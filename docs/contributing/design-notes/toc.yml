@@ -82,6 +82,8 @@
     href: Diagnostics Overlay.md
   - name: Compiler-Projected Editor Semantics
     href: Compiler-Projected Editor Semantics.md
+  - name: Live Visualization — Heading Anchors
+    href: Live Visualization - Heading Anchors.md
 - name: Other notes
   items:
   - name: BBCode Rendering

@@ -130,6 +130,7 @@ flowchart TB
     CFGCN --> UST["18. Unavailable Stage Tabs"]
     UST --> DGO["19. Diagnostics Overlay"]
     DGO --> CPE["20. Compiler-Projected Editor Semantics"]
+    CPE --> HA["21. Live Visualization — Heading Anchors"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -154,6 +155,7 @@ flowchart TB
 | 18 | [Unavailable Stage Tabs](./Unavailable%20Stage%20Tabs.md) | A halted compile renders its unproduced stages as disabled tabs, so a broken script still shows what it did produce | Implemented |
 | 19 | [Diagnostics Overlay](./Diagnostics%20Overlay.md) | The compiler's diagnostics as a source-editor overlay — squiggles, gutter markers, and doc-linked tooltips — on a reusable LSP-shaped projection | Implemented |
 | 20 | [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) | Source-editor highlighting and completions projected from the compiler's own parse (semantic tokens + resolved symbols), retiring the client-side grammar | Implemented |
+| 21 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
 
 ### Other notes
 
