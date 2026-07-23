@@ -519,3 +519,37 @@ test("a save that introduces an error shows the diagnostics overlay; fixing it c
     await expect(page.locator(".tab.dirty")).toHaveCount(0);
     await expect(marker).toHaveCount(0);
 });
+
+test("a preview heading reveals a link icon that copies the full jump target", async ({ page }) => {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto(`${base}/`);
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    const heading = page.locator(".source-preview h1", { hasText: "Scene" });
+    const link = heading.locator(".heading-anchor-link");
+    // The link is hidden until the heading is hovered (GitHub-style).
+    await expect(link).toHaveCSS("opacity", "0");
+    await heading.hover();
+    await expect(link).toHaveCSS("opacity", "1");
+
+    await link.click();
+    await expect(page.locator(".toast")).toHaveText("Copied [Scene](#scene)");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("[Scene](#scene)");
+});
+
+test("the active heading line reveals a #slug hint that copies the anchor", async ({ page }) => {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto(`${base}/`);
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    // The caret starts on the "# Scene" heading line, so its #slug hint shows after the text.
+    const hint = page.locator(".source-pane .dd-slug-hint");
+    await expect(hint).toHaveText("#scene");
+    await hint.click();
+    await expect(page.locator(".toast")).toHaveText("Copied #scene");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("#scene");
+
+    // Moving the caret off the heading line hides the hint (revealed on the active line only).
+    await page.locator(".source-pane .cm-line", { hasText: "Alice" }).click();
+    await expect(hint).toHaveCount(0);
+});
