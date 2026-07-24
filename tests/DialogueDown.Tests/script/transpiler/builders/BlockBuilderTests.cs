@@ -2,6 +2,7 @@ using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Transpiler.Builders;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.MarkdownAstFactory;
 using MarkdownBlock = DialogueDown.Markdown.MarkdownBlock;
@@ -200,6 +201,106 @@ public sealed class BlockBuilderTests
     public void UnknownBlockKind_Throws() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Build([new UnknownMarkdownBlock(Span())]));
+
+    [Fact]
+    public void List_WithLeadingWeights_BecomesRandomChoices()
+    {
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("50%"), Text(" Heads."))),
+                ListItem(Paragraph(CodeSpan("50%"), Text(" Tails.")))),
+        ]);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        Assert.Equal(2, random.Options.Count);
+        Assert.Equal(new NumberWeight(50), random.Options[0].Weight);
+        Assert.Equal(new NumberWeight(50), random.Options[1].Weight);
+        AssertSpeechText(AssertRandomOptionLine(random.Options[0]), "Heads.");
+        AssertSpeechText(AssertRandomOptionLine(random.Options[1]), "Tails.");
+    }
+
+    [Fact]
+    public void RandomChoice_RecognizesNumberAndAutoWeights()
+    {
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("70%"), Text(" Guard: Halt!"))),
+                ListItem(Paragraph(CodeSpan("%"), Text(" Guard: Oh, it's you.")))),
+        ]);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        Assert.Equal(new NumberWeight(70), random.Options[0].Weight);
+        Assert.IsType<AutoWeight>(random.Options[1].Weight);
+    }
+
+    [Fact]
+    public void RandomOption_WeightIsPeeled_AndTheSpeakerStillParses()
+    {
+        var body = Build(
+        [
+            ListBlock(ordered: false, ListItem(Paragraph(CodeSpan("50%"), Text(" Alice: Hi")))),
+        ]);
+
+        var line = AssertRandomOptionLine(Assert.Single(AssertRandomChoices(Assert.Single(body)).Options));
+        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeechText(line, "Hi");
+    }
+
+    [Fact]
+    public void RandomChoice_MissingWeightOnAnOption_ReportsMissingWeight_AndRecoversAsAuto()
+    {
+        var diagnostics = new DiagnosticBag();
+
+        var body = _builder.Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("50%"), Text(" Heads."))),
+                ListItem(TextParagraph("Tails."))),
+        ], diagnostics);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        Assert.Equal(new NumberWeight(50), random.Options[0].Weight);
+        Assert.IsType<AutoWeight>(random.Options[1].Weight);
+        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.MissingChoiceWeight);
+    }
+
+    [Fact]
+    public void RandomChoice_InvalidWeight_ReportsInvalidWeight_AtItsSpan_AndRecoversAsAuto()
+    {
+        var diagnostics = new DiagnosticBag();
+        var invalid = CodeSpan("-10%");
+
+        var body = _builder.Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(invalid, Text(" Heads."))),
+                ListItem(Paragraph(CodeSpan("%"), Text(" Tails.")))),
+        ], diagnostics);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        Assert.IsType<AutoWeight>(random.Options[0].Weight);
+        Assert.Equal(
+            invalid.Span,
+            AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.InvalidChoiceWeight).Span);
+    }
+
+    [Fact]
+    public void RandomChoice_CarriesListAndItemSpans()
+    {
+        var item = ListItem(Paragraph(CodeSpan("50%"), Text(" Heads.")));
+        var list = ListBlock(ordered: false, item);
+
+        var random = AssertRandomChoices(Assert.Single(Build([list])));
+
+        Assert.Equal(list.Span, random.Span);
+        Assert.Equal(item.Span, Assert.Single(random.Options).Span);
+    }
 
     private IReadOnlyList<ScriptBlock> Build(IReadOnlyList<MarkdownBlock> blocks) =>
         _builder.Build(blocks, new DiagnosticBag());

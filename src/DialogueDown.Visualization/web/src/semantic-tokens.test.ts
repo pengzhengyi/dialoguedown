@@ -18,21 +18,30 @@ describe("decoratedRanges", () => {
     it("resolves a token's LSP range to editor offsets and its class", () => {
         const state = EditorState.create({ doc: "Alice: Hi." });
 
-        const ranges = decoratedRanges(state, [token("Speaker", 0, 0, 7)]);
+        const ranges = decoratedRanges(state, [token("SpeakerName", 0, 0, 5)]);
 
-        expect(ranges).toEqual([{ from: 0, to: 7, className: "dd-tok-speaker" }]);
+        expect(ranges).toEqual([{ from: 0, to: 5, className: "dd-tok-speaker-name" }]);
     });
 
     it("maps each kind to its own class", () => {
         const state = EditorState.create({ doc: "x" });
-        const kinds: TokenKind[] = ["Speaker", "CustomTag", "ReservedTag", "JumpIndicator"];
+        const kinds: TokenKind[] = [
+            "SpeakerName",
+            "SpeakerId",
+            "Separator",
+            "CustomTag",
+            "ReservedTag",
+            "JumpIndicator",
+        ];
 
         const classes = kinds.map(
             (kind) => decoratedRanges(state, [token(kind, 0, 0, 1)])[0].className,
         );
 
         expect(classes).toEqual([
-            "dd-tok-speaker",
+            "dd-tok-speaker-name",
+            "dd-tok-speaker-id",
+            "dd-tok-separator",
             "dd-tok-custom-tag",
             "dd-tok-reserved-tag",
             "dd-tok-jump",
@@ -42,31 +51,33 @@ describe("decoratedRanges", () => {
     it("resolves a token that spans across lines", () => {
         const state = EditorState.create({ doc: "Alice: Hi.\nBob: Yo." });
         // Line 1 (zero-based) starts at offset 11; "Bob" is characters 0..3 there.
-        const ranges = decoratedRanges(state, [token("Speaker", 1, 0, 3)]);
+        const ranges = decoratedRanges(state, [token("SpeakerName", 1, 0, 3)]);
 
-        expect(ranges).toEqual([{ from: 11, to: 14, className: "dd-tok-speaker" }]);
+        expect(ranges).toEqual([{ from: 11, to: 14, className: "dd-tok-speaker-name" }]);
     });
 
-    it("orders a coarse speaker before its overlapping tag, so the tag nests on top", () => {
-        const state = EditorState.create({ doc: "Alice #happy: Hi." });
-        // The speaker token spans the whole prefix "Alice #happy: "; the tag overlaps it.
+    it("orders the disjoint speaker parts by start", () => {
+        const state = EditorState.create({ doc: "Alice @alice #happy: Hi." });
+        // Name, id, tag, separator: given out of order, they come back ordered by start.
         const ranges = decoratedRanges(state, [
-            token("CustomTag", 0, 6, 12),
-            token("Speaker", 0, 0, 14),
+            token("Separator", 0, 19, 20),
+            token("SpeakerName", 0, 0, 5),
+            token("CustomTag", 0, 13, 19),
+            token("SpeakerId", 0, 6, 12),
         ]);
 
-        // The wider speaker sorts first (outer span); the tag second (inner, painted over).
-        expect(ranges.map((r) => r.className)).toEqual(["dd-tok-speaker", "dd-tok-custom-tag"]);
-        expect(ranges).toEqual([
-            { from: 0, to: 14, className: "dd-tok-speaker" },
-            { from: 6, to: 12, className: "dd-tok-custom-tag" },
+        expect(ranges.map((r) => r.className)).toEqual([
+            "dd-tok-speaker-name",
+            "dd-tok-speaker-id",
+            "dd-tok-custom-tag",
+            "dd-tok-separator",
         ]);
     });
 
     it("drops a zero-width token (a synthetic node has no text to color)", () => {
         const state = EditorState.create({ doc: "Alice: Hi." });
 
-        expect(decoratedRanges(state, [token("Speaker", 0, 3, 3)])).toEqual([]);
+        expect(decoratedRanges(state, [token("SpeakerName", 0, 3, 3)])).toEqual([]);
     });
 
     it("clamps a stale range past the end of the shrunken buffer", () => {
@@ -74,7 +85,7 @@ describe("decoratedRanges", () => {
 
         // A token on a line that no longer exists clamps to the document end; both ends land
         // on the end offset, so it collapses to zero width and is dropped rather than throwing.
-        expect(decoratedRanges(state, [token("Speaker", 9, 0, 5)])).toEqual([]);
+        expect(decoratedRanges(state, [token("SpeakerName", 9, 0, 5)])).toEqual([]);
     });
 });
 
@@ -110,7 +121,7 @@ describe("semanticTokens extension", () => {
     it("paints the pushed tokens' ranges", () => {
         const view = mount("Alice: Hi.");
 
-        setEditorSemanticTokens(view, [token("Speaker", 0, 0, 7)]);
+        setEditorSemanticTokens(view, [token("SpeakerName", 0, 0, 7)]);
 
         expect(decorations(view)).toEqual([{ from: 0, to: 7 }]);
         view.destroy();
@@ -118,7 +129,7 @@ describe("semanticTokens extension", () => {
 
     it("replaces the tokens on the next push (an empty list clears them)", () => {
         const view = mount("Alice: Hi.");
-        setEditorSemanticTokens(view, [token("Speaker", 0, 0, 7)]);
+        setEditorSemanticTokens(view, [token("SpeakerName", 0, 0, 7)]);
 
         setEditorSemanticTokens(view, []);
 
@@ -128,7 +139,7 @@ describe("semanticTokens extension", () => {
 
     it("maps the decorations through edits so they track until the next compile", () => {
         const view = mount("Alice: Hi.");
-        setEditorSemanticTokens(view, [token("Speaker", 0, 0, 7)]);
+        setEditorSemanticTokens(view, [token("SpeakerName", 0, 0, 7)]);
 
         // Insert two characters before the token; its range shifts right by two.
         view.dispatch({ changes: { from: 0, insert: "xx" } });

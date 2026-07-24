@@ -49,6 +49,16 @@ internal static class ParserCombinators
         new OptionalOrDefaultParser<T>(parser, defaultValue);
 
     /// <summary>
+    /// Makes a value-type parser optional, yielding <c>null</c> when it does not match. Plain
+    /// <see cref="Optional{T}"/> yields <c>default(T)</c> for a value type, which cannot be told
+    /// from a real match; this lifts the value into a nullable so absence is a genuine
+    /// <c>null</c>. Use it where a struct-valued part (a located identifier, say) is optional.
+    /// </summary>
+    public static IParser<T?> OptionalValue<T>(this IParser<T> parser)
+        where T : struct =>
+        parser.Select(value => (T?)value).OptionalOrDefault(null);
+
+    /// <summary>
     /// Matches a parser zero or more times, collecting the values. It always
     /// succeeds — an empty list when nothing matches. A match that consumes nothing
     /// stops the loop (rather than spinning forever), so the inner parser should make

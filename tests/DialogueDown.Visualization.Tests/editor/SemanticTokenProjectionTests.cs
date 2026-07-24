@@ -26,61 +26,73 @@ public sealed class SemanticTokenProjectionTests
         Assert.Empty(Project("Just some narration with no speaker."));
 
     [Fact]
-    public void Project_SpeakerName_TokenCoversTheWholePrefix()
+    public void Project_SpeakerName_ProjectsANameAndSeparatorButNoId()
     {
         var source = "Alice: Hello there.";
+        var tokens = Project(source);
 
-        // The speaker token is the raw prefix span, through the colon and its trailing space.
-        var token = AssertSingleSemanticToken(Project(source), TokenKind.Speaker);
-        Assert.Equal("Alice: ", token.TextIn(source));
+        AssertToken(tokens, TokenKind.SpeakerName, "Alice", source);
+        AssertToken(tokens, TokenKind.Separator, ":", source);
+        Assert.DoesNotContain(tokens, token => token.Kind == TokenKind.SpeakerId);
     }
 
     [Fact]
-    public void Project_SpeakerId_TokenCoversTheWholePrefix()
+    public void Project_SpeakerId_ProjectsAnIdIncludingTheAtAndASeparatorButNoName()
     {
         var source = "@alice: Hello there.";
+        var tokens = Project(source);
 
-        var token = AssertSingleSemanticToken(Project(source), TokenKind.Speaker);
-        Assert.Equal("@alice: ", token.TextIn(source));
+        AssertToken(tokens, TokenKind.SpeakerId, "@alice", source);
+        AssertToken(tokens, TokenKind.Separator, ":", source);
+        Assert.DoesNotContain(tokens, token => token.Kind == TokenKind.SpeakerName);
     }
 
     [Fact]
-    public void Project_SpeakerNameAndId_TokenCoversBothTogether()
+    public void Project_SpeakerNameAndId_ProjectsNameIdAndSeparatorSeparately()
     {
         var source = "Alice @alice: Hello there.";
+        var tokens = Project(source);
 
-        var token = AssertSingleSemanticToken(Project(source), TokenKind.Speaker);
-        Assert.Equal("Alice @alice: ", token.TextIn(source));
+        AssertToken(tokens, TokenKind.SpeakerName, "Alice", source);
+        AssertToken(tokens, TokenKind.SpeakerId, "@alice", source);
+        AssertToken(tokens, TokenKind.Separator, ":", source);
     }
 
     [Fact]
-    public void Project_SpeakerWithTag_SpeakerCoversTheWholePrefixAndTheTagOverlaps()
+    public void Project_SpeakerWithTag_ProjectsDisjointNameIdTagAndSeparatorTokens()
     {
         var source = "Alice @alice #happy: Hello there.";
         var tokens = Project(source);
 
-        // The coarse speaker token spans the whole prefix, including the tag; the separate tag
-        // token overlaps it and the editor layers the tag on top by decoration precedence.
-        var speaker = AssertSingleSemanticToken(tokens, TokenKind.Speaker);
-        Assert.Equal("Alice @alice #happy: ", speaker.TextIn(source));
-        var tag = AssertSingleSemanticToken(tokens, TokenKind.CustomTag);
-        Assert.Equal("#happy", tag.TextIn(source));
+        // Precise tokens are non-overlapping: the tag sits between the id and the colon, and
+        // no speaker token covers it (unlike the retired coarse Speaker token).
+        AssertToken(tokens, TokenKind.SpeakerName, "Alice", source);
+        AssertToken(tokens, TokenKind.SpeakerId, "@alice", source);
+        AssertToken(tokens, TokenKind.CustomTag, "#happy", source);
+        AssertToken(tokens, TokenKind.Separator, ":", source);
+        AssertTokensDoNotOverlap(tokens);
     }
 
     [Fact]
-    public void Project_QuotedSpeakerName_TokenCoversTheQuotedPrefix()
+    public void Project_QuotedSpeakerName_SpanIncludesTheQuotes()
     {
         var source = "\"Dr. Vale\": Hello there.";
+        var tokens = Project(source);
 
-        var token = AssertSingleSemanticToken(Project(source), TokenKind.Speaker);
-        Assert.Equal("\"Dr. Vale\": ", token.TextIn(source));
+        AssertToken(tokens, TokenKind.SpeakerName, "\"Dr. Vale\"", source);
+        AssertToken(tokens, TokenKind.Separator, ":", source);
     }
 
     [Fact]
-    public void Project_OrphanTagWithNoSpeaker_HasNoSpeakerToken() =>
-        // A prefix of only tags names no speaker; it recovers to a default and drops the tags,
-        // so nothing dialogue-specific is left to highlight.
-        Assert.DoesNotContain(Project("#lonely: Hello there."), token => token.Kind == TokenKind.Speaker);
+    public void Project_OrphanTagWithNoSpeaker_HasNoSpeakerTokens()
+    {
+        // A prefix of only tags names no speaker; it recovers to a default that carries no
+        // prefix spans, so no name, id, or separator token is projected.
+        var tokens = Project("#lonely: Hello there.");
+
+        Assert.DoesNotContain(tokens, token =>
+            token.Kind is TokenKind.SpeakerName or TokenKind.SpeakerId or TokenKind.Separator);
+    }
 
     [Fact]
     public void Project_CustomTag_TokenIncludesTheHash()
@@ -133,15 +145,35 @@ public sealed class SemanticTokenProjectionTests
             softwraps onto a second.
             """;
 
-        var token = AssertSingleSemanticToken(Project(source), TokenKind.Speaker);
+        var token = AssertSingleSemanticToken(Project(source), TokenKind.SpeakerName);
 
-        Assert.Equal("Alice: ", token.TextIn(source));
+        Assert.Equal("Alice", token.TextIn(source));
         Assert.Equal(2, token.Range.Start.Line); // zero-based: the third line, not the heading
     }
 
     private static SemanticToken AssertSingleSemanticToken(
         IEnumerable<SemanticToken> tokens, TokenKind kind) =>
         Assert.Single(tokens, token => token.Kind == kind);
+
+    private static void AssertToken(
+        IEnumerable<SemanticToken> tokens, TokenKind kind, string expected, string source) =>
+        Assert.Equal(expected, AssertSingleSemanticToken(tokens, kind).TextIn(source));
+
+    private static void AssertTokensDoNotOverlap(IReadOnlyList<SemanticToken> tokens)
+    {
+        var ordered = tokens
+            .OrderBy(token => token.Range.Start.Line)
+            .ThenBy(token => token.Range.Start.Character)
+            .ToList();
+        for (var i = 1; i < ordered.Count; i++)
+        {
+            var previousEnd = ordered[i - 1].Range.End;
+            var start = ordered[i].Range.Start;
+            var startsAfterPrevious = start.Line > previousEnd.Line
+                || (start.Line == previousEnd.Line && start.Character >= previousEnd.Character);
+            Assert.True(startsAfterPrevious, "semantic tokens must not overlap");
+        }
+    }
 
     private IReadOnlyList<SemanticToken> Project(string source) =>
         [.. _projection.Project(Pipeline.Document(source), source)];

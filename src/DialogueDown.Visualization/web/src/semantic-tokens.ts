@@ -8,7 +8,9 @@ import type { SemanticToken, TokenKind } from "./model";
  * styled in `styles.css`; nothing else in the editor changes.
  */
 const TOKEN_CLASS: Record<TokenKind, string> = {
-    Speaker: "dd-tok-speaker",
+    SpeakerName: "dd-tok-speaker-name",
+    SpeakerId: "dd-tok-speaker-id",
+    Separator: "dd-tok-separator",
     CustomTag: "dd-tok-custom-tag",
     ReservedTag: "dd-tok-reserved-tag",
     JumpIndicator: "dd-tok-jump",
@@ -23,10 +25,8 @@ export interface DecoratedRange {
 
 /**
  * Resolve each token's LSP range to editor offsets and its class, dropping zero-width tokens
- * (a synthetic node has no text to color). The order is the layering: widest range first at a
- * shared start, so a coarse `Speaker` token nests *outside* its tag tokens and the editor
- * paints the tag on top (its inner span's color wins over the speaker's by DOM nesting). This
- * is the precedence the coarse, overlapping speaker token relies on. Exported for testing.
+ * (a synthetic node has no text to color). The compiler's tokens are disjoint, so they only
+ * need ordering by start for CodeMirror's sorted decoration set. Exported for testing.
  */
 export function decoratedRanges(
     state: EditorState,
@@ -39,7 +39,7 @@ export function decoratedRanges(
             className: TOKEN_CLASS[token.kind],
         }))
         .filter((range) => range.to > range.from && range.className != null)
-        .sort((a, b) => a.from - b.from || b.to - a.to);
+        .sort((a, b) => a.from - b.from);
 }
 
 /** Build the decoration set for `tokens` against the current document. */

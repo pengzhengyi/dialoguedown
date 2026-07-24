@@ -360,9 +360,11 @@ public sealed class CompilationVisualizerTests
             "view");
 
         Assert.Contains("\"semanticTokens\":[", json);
-        Assert.Contains("\"kind\":\"Speaker\"", json);
+        Assert.Contains("\"kind\":\"SpeakerName\"", json);
         Assert.Contains("\"kind\":\"CustomTag\"", json);
+        Assert.Contains("\"kind\":\"Separator\"", json);
         Assert.Contains("\"kind\":\"JumpIndicator\"", json);
+        Assert.DoesNotContain("\"kind\":\"Speaker\"", json); // the coarse kind is retired
     }
 
     [Fact]

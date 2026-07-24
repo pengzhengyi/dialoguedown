@@ -8,10 +8,11 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// <summary>
 /// Walks the Markdown block tree into the Dialogue AST skeleton. It orchestrates: a
 /// heading becomes a flat <see cref="SceneHeading"/> marker, a paragraph is handed to the
-/// <see cref="LineBuilder"/>, and a list becomes <see cref="Choices"/>. It is a faithful,
-/// local tokenizer — composition across siblings, such as grouping headings into scenes,
-/// is deferred to later stages. One shared, recursive <see cref="Build"/> serves both the
-/// document body and each choice body.
+/// <see cref="LineBuilder"/>, and a list becomes a branch — <see cref="Choices"/>, or a
+/// <see cref="RandomChoices"/> when any option leads with a weight (a <c>`…%`</c> code span).
+/// It is a faithful, local tokenizer — composition across siblings, such as grouping headings
+/// into scenes, is deferred to later stages. One shared, recursive <see cref="Build"/> serves
+/// both the document body and each choice body.
 /// </summary>
 internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder lineBuilder)
 {
@@ -73,7 +74,7 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
 
                 break;
             case ListBlock list:
-                blocks.Add(BuildChoices(list, diagnostics));
+                blocks.Add(BuildBranch(list, diagnostics));
                 break;
             default:
                 throw new ArgumentOutOfRangeException(
@@ -83,13 +84,33 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
         }
     }
 
-    // Each list item's blocks recurse through the same walk, so a nested list inside an item
-    // becomes a nested Choices inside that Choice.
-    private Choices BuildChoices(ListBlock list, IDiagnosticSink diagnostics)
+    // A list becomes a branch: a player-facing Choices, or a RandomChoices when any option leads
+    // with a weight code span. Each list item's blocks recurse through the same walk, so a nested
+    // list inside an item becomes a nested branch inside that option.
+    private ScriptBlock BuildBranch(ListBlock list, IDiagnosticSink diagnostics) =>
+        list.Items.Any(RandomChoiceRecognition.HasLeadingWeight)
+            ? BuildRandomChoices(list, diagnostics)
+            : BuildPlayerChoices(list, diagnostics);
+
+    private Choices BuildPlayerChoices(ListBlock list, IDiagnosticSink diagnostics)
     {
         var options = list.Items
             .Select(item => new Choice(Build(item.Blocks, diagnostics), item.Span))
             .ToList();
         return new Choices(list.IsOrdered, options, list.Span);
+    }
+
+    private RandomChoices BuildRandomChoices(ListBlock list, IDiagnosticSink diagnostics)
+    {
+        var options = list.Items
+            .Select(item => BuildRandomOption(item, diagnostics))
+            .ToList();
+        return new RandomChoices(options, list.Span);
+    }
+
+    private RandomOption BuildRandomOption(ListItem item, IDiagnosticSink diagnostics)
+    {
+        var (weight, body) = RandomChoiceRecognition.Resolve(item, diagnostics);
+        return new RandomOption(weight, Build(body, diagnostics), item.Span);
     }
 }

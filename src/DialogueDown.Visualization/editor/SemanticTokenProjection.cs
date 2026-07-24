@@ -31,9 +31,10 @@ internal sealed class SemanticTokenProjection
 
     // The token(s) a node contributes, if any. Non-dialogue nodes (text, styled runs, the line
     // itself) contribute nothing and keep their Markdown highlighting. Each token is a raw AST
-    // span — the projection never re-derives structure the compiler already parsed. A speaker's
-    // span covers its whole prefix (name, @id, tags, and the colon), so the coarse Speaker token
-    // overlaps its tag tokens; the editor layers the tags on top by decoration precedence.
+    // span — the projection never re-derives structure the compiler already parsed. A speaker
+    // projects a token per part it wrote (name, @id, and the : separator) from its prefix spans;
+    // the parts are disjoint and interleave with the separate tag tokens. A synthetic or
+    // recovered speaker carries no prefix spans, so it contributes nothing.
     private static IEnumerable<SemanticToken> TokensOf(ScriptNode node, LspLineMap map)
     {
         switch (node)
@@ -47,8 +48,18 @@ internal sealed class SemanticTokenProjection
             case JumpIndicator jump:
                 yield return Token(TokenKind.JumpIndicator, jump.Span, map);
                 break;
-            case SpeakerReference or SpeakerDeclaration or PartialSpeakerDeclaration:
-                yield return Token(TokenKind.Speaker, ((Speaker)node).Span, map);
+            case Speaker { PrefixSpans: { } prefix }:
+                if (prefix.Name is { } name)
+                {
+                    yield return Token(TokenKind.SpeakerName, name, map);
+                }
+
+                if (prefix.Id is { } id)
+                {
+                    yield return Token(TokenKind.SpeakerId, id, map);
+                }
+
+                yield return Token(TokenKind.Separator, prefix.Separator, map);
                 break;
         }
     }

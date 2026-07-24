@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Transpiler.Builders;
@@ -46,12 +47,75 @@ public sealed class SpeakerBuilderTests
     {
         var text = "Alice #mood=happy: Hi";
 
-        var result = _builder.Build(ParseInputFactory.Input(text, 10), new DiagnosticBag());
+        var declaration = Assert.IsType<SpeakerDeclaration>(SpeakerAt(text, 10));
 
-        Assert.True(result.Success);
-        var declaration = Assert.IsType<SpeakerDeclaration>(result.MatchedValue);
         var tag = Assert.Single(declaration.Tags);
         Assert.Equal(10 + text.IndexOf('#'), tag.Span.Start);
+    }
+
+    [Fact]
+    public void SpeakerPrefix_CarriesTheSeparatorSpanAtTheColon()
+    {
+        var text = "Alice @A #main: Hi";
+
+        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+
+        AssertSpan(prefix.Separator, 10 + text.IndexOf(':'), length: 1); // just the ":"
+    }
+
+    [Fact]
+    public void BareName_CarriesTheNameSpanAndNoId()
+    {
+        var text = "Alice: Hi";
+
+        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+
+        AssertSpan(prefix.Name, 10 + text.IndexOf("Alice", StringComparison.Ordinal), "Alice".Length);
+        Assert.Null(prefix.Id);
+    }
+
+    [Fact]
+    public void QuotedName_SpanIncludesTheQuotes()
+    {
+        var text = "\"Old Man\": Hi";
+
+        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+
+        // The span covers the whole quoted literal, quotes included.
+        AssertSpan(prefix.Name, 10 + text.IndexOf('"'), "\"Old Man\"".Length);
+    }
+
+    [Fact]
+    public void BareId_CarriesTheIdSpanIncludingTheAtAndNoName()
+    {
+        var text = "@alice: Hi";
+
+        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+
+        AssertSpan(prefix.Id, 10 + text.IndexOf('@'), "@alice".Length);
+        Assert.Null(prefix.Name);
+    }
+
+    [Fact]
+    public void NameAndId_CarryBothSpans()
+    {
+        var text = "Alice @alice: Hi";
+
+        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+
+        AssertSpan(prefix.Name, 10 + text.IndexOf("Alice", StringComparison.Ordinal), "Alice".Length);
+        AssertSpan(prefix.Id, 10 + text.IndexOf('@'), "@alice".Length);
+    }
+
+    [Fact]
+    public void SyntheticDefaultSpeaker_HasNoPrefixSpans()
+    {
+        // An orphan-tag prefix recovers to a default speaker, which names no one, so it
+        // carries no prefix locations.
+        var speaker = Speaker("#lonely: Hi");
+
+        Assert.IsType<DefaultSpeaker>(speaker);
+        Assert.Null(speaker.PrefixSpans);
     }
 
     [Theory]
@@ -59,7 +123,7 @@ public sealed class SpeakerBuilderTests
     [InlineData("Alice:   Hello")]
     public void SpeechStart_LandsAfterAllPostColonWhitespace(string text)
     {
-        var result = _builder.Build(ParseInputFactory.Input(text), new DiagnosticBag());
+        var result = Build(text);
 
         Assert.True(result.Success);
         Assert.Equal(text.IndexOf("Hello", StringComparison.Ordinal), result.MatchedLength);
@@ -89,15 +153,26 @@ public sealed class SpeakerBuilderTests
         AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
     }
 
-    private static ParseResult<Speaker> Build(string text) =>
-        _builder.Build(ParseInputFactory.Input(text), new DiagnosticBag());
+    private static ParseResult<Speaker> Build(string text) => BuildAt(text, 0);
 
-    private static Speaker Speaker(string text)
+    private static ParseResult<Speaker> BuildAt(string text, int position) =>
+        _builder.Build(ParseInputFactory.Input(text, position), new DiagnosticBag());
+
+    private static Speaker Speaker(string text) => SpeakerAt(text, 0);
+
+    private static Speaker SpeakerAt(string text, int position)
     {
-        var result = Build(text);
+        var result = BuildAt(text, position);
         Assert.True(result.Success);
         return result.MatchedValue;
     }
 
     private static void AssertBuildFailed(string text) => Assert.False(Build(text).Success);
+
+    private static void AssertSpan(SourceSpan? span, int start, int length)
+    {
+        Assert.NotNull(span);
+        Assert.Equal(start, span.Value.Start);
+        Assert.Equal(length, span.Value.Length);
+    }
 }

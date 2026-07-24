@@ -12,8 +12,7 @@ public sealed class SpeakerPrefixParserTests
     {
         var data = Data("Alice @A #main: Hello");
 
-        Assert.Equal("Alice", data.Name);
-        Assert.Equal("A", data.Id);
+        AssertNameAndId(data, name: "Alice", id: "A");
         var tag = Assert.Single(data.Tags);
         Assert.Equal("main", tag.Value.Name);
         Assert.False(tag.Value.IsReserved);
@@ -24,18 +23,17 @@ public sealed class SpeakerPrefixParserTests
     {
         var data = Data("Alice: Hello");
 
-        Assert.Equal("Alice", data.Name);
-        Assert.Null(data.Id);
+        AssertNameAndId(data, name: "Alice", id: null);
         Assert.Empty(data.Tags);
     }
 
     [Fact]
     public void QuotedName_AllowsSpaces() =>
-        Assert.Equal("Old Man", Data("\"Old Man\": Hello").Name);
+        AssertNameAndId(Data("\"Old Man\": Hello"), name: "Old Man", id: null);
 
     [Fact]
     public void BareId_HasNoName() =>
-        Assert.Equal("A", Data("@A: Hello").Id);
+        AssertNameAndId(Data("@A: Hello"), name: null, id: "A");
 
     [Fact]
     public void ReservedTag_IsReported()
@@ -79,8 +77,7 @@ public sealed class SpeakerPrefixParserTests
     {
         var data = Data("#a #b: Hi");
 
-        Assert.Null(data.Name);
-        Assert.Null(data.Id);
+        AssertNameAndId(data, name: null, id: null);
         Assert.Equal("a", data.Tags[0].Value.Name);
         Assert.Equal("b", data.Tags[1].Value.Name);
     }
@@ -91,8 +88,7 @@ public sealed class SpeakerPrefixParserTests
         // The parser only recognizes shape; the builder rejects nameless metadata.
         var data = Data("@A #main: Hi");
 
-        Assert.Null(data.Name);
-        Assert.Equal("A", data.Id);
+        AssertNameAndId(data, name: null, id: "A");
         Assert.Single(data.Tags);
     }
 
@@ -101,8 +97,7 @@ public sealed class SpeakerPrefixParserTests
     {
         var data = Data(": Hello");
 
-        Assert.Null(data.Name);
-        Assert.Null(data.Id);
+        AssertNameAndId(data, name: null, id: null);
         Assert.Empty(data.Tags);
     }
 
@@ -161,4 +156,11 @@ public sealed class SpeakerPrefixParserTests
     }
 
     private static void AssertNotAPrefix(string text) => Assert.False(Parse(text).Success);
+
+    /// <summary>Asserts how a prefix parsed its speaker: a name and id value, or null for absent.</summary>
+    private static void AssertNameAndId(SpeakerPrefixData data, string? name, string? id)
+    {
+        Assert.Equal(name, data.Name?.Value);
+        Assert.Equal(id, data.Id?.Value);
+    }
 }

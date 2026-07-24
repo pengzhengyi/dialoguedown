@@ -80,6 +80,50 @@ internal static class DiagnosticDocs
             + "images, nested links, or line breaks — are not allowed inside a label or an image's "
             + "alt text."),
         new(
+            DiagnosticCatalog.MissingChoiceWeight,
+            "In a random choice — a list where at least one option leads with a weight — every "
+            + "option must carry a weight so the engine can pick fairly. Give the option a "
+            + "percentage like `50%`, or `%` to share the remaining percentage equally.",
+            new(
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` Heads.
+                - Tails.
+                """,
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` Heads.
+                - `50%` Tails.
+                """,
+                ["- Tails."],
+                ["`50%` Tails."])),
+        new(
+            DiagnosticCatalog.InvalidChoiceWeight,
+            "A choice weight is a percentage code span. Write a non-negative number like `50%`, or "
+            + "a bare `%` to take an equal share of the remaining percentage. A negative number or "
+            + "other text is not a valid weight.",
+            new(
+                """
+                # Coin
+                The coin spins.
+
+                - `-10%` Heads.
+                - `%` Tails.
+                """,
+                """
+                # Coin
+                The coin spins.
+
+                - `10%` Heads.
+                - `%` Tails.
+                """,
+                ["`-10%`"],
+                ["`10%`"])),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",
@@ -241,6 +285,27 @@ internal static class DiagnosticDocs
                 ["#the-end"],
                 ["# The End"])),
         new(
+            DiagnosticCatalog.ZeroChoiceWeightTotal,
+            "A random choice picks one option by weight. When every weight is 0 there is nothing "
+            + "to pick from — the odds are undefined. Give at least one option a positive weight.",
+            new(
+                """
+                # Coin
+                The coin spins.
+
+                - `0%` Heads.
+                - `0%` Tails.
+                """,
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` Heads.
+                - `50%` Tails.
+                """,
+                ["`0%`"],
+                ["`50%`"])),
+        new(
             DiagnosticCatalog.DeeplyNestedChoiceBranch,
             "Nested choices remain valid, but a fourth level becomes difficult to scan and "
             + "maintain. Consider moving that branch into a new scene and jumping to it instead.",
@@ -269,6 +334,50 @@ internal static class DiagnosticDocs
                 """,
                 ["- Level 4"],
                 ["=> [Continue](#deeper-branch)", "# Deeper branch"])),
+        new(
+            DiagnosticCatalog.ChoiceWeightsNotOneHundred,
+            "A random choice's weights are relative — they are normalized by their sum — so any "
+            + "positive total works. When they do not add up to 100 the intended odds are harder "
+            + "to read; adjust them to total 100% (or use `%` to share the rest) to state the odds "
+            + "directly.",
+            new(
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` Heads.
+                - `30%` Tails.
+                """,
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` Heads.
+                - `50%` Tails.
+                """,
+                ["`30%`"],
+                ["`50%`"])),
+        new(
+            DiagnosticCatalog.SingleOptionRandomChoice,
+            "A random choice with only one option always selects it — the weight has no effect and "
+            + "the list is not really random. This usually means a plain line was given a weight, "
+            + "or the other options are missing.",
+            new(
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` It always lands heads.
+                """,
+                """
+                # Coin
+                The coin spins.
+
+                - `50%` Heads.
+                - `50%` Tails.
+                """,
+                ["`50%` It always lands heads."],
+                ["`50%` Tails."])),
     ];
 
     public static IReadOnlyDictionary<string, DiagnosticDoc> ByCode { get; } =

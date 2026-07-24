@@ -12,7 +12,7 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_FourthChoiceLevel_ReportsStyleWarningAtGroupStart()
     {
-        var level4 = ChoiceGroup(40, Choice(Line(Text("deep"))));
+        var level4 = Choices(40, Choice(Line(Text("deep"))));
         var root = NestToFourthLevel(level4);
 
         var diagnostic = Assert.Single(Check(root));
@@ -27,9 +27,9 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_ThirdChoiceLevel_ReportsNothing()
     {
-        var level3 = ChoiceGroup(Choice(Line(Text("allowed"))));
-        var level2 = ChoiceGroup(Choice(level3));
-        var root = ChoiceGroup(Choice(level2));
+        var level3 = Choices(Choice(Line(Text("allowed"))));
+        var level2 = Choices(Choice(level3));
+        var root = Choices(Choice(level2));
 
         var diagnostics = Check(root);
 
@@ -39,8 +39,8 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_DeeperDescendants_ReportsOnlyFirstOverLimitGroup()
     {
-        var level5 = ChoiceGroup(50, Choice(Line(Text("deeper"))));
-        var level4 = ChoiceGroup(40, Choice(level5));
+        var level5 = Choices(50, Choice(Line(Text("deeper"))));
+        var level4 = Choices(40, Choice(level5));
         var root = NestToFourthLevel(level4);
 
         var diagnostic = Assert.Single(Check(root));
@@ -51,9 +51,9 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_SeparateOverNestedBranches_ReportsEachBranch()
     {
-        var left = NestFromSecondLevel(ChoiceGroup(40, Choice(Line(Text("left")))));
-        var right = NestFromSecondLevel(ChoiceGroup(80, Choice(Line(Text("right")))));
-        var root = ChoiceGroup(Choice(left), Choice(right));
+        var left = NestFromSecondLevel(Choices(40, Choice(Line(Text("left")))));
+        var right = NestFromSecondLevel(Choices(80, Choice(Line(Text("right")))));
+        var root = Choices(Choice(left), Choice(right));
 
         var diagnostics = Check(root);
 
@@ -65,7 +65,7 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_OrderedChoiceGroupAtFourthLevel_Reports()
     {
-        var level4 = ChoiceGroup(isOrdered: true, Choice(Line(Text("ordered"))));
+        var level4 = Choices(isOrdered: true, Choice(Line(Text("ordered"))));
         var root = NestToFourthLevel(level4);
 
         var diagnostic = Assert.Single(Check(root));
@@ -76,13 +76,29 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_CustomMaximum_UsesConfiguredDepth()
     {
-        var level2 = ChoiceGroup(20, Choice(Line(Text("deep"))));
-        var root = ChoiceGroup(Choice(level2));
+        var level2 = Choices(20, Choice(Line(Text("deep"))));
+        var root = Choices(Choice(level2));
 
         var diagnostic = Assert.Single(Check(root, maximumNestingLevel: 1));
 
         Assert.Equal(SourceSpan.EmptyAt(20), diagnostic.Span);
         Assert.Equal([2, 1], diagnostic.MessageArguments);
+    }
+
+    [Fact]
+    public void Check_RandomChoicesCountTowardNestingDepth()
+    {
+        // Depth mixes both group kinds: Choices > RandomChoices > Choices > RandomChoices.
+        var level4 = RandomChoices(40, RandomOption(new NumberWeight(50), Line(Text("deep"))));
+        var level3 = Choices(Choice(level4));
+        var level2 = RandomChoices(RandomOption(new AutoWeight(), level3));
+        var root = Choices(Choice(level2));
+
+        var diagnostic = Assert.Single(Check(root));
+
+        Assert.Equal(DiagnosticCatalog.DeeplyNestedChoiceBranch.Code, diagnostic.Descriptor.Code);
+        Assert.Equal(SourceSpan.EmptyAt(40), diagnostic.Span);
+        Assert.Equal([4, 3], diagnostic.MessageArguments);
     }
 
     [Fact]
@@ -96,14 +112,14 @@ public sealed class ChoiceNestingDepthRuleTests
 
     private static Choices NestToFourthLevel(Choices level4)
     {
-        var level3 = ChoiceGroup(Choice(level4));
-        return ChoiceGroup(Choice(ChoiceGroup(Choice(level3))));
+        var level3 = Choices(Choice(level4));
+        return Choices(Choice(Choices(Choice(level3))));
     }
 
     private static Choices NestFromSecondLevel(Choices level4)
     {
-        var level3 = ChoiceGroup(Choice(level4));
-        return ChoiceGroup(Choice(level3));
+        var level3 = Choices(Choice(level4));
+        return Choices(Choice(level3));
     }
 
     private static IReadOnlyList<Diagnostic> Check(Choices root, int maximumNestingLevel = 3)

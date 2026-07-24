@@ -13,6 +13,7 @@ that every component shares — starting with the error model.
 
 - [Reading guide](#reading-guide)
   - [Core: the compiler pipeline](#core-the-compiler-pipeline)
+  - [Language constructs](#language-constructs)
   - [Configuration](#configuration)
   - [Diagnostics](#diagnostics)
   - [Command-line interface](#command-line-interface)
@@ -64,6 +65,17 @@ flowchart LR
 
 The [Error model](#error-model) below is a cross-cutting core convention every
 stage adopts — read it alongside these.
+
+### Language constructs
+
+**Read when you add or change a script-language construct.** Each note designs
+one writer-facing syntax — its grammar, semantics, Markdown interaction, and
+diagnostics — layered on the pipeline above. Read the relevant Core stage notes
+first, since a construct threads through them.
+
+| Note | What it covers | Status |
+| --- | --- | --- |
+| [Random Choice](./Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
 
 ### Configuration
 
@@ -130,7 +142,8 @@ flowchart TB
     CFGCN --> UST["18. Unavailable Stage Tabs"]
     UST --> DGO["19. Diagnostics Overlay"]
     DGO --> CPE["20. Compiler-Projected Editor Semantics"]
-    CPE --> HA["21. Live Visualization — Heading Anchors"]
+    CPE --> PST["21. Precise Speaker Tokens"]
+    PST --> HA["22. Live Visualization — Heading Anchors"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -155,7 +168,8 @@ flowchart TB
 | 18 | [Unavailable Stage Tabs](./Unavailable%20Stage%20Tabs.md) | A halted compile renders its unproduced stages as disabled tabs, so a broken script still shows what it did produce | Implemented |
 | 19 | [Diagnostics Overlay](./Diagnostics%20Overlay.md) | The compiler's diagnostics as a source-editor overlay — squiggles, gutter markers, and doc-linked tooltips — on a reusable LSP-shaped projection | Implemented |
 | 20 | [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) | Source-editor highlighting and completions projected from the compiler's own parse (semantic tokens + resolved symbols), retiring the client-side grammar | Implemented |
-| 21 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
+| 21 | [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md) | Speaker highlighting split into precise, non-overlapping name, `@id`, and separator tokens, from sub-spans the parser records on the AST | Implemented |
+| 22 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
 
 ### Other notes
 

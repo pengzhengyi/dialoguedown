@@ -66,6 +66,42 @@ public sealed class DialogueAstRewriterTests
             () => new IdentityRewriter().Rewrite(
                 new ScriptDocument([new UnknownScriptBlock(SourceSpanFactory.Span())])));
 
+    [Fact]
+    public void Identity_PreservesRandomChoiceWeightsAndOptions()
+    {
+        var random = AssertRandomChoices(new IdentityRewriter().Rewrite(RandomChoiceSample()).Body[0]);
+
+        Assert.Equal(new NumberWeight(50), random.Options[0].Weight);
+        Assert.Equal(new AutoWeight(), random.Options[1].Weight);
+        AssertSpeechText(AssertRandomOptionLine(random.Options[0]), "heads");
+        AssertSpeechText(AssertRandomOptionLine(random.Options[1]), "tails");
+    }
+
+    [Fact]
+    public void Override_RewriteFragment_ReachesRandomChoiceOptionBodies()
+    {
+        var random = AssertRandomChoices(new UppercaseTextRewriter().Rewrite(RandomChoiceSample()).Body[0]);
+
+        AssertSpeechText(AssertRandomOptionLine(random.Options[0]), "HEADS");
+        AssertSpeechText(AssertRandomOptionLine(random.Options[1]), "TAILS");
+    }
+
+    // A random choice with a numeric and an auto weight, so both the weights and the option
+    // bodies can be checked after a rewrite. Shape:
+    //
+    //   - `50%` heads
+    //   - `%`   tails
+    private static ScriptDocument RandomChoiceSample() =>
+        new(
+        [
+            new RandomChoices(
+                [
+                    new RandomOption(new NumberWeight(50), [Line(Text("heads"))], SourceSpanFactory.Span()),
+                    new RandomOption(new AutoWeight(), [Line(Text("tails"))], SourceSpanFactory.Span()),
+                ],
+                SourceSpanFactory.Span()),
+        ]);
+
     // A hand-built tree holding a fragment of every kind, so a rewrite can be checked at
     // each position. Jump is included even though the transpiler never emits one directly
     // (Desugar assembles it), because the rewriter is reused after Desugar. Shape:
@@ -88,7 +124,7 @@ public sealed class DialogueAstRewriterTests
                     CustomTag("aside"),
                 ],
                 SourceSpanFactory.Span()),
-            ChoiceGroup(Choice(Line(Text("choice")))),
+            Choices(Choice(Line(Text("choice")))),
         ]);
 
     // One line per speaker form, plus a speech tag, so speaker and tag rewriting can be

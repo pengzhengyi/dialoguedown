@@ -337,16 +337,16 @@ public sealed class DisplayGraphJsonTests
         var graph = MakeGraph("G", [Node("n0", "Document")], []);
         var tokens = new List<SemanticToken>
         {
-            new(new LspRange(new LspPosition(0, 0), new LspPosition(0, 7)), TokenKind.Speaker),
+            new(new LspRange(new LspPosition(0, 0), new LspPosition(0, 5)), TokenKind.SpeakerName),
         };
 
         var json = DisplayGraphJson.SerializeReport(
             "static", null, "Alice: Hi.", [graph], semanticTokens: tokens);
 
         Assert.Contains(
-            "\"range\":{\"start\":{\"line\":0,\"character\":0},\"end\":{\"line\":0,\"character\":7}}",
+            "\"range\":{\"start\":{\"line\":0,\"character\":0},\"end\":{\"line\":0,\"character\":5}}",
             json);
-        Assert.Contains("\"kind\":\"Speaker\"", json);
+        Assert.Contains("\"kind\":\"SpeakerName\"", json);
     }
 
     [Fact]

@@ -34,12 +34,6 @@ projection and the rendering are reused unchanged when the language server arriv
 
 **Out of scope (deferred, seams left open):**
 
-- **Precise speaker sub-tokens.** The coarse legend colors a speaker's whole prefix as one
-  `Speaker` token (its tag tokens overlap it, layered on top by decoration precedence); splitting
-  the prefix into distinct `SpeakerName`/`SpeakerId`/`Separator` tokens — the non-overlapping form
-  a real LSP server needs — requires sub-spans the core AST does not yet carry, so it is deferred
-  to the language-server work
-  ([#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142)).
 - **Instant, per-keystroke highlighting** via a client lexer
   ([#139](https://github.com/pengzhengyi/godot-dialoguedown/issues/139)). Projected highlighting
   refreshes on recompile (save and hot-reload); zero-latency coloring is a later UX layer, and
@@ -79,7 +73,7 @@ projection and the rendering are reused unchanged when the language server arriv
 | Type / seam | Responsibility | Collaborators |
 | --- | --- | --- |
 | `SemanticToken` (`.NET`, new) | A positioned token: a zero-based `Range` and a `TokenKind`. | `LspRange`, `TokenKind` |
-| `TokenKind` (`.NET`, new) | The token legend enum: `Speaker`, `CustomTag`, `ReservedTag`, `JumpIndicator`. | — |
+| `TokenKind` (`.NET`, new) | The token legend enum: `SpeakerName`, `SpeakerId`, `Separator`, `CustomTag`, `ReservedTag`, `JumpIndicator`. | — |
 | `SemanticTokenProjection` (`.NET`, new) | Walk the Dialogue AST and emit `SemanticToken`s; the reusable seam. | `ScriptDocument` AST, `LineMap` |
 | `CompilationVisualizer.BuildContent` (`.NET`) | Project `result.Script` into tokens and include them in the payload. | `SemanticTokenProjection`, `DisplayGraphJson` |
 | `DisplayGraphJson.SerializeReport` (`.NET`) | Serialize the tokens into the payload's `semanticTokens` field. | `SemanticToken` |
@@ -110,7 +104,9 @@ export interface SemanticToken {
 }
 
 export type TokenKind =
-    | "Speaker"
+    | "SpeakerName"
+    | "SpeakerId"
+    | "Separator"
     | "CustomTag"
     | "ReservedTag"
     | "JumpIndicator";
@@ -138,20 +134,19 @@ visualization's `DialogueAstProjection` already walks it. `SemanticTokenProjecti
 walk and maps the dialogue-bearing node types to tokens — each token is a node's **raw span**, so
 the projection never re-derives structure the compiler already parsed:
 
-| AST node | Token |
+| AST node | Token(s) |
 | --- | --- |
-| `SpeakerNameReference`, `SpeakerIdReference`, `SpeakerDeclaration`, `PartialSpeakerDeclaration` | `Speaker` (the whole prefix span) |
+| `SpeakerNameReference`, `SpeakerIdReference`, `SpeakerDeclaration`, `PartialSpeakerDeclaration` | `SpeakerName`, `SpeakerId`, and `Separator` — one per part the speaker wrote |
 | `CustomTag` | `CustomTag` (its span, includes `#` and any `=value`) |
 | `ReservedTag` | `ReservedTag` (its span, includes `##`) |
 | `JumpIndicator` | `JumpIndicator` (its span, the `=>`) |
 
-A speaker node's span covers the **whole prefix** — the name, the `@id`, its tags, and the
-terminating `:`. Rather than re-parse that span to carve out the name, the id, or the separator
-(the very work the compiler already did), the coarse `Speaker` token uses it as-is. Its tags are
-separate nodes with their own spans **inside** it, so the `Speaker` token and the tag tokens
-**overlap** — the editor resolves that by decoration precedence, painting the tags on top of the
-speaker (see [D8](#d8--coarse-overlapping-tokens-now-precise-lsp-tokens-later)). A synthetic or
-recovered speaker (a filled default, or an orphan-tag recovery) contributes no token.
+A speaker node carries **sub-spans** for the parts it wrote — the name, the `@id`, and the `:`
+separator — and the projection emits one token per part from those spans. The tokens are
+**disjoint** and interleave cleanly with the separate tag tokens, which is the non-overlapping form
+a real language server publishes. A synthetic or recovered speaker (a filled default, or an
+orphan-tag recovery) carries no sub-spans and contributes no token. The sub-span mechanics are
+detailed in [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md).
 
 ### D3 — Tokens layer over Markdown highlighting
 
@@ -213,23 +208,18 @@ Desugared AST fills synthetic nodes (a default speaker on a speaker-less line) t
 text; highlighting those would color positions the writer never wrote. The Dialogue AST has no
 synthetic nodes, so every token maps to real text.
 
-### D8 — Coarse overlapping tokens now; precise LSP tokens later
+### D8 — Precise, non-overlapping speaker sub-tokens
 
-The `Speaker` token is deliberately **coarse**: it is the raw prefix span, and it **overlaps** its
-own tag tokens. The alternative — carving the prefix into non-overlapping name, `@id`, separator,
-and tag runs — would re-parse structure the compiler already resolved, pushing lexer work back
-into the projection this design exists to retire. So for highlighting we keep the whole span and
-let the editor's **decoration precedence** paint the finer tag tokens on top; whitespace inside the
-span needs no special handling because color on blank columns is invisible.
+The speaker's parts are highlighted as **distinct, non-overlapping tokens** — `SpeakerName`,
+`SpeakerId`, and `Separator` — projected from sub-spans the parser records on the speaker AST node.
+This is the LSP-conformant shape: the [`semanticTokens`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens)
+wire format forbids overlap (its tokens are delta-encoded and strictly ordered), and disjoint parts
+encode directly. Because the tokens no longer overlap the separate tag tokens, the editor needs no
+decoration precedence — it simply orders tokens by start.
 
-The tradeoff: the [LSP `semanticTokens`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens)
-wire format forbids overlap (its tokens are delta-encoded and strictly ordered). These coarse,
-overlapping tokens are therefore a **visualization-only** layer. When a real language server
-arrives, precise **non-overlapping** tokens (distinct name, `@id`, and tag spans) come from AST
-sub-spans the nodes do not yet carry — deferred to
-[#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142). Both layers share the same
-invariants: project from AST spans and reuse the shared `LspRange` geometry, so the later precise
-projection replaces the coarse one without disturbing the transport or the editor wiring.
+The parser records each part's sub-span on the speaker AST node; the mechanics live in
+[Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md)
+([#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142)).
 
 ## Error and boundary cases
 
@@ -240,7 +230,7 @@ projection replaces the coarse one without disturbing the transport or the edito
 | Malformed / incomplete line | Only the nodes the transpiler produced are tokenized; no crash. |
 | Range past the current buffer (dirty edit) | The overlay reflects the last compile; CodeMirror clamps stale ranges until the next recompile refreshes them. |
 | Empty document | No tokens; the overlay is empty. |
-| Overlapping tokens | Expected — a `Speaker` token spans its whole prefix and each of its tag tokens overlaps it; the editor layers tags on top by decoration precedence (see [D8](#d8--coarse-overlapping-tokens-now-precise-lsp-tokens-later)). |
+| Overlapping tokens | Not produced — the speaker's parts, its tags, and the jump arrow are all disjoint spans. |
 
 ## Integration
 
@@ -258,10 +248,9 @@ projection replaces the coarse one without disturbing the transport or the edito
 ## Testability
 
 - **`.NET` unit** (`SemanticTokenProjectionTests`): each dialogue node maps to the right kind and
-  zero-based range; a `Speaker` token covers the whole prefix span (through the `:` and its
-  trailing space), and a tagged speaker's tag token overlaps that span; a quoted name is covered
-  whole; tags and the jump indicator use their own spans; synthetic or recovered speakers emit
-  nothing; a halted compile still yields tokens.
+  zero-based range; a speaker projects disjoint `SpeakerName`/`SpeakerId`/`Separator` tokens (a
+  quoted name includes its quotes, an `@id` includes its `@`) that do not overlap its tag tokens;
+  synthetic or recovered speakers emit nothing; a halted compile still yields tokens.
 - **`.NET`** (`CompilationVisualizerTests`, `DisplayGraphJsonTests`): a compile's tokens reach the
   payload's `semanticTokens` field; an empty document carries an empty array.
 - **TS unit** (`semantic-tokens.test.ts`): payload tokens convert to decorations at the right
@@ -273,8 +262,8 @@ projection replaces the coarse one without disturbing the transport or the edito
 
 ## Open questions
 
-None outstanding — the approach (AST-projected tokens, Dialogue AST, coarse legend, drop the
-client scan) is agreed. The coarse legend colors a speaker's whole prefix as one `Speaker` token
-and lets its tag tokens overlap, layered on top in the editor; the precise non-overlapping form a
-real LSP server needs (distinct name/`@id`/separator tokens from AST sub-spans) is deferred to the
-language-server work ([#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142)).
+None outstanding — the approach (AST-projected tokens, Dialogue AST, drop the client scan) is
+agreed and shipped. The speaker's parts are highlighted as precise, non-overlapping
+`SpeakerName`/`SpeakerId`/`Separator` tokens from AST sub-spans; the mechanics live in
+[Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md)
+([#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142)).

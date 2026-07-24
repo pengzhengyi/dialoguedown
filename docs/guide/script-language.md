@@ -34,6 +34,7 @@ model for developers.
   - [Dialogue structure](#dialogue-structure)
     - [Succession](#succession)
     - [Choices](#choices)
+    - [Random choices](#random-choices)
     - [Jumps](#jumps)
     - [Comments](#comments)
     - [Front matter](#front-matter)
@@ -91,6 +92,7 @@ flowchart TD
 | Tag | `#main` | Attach custom metadata. |
 | Reserved tag | `##default` | Mark built-in behavior. |
 | Choice | `- Bob: Really?` | Offer a selectable response. |
+| Random choice | ``- `50%` Bob: Really?`` | Let the engine pick one option by weight. |
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
@@ -543,6 +545,56 @@ means the choices must be presented in that textual order. An **unordered** list
 (`-`) leaves later stages free to shuffle the display order — useful when the
 options should appear in a random order.
 
+### Random choices
+
+Sometimes you want the *engine* to pick, not the player — a guard who greets you
+one of several ways, a coin that lands heads or tails. Give an option a **weight**
+— a code span ending in `%` — and the whole list becomes a **random choice**: at
+runtime the engine selects exactly one option by weight and runs its body. No
+menu is shown.
+
+```markdown
+The coin spins in the air.
+
+- `50%` It lands heads.
+- `50%` It lands tails.
+```
+
+Weights are **relative** — they are normalized by their sum, so equal numbers
+mean equal odds no matter the total. Write them as the percentages you intend;
+if they do not add up to 100, the compiler normalizes them and warns.
+
+A bare `` `%` `` is an **auto** weight: it takes an equal share of whatever
+percentage the explicit weights leave. Pin the odds that matter and let the rest
+divide evenly.
+
+```markdown
+- `70%` Guard: Halt! Who goes there?
+- `%`   Guard: ...oh, it's you.
+```
+
+Above, the auto weight resolves to the remaining 30%. Several autos split the
+leftover equally, so `` `%` `` + `` `%` `` is a plain 50/50, and an all-auto list
+is a convenient uniform random.
+
+Each option's body is an ordinary choice body, so a random choice nests and
+carries dialogue exactly like a player choice:
+
+```markdown
+- `80%` Merchant: Fresh apples!
+    - Alice: I'll take one.
+- `20%` Merchant: ...bad day for business.
+```
+
+A few rules keep random choices unambiguous:
+
+- **Every option must carry a weight** once any option does. A bare option in a
+  random choice is an error; write `` `%` `` to give it an equal share instead.
+- **The weight comes first**, before the speaker. A code span ending in `%` is
+  only a weight in this leading position; elsewhere it is ordinary inline code.
+- **A Markdown preview** shows each weight as inline code (`50%`) at the start of
+  the option — readable, and clearly not spoken text.
+
 ### Jumps
 
 A jump is `=>` followed by a Markdown-style link.
@@ -696,7 +748,8 @@ It is *beautiful*, especially at dusk.
 
 Alice: I love this painting too. The colors are **amazing**.
 
-Christina @C: I learned color theory in the Art Club.
+- `70%` Christina @C: I learned color theory in the Art Club.
+- `30%` @C: Oh, that old thing? I nearly painted over it.
 
 `IncreaseAffection("Christina", "Alice")`
 

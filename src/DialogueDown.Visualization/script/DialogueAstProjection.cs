@@ -1,3 +1,4 @@
+using System.Globalization;
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 
@@ -83,6 +84,16 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
                 Slice(choices.Span),
                 ChoiceCategory),
             Choice choice => new("Choice", [SpanAttribute(choice.Span)], Slice(choice.Span), ChoiceCategory),
+            RandomChoices random => new(
+                "Random choices",
+                [SpanAttribute(random.Span)],
+                Slice(random.Span),
+                ChoiceCategory),
+            RandomOption option => new(
+                "Random option",
+                [new("weight", WeightText(option.Weight)), SpanAttribute(option.Span)],
+                Slice(option.Span),
+                ChoiceCategory),
             SpeakerDeclaration speaker => new(
                 "Speaker (declaration)",
                 [new("name", speaker.Name), .. Optional("id", speaker.Id), SpanAttribute(speaker.Span)],
@@ -173,6 +184,8 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
             Line line => LineChildren(line.Speaker, line.Speech),
             Choices choices => choices.Options,
             Choice choice => choice.Body,
+            RandomChoices random => random.Options,
+            RandomOption option => option.Body,
             SpeakerDeclaration speaker => speaker.Tags,
             PartialSpeakerDeclaration speaker => speaker.Tags,
             StyledText styled => styled.Children,
@@ -185,6 +198,15 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
 
     private static DisplayAttribute SpanAttribute(SourceSpan span) =>
         new("span", $"[{span.Start}, {span.End})");
+
+    // A random option's weight, as the author would write it: a percentage or a bare "%".
+    private static string WeightText(ChoiceWeight weight) => weight switch
+    {
+        NumberWeight number => $"{number.Percentage.ToString("0.##", CultureInfo.InvariantCulture)}%",
+        AutoWeight => "%",
+        _ => throw new ArgumentException(
+            $"Unsupported choice weight type '{weight.GetType().Name}'.", nameof(weight)),
+    };
 
     // A nullable attribute (a speaker's id, a tag's value) is shown only when present.
     private static IEnumerable<DisplayAttribute> Optional(string name, string? value) =>

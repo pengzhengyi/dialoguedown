@@ -10,10 +10,12 @@
     --cm-selection: rgb(20 100 210 / 22%);
 
     /* Dialogue token highlighting: the compiler-projected semantic tokens, layered over the
-       Markdown colors above. Kept off blue so they stay distinct from headings and links; a
-       tag overrides the coarse speaker color where the two overlap (the tag span nests inside).
-       GitHub Primer light-syntax hues; dark overrides below. */
-    --tok-speaker: #8250df;
+       Markdown colors above. Kept off blue so they stay distinct from headings and links. The
+       speaker's name, @id, and : separator get distinct hues; GitHub Primer light-syntax hues,
+       with dark overrides below. */
+    --tok-speaker-name: #8250df;
+    --tok-speaker-id: #1a7f37;
+    --tok-separator: #6e7781;
     --tok-custom-tag: #bf3989;
     --tok-reserved-tag: #953800;
     --tok-jump: #1b7c83;
@@ -52,7 +54,9 @@
         --dd-ink: #0f172a;
         --entity-highlight: rgb(250 204 21 / 30%);
         --entity-highlight-edge: #eab308;
-        --tok-speaker: #d2a8ff;
+        --tok-speaker-name: #d2a8ff;
+        --tok-speaker-id: #3fb950;
+        --tok-separator: #8b949e;
         --tok-custom-tag: #f778ba;
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
@@ -71,7 +75,9 @@
     --dd-ink: #0f172a;
     --entity-highlight: rgb(250 204 21 / 30%);
     --entity-highlight-edge: #eab308;
-    --tok-speaker: #d2a8ff;
+    --tok-speaker-name: #d2a8ff;
+    --tok-speaker-id: #3fb950;
+    --tok-separator: #8b949e;
     --tok-custom-tag: #f778ba;
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
@@ -729,12 +735,19 @@ g.node.entity-highlight text.label {
 }
 
 /* Dialogue semantic-token highlighting: the compiler-projected tokens, painted over the
-   Markdown syntax colors. A coarse speaker token spans its whole prefix and each of its tag
-   tokens nests inside it, so a tag's color (on the inner span) naturally wins over the
-   speaker's where they overlap. No lexer runs in the browser — these classes decorate the
-   ranges the compiler projected into the report payload. */
-.source-pane .cm-content .dd-tok-speaker {
-    color: var(--tok-speaker);
+   Markdown syntax colors. The tokens are disjoint — the speaker's name, @id, and : separator,
+   plus tags and the jump arrow — so each simply colors its own range. No lexer runs in the
+   browser; these classes decorate the ranges the compiler projected into the report payload. */
+.source-pane .cm-content .dd-tok-speaker-name {
+    color: var(--tok-speaker-name);
+}
+
+.source-pane .cm-content .dd-tok-speaker-id {
+    color: var(--tok-speaker-id);
+}
+
+.source-pane .cm-content .dd-tok-separator {
+    color: var(--tok-separator);
 }
 
 .source-pane .cm-content .dd-tok-custom-tag {

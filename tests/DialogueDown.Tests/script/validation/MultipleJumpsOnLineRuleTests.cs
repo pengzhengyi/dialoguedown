@@ -49,7 +49,7 @@ public sealed class MultipleJumpsOnLineRuleTests
     {
         var line = Line(Jump("#a"), Jump("#b"));
 
-        var diagnostic = Assert.Single(Check(ChoiceGroup(Choice(line))));
+        var diagnostic = Assert.Single(Check(Choices(Choice(line))));
 
         Assert.Equal(line.Span, diagnostic.Span);
     }

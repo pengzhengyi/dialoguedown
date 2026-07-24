@@ -135,7 +135,13 @@ internal static class DialogueAstAssert
         return choices;
     }
 
+    public static RandomChoices AssertRandomChoices(ScriptBlock actual) =>
+        Assert.IsType<RandomChoices>(actual);
+
     public static Line AssertChoiceLine(Choice choice) => AssertLine(Assert.Single(choice.Body));
+
+    public static Line AssertRandomOptionLine(RandomOption option) =>
+        AssertLine(Assert.Single(option.Body));
 
     public static Text AssertSpeechText(Line line, string content) =>
         AssertText(Assert.Single(line.Speech), content);

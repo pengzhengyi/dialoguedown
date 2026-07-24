@@ -1,0 +1,10 @@
+# Per-repo LanguageTool rule suppressions for `polish-tech-doc` (lt-check.py).
+# One rule ID per line; `#` comments and blank lines are ignored.
+# Keep this list small and conservative — only rules that are consistently
+# low-value for this project's docs. Spelling false positives belong in
+# `.languagetool-dictionary.txt`, not here.
+
+# "id" is a domain term throughout DialogueDown docs — the `@id` speaker
+# construct and the `Id` property — deliberately lowercase to match the syntax.
+# LanguageTool's ID_CASING wants "ID"; that is wrong for this vocabulary.
+ID_CASING

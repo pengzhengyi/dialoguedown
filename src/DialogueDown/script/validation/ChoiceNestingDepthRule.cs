@@ -6,9 +6,10 @@ using DialogueDown.Script.Desugar;
 namespace DialogueDown.Script.Validation;
 
 /// <summary>
-/// Warns at the first choice group beyond the recommended nesting depth on each branch.
-/// Deeper descendants do not repeat the same advice; separately over-nested sibling branches
-/// still report independently.
+/// Warns at the first choice group beyond the recommended nesting depth on each branch. A group
+/// is a player <see cref="Choices"/> or a <see cref="RandomChoices"/>; both add source-indentation
+/// depth, so both count. Deeper descendants do not repeat the same advice; separately over-nested
+/// sibling branches still report independently.
 /// </summary>
 internal sealed class ChoiceNestingDepthRule : DiagnosticRule
 {
@@ -33,14 +34,13 @@ internal sealed class ChoiceNestingDepthRule : DiagnosticRule
 
     protected override void Analyze(DialogueTreeIndex nodes, Reporter report)
     {
-        foreach (var choices in nodes.OfType<Choices>())
+        foreach (var group in nodes.OfType<ChoiceGroup>())
         {
-            var enclosingChoiceCount =
-                nodes.AncestorsOf(choices).Count(node => node is Choices);
+            var enclosingChoiceCount = nodes.AncestorsOf(group).Count(node => node is ChoiceGroup);
             if (enclosingChoiceCount == _maximumNestingLevel)
             {
                 report(
-                    SourceSpan.EmptyAt(choices.Span.Start),
+                    SourceSpan.EmptyAt(group.Span.Start),
                     enclosingChoiceCount + 1,
                     _maximumNestingLevel);
             }

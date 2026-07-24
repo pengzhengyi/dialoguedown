@@ -7,7 +7,7 @@ namespace DialogueDown.Tests.Script.Ast;
 public sealed class ChoicesTests
 {
     [Fact]
-    public void Constructor_ExposesOrderingOptionsAndSpan_AndIsABlock()
+    public void Constructor_ExposesOrderingOptionsAndSpan_AndIsAChoiceGroup()
     {
         var span = SourceSpanFactory.Span();
         var options = new[] { Choice(Line(Text("Is it really?"))), Choice(Line(Text("I agree."))) };
@@ -17,7 +17,7 @@ public sealed class ChoicesTests
         Assert.True(choices.IsOrdered);
         Assert.Equal(options, choices.Options);
         Assert.Equal(span, choices.Span);
-        Assert.IsAssignableFrom<ScriptBlock>(choices);
+        Assert.IsAssignableFrom<ChoiceGroup>(choices);
         Assert.IsAssignableFrom<ScriptNode>(choices);
     }
 

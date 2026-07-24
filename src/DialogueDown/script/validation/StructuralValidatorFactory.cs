@@ -1,3 +1,5 @@
+using DialogueDown.Script.Weights;
+
 namespace DialogueDown.Script.Validation;
 
 /// <summary>
@@ -12,5 +14,7 @@ internal static class StructuralValidatorFactory
         [
             new MultipleJumpsOnLineRule(),
             new ChoiceNestingDepthRule(),
+            new WeightTotalRule(new DefaultWeightNormalization()),
+            new SingleOptionRandomChoiceRule(),
         ]);
 }

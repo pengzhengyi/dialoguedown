@@ -39,7 +39,7 @@ public sealed class DesugarerTests
     {
         // The rules must reach nested blocks, not only top-level lines.
         var nested = Line(JumpIndicator(), Link("#play", Text("go")));
-        var document = Document(ChoiceGroup(Choice(nested)));
+        var document = Document(Choices(Choice(nested)));
 
         var choices = AssertChoices(Rewrite(document).Body[0], isOrdered: false);
         var line = AssertChoiceLine(Assert.Single(choices.Options));

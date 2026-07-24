@@ -81,6 +81,47 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
+    public void Describe_RandomChoices_LabelsItWithTheChoiceCategory()
+    {
+        var description = _projection.Describe(new RandomChoices([], new SourceSpan(0, 5)));
+
+        Assert.Equal("Random choices", description.Label);
+        Assert.Equal("choice", description.Category);
+    }
+
+    [Fact]
+    public void Describe_RandomOption_ShowsItsWeightAsWritten()
+    {
+        var span = new SourceSpan(0, 5);
+
+        var numeric = _projection.Describe(new RandomOption(new NumberWeight(50), [], span));
+        Assert.Equal("Random option", numeric.Label);
+        Assert.Equal("choice", numeric.Category);
+        Assert.Contains(numeric.Attributes, a => a.Name == "weight" && a.Value == "50%");
+
+        var auto = _projection.Describe(new RandomOption(new AutoWeight(), [], span));
+        Assert.Contains(auto.Attributes, a => a.Name == "weight" && a.Value == "%");
+    }
+
+    [Fact]
+    public void Neighbors_RandomChoices_YieldsOptions()
+    {
+        var option = new RandomOption(new AutoWeight(), [], new SourceSpan(0, 1));
+        var random = new RandomChoices([option], new SourceSpan(0, 5));
+
+        Assert.Equal(new object[] { option }, _projection.Neighbors(random));
+    }
+
+    [Fact]
+    public void Neighbors_RandomOption_YieldsBody()
+    {
+        var line = new Line(null, [new Text("x", new SourceSpan(0, 1))], new SourceSpan(0, 1));
+        var option = new RandomOption(new NumberWeight(50), [line], new SourceSpan(0, 5));
+
+        Assert.Equal(new object[] { line }, _projection.Neighbors(option));
+    }
+
+    [Fact]
     public void Neighbors_Line_YieldsSpeakerThenSpeech()
     {
         var span = new SourceSpan(0, 5);

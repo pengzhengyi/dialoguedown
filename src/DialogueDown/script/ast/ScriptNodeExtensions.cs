@@ -45,6 +45,7 @@ internal static class ScriptNodeExtensions
     {
         ScriptBlock block => BlockChildren(block),
         Choice choice => choice.Body,
+        RandomOption option => option.Body,
         Speaker speaker => SpeakerChildren(speaker),
         InlineFragment fragment => FragmentChildren(fragment),
 
@@ -75,6 +76,7 @@ internal static class ScriptNodeExtensions
     {
         Line line => LineChildren(line),
         Choices choices => choices.Options,
+        RandomChoices random => random.Options,
         SceneHeading heading => heading.Title,
 
         _ => throw new ArgumentOutOfRangeException(

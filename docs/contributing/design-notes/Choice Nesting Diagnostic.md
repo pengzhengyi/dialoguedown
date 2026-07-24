@@ -52,8 +52,8 @@ level, or introduce public/TOML rule configuration.
 
 | Term | Meaning |
 | --- | --- |
-| **Choice group** | One `Choices` block: the options offered together at one branch. |
-| **Choice nesting level** | The number of `Choices` groups on the path from the document body to the current group, including the current group. |
+| **Choice group** | One `Choices` or `RandomChoices` block: the options offered together at one branch. |
+| **Choice nesting level** | The number of choice groups (`Choices` or `RandomChoices`) on the path from the document body to the current group, including the current group. |
 | **Recommended maximum** | The deepest level that produces no diagnostic: 3. |
 | **First over-limit group** | A choice group at level 4 whose nearest enclosing choice group is still within the recommended maximum. |
 | **Choice branch** | One path through nested choice groups. Separate sibling paths are separate branches. |
@@ -153,8 +153,9 @@ flowchart LR
 
 The existing structural validator remains the owner of the pass. The tree index
 records parent relationships while it performs its existing single traversal.
-The rule walks the ancestors of each `Choices` node and counts only `Choices`
-ancestors.
+The rule walks the ancestors of each choice group — a `Choices` or a
+`RandomChoices` — and counts only choice-group ancestors, since both a player
+choice and a random choice add source-indentation depth.
 
 ## Interfaces and responsibilities
 
@@ -191,7 +192,7 @@ rule today.
 
 ### D3 — Report once at the first violation
 
-For one branch, count its enclosing `Choices` groups. Report when that zero-based
+For one branch, count its enclosing choice groups. Report when that zero-based
 count equals the maximum nesting level. The writer-facing level is the enclosing
 count plus 1, so a maximum of 3 reports the first group at level 4.
 
@@ -203,9 +204,9 @@ a separate refactoring decision.
 
 ### D4 — Point at the nested group, not the whole branch
 
-A `Choices` span may cover several lines. Use an empty source span at
-`Choices.Span.Start` so terminal and editor renderers point at the first marker
-without underlining the whole nested block.
+A choice group's span may cover several lines. Use an empty source span at the
+group's start (`group.Span.Start`) so terminal and editor renderers point at the
+first marker without underlining the whole nested block.
 
 ### D5 — Extend the shared index instead of walking twice
 

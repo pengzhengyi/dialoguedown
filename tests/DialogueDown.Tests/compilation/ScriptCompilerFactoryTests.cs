@@ -48,6 +48,32 @@ public sealed class ScriptCompilerFactoryTests
     }
 
     [Fact]
+    public void CreateDefault_CompilesARandomChoiceThroughEveryStage()
+    {
+        var source =
+            """
+            # Coin
+
+            The coin spins.
+
+            - `70%` Alice: Heads it is.
+            - `%` Alice: Tails.
+            """;
+
+        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+
+        Assert.Empty(result.Diagnostics);
+
+        var random = Assert.IsType<RandomChoices>(result.Desugared.Body[2]);
+        Assert.Equal(new NumberWeight(70), random.Options[0].Weight);
+        Assert.IsType<AutoWeight>(random.Options[1].Weight);
+
+        var first = AssertLine(Assert.Single(random.Options[0].Body));
+        AssertSpeakerNameReference(first.Speaker!, "Alice");
+        AssertSpeechText(first, "Heads it is.");
+    }
+
+    [Fact]
     public void CreateDefault_WithAConfiguredDefaultSpeaker_UsesItForSpeakerlessLines()
     {
         var options = new CompilerOptions { Speakers = [DefaultConfiguredSpeaker("Narrator")] };

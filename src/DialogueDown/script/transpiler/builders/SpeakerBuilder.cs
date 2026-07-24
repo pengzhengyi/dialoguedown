@@ -31,31 +31,41 @@ internal sealed class SpeakerBuilder(IParser<SpeakerPrefixData> parser, TagBuild
             : ParseResult<Speaker>.Ok(new ParseMatch<Speaker>(speaker, result.MatchedRange));
     }
 
+    // A written prefix always ends in a colon, so the separator is always present; the name and
+    // id spans are present only when the prefix names the speaker that way.
+    private static SpeakerPrefixSpans PrefixSpansOf(SpeakerPrefixData data) =>
+        new(SpanOf(data.Name), SpanOf(data.Id), data.SeparatorRange.ToSourceSpan());
+
+    private static SourceSpan? SpanOf(Spanned<string>? part) =>
+        part is { } located ? located.Range.ToSourceSpan() : null;
+
     private Speaker? Classify(
         SpeakerPrefixData data, SourceSpan span, string content, IDiagnosticSink diagnostics)
     {
         var tagNodes = data.Tags
             .Select(tag => tagBuilder.Build(tag.Value, tag.Range.ToSourceSpan()))
             .ToList();
+        var prefixSpans = PrefixSpansOf(data);
 
-        if (data.Name is not null)
+        if (data.TryGetName(out var name))
         {
             return data.Id is not null || tagNodes.Count > 0
-                ? new SpeakerDeclaration(data.Name, data.Id, tagNodes, span)
-                : new SpeakerNameReference(data.Name, span);
+                ? new SpeakerDeclaration(name, data.Id?.Value, tagNodes, span) { PrefixSpans = prefixSpans }
+                : new SpeakerNameReference(name, span) { PrefixSpans = prefixSpans };
         }
 
-        if (data.Id is not null)
+        if (data.TryGetId(out var id))
         {
             return tagNodes.Count > 0
-                ? new PartialSpeakerDeclaration(data.Id, tagNodes, span)
-                : new SpeakerIdReference(data.Id, span);
+                ? new PartialSpeakerDeclaration(id, tagNodes, span) { PrefixSpans = prefixSpans }
+                : new SpeakerIdReference(id, span) { PrefixSpans = prefixSpans };
         }
 
         if (tagNodes.Count > 0)
         {
             // Tags with no speaker to attach to: report and recover by dropping the tags and
             // attributing the line to the default speaker, so the rest of the line still compiles.
+            // The default speaker names no one, so it carries no prefix spans.
             diagnostics.Report(new Diagnostic(DiagnosticCatalog.TagsWithoutSpeaker, span, [content]));
             return new DefaultSpeaker(span);
         }

@@ -17,12 +17,13 @@ internal static class SpeakerPrefixParser
 {
     private static readonly SpeakerPrefixData _empty = new(null, null, []);
 
-    private static readonly IParser<string> _name = SuperpowerParser.Wrap(
+    private static readonly IParser<Spanned<string>> _name = SuperpowerParser.Wrap(
         SuperpowerPrimitives.QuotedString.Try()
-            .Or(Identifier.CStyle.Select(name => name.ToStringValue())));
+            .Or(Identifier.CStyle.Select(name => name.ToStringValue()))).Located();
 
-    private static readonly IParser<string> _id = SuperpowerParser.Wrap(
-        Character.EqualTo('@').IgnoreThen(Identifier.CStyle.Select(id => id.ToStringValue())));
+    private static readonly IParser<Spanned<string>> _id = SuperpowerParser.Wrap(
+        Character.EqualTo('@').IgnoreThen(Identifier.CStyle.Select(id => id.ToStringValue())))
+        .Located();
 
     private static readonly IParser<char[]> _optionalWhitespace =
         SuperpowerParser.Wrap(Character.WhiteSpace.Many());
@@ -35,7 +36,7 @@ internal static class SpeakerPrefixParser
 
     // Each subsequent id or tag must be preceded by whitespace; the first element
     // (handled per branch below) carries no such requirement.
-    private static readonly IParser<string> _spacedId =
+    private static readonly IParser<Spanned<string>> _spacedId =
         from _ in _requiredWhitespace
         from id in _id
         select id;
@@ -47,7 +48,7 @@ internal static class SpeakerPrefixParser
 
     private static readonly IParser<SpeakerPrefixData> _nameFirst =
         from name in _name
-        from id in _spacedId.Optional()
+        from id in _spacedId.OptionalValue()
         from tags in _spacedTag.Repeated()
         select new SpeakerPrefixData(name, id, tags);
 
@@ -67,13 +68,14 @@ internal static class SpeakerPrefixParser
     // The match extends past the colon and consumes all whitespace after it, so
     // MatchedLength lands at the speech start. Post-colon whitespace is insignificant
     // regardless of amount; a leading space in speech must be quoted (see the DSL spec).
+    // The colon's own range is kept for the separator sub-span.
     public static IParser<SpeakerPrefixData> Prefix { get; } =
         from _lead in _optionalWhitespace
         from data in _body
         from _trail in _optionalWhitespace
-        from _colonChar in _colon
+        from colon in _colon.Located()
         from _afterColon in _optionalWhitespace
-        select data;
+        select data with { SeparatorRange = colon.Range };
 
     private static IReadOnlyList<Spanned<TagData>> Prepend(
         Spanned<TagData> first, IReadOnlyList<Spanned<TagData>> rest)

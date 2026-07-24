@@ -46,6 +46,24 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG1104 — an option in a random choice carries no weight.</summary>
+    public static readonly DiagnosticDescriptor MissingChoiceWeight = new(
+        "DLG1104",
+        "Missing weight in a random choice",
+        "This option has no weight, but its list is a random choice. Give it a weight like `50%`, "
+            + "or `%` to share the remaining percentage equally.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG1105 — a choice weight is neither a non-negative number nor a bare percent.</summary>
+    public static readonly DiagnosticDescriptor InvalidChoiceWeight = new(
+        "DLG1105",
+        "Invalid choice weight",
+        "\"{0}\" is not a valid weight. Write a non-negative percentage like `50%`, or `%` to "
+            + "share the remaining percentage equally.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
     // Semantic — DLG2xxx: a meaning-level conflict found during analysis.
 
     /// <summary>DLG2001 — two headings slug to the same anchor.</summary>
@@ -129,6 +147,15 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG2010 — every weight in a random choice resolves to zero.</summary>
+    public static readonly DiagnosticDescriptor ZeroChoiceWeightTotal = new(
+        "DLG2010",
+        "Random choice weights sum to zero",
+        "Every weight in this random choice is 0, so no option can be selected. Give at least one "
+            + "option a positive weight.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Error);
+
     // Style — DLG3xxx: a valid script shape that may be difficult to read or maintain.
 
     /// <summary>DLG3002 — a choice branch exceeds the recommended nesting depth.</summary>
@@ -137,6 +164,24 @@ internal static class DiagnosticCatalog
         "Deeply nested choice branch",
         "This branch reaches choice nesting level {0}; the recommended maximum is {1}. Consider "
             + "moving this branch into a new scene and jumping to it instead.",
+        DiagnosticCategory.Style,
+        DiagnosticSeverity.Warning);
+
+    /// <summary>DLG3003 — a random choice's static weights do not total 100%.</summary>
+    public static readonly DiagnosticDescriptor ChoiceWeightsNotOneHundred = new(
+        "DLG3003",
+        "Choice weights do not total 100%",
+        "These weights total {0}%, not 100%. Weights are normalized by their sum, so the odds "
+            + "still work; adjust them to total 100% to state the intended odds directly.",
+        DiagnosticCategory.Style,
+        DiagnosticSeverity.Warning);
+
+    /// <summary>DLG3004 — a random choice offers only one option.</summary>
+    public static readonly DiagnosticDescriptor SingleOptionRandomChoice = new(
+        "DLG3004",
+        "Single-option random choice",
+        "This random choice has a single option, so it is always selected and the weight has no "
+            + "effect. Remove the weight to make it a plain line, or add more options.",
         DiagnosticCategory.Style,
         DiagnosticSeverity.Warning);
 }

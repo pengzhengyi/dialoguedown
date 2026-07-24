@@ -57,10 +57,11 @@ const markdownHighlightStyle = HighlightStyle.define([
     { tag: [tags.link, tags.url], color: "var(--md-link)", textDecoration: "underline" },
     { tag: tags.monospace, color: "var(--md-code)" },
     { tag: tags.quote, color: "var(--md-muted)" },
-    {
-        tag: [tags.processingInstruction, tags.list, tags.contentSeparator],
-        color: "var(--md-muted)",
-    },
+    // Mute the list MARKER (`-`, `1.`) and separators, but NOT list content: @lezer/markdown
+    // tags a list's whole content `tags.list` (not just its marker, which is a
+    // processingInstruction), so muting `tags.list` here would gray out every token nested in
+    // a choice — the compiler's dialogue tokens and code spans included.
+    { tag: [tags.processingInstruction, tags.contentSeparator], color: "var(--md-muted)" },
 ]);
 
 /**

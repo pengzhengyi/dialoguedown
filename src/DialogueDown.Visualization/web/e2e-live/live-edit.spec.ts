@@ -130,7 +130,7 @@ test("Discard restores the source editor's diagnostics and semantic-token overla
     await page.goto(`${base}/`);
     const source = page.locator(".source-pane");
     await expect(source.locator(".cm-editor")).toBeVisible();
-    await expect(source.locator(".dd-tok-speaker").first()).toContainText("Alice");
+    await expect(source.locator(".dd-tok-speaker-name").first()).toContainText("Alice");
     await expect(source.locator(".cm-lintRange-error").first()).toBeVisible();
 
     // Edit then Discard — a full-document restore that would otherwise drop those overlays.
@@ -141,7 +141,7 @@ test("Discard restores the source editor's diagnostics and semantic-token overla
     await expect(page.locator(".tab.dirty")).toHaveCount(0);
 
     // Both overlays are reapplied from the accepted baseline report, not lost by the restore.
-    await expect(source.locator(".dd-tok-speaker").first()).toContainText("Alice");
+    await expect(source.locator(".dd-tok-speaker-name").first()).toContainText("Alice");
     await expect(source.locator(".cm-lintRange-error").first()).toBeVisible();
 });
 

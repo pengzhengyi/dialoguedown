@@ -65,9 +65,9 @@ public sealed class DialogueTreeIndexTests
     [Fact]
     public void AncestorsOf_NestedChoiceGroup_ReturnsNearestParentFirst()
     {
-        var nested = ChoiceGroup(Choice(Line(Text("nested"))));
+        var nested = Choices(Choice(Line(Text("nested"))));
         var outerChoice = Choice(nested);
-        var outer = ChoiceGroup(outerChoice);
+        var outer = Choices(outerChoice);
         var index = Build(outer);
 
         var ancestors = index.AncestorsOf(nested);
@@ -83,7 +83,7 @@ public sealed class DialogueTreeIndexTests
         var second = new Choices(false, sharedOptions, SourceSpanFactory.Span());
         var firstParent = Choice(first);
         var secondParent = Choice(second);
-        var index = Build(ChoiceGroup(firstParent, secondParent));
+        var index = Build(Choices(firstParent, secondParent));
         Assert.Equal(first, second);
         Assert.NotSame(first, second);
 
@@ -97,7 +97,7 @@ public sealed class DialogueTreeIndexTests
     [Fact]
     public void AncestorsOf_RootBlock_ReturnsEmpty()
     {
-        var root = ChoiceGroup(Choice(Line(Text("root"))));
+        var root = Choices(Choice(Line(Text("root"))));
         var index = Build(root);
 
         var ancestors = index.AncestorsOf(root);
@@ -133,7 +133,7 @@ public sealed class DialogueTreeIndexTests
             SpeakerNameReference("Alice"),
             [Text("hi"), Jump("#play", Text("go"))],
             SourceSpanFactory.Span());
-        var choices = ChoiceGroup(Choice(Line(Text("pick"))));
+        var choices = Choices(Choice(Line(Text("pick"))));
         return new DesugaredScriptDocument(new ScriptDocument([heading, spoken, choices]));
     }
 }

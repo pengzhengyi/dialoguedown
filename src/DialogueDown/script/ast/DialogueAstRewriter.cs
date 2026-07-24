@@ -18,6 +18,7 @@ internal abstract class DialogueAstRewriter
     {
         Line line => RewriteLine(line),
         Choices choices => RewriteChoices(choices),
+        RandomChoices random => RewriteRandomChoices(random),
         SceneHeading heading => RewriteSceneHeading(heading),
         _ => throw new ArgumentOutOfRangeException(
             nameof(block), block.GetType().Name,
@@ -51,6 +52,12 @@ internal abstract class DialogueAstRewriter
 
     protected virtual Choice RewriteChoice(Choice choice) =>
         choice with { Body = choice.Body.Select(RewriteBlock).ToList() };
+
+    protected virtual RandomChoices RewriteRandomChoices(RandomChoices random) =>
+        random with { Options = random.Options.Select(RewriteRandomOption).ToList() };
+
+    protected virtual RandomOption RewriteRandomOption(RandomOption option) =>
+        option with { Body = option.Body.Select(RewriteBlock).ToList() };
 
     protected virtual IReadOnlyList<InlineFragment> RewriteFragments(
         IReadOnlyList<InlineFragment> fragments) =>

@@ -8,4 +8,4 @@ namespace DialogueDown.Script.Ast;
 /// ordered list in the source); otherwise a later stage may shuffle their display.
 /// </summary>
 internal sealed record Choices(
-    bool IsOrdered, IReadOnlyList<Choice> Options, SourceSpan Span) : ScriptBlock(Span);
+    bool IsOrdered, IReadOnlyList<Choice> Options, SourceSpan Span) : ChoiceGroup(Span);

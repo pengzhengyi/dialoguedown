@@ -36,11 +36,11 @@ test("serves a view report bound to the document", async ({ page }) => {
 test("highlights the dialogue speaker from the compiler's semantic tokens", async ({ page }) => {
     // The served payload carries the compiler's projected tokens, so the editor colors the
     // speaker of "Alice: The original line." with no browser-side lexer.
-    await expect(page.locator(".source-pane .dd-tok-speaker").first()).toContainText("Alice");
+    await expect(page.locator(".source-pane .dd-tok-speaker-name").first()).toContainText("Alice");
 
     // A hot reload re-highlights in place: the new speaker is colored after the SSE push.
     writeFileSync(LIVE_DOC, "# New Scene\n\nBob: A different speaker.\n");
-    await expect(page.locator(".source-pane .dd-tok-speaker").first()).toContainText("Bob");
+    await expect(page.locator(".source-pane .dd-tok-speaker-name").first()).toContainText("Bob");
 });
 
 test("serves images alongside the document so relative links resolve", async ({ page }) => {

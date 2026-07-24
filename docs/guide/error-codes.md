@@ -82,6 +82,54 @@ Alice: The sky turns `<mark class="dd-mark-fix">&quot;World.Weather&quot;</mark>
 
 A jump or link label is plain, styled text only. Functional elements — code spans, images, nested links, or line breaks — are not allowed inside a label or an image's alt text.
 
+### DLG1104
+
+<span class="dd-sev dd-sev--error">Error</span> · Missing weight in a random choice
+
+This option has no weight, but its list is a random choice. Give it a weight like `50%`, or `%` to share the remaining percentage equally.
+
+In a random choice — a list where at least one option leads with a weight — every option must carry a weight so the engine can pick fairly. Give the option a percentage like `50%`, or `%` to share the remaining percentage equally.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- `50%` Heads.
+<mark class="dd-mark-bad">- Tails.</mark></code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- `50%` Heads.
+- <mark class="dd-mark-fix">`50%` Tails.</mark></code></pre>
+
+### DLG1105
+
+<span class="dd-sev dd-sev--error">Error</span> · Invalid choice weight
+
+"{0}" is not a valid weight. Write a non-negative percentage like `50%`, or `%` to share the remaining percentage equally.
+
+A choice weight is a percentage code span. Write a non-negative number like `50%`, or a bare `%` to take an equal share of the remaining percentage. A negative number or other text is not a valid weight.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- <mark class="dd-mark-bad">`-10%`</mark> Heads.
+- `%` Tails.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- <mark class="dd-mark-fix">`10%`</mark> Heads.
+- `%` Tails.</code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.
@@ -273,6 +321,30 @@ Alice: Onward!
 <mark class="dd-mark-fix"># The End</mark>
 Alice: We made it.</code></pre>
 
+### DLG2010
+
+<span class="dd-sev dd-sev--error">Error</span> · Random choice weights sum to zero
+
+Every weight in this random choice is 0, so no option can be selected. Give at least one option a positive weight.
+
+A random choice picks one option by weight. When every weight is 0 there is nothing to pick from — the odds are undefined. Give at least one option a positive weight.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- <mark class="dd-mark-bad">`0%`</mark> Heads.
+- `0%` Tails.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- <mark class="dd-mark-fix">`50%`</mark> Heads.
+- `50%` Tails.</code></pre>
+
 ## Style (`DLG3xxx`)
 
 A valid script that reads correctly but could read better.
@@ -308,3 +380,50 @@ Nested choices remain valid, but a fourth level becomes difficult to scan and ma
 - Level 3
     - Level 4
         Alice: This branch is easier to scan.</code></pre>
+
+### DLG3003
+
+<span class="dd-sev dd-sev--warning">Warning</span> · Choice weights do not total 100%
+
+These weights total {0}%, not 100%. Weights are normalized by their sum, so the odds still work; adjust them to total 100% to state the intended odds directly.
+
+A random choice's weights are relative — they are normalized by their sum — so any positive total works. When they do not add up to 100 the intended odds are harder to read; adjust them to total 100% (or use `%` to share the rest) to state the odds directly.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- `50%` Heads.
+- <mark class="dd-mark-bad">`30%`</mark> Tails.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- <mark class="dd-mark-fix">`50%`</mark> Heads.
+- `50%` Tails.</code></pre>
+
+### DLG3004
+
+<span class="dd-sev dd-sev--warning">Warning</span> · Single-option random choice
+
+This random choice has a single option, so it is always selected and the weight has no effect. Remove the weight to make it a plain line, or add more options.
+
+A random choice with only one option always selects it — the weight has no effect and the list is not really random. This usually means a plain line was given a weight, or the other options are missing.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- <mark class="dd-mark-bad">`50%` It always lands heads.</mark></code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Coin
+The coin spins.
+
+- `50%` Heads.
+- <mark class="dd-mark-fix">`50%` Tails.</mark></code></pre>

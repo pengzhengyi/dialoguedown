@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Random choices** — a choice list whose options lead with a `` `%` `` weight now becomes a
+  *random choice*: the engine picks one option at random by weight instead of offering the player a
+  menu. Write an explicit percentage (`` `50%` ``) or a bare `` `%` `` to share the remaining
+  chance equally, and the report's AST tabs show each option's weight. See the
+  [Random Choice](docs/contributing/design-notes/Random%20Choice.md) note.
 - **Autosave in the live visualization editor** — each editable document now has a persisted
   **Auto | Manual** save mode beside the Save button. Source defaults to Auto (saving 1s after you
   stop typing) and Config defaults to Manual, and explicit Save / <kbd>⌘/Ctrl-S</kbd> stay immediate
@@ -38,12 +43,14 @@ changes easy to categorize.
   server and editor extension. See the
   [Diagnostics Overlay](docs/contributing/design-notes/Diagnostics%20Overlay.md) note.
 - **Dialogue highlighting and grammar-correct completions in the visualization editor** — the
-  report's source editor now colors dialogue as you read and write it — speakers, tags, and jump
-  indicators — over the Markdown, and its completions for speakers, `@id`s, `#tag`s, and jump
-  targets are drawn from the compiler itself, so a suggestion can never be a name the compiler
-  would reject. Both are projected from the compiler's own parse instead of a second grammar in
-  the browser, sharing the LSP-shaped groundwork laid for a future language server. See the
-  [Compiler-Projected Editor Semantics](docs/contributing/design-notes/Compiler-Projected%20Editor%20Semantics.md) note.
+  report's source editor now colors dialogue as you read and write it — a speaker's name, `@id`,
+  and `:` separator each distinctly, its tags, and jump indicators — over the Markdown, and its
+  completions for speakers, `@id`s, `#tag`s, and jump targets are drawn from the compiler itself,
+  so a suggestion can never be a name the compiler would reject. Both are projected from the
+  compiler's own parse instead of a second grammar in the browser, sharing the LSP-shaped
+  groundwork laid for a future language server. See the
+  [Compiler-Projected Editor Semantics](docs/contributing/design-notes/Compiler-Projected%20Editor%20Semantics.md)
+  and [Precise Speaker Tokens](docs/contributing/design-notes/Precise%20Speaker%20Tokens.md) notes.
 - **Set the compilation mode per project** — a `dialogue.toml` can now choose how far a compile
   proceeds after an error (`mode = "stage-boundary"` or `"best-effort"`), and the visualization's
   Config tab shows, edits, and autocompletes it. The CLI `--mode` still overrides the project
@@ -147,6 +154,9 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Dialogue highlighting now reaches inside choices.** In the visualization editor, the
+  jump arrow, tags, and code spans on a choice (a Markdown list item) are colored the same
+  as at the top level, instead of being grayed out by the surrounding list styling.
 - **The report now renders cleanly on small and phone-sized windows.** Every tab
   adapts below tablet width instead of overlapping, clipping, or running off-screen:
   the Source, Config, AST, and Semantic views stack their split panes with a handle

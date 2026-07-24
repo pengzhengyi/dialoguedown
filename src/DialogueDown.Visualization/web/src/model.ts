@@ -168,7 +168,8 @@ export interface LspDiagnostic {
 }
 
 /** The legend of dialogue-specific token kinds the compiler projects for highlighting. */
-export type TokenKind = "Speaker" | "CustomTag" | "ReservedTag" | "JumpIndicator";
+export type TokenKind =
+    "SpeakerName" | "SpeakerId" | "Separator" | "CustomTag" | "ReservedTag" | "JumpIndicator";
 
 /**
  * One positioned dialogue token the compiler projects from the parse: a zero-based

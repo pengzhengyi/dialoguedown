@@ -37,6 +37,9 @@ Alice: This place is *wonderful*.
 
 The trees close in overhead, and something rustles in the shadows. #mysterious
 
+- `60%` A fox darts across the path and vanishes.
+- `40%` An owl watches you from a low branch.
+
 Alice: Maybe this was a **mistake**.
 
 => [Turn back](#the-crossroads)
