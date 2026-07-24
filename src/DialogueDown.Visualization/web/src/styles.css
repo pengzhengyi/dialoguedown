@@ -1045,13 +1045,14 @@ g.node.entity-highlight text.label {
 }
 
 /* A hover-revealed chain-link after each preview heading copies the full jump target. It inherits
-   the heading's font size, then renders slightly shorter than the text line; inline-flex +
-   vertical-align middle centers it on the text rather than raising it like a superscript. */
+   the heading's font size, then renders well shorter than the text line; inline-flex +
+   vertical-align middle, nudged down to the caps' optical center, seats it on the text rather than
+   raising it like a superscript. */
 .source-preview .heading-anchor {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: 0.35em;
+    margin-left: 0.3em;
     border: 0;
     padding: 0;
     background: none;
@@ -1059,7 +1060,7 @@ g.node.entity-highlight text.label {
     font: inherit;
     line-height: 1;
     vertical-align: middle;
-    transform: translateY(0.12em);
+    transform: translateY(0.16em);
     cursor: pointer;
     opacity: 0;
     transition:
@@ -1069,8 +1070,8 @@ g.node.entity-highlight text.label {
 
 .source-preview .heading-anchor-link svg {
     display: block;
-    width: 0.9em;
-    height: 0.9em;
+    width: 0.62em;
+    height: 0.62em;
 }
 
 .source-preview :is(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
