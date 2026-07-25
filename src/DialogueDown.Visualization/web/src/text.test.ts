@@ -144,8 +144,13 @@ describe("renderDocument", () => {
         expect(renderMarkdown("## Heading")).not.toContain("id=");
     });
 
-    it("renders single newlines as hard breaks (dialogue is line-oriented)", () => {
-        expect(renderDocument("Alice: hi.\n=> [Go](#go)")).toContain("<br>");
-        expect(renderMarkdown("first line\nsecond line")).toContain("<br>");
+    it("joins single newlines as soft breaks, matching CommonMark and VSCode", () => {
+        expect(renderDocument("Alice: hi.\n=> [Go](#go)")).not.toContain("<br>");
+        expect(renderMarkdown("first line\nsecond line")).not.toContain("<br>");
+    });
+
+    it("honors explicit hard breaks (two trailing spaces or a trailing backslash)", () => {
+        expect(renderDocument("first line  \nsecond line")).toContain("<br>");
+        expect(renderMarkdown("first line\\\nsecond line")).toContain("<br>");
     });
 });

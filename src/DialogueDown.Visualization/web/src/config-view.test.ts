@@ -162,18 +162,6 @@ describe("createConfigView", () => {
         );
     });
 
-    it("shows a maximize button only when a fullscreen toggle is provided", () => {
-        expect(mount(withFile()).querySelector(".config-controls")).toBeNull();
-
-        const onToggleFullscreen = vi.fn();
-        const view = mount(withFile(), { onToggleFullscreen });
-        const button = view.querySelector<HTMLButtonElement>(".config-controls .maximize-button");
-        expect(button).not.toBeNull();
-
-        button!.click();
-        expect(onToggleFullscreen).toHaveBeenCalledOnce();
-    });
-
     it("hides and reopens the speakers panel from the divider toggle", () => {
         const view = mount(withFile());
 

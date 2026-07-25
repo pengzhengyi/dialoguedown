@@ -25,10 +25,11 @@ import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { tags } from "@lezer/highlight";
 import { toggleWrap, insertLink, headingFoldEndLine } from "./editor-commands";
-import { createMaximizeButton } from "./maximize-button";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
 import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
+import { annotateHeadingAnchors, wireHeadingAnchorCopy } from "./heading-anchors";
+import { headingSlugHints } from "./heading-slug-hints";
 import {
     semanticTokens as semanticTokensExtension,
     setEditorSemanticTokens,
@@ -110,8 +111,6 @@ export interface SourceViewOptions {
     editable?: boolean;
     /** Called with the new buffer on every edit — for the preview and dirty state. */
     onChange?: (value: string) => void;
-    /** Toggle the whole-window maximize mode; when set, a maximize button is shown. */
-    onToggleFullscreen?: () => void;
     /**
      * Where the editor's autocompletion draws its symbols — the compiler's resolved symbols
      * from the report payload. Defaults to {@link EMPTY_SYMBOLS} (a bare render offers no
@@ -192,7 +191,6 @@ export function createSourceView(
     const {
         editable = false,
         onChange,
-        onToggleFullscreen,
         symbols = () => EMPTY_SYMBOLS,
         previewStorageKey = "dd-preview-collapsed",
     } = options;
@@ -218,6 +216,9 @@ export function createSourceView(
     preview.setAttribute("role", "region");
     preview.setAttribute("aria-label", "Preview");
     preview.innerHTML = renderDocument(source);
+    annotateHeadingAnchors(preview);
+    // Delegated once on the stable preview element; each render re-annotates its headings.
+    wireHeadingAnchorCopy(preview);
 
     // Re-render the preview and report the new buffer on every change (edits in Edit, or
     // a programmatic View-mode reload). The mode controller decides what to do with it.
@@ -225,6 +226,7 @@ export function createSourceView(
         if (update.docChanged) {
             const value = update.state.doc.toString();
             preview.innerHTML = renderDocument(value);
+            annotateHeadingAnchors(preview);
             onChange?.(value);
         }
     });
@@ -239,6 +241,7 @@ export function createSourceView(
                 foldGutter(),
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
+                headingSlugHints(),
                 foldHeadings,
                 codeFolding(),
                 drawSelection(),
@@ -293,15 +296,6 @@ export function createSourceView(
         name: "preview",
     });
     divider.appendChild(previewPanel.button);
-
-    // A maximize toggle in a small pill (bottom-right), matching the graph's zoom
-    // cluster, so the Source tab can fill the window like the graphs.
-    if (onToggleFullscreen) {
-        const controls = document.createElement("div");
-        controls.className = "source-controls";
-        controls.appendChild(createMaximizeButton(onToggleFullscreen));
-        container.appendChild(controls);
-    }
 
     return {
         element: container,

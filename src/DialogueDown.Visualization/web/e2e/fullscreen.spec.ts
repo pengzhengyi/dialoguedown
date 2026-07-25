@@ -14,19 +14,24 @@ async function showAst(page: Page): Promise<void> {
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
 }
 
-test("a graph's maximize button fills the window and hides the chrome", async ({ page }) => {
+test("the tab-bar control fills the window and hides the chrome", async ({ page }) => {
     await showAst(page);
     await expect(page.locator(".app-header")).toBeVisible();
+    // The maximize control is app-level (one button at the end of the tab row), not per-pane.
+    await expect(page.locator(".zoom-controls .maximize-button")).toHaveCount(0);
 
-    const maximize = page.locator("section.stage.active .zoom-controls .maximize-button");
-    await maximize.click();
+    await page.locator(".tabbar-maximize").click();
     await expect(page.locator("body")).toHaveClass(/maximized/);
     await expect(page.locator(".app-header")).toBeHidden();
     await expect(page.locator(".app-footer")).toBeHidden();
 
-    await maximize.click();
+    // The tab-bar button hides with the chrome; the floating exit chip takes over.
+    const exit = page.locator(".maximize-exit");
+    await expect(exit).toBeVisible();
+    await exit.click();
     await expect(page.locator("body")).not.toHaveClass(/maximized/);
     await expect(page.locator(".app-header")).toBeVisible();
+    await expect(exit).toBeHidden();
 });
 
 test("the f key toggles full screen and Escape leaves it", async ({ page }) => {
@@ -46,17 +51,15 @@ test("the f key toggles full screen and Escape leaves it", async ({ page }) => {
     await expect(page.locator("body")).not.toHaveClass(/maximized/);
 });
 
-test("the Source tab has its own maximize button", async ({ page }) => {
-    const maximize = page.locator(
-        "section.stage.active.source-stage .source-controls .maximize-button",
-    );
-    await expect(maximize).toBeVisible();
+test("the single tab-bar control also maximizes from the Source tab", async ({ page }) => {
+    // No per-pane control remains on the Source tab.
+    await expect(page.locator(".source-controls")).toHaveCount(0);
 
-    await maximize.click();
+    await page.locator(".tabbar-maximize").click();
     await expect(page.locator("body")).toHaveClass(/maximized/);
     await expect(page.locator(".app-header")).toBeHidden();
 
-    await maximize.click();
+    await page.locator(".maximize-exit").click();
     await expect(page.locator("body")).not.toHaveClass(/maximized/);
 });
 

@@ -763,6 +763,41 @@ g.node.entity-highlight text.label {
     font-weight: 600;
 }
 
+/* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
+   The wrapper is a zero-size inline box; the chip floats as an absolute overlay so it adds no
+   line height or wrap width (the editor/preview scroll-sync aligns on heading line tops). */
+.dd-slug-hint-wrap {
+    position: relative;
+    display: inline;
+}
+
+.dd-slug-hint {
+    position: absolute;
+    left: 0.6em;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0 0.3em;
+    border: 0;
+    border-radius: 0.4em;
+    background: none;
+    color: var(--md-muted);
+    font-family: var(--pico-font-family-monospace, ui-monospace, monospace);
+    font-size: 0.82em;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.75;
+    transition:
+        opacity 0.12s ease,
+        color 0.12s ease;
+}
+
+.dd-slug-hint:hover,
+.dd-slug-hint:focus-visible {
+    color: var(--md-link);
+    opacity: 1;
+}
+
 /* The diagnostics overlay. The squiggles and gutter markers use CodeMirror's built-in lint
    theme (severity-colored); this themes the hover tooltip to match the report card and styles
    the "more information" docs link inside it. Two tooltip shapes need theming: hovering a
@@ -1007,6 +1042,46 @@ g.node.entity-highlight text.label {
 
 .source-preview :is(h1, h2, h3, h4, h5, h6) {
     scroll-margin-top: 0.5rem;
+}
+
+/* A hover-revealed chain-link after each preview heading copies the full jump target. It inherits
+   the heading's font size, then renders well shorter than the text line; inline-flex +
+   vertical-align middle, nudged down to the caps' optical center, seats it on the text rather than
+   raising it like a superscript. */
+.source-preview .heading-anchor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.3em;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: var(--md-muted);
+    font: inherit;
+    line-height: 1;
+    vertical-align: middle;
+    transform: translateY(0.16em);
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.12s ease,
+        color 0.12s ease;
+}
+
+.source-preview .heading-anchor-link svg {
+    display: block;
+    width: 0.62em;
+    height: 0.62em;
+}
+
+.source-preview :is(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
+.source-preview .heading-anchor:focus-visible {
+    opacity: 1;
+}
+
+.source-preview .heading-anchor:hover,
+.source-preview .heading-anchor:focus-visible {
+    color: var(--md-link);
 }
 
 /* Briefly highlight the heading an anchor link jumped to. */
@@ -1291,47 +1366,64 @@ body.maximized .maximize-button .icon-compress {
     display: block;
 }
 
-/* Inside the zoom cluster the maximize toggle is set off by a divider, like the % field. */
-.zoom-controls .maximize-button {
-    border-left: 1px solid var(--pico-muted-border-color);
+/* The maximize control is app-level, not per-tab: one button at the right end of the
+   tab-nav row. (Pico inverts --pico-color on buttons; reset it so the glyph uses the
+   normal foreground rather than white-on-white, as the zoom buttons do.) */
+.tabbar-maximize {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    position: absolute;
+    right: 1.25rem;
+    bottom: 0.35rem;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    cursor: pointer;
 }
 
-/* The Source tab has no zoom cluster, so its maximize toggle sits in a matching pill,
-   floating bottom-right over the preview. */
-.source-controls,
-.config-controls {
-    position: absolute;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    display: flex;
-    overflow: hidden;
+.tabbar-maximize:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
+/* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
+   sits at the viewport's top-right corner (the conventional close-fullscreen spot, clear of
+   the graph legend and zoom cluster). Revealed only while maximized. */
+.maximize-exit {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: none;
+    position: fixed;
+    top: 0.6rem;
+    right: 0.85rem;
+    z-index: 1000;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.55rem;
+    color: var(--pico-color);
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
     box-shadow: 0 1px 5px rgb(0 0 0 / 18%);
-}
-
-.source-controls .maximize-button,
-.config-controls .maximize-button {
-    /* Pico inverts --pico-color on buttons; reset it so the glyph uses the normal
-       foreground rather than white-on-white (as the zoom buttons do). */
-    --pico-color: inherit;
-    --pico-background-color: transparent;
-
-    margin: 0;
-    padding: 0.3rem 0.6rem;
-    color: var(--pico-color);
-    background: var(--pico-card-background-color);
-    border: none;
-    border-radius: 0;
     cursor: pointer;
 }
 
-.source-controls .maximize-button:hover,
-.config-controls .maximize-button:hover {
+.maximize-exit:hover {
     --pico-color: inherit;
 
     background: var(--pico-muted-border-color);
+}
+
+body.maximized .maximize-exit {
+    display: inline-flex;
 }
 
 /* Maximized: the active tab fills the window and the app chrome is hidden. The body is a

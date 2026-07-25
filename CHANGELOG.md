@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Copy a scene heading's anchor from the report** — hovering a heading in the live
+  visualization's Source preview reveals a link icon that copies a ready-to-paste jump
+  `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.
+  See the
+  [Live Visualization — Heading Anchors](docs/contributing/design-notes/Live%20Visualization%20-%20Heading%20Anchors.md) note.
 - **Random choices** — a choice list whose options lead with a `` `%` `` weight now becomes a
   *random choice*: the engine picks one option at random by weight instead of offering the player a
   menu. Write an explicit percentage (`` `50%` ``), a bare `` `%` `` to share the remaining chance
@@ -136,6 +141,9 @@ changes easy to categorize.
 
 ### Changed
 
+- **One maximize control for the whole report.** The visualization report's *full screen*
+  toggle now lives once at the right end of the tab bar (with a matching exit control while
+  maximized), instead of a separate button in each tab's toolbar; `f` and `Escape` still toggle it.
 - Development verification now provides faster targeted local loops and
   parallel, overlapped frontend CI while retaining the full test, analyzer,
   coverage, accessibility, and generated-bundle gates.
@@ -155,6 +163,10 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The Source preview now continues soft-wrapped lines like VSCode.** A single line
+  break joins into the same paragraph, and only an explicit hard break (two trailing
+  spaces or a trailing backslash) starts a new line — matching CommonMark and the
+  editor's own Markdown preview, instead of breaking on every newline.
 - **Dialogue highlighting now reaches inside choices.** In the visualization editor, the
   jump arrow, tags, and code spans on a choice (a Markdown list item) are colored the same
   as at the top level, instead of being grayed out by the surrounding list styling.

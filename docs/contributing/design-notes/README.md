@@ -143,6 +143,7 @@ flowchart TB
     UST --> DGO["19. Diagnostics Overlay"]
     DGO --> CPE["20. Compiler-Projected Editor Semantics"]
     CPE --> PST["21. Precise Speaker Tokens"]
+    PST --> HA["22. Live Visualization — Heading Anchors"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -168,6 +169,7 @@ flowchart TB
 | 19 | [Diagnostics Overlay](./Diagnostics%20Overlay.md) | The compiler's diagnostics as a source-editor overlay — squiggles, gutter markers, and doc-linked tooltips — on a reusable LSP-shaped projection | Implemented |
 | 20 | [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) | Source-editor highlighting and completions projected from the compiler's own parse (semantic tokens + resolved symbols), retiring the client-side grammar | Implemented |
 | 21 | [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md) | Speaker highlighting split into precise, non-overlapping name, `@id`, and separator tokens, from sub-spans the parser records on the AST | Implemented |
+| 22 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
 
 ### Other notes
 
