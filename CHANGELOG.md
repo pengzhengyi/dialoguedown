@@ -12,8 +12,9 @@ changes easy to categorize.
 
 - **Random choices** — a choice list whose options lead with a `` `%` `` weight now becomes a
   *random choice*: the engine picks one option at random by weight instead of offering the player a
-  menu. Write an explicit percentage (`` `50%` ``) or a bare `` `%` `` to share the remaining
-  chance equally, and the report's AST tabs show each option's weight. See the
+  menu. Write an explicit percentage (`` `50%` ``), a bare `` `%` `` to share the remaining chance
+  equally, or a game-state query (`` `"Bob's Affection"%` ``) to weight an option by a value read at
+  runtime. The report's AST tabs show each option's weight. See the
   [Random Choice](docs/contributing/design-notes/Random%20Choice.md) note.
 - **Autosave in the live visualization editor** — each editable document now has a persisted
   **Auto | Manual** save mode beside the Save button. Source defaults to Auto (saving 1s after you

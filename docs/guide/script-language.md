@@ -35,7 +35,7 @@ model for developers.
     - [Succession](#succession)
     - [Choices](#choices)
     - [Random choices](#random-choices)
-      - [Dynamic weights (proposed)](#dynamic-weights-proposed)
+      - [Dynamic weights](#dynamic-weights)
     - [Jumps](#jumps)
     - [Comments](#comments)
     - [Front matter](#front-matter)
@@ -400,7 +400,7 @@ Alice: My favorite color is red.
 
 > [!TIP]
 > A query can also drive a random choice's odds — see
-> [Dynamic weights](#dynamic-weights-proposed).
+> [Dynamic weights](#dynamic-weights).
 
 ### Commands
 
@@ -600,14 +600,7 @@ A few rules keep random choices unambiguous:
 - **A Markdown preview** shows each weight as inline code (`50%`) at the start of
   the option — readable, and clearly not spoken text.
 
-#### Dynamic weights (proposed)
-
-> [!NOTE]
-> Dynamic weights are a **proposed** extension. The compiler will accept and
-> preserve them, but resolving and drawing them needs the engine runtime, which
-> is still in progress
-> ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)).
-> Scripts that use them do not run yet.
+#### Dynamic weights
 
 A weight can also be **computed from game state**. Wrap a [query](#queries) in a
 code span and end it with `%`; its runtime numeric result becomes the option's
