@@ -19,6 +19,7 @@ import { rememberActiveTab, rememberedActiveTab } from "./active-tab";
 import { createSemanticView } from "./semantic-view";
 import { initResizer } from "./resizer";
 import { initFullscreen } from "./fullscreen";
+import { installMaximizeControls } from "./maximize-controls";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
@@ -162,9 +163,11 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
         panel.show(node);
     }
 
-    // The whole-window maximize mode (graphs and the source split), toggled from each
-    // tab's maximize button or the `f` / Escape keys. Wired once for the app's lifetime.
+    // The whole-window maximize mode (graphs and the source split) — one page-level action,
+    // so it gets one app-level control (at the right end of the tab-nav row) plus the
+    // `f` / Escape keys, rather than a copy in every tab. Wired once for the app's lifetime.
     const fullscreen = initFullscreen();
+    installMaximizeControls(tabsEl.parentElement ?? appEl, appEl, fullscreen.toggle);
 
     build(report);
 
@@ -234,7 +237,6 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             const section = document.createElement("section");
             section.className = "stage config-stage";
             configHandle = createConfigView(report.configuration, {
-                onToggleFullscreen: fullscreen.toggle,
                 editable: source?.editable ?? false,
                 ...(source?.configOnChange ? { onChange: source.configOnChange } : {}),
                 ...(source?.onCreateConfig ? { onCreateConfig: source.onCreateConfig } : {}),
@@ -248,7 +250,6 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             const section = document.createElement("section");
             section.className = "stage source-stage";
             sourceHandle = createSourceView(report.source, {
-                onToggleFullscreen: fullscreen.toggle,
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
             });
@@ -351,7 +352,6 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                         : cameras.noteCamera(transform),
                 onFoldChange: (collapsed: string[]) => cameras.setFold(stage.title, collapsed),
                 onRevert: () => cameras.reset(stage.title),
-                onToggleFullscreen: fullscreen.toggle,
                 // Selecting another node is navigation: route it through the async guard, then
                 // resolve the node by id against the active view (a save-triggered rebuild may have
                 // replaced this one) so the deferred selection never lands on a stale node.

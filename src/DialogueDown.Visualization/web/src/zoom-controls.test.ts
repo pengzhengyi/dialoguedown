@@ -7,7 +7,6 @@ function setup() {
         onZoomOut: vi.fn(),
         onSetZoom: vi.fn(),
         onRevert: vi.fn(),
-        onToggleFullscreen: vi.fn(),
     };
     const controls = createZoomControls(handlers);
     const buttons = controls.element.querySelectorAll<HTMLButtonElement>("button");
@@ -16,15 +15,10 @@ function setup() {
 }
 
 describe("createZoomControls", () => {
-    it("renders − / editable % / + / revert / maximize", () => {
+    it("renders − / editable % / + / revert", () => {
         const { buttons, input } = setup();
-        expect(buttons.length).toBe(4);
-        expect([...buttons].slice(0, 3).map((b) => b.textContent)).toEqual([
-            "\u2212",
-            "+",
-            "\u21BA",
-        ]);
-        expect(buttons[3].classList.contains("maximize-button")).toBe(true);
+        expect(buttons.length).toBe(3);
+        expect([...buttons].map((b) => b.textContent)).toEqual(["\u2212", "+", "\u21BA"]);
         expect(input.type).toBe("number");
         expect(input.value).toBe("100");
     });
@@ -46,12 +40,6 @@ describe("createZoomControls", () => {
         expect(handlers.onZoomOut).toHaveBeenCalledOnce();
         expect(handlers.onZoomIn).toHaveBeenCalledOnce();
         expect(handlers.onRevert).toHaveBeenCalledOnce();
-    });
-
-    it("wires the maximize button to the fullscreen handler", () => {
-        const { handlers, controls } = setup();
-        controls.element.querySelector<HTMLButtonElement>(".maximize-button")!.click();
-        expect(handlers.onToggleFullscreen).toHaveBeenCalledOnce();
     });
 
     it("commits a typed percentage on change and on Enter", () => {

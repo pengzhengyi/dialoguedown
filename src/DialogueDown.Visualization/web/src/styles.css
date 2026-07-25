@@ -1366,47 +1366,64 @@ body.maximized .maximize-button .icon-compress {
     display: block;
 }
 
-/* Inside the zoom cluster the maximize toggle is set off by a divider, like the % field. */
-.zoom-controls .maximize-button {
-    border-left: 1px solid var(--pico-muted-border-color);
+/* The maximize control is app-level, not per-tab: one button at the right end of the
+   tab-nav row. (Pico inverts --pico-color on buttons; reset it so the glyph uses the
+   normal foreground rather than white-on-white, as the zoom buttons do.) */
+.tabbar-maximize {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    position: absolute;
+    right: 1.25rem;
+    bottom: 0.35rem;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    cursor: pointer;
 }
 
-/* The Source tab has no zoom cluster, so its maximize toggle sits in a matching pill,
-   floating bottom-right over the preview. */
-.source-controls,
-.config-controls {
-    position: absolute;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    display: flex;
-    overflow: hidden;
+.tabbar-maximize:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
+/* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
+   sits at the viewport's top-right corner (the conventional close-fullscreen spot, clear of
+   the graph legend and zoom cluster). Revealed only while maximized. */
+.maximize-exit {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: none;
+    position: fixed;
+    top: 0.6rem;
+    right: 0.85rem;
+    z-index: 1000;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.55rem;
+    color: var(--pico-color);
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
     box-shadow: 0 1px 5px rgb(0 0 0 / 18%);
-}
-
-.source-controls .maximize-button,
-.config-controls .maximize-button {
-    /* Pico inverts --pico-color on buttons; reset it so the glyph uses the normal
-       foreground rather than white-on-white (as the zoom buttons do). */
-    --pico-color: inherit;
-    --pico-background-color: transparent;
-
-    margin: 0;
-    padding: 0.3rem 0.6rem;
-    color: var(--pico-color);
-    background: var(--pico-card-background-color);
-    border: none;
-    border-radius: 0;
     cursor: pointer;
 }
 
-.source-controls .maximize-button:hover,
-.config-controls .maximize-button:hover {
+.maximize-exit:hover {
     --pico-color: inherit;
 
     background: var(--pico-muted-border-color);
+}
+
+body.maximized .maximize-exit {
+    display: inline-flex;
 }
 
 /* Maximized: the active tab fills the window and the app chrome is hidden. The body is a

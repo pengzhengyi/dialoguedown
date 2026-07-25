@@ -27,7 +27,6 @@ import type { ConfigReport, ConfiguredSpeakerView } from "./model";
 import { isConfiguredFromFile } from "./model";
 import { initSplitDivider } from "./source-view";
 import { copyToClipboard } from "./path-display";
-import { createMaximizeButton } from "./maximize-button";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
 import { configCompletions } from "./config-completions";
@@ -36,8 +35,6 @@ import { escapeHtml } from "./text";
 
 /** Options for the Config tab. */
 export interface ConfigViewOptions {
-    /** Toggle the whole-window maximize mode; when set, a maximize button is shown. */
-    onToggleFullscreen?: () => void;
     /** Start the TOML editor editable (Edit) or read-only (View); toggled later via the handle. */
     editable?: boolean;
     /** Called with the new buffer on every edit — for the config buffer and dirty state. */
@@ -174,15 +171,6 @@ export function createConfigView(
         name: "configured speakers",
     });
     divider.appendChild(speakersPanel.button);
-
-    // A maximize toggle in a small pill (bottom-right), matching the Source tab and the
-    // graphs, so Config can fill the window with both its panes.
-    if (options.onToggleFullscreen) {
-        const controls = document.createElement("div");
-        controls.className = "config-controls";
-        controls.appendChild(createMaximizeButton(options.onToggleFullscreen));
-        container.appendChild(controls);
-    }
 
     return {
         element: container,
