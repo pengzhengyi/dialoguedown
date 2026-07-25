@@ -1,4 +1,5 @@
 using System.Globalization;
+using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Script.Transpiler.Builders;
@@ -18,21 +19,21 @@ internal static class ChoiceWeightReader
 
     public static bool IsWeight(string content) => content.Trim().EndsWith('%');
 
-    // Reads the weight value; null when it is neither a non-negative number nor a bare percent,
-    // so the caller can report the invalid weight and recover.
-    public static ChoiceWeight? Read(string content)
+    // Reads the weight into a spanned node; null when the value is neither a non-negative number
+    // nor a bare percent, so the caller can report the invalid weight and recover.
+    public static ChoiceWeight? Read(string content, SourceSpan span)
     {
         var value = content.Trim();
         value = value[..^1].Trim();
         if (value.Length == 0)
         {
-            return new AutoWeight();
+            return new AutoWeight(span);
         }
 
         if (double.TryParse(value, WeightNumberStyles, CultureInfo.InvariantCulture, out var percentage)
             && percentage >= 0)
         {
-            return new NumberWeight(percentage);
+            return new NumberWeight(percentage, span);
         }
 
         return null;

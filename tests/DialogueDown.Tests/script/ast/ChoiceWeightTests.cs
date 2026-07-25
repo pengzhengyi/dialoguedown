@@ -1,4 +1,6 @@
+using DialogueDown.Common;
 using DialogueDown.Script.Ast;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Ast;
 
@@ -7,7 +9,7 @@ public sealed class ChoiceWeightTests
     [Fact]
     public void NumberWeight_ExposesItsPercentage_AndIsAChoiceWeight()
     {
-        var weight = new NumberWeight(50);
+        var weight = NumberWeight(50);
 
         Assert.Equal(50, weight.Percentage);
         Assert.IsAssignableFrom<ChoiceWeight>(weight);
@@ -16,18 +18,31 @@ public sealed class ChoiceWeightTests
     [Fact]
     public void NumberWeights_CompareByPercentage()
     {
-        Assert.Equal(new NumberWeight(25), new NumberWeight(25));
-        Assert.NotEqual(new NumberWeight(25), new NumberWeight(30));
+        Assert.Equal(NumberWeight(25), NumberWeight(25));
+        Assert.NotEqual(NumberWeight(25), NumberWeight(30));
     }
 
     [Fact]
     public void AutoWeights_AreAllInterchangeable_AndAreChoiceWeights()
     {
-        Assert.Equal(new AutoWeight(), new AutoWeight());
-        Assert.IsAssignableFrom<ChoiceWeight>(new AutoWeight());
+        Assert.Equal(AutoWeight(), AutoWeight());
+        Assert.IsAssignableFrom<ChoiceWeight>(AutoWeight());
     }
 
     [Fact]
     public void AutoWeight_IsNotANumberWeight() =>
-        Assert.NotEqual<ChoiceWeight>(new AutoWeight(), new NumberWeight(0));
+        Assert.NotEqual<ChoiceWeight>(AutoWeight(), NumberWeight(0));
+
+    [Fact]
+    public void Weights_AreSpannedScriptNodes_CarryingTheirCodeSpanLocation()
+    {
+        var span = new SourceSpan(3, 8);
+
+        var number = new NumberWeight(50, span);
+        var auto = new AutoWeight(span);
+
+        Assert.IsAssignableFrom<ScriptNode>(number);
+        Assert.Equal(span, number.Span);
+        Assert.Equal(span, auto.Span);
+    }
 }

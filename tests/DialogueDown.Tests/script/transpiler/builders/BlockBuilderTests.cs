@@ -215,8 +215,8 @@ public sealed class BlockBuilderTests
 
         var random = AssertRandomChoices(Assert.Single(body));
         Assert.Equal(2, random.Options.Count);
-        Assert.Equal(new NumberWeight(50), random.Options[0].Weight);
-        Assert.Equal(new NumberWeight(50), random.Options[1].Weight);
+        AssertNumberWeight(random.Options[0], 50);
+        AssertNumberWeight(random.Options[1], 50);
         AssertSpeechText(AssertRandomOptionLine(random.Options[0]), "Heads.");
         AssertSpeechText(AssertRandomOptionLine(random.Options[1]), "Tails.");
     }
@@ -233,8 +233,8 @@ public sealed class BlockBuilderTests
         ]);
 
         var random = AssertRandomChoices(Assert.Single(body));
-        Assert.Equal(new NumberWeight(70), random.Options[0].Weight);
-        Assert.IsType<AutoWeight>(random.Options[1].Weight);
+        AssertNumberWeight(random.Options[0], 70);
+        AssertAutoWeight(random.Options[1]);
     }
 
     [Fact]
@@ -264,8 +264,8 @@ public sealed class BlockBuilderTests
         ], diagnostics);
 
         var random = AssertRandomChoices(Assert.Single(body));
-        Assert.Equal(new NumberWeight(50), random.Options[0].Weight);
-        Assert.IsType<AutoWeight>(random.Options[1].Weight);
+        AssertNumberWeight(random.Options[0], 50);
+        AssertAutoWeight(random.Options[1]);
         AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.MissingChoiceWeight);
     }
 

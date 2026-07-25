@@ -47,19 +47,20 @@ public sealed class ScriptNodeExtensionsTests
     [Fact]
     public void Children_RandomChoices_YieldsOptions()
     {
-        var option = RandomOption(new NumberWeight(50), Line(Text("heads")));
+        var option = RandomOption(NumberWeight(50), Line(Text("heads")));
         var random = RandomChoices(option);
 
         Assert.Equal([option], random.Children());
     }
 
     [Fact]
-    public void Children_RandomOption_YieldsBody()
+    public void Children_RandomOption_YieldsWeightThenBody()
     {
+        var weight = AutoWeight();
         var body = Line(Text("body"));
-        var option = RandomOption(new AutoWeight(), body);
+        var option = RandomOption(weight, body);
 
-        Assert.Equal([body], option.Children());
+        Assert.Equal([weight, body], option.Children());
     }
 
     [Fact]

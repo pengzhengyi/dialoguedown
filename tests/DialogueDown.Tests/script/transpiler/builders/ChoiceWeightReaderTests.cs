@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Transpiler.Builders;
 
@@ -31,7 +32,7 @@ public sealed class ChoiceWeightReaderTests
     [InlineData(" 70 % ", 70)]
     public void Read_ANumericWeight_YieldsANumberWeight(string content, double expected)
     {
-        var weight = Assert.IsType<NumberWeight>(ChoiceWeightReader.Read(content));
+        var weight = Assert.IsType<NumberWeight>(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
 
         Assert.Equal(expected, weight.Percentage);
     }
@@ -40,7 +41,7 @@ public sealed class ChoiceWeightReaderTests
     [InlineData("%")]
     [InlineData(" % ")]
     public void Read_ABarePercent_YieldsAnAutoWeight(string content) =>
-        Assert.IsType<AutoWeight>(ChoiceWeightReader.Read(content));
+        Assert.IsType<AutoWeight>(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
 
     [Theory]
     [InlineData("-10%")]
@@ -48,5 +49,5 @@ public sealed class ChoiceWeightReaderTests
     [InlineData("\"Bob's Affection\"%")]
     [InlineData("%%")]
     public void Read_AnInvalidWeight_YieldsNull(string content) =>
-        Assert.Null(ChoiceWeightReader.Read(content));
+        Assert.Null(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
 }

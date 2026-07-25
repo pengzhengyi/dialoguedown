@@ -10,7 +10,7 @@ public sealed class RandomChoicesTests
     public void RandomOption_ExposesWeightBodyAndSpan_AndIsAScriptNodeNotABlock()
     {
         var span = SourceSpanFactory.Span();
-        var weight = new NumberWeight(70);
+        var weight = NumberWeight(70);
         var body = new ScriptBlock[] { Line(Text("Fresh apples!")) };
 
         var option = new RandomOption(weight, body, span);
@@ -26,7 +26,7 @@ public sealed class RandomChoicesTests
     public void RandomChoices_ExposesOptionsAndSpan_AndIsAChoiceGroup()
     {
         var span = SourceSpanFactory.Span();
-        var option = RandomOption(new AutoWeight(), Line(Text("heads")));
+        var option = RandomOption(AutoWeight(), Line(Text("heads")));
 
         var random = new RandomChoices([option], span);
 
@@ -46,9 +46,9 @@ public sealed class RandomChoicesTests
     [Fact]
     public void RandomOption_HoldsANestedRandomChoices_ForBranchingOptions()
     {
-        var nested = RandomChoices(RandomOption(new AutoWeight(), Line(Text("caws"))));
+        var nested = RandomChoices(RandomOption(AutoWeight(), Line(Text("caws"))));
 
-        var option = RandomOption(new NumberWeight(80), Line(Text("Fresh apples!")), nested);
+        var option = RandomOption(NumberWeight(80), Line(Text("Fresh apples!")), nested);
 
         Assert.Same(nested, Assert.IsType<RandomChoices>(option.Body[1]));
     }

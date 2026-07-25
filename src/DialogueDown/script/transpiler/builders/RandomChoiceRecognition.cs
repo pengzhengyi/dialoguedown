@@ -24,9 +24,10 @@ internal static class RandomChoiceRecognition
     {
         if (!TryLeadingWeightSpan(item, out var code))
         {
+            var missingAt = SourceSpan.EmptyAt(item.Span.Start);
             diagnostics.Report(new Diagnostic(
-                DiagnosticCatalog.MissingChoiceWeight, SourceSpan.EmptyAt(item.Span.Start), []));
-            return (new AutoWeight(), item.Blocks);
+                DiagnosticCatalog.MissingChoiceWeight, missingAt, []));
+            return (new AutoWeight(missingAt), item.Blocks);
         }
 
         return (ReadWeight(code, diagnostics), WithoutLeadingWeight(item));
@@ -47,14 +48,14 @@ internal static class RandomChoiceRecognition
 
     private static ChoiceWeight ReadWeight(CodeSpanInline code, IDiagnosticSink diagnostics)
     {
-        if (ChoiceWeightReader.Read(code.Content) is { } weight)
+        if (ChoiceWeightReader.Read(code.Content, code.Span) is { } weight)
         {
             return weight;
         }
 
         diagnostics.Report(new Diagnostic(
             DiagnosticCatalog.InvalidChoiceWeight, code.Span, [code.Content]));
-        return new AutoWeight();
+        return new AutoWeight(code.Span);
     }
 
     // The item's blocks with the leading weight code span removed from the first paragraph, and

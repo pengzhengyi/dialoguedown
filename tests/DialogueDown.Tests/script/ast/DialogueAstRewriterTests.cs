@@ -71,8 +71,8 @@ public sealed class DialogueAstRewriterTests
     {
         var random = AssertRandomChoices(new IdentityRewriter().Rewrite(RandomChoiceSample()).Body[0]);
 
-        Assert.Equal(new NumberWeight(50), random.Options[0].Weight);
-        Assert.Equal(new AutoWeight(), random.Options[1].Weight);
+        AssertNumberWeight(random.Options[0], 50);
+        AssertAutoWeight(random.Options[1]);
         AssertSpeechText(AssertRandomOptionLine(random.Options[0]), "heads");
         AssertSpeechText(AssertRandomOptionLine(random.Options[1]), "tails");
     }
@@ -96,8 +96,8 @@ public sealed class DialogueAstRewriterTests
         [
             new RandomChoices(
                 [
-                    new RandomOption(new NumberWeight(50), [Line(Text("heads"))], SourceSpanFactory.Span()),
-                    new RandomOption(new AutoWeight(), [Line(Text("tails"))], SourceSpanFactory.Span()),
+                    new RandomOption(NumberWeight(50), [Line(Text("heads"))], SourceSpanFactory.Span()),
+                    new RandomOption(AutoWeight(), [Line(Text("tails"))], SourceSpanFactory.Span()),
                 ],
                 SourceSpanFactory.Span()),
         ]);
