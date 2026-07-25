@@ -159,6 +159,10 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The Source preview now continues soft-wrapped lines like VSCode.** A single line
+  break joins into the same paragraph, and only an explicit hard break (two trailing
+  spaces or a trailing backslash) starts a new line — matching CommonMark and the
+  editor's own Markdown preview, instead of breaking on every newline.
 - **Dialogue highlighting now reaches inside choices.** In the visualization editor, the
   jump arrow, tags, and code spans on a choice (a Markdown list item) are colored the same
   as at the top level, instead of being grayed out by the surrounding list styling.

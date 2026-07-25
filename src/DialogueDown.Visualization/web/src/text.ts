@@ -59,11 +59,18 @@ export function splitFrontMatter(source: string): FrontMatterSplit {
 const documentMarked = new Marked();
 documentMarked.use(gfmHeadingId());
 
-/** Render Markdown to HTML, handling a leading YAML front matter block. */
+/**
+ * Render Markdown to HTML, handling a leading YAML front matter block.
+ *
+ * Uses CommonMark line-break semantics (`breaks: false`) to match VSCode's
+ * Markdown preview: a single newline is a soft break that continues the line,
+ * while an explicit hard break (two trailing spaces or a trailing backslash)
+ * becomes a `<br>`.
+ */
 export function renderMarkdown(source: string): string {
     return renderFrontMatterAnd(
         source,
-        (body) => marked.parse(body, { async: false, breaks: true }) as string,
+        (body) => marked.parse(body, { async: false, breaks: false }) as string,
     );
 }
 
@@ -74,7 +81,7 @@ export function renderMarkdown(source: string): string {
 export function renderDocument(source: string): string {
     return renderFrontMatterAnd(
         source,
-        (body) => documentMarked.parse(body, { async: false, breaks: true }) as string,
+        (body) => documentMarked.parse(body, { async: false, breaks: false }) as string,
     );
 }
 
