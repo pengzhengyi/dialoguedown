@@ -42,7 +42,7 @@
        parameters only from that AdditionalFile, not .editorconfig); .editorconfig
        sets the severities and scopes the rules to this project. -->
   <ItemGroup>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.30.0.144632" PrivateAssets="all" />
     <AdditionalFiles Include="SonarLint.xml" />
   </ItemGroup>
 
