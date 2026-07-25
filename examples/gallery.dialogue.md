@@ -40,6 +40,12 @@ The trees close in overhead, and something rustles in the shadows. #mysterious
 - `60%` A fox darts across the path and vanishes.
 - `40%` An owl watches you from a low branch.
 
+Deeper in, the forest seems to weigh what it senses in you.
+
+- `"Alice.Courage"%` Alice stands tall and presses on.
+- `"Alice.Fear"%` Alice startles at every shifting shadow.
+- `%` Alice walks on, uncertain.
+
 Alice: Maybe this was a **mistake**.
 
 => [Turn back](#the-crossroads)
