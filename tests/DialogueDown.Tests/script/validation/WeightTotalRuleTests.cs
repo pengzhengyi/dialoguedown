@@ -14,8 +14,8 @@ public sealed class WeightTotalRuleTests
     public void Check_WeightsTotalOneHundred_ReportsNothing()
     {
         var random = RandomChoices(
-            RandomOption(new NumberWeight(50), Line(Text("heads"))),
-            RandomOption(new NumberWeight(50), Line(Text("tails"))));
+            RandomOption(NumberWeight(50), Line(Text("heads"))),
+            RandomOption(NumberWeight(50), Line(Text("tails"))));
 
         Assert.Empty(Check(random));
     }
@@ -25,8 +25,8 @@ public sealed class WeightTotalRuleTests
     {
         var random = RandomChoices(
             12,
-            RandomOption(new NumberWeight(50), Line(Text("heads"))),
-            RandomOption(new NumberWeight(30), Line(Text("tails"))));
+            RandomOption(NumberWeight(50), Line(Text("heads"))),
+            RandomOption(NumberWeight(30), Line(Text("tails"))));
 
         var diagnostic = Assert.Single(Check(random));
 
@@ -40,8 +40,8 @@ public sealed class WeightTotalRuleTests
     public void Check_WeightsAboveOneHundred_Warns()
     {
         var random = RandomChoices(
-            RandomOption(new NumberWeight(60), Line(Text("heads"))),
-            RandomOption(new NumberWeight(60), Line(Text("tails"))));
+            RandomOption(NumberWeight(60), Line(Text("heads"))),
+            RandomOption(NumberWeight(60), Line(Text("tails"))));
 
         var diagnostic = Assert.Single(Check(random));
 
@@ -54,8 +54,8 @@ public sealed class WeightTotalRuleTests
     {
         var random = RandomChoices(
             7,
-            RandomOption(new NumberWeight(0), Line(Text("heads"))),
-            RandomOption(new NumberWeight(0), Line(Text("tails"))));
+            RandomOption(NumberWeight(0), Line(Text("heads"))),
+            RandomOption(NumberWeight(0), Line(Text("tails"))));
 
         var diagnostic = Assert.Single(Check(random));
 
@@ -68,8 +68,8 @@ public sealed class WeightTotalRuleTests
     public void Check_AnAutoWeightThatFillsTheLeftover_ReportsNothing()
     {
         var random = RandomChoices(
-            RandomOption(new NumberWeight(70), Line(Text("halt"))),
-            RandomOption(new AutoWeight(), Line(Text("oh, it's you"))));
+            RandomOption(NumberWeight(70), Line(Text("halt"))),
+            RandomOption(AutoWeight(), Line(Text("oh, it's you"))));
 
         Assert.Empty(Check(random));
     }
@@ -77,7 +77,7 @@ public sealed class WeightTotalRuleTests
     [Fact]
     public void Check_ASingleOption_IsAlwaysSelected_SoReportsNothing()
     {
-        var random = RandomChoices(RandomOption(new NumberWeight(50), Line(Text("only"))));
+        var random = RandomChoices(RandomOption(NumberWeight(50), Line(Text("only"))));
 
         Assert.Empty(Check(random));
     }
@@ -86,9 +86,19 @@ public sealed class WeightTotalRuleTests
     public void Check_WeightsCloseEnoughToOneHundred_ReportNothing()
     {
         var random = RandomChoices(
-            RandomOption(new NumberWeight(33.3), Line(Text("a"))),
-            RandomOption(new NumberWeight(33.3), Line(Text("b"))),
-            RandomOption(new NumberWeight(33.3), Line(Text("c"))));
+            RandomOption(NumberWeight(33.3), Line(Text("a"))),
+            RandomOption(NumberWeight(33.3), Line(Text("b"))),
+            RandomOption(NumberWeight(33.3), Line(Text("c"))));
+
+        Assert.Empty(Check(random));
+    }
+
+    [Fact]
+    public void Check_AQueryWeightInTheGroup_DefersTheChecksToRuntime()
+    {
+        var random = RandomChoices(
+            RandomOption(NumberWeight(20), Line(Text("static"))),
+            RandomOption(QueryWeight("Bob.Affection"), Line(Text("dynamic"))));
 
         Assert.Empty(Check(random));
     }

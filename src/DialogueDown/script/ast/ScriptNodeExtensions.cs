@@ -45,7 +45,8 @@ internal static class ScriptNodeExtensions
     {
         ScriptBlock block => BlockChildren(block),
         Choice choice => choice.Body,
-        RandomOption option => option.Body,
+        RandomOption option => [option.Weight, .. option.Body],
+        ChoiceWeight => [],
         Speaker speaker => SpeakerChildren(speaker),
         InlineFragment fragment => FragmentChildren(fragment),
 

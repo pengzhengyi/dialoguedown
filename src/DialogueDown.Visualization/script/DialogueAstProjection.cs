@@ -199,11 +199,13 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
     private static DisplayAttribute SpanAttribute(SourceSpan span) =>
         new("span", $"[{span.Start}, {span.End})");
 
-    // A random option's weight, as the author would write it: a percentage or a bare "%".
+    // A random option's weight, as the author would write it: a percentage, a bare "%", or a
+    // quoted query the runtime resolves.
     private static string WeightText(ChoiceWeight weight) => weight switch
     {
         NumberWeight number => $"{number.Percentage.ToString("0.##", CultureInfo.InvariantCulture)}%",
         AutoWeight => "%",
+        QueryWeight query => $"\"{query.Key}\"%",
         _ => throw new ArgumentException(
             $"Unsupported choice weight type '{weight.GetType().Name}'.", nameof(weight)),
     };

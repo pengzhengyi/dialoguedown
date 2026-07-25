@@ -1,10 +1,12 @@
 # Random choice
 
 > [!NOTE]
-> Status: **implemented**
-> ([issue #141](https://github.com/pengzhengyi/godot-dialoguedown/issues/141)).
-> Let a choice list carry per-option weights so the engine picks one option at
-> random, instead of offering the options to the player.
+> Status: **implemented**. The static construct shipped in
+> [issue #141](https://github.com/pengzhengyi/godot-dialoguedown/issues/141), and
+> the compiler now recognizes a game-state query as a runtime-calculated weight
+> under the same random-choice syntax and normalization policy. Executing a random
+> choice — static or dynamic — awaits the
+> [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
 
 ## Table of contents
 
@@ -40,11 +42,11 @@ list carries a weight, the whole list becomes a random choice: at runtime the
 engine selects exactly one option by weight and runs its body. The player sees
 no menu.
 
-This note covers recognizing the construct, its weight grammar, the
-compile-time weight semantics, and the diagnostics it introduces. It does **not**
-cover the runtime selection itself (there is no runtime yet) or dynamic weights
-that read game state; both are described as [deferred
-work](#open-questions-and-deferred-work) with a seam left for them.
+This note covers the construct's complete writer contract: static, auto, and
+dynamic query weights; compile-time modeling and diagnostics; and the runtime
+resolution policy. The compiler extension accepts and preserves query weights
+now. Executing a random choice remains part of the planned runtime
+([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)).
 
 ## Functionality checklist
 
@@ -54,13 +56,16 @@ work](#open-questions-and-deferred-work) with a seam left for them.
       option is weighted, leaving `Choices`/`Choice` unchanged otherwise.
 - [x] Model a `NumberWeight` (explicit percentage) and an `AutoWeight` (equal
       share of the leftover) as a closed `ChoiceWeight`.
-- [x] Leave a closed seam for a future dynamic `QueryWeight`.
-- [ ] Defer all resolution to the runtime for a random choice with any dynamic
-      weight. *(Deferred: dynamic weights are rejected for now — see the crosscheck.)*
+- [x] Make every `ChoiceWeight` a spanned AST node so tooling can point at the
+      exact weight code span.
+- [x] Recognize `` `"Query"%` `` by reusing the existing query grammar and model
+      it as `QueryWeight`.
+- [x] Defer all total validation for a group containing `QueryWeight` until
+      runtime.
 - [x] Resolve weights through an injectable normalization strategy, so the
       arithmetic is tested and swapped in isolation from parsing.
 - [x] Report `DLG1104` when an option in a random choice has no weight.
-- [x] Report `DLG1105` when a weight value is not a non-negative number or a bare `%`.
+- [x] Report `DLG1105` for an invalid weight value (a negative or non-numeric code span).
 - [x] Report `DLG3003` when static weights do not total 100%, and normalize.
 - [x] Report `DLG2010` when static weights sum to zero (no option can be selected).
 - [x] Report `DLG3004` when a random choice offers only one option.
@@ -77,7 +82,8 @@ work](#open-questions-and-deferred-work) with a seam left for them.
 | **Choice weight** | The leading code span ending in `%` on an option that gives its relative selection probability. |
 | **Explicit weight** | A numeric weight, `` `N%` `` — a concrete percentage. |
 | **Auto weight** | A bare `` `%` `` — claims an equal share of the percentage left over after the explicit weights. |
-| **Dynamic weight** *(deferred)* | `` `"Query"%` `` — a weight read from game state at runtime, reusing the game-call query grammar. |
+| **Dynamic weight** | `` `"Query"%` `` — a query whose runtime numeric result becomes the option's explicit weight. |
+| **Query weight** | The AST form of a dynamic weight: the query key plus the exact source span of its code span. |
 | **Leftover** | `max(0, 100 − sum of explicit weights)`, divided equally among the auto weights. |
 | **Normalization** | Dividing every resolved weight by their total so the probabilities sum to 1; owned by a swappable strategy so it can be tested and replaced in isolation. |
 
@@ -127,6 +133,24 @@ carries dialogue exactly like a player choice:
 In a plain Markdown preview each weight shows as inline code (`50%`) at the start
 of the option — readable, and clearly not spoken text.
 
+### Dynamic query weights
+
+A quoted query followed by `%` calculates the weight from game state at runtime:
+
+```markdown
+- `"Bob's Affection"%` Alice: Hello, Bob.
+- `"Christina's Affection"%` Alice: Hello, Christina.
+```
+
+This is the existing query syntax plus a percent sign. The query must resolve to
+a finite, non-negative number. The runtime treats that result as an explicit
+weight, then applies the same auto and normalization policy as a static random
+choice.
+
+Dynamic weights compile today: the Dialogue AST preserves the query key and
+source span as a `QueryWeight`, and the report shows the structure. Selection
+waits for the runtime.
+
 ## Grammar
 
 A weight is the first inline of an option: a code span whose content ends with a
@@ -136,7 +160,7 @@ literal `%`.
 RandomChoices     = WeightedItem , { WeightedItem } ;
 WeightedItem     = WeightSpan , ChoiceBody ;
 WeightSpan       = "`" , WeightValue , "%" , "`" ;
-WeightValue      = [ Number | QuotedString ] ; (* empty => auto; quoted => dynamic, deferred *)
+WeightValue      = [ Number | QuotedString ] ; (* empty => auto; quoted => query weight *)
 Number           = Digit , { Digit } , [ "." , { Digit } ] ;
 ```
 
@@ -149,36 +173,32 @@ call ends in `%`, so a leading `` `…%` `` code span is unambiguous (see
 
 ## Weight resolution
 
-Resolution turns the raw weights into normalized probabilities. It is owned by a
-single **injectable normalization strategy** (`IWeightNormalization`, see
-decision **D8**), so the arithmetic is tested and swapped in isolation from
-parsing and the AST.
+Resolution turns source weights into normalized probabilities. The compiler
+applies the policy immediately only when every weight is static. A group
+containing any `QueryWeight` preserves its unresolved AST and defers the whole
+policy to runtime: a compile-time partial total would be misleading.
 
-**A random choice that contains any dynamic weight defers *all* resolution to the
-runtime** — the total cannot be known until the game runs. The steps below
-therefore apply only when every weight is static (a number or an auto):
+At runtime:
 
-1. **Sum the explicit weights** → `explicit`.
-2. **Distribute the leftover to autos:** `leftover = max(0, 100 − explicit)`;
-   each auto resolves to `leftover ÷ (auto count)`.
+1. **Resolve explicit values.** A `NumberWeight` contributes its number. A
+   `QueryWeight` reads game state and must produce a finite, non-negative number.
+   A missing, non-numeric, negative, NaN, or infinite result is a runtime error;
+   the runtime selects no option.
+2. **Distribute the leftover to autos:** `leftover = max(0, 100 − explicit)`,
+   where `explicit` includes both numeric and resolved query weights. Each auto
+   receives `leftover ÷ autoCount`.
 3. **Total** all resolved weights.
-4. **Normalize:** every weight is divided by the total so the probabilities sum
-   to 1. Weights are relative, so the total need not be 100.
-5. **Warn on drift:** if the total is not within 0.5 of 100, report
-   [`DLG3003`](#diagnostics) with the actual total. The script still compiles;
-   the odds are simply normalized. The small tolerance keeps deliberate rounding
-   quiet — three `` `33.3%` `` options total 99.9, not a mistake — while a real
-   mismatch such as 50 + 30 still warns. A single-option group is skipped by the
-   total checks — its lone option is always selected, so its total is moot — and
-   is instead reported by its own rule as [`DLG3004`](#diagnostics).
-6. **Reject a zero total** (every weight resolved to 0, e.g. all `` `0%` ``):
-   report [`DLG2010`](#diagnostics) as an **error**. A zero total is ambiguous —
-   a mistake, or a misread as uniform — so the explicit principle rejects it
-   rather than guessing. The strategy still recovers to a uniform distribution so
-   later stages never divide by zero on the best-effort result.
+4. **Reject a zero total.** No option can be selected. This mirrors
+   [`DLG2010`](#diagnostics) for static weights.
+5. **Warn on drift.** If the total is more than 0.5 from 100, report the actual
+   total, then continue. This mirrors [`DLG3003`](#diagnostics); the tolerance
+   keeps deliberate rounding such as three `` `33.3%` `` weights quiet.
+6. **Normalize:** divide every resolved weight by the total so the probabilities
+   sum to 1. Weights remain relative; they need not total 100 to work.
 
-At runtime a dynamic random choice runs the same strategy over its resolved
-values, so static and dynamic lists share one normalization definition.
+The existing injectable normalization policy remains the single definition of
+auto distribution and sum normalization. The future runtime resolves
+`QueryWeight` values before invoking that policy.
 
 ## Prior art
 
@@ -201,6 +221,10 @@ Lessons carried into this design:
   (Ren'Py's `random.choices`, and the duplication trick is just integer
   weighting). DialogueDown adopts the same relative model but lets the author
   *see* the intended percentages.
+- **Dynamic values are resolved before selection.** Yarn and Ink express this
+  through variables plus explicit random logic rather than first-class weighted
+  syntax. Python's `random.choices` accepts runtime numeric values, but requires
+  them to be finite and non-negative, with at least one positive value.
 - **A percent sign reads as a probability** to a non-technical writer, and it is
   the one punctuation none of the surveyed tools claimed — so it is a clean,
   self-explanatory marker for DialogueDown to define.
@@ -209,29 +233,35 @@ Lessons carried into this design:
 
 ```mermaid
 flowchart LR
-    LI["Markdown list item"] --> Peel["BlockBuilder.BuildChoices<br/>peel leading weight span"]
-    Peel -->|any option weighted| RC["RandomChoices<br/>(RandomOption[])"]
-    Peel -->|none weighted| PC["Choices<br/>(player choice, unchanged)"]
-    RC --> Rule["WeightTotalRule<br/>over the desugared AST"]
-    Rule -->|IWeightNormalization| Norm["Weight-normalization<br/>strategy"]
-    Rule --> D3["DLG3003<br/>weights ≠ 100%"]
+    LI["Markdown list item"] --> Recognize["RandomChoiceRecognition<br/>peel leading weight span"]
+    Recognize --> Read["ChoiceWeightReader"]
+    Read --> NW["NumberWeight"]
+    Read --> AW["AutoWeight"]
+    Read --> QW["QueryWeight<br/>(shared query grammar)"]
+    NW --> RC["RandomChoices"]
+    AW --> RC
+    QW --> RC
+    RC -->|static only| Rule["WeightTotalRule"]
+    RC -->|contains query| Runtime["Runtime query resolution<br/>(planned)"]
+    Rule --> Norm["IWeightNormalization"]
+    Runtime --> Norm
 ```
 
-Recognition happens in the **transpiler**, in `BlockBuilder.BuildChoices`. Before
-an item's blocks are built, the builder peels a leading weight code span off the
-item's first paragraph. This is essential: if the weight reached the ordinary
-inline walk it would be handed to `GameCallBuilder`, which rejects any code span
-that is not a game call as `DLG1102`. Peeling it first keeps the weight out of
-game-call classification, and the rest of the option body builds exactly as it
-does today. When any option is weighted the builder emits a `RandomChoices` of
-`RandomOption`s; otherwise it emits `Choices` as before.
+Recognition happens in the **transpiler**. `RandomChoiceRecognition` peels a
+leading weight code span before the ordinary inline walk can classify it as a
+game call. `ChoiceWeightReader` reads a number, an auto, or a quoted query. The
+quoted form must reuse the same query grammar as a speech query; duplicating
+quoted-string parsing would let the two forms drift.
 
-The **weight-total** style warning (`DLG3003`) is a structural validation rule
-over the desugared Dialogue AST, mirroring the existing choice-nesting rule
-(`DLG3002`). The rule asks the `IWeightNormalization` strategy for the resolved
-total rather than doing the arithmetic itself. Recognition-time problems — a
-missing weight (`DLG1104`) and an invalid weight value (`DLG1105`) — are reported
-where the span is peeled.
+Each weight preserves the exact code-span source location as a `ScriptNode`.
+That gives diagnostics, AST visualization, semantic-token highlighting, and the
+future runtime one authoritative location. A `RandomOption` traverses its weight
+before its body.
+
+The **weight-total** rules run at compile time only for a fully static group.
+When a `QueryWeight` is present, the group is structurally valid but unresolved;
+the future runtime resolves every query, validates the values, and invokes the
+same normalization policy.
 
 ## Interfaces and responsibilities
 
@@ -239,12 +269,16 @@ where the span is peeled.
 | --- | --- |
 | `ChoiceGroup` | The abstract base shared by `Choices` and `RandomChoices` — a branch that offers several options. It lets a pass that cares about any branch group (the choice-nesting depth check) query one type, while the two stay distinct records. |
 | `RandomChoices` | A `ChoiceGroup` for the whole construct: the ordered `RandomOption`s the engine resolves to one. Separate from `Choices` so the player choice stays unchanged and the visualization and runtime handle it distinctly. |
-| `RandomOption` | One option in a random choice: its `ChoiceWeight` and its body blocks. Named an *option*, not a `Choice`: the player never selects it — the engine does — so the "choice" vocabulary (which means player selection here) would mislead. |
-| `ChoiceWeight` | A closed value hierarchy for a weight: `NumberWeight(double)` and `AutoWeight`. A future `QueryWeight` variant is the deferred dynamic seam. |
-| `IWeightNormalization` | The injectable strategy that turns a random choice's static weights into normalized probabilities and reports the raw total; consumed by `WeightTotalRule` now and the runtime later. |
-| `BlockBuilder` | Peels the leading weight span from each item, emits a `RandomChoices` when any option is weighted (otherwise `Choices`), reports `DLG1104`/`DLG1105`, and builds each option body from the remaining inlines. |
+| `RandomOption` | One option in a random choice: its spanned `ChoiceWeight` and body blocks. Traversal yields the weight before the body. |
+| `ChoiceWeight` | A spanned `ScriptNode` base for `NumberWeight`, `AutoWeight`, and `QueryWeight`; tooling can point at the exact weight code span. |
+| `NumberWeight` | A finite, non-negative literal percentage plus its source span. |
+| `AutoWeight` | A bare `%` plus its source span; resolved after explicit numeric and query weights. |
+| `QueryWeight` | A game-state query key plus its source span. The runtime numeric result becomes an explicit weight. |
+| `IWeightNormalization` | The injectable policy that fills autos, normalizes resolved values, and reports the raw total; consumed by static validation now and the runtime later. |
+| `ChoiceWeightReader` | Reads all three weight forms and reuses the existing query grammar for the quoted form. |
+| `SemanticTokenProjection` | A weight is a Markdown code span the editor already colors, so no dedicated weight token is projected. Query-key completion stays deferred until a game-state symbol source exists. |
 | `DiagnosticCatalog` | Own `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004`. |
-| `WeightTotalRule` | A structural rule that, for a fully static random choice, asks `IWeightNormalization` for the raw total; reports `DLG2010` when it is zero, or `DLG3003` when it is otherwise not ≈100%. Skips a single-option group. |
+| `WeightTotalRule` | Validates only fully static groups. A group containing `QueryWeight` defers zero/drift checks to runtime. |
 | `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. |
 
 ## Key design decisions
@@ -319,16 +353,30 @@ choice-nesting depth check) can query one type. This is a shared supertype, not
 a merge: `Choices` and `RandomChoices` remain distinct records, so it does not
 reintroduce the branching-on-a-flag problem above.
 
-### D7 — A closed weight hierarchy with a dynamic seam
+### D7 — Every weight is a spanned AST node
 
-`ChoiceWeight` is a closed set of records — `NumberWeight` and `AutoWeight` now —
-so exhaustive handling is compiler-checked. The dynamic `` `"Query"%` `` form is
-designed but not implemented: it reuses the game-call query grammar and adds a
-`QueryWeight` variant later. Modeling the seam now keeps the recognition and AST
-shape stable when the runtime lands, without building expression evaluation
-today.
+`ChoiceWeight` becomes a `ScriptNode` with the exact code-span location.
+`NumberWeight`, `AutoWeight`, and `QueryWeight` are the closed variants, so every
+consumer handles the complete set exhaustively.
 
-### D8 — Weight normalization is an injectable strategy
+The source span is not incidental metadata. It lets the Dialogue AST report show
+the weight as its own node, lets the compiler project a precise editor token,
+and gives a future runtime error the exact query weight that failed. Keeping a
+separate `WeightSpan` on `RandomOption` would split one concept across two
+objects; using the whole option span would underline unrelated speech.
+
+### D8 — A query weight reuses the query grammar
+
+`` `"Bob's Affection"%` `` is a query plus a percent sign, not a new expression
+language. The weight reader strips the trailing `%` and delegates the quoted
+portion to the same grammar used by a speech query. Only a query is valid:
+commands followed by `%` remain invalid weights.
+
+The AST stores the query key in `QueryWeight`; it does not copy a speech `Query`
+node because a weight is not an inline game call and must participate in the
+`ChoiceWeight` hierarchy.
+
+### D9 — Weight normalization is an injectable strategy
 
 Turning weights into probabilities — summing, filling autos, normalizing by the
 total, and the zero-total uniform fallback — lives behind an `IWeightNormalization`
@@ -341,31 +389,35 @@ The strategy takes non-negative weights as a precondition — recognition reject
 negative weight as `DLG1105` before it reaches the AST — and fails fast on a
 violation, so its output probabilities are always valid.
 
+For a dynamic group, the runtime first resolves each `QueryWeight` to a numeric
+explicit value and validates that it is finite and non-negative. Only then does
+it invoke the shared normalization policy. An invalid query value is an error;
+the runtime selects no option rather than guessing zero or falling back to a
+uniform distribution.
+
 ## Markdown interaction
 
 `` `50%` `` is an ordinary CommonMark **code span**. A plain Markdown preview
 renders it as inline code at the start of the list item, which reads naturally as
 a label on the option. The construct collides with no other Markdown syntax.
 
-Crucially, a leading code span on a choice option is **already a hard error
-today**: the inline walk sends it to `GameCallBuilder`, and no game call ends in
-`%`, so `` `50%` `` currently fails as `DLG1102`. Reclaiming that position for a
-weight therefore removes **no valid expressibility** — it gives meaning to input
-that was previously always rejected.
+No valid game call ends in `%`, so the trailing sign unambiguously distinguishes
+a weight from a speech query or command. In particular, `` `"key"` `` is a
+speech query, while `` `"key"%` `` is a query weight. The forms share the quoted
+query grammar but occupy different AST contexts.
 
 **Literal text.** The weight is special *only* as the first inline of a
 choice-list item. Elsewhere — mid-speech, in paragraphs, in a non-choice list —
 a code span ending in `%` is untouched. In the rare case a writer wants a literal
 leading `` `100%` `` code span on a choice option, they can put any text before
-it; because that exact position was previously a `DLG1102` error, no previously
-valid script changes meaning.
+it so the code span is no longer the option's weight prefix.
 
 ## Diagnostics
 
 | Code | Title | Category | Severity | When |
 | --- | --- | --- | --- | --- |
 | `DLG1104` | Missing weight in a random choice | Syntax | Error | An option in a random choice has no leading weight span. |
-| `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is not a non-negative number or a bare `%` (e.g. `` `-10%` ``, `` `abc%` ``, or — until dynamic weights ship — `` `"q"%` ``). |
+| `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is not a non-negative number, a quoted query, or a bare `%` (e.g. `` `-10%` `` or `` `abc%` ``). |
 | `DLG2010` | Random choice weights sum to zero | Semantic | Error | A fully static random choice's weights all resolve to 0, so no option can be selected. |
 | `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static random choice's weights do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
 | `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. |
@@ -391,38 +443,52 @@ planned dropped-unmodeled-Markdown warning).
 | Negative weight (`` `-10%` ``) | `DLG1105`. |
 | Non-numeric, non-query value (`` `abc%` ``) | `DLG1105`. |
 | Non-integer (`` `33.3%` ``) | Allowed; normalized. |
-| Any dynamic weight (`` `"q"%` ``) | Rejected as `DLG1105` for now; the closed `ChoiceWeight` hierarchy leaves a `QueryWeight` seam for when the runtime lands (deferred). |
+| Quoted query weight (`` `"q"%` ``) | Accepted as `QueryWeight`; compile-time total checks are deferred. |
+| Query returns a missing, non-numeric, negative, NaN, or infinite value | Runtime error; select no option. |
+| Static + query + auto | Resolve the query, subtract all explicit values from 100, split the non-negative remainder across autos, then normalize. |
+| Resolved dynamic total is zero | Runtime error equivalent to `DLG2010`; select no option. |
+| Resolved dynamic total differs from 100 by more than 0.5 | Runtime warning equivalent to `DLG3003`; normalize and continue. |
 | Nested random choice | Composes recursively; the choice-nesting rule (`DLG3002`) still applies. |
 | Ordered vs unordered list | Both may be random; a random choice shows no menu, so list ordering is not observed. |
 
 ## Testability
 
-- **Recognition (transpiler):** each weight form (`` `50%` ``, `` `%` ``,
-  non-integer) is peeled into the right `ChoiceWeight`; the option body keeps its
-  remaining inlines; an all-unweighted list stays an ordinary player choice.
+- **Recognition (transpiler):** each weight form (`` `50%` ``, `` `%` ``, and
+  `` `"q"%` ``) is peeled into the right spanned `ChoiceWeight`; the query form
+  shares the speech-query grammar; the option body keeps its remaining inlines.
+- **AST traversal:** a `RandomOption` yields its weight before its body, and each
+  weight preserves the exact code-span source location.
 - **Normalization strategy (isolated):** feed weight lists straight to
   `IWeightNormalization` and assert the probabilities, raw total, auto
   distribution, over-100 totals, the zero-total uniform recovery, and a
   fail-fast on a negative weight — no parsing involved.
+- **Dynamic runtime contract:** resolve query values through a fake game-state
+  source and cover valid decimals, missing/non-numeric values, negative and
+  non-finite values, mixed autos, zero total, and drift warnings.
 - **Diagnostics:** `DLG1104`, `DLG1105`, `DLG2010`, and `DLG3003` fire on the
   right inputs with located spans, and a well-formed random choice produces none.
 - **Boundaries:** every row in the table above, especially auto distribution,
   over-100 totals, and the zero-total error.
 - **Composition:** a nested random choice inside a player choice (and vice
   versa) builds correctly and still triggers the nesting rule when deep.
-- **AST shape:** a weighted list yields a `RandomChoices` of `RandomOption`s
-  with the source weights; an unweighted list still yields `Choices`.
+- **Visualization/editor:** Dialogue and Desugared AST projections show all
+  weight variants; the semantic-token projection highlights the exact weight
+  span. Query-key completion remains absent until the compiler receives a
+  game-state symbol source.
 
 Use multi-line raw string literals for the script fixtures so the weights and
 indentation are visible.
 
 ## Implementation crosscheck
 
+The static random choice shipped as recorded below. The compiler now recognizes
+and preserves a dynamic query weight; executing it awaits the runtime.
+
 | Bucket | Result |
 | --- | --- |
-| **Achieved** | Recognition (`RandomChoices`/`RandomOption`, weight peeling, the `ChoiceGroup` base), the `NumberWeight`/`AutoWeight` model, the injectable normalization strategy, all five diagnostics (`DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, `DLG3004`), the ≈100 tolerance, the single-option warning, nesting-depth counting, the report AST projection, and the writer spec + gallery all match the design. |
-| **Changed** | `DLG3003` shows the actual total and uses a 0.5 tolerance (the note originally said only "approximately 100"). A single-option group became its own `DLG3004` warning rather than "no diagnostic". The two group records gained a shared `ChoiceGroup` base so the nesting rule can query one type. |
-| **Deferred** | Dynamic `` `"Query"%` `` weights are not implemented; they are rejected as `DLG1105` for now. The closed `ChoiceWeight` hierarchy leaves a `QueryWeight` seam, and runtime resolution/normalization of dynamic weights is tracked with the [runtime work](https://github.com/pengzhengyi/godot-dialoguedown/issues/45). |
+| **Achieved (static)** | Recognition (`RandomChoices`/`RandomOption`, weight peeling, the `ChoiceGroup` base), the `NumberWeight`/`AutoWeight` model, the injectable normalization strategy, the five static diagnostics (`DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, `DLG3004`), the ≈100 tolerance, the single-option warning, nesting-depth counting, the report AST projection, and the writer spec + gallery all match the design. |
+| **Changed (static)** | `DLG3003` shows the actual total and uses a 0.5 tolerance (the note originally said only "approximately 100"). A single-option group became its own `DLG3004` warning rather than "no diagnostic". The two group records gained a shared `ChoiceGroup` base so the nesting rule can query one type. |
+| **Achieved (dynamic recognition)** | `ChoiceWeight` is a spanned `ScriptNode`; a `QueryWeight` reuses the query grammar; static total checks skip a group containing a query weight; and the report renders the query weight. Resolving, validating, and normalizing query values at selection time awaits the [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45). |
 
 ## Alternatives not chosen
 
@@ -435,14 +501,16 @@ indentation are visible.
 | Reject totals that are not exactly 100 | Over-strict; relative weights are a feature, and normalization makes any positive total valid. |
 | Treat an unweighted option in a random list as an implicit auto | Silently guesses a probability; a bare `` `%` `` already expresses "share the rest" explicitly. |
 | A `bool IsRandom` flag on `Choices` plus a weight field on `Choice` | Blurs two behaviors (player menu vs engine pick) into one type and forces every consumer to branch on a flag; a dedicated `RandomChoices` node keeps them cleanly separated (D6). |
-| Normalize inline in the builder or the validation rule | Couples the arithmetic to parsing, makes it hard to test in isolation, and duplicates it for the runtime; an injectable strategy is unit-testable and shared (D8). |
-| Implement dynamic `` `"Query"%` `` weights now | No runtime exists to resolve game state; the seam is modeled and deferred. |
+| Normalize inline in the builder or the validation rule | Couples the arithmetic to parsing, makes it hard to test in isolation, and duplicates it for the runtime; an injectable strategy is unit-testable and shared (D9). |
+| Reject a query weight until the runtime ships | Writers could not author dynamic scripts, and the AST shape would change later; accepting and preserving `QueryWeight` now keeps scripts and the tree stable. |
+| Resolve a query weight at compile time | Game state is unknown until the game runs, so a compile-time total would be fictional; static checks skip a dynamic group and the runtime validates instead. |
 
 ## Open questions and deferred work
 
-- **Dynamic weights** (`` `"Query"%` ``) — recognized in the grammar and modeled
-  as a `QueryWeight` seam, but resolution needs the runtime. Deferred with the
-  [runtime work](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
+- **Runtime execution of query weights** — the compiler accepts and preserves a
+  `QueryWeight`, but resolving its query to a number, validating that the value is
+  finite and non-negative, and drawing the weighted sample all need the runtime.
+  Tracked with the [runtime work](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
 - **Weighted player menu** — weights that bias a *shown* menu (for previews or
   autoplay) are explicitly out of scope; this construct always resolves to one
   option with no menu.

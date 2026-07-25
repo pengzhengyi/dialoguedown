@@ -21,8 +21,8 @@ internal static class GameCallParser
         from trailing in Character.WhiteSpace.Many()
         select comma;
 
-    private static readonly TextParser<GameCallData> _query =
-        SuperpowerPrimitives.QuotedString.Select(key => (GameCallData)new QueryData(key));
+    private static readonly TextParser<QueryData> _query =
+        SuperpowerPrimitives.QuotedString.Select(key => new QueryData(key));
 
     private static readonly TextParser<GameCallData> _defaultCommand =
         from action in SuperpowerPrimitives.QuotedString.EnclosedInParentheses()
@@ -35,8 +35,14 @@ internal static class GameCallParser
             .EnclosedInParentheses()
         select (GameCallData)new CustomCommandData(name.ToStringValue(), args);
 
+    /// <summary>
+    /// The query grammar on its own, so a consumer that only accepts a query — such as a
+    /// dynamic choice weight — reuses the same recognition instead of re-deriving it.
+    /// </summary>
+    public static IParser<QueryData> Query { get; } = SuperpowerParser.Wrap(_query);
+
     public static IParser<GameCallData> Grammar { get; } = SuperpowerParser.Wrap(
-        _query.Try()
+        _query.Select(query => (GameCallData)query).Try()
             .Or(_defaultCommand.Try())
             .Or(_customCommand));
 }

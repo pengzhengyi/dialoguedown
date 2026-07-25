@@ -89,9 +89,9 @@ public sealed class ChoiceNestingDepthRuleTests
     public void Check_RandomChoicesCountTowardNestingDepth()
     {
         // Depth mixes both group kinds: Choices > RandomChoices > Choices > RandomChoices.
-        var level4 = RandomChoices(40, RandomOption(new NumberWeight(50), Line(Text("deep"))));
+        var level4 = RandomChoices(40, RandomOption(NumberWeight(50), Line(Text("deep"))));
         var level3 = Choices(Choice(level4));
-        var level2 = RandomChoices(RandomOption(new AutoWeight(), level3));
+        var level2 = RandomChoices(RandomOption(AutoWeight(), level3));
         var root = Choices(Choice(level2));
 
         var diagnostic = Assert.Single(Check(root));

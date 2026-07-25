@@ -59,6 +59,9 @@ internal sealed class DefaultWeightNormalization : IWeightNormalization
     {
         NumberWeight number => number.Percentage,
         AutoWeight => autoShare,
+        QueryWeight => throw new ArgumentOutOfRangeException(
+            nameof(weight), weight.GetType(),
+            "A query weight has no compile-time value; resolve it at runtime before normalizing."),
         _ => throw new ArgumentOutOfRangeException(
             nameof(weight), weight.GetType(), "Unhandled choice weight kind."),
     };

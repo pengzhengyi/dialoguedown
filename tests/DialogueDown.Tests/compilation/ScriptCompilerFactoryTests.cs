@@ -65,8 +65,8 @@ public sealed class ScriptCompilerFactoryTests
         Assert.Empty(result.Diagnostics);
 
         var random = Assert.IsType<RandomChoices>(result.Desugared.Body[2]);
-        Assert.Equal(new NumberWeight(70), random.Options[0].Weight);
-        Assert.IsType<AutoWeight>(random.Options[1].Weight);
+        AssertNumberWeight(random.Options[0], 70);
+        AssertAutoWeight(random.Options[1]);
 
         var first = AssertLine(Assert.Single(random.Options[0].Body));
         AssertSpeakerNameReference(first.Speaker!, "Alice");

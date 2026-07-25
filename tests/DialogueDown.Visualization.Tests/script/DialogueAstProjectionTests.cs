@@ -94,19 +94,23 @@ public sealed class DialogueAstProjectionTests
     {
         var span = new SourceSpan(0, 5);
 
-        var numeric = _projection.Describe(new RandomOption(new NumberWeight(50), [], span));
+        var numeric = _projection.Describe(new RandomOption(new NumberWeight(50, span), [], span));
         Assert.Equal("Random option", numeric.Label);
         Assert.Equal("choice", numeric.Category);
         Assert.Contains(numeric.Attributes, a => a.Name == "weight" && a.Value == "50%");
 
-        var auto = _projection.Describe(new RandomOption(new AutoWeight(), [], span));
+        var auto = _projection.Describe(new RandomOption(new AutoWeight(span), [], span));
         Assert.Contains(auto.Attributes, a => a.Name == "weight" && a.Value == "%");
+
+        var query = _projection.Describe(
+            new RandomOption(new QueryWeight("Bob.Affection", span), [], span));
+        Assert.Contains(query.Attributes, a => a.Name == "weight" && a.Value == "\"Bob.Affection\"%");
     }
 
     [Fact]
     public void Neighbors_RandomChoices_YieldsOptions()
     {
-        var option = new RandomOption(new AutoWeight(), [], new SourceSpan(0, 1));
+        var option = new RandomOption(new AutoWeight(new SourceSpan(0, 1)), [], new SourceSpan(0, 1));
         var random = new RandomChoices([option], new SourceSpan(0, 5));
 
         Assert.Equal(new object[] { option }, _projection.Neighbors(random));
@@ -116,7 +120,7 @@ public sealed class DialogueAstProjectionTests
     public void Neighbors_RandomOption_YieldsBody()
     {
         var line = new Line(null, [new Text("x", new SourceSpan(0, 1))], new SourceSpan(0, 1));
-        var option = new RandomOption(new NumberWeight(50), [line], new SourceSpan(0, 5));
+        var option = new RandomOption(new NumberWeight(50, new SourceSpan(0, 5)), [line], new SourceSpan(0, 5));
 
         Assert.Equal(new object[] { line }, _projection.Neighbors(option));
     }

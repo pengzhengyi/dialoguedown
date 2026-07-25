@@ -45,6 +45,14 @@ internal static class DialogueAstFactory
     public static Choices Choices(bool isOrdered, params Choice[] options) =>
         new(isOrdered, options, SourceSpanFactory.Span());
 
+    public static NumberWeight NumberWeight(double percentage) =>
+        new(percentage, SourceSpanFactory.Span());
+
+    public static AutoWeight AutoWeight() => new(SourceSpanFactory.Span());
+
+    public static QueryWeight QueryWeight(string key) =>
+        new(key, SourceSpanFactory.Span());
+
     public static RandomOption RandomOption(ChoiceWeight weight, params ScriptBlock[] body) =>
         new(weight, body, SourceSpanFactory.Span());
 

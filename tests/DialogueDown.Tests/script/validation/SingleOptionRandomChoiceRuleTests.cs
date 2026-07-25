@@ -13,7 +13,7 @@ public sealed class SingleOptionRandomChoiceRuleTests
     [Fact]
     public void Check_ASingleOptionRandomChoice_WarnsAtTheGroupStart()
     {
-        var random = RandomChoices(9, RandomOption(new NumberWeight(50), Line(Text("only"))));
+        var random = RandomChoices(9, RandomOption(NumberWeight(50), Line(Text("only"))));
 
         var diagnostic = AssertReported(Check(random), DiagnosticCatalog.SingleOptionRandomChoice);
 
@@ -24,7 +24,7 @@ public sealed class SingleOptionRandomChoiceRuleTests
     [Fact]
     public void Check_ASingleZeroWeightOption_AlsoWarns()
     {
-        var random = RandomChoices(RandomOption(new NumberWeight(0), Line(Text("never?"))));
+        var random = RandomChoices(RandomOption(NumberWeight(0), Line(Text("never?"))));
 
         AssertReported(Check(random), DiagnosticCatalog.SingleOptionRandomChoice);
     }
@@ -33,8 +33,8 @@ public sealed class SingleOptionRandomChoiceRuleTests
     public void Check_MultipleOptions_ReportsNothing()
     {
         var random = RandomChoices(
-            RandomOption(new NumberWeight(50), Line(Text("a"))),
-            RandomOption(new NumberWeight(50), Line(Text("b"))));
+            RandomOption(NumberWeight(50), Line(Text("a"))),
+            RandomOption(NumberWeight(50), Line(Text("b"))));
 
         Assert.Empty(Check(random));
     }

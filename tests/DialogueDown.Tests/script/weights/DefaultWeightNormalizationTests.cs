@@ -1,6 +1,6 @@
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Weights;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Weights;
 
@@ -11,7 +11,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void EqualNumbers_SplitEvenly_AndTotalOneHundred()
     {
-        var result = _normalizer.Normalize([new NumberWeight(50), new NumberWeight(50)]);
+        var result = _normalizer.Normalize([NumberWeight(50), NumberWeight(50)]);
 
         AssertProbabilities(result, 0.5, 0.5);
         NumericAssert.Equal(100, result.RawTotal);
@@ -20,7 +20,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void NumbersBelowOneHundred_AreNormalizedBySum_AndReportTheRawTotal()
     {
-        var result = _normalizer.Normalize([new NumberWeight(30), new NumberWeight(30)]);
+        var result = _normalizer.Normalize([NumberWeight(30), NumberWeight(30)]);
 
         AssertProbabilities(result, 0.5, 0.5);
         NumericAssert.Equal(60, result.RawTotal);
@@ -29,7 +29,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void NumbersAboveOneHundred_AreNormalizedBySum_AndReportTheRawTotal()
     {
-        var result = _normalizer.Normalize([new NumberWeight(60), new NumberWeight(60)]);
+        var result = _normalizer.Normalize([NumberWeight(60), NumberWeight(60)]);
 
         AssertProbabilities(result, 0.5, 0.5);
         NumericAssert.Equal(120, result.RawTotal);
@@ -38,7 +38,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void AnAutoWeight_ClaimsTheLeftoverAfterTheExplicitWeights()
     {
-        var result = _normalizer.Normalize([new NumberWeight(70), new AutoWeight()]);
+        var result = _normalizer.Normalize([NumberWeight(70), AutoWeight()]);
 
         AssertProbabilities(result, 0.7, 0.3);
         NumericAssert.Equal(100, result.RawTotal);
@@ -48,7 +48,7 @@ public sealed class DefaultWeightNormalizationTests
     public void SeveralAutoWeights_SplitTheLeftoverEqually()
     {
         var result = _normalizer.Normalize(
-            [new NumberWeight(50), new AutoWeight(), new AutoWeight()]);
+            [NumberWeight(50), AutoWeight(), AutoWeight()]);
 
         AssertProbabilities(result, 0.5, 0.25, 0.25);
         NumericAssert.Equal(100, result.RawTotal);
@@ -57,7 +57,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void AllAutoWeights_ProduceAUniformDistribution()
     {
-        var result = _normalizer.Normalize([new AutoWeight(), new AutoWeight()]);
+        var result = _normalizer.Normalize([AutoWeight(), AutoWeight()]);
 
         AssertProbabilities(result, 0.5, 0.5);
         NumericAssert.Equal(100, result.RawTotal);
@@ -66,7 +66,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void WhenExplicitWeightsExceedOneHundred_AutoWeightsResolveToZero()
     {
-        var result = _normalizer.Normalize([new NumberWeight(120), new AutoWeight()]);
+        var result = _normalizer.Normalize([NumberWeight(120), AutoWeight()]);
 
         AssertProbabilities(result, 1.0, 0.0);
         NumericAssert.Equal(120, result.RawTotal);
@@ -77,7 +77,7 @@ public sealed class DefaultWeightNormalizationTests
     {
         // A zero total is a validation error (DLG2010); the strategy still returns a valid
         // distribution so downstream never divides by zero.
-        var result = _normalizer.Normalize([new NumberWeight(0), new NumberWeight(0)]);
+        var result = _normalizer.Normalize([NumberWeight(0), NumberWeight(0)]);
 
         AssertProbabilities(result, 0.5, 0.5);
         NumericAssert.Equal(0, result.RawTotal);
@@ -86,7 +86,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void ASingleOption_IsAlwaysSelected_ButItsRawTotalIsPreserved()
     {
-        var result = _normalizer.Normalize([new NumberWeight(50)]);
+        var result = _normalizer.Normalize([NumberWeight(50)]);
 
         AssertProbabilities(result, 1.0);
         NumericAssert.Equal(50, result.RawTotal);
@@ -96,7 +96,7 @@ public sealed class DefaultWeightNormalizationTests
     public void NonIntegerWeights_AreNormalized_AndProbabilitiesSumToOne()
     {
         var result = _normalizer.Normalize(
-            [new NumberWeight(33.3), new NumberWeight(33.3), new NumberWeight(33.3)]);
+            [NumberWeight(33.3), NumberWeight(33.3), NumberWeight(33.3)]);
 
         AssertProbabilities(result, 1.0 / 3, 1.0 / 3, 1.0 / 3);
         NumericAssert.Equal(99.9, result.RawTotal);
@@ -105,7 +105,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void ANegativeWeight_IsRejected_AsACallerError() =>
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => _normalizer.Normalize([new NumberWeight(-10), new NumberWeight(50)]));
+            () => _normalizer.Normalize([NumberWeight(-10), NumberWeight(50)]));
 
     private static void AssertProbabilities(WeightDistribution result, params double[] expected)
     {
