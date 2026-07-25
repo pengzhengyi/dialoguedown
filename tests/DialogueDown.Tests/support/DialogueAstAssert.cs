@@ -153,6 +153,13 @@ internal static class DialogueAstAssert
     public static AutoWeight AssertAutoWeight(RandomOption option) =>
         Assert.IsType<AutoWeight>(option.Weight);
 
+    public static QueryWeight AssertQueryWeight(RandomOption option, string key)
+    {
+        var weight = Assert.IsType<QueryWeight>(option.Weight);
+        Assert.Equal(key, weight.Key);
+        return weight;
+    }
+
     public static Text AssertSpeechText(Line line, string content) =>
         AssertText(Assert.Single(line.Speech), content);
 

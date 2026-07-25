@@ -302,6 +302,25 @@ public sealed class BlockBuilderTests
         Assert.Equal(item.Span, Assert.Single(random.Options).Span);
     }
 
+    [Fact]
+    public void RandomChoice_RecognizesAQueryWeight_WithoutReportingAnInvalidWeight()
+    {
+        var diagnostics = new DiagnosticBag();
+
+        var body = _builder.Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"Bob.Affection\"%"), Text(" Bob: Hi."))),
+                ListItem(Paragraph(CodeSpan("\"Christina.Affection\"%"), Text(" Christina: Hi.")))),
+        ], diagnostics);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        AssertQueryWeight(random.Options[0], "Bob.Affection");
+        AssertQueryWeight(random.Options[1], "Christina.Affection");
+        Assert.Empty(diagnostics.Diagnostics);
+    }
+
     private IReadOnlyList<ScriptBlock> Build(IReadOnlyList<MarkdownBlock> blocks) =>
         _builder.Build(blocks, new DiagnosticBag());
 }

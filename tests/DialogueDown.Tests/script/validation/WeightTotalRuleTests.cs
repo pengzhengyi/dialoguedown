@@ -93,6 +93,16 @@ public sealed class WeightTotalRuleTests
         Assert.Empty(Check(random));
     }
 
+    [Fact]
+    public void Check_AQueryWeightInTheGroup_DefersTheChecksToRuntime()
+    {
+        var random = RandomChoices(
+            RandomOption(NumberWeight(20), Line(Text("static"))),
+            RandomOption(QueryWeight("Bob.Affection"), Line(Text("dynamic"))));
+
+        Assert.Empty(Check(random));
+    }
+
     private static IReadOnlyList<Diagnostic> Check(RandomChoices root)
     {
         var bag = new DiagnosticBag();

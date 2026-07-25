@@ -34,6 +34,15 @@ public sealed class ChoiceWeightTests
         Assert.NotEqual<ChoiceWeight>(AutoWeight(), NumberWeight(0));
 
     [Fact]
+    public void QueryWeight_ExposesItsKey_AndIsAChoiceWeight()
+    {
+        var weight = QueryWeight("Bob.Affection");
+
+        Assert.Equal("Bob.Affection", weight.Key);
+        Assert.IsAssignableFrom<ChoiceWeight>(weight);
+    }
+
+    [Fact]
     public void Weights_AreSpannedScriptNodes_CarryingTheirCodeSpanLocation()
     {
         var span = new SourceSpan(3, 8);

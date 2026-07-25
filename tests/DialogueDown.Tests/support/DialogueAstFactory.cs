@@ -50,6 +50,9 @@ internal static class DialogueAstFactory
 
     public static AutoWeight AutoWeight() => new(SourceSpanFactory.Span());
 
+    public static QueryWeight QueryWeight(string key) =>
+        new(key, SourceSpanFactory.Span());
+
     public static RandomOption RandomOption(ChoiceWeight weight, params ScriptBlock[] body) =>
         new(weight, body, SourceSpanFactory.Span());
 

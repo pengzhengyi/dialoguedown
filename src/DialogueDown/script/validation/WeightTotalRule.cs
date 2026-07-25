@@ -14,7 +14,8 @@ namespace DialogueDown.Script.Validation;
 /// option can be selected; otherwise a warning
 /// (<see cref="DiagnosticCatalog.ChoiceWeightsNotOneHundred"/>) when they do not total
 /// approximately 100%. A single-option group is skipped: its lone option is always selected, so
-/// its total is moot.
+/// its total is moot, as is a group containing a <see cref="QueryWeight"/> — its total is only
+/// known at runtime.
 /// </summary>
 internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDiagnosticRule
 {
@@ -36,6 +37,12 @@ internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDia
     private void Inspect(RandomChoices random, IDiagnosticSink diagnostics)
     {
         if (random.Options.Count <= 1)
+        {
+            return;
+        }
+
+        // A query weight has no compile-time value; the runtime resolves it and checks the total.
+        if (random.Options.Any(option => option.Weight is QueryWeight))
         {
             return;
         }

@@ -46,8 +46,19 @@ public sealed class ChoiceWeightReaderTests
     [Theory]
     [InlineData("-10%")]
     [InlineData("abc%")]
-    [InlineData("\"Bob's Affection\"%")]
     [InlineData("%%")]
     public void Read_AnInvalidWeight_YieldsNull(string content) =>
         Assert.Null(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
+
+    [Theory]
+    [InlineData("\"Bob's Affection\"%", "Bob's Affection")]
+    [InlineData("\"Guard.Suspicion\"%", "Guard.Suspicion")]
+    [InlineData(" \"x\" % ", "x")]
+    public void Read_AQuotedQuery_YieldsAQueryWeight(string content, string expectedKey)
+    {
+        var weight = Assert.IsType<QueryWeight>(
+            ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
+
+        Assert.Equal(expectedKey, weight.Key);
+    }
 }
