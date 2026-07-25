@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Copy a scene heading's anchor from the report** — hovering a heading in the live
+  visualization's Source preview reveals a link icon that copies a ready-to-paste jump
+  `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.
+  See the
+  [Live Visualization — Heading Anchors](docs/contributing/design-notes/Live%20Visualization%20-%20Heading%20Anchors.md) note.
 - **Random choices** — a choice list whose options lead with a `` `%` `` weight now becomes a
   *random choice*: the engine picks one option at random by weight instead of offering the player a
   menu. Write an explicit percentage (`` `50%` ``) or a bare `` `%` `` to share the remaining

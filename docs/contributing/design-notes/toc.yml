@@ -88,6 +88,8 @@
     href: Compiler-Projected Editor Semantics.md
   - name: Precise Speaker Tokens
     href: Precise Speaker Tokens.md
+  - name: Live Visualization — Heading Anchors
+    href: Live Visualization - Heading Anchors.md
 - name: Other notes
   items:
   - name: BBCode Rendering

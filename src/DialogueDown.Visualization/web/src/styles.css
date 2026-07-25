@@ -763,6 +763,41 @@ g.node.entity-highlight text.label {
     font-weight: 600;
 }
 
+/* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
+   The wrapper is a zero-size inline box; the chip floats as an absolute overlay so it adds no
+   line height or wrap width (the editor/preview scroll-sync aligns on heading line tops). */
+.dd-slug-hint-wrap {
+    position: relative;
+    display: inline;
+}
+
+.dd-slug-hint {
+    position: absolute;
+    left: 0.6em;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0 0.3em;
+    border: 0;
+    border-radius: 0.4em;
+    background: none;
+    color: var(--md-muted);
+    font-family: var(--pico-font-family-monospace, ui-monospace, monospace);
+    font-size: 0.82em;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.75;
+    transition:
+        opacity 0.12s ease,
+        color 0.12s ease;
+}
+
+.dd-slug-hint:hover,
+.dd-slug-hint:focus-visible {
+    color: var(--md-link);
+    opacity: 1;
+}
+
 /* The diagnostics overlay. The squiggles and gutter markers use CodeMirror's built-in lint
    theme (severity-colored); this themes the hover tooltip to match the report card and styles
    the "more information" docs link inside it. Two tooltip shapes need theming: hovering a
@@ -1007,6 +1042,46 @@ g.node.entity-highlight text.label {
 
 .source-preview :is(h1, h2, h3, h4, h5, h6) {
     scroll-margin-top: 0.5rem;
+}
+
+/* A hover-revealed chain-link after each preview heading copies the full jump target. It inherits
+   the heading's font size, then renders well shorter than the text line; inline-flex +
+   vertical-align middle, nudged down to the caps' optical center, seats it on the text rather than
+   raising it like a superscript. */
+.source-preview .heading-anchor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.3em;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: var(--md-muted);
+    font: inherit;
+    line-height: 1;
+    vertical-align: middle;
+    transform: translateY(0.16em);
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.12s ease,
+        color 0.12s ease;
+}
+
+.source-preview .heading-anchor-link svg {
+    display: block;
+    width: 0.62em;
+    height: 0.62em;
+}
+
+.source-preview :is(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
+.source-preview .heading-anchor:focus-visible {
+    opacity: 1;
+}
+
+.source-preview .heading-anchor:hover,
+.source-preview .heading-anchor:focus-visible {
+    color: var(--md-link);
 }
 
 /* Briefly highlight the heading an anchor link jumped to. */
