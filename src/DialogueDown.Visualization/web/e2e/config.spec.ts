@@ -69,13 +69,14 @@ test.describe("Config tab — a configured project", () => {
         await expect(page.locator(".toast.visible")).toContainText("Copied Guide");
     });
 
-    test("maximizes the whole tab from the Config controls", async ({ page }) => {
+    test("maximizes the whole tab from the tab-bar control", async ({ page }) => {
         await page.locator(".tab", { hasText: "Config" }).click();
         await expect(page.locator("body.maximized")).toHaveCount(0);
+        await expect(page.locator(".config-controls")).toHaveCount(0);
 
-        await page.locator(".config-controls .maximize-button").click();
+        await page.locator(".tabbar-maximize").click();
         await expect(page.locator("body.maximized")).toHaveCount(1);
-        // The panes still show while maximized, and the app chrome is hidden.
+        // Both panes still show while maximized, and the app chrome is hidden.
         await expect(page.locator(".config-source .cm-editor")).toBeVisible();
         await expect(page.locator(".app-header")).toBeHidden();
     });

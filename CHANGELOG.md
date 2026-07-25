@@ -140,6 +140,9 @@ changes easy to categorize.
 
 ### Changed
 
+- **One maximize control for the whole report.** The visualization report's *full screen*
+  toggle now lives once at the right end of the tab bar (with a matching exit control while
+  maximized), instead of a separate button in each tab's toolbar; `f` and `Escape` still toggle it.
 - Development verification now provides faster targeted local loops and
   parallel, overlapped frontend CI while retaining the full test, analyzer,
   coverage, accessibility, and generated-bundle gates.

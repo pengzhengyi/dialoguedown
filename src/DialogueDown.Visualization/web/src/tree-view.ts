@@ -87,8 +87,6 @@ export interface TreeViewOptions {
     onFoldChange?(collapsed: string[]): void;
     /** Fired when the reader clicks Revert, so the caller can drop remembered state. */
     onRevert?(): void;
-    /** Toggle the whole-window maximize mode (the zoom cluster's trailing button). */
-    onToggleFullscreen?(): void;
     /**
      * Route a move of the selection to a different node through the app's navigation boundary. The
      * app resolves navigation (an Auto flush, or a discard prompt) and then re-applies the
@@ -132,7 +130,6 @@ export function createTreeView(
         onCameraChange,
         onFoldChange,
         onRevert,
-        onToggleFullscreen = () => {},
         onNodeSelect,
     } = options;
     const referenceEdges = stage.edges.filter((edge) => edge.kind === "Reference");
@@ -185,7 +182,6 @@ export function createTreeView(
         onSetZoom: (percent) =>
             userAction(() => svg.call(zoomBehavior.scaleTo, clampScale(percent / 100))),
         onRevert: () => revert(),
-        onToggleFullscreen,
     });
 
     const legend = createLegend(stage, {
