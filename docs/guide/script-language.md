@@ -35,6 +35,7 @@ model for developers.
     - [Succession](#succession)
     - [Choices](#choices)
     - [Random choices](#random-choices)
+      - [Dynamic weights (proposed)](#dynamic-weights-proposed)
     - [Jumps](#jumps)
     - [Comments](#comments)
     - [Front matter](#front-matter)
@@ -397,6 +398,10 @@ Bob: What's your favorite color?
 Alice: My favorite color is red.
 ```
 
+> [!TIP]
+> A query can also drive a random choice's odds — see
+> [Dynamic weights](#dynamic-weights-proposed).
+
 ### Commands
 
 A command changes game state through `IGameSystem.Execute`.
@@ -594,6 +599,49 @@ A few rules keep random choices unambiguous:
   only a weight in this leading position; elsewhere it is ordinary inline code.
 - **A Markdown preview** shows each weight as inline code (`50%`) at the start of
   the option — readable, and clearly not spoken text.
+
+#### Dynamic weights (proposed)
+
+> [!NOTE]
+> Dynamic weights are a **proposed** extension. The compiler will accept and
+> preserve them, but resolving and drawing them needs the engine runtime, which
+> is still in progress
+> ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)).
+> Scripts that use them do not run yet.
+
+A weight can also be **computed from game state**. Wrap a [query](#queries) in a
+code span and end it with `%`; its runtime numeric result becomes the option's
+weight:
+
+```markdown
+The rival spots you across the courtyard.
+
+- `"Bob.Affection"%`       Bob: ...good to see you.
+- `"Christina.Affection"%` Christina: Oh — hello.
+```
+
+The engine reads each query through `IGameSystem.Query`, treats the result as a
+percentage, and picks one line by weight — so the character most fond of the
+player is the most likely to greet them. Static, auto, and dynamic weights mix
+freely in one list:
+
+```markdown
+- `50%`                Guard: Halt!
+- `"Guard.Suspicion"%` Guard: ...I'm watching you.
+- `%`                  Guard: Move along.
+```
+
+Because the numbers are unknown until the game runs, the usual "weights should
+total 100%" check is **deferred to runtime** for any list that contains a
+dynamic weight. At runtime:
+
+- Each query must resolve to a **finite, non-negative number**. A missing,
+  non-numeric, negative, or infinite result is an error, and the engine selects
+  no option.
+- Auto weights take an equal share of what is left after **both** the static and
+  the resolved dynamic weights: `max(0, 100 − static − dynamic) / autoCount`.
+- The resolved weights are then normalized by their sum, exactly like static
+  weights: a zero total is an error, and a total far from 100 warns.
 
 ### Jumps
 
