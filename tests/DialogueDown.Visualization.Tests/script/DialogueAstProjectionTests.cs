@@ -101,6 +101,10 @@ public sealed class DialogueAstProjectionTests
 
         var auto = _projection.Describe(new RandomOption(new AutoWeight(span), [], span));
         Assert.Contains(auto.Attributes, a => a.Name == "weight" && a.Value == "%");
+
+        var query = _projection.Describe(
+            new RandomOption(new QueryWeight("Bob.Affection", span), [], span));
+        Assert.Contains(query.Attributes, a => a.Name == "weight" && a.Value == "\"Bob.Affection\"%");
     }
 
     [Fact]
