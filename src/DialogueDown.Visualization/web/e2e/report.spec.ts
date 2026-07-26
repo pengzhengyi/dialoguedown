@@ -67,6 +67,28 @@ test("clicking a preview anchor link scrolls to its heading", async ({ page }) =
     await expect(page.locator("#the-market")).toBeInViewport();
 });
 
+test("the preview cycles nested unordered bullets by depth and keeps ordered lists numbered", async ({
+    page,
+}) => {
+    // Regression: Pico's base stylesheet forces every `ul li` to a square, flattening nested
+    // unordered lists to one marker. The preview must restore the browser/VSCode cascade
+    // (disc -> circle -> square) while leaving ordered lists numbered.
+    await page.goto(writeReport({ source: "- a\n  - b\n    - c\n\n1. x\n1. y\n", stages: [] }));
+    const preview = page.locator("section.stage.active .source-preview");
+    await expect(preview.locator("ul")).toHaveCount(3);
+
+    const markerOf = (selector: string) =>
+        preview
+            .locator(selector)
+            .first()
+            .evaluate((el) => getComputedStyle(el).listStyleType);
+    expect(await markerOf("ul > li")).toBe("disc");
+    expect(await markerOf("ul ul > li")).toBe("circle");
+    expect(await markerOf("ul ul ul > li")).toBe("square");
+    expect(await markerOf("ol > li")).toBe("decimal");
+    await expect(preview.locator("ol > li")).toHaveCount(2);
+});
+
 test("the theme toggle forces light/dark and returns to following the system", async ({ page }) => {
     const html = page.locator("html");
     await expect(page.locator(".theme-select")).toBeVisible();
