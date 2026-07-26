@@ -37,6 +37,7 @@ model for developers.
     - [Random choices](#random-choices)
       - [Dynamic weights](#dynamic-weights)
     - [Jumps](#jumps)
+    - [Conditional jumps](#conditional-jumps)
     - [Comments](#comments)
     - [Front matter](#front-matter)
     - [Authoring aids](#authoring-aids)
@@ -95,6 +96,7 @@ flowchart TD
 | Choice | `- Bob: Really?` | Offer a selectable response. |
 | Random choice | ``- `50%` Bob: Really?`` | Let the engine pick one option by weight. |
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
+| Conditional jump | `` `"Rainy"?` => [Inn](#inn)`` | Jump only when a query reads as true. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
 | Custom command | `` `JoinClub("Alice", "Art")` `` | Execute with arguments. |
@@ -697,6 +699,57 @@ Alice: Tennis is fun!
 Bob: Yes, I agree.
 ```
 
+### Conditional jumps
+
+Make a jump *optional* by placing a **condition** in front of it — a
+[query](#queries) with a `?` added inside the code span. The jump fires only when
+the query reads as true:
+
+```markdown
+`"FoundKey"?` => [Open the vault](#the-vault)
+
+The door stays shut. You look for another way.
+```
+
+If `FoundKey` is true, the reader jumps to *The Vault*; if it is false, the jump
+is skipped and reading continues with the next line.
+
+A condition is the third member of the query family: `` `"key"` `` inserts a
+value, `` `"key"%` `` weights a random option, and `` `"key"?` `` reads a boolean.
+The game decides what the key means and returns `true` or `false`; an unset value
+counts as false.
+
+Because the key is quoted, a key that itself contains a `?` is unambiguous — the
+operator is the `?` after the closing quote:
+
+```markdown
+`"Rainy?"?` => [Wait out the storm](#the-inn)
+```
+
+To branch when a flag is **false**, query a game-defined inverse — there is no
+`not` operator:
+
+```markdown
+`"NotRainy"?` => [Set off across the moor](#the-moor)
+```
+
+A condition guards **one** jump. For an alternative, put another jump on the next
+line, as its own paragraph:
+
+```markdown
+`"FoundKey"?` => [Open the vault](#the-vault)
+
+=> [Search the study](#the-study)
+```
+
+If the key is found the reader takes the vault; otherwise the plain jump to the
+study runs. Keep them in separate paragraphs — two jumps in one paragraph chain
+and warn.
+
+A conditional jump follows every [jump](#jumps) rule: it lives on one line, its
+pieces may be separated by spaces but not a line break, and it cannot appear in a
+heading.
+
 ### Comments
 
 Because the DSL is Markdown-inspired, use Markdown-compatible HTML comments for
@@ -781,6 +834,8 @@ Alice: My favorite color is `"Alice.FavoriteColor"`. May I join the Photography 
 - Bob: Not ~~yet~~ quite.
 
 `("Alice joins Photography")`
+
+`"Bob.Affection"?` => [Discuss Christina's painting](#discuss-christinas-painting)
 
 ## Discuss Christina's painting
 

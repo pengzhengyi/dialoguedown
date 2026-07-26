@@ -56,6 +56,13 @@ internal static class DialogueAstAssert
         return query;
     }
 
+    public static Condition AssertCondition(InlineFragment actual, string key)
+    {
+        var condition = Assert.IsType<Condition>(actual);
+        Assert.Equal(key, condition.Key);
+        return condition;
+    }
+
     public static JumpIndicator AssertJumpIndicator(InlineFragment actual) =>
         Assert.IsType<JumpIndicator>(actual);
 

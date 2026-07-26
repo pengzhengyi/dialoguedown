@@ -32,9 +32,11 @@ internal static class ChoiceWeightReader
             return new AutoWeight(span);
         }
 
-        if (TryReadQueryKey(value, out var key))
+        // A dynamic weight is a query, recognized by the shared query grammar rather than a
+        // re-derived quoted string, so it stays in step with a value query.
+        if (GameCallParser.Query.TryParseAll(value, out var query))
         {
-            return new QueryWeight(key, span);
+            return new QueryWeight(query.Key, span);
         }
 
         if (double.TryParse(value, WeightNumberStyles, CultureInfo.InvariantCulture, out var percentage)
@@ -44,21 +46,5 @@ internal static class ChoiceWeightReader
         }
 
         return null;
-    }
-
-    // A dynamic weight is a query, recognized by the shared query grammar rather than a
-    // re-derived quoted string. ConsumeAll requires the whole value to be that query, so
-    // trailing text is not mistaken for one.
-    private static bool TryReadQueryKey(string value, out string key)
-    {
-        var result = GameCallParser.Query.ConsumeAll(new ParseInput(value, 0));
-        if (result.Success)
-        {
-            key = result.MatchedValue.Key;
-            return true;
-        }
-
-        key = string.Empty;
-        return false;
     }
 }

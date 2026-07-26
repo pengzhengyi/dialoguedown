@@ -133,4 +133,55 @@ public sealed class JumpAssemblerTests
         AssertText(result[0], "hello ");
         AssertCustomTag(result[1], "wave");
     }
+
+    [Fact]
+    public void ConditionBeforeAJump_BindsToTheJump_AndLeavesOnlyTheJump()
+    {
+        // `"Rainy"?` => [go](#play)
+        var condition = Condition("Rainy");
+
+        var result = JumpAssembler.Assemble(
+            [condition, Text(" "), JumpIndicator(), Text(" "), Link("#play", Text("go"))]);
+
+        var jump = AssertJump(Assert.Single(result), "#play");
+        Assert.Same(condition, jump.Condition);
+    }
+
+    [Fact]
+    public void JumpWithoutAPrecedingCondition_HasNoCondition()
+    {
+        var result = JumpAssembler.Assemble([JumpIndicator(), Link("#play", Text("go"))]);
+
+        Assert.False(AssertJump(Assert.Single(result), "#play").IsConditional);
+    }
+
+    [Fact]
+    public void TextThenConditionBeforeAJump_KeepsTheTextAndBindsTheCondition()
+    {
+        // Go `"Rainy"?` => [there](#play)
+        var condition = Condition("Rainy");
+
+        var result = JumpAssembler.Assemble(
+            [Text("Go "), condition, JumpIndicator(), Link("#play", Text("there"))]);
+
+        Assert.Collection(
+            result,
+            first => AssertText(first, "Go "),
+            second => Assert.Same(condition, AssertJump(second, "#play").Condition));
+    }
+
+    [Fact]
+    public void ConditionBeforeADanglingArrow_LeavesTheConditionUnbound()
+    {
+        // `"Rainy"?` =>   (no link) — the arrow degrades to text, the condition is left as-is.
+        var condition = Condition("Rainy");
+
+        var result = JumpAssembler.Assemble([condition, Text(" "), JumpIndicator()]);
+
+        Assert.Collection(
+            result,
+            first => Assert.Same(condition, first),
+            second => AssertText(second, " "),
+            third => AssertText(third, "=>"));
+    }
 }

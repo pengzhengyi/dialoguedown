@@ -20,6 +20,8 @@
     href: Progression Order.md
   - name: Random Choice
     href: Random Choice.md
+  - name: Conditional Jump
+    href: Conditional Jump.md
 - name: Configuration
   items:
   - name: Configuration

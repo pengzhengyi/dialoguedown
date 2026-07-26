@@ -74,8 +74,9 @@ internal sealed class InlineBuilder(
                 fragments.Add(new Link(link.Target, Build(link.Label, labelPolicy, diagnostics), link.Span));
                 break;
             case CodeSpanInline code:
-                fragments.Add(gameCallBuilder.Build(
-                    new ParseInput(code.Content, code.Span.Start), code.Span, diagnostics));
+                fragments.Add(ConditionReader.Read(code.Content, code.Span)
+                    ?? gameCallBuilder.Build(
+                        new ParseInput(code.Content, code.Span.Start), code.Span, diagnostics));
                 break;
             case MarkdownLineBreak:
                 // A soft break is kept as a display hint; hard breaks are split off earlier.

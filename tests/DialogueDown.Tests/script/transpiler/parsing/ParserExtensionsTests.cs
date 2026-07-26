@@ -34,6 +34,22 @@ public sealed class ParserExtensionsTests
     }
 
     [Fact]
+    public void TryParseAll_WhenTheWholeStringMatches_YieldsTheValue()
+    {
+        var matched = TestParsers.Identifier.TryParseAll("abc", out var value);
+
+        Assert.True(matched);
+        Assert.Equal("abc", value);
+    }
+
+    [Fact]
+    public void TryParseAll_WhenTextIsLeftOverOrTheParserFails_YieldsFalse()
+    {
+        Assert.False(TestParsers.Identifier.TryParseAll("abc def", out _));
+        Assert.False(TestParsers.Identifier.TryParseAll("123", out _));
+    }
+
+    [Fact]
     public void Explain_WithAFailure_AppendsTheTechnicalReason()
     {
         var failure = TestParsers.Identifier.Consume(ParseInputFactory.Input("123"));
