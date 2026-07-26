@@ -163,6 +163,9 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Nested lists in the Source preview keep an even vertical rhythm.** Items around a
+  nested list are now spaced consistently instead of opening a large gap when a sub-list
+  ends.
 - **Nested bullet lists in the Source preview now vary their markers by depth.** The
   preview cycles disc → circle → square as unordered lists nest — matching a browser and
   VSCode's Markdown preview — instead of drawing a square at every level; numbered lists
