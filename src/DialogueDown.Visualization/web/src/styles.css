@@ -1679,6 +1679,17 @@ body.maximized #app {
     list-style-type: inherit;
 }
 
+/* Keep a nested list tight against its parent item. Pico gives every list a 1rem bottom
+   margin; on a *nested* list that opens a gap several times the spacing between sibling
+   items, so the vertical rhythm looks uneven (a big step out of a sub-list, small steps
+   within it). Zero the nested list's margin so every item keeps an even rhythm — the
+   outermost list keeps its margin to separate it from surrounding prose. */
+.preview li > ul,
+.preview li > ol {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 .app-footer {
     flex: 0 0 auto;
     display: flex;

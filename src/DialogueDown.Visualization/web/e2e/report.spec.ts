@@ -89,6 +89,25 @@ test("the preview cycles nested unordered bullets by depth and keeps ordered lis
     await expect(preview.locator("ol > li")).toHaveCount(2);
 });
 
+test("the preview keeps an even vertical rhythm across items around a nested list", async ({
+    page,
+}) => {
+    // Regression: Pico gives every list a 1rem bottom margin, which on a *nested* list opened a
+    // gap several times the spacing between sibling items — so stepping out of a sub-list looked
+    // uneven. Every consecutive item pair should sit at about the same vertical step.
+    await page.goto(writeReport({ source: "1. one\n   - a\n   - b\n1. two\n", stages: [] }));
+    const preview = page.locator("section.stage.active .source-preview");
+    await expect(preview.locator("li")).toHaveCount(4);
+
+    const tops = await preview
+        .locator("li")
+        .evaluateAll((items) => items.map((li) => li.getBoundingClientRect().top));
+    const gaps = tops.slice(1).map((top, i) => top - tops[i]);
+    // The step out of the nested list (last "b" -> "two") must match the step between the
+    // nested siblings ("a" -> "b"), not balloon to ~1rem more.
+    expect(Math.abs(gaps[2] - gaps[1])).toBeLessThan(6);
+});
+
 test("the theme toggle forces light/dark and returns to following the system", async ({ page }) => {
     const html = page.locator("html");
     await expect(page.locator(".theme-select")).toBeVisible();
