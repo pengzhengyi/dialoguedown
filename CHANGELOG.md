@@ -163,6 +163,10 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Nested bullet lists in the Source preview now vary their markers by depth.** The
+  preview cycles disc → circle → square as unordered lists nest — matching a browser and
+  VSCode's Markdown preview — instead of drawing a square at every level; numbered lists
+  stay numbered.
 - **The Source preview now continues soft-wrapped lines like VSCode.** A single line
   break joins into the same paragraph, and only an explicit hard break (two trailing
   spaces or a trailing backslash) starts a new line — matching CommonMark and the

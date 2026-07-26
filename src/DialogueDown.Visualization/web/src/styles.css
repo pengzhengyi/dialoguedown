@@ -1654,6 +1654,31 @@ body.maximized #app {
     margin-bottom: 0;
 }
 
+/* Restore native list markers in the whole-document preview. Pico's base stylesheet forces
+   every `ul li` to a square, which flattens nested unordered lists to one symbol regardless of
+   depth. Cycle disc -> circle -> square by nesting depth and keep ordered lists numbered, the
+   way a browser (and VSCode's Markdown preview) render them. `list-style-type` on the items is
+   `inherit` so each item takes its list's marker, overriding Pico's per-item square. */
+.preview ul {
+    list-style-type: disc;
+}
+
+.preview ul ul {
+    list-style-type: circle;
+}
+
+.preview ul ul ul {
+    list-style-type: square;
+}
+
+.preview ol {
+    list-style-type: decimal;
+}
+
+.preview li {
+    list-style-type: inherit;
+}
+
 .app-footer {
     flex: 0 0 auto;
     display: flex;
