@@ -16,6 +16,8 @@
     href: Script Compiler Facade.md
 - name: Language constructs
   items:
+  - name: Progression Order
+    href: Progression Order.md
   - name: Random Choice
     href: Random Choice.md
 - name: Configuration

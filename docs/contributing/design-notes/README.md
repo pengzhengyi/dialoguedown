@@ -75,6 +75,7 @@ first, since a construct threads through them.
 
 | Note | What it covers | Status |
 | --- | --- | --- |
+| [Progression Order](./Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert vs. detour jump roles, and the `#END` terminator | Proposed |
 | [Random Choice](./Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
 
 ### Configuration
