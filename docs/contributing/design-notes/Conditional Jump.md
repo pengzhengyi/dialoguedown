@@ -1,10 +1,10 @@
 # Conditional jump
 
 > [!NOTE]
-> Status: **proposed**. This note designs a **condition** primitive
-> (`` `"key"?` ``) and its first application, the **conditional jump** — a jump
-> that only fires when the condition is true. The compiler will recognize and
-> preserve the condition; gating the edge at play time is part of the planned
+> Status: **implemented**. The compiler recognizes and preserves a **condition**
+> primitive (`` `"key"?` ``) and its first application, the **conditional jump** —
+> a jump that fires only when the condition is true. Gating the edge at play time
+> (and the `IGameSystem.Check` read it will use) is part of the planned
 > [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
 
 ## Table of contents
@@ -34,6 +34,7 @@
   - [Diagnostics](#diagnostics)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Testability](#testability)
+  - [Implementation crosscheck](#implementation-crosscheck)
   - [Alternatives not chosen](#alternatives-not-chosen)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
 
@@ -69,16 +70,16 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 ## Functionality checklist
 
-- [ ] Recognize a `` `"key"?` `` code span as a `Condition` — the query grammar
+- [x] Recognize a `` `"key"?` `` code span as a `Condition` — the query grammar
       plus a trailing `?` — carrying the key and its exact source span.
-- [ ] Bind a condition that immediately precedes a jump to that jump during jump
+- [x] Bind a condition that immediately precedes a jump to that jump during jump
       assembly, so a `Jump` carries an optional `Condition`.
-- [ ] Report `DLG1106` when a condition does not precede a jump.
-- [ ] Preserve the source span of the condition, its query key, and the guarded
+- [x] Report `DLG1106` when a condition does not precede a jump.
+- [x] Preserve the source span of the condition, its query key, and the guarded
       jump.
-- [ ] Leave an ordinary unconditional jump unchanged when no condition precedes
+- [x] Leave an ordinary unconditional jump unchanged when no condition precedes
       it.
-- [ ] Add the construct to the writer-facing specification, the gallery, and the
+- [x] Add the construct to the writer-facing specification, the gallery, and the
       report projection.
 
 ## Ubiquitous language
@@ -232,15 +233,16 @@ flowchart LR
 
 ## Interfaces and responsibilities
 
-| Element               | Responsibility                                                                                                                                                                           |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Condition`           | A spanned `ScriptNode` carrying the query `Key` and its source span; the reusable primitive a jump (and, later, a line or choice) guards.                                                |
-| `Jump`                | Gains an optional `Condition`; an unconditional jump leaves it absent.                                                                                                                   |
-| Condition recognition | Recognizes a `` `"key"?` `` code span by reusing the query grammar plus a trailing `?`, producing a `Condition`.                                                                         |
-| `JumpAssembler`       | Binds a `Condition` immediately preceding a `JumpIndicator` to the assembled `Jump`; reports a condition that guards no jump.                                                            |
-| `IGameSystem.Check`   | A new `bool Check(string key)` the runtime calls to resolve a condition; the game answers `true`/`false`, defaulting an unknown key to `false`.                                          |
-| `DiagnosticCatalog`   | Owns `DLG1106` (a condition does not precede a jump).                                                                                                                                    |
-| Report projection     | Shows a jump's condition (its key) in the Dialogue AST report. A condition is a code span, so the editor colors it through Markdown highlighting; no dedicated semantic token is needed. |
+| Element                          | Responsibility                                                                                                                                                                           |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Condition`                      | A spanned `ScriptNode` carrying the query `Key` and its source span; the reusable primitive a jump (and, later, a line or choice) guards.                                                |
+| `Jump`                           | Gains an optional `Condition`; an unconditional jump leaves it absent.                                                                                                                   |
+| `ConditionReader`                | Recognizes a `` `"key"?` `` code span by reusing `GameCallParser.Query` through `TryParseAll`, producing a `Condition`.                                                                  |
+| `JumpAssembler`                  | Folds the guard-first condition into the jump with a small Pidgin grammar over the fragment stream, sharing the `FragmentParsers.OfType<T>()` combinator.                                |
+| `IGameSystem.Check` *(deferred)* | The `bool Check(string key)` the runtime will call to resolve a condition (an unknown key is `false`); not added yet — it lands with the runtime.                                        |
+| `ConditionWithoutJumpRule`       | Reports `DLG1106` for a condition that guards no jump (its immediate parent is not the jump it guards).                                                                                  |
+| `DiagnosticCatalog`              | Owns `DLG1106` (a condition does not precede a jump).                                                                                                                                    |
+| Report projection                | Shows a jump's condition (its key) in the Dialogue AST report. A condition is a code span, so the editor colors it through Markdown highlighting; no dedicated semantic token is needed. |
 
 ## Key design decisions
 
@@ -361,6 +363,16 @@ false.
 Use multi-line raw string literals for script fixtures so the condition and the
 jump are visible.
 
+## Implementation crosscheck
+
+The construct shipped as designed; the runtime read and gating remain deferred.
+
+| Bucket       | Result                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Achieved** | The spanned `Condition` node and `IsConditional` predicate; recognition by `ConditionReader` (reusing `GameCallParser.Query` via a new `TryParseAll`); guard-first binding in `JumpAssembler`; `DLG1106` from `ConditionWithoutJumpRule`; the report projection; and the writer spec, gallery, and error-codes entry all match the design.                              |
+| **Changed**  | `JumpAssembler`'s fold became a small **Pidgin** grammar over the fragment stream (Pidgin is a new core dependency), with a shared `FragmentParsers.OfType<T>()` combinator; the orphan-condition diagnostic lives in a structural rule (`ConditionWithoutJumpRule`), not in `JumpAssembler`; and `TryParseAll` was extracted and shared with the choice-weight reader. |
+| **Deferred** | `IGameSystem.Check` is not added yet — resolving a condition and gating the edge are the runtime's job ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)). Conditions on lines and choices, their interaction with random choices, and negation remain follow-up.                                                                               |
+
 ## Alternatives not chosen
 
 | Alternative                                                 | Why not                                                                                                                                                                                                                         |
@@ -370,7 +382,7 @@ jump are visible.
 | Condition *after* the jump (`=> [L](#a)` then `` `"K"?` ``) | Reads naturally in English but hides the guard at the line's end and does not generalize to a future line or choice guard (D3).                                                                                                 |
 | Prefix `!` negation now (`` `!"Rainy"?` ``)                 | Cryptic for non-technical writers; deferred in favor of a game-defined inverse flag, and addable later without changing `?` (D5).                                                                                               |
 | Reuse `Query` for the condition (string `"true"`/`"false"`) | Keeps the surface at two methods and matches the dynamic weight, but forces a boolean through a string — a truthiness ladder, an invalid-value error, and an awkward read for the game author; a typed `Check` is cleaner (D4). |
-| An inline else-target (`{cond: -> A \                       | -> B}`)                                                                                                                                                                                                                         |
+| An inline else-target (a second divert on the same line)    | Denser and less Markdown-native than writing the alternative on the next line as its own paragraph (D6).                                                                                                                        |
 
 ## Open questions and deferred work
 

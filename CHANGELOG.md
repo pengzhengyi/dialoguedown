@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Conditional jumps** — put a game-state query with a `?` in front of a jump
+  (`` `"FoundKey"?` `` `=> [Vault](#vault)`) to make the jump *optional*: it fires only when the
+  query reads as true, and otherwise the dialogue falls through to the next line. The game answers
+  each condition with a boolean; an unset one counts as false. See the
+  [Conditional Jump](docs/contributing/design-notes/Conditional%20Jump.md) note.
 - **Copy a scene heading's anchor from the report** — hovering a heading in the live
   visualization's Source preview reveals a link icon that copies a ready-to-paste jump
   `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.

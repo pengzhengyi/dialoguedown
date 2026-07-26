@@ -96,6 +96,7 @@ flowchart TD
 | Choice | `- Bob: Really?` | Offer a selectable response. |
 | Random choice | ``- `50%` Bob: Really?`` | Let the engine pick one option by weight. |
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
+| Conditional jump | `` `"Rainy"?` => [Inn](#inn)`` | Jump only when a query reads as true. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
 | Custom command | `` `JoinClub("Alice", "Art")` `` | Execute with arguments. |
@@ -700,10 +701,6 @@ Bob: Yes, I agree.
 
 ### Conditional jumps
 
-> [!NOTE]
-> Conditional jumps are a **proposed** construct, documented here for review. The
-> compiler does not recognize them yet.
-
 Make a jump *optional* by placing a **condition** in front of it — a
 [query](#queries) with a `?` added inside the code span. The jump fires only when
 the query reads as true:
@@ -736,15 +733,18 @@ To branch when a flag is **false**, query a game-defined inverse — there is no
 `"NotRainy"?` => [Set off across the moor](#the-moor)
 ```
 
-A condition guards **one** jump. For an alternative, write the next line:
+A condition guards **one** jump. For an alternative, put another jump on the next
+line, as its own paragraph:
 
 ```markdown
 `"FoundKey"?` => [Open the vault](#the-vault)
+
 => [Search the study](#the-study)
 ```
 
 If the key is found the reader takes the vault; otherwise the plain jump to the
-study runs.
+study runs. Keep them in separate paragraphs — two jumps in one paragraph chain
+and warn.
 
 A conditional jump follows every [jump](#jumps) rule: it lives on one line, its
 pieces may be separated by spaces but not a line break, and it cannot appear in a
@@ -834,6 +834,8 @@ Alice: My favorite color is `"Alice.FavoriteColor"`. May I join the Photography 
 - Bob: Not ~~yet~~ quite.
 
 `("Alice joins Photography")`
+
+`"Bob.Affection"?` => [Discuss Christina's painting](#discuss-christinas-painting)
 
 ## Discuss Christina's painting
 
