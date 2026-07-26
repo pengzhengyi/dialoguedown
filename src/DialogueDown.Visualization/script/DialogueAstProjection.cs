@@ -145,6 +145,11 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
                 CallCategory),
             Query query => new(
                 "Query", [new("key", query.Key), SpanAttribute(query.Span)], Slice(query.Span), CallCategory),
+            Condition condition => new(
+                "Condition",
+                [new("key", condition.Key), SpanAttribute(condition.Span)],
+                Slice(condition.Span),
+                CallCategory),
             JumpIndicator jump => new(
                 "Jump indicator", [SpanAttribute(jump.Span)], Slice(jump.Span), JumpCategory),
             Jump jump => new(
@@ -190,7 +195,7 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
             PartialSpeakerDeclaration speaker => speaker.Tags,
             StyledText styled => styled.Children,
             Link link => link.Label,
-            Jump jump => jump.Label,
+            Jump jump => jump.IsConditional ? [jump.Condition!, .. jump.Label] : jump.Label,
             Image image => image.Alt,
             _ => [],
         };

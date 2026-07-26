@@ -117,6 +117,37 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
+    public void Describe_Condition_ShowsItsKey_InTheCallCategory()
+    {
+        var description = _projection.Describe(new Condition("Rainy", new SourceSpan(0, 9)));
+
+        Assert.Equal("Condition", description.Label);
+        Assert.Equal("call", description.Category);
+        Assert.Contains(description.Attributes, a => a.Name == "key" && a.Value == "Rainy");
+    }
+
+    [Fact]
+    public void Neighbors_ConditionalJump_YieldsTheConditionThenTheLabel()
+    {
+        var span = new SourceSpan(0, 5);
+        var condition = new Condition("Rainy", span);
+        var label = new Text("go", span);
+        var jump = new Jump("#x", [label], span, condition);
+
+        Assert.Equal(new object[] { condition, label }, _projection.Neighbors(jump));
+    }
+
+    [Fact]
+    public void Neighbors_UnconditionalJump_YieldsOnlyTheLabel()
+    {
+        var span = new SourceSpan(0, 5);
+        var label = new Text("go", span);
+        var jump = new Jump("#x", [label], span);
+
+        Assert.Equal(new object[] { label }, _projection.Neighbors(jump));
+    }
+
+    [Fact]
     public void Neighbors_RandomOption_YieldsBody()
     {
         var line = new Line(null, [new Text("x", new SourceSpan(0, 1))], new SourceSpan(0, 1));
