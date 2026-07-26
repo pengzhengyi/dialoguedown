@@ -37,6 +37,7 @@ model for developers.
     - [Random choices](#random-choices)
       - [Dynamic weights](#dynamic-weights)
     - [Jumps](#jumps)
+    - [Conditional jumps](#conditional-jumps)
     - [Comments](#comments)
     - [Front matter](#front-matter)
     - [Authoring aids](#authoring-aids)
@@ -696,6 +697,58 @@ Alice: Tennis is fun!
 
 Bob: Yes, I agree.
 ```
+
+### Conditional jumps
+
+> [!NOTE]
+> Conditional jumps are a **proposed** construct, documented here for review. The
+> compiler does not recognize them yet.
+
+Make a jump *optional* by placing a **condition** in front of it — a
+[query](#queries) with a `?` added inside the code span. The jump fires only when
+the query reads as true:
+
+```markdown
+`"FoundKey"?` => [Open the vault](#the-vault)
+
+The door stays shut. You look for another way.
+```
+
+If `FoundKey` is true, the reader jumps to *The Vault*; if it is false, the jump
+is skipped and reading continues with the next line.
+
+A condition is the third member of the query family: `` `"key"` `` inserts a
+value, `` `"key"%` `` weights a random option, and `` `"key"?` `` reads a boolean.
+The game decides what the key means and returns `true` or `false`; an unset value
+counts as false.
+
+Because the key is quoted, a key that itself contains a `?` is unambiguous — the
+operator is the `?` after the closing quote:
+
+```markdown
+`"Rainy?"?` => [Wait out the storm](#the-inn)
+```
+
+To branch when a flag is **false**, query a game-defined inverse — there is no
+`not` operator:
+
+```markdown
+`"NotRainy"?` => [Set off across the moor](#the-moor)
+```
+
+A condition guards **one** jump. For an alternative, write the next line:
+
+```markdown
+`"FoundKey"?` => [Open the vault](#the-vault)
+=> [Search the study](#the-study)
+```
+
+If the key is found the reader takes the vault; otherwise the plain jump to the
+study runs.
+
+A conditional jump follows every [jump](#jumps) rule: it lives on one line, its
+pieces may be separated by spaces but not a line break, and it cannot appear in a
+heading.
 
 ### Comments
 
