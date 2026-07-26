@@ -124,6 +124,22 @@ internal static class DiagnosticDocs
                 ["`-10%`"],
                 ["`10%`"])),
         new(
+            DiagnosticCatalog.ConditionWithoutJump,
+            "A condition guards a jump, so it must sit immediately before a `=>` jump. A `\"key\"?` "
+            + "code span anywhere else has nothing to guard. Move it in front of a jump, or remove "
+            + "the `?` to write a plain query.",
+            new(
+                """
+                # Moor
+                Guide: `"Rainy"?` The moor is bleak.
+                """,
+                """
+                # Moor
+                Guide: `"Rainy"` The moor is bleak.
+                """,
+                ["`\"Rainy\"?`"],
+                ["`\"Rainy\"`"])),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",
