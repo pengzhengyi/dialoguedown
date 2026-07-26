@@ -64,6 +64,16 @@ public sealed class ScriptNodeExtensionsTests
     }
 
     [Fact]
+    public void Children_Jump_YieldsConditionThenLabel()
+    {
+        var condition = Condition("Rainy");
+        var label = Text("Go");
+        var jump = new Jump("#a", [label], SourceSpanFactory.Span(), condition);
+
+        Assert.Equal([condition, label], jump.Children());
+    }
+
+    [Fact]
     public void Children_SceneHeading_YieldsTitle()
     {
         var title = Text("Scene");

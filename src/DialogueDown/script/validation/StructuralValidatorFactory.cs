@@ -16,5 +16,6 @@ internal static class StructuralValidatorFactory
             new ChoiceNestingDepthRule(),
             new WeightTotalRule(new DefaultWeightNormalization()),
             new SingleOptionRandomChoiceRule(),
+            new ConditionWithoutJumpRule(),
         ]);
 }

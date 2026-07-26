@@ -64,6 +64,15 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG1106 — a condition code span does not precede a jump.</summary>
+    public static readonly DiagnosticDescriptor ConditionWithoutJump = new(
+        "DLG1106",
+        "Condition without a jump",
+        "A condition (`\"{0}\"?`) must guard a jump. Put it immediately before a `=>` jump, or "
+            + "remove the `?` to write a plain query.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
     // Semantic — DLG2xxx: a meaning-level conflict found during analysis.
 
     /// <summary>DLG2001 — two headings slug to the same anchor.</summary>

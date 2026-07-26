@@ -23,6 +23,8 @@ internal static class DialogueAstFactory
 
     public static JumpIndicator JumpIndicator() => new(SourceSpanFactory.Span());
 
+    public static Condition Condition(string key) => new(key, SourceSpanFactory.Span());
+
     public static Link Link(string target, params InlineFragment[] label) =>
         new(target, label.Length == 0 ? [Text("label")] : label, SourceSpanFactory.Span());
 
