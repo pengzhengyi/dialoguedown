@@ -61,6 +61,14 @@ public sealed class InlineBuilderTests
     }
 
     [Fact]
+    public void Build_CodeSpanThatIsACondition_BecomesACondition()
+    {
+        var speech = Build([Md.CodeSpan("\"Rainy\"?")]);
+
+        AssertCondition(Assert.Single(speech), "Rainy");
+    }
+
+    [Fact]
     public void Build_CodeSpanThatIsNotAGameCall_ReportsAndKeepsAsText()
     {
         var speech = Build([Md.CodeSpan("just words")], out var diagnostics);
