@@ -207,15 +207,13 @@ Reading order plus a non-returning divert makes two structural checks meaningful
 Both are **warnings** (dead content, not malformed input) and both are purely
 structural, so they can ship without the runtime.
 
-- **Unreachable content after a divert.** In a line's speech, any non-blank fragment
-  after the first divert — trailing text, or a second `=>` — can never play, because
-  the divert already left. Warn, spanning from the first unreachable fragment to the
-  end of the line.
-- **Reframe "multiple jumps on a line."** The existing `MultipleJumpsOnLine`
-  (`DLG1003`) message says several jumps "run in sequence." That is only true for a
-  **returning detour**; for the non-returning `=>`, a second jump is simply
-  *unreachable*. Reword it to match this model (and let the rule above subsume the
-  non-returning case), so the diagnostic no longer implies diverts chain.
+- **Unreachable content after a divert (`DLG1003`).** In a line's speech, any
+  non-blank fragment after the first divert — trailing text, or a second `=>` — can
+  never play, because the divert already left. Warn, spanning the unreachable content.
+- **The former "multiple jumps on a line" check is subsumed.** A second jump is just
+  unreachable content after the first, so the single rule above covers it — there is
+  no separate multiple-jumps diagnostic. Once the returning detour exists, the rule
+  keys off the *divert*, since detours legitimately chain.
 
 A divert to an unknown reserved anchor (for example a mistyped `#ENND`) is an
 unresolved target, reported like any other missing anchor.
