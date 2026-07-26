@@ -1,66 +1,50 @@
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
+using Pidgin;
+using static DialogueDown.Script.Desugar.FragmentParsers;
+using static Pidgin.Parser<DialogueDown.Script.Ast.InlineFragment>;
 
 namespace DialogueDown.Script.Desugar;
 
 /// <summary>
-/// The "assemble jumps" rule over a single fragment sequence: it folds a
-/// <see cref="JumpIndicator"/> and the <see cref="Link"/> that follows it (across
-/// same-line whitespace) into one <see cref="Jump"/>, whose span reaches from the
-/// <c>=&gt;</c> through the link. A jump is single-line: a <see cref="LineBreak"/> between
-/// the <c>=&gt;</c> and the link ends the jump. A <see cref="JumpIndicator"/> with no link
-/// after it is dangling: it is just the characters <c>=&gt;</c>, so it degrades to a plain
-/// <see cref="Text"/>. A link with no preceding indicator is left untouched. Fragments stay
-/// granular here — a later stage folds adjacent text runs together — so the degraded arrow
-/// is left as its own run, exactly like any other neighboring text. It works one level at
-/// a time; nested sequences are reached by the rewriter.
+/// Folds a jump and the pieces around it into one <see cref="Jump"/>, over a single fragment
+/// sequence. The rule is a small grammar — an optional guarding <see cref="Condition"/>, the
+/// <c>=&gt;</c> <see cref="JumpIndicator"/>, and the <see cref="Link"/> that follows, across
+/// same-line whitespace — expressed with the Pidgin parser combinators so the pattern reads
+/// declaratively instead of as hand-rolled index tracking and backtracking. A
+/// <see cref="JumpIndicator"/> with no link is dangling: it degrades to the characters
+/// <c>=&gt;</c>. A <see cref="LineBreak"/> is not blank, so it stops the scan and keeps a jump
+/// single-line. It works one level at a time; nested sequences are reached by the rewriter.
 /// </summary>
 internal static class JumpAssembler
 {
-    public static IReadOnlyList<InlineFragment> Assemble(IReadOnlyList<InlineFragment> fragments)
+    private static readonly Parser<InlineFragment, InlineFragment> _blank =
+        Token(fragment => fragment.IsBlank());
+
+    // [Condition] blank* — an optional guard that also absorbs the whitespace after it.
+    private static readonly Parser<InlineFragment, Maybe<Condition>> _guard =
+        OfType<Condition>().Before(_blank.Many()).Optional();
+
+    // [Condition] blank* => blank* Link  →  Jump
+    private static readonly Parser<InlineFragment, InlineFragment> _conditionalJump =
+        Parser.Map(FoldJump, _guard, OfType<JumpIndicator>().Before(_blank.Many()), OfType<Link>());
+
+    // A => with no link after it is not a jump, so it degrades to the characters "=>".
+    private static readonly Parser<InlineFragment, InlineFragment> _danglingArrow =
+        OfType<JumpIndicator>().Select(indicator => (InlineFragment)new Text("=>", indicator.Span));
+
+    // Try the whole jump first (Try backtracks a guard consumed before a missing link); otherwise
+    // degrade a lone arrow, otherwise pass the fragment through untouched.
+    private static readonly Parser<InlineFragment, IEnumerable<InlineFragment>> _grammar =
+        Parser.OneOf(Parser.Try(_conditionalJump), _danglingArrow, Any).Many();
+
+    public static IReadOnlyList<InlineFragment> Assemble(IReadOnlyList<InlineFragment> fragments) =>
+        _grammar.ParseOrThrow(fragments).ToList();
+
+    private static InlineFragment FoldJump(Maybe<Condition> guard, JumpIndicator arrow, Link link)
     {
-        var result = new List<InlineFragment>();
-        var index = 0;
-        while (index < fragments.Count)
-        {
-            if (fragments[index] is JumpIndicator indicator)
-            {
-                var linkIndex = LinkIndexAfterBlanks(fragments, index + 1);
-                if (linkIndex >= 0)
-                {
-                    var link = (Link)fragments[linkIndex];
-                    result.Add(new Jump(
-                        link.Target, link.Label, SourceSpan.Covering(indicator.Span, link.Span)));
-                    index = linkIndex + 1;
-                }
-                else
-                {
-                    // Dangling: not a jump, so the arrow is just the characters "=>".
-                    result.Add(new Text("=>", indicator.Span));
-                    index++;
-                }
-            }
-            else
-            {
-                result.Add(fragments[index]);
-                index++;
-            }
-        }
-
-        return result;
-    }
-
-    // The index of the Link that follows `start` across blank, same-line fragments, or -1
-    // when the next meaningful fragment is not a link. A line break is not blank, so it
-    // stops the scan and keeps the jump single-line.
-    private static int LinkIndexAfterBlanks(IReadOnlyList<InlineFragment> fragments, int start)
-    {
-        var index = start;
-        while (index < fragments.Count && fragments[index].IsBlank())
-        {
-            index++;
-        }
-
-        return index < fragments.Count && fragments[index] is Link ? index : -1;
+        var condition = guard.GetValueOrDefault();
+        var from = condition?.Span ?? arrow.Span;
+        return new Jump(link.Target, link.Label, SourceSpan.Covering(from, link.Span), condition);
     }
 }
