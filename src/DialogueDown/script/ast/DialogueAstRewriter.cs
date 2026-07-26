@@ -72,7 +72,7 @@ internal abstract class DialogueAstRewriter
             styled.Style, RewriteFragments(styled.Children), styled.Span),
         Image image => new Image(image.Source, RewriteFragments(image.Alt), image.Span),
         Link link => new Link(link.Target, RewriteFragments(link.Label), link.Span),
-        Jump jump => new Jump(jump.Target, RewriteFragments(jump.Label), jump.Span),
+        Jump jump => new Jump(jump.Target, RewriteFragments(jump.Label), jump.Span, jump.Condition),
         Tag tag => RewriteTag(tag),
         _ => fragment,
     };

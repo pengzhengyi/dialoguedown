@@ -102,7 +102,7 @@ internal static class ScriptNodeExtensions
         StyledText styled => styled.Children,
         Image image => image.Alt,
         Link link => link.Label,
-        Jump jump => jump.Label,
+        Jump jump => jump.IsConditional ? [jump.Condition!, .. jump.Label] : jump.Label,
 
         _ => [],
     };

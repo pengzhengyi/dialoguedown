@@ -10,15 +10,24 @@ namespace DialogueDown.Script.Ast;
 /// </summary>
 internal sealed record Jump : InlineFragment
 {
-    public Jump(string target, IReadOnlyList<InlineFragment> label, SourceSpan span)
+    public Jump(
+        string target, IReadOnlyList<InlineFragment> label, SourceSpan span,
+        Condition? condition = null)
         : base(span)
     {
         ArgumentNullException.ThrowIfNull(target);
         Target = target;
         Label = label;
+        Condition = condition;
     }
 
     public string Target { get; }
 
     public IReadOnlyList<InlineFragment> Label { get; }
+
+    /// <summary>The condition that guards this jump, or null for an unconditional jump.</summary>
+    public Condition? Condition { get; }
+
+    /// <summary>Whether this jump is guarded by a condition.</summary>
+    public bool IsConditional => Condition is not null;
 }

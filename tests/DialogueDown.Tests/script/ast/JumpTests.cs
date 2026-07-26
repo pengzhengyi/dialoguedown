@@ -32,4 +32,26 @@ public sealed class JumpTests
     [Fact]
     public void Constructor_NullTarget_Throws() =>
         Assert.Throws<ArgumentNullException>(() => new Jump(null!, [], SourceSpanFactory.Span()));
+
+    [Fact]
+    public void Constructor_HasNoCondition_ByDefault() =>
+        Assert.Null(new Jump("#x", [], SourceSpanFactory.Span()).Condition);
+
+    [Fact]
+    public void Constructor_CarriesAnOptionalCondition()
+    {
+        var condition = new Condition("Rainy", SourceSpanFactory.Span());
+
+        var jump = new Jump("#x", [], SourceSpanFactory.Span(), condition);
+
+        Assert.Same(condition, jump.Condition);
+    }
+
+    [Fact]
+    public void IsConditional_ReflectsWhetherAConditionGuardsTheJump()
+    {
+        Assert.False(new Jump("#x", [], SourceSpanFactory.Span()).IsConditional);
+        Assert.True(new Jump("#x", [], SourceSpanFactory.Span(),
+            new Condition("Rainy", SourceSpanFactory.Span())).IsConditional);
+    }
 }
