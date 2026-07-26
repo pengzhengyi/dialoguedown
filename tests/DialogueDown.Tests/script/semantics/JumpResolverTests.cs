@@ -69,6 +69,28 @@ public sealed class JumpResolverTests
         Assert.IsType<UnresolvedJump>(ResolveOne(Jump("#"), new AnchorTable()));
 
     [Fact]
+    public void Resolve_ReservedEndAnchor_ResolvesToTerminal() =>
+        Assert.IsType<TerminalJump>(ResolveOne(Jump("#END"), new AnchorTable()));
+
+    [Fact]
+    public void Resolve_LowercaseEnd_IsAnOrdinaryAnchor_NotTerminal()
+    {
+        // `#end` is a normal slug (a scene titled "End"), never the reserved terminator.
+        var anchors = AnchorsFor(SceneHeading("End", 1));
+
+        Assert.IsType<SceneJump>(ResolveOne(Jump("#end"), anchors));
+    }
+
+    [Fact]
+    public void Resolve_FileScopedEnd_IsFileScoped_NotTerminal()
+    {
+        var fileScoped = Assert.IsType<FileScopedJump>(
+            ResolveOne(Jump("chapter-02.md#END"), new AnchorTable()));
+
+        Assert.Equal("END", fileScoped.Anchor);
+    }
+
+    [Fact]
     public void Resolve_KeysEachResolutionByItsJump()
     {
         var anchors = AnchorsFor(SceneHeading("Play tennis", 1));

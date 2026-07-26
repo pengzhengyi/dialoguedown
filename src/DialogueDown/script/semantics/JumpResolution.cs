@@ -20,3 +20,10 @@ internal sealed record FileScopedJump(string File, string? Anchor) : JumpResolut
 
 /// <summary>A jump whose target is empty, so it points nowhere and cannot be resolved.</summary>
 internal sealed record UnresolvedJump : JumpResolution;
+
+/// <summary>
+/// A jump to the reserved <c>#END</c> anchor: it resolves to the run's End sentinel and
+/// terminates the run when reached. The anchor is uppercase and matched case-sensitively, so it
+/// can never collide with a heading's anchor, which is always lowercased.
+/// </summary>
+internal sealed record TerminalJump : JumpResolution;

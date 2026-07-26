@@ -11,6 +11,10 @@ namespace DialogueDown.Script.Semantics;
 /// </summary>
 internal static class JumpResolver
 {
+    // The reserved terminator anchor. Uppercase and matched case-sensitively so it can never
+    // collide with a heading's anchor, which is always lowercased.
+    private const string TerminalAnchor = "END";
+
     /// <summary>
     /// Resolves every jump in <paramref name="jumps"/> against <paramref name="anchors"/>, reporting
     /// a jump to a missing local anchor into <paramref name="diagnostics"/>.
@@ -33,6 +37,13 @@ internal static class JumpResolver
         if (!target.HasAnchor)
         {
             return new UnresolvedJump();
+        }
+
+        // The reserved terminator is recognized before slug lookup, so it never depends on — or
+        // collides with — an author's scene anchors.
+        if (target.Anchor == TerminalAnchor)
+        {
+            return new TerminalJump();
         }
 
         if (anchors.TryResolve(target.Anchor!, out var scene))
