@@ -76,6 +76,7 @@ first, since a construct threads through them.
 | Note | What it covers | Status |
 | --- | --- | --- |
 | [Random Choice](./Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
+| [Conditional Jump](./Conditional%20Jump.md) | A condition (`` `"key"?` ``) that makes a jump fire only when a game-state query is true | Explored |
 
 ### Configuration
 
