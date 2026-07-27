@@ -206,6 +206,45 @@ public sealed class BlockBuilderTests
     }
 
     [Fact]
+    public void RandomOption_WithALeadingCondition_CarriesBothTheConditionAndTheWeight()
+    {
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(
+                    CodeSpan("\"IsAngry\"?"), Text(" "), CodeSpan("50%"), Text(" The guard glares."))),
+                ListItem(Paragraph(CodeSpan("50%"), Text(" The guard nods.")))),
+        ]);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        var guarded = random.Options[0];
+        AssertCondition(guarded.Condition!, "IsAngry");
+        Assert.True(guarded.IsConditional);
+        AssertNumberWeight(guarded, 50);
+        AssertSpeechText(AssertRandomOptionLine(guarded), "The guard glares.");
+        Assert.Null(random.Options[1].Condition);
+    }
+
+    [Fact]
+    public void RandomOptions_LeadingWithAConditionThenAWeight_AreStillARandomChoice()
+    {
+        // Without peeking past the condition, both options would look weight-less and the list
+        // would be misread as a player choice.
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"C1\"?"), Text(" "), CodeSpan("50%"), Text(" A"))),
+                ListItem(Paragraph(CodeSpan("\"C2\"?"), Text(" "), CodeSpan("50%"), Text(" B")))),
+        ]);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        AssertCondition(random.Options[0].Condition!, "C1");
+        AssertCondition(random.Options[1].Condition!, "C2");
+    }
+
+    [Fact]
     public void NestedList_BecomesNestedChoices()
     {
         var innerList = ListBlock(ordered: false, ListItem(TextParagraph("Inner")));

@@ -116,7 +116,8 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
 
     private RandomOption BuildRandomOption(ListItem item, IDiagnosticSink diagnostics)
     {
-        var (weight, body) = RandomChoiceRecognition.Resolve(item, diagnostics);
-        return new RandomOption(weight, Build(body, diagnostics), item.Span);
+        var blocks = ChoiceConditionRecognition.Peel(item, out var condition);
+        var (weight, body) = RandomChoiceRecognition.Resolve(item with { Blocks = blocks }, diagnostics);
+        return new RandomOption(weight, Build(body, diagnostics), item.Span, condition);
     }
 }
