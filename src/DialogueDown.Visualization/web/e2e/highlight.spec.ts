@@ -83,13 +83,27 @@ test("colors the reserved #END terminator as its own token", async ({ page }) =>
     const active = page.locator("section.stage.active");
     await expect(active.locator(".dd-tok-reserved-anchor")).toHaveText("#END");
 
-    // The reserved terminator gets its own hue, distinct from the jump arrow beside it.
-    const [anchorColor, jumpColor] = await active.evaluate((root) => {
+    // The reader sees the innermost element's color. Because #END sits in a Markdown link
+    // destination, CodeMirror nests a link-url highlight span inside the token decoration; that
+    // leaf must still show the reserved-anchor color, not the Markdown link color.
+    const colors = await active.evaluate((root) => {
+        const mark = root.querySelector(".dd-tok-reserved-anchor") as Element;
+        const leafColor = (element: Element): string => {
+            let node: Element = element;
+            while (node.firstElementChild != null) node = node.firstElementChild;
+            return getComputedStyle(node).color;
+        };
         const colorOf = (selector: string) =>
             getComputedStyle(root.querySelector(selector) as Element).color;
-        return [colorOf(".dd-tok-reserved-anchor"), colorOf(".dd-tok-jump")];
+        return {
+            mark: getComputedStyle(mark).color,
+            leaf: leafColor(mark),
+            jump: colorOf(".dd-tok-jump"),
+        };
     });
-    expect(anchorColor).not.toBe(jumpColor);
+    expect(colors.leaf).toBe(colors.mark);
+    // The reserved terminator gets its own hue, distinct from the jump arrow beside it.
+    expect(colors.mark).not.toBe(colors.jump);
 });
 
 test("keeps the tag a separate token, not nested inside a speaker token", async ({ page }) => {

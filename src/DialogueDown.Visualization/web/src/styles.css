@@ -766,7 +766,8 @@ g.node.entity-highlight text.label {
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-reserved-anchor {
+.source-pane .cm-content .dd-tok-reserved-anchor,
+.source-pane .cm-content .dd-tok-reserved-anchor * {
     color: var(--tok-reserved-anchor);
     font-weight: 600;
 }
