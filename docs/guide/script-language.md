@@ -38,6 +38,7 @@ model for developers.
       - [Dynamic weights](#dynamic-weights)
     - [Jumps](#jumps)
     - [Conditional jumps](#conditional-jumps)
+    - [Conditional lines](#conditional-lines)
     - [Ending a run](#ending-a-run)
     - [Comments](#comments)
     - [Front matter](#front-matter)
@@ -98,6 +99,7 @@ flowchart TD
 | Random choice | ``- `50%` Bob: Really?`` | Let the engine pick one option by weight. |
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
 | Conditional jump | `` `"Rainy"?` => [Inn](#inn)`` | Jump only when a query reads as true. |
+| Conditional line | `` `"Angry"?` Guard: Leave.`` | Play a line only when a query reads as true. |
 | End of run | `=> [The end](#END)` | Stop the dialogue at the reserved endpoint. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
@@ -752,6 +754,41 @@ unreachable content.
 A conditional jump follows every [jump](#jumps) rule: it lives on one line, its
 pieces may be separated by spaces but not a line break, and it cannot appear in a
 heading.
+
+### Conditional lines
+
+Start a line with a **condition** to play the whole line only when the query
+reads as true. The condition goes at the very start of the line, before the
+speaker:
+
+```markdown
+`"Angry"?` Guard: You again? Get out.
+
+The guard says nothing and waves you through.
+```
+
+If `Angry` is true, that line plays; if it is false, the line is skipped and
+reading continues with the next line. The condition is not spoken — it sits
+before the speaker, and `Guard` is still recognized as the speaker.
+
+A line with no speaker can be conditional too:
+
+```markdown
+`"Returned"?` Welcome back. It has been too long.
+```
+
+As with a [conditional jump](#conditional-jumps), there is no `not` and no inline
+*else*: query a game-defined inverse, or write the alternative as its own line —
+often a second conditional line testing the opposite flag.
+
+```markdown
+`"Angry"?` Guard: You again? Get out.
+`"NotAngry"?` Guard: Back so soon? Go on through.
+```
+
+A condition needs a line to apply to: a `` `"key"?` `` alone on a line, or one
+buried mid-line after the speaker, applies to nothing and is reported as
+[`DLG1106`](error-codes.md#dlg1106).
 
 ### Ending a run
 

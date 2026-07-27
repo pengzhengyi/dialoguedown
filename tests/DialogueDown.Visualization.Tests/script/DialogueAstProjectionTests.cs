@@ -177,6 +177,18 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
+    public void Neighbors_ConditionalLine_YieldsTheConditionThenSpeakerThenSpeech()
+    {
+        var span = new SourceSpan(0, 5);
+        var condition = new Condition("Rainy", span);
+        var speaker = new SpeakerNameReference("Alice", span);
+        var text = new Text("Hi", span);
+        var line = new Line(speaker, [text], span, condition);
+
+        Assert.Equal(new object[] { condition, speaker, text }, _projection.Neighbors(line));
+    }
+
+    [Fact]
     public void Neighbors_Leaf_IsEmpty()
     {
         Assert.Empty(_projection.Neighbors(new Text("Hi", new SourceSpan(0, 2))));

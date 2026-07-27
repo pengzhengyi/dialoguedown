@@ -107,10 +107,15 @@ internal static class ScriptNodeExtensions
         _ => [],
     };
 
-    // A line's speaker (when present) comes before its speech, so traversal keeps
-    // document order.
+    // A line's condition guard (when present) comes before its speaker and speech, so traversal
+    // keeps document order and matches the guard-first reading.
     private static IEnumerable<ScriptNode> LineChildren(Line line)
     {
+        if (line.Condition is not null)
+        {
+            yield return line.Condition;
+        }
+
         if (line.Speaker is not null)
         {
             yield return line.Speaker;

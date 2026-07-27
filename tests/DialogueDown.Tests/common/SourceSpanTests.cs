@@ -92,4 +92,37 @@ public sealed class SourceSpanTests
         int startPos, int startLen, int endPos, int endLen) =>
         Assert.Throws<ArgumentException>(
             () => SourceSpan.Covering(new SourceSpan(startPos, startLen), new SourceSpan(endPos, endLen)));
+
+    [Fact]
+    public void Covering_ASingleNode_CoversThatNodesSpan()
+    {
+        var covering = SourceSpan.Covering([new Spanned(new SourceSpan(3, 4))]);
+
+        Assert.Equal(3, covering.Start);
+        Assert.Equal(7, covering.End);
+    }
+
+    [Fact]
+    public void Covering_NodesInOrder_SpansFromTheFirstThroughTheLast()
+    {
+        var covering = SourceSpan.Covering(
+        [
+            new Spanned(new SourceSpan(0, 2)),
+            new Spanned(new SourceSpan(2, 3)),
+            new Spanned(new SourceSpan(8, 1)), // a gap before the last node is still covered
+        ]);
+
+        Assert.Equal(0, covering.Start);
+        Assert.Equal(9, covering.End);
+    }
+
+    [Fact]
+    public void Covering_NoNodes_Throws() =>
+        Assert.Throws<ArgumentException>(() => SourceSpan.Covering([]));
+
+    [Fact]
+    public void Covering_NullNodes_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => SourceSpan.Covering(null!));
+
+    private sealed record Spanned(SourceSpan Span) : ISpanned;
 }

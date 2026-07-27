@@ -186,7 +186,7 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
         {
             ScriptDocument document => document.Body,
             SceneHeading heading => heading.Title,
-            Line line => LineChildren(line.Speaker, line.Speech),
+            Line line => LineChildren(line.Condition, line.Speaker, line.Speech),
             Choices choices => choices.Options,
             Choice choice => choice.Body,
             RandomChoices random => random.Options,
@@ -219,9 +219,16 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
     private static IEnumerable<DisplayAttribute> Optional(string name, string? value) =>
         value is null ? [] : [new DisplayAttribute(name, value)];
 
-    // A line's children are its optional speaker followed by its speech fragments.
-    private static IEnumerable<object> LineChildren(Speaker? speaker, IReadOnlyList<InlineFragment> speech)
+    // A line's children are its optional condition guard, then its optional speaker, followed by
+    // its speech fragments — guard-first, matching the traversal and how the line reads.
+    private static IEnumerable<object> LineChildren(
+        Condition? condition, Speaker? speaker, IReadOnlyList<InlineFragment> speech)
     {
+        if (condition is not null)
+        {
+            yield return condition;
+        }
+
         if (speaker is not null)
         {
             yield return speaker;

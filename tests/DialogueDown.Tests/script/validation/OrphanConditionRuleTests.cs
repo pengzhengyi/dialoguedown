@@ -8,15 +8,15 @@ using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Validation;
 
-public sealed class ConditionWithoutJumpRuleTests
+public sealed class OrphanConditionRuleTests
 {
     [Fact]
-    public void Check_AConditionNotBeforeAJump_ReportsAtTheConditionSpan()
+    public void Check_AConditionInSpeech_ReportsAtTheConditionSpan()
     {
         var condition = new Condition("Rainy", SourceSpanFactory.Span(7));
         var line = Line(condition);
 
-        var diagnostic = AssertReported(Check(line), DiagnosticCatalog.ConditionWithoutJump);
+        var diagnostic = AssertReported(Check(line), DiagnosticCatalog.OrphanCondition);
 
         Assert.Equal(DiagnosticSeverity.Error, diagnostic.Severity);
         Assert.Equal(condition.Span, diagnostic.Span);
@@ -31,11 +31,31 @@ public sealed class ConditionWithoutJumpRuleTests
         Assert.Empty(Check(line));
     }
 
+    [Fact]
+    public void Check_AConditionBoundToALine_ReportsNothing()
+    {
+        var line = ConditionalLine(Condition("Rainy"), Text("The moor is bleak."));
+
+        Assert.Empty(Check(line));
+    }
+
+    [Fact]
+    public void Check_ALineGuardBesideAStrayCondition_ReportsOnlyTheStrayOne()
+    {
+        var stray = new Condition("Sunny", SourceSpanFactory.Span(20));
+        var line = ConditionalLine(Condition("Rainy"), Text("It is "), stray);
+
+        var diagnostics = Check(line);
+        var diagnostic = AssertReported(diagnostics, DiagnosticCatalog.OrphanCondition);
+        Assert.Equal(stray.Span, diagnostic.Span);
+        Assert.Single(diagnostics);
+    }
+
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();
         var document = new DesugaredScriptDocument(new ScriptDocument([root]));
-        new ConditionWithoutJumpRule().Check(DialogueTreeIndex.Build(document), bag);
+        new OrphanConditionRule().Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;
     }
 }

@@ -68,7 +68,7 @@ internal static class RandomChoiceRecognition
         var blocks = new List<MarkdownBlock>();
         if (speech.Count > 0)
         {
-            blocks.Add(new Paragraph(speech, SourceSpan.Covering(speech[0].Span, speech[^1].Span)));
+            blocks.Add(new Paragraph(speech, SourceSpan.Covering(speech)));
         }
 
         blocks.AddRange(item.Blocks.Skip(1));

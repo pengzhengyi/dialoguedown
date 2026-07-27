@@ -22,6 +22,10 @@
     href: Random Choice.md
   - name: Conditional Jump
     href: Conditional Jump.md
+  - name: Conditional Line
+    href: Conditional Line.md
+  - name: Cross-File Jump Resolution
+    href: Cross-File Jump Resolution.md
 - name: Configuration
   items:
   - name: Configuration
