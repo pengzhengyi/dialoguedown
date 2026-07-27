@@ -3,13 +3,21 @@ namespace DialogueDown.Visualization;
 /// <summary>
 /// A named table of the semantic model shown beside the scene-tree graph in the Semantic tab —
 /// the speaker, anchor, or jump-resolution table. Carries its <see cref="Columns"/> headers,
-/// its <see cref="Rows"/>, and the <see cref="EmptyText"/> to show when there are no rows.
+/// its <see cref="Rows"/>, the <see cref="EmptyText"/> to show when there are no rows, and the
+/// <see cref="FacetColumns"/> whose small, fixed vocabulary the editor offers as a filter.
 /// </summary>
 public sealed record SemanticTable(
     string Title,
     IReadOnlyList<string> Columns,
     IReadOnlyList<SemanticRow> Rows,
-    string EmptyText);
+    string EmptyText)
+{
+    /// <summary>
+    /// The names of columns that are categorical — a small, fixed set of values (a jump's Type,
+    /// a speaker's Default) the report offers as a faceted filter beside the free-text search.
+    /// </summary>
+    public IReadOnlyList<string> FacetColumns { get; init; } = [];
+}
 
 /// <summary>
 /// One row of a <see cref="SemanticTable"/>: its <see cref="Cells"/> in column order and an

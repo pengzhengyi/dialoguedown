@@ -1,43 +1,77 @@
-import type { SemanticTable, SemanticCell } from "./model";
+import tippy from "tippy.js";
+import type { SemanticTable, SemanticCell, SemanticRow } from "./model";
 import { escapeHtml } from "./text";
 import { colorOf } from "./palette";
 import { initCollapsiblePanel } from "./collapse-toggle";
+import {
+    createTable,
+    functionalUpdate,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getSortedRowModel,
+    type ColumnDef,
+    type Table,
+    type TableState,
+} from "@tanstack/table-core";
+
+// Lucide icons (ISC): a magnifier for the on-demand search, a funnel for a column's facet filter.
+const SEARCH_ICON = svg('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>');
+const FILTER_ICON = svg('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>');
+
+let facetGroupSeq = 0;
 
 /**
- * Render one semantic table as a **collapsible panel**: a header bar (title + row count) that
- * toggles the table body to a bar and back, over a table whose rows and cells carry the
- * cross-link keys the entity highlighter reads. The collapsed state persists across reloads,
- * reusing the report's collapsible-panel pattern.
+ * Render one semantic table as a **collapsible panel** whose title bar carries the collapse caret,
+ * an on-demand search toggle, and the (filter-aware) row count. Its rows sort on any column header,
+ * filter through a revealed search box, and — for categorical columns — through a faceted popover
+ * whose choice shows as a chip in the header. Sorting and filtering run on TanStack `table-core`
+ * (headless), so this module still owns every pixel: category accents, cross-link keys, and the
+ * collapsible state all survive. The collapsed state persists across reloads.
  */
 export function createTablePanel(table: SemanticTable): HTMLElement {
     const panel = document.createElement("section");
     panel.className = "table-panel";
 
-    const header = document.createElement("button");
-    header.type = "button";
-    header.className = "table-panel-header";
-    header.innerHTML =
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "table-panel-toggle";
+    toggle.innerHTML =
         `<span class="table-panel-caret" aria-hidden="true"></span>` +
-        `<span class="table-panel-title">${escapeHtml(table.title)}</span>` +
-        `<span class="table-panel-count">${table.rows.length}</span>`;
+        `<span class="table-panel-title">${escapeHtml(table.title)}</span>`;
+
+    const count = document.createElement("span");
+    count.className = "table-panel-count";
+    count.textContent = String(table.rows.length);
+
+    const header = document.createElement("div");
+    header.className = "table-panel-header";
+    header.appendChild(toggle);
+
+    // The search toggle only makes sense when there are rows to filter.
+    const searchToggle = table.rows.length > 0 ? buildSearchToggle(table.title) : null;
+    if (searchToggle) {
+        header.appendChild(searchToggle);
+    }
+    header.appendChild(count);
 
     const body = document.createElement("div");
     body.className = "table-panel-body";
-    body.appendChild(renderTable(table));
+    body.appendChild(
+        renderContent(table, (shown) => (count.textContent = String(shown)), searchToggle),
+    );
 
     panel.append(header, body);
 
-    // Reuse the collapsible-panel state + persistence; the header bar is the toggle, so its
-    // own button is unused. A per-title key remembers each panel independently across reloads.
+    // Collapse only via the caret/title toggle, so the search button never folds the panel.
     const collapsible = initCollapsiblePanel({
         container: panel,
         collapsedClass: "collapsed",
-        storageKey: `dd-sem-panel-${table.title.toLowerCase().replace(/\s+/g, "-")}`,
+        storageKey: `dd-sem-panel-${slug(table.title)}`,
         name: table.title,
     });
     const reflect = (): void =>
-        header.setAttribute("aria-expanded", String(!collapsible.isCollapsed()));
-    header.addEventListener("click", () => {
+        toggle.setAttribute("aria-expanded", String(!collapsible.isCollapsed()));
+    toggle.addEventListener("click", () => {
         collapsible.toggle();
         reflect();
     });
@@ -46,8 +80,23 @@ export function createTablePanel(table: SemanticTable): HTMLElement {
     return panel;
 }
 
-/** The `<table>` for a semantic table, or a "none" note when it has no rows. */
-function renderTable(table: SemanticTable): HTMLElement {
+/** The magnifier button that reveals the search box; wired to the input in the body. */
+function buildSearchToggle(title: string): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "table-panel-search";
+    button.innerHTML = SEARCH_ICON;
+    button.setAttribute("aria-label", `Search ${title}`);
+    button.setAttribute("aria-expanded", "false");
+    return button;
+}
+
+/** The panel body: an interactive table, or a "none" note when the table has no rows. */
+function renderContent(
+    table: SemanticTable,
+    setShown: (shown: number) => void,
+    searchToggle: HTMLButtonElement | null,
+): HTMLElement {
     if (table.rows.length === 0) {
         const empty = document.createElement("p");
         empty.className = "table-empty";
@@ -55,32 +104,266 @@ function renderTable(table: SemanticTable): HTMLElement {
         return empty;
     }
 
+    return buildInteractiveTable(table, setShown, searchToggle);
+}
+
+/**
+ * A sortable, filterable table over `table.rows`. A `table-core` instance holds the sort, global
+ * filter, and per-column facet state; on every change this re-renders the body from its row model
+ * and reports the visible-row count to `setShown`. Header cells are built once (so keyboard focus
+ * survives a sort); only their `aria-sort` updates.
+ */
+function buildInteractiveTable(
+    table: SemanticTable,
+    setShown: (shown: number) => void,
+    searchToggle: HTMLButtonElement | null,
+): HTMLElement {
+    const container = document.createElement("div");
+    container.className = "table-interactive";
+
+    const facetNames = new Set(table.facetColumns ?? []);
+
+    const searchRow = document.createElement("div");
+    searchRow.className = "table-search-row";
+    searchRow.hidden = true;
+    const search = document.createElement("input");
+    search.type = "search";
+    search.className = "table-search";
+    search.placeholder = "Filter…";
+    search.setAttribute("aria-label", `Filter ${table.title}`);
+    searchRow.appendChild(search);
+
     const element = document.createElement("table");
     element.className = "semantic-table";
-    element.dataset.table = table.title.toLowerCase().replace(/\s+/g, "-");
-
-    const head = document.createElement("thead");
+    element.dataset.table = slug(table.title);
     const headRow = document.createElement("tr");
-    for (const column of table.columns) {
+    const thead = document.createElement("thead");
+    thead.appendChild(headRow);
+    const tbody = document.createElement("tbody");
+    element.append(thead, tbody);
+
+    // One column per source column; each reads its cell's text so sort and filter act on what the
+    // reader sees. A categorical column also matches by exact value, for its faceted filter.
+    const columns: ColumnDef<SemanticRow>[] = table.columns.map((name, index) => ({
+        id: name,
+        header: name,
+        accessorFn: (row) => row.cells[index]?.text ?? "",
+        filterFn: facetNames.has(name) ? "equalsString" : "includesString",
+    }));
+
+    let state: TableState;
+
+    const instance = createTable<SemanticRow>({
+        data: table.rows,
+        columns,
+        globalFilterFn: "includesString",
+        enableSortingRemoval: true,
+        state: {},
+        onStateChange: (updater) => {
+            state = functionalUpdate(updater, instance.getState());
+            instance.setOptions((prev) => ({ ...prev, state }));
+            render();
+        },
+        renderFallbackValue: null,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+    });
+
+    // Seed the full default state (column pinning, order, sizing, …) so the headless header code
+    // has its defaults; from here we only ever change sorting and the filters through it.
+    state = instance.initialState;
+    instance.setOptions((prev) => ({ ...prev, state }));
+
+    // Header cells built once so a keyboard sort keeps focus; render() only refreshes aria-sort.
+    const headerCells = instance.getFlatHeaders().map((headerColumn) => {
         const th = document.createElement("th");
         th.scope = "col";
-        th.textContent = column;
-        headRow.appendChild(th);
-    }
-    head.appendChild(headRow);
+        const inner = document.createElement("div");
+        inner.className = "th-inner";
 
-    const bodyEl = document.createElement("tbody");
-    for (const row of table.rows) {
-        const tr = document.createElement("tr");
-        if (row.entityKey) tr.setAttribute("data-entity-key", row.entityKey);
-        for (const cell of row.cells) {
-            tr.appendChild(renderCell(cell));
+        const sort = document.createElement("button");
+        sort.type = "button";
+        sort.className = "th-sort";
+        sort.textContent = headerColumn.column.id;
+        const toggleSort = headerColumn.column.getToggleSortingHandler();
+        if (toggleSort) {
+            sort.addEventListener("click", (event) => toggleSort(event));
         }
-        bodyEl.appendChild(tr);
+        inner.appendChild(sort);
+
+        if (facetNames.has(headerColumn.column.id)) {
+            const facet = buildFacetControl(table, headerColumn.column.id, instance);
+            if (facet) {
+                inner.appendChild(facet);
+            }
+        }
+
+        th.appendChild(inner);
+        return { th, id: headerColumn.column.id };
+    });
+    headRow.append(...headerCells.map((cell) => cell.th));
+
+    function render(): void {
+        for (const { th, id } of headerCells) {
+            th.setAttribute("aria-sort", ariaSort(instance.getColumn(id)?.getIsSorted()));
+        }
+
+        const rows = instance.getRowModel().rows;
+        if (rows.length === 0) {
+            tbody.replaceChildren(noMatchRow(table.columns.length));
+        } else {
+            tbody.replaceChildren(...rows.map((row) => renderRow(row.original)));
+        }
+        setShown(rows.length);
     }
 
-    element.append(head, bodyEl);
-    return element;
+    if (searchToggle) {
+        searchToggle.addEventListener("click", () => {
+            const open = searchRow.hidden;
+            searchRow.hidden = !open;
+            searchToggle.setAttribute("aria-expanded", String(open));
+            if (open) {
+                search.focus();
+            }
+        });
+    }
+    search.addEventListener("input", () => {
+        instance.setGlobalFilter(search.value);
+        searchToggle?.classList.toggle("active", search.value.length > 0);
+    });
+
+    render();
+    container.append(searchRow, element);
+    return container;
+}
+
+/**
+ * The facet control for a categorical column: a funnel button that, when a value is chosen, becomes
+ * a value chip. Clicking it opens a radio popover (All plus the column's distinct values); choosing
+ * one applies that column's exact-match filter and All clears it.
+ */
+function buildFacetControl(
+    table: SemanticTable,
+    columnName: string,
+    instance: Table<SemanticRow>,
+): HTMLElement | null {
+    const index = table.columns.indexOf(columnName);
+    const values = distinctValues(table.rows, index);
+    if (values.length === 0) {
+        return null;
+    }
+    const control = document.createElement("button");
+    control.type = "button";
+    control.className = "th-facet";
+    control.setAttribute("aria-haspopup", "true");
+
+    const showInactive = (): void => {
+        control.classList.remove("active");
+        control.innerHTML = FILTER_ICON;
+        control.setAttribute("aria-label", `Filter by ${columnName}`);
+    };
+    const showValue = (value: string): void => {
+        control.classList.add("active");
+        control.textContent = "";
+        const chip = document.createElement("span");
+        chip.className = "th-facet-value";
+        chip.textContent = value;
+        control.appendChild(chip);
+        control.setAttribute("aria-label", `${columnName}: ${value}. Change filter`);
+    };
+    showInactive();
+
+    const groupName = `facet-${slug(columnName)}-${facetGroupSeq++}`;
+    const popover = document.createElement("div");
+    popover.className = "facet-popover";
+    popover.setAttribute("role", "radiogroup");
+    popover.setAttribute("aria-label", `Filter by ${columnName}`);
+
+    function apply(value: string): void {
+        instance.getColumn(columnName)?.setFilterValue(value || undefined);
+        if (value) {
+            showValue(value);
+        } else {
+            showInactive();
+        }
+        tip.hide();
+    }
+
+    const radios = ["", ...values].map((value) => {
+        const option = document.createElement("label");
+        option.className = "facet-option";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = groupName;
+        input.value = value;
+        input.checked = value === "";
+        input.addEventListener("change", () => {
+            if (input.checked) {
+                apply(value);
+            }
+        });
+        const text = document.createElement("span");
+        text.textContent = value === "" ? "All" : value;
+        option.append(input, text);
+        return option;
+    });
+    popover.append(...radios);
+
+    const tip = tippy(control, {
+        content: popover,
+        interactive: true,
+        trigger: "click",
+        placement: "bottom-end",
+        appendTo: () => document.body,
+        arrow: false,
+        offset: [0, 4],
+        theme: "dd-facet",
+    });
+
+    return control;
+}
+
+/** The `aria-sort` value for a column's sort direction. */
+function ariaSort(direction: false | "asc" | "desc" | undefined): string {
+    if (direction === "asc") return "ascending";
+    if (direction === "desc") return "descending";
+    return "none";
+}
+
+/** The distinct non-empty cell texts of one column, in first-seen order. */
+function distinctValues(rows: readonly SemanticRow[], index: number): string[] {
+    const seen = new Set<string>();
+    const values: string[] = [];
+    for (const row of rows) {
+        const text = row.cells[index]?.text ?? "";
+        if (text !== "" && !seen.has(text)) {
+            seen.add(text);
+            values.push(text);
+        }
+    }
+    return values;
+}
+
+/** The single "no matches" row shown when a filter hides every row. */
+function noMatchRow(columnCount: number): HTMLElement {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.className = "table-nomatch";
+    td.colSpan = columnCount;
+    td.textContent = "No matches.";
+    tr.appendChild(td);
+    return tr;
+}
+
+/** A `<tr>` carrying the row's cross-link key and its cells. */
+function renderRow(row: SemanticRow): HTMLElement {
+    const tr = document.createElement("tr");
+    if (row.entityKey) tr.setAttribute("data-entity-key", row.entityKey);
+    for (const cell of row.cells) {
+        tr.appendChild(renderCell(cell));
+    }
+    return tr;
 }
 
 /** A `<td>` carrying the cell's text, category color accent, and any cross-link key. */
@@ -94,4 +377,18 @@ function renderCell(cell: SemanticCell): HTMLElement {
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
     return td;
+}
+
+/** A 15px stroked Lucide-style icon from its inner paths. */
+function svg(paths: string): string {
+    return (
+        `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ` +
+        `stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">` +
+        `${paths}</svg>`
+    );
+}
+
+/** A panel/table slug from a title: lowercased, spaces to hyphens. */
+function slug(title: string): string {
+    return title.toLowerCase().replace(/\s+/g, "-");
 }

@@ -59,6 +59,8 @@ export interface SemanticTable {
     rows: SemanticRow[];
     /** Shown when there are no rows. */
     emptyText: string;
+    /** Names of categorical columns the editor offers as a faceted filter (e.g. a jump's Type). */
+    facetColumns?: string[];
 }
 
 export interface Stage {

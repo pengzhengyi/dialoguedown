@@ -111,12 +111,21 @@ const report: Report = {
                                 { text: "1" },
                             ],
                         },
+                        {
+                            entityKey: "scene:the-alley",
+                            cells: [
+                                { text: "#the-alley", category: "structure" },
+                                { text: "The Alley" },
+                                { text: "2" },
+                            ],
+                        },
                     ],
                 },
                 {
                     title: "Jump resolutions",
                     columns: ["Type", "Jump", "Target", "Resolves to"],
                     emptyText: "No jumps appear in this script.",
+                    facetColumns: ["Type"],
                     rows: [
                         {
                             cells: [
@@ -127,6 +136,14 @@ const report: Report = {
                                     text: "=> The Square",
                                     refKey: "scene:the-square",
                                 },
+                            ],
+                        },
+                        {
+                            cells: [
+                                { text: "End", category: "terminal" },
+                                { text: "the end" },
+                                { text: "#END" },
+                                { text: "End sentinel" },
                             ],
                         },
                     ],
@@ -159,6 +176,55 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     // The shared node-detail inspector is hidden — the tab has its own tables.
     await expect(page.locator("#app")).toHaveClass(/no-detail/);
     await expect(page.locator("#detail")).toBeHidden();
+});
+
+test("filters and sorts a table while keeping its cross-links", async ({ page }) => {
+    const anchors = page.locator('.table-panel:has(.table-panel-title:text-is("Anchors"))');
+
+    // Sort by Scene ascending: the alphabetically-first scene leads, and the header announces it.
+    await anchors.locator(".th-sort", { hasText: "Scene" }).click();
+    await expect(anchors.locator("tbody tr td:nth-child(2)").first()).toHaveText("The Alley");
+    await expect(anchors.locator('th:has(.th-sort:text-is("Scene"))')).toHaveAttribute(
+        "aria-sort",
+        "ascending",
+    );
+
+    // Reveal the search box on demand, then filter to just the market; the panel count tracks the
+    // visible rows, and the row still carries its cross-link key.
+    await anchors.locator(".table-panel-search").click();
+    await anchors.locator("input.table-search").fill("market");
+    await expect(anchors.locator("tbody tr")).toHaveCount(1);
+    await expect(anchors.locator('tbody tr[data-entity-key="scene:the-market"]')).toBeVisible();
+    await expect(anchors.locator(".table-panel-count")).toHaveText("1");
+
+    // A no-match filter shows the note and a zero count.
+    await anchors.locator("input.table-search").fill("zzzz");
+    await expect(anchors.locator(".table-nomatch")).toHaveText("No matches.");
+    await expect(anchors.locator(".table-panel-count")).toHaveText("0");
+});
+
+test("facets the Jump resolutions table by its Type column", async ({ page }) => {
+    const jumps = page.locator('.table-panel:has(.table-panel-title:text-is("Jump resolutions"))');
+    await expect(jumps.locator("tbody tr")).toHaveCount(2);
+
+    // Open the Type facet popover and choose End; the choice shows as a chip in the header.
+    // Click (not check) the radio: choosing a value closes the popover, so re-verifying the
+    // checked state would race that teardown.
+    await jumps.locator(".th-facet").click();
+    const endOption = page.locator('.facet-popover input[value="End"]');
+    await expect(endOption).toBeVisible();
+    await endOption.click();
+    await expect(jumps.locator("tbody tr")).toHaveCount(1);
+    await expect(jumps.locator("tbody tr td").first()).toHaveText("End");
+    await expect(jumps.locator(".th-facet .th-facet-value")).toHaveText("End");
+    await expect(jumps.locator(".table-panel-count")).toHaveText("1");
+
+    // Reopen and clear with All.
+    await jumps.locator(".th-facet").click();
+    const allOption = page.locator('.facet-popover input[value=""]');
+    await expect(allOption).toBeVisible();
+    await allOption.click();
+    await expect(jumps.locator("tbody tr")).toHaveCount(2);
 });
 
 test("cross-links a scene across the graph, the anchor table, and a jump block", async ({
@@ -216,19 +282,19 @@ test("lineage focus preserves the scene backbone while spotlighting a scene", as
     await expect(graph.locator("g.node.scene:not(.related)")).not.toHaveCount(0);
 });
 
-test("collapses and reopens a table from its header bar", async ({ page }) => {
+test("collapses and reopens a table from its caret toggle", async ({ page }) => {
     const speakers = page
         .locator(".table-panel")
         .filter({ has: page.locator(".table-panel-title", { hasText: "Speakers" }) });
-    const header = speakers.locator(".table-panel-header");
+    const toggle = speakers.locator(".table-panel-toggle");
 
     await expect(speakers.locator("tbody")).toBeVisible();
-    await header.click();
+    await toggle.click();
     await expect(speakers).toHaveClass(/collapsed/);
-    await expect(header).toHaveAttribute("aria-expanded", "false");
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
     await expect(speakers.locator("tbody")).toBeHidden();
 
-    await header.click();
+    await toggle.click();
     await expect(speakers).not.toHaveClass(/collapsed/);
     await expect(speakers.locator("tbody")).toBeVisible();
 });

@@ -130,6 +130,36 @@ public sealed class SemanticProjectionTests
     }
 
     [Fact]
+    public void Project_SpeakerTable_ShowsNaForASpeakerWithNoNameOrId()
+    {
+        // A speaker-less line resolves to the anonymous default speaker: it has neither a name nor
+        // an @id, so both cells read "N/A" rather than an ambiguous dash.
+        var graph = Project("The room is silent.");
+
+        var row = Assert.Single(Table(graph, "Speakers").Rows);
+        Assert.Equal("N/A", row.Cells[0].Text);
+        Assert.Equal("N/A", row.Cells[1].Text);
+    }
+
+    [Fact]
+    public void Project_MarksTheCategoricalColumnsAsFacets()
+    {
+        var graph = Project(
+            """
+            # The Market
+
+            Guide @guide: Welcome.
+
+            => [east](#the-market)
+            """);
+
+        // Type (jumps) and Default (speakers) are categorical; the free-text tables carry none.
+        Assert.Equal(["Type"], Table(graph, "Jump resolutions").FacetColumns);
+        Assert.Equal(["Default"], Table(graph, "Speakers").FacetColumns);
+        Assert.Empty(Table(graph, "Anchors").FacetColumns);
+    }
+
+    [Fact]
     public void Project_SpeakerTable_DeduplicatesOneSpeakerSeenByNameAndId()
     {
         var graph = Project(
