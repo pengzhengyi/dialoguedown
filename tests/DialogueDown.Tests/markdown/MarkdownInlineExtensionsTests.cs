@@ -75,4 +75,43 @@ public sealed class MarkdownInlineExtensionsTests
     [Fact]
     public void TrimLeadingWhitespace_Empty_IsEmpty() =>
         Assert.Empty(Array.Empty<MarkdownInline>().TrimLeadingWhitespace());
+
+    [Fact]
+    public void PlainText_Text_IsItsText() =>
+        Assert.Equal("Alice", Text("Alice").PlainText());
+
+    [Fact]
+    public void PlainText_Emphasis_DropsTheStylingAndKeepsTheWords() =>
+        Assert.Equal("Alice", Emphasis(EmphasisKind.Italic, Text("Alice")).PlainText());
+
+    [Fact]
+    public void PlainText_NestedEmphasis_Flattens() =>
+        Assert.Equal(
+            "Al", Emphasis(EmphasisKind.Bold, Emphasis(EmphasisKind.Italic, Text("Al"))).PlainText());
+
+    [Fact]
+    public void PlainText_ACodeSpan_IsNull() => Assert.Null(CodeSpan("x").PlainText());
+
+    [Fact]
+    public void PlainText_ALink_IsNull() => Assert.Null(Link("t", Text("x")).PlainText());
+
+    [Fact]
+    public void PlainText_AnImage_IsNull() => Assert.Null(Image("s", Text("x")).PlainText());
+
+    [Fact]
+    public void PlainText_ALineBreak_IsNull() => Assert.Null(LineBreak().PlainText());
+
+    [Fact]
+    public void PlainText_ARun_ConcatenatesEachInline() =>
+        Assert.Equal(
+            "Alice",
+            new MarkdownInline[] { Text("A"), Emphasis(EmphasisKind.Italic, Text("lice")) }.PlainText());
+
+    [Fact]
+    public void PlainText_ARunWithAFunctionalInline_IsNull() =>
+        Assert.Null(new MarkdownInline[] { Text("A"), CodeSpan("x") }.PlainText());
+
+    [Fact]
+    public void PlainText_AnEmptyRun_IsEmpty() =>
+        Assert.Equal("", Array.Empty<MarkdownInline>().PlainText());
 }

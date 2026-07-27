@@ -1,3 +1,4 @@
+using System.Text;
 using DialogueDown.Common;
 
 namespace DialogueDown.Markdown;
@@ -56,5 +57,39 @@ internal static class MarkdownInlineExtensions
 
         var rest = list.Skip(1);
         return trimmed is null ? rest.ToList() : [trimmed, .. rest];
+    }
+
+    /// <summary>
+    /// The plain, unstyled text of this inline: a text inline's text, or an emphasis inline's
+    /// children flattened the same way — styling is dropped, only the words remain. Returns
+    /// <c>null</c> when the inline holds a functional element (a code span, link, image, or break)
+    /// that has no plain-text form.
+    /// </summary>
+    public static string? PlainText(this MarkdownInline inline) => inline switch
+    {
+        TextInline text => text.Text,
+        EmphasisInline emphasis => emphasis.Children.PlainText(),
+        _ => null,
+    };
+
+    /// <summary>
+    /// The plain text of a run of inlines, concatenated (see
+    /// <see cref="PlainText(MarkdownInline)"/>), or <c>null</c> when any inline in the run has no
+    /// plain-text form.
+    /// </summary>
+    public static string? PlainText(this IEnumerable<MarkdownInline> inlines)
+    {
+        var builder = new StringBuilder();
+        foreach (var inline in inlines)
+        {
+            if (inline.PlainText() is not { } text)
+            {
+                return null;
+            }
+
+            builder.Append(text);
+        }
+
+        return builder.ToString();
     }
 }
