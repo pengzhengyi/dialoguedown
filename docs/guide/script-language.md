@@ -126,6 +126,11 @@ A line may name who speaks before the colon. A speaker prefix is either a
 (which only points at a known speaker); omitting the prefix uses the default
 speaker.
 
+> [!NOTE]
+> A speaker's name must be **plain text**. If you style it — `*Alice*:`,
+> `**Alice**:` — it is not read as a speaker prefix, so the line is left
+> unattributed. Write the name unstyled (`Alice:`).
+
 #### Inline speaker declaration
 
 Inline speaker declarations are a lightweight way to introduce or enrich
@@ -787,8 +792,8 @@ often a second conditional line testing the opposite flag.
 ```
 
 A condition needs a line to apply to: a `` `"key"?` `` alone on a line, or one
-buried mid-line after the speaker, applies to nothing and is reported as
-[`DLG1106`](error-codes.md#dlg1106).
+buried mid-line after the speaker, guards nothing. Put it at the start of a line,
+or immediately before a jump.
 
 ### Ending a run
 
