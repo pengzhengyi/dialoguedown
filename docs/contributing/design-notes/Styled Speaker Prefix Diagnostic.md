@@ -36,8 +36,8 @@ This note adds a **warning** that catches the likely mistake: when a line's styl
 leading run *would* parse as a speaker prefix if it were unstyled, report it and
 tell the writer to remove the emphasis.
 
-**In scope:** a structural style/surface warning over the desugared Dialogue AST,
-its detection rule, its `DLG1107` descriptor, the writer-facing guidance, and the
+**In scope:** a warning emitted by the transpiler when it fails to peel a styled
+speaker prefix, its `DLG1107` descriptor, the writer-facing guidance, and the
 generated error-code entry.
 
 **Out of scope:** changing how a speaker prefix is *parsed* (styled prefixes stay
@@ -55,7 +55,7 @@ rule configuration (no TOML knob).
       fully-styled line (`*Alice: hi*`) does not trigger.
 - [ ] Point the diagnostic at the would-be prefix (line start through the `:`).
 - [ ] Apply inside choice options too (any `Line`, not only top-level speech).
-- [ ] Register the rule in every default compiler composition root.
+- [ ] Emit from the line builder when the speaker peel fails on a styled run.
 - [ ] Add the generated error-code reference entry and a short writer-facing note.
 
 ## Ubiquitous language
@@ -66,7 +66,7 @@ rule configuration (no TOML knob).
 | **Styled speaker prefix** | A would-be speaker prefix whose name is wrapped in Markdown styling (`*Alice*:`), which the transpiler does not recognize because styling breaks the leading plain-text run. |
 | **Unattributed line** | A `Line` with no recognized speaker (`Speaker` is `null`); desugar fills the default speaker downstream. |
 | **Would-be prefix** | The leading run of a line flattened to plain text up to and including the first `:`. If it parses as a speaker prefix, styling is the only reason recognition failed. |
-| **Styled run** | A leading `StyledText` fragment (italic, bold, or strikethrough) — the Dialogue AST's record that some speech text carries a style. |
+| **Styled run** | A leading `EmphasisInline` (italic, bold, or strikethrough) — the Markdown AST's record that some text is styled. |
 
 ## Writer-facing behavior
 
@@ -110,71 +110,74 @@ never reached. Nothing downstream flags it.
 
 ## Architecture
 
-Line-surface advisories in DialogueDown are **structural validation rules** over
-the desugared Dialogue AST, not diagnostics emitted while transpiling — the same
-home as `DLG1003` (unreachable content after a jump) and `DLG1106` (a condition
-guarding nothing). This diagnostic joins them as one more rule.
+Speaker-prefix **recognition** diagnostics are emitted by the transpiler's
+builders: `DLG1101` (tags without a speaker) from `SpeakerBuilder`, and
+`DLG1102`–`DLG1105` from the other builders. This diagnostic joins them — the
+transpiler already tries to peel a speaker prefix, so it is the natural place to
+notice that a styled leading run *would* have been one. (Structural *placement*
+advisories like `DLG1003` and `DLG1106` are validation rules; a recognition
+diagnostic like this one is not.)
 
 ```mermaid
 flowchart LR
-    SRC["source"] --> MD["Markdown AST"] --> AST["Dialogue AST"]
-    AST --> DES["desugared AST"] --> VAL["Structural validator"]
-    VAL -. "DLG1107" .-> DIAG["Diagnostics"]
-    subgraph rules["Structural rules"]
-        R1["UnreachableAfterJumpRule"]
-        R2["OrphanConditionRule"]
-        R3["StyledSpeakerPrefixRule (new)"]
-    end
-    VAL --- rules
+    MD["Markdown AST"] --> LB["Line builder"]
+    LB -->|"peel speaker"| PEEL{"recognized?"}
+    PEEL -->|"yes"| LINE["Line with speaker"]
+    PEEL -->|"no: styled run?"| DET["StyledSpeakerPrefixDetector"]
+    DET -. "DLG1107" .-> DIAG["Diagnostics"]
+    DET --> LINE
 ```
 
-The Dialogue AST preserves styling as a `StyledText` fragment (a `SpeechStyle`
-plus child fragments plus a span), so a rule can see the styled leading run and
-reconstruct the writer's plain text — the emphasis has not been thrown away.
+The Markdown AST preserves styling as an `EmphasisInline` (a kind plus child
+inlines plus a span), so at the point the peel fails the line builder can see the
+styled leading run and reconstruct the writer's plain text — the emphasis has not
+been thrown away.
 
 ## Interfaces and responsibilities
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `StyledSpeakerPrefixRule` | The new rule: walk each `Line`, detect a styled would-be prefix, report `DLG1107`. Extends `DiagnosticRule`. | `DialogueTreeIndex`, `SpeakerPrefixParser` |
+| `StyledSpeakerPrefixDetector` | Reports `DLG1107` when a line's leading Markdown run would be a speaker prefix once unstyled. Called when the speaker peel fails. | `SpeakerPrefixProbe`, `MarkdownInline` |
 | `DiagnosticCatalog.StyledSpeakerPrefix` | The `DLG1107` descriptor (Syntax, Warning). | — |
-| `StructuralValidatorFactory` | Register the rule in the default rule set, so both composition roots run it. | `StructuralValidator` |
-| `SpeakerPrefixProbe` | A small shared probe over `SpeakerPrefixParser.Prefix` that answers "does this plain text begin with a speaker prefix?" — reused by the rule (and available to the transpiler) so validation does not reach into transpiler internals. | `SpeakerPrefixParser` |
+| `LineBuilder` | Calls the detector when `PeelSpeaker` returns no speaker. | `StyledSpeakerPrefixDetector` |
+| `SpeakerPrefixProbe` | A small probe over `SpeakerPrefixParser.Prefix` that answers "does this plain text begin with a speaker prefix?" — reused by the detector, both in the transpiler layer. | `SpeakerPrefixParser` |
 
 ## Detection
 
-For each `Line` the rule runs this test:
+The line builder calls the detector only when `PeelSpeaker` recognizes no
+speaker, so it runs on the leading Markdown inlines of an unattributed line:
 
-1. **Skip attributed lines.** If `Line.Speaker` is not `null`, the line already
-   names a speaker — nothing to warn about.
-2. **Require styling at the front.** The leading run of `Line.Speech`, up to the
-   first `:`, must contain at least one `StyledText` fragment. No styling means an
-   ordinary unattributed line, not a mistake this rule owns.
-3. **Flatten the would-be prefix.** Concatenate the plain text of the leading
-   fragments (a `StyledText` contributes its children's text; `Text` its content)
-   up to and including the first `:` that sits **outside** any styled run.
-4. **Parse it.** Run the shared `SpeakerPrefixProbe` (over `SpeakerPrefixParser`)
-   on the flattened text. If it matches, the styling is the only reason
-   recognition failed → report `DLG1107` spanning the would-be prefix, with the
-   flattened text as the message argument.
+1. **Require styling at the front.** The leading run up to the first `:` must
+   contain at least one `EmphasisInline`. No styling means an ordinary
+   unattributed line, not a mistake this warning owns.
+2. **Flatten the would-be prefix.** Concatenate the plain text of the leading
+   inlines (an `EmphasisInline` contributes its children's text; a `TextInline`
+   its text) up to and including the first `:` that sits **outside** any styling.
+3. **Probe it.** Run `SpeakerPrefixProbe` (over `SpeakerPrefixParser`) on the
+   flattened text. If it matches, the styling is the only reason recognition
+   failed → report `DLG1107` spanning the would-be prefix, with the flattened
+   text as the message argument.
 
-Probing through the real grammar means the rule and the transpiler agree exactly
-on what a "speaker prefix" is, so the warning never disagrees with recognition.
+Probing through the real grammar means the detector and the peel agree exactly on
+what a "speaker prefix" is, so the warning never disagrees with recognition.
 
 ## Key design decisions
 
-- **A validation rule, not a transpiler diagnostic.** Line-surface advisories that
-  still compile live in the structural validator (`DLG1003`, `DLG1106`), keeping
-  the transpiler focused on building. This diagnostic follows that convention.
+- **Emitted in the transpiler, beside the other recognition diagnostics.** Every
+  `DLG11xx` recognition diagnostic (`DLG1101` speaker, `DLG1102` game call,
+  `DLG1103`–`DLG1105`) is reported by a transpiler builder; only structural
+  *placement* advisories (`DLG1003`, `DLG1106`) are validation rules. A styled
+  prefix is a recognition failure, so it warns from the line builder where the
+  peel fails — which also keeps the speaker-grammar reuse inside one layer, since
+  the architecture forbids validation depending on the transpiler.
 - **`Syntax` / `Warning` (`DLG1107`).** The line is valid Markdown that still
   compiles, so it is not an error; but it is a malformed *speaker-prefix surface*,
   which is the `DLG11xx` syntax family (`DLG1101`, tags without a speaker), not a
   readability `DLG3xxx` style rule.
 - **Probe through the real grammar.** Detection asks the authoritative question —
   "would this have parsed as a prefix?" — instead of a look-alike heuristic that
-  could drift from real recognition. A small shared `SpeakerPrefixProbe` wraps
-  `SpeakerPrefixParser`, so the rule reuses the grammar without a validation →
-  transpiler-internals dependency.
+  could drift from real recognition. A small `SpeakerPrefixProbe` wraps
+  `SpeakerPrefixParser`, so the detector reuses the exact grammar.
 - **The `:` must be outside the styling.** Requiring the terminating colon in a
   plain fragment means the *name* is styled, but the writer still typed a normal
   `:` — the strong "styled speaker" signal — and excludes a deliberately
@@ -194,40 +197,41 @@ on what a "speaker prefix" is, so the warning never disagrees with recognition.
 | `*Alice: hi*` | No warning — the `:` is inside the styled run (whole-line italic). |
 | `*It was cold.*` | No warning — no `name:` shape flattens out. |
 | `*the great*: hi` | No warning — `the great` is not a valid speaker name, so the flattened text does not parse. |
-| `A*l*ice: hi` | `DLG1107` — styling appears in the leading run before the colon, even though the first fragment is plain `Text("A")`. |
-| `` `"key"?` *Alice*: hi `` | `DLG1107` — the condition guard is peeled first; the styled prefix is still detected in the remaining speech. |
-| `*Alice*: hi` inside a choice option | `DLG1107` — a choice option is a `Line`, so the rule covers it. |
+| `A*l*ice: hi` | `DLG1107` — styling appears in the leading run before the colon, even though the first inline is plain `TextInline("A")`. |
+| `` `"key"?` *Alice*: hi `` | `DLG1107` — the condition guard is peeled first; the styled prefix is still detected in the remaining inlines. |
+| `*Alice*: hi` inside a choice option | `DLG1107` — a choice option's line runs through the same line builder. |
 
 ## Integration
 
 - Add `DLG1107` to `DiagnosticCatalog`.
-- Add `StyledSpeakerPrefixRule` to `StructuralValidatorFactory.CreateDefault()`.
-- Reuse the grammar through a shared `SpeakerPrefixProbe` over
-  `SpeakerPrefixParser`, called from the rule, rather than a direct
-  validation → transpiler-parser reference.
+- Call `StyledSpeakerPrefixDetector` from `LineBuilder` when the speaker peel
+  finds no speaker.
+- Reuse the grammar through `SpeakerPrefixProbe` over `SpeakerPrefixParser`, both
+  in the transpiler layer.
 - Add the generated **error-code reference** entry for `DLG1107` (trigger/fix
   docs, as every `DLG` code carries) and a short **writer-facing** note in the
   script-language guide that a speaker's name must be unstyled.
 
 ## Testability
 
-The rule is pure over the desugared AST and needs no I/O, so it stays
-bottom-heavy on unit tests, built through the existing pipeline/object-mother
-helpers that compile a source string to the tree.
+The detector is pure over the leading Markdown inlines and needs no I/O, so it
+stays bottom-heavy on unit tests that build the inlines directly.
 
-- **Unit (`StyledSpeakerPrefixRuleTests`):** each styled form warns; a plain
-  prefix does not; a fully-styled line (colon inside) does not; a styled non-name
-  does not; a styled prefix with a tag warns; a styled prefix inside a choice
-  warns; a conditional line with a styled prefix warns; the reported span covers
-  the would-be prefix.
+- **Unit (`StyledSpeakerPrefixDetectorTests`):** each styled form warns; a plain
+  prefix shape does not; a fully-styled line (colon inside) does not; a styled
+  non-name does not; a styled prefix with a tag warns; styling within the name
+  warns; a styled run with no colon does not; the message names the would-be
+  prefix.
 - **Integration:** one end-to-end compile asserting the `DLG1107` code and its
-  location for `*Alice*: hi`, plus that a plain `Alice: hi` stays clean.
+  location for `*Alice*: hi`, plus (via the compiler-verified error-code example)
+  that the fix `Alice: hi` stays clean.
 
 ## Alternatives not chosen
 
-- **Emit it while transpiling** (in `LineBuilder`/`SpeakerBuilder`). Rejected: it
-  puts an advisory in the builder, against the convention that line-surface
-  advisories are validation rules.
+- **A validation rule over the desugared AST.** Rejected: it would make validation
+  depend on the transpiler's speaker grammar, which the architecture forbids
+  (`CoreLayeringTests`) — and a recognition diagnostic belongs in the transpiler
+  beside `DLG1101`, not with the structural placement rules.
 - **Silently promote a styled prefix to a speaker.** Rejected: it would drop or
   relocate the writer's styling and change Markdown meaning without consent; a
   warning is safer and reversible.
@@ -246,6 +250,7 @@ Settled in review:
 2. **Any styling before the colon triggers it** — including partial-name styling
    like `A*l*ice:`, not only a fully styled leading fragment.
 3. **Strikethrough counts** — `~~Ghost~~:` warns like italic and bold.
-4. **Detection goes through a shared `SpeakerPrefixProbe`** over
-   `SpeakerPrefixParser`, so the rule reuses the authoritative grammar without a
-   validation → transpiler-internals dependency.
+4. **Emitted in the transpiler.** Detection runs in the line builder where the
+   speaker peel fails, beside the other recognition diagnostics, reusing
+   `SpeakerPrefixProbe` over `SpeakerPrefixParser` within the transpiler layer —
+   which also avoids the layering issue a validation rule would have caused.
