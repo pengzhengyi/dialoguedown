@@ -22,14 +22,20 @@ export function createNodeDetailPanel(): NodeDetailPanel {
     const panel = document.createElement("section");
     panel.className = "table-panel node-detail-panel";
 
-    const header = document.createElement("button");
-    header.type = "button";
-    header.className = "table-panel-header";
-    header.innerHTML = `<span class="table-panel-caret" aria-hidden="true"></span>`;
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "table-panel-toggle";
+    toggle.innerHTML = `<span class="table-panel-caret" aria-hidden="true"></span>`;
     const title = document.createElement("span");
     title.className = "table-panel-title";
     title.textContent = "Node details";
-    header.appendChild(title);
+    toggle.appendChild(title);
+
+    // Same header shape as the tables' panels (a caret/title toggle in a header bar), so the
+    // "Node details" title reads like the other table titles rather than a filled button.
+    const header = document.createElement("div");
+    header.className = "table-panel-header";
+    header.appendChild(toggle);
 
     const body = document.createElement("div");
     body.className = "table-panel-body node-detail-body";
@@ -44,8 +50,8 @@ export function createNodeDetailPanel(): NodeDetailPanel {
         name: "node details",
     });
     const reflect = (): void =>
-        header.setAttribute("aria-expanded", String(!collapsible.isCollapsed()));
-    header.addEventListener("click", () => {
+        toggle.setAttribute("aria-expanded", String(!collapsible.isCollapsed()));
+    toggle.addEventListener("click", () => {
         collapsible.toggle();
         reflect();
     });
