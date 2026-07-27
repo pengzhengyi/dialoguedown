@@ -58,19 +58,13 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         // (bound later in desugar), and a lone condition guards nothing; both are left in place.
         private Condition? PeelCondition()
         {
-            if (_remaining[0] is not CodeSpanInline code
-                || ConditionReader.Read(code.Content, code.Span) is not { } condition)
+            if (!ConditionReader.TryPeel(_remaining, out var condition, out var remainder)
+                || remainder.Count == 0 || PrecedesAJump(remainder))
             {
                 return null;
             }
 
-            var afterGuard = _remaining.Skip(1).TrimLeadingWhitespace();
-            if (afterGuard.Count == 0 || PrecedesAJump(afterGuard))
-            {
-                return null;
-            }
-
-            _remaining = [.. afterGuard];
+            _remaining = [.. remainder];
             return condition;
         }
 
