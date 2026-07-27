@@ -79,6 +79,7 @@ first, since a construct threads through them.
 | [Random Choice](./Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
 | [Conditional Jump](./Conditional%20Jump.md) | A condition (`` `"key"?` ``) that makes a jump fire only when a game-state query is true | Explored |
 | [Conditional Line](./Conditional%20Line.md) | The same condition (`` `"key"?` ``) fronting a line, so the line plays only when the query is true | Explored |
+| [Conditional Choice](./Conditional%20Choice.md) | The same condition guarding a choice option, so a player or random option is offered only when the query is true | Proposed |
 | [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.md#meet-bob`) across a project, via a linker | Explored |
 
 ### Configuration
