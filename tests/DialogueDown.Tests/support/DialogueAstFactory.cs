@@ -35,6 +35,9 @@ internal static class DialogueAstFactory
     public static Line Line(params InlineFragment[] speech) =>
         new(null, speech, SourceSpanFactory.Span());
 
+    public static Line ConditionalLine(Condition condition, params InlineFragment[] speech) =>
+        new(null, speech, SourceSpanFactory.Span(), condition);
+
     public static Choice Choice(params ScriptBlock[] body) =>
         new(body, SourceSpanFactory.Span());
 

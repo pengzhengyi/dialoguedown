@@ -132,11 +132,11 @@ The coin spins.
 
 ### DLG1106
 
-<span class="dd-sev dd-sev--error">Error</span> · Condition without a jump
+<span class="dd-sev dd-sev--error">Error</span> · Condition guards nothing
 
-A condition (`"{0}"?`) must guard a jump. Put it immediately before a `=>` jump, or remove the `?` to write a plain query.
+A condition (`"{0}"?`) must guard a jump or a line. Put it immediately before a `=>` jump, or at the start of a line, or remove the `?` to write a plain query.
 
-A condition guards a jump, so it must sit immediately before a `=>` jump. A `"key"?` code span anywhere else has nothing to guard. Move it in front of a jump, or remove the `?` to write a plain query.
+A condition guards the jump it precedes or the line it fronts, so it must sit immediately before a `=>` jump or at the start of a line. A `"key"?` code span anywhere else has nothing to guard. Move it in front of a jump, front a line with it, or remove the `?` to write a plain query.
 
 <span class="dd-eg-bad">Triggering example</span>
 
@@ -146,7 +146,7 @@ Guide: <mark class="dd-mark-bad">`&quot;Rainy&quot;?`</mark> The moor is bleak.<
 <span class="dd-eg-fix">Fix</span>
 
 <pre class="dd-example"><code class="nohighlight"># Moor
-Guide: <mark class="dd-mark-fix">`&quot;Rainy&quot;`</mark> The moor is bleak.</code></pre>
+<mark class="dd-mark-fix">`&quot;Rainy&quot;?`</mark> Guide: The moor is bleak.</code></pre>
 
 ## Semantic (`DLG2xxx`)
 
