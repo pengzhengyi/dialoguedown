@@ -1,13 +1,15 @@
 # Progression order
 
 > [!NOTE]
-> Status: **proposed**. This note fixes DialogueDown's **progression order** — how
-> a reader moves through a script when nothing branches — and the two roles a jump
-> can play under it. It also adds one concrete construct, the **`#END`** reserved
-> terminator. The actual play-time traversal belongs to the deferred
+> Status: **partially implemented**. This note fixes DialogueDown's **progression
+> order** — how a reader moves through a script when nothing branches — and the two
+> roles a jump can play under it. Its compile-time surfaces ship now: the **`#END`**
+> reserved terminator resolves to the **End sentinel**, an
+> **unreachable-content-after-a-jump** diagnostic warns on dead content, and the
+> report **highlights** and **completes** `#END`. The play-time traversal that walks
+> this flow — and the returning **detour** — remain deferred to the
 > [dialogue graph and runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45);
-> this note settles the *meaning* the graph will implement, plus the compile-time
-> resolution, diagnostics, and editor support that can ship now.
+> this note settles the *meaning* that graph will implement.
 
 ## Table of contents
 
