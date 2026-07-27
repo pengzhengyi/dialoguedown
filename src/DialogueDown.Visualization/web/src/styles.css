@@ -657,11 +657,13 @@ section.stage.error {
     margin: 0.1rem 0 0.5rem;
 }
 
-.table-search {
+/* Higher specificity than Pico's `input[type="search"]`, so the slim padding actually wins. */
+.table-search-row input.table-search {
     box-sizing: border-box;
     width: 100%;
+    height: auto;
     margin: 0;
-    padding: 0.2rem 0.45rem;
+    padding: 0.1rem 0.45rem;
     font-size: 0.76rem;
     color: inherit;
     background: var(--pico-form-element-background-color, transparent);
@@ -774,6 +776,9 @@ section.stage.error {
 
 /* The facet radio menu, a tippy popover appended to the document body. */
 .tippy-box[data-theme~="dd-facet"] {
+    /* Keep the menu text at or below the table's own size (0.8rem), overriding tippy's larger
+       default so the radios never look bigger than the rows. */
+    font-size: 0.72rem;
     color: var(--pico-color);
     background: var(--pico-background-color, #fff);
     border: 1px solid var(--pico-muted-border-color);
@@ -782,22 +787,22 @@ section.stage.error {
 }
 
 .tippy-box[data-theme~="dd-facet"] .tippy-content {
-    padding: 0.25rem;
+    padding: 0.2rem;
 }
 
 .facet-popover {
     display: flex;
     flex-direction: column;
     gap: 0.05rem;
-    min-width: 6rem;
+    min-width: 5rem;
 }
 
 .facet-option {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.2rem 0.4rem;
-    font-size: 0.78rem;
+    gap: 0.3rem;
+    padding: 0.12rem 0.35rem;
+    font-size: inherit;
     border-radius: 0.3rem;
     cursor: pointer;
 }
@@ -807,7 +812,10 @@ section.stage.error {
 }
 
 .facet-option input {
+    width: 0.85rem;
+    height: 0.85rem;
     margin: 0;
+    accent-color: var(--md-link, #0969da);
 }
 
 .table-nomatch {

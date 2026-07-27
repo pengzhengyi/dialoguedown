@@ -208,8 +208,12 @@ test("facets the Jump resolutions table by its Type column", async ({ page }) =>
     await expect(jumps.locator("tbody tr")).toHaveCount(2);
 
     // Open the Type facet popover and choose End; the choice shows as a chip in the header.
+    // Click (not check) the radio: choosing a value closes the popover, so re-verifying the
+    // checked state would race that teardown.
     await jumps.locator(".th-facet").click();
-    await page.locator('.facet-popover input[value="End"]').check();
+    const endOption = page.locator('.facet-popover input[value="End"]');
+    await expect(endOption).toBeVisible();
+    await endOption.click();
     await expect(jumps.locator("tbody tr")).toHaveCount(1);
     await expect(jumps.locator("tbody tr td").first()).toHaveText("End");
     await expect(jumps.locator(".th-facet .th-facet-value")).toHaveText("End");
@@ -217,7 +221,9 @@ test("facets the Jump resolutions table by its Type column", async ({ page }) =>
 
     // Reopen and clear with All.
     await jumps.locator(".th-facet").click();
-    await page.locator('.facet-popover input[value=""]').check();
+    const allOption = page.locator('.facet-popover input[value=""]');
+    await expect(allOption).toBeVisible();
+    await allOption.click();
     await expect(jumps.locator("tbody tr")).toHaveCount(2);
 });
 
