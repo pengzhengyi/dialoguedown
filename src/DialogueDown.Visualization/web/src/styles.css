@@ -652,9 +652,10 @@ section.stage.error {
     white-space: nowrap;
 }
 
-/* The revealed search box: a slim row above the table, shown on demand from the title bar. */
+/* The revealed search box: a slim, horizontally inset row above the table (not edge-to-edge),
+   shown on demand from the title bar. */
 .table-search-row {
-    margin: 0.1rem 0 0.5rem;
+    margin: 0.15rem 0.55rem 0.5rem;
 }
 
 /* Higher specificity than Pico's `input[type="search"]`, so the slim padding actually wins. */
@@ -791,17 +792,19 @@ section.stage.error {
 }
 
 .facet-popover {
-    display: flex;
-    flex-direction: column;
-    gap: 0.05rem;
     min-width: 5rem;
 }
 
-.facet-option {
+/* `.facet-popover` prefix beats Pico's `label:has([type=radio]) { width: fit-content }`, so the
+   options fill the menu width and read as symmetric. */
+.facet-popover .facet-option {
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.12rem 0.35rem;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0.15rem 0.35rem;
     font-size: inherit;
     border-radius: 0.3rem;
     cursor: pointer;
