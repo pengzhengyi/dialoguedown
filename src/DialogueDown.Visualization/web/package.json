@@ -32,6 +32,7 @@
     "@codemirror/view": "^6.43.6",
     "@lezer/highlight": "^1.2.3",
     "@picocss/pico": "^2.0.6",
+    "@tanstack/table-core": "^8.21.3",
     "codemirror": "^6.0.2",
     "d3": "^7.9.0",
     "github-slugger": "^2.0.0",

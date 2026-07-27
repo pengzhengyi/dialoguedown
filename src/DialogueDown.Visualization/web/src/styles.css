@@ -586,7 +586,7 @@ section.stage.error {
 }
 
 .semantic-table th {
-    padding: 0.3rem 0.6rem;
+    padding: 0;
     text-align: left;
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -613,6 +613,73 @@ section.stage.error {
 .semantic-table[data-table="jump-resolutions"] th:first-child,
 .semantic-table[data-table="jump-resolutions"] td:first-child {
     white-space: nowrap;
+}
+
+/* Interactive table controls: a per-table filter box above a table whose headers sort on click. */
+.table-search {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0.1rem 0 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.78rem;
+    color: inherit;
+    background: var(--pico-form-element-background-color, transparent);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.35rem;
+}
+
+.table-search:focus-visible {
+    outline: 2px solid var(--md-link, #0969da);
+    outline-offset: 1px;
+}
+
+/* The header label doubles as a sort button: a text button that fills its cell (whose own
+   padding is now zero) and carries a direction caret. */
+.semantic-table .th-sort {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4em;
+    width: 100%;
+    padding: 0.3rem 0.6rem;
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    text-align: left;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.semantic-table .th-sort:hover {
+    color: var(--pico-color);
+}
+
+/* The sort caret reflects aria-sort: a faint idle glyph, a solid arrow once sorted. */
+.semantic-table .th-sort::after {
+    content: "⇅";
+    font-size: 0.85em;
+    opacity: 0.35;
+}
+
+.semantic-table th[aria-sort="ascending"] .th-sort::after {
+    content: "▲";
+    opacity: 0.9;
+}
+
+.semantic-table th[aria-sort="descending"] .th-sort::after {
+    content: "▼";
+    opacity: 0.9;
+}
+
+.semantic-table .th-sort:hover::after {
+    opacity: 0.7;
+}
+
+.table-nomatch {
+    font-style: italic;
+    color: var(--pico-muted-color);
 }
 
 /* Cross-linked rows and cells invite a hover; the highlighter (entity-highlight.ts)

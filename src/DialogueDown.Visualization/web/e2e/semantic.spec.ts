@@ -111,6 +111,14 @@ const report: Report = {
                                 { text: "1" },
                             ],
                         },
+                        {
+                            entityKey: "scene:the-alley",
+                            cells: [
+                                { text: "#the-alley", category: "structure" },
+                                { text: "The Alley" },
+                                { text: "2" },
+                            ],
+                        },
                     ],
                 },
                 {
@@ -159,6 +167,30 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     // The shared node-detail inspector is hidden — the tab has its own tables.
     await expect(page.locator("#app")).toHaveClass(/no-detail/);
     await expect(page.locator("#detail")).toBeHidden();
+});
+
+test("filters and sorts a table while keeping its cross-links", async ({ page }) => {
+    const anchors = page.locator('.table-panel:has(.table-panel-title:text-is("Anchors"))');
+
+    // Sort by Scene ascending: the alphabetically-first scene leads, and the header announces it.
+    await anchors.locator(".th-sort", { hasText: "Scene" }).click();
+    await expect(anchors.locator("tbody tr td:nth-child(2)").first()).toHaveText("The Alley");
+    await expect(anchors.locator('th:has(.th-sort:text-is("Scene"))')).toHaveAttribute(
+        "aria-sort",
+        "ascending",
+    );
+
+    // Filter to just the market; the panel count tracks the visible rows, and the row still
+    // carries its cross-link key.
+    await anchors.locator("input.table-search").fill("market");
+    await expect(anchors.locator("tbody tr")).toHaveCount(1);
+    await expect(anchors.locator('tbody tr[data-entity-key="scene:the-market"]')).toBeVisible();
+    await expect(anchors.locator(".table-panel-count")).toHaveText("1");
+
+    // A no-match filter shows the note and a zero count.
+    await anchors.locator("input.table-search").fill("zzzz");
+    await expect(anchors.locator(".table-nomatch")).toHaveText("No matches.");
+    await expect(anchors.locator(".table-panel-count")).toHaveText("0");
 });
 
 test("cross-links a scene across the graph, the anchor table, and a jump block", async ({
