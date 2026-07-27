@@ -11,7 +11,8 @@ changes easy to categorize.
 ### Added
 
 - **Searchable, sortable Semantic-tab tables** — the report's Speakers, Anchors, and Jump
-  resolutions tables now filter as you type and sort on any column header, so a writer can find a
+  resolutions tables now filter as you type, sort on any column header, and offer a faceted filter
+  for their categorical columns (a jump's Type, a speaker's Default), so a writer can find a
   speaker, scene, or jump and scan by name, level, or type. Cross-linking, category accents, and
   the collapsible panels are unchanged.
 - **Jump types in the Semantic tab** — the report's *Jump resolutions* table now leads with a

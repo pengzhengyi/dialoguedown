@@ -615,13 +615,21 @@ section.stage.error {
     white-space: nowrap;
 }
 
-/* Interactive table controls: a per-table filter box above a table whose headers sort on click. */
+/* Interactive table controls: a filter bar (free-text search + any faceted selects) above a
+   table whose headers sort on click. */
+.table-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.1rem 0 0.55rem;
+}
+
 .table-search {
     box-sizing: border-box;
     width: 100%;
-    margin: 0.1rem 0 0.5rem;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.78rem;
+    margin: 0;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.76rem;
     color: inherit;
     background: var(--pico-form-element-background-color, transparent);
     border: 1px solid var(--pico-muted-border-color);
@@ -631,6 +639,41 @@ section.stage.error {
 .table-search:focus-visible {
     outline: 2px solid var(--md-link, #0969da);
     outline-offset: 1px;
+}
+
+/* Faceted filters for categorical columns: a compact labeled select per column. */
+.table-facets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+}
+
+.table-facet {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.table-facet-name {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--pico-muted-color);
+}
+
+.table-facet select {
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0.1rem 1.4rem 0.1rem 0.4rem;
+    font-size: 0.74rem;
+    line-height: 1.3;
+    color: inherit;
+    background-color: var(--pico-form-element-background-color, transparent);
+    background-position: right 0.35rem center;
+    background-size: 0.65rem auto;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.3rem;
 }
 
 /* The header label doubles as a sort button: a text button that fills its cell (whose own

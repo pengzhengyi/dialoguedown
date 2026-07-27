@@ -125,6 +125,7 @@ const report: Report = {
                     title: "Jump resolutions",
                     columns: ["Type", "Jump", "Target", "Resolves to"],
                     emptyText: "No jumps appear in this script.",
+                    facetColumns: ["Type"],
                     rows: [
                         {
                             cells: [
@@ -135,6 +136,14 @@ const report: Report = {
                                     text: "=> The Square",
                                     refKey: "scene:the-square",
                                 },
+                            ],
+                        },
+                        {
+                            cells: [
+                                { text: "End", category: "terminal" },
+                                { text: "the end" },
+                                { text: "#END" },
+                                { text: "End sentinel" },
                             ],
                         },
                     ],
@@ -191,6 +200,19 @@ test("filters and sorts a table while keeping its cross-links", async ({ page })
     await anchors.locator("input.table-search").fill("zzzz");
     await expect(anchors.locator(".table-nomatch")).toHaveText("No matches.");
     await expect(anchors.locator(".table-panel-count")).toHaveText("0");
+});
+
+test("facets the Jump resolutions table by its Type column", async ({ page }) => {
+    const jumps = page.locator('.table-panel:has(.table-panel-title:text-is("Jump resolutions"))');
+    await expect(jumps.locator("tbody tr")).toHaveCount(2);
+
+    await jumps.locator(".table-facet select").selectOption("End");
+    await expect(jumps.locator("tbody tr")).toHaveCount(1);
+    await expect(jumps.locator("tbody tr td").first()).toHaveText("End");
+    await expect(jumps.locator(".table-panel-count")).toHaveText("1");
+
+    await jumps.locator(".table-facet select").selectOption(""); // All
+    await expect(jumps.locator("tbody tr")).toHaveCount(2);
 });
 
 test("cross-links a scene across the graph, the anchor table, and a jump block", async ({

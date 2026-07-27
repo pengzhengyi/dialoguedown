@@ -9,6 +9,7 @@ import {
     getFilteredRowModel,
     getSortedRowModel,
     type ColumnDef,
+    type Table,
     type TableState,
 } from "@tanstack/table-core";
 
@@ -86,11 +87,17 @@ function buildInteractiveTable(
     const container = document.createElement("div");
     container.className = "table-interactive";
 
+    const facetNames = new Set(table.facetColumns ?? []);
+
+    const controls = document.createElement("div");
+    controls.className = "table-filters";
+
     const search = document.createElement("input");
     search.type = "search";
     search.className = "table-search";
     search.placeholder = "Filter…";
     search.setAttribute("aria-label", `Filter ${table.title}`);
+    controls.appendChild(search);
 
     const element = document.createElement("table");
     element.className = "semantic-table";
@@ -102,11 +109,12 @@ function buildInteractiveTable(
     element.append(thead, tbody);
 
     // One column per source column; each reads its cell's text so sort and filter act on what the
-    // reader sees. The accessor keeps rows as our own SemanticRow, so rendering is unchanged.
+    // reader sees. A categorical column also matches by exact value, for its faceted filter.
     const columns: ColumnDef<SemanticRow>[] = table.columns.map((name, index) => ({
         id: name,
         header: name,
         accessorFn: (row) => row.cells[index]?.text ?? "",
+        filterFn: facetNames.has(name) ? "equalsString" : "includesString",
     }));
 
     let state: TableState;
@@ -127,6 +135,11 @@ function buildInteractiveTable(
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
     });
+
+    // A facet <select> for each categorical column, offering its distinct values. Selecting one
+    // sets that column's exact-match filter; "All" clears it. Built once; it holds its own value.
+    const facetBar = buildFacetBar(table, facetNames, instance);
+    if (facetBar) controls.appendChild(facetBar);
 
     // Seed the full default state (column pinning, order, sizing, …) so the headless header code
     // has its defaults; from here we only ever change `sorting` and `globalFilter` through it.
@@ -167,8 +180,75 @@ function buildInteractiveTable(
     search.addEventListener("input", () => instance.setGlobalFilter(search.value));
 
     render();
-    container.append(search, element);
+    container.append(controls, element);
     return container;
+}
+
+/**
+ * A row of facet <select>s for the table's categorical columns, or null when it has none. Each
+ * select offers that column's distinct values; choosing one sets the column's exact-match filter
+ * (combined with the free-text search), and "All" clears it. Built once — it keeps its own value.
+ */
+function buildFacetBar(
+    table: SemanticTable,
+    facetNames: ReadonlySet<string>,
+    instance: Table<SemanticRow>,
+): HTMLElement | null {
+    if (facetNames.size === 0) {
+        return null;
+    }
+
+    const bar = document.createElement("div");
+    bar.className = "table-facets";
+    for (const [index, name] of table.columns.entries()) {
+        if (!facetNames.has(name)) {
+            continue;
+        }
+        const values = distinctValues(table.rows, index);
+        if (values.length === 0) {
+            continue;
+        }
+
+        const label = document.createElement("label");
+        label.className = "table-facet";
+        const caption = document.createElement("span");
+        caption.className = "table-facet-name";
+        caption.textContent = name;
+
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", `Filter by ${name}`);
+        select.append(option("", "All"), ...values.map((value) => option(value, value)));
+        select.addEventListener("change", () =>
+            instance.getColumn(name)?.setFilterValue(select.value || undefined),
+        );
+
+        label.append(caption, select);
+        bar.appendChild(label);
+    }
+
+    return bar.childElementCount > 0 ? bar : null;
+}
+
+/** The distinct non-empty cell texts of one column, in first-seen order. */
+function distinctValues(rows: readonly SemanticRow[], index: number): string[] {
+    const seen = new Set<string>();
+    const values: string[] = [];
+    for (const row of rows) {
+        const text = row.cells[index]?.text ?? "";
+        if (text !== "" && !seen.has(text)) {
+            seen.add(text);
+            values.push(text);
+        }
+    }
+    return values;
+}
+
+/** An <option> with the given value and label. */
+function option(value: string, label: string): HTMLOptionElement {
+    const element = document.createElement("option");
+    element.value = value;
+    element.textContent = label;
+    return element;
 }
 
 /** The `aria-sort` value for a column's sort direction. */

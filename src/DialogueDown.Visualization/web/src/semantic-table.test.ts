@@ -66,6 +66,26 @@ function setFilter(panel: HTMLElement, value: string): void {
     search.dispatchEvent(new Event("input"));
 }
 
+function jumpFacetTable(): SemanticTable {
+    return {
+        title: "Jump resolutions",
+        columns: ["Type", "Jump"],
+        emptyText: "No jumps.",
+        facetColumns: ["Type"],
+        rows: [
+            { cells: [{ text: "Scene" }, { text: "east" }] },
+            { cells: [{ text: "End" }, { text: "the end" }] },
+            { cells: [{ text: "Scene" }, { text: "west" }] },
+        ],
+    };
+}
+
+function chooseFacet(panel: HTMLElement, value: string): void {
+    const select = panel.querySelector<HTMLSelectElement>(".table-facet select")!;
+    select.value = value;
+    select.dispatchEvent(new Event("change"));
+}
+
 describe("createTablePanel", () => {
     beforeEach(() => {
         document.body.innerHTML = "";
@@ -206,5 +226,48 @@ describe("createTablePanel — sorting and filtering", () => {
             (tr) => tr.querySelector("td")?.textContent === "Alice",
         );
         expect(alice?.getAttribute("data-entity-key")).toBe("speaker:@alice");
+    });
+});
+
+describe("createTablePanel — faceted filters", () => {
+    beforeEach(() => {
+        document.body.innerHTML = "";
+    });
+
+    it("offers a labeled facet select per categorical column with All plus its distinct values", () => {
+        const panel = createTablePanel(jumpFacetTable());
+        const select = panel.querySelector<HTMLSelectElement>(".table-facet select")!;
+
+        expect(select.getAttribute("aria-label")).toBe("Filter by Type");
+        expect([...select.options].map((option) => option.textContent)).toEqual([
+            "All",
+            "Scene",
+            "End",
+        ]);
+    });
+
+    it("filters rows to a chosen facet value and clears with All", () => {
+        const panel = createTablePanel(jumpFacetTable());
+
+        chooseFacet(panel, "End");
+        expect(firstColumn(panel)).toEqual(["End"]);
+
+        chooseFacet(panel, ""); // All
+        expect(firstColumn(panel)).toEqual(["Scene", "End", "Scene"]);
+    });
+
+    it("combines a facet with the free-text search", () => {
+        const panel = createTablePanel(jumpFacetTable());
+
+        chooseFacet(panel, "Scene"); // two Scene rows
+        setFilter(panel, "west"); // only the "west" one
+        expect(panel.querySelectorAll("tbody tr")).toHaveLength(1);
+        expect(firstColumn(panel)).toEqual(["Scene"]);
+    });
+
+    it("renders no facet bar for a table with no categorical columns", () => {
+        const panel = createTablePanel(castTable());
+
+        expect(panel.querySelector(".table-facets")).toBeNull();
     });
 });
