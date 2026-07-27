@@ -166,6 +166,46 @@ public sealed class BlockBuilderTests
     }
 
     [Fact]
+    public void ChoiceItem_WithALeadingCondition_GuardsTheWholeOption()
+    {
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"HasKey\"?"), Text(" Use the key."))),
+                ListItem(TextParagraph("Search for another way."))),
+        ]);
+
+        var choices = AssertChoices(Assert.Single(body), isOrdered: false);
+        var guarded = choices.Options[0];
+        AssertCondition(guarded.Condition!, "HasKey");
+        Assert.True(guarded.IsConditional);
+        AssertSpeechText(AssertChoiceLine(guarded), "Use the key.");
+
+        Assert.Null(choices.Options[1].Condition);
+        AssertSpeechText(AssertChoiceLine(choices.Options[1]), "Search for another way.");
+    }
+
+    [Fact]
+    public void ChoiceItem_ConditionBindsTheOption_NotItsInnerLine()
+    {
+        // The guard sits on the option, so its first line stays an ordinary line with its speaker.
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"IsAngry\"?"), Text(" Bob: Attack!")))),
+        ]);
+
+        var choice = Assert.Single(AssertChoices(Assert.Single(body), isOrdered: false).Options);
+        AssertCondition(choice.Condition!, "IsAngry");
+        var line = AssertChoiceLine(choice);
+        Assert.Null(line.Condition);
+        AssertSpeakerNameReference(line.Speaker!, "Bob");
+        AssertSpeechText(line, "Attack!");
+    }
+
+    [Fact]
     public void NestedList_BecomesNestedChoices()
     {
         var innerList = ListBlock(ordered: false, ListItem(TextParagraph("Inner")));
