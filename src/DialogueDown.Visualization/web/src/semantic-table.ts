@@ -3,6 +3,7 @@ import type { SemanticTable, SemanticCell, SemanticRow } from "./model";
 import { escapeHtml } from "./text";
 import { colorOf } from "./palette";
 import { initCollapsiblePanel } from "./collapse-toggle";
+import { findMatches, hasMatch, type MatchOptions, type MatchRange } from "./text-match";
 import {
     createTable,
     functionalUpdate,
@@ -10,9 +11,22 @@ import {
     getFilteredRowModel,
     getSortedRowModel,
     type ColumnDef,
+    type FilterFn,
     type Table,
     type TableState,
 } from "@tanstack/table-core";
+
+/** The table's search: the typed query plus the Match Case / Match Whole Word toggle state. */
+interface SearchQuery extends MatchOptions {
+    query: string;
+}
+
+// The global filter: a row is kept when any of its cells contains the query under the current
+// case/whole-word options. The highlight uses the same matcher, so the marks match what stays.
+const globalMatch: FilterFn<SemanticRow> = (row, columnId, value) => {
+    const search = value as SearchQuery;
+    return hasMatch(String(row.getValue(columnId) ?? ""), search.query, search);
+};
 
 // Lucide icons (ISC): a magnifier for the on-demand search, a funnel for a column's facet filter.
 const SEARCH_ICON = svg('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>');
@@ -126,12 +140,23 @@ function buildInteractiveTable(
     const searchRow = document.createElement("div");
     searchRow.className = "table-search-row";
     searchRow.hidden = true;
+
+    // A bordered field holding the input and the inline Match Case / Match Whole Word toggles,
+    // matching the editor's search field.
+    const field = document.createElement("div");
+    field.className = "table-search-field";
     const search = document.createElement("input");
     search.type = "search";
     search.className = "table-search";
     search.placeholder = "Filter…";
     search.setAttribute("aria-label", `Filter ${table.title}`);
-    searchRow.appendChild(search);
+    const caseToggle = matchToggle("Aa", "Match case");
+    const wordToggle = matchToggle("ab|", "Match whole word");
+    const toggles = document.createElement("div");
+    toggles.className = "table-search-toggles";
+    toggles.append(caseToggle, wordToggle);
+    field.append(search, toggles);
+    searchRow.appendChild(field);
 
     const element = document.createElement("table");
     element.className = "semantic-table";
@@ -156,7 +181,7 @@ function buildInteractiveTable(
     const instance = createTable<SemanticRow>({
         data: table.rows,
         columns,
-        globalFilterFn: "includesString",
+        globalFilterFn: globalMatch,
         enableSortingRemoval: true,
         state: {},
         onStateChange: (updater) => {
@@ -209,14 +234,38 @@ function buildInteractiveTable(
             th.setAttribute("aria-sort", ariaSort(instance.getColumn(id)?.getIsSorted()));
         }
 
+        const query = instance.getState().globalFilter as SearchQuery | undefined;
         const rows = instance.getRowModel().rows;
         if (rows.length === 0) {
             tbody.replaceChildren(noMatchRow(table.columns.length));
         } else {
-            tbody.replaceChildren(...rows.map((row) => renderRow(row.original)));
+            tbody.replaceChildren(...rows.map((row) => renderRow(row.original, query)));
         }
         setShown(rows.length);
     }
+
+    let caseSensitive = false;
+    let wholeWord = false;
+
+    const applySearch = (): void => {
+        const query = search.value;
+        instance.setGlobalFilter(
+            query.length === 0 ? undefined : { query, caseSensitive, wholeWord },
+        );
+        searchToggle?.classList.toggle("active", query.length > 0);
+    };
+
+    const wireToggle = (toggle: HTMLButtonElement, set: (pressed: boolean) => void): void => {
+        toggle.addEventListener("click", () => {
+            const pressed = toggle.getAttribute("aria-pressed") !== "true";
+            toggle.setAttribute("aria-pressed", String(pressed));
+            set(pressed);
+            applySearch();
+            search.focus();
+        });
+    };
+    wireToggle(caseToggle, (pressed) => (caseSensitive = pressed));
+    wireToggle(wordToggle, (pressed) => (wholeWord = pressed));
 
     if (searchToggle) {
         searchToggle.addEventListener("click", () => {
@@ -228,14 +277,23 @@ function buildInteractiveTable(
             }
         });
     }
-    search.addEventListener("input", () => {
-        instance.setGlobalFilter(search.value);
-        searchToggle?.classList.toggle("active", search.value.length > 0);
-    });
+    search.addEventListener("input", applySearch);
 
     render();
     container.append(searchRow, element);
     return container;
+}
+
+/** A Match Case / Match Whole Word toggle button, styled like the editor's search toggles. */
+function matchToggle(label: string, title: string): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "dd-search-toggle";
+    button.textContent = label;
+    button.title = title;
+    button.setAttribute("aria-label", title);
+    button.setAttribute("aria-pressed", "false");
+    return button;
 }
 
 /**
@@ -357,26 +415,49 @@ function noMatchRow(columnCount: number): HTMLElement {
 }
 
 /** A `<tr>` carrying the row's cross-link key and its cells. */
-function renderRow(row: SemanticRow): HTMLElement {
+function renderRow(row: SemanticRow, query: SearchQuery | undefined): HTMLElement {
     const tr = document.createElement("tr");
     if (row.entityKey) tr.setAttribute("data-entity-key", row.entityKey);
     for (const cell of row.cells) {
-        tr.appendChild(renderCell(cell));
+        tr.appendChild(renderCell(cell, query));
     }
     return tr;
 }
 
 /** A `<td>` carrying the cell's text, category color accent, and any cross-link key. */
-function renderCell(cell: SemanticCell): HTMLElement {
+function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLElement {
     const td = document.createElement("td");
-    td.textContent = cell.text;
     if (cell.entityKey) td.setAttribute("data-entity-key", cell.entityKey);
     if (cell.refKey) td.setAttribute("data-ref-key", cell.refKey);
     if (cell.category) {
         td.dataset.category = cell.category;
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
+    const ranges = query ? findMatches(cell.text, query.query, query) : [];
+    if (ranges.length === 0) {
+        td.textContent = cell.text;
+    } else {
+        highlightInto(td, cell.text, ranges);
+    }
     return td;
+}
+
+/** Fills `td` with `text`, wrapping each match range in a `<mark>` so it stands out. */
+function highlightInto(td: HTMLElement, text: string, ranges: MatchRange[]): void {
+    let cursor = 0;
+    for (const range of ranges) {
+        if (range.start > cursor) {
+            td.appendChild(document.createTextNode(text.slice(cursor, range.start)));
+        }
+        const mark = document.createElement("mark");
+        mark.className = "table-mark";
+        mark.textContent = text.slice(range.start, range.end);
+        td.appendChild(mark);
+        cursor = range.end;
+    }
+    if (cursor < text.length) {
+        td.appendChild(document.createTextNode(text.slice(cursor)));
+    }
 }
 
 /** A 15px stroked Lucide-style icon from its inner paths. */

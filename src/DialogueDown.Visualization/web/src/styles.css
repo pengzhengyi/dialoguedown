@@ -35,6 +35,12 @@
     --mode-accent: var(--pico-primary);
     --mode-accent-contrast: var(--pico-primary-inverse);
 
+    /* Search-match highlight in the Semantic-tab tables: the query's matches in filtered rows
+       get an amber "highlighter" fill, distinct from the amber cross-link tint (which sits on
+       whole cells) by being an opaque marker on the matched text only. Dark overrides below. */
+    --table-mark-bg: #fff3b0;
+    --table-mark-fg: #1f2328;
+
     /* Brand mark: a navy bubble with a light "M" and light pipeline outlines on light
        backgrounds; inverted to a light bubble with a navy mark on dark (see the dark
        blocks below), so the bubble silhouette never disappears into a dark page. */
@@ -62,6 +68,8 @@
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
         --tok-reserved-anchor: #ff7b72;
+        --table-mark-bg: #b0892b;
+        --table-mark-fg: #f8fafc;
     }
 }
 
@@ -84,6 +92,8 @@
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
     --tok-reserved-anchor: #ff7b72;
+    --table-mark-bg: #b0892b;
+    --table-mark-fg: #f8fafc;
 }
 
 /* Edit mode: switch the accent from blue to green (matching the Save button). */
@@ -658,23 +668,63 @@ section.stage.error {
     margin: 0.15rem 0.55rem 0.5rem;
 }
 
-/* Higher specificity than Pico's `input[type="search"]`, so the slim padding actually wins. */
-.table-search-row input.table-search {
-    box-sizing: border-box;
-    width: 100%;
-    height: auto;
-    margin: 0;
-    padding: 0.1rem 0.45rem;
-    font-size: 0.76rem;
-    color: inherit;
+/* The field wraps the input and the inline Match Case / Match Whole Word toggles in one bordered
+   box, mirroring the editor's search field. */
+.table-search-field {
+    display: flex;
+    align-items: center;
+    padding-right: 0.15rem;
     background: var(--pico-form-element-background-color, transparent);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: 0.35rem;
 }
 
-.table-search:focus-visible {
-    outline: 2px solid var(--md-link, #0969da);
-    outline-offset: 1px;
+.table-search-field:focus-within {
+    border-color: var(--md-link, #0969da);
+}
+
+/* Higher specificity than Pico's `input[type="search"]`, so the slim padding actually wins.
+   The border lives on the field, so the input itself is borderless and transparent. */
+.table-search-field input.table-search {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.76rem;
+    color: inherit;
+    background: transparent;
+    border: none;
+}
+
+.table-search:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.table-search-toggles {
+    display: flex;
+    flex: none;
+    gap: 0.1rem;
+}
+
+/* Reuse the editor's toggle look; Pico's global button margin isn't scoped away here (unlike in
+   `.dd-search`), so reset it locally. */
+.table-search-toggles .dd-search-toggle {
+    margin: 0;
+    box-shadow: none;
+}
+
+/* The query's matches inside a filtered row: an amber marker on the matched text, so the eye
+   lands on exactly what matched. Theme-aware, and it keeps its own color even when the whole
+   cell also carries the cross-link tint. */
+.semantic-table mark.table-mark {
+    padding: 0 0.05em;
+    color: var(--table-mark-fg);
+    background: var(--table-mark-bg);
+    border-radius: 2px;
 }
 
 /* A header cell holds its sort button and, for a categorical column, a facet control. */
