@@ -73,6 +73,15 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG1107 — a line's styled name looks like a speaker prefix but is not recognized.</summary>
+    public static readonly DiagnosticDescriptor StyledSpeakerPrefix = new(
+        "DLG1107",
+        "Styled speaker prefix",
+        "This line looks like a speaker prefix (\"{0}\") but the name is styled, so it is not "
+            + "recognized and the line has no speaker. Remove the styling to declare the speaker.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Warning);
+
     // Semantic — DLG2xxx: a meaning-level conflict found during analysis.
 
     /// <summary>DLG2001 — two headings slug to the same anchor.</summary>
