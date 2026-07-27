@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **End a run with `#END`** — divert to the reserved `#END` target
+  (`=> [The end](#END)`) to stop the dialogue at a definite endpoint. `#END` is uppercase and
+  reserved, so it never collides with a scene heading; the report highlights it as a reserved
+  keyword and completion offers it as a jump target. Because a jump is non-returning, the compiler
+  now warns when unreachable content — a trailing fragment or a second jump — follows a jump on the
+  same line. See the
+  [Progression Order](docs/contributing/design-notes/Progression%20Order.md) note.
 - **Conditional jumps** — put a game-state query with a `?` in front of a jump
   (`` `"FoundKey"?` `` `=> [Vault](#vault)`) to make the jump *optional*: it fires only when the
   query reads as true, and otherwise the dialogue falls through to the next line. The game answers
