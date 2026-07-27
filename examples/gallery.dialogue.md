@@ -31,6 +31,8 @@ Merchant @merchant: Fresh apples! Warm bread! Come, see my wares.
 
 Alice: This place is *wonderful*.
 
+`"Alice.HasMap"?` Alice: And I still have the old map — good.
+
 If she still carries the old map, a hidden trail winds back through the hills.
 
 `"Alice.HasMap"?` => [Brave the west road](#the-dark-forest)

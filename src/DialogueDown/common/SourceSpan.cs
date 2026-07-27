@@ -66,4 +66,21 @@ internal readonly record struct SourceSpan
 
         return new SourceSpan(start.Start, end.End - start.Start);
     }
+
+    /// <summary>
+    /// The span covering every node in <paramref name="nodes"/> — from the first node's
+    /// beginning through the last node's ending — for a run enclosed by its endpoints. The
+    /// sequence must be non-empty; the nodes are assumed to be in source order.
+    /// </summary>
+    public static SourceSpan Covering(IReadOnlyList<ISpanned> nodes)
+    {
+        ArgumentNullException.ThrowIfNull(nodes);
+        if (nodes.Count == 0)
+        {
+            throw new ArgumentException(
+                "At least one node is required to cover a span.", nameof(nodes));
+        }
+
+        return Covering(nodes[0].Span, nodes[^1].Span);
+    }
 }

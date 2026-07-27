@@ -124,10 +124,11 @@ internal static class DiagnosticDocs
                 ["`-10%`"],
                 ["`10%`"])),
         new(
-            DiagnosticCatalog.ConditionWithoutJump,
-            "A condition guards a jump, so it must sit immediately before a `=>` jump. A `\"key\"?` "
-            + "code span anywhere else has nothing to guard. Move it in front of a jump, or remove "
-            + "the `?` to write a plain query.",
+            DiagnosticCatalog.OrphanCondition,
+            "A condition guards the jump it precedes or the line it fronts, so it must sit "
+            + "immediately before a `=>` jump or at the start of a line. A `\"key\"?` code span "
+            + "anywhere else has nothing to guard. Move it in front of a jump, front a line with "
+            + "it, or remove the `?` to write a plain query.",
             new(
                 """
                 # Moor
@@ -135,10 +136,10 @@ internal static class DiagnosticDocs
                 """,
                 """
                 # Moor
-                Guide: `"Rainy"` The moor is bleak.
+                `"Rainy"?` Guide: The moor is bleak.
                 """,
                 ["`\"Rainy\"?`"],
-                ["`\"Rainy\"`"])),
+                ["`\"Rainy\"?`"])),
         new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "

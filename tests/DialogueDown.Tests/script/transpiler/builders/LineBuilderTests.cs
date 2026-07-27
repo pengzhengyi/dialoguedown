@@ -64,6 +64,70 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
+    public void WithoutACondition_IsNotConditional()
+    {
+        var line = Build([Text("Alice: Hello there.")]);
+
+        Assert.Null(line.Condition);
+        Assert.False(line.IsConditional);
+    }
+
+    [Fact]
+    public void LeadingCondition_IsPeeledOntoTheLineBeforeTheSpeaker()
+    {
+        var line = Build([CodeSpan("\"Angry\"?"), Text(" Guard: You again?")]);
+
+        AssertCondition(line.Condition!, "Angry");
+        Assert.True(line.IsConditional);
+        AssertSpeakerNameReference(line.Speaker!, "Guard");
+        AssertSpeechText(line, "You again?");
+    }
+
+    [Fact]
+    public void LeadingCondition_WithoutASpeaker_KeepsTheSpeech()
+    {
+        var line = Build([CodeSpan("\"Returned\"?"), Text(" Welcome back.")]);
+
+        AssertCondition(line.Condition!, "Returned");
+        Assert.Null(line.Speaker);
+        AssertSpeechText(line, "Welcome back.");
+    }
+
+    [Fact]
+    public void OnlyACondition_IsNotPeeled_SoItStaysAnOrphanFragment()
+    {
+        // A condition with nothing after it guards nothing; it is left in speech for the
+        // orphan-condition rule to report, rather than becoming an empty conditional line.
+        var line = Build([CodeSpan("\"Angry\"?")]);
+
+        Assert.Null(line.Condition);
+        AssertCondition(Assert.Single(line.Speech), "Angry");
+    }
+
+    [Fact]
+    public void LeadingConditionBeforeAJump_IsNotPeeled_SoItGuardsTheJump()
+    {
+        // `"key"?` => ... is a conditional *jump*: the condition stays in speech so desugar binds
+        // it to the jump, rather than being stolen as the line's guard.
+        var line = Build([CodeSpan("\"FoundKey\"?"), Text(" => "), Link("#the-vault", Text("open"))]);
+
+        Assert.Null(line.Condition);
+        Assert.Null(line.Speaker);
+        AssertCondition(line.Speech[0], "FoundKey");
+    }
+
+    [Fact]
+    public void MidSpeechCondition_IsNotACondition_AndStaysInSpeech()
+    {
+        // A condition that is not the leading inline is not a line guard; it stays in speech.
+        var line = Build([Text("Guard: You "), CodeSpan("\"Angry\"?"), Text(" there")]);
+
+        Assert.Null(line.Condition);
+        AssertSpeakerNameReference(line.Speaker!, "Guard");
+        AssertCondition(line.Speech[1], "Angry");
+    }
+
+    [Fact]
     public void TagsWithoutASpeakerName_ReportsAndUsesDefaultSpeaker()
     {
         var diagnostics = new DiagnosticBag();

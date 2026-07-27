@@ -64,12 +64,12 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG1106 — a condition code span does not precede a jump.</summary>
-    public static readonly DiagnosticDescriptor ConditionWithoutJump = new(
+    /// <summary>DLG1106 — a condition code span guards neither a jump nor a line.</summary>
+    public static readonly DiagnosticDescriptor OrphanCondition = new(
         "DLG1106",
-        "Condition without a jump",
-        "A condition (`\"{0}\"?`) must guard a jump. Put it immediately before a `=>` jump, or "
-            + "remove the `?` to write a plain query.",
+        "Condition guards nothing",
+        "A condition (`\"{0}\"?`) must guard a jump or a line. Put it immediately before a `=>` "
+            + "jump, or at the start of a line, or remove the `?` to write a plain query.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 

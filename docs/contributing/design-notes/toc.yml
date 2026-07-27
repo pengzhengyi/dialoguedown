@@ -22,6 +22,8 @@
     href: Random Choice.md
   - name: Conditional Jump
     href: Conditional Jump.md
+  - name: Conditional Line
+    href: Conditional Line.md
 - name: Configuration
   items:
   - name: Configuration
