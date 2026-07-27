@@ -1,3 +1,4 @@
+import tippy from "tippy.js";
 import type { SemanticTable, SemanticCell, SemanticRow } from "./model";
 import { escapeHtml } from "./text";
 import { colorOf } from "./palette";
@@ -13,38 +14,55 @@ import {
     type TableState,
 } from "@tanstack/table-core";
 
+// Lucide icons (ISC): a magnifier for the on-demand search, a funnel for a column's facet filter.
+const SEARCH_ICON = svg('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>');
+const FILTER_ICON = svg('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>');
+
+let facetGroupSeq = 0;
+
 /**
- * Render one semantic table as a **collapsible panel**: a header bar (title + row count) that
- * toggles the table body to a bar and back, over an interactive table a writer can **filter** and
- * **sort** while its rows and cells keep the cross-link keys the entity highlighter reads. Sorting
- * and filtering are driven by TanStack `table-core` (headless), so this module still owns every
- * pixel — the category accents, cross-link attributes, and collapsible state all survive. The
- * collapsed state persists across reloads, reusing the report's collapsible-panel pattern.
+ * Render one semantic table as a **collapsible panel** whose title bar carries the collapse caret,
+ * an on-demand search toggle, and the (filter-aware) row count. Its rows sort on any column header,
+ * filter through a revealed search box, and — for categorical columns — through a faceted popover
+ * whose choice shows as a chip in the header. Sorting and filtering run on TanStack `table-core`
+ * (headless), so this module still owns every pixel: category accents, cross-link keys, and the
+ * collapsible state all survive. The collapsed state persists across reloads.
  */
 export function createTablePanel(table: SemanticTable): HTMLElement {
     const panel = document.createElement("section");
     panel.className = "table-panel";
 
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "table-panel-toggle";
+    toggle.innerHTML =
+        `<span class="table-panel-caret" aria-hidden="true"></span>` +
+        `<span class="table-panel-title">${escapeHtml(table.title)}</span>`;
+
     const count = document.createElement("span");
     count.className = "table-panel-count";
     count.textContent = String(table.rows.length);
 
-    const header = document.createElement("button");
-    header.type = "button";
+    const header = document.createElement("div");
     header.className = "table-panel-header";
-    header.innerHTML =
-        `<span class="table-panel-caret" aria-hidden="true"></span>` +
-        `<span class="table-panel-title">${escapeHtml(table.title)}</span>`;
+    header.appendChild(toggle);
+
+    // The search toggle only makes sense when there are rows to filter.
+    const searchToggle = table.rows.length > 0 ? buildSearchToggle(table.title) : null;
+    if (searchToggle) {
+        header.appendChild(searchToggle);
+    }
     header.appendChild(count);
 
     const body = document.createElement("div");
     body.className = "table-panel-body";
-    body.appendChild(renderContent(table, (shown) => (count.textContent = String(shown))));
+    body.appendChild(
+        renderContent(table, (shown) => (count.textContent = String(shown)), searchToggle),
+    );
 
     panel.append(header, body);
 
-    // Reuse the collapsible-panel state + persistence; the header bar is the toggle, so its
-    // own button is unused. A per-title key remembers each panel independently across reloads.
+    // Collapse only via the caret/title toggle, so the search button never folds the panel.
     const collapsible = initCollapsiblePanel({
         container: panel,
         collapsedClass: "collapsed",
@@ -52,8 +70,8 @@ export function createTablePanel(table: SemanticTable): HTMLElement {
         name: table.title,
     });
     const reflect = (): void =>
-        header.setAttribute("aria-expanded", String(!collapsible.isCollapsed()));
-    header.addEventListener("click", () => {
+        toggle.setAttribute("aria-expanded", String(!collapsible.isCollapsed()));
+    toggle.addEventListener("click", () => {
         collapsible.toggle();
         reflect();
     });
@@ -62,8 +80,23 @@ export function createTablePanel(table: SemanticTable): HTMLElement {
     return panel;
 }
 
+/** The magnifier button that reveals the search box; wired to the input in the body. */
+function buildSearchToggle(title: string): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "table-panel-search";
+    button.innerHTML = SEARCH_ICON;
+    button.setAttribute("aria-label", `Search ${title}`);
+    button.setAttribute("aria-expanded", "false");
+    return button;
+}
+
 /** The panel body: an interactive table, or a "none" note when the table has no rows. */
-function renderContent(table: SemanticTable, setShown: (shown: number) => void): HTMLElement {
+function renderContent(
+    table: SemanticTable,
+    setShown: (shown: number) => void,
+    searchToggle: HTMLButtonElement | null,
+): HTMLElement {
     if (table.rows.length === 0) {
         const empty = document.createElement("p");
         empty.className = "table-empty";
@@ -71,33 +104,34 @@ function renderContent(table: SemanticTable, setShown: (shown: number) => void):
         return empty;
     }
 
-    return buildInteractiveTable(table, setShown);
+    return buildInteractiveTable(table, setShown, searchToggle);
 }
 
 /**
- * A searchable, sortable table over `table.rows`. A `table-core` instance holds the sort and
- * global-filter state; on every change this re-renders the body from its row model and reports the
- * visible-row count to `setShown`, so the panel's count badge tracks the filter. The header cells
- * are built once (so keyboard focus survives a sort) and only their `aria-sort` updates.
+ * A sortable, filterable table over `table.rows`. A `table-core` instance holds the sort, global
+ * filter, and per-column facet state; on every change this re-renders the body from its row model
+ * and reports the visible-row count to `setShown`. Header cells are built once (so keyboard focus
+ * survives a sort); only their `aria-sort` updates.
  */
 function buildInteractiveTable(
     table: SemanticTable,
     setShown: (shown: number) => void,
+    searchToggle: HTMLButtonElement | null,
 ): HTMLElement {
     const container = document.createElement("div");
     container.className = "table-interactive";
 
     const facetNames = new Set(table.facetColumns ?? []);
 
-    const controls = document.createElement("div");
-    controls.className = "table-filters";
-
+    const searchRow = document.createElement("div");
+    searchRow.className = "table-search-row";
+    searchRow.hidden = true;
     const search = document.createElement("input");
     search.type = "search";
     search.className = "table-search";
     search.placeholder = "Filter…";
     search.setAttribute("aria-label", `Filter ${table.title}`);
-    controls.appendChild(search);
+    searchRow.appendChild(search);
 
     const element = document.createElement("table");
     element.className = "semantic-table";
@@ -136,30 +170,37 @@ function buildInteractiveTable(
         getFilteredRowModel: getFilteredRowModel(),
     });
 
-    // A facet <select> for each categorical column, offering its distinct values. Selecting one
-    // sets that column's exact-match filter; "All" clears it. Built once; it holds its own value.
-    const facetBar = buildFacetBar(table, facetNames, instance);
-    if (facetBar) controls.appendChild(facetBar);
-
     // Seed the full default state (column pinning, order, sizing, …) so the headless header code
-    // has its defaults; from here we only ever change `sorting` and `globalFilter` through it.
+    // has its defaults; from here we only ever change sorting and the filters through it.
     state = instance.initialState;
     instance.setOptions((prev) => ({ ...prev, state }));
 
     // Header cells built once so a keyboard sort keeps focus; render() only refreshes aria-sort.
-    const headerCells = instance.getFlatHeaders().map((header) => {
+    const headerCells = instance.getFlatHeaders().map((headerColumn) => {
         const th = document.createElement("th");
         th.scope = "col";
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "th-sort";
-        button.textContent = header.column.id;
-        const toggle = header.column.getToggleSortingHandler();
-        if (toggle) {
-            button.addEventListener("click", (event) => toggle(event));
+        const inner = document.createElement("div");
+        inner.className = "th-inner";
+
+        const sort = document.createElement("button");
+        sort.type = "button";
+        sort.className = "th-sort";
+        sort.textContent = headerColumn.column.id;
+        const toggleSort = headerColumn.column.getToggleSortingHandler();
+        if (toggleSort) {
+            sort.addEventListener("click", (event) => toggleSort(event));
         }
-        th.appendChild(button);
-        return { th, id: header.column.id };
+        inner.appendChild(sort);
+
+        if (facetNames.has(headerColumn.column.id)) {
+            const facet = buildFacetControl(table, headerColumn.column.id, instance);
+            if (facet) {
+                inner.appendChild(facet);
+            }
+        }
+
+        th.appendChild(inner);
+        return { th, id: headerColumn.column.id };
     });
     headRow.append(...headerCells.map((cell) => cell.th));
 
@@ -177,56 +218,117 @@ function buildInteractiveTable(
         setShown(rows.length);
     }
 
-    search.addEventListener("input", () => instance.setGlobalFilter(search.value));
+    if (searchToggle) {
+        searchToggle.addEventListener("click", () => {
+            const open = searchRow.hidden;
+            searchRow.hidden = !open;
+            searchToggle.setAttribute("aria-expanded", String(open));
+            if (open) {
+                search.focus();
+            }
+        });
+    }
+    search.addEventListener("input", () => {
+        instance.setGlobalFilter(search.value);
+        searchToggle?.classList.toggle("active", search.value.length > 0);
+    });
 
     render();
-    container.append(controls, element);
+    container.append(searchRow, element);
     return container;
 }
 
 /**
- * A row of facet <select>s for the table's categorical columns, or null when it has none. Each
- * select offers that column's distinct values; choosing one sets the column's exact-match filter
- * (combined with the free-text search), and "All" clears it. Built once — it keeps its own value.
+ * The facet control for a categorical column: a funnel button that, when a value is chosen, becomes
+ * a value chip. Clicking it opens a radio popover (All plus the column's distinct values); choosing
+ * one applies that column's exact-match filter and All clears it.
  */
-function buildFacetBar(
+function buildFacetControl(
     table: SemanticTable,
-    facetNames: ReadonlySet<string>,
+    columnName: string,
     instance: Table<SemanticRow>,
 ): HTMLElement | null {
-    if (facetNames.size === 0) {
+    const index = table.columns.indexOf(columnName);
+    const values = distinctValues(table.rows, index);
+    if (values.length === 0) {
         return null;
     }
+    const control = document.createElement("button");
+    control.type = "button";
+    control.className = "th-facet";
+    control.setAttribute("aria-haspopup", "true");
 
-    const bar = document.createElement("div");
-    bar.className = "table-facets";
-    for (const [index, name] of table.columns.entries()) {
-        if (!facetNames.has(name)) {
-            continue;
+    const showInactive = (): void => {
+        control.classList.remove("active");
+        control.innerHTML = FILTER_ICON;
+        control.setAttribute("aria-label", `Filter by ${columnName}`);
+    };
+    const showValue = (value: string): void => {
+        control.classList.add("active");
+        control.textContent = "";
+        const chip = document.createElement("span");
+        chip.className = "th-facet-value";
+        chip.textContent = value;
+        control.appendChild(chip);
+        control.setAttribute("aria-label", `${columnName}: ${value}. Change filter`);
+    };
+    showInactive();
+
+    const groupName = `facet-${slug(columnName)}-${facetGroupSeq++}`;
+    const popover = document.createElement("div");
+    popover.className = "facet-popover";
+    popover.setAttribute("role", "radiogroup");
+    popover.setAttribute("aria-label", `Filter by ${columnName}`);
+
+    function apply(value: string): void {
+        instance.getColumn(columnName)?.setFilterValue(value || undefined);
+        if (value) {
+            showValue(value);
+        } else {
+            showInactive();
         }
-        const values = distinctValues(table.rows, index);
-        if (values.length === 0) {
-            continue;
-        }
-
-        const label = document.createElement("label");
-        label.className = "table-facet";
-        const caption = document.createElement("span");
-        caption.className = "table-facet-name";
-        caption.textContent = name;
-
-        const select = document.createElement("select");
-        select.setAttribute("aria-label", `Filter by ${name}`);
-        select.append(option("", "All"), ...values.map((value) => option(value, value)));
-        select.addEventListener("change", () =>
-            instance.getColumn(name)?.setFilterValue(select.value || undefined),
-        );
-
-        label.append(caption, select);
-        bar.appendChild(label);
+        tip.hide();
     }
 
-    return bar.childElementCount > 0 ? bar : null;
+    const radios = ["", ...values].map((value) => {
+        const option = document.createElement("label");
+        option.className = "facet-option";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = groupName;
+        input.value = value;
+        input.checked = value === "";
+        input.addEventListener("change", () => {
+            if (input.checked) {
+                apply(value);
+            }
+        });
+        const text = document.createElement("span");
+        text.textContent = value === "" ? "All" : value;
+        option.append(input, text);
+        return option;
+    });
+    popover.append(...radios);
+
+    const tip = tippy(control, {
+        content: popover,
+        interactive: true,
+        trigger: "click",
+        placement: "bottom-end",
+        appendTo: () => document.body,
+        arrow: false,
+        offset: [0, 4],
+        theme: "dd-facet",
+    });
+
+    return control;
+}
+
+/** The `aria-sort` value for a column's sort direction. */
+function ariaSort(direction: false | "asc" | "desc" | undefined): string {
+    if (direction === "asc") return "ascending";
+    if (direction === "desc") return "descending";
+    return "none";
 }
 
 /** The distinct non-empty cell texts of one column, in first-seen order. */
@@ -241,21 +343,6 @@ function distinctValues(rows: readonly SemanticRow[], index: number): string[] {
         }
     }
     return values;
-}
-
-/** An <option> with the given value and label. */
-function option(value: string, label: string): HTMLOptionElement {
-    const element = document.createElement("option");
-    element.value = value;
-    element.textContent = label;
-    return element;
-}
-
-/** The `aria-sort` value for a column's sort direction. */
-function ariaSort(direction: false | "asc" | "desc" | undefined): string {
-    if (direction === "asc") return "ascending";
-    if (direction === "desc") return "descending";
-    return "none";
 }
 
 /** The single "no matches" row shown when a filter hides every row. */
@@ -290,6 +377,15 @@ function renderCell(cell: SemanticCell): HTMLElement {
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
     return td;
+}
+
+/** A 15px stroked Lucide-style icon from its inner paths. */
+function svg(paths: string): string {
+    return (
+        `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ` +
+        `stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">` +
+        `${paths}</svg>`
+    );
 }
 
 /** A panel/table slug from a title: lowercased, spaces to hyphens. */

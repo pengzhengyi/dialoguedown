@@ -514,27 +514,64 @@ section.stage.error {
 }
 
 .table-panel-header {
-    /* Reset Pico's button chrome so the bar reads as a header, not a form control. Pico
-       redefines --pico-color to its inverse (white) on buttons, which made the title
-       invisible on the light panel background — inherit the normal text color instead. */
-    --pico-color: inherit;
-
-    width: 100%;
-    margin: 0;
-    padding: 0.4rem 0.6rem;
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.3rem;
+    padding: 0.3rem 0.5rem;
+}
+
+.table-panel-toggle {
+    /* Pico redefines --pico-color to white on buttons, which would hide the title on the light
+       panel background; inherit the normal text color instead. */
+    --pico-color: inherit;
+
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.15rem 0.2rem;
     background: transparent;
     border: 0;
+    border-radius: 0.3rem;
     color: var(--pico-color);
     font-weight: 600;
     font-size: 0.85rem;
+    text-align: left;
     cursor: pointer;
 }
 
-.table-panel-header:hover {
+.table-panel-toggle:hover {
     background: var(--pico-secondary-background, rgb(128 128 128 / 8%));
+}
+
+.table-panel-search {
+    /* Same Pico button-color reset as the toggle. */
+    --pico-color: inherit;
+
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0.3rem;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+}
+
+.table-panel-search:hover {
+    background: var(--pico-secondary-background, rgb(128 128 128 / 8%));
+    color: var(--pico-color);
+}
+
+.table-panel-search.active {
+    color: var(--md-link, #0969da);
 }
 
 .table-panel-caret::before {
@@ -615,13 +652,9 @@ section.stage.error {
     white-space: nowrap;
 }
 
-/* Interactive table controls: a filter bar (free-text search + any faceted selects) above a
-   table whose headers sort on click. */
-.table-filters {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin: 0.1rem 0 0.55rem;
+/* The revealed search box: a slim row above the table, shown on demand from the title bar. */
+.table-search-row {
+    margin: 0.1rem 0 0.5rem;
 }
 
 .table-search {
@@ -641,54 +674,28 @@ section.stage.error {
     outline-offset: 1px;
 }
 
-/* Faceted filters for categorical columns: a compact labeled select per column. */
-.table-facets {
+/* A header cell holds its sort button and, for a categorical column, a facet control. */
+.th-inner {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.6rem;
-}
-
-.table-facet {
-    display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.2rem;
+    padding: 0.3rem 0.55rem;
 }
 
-.table-facet-name {
-    font-size: 0.66rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--pico-muted-color);
-}
-
-.table-facet select {
-    width: auto;
-    height: auto;
-    margin: 0;
-    padding: 0.1rem 1.4rem 0.1rem 0.4rem;
-    font-size: 0.74rem;
-    line-height: 1.3;
-    color: inherit;
-    background-color: var(--pico-form-element-background-color, transparent);
-    background-position: right 0.35rem center;
-    background-size: 0.65rem auto;
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: 0.3rem;
-}
-
-/* The header label doubles as a sort button: a text button that fills its cell (whose own
-   padding is now zero) and carries a direction caret. */
+/* The header label doubles as a sort button; it fills the cell and carries a direction caret. */
 .semantic-table .th-sort {
-    /* Pico redefines --pico-color to its inverse (white) on buttons, which turned the hovered
-       header white-on-white; inherit the normal text color instead (as the panel header does). */
+    /* Pico redefines --pico-color to white on buttons, which turned the hovered header
+       white-on-white; inherit the normal text color instead. */
     --pico-color: inherit;
 
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.4em;
-    width: 100%;
-    padding: 0.3rem 0.6rem;
+    margin: 0;
+    padding: 0;
     font: inherit;
     text-transform: inherit;
     letter-spacing: inherit;
@@ -705,23 +712,102 @@ section.stage.error {
 
 /* The sort caret reflects aria-sort: a faint idle glyph, a solid arrow once sorted. */
 .semantic-table .th-sort::after {
-    content: "⇅";
+    content: "\2195";
     font-size: 0.85em;
     opacity: 0.35;
 }
 
 .semantic-table th[aria-sort="ascending"] .th-sort::after {
-    content: "▲";
+    content: "\25B2";
     opacity: 0.9;
 }
 
 .semantic-table th[aria-sort="descending"] .th-sort::after {
-    content: "▼";
+    content: "\25BC";
     opacity: 0.9;
 }
 
 .semantic-table .th-sort:hover::after {
     opacity: 0.7;
+}
+
+/* The facet trigger: a funnel icon, or — once a value is chosen — a compact value chip. */
+.semantic-table .th-facet {
+    --pico-color: inherit;
+
+    flex: 0 1 auto;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    max-width: 6rem;
+    margin: 0;
+    padding: 0.05rem 0.2rem;
+    color: var(--pico-muted-color);
+    background: none;
+    border: 0;
+    border-radius: 0.3rem;
+    cursor: pointer;
+}
+
+.semantic-table .th-facet:hover {
+    color: var(--pico-color);
+    background: var(--pico-secondary-background, rgb(128 128 128 / 8%));
+}
+
+.semantic-table .th-facet.active {
+    color: var(--md-link, #0969da);
+}
+
+.th-facet-value {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    border: 1px solid currentcolor;
+    border-radius: 999px;
+}
+
+/* The facet radio menu, a tippy popover appended to the document body. */
+.tippy-box[data-theme~="dd-facet"] {
+    color: var(--pico-color);
+    background: var(--pico-background-color, #fff);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.4rem;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 15%);
+}
+
+.tippy-box[data-theme~="dd-facet"] .tippy-content {
+    padding: 0.25rem;
+}
+
+.facet-popover {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    min-width: 6rem;
+}
+
+.facet-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.78rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+}
+
+.facet-option:hover {
+    background: var(--pico-secondary-background, rgb(128 128 128 / 8%));
+}
+
+.facet-option input {
+    margin: 0;
 }
 
 .table-nomatch {

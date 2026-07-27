@@ -189,8 +189,9 @@ test("filters and sorts a table while keeping its cross-links", async ({ page })
         "ascending",
     );
 
-    // Filter to just the market; the panel count tracks the visible rows, and the row still
-    // carries its cross-link key.
+    // Reveal the search box on demand, then filter to just the market; the panel count tracks the
+    // visible rows, and the row still carries its cross-link key.
+    await anchors.locator(".table-panel-search").click();
     await anchors.locator("input.table-search").fill("market");
     await expect(anchors.locator("tbody tr")).toHaveCount(1);
     await expect(anchors.locator('tbody tr[data-entity-key="scene:the-market"]')).toBeVisible();
@@ -206,12 +207,17 @@ test("facets the Jump resolutions table by its Type column", async ({ page }) =>
     const jumps = page.locator('.table-panel:has(.table-panel-title:text-is("Jump resolutions"))');
     await expect(jumps.locator("tbody tr")).toHaveCount(2);
 
-    await jumps.locator(".table-facet select").selectOption("End");
+    // Open the Type facet popover and choose End; the choice shows as a chip in the header.
+    await jumps.locator(".th-facet").click();
+    await page.locator('.facet-popover input[value="End"]').check();
     await expect(jumps.locator("tbody tr")).toHaveCount(1);
     await expect(jumps.locator("tbody tr td").first()).toHaveText("End");
+    await expect(jumps.locator(".th-facet .th-facet-value")).toHaveText("End");
     await expect(jumps.locator(".table-panel-count")).toHaveText("1");
 
-    await jumps.locator(".table-facet select").selectOption(""); // All
+    // Reopen and clear with All.
+    await jumps.locator(".th-facet").click();
+    await page.locator('.facet-popover input[value=""]').check();
     await expect(jumps.locator("tbody tr")).toHaveCount(2);
 });
 
@@ -270,19 +276,19 @@ test("lineage focus preserves the scene backbone while spotlighting a scene", as
     await expect(graph.locator("g.node.scene:not(.related)")).not.toHaveCount(0);
 });
 
-test("collapses and reopens a table from its header bar", async ({ page }) => {
+test("collapses and reopens a table from its caret toggle", async ({ page }) => {
     const speakers = page
         .locator(".table-panel")
         .filter({ has: page.locator(".table-panel-title", { hasText: "Speakers" }) });
-    const header = speakers.locator(".table-panel-header");
+    const toggle = speakers.locator(".table-panel-toggle");
 
     await expect(speakers.locator("tbody")).toBeVisible();
-    await header.click();
+    await toggle.click();
     await expect(speakers).toHaveClass(/collapsed/);
-    await expect(header).toHaveAttribute("aria-expanded", "false");
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
     await expect(speakers.locator("tbody")).toBeHidden();
 
-    await header.click();
+    await toggle.click();
     await expect(speakers).not.toHaveClass(/collapsed/);
     await expect(speakers.locator("tbody")).toBeVisible();
 });

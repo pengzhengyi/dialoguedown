@@ -81,9 +81,14 @@ function jumpFacetTable(): SemanticTable {
 }
 
 function chooseFacet(panel: HTMLElement, value: string): void {
-    const select = panel.querySelector<HTMLSelectElement>(".table-facet select")!;
-    select.value = value;
-    select.dispatchEvent(new Event("change"));
+    const control = panel.querySelector<HTMLButtonElement>(".th-facet")!;
+    // Open the popover (tippy mounts it to the body), then pick the radio.
+    (control as unknown as { _tippy: { show: () => void } })._tippy.show();
+    const radio = document.querySelector<HTMLInputElement>(
+        `.facet-popover input[value="${value}"]`,
+    )!;
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change"));
 }
 
 describe("createTablePanel", () => {
@@ -136,19 +141,55 @@ describe("createTablePanel", () => {
         expect(panel.querySelector(".table-panel-count")?.textContent).toBe("0");
     });
 
-    it("collapses and reopens the panel when its header is pressed", () => {
+    it("collapses and reopens the panel when its caret toggle is pressed", () => {
         const panel = createTablePanel(speakerTable());
-        const header = panel.querySelector<HTMLButtonElement>(".table-panel-header")!;
+        const toggle = panel.querySelector<HTMLButtonElement>(".table-panel-toggle")!;
         expect(panel.classList.contains("collapsed")).toBe(false);
-        expect(header.getAttribute("aria-expanded")).toBe("true");
+        expect(toggle.getAttribute("aria-expanded")).toBe("true");
 
-        header.click();
+        toggle.click();
         expect(panel.classList.contains("collapsed")).toBe(true);
-        expect(header.getAttribute("aria-expanded")).toBe("false");
+        expect(toggle.getAttribute("aria-expanded")).toBe("false");
 
-        header.click();
+        toggle.click();
         expect(panel.classList.contains("collapsed")).toBe(false);
-        expect(header.getAttribute("aria-expanded")).toBe("true");
+        expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    });
+});
+
+describe("createTablePanel — search reveal", () => {
+    beforeEach(() => {
+        document.body.innerHTML = "";
+    });
+
+    it("reveals the hidden search box when the magnifier toggle is pressed", () => {
+        const panel = createTablePanel(castTable());
+        const row = panel.querySelector<HTMLElement>(".table-search-row")!;
+        const toggle = panel.querySelector<HTMLButtonElement>(".table-panel-search")!;
+
+        expect(row.hidden).toBe(true);
+        expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+        toggle.click();
+        expect(row.hidden).toBe(false);
+        expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    });
+
+    it("marks the search toggle active while the filter carries text", () => {
+        const panel = createTablePanel(castTable());
+        const toggle = panel.querySelector<HTMLButtonElement>(".table-panel-search")!;
+
+        setFilter(panel, "ali");
+        expect(toggle.classList.contains("active")).toBe(true);
+
+        setFilter(panel, "");
+        expect(toggle.classList.contains("active")).toBe(false);
+    });
+
+    it("has no search toggle for an empty table", () => {
+        const panel = createTablePanel(emptyTable());
+
+        expect(panel.querySelector(".table-panel-search")).toBeNull();
     });
 });
 
@@ -234,16 +275,17 @@ describe("createTablePanel — faceted filters", () => {
         document.body.innerHTML = "";
     });
 
-    it("offers a labeled facet select per categorical column with All plus its distinct values", () => {
+    it("offers a labeled facet popover with All plus the column's distinct values", () => {
         const panel = createTablePanel(jumpFacetTable());
-        const select = panel.querySelector<HTMLSelectElement>(".table-facet select")!;
+        const control = panel.querySelector<HTMLButtonElement>(".th-facet")!;
+        expect(control.getAttribute("aria-label")).toBe("Filter by Type");
 
-        expect(select.getAttribute("aria-label")).toBe("Filter by Type");
-        expect([...select.options].map((option) => option.textContent)).toEqual([
-            "All",
-            "Scene",
-            "End",
-        ]);
+        (control as unknown as { _tippy: { show: () => void } })._tippy.show();
+        const popover = document.querySelector(".facet-popover")!;
+        expect(popover.getAttribute("aria-label")).toBe("Filter by Type");
+        expect(
+            [...popover.querySelectorAll(".facet-option span")].map((s) => s.textContent),
+        ).toEqual(["All", "Scene", "End"]);
     });
 
     it("filters rows to a chosen facet value and clears with All", () => {
@@ -256,6 +298,15 @@ describe("createTablePanel — faceted filters", () => {
         expect(firstColumn(panel)).toEqual(["Scene", "End", "Scene"]);
     });
 
+    it("shows the chosen facet value as a chip in the header", () => {
+        const panel = createTablePanel(jumpFacetTable());
+
+        chooseFacet(panel, "End");
+        const control = panel.querySelector(".th-facet")!;
+        expect(control.classList.contains("active")).toBe(true);
+        expect(control.querySelector(".th-facet-value")?.textContent).toBe("End");
+    });
+
     it("combines a facet with the free-text search", () => {
         const panel = createTablePanel(jumpFacetTable());
 
@@ -265,9 +316,9 @@ describe("createTablePanel — faceted filters", () => {
         expect(firstColumn(panel)).toEqual(["Scene"]);
     });
 
-    it("renders no facet bar for a table with no categorical columns", () => {
+    it("renders no facet control for a table with no categorical columns", () => {
         const panel = createTablePanel(castTable());
 
-        expect(panel.querySelector(".table-facets")).toBeNull();
+        expect(panel.querySelector(".th-facet")).toBeNull();
     });
 });
