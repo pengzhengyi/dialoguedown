@@ -1,9 +1,9 @@
 # Conditional line
 
 > [!NOTE]
-> Status: **proposed**. This note designs the second application of the
-> **condition** primitive (`` `"key"?` ``): a **conditional line** — a line that
-> plays only when the condition is true. It reuses the condition designed in the
+> Status: **implemented**. The compiler recognizes a **conditional line** — a line
+> fronted by the **condition** primitive (`` `"key"?` ``) that plays only when the
+> condition is true — reusing the condition designed in the
 > [Conditional Jump](./Conditional%20Jump.md) note; read that first. Gating the
 > line at play time (and the `IGameSystem.Check` read it will use) is part of the
 > planned [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
@@ -32,6 +32,7 @@
   - [Diagnostics](#diagnostics)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Testability](#testability)
+  - [Implementation crosscheck](#implementation-crosscheck)
   - [Alternatives not chosen](#alternatives-not-chosen)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
 
@@ -70,19 +71,19 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 ## Functionality checklist
 
-- [ ] Recognize a leading `` `"key"?` `` condition code span on a line, *before*
+- [x] Recognize a leading `` `"key"?` `` condition code span on a line, *before*
       the speaker is parsed, and peel it off as the line's guard.
-- [ ] Model the guard as an optional `Condition` on `Line`, with an
+- [x] Model the guard as an optional `Condition` on `Line`, with an
       `IsConditional` predicate; an unguarded line leaves it absent.
-- [ ] Parse the speaker and speech from the content *after* the peeled condition,
+- [x] Parse the speaker and speech from the content *after* the peeled condition,
       so `` `"Angry"?` Guard: Leave.`` still names the speaker `Guard`.
-- [ ] Preserve the source span of the condition, its query key, the speaker, and
+- [x] Preserve the source span of the condition, its query key, the speaker, and
       the speech.
-- [ ] Generalize `DLG1106` so a condition that guards neither a jump nor a line
+- [x] Generalize `DLG1106` so a condition that guards neither a jump nor a line
       is reported, and detect "guarded" by identity, not by parent type alone.
-- [ ] Leave an ordinary unconditional line unchanged when no condition precedes
+- [x] Leave an ordinary unconditional line unchanged when no condition precedes
       it.
-- [ ] Add the construct to the writer-facing specification, the gallery, and the
+- [x] Add the construct to the writer-facing specification, the gallery, and the
       report projection.
 
 ## Ubiquitous language
@@ -341,6 +342,16 @@ and an unknown key defaults to false.
 
 Use multi-line raw string literals for script fixtures so the condition and the
 line are visible.
+
+## Implementation crosscheck
+
+The construct shipped as designed; the runtime read and gating remain deferred.
+
+| Bucket       | Result                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Achieved** | `Line` gained an optional `Condition` and an `IsConditional` predicate; `LineBuilder` peels a leading condition before the speaker, only when content follows it; the orphan-condition rule generalized to `OrphanConditionRule`, detecting a bound condition by identity across a jump or a line; a line's condition is traversed guard-first; and the report projection, writer spec, gallery, and `DLG1106` docs all match the design (D1–D6). |
+| **Changed**  | `LineBuilder` was restructured into a thin wrapper over a single-use `Assembler` that consumes the front of the line's inlines, and a shared `ISpanned` interface with a `SourceSpan.Covering` overload replaced the repeated first-and-last-span idiom — refinements beyond the note. The `DLG1106` fix example now moves the guard to the line's start rather than dropping the `?`, preserving the writer's intent.                            |
+| **Deferred** | Reading the condition through `IGameSystem.Check` and playing or skipping the line are the runtime's job ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)). Conditions on choices are the next construct; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                 |
 
 ## Alternatives not chosen
 
