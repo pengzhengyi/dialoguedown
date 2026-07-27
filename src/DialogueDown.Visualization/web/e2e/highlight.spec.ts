@@ -62,6 +62,36 @@ test("colors the speaker's name, id, separator, tag, and jump distinctly", async
     expect(new Set(colors).size).toBe(5);
 });
 
+test("colors the reserved #END terminator as its own token", async ({ page }) => {
+    const endUrl = writeReport({
+        source: "=> [the end](#END)\n",
+        stages: SAMPLE_STAGES,
+        semanticTokens: [
+            {
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 2 } },
+                kind: "JumpIndicator",
+            },
+            {
+                range: { start: { line: 0, character: 13 }, end: { line: 0, character: 17 } },
+                kind: "ReservedAnchor",
+            },
+        ],
+    });
+    await page.goto(endUrl);
+    await expect(page.locator(".tab")).toHaveCount(2);
+
+    const active = page.locator("section.stage.active");
+    await expect(active.locator(".dd-tok-reserved-anchor")).toHaveText("#END");
+
+    // The reserved terminator gets its own hue, distinct from the jump arrow beside it.
+    const [anchorColor, jumpColor] = await active.evaluate((root) => {
+        const colorOf = (selector: string) =>
+            getComputedStyle(root.querySelector(selector) as Element).color;
+        return [colorOf(".dd-tok-reserved-anchor"), colorOf(".dd-tok-jump")];
+    });
+    expect(anchorColor).not.toBe(jumpColor);
+});
+
 test("keeps the tag a separate token, not nested inside a speaker token", async ({ page }) => {
     const active = page.locator("section.stage.active");
 
