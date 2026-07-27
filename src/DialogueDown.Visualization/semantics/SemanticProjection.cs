@@ -77,7 +77,10 @@ internal sealed class SemanticProjection
         }
 
         return new SemanticTable(
-            "Speakers", ["Name", "@id", "Tags", "Default"], rows, "No speakers.");
+            "Speakers", ["Name", "@id", "Tags", "Default"], rows, "No speakers.")
+        {
+            FacetColumns = ["Default"],
+        };
     }
 
     // Every anchored scene, walking the tree top-down (the root has no anchor).
@@ -121,7 +124,10 @@ internal sealed class SemanticProjection
         }
 
         return new SemanticTable(
-            "Jump resolutions", ["Type", "Jump", "Target", "Resolves to"], rows, "No jumps.");
+            "Jump resolutions", ["Type", "Jump", "Target", "Resolves to"], rows, "No jumps.")
+        {
+            FacetColumns = ["Type"],
+        };
     }
 
     // A jump's resolution as four parts: a short Type label and its color category, the display

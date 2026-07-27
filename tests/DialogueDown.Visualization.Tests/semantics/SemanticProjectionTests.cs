@@ -142,6 +142,24 @@ public sealed class SemanticProjectionTests
     }
 
     [Fact]
+    public void Project_MarksTheCategoricalColumnsAsFacets()
+    {
+        var graph = Project(
+            """
+            # The Market
+
+            Guide @guide: Welcome.
+
+            => [east](#the-market)
+            """);
+
+        // Type (jumps) and Default (speakers) are categorical; the free-text tables carry none.
+        Assert.Equal(["Type"], Table(graph, "Jump resolutions").FacetColumns);
+        Assert.Equal(["Default"], Table(graph, "Speakers").FacetColumns);
+        Assert.Empty(Table(graph, "Anchors").FacetColumns);
+    }
+
+    [Fact]
     public void Project_SpeakerTable_DeduplicatesOneSpeakerSeenByNameAndId()
     {
         var graph = Project(
