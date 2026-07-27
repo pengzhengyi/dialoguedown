@@ -636,6 +636,10 @@ section.stage.error {
 /* The header label doubles as a sort button: a text button that fills its cell (whose own
    padding is now zero) and carries a direction caret. */
 .semantic-table .th-sort {
+    /* Pico redefines --pico-color to its inverse (white) on buttons, which turned the hovered
+       header white-on-white; inherit the normal text color instead (as the panel header does). */
+    --pico-color: inherit;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
