@@ -331,7 +331,7 @@ classDiagram
 | `=>` then non-whitespace then link (`=> x [a](b)`)          | `=>` is dangling (only same-line whitespace may sit between); the link stays bare                           |
 | `=>` then line break then link (`=>` ⏎ `[a](b)`)            | a jump is single-line; the break ends it, so `=>` is dangling and the link stays bare                       |
 | `=>` immediately before a link (`=>[a](b)`)                 | assembled; no whitespace to fold                                                                            |
-| Multiple jumps in one speech                                | each `JumpIndicator · Link` pair assembled independently; a later stage may warn (sequential jumps confuse) |
+| Multiple jumps in one speech                                | each `JumpIndicator · Link` pair assembled independently; a later stage may warn (later content unreachable)|
 | `JumpIndicator` nested in `StyledText`                      | assembled or degraded in place, so none survive                                                             |
 | Line already has a speaker                                  | passes through unchanged                                                                                    |
 | Line with no speaker (any speech, including a lone command) | gets `DefaultSpeaker`                                                                                       |

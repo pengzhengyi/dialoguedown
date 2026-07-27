@@ -12,7 +12,7 @@ internal static class StructuralValidatorFactory
     public static IStructuralValidator CreateDefault() =>
         new StructuralValidator(
         [
-            new MultipleJumpsOnLineRule(),
+            new UnreachableAfterJumpRule(),
             new ChoiceNestingDepthRule(),
             new WeightTotalRule(new DefaultWeightNormalization()),
             new SingleOptionRandomChoiceRule(),

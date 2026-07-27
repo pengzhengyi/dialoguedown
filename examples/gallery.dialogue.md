@@ -52,4 +52,13 @@ Deeper in, the forest seems to weigh what it senses in you.
 
 Alice: Maybe this was a **mistake**.
 
-=> [Turn back](#the-crossroads)
+- => [Turn back to the crossroads](#the-crossroads)
+- => [Follow the moonlight ahead](#the-quiet-lake)
+
+# The Quiet Lake
+
+The trees give way to a still lake, silver under the moon. The long road is over.
+
+Alice: I found my own way, in the end.
+
+=> [The end](#END)

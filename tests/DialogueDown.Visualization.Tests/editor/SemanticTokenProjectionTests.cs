@@ -122,6 +122,25 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_TerminalDivert_ProjectsAReservedAnchorTokenOverTheEnd()
+    {
+        var source = "Alice: Farewell => [the end](#END)";
+
+        var token = AssertSingleSemanticToken(Project(source), TokenKind.ReservedAnchor);
+        Assert.Equal("#END", token.TextIn(source));
+    }
+
+    [Fact]
+    public void Project_LowercaseEndAnchor_IsNotAReservedAnchor()
+    {
+        // A scene titled "End" slugs to lowercase "end"; a divert to it is an ordinary scene jump,
+        // not the reserved uppercase terminator, so it carries no reserved-anchor token.
+        var tokens = Project("Alice: Farewell => [the end](#end)");
+
+        Assert.DoesNotContain(tokens, token => token.Kind == TokenKind.ReservedAnchor);
+    }
+
+    [Fact]
     public void Project_TokenRangeIsZeroBased()
     {
         // "Bob #wow: Hi." — the custom tag "#wow" starts at column 4 on the first line.

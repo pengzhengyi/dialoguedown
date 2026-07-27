@@ -1,5 +1,6 @@
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
+using DialogueDown.Script.Semantics;
 using DialogueDown.Visualization.Lsp;
 
 namespace DialogueDown.Visualization.Editor;
@@ -26,7 +27,7 @@ internal sealed class SemanticTokenProjection
         var map = new LspLineMap(source);
         return document.Body
             .SelectMany(block => block.DescendantsAndSelf())
-            .SelectMany(node => TokensOf(node, map));
+            .SelectMany(node => TokensOf(node, source, map));
     }
 
     // The token(s) a node contributes, if any. Non-dialogue nodes (text, styled runs, the line
@@ -35,7 +36,7 @@ internal sealed class SemanticTokenProjection
     // projects a token per part it wrote (name, @id, and the : separator) from its prefix spans;
     // the parts are disjoint and interleave with the separate tag tokens. A synthetic or
     // recovered speaker carries no prefix spans, so it contributes nothing.
-    private static IEnumerable<SemanticToken> TokensOf(ScriptNode node, LspLineMap map)
+    private static IEnumerable<SemanticToken> TokensOf(ScriptNode node, string source, LspLineMap map)
     {
         switch (node)
         {
@@ -47,6 +48,9 @@ internal sealed class SemanticTokenProjection
                 break;
             case JumpIndicator jump:
                 yield return Token(TokenKind.JumpIndicator, jump.Span, map);
+                break;
+            case Link link when TerminalAnchorSpan(link, source) is { } anchor:
+                yield return Token(TokenKind.ReservedAnchor, anchor, map);
                 break;
             case Speaker { PrefixSpans: { } prefix }:
                 if (prefix.Name is { } name)
@@ -62,6 +66,26 @@ internal sealed class SemanticTokenProjection
                 yield return Token(TokenKind.Separator, prefix.Separator, map);
                 break;
         }
+    }
+
+    // The source span of the reserved #END destination in a divert, or null when the link is not a
+    // terminator. #END is written as an ordinary divert whose destination is the uppercase anchor;
+    // the AST keeps only the whole-link span, so the reserved destination text (link.Target, e.g.
+    // "#END") is located within it to color just the anchor — a coarse, visualization-only token
+    // like the whole-prefix speaker one, until the parse projects a precise target span.
+    private static SourceSpan? TerminalAnchorSpan(Link link, string source)
+    {
+        var target = JumpTarget.Parse(link.Target);
+        if (target.HasFilePart || target.Anchor != ReservedAnchors.End)
+        {
+            return null;
+        }
+
+        // Search from the link's tail so a label that happens to contain "#END" cannot shadow the
+        // real destination in `](#END)`.
+        var start = source.LastIndexOf(
+            link.Target, link.Span.End - 1, link.Span.Length, StringComparison.Ordinal);
+        return start < 0 ? null : new SourceSpan(start, link.Target.Length);
     }
 
     private static SemanticToken Token(TokenKind kind, SourceSpan span, LspLineMap map) =>

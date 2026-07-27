@@ -85,7 +85,7 @@ public sealed class ScriptCompilerFactoryTests
     }
 
     [Fact]
-    public void CreateDefault_ALineWithTwoJumps_SurfacesTheMultipleJumpsWarning()
+    public void CreateDefault_ContentAfterAJump_SurfacesTheUnreachableWarning()
     {
         var source =
             """
@@ -98,7 +98,9 @@ public sealed class ScriptCompilerFactoryTests
 
         var result = ScriptCompilerFactory.CreateDefault().Compile(source);
 
-        var warning = Assert.Single(result.Diagnostics, d => d.Descriptor.Code == DiagnosticCatalog.MultipleJumpsOnLine.Code);
+        var warning = Assert.Single(
+            result.Diagnostics,
+            d => d.Descriptor.Code == DiagnosticCatalog.UnreachableContentAfterJump.Code);
         Assert.Equal(DiagnosticSeverity.Warning, warning.Severity);
         Assert.False(result.HasErrors);
     }
