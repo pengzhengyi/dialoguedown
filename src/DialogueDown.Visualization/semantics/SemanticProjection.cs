@@ -17,6 +17,10 @@ internal sealed class SemanticProjection
     private const string StructureCategory = "structure";
     private const string SpeechCategory = "speech";
 
+    // Shown in a cell whose single value is absent — a speaker with no name or no @id — so the
+    // gap reads as "not applicable" rather than an ambiguous dash.
+    private const string Absent = "N/A";
+
     // Jump-resolution kind colors. "terminal" reuses the reserved #END editor hue so the End type
     // reads the same in the table and the source; "deferred" marks a not-yet-resolvable cross-file
     // jump. Both are unique palette colors.
@@ -64,8 +68,8 @@ internal sealed class SemanticProjection
 
             rows.Add(new SemanticRow(
                 [
-                    new SemanticCell(symbol.Name ?? "—", Category: SpeechCategory),
-                    new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : "—"),
+                    new SemanticCell(symbol.Name ?? Absent, Category: SpeechCategory),
+                    new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : Absent),
                     new SemanticCell(TagsText(symbol)),
                     new SemanticCell(symbol.IsDefault ? "✓" : ""),
                 ],
