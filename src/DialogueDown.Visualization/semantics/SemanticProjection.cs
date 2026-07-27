@@ -118,6 +118,7 @@ internal sealed class SemanticProjection
         resolution switch
         {
             SceneJump scene => ($"=> {SceneEntity.Label(scene.Scene)}", SceneEntity.Key(scene.Scene)),
+            TerminalJump => ("End sentinel", null),
             FileScopedJump file => ($"{file.File}{Anchor(file.Anchor)} (deferred)", null),
             UnresolvedJump => ("unresolved", null),
             _ => (resolution.ToString() ?? "", null),

@@ -201,6 +201,16 @@ public sealed class SemanticProjectionTests
     }
 
     [Fact]
+    public void Project_JumpTable_TerminalJumpResolvesToTheEndSentinel()
+    {
+        var graph = Project("=> [the end](#END)");
+
+        var row = Assert.Single(Table(graph, "Jump resolutions").Rows);
+        Assert.Equal("End sentinel", row.Cells[2].Text);
+        Assert.Null(row.Cells[2].RefKey);
+    }
+
+    [Fact]
     public void Project_JumpTable_UnresolvedJumpShowsUnresolvedWithNoCrossLink()
     {
         var graph = Project("=> [nowhere]()");
