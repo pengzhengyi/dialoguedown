@@ -57,6 +57,7 @@ function renderTable(table: SemanticTable): HTMLElement {
 
     const element = document.createElement("table");
     element.className = "semantic-table";
+    element.dataset.table = table.title.toLowerCase().replace(/\s+/g, "-");
 
     const head = document.createElement("thead");
     const headRow = document.createElement("tr");

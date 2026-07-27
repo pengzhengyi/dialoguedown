@@ -180,44 +180,69 @@ public sealed class SemanticProjectionTests
             """);
 
         var jumps = Table(graph, "Jump resolutions");
+        Assert.Equal(["Type", "Jump", "Target", "Resolves to"], jumps.Columns);
         var row = Assert.Single(jumps.Rows);
-        Assert.Equal("east", row.Cells[0].Text);
-        Assert.Equal("#the-forest", row.Cells[1].Text);
-        Assert.StartsWith("=> ", row.Cells[2].Text); // "=> The Forest"
-        // The jump's target cell references the same key the scene node and anchor row carry.
-        Assert.Equal("scene:the-forest", row.Cells[2].RefKey);
+        Assert.Equal("Scene", row.Cells[0].Text);
+        Assert.Equal("structure", row.Cells[0].Category);
+        Assert.Equal("east", row.Cells[1].Text);
+        Assert.Equal("#the-forest", row.Cells[2].Text);
+        Assert.StartsWith("=> ", row.Cells[3].Text); // "=> The Forest"
+        // The jump's resolves-to cell references the same key the scene node and anchor row carry.
+        Assert.Equal("scene:the-forest", row.Cells[3].RefKey);
         Assert.Contains(graph.Nodes, node => node.EntityKey == "scene:the-forest");
         Assert.Contains(Table(graph, "Anchors").Rows, r => r.EntityKey == "scene:the-forest");
     }
 
     [Fact]
-    public void Project_JumpTable_FileScopedJumpIsDeferredWithNoCrossLink()
+    public void Project_JumpTable_FileScopedJumpIsCrossFileAndDeferred()
     {
         var graph = Project("=> [docs](guide.md#intro)");
 
         var row = Assert.Single(Table(graph, "Jump resolutions").Rows);
-        Assert.Contains("deferred", row.Cells[2].Text);
-        Assert.Null(row.Cells[2].RefKey);
+        Assert.Equal("Cross-file", row.Cells[0].Text);
+        Assert.Equal("deferred", row.Cells[0].Category);
+        Assert.Contains("deferred", row.Cells[3].Text);
+        Assert.Null(row.Cells[3].RefKey);
     }
 
     [Fact]
-    public void Project_JumpTable_TerminalJumpResolvesToTheEndSentinel()
+    public void Project_JumpTable_TerminalJumpIsEndAndResolvesToTheEndSentinel()
     {
         var graph = Project("=> [the end](#END)");
 
         var row = Assert.Single(Table(graph, "Jump resolutions").Rows);
-        Assert.Equal("End sentinel", row.Cells[2].Text);
-        Assert.Null(row.Cells[2].RefKey);
+        Assert.Equal("End", row.Cells[0].Text);
+        Assert.Equal("terminal", row.Cells[0].Category);
+        Assert.Equal("End sentinel", row.Cells[3].Text);
+        Assert.Null(row.Cells[3].RefKey);
     }
 
     [Fact]
-    public void Project_JumpTable_UnresolvedJumpShowsUnresolvedWithNoCrossLink()
+    public void Project_JumpTable_UnresolvedJumpIsUncoloredWithNoCrossLink()
     {
         var graph = Project("=> [nowhere]()");
 
         var row = Assert.Single(Table(graph, "Jump resolutions").Rows);
-        Assert.Equal("unresolved", row.Cells[2].Text);
-        Assert.Null(row.Cells[2].RefKey);
+        Assert.Equal("Unresolved", row.Cells[0].Text);
+        // No category: an unresolved jump reads as uncolored — nothing to resolve to.
+        Assert.Null(row.Cells[0].Category);
+        Assert.Equal("unresolved", row.Cells[3].Text);
+        Assert.Null(row.Cells[3].RefKey);
+    }
+
+    [Fact]
+    public void Project_JumpTable_ConditionalJumpPrefixesTheJumpCellWithItsCondition()
+    {
+        var graph = Project(
+            """
+            # The Vault
+
+            `"FoundKey"?` => [open](#the-vault)
+            """);
+
+        var row = Assert.Single(Table(graph, "Jump resolutions").Rows);
+        Assert.Equal("Scene", row.Cells[0].Text);
+        Assert.Equal("\"FoundKey\"? open", row.Cells[1].Text);
     }
 
     [Fact]

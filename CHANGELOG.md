@@ -10,6 +10,10 @@ changes easy to categorize.
 
 ### Added
 
+- **Jump types in the Semantic tab** — the report's *Jump resolutions* table now leads with a
+  color-coded **Type** column (Scene, End, Cross-file, Unresolved) so jumps group and read at a
+  glance, prefixes a conditional jump with its guarding condition, and colors the *End* type with
+  the same reserved hue as `#END` in the source editor.
 - **End a run with `#END`** — divert to the reserved `#END` target
   (`=> [The end](#END)`) to stop the dialogue at a definite endpoint. `#END` is uppercase and
   reserved, so it never collides with a scene heading; the report highlights it as a reserved

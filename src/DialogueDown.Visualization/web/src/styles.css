@@ -608,6 +608,13 @@ section.stage.error {
     padding-left: 0.5rem;
 }
 
+/* The jump table's leading Type is a short label that groups the row by resolution kind; keep
+   it on one line so a narrow panel never breaks "Scene" across two rows. */
+.semantic-table[data-table="jump-resolutions"] th:first-child,
+.semantic-table[data-table="jump-resolutions"] td:first-child {
+    white-space: nowrap;
+}
+
 /* Cross-linked rows and cells invite a hover; the highlighter (entity-highlight.ts)
    drives the actual highlight class. */
 .semantic-table tbody tr[data-entity-key],

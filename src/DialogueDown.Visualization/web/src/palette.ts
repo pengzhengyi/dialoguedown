@@ -17,6 +17,8 @@ export const CATEGORY_COLORS: Readonly<Record<string, string>> = {
     styling: "#f59e0b",
     break: "#9ca3af",
     tag: "#ec4899",
+    terminal: "#cf222e",
+    deferred: "#d97706",
 };
 
 export const DEFAULT_COLOR = "#94a3b8";
