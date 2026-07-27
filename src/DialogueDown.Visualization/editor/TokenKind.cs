@@ -26,4 +26,7 @@ internal enum TokenKind
 
     /// <summary>The <c>=&gt;</c> that marks a jump.</summary>
     JumpIndicator,
+
+    /// <summary>The reserved <c>#END</c> terminator anchor, including its leading <c>#</c>.</summary>
+    ReservedAnchor,
 }

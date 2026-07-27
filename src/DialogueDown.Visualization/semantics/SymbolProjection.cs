@@ -27,6 +27,10 @@ internal sealed class SymbolProjection
             }
         }
 
+        // The reserved terminator is always a valid divert target, independent of the document's
+        // scenes, so completion offers it alongside them.
+        jumpTargets.Add(new JumpTargetSymbol(ReservedAnchors.End, "End the run"));
+
         var speakers = new OrderedSet();
         var speakerIds = new OrderedSet();
         var tags = new OrderedSet();

@@ -10,12 +10,12 @@ internal static class DiagnosticCatalog
 {
     // Syntax — DLG1xxx: a malformed line surface, or a structural readability concern.
 
-    /// <summary>DLG1003 — a line carries more than one jump (structural, advisory).</summary>
-    public static readonly DiagnosticDescriptor MultipleJumpsOnLine = new(
+    /// <summary>DLG1003 — content trails a jump on a line, so it can never play (structural).</summary>
+    public static readonly DiagnosticDescriptor UnreachableContentAfterJump = new(
         "DLG1003",
-        "Multiple jumps on a line",
-        "This line has {0} jumps; multiple jumps on one line run in sequence and are easy to "
-            + "misread — prefer at most one.",
+        "Unreachable content after a jump",
+        "Content after a jump on this line can never play: a jump does not return, so anything "
+            + "following it is unreachable. Move it before the jump, or onto its own line.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Warning);
 

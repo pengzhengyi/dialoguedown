@@ -8,16 +8,16 @@ A line's surface does not parse as intended.
 
 ### DLG1003
 
-<span class="dd-sev dd-sev--warning">Warning</span> · Multiple jumps on a line
+<span class="dd-sev dd-sev--warning">Warning</span> · Unreachable content after a jump
 
-This line has {0} jumps; multiple jumps on one line run in sequence and are easy to misread — prefer at most one.
+Content after a jump on this line can never play: a jump does not return, so anything following it is unreachable. Move it before the jump, or onto its own line.
 
-Two jumps on one line run one after the other, which is easy to misread. Put each jump on its own line, separated by a blank line, so the flow is clear.
+A jump does not return, so text or a second jump after it on the same line never plays. Put each jump on its own line, separated by a blank line, so nothing trails it.
 
 <span class="dd-eg-bad">Triggering example</span>
 
 <pre class="dd-example"><code class="nohighlight"># Crossroads
-<mark class="dd-mark-bad">=&gt; [Market](#market) or =&gt; [Home](#home)</mark>
+=&gt; [Market](#market) <mark class="dd-mark-bad">or =&gt; [Home](#home)</mark>
 
 # Market
 Merchant: Wares!

@@ -105,6 +105,18 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
+    public void LeadingConditionBeforeAJump_IsNotPeeled_SoItGuardsTheJump()
+    {
+        // `"key"?` => ... is a conditional *jump*: the condition stays in speech so desugar binds
+        // it to the jump, rather than being stolen as the line's guard.
+        var line = Build([CodeSpan("\"FoundKey\"?"), Text(" => "), Link("#the-vault", Text("open"))]);
+
+        Assert.Null(line.Condition);
+        Assert.Null(line.Speaker);
+        AssertCondition(line.Speech[0], "FoundKey");
+    }
+
+    [Fact]
     public void MidSpeechCondition_IsNotACondition_AndStaysInSpeech()
     {
         // A condition that is not the leading inline is not a line guard; it stays in speech.

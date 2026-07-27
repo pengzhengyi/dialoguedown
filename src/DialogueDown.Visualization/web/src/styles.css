@@ -19,6 +19,7 @@
     --tok-custom-tag: #bf3989;
     --tok-reserved-tag: #953800;
     --tok-jump: #1b7c83;
+    --tok-reserved-anchor: #cf222e;
 
     /* Cross-link highlight: hovering a scene or speaker in the Semantic tab lights up
        every place it appears (graph node, table rows/cells). An amber "highlighter"
@@ -60,6 +61,7 @@
         --tok-custom-tag: #f778ba;
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
+        --tok-reserved-anchor: #ff7b72;
     }
 }
 
@@ -81,6 +83,7 @@
     --tok-custom-tag: #f778ba;
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
+    --tok-reserved-anchor: #ff7b72;
 }
 
 /* Edit mode: switch the accent from blue to green (matching the Save button). */
@@ -605,6 +608,13 @@ section.stage.error {
     padding-left: 0.5rem;
 }
 
+/* The jump table's leading Type is a short label that groups the row by resolution kind; keep
+   it on one line so a narrow panel never breaks "Scene" across two rows. */
+.semantic-table[data-table="jump-resolutions"] th:first-child,
+.semantic-table[data-table="jump-resolutions"] td:first-child {
+    white-space: nowrap;
+}
+
 /* Cross-linked rows and cells invite a hover; the highlighter (entity-highlight.ts)
    drives the actual highlight class. */
 .semantic-table tbody tr[data-entity-key],
@@ -760,6 +770,12 @@ g.node.entity-highlight text.label {
 
 .source-pane .cm-content .dd-tok-jump {
     color: var(--tok-jump);
+    font-weight: 600;
+}
+
+.source-pane .cm-content .dd-tok-reserved-anchor,
+.source-pane .cm-content .dd-tok-reserved-anchor * {
+    color: var(--tok-reserved-anchor);
     font-weight: 600;
 }
 

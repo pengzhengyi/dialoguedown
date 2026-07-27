@@ -39,6 +39,7 @@ model for developers.
     - [Jumps](#jumps)
     - [Conditional jumps](#conditional-jumps)
     - [Conditional lines](#conditional-lines)
+    - [Ending a run](#ending-a-run)
     - [Comments](#comments)
     - [Front matter](#front-matter)
     - [Authoring aids](#authoring-aids)
@@ -99,6 +100,7 @@ flowchart TD
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
 | Conditional jump | `` `"Rainy"?` => [Inn](#inn)`` | Jump only when a query reads as true. |
 | Conditional line | `` `"Angry"?` Guard: Leave.`` | Play a line only when a query reads as true. |
+| End of run | `=> [The end](#END)` | Stop the dialogue at the reserved endpoint. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
 | Custom command | `` `JoinClub("Alice", "Art")` `` | Execute with arguments. |
@@ -745,8 +747,9 @@ line, as its own paragraph:
 ```
 
 If the key is found the reader takes the vault; otherwise the plain jump to the
-study runs. Keep them in separate paragraphs — two jumps in one paragraph chain
-and warn.
+study runs. Keep them in separate paragraphs: a jump is non-returning, so a
+second jump in the same paragraph can never play — the compiler warns about the
+unreachable content.
 
 A conditional jump follows every [jump](#jumps) rule: it lives on one line, its
 pieces may be separated by spaces but not a line break, and it cannot appear in a
@@ -786,6 +789,31 @@ often a second conditional line testing the opposite flag.
 A condition needs a line to apply to: a `` `"key"?` `` alone on a line, or one
 buried mid-line after the speaker, applies to nothing and is reported as
 [`DLG1106`](error-codes.md#dlg1106).
+
+### Ending a run
+
+`#END` is a reserved jump target that ends the current run. Divert to it to stop
+the dialogue at a definite endpoint:
+
+```markdown
+Guide: The road ends here. Farewell, traveler.
+
+=> [The end](#END)
+```
+
+`#END` is uppercase and reserved, so it can never collide with one of your
+scenes: a heading's anchor is always lowercased (a `# End` heading anchors to
+`#end`), while `#END` is matched exactly. There is no `# End` heading to write —
+`#END` is always available as a target.
+
+In a Markdown preview `=> [The end](#END)` renders as an ordinary link. Because
+`#END` matches no heading, the link simply scrolls nowhere; the compiler
+recognizes it as the reserved endpoint.
+
+> [!NOTE]
+> Reaching `#END` stops a run *early*. How reading otherwise flows from one scene
+> to the next — the dialogue's progression order — and the runtime that walks it
+> are still in progress; see the *Progression Order* design note for the model.
 
 ### Comments
 
@@ -889,6 +917,10 @@ Alice: I love this painting too. The colors are **amazing**.
 Alice: I'd like to join the Art Club and give painting a try.
 
 `JoinClub("Alice", "Art")`
+
+Alice: What a lovely visit.
+
+=> [The end](#END)
 ```
 
 ## File format

@@ -10,6 +10,17 @@ changes easy to categorize.
 
 ### Added
 
+- **Jump types in the Semantic tab** — the report's *Jump resolutions* table now leads with a
+  color-coded **Type** column (Scene, End, Cross-file, Unresolved) so jumps group and read at a
+  glance, prefixes a conditional jump with its guarding condition, and colors the *End* type with
+  the same reserved hue as `#END` in the source editor.
+- **End a run with `#END`** — divert to the reserved `#END` target
+  (`=> [The end](#END)`) to stop the dialogue at a definite endpoint. `#END` is uppercase and
+  reserved, so it never collides with a scene heading; the report highlights it as a reserved
+  keyword and completion offers it as a jump target. Because a jump is non-returning, the compiler
+  now warns when unreachable content — a trailing fragment or a second jump — follows a jump on the
+  same line. See the
+  [Progression Order](docs/contributing/design-notes/Progression%20Order.md) note.
 - **Conditions** — put a game-state query with a `?` in front of a jump or a line
   (`` `"FoundKey"?` ``) to guard it: the jump fires, or the line plays, only when the query
   reads as true, and otherwise the dialogue falls through to the next line. The game answers

@@ -32,14 +32,16 @@ public sealed class StructuralValidatorTests
     }
 
     [Fact]
-    public void Validate_WithTheMultipleJumpsRule_ReportsForATwoJumpLine()
+    public void Validate_WithTheUnreachableAfterJumpRule_ReportsForContentAfterAJump()
     {
         var document = Document(Line(Jump("#a"), Jump("#b")));
         var sink = new DiagnosticBag();
 
-        new StructuralValidator([new MultipleJumpsOnLineRule()]).Validate(document, sink);
+        new StructuralValidator([new UnreachableAfterJumpRule()]).Validate(document, sink);
 
-        Assert.Equal(DiagnosticCatalog.MultipleJumpsOnLine.Code, Assert.Single(sink.Diagnostics).Descriptor.Code);
+        Assert.Equal(
+            DiagnosticCatalog.UnreachableContentAfterJump.Code,
+            Assert.Single(sink.Diagnostics).Descriptor.Code);
     }
 
     [Fact]

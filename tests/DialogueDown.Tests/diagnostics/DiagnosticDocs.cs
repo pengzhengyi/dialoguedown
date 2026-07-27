@@ -16,9 +16,9 @@ internal static class DiagnosticDocs
     public static IReadOnlyList<DiagnosticDoc> All { get; } =
     [
         new(
-            DiagnosticCatalog.MultipleJumpsOnLine,
-            "Two jumps on one line run one after the other, which is easy to misread. Put each jump "
-            + "on its own line, separated by a blank line, so the flow is clear.",
+            DiagnosticCatalog.UnreachableContentAfterJump,
+            "A jump does not return, so text or a second jump after it on the same line never plays. "
+            + "Put each jump on its own line, separated by a blank line, so nothing trails it.",
             new(
                 """
                 # Crossroads
@@ -42,7 +42,7 @@ internal static class DiagnosticDocs
                 # Home
                 Alice: Cozy.
                 """,
-                ["=> [Market](#market) or => [Home](#home)"],
+                ["or => [Home](#home)"],
                 ["=> [Home](#home)"])),
         new(
             DiagnosticCatalog.TagsWithoutSpeaker,

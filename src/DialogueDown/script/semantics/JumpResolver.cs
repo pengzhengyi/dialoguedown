@@ -35,6 +35,13 @@ internal static class JumpResolver
             return new UnresolvedJump();
         }
 
+        // The reserved terminator is recognized before slug lookup, so it never depends on — or
+        // collides with — an author's scene anchors.
+        if (target.Anchor == ReservedAnchors.End)
+        {
+            return new TerminalJump();
+        }
+
         if (anchors.TryResolve(target.Anchor!, out var scene))
         {
             return new SceneJump(scene);

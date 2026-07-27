@@ -230,13 +230,13 @@ end. It ships the rule framework and the one rule the desugared tree can honestl
 | --- | --- | --- |
 | `IDiagnosticRule` | internal | one check: inspect the indexed desugared tree and report zero or more diagnostics into an `IDiagnosticSink` |
 | `DiagnosticRule` | internal (abstract) | base for a rule: guards its arguments, builds each diagnostic from the rule's descriptor, and hands the rule a `Reporter` closure, so a concrete rule only walks the nodes and reports a span with arguments |
-| `MultipleJumpsOnLineRule` | internal | the first rule: a `Line` whose speech holds more than one `Jump` reports `DLG1003` (`Warning`), anchored on the line's span |
+| `UnreachableAfterJumpRule` | internal | the first rule: a `Line` whose speech holds content after a `Jump` reports `DLG1003` (`Warning`), anchored on the unreachable content |
 | `IStructuralValidator` / `StructuralValidator` | internal | the pass seam and its implementation: build the tree index once, run each composed rule over it, reporting into the sink |
 | `ScriptCompiler` (facade) | internal | runs the validator over the desugared tree, between desugar and analyze, reporting into the context's sink |
 
 Detection is purely structural: the validator builds a `DialogueTreeIndex` once and hands it to every
-rule; `MultipleJumpsOnLineRule` takes each `Line` from the index and counts the `Jump` fragments
-directly in its `Speech` — more than one is a `DLG1003`, and the message carries the count. Because
+rule; `UnreachableAfterJumpRule` takes each `Line` from the index and looks at the fragments
+directly in its `Speech` — any non-blank fragment after the first `Jump` is a `DLG1003`. Because
 the validator emits a real diagnostic, the facade's collect-and-continue path is now exercised by a
 genuine producer, not only a test spy. The rule reports the `DiagnosticDescriptor` it owns in the
 central `DiagnosticCatalog` (per [DD3](#dd3--a-descriptor-catalog-with-dlg-codes)).
@@ -448,7 +448,7 @@ The first structural rule targets a problem the desugared tree can honestly reve
 
 | Rule | Code | Severity | Trigger | Status |
 | --- | --- | --- | --- | --- |
-| Multiple jumps on a line | `DLG1003` | `Warning` | more than one `Jump` fragment in a `Line`'s speech | **First rule** |
+| Unreachable content after a jump | `DLG1003` | `Warning` | a non-blank fragment after the first `Jump` in a `Line`'s speech | **First rule** |
 
 The other candidates once listed here are **not** desugared-tree structural rules, so they move
 elsewhere — checking how the pipeline actually represents each condition reclassified them:
@@ -573,7 +573,7 @@ compile today; a **warnings-as-errors** promotion is a planned toggle, not built
 - **Rules and the validator** — each rule is unit-tested in isolation: feed a small desugared
   artifact and assert the emitted descriptor, severity, and span. The `StructuralValidator` pass is
   tested separately — it builds one shared index and runs each composed rule over it — and an
-  integration test through `ScriptCompilerFactory` confirms a two-jump line surfaces `DLG1003` end
+  integration test through `ScriptCompilerFactory` confirms content after a jump surfaces `DLG1003` end
   to end. A **NetArchTest** rule pins that validation never depends on the semantic layer. Built at
   100% line and branch coverage.
 - **Renderer** (later) — assert the mapping (severity→kind, span→label via `LineMap`, code,

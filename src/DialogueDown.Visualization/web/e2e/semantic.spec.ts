@@ -115,17 +115,17 @@ const report: Report = {
                 },
                 {
                     title: "Jump resolutions",
-                    columns: ["Jump", "Target", "Resolves to"],
+                    columns: ["Type", "Jump", "Target", "Resolves to"],
                     emptyText: "No jumps appear in this script.",
                     rows: [
                         {
                             cells: [
-                                { text: "Leave", category: "jump" },
+                                { text: "Scene", category: "structure" },
+                                { text: "Leave" },
                                 { text: "#the-square" },
                                 {
                                     text: "=> The Square",
                                     refKey: "scene:the-square",
-                                    category: "structure",
                                 },
                             ],
                         },

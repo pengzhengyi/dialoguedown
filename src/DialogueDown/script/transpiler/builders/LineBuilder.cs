@@ -47,9 +47,15 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
             return new Line(speaker, inlineBuilder.Build(_remaining, diagnostics), _span, condition);
         }
 
-        // A leading `"key"?` condition code span is the line's guard — but only when content
-        // follows it to guard. A lone condition is left in the remainder so the orphan-condition
-        // rule reports it, rather than becoming an empty conditional line.
+        // Whether the content begins with the jump indicator `=>` (still raw text at this stage,
+        // tokenized later). Such a condition guards the jump, not the line, so it is not peeled.
+        private static bool PrecedesAJump(IReadOnlyList<MarkdownInline> content) =>
+            content is [TextInline head, ..]
+            && head.Text.StartsWith("=>", StringComparison.Ordinal);
+
+        // A leading `"key"?` condition code span is the line's guard — but only when non-jump
+        // content follows it to guard. A condition that directly precedes a jump guards the jump
+        // (bound later in desugar), and a lone condition guards nothing; both are left in place.
         private Condition? PeelCondition()
         {
             if (_remaining[0] is not CodeSpanInline code
@@ -59,7 +65,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
             }
 
             var afterGuard = _remaining.Skip(1).TrimLeadingWhitespace();
-            if (afterGuard.Count == 0)
+            if (afterGuard.Count == 0 || PrecedesAJump(afterGuard))
             {
                 return null;
             }

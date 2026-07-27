@@ -64,13 +64,22 @@ public sealed class SymbolProjectionTests
     }
 
     [Fact]
-    public void Project_ADocumentWithoutScenesOrNamedSpeakers_HasEmptySymbols()
+    public void Project_ADocumentWithoutScenesOrNamedSpeakers_HasOnlyTheReservedTerminator()
     {
         var symbols = Project("The room is quiet.");
 
-        Assert.Empty(symbols.JumpTargets);
+        // The reserved #END terminator is always offered; there are no scene targets here.
+        Assert.Equal(["END"], symbols.JumpTargets.Select(target => target.Slug));
         Assert.Empty(symbols.Speakers);
         Assert.Empty(symbols.SpeakerIds);
+    }
+
+    [Fact]
+    public void Project_JumpTargets_IncludeTheReservedEndTerminator()
+    {
+        var symbols = Project("Alice: Farewell.");
+
+        Assert.Contains(symbols.JumpTargets, target => target is { Slug: "END", Heading: "End the run" });
     }
 
     [Fact]

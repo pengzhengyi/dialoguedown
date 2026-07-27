@@ -16,7 +16,12 @@ internal sealed class SemanticProjection
 {
     private const string StructureCategory = "structure";
     private const string SpeechCategory = "speech";
-    private const string JumpCategory = "jump";
+
+    // Jump-resolution kind colors. "terminal" reuses the reserved #END editor hue so the End type
+    // reads the same in the table and the source; "deferred" marks a not-yet-resolvable cross-file
+    // jump. Both are unique palette colors.
+    private const string TerminalCategory = "terminal";
+    private const string DeferredCategory = "deferred";
 
     /// <summary>
     /// A placeholder for the Semantic Model stage when the compile halted before analysis, so the
@@ -94,36 +99,51 @@ internal sealed class SemanticProjection
         return new SemanticTable("Anchors", ["Anchor", "Scene", "Level"], rows, "No scenes.");
     }
 
-    // Every analyzed jump paired with what it resolved to; a scene jump cross-links its scene.
+    // Every analyzed jump paired with its type and what it resolved to; a scene jump cross-links
+    // its scene. The leading Type cell groups the rows by resolution kind and carries its color.
     private static SemanticTable JumpTable(DialogueTreeIndex index, SemanticModel model)
     {
         var rows = new List<SemanticRow>();
         foreach (var jump in index.OfType<Jump>())
         {
-            var (text, refKey) = ResolutionCell(model.Jumps.Resolve(jump));
+            var (type, category, resolvesTo, refKey) = Describe(model.Jumps.Resolve(jump));
             rows.Add(new SemanticRow(
                 [
-                    new SemanticCell(LabelText(jump), Category: JumpCategory),
+                    new SemanticCell(type, Category: category),
+                    new SemanticCell(JumpText(jump)),
                     new SemanticCell(jump.Target),
-                    new SemanticCell(text, RefKey: refKey, Category: refKey is null ? null : StructureCategory),
+                    new SemanticCell(resolvesTo, RefKey: refKey),
                 ]));
         }
 
         return new SemanticTable(
-            "Jump resolutions", ["Jump", "Target", "Resolves to"], rows, "No jumps.");
+            "Jump resolutions", ["Type", "Jump", "Target", "Resolves to"], rows, "No jumps.");
     }
 
-    // The resolution's display text and, for a scene jump, the scene's cross-link key.
-    private static (string Text, string? RefKey) ResolutionCell(JumpResolution resolution) =>
+    // A jump's resolution as four parts: a short Type label and its color category, the display
+    // text for the "Resolves to" cell, and — for a scene jump — the scene's cross-link key. An
+    // unresolved jump has no category, so it reads as uncolored: nothing to resolve to.
+    private static (string Type, string? Category, string ResolvesTo, string? RefKey) Describe(
+        JumpResolution resolution) =>
         resolution switch
         {
-            SceneJump scene => ($"=> {SceneEntity.Label(scene.Scene)}", SceneEntity.Key(scene.Scene)),
-            FileScopedJump file => ($"{file.File}{Anchor(file.Anchor)} (deferred)", null),
-            UnresolvedJump => ("unresolved", null),
-            _ => (resolution.ToString() ?? "", null),
+            SceneJump scene =>
+                ("Scene", StructureCategory, $"=> {SceneEntity.Label(scene.Scene)}", SceneEntity.Key(scene.Scene)),
+            TerminalJump => ("End", TerminalCategory, "End sentinel", null),
+            FileScopedJump file => ("Cross-file", DeferredCategory, $"{file.File}{Anchor(file.Anchor)} (deferred)", null),
+            UnresolvedJump => ("Unresolved", null, "unresolved", null),
+            _ => ("?", null, resolution.ToString() ?? "", null),
         };
 
     private static string Anchor(string? anchor) => anchor is null ? "" : $"#{anchor}";
+
+    // The Jump cell text: the shown label, prefixed with the guarding condition when the jump is
+    // conditional, so a conditional jump reads as it was written (`"key"?` before the label).
+    private static string JumpText(Jump jump)
+    {
+        var label = LabelText(jump);
+        return jump.IsConditional ? $"\"{jump.Condition!.Key}\"? {label}" : label;
+    }
 
     private static string LabelText(Jump jump)
     {
