@@ -8,10 +8,11 @@ namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
 /// Builds one <see cref="Line"/> from a group of Markdown inlines — a paragraph, or one
-/// slice of it between hard breaks. It splits an optional speaker off the leading text
-/// with the <see cref="SpeakerBuilder"/>, then builds the remaining speech through the
-/// <see cref="InlineBuilder"/>. The line's span covers the whole group, the speaker
-/// prefix included. The group must be non-empty; an empty line is dropped upstream.
+/// slice of it between hard breaks. The work is done by a single-use <see cref="Assembler"/>
+/// that peels an optional leading <see cref="Condition"/> guard, then an optional speaker, off
+/// the front, and builds the remaining speech through the <see cref="InlineBuilder"/>. The
+/// line's span covers the whole group, the condition and speaker prefix included. The group
+/// must be non-empty; an empty line is dropped upstream.
 /// </summary>
 internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder inlineBuilder)
 {
@@ -23,65 +24,85 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
                 "A line must be built from at least one inline.", nameof(group));
         }
 
-        var span = SourceSpan.Covering(group[0].Span, group[^1].Span);
-        var (speaker, speech) = SplitSpeakerAndSpeech(group, diagnostics);
-        return new Line(speaker, inlineBuilder.Build(speech, diagnostics), span);
+        return new Assembler(speakerBuilder, inlineBuilder, group, diagnostics).Build();
     }
 
-    // The speech inlines: the leftover leading text (if any), then the rest of the group.
-    private static IReadOnlyList<MarkdownInline> AssembleSpeechInlines(
-        TextInline? speechHead, IReadOnlyList<MarkdownInline> group)
-    {
-        var speech = new List<MarkdownInline>();
-        if (speechHead is not null)
-        {
-            speech.Add(speechHead);
-        }
-
-        speech.AddRange(group.Skip(1));
-        return speech;
-    }
-
-    private (Speaker?, IReadOnlyList<MarkdownInline>) SplitSpeakerAndSpeech(
+    /// <summary>
+    /// A single-use assembler for one line. It holds the not-yet-consumed inlines in
+    /// <see cref="_remaining"/> and peels the guard, then the speaker, off the front in order —
+    /// each step reads and reassigns the shared remainder as it consumes the front. It is created
+    /// fresh per line, so <see cref="LineBuilder"/> stays stateless.
+    /// </summary>
+    private sealed class Assembler(
+        SpeakerBuilder speakerBuilder, InlineBuilder inlineBuilder,
         IReadOnlyList<MarkdownInline> group, IDiagnosticSink diagnostics)
     {
-        if (!TryBuildSpeaker(group[0], diagnostics, out var speaker, out var speechHead))
+        private readonly SourceSpan _span = SourceSpan.Covering(group);
+        private List<MarkdownInline> _remaining = [.. group];
+
+        public Line Build()
         {
-            return (null, group);
+            var condition = PeelCondition();
+            var speaker = PeelSpeaker();
+            return new Line(speaker, inlineBuilder.Build(_remaining, diagnostics), _span, condition);
         }
 
-        return (speaker, AssembleSpeechInlines(speechHead, group));
-    }
-
-    // True when the leading inline is a speaker prefix. On success, `speaker` is the parsed
-    // speaker and `speechHead` is the leftover text after the prefix (re-anchored), or null
-    // when the prefix consumed the whole leading text. A prefix that binds tags but names no
-    // speaker reports through the speaker builder and recovers to a default speaker.
-    private bool TryBuildSpeaker(
-        MarkdownInline leadingInline, IDiagnosticSink diagnostics,
-        out Speaker? speaker, out TextInline? speechHead)
-    {
-        speaker = null;
-        speechHead = null;
-        if (leadingInline is not TextInline leading)
+        // A leading `"key"?` condition code span is the line's guard — but only when content
+        // follows it to guard. A lone condition is left in the remainder so the orphan-condition
+        // rule reports it, rather than becoming an empty conditional line.
+        private Condition? PeelCondition()
         {
-            return false;
+            if (_remaining[0] is not CodeSpanInline code
+                || ConditionReader.Read(code.Content, code.Span) is not { } condition)
+            {
+                return null;
+            }
+
+            var afterGuard = _remaining.Skip(1).TrimLeadingWhitespace();
+            if (afterGuard.Count == 0)
+            {
+                return null;
+            }
+
+            _remaining = [.. afterGuard];
+            return condition;
         }
 
-        // Anchor at ContentSpan: the speaker prefix is parsed from the unescaped Text,
-        // whose source position sits past any stripped leading backslash.
-        var input = new ParseInput(leading.Text, leading.ContentSpan.Start);
-        var result = speakerBuilder.Build(input, diagnostics);
-        if (!result.Success)
+        // Splits an optional speaker prefix off the leading text. A prefix that binds tags but
+        // names no speaker reports through the speaker builder and recovers to a default speaker.
+        private Speaker? PeelSpeaker()
         {
-            return false;
+            if (_remaining[0] is not TextInline leading)
+            {
+                return null;
+            }
+
+            // Anchor at ContentSpan: the speaker prefix is parsed from the unescaped Text, whose
+            // source position sits past any stripped leading backslash.
+            var input = new ParseInput(leading.Text, leading.ContentSpan.Start);
+            var result = speakerBuilder.Build(input, diagnostics);
+            if (!result.Success)
+            {
+                return null;
+            }
+
+            RemoveSpeakerPrefix(input.Advance(result.MatchedLength));
+            return result.MatchedValue;
         }
 
-        speaker = result.MatchedValue;
-        var remainder = input.Advance(result.MatchedLength);
-        speechHead = remainder.Text.Length > 0
-            ? new TextInline(remainder.Text, new SourceSpan(remainder.Position, remainder.Text.Length))
-            : null;
-        return true;
+        // Drops the parsed speaker prefix from the leading text: the re-anchored leftover replaces
+        // the leading text when part of it remains, otherwise the leading text is removed.
+        private void RemoveSpeakerPrefix(ParseInput leftover)
+        {
+            if (leftover.Text.Length > 0)
+            {
+                _remaining[0] = new TextInline(
+                    leftover.Text, new SourceSpan(leftover.Position, leftover.Text.Length));
+            }
+            else
+            {
+                _remaining.RemoveAt(0);
+            }
+        }
     }
 }
