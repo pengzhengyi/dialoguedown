@@ -31,4 +31,22 @@ public sealed class InlineFragmentExtensionsTests
     {
         Assert.False(new Link("#play", [Text("go")], new SourceSpan(0, 5)).IsBlank());
     }
+
+    [Fact]
+    public void NonBlank_WhitespaceText_IsFalse()
+    {
+        Assert.False(Text("   ").NonBlank());
+    }
+
+    [Fact]
+    public void NonBlank_TextWithVisibleContent_IsTrue()
+    {
+        Assert.True(Text("go").NonBlank());
+    }
+
+    [Fact]
+    public void NonBlank_NonTextFragment_IsTrue()
+    {
+        Assert.True(LineBreak().NonBlank());
+    }
 }

@@ -26,34 +26,19 @@ internal sealed class UnreachableAfterJumpRule : DiagnosticRule
 
     private static void ReportUnreachable(Line line, Reporter report)
     {
-        var speech = line.Speech;
-        var firstJump = FirstJumpIndex(speech);
+        var firstJump = line.Speech.FindIndex(fragment => fragment is Jump);
         if (firstJump < 0)
         {
             return;
         }
 
-        // Blank text after the jump is just padding, not content; a soft line break already ended
-        // the jump upstream, so only real fragments left on the line count as unreachable.
-        var unreachable = speech.Skip(firstJump + 1).Where(fragment => !fragment.IsBlank()).ToList();
+        // Blank text after the jump is just padding; only real fragments left on the line count.
+        var unreachable = line.Speech.Skip(firstJump + 1).Where(fragment => fragment.NonBlank()).ToList();
         if (unreachable.Count == 0)
         {
             return;
         }
 
         report(SourceSpan.Covering(unreachable[0].Span, unreachable[^1].Span));
-    }
-
-    private static int FirstJumpIndex(IReadOnlyList<InlineFragment> speech)
-    {
-        for (var index = 0; index < speech.Count; index++)
-        {
-            if (speech[index] is Jump)
-            {
-                return index;
-            }
-        }
-
-        return -1;
     }
 }

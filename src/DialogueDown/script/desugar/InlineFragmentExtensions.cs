@@ -14,4 +14,7 @@ internal static class InlineFragmentExtensions
     /// </summary>
     public static bool IsBlank(this InlineFragment fragment) =>
         fragment is Text text && string.IsNullOrWhiteSpace(text.Content);
+
+    /// <summary>Whether the fragment carries real content: the negation of <see cref="IsBlank"/>.</summary>
+    public static bool NonBlank(this InlineFragment fragment) => !fragment.IsBlank();
 }
