@@ -461,9 +461,11 @@ export function initExplorer(
 
 /**
  * The ancestor folders of a root-relative path, root-first, excluding the file itself:
- * `"act-1/scene/x.dialogue.md"` → `["act-1", "act-1/scene"]`.
+ * `"act-1/scene/x.dialogue.md"` → `["act-1", "act-1/scene"]`. No active path (the empty state)
+ * has no ancestors to reveal.
  */
-export function ancestorFolders(activePath: string): string[] {
+export function ancestorFolders(activePath: string | undefined): string[] {
+    if (activePath === undefined) return [];
     const parts = activePath.split("/").filter(Boolean);
     parts.pop();
     return parts.map((_, index) => parts.slice(0, index + 1).join("/"));

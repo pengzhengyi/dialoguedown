@@ -330,7 +330,7 @@ if (report.mode === "view" || report.mode === "edit") {
             // A cross-file link in the Source preview opens the target script like a hyperlink;
             // same-file #anchors keep their native scroll, and the anchor part is dropped (the
             // linker resolves anchors, deferred).
-            const activeFolder = parentPath(report.project.activePath);
+            const activeFolder = parentPath(report.project.activePath ?? "");
             for (const preview of document.querySelectorAll(".source-preview")) {
                 preview.addEventListener("click", (event) => {
                     const anchor = (event.target as Element | null)?.closest("a");

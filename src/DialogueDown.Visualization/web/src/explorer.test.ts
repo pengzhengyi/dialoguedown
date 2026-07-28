@@ -91,6 +91,7 @@ describe("ancestorFolders", () => {
     it("lists ancestor folders root-first, excluding the file", () => {
         expect(ancestorFolders("act-1/scene/x.dialogue.md")).toEqual(["act-1", "act-1/scene"]);
         expect(ancestorFolders("intro.dialogue.md")).toEqual([]);
+        expect(ancestorFolders(undefined)).toEqual([]);
     });
 });
 
