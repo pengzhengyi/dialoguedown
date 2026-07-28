@@ -81,6 +81,7 @@ first, since a construct threads through them.
 | [Conditional Line](./Conditional%20Line.md) | The same condition (`` `"key"?` ``) fronting a line, so the line plays only when the query is true | Explored |
 | [Conditional Choice](./Conditional%20Choice.md) | The same condition guarding a choice option, so a player or random option is offered only when the query is true | Explored |
 | [Unquoted Keys](./Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Proposed |
+| [Block Controls](./Block%20Controls.md) | An options-and-evaluation survey for a block `if`/`elseif`/`else` and a spoken-vs-effect-only line distinction | Exploring |
 | [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.md#meet-bob`) across a project, via a linker | Explored |
 
 ### Configuration
