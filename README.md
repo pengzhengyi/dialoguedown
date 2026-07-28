@@ -2,6 +2,11 @@
   <img src="assets/logo.svg" alt="DialogueDown logo" width="120" height="120" />
 </p>
 
+<p align="center">
+  <a href="https://www.nuget.org/packages/DialogueDown.Cli"><img src="https://img.shields.io/nuget/v/DialogueDown.Cli?logo=nuget&label=DialogueDown.Cli" alt="DialogueDown.Cli on NuGet" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/pengzhengyi/dialoguedown" alt="MIT license" /></a>
+</p>
+
 # DialogueDown
 
 Engine-agnostic, C#-first **dialogue compiler** library. It lowers a

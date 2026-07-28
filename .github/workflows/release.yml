@@ -22,7 +22,7 @@ jobs:
     name: Publish to NuGet
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # create the GitHub Release for the tag
       id-token: write # required for the OIDC token exchange with nuget.org
 
     steps:
@@ -62,3 +62,35 @@ jobs:
           --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
+
+      - name: Build the GitHub Release notes
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          # Pull this version's section out of the changelog (between "## [x.y.z]"
+          # and the next "## " heading); empty when the version has no section.
+          awk -v ver="$version" '
+            $0 ~ ("^## \\[" ver "\\]") {flag=1; next}
+            /^## / && flag {flag=0}
+            flag {print}
+          ' CHANGELOG.md > release-notes.md
+          {
+            echo "**NuGet:** [DialogueDown.Cli](https://www.nuget.org/packages/DialogueDown.Cli)"
+            echo
+            echo "Install: \`dotnet tool install --global DialogueDown.Cli\`"
+            echo
+            echo "---"
+            cat release-notes.md
+          } > release-body.md
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="--notes-file release-body.md"
+          [ -s release-notes.md ] || notes="--generate-notes"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; skipping."
+          else
+            # Future: attach self-contained binaries by adding file paths after $notes.
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --verify-tag $notes
+          fi
