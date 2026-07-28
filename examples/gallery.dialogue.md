@@ -21,7 +21,7 @@ Guide: What will you do, `"playerName"`?
 
 - => [Take the east road to the market](#the-market)
 - => [Brave the west road](#the-dark-forest)
-- `"Alice.HasMap"?` Slip onto the hidden trail through the hills.
+- `Alice.HasMap?` Slip onto the hidden trail through the hills.
 - Ask the guide for advice first #cautious
 
 # The Market
@@ -32,11 +32,11 @@ Merchant @merchant: Fresh apples! Warm bread! Come, see my wares.
 
 Alice: This place is *wonderful*.
 
-`"Alice.HasMap"?` Alice: And I still have the old map — good.
+`Alice.HasMap?` Alice: And I still have the old map — good.
 
 If she still carries the old map, a hidden trail winds back through the hills.
 
-`"Alice.HasMap"?` => [Brave the west road](#the-dark-forest)
+`Alice.HasMap?` => [Brave the west road](#the-dark-forest)
 
 => [Leave town](#the-crossroads)
 
@@ -49,8 +49,8 @@ The trees close in overhead, and something rustles in the shadows. #mysterious
 
 Deeper in, the forest seems to weigh what it senses in you.
 
-- `"Alice.Courage"%` Alice stands tall and presses on.
-- `"Alice.Fear"%` Alice startles at every shifting shadow.
+- `Alice.Courage%` Alice stands tall and presses on.
+- `Alice.Fear%` Alice startles at every shifting shadow.
 - `%` Alice walks on, uncertain.
 
 Alice: Maybe this was a **mistake**.

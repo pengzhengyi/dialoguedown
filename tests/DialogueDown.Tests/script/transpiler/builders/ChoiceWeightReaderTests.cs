@@ -44,17 +44,21 @@ public sealed class ChoiceWeightReaderTests
         Assert.IsType<AutoWeight>(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
 
     [Theory]
-    [InlineData("-10%")]
-    [InlineData("abc%")]
-    [InlineData("%%")]
-    public void Read_AnInvalidWeight_YieldsNull(string content) =>
+    [InlineData("-10%")]   // a negative number is not a valid weight
+    [InlineData("-0.5%")]
+    public void Read_ANegativeNumber_YieldsNull(string content) =>
         Assert.Null(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
 
     [Theory]
-    [InlineData("\"Bob's Affection\"%", "Bob's Affection")]
+    [InlineData("\"Bob's Affection\"%", "Bob's Affection")]  // quoted key
     [InlineData("\"Guard.Suspicion\"%", "Guard.Suspicion")]
-    [InlineData(" \"x\" % ", "x")]
-    public void Read_AQuotedQuery_YieldsAQueryWeight(string content, string expectedKey)
+    [InlineData(" \"x\" % ", "x")]                            // whitespace around a quoted key
+    [InlineData("\"50\"%", "50")]                             // a quoted numeric is a key, not a number
+    [InlineData("Bob.Affection%", "Bob.Affection")]          // unquoted dotted key
+    [InlineData("Alice's Luck%", "Alice's Luck")]            // unquoted key with a space and apostrophe
+    [InlineData("abc%", "abc")]                               // any non-numeric text is a key
+    [InlineData("%%", "%")]                                   // the key is everything before the final %
+    public void Read_AKeyWeight_YieldsAQueryWeight(string content, string expectedKey)
     {
         var weight = Assert.IsType<QueryWeight>(
             ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));

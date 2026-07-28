@@ -112,7 +112,7 @@ The coin spins.
 
 "{0}" is not a valid weight. Write a non-negative percentage like `50%`, or `%` to share the remaining percentage equally.
 
-A choice weight is a percentage code span. Write a non-negative number like `50%`, or a bare `%` to take an equal share of the remaining percentage. A negative number or other text is not a valid weight.
+A choice weight is a percentage code span: a non-negative number like `50%`, a bare `%` to take an equal share of the remaining percentage, or a game-state key like `Luck%` the runtime computes into a weight. A negative number is not a valid weight.
 
 <span class="dd-eg-bad">Triggering example</span>
 
