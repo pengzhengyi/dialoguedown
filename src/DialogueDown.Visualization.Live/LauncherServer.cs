@@ -23,6 +23,11 @@ internal sealed class LauncherServer : IAsyncDisposable
     private readonly object _gate = new();
     private ActiveDocument? _active;
 
+    // True once the run pinned an initial document (a served `visualize <script>`): the landing then
+    // redirects to that report. A browse-only run (no initial script) leaves this false, so the
+    // landing stays the empty shell even after a script is opened from the Explorer.
+    private bool _landingRedirectsToReport;
+
     /// <summary>
     /// Builds a launcher server for <paramref name="root"/> on the given loopback port
     /// (0 = ephemeral), serving <paramref name="launcherHtml"/> at <c>/</c>.
@@ -60,8 +65,11 @@ internal sealed class LauncherServer : IAsyncDisposable
     /// is the launched path shown to the reader (a symlink's link path) when it differs from the
     /// resolved <paramref name="documentPath"/>.
     /// </summary>
-    public string StartInitialDocument(string documentPath, string mode, string? displayPath = null) =>
-        ReportMount + Activate(documentPath, mode, displayPath);
+    public string StartInitialDocument(string documentPath, string mode, string? displayPath = null)
+    {
+        _landingRedirectsToReport = true;
+        return ReportMount + Activate(documentPath, mode, displayPath);
+    }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
@@ -132,18 +140,18 @@ internal sealed class LauncherServer : IAsyncDisposable
         return listing is null ? Results.NotFound() : Results.Json(listing.Value);
     }
 
-    // The landing: an active document redirects to its report under the /r mount; with none it is
-    // the empty shell — the Explorer over the root and a create call to action.
+    // The landing. A run that pinned an initial document (served `visualize <script>`) redirects to
+    // its report under the /r mount; a browse-only run stays on the empty shell — the Explorer over
+    // the root and a create call to action — even after a script is opened from the tree.
     private IResult Root(HttpContext context)
     {
-        var active = Active();
-        if (active is null)
+        if (_landingRedirectsToReport && Active() is { } active)
         {
-            return NoStoreHtml(context, _launcherHtml);
+            context.Response.Headers.Location = ReportMount + active.ReportPath;
+            return Results.StatusCode(StatusCodes.Status303SeeOther);
         }
 
-        context.Response.Headers.Location = ReportMount + active.ReportPath;
-        return Results.StatusCode(StatusCodes.Status303SeeOther);
+        return NoStoreHtml(context, _launcherHtml);
     }
 
     private IResult Open(OpenRequest request, HttpContext context)
