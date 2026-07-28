@@ -17,7 +17,10 @@ import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
 import { initHelpToggle } from "./help";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
+import { initExplorer } from "./explorer";
+import { initCollapsiblePanel } from "./collapse-toggle";
 import { type DialogueSymbols, EMPTY_SYMBOLS, type Report, type ServedMode } from "./model";
+import type { BrowseListing } from "./launcher";
 
 /**
  * The .NET library replaces the `"__REPORT__"` slot in report.html with the
@@ -208,6 +211,47 @@ if (report.mode === "view" || report.mode === "edit") {
         },
         onProblem: (message, target) => controller.onProblem(message, target),
     });
+    // The Explorer sidebar: present only for a served, browsable report (report.project is set by
+    // the project server). It reuses the launcher's browse/open endpoints and routes a file open
+    // through beginNavigation, so switching scripts respects the save mode (Auto flushes, Manual
+    // prompts) before the server switches sessions.
+    if (report.project) {
+        const explorerEl = document.getElementById("explorer");
+        const appEl = document.getElementById("app");
+        if (explorerEl && appEl) {
+            appEl.classList.add("has-explorer");
+            initExplorer(explorerEl, report.project, {
+                browse: async (path) => {
+                    const response = await fetch(`/api/browse?path=${encodeURIComponent(path)}`);
+                    return response.ok ? ((await response.json()) as BrowseListing) : null;
+                },
+                openScript: (path) =>
+                    beginNavigation(() => {
+                        void openScriptSession(path);
+                    }),
+            });
+            const explorerPanel = initCollapsiblePanel({
+                container: appEl,
+                collapsedClass: "explorer-collapsed",
+                storageKey: "dd-explorer-collapsed",
+                name: "explorer",
+            });
+            document.getElementById("explorer-resizer")?.appendChild(explorerPanel.button);
+        }
+    }
+
+    // Open another script: preserve the current View/Edit mode (read from the live accent the
+    // toggle sets), start its session, and follow the 303 to its report.
+    async function openScriptSession(source: string): Promise<void> {
+        const mode = document.documentElement.dataset.servedMode ?? initialMode;
+        const response = await fetch("/api/open", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ source, mode }),
+        });
+        if (response.redirected) window.location.assign(response.url);
+    }
+
     if (header) initBackToLauncher(header, window.location.pathname);
 } else {
     // Static export: read-only, no server, no toggle.
