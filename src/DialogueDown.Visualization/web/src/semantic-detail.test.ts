@@ -47,8 +47,8 @@ describe("createNodeDetailPanel", () => {
 
     it("auto-expands when a node is selected while collapsed", () => {
         const panel = createNodeDetailPanel();
-        const header = panel.element.querySelector<HTMLButtonElement>(".table-panel-header")!;
-        header.click(); // collapse it
+        const toggle = panel.element.querySelector<HTMLButtonElement>(".table-panel-toggle")!;
+        toggle.click(); // collapse it
         expect(panel.element.classList.contains("collapsed")).toBe(true);
 
         panel.show(node());
@@ -66,16 +66,16 @@ describe("createNodeDetailPanel", () => {
         );
     });
 
-    it("collapses and reopens from the header", () => {
+    it("collapses and reopens from the caret toggle", () => {
         const panel = createNodeDetailPanel();
-        const header = panel.element.querySelector<HTMLButtonElement>(".table-panel-header")!;
-        expect(header.getAttribute("aria-expanded")).toBe("true");
+        const toggle = panel.element.querySelector<HTMLButtonElement>(".table-panel-toggle")!;
+        expect(toggle.getAttribute("aria-expanded")).toBe("true");
 
-        header.click();
+        toggle.click();
         expect(panel.element.classList.contains("collapsed")).toBe(true);
-        expect(header.getAttribute("aria-expanded")).toBe("false");
+        expect(toggle.getAttribute("aria-expanded")).toBe("false");
 
-        header.click();
+        toggle.click();
         expect(panel.element.classList.contains("collapsed")).toBe(false);
     });
 });

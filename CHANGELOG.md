@@ -15,6 +15,12 @@ changes easy to categorize.
   silently unattributed; the compiler now warns and points at the fix — remove the styling to
   declare the speaker (`Alice:`). See the
   [Styled Speaker Prefix Diagnostic](docs/contributing/design-notes/Styled%20Speaker%20Prefix%20Diagnostic.md) note.
+- **Searchable, sortable Semantic-tab tables** — the report's Speakers, Anchors, and Jump
+  resolutions tables now filter as you type, sort on any column header, and offer a faceted filter
+  for their categorical columns (a jump's Type, a speaker's Default), so a writer can find a
+  speaker, scene, or jump and scan by name, level, or type. Filtering highlights the matched text
+  in place and offers editor-style **Match case** and **Match whole word** toggles. Cross-linking,
+  category accents, and the collapsible panels are unchanged.
 - **Jump types in the Semantic tab** — the report's *Jump resolutions* table now leads with a
   color-coded **Type** column (Scene, End, Cross-file, Unresolved) so jumps group and read at a
   glance, prefixes a conditional jump with its guarding condition, and colors the *End* type with
