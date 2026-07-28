@@ -78,7 +78,7 @@ public sealed class DialogueDownServiceCollectionExtensionsTests
         provider.GetRequiredService<IScriptCompiler>().Compile("Alice: hi");
 
         transpiler.Received(1)
-            .Transpile(Arg.Any<MarkdownDocument>(), Arg.Is<DiagnosticsContext>(c => c.Source == "Alice: hi"));
+            .Transpile(Arg.Any<MarkdownDocument>(), Arg.Is<DiagnosticsContext>(c => c!.Source == "Alice: hi"));
     }
 
     [Fact]

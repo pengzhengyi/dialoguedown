@@ -50,8 +50,8 @@ public sealed class JumpTests
     [Fact]
     public void IsConditional_ReflectsWhetherAConditionGuardsTheJump()
     {
-        Assert.False(new Jump("#x", [], SourceSpanFactory.Span()).IsConditional);
+        Assert.False(new Jump("#x", [], SourceSpanFactory.Span()).IsConditional());
         Assert.True(new Jump("#x", [], SourceSpanFactory.Span(),
-            new Condition("Rainy", SourceSpanFactory.Span())).IsConditional);
+            new Condition("Rainy", SourceSpanFactory.Span())).IsConditional());
     }
 }

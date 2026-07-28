@@ -6,7 +6,7 @@
 > reusing the condition from the [Conditional Jump](./Conditional%20Jump.md) and
 > [Conditional Line](./Conditional%20Line.md) notes; read those first. Offering,
 > hiding, and re-normalizing options at play time is part of the planned
-> [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
+> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
 ## Table of contents
 
@@ -390,7 +390,7 @@ The construct shipped as designed; the runtime resolution remains deferred.
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Achieved** | `Choice` and `RandomOption` gained an optional `Condition` and an `IsConditional` predicate; `ChoiceConditionRecognition.Peel` binds the guard at the list-item level before the body — and, for a random option, its weight — via the shared `ConditionReader.TryPeel`; `HasLeadingWeight` peeks past a leading condition; the weight total defers when any option is conditional; the orphan-condition rule and the tree traversal extend to a choice guard (guard-first, condition before weight); and the report projection, writer spec, and gallery match the design (D1–D5). |
 | **Changed**  | The shared leading-condition peel was extracted to `ConditionReader.TryPeel(inlines, out condition, out remainder)` and the conditional line's `LineBuilder` was refactored to call it, unifying the two block-start guards. A generic `ReadOnlyListExtensions.ReplaceOrRemoveAt` now backs both the condition peel and the random weight's block rebuild. The weight recognizer kept its `Resolve` name: it validates and recovers a required weight, so it is a resolution, not the pure structural peel a condition uses.                                                        |
-| **Deferred** | Offering or hiding a player option and excluding then re-normalizing a random pool are the runtime's job ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)). A block `if`/`elseif`/`else` remains a separate future construct that reuses this primitive; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                                                                                                    |
+| **Deferred** | Offering or hiding a player option and excluding then re-normalizing a random pool are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). A block `if`/`elseif`/`else` remains a separate future construct that reuses this primitive; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                                                                                                          |
 
 ## Alternatives not chosen
 
@@ -407,7 +407,7 @@ The construct shipped as designed; the runtime resolution remains deferred.
 - **Runtime resolution of a conditional option** — the compiler recognizes and
   preserves the guard, but offering or hiding a player option and excluding then
   re-normalizing a random pool need the runtime. Tracked with the
-  [runtime work](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
+  [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
 - **Block `if`/`elseif`/`else`** — the grouped, mutually-exclusive sibling of the
   inline condition, reusing this note's primitive. Designed separately (see
   [Relation to a future block `if`/`elseif`/`else`](#relation-to-a-future-block-ifelseifelse)).

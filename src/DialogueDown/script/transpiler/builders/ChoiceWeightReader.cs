@@ -1,8 +1,6 @@
 using System.Globalization;
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
-using DialogueDown.Script.Transpiler.Parsers;
-using DialogueDown.Script.Transpiler.Parsing;
 
 namespace DialogueDown.Script.Transpiler.Builders;
 
@@ -10,8 +8,9 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// Reads a choice option's leading code span into a <see cref="ChoiceWeight"/>. A weight is a
 /// code span whose content ends with a percent sign — the signal that separates it from a game
 /// call, none of which ends in <c>%</c>. The value before the sign is a non-negative number
-/// (<see cref="NumberWeight"/>), a quoted query the runtime computes (<see cref="QueryWeight"/>),
-/// empty (<see cref="AutoWeight"/>), or invalid, in which case the caller reports
+/// (<see cref="NumberWeight"/>), a key the runtime computes into a weight
+/// (<see cref="QueryWeight"/>, written quoted or unquoted), empty (<see cref="AutoWeight"/>), or
+/// an invalid number such as a negative one, in which case the caller reports
 /// <see cref="DialogueDown.Diagnostics.DiagnosticCatalog.InvalidChoiceWeight"/>.
 /// </summary>
 internal static class ChoiceWeightReader
@@ -21,8 +20,8 @@ internal static class ChoiceWeightReader
 
     public static bool IsWeight(string content) => content.Trim().EndsWith('%');
 
-    // Reads the weight into a spanned node; null when the value is neither a non-negative number
-    // nor a bare percent, so the caller can report the invalid weight and recover.
+    // Reads the weight into a spanned node; null when the value is a number the weight cannot
+    // use (a negative one), so the caller can report the invalid weight and recover.
     public static ChoiceWeight? Read(string content, SourceSpan span)
     {
         var value = content.Trim();
@@ -32,19 +31,15 @@ internal static class ChoiceWeightReader
             return new AutoWeight(span);
         }
 
-        // A dynamic weight is a query, recognized by the shared query grammar rather than a
-        // re-derived quoted string, so it stays in step with a value query.
-        if (GameCallParser.Query.TryParseAll(value, out var query))
+        // A number is a static weight; only a non-negative one is valid. Trying the number first
+        // keeps `50%` the number 50 rather than a key named "50".
+        if (double.TryParse(value, WeightNumberStyles, CultureInfo.InvariantCulture, out var percentage))
         {
-            return new QueryWeight(query.Key, span);
+            return percentage >= 0 ? new NumberWeight(percentage, span) : null;
         }
 
-        if (double.TryParse(value, WeightNumberStyles, CultureInfo.InvariantCulture, out var percentage)
-            && percentage >= 0)
-        {
-            return new NumberWeight(percentage, span);
-        }
-
-        return null;
+        // Any other non-empty text is a key — quoted or unquoted — the runtime computes.
+        var key = QueryKeyReader.Read(value);
+        return key is null ? null : new QueryWeight(key, span);
     }
 }

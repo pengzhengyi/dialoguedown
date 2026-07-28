@@ -16,7 +16,7 @@ The report **projects this partial result** — an absent stage becomes a **disa
 (grayed, non-navigable, with a tooltip saying why) while the produced stages stay fully
 interactive. This lets the visualizer compile at the real stage-boundary policy (see the
 [Diagnostics note](./Diagnostics%20and%20Validation.md)) and render a broken script
-honestly, resolving [#111](https://github.com/pengzhengyi/godot-dialoguedown/issues/111).
+honestly, resolving [#111](https://github.com/pengzhengyi/dialoguedown/issues/111).
 
 **In scope:**
 
@@ -37,7 +37,7 @@ honestly, resolving [#111](https://github.com/pengzhengyi/godot-dialoguedown/iss
   halted report shows disabled tabs whose tooltip says a compile error caused them, but
   not the errors — an accepted interim.
 - **User-selectable compile mode** — exposing best-effort / stage-boundary through the CLI
-  and config ([#110](https://github.com/pengzhengyi/godot-dialoguedown/issues/110)) so a
+  and config ([#110](https://github.com/pengzhengyi/dialoguedown/issues/110)) so a
   reader can choose. The visualizer forces stage-boundary until then.
 
 ## Ubiquitous language
@@ -129,7 +129,7 @@ nodes/edges), and `DisplayGraphJson` serializes it into the same field.
    one halts, so its later stages are unavailable and render disabled. Fail-fast is never
    used — it throws instead of returning a
    renderable result. Exposing the mode to the reader (best-effort included) is a later
-   step ([#110](https://github.com/pengzhengyi/godot-dialoguedown/issues/110)); until then
+   step ([#110](https://github.com/pengzhengyi/dialoguedown/issues/110)); until then
    the report is deterministic.
 
 ## Error and boundary cases

@@ -11,8 +11,40 @@
     <Version>0.1.0</Version>
     <!-- The command-line front-end for DialogueDown scripts. A thin Spectre.Console.Cli
          host over the library; the real work lives behind the compilation seam. -->
-    <Description>Command-line interface for DialogueDown scripts.</Description>
+    <Description>Compile and visualize DialogueDown dialogue scripts from the command line.</Description>
+
+    <!-- Ship as a cross-platform .NET global tool: `dotnet tool install -g DialogueDown.Cli`
+         puts a `ddown` command on the user's PATH. See docs/guide/cli.md. -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ddown</ToolCommandName>
+    <PackageId>DialogueDown.Cli</PackageId>
+    <Authors>Zhengyi Peng</Authors>
+    <Copyright>Copyright (c) 2026 Zhengyi Peng</Copyright>
+    <PackageTags>dialogue;markdown;compiler;narrative;gamedev;cli</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/pengzhengyi/dialoguedown</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/pengzhengyi/dialoguedown.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>See the changelog: https://github.com/pengzhengyi/dialoguedown/blob/main/CHANGELOG.md</PackageReleaseNotes>
+
+    <!-- Source Link: embed repository + commit metadata and source so the tool is
+         debuggable, with a deterministic build in CI. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="DialogueDown.Cli.Tests" />

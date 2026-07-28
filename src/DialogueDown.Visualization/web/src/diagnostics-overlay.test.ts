@@ -3,7 +3,7 @@ import { EditorState } from "@codemirror/state";
 import { toEditorDiagnostic, renderDiagnosticTooltip, errorCodeUrl } from "./diagnostics-overlay";
 import type { LspDiagnostic } from "./model";
 
-const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/godot-dialoguedown/guide/error-codes.html";
+const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
 
 /** An LSP-shaped diagnostic with sensible defaults, overridable per test. */
 function diagnostic(overrides: Partial<LspDiagnostic> = {}): LspDiagnostic {

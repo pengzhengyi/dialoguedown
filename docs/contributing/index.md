@@ -5,10 +5,10 @@ architecture, the reasoning behind each compiler stage, and how to get set up.
 
 ## Start here
 
-- **[Contribution guide](https://github.com/pengzhengyi/godot-dialoguedown/blob/main/CONTRIBUTING.md)**
+- **[Contribution guide](https://github.com/pengzhengyi/dialoguedown/blob/main/CONTRIBUTING.md)**
   — how to report issues, develop, test, and open pull requests.
-- **[Code of conduct](https://github.com/pengzhengyi/godot-dialoguedown/blob/main/CODE_OF_CONDUCT.md)**
-  and **[security policy](https://github.com/pengzhengyi/godot-dialoguedown/blob/main/SECURITY.md)**.
+- **[Code of conduct](https://github.com/pengzhengyi/dialoguedown/blob/main/CODE_OF_CONDUCT.md)**
+  and **[security policy](https://github.com/pengzhengyi/dialoguedown/blob/main/SECURITY.md)**.
 
 ## Understand the design
 
@@ -33,7 +33,7 @@ together before making a change.
 
 The pipeline's shape is not just convention — it is guarded by architecture tests
 in
-[`tests/DialogueDown.Architecture.Tests`](https://github.com/pengzhengyi/godot-dialoguedown/tree/main/tests/DialogueDown.Architecture.Tests)
+[`tests/DialogueDown.Architecture.Tests`](https://github.com/pengzhengyi/dialoguedown/tree/main/tests/DialogueDown.Architecture.Tests)
 (built on NetArchTest.eNhancedEdition). They fail the build if a change breaks the
 intended dependency direction:
 

@@ -5,10 +5,10 @@
 > compiler already parses a cross-file jump
 > target and defers it — `JumpResolver` marks any target that names a file as a
 > `FileScopedJump` rather than resolving or rejecting it
-> ([issue #59](https://github.com/pengzhengyi/godot-dialoguedown/issues/59)). This
+> ([issue #59](https://github.com/pengzhengyi/dialoguedown/issues/59)). This
 > note designs the **linker** that resolves those targets across a **project** of
 > scripts. Executing a resolved jump still belongs to the planned
-> [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45); this
+> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45); this
 > note stops at compile-time resolution and diagnostics.
 
 ## Table of contents
@@ -57,7 +57,7 @@ seam, cross-file diagnostics, path and identity semantics, and how a
 compile decides which scripts to load.
 
 **Out of scope (deferred):** *executing* a resolved jump (the planned
-[runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)); a
+[runtime](https://github.com/pengzhengyi/dialoguedown/issues/45)); a
 multi-script project view in the visualization; and any change to the jump
 *syntax*, which already ships and is documented in the
 [script language guide](../../guide/script-language.md).
@@ -420,7 +420,7 @@ Architecture tests assert the core takes no filesystem dependency outside the
 
 Both are deferred, but the model leaves clean seams:
 
-- **Runtime** ([#45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)):
+- **Runtime** ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)):
   a `CrossFileJump` is a graph edge into another script. Because linking is by
   reference, the runtime can follow the edge and **load the next script on
   demand** — the lazy seeding policy, applied at play time. No script is merged
@@ -464,5 +464,5 @@ The design's open questions are settled:
    `FileScopedJump` resolution is retired.
 
 **Still deferred** (out of this note's scope): executing a resolved jump (the
-[runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)) and a
+[runtime](https://github.com/pengzhengyi/dialoguedown/issues/45)) and a
 multi-script project view in the visualization.

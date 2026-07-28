@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project uses [Conventional Commits](https://www.conventionalcommits.org/) to keep
 changes easy to categorize.
 
-## Unreleased
+## [Unreleased]
 
 ### Added
 
@@ -17,6 +17,16 @@ changes easy to categorize.
   place, and a pinned `dialogue.toml` entry opens the Config tab; switching scripts respects the
   save mode (Auto flushes, Manual prompts). See the
   [Live Visualization — File Explorer](docs/contributing/design-notes/Live%20Visualization%20-%20File%20Explorer.md) note.
+
+## [0.1.0] - 2026-07-28
+
+### Added
+
+- **Install the `ddown` command-line tool** — DialogueDown's CLI now ships as a
+  cross-platform .NET global tool: `dotnet tool install --global DialogueDown.Cli`
+  puts a `ddown` command on your `PATH` to `compile` and `visualize` scripts. The
+  command is now named `ddown` (previously `dialoguedown`). See the
+  [command-line guide](docs/guide/cli.md).
 - **Styled speaker names are flagged** — when a line's speaker name is Markdown-styled
   (`*Alice*:`), it is not recognized as a speaker prefix and the line would otherwise be left
   silently unattributed; the compiler now warns and points at the fix — remove the styling to
@@ -47,6 +57,12 @@ changes easy to categorize.
   [Conditional Jump](docs/contributing/design-notes/Conditional%20Jump.md),
   [Conditional Line](docs/contributing/design-notes/Conditional%20Line.md), and
   [Conditional Choice](docs/contributing/design-notes/Conditional%20Choice.md) notes.
+- **Unquoted keys** — a condition and a dynamic weight may now drop the quotes around their key:
+  write `` `IsAngry?` `` or `` `Luck%` `` instead of `` `"IsAngry"?` ``/`` `"Luck"%` ``. The
+  trailing `?`/`%` marks where the key ends, so a key can read as a natural phrase and may contain
+  spaces (`` `Is Alice happy?` ``). Quotes remain the escape for a key that must end in a literal
+  `?`/`%`, and a value read (`` `"Alice.FavoriteColor"` ``) is still quoted. See the
+  [Unquoted Keys](docs/contributing/design-notes/Unquoted%20Keys.md) note.
 - **Copy a scene heading's anchor from the report** — hovering a heading in the live
   visualization's Source preview reveals a link icon that copies a ready-to-paste jump
   `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.
@@ -165,9 +181,9 @@ changes easy to categorize.
   failing to open. See the
   [Unavailable Stage Tabs](docs/contributing/design-notes/Unavailable%20Stage%20Tabs.md) note.
 - **Documentation site and live demo** — a
-  [DocFX site](https://pengzhengyi.github.io/godot-dialoguedown/) (a writer Guide, a
+  [DocFX site](https://pengzhengyi.github.io/dialoguedown/) (a writer Guide, a
   Contributing section with the design notes, and a generated C# API reference) and a
-  [live, read-only demo](https://pengzhengyi.github.io/godot-dialoguedown/demo/) of
+  [live, read-only demo](https://pengzhengyi.github.io/dialoguedown/demo/) of
   the report, both published to GitHub Pages on every merge to `main`.
 - **Development guardrails** — architecture tests that enforce the project's
   dependency direction (the engine-agnostic core stays free of the CLI, the
@@ -178,6 +194,11 @@ changes easy to categorize.
 
 ### Changed
 
+- **A bare jump or a silent command is an effect, not speech** — a jump or a
+  game-state command on its own line is now an effect-only *control line* with no
+  speaker, so it is never attributed to a character or the configured default
+  speaker; narration by the default speaker is unchanged. See the
+  [Control Line](docs/contributing/design-notes/Control%20Line.md) note.
 - **One maximize control for the whole report.** The visualization report's *full screen*
   toggle now lives once at the right end of the tab bar (with a matching exit control while
   maximized), instead of a separate button in each tab's toolbar; `f` and `Escape` still toggle it.
@@ -223,3 +244,6 @@ changes easy to categorize.
   bubble across the report and launcher, the favicon, and the demo.
 - Escaped inline punctuation (for example `\*`) no longer shifts the source spans of
   the text that follows it, so spans stay exact for diagnostics and the visualizer.
+
+[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/pengzhengyi/dialoguedown/releases/tag/v0.1.0

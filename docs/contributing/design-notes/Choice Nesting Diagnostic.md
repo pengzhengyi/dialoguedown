@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented**
-> ([issue #132](https://github.com/pengzhengyi/godot-dialoguedown/issues/132)).
+> ([issue #132](https://github.com/pengzhengyi/dialoguedown/issues/132)).
 > Add a style warning when a choice branch becomes difficult to scan, while
 > keeping nested choices valid.
 

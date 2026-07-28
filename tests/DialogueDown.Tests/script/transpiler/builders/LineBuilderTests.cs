@@ -69,7 +69,7 @@ public sealed class LineBuilderTests
         var line = Build([Text("Alice: Hello there.")]);
 
         Assert.Null(line.Condition);
-        Assert.False(line.IsConditional);
+        Assert.False(line.IsConditional());
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class LineBuilderTests
         var line = Build([CodeSpan("\"Angry\"?"), Text(" Guard: You again?")]);
 
         AssertCondition(line.Condition!, "Angry");
-        Assert.True(line.IsConditional);
+        Assert.True(line.IsConditional());
         AssertSpeakerNameReference(line.Speaker!, "Guard");
         AssertSpeechText(line, "You again?");
     }

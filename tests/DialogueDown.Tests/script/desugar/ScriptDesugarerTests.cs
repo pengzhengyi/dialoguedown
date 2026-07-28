@@ -1,6 +1,7 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DesugarerFactory;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
@@ -8,7 +9,7 @@ namespace DialogueDown.Tests.Script.Desugar;
 
 public sealed class ScriptDesugarerTests
 {
-    private readonly IScriptDesugarer _desugarer = DesugarerFactory.ScriptDesugarer();
+    private readonly IScriptDesugarer _desugarer = ScriptDesugarer();
 
     [Fact]
     public void Desugar_NullDocument_Throws() =>

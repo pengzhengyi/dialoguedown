@@ -3,7 +3,7 @@
 A `dialogue.toml` file configures how DialogueDown compiles the scripts in your
 project — the **speakers** your dialogue uses (and which one is the **default**)
 and the **compilation mode**. It sits at your project root, and the
-`dialoguedown` CLI finds it automatically, so your scripts stay free of
+`ddown` CLI finds it automatically, so your scripts stay free of
 project-wide setup.
 
 > [!NOTE]
@@ -125,14 +125,14 @@ Both commands pick up the configuration automatically:
 
 ```bash
 # Discovers the nearest dialogue.toml walking up from the script's folder.
-dialoguedown compile dialogues/act1/intro.dialogue.md
-dialoguedown visualize dialogues/act1/intro.dialogue.md
+ddown compile dialogues/act1/intro.dialogue.md
+ddown visualize dialogues/act1/intro.dialogue.md
 ```
 
 Use `--config` to name a specific file, overriding discovery:
 
 ```bash
-dialoguedown compile intro.dialogue.md --config config/dialogue.toml
+ddown compile intro.dialogue.md --config config/dialogue.toml
 ```
 
 | Option            | Behavior                                                              |

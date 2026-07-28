@@ -9,7 +9,7 @@ namespace DialogueDown.Cli;
 internal static class DiagnosticDocumentation
 {
     private const string ErrorCodesPage =
-        "https://pengzhengyi.github.io/godot-dialoguedown/guide/error-codes.html";
+        "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
 
     /// <summary>The deep link to <paramref name="code"/>'s entry on the Error codes page.</summary>
     public static string UrlFor(string code)

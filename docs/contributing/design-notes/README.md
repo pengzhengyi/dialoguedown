@@ -80,6 +80,9 @@ first, since a construct threads through them.
 | [Conditional Jump](./Conditional%20Jump.md) | A condition (`` `"key"?` ``) that makes a jump fire only when a game-state query is true | Explored |
 | [Conditional Line](./Conditional%20Line.md) | The same condition (`` `"key"?` ``) fronting a line, so the line plays only when the query is true | Explored |
 | [Conditional Choice](./Conditional%20Choice.md) | The same condition guarding a choice option, so a player or random option is offered only when the query is true | Explored |
+| [Unquoted Keys](./Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
+| [Block Controls](./Block%20Controls.md) | An options-and-evaluation survey for a block `if`/`elseif`/`else` and a spoken-vs-effect-only line distinction | Exploring |
+| [Control Line](./Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
 | [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.md#meet-bob`) across a project, via a linker | Explored |
 
 ### Configuration
@@ -124,7 +127,7 @@ flowchart LR
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
 | 1 | [Command-Line Interface](./Command-Line%20Interface.md) | The `dialoguedown` CLI: `compile` + `visualize` (Spectre.Console.Cli) | Implemented |
-| 2 | [Visualize on the CLI](./Visualize%20on%20the%20CLI.md) | Wire `dialoguedown visualize` to the engine; retire the hand-rolled CLI | Implemented |
+| 2 | [Visualize on the CLI](./Visualize%20on%20the%20CLI.md) | Wire `ddown visualize` to the engine; retire the hand-rolled CLI | Implemented |
 | 3 | [Visualize CLI — Emit Mermaid and DOT](./Visualize%20CLI%20-%20Emit%20Mermaid%20and%20DOT.md) | `visualize --emit mermaid\|dot` emits each stage's graph as portable text | Implemented |
 
 ### Visualization

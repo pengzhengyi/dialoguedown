@@ -11,10 +11,16 @@ namespace DialogueDown.Tests.Script.Transpiler.Builders;
 public sealed class ConditionReaderTests
 {
     [Theory]
-    [InlineData("\"Rainy\"?", "Rainy")]
-    [InlineData("\"Rainy?\"?", "Rainy?")]
-    [InlineData(" \"Alice.Ready\" ? ", "Alice.Ready")]
-    public void Read_AQueryFollowedByQuestionMark_YieldsACondition(string content, string expectedKey)
+    [InlineData("\"Rainy\"?", "Rainy")]                 // quoted key
+    [InlineData("\"Rainy?\"?", "Rainy?")]               // quoted key escapes an inner ?
+    [InlineData(" \"Alice.Ready\" ? ", "Alice.Ready")]  // whitespace around the key and sign
+    [InlineData("Rainy?", "Rainy")]                     // unquoted key
+    [InlineData("Alice.HasMap?", "Alice.HasMap")]       // unquoted dotted key
+    [InlineData("Is Alice happy?", "Is Alice happy")]   // unquoted key keeps its spaces
+    [InlineData(" IsReady ? ", "IsReady")]              // unquoted, surrounding whitespace trimmed
+    [InlineData("\"a\" \"b\"?", "\"a\" \"b\"")]         // not one clean quoted string -> raw key
+    [InlineData("(\"do\")?", "(\"do\")")]               // command-shaped text is just a raw key
+    public void Read_AKeyFollowedByQuestionMark_YieldsACondition(string content, string expectedKey)
     {
         var condition = Assert.IsType<Condition>(
             ConditionReader.Read(content, new SourceSpan(0, content.Length)));
@@ -23,12 +29,11 @@ public sealed class ConditionReaderTests
     }
 
     [Theory]
-    [InlineData("\"Rainy\"")]     // a plain query, no ?
-    [InlineData("?")]             // no query before the ?
-    [InlineData("\"a\" \"b\"?")]  // not a single query before the ?
-    [InlineData("(\"do\")?")]     // a command, not a query
-    [InlineData("just words")]
-    public void Read_AnythingElse_YieldsNull(string content) =>
+    [InlineData("\"Rainy\"")]  // a query with no ? is a value read, not a condition
+    [InlineData("?")]          // no key before the ?
+    [InlineData("   ?")]       // only whitespace before the ? -> empty key
+    [InlineData("just words")] // no ? at all
+    public void Read_WithoutATrailingQuestionMarkOrKey_YieldsNull(string content) =>
         Assert.Null(ConditionReader.Read(content, new SourceSpan(0, content.Length)));
 
     [Fact]
@@ -53,6 +58,18 @@ public sealed class ConditionReaderTests
         Assert.True(peeled);
         AssertCondition(condition, "Rainy");
         Assert.Empty(remainder);
+    }
+
+    [Fact]
+    public void TryPeel_LeadingUnquotedCondition_PeelsItAndTrimsTheRemainder()
+    {
+        MarkdownInline[] inlines = [CodeSpan("Is Alice happy?"), Text(" hello")];
+
+        var peeled = ConditionReader.TryPeel(inlines, out var condition, out var remainder);
+
+        Assert.True(peeled);
+        AssertCondition(condition, "Is Alice happy");
+        AssertSingleText(remainder, "hello");
     }
 
     [Fact]

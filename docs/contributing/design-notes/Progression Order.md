@@ -8,7 +8,7 @@
 > **unreachable-content-after-a-jump** diagnostic warns on dead content, and the
 > report **highlights** and **completes** `#END`. The play-time traversal that walks
 > this flow — and the returning **detour** — remain deferred to the
-> [dialogue graph and runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45);
+> [dialogue graph and runtime](https://github.com/pengzhengyi/dialoguedown/issues/45);
 > this note settles the *meaning* that graph will implement.
 
 ## Table of contents
@@ -50,12 +50,12 @@ In scope:
 Out of scope / deferred (see [open questions](#open-questions-and-deferred-work)):
 
 - **Runtime traversal** — actually walking the flow at play time is the deferred
-  graph/runtime ([#45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)).
+  graph/runtime ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
 - **The detour's syntax and return boundary** — its concrete spelling and *where*
   it returns get their own follow-up note; here it is only a named role.
 - **`#START` / entry point** — where a run begins (file top vs. a designated start
   vs. a cross-file entry) is deliberately left open.
-- **Cross-file** jumps ([#59](https://github.com/pengzhengyi/godot-dialoguedown/issues/59)).
+- **Cross-file** jumps ([#59](https://github.com/pengzhengyi/dialoguedown/issues/59)).
 
 ## Ubiquitous language
 
@@ -193,7 +193,7 @@ content or a second jump on a line is reachable.
 | Validation | Add an **unreachable-after-divert** rule; reframe the existing multiple-jumps rule (see [diagnostics](#diagnostics)). |
 | Semantic model | Expose the End sentinel and reserved-anchor resolution so the graph builder and editor projections can consume them. |
 | Editor projections (visualization) | Surface `#END` through the **semantic symbol projection** so completion offers it as a divert target, and add a **semantic token** so it highlights as a reserved keyword. See the [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) note. |
-| Flow graph / runtime — **deferred** | The succession/divert/detour **edges** and play-time traversal are the deferred graph/runtime ([#45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)). This note only fixes their meaning. |
+| Flow graph / runtime — **deferred** | The succession/divert/detour **edges** and play-time traversal are the deferred graph/runtime ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)). This note only fixes their meaning. |
 
 ## Markdown interaction
 
@@ -258,7 +258,7 @@ unresolved target, reported like any other missing anchor.
 - **`#START` / entry point** — reserving a start sentinel is natural, but its meaning
   (file top vs. a designated start vs. cross-file entry) is unsettled and deferred.
 - **Runtime traversal** — fall-through, divert, detour, and termination execute in
-  the deferred graph/runtime ([#45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)).
+  the deferred graph/runtime ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
 - **Case-insensitive scene-target matching** — ordinary jump targets are matched
   case-sensitively against lowercased slugs, so a hand-typed `#The-Market` fails to
   resolve. Autocomplete inserts the correct slug, so it rarely bites, but it is a

@@ -10,8 +10,5 @@ namespace DialogueDown.Script.Ast;
 /// only when the condition is true.
 /// </summary>
 internal sealed record Choice(
-    IReadOnlyList<ScriptBlock> Body, SourceSpan Span, Condition? Condition = null) : ScriptNode(Span)
-{
-    /// <summary>Whether this option is guarded by a condition.</summary>
-    public bool IsConditional => Condition is not null;
-}
+    IReadOnlyList<ScriptBlock> Body, SourceSpan Span, Condition? Condition = null)
+    : ScriptNode(Span), IConditional;

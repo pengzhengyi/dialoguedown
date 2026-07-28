@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented**. This is the web-report half of
-> [Component 6 — Editor seams](./Diagnostics%20and%20Validation.md) ([#121](https://github.com/pengzhengyi/godot-dialoguedown/issues/121)):
+> [Component 6 — Editor seams](./Diagnostics%20and%20Validation.md) ([#121](https://github.com/pengzhengyi/dialoguedown/issues/121)):
 > it renders the compiler's diagnostics in the `visualize` report's source editor,
 > built on an **LSP-shaped diagnostic projection** so a future language server and
 > VS Code extension reuse the same seam. The language server itself is deferred.
@@ -197,7 +197,7 @@ grays out the later tabs. The overlay shows the diagnostics from the produced st
 exactly the errors that halted compilation. Compiling **best-effort** to surface *every*
 stage's problems at once (more linter-like) is deferred: it would re-enable the grayed
 tabs and belongs with user-selectable mode
-([#110](https://github.com/pengzhengyi/godot-dialoguedown/issues/110)).
+([#110](https://github.com/pengzhengyi/dialoguedown/issues/110)).
 
 ## Error and boundary cases
 

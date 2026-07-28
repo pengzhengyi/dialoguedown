@@ -5,7 +5,7 @@
 > primitive (`` `"key"?` ``) and its first application, the **conditional jump** —
 > a jump that fires only when the condition is true. Gating the edge at play time
 > (and the `IGameSystem.Check` read it will use) is part of the planned
-> [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
+> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
 ## Table of contents
 
@@ -371,7 +371,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Achieved** | The spanned `Condition` node and `IsConditional` predicate; recognition by `ConditionReader` (reusing `GameCallParser.Query` via a new `TryParseAll`); guard-first binding in `JumpAssembler`; `DLG1106` from `OrphanConditionRule`; the report projection; and the writer spec, gallery, and error-codes entry all match the design.                              |
 | **Changed**  | `JumpAssembler`'s fold became a small **Pidgin** grammar over the fragment stream (Pidgin is a new core dependency), with a shared `FragmentParsers.OfType<T>()` combinator; the orphan-condition diagnostic lives in a structural rule (`OrphanConditionRule`), not in `JumpAssembler`; and `TryParseAll` was extracted and shared with the choice-weight reader. |
-| **Deferred** | `IGameSystem.Check` is not added yet — resolving a condition and gating the edge are the runtime's job ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)). Conditions on lines and choices, their interaction with random choices, and negation remain follow-up.                                                                          |
+| **Deferred** | `IGameSystem.Check` is not added yet — resolving a condition and gating the edge are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). Conditions on lines and choices, their interaction with random choices, and negation remain follow-up.                                                                                |
 
 ## Alternatives not chosen
 
@@ -389,7 +389,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 - **Runtime gating of a condition** — the compiler recognizes and preserves a
   condition, but reading the key through `Check` and taking or skipping the edge
   need the runtime. Tracked with the
-  [runtime work](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
+  [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
 - **Conditions on lines and choices** — the guard-first prefix is designed to
   front a line or a choice, but only the jump is wired now. Its **interaction with
   random choices** — a condition on or inside a random option, and how a skipped
