@@ -6,10 +6,10 @@ namespace DialogueDown.Visualization.Live.Tests;
 
 public sealed class LauncherServerTests
 {
-    private const string LauncherHtml = "<!doctype html><title>Launcher</title>";
+    private const string LandingHtml = "<!doctype html><title>Shell</title>";
 
     [Fact]
-    public async Task Root_ServesTheLauncherPage()
+    public async Task Root_ServesTheLandingHtml()
     {
         using var tree = new TempTree();
         await using var server = await Started(tree);
@@ -17,7 +17,7 @@ public sealed class LauncherServerTests
 
         var html = await client.GetStringAsync("/");
 
-        Assert.Equal(LauncherHtml, html);
+        Assert.Equal(LandingHtml, html);
     }
 
     [Fact]
@@ -412,7 +412,7 @@ public sealed class LauncherServerTests
 
     private static async Task<LauncherServer> Started(TempTree tree)
     {
-        var server = new LauncherServer(LaunchRoot.At(tree.Dir("root")), LauncherHtml);
+        var server = new LauncherServer(LaunchRoot.At(tree.Dir("root")), LandingHtml);
         await server.StartAsync();
         return server;
     }
