@@ -15,7 +15,20 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// </summary>
 internal static class RandomChoiceRecognition
 {
-    public static bool HasLeadingWeight(ListItem item) => TryLeadingWeightSpan(item, out _);
+    public static bool HasLeadingWeight(ListItem item)
+    {
+        if (item.Blocks is not [Paragraph paragraph, ..])
+        {
+            return false;
+        }
+
+        // A condition may guard a random option, so a weight can sit just past a leading
+        // condition; peek past it to classify the option as weighted.
+        var inlines = ConditionReader.TryPeel(paragraph.Inlines, out _, out var afterCondition)
+            ? afterCondition
+            : paragraph.Inlines;
+        return StartsWithWeight(inlines);
+    }
 
     // The option's weight and the body blocks that follow it. A missing or invalid weight is
     // reported and recovered as an auto share so the random choice stays well-formed.
@@ -46,6 +59,9 @@ internal static class RandomChoiceRecognition
         return false;
     }
 
+    private static bool StartsWithWeight(IReadOnlyList<MarkdownInline> inlines) =>
+        inlines is [CodeSpanInline candidate, ..] && ChoiceWeightReader.IsWeight(candidate.Content);
+
     private static ChoiceWeight ReadWeight(CodeSpanInline code, IDiagnosticSink diagnostics)
     {
         if (ChoiceWeightReader.Read(code.Content, code.Span) is { } weight)
@@ -62,16 +78,8 @@ internal static class RandomChoiceRecognition
     // the space that followed it trimmed so the option's speaker still parses.
     private static IReadOnlyList<MarkdownBlock> WithoutLeadingWeight(ListItem item)
     {
-        var paragraph = (Paragraph)item.Blocks[0];
-        var speech = paragraph.Inlines.Skip(1).TrimLeadingWhitespace();
-
-        var blocks = new List<MarkdownBlock>();
-        if (speech.Count > 0)
-        {
-            blocks.Add(new Paragraph(speech, SourceSpan.Covering(speech)));
-        }
-
-        blocks.AddRange(item.Blocks.Skip(1));
-        return blocks;
+        var speech = ((Paragraph)item.Blocks[0]).Inlines.Skip(1).TrimLeadingWhitespace();
+        var head = speech.Count > 0 ? new Paragraph(speech, SourceSpan.Covering(speech)) : null;
+        return item.Blocks.ReplaceOrRemoveAt(0, head);
     }
 }

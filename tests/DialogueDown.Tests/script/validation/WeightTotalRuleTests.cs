@@ -103,6 +103,18 @@ public sealed class WeightTotalRuleTests
         Assert.Empty(Check(random));
     }
 
+    [Fact]
+    public void Check_AConditionalOptionInTheGroup_DefersTheChecksToRuntime()
+    {
+        // A conditional option may be excluded at runtime, so the achievable total — here a
+        // visible 70 — is only known once the conditions resolve. No warning is reported.
+        var random = RandomChoices(
+            RandomOption(NumberWeight(20), Line(Text("always"))),
+            ConditionalRandomOption(Condition("IsAngry"), NumberWeight(50), Line(Text("maybe"))));
+
+        Assert.Empty(Check(random));
+    }
+
     private static IReadOnlyList<Diagnostic> Check(RandomChoices root)
     {
         var bag = new DiagnosticBag();

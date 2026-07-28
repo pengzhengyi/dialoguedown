@@ -51,6 +51,24 @@ public sealed class OrphanConditionRuleTests
         Assert.Single(diagnostics);
     }
 
+    [Fact]
+    public void Check_AConditionBoundToAChoice_ReportsNothing()
+    {
+        var choices = Choices(ConditionalChoice(Condition("Rainy"), Line(Text("Use it."))));
+
+        Assert.Empty(Check(choices));
+    }
+
+    [Fact]
+    public void Check_AConditionBoundToARandomOption_ReportsNothing()
+    {
+        var random = RandomChoices(
+            ConditionalRandomOption(Condition("Rainy"), NumberWeight(50), Line(Text("maybe"))),
+            RandomOption(NumberWeight(50), Line(Text("always"))));
+
+        Assert.Empty(Check(random));
+    }
+
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();

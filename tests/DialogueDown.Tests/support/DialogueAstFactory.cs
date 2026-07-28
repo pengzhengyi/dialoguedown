@@ -41,6 +41,9 @@ internal static class DialogueAstFactory
     public static Choice Choice(params ScriptBlock[] body) =>
         new(body, SourceSpanFactory.Span());
 
+    public static Choice ConditionalChoice(Condition condition, params ScriptBlock[] body) =>
+        new(body, SourceSpanFactory.Span(), condition);
+
     public static Choices Choices(params Choice[] options) =>
         Choices(isOrdered: false, options);
 
@@ -60,6 +63,10 @@ internal static class DialogueAstFactory
 
     public static RandomOption RandomOption(ChoiceWeight weight, params ScriptBlock[] body) =>
         new(weight, body, SourceSpanFactory.Span());
+
+    public static RandomOption ConditionalRandomOption(
+        Condition condition, ChoiceWeight weight, params ScriptBlock[] body) =>
+        new(weight, body, SourceSpanFactory.Span(), condition);
 
     public static RandomChoices RandomChoices(params RandomOption[] options) =>
         new(options, SourceSpanFactory.Span());

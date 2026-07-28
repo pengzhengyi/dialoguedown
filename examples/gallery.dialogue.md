@@ -21,6 +21,7 @@ Guide: What will you do, `"playerName"`?
 
 - => [Take the east road to the market](#the-market)
 - => [Brave the west road](#the-dark-forest)
+- `"Alice.HasMap"?` Slip onto the hidden trail through the hills.
 - Ask the guide for advice first #cautious
 
 # The Market

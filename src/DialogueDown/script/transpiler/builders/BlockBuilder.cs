@@ -95,9 +95,15 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
     private Choices BuildPlayerChoices(ListBlock list, IDiagnosticSink diagnostics)
     {
         var options = list.Items
-            .Select(item => new Choice(Build(item.Blocks, diagnostics), item.Span))
+            .Select(item => BuildChoice(item, diagnostics))
             .ToList();
         return new Choices(list.IsOrdered, options, list.Span);
+    }
+
+    private Choice BuildChoice(ListItem item, IDiagnosticSink diagnostics)
+    {
+        var blocks = ChoiceConditionRecognition.Peel(item, out var condition);
+        return new Choice(Build(blocks, diagnostics), item.Span, condition);
     }
 
     private RandomChoices BuildRandomChoices(ListBlock list, IDiagnosticSink diagnostics)
@@ -110,7 +116,8 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
 
     private RandomOption BuildRandomOption(ListItem item, IDiagnosticSink diagnostics)
     {
-        var (weight, body) = RandomChoiceRecognition.Resolve(item, diagnostics);
-        return new RandomOption(weight, Build(body, diagnostics), item.Span);
+        var blocks = ChoiceConditionRecognition.Peel(item, out var condition);
+        var (weight, body) = RandomChoiceRecognition.Resolve(item with { Blocks = blocks }, diagnostics);
+        return new RandomOption(weight, Build(body, diagnostics), item.Span, condition);
     }
 }

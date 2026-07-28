@@ -44,8 +44,10 @@ internal static class ScriptNodeExtensions
     internal static IEnumerable<ScriptNode> Children(this ScriptNode node) => node switch
     {
         ScriptBlock block => BlockChildren(block),
-        Choice choice => choice.Body,
-        RandomOption option => [option.Weight, .. option.Body],
+        Choice choice => choice.IsConditional ? [choice.Condition!, .. choice.Body] : choice.Body,
+        RandomOption option => option.IsConditional
+            ? [option.Condition!, option.Weight, .. option.Body]
+            : [option.Weight, .. option.Body],
         ChoiceWeight => [],
         Speaker speaker => SpeakerChildren(speaker),
         InlineFragment fragment => FragmentChildren(fragment),
