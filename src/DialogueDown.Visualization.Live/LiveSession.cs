@@ -91,15 +91,6 @@ internal sealed class LiveSession
     public string CurrentDocumentJson() =>
         SerializeReportDocument(File.ReadAllText(DocumentPath), CurrentConfigOverlay());
 
-    // Render or serialize the payload through the visualizer with this session's constants — its
-    // display path, mode, and project context — so every payload it emits carries the Explorer's
-    // project for the client to render the sidebar.
-    private string RenderReportHtml(string source, ConfigStatusOverlay? overlay = null) =>
-        _visualizer.RenderLiveReport(DisplayPath, source, Mode, overlay, Project);
-
-    private string SerializeReportDocument(string source, ConfigStatusOverlay? overlay = null) =>
-        _visualizer.SerializeDocument(DisplayPath, source, Mode, overlay, Project);
-
     /// <summary>
     /// Applies one save request and returns a payload carrying a typed <c>outcome</c>:
     /// <c>saved</c>, <c>saved-invalid</c>, <c>invalid-auto</c>, <c>conflict</c>, or
@@ -577,6 +568,15 @@ internal sealed class LiveSession
         RecordInvalidConfig(source, error);
         return InvalidConfigPayload(source, error, "invalid");
     }
+
+    // Render or serialize the payload through the visualizer with this session's constants — its
+    // display path, mode, and project context — so every payload it emits carries the Explorer's
+    // project for the client to render the sidebar.
+    private string RenderReportHtml(string source, ConfigStatusOverlay? overlay = null) =>
+        _visualizer.RenderLiveReport(DisplayPath, source, Mode, overlay, Project);
+
+    private string SerializeReportDocument(string source, ConfigStatusOverlay? overlay = null) =>
+        _visualizer.SerializeDocument(DisplayPath, source, Mode, overlay, Project);
 
     private string SerializeCurrent() =>
         SerializeReportDocument(File.ReadAllText(DocumentPath));
