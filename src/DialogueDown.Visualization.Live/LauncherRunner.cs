@@ -48,7 +48,10 @@ public sealed class LauncherRunner : ILauncherRunner
         }
 
         var launchRoot = LaunchRoot.At(root);
-        var html = LauncherPage.Render(launchRoot.RootDirectory, source, ModeToString(mode));
+        // The landing is the report shell's empty state — the Explorer over the root — not a
+        // separate picker page. Opening or creating a script from the tree serves its report.
+        var html = new CompilationVisualizer().RenderEmptyShell(
+            launchRoot.RootDirectory, ModeToString(mode));
         await using var server = new LauncherServer(
             launchRoot, html, port ?? 0,
             (path, sessionMode) => new LiveSession(

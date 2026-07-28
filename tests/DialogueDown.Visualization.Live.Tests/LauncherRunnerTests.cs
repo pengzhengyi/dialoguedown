@@ -29,7 +29,7 @@ public sealed class LauncherRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_OpensTheLauncherUrl_AndStopsOnCancellation()
+    public async Task RunAsync_ServesTheProjectShell_AndStopsOnCancellation()
     {
         using var tree = new TempTree();
         tree.File("scene.dialogue.md", "# Scene");
@@ -45,8 +45,12 @@ public sealed class LauncherRunnerTests
         var url = Assert.Single(browser.Opened);
         Assert.StartsWith("http://127.0.0.1:", url);
 
+        // The landing is the report shell's empty state (the Explorer over the project), not a
+        // separate picker page: it carries the project payload and no active document.
         using var client = new HttpClient { BaseAddress = new Uri(url) };
-        Assert.Contains("Open a script", await client.GetStringAsync("/"));
+        var landing = await client.GetStringAsync("/");
+        Assert.StartsWith("<!doctype html", landing, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"project\":", landing);
 
         stop.Cancel();
         Assert.Equal(0, await task);
