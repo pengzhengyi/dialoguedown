@@ -17,7 +17,7 @@ internal static class CliConfigurator
     public static void Configure(IConfigurator config)
     {
         ArgumentNullException.ThrowIfNull(config);
-        config.SetApplicationName("dialoguedown");
+        config.SetApplicationName("ddown");
         config.SetApplicationVersion(ResolveVersion());
         config.SetExceptionHandler(HandleException);
 

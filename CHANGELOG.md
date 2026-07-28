@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Install the `ddown` command-line tool** — DialogueDown's CLI now ships as a
+  cross-platform .NET global tool: `dotnet tool install --global DialogueDown.Cli`
+  puts a `ddown` command on your `PATH` to `compile` and `visualize` scripts. The
+  command is now named `ddown` (previously `dialoguedown`). See the
+  [command-line guide](docs/guide/cli.md).
 - **Styled speaker names are flagged** — when a line's speaker name is Markdown-styled
   (`*Alice*:`), it is not recognized as a speaker prefix and the line would otherwise be left
   silently unattributed; the compiler now warns and points at the fix — remove the styling to

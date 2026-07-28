@@ -75,7 +75,7 @@ compilation seam. Commands never compile Markdown themselves.
 
 ```mermaid
 flowchart TD
-    User(["dialoguedown &lt;command&gt; …"]) --> App["CommandApp<br/>(Spectre.Console.Cli)"]
+    User(["ddown &lt;command&gt; …"]) --> App["CommandApp<br/>(Spectre.Console.Cli)"]
     App --> Compile["CompileCommand"]
     App --> Visualize["VisualizeCommand"]
     Compile --> Seam["IScriptCompiler"]
@@ -93,9 +93,9 @@ self-invoking it**.
 ## Functionality checklist
 
 - [x] `dialoguedown` with no arguments prints help (exit `0`).
-- [x] `dialoguedown --help` lists the `compile` and `visualize` commands.
-- [x] `dialoguedown --version` prints the tool version.
-- [x] `dialoguedown compile --help` / `visualize --help` show each command's usage.
+- [x] `ddown --help` lists the `compile` and `visualize` commands.
+- [x] `ddown --version` prints the tool version.
+- [x] `ddown compile --help` / `visualize --help` show each command's usage.
 - [x] `compile <script>` validates the argument, then reports "not yet
       implemented" with a distinct exit code.
 - [x] `visualize <script>` behaves the same (validate → not-yet-implemented).

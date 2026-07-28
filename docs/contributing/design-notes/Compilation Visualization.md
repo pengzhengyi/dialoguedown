@@ -58,7 +58,7 @@ contain cycles**. The display model and the traversal are therefore
 - Editing or round-tripping — this is read-only diagnostics.
 - Shipping the visualizer inside the core NuGet package (see
   [D1](#d1--a-separate-project-keeps-the-core-pure)).
-- The CLI and live/hosted delivery of the report — the `dialoguedown visualize`
+- The CLI and live/hosted delivery of the report — the `ddown visualize`
   command and the loopback server wrap this component and have their own notes;
   this note covers the render/model core they build on.
 
