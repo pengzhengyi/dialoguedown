@@ -179,7 +179,7 @@ public sealed class BlockBuilderTests
         var choices = AssertChoices(Assert.Single(body), isOrdered: false);
         var guarded = choices.Options[0];
         AssertCondition(guarded.Condition!, "HasKey");
-        Assert.True(guarded.IsConditional);
+        Assert.True(guarded.IsConditional());
         AssertSpeechText(AssertChoiceLine(guarded), "Use the key.");
 
         Assert.Null(choices.Options[1].Condition);
@@ -220,7 +220,7 @@ public sealed class BlockBuilderTests
         var random = AssertRandomChoices(Assert.Single(body));
         var guarded = random.Options[0];
         AssertCondition(guarded.Condition!, "IsAngry");
-        Assert.True(guarded.IsConditional);
+        Assert.True(guarded.IsConditional());
         AssertNumberWeight(guarded, 50);
         AssertSpeechText(AssertRandomOptionLine(guarded), "The guard glares.");
         Assert.Null(random.Options[1].Condition);

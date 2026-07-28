@@ -11,8 +11,4 @@ namespace DialogueDown.Script.Ast;
 /// </summary>
 internal sealed record Line(
     Speaker? Speaker, IReadOnlyList<InlineFragment> Speech, SourceSpan Span,
-    Condition? Condition = null) : ScriptBlock(Span)
-{
-    /// <summary>Whether this line is guarded by a condition.</summary>
-    public bool IsConditional => Condition is not null;
-}
+    Condition? Condition = null) : ScriptBlock(Span), IConditional;

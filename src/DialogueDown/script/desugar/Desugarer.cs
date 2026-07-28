@@ -3,20 +3,30 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Script.Desugar;
 
 /// <summary>
-/// The desugarer rewrite: a <see cref="DialogueAstRewriter"/> wired with the local
-/// normalization rules. It assembles jumps in every fragment sequence and fills the
-/// default speaker on every speaker-less line; everything else clones through unchanged.
+/// Runs a composed set of <see cref="IDesugarRule"/>s over a Dialogue AST, in order, each rule's
+/// output feeding the next. Composing the rules here keeps desugaring open to new normalizations
+/// without touching the pipeline.
 /// </summary>
-internal sealed class Desugarer : DialogueAstRewriter
+internal sealed class Desugarer
 {
-    // Each override calls base first, so the tree is rewritten bottom-up before a rule
-    // runs: base.RewriteLine rewrites the speech (assembling any jumps in it) and the
-    // speaker, and base.RewriteFragments rewrites nested fragments (e.g. a link label);
-    // only then does the rule transform the already-rewritten node.
-    protected override Line RewriteLine(Line line) =>
-        DefaultSpeakerFiller.Fill(base.RewriteLine(line));
+    private readonly IReadOnlyList<IDesugarRule> _rules;
 
-    protected override IReadOnlyList<InlineFragment> RewriteFragments(
-        IReadOnlyList<InlineFragment> fragments) =>
-        JumpAssembler.Assemble(base.RewriteFragments(fragments));
+    public Desugarer(IReadOnlyList<IDesugarRule> rules)
+    {
+        ArgumentNullException.ThrowIfNull(rules);
+        _rules = rules;
+    }
+
+    public ScriptDocument Desugar(ScriptDocument document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        var result = document;
+        foreach (var rule in _rules)
+        {
+            result = rule.Apply(result);
+        }
+
+        return result;
+    }
 }

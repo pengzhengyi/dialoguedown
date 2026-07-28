@@ -17,6 +17,7 @@ internal abstract class DialogueAstRewriter
     protected virtual ScriptBlock RewriteBlock(ScriptBlock block) => block switch
     {
         Line line => RewriteLine(line),
+        ControlLine control => RewriteControlLine(control),
         Choices choices => RewriteChoices(choices),
         RandomChoices random => RewriteRandomChoices(random),
         SceneHeading heading => RewriteSceneHeading(heading),
@@ -32,6 +33,9 @@ internal abstract class DialogueAstRewriter
             Speaker = line.Speaker is null ? null : RewriteSpeaker(line.Speaker),
             Speech = RewriteFragments(line.Speech),
         };
+
+    protected virtual ControlLine RewriteControlLine(ControlLine control) =>
+        control with { Effects = RewriteFragments(control.Effects) };
 
     // Declarations carry tags, so they recurse; references and DefaultSpeaker are leaves.
     // A null speaker is handled by RewriteLine, so this hook only sees a present speaker.

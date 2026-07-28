@@ -65,8 +65,8 @@ public sealed class UnquotedKeyTranspilationTests
     {
         var desugared = Pipeline.UntilDesugared("`Rainy?` => [Wait it out](#the-inn)");
 
-        var line = AssertLine(Assert.Single(desugared.Document.Body));
-        AssertCondition(AssertJump(Assert.Single(line.Speech), "#the-inn").Condition!, "Rainy");
+        var control = AssertControlLine(Assert.Single(desugared.Document.Body));
+        AssertCondition(AssertJump(Assert.Single(control.Effects), "#the-inn").Condition!, "Rainy");
     }
 
     private ScriptDocument Transpile(string source) =>

@@ -61,6 +61,13 @@ public sealed class UnreachableAfterJumpRuleTests
         Assert.Single(Check(Choices(Choice(line))));
     }
 
+    [Fact]
+    public void Check_ContentAfterAJumpInAControlLine_IsChecked()
+    {
+        // A bare jump followed by another effect is a control line; the unreachable effect counts.
+        Assert.Single(Check(ControlLine(Jump("#a"), Jump("#b"))));
+    }
+
     private IReadOnlyList<Diagnostic> Check(params ScriptBlock[] blocks)
     {
         var bag = new DiagnosticBag();

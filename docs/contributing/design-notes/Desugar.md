@@ -2,11 +2,11 @@
 
 > [!NOTE]
 > Status: **implemented**. Component 3 of the DialogueDown script compiler, sitting
-> between the transpiler and semantic analysis. Both local rules ship — jump
-> assembly (`JumpAssembler`) and default-speaker fill (`DefaultSpeakerFiller`) —
-> wired through the reusable `DialogueAstRewriter` and exposed via the
-> `IScriptDesugarer` seam (`ScriptDesugarer`), with the result wrapped as a
-> `DesugaredScriptDocument`.
+> between the transpiler and semantic analysis. It composes an ordered pipeline of
+> rules — jump assembly (`JumpAssembler`), control-line recognition, and
+> default-speaker fill (`DefaultSpeakerFiller`) — each a `DialogueAstRewriter`, run
+> in order by the `Desugarer` and exposed via the `IScriptDesugarer` seam
+> (`ScriptDesugarer`), with the result wrapped as a `DesugaredScriptDocument`.
 
 ## Table of contents
 
@@ -21,9 +21,9 @@
   - [Key design decisions](#key-design-decisions)
     - [DD1 — Local rewrite; do only what the transpiler deferred](#dd1--local-rewrite-do-only-what-the-transpiler-deferred)
     - [DD2 — A reusable, complete-hook rewriter](#dd2--a-reusable-complete-hook-rewriter)
-    - [DD3 — Rules are named functions behind typed hooks](#dd3--rules-are-named-functions-behind-typed-hooks)
+    - [DD3 — Rules compose as an ordered pipeline](#dd3--rules-compose-as-an-ordered-pipeline)
     - [DD4 — Jump assembly is a fragment-sequence transform](#dd4--jump-assembly-is-a-fragment-sequence-transform)
-    - [DD5 — Default speaker is a sentinel; silent commands fold in](#dd5--default-speaker-is-a-sentinel-silent-commands-fold-in)
+    - [DD5 — Default speaker is a sentinel](#dd5--default-speaker-is-a-sentinel)
     - [DD6 — Same node AST, a document-level stage marker](#dd6--same-node-ast-a-document-level-stage-marker)
     - [DD7 — What Desugar does not touch](#dd7--what-desugar-does-not-touch)
   - [Desugar in pseudocode](#desugar-in-pseudocode)
@@ -41,15 +41,18 @@ between the transpiler and semantic analysis. The transpiler is a faithful,
 performs exactly those, as a **local whole-tree rewrite** — no document-wide
 knowledge, no reference resolution.
 
-It does two things:
+It does three things, each a **rule** in an ordered pipeline:
 
 1. **Assemble jumps.** Collapse a `JumpIndicator · (same-line whitespace) · Link`
    run in a fragment sequence into a single **`Jump`**. A jump is single-line, so a
    `LineBreak` between the `=>` and the link ends it. A dangling `=>` (no link
    after it) degrades back to plain text; a bare link stays a link.
-2. **Fill the default speaker.** A `Line` that names no speaker gets the
-   **`DefaultSpeaker`** sentinel. A lone command line is just a speaker-less line,
-   so this same fill also covers the DSL's **silent command**.
+2. **Recognize control lines.** A speaker-less line whose content is entirely
+   effects — a bare jump or one or more silent commands — becomes a
+   **`ControlLine`**: an effect-only block with no speaker, so an effect is never
+   attributed to a speaker. See the [Control Line](./Control%20Line.md) note.
+3. **Fill the default speaker.** A remaining speaker-less `Line` gets the
+   **`DefaultSpeaker`** sentinel — narration by the default speaker.
 
 Alongside these, this component builds a small **reusable rewriter foundation** —
 an immutable clone-by-default tree transformer with a complete set of typed hooks.
@@ -81,16 +84,16 @@ through unchanged.
 
 ## Ubiquitous language
 
-| Term                        | Meaning                                                                |
-| --------------------------- | ---------------------------------------------------------------------- |
-| **Desugar**                 | the stage that composes and normalizes the Dialogue AST.               |
-| **Rewriter**                | an immutable tree transformer: clone by default, override a few nodes. |
-| **Rule**                    | one small, named transform (`DefaultSpeakerFiller`, `JumpAssembler`).  |
-| **Jump**                    | an assembled jump fragment: a label and an unresolved target.          |
-| **DefaultSpeaker**          | the sentinel for "the default speaker", resolved later.                |
-| **DesugaredScriptDocument** | the desugared tree, wrapped as a distinct pipeline-stage type.         |
-| **Silent command**          | a lone command line, spoken by the default speaker.                    |
-| **Dangling `=>`**           | a `JumpIndicator` with no link after it; reads as plain text.          |
+| Term                        | Meaning                                                                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Desugar**                 | the stage that composes and normalizes the Dialogue AST.                                                                     |
+| **Rewriter**                | an immutable tree transformer: clone by default, override a few nodes.                                                       |
+| **Rule**                    | one normalization in the pipeline, each a rewriter (`JumpAssemblyRule`, `ControlLineRecognitionRule`, `DefaultSpeakerRule`). |
+| **Jump**                    | an assembled jump fragment: a label and an unresolved target.                                                                |
+| **DefaultSpeaker**          | the sentinel for "the default speaker", resolved later.                                                                      |
+| **DesugaredScriptDocument** | the desugared tree, wrapped as a distinct pipeline-stage type.                                                               |
+| **Silent command**          | a lone command line, spoken by the default speaker.                                                                          |
+| **Dangling `=>`**           | a `JumpIndicator` with no link after it; reads as plain text.                                                                |
 
 ## Functionality checklist
 
@@ -100,7 +103,10 @@ through unchanged.
       granular (folding adjacent text is a later, rendering-stage concern).
 - [x] **Keep a bare `Link`** (no preceding `=>`) as an inline link.
 - [x] **Fill `DefaultSpeaker`** on a `Line` that names no speaker.
-- [x] **Cover silent commands** by the same default-speaker fill.
+- [x] **Recognize a control line**: an effect-only, speaker-less line (a bare jump
+      or one or more silent commands) becomes a `ControlLine` with no speaker.
+- [x] **Compose the rules as an ordered pipeline** run by the `Desugarer`, so a new
+      normalization is added as one rule.
 - [x] **Reusable rewriter**: clone by default, a complete set of typed hooks
       (blocks, line, speaker, tag, and every fragment sequence).
 - [x] **Invariants after Desugar**: no `JumpIndicator` survives; no `Line` has a
@@ -110,16 +116,23 @@ through unchanged.
 
 ## Interfaces and abstractions
 
-| Type                      | Responsibility                                                                                                                      | Collaborators                               |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `IScriptDesugarer`        | public seam: `DesugaredScriptDocument Desugar(ScriptDocument, string source)`; `source` is validated only, held for future warnings | `ScriptDocument`, `DesugaredScriptDocument` |
-| `Desugarer`               | the default desugarer — a `DialogueAstRewriter` wired with the rules                                                                | rewriter, rules                             |
-| `DialogueAstRewriter`     | immutable clone-by-default tree rewrite with a complete set of typed hooks                                                          | `ScriptNode`                                |
-| `DefaultSpeakerFiller`    | rule: a `Line` with no speaker gets a `DefaultSpeaker` at a zero-width caret                                                        | `Line`, `DefaultSpeaker`                    |
-| `JumpAssembler`           | rule: fold `JumpIndicator · (same-line whitespace) · Link` into `Jump`; degrade a dangling `=>` to plain text                       | `InlineFragment` list                       |
-| `Jump` (AST)              | assembled jump fragment: label + unresolved target                                                                                  | `InlineFragment`                            |
-| `DefaultSpeaker` (AST)    | the default-speaker sentinel                                                                                                        | `Speaker`                                   |
-| `DesugaredScriptDocument` | thin wrapper marking a desugared tree, so stages type-check in order                                                                | `ScriptDocument`                            |
+| Type                         | Responsibility                                                                                                                      | Collaborators                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `IScriptDesugarer`           | public seam: `DesugaredScriptDocument Desugar(ScriptDocument, string source)`; `source` is validated only, held for future warnings | `ScriptDocument`, `DesugaredScriptDocument` |
+| `Desugarer`                  | composes the rules — runs a registered `IDesugarRule` list in order, each rule's output feeding the next                            | `IDesugarRule`                              |
+| `DesugarerFactory`           | registers the built-in rules in dependency order: jump assembly, control-line recognition, default-speaker fill                     | `Desugarer`, rules                          |
+| `IDesugarRule`               | rule seam: `ScriptDocument Apply(ScriptDocument)` — one normalization over the whole tree                                           | `ScriptDocument`                            |
+| `DesugarRule`                | rule base: a `DialogueAstRewriter` whose `Apply` runs the rewrite; a rule overrides only the hooks it needs                         | `DialogueAstRewriter`                       |
+| `JumpAssemblyRule`           | rule: assemble jumps in every fragment sequence, via `JumpAssembler`                                                                | `JumpAssembler`                             |
+| `ControlLineRecognitionRule` | rule: a speaker-less, effect-only line becomes a `ControlLine`                                                                      | `Line`, `ControlLine`                       |
+| `DefaultSpeakerRule`         | rule: fill `DefaultSpeaker` on a speaker-less line, via `DefaultSpeakerFiller`                                                      | `DefaultSpeakerFiller`                      |
+| `DialogueAstRewriter`        | immutable clone-by-default tree rewrite with a complete set of typed hooks                                                          | `ScriptNode`                                |
+| `JumpAssembler`              | transform: fold `JumpIndicator · (same-line whitespace) · Link` into `Jump`; degrade a dangling `=>` to plain text                  | `InlineFragment` list                       |
+| `DefaultSpeakerFiller`       | transform: a `Line` with no speaker gets a `DefaultSpeaker` at a zero-width caret                                                   | `Line`, `DefaultSpeaker`                    |
+| `Jump` (AST)                 | assembled jump fragment: label + unresolved target                                                                                  | `InlineFragment`                            |
+| `ControlLine` (AST)          | effect-only block with no speaker; holds jump/command effects and an optional guard                                                 | `ScriptBlock`                               |
+| `DefaultSpeaker` (AST)       | the default-speaker sentinel                                                                                                        | `Speaker`                                   |
+| `DesugaredScriptDocument`    | thin wrapper marking a desugared tree, so stages type-check in order                                                                | `ScriptDocument`                            |
 
 ## The rewriter foundation
 
@@ -136,8 +149,9 @@ nodes it cares about, never the traversal:
 ```text
 DialogueAstRewriter
   Rewrite(ScriptDocument)             -> ScriptDocument   # entry
-  virtual RewriteBlock(ScriptBlock)   -> ScriptBlock      # dispatch: Line / Choices / SceneHeading
+  virtual RewriteBlock(ScriptBlock)   -> ScriptBlock      # dispatch: Line / ControlLine / Choices / SceneHeading
   virtual RewriteLine(Line)           -> Line             # rebuild with rewritten speaker + speech
+  virtual RewriteControlLine(...)     -> ControlLine      # rebuild with rewritten effects
   virtual RewriteSpeaker(Speaker)     -> Speaker          # declarations recurse into their tags
   virtual RewriteSceneHeading(...)    -> SceneHeading
   virtual RewriteChoices(Choices)     -> Choices
@@ -153,19 +167,21 @@ the whole tree. A tag routes through `RewriteTag` wherever it sits (speech or a
 speaker prefix), and a null speaker is handled at the `Line` so `RewriteSpeaker`
 only ever sees a present one.
 
-Desugar overrides just two hooks; each delegates to a separate, pure **rule**, so
-the two transforms stay independent and are never interleaved during traversal:
+Each rule is a **`DesugarRule`** — a `DialogueAstRewriter` whose `Apply` runs the
+rewrite over the whole document — so a rule overrides only the hooks it changes and
+never repeats the traversal. The **`Desugarer`** composes them: it runs a registered
+list of rules in order, each rule's output feeding the next.
 
 ```text
-Desugarer : DialogueAstRewriter
-  RewriteLine(line)      = DefaultSpeakerFiller.Fill(base.RewriteLine(line))
-  RewriteFragments(list) = JumpAssembler.Assemble(base.RewriteFragments(list))
+Desugarer(rules).Desugar(document):
+    for rule in rules:      # jump assembly -> control-line recognition -> default speaker
+        document = rule.Apply(document)
+    return document
 ```
 
-A **configurable rule pipeline** (registering rules dynamically) is a deliberate
-**future seam**, not built now: two rules of different shapes (a node transform
-and a sequence transform) do not need a registry, and the typed hooks already
-keep them separate.
+`DesugarerFactory` registers the built-in set in dependency order. Adding a
+normalization is adding one rule to that list — no traversal to weave, no hook to
+interleave.
 
 A read-only walk (enumerating descendants for collection and validation) is
 **deferred to semantic analysis**, where a real consumer will shape its hooks; the
@@ -191,12 +207,15 @@ its hooks cover every child slot so any later pass can rewrite any node kind. Th
 read-only descendant walk semantic analysis will also want is deferred to that
 component, so its hooks are shaped by a real consumer rather than guessed here.
 
-### DD3 — Rules are named functions behind typed hooks
+### DD3 — Rules compose as an ordered pipeline
 
-Each desugar operation is a separate, independently tested **rule** invoked from a
-rewriter hook. This separates concerns (no rule logic tangled into traversal) and
-composes cleanly. A dynamic rule **registry** is left as a documented seam — see
-[the foundation](#the-rewriter-foundation).
+Each desugar operation is a separate, independently tested **rule** — an
+`IDesugarRule` (a `DesugarRule`: a rewriter applied to the whole document). The
+`Desugarer` runs a registered list of rules in order, each rule's output feeding
+the next, so concerns stay separate — no rule logic tangled into a shared traversal
+— and a new normalization is added as one rule without touching the pipeline. The
+order is a dependency: control-line recognition needs assembled jumps and must
+precede the default-speaker fill, so a control line is never given a speaker.
 
 ### DD4 — Jump assembly is a fragment-sequence transform
 
@@ -218,7 +237,7 @@ type. For each list:
   three `Text` runs) — folding adjacent text is a later, rendering-stage concern.
 - A `Link` with no preceding `=>` is left untouched.
 
-### DD5 — Default speaker is a sentinel; silent commands fold in
+### DD5 — Default speaker is a sentinel
 
 A `Line` with no speaker gets a **`DefaultSpeaker`** node — a sentinel meaning
 "whatever the default is". It is **not** resolved to a concrete speaker here;
@@ -227,10 +246,9 @@ exists) is semantic analysis, which owns the document-wide speaker table. The
 sentinel has no source text of its own, so it carries a **zero-width span**
 (`SourceSpan.EmptyAt`) at the line's start — a caret a tool can detect via
 `SourceSpan.IsEmpty` and render as a point, rather than underlining the whole
-line. Because
-a lone command line is simply a speaker-less line whose speech is a command, the
-DSL's **silent command** needs no special case — the same fill produces a
-default-speaker command line (the spec's `@default:` form).
+line. Only **spoken** lines reach this fill: an effect-only line — a bare jump or a
+silent command — is recognized as a `ControlLine` earlier in the pipeline, so it
+never gets a speaker (see the [Control Line](./Control%20Line.md) note).
 
 ### DD6 — Same node AST, a document-level stage marker
 
@@ -260,24 +278,39 @@ here.
 
 ```text
 Desugar(document, source):
-    validate(source)                         # held for future warnings; not read here
-    rewritten = Rewriter.Rewrite(document)   # clone-by-default walk; hooks apply the rules
+    validate(source)                       # held for future warnings; not read here
+    rewritten = Desugarer(rules).Desugar(document)
     return DesugaredScriptDocument(rewritten)
 
-# hook overrides
-RewriteLine(line):
-    line = base.RewriteLine(line)         # rewrite speech first (assembles inner jumps)
-    return DefaultSpeakerFiller.Fill(line)
+Desugarer(rules).Desugar(document):
+    for rule in rules:      # jump assembly -> control-line recognition -> default speaker
+        document = rule.Apply(document)    # each rule is a whole-document rewrite
+    return document
 
-RewriteFragments(fragments):
-    fragments = base.RewriteFragments(fragments)   # rewrite each fragment first
-    return JumpAssembler.Assemble(fragments)
+# rules (each a DesugarRule : DialogueAstRewriter, overriding only the hooks it needs)
+JumpAssemblyRule.RewriteFragments(fragments):
+    return JumpAssembler.Assemble(base.RewriteFragments(fragments))
 
-# rules
-DefaultSpeakerFiller.Fill(line):
+ControlLineRecognitionRule.RewriteBlock(block):
+    block = base.RewriteBlock(block)
+    if block is Line line and line.Speaker is null and isEffectOnly(line.Speech):
+        return ControlLine(line.Speech, line.Span, line.Condition)   # no speaker
+    return block
+
+DefaultSpeakerRule.RewriteLine(line):
+    line = base.RewriteLine(line)          # rewrite speech first
     if line.Speaker is null:
         return line with Speaker = DefaultSpeaker(EmptyAt(line.Span.Start))   # caret
     return line
+
+# effect-only: some effect (Jump / DefaultCommand / CustomCommand), no spoken content
+isEffectOnly(fragments):
+    hasEffect = false
+    for f in fragments:
+        if f is Jump or DefaultCommand or CustomCommand: hasEffect = true
+        else if f is LineBreak or blank Text:            continue
+        else:                                            return false
+    return hasEffect
 
 JumpAssembler.Assemble(fragments):
     out = []
@@ -298,8 +331,7 @@ JumpAssembler.Assemble(fragments):
 
 ## New AST nodes
 
-Both live in `DialogueDown.Script.Ast` beside the other nodes; Desugar merely
-introduces them.
+The nodes Desugar introduces live in `DialogueDown.Script.Ast` beside the others.
 
 ```mermaid
 classDiagram
@@ -311,8 +343,13 @@ classDiagram
         <<abstract>>
     }
     class DefaultSpeaker
+    class ScriptBlock {
+        <<abstract>>
+    }
+    class ControlLine
     InlineFragment <|-- Jump
     Speaker <|-- DefaultSpeaker
+    ScriptBlock <|-- ControlLine
     Jump o-- InlineFragment : label
 ```
 
@@ -322,6 +359,10 @@ classDiagram
   covers the `=>` through the link.
 - **`DefaultSpeaker(SourceSpan Span)`** — a `Speaker`. A leaf sentinel with no
   data; it marks "the default speaker" for semantic analysis to resolve.
+- **`ControlLine(IReadOnlyList<InlineFragment> Effects, SourceSpan Span, Condition? Condition)`**
+  — a `ScriptBlock`. An effect-only line with no speaker; its `Effects` are the jump
+  and command fragments, guarded by an optional `Condition`. See the
+  [Control Line](./Control%20Line.md) note.
 
 ## Error and boundary cases
 

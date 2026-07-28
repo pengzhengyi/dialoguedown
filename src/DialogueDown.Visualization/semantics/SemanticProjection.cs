@@ -152,7 +152,7 @@ internal sealed class SemanticProjection
     private static string JumpText(Jump jump)
     {
         var label = LabelText(jump);
-        return jump.IsConditional ? $"\"{jump.Condition!.Key}\"? {label}" : label;
+        return jump.IsConditional() ? $"\"{jump.Condition!.Key}\"? {label}" : label;
     }
 
     private static string LabelText(Jump jump)
