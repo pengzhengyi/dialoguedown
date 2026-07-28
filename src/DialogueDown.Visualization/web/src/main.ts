@@ -17,10 +17,10 @@ import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
 import { initHelpToggle } from "./help";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
-import { initExplorer } from "./explorer";
+import { initExplorer, resolveProjectPath } from "./explorer";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { type DialogueSymbols, EMPTY_SYMBOLS, type Report, type ServedMode } from "./model";
-import type { BrowseListing, CreateOutcome } from "./launcher";
+import { parentPath, type BrowseListing, type CreateOutcome } from "./launcher";
 
 /**
  * The .NET library replaces the `"__REPORT__"` slot in report.html with the
@@ -247,6 +247,27 @@ if (report.mode === "view" || report.mode === "edit") {
                 name: "explorer",
             });
             document.getElementById("explorer-resizer")?.appendChild(explorerPanel.button);
+
+            // A cross-file link in the Source preview opens the target script like a hyperlink;
+            // same-file #anchors keep their native scroll, and the anchor part is dropped (the
+            // linker resolves anchors, deferred).
+            const activeFolder = parentPath(report.project.activePath);
+            for (const preview of document.querySelectorAll(".source-preview")) {
+                preview.addEventListener("click", (event) => {
+                    const anchor = (event.target as Element | null)?.closest("a");
+                    const href = anchor?.getAttribute("href");
+                    if (href == null || href.startsWith("#") || /^[a-z][\w+.-]*:/i.test(href)) {
+                        return;
+                    }
+                    event.preventDefault();
+                    const target = resolveProjectPath(activeFolder, href);
+                    if (target !== null) {
+                        beginNavigation(() => {
+                            void openScriptSession(target);
+                        });
+                    }
+                });
+            }
         }
     }
 

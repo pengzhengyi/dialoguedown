@@ -200,6 +200,29 @@ export function ancestorFolders(activePath: string): string[] {
     return parts.map((_, index) => parts.slice(0, index + 1).join("/"));
 }
 
+/**
+ * Resolve a preview link's file part — written relative to the folder of the script that contains
+ * it — to a root-relative path the Explorer can open, or `null` when it escapes the project root or
+ * names no file. The `#anchor` is dropped: opening the file is the Explorer's job; resolving the
+ * anchor is the linker's (deferred).
+ */
+export function resolveProjectPath(baseFolder: string, link: string): string | null {
+    const filePart = link.split("#")[0];
+    if (filePart === "") return null; // a bare "#anchor" is same-file, not a cross-file open
+    const segments = (baseFolder === "" ? [] : baseFolder.split("/")).concat(filePart.split("/"));
+    const stack: string[] = [];
+    for (const segment of segments) {
+        if (segment === "" || segment === ".") continue;
+        if (segment === "..") {
+            if (stack.length === 0) return null; // escapes the root
+            stack.pop();
+        } else {
+            stack.push(segment);
+        }
+    }
+    return stack.length === 0 ? null : stack.join("/");
+}
+
 function element(tag: string, className: string): HTMLElement {
     const node = document.createElement(tag);
     node.className = className;

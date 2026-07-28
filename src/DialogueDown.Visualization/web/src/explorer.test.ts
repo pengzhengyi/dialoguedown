@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { ancestorFolders, initExplorer, type ExplorerPorts } from "./explorer";
+import { ancestorFolders, initExplorer, resolveProjectPath, type ExplorerPorts } from "./explorer";
 import type { BrowseListing, CreateOutcome } from "./launcher";
 import type { ReportProject } from "./model";
 
@@ -47,6 +47,28 @@ describe("ancestorFolders", () => {
     it("lists ancestor folders root-first, excluding the file", () => {
         expect(ancestorFolders("act-1/scene/x.dialogue.md")).toEqual(["act-1", "act-1/scene"]);
         expect(ancestorFolders("intro.dialogue.md")).toEqual([]);
+    });
+});
+
+describe("resolveProjectPath", () => {
+    it("resolves a sibling link relative to the script's folder", () => {
+        expect(resolveProjectPath("act-1", "chapter-02.dialogue.md#meet-bob")).toBe(
+            "act-1/chapter-02.dialogue.md",
+        );
+    });
+
+    it("resolves a parent traversal", () => {
+        expect(resolveProjectPath("act-1/scenes", "../intro.dialogue.md")).toBe(
+            "act-1/intro.dialogue.md",
+        );
+    });
+
+    it("returns null when the link escapes the root", () => {
+        expect(resolveProjectPath("act-1", "../../outside.dialogue.md")).toBeNull();
+    });
+
+    it("returns null for a bare same-file anchor", () => {
+        expect(resolveProjectPath("act-1", "#crossroads")).toBeNull();
     });
 });
 
