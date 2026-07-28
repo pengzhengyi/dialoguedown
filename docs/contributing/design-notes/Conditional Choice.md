@@ -1,11 +1,9 @@
 # Conditional choice
 
 > [!NOTE]
-> Status: **proposed**. This note designs the third application of the
-> **condition** primitive (`` `"key"?` ``): a **conditional choice option** — a
-> player choice or a random option that is offered only when the condition is
-> true. It reuses the condition from the
-> [Conditional Jump](./Conditional%20Jump.md) and
+> Status: **implemented**. The compiler recognizes a **conditional choice option** —
+> a player choice or a random option offered only when the condition is true —
+> reusing the condition from the [Conditional Jump](./Conditional%20Jump.md) and
 > [Conditional Line](./Conditional%20Line.md) notes; read those first. Offering,
 > hiding, and re-normalizing options at play time is part of the planned
 > [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
@@ -34,6 +32,7 @@
   - [Diagnostics](#diagnostics)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Testability](#testability)
+  - [Implementation crosscheck](#implementation-crosscheck)
   - [Alternatives not chosen](#alternatives-not-chosen)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
 
@@ -76,22 +75,22 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 ## Functionality checklist
 
-- [ ] Recognize a leading `` `"key"?` `` condition on a list item — *before* its
+- [x] Recognize a leading `` `"key"?` `` condition on a list item — *before* its
       weight and body — and peel it off as the option's guard.
-- [ ] Model the guard as an optional `Condition` on `Choice` and on
+- [x] Model the guard as an optional `Condition` on `Choice` and on
       `RandomOption`, each with an `IsConditional` predicate.
-- [ ] Keep classifying a list as a random choice when an option leads with a
+- [x] Keep classifying a list as a random choice when an option leads with a
       condition *then* a weight, by peeking past the condition for the weight.
-- [ ] Build the option's body from the content *after* the peeled condition, so a
+- [x] Build the option's body from the content *after* the peeled condition, so a
       condition on an option guards the whole option, not its first line.
-- [ ] Defer the static weight-total check for a random choice when any option is
+- [x] Defer the static weight-total check for a random choice when any option is
       conditional, as a dynamic query weight already does.
-- [ ] Preserve the source span of the condition, the weight, and the option.
-- [ ] Generalize `DLG1106` so a condition guards a jump, a line, **or** a choice
+- [x] Preserve the source span of the condition, the weight, and the option.
+- [x] Generalize `DLG1106` so a condition guards a jump, a line, **or** a choice
       option, detecting a bound guard by identity.
-- [ ] Leave an ordinary unconditional option unchanged when no condition precedes
+- [x] Leave an ordinary unconditional option unchanged when no condition precedes
       it.
-- [ ] Add the construct to the writer-facing specification, the gallery, and the
+- [x] Add the construct to the writer-facing specification, the gallery, and the
       report projection.
 
 ## Ubiquitous language
@@ -382,6 +381,16 @@ any option is conditional (see [D3](#d3--a-conditional-random-option-defers-the-
 
 Use multi-line raw string literals for script fixtures so the option, its
 condition, and its weight are visible.
+
+## Implementation crosscheck
+
+The construct shipped as designed; the runtime resolution remains deferred.
+
+| Bucket       | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Achieved** | `Choice` and `RandomOption` gained an optional `Condition` and an `IsConditional` predicate; `ChoiceConditionRecognition.Peel` binds the guard at the list-item level before the body — and, for a random option, its weight — via the shared `ConditionReader.TryPeel`; `HasLeadingWeight` peeks past a leading condition; the weight total defers when any option is conditional; the orphan-condition rule and the tree traversal extend to a choice guard (guard-first, condition before weight); and the report projection, writer spec, and gallery match the design (D1–D5). |
+| **Changed**  | The shared leading-condition peel was extracted to `ConditionReader.TryPeel(inlines, out condition, out remainder)` and the conditional line's `LineBuilder` was refactored to call it, unifying the two block-start guards. A generic `ReadOnlyListExtensions.ReplaceOrRemoveAt` now backs both the condition peel and the random weight's block rebuild. The weight recognizer kept its `Resolve` name: it validates and recovers a required weight, so it is a resolution, not the pure structural peel a condition uses.                                                        |
+| **Deferred** | Offering or hiding a player option and excluding then re-normalizing a random pool are the runtime's job ([issue #45](https://github.com/pengzhengyi/godot-dialoguedown/issues/45)). A block `if`/`elseif`/`else` remains a separate future construct that reuses this primitive; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                                                                                                    |
 
 ## Alternatives not chosen
 
