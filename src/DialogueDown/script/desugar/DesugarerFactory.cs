@@ -11,6 +11,7 @@ internal static class DesugarerFactory
         new(
         [
             new JumpAssemblyRule(),
+            new ControlLineRecognitionRule(),
             new DefaultSpeakerRule(),
         ]);
 }
