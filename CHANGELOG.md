@@ -23,6 +23,14 @@ changes easy to categorize.
   editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
   [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
 
+### Fixed
+
+- **`ddown visualize` now stops on Ctrl+C** — the live server previously ignored the
+  interrupt and had to be killed, because the shutdown signal reached the web host but
+  not the command waiting on it. Pressing Ctrl+C (or sending a termination signal) now
+  stops the session promptly, ending any open hot-reload stream instead of blocking
+  shutdown.
+
 ## [0.1.0] - 2026-07-28
 
 ### Added

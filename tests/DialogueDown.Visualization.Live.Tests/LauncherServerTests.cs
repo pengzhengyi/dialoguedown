@@ -410,6 +410,28 @@ public sealed class LauncherServerTests
         Assert.Contains("\"name\":\"Bob\"", await save.Content.ReadAsStringAsync());
     }
 
+    [Fact]
+    public async Task WaitForShutdownAsync_WhenCanceled_StopsTheServer()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        var baseUrl = server.BaseUrl;
+
+        using var stop = new CancellationTokenSource();
+        var shutdown = server.WaitForShutdownAsync(stop.Token);
+        Assert.False(shutdown.IsCompleted); // keeps serving until asked to stop
+
+        stop.Cancel();
+        await shutdown.WaitAsync(TimeSpan.FromSeconds(15)); // returns only once the host has stopped
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri(baseUrl),
+            Timeout = TimeSpan.FromSeconds(3),
+        };
+        await Assert.ThrowsAnyAsync<Exception>(() => client.GetAsync("/"));
+    }
+
     private static async Task<LauncherServer> Started(TempTree tree)
     {
         var server = new LauncherServer(LaunchRoot.At(tree.Dir("root")), LauncherHtml);
