@@ -300,6 +300,31 @@ public sealed class ServeModeTests
         Assert.NotEmpty(error.ToString()); // a broken link is refused with an explanation, never served
     }
 
+    [Fact]
+    public async Task RunAsync_WithAnOpenEventStream_StillStopsPromptlyOnCancellation()
+    {
+        // A held-open hot-reload stream is a long-lived in-flight request. Graceful shutdown
+        // must not wait on it until the host's timeout — the stream observes the server
+        // shutting down and ends, so Ctrl+C stops the session promptly even with a live client.
+        using var doc = new TempDocument("# Scene");
+        var browser = new FakeBrowserLauncher();
+        using var stop = new CancellationTokenSource();
+
+        var task = ServeMode.RunAsync(
+            doc.Path, port: 0, noOpen: false, renderRoot: null, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new FakeHostConsent(allow: false),
+            new StringWriter(), new StringWriter(), stop.Token);
+        await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
+
+        using var client = new HttpClient { BaseAddress = new Uri(browser.Opened[0]) };
+        using var response = await client.GetAsync(
+            "/api/events", HttpCompletionOption.ResponseHeadersRead);
+        Assert.Equal("text/event-stream", response.Content.Headers.ContentType?.MediaType);
+
+        stop.Cancel();
+        var code = await task.WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.Equal(0, code);
+    }
+
     private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;

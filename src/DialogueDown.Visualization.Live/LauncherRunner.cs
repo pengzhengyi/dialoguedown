@@ -63,10 +63,9 @@ public sealed class LauncherRunner : ILauncherRunner
             _browser.Open(url);
         }
 
-        // Keep serving until canceled (Ctrl+C); complete normally rather than throwing.
-        var stopped = new TaskCompletionSource();
-        await using var registration = cancellationToken.Register(() => stopped.TrySetResult());
-        await stopped.Task;
+        // Keep serving until the web host shuts down — Ctrl+C (a termination signal the host
+        // handles) or the command's cancellation token; complete normally rather than throwing.
+        await server.WaitForShutdownAsync(cancellationToken);
 
         return 0;
     }

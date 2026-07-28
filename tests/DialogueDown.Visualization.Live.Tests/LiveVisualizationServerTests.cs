@@ -278,4 +278,28 @@ public sealed class LiveVisualizationServerTests
         var html = await client.GetStringAsync("/");
         Assert.Contains("\"configStatus\":\"saved-invalid\"", html);
     }
+
+    [Fact]
+    public async Task WaitForShutdownAsync_WhenCanceled_StopsTheServer()
+    {
+        using var doc = new TempDocument("# Scene");
+        await using var server = new LiveVisualizationServer(new LiveSession(doc.Path));
+        await server.StartAsync();
+        var baseUrl = server.BaseUrl;
+
+        using var stop = new CancellationTokenSource();
+        var shutdown = server.WaitForShutdownAsync(stop.Token);
+        Assert.False(shutdown.IsCompleted); // keeps serving until asked to stop
+
+        stop.Cancel();
+        await shutdown.WaitAsync(TimeSpan.FromSeconds(15)); // returns only once the host has stopped
+
+        // The host is stopped, so the loopback port no longer accepts requests.
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri(baseUrl),
+            Timeout = TimeSpan.FromSeconds(3),
+        };
+        await Assert.ThrowsAnyAsync<Exception>(() => client.GetAsync("/"));
+    }
 }

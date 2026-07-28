@@ -53,6 +53,14 @@ internal sealed class LauncherServer : IAsyncDisposable
     /// <summary>Starts listening.</summary>
     public Task StartAsync() => _app.StartAsync();
 
+    /// <summary>
+    /// Blocks until the web host shuts down — either a Ctrl+C / termination signal that
+    /// the host's own console lifetime handles, or <paramref name="cancellationToken"/>
+    /// (the command's token) — then stops the host. Returning is the signal to dispose.
+    /// </summary>
+    public Task WaitForShutdownAsync(CancellationToken cancellationToken) =>
+        _app.WaitForShutdownAsync(cancellationToken);
+
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
@@ -421,7 +429,8 @@ internal sealed class LauncherServer : IAsyncDisposable
         }
     }
 
-    private async Task HandleEventsAsync(HttpContext context, CancellationToken cancellationToken)
+    private async Task HandleEventsAsync(
+        HttpContext context, IHostApplicationLifetime lifetime, CancellationToken cancellationToken)
     {
         var active = Active();
         if (active is null)
@@ -436,11 +445,25 @@ internal sealed class LauncherServer : IAsyncDisposable
         using var subscription = active.Session.Broadcaster.Subscribe(out var reader);
         await context.Response.Body.FlushAsync(cancellationToken);
 
-        await foreach (var liveEvent in reader.ReadAllAsync(cancellationToken))
+        // End the stream on a client disconnect (`cancellationToken` is RequestAborted) OR
+        // when the host begins shutting down (Ctrl+C). Observing ApplicationStopping keeps a
+        // live stream from holding graceful shutdown open until the host's timeout.
+        using var streaming = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, lifetime.ApplicationStopping);
+        var streamToken = streaming.Token;
+
+        try
         {
-            await context.Response.WriteAsync($"event: {liveEvent.Event}\n", cancellationToken);
-            await context.Response.WriteAsync($"data: {liveEvent.Data}\n\n", cancellationToken);
-            await context.Response.Body.FlushAsync(cancellationToken);
+            await foreach (var liveEvent in reader.ReadAllAsync(streamToken))
+            {
+                await context.Response.WriteAsync($"event: {liveEvent.Event}\n", streamToken);
+                await context.Response.WriteAsync($"data: {liveEvent.Data}\n\n", streamToken);
+                await context.Response.Body.FlushAsync(streamToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // A normal client disconnect or a server shutdown; the `using` above cleans up.
         }
     }
 

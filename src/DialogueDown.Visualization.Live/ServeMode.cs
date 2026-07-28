@@ -112,13 +112,13 @@ internal static class ServeMode
             browser.Open(url);
         }
 
-        // Keep serving until canceled (Ctrl+C). Complete normally on cancellation
-        // rather than throwing, so shutdown is not an exceptional path.
-        var stopped = new TaskCompletionSource();
-        await using var registration = cancellationToken.Register(() => stopped.TrySetResult());
+        // Keep serving until the web host shuts down — Ctrl+C (a termination signal the host
+        // handles) or the command's cancellation token. WaitForShutdownAsync stops the host;
+        // the `await using` above then disposes it. Complete normally rather than throwing, so
+        // shutdown is not an exceptional path.
         try
         {
-            await stopped.Task;
+            await server.WaitForShutdownAsync(cancellationToken);
         }
         finally
         {
