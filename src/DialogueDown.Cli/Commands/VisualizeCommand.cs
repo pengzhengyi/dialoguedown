@@ -1,5 +1,4 @@
 using DialogueDown.Configuration;
-using DialogueDown.Visualization;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live;
 using Spectre.Console.Cli;
