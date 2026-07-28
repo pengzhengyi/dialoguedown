@@ -2,10 +2,10 @@
 
 > [!IMPORTANT]
 > Status: **implemented** — Component 5 of the diagnostics subsystem
-> ([#43](https://github.com/pengzhengyi/godot-dialoguedown/issues/43)).
+> ([#43](https://github.com/pengzhengyi/dialoguedown/issues/43)).
 > Components 1–4 **collect** located diagnostics and recover; this component makes them
 > **visible** to script authors on the `dialoguedown` CLI, and exposes the compilation mode there
-> (the CLI half of [#110](https://github.com/pengzhengyi/godot-dialoguedown/issues/110)). It builds
+> (the CLI half of [#110](https://github.com/pengzhengyi/dialoguedown/issues/110)). It builds
 > on the [Diagnostics and Validation](Diagnostics%20and%20Validation.md) note (DD6, DD7, DD9).
 
 ## Table of contents
@@ -44,9 +44,9 @@ authoring against DialogueDown gives real feedback.
 and location; the CLI errata renderer and its data-error exit code; a `compile --mode` option.
 
 **Out of scope (deferred):** the LSP and web-report projections (Component 6,
-[#121](https://github.com/pengzhengyi/godot-dialoguedown/issues/121)); the config-file `mode`
+[#121](https://github.com/pengzhengyi/dialoguedown/issues/121)); the config-file `mode`
 key and the visualization mode tab (the rest of
-[#110](https://github.com/pengzhengyi/godot-dialoguedown/issues/110)); a `--mode fail-fast` CLI
+[#110](https://github.com/pengzhengyi/dialoguedown/issues/110)); a `--mode fail-fast` CLI
 option (needs a public fail-fast reporting seam — see DR6); promoting warnings to errors (a
 planned per-run toggle).
 
@@ -300,7 +300,7 @@ Resolved while finalizing the design (headless), including the design-review pas
 2. **Sort key.** Order by **position then code** — a compiler-like reading order — over
    severity-first.
 3. **Config `mode` key.** **Deferred** to the rest of
-   [#110](https://github.com/pengzhengyi/godot-dialoguedown/issues/110), keeping this component
+   [#110](https://github.com/pengzhengyi/dialoguedown/issues/110), keeping this component
    CLI-focused and cleanly bounded.
 4. **Fail-fast is not a CLI mode** (DR6). It is a throwing embedding contract, incompatible with
    errata and invisible to the CLI (internal exception); a public fail-fast reporting seam is a

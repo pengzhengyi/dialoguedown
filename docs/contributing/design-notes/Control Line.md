@@ -11,7 +11,7 @@
 > [Markdown to Dialogue AST Transpiler](./Markdown%20to%20Dialogue%20AST%20Transpiler.md)
 > and the condition from the [Conditional Jump](./Conditional%20Jump.md) note.
 > Executing an effect at play time is part of the planned
-> [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
+> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
 ## Table of contents
 

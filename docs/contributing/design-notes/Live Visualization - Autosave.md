@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented**
-> ([issue #140](https://github.com/pengzhengyi/godot-dialoguedown/issues/140)).
+> ([issue #140](https://github.com/pengzhengyi/dialoguedown/issues/140)).
 > Reliable idle autosave in the live report, alongside explicit Save, discard,
 > external-change protection, and document-specific defaults. See
 > [Implementation status](#implementation-status) for what shipped.

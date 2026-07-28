@@ -164,9 +164,9 @@ changes easy to categorize.
   failing to open. See the
   [Unavailable Stage Tabs](docs/contributing/design-notes/Unavailable%20Stage%20Tabs.md) note.
 - **Documentation site and live demo** — a
-  [DocFX site](https://pengzhengyi.github.io/godot-dialoguedown/) (a writer Guide, a
+  [DocFX site](https://pengzhengyi.github.io/dialoguedown/) (a writer Guide, a
   Contributing section with the design notes, and a generated C# API reference) and a
-  [live, read-only demo](https://pengzhengyi.github.io/godot-dialoguedown/demo/) of
+  [live, read-only demo](https://pengzhengyi.github.io/dialoguedown/demo/) of
   the report, both published to GitHub Pages on every merge to `main`.
 - **Development guardrails** — architecture tests that enforce the project's
   dependency direction (the engine-agnostic core stays free of the CLI, the

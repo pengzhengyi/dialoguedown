@@ -16,10 +16,10 @@ core free of any game-engine dependency.
 | **[📘 Guide](guide/index.md)** | Writers | How to write dialogue scripts — the overview and the script-language specification. |
 | **[🔧 Contributing](contributing/index.md)** | Developers | Architecture, the design notes behind each compiler stage, and how to contribute. |
 | **[📗 API reference](api/index.md)** | Developers | The C# library API, generated from the source XML documentation. |
-| **[🎨 Live demo](https://pengzhengyi.github.io/godot-dialoguedown/demo/)** | Everyone | An interactive visualization of a sample script's compiler stages. |
+| **[🎨 Live demo](https://pengzhengyi.github.io/dialoguedown/demo/)** | Everyone | An interactive visualization of a sample script's compiler stages. |
 
 ## Project links
 
-- [Source on GitHub](https://github.com/pengzhengyi/godot-dialoguedown)
-- [Changelog](https://github.com/pengzhengyi/godot-dialoguedown/blob/main/CHANGELOG.md)
-- [Report a security issue](https://github.com/pengzhengyi/godot-dialoguedown/blob/main/SECURITY.md)
+- [Source on GitHub](https://github.com/pengzhengyi/dialoguedown)
+- [Changelog](https://github.com/pengzhengyi/dialoguedown/blob/main/CHANGELOG.md)
+- [Report a security issue](https://github.com/pengzhengyi/dialoguedown/blob/main/SECURITY.md)
