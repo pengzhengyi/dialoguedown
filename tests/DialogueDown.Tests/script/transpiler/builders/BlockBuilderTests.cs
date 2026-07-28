@@ -166,6 +166,85 @@ public sealed class BlockBuilderTests
     }
 
     [Fact]
+    public void ChoiceItem_WithALeadingCondition_GuardsTheWholeOption()
+    {
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"HasKey\"?"), Text(" Use the key."))),
+                ListItem(TextParagraph("Search for another way."))),
+        ]);
+
+        var choices = AssertChoices(Assert.Single(body), isOrdered: false);
+        var guarded = choices.Options[0];
+        AssertCondition(guarded.Condition!, "HasKey");
+        Assert.True(guarded.IsConditional);
+        AssertSpeechText(AssertChoiceLine(guarded), "Use the key.");
+
+        Assert.Null(choices.Options[1].Condition);
+        AssertSpeechText(AssertChoiceLine(choices.Options[1]), "Search for another way.");
+    }
+
+    [Fact]
+    public void ChoiceItem_ConditionBindsTheOption_NotItsInnerLine()
+    {
+        // The guard sits on the option, so its first line stays an ordinary line with its speaker.
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"IsAngry\"?"), Text(" Bob: Attack!")))),
+        ]);
+
+        var choice = Assert.Single(AssertChoices(Assert.Single(body), isOrdered: false).Options);
+        AssertCondition(choice.Condition!, "IsAngry");
+        var line = AssertChoiceLine(choice);
+        Assert.Null(line.Condition);
+        AssertSpeakerNameReference(line.Speaker!, "Bob");
+        AssertSpeechText(line, "Attack!");
+    }
+
+    [Fact]
+    public void RandomOption_WithALeadingCondition_CarriesBothTheConditionAndTheWeight()
+    {
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(
+                    CodeSpan("\"IsAngry\"?"), Text(" "), CodeSpan("50%"), Text(" The guard glares."))),
+                ListItem(Paragraph(CodeSpan("50%"), Text(" The guard nods.")))),
+        ]);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        var guarded = random.Options[0];
+        AssertCondition(guarded.Condition!, "IsAngry");
+        Assert.True(guarded.IsConditional);
+        AssertNumberWeight(guarded, 50);
+        AssertSpeechText(AssertRandomOptionLine(guarded), "The guard glares.");
+        Assert.Null(random.Options[1].Condition);
+    }
+
+    [Fact]
+    public void RandomOptions_LeadingWithAConditionThenAWeight_AreStillARandomChoice()
+    {
+        // Without peeking past the condition, both options would look weight-less and the list
+        // would be misread as a player choice.
+        var body = Build(
+        [
+            ListBlock(
+                ordered: false,
+                ListItem(Paragraph(CodeSpan("\"C1\"?"), Text(" "), CodeSpan("50%"), Text(" A"))),
+                ListItem(Paragraph(CodeSpan("\"C2\"?"), Text(" "), CodeSpan("50%"), Text(" B")))),
+        ]);
+
+        var random = AssertRandomChoices(Assert.Single(body));
+        AssertCondition(random.Options[0].Condition!, "C1");
+        AssertCondition(random.Options[1].Condition!, "C2");
+    }
+
+    [Fact]
     public void NestedList_BecomesNestedChoices()
     {
         var innerList = ListBlock(ordered: false, ListItem(TextParagraph("Inner")));

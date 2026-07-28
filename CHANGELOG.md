@@ -27,12 +27,14 @@ changes easy to categorize.
   now warns when unreachable content — a trailing fragment or a second jump — follows a jump on the
   same line. See the
   [Progression Order](docs/contributing/design-notes/Progression%20Order.md) note.
-- **Conditions** — put a game-state query with a `?` in front of a jump or a line
-  (`` `"FoundKey"?` ``) to guard it: the jump fires, or the line plays, only when the query
-  reads as true, and otherwise the dialogue falls through to the next line. The game answers
-  each condition with a boolean; an unset one counts as false. See the
-  [Conditional Jump](docs/contributing/design-notes/Conditional%20Jump.md) and
-  [Conditional Line](docs/contributing/design-notes/Conditional%20Line.md) notes.
+- **Conditions** — put a game-state query with a `?` in front of a jump, a line, or a choice
+  option (`` `"FoundKey"?` ``) to guard it: the jump fires, the line plays, or the option is
+  offered only when the query reads as true, and otherwise it is skipped. A random option can
+  lead with a condition before its weight, so a random pool can offer a dynamic set of options.
+  The game answers each condition with a boolean; an unset one counts as false. See the
+  [Conditional Jump](docs/contributing/design-notes/Conditional%20Jump.md),
+  [Conditional Line](docs/contributing/design-notes/Conditional%20Line.md), and
+  [Conditional Choice](docs/contributing/design-notes/Conditional%20Choice.md) notes.
 - **Copy a scene heading's anchor from the report** — hovering a heading in the live
   visualization's Source preview reveals a link icon that copies a ready-to-paste jump
   `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.

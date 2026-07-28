@@ -157,6 +157,28 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
+    public void Neighbors_ConditionalChoice_YieldsTheConditionThenBody()
+    {
+        var span = new SourceSpan(0, 5);
+        var condition = new Condition("Rainy", span);
+        var line = new Line(null, [new Text("x", span)], span);
+        var choice = new Choice([line], span, condition);
+
+        Assert.Equal(new object[] { condition, line }, _projection.Neighbors(choice));
+    }
+
+    [Fact]
+    public void Neighbors_ConditionalRandomOption_YieldsTheConditionThenBody()
+    {
+        var span = new SourceSpan(0, 5);
+        var condition = new Condition("Rainy", span);
+        var line = new Line(null, [new Text("x", span)], span);
+        var option = new RandomOption(new NumberWeight(50, span), [line], span, condition);
+
+        Assert.Equal(new object[] { condition, line }, _projection.Neighbors(option));
+    }
+
+    [Fact]
     public void Neighbors_Line_YieldsSpeakerThenSpeech()
     {
         var span = new SourceSpan(0, 5);

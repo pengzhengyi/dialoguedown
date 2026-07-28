@@ -125,10 +125,10 @@ internal static class DiagnosticDocs
                 ["`10%`"])),
         new(
             DiagnosticCatalog.OrphanCondition,
-            "A condition guards the jump it precedes or the line it fronts, so it must sit "
-            + "immediately before a `=>` jump or at the start of a line. A `\"key\"?` code span "
-            + "anywhere else has nothing to guard. Move it in front of a jump, front a line with "
-            + "it, or remove the `?` to write a plain query.",
+            "A condition guards the jump it precedes, the line it fronts, or the choice option it "
+            + "leads, so it must sit immediately before a `=>` jump or at the start of a line or "
+            + "choice. A `\"key\"?` code span anywhere else has nothing to guard. Move it in front "
+            + "of a jump, front a line or option with it, or remove the `?` to write a plain query.",
             new(
                 """
                 # Moor
