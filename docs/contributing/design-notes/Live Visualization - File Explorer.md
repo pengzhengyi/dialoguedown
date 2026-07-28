@@ -75,8 +75,18 @@ backs browsing and opening from within a served report.
       preserved).
 - [x] Open a script from a **cross-file source link** (`chapter-02.md#anchor`) by
       navigating to that script.
-- [x] Create a new script in the active script's folder (**New file**), reusing the
-      launcher's name/append/conflict rules, then open it in Edit.
+- [x] Create a new script (**New file**) at the root or, from a folder's context
+      menu, inside that folder — reusing the launcher's name/append/conflict rules,
+      then open it in Edit.
+- [x] Create a new **folder** (header toolbar, or a folder's context menu).
+- [x] **Rename** a script or folder in place (context menu), moving the file or
+      folder; when the rename carries the open document, reopen it at its new path.
+- [x] Pin the project's **`dialogue.toml`** above the tree and open it in the
+      Config tab.
+- [x] A VS Code-style **header toolbar** (New File, New Folder, Refresh, Collapse
+      Folders) and cursor-anchored right-click **context menus**.
+- [x] Serve the report and launcher HTML **uncached** (`Cache-Control: no-store`),
+      so a rebuilt bundle is never stale against the live filesystem.
 - [x] Confine every path to the root (no `..`, absolute, or symlink escape).
 - [x] Remember the sidebar's collapsed/expanded state across reloads.
 - [x] Flush or guard unsaved edits before navigating away (Edit mode).

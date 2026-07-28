@@ -12,8 +12,10 @@ changes easy to categorize.
 
 - **File Explorer in the report** — a served report opened through the launcher now shows a
   collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
-  highlighted, open another by clicking it or following a cross-file link, and create a new script
-  in place. See the
+  highlighted, and open another by clicking it or following a cross-file link. A VS Code-style
+  header toolbar and right-click menus create files and folders and rename scripts and folders in
+  place, and a pinned `dialogue.toml` entry opens the Config tab; switching scripts respects the
+  save mode (Auto flushes, Manual prompts). See the
   [Live Visualization — File Explorer](docs/contributing/design-notes/Live%20Visualization%20-%20File%20Explorer.md) note.
 - **Styled speaker names are flagged** — when a line's speaker name is Markdown-styled
   (`*Alice*:`), it is not recognized as a speaker prefix and the line would otherwise be left
