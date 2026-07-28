@@ -101,6 +101,8 @@ export interface AppController {
     markConfigDirty(dirty: boolean): void;
     /** Whether the Config tab is the active tab (so a save/⌘S targets the config). */
     isConfigTabActive(): boolean;
+    /** Activate the Config tab — the Explorer's "open dialogue.toml"; a no-op without a config. */
+    showConfigTab(): void;
     /** Show a status message (e.g. a live compile error), or clear it with `null`. */
     showBanner(message: string | null): void;
 }
@@ -216,6 +218,13 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
         markSourceDirty: (dirty) => sourceTab?.classList.toggle("dirty", dirty),
         markConfigDirty: (dirty) => configTab?.classList.toggle("dirty", dirty),
         isConfigTabActive: () => configPresent && activeIndex === 0,
+        showConfigTab: () => {
+            // Mirror a Config-tab click: route through the save-safe navigation guard so an Auto
+            // save flushes (or a Manual prompt resolves) before the tab changes.
+            if (!configPresent || activeIndex === 0) return;
+            if (source?.beginNavigation) source.beginNavigation(() => activate(0));
+            else activate(0);
+        },
         showBanner(message) {
             bannerEl.textContent = message ?? "";
             bannerEl.hidden = message === null;

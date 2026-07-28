@@ -31,6 +31,14 @@ describe("createCollapseToggle", () => {
         expect(onToggle).toHaveBeenCalledOnce();
     });
 
+    it("draws left-panel glyphs for a left-side panel, right-panel glyphs by default", () => {
+        // The divider sits at x=9 for a left panel (panel-left) and x=15 for a right one
+        // (panel-right), so each side's chevrons point the way the panel moves without a CSS mirror.
+        expect(createCollapseToggle(vi.fn(), "left").innerHTML).toContain("M9 3v18");
+        expect(createCollapseToggle(vi.fn(), "left").innerHTML).not.toContain("M15 3v18");
+        expect(createCollapseToggle(vi.fn()).innerHTML).toContain("M15 3v18");
+    });
+
     it("swallows mousedown so a divider drag never starts from the toggle", () => {
         const button = createCollapseToggle(vi.fn());
         const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true });

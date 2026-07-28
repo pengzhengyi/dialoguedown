@@ -426,7 +426,8 @@ section.stage.error {
     background: transparent;
 }
 
-/* The show/hide toggle sits on the divider, like the inspector's re-open handle. */
+/* The show/hide toggle sits on the divider, like the inspector's re-open handle. It carries the
+   left-hand `panel-left-*` glyphs (via side: "left"), so the chevrons already point the right way. */
 #explorer-resizer .collapse-toggle {
     position: absolute;
     top: 0;
@@ -437,31 +438,67 @@ section.stage.error {
 .explorer-header {
     display: flex;
     gap: 0.5rem;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
+    min-height: 1.6rem;
 }
 
-.explorer-new {
-    width: auto;
+/* The header action toolbar (New file, New folder, Refresh, Collapse), VS Code style. */
+.explorer-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.05rem;
+}
+
+.explorer-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
     margin: 0;
-    padding: 0 0.35rem;
+    padding: 0;
     border: 0;
     border-radius: var(--pico-border-radius);
     background: transparent;
-    color: var(--pico-primary);
-    font-size: 0.72rem;
-    line-height: 1.6;
+    color: var(--pico-muted-color);
+    box-shadow: none;
     cursor: pointer;
 }
 
-.explorer-new:hover {
-    background: var(--pico-secondary-background, rgb(128 128 128 / 12%));
+.explorer-action:hover {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+    color: var(--pico-color);
 }
 
-.explorer-create-name {
-    width: 100%;
+.explorer-action-icon {
+    font-size: 15px;
+}
+
+/* The inline create field lives inside a tree row, filling the space after the icon. A
+   theme-matched background and a mode-accent border keep it readable in light and dark. */
+.explorer-input-row .explorer-row {
+    cursor: default;
+}
+
+.explorer-tree .explorer-create-name {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    height: 1.4rem;
     margin: 0;
-    padding: 0.1rem 0.3rem;
+    padding: 0 0.25rem;
+    border: 1px solid var(--mode-accent, var(--pico-primary));
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-background-color);
+    color: var(--pico-color);
+    font-size: 0.8rem;
+    line-height: normal;
+}
+
+.explorer-create-ext {
+    flex: 0 0 auto;
+    color: var(--pico-muted-color);
     font-size: 0.8rem;
 }
 
@@ -496,9 +533,16 @@ section.stage.error {
     list-style: none;
 }
 
+.explorer-tree li,
+.explorer-input-row {
+    margin: 0;
+    padding: 0;
+}
+
 .explorer-children {
-    margin-left: 0.35rem;
-    padding-left: 0.75rem;
+    /* A shallow indent with a faint guide line, like VS Code's tree. */
+    margin-left: 0.55rem;
+    padding-left: 0.4rem;
     border-left: 1px solid var(--pico-muted-border-color);
 }
 
@@ -507,48 +551,131 @@ section.stage.error {
 }
 
 .explorer-row {
-    display: block;
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
     width: 100%;
+    min-height: 0;
+    height: 1.375rem;
     margin: 0;
-    padding: 0.1rem 0.3rem;
+    padding: 0 0.25rem;
     overflow: hidden;
     border: 0;
     border-radius: var(--pico-border-radius);
     background: transparent;
     color: inherit;
+    box-shadow: none;
     font-size: 0.8rem;
-    line-height: 1.5;
+    line-height: 1.375rem;
     text-align: left;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     cursor: pointer;
 }
 
 .explorer-row:hover {
-    background: var(--pico-secondary-background, rgb(128 128 128 / 12%));
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 12%, transparent);
 }
 
-.explorer-folder-row::before {
-    display: inline-block;
-    width: 1em;
+/* Pico paints buttons with a primary focus ring via the shared box-shadow; the rows and
+   toolbar buttons suppress it (box-shadow: none) and use a themed keyboard-only outline, so
+   mouse selection reads as a flat, on-accent VS Code tree rather than a blue Pico button. */
+.explorer-row:focus-visible,
+.explorer-action:focus-visible {
+    outline: 2px solid var(--mode-accent, var(--pico-primary));
+    outline-offset: -2px;
+}
+
+.explorer-chevron,
+.explorer-icon {
+    flex: 0 0 auto;
     color: var(--pico-muted-color);
-    content: "▸";
+    font-size: 15px;
 }
 
-.explorer-folder.expanded > .explorer-folder-row::before {
-    content: "▾";
+.explorer-chevron {
+    width: 15px;
+    transition: transform 0.12s ease;
 }
 
+.explorer-folder.expanded > .explorer-folder-row .explorer-chevron {
+    transform: rotate(90deg);
+}
+
+.explorer-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Selected script: a subtle tint with a left accent bar following the View/Edit color —
+   not a heavy solid block. */
 .explorer-script.active > .explorer-script-row {
-    background: var(--mode-accent, var(--pico-primary));
-    color: var(--pico-primary-inverse, #fff);
-    font-weight: 600;
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 22%, transparent);
+    box-shadow: inset 2px 0 0 var(--mode-accent, var(--pico-primary));
+    color: inherit;
+    font-weight: 500;
+}
+
+.explorer-script.active > .explorer-script-row .explorer-icon {
+    color: var(--mode-accent, var(--pico-primary));
 }
 
 .explorer-empty {
     padding: 0.3rem;
     color: var(--pico-muted-color);
     font-size: 0.78rem;
+}
+
+/* The pinned project configuration entry (dialogue.toml), above the lazy tree — project-level,
+   so it sits apart from the script tree with a little breathing room and a hairline. */
+.explorer-config-row {
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    border-radius: 0;
+}
+
+/* A folder's right-click menu: a small floating card of actions (New File / New Folder),
+   anchored at the cursor. It reuses the tree's accent-tinted hover so it feels of a piece. */
+.explorer-context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 11rem;
+    padding: 0.25rem;
+    color: var(--pico-color);
+    background: var(--pico-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 28%);
+}
+
+.explorer-menu-item {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    text-align: left;
+    cursor: pointer;
+}
+
+.explorer-menu-item:hover,
+.explorer-menu-item:focus-visible {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
+    outline: none;
+}
+
+.explorer-menu-icon {
+    flex: 0 0 auto;
+    color: var(--pico-muted-color);
+    font-size: 15px;
 }
 
 /* Semantic tab: the scene-tree graph (left) beside stacked, collapsible tables (right).
@@ -1938,7 +2065,8 @@ body.maximized #app {
 .detail-collapsed .collapse-toggle,
 .preview-collapsed .collapse-toggle,
 .config-collapsed .collapse-toggle,
-.tables-collapsed .collapse-toggle {
+.tables-collapsed .collapse-toggle,
+.explorer-collapsed .collapse-toggle {
     --pico-color: inherit;
 
     opacity: 1;
@@ -1962,14 +2090,16 @@ body.maximized #app {
 .detail-collapsed .collapse-toggle .icon-collapse,
 .preview-collapsed .collapse-toggle .icon-collapse,
 .config-collapsed .collapse-toggle .icon-collapse,
-.tables-collapsed .collapse-toggle .icon-collapse {
+.tables-collapsed .collapse-toggle .icon-collapse,
+.explorer-collapsed .collapse-toggle .icon-collapse {
     display: none;
 }
 
 .detail-collapsed .collapse-toggle .icon-expand,
 .preview-collapsed .collapse-toggle .icon-expand,
 .config-collapsed .collapse-toggle .icon-expand,
-.tables-collapsed .collapse-toggle .icon-expand {
+.tables-collapsed .collapse-toggle .icon-expand,
+.explorer-collapsed .collapse-toggle .icon-expand {
     display: block;
 }
 

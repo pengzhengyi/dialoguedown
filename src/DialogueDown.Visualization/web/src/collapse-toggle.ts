@@ -1,31 +1,45 @@
 /**
- * Lucide Icons (ISC): `panel-right-close` (a right-hand panel with an inward chevron)
- * to hide the panel, and `panel-right-open` (outward chevron) to bring it back — the
- * standard "hide/show side panel" glyphs. Both are rendered into the one button; CSS
- * reveals whichever matches the panel's collapsed state (a class on the panel's
- * container), so a toggle built while the panel is already collapsed still shows the
- * correct glyph.
+ * Lucide Icons (ISC): the standard "hide/show side panel" glyphs. A right-hand panel uses
+ * `panel-right-close` (an inward chevron) to hide and `panel-right-open` (outward) to show; a
+ * left-hand panel (the Explorer) uses the `panel-left-*` pair, so each side's chevron points the
+ * way the panel moves — drawn correctly per side rather than mirrored with a CSS transform, which
+ * some engines render inconsistently. Both glyphs render into the one button; CSS reveals whichever
+ * matches the panel's collapsed state (a class on the panel's container), so a toggle built while
+ * the panel is already collapsed still shows the correct glyph.
  */
-const icon = (variant: string, extra: string): string =>
+export type PanelSide = "left" | "right";
+
+const svgIcon = (variant: string, divider: string, chevron: string): string =>
     `<svg class="collapse-icon ${variant}" viewBox="0 0 24 24" width="15" height="15" ` +
     `fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ` +
     `stroke-linejoin="round" aria-hidden="true">` +
-    `<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/>${extra}</svg>`;
+    `<rect width="18" height="18" x="3" y="3" rx="2"/><path d="${divider}"/><path d="${chevron}"/></svg>`;
 
-const COLLAPSE = icon("icon-collapse", '<path d="m8 9 3 3-3 3"/>');
-const EXPAND = icon("icon-expand", '<path d="m10 15-3-3 3-3"/>');
+// Per side: the panel's divider, plus the hide (collapse) and show (expand) chevrons, drawn so the
+// chevron points the way the panel moves — a right panel hides rightward, a left panel leftward.
+const GLYPHS: Record<PanelSide, { divider: string; collapse: string; expand: string }> = {
+    right: { divider: "M15 3v18", collapse: "m8 9 3 3-3 3", expand: "m10 15-3-3 3-3" },
+    left: { divider: "M9 3v18", collapse: "m16 15-3-3 3-3", expand: "m14 9 3 3-3 3" },
+};
 
 /**
- * A hide/show toggle carrying both the collapse and expand panel glyphs. The visible
- * glyph is chosen by CSS from the container's collapsed class rather than per-button
- * state, so a toggle rebuilt while the panel is collapsed still reads correctly. The
- * mousedown is swallowed so pressing the toggle on a resize divider never starts a drag.
+ * A hide/show toggle carrying both the collapse and expand panel glyphs for its {@link side}
+ * (default the right). The visible glyph is chosen by CSS from the container's collapsed class
+ * rather than per-button state, so a toggle rebuilt while the panel is collapsed still reads
+ * correctly. The mousedown is swallowed so pressing the toggle on a resize divider never starts a
+ * drag.
  */
-export function createCollapseToggle(onToggle: () => void): HTMLButtonElement {
+export function createCollapseToggle(
+    onToggle: () => void,
+    side: PanelSide = "right",
+): HTMLButtonElement {
+    const glyph = GLYPHS[side];
     const button = document.createElement("button");
     button.type = "button";
     button.className = "collapse-toggle";
-    button.innerHTML = COLLAPSE + EXPAND;
+    button.innerHTML =
+        svgIcon("icon-collapse", glyph.divider, glyph.collapse) +
+        svgIcon("icon-expand", glyph.divider, glyph.expand);
     button.addEventListener("click", onToggle);
     button.addEventListener("mousedown", (event) => event.stopPropagation());
     return button;
@@ -50,6 +64,8 @@ export interface CollapsiblePanelOptions {
     storageKey: string;
     /** Accessible name of the panel, e.g. "inspector" or "preview". */
     name: string;
+    /** Which side the panel is on, so the toggle's chevrons point the right way. Defaults to "right". */
+    side?: PanelSide;
     /** Storage for the remembered state; defaults to `localStorage`. */
     storage?: Storage;
 }
@@ -86,7 +102,7 @@ export function initCollapsiblePanel(options: CollapsiblePanelOptions): Collapsi
         }
     };
 
-    const button = createCollapseToggle(toggle);
+    const button = createCollapseToggle(toggle, options.side);
 
     let remembered = false;
     try {

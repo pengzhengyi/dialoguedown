@@ -1,5 +1,6 @@
 import "@picocss/pico/css/pico.min.css";
 import "tippy.js/dist/tippy.css";
+import "@vscode/codicons/dist/codicon.css";
 import "./styles.css";
 
 import { runApp } from "./app";
@@ -17,10 +18,27 @@ import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
 import { initHelpToggle } from "./help";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
-import { initExplorer, resolveProjectPath } from "./explorer";
+import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { type DialogueSymbols, EMPTY_SYMBOLS, type Report, type ServedMode } from "./model";
+import {
+    type ConfigReport,
+    type DialogueSymbols,
+    EMPTY_SYMBOLS,
+    type Report,
+    type ServedMode,
+} from "./model";
 import { parentPath, type BrowseListing, type CreateOutcome } from "./launcher";
+
+/**
+ * The Explorer's pinned configuration entry for a report — present only when a `dialogue.toml`
+ * was applied. The label is the file's leaf (separator-robust, so a Windows-authored report
+ * reads cleanly too).
+ */
+function configExplorerEntry(configuration: ConfigReport | undefined): ExplorerConfig | undefined {
+    const path = configuration?.file?.path;
+    if (path === undefined) return undefined;
+    return { label: path.split(/[\\/]/).pop() ?? path };
+}
 
 /**
  * The .NET library replaces the `"__REPORT__"` slot in report.html with the
@@ -220,31 +238,92 @@ if (report.mode === "view" || report.mode === "edit") {
         const appEl = document.getElementById("app");
         if (explorerEl && appEl) {
             appEl.classList.add("has-explorer");
-            initExplorer(explorerEl, report.project, {
-                browse: async (path) => {
-                    const response = await fetch(`/api/browse?path=${encodeURIComponent(path)}`);
-                    return response.ok ? ((await response.json()) as BrowseListing) : null;
+            initExplorer(
+                explorerEl,
+                report.project,
+                {
+                    browse: async (path) => {
+                        const response = await fetch(
+                            `/api/browse?path=${encodeURIComponent(path)}`,
+                        );
+                        return response.ok ? ((await response.json()) as BrowseListing) : null;
+                    },
+                    openScript: (path) =>
+                        beginNavigation(() => {
+                            void openScriptSession(path);
+                        }),
+                    create: async (path) => {
+                        // Resolve the current document save-safely first; a cancelled Manual save
+                        // aborts the create (empty message → the Explorer shows nothing).
+                        const live = activeLive();
+                        if (live && !(await resolveDocument(live))) {
+                            return { kind: "error", message: "" };
+                        }
+                        return createScriptSession(path);
+                    },
+                    createFolder: async (path) => {
+                        const response = await fetch("/api/create-folder", {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ path }),
+                        });
+                        if (response.ok) return { ok: true };
+                        const body = (await response.json().catch(() => ({}))) as {
+                            message?: string;
+                        };
+                        return {
+                            ok: false,
+                            message: body.message ?? "Could not create the folder.",
+                        };
+                    },
+                    rename: async (from, to) => {
+                        // A rename that carries the document on screen — the file itself, or a
+                        // file inside a renamed folder — saves it first (save-safe) and reopens it
+                        // under the new path; a cancelled Manual save aborts the rename.
+                        const activePath = report.project?.activePath;
+                        const carriesActive =
+                            activePath === from || (activePath?.startsWith(`${from}/`) ?? false);
+                        if (carriesActive) {
+                            const live = activeLive();
+                            if (live && !(await resolveDocument(live))) {
+                                return { kind: "error", message: "" };
+                            }
+                        }
+                        const response = await fetch("/api/rename", {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ from, to }),
+                        });
+                        if (response.ok) {
+                            const body = (await response.json().catch(() => ({}))) as {
+                                path?: string;
+                                active?: boolean;
+                                activePath?: string;
+                            };
+                            const path = body.path ?? to;
+                            if (body.active) void openScriptSession(body.activePath ?? path);
+                            return { kind: "renamed", path };
+                        }
+                        if (response.status === 409) return { kind: "exists" };
+                        const body = (await response.json().catch(() => ({}))) as {
+                            message?: string;
+                        };
+                        return {
+                            kind: "error",
+                            message: body.message ?? "Could not rename the file.",
+                        };
+                    },
+                    confirm: (message) => window.confirm(message),
+                    openConfig: () => app.showConfigTab(),
                 },
-                openScript: (path) =>
-                    beginNavigation(() => {
-                        void openScriptSession(path);
-                    }),
-                create: async (path) => {
-                    // Resolve the current document save-safely first; a cancelled Manual save
-                    // aborts the create (empty message → the Explorer shows nothing).
-                    const live = activeLive();
-                    if (live && !(await resolveDocument(live))) {
-                        return { kind: "error", message: "" };
-                    }
-                    return createScriptSession(path);
-                },
-                confirm: (message) => window.confirm(message),
-            });
+                configExplorerEntry(report.configuration),
+            );
             const explorerPanel = initCollapsiblePanel({
                 container: appEl,
                 collapsedClass: "explorer-collapsed",
                 storageKey: "dd-explorer-collapsed",
                 name: "explorer",
+                side: "left",
             });
             document.getElementById("explorer-resizer")?.appendChild(explorerPanel.button);
 
