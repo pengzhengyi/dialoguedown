@@ -29,6 +29,11 @@ public sealed class StyledSpeakerPrefixDetectorTests
         Assert.Single(Check(Emphasis(EmphasisKind.Strikethrough, Text("Ghost")), Text(": ...")));
 
     [Fact]
+    public void Report_ABoldItalicName_Reports() =>
+        // Nested emphasis: PlainText recurses through both layers to the name.
+        Assert.Single(Check(Emphasis(EmphasisKind.Bold, Italic(Text("Carol"))), Text(": hi")));
+
+    [Fact]
     public void Report_AStyledNameWithATag_Reports()
     {
         var diagnostic = Assert.Single(Check(Italic(Text("Alice")), Text(" #excited: hi")));
@@ -77,6 +82,25 @@ public sealed class StyledSpeakerPrefixDetectorTests
 
         Assert.Equal(
             "*Alice*:",
+            source.Substring(diagnostic.StartOffset, diagnostic.EndOffset - diagnostic.StartOffset));
+    }
+
+    [Fact]
+    public void Compiling_AStyledSpeakerPrefixInsideAChoiceOption_ReportsTheWarning()
+    {
+        var source = """
+            Alice: Pick one.
+            - *Bob*: Left.
+            """;
+
+        var compiler = ScriptCompilerFactory.CreateDefault(
+            CompilerOptions.Default with { Mode = CompilationMode.BestEffort });
+        var diagnostic = Assert.Single(
+            compiler.Compile(source).LocatedDiagnostics,
+            located => located.Code == DiagnosticCatalog.StyledSpeakerPrefix.Code);
+
+        Assert.Equal(
+            "*Bob*:",
             source.Substring(diagnostic.StartOffset, diagnostic.EndOffset - diagnostic.StartOffset));
     }
 
