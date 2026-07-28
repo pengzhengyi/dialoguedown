@@ -87,6 +87,126 @@ public sealed class LauncherServerTests
     }
 
     [Fact]
+    public async Task CreateFolder_MakesADirectoryVisibleInBrowse()
+    {
+        using var tree = new TempTree();
+        tree.File("root/a.dialogue.md", "# A");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var created = await client.PostAsJsonAsync("/api/create-folder", new { path = "act-2" });
+        Assert.Equal(HttpStatusCode.OK, created.StatusCode);
+
+        var json = await client.GetStringAsync("/api/browse?path=");
+        Assert.Contains("\"directories\":[\"act-2\"]", json);
+    }
+
+    [Fact]
+    public async Task CreateFolder_OutsideRoot_BadRequest()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync("/api/create-folder", new { path = "../escape" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Report_IsServedWithNoStore()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server, followRedirects: false);
+
+        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "view" });
+        var report = await client.GetAsync("/r/");
+
+        // Per-session HTML is rebuilt each launch, so it must not be cached (no stale reports).
+        Assert.Equal(HttpStatusCode.OK, report.StatusCode);
+        Assert.True(report.Headers.CacheControl!.NoStore);
+    }
+
+    [Fact]
+    public async Task Rename_MovesAScriptToItsNewName()
+    {
+        using var tree = new TempTree();
+        tree.File("root/act-1/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var renamed = await client.PostAsJsonAsync(
+            "/api/rename",
+            new { from = "act-1/scene.dialogue.md", to = "act-1/prologue.dialogue.md" });
+        Assert.Equal(HttpStatusCode.OK, renamed.StatusCode);
+
+        var json = await client.GetStringAsync("/api/browse?path=act-1");
+        Assert.Contains("prologue.dialogue.md", json);
+        Assert.DoesNotContain("scene.dialogue.md", json);
+    }
+
+    [Fact]
+    public async Task Rename_ToAnExistingName_Conflict()
+    {
+        using var tree = new TempTree();
+        tree.File("root/a.dialogue.md", "# A");
+        tree.File("root/b.dialogue.md", "# B");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/rename", new { from = "a.dialogue.md", to = "b.dialogue.md" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Rename_OutsideRoot_BadRequest()
+    {
+        using var tree = new TempTree();
+        tree.File("root/a.dialogue.md", "# A");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/rename", new { from = "a.dialogue.md", to = "../escape.dialogue.md" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Rename_MovesAFolderAndItsContents()
+    {
+        using var tree = new TempTree();
+        tree.File("root/act-1/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var renamed = await client.PostAsJsonAsync("/api/rename", new { from = "act-1", to = "act-one" });
+        Assert.Equal(HttpStatusCode.OK, renamed.StatusCode);
+
+        Assert.Contains("\"directories\":[\"act-one\"]", await client.GetStringAsync("/api/browse?path="));
+        Assert.Contains(
+            "act-one/scene.dialogue.md", await client.GetStringAsync("/api/browse?path=act-one"));
+    }
+
+    [Fact]
+    public async Task Rename_FolderOntoAnExistingName_Conflict()
+    {
+        using var tree = new TempTree();
+        tree.Dir("root/act-1");
+        tree.Dir("root/act-2");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync("/api/rename", new { from = "act-1", to = "act-2" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Open_ViewMode_ServesReportInViewMode()
     {
         using var tree = new TempTree();

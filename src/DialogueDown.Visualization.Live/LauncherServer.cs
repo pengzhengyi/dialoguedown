@@ -76,6 +76,15 @@ internal sealed class LauncherServer : IAsyncDisposable
         return parsed.Length != 0;
     }
 
+    // Served HTML is per-session and rebuilt on every launch, so it must never be cached: a stale
+    // report.html would render an old bundle against the live filesystem (wrong toggles, missing
+    // features). The launcher page follows the same rule.
+    private static IResult NoStoreHtml(HttpContext context, string html)
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
     private void Configure(WebApplication app)
     {
         // Compress the large report pages; text/event-stream is not compressible, so the
@@ -92,17 +101,19 @@ internal sealed class LauncherServer : IAsyncDisposable
         });
         app.UseRouting();
 
-        app.MapGet("/", () => Results.Content(_launcherHtml, "text/html; charset=utf-8"));
+        app.MapGet("/", (HttpContext context) => NoStoreHtml(context, _launcherHtml));
         app.MapGet("/api/browse", (string? path) => Browse(path ?? string.Empty));
         app.MapPost("/api/open", (OpenRequest request, HttpContext context) => Open(request, context));
         app.MapPost("/api/create", (CreateRequest request, HttpContext context) => Create(request, context));
+        app.MapPost("/api/create-folder", (CreateFolderRequest request) => CreateFolder(request));
+        app.MapPost("/api/rename", (RenameRequest request) => Rename(request));
         app.MapPost("/api/create-config", CreateConfig);
         app.MapGet("/api/document", Document);
         app.MapPost("/api/save", (SaveRequest request) => Save(request));
         app.MapPost("/api/reload", (ReloadRequest request) => Reload(request));
         app.MapGet("/api/events", HandleEventsAsync);
-        app.MapGet(ReportMount, () => Report(string.Empty));
-        app.MapGet(ReportMount + "/{**path}", (string? path) => Report(path ?? string.Empty));
+        app.MapGet(ReportMount, (HttpContext context) => Report(context, string.Empty));
+        app.MapGet(ReportMount + "/{**path}", (HttpContext context, string? path) => Report(context, path ?? string.Empty));
     }
 
     private IResult Browse(string path)
@@ -160,6 +171,31 @@ internal sealed class LauncherServer : IAsyncDisposable
         return StartSession(target, VisualizationMode.Edit, context);
     }
 
+    // Creates a new, empty folder at a root-confined path. A name that already exists (as a file or
+    // folder) is a conflict (409); an escape or a missing parent is a 400.
+    private IResult CreateFolder(CreateFolderRequest request)
+    {
+        var relativePath = request.Path ?? string.Empty;
+        var target = _root.Resolve(relativePath);
+        if (target is null || relativePath.Length == 0)
+        {
+            return Results.BadRequest(new { message = "The folder path is outside the launch root." });
+        }
+
+        if (!Directory.Exists(Path.GetDirectoryName(target)!))
+        {
+            return Results.BadRequest(new { message = "The containing folder does not exist." });
+        }
+
+        if (Directory.Exists(target) || File.Exists(target))
+        {
+            return Results.Conflict(new { message = "A file or folder with that name already exists." });
+        }
+
+        Directory.CreateDirectory(target);
+        return Results.Ok(new { path = relativePath });
+    }
+
     // Starts a served session for an existing source path and redirects to its report. Shared
     // by Open (an existing script) and Create (a freshly written one).
     private IResult StartSession(string source, string mode, HttpContext context)
@@ -192,7 +228,7 @@ internal sealed class LauncherServer : IAsyncDisposable
         return Results.StatusCode(StatusCodes.Status303SeeOther);
     }
 
-    private IResult Report(string path)
+    private IResult Report(HttpContext context, string path)
     {
         var active = Active();
         if (active is null || path.Trim('/') != active.ReportRelative)
@@ -200,7 +236,82 @@ internal sealed class LauncherServer : IAsyncDisposable
             return Results.NotFound();
         }
 
-        return Results.Content(active.Session.RenderInitialHtml(), "text/html; charset=utf-8");
+        return NoStoreHtml(context, active.Session.RenderInitialHtml());
+    }
+
+    // Renames (moves) a root-confined script or folder to a new root-relative path. A script keeps
+    // its `.dialogue.md` extension; a folder has no extension rule. A name already in use is a
+    // conflict (409). When the move carries the document on screen — the file itself, or a file
+    // inside a renamed folder — its watcher is dropped (so it does not fire a spurious "deleted")
+    // and the reply carries the document's new path so the client reopens it.
+    private IResult Rename(RenameRequest request)
+    {
+        var fromRelative = request.From ?? string.Empty;
+        var toRelative = request.To ?? string.Empty;
+        var from = _root.Resolve(fromRelative);
+        var to = _root.Resolve(toRelative);
+        if (from is null || to is null || fromRelative.Length == 0 || toRelative.Length == 0)
+        {
+            return Results.BadRequest(new { message = "The path is outside the launch root." });
+        }
+
+        var isFolder = Directory.Exists(from);
+        if (!isFolder && !File.Exists(from))
+        {
+            return Results.BadRequest(new { message = "The file or folder no longer exists." });
+        }
+
+        if (!isFolder
+            && !toRelative.EndsWith(DocumentValidation.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.BadRequest(
+                new { message = $"A script name must end in '{DocumentValidation.Extension}'." });
+        }
+
+        if (!Directory.Exists(Path.GetDirectoryName(to)!))
+        {
+            return Results.BadRequest(new { message = "The containing folder does not exist." });
+        }
+
+        if (File.Exists(to) || Directory.Exists(to))
+        {
+            return Results.Conflict(
+                new { message = "A file or folder with that name already exists.", path = toRelative });
+        }
+
+        string? activePath = null;
+        lock (_gate)
+        {
+            if (_active is { } current)
+            {
+                var activeRelative = _root.Relativize(current.Session.DocumentPath);
+                if (string.Equals(activeRelative, fromRelative, StringComparison.Ordinal))
+                {
+                    activePath = toRelative; // the active file itself was renamed
+                }
+                else if (activeRelative.StartsWith(fromRelative + "/", StringComparison.Ordinal))
+                {
+                    // the active file lives inside the renamed folder
+                    activePath = toRelative + activeRelative[fromRelative.Length..];
+                }
+
+                if (activePath is not null)
+                {
+                    current.Watcher?.Dispose();
+                }
+            }
+        }
+
+        if (isFolder)
+        {
+            Directory.Move(from, to);
+        }
+        else
+        {
+            File.Move(from, to);
+        }
+
+        return Results.Ok(new { path = toRelative, active = activePath is not null, activePath });
     }
 
     private IResult Document()
@@ -350,6 +461,10 @@ internal sealed class LauncherServer : IAsyncDisposable
     private sealed record OpenRequest(string? Source, string? Mode);
 
     private sealed record CreateRequest(string? Path);
+
+    private sealed record CreateFolderRequest(string? Path);
+
+    private sealed record RenameRequest(string? From, string? To);
 
     private sealed record SaveRequest(
         string? Source,
