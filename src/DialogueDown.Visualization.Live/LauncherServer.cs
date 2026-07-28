@@ -167,6 +167,9 @@ internal sealed class LauncherServer : IAsyncDisposable
         var sourceDirectory = Path.GetDirectoryName(source)!;
         var reportPath = ServeRoot.For(_root.RootDirectory, sourceDirectory).ReportPath;
         var session = _sessionFactory(source, mode);
+        // The Explorer sidebar needs the project root and this script's place in it; the launcher
+        // always serves within a root, so every launcher-served report is project-aware.
+        session.Project = new ReportProject(_root.RootDirectory, _root.Relativize(source));
         // A served session always watches the file: View hot-reloads the report, Edit
         // surfaces a passive "changed on disk" chip.
         var watcher = new DocumentWatcher(source, session.Refresh);

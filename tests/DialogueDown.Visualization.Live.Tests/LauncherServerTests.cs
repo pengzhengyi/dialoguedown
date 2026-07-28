@@ -69,6 +69,24 @@ public sealed class LauncherServerTests
     }
 
     [Fact]
+    public async Task Open_ServesReportCarryingTheProjectContext()
+    {
+        using var tree = new TempTree();
+        tree.File("root/proj/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server, followRedirects: false);
+
+        await client.PostAsJsonAsync(
+            "/api/open", new { source = "proj/scene.dialogue.md", mode = "view" });
+
+        // The launcher always serves within a root, so the report carries the project context the
+        // Explorer sidebar renders: the active script's root-relative path (and the root itself).
+        var html = await client.GetStringAsync("/r/proj/");
+        Assert.Contains("\"project\":{", html);
+        Assert.Contains("\"activePath\":\"proj/scene.dialogue.md\"", html);
+    }
+
+    [Fact]
     public async Task Open_ViewMode_ServesReportInViewMode()
     {
         using var tree = new TempTree();

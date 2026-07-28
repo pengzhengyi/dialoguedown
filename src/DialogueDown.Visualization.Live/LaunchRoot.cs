@@ -117,6 +117,9 @@ internal sealed class LaunchRoot
             && !Path.IsPathRooted(relative);
     }
 
+    /// <summary>The root-relative, forward-slash path of a confined absolute path under the root.</summary>
+    public string Relativize(string absolutePath) => ToRelative(absolutePath);
+
     private string ToRelative(string absolutePath)
     {
         var relative = Path.GetRelativePath(RootDirectory, absolutePath);
