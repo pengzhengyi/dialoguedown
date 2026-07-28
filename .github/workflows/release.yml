@@ -1,0 +1,64 @@
+name: Release
+
+# Publishes the ddown CLI to NuGet when a version tag is pushed, using NuGet
+# Trusted Publishing (OIDC) — no long-lived API key is stored. See
+# docs/guide/cli.md and the distribute-cli skill. The matching trusted-publishing
+# policy on nuget.org must reference this workflow file (release.yml).
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to NuGet
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for the OIDC token exchange with nuget.org
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Derive version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore DialogueDown.sln
+
+      - name: Build
+        run: dotnet build DialogueDown.sln --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Test
+        run: dotnet test DialogueDown.sln --configuration Release --no-build
+
+      - name: Pack the ddown CLI
+        run: dotnet pack src/DialogueDown.Cli/DialogueDown.Cli.csproj --configuration Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
+
+      - name: NuGet login (OIDC exchange for a short-lived key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
