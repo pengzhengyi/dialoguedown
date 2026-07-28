@@ -1,12 +1,14 @@
 # Control line
 
 > [!NOTE]
-> Status: **proposed**. This note designs the **control line** — an *effect-only*
-> block with no speaker, distinct from a spoken [line](./Conditional%20Line.md). It
-> models what a bare jump and a silent command already are (control and effect, not
-> speech), so neither is attributed to the configured default speaker. It grows out
-> of the [Block Controls](./Block%20Controls.md) survey and reuses the jump and
-> command fragments from the [Markdown to Dialogue AST Transpiler](./Markdown%20to%20Dialogue%20AST%20Transpiler.md)
+> Status: **implemented**. The compiler recognizes a **control line** — an
+> *effect-only* block with no speaker, distinct from a spoken
+> [line](./Conditional%20Line.md). It models what a bare jump and a silent command
+> already are (control and effect, not speech), so neither is attributed to the
+> configured default speaker. It grows out of the
+> [Block Controls](./Block%20Controls.md) survey and reuses the jump and command
+> fragments from the
+> [Markdown to Dialogue AST Transpiler](./Markdown%20to%20Dialogue%20AST%20Transpiler.md)
 > and the condition from the [Conditional Jump](./Conditional%20Jump.md) note.
 > Executing an effect at play time is part of the planned
 > [runtime](https://github.com/pengzhengyi/godot-dialoguedown/issues/45).
@@ -25,7 +27,7 @@
   - [Key design decisions](#key-design-decisions)
     - [D1 — A distinct sibling type, guarded through `IConditional`](#d1--a-distinct-sibling-type-guarded-through-iconditional)
     - [D2 — The boundary is speaker-less and effect-only](#d2--the-boundary-is-speaker-less-and-effect-only)
-    - [D3 — Recognize in desugar, after jump assembly](#d3--recognize-in-desugar-after-jump-assembly)
+    - [D3 — Recognize as a rule in the desugar pipeline](#d3--recognize-as-a-rule-in-the-desugar-pipeline)
     - [D4 — The default-speaker fill no longer covers effects](#d4--the-default-speaker-fill-no-longer-covers-effects)
     - [D5 — A control line reuses the effect fragments and may carry a condition](#d5--a-control-line-reuses-the-effect-fragments-and-may-carry-a-condition)
     - [D6 — Every block switch handles the new kind](#d6--every-block-switch-handles-the-new-kind)
@@ -76,23 +78,23 @@ Out of scope (see [deferred work](#open-questions-and-deferred-work)):
 
 ## Functionality checklist
 
-- [ ] Add a `ControlLine` block: an ordered list of effect fragments, a span, and
+- [x] Add a `ControlLine` block: an ordered list of effect fragments, a span, and
       an optional `Condition`; it has **no speaker**.
-- [ ] Extract an `IConditional` interface (a `Condition?`) with an `IsConditional`
+- [x] Extract an `IConditional` interface (a `Condition?`) with an `IsConditional`
       extension method, implemented by `Line`, `ControlLine`, `Choice`,
       `RandomOption`, and `Jump` — a small refactor removing today's duplicated
       predicate.
-- [ ] Recognize a speaker-less, effect-only line as a `ControlLine` — a bare jump
+- [x] Recognize a speaker-less, effect-only line as a `ControlLine` — a bare jump
       or one or more silent commands — after jumps are assembled.
-- [ ] Keep a speaker-less line that carries **prose** as a spoken `Line` (default
+- [x] Keep a speaker-less line that carries **prose** as a spoken `Line` (default
       narration), and keep a line with a speaker a spoken `Line`.
-- [ ] Leave the `DefaultSpeaker` fill to spoken lines only, so an effect is never
+- [x] Leave the `DefaultSpeaker` fill to spoken lines only, so an effect is never
       attributed to a speaker.
-- [ ] Preserve the source spans of the control line and its effects, and carry a
+- [x] Preserve the source spans of the control line and its effects, and carry a
       guarding condition when present.
-- [ ] Handle `ControlLine` in every block switch — the AST rewriter, the traversal
+- [x] Handle `ControlLine` in every block switch — the AST rewriter, the traversal
       helper, the report projection, and the affected validation rules.
-- [ ] Update the writer-facing specification so a silent command and a bare jump are
+- [x] Update the writer-facing specification so a silent command and a bare jump are
       documented as effect-only, not spoken by the default speaker.
 
 ## Ubiquitous language
@@ -149,19 +151,18 @@ reuses their recognition rather than re-deriving it.
 
 ## Architecture
 
-Recognition happens in **desugar**, after the `JumpAssembler` has assembled a bare
-`=>` run into a `Jump` — because only then is "effect-only" cleanly decidable (at
-the transpiler stage a jump is still raw `=>` text and a link). The desugarer, which
-already fills the default speaker, gains one rule that runs **before** that fill: a
-speaker-less line whose speech is entirely effect fragments becomes a `ControlLine`;
-every other line is filled as before.
+Recognition is one **rule in the desugar pipeline**. Desugar runs an ordered list
+of rules, each rewriting the whole tree (see the [Desugar](./Desugar.md) note):
+jump assembly, then **control-line recognition**, then the default-speaker fill.
+Recognition sits between the other two on purpose — after jump assembly, so a bare
+`=>` run is already a `Jump` and "effect-only" is decidable; and before the fill,
+so a control line is never given a speaker.
 
 ```mermaid
 flowchart LR
-    P["Transpiler:<br/>speaker-less line<br/>(jump/command fragments)"] --> JA["Desugar: JumpAssembler<br/>assembles the jump"]
-    JA --> R{"Speaker-less<br/>and effect-only?"}
-    R -->|"yes"| CL["ControlLine<br/>(no speaker)"]
-    R -->|"no"| DF["DefaultSpeakerFiller<br/>→ spoken Line"]
+    JA["JumpAssemblyRule:<br/>assemble jumps"] --> CR{"ControlLineRecognitionRule:<br/>speaker-less and effect-only?"}
+    CR -->|"yes"| CL["ControlLine<br/>(no speaker)"]
+    CR -->|"no"| DS["DefaultSpeakerRule<br/>→ spoken Line"]
 ```
 
 A `ControlLine` is a `ScriptBlock`, so it flows through the pipeline beside `Line`,
@@ -171,17 +172,17 @@ completeness the compiler enforces.
 
 ## Interfaces and responsibilities
 
-| Component                      | Responsibility                                                                                 |
-| ------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `ControlLine` (new AST block)  | Hold the effect fragments, the span, and an optional `Condition`; expose no speaker.           |
-| `IConditional` (new interface) | Expose a `Condition?` across guarded nodes; `IsConditional` is an extension method over it.    |
-| `Desugarer`                    | Recognize a speaker-less, effect-only line as a `ControlLine` before the default-speaker fill. |
-| `DefaultSpeakerFiller`         | Fill the default speaker on spoken lines only; never see a control line.                       |
-| `DialogueAstRewriter`          | Rewrite a `ControlLine` (its effects and condition) with a new block hook.                     |
-| `ScriptNodeExtensions`         | Enumerate a `ControlLine`'s children (its effects) for traversal.                              |
-| `DialogueAstProjection`        | Project a `ControlLine` to a report node with a control category.                              |
-| `OrphanConditionRule`          | Treat a `ControlLine`'s condition as a bound guard, not an orphan.                             |
-| `UnreachableAfterJumpRule`     | Apply the after-a-jump reachability check to a jump on a control line.                         |
+| Component                      | Responsibility                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `ControlLine` (new AST block)  | Hold the effect fragments, the span, and an optional `Condition`; expose no speaker.        |
+| `IConditional` (new interface) | Expose a `Condition?` across guarded nodes; `IsConditional` is an extension method over it. |
+| `ControlLineRecognitionRule`   | Recognize a speaker-less, effect-only line as a `ControlLine`, after jump assembly.         |
+| `DefaultSpeakerFiller`         | Fill the default speaker on spoken lines only; never see a control line.                    |
+| `DialogueAstRewriter`          | Rewrite a `ControlLine` (its effects and condition) with a new block hook.                  |
+| `ScriptNodeExtensions`         | Enumerate a `ControlLine`'s children (its effects) for traversal.                           |
+| `DialogueAstProjection`        | Project a `ControlLine` to a report node with a control category.                           |
+| `OrphanConditionRule`          | Treat a `ControlLine`'s condition as a bound guard, not an orphan.                          |
+| `UnreachableAfterJumpRule`     | Apply the after-a-jump reachability check to a jump on a control line.                      |
 
 ## Key design decisions
 
@@ -221,13 +222,15 @@ whitespace. This preserves two spoken cases:
 A `Query` is deliberately **not** an effect: it reads state to produce spoken text,
 so a line containing one is speech.
 
-### D3 — Recognize in desugar, after jump assembly
+### D3 — Recognize as a rule in the desugar pipeline
 
-A bare jump is assembled from raw `=>` text and a link by the `JumpAssembler`
-during desugar; before that, "effect-only" cannot be decided without duplicating
-jump-precursor detection in the transpiler. So recognition lives in the desugarer,
-right where the default-speaker fill already runs, and runs first: assemble, then
-convert an effect-only speaker-less line to a `ControlLine`, otherwise fill.
+Desugar composes its normalizations as an ordered pipeline of rules (see the
+[Desugar](./Desugar.md) note), so recognition is its own
+`ControlLineRecognitionRule` rather than logic woven into the desugarer. It is
+ordered after jump assembly — a bare jump is assembled from raw `=>` text and a
+link first, so "effect-only" is decidable without duplicating jump-precursor
+detection — and before the default-speaker fill, so a recognized control line is
+never given a speaker.
 
 ### D4 — The default-speaker fill no longer covers effects
 
@@ -303,7 +306,7 @@ No new diagnostic is introduced. Two existing rules generalize to the new kind:
 - **A "system" speaker sentinel** — attributing effects to a reserved non-character
   speaker keeps them inside the speaker model, which is exactly the coupling this
   note removes.
-- **Recognizing in the transpiler** — rejected in [D3](#d3--recognize-in-desugar-after-jump-assembly):
+- **Recognizing in the transpiler** — rejected in [D3](#d3--recognize-as-a-rule-in-the-desugar-pipeline):
   a jump is not yet assembled there, so it would duplicate jump-precursor detection.
 
 ## Open questions and deferred work
