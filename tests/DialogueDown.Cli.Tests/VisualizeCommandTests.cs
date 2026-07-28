@@ -57,7 +57,7 @@ public sealed class VisualizeCommandTests
 
         runner.Received(1).RunServedAsync(
             scriptPath, null, false, null, VisualizationMode.View,
-            Arg.Is<AppliedConfiguration>(c => c.Options.Speakers.Any(s => s.Name == "Narrator")),
+            Arg.Is<AppliedConfiguration>(c => c!.Options.Speakers.Any(s => s.Name == "Narrator")),
             Arg.Any<CancellationToken>());
     }
 
