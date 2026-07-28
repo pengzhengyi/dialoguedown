@@ -31,6 +31,7 @@ model for developers.
   - [Game-state integration](#game-state-integration)
     - [Queries](#queries)
     - [Commands](#commands)
+    - [Quoting a key](#quoting-a-key)
   - [Dialogue structure](#dialogue-structure)
     - [Succession](#succession)
     - [Choices](#choices)
@@ -99,9 +100,9 @@ flowchart TD
 | Choice | `- Bob: Really?` | Offer a selectable response. |
 | Random choice | ``- `50%` Bob: Really?`` | Let the engine pick one option by weight. |
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
-| Conditional jump | `` `"Rainy"?` => [Inn](#inn)`` | Jump only when a query reads as true. |
-| Conditional line | `` `"Angry"?` Guard: Leave.`` | Play a line only when a query reads as true. |
-| Conditional choice | ``- `"HasKey"?` Use the key.`` | Offer an option only when a query reads as true. |
+| Conditional jump | `` `Rainy?` => [Inn](#inn)`` | Jump only when a query reads as true. |
+| Conditional line | `` `Angry?` Guard: Leave.`` | Play a line only when a query reads as true. |
+| Conditional choice | ``- `HasKey?` Use the key.`` | Offer an option only when a query reads as true. |
 | End of run | `=> [The end](#END)` | Stop the dialogue at the reserved endpoint. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
@@ -494,6 +495,36 @@ by the default speaker.
 The compiler will emit a special node for each game-system call. The node shape
 and runtime execution contract are outside this document's scope.
 
+### Quoting a key
+
+Every key so far is written in straight double quotes. The quotes mark where the
+key begins and ends, so it can hold any characters — including spaces.
+
+Two constructs put a **sigil** right after the key: a
+[condition](#conditional-jumps) ends it with `?`, and a
+[dynamic weight](#dynamic-weights) ends it with `%`. There the sigil already marks
+where the key ends, so you may **drop the quotes** and write the key plainly:
+
+```markdown
+`IsAngry?` => [The guard blocks your way](#blocked)
+
+- `Bob.Affection%` Bob: ...good to see you.
+```
+
+The unquoted key is everything before the sigil, with surrounding spaces trimmed —
+so a natural phrase reads well, as in `` `Is Alice happy?` ``. Prefer this unquoted
+form; it is the one this guide uses by default.
+
+Add the quotes back only to **escape** — when a key must *end* in a literal `?` or
+`%`, or contain a `"`:
+
+```markdown
+`"Rainy?"?` => [Wait out the storm](#the-inn)
+```
+
+Here the key is the literal `Rainy?`; the final `?` is the condition. A
+[value read](#queries) has no sigil to mark its end, so it is **always quoted**.
+
 ## Dialogue structure
 
 Dialogue sections become graph nodes and edges. Linear lines create succession
@@ -615,15 +646,15 @@ A few rules keep random choices unambiguous:
 
 #### Dynamic weights
 
-A weight can also be **computed from game state**. Wrap a [query](#queries) in a
-code span and end it with `%`; its runtime numeric result becomes the option's
-weight:
+A weight can also be **computed from game state**. Wrap a [key](#quoting-a-key) in
+a code span and end it with `%`; its runtime numeric result becomes the option's
+weight. The key may be written unquoted here, as below:
 
 ```markdown
 The rival spots you across the courtyard.
 
-- `"Bob.Affection"%`       Bob: ...good to see you.
-- `"Christina.Affection"%` Christina: Oh — hello.
+- `Bob.Affection%`       Bob: ...good to see you.
+- `Christina.Affection%` Christina: Oh — hello.
 ```
 
 The engine reads each query through `IGameSystem.Query`, treats the result as a
@@ -632,9 +663,9 @@ player is the most likely to greet them. Static, auto, and dynamic weights mix
 freely in one list:
 
 ```markdown
-- `50%`                Guard: Halt!
-- `"Guard.Suspicion"%` Guard: ...I'm watching you.
-- `%`                  Guard: Move along.
+- `50%`              Guard: Halt!
+- `Guard.Suspicion%` Guard: ...I'm watching you.
+- `%`                Guard: Move along.
 ```
 
 Because the numbers are unknown until the game runs, the usual "weights should
@@ -717,7 +748,7 @@ Make a jump *optional* by placing a **condition** in front of it — a
 the query reads as true:
 
 ```markdown
-`"FoundKey"?` => [Open the vault](#the-vault)
+`FoundKey?` => [Open the vault](#the-vault)
 
 The door stays shut. You look for another way.
 ```
@@ -726,12 +757,13 @@ If `FoundKey` is true, the reader jumps to *The Vault*; if it is false, the jump
 is skipped and reading continues with the next line.
 
 A condition is the third member of the query family: `` `"key"` `` inserts a
-value, `` `"key"%` `` weights a random option, and `` `"key"?` `` reads a boolean.
+value, `` `key%` `` weights a random option, and `` `key?` `` reads a boolean.
 The game decides what the key means and returns `true` or `false`; an unset value
 counts as false.
 
-Because the key is quoted, a key that itself contains a `?` is unambiguous — the
-operator is the `?` after the closing quote:
+The key may be written unquoted, as above — see [Quoting a key](#quoting-a-key).
+Quote it only when the key must *end* in a literal `?`; the trailing `?` after the
+closing quote is then unmistakably the operator:
 
 ```markdown
 `"Rainy?"?` => [Wait out the storm](#the-inn)
@@ -741,14 +773,14 @@ To branch when a flag is **false**, query a game-defined inverse — there is no
 `not` operator:
 
 ```markdown
-`"NotRainy"?` => [Set off across the moor](#the-moor)
+`NotRainy?` => [Set off across the moor](#the-moor)
 ```
 
 A condition guards **one** jump. For an alternative, put another jump on the next
 line, as its own paragraph:
 
 ```markdown
-`"FoundKey"?` => [Open the vault](#the-vault)
+`FoundKey?` => [Open the vault](#the-vault)
 
 => [Search the study](#the-study)
 ```
@@ -769,7 +801,7 @@ reads as true. The condition goes at the very start of the line, before the
 speaker:
 
 ```markdown
-`"Angry"?` Guard: You again? Get out.
+`Angry?` Guard: You again? Get out.
 
 The guard says nothing and waves you through.
 ```
@@ -781,7 +813,7 @@ before the speaker, and `Guard` is still recognized as the speaker.
 A line with no speaker can be conditional too:
 
 ```markdown
-`"Returned"?` Welcome back. It has been too long.
+`Returned?` Welcome back. It has been too long.
 ```
 
 As with a [conditional jump](#conditional-jumps), there is no `not` and no inline
@@ -789,11 +821,11 @@ As with a [conditional jump](#conditional-jumps), there is no `not` and no inlin
 often a second conditional line testing the opposite flag.
 
 ```markdown
-`"Angry"?` Guard: You again? Get out.
-`"NotAngry"?` Guard: Back so soon? Go on through.
+`Angry?` Guard: You again? Get out.
+`NotAngry?` Guard: Back so soon? Go on through.
 ```
 
-A condition must lead the line it guards; a `` `"key"?` `` alone on a line, or one
+A condition must lead the line it guards; a `` `key?` `` alone on a line, or one
 buried mid-line after the speaker, has nothing to guard and is an error.
 
 ### Conditional choices
@@ -802,7 +834,7 @@ Front a **choice option** with a condition to offer it only when the query reads
 as true. The condition goes at the very start of the option:
 
 ```markdown
-- `"HasKey"?` Use the key on the lock.
+- `HasKey?` Use the key on the lock.
 - Search for another way in.
 ```
 
@@ -814,7 +846,7 @@ A [random option](#random-choices) can be conditional too — the condition come
 **first, before the weight**:
 
 ```markdown
-- `"IsAngry"?` `50%` The guard glares and blocks your path.
+- `IsAngry?` `50%` The guard glares and blocks your path.
 - `30%` The guard waves you through.
 - `20%` The guard ignores you.
 ```
@@ -938,7 +970,7 @@ Alice: My favorite color is `"Alice.FavoriteColor"`. May I join the Photography 
 
 `("Alice joins Photography")`
 
-`"Bob.Affection"?` => [Discuss Christina's painting](#discuss-christinas-painting)
+`Bob.Affection?` => [Discuss Christina's painting](#discuss-christinas-painting)
 
 ## Discuss Christina's painting
 
