@@ -8,6 +8,8 @@ namespace DialogueDown.Tests.Support;
 /// </summary>
 internal static class DialogueAstFactory
 {
+    public static ScriptDocument Document(params ScriptBlock[] body) => new(body);
+
     public static CustomTag CustomTag(string name, string? value = null) =>
         new(name, value, SourceSpanFactory.Span());
 
