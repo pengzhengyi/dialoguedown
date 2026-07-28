@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Styled speaker names are flagged** — when a line's speaker name is Markdown-styled
+  (`*Alice*:`), it is not recognized as a speaker prefix and the line would otherwise be left
+  silently unattributed; the compiler now warns and points at the fix — remove the styling to
+  declare the speaker (`Alice:`). See the
+  [Styled Speaker Prefix Diagnostic](docs/contributing/design-notes/Styled%20Speaker%20Prefix%20Diagnostic.md) note.
 - **Searchable, sortable Semantic-tab tables** — the report's Speakers, Anchors, and Jump
   resolutions tables now filter as you type, sort on any column header, and offer a faceted filter
   for their categorical columns (a jump's Type, a speaker's Default), so a writer can find a

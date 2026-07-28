@@ -148,6 +148,22 @@ Guide: <mark class="dd-mark-bad">`&quot;Rainy&quot;?`</mark> The moor is bleak.<
 <pre class="dd-example"><code class="nohighlight"># Moor
 <mark class="dd-mark-fix">`&quot;Rainy&quot;?`</mark> Guide: The moor is bleak.</code></pre>
 
+### DLG1107
+
+<span class="dd-sev dd-sev--warning">Warning</span> · Styled speaker prefix
+
+This line looks like a speaker prefix ("{0}") but the name is styled, so it is not recognized and the line has no speaker. Remove the styling to declare the speaker.
+
+A line that begins with a styled name followed by a colon — like `*Alice*:` — looks like a speaker prefix, but the styling stops it from being recognized, so the line has no speaker. Remove the styling from the name.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"><mark class="dd-mark-bad">*Alice*:</mark> Hello there.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"><mark class="dd-mark-fix">Alice:</mark> Hello there.</code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.

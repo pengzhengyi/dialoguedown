@@ -141,6 +141,20 @@ internal static class DiagnosticDocs
                 ["`\"Rainy\"?`"],
                 ["`\"Rainy\"?`"])),
         new(
+            DiagnosticCatalog.StyledSpeakerPrefix,
+            "A line that begins with a styled name followed by a colon — like `*Alice*:` — looks "
+            + "like a speaker prefix, but the styling stops it from being recognized, so the line "
+            + "has no speaker. Remove the styling from the name.",
+            new(
+                """
+                *Alice*: Hello there.
+                """,
+                """
+                Alice: Hello there.
+                """,
+                ["*Alice*:"],
+                ["Alice:"])),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",

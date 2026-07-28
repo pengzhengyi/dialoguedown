@@ -53,6 +53,30 @@ public sealed class SourceSpanTests
         Assert.True(span.IsEmpty);
     }
 
+    [Theory]
+    [InlineData(0, 0, 1, 1)] // single character: [0, 1)
+    [InlineData(3, 6, 4, 7)] // positions 3 through 6 inclusive: [3, 7)
+    [InlineData(0, 4, 5, 5)] // positions 0 through 4 inclusive: [0, 5)
+    public void Inclusive_EndNotBeforeStart_SpansThroughTheInclusiveEnd(
+        int start, int endInclusive, int expectedLength, int expectedEnd)
+    {
+        var span = SourceSpan.Inclusive(start, endInclusive);
+
+        Assert.Equal(start, span.Start);
+        Assert.Equal(expectedLength, span.Length);
+        Assert.Equal(expectedEnd, span.End);
+    }
+
+    [Theory]
+    [InlineData(5, 4)] // end one before start
+    [InlineData(3, 0)] // end well before start
+    public void Inclusive_EndBeforeStart_Throws(int start, int endInclusive) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => SourceSpan.Inclusive(start, endInclusive));
+
+    [Fact]
+    public void Inclusive_NegativeStart_Throws() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => SourceSpan.Inclusive(-1, 2));
+
     [Fact]
     public void IsEmpty_NonZeroLength_IsFalse()
     {

@@ -44,6 +44,8 @@
     href: Diagnostics and Validation.md
   - name: Choice Nesting Diagnostic
     href: Choice Nesting Diagnostic.md
+  - name: Styled Speaker Prefix Diagnostic
+    href: Styled Speaker Prefix Diagnostic.md
   - name: CLI Diagnostic Rendering
     href: CLI Diagnostic Rendering.md
 - name: Command-line interface

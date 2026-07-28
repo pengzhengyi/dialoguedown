@@ -44,6 +44,12 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         {
             var condition = PeelCondition();
             var speaker = PeelSpeaker();
+            if (speaker is null)
+            {
+                // The peel failed: warn when a styled leading run would have been a speaker prefix.
+                StyledSpeakerPrefixDetector.Report(_remaining, diagnostics);
+            }
+
             return new Line(speaker, inlineBuilder.Build(_remaining, diagnostics), _span, condition);
         }
 

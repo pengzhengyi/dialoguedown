@@ -128,6 +128,11 @@ A line may name who speaks before the colon. A speaker prefix is either a
 (which only points at a known speaker); omitting the prefix uses the default
 speaker.
 
+> [!NOTE]
+> A speaker's name must be **plain text**. If you style it — `*Alice*:`,
+> `**Alice**:` — it is not read as a speaker prefix, so the line is left
+> unattributed. Write the name unstyled (`Alice:`).
+
 #### Inline speaker declaration
 
 Inline speaker declarations are a lightweight way to introduce or enrich

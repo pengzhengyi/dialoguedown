@@ -47,6 +47,25 @@ internal readonly record struct SourceSpan
     public static SourceSpan EmptyAt(int position) => new(position, 0);
 
     /// <summary>
+    /// The span running from <paramref name="start"/> through <paramref name="endInclusive"/>,
+    /// both offsets included — a convenience for building a span from its first and last character
+    /// positions rather than from a length. <paramref name="endInclusive"/> must not precede
+    /// <paramref name="start"/>, so the span always covers at least one character; a reversed pair
+    /// throws.
+    /// </summary>
+    public static SourceSpan Inclusive(int start, int endInclusive)
+    {
+        if (endInclusive < start)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(endInclusive), endInclusive,
+                $"Source span inclusive end must not precede the start ({start}).");
+        }
+
+        return new SourceSpan(start, endInclusive - start + 1);
+    }
+
+    /// <summary>
     /// The span reaching from <paramref name="start"/>'s beginning through
     /// <paramref name="end"/>'s ending — used to enclose a run of nodes by their first
     /// and last spans. Unlike joining contiguous ranges, the two spans may be separated
