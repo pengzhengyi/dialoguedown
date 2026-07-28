@@ -386,6 +386,37 @@ section.stage.error {
     font-size: 0.85rem;
 }
 
+/* The served shell's empty state — no document open — centered in the main pane. */
+section.stage.empty-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.empty-shell-card {
+    max-width: 26rem;
+    text-align: center;
+}
+
+.empty-shell-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+}
+
+.empty-shell-hint {
+    margin: 0 0 1.25rem;
+    color: var(--pico-muted-color);
+}
+
+.empty-shell-create {
+    width: auto;
+    margin: 0;
+    border: 1px solid var(--mode-accent, var(--pico-primary));
+    background: var(--mode-accent, var(--pico-primary));
+    color: var(--mode-accent-contrast, #fff);
+}
+
 /* The Source tab has no node-detail panel: hide it and let the split fill. */
 .no-detail #detail,
 .no-detail #resizer {

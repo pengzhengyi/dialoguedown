@@ -260,6 +260,22 @@ public sealed class CompilationVisualizerTests
     }
 
     [Fact]
+    public void RenderEmptyShell_CarriesTheProjectWithNoActiveDocument()
+    {
+        var visualizer = new CompilationVisualizer();
+
+        var html = visualizer.RenderEmptyShell("/project", "edit");
+
+        Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"project\":{", html);
+        Assert.Contains("\"root\":\"/project\"", html);
+        Assert.Contains("\"mode\":\"edit\"", html);
+        // No active document: no active path, no source, no stages to show.
+        Assert.DoesNotContain("\"activePath\"", html);
+        Assert.DoesNotContain("\"source\":", html);
+    }
+
+    [Fact]
     public void RenderHtmlReport_MarksThePayloadStatic()
     {
         var visualizer = new CompilationVisualizer();

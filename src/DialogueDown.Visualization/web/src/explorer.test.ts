@@ -8,7 +8,7 @@ import {
     type ExplorerPorts,
     type RenameOutcome,
 } from "./explorer";
-import type { BrowseListing, CreateOutcome } from "./launcher";
+import type { BrowseListing, CreateOutcome } from "./project-fs";
 import type { ReportProject } from "./model";
 
 const rootListing: BrowseListing = {

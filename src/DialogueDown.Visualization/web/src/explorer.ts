@@ -6,7 +6,7 @@
  * is injected through {@link ExplorerPorts}, mirroring the launcher.
  */
 
-import { leafName, SCRIPT_EXTENSION, type BrowseListing, type CreateOutcome } from "./launcher";
+import { leafName, SCRIPT_EXTENSION, type BrowseListing, type CreateOutcome } from "./project-fs";
 import type { ReportProject } from "./model";
 
 /** The outcome of a folder-create request. */
