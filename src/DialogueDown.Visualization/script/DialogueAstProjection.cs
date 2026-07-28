@@ -25,6 +25,7 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
     private const string JumpCategory = "jump";
     private const string MediaCategory = "media";
     private const string CallCategory = "call";
+    private const string ControlCategory = "control";
     private const string StylingCategory = "styling";
     private const string BreakCategory = "break";
     private const string TagCategory = "tag";
@@ -78,6 +79,8 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
                 Slice(heading.Span),
                 StructureCategory),
             Line line => new("Line", [SpanAttribute(line.Span)], Slice(line.Span), SpeechCategory),
+            ControlLine control => new(
+                "Control line", [SpanAttribute(control.Span)], Slice(control.Span), ControlCategory),
             Choices choices => new(
                 choices.IsOrdered ? "Choices (ordered)" : "Choices (unordered)",
                 [SpanAttribute(choices.Span)],
@@ -187,6 +190,8 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
             ScriptDocument document => document.Body,
             SceneHeading heading => heading.Title,
             Line line => LineChildren(line.Condition, line.Speaker, line.Speech),
+            ControlLine control =>
+                control.Condition is not null ? [control.Condition, .. control.Effects] : control.Effects,
             Choices choices => choices.Options,
             Choice choice => choice.IsConditional() ? [choice.Condition!, .. choice.Body] : choice.Body,
             RandomChoices random => random.Options,

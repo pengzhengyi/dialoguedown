@@ -78,6 +78,7 @@ internal static class ScriptNodeExtensions
     private static IEnumerable<ScriptNode> BlockChildren(ScriptBlock block) => block switch
     {
         Line line => LineChildren(line),
+        ControlLine control => ControlLineChildren(control),
         Choices choices => choices.Options,
         RandomChoices random => random.Options,
         SceneHeading heading => heading.Title,
@@ -126,6 +127,21 @@ internal static class ScriptNodeExtensions
         foreach (var fragment in line.Speech)
         {
             yield return fragment;
+        }
+    }
+
+    // A control line's guard (when present) comes before its effects, matching guard-first
+    // reading; it has no speaker.
+    private static IEnumerable<ScriptNode> ControlLineChildren(ControlLine control)
+    {
+        if (control.Condition is not null)
+        {
+            yield return control.Condition;
+        }
+
+        foreach (var effect in control.Effects)
+        {
+            yield return effect;
         }
     }
 }
