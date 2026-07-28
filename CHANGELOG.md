@@ -40,6 +40,12 @@ changes easy to categorize.
   [Conditional Jump](docs/contributing/design-notes/Conditional%20Jump.md),
   [Conditional Line](docs/contributing/design-notes/Conditional%20Line.md), and
   [Conditional Choice](docs/contributing/design-notes/Conditional%20Choice.md) notes.
+- **Unquoted keys** — a condition and a dynamic weight may now drop the quotes around their key:
+  write `` `IsAngry?` `` or `` `Luck%` `` instead of `` `"IsAngry"?` ``/`` `"Luck"%` ``. The
+  trailing `?`/`%` marks where the key ends, so a key can read as a natural phrase and may contain
+  spaces (`` `Is Alice happy?` ``). Quotes remain the escape for a key that must end in a literal
+  `?`/`%`, and a value read (`` `"Alice.FavoriteColor"` ``) is still quoted. See the
+  [Unquoted Keys](docs/contributing/design-notes/Unquoted%20Keys.md) note.
 - **Copy a scene heading's anchor from the report** — hovering a heading in the live
   visualization's Source preview reveals a link icon that copies a ready-to-paste jump
   `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.

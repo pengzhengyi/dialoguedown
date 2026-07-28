@@ -1,8 +1,8 @@
 # Unquoted keys
 
 > [!NOTE]
-> Status: **proposed**, not yet implemented. This note refines the syntax of the
-> **query key** shared by the [Conditional Jump](./Conditional%20Jump.md),
+> Status: **implemented**. This note refines the syntax of the **query key** shared
+> by the [Conditional Jump](./Conditional%20Jump.md),
 > [Conditional Line](./Conditional%20Line.md),
 > [Conditional Choice](./Conditional%20Choice.md), and
 > [Random Choice](./Random%20Choice.md) notes; read those first for the condition
@@ -30,6 +30,7 @@
   - [Diagnostics](#diagnostics)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Testability](#testability)
+  - [Implementation crosscheck](#implementation-crosscheck)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
@@ -69,22 +70,22 @@ Out of scope:
 
 ## Functionality checklist
 
-- [ ] Recognize a **condition** whose key is unquoted: `` `IsAngry?` `` reads the
+- [x] Recognize a **condition** whose key is unquoted: `` `IsAngry?` `` reads the
       key `IsAngry`.
-- [ ] Recognize a **weight** whose key is unquoted: `` `Luck%` `` reads the key
+- [x] Recognize a **weight** whose key is unquoted: `` `Luck%` `` reads the key
       `Luck` as a dynamic weight.
-- [ ] Keep accepting the **quoted** form of both, unchanged.
-- [ ] Keep the **value read** quoted-only; a bare `` `IsAngry` `` stays *not a game
+- [x] Keep accepting the **quoted** form of both, unchanged.
+- [x] Keep the **value read** quoted-only; a bare `` `IsAngry` `` stays *not a game
       call*.
-- [ ] Treat a trailing `?`/`%` as the **operator**; a key that ends in a literal
+- [x] Treat a trailing `?`/`%` as the **operator**; a key that ends in a literal
       `?`/`%` is written quoted (`` `"Rainy?"?` ``).
-- [ ] Preserve a numeric weight: `` `50%` `` is the number 50, not the key `50`;
+- [x] Preserve a numeric weight: `` `50%` `` is the number 50, not the key `50`;
       a negative numeric weight (`` `-5%` ``) stays an **invalid weight**, not a key.
-- [ ] Trim insignificant whitespace around the key and the sigil; keep spaces
+- [x] Trim insignificant whitespace around the key and the sigil; keep spaces
       *inside* an unquoted key.
-- [ ] Present the unquoted form as the **recommended default** in the writer guide,
+- [x] Present the unquoted form as the **recommended default** in the writer guide,
       with quotes documented as the escape.
-- [ ] Leave the source span of the condition, the weight, and the key correct.
+- [x] Leave the source span of the condition, the weight, and the key correct.
 
 ## Ubiquitous language
 
@@ -151,20 +152,21 @@ it admits only a `QuotedString`.
 
 ## Key resolution
 
-Recognition already strips the sigil and hands the remaining text to a key reader.
-This note changes only that reader — from *"the text must be a quoted string"* to
-*"the text is a quoted or an unquoted key"*:
+Recognition already strips the sigil and hands the remaining text to
+`QueryKeyReader.Read`, which resolves it — *"a quoted string yields its inner text;
+any other non-empty text is an unquoted key"*:
 
 ```text
 codeSpan content
   └─ trim, split off trailing sigil (? or %)
-       └─ remaining text ──► resolveKey
-                               ├─ looks like "..."  → QuotedKey(inner)
-                               └─ otherwise         → UnquotedKey(text)   (non-empty)
+       └─ remaining text ──► QueryKeyReader.Read
+                               ├─ a clean "..."   → the inner text (quoted key)
+                               └─ any other text  → the text itself (unquoted key)
 ```
 
-The same `resolveKey` serves the condition and the weight, so the two forms accept
-keys identically. A value read never calls it — it keeps its quoted-string reader.
+The same `QueryKeyReader.Read` serves the condition and the weight, so the two
+forms accept keys identically. A value read never calls it — it keeps its
+quoted-string grammar.
 
 ## Prior art
 
@@ -196,7 +198,7 @@ key before validating it. Two readers gain the unquoted form; nothing else moves
 flowchart TD
     CS["Code span content"] --> CR["ConditionReader\n(strips ?)"]
     CS --> CW["ChoiceWeightReader\n(strips %)"]
-    CR --> RK["resolveKey\n(quoted or unquoted)"]
+    CR --> RK["QueryKeyReader.Read\n(quoted or unquoted)"]
     CW --> RK
     CS --> GC["GameCallParser.Grammar\n(value read, commands)\nUNCHANGED"]
 ```
@@ -205,7 +207,7 @@ flowchart TD
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------- |
 | `ConditionReader`    | Read a `` `key?` `` code span into a `Condition`.        | Accept an unquoted key.                        |
 | `ChoiceWeightReader` | Read a `` `…%` `` code span into a `ChoiceWeight`.       | Accept an unquoted key for the dynamic weight. |
-| *Key resolution*     | Turn the text before the sigil into a key.               | New shared shape: quoted **or** unquoted.      |
+| `QueryKeyReader`     | Turn the text before the sigil into a key.               | New shared reader: quoted **or** unquoted.     |
 | `GameCallParser`     | Recognize a value read, default command, custom command. | **None** — value reads stay quoted.            |
 
 ## Key design decisions
@@ -310,17 +312,36 @@ valid. Existing diagnostics are preserved:
 
 ## Testability
 
+- **`QueryKeyReader`** — unit tests for a quoted key (inner text), an unquoted key
+  (verbatim, spaces kept), text that is not one clean quoted string (raw key), and
+  empty text (null).
 - **`ConditionReader`** — unit tests for the unquoted key, the quoted key, the
   quoted escape of an inner `?`, whitespace trimming, spaces inside a key, and the
   empty-key rejection.
 - **`ChoiceWeightReader`** — unit tests for the unquoted key weight, the
   number-before-key precedence, the negative-number invalid weight, the auto
   weight, and the quoted key.
-- **Builders** — a conditional jump, line, and choice, and a dynamic random
-  weight, each written **unquoted**, compile to the same AST as the quoted form
-  (equivalence tests), confirming the widening does not change downstream shape.
-- **Value read** — a bare `` `IsAngry` `` still reports *not a game call*, guarding
-  the quoted-only rule.
+- **End-to-end** — `UnquotedKeyTranspilationTests` transpiles (and desugars, for a
+  jump) a conditional line, choice, random option, and jump written **unquoted**,
+  plus a key with spaces, asserting each yields the same key its quoted form would.
+- **Value read** — a bare code span with no sigil still reports *not a game call*,
+  guarding the quoted-only rule.
+
+## Implementation crosscheck
+
+Built as designed, with these notes:
+
+- **Achieved.** A condition and a dynamic weight accept an unquoted key through a
+  shared `QueryKeyReader.Read`; the quoted form and the value read are unchanged; a
+  number still beats a key in a weight and a negative number stays an invalid
+  weight; and the writer guide recommends the unquoted form. Reader unit tests plus
+  the end-to-end `UnquotedKeyTranspilationTests` cover a line, a choice, a random
+  option, a jump, and a key with spaces.
+- **Changed.** The shared step sketched as `resolveKey` shipped as the static
+  `QueryKeyReader.Read`. The `InvalidChoiceWeight` explanation was corrected: since
+  non-numeric text is now a key, a negative number is the only invalid weight.
+- **Not implemented.** Nothing deferred — the construct is pure compile-time syntax
+  with no runtime component.
 
 ## Open questions and deferred work
 
