@@ -8,7 +8,7 @@ Engine-agnostic, C#-first **dialogue compiler** library. It lowers a
 Markdown-first dialogue script through distinct compiler stages into a validated
 **semantic model**, reporting precise diagnostics as it goes, and keeps the core
 free of any Godot dependency so it stays **reusable** and **unit-testable**. The
-`dialoguedown` CLI compiles scripts and renders every stage as an interactive
+`ddown` CLI compiles scripts and renders every stage as an interactive
 report. The runtime that *plays* a compiled script — a dialogue runner and thin
 engine presentation adapters — is **planned**, not yet built.
 
@@ -37,7 +37,7 @@ engine presentation adapters — is **planned**, not yet built.
 - **Engine dependency:** none in the core library.
 - **Primary consumer:** Godot/C# game projects through `ProjectReference`.
 - **Built today:** the compiler pipeline (Markdown → semantic model), collected
-  diagnostics, the `dialoguedown` CLI (`compile`, `visualize`), and `dialogue.toml`
+  diagnostics, the `ddown` CLI (`compile`, `visualize`), and `dialogue.toml`
   configuration.
 - **Planned:** the runtime — a dialogue runner, effects and conditions, and thin
   engine presentation adapters.
@@ -65,7 +65,14 @@ flowchart LR
 - **Planned runtime.** Playing a compiled script — a runner, effects and
   conditions, and thin engine adapters — is design intent, not yet implemented.
 
-Compile a script and see its diagnostics from the command line:
+Install the `ddown` command ([setup guide](docs/guide/cli.md)), then compile a
+script and see its diagnostics:
+
+```bash
+ddown compile scene.dialogue.md
+```
+
+Contributors can run the same CLI from a source checkout without installing it:
 
 ```bash
 dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
@@ -78,7 +85,7 @@ dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
 | `src/DialogueDown/` | the reusable class library (net8.0, no engine refs) |
 | `src/DialogueDown.Visualization/` | diagnostics-only visualizer of compiler stages (not shipped in the core package) |
 | `src/DialogueDown.Visualization.Live/` | loopback server that serves the report, hot-reloads it on edit, and hosts the launcher |
-| `src/DialogueDown.Cli/` | the `dialoguedown` command-line interface (`compile`, `visualize`) |
+| `src/DialogueDown.Cli/` | the `ddown` command-line interface (`compile`, `visualize`) |
 | `tests/DialogueDown.Tests/` | xUnit tests for the pure logic |
 | `tests/DialogueDown.Visualization.Tests/` | xUnit tests for the visualizer |
 | `tests/DialogueDown.Visualization.Live.Tests/` | xUnit tests for the live server and launcher |
@@ -155,24 +162,25 @@ the file. It bundles all its assets (D3, CodeMirror, Pico.css, marked, Tippy.js)
 so it works fully offline, and reads the compiler through the same seams the tests
 use, never touching the shipped core package.
 
-Render a script from the command line with the `dialoguedown visualize` command:
+Render a script from the command line with the `ddown visualize` command
+([setup guide](docs/guide/cli.md)):
 
 ```bash
 # Open the launcher to browse for a script (the uniform entry point)
-dotnet run --project src/DialogueDown.Cli -- visualize
+ddown visualize
 
 # Serve a script's report and toggle View ⇄ Edit in the browser (auto-updates on save)
-dotnet run --project src/DialogueDown.Cli -- visualize scene.dialogue.md --root .
+ddown visualize scene.dialogue.md --root .
 
 # Start directly in Edit (editable, saves back to the file)
-dotnet run --project src/DialogueDown.Cli -- visualize scene.dialogue.md --edit --root .
+ddown visualize scene.dialogue.md --edit --root .
 
 # Export a self-contained report to a file (no server, no browser)
-dotnet run --project src/DialogueDown.Cli -- visualize scene.dialogue.md -o report.html
+ddown visualize scene.dialogue.md -o report.html
 
 # Emit each stage's graph as portable Mermaid or Graphviz DOT text (to stdout or -o)
-dotnet run --project src/DialogueDown.Cli -- visualize scene.dialogue.md --emit mermaid
-dotnet run --project src/DialogueDown.Cli -- visualize scene.dialogue.md --emit dot -o scene.dot
+ddown visualize scene.dialogue.md --emit mermaid
+ddown visualize scene.dialogue.md --emit dot -o scene.dot
 ```
 
 > [!NOTE]

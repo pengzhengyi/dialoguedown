@@ -72,7 +72,7 @@ flowchart LR
 
 ### A. Terminal player
 
-A `dialoguedown play` command that walks the scenario in the terminal using
+A `ddown play` command that walks the scenario in the terminal using
 **Spectre.Console** — already a CLI dependency. Speeches render with markup and
 color-coded speakers; each branch is an arrow-key `SelectionPrompt`; endings show
 a green (safe) or red (danger) panel; a prompt offers a replay.
@@ -111,7 +111,7 @@ restart.
   no new dependency and stays out of the engine-agnostic core (it lives in the
   CLI).
 - **A fixed-data preview is enough to evaluate UX.** Capturing a real report from
-  `dialoguedown visualize` gave authentic stage tabs, while a hand-authored
+  `ddown visualize` gave authentic stage tabs, while a hand-authored
   playable IR fed the new tabs — no dependency on the incomplete runtime.
 - **`yarn-bound` sizing.** The runtime adds about **48 KB raw / 24 KB gzip** to
   the built report (measured by building with and without it).

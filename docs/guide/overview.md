@@ -62,7 +62,7 @@ Dialogue content moves through three representations:
   [error codes](./error-codes.md).
 - **Configuration:** a project's `dialogue.toml` declares its speakers and the
   compilation mode. See [project configuration](./configuration.md).
-- **CLI and visualization:** the `dialoguedown` CLI compiles a script and renders
+- **CLI and visualization:** the `ddown` CLI compiles a script and renders
   every compiler stage as an interactive report.
 - **Planned:** the runtime — a dialogue runner, effects and conditions, and thin
   engine presentation adapters.
