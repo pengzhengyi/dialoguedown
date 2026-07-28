@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project uses [Conventional Commits](https://www.conventionalcommits.org/) to keep
 changes easy to categorize.
 
-## Unreleased
+## [Unreleased]
+
+## [0.1.0] - 2026-07-28
 
 ### Added
 
@@ -232,3 +234,6 @@ changes easy to categorize.
   bubble across the report and launcher, the favicon, and the demo.
 - Escaped inline punctuation (for example `\*`) no longer shifts the source spans of
   the text that follows it, so spans stay exact for diagnostics and the visualizer.
+
+[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/pengzhengyi/dialoguedown/releases/tag/v0.1.0
