@@ -6,11 +6,14 @@ import {
     CompletionContext,
     completionStatus,
     startCompletion,
+    type Completion,
     type CompletionResult,
+    type CompletionSource,
 } from "@codemirror/autocomplete";
 import type { DialogueSymbolProvider, DialogueSymbols } from "./model";
 import {
-    jumpTargetCompletions,
+    jumpIndicatorCompletions,
+    jumpSlugCompletions,
     speakerIdCompletions,
     tagCompletions,
     speakerCompletions,
@@ -30,24 +33,136 @@ function contextAtCursor(docWithCursor: string, explicit = false): CompletionCon
 }
 
 /** The labels a source offers at the cursor, or `null` when it does not fire. */
-function labelsAt(
-    source: ReturnType<typeof jumpTargetCompletions>,
-    docWithCursor: string,
-): string[] | null {
+function labelsAt(source: CompletionSource, docWithCursor: string): string[] | null {
     const result = resultAt(source, docWithCursor);
     return result ? result.options.map((o) => o.label) : null;
 }
 
 /** The (synchronous) completion result a source returns at the cursor, or `null`. */
-function resultAt(
-    source: ReturnType<typeof jumpTargetCompletions>,
-    docWithCursor: string,
-): CompletionResult | null {
+function resultAt(source: CompletionSource, docWithCursor: string): CompletionResult | null {
     return source(contextAtCursor(docWithCursor)) as CompletionResult | null;
 }
 
-describe("jumpTargetCompletions", () => {
-    const source = jumpTargetCompletions(
+/**
+ * Apply `option` over the range `result.from`…cursor in `docWithCursor`, returning the
+ * resulting document text and whatever range the option leaves selected (a snippet field).
+ */
+function applyAt(
+    result: CompletionResult,
+    option: Completion,
+    docWithCursor: string,
+): { text: string; selected: string } {
+    const pos = docWithCursor.indexOf("|");
+    const doc = docWithCursor.slice(0, pos) + docWithCursor.slice(pos + 1);
+    const parent = document.createElement("div");
+    document.body.appendChild(parent);
+    const view = new EditorView({
+        parent,
+        state: EditorState.create({ doc, selection: { anchor: pos } }),
+    });
+    const apply = option.apply as (
+        view: EditorView,
+        completion: Completion,
+        from: number,
+        to: number,
+    ) => void;
+    apply(view, option, result.from, pos);
+    const { from, to } = view.state.selection.main;
+    const applied = { text: view.state.doc.toString(), selected: view.state.sliceDoc(from, to) };
+    view.destroy();
+    parent.remove();
+    return applied;
+}
+
+describe("jumpIndicatorCompletions", () => {
+    const source = jumpIndicatorCompletions(
+        provide({
+            jumpTargets: [
+                { slug: "the-market", heading: "The Market" },
+                { slug: "the-old-mill", heading: "The Old Mill" },
+            ],
+        }),
+    );
+
+    it("offers every scene, labelled by its heading, after the => indicator", () => {
+        expect(labelsAt(source, `Alice: hi\n=> |`)).toEqual(["The Market", "The Old Mill"]);
+    });
+
+    it("fires immediately after => with no trailing space", () => {
+        expect(labelsAt(source, `=>|`)).toEqual(["The Market", "The Old Mill"]);
+    });
+
+    it("filters scenes by the partial label via the completion's from", () => {
+        const doc = `=> The O|`;
+        const result = resultAt(source, doc)!;
+        // `from` points just past `=> `, so the whole partial label is the filter prefix.
+        const state = EditorState.create({ doc: doc.replace("|", "") });
+        expect(state.doc.sliceString(result.from, doc.indexOf("|"))).toBe("The O");
+    });
+
+    it("shows the slug as detail and previews the full anchor as info", () => {
+        const result = resultAt(source, `=> |`)!;
+        expect(result.options[0]).toMatchObject({
+            label: "The Market",
+            detail: "#the-market",
+            info: "[The Market](#the-market)",
+        });
+    });
+
+    it("types each option as dd-jump (selects the arrow icon)", () => {
+        const result = resultAt(source, `=> |`)!;
+        expect(result.options.every((o) => o.type === "dd-jump")).toBe(true);
+    });
+
+    it("enriches an accepted scene into the whole [Heading](#slug) jump target", () => {
+        const result = resultAt(source, `=> |`)!;
+        const market = result.options.find((o) => o.label === "The Market")!;
+        expect(applyAt(result, market, `=> |`).text).toBe(`=> [The Market](#the-market)`);
+    });
+
+    it("leaves the heading as an editable field, its default text selected", () => {
+        const result = resultAt(source, `=> |`)!;
+        const market = result.options.find((o) => o.label === "The Market")!;
+        // The snippet selects the heading field, so a writer can immediately retype the label.
+        expect(applyAt(result, market, `=> |`).selected).toBe("The Market");
+    });
+
+    it("normalizes the separating space so => [..] never becomes =>[..]", () => {
+        const result = resultAt(source, `=>|`)!;
+        const market = result.options.find((o) => o.label === "The Market")!;
+        expect(applyAt(result, market, `=>|`).text).toBe(`=> [The Market](#the-market)`);
+    });
+
+    it("replaces a partial label rather than appending to it", () => {
+        const result = resultAt(source, `=> The O|`)!;
+        const mill = result.options.find((o) => o.label === "The Old Mill")!;
+        expect(applyAt(result, mill, `=> The O|`).text).toBe(`=> [The Old Mill](#the-old-mill)`);
+    });
+
+    it("does not fire once the link brackets are typed (left to the slug source)", () => {
+        expect(labelsAt(source, `=> [x](#|)`)).toBeNull();
+    });
+
+    it("does not fire on a line without the => indicator", () => {
+        expect(labelsAt(source, `Alice: plain text |`)).toBeNull();
+    });
+
+    it("offers nothing when the payload has no scenes", () => {
+        const empty = jumpIndicatorCompletions(provide({}));
+        expect(labelsAt(empty, `=> |`)).toBeNull();
+    });
+
+    it("offers the #END sentinel like any other scene", () => {
+        const withEnd = jumpIndicatorCompletions(
+            provide({ jumpTargets: [{ slug: "END", heading: "End the run" }] }),
+        );
+        const result = resultAt(withEnd, `=> |`)!;
+        expect(applyAt(result, result.options[0], `=> |`).text).toBe(`=> [End the run](#END)`);
+    });
+});
+
+describe("jumpSlugCompletions", () => {
+    const source = jumpSlugCompletions(
         provide({
             jumpTargets: [
                 { slug: "the-market", heading: "The Market" },
@@ -84,7 +199,7 @@ describe("jumpTargetCompletions", () => {
     });
 
     it("offers nothing when the payload has no jump targets", () => {
-        const empty = jumpTargetCompletions(provide({}));
+        const empty = jumpSlugCompletions(provide({}));
         expect(labelsAt(empty, `Alice: Go [east](#|)`)).toBeNull();
     });
 });

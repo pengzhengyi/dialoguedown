@@ -110,6 +110,8 @@
     href: Live Visualization - Heading Anchors.md
   - name: Live Visualization — File Explorer
     href: Live Visualization - File Explorer.md
+  - name: Jump-Target Completion
+    href: Jump-Target Completion.md
 - name: Other notes
   items:
   - name: BBCode Rendering

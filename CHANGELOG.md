@@ -17,6 +17,11 @@ changes easy to categorize.
   place, and a pinned `dialogue.toml` entry opens the Config tab; switching scripts respects the
   save mode (Auto flushes, Manual prompts). See the
   [Live Visualization — File Explorer](docs/contributing/design-notes/Live%20Visualization%20-%20File%20Explorer.md) note.
+- **Jump to a scene by typing `=>`** — the source editor now completes the whole jump
+  target from the `=>` jump indicator: type `=>` and the report offers every scene by its
+  heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an
+  editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
+  [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
 
 ## [0.1.0] - 2026-07-28
 

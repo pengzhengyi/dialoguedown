@@ -74,6 +74,30 @@ test("offers a resolved name that is absent from the document", async ({ page })
     await expect(page.locator(`${tooltip} li`)).toContainText(["Merchant"]);
 });
 
+test("offers scenes when the => jump indicator is typed", async ({ page }) => {
+    await page.goto(editUrl);
+    await focusEditorEnd(page);
+    await page.keyboard.type("\n=> ");
+    await expect(page.locator(tooltip)).toBeVisible();
+    // Each scene is offered by its heading (the label); order is CodeMirror's, so match as a set.
+    const labels = (await page.locator(`${tooltip} li`).allInnerTexts()).join(" ");
+    expect(labels).toContain("The Market");
+    expect(labels).toContain("The Docks");
+});
+
+test("enriches the => jump indicator into a full [Heading](#slug) target", async ({ page }) => {
+    await page.goto(editUrl);
+    await focusEditorEnd(page);
+    await page.keyboard.type("\n=> The Mar");
+    await expect(page.locator(tooltip)).toBeVisible();
+    // CodeMirror blocks accepting a just-opened completion for 75 ms (an anti-misclick guard);
+    // wait it out so Enter accepts the scene rather than inserting a newline.
+    await page.waitForTimeout(150);
+    await page.keyboard.press("Enter");
+    // Accepting a scene writes the whole jump target, not just the typed heading.
+    await expect(page.locator(".cm-content")).toContainText("=> [The Market](#the-market)");
+});
+
 test("does not offer completions in the read-only static report", async ({ page }) => {
     await page.goto(staticUrl);
     await page.locator(".cm-content").click();
