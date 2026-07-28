@@ -11,7 +11,7 @@ public sealed class DiagnosticDocumentationTests
         var url = DiagnosticDocumentation.UrlFor(code);
 
         Assert.StartsWith(
-            "https://pengzhengyi.github.io/godot-dialoguedown/guide/error-codes.html",
+            "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html",
             url,
             StringComparison.Ordinal);
         Assert.EndsWith(anchor, url, StringComparison.Ordinal);

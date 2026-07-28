@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented; the measured follow-up changes await review in
-> [PR #113](https://github.com/pengzhengyi/godot-dialoguedown/pull/113)**.
+> [PR #113](https://github.com/pengzhengyi/dialoguedown/pull/113)**.
 > Increments 1 and 3–11 are built and measured. Increment 2 was deliberately
 > skipped because Release coverage changed the sequence-point denominator.
 

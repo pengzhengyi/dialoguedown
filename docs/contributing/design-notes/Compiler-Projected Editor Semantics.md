@@ -3,8 +3,8 @@
 > [!NOTE]
 > Status: **implemented** — the `visualize` source editor highlights dialogue and completes
 > from the compiler's projected semantics. Unifies syntax highlighting
-> ([#115](https://github.com/pengzhengyi/godot-dialoguedown/issues/115)) and completion
-> alignment ([#118](https://github.com/pengzhengyi/godot-dialoguedown/issues/118)) under one
+> ([#115](https://github.com/pengzhengyi/dialoguedown/issues/115)) and completion
+> alignment ([#118](https://github.com/pengzhengyi/dialoguedown/issues/118)) under one
 > principle: the **compiler is the single source of truth** for the dialogue grammar, and the
 > editor *renders* what the compiler projects rather than re-lexing the language itself.
 
@@ -17,7 +17,7 @@ carried in the report payload beside the diagnostics and symbols already there, 
 the browser. One grammar, in C#; the client only draws.
 
 This is the same pattern the diagnostics overlay established
-([#134](https://github.com/pengzhengyi/godot-dialoguedown/pull/134)): a pure `.NET` projection
+([#134](https://github.com/pengzhengyi/dialoguedown/pull/134)): a pure `.NET` projection
 into an editor-shaped artifact, a payload transport today, and an LSP transport later — the
 projection and the rendering are reused unchanged when the language server arrives.
 
@@ -35,7 +35,7 @@ projection and the rendering are reused unchanged when the language server arriv
 **Out of scope (deferred, seams left open):**
 
 - **Instant, per-keystroke highlighting** via a client lexer
-  ([#139](https://github.com/pengzhengyi/godot-dialoguedown/issues/139)). Projected highlighting
+  ([#139](https://github.com/pengzhengyi/dialoguedown/issues/139)). Projected highlighting
   refreshes on recompile (save and hot-reload); zero-latency coloring is a later UX layer, and
   the `feat/source-syntax-highlighting` worktree is its prior attempt.
 - **A real language server.** The projections are LSP-shaped so a future
@@ -198,7 +198,7 @@ cannot produce a ghost, so the triggers no longer carry a grammar contract.
 scan over the payload symbols) is removed: its sole purpose was the client grammar this replaces.
 The **instant per-keystroke lexer** (#139) and its cross-language conformance corpus are deferred
 — once highlighting is compiler-projected, maintaining a second TypeScript grammar is low value,
-and autosave-on-idle ([#140](https://github.com/pengzhengyi/godot-dialoguedown/issues/140)) will
+and autosave-on-idle ([#140](https://github.com/pengzhengyi/dialoguedown/issues/140)) will
 shrink the recompile gap further.
 
 ### D7 — Highlight the Dialogue AST, not the Desugared AST
@@ -219,7 +219,7 @@ decoration precedence — it simply orders tokens by start.
 
 The parser records each part's sub-span on the speaker AST node; the mechanics live in
 [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md)
-([#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142)).
+([#142](https://github.com/pengzhengyi/dialoguedown/issues/142)).
 
 ## Error and boundary cases
 
@@ -266,4 +266,4 @@ None outstanding — the approach (AST-projected tokens, Dialogue AST, drop the 
 agreed and shipped. The speaker's parts are highlighted as precise, non-overlapping
 `SpeakerName`/`SpeakerId`/`Separator` tokens from AST sub-spans; the mechanics live in
 [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md)
-([#142](https://github.com/pengzhengyi/godot-dialoguedown/issues/142)).
+([#142](https://github.com/pengzhengyi/dialoguedown/issues/142)).

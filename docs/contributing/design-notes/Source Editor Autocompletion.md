@@ -222,7 +222,7 @@ the browser `createSemanticSymbolSource` wraps those resolved symbols as a
 since the last compile still complete; `main.ts` passes it to `createSourceView`
 and refreshes the resolved half on each hot-reload. The completion sources are
 unchanged — the whole feature rides the existing seam. Delivered in
-[issue #71](https://github.com/pengzhengyi/godot-dialoguedown/issues/71).
+[issue #71](https://github.com/pengzhengyi/dialoguedown/issues/71).
 
 ## Implementation checklist
 

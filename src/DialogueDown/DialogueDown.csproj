@@ -10,7 +10,7 @@
     <Authors>Zhengyi Peng</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/pengzhengyi/godot-dialoguedown</RepositoryUrl>
+    <RepositoryUrl>https://github.com/pengzhengyi/dialoguedown</RepositoryUrl>
     <LangVersion>latest</LangVersion>
     <!-- Engine-agnostic: no Godot reference so the core stays reusable and unit-testable. -->
     <Description>Markdown-first branching dialogue core for Godot-facing dialogue systems.</Description>

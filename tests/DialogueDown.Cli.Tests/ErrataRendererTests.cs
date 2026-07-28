@@ -118,12 +118,12 @@ public sealed class ErrataRendererTests
         // Each diagnostic is followed, inline, by a doc link to its own code (Clippy/Biome style).
         Assert.Contains(
             "for more information, see "
-            + "https://pengzhengyi.github.io/godot-dialoguedown/guide/error-codes.html#dlg1003",
+            + "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1003",
             output,
             StringComparison.Ordinal);
         Assert.Contains(
             "for more information, see "
-            + "https://pengzhengyi.github.io/godot-dialoguedown/guide/error-codes.html#dlg2001",
+            + "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg2001",
             output,
             StringComparison.Ordinal);
         // The link sits directly under its diagnostic line, not batched at the end.

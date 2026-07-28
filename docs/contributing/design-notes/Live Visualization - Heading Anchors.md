@@ -52,7 +52,7 @@ copying, and affordances on the graph-tab scene nodes.
   inline [widget decoration](https://codemirror.net/docs/ref/#view.Decoration^widget)
   is the idiomatic equivalent, and is how community inlay-hint packages are built.
   The editor slug hint is one such widget.
-- **DialogueDown jump autocomplete** ([issue #71](https://github.com/pengzhengyi/godot-dialoguedown/issues/71))
+- **DialogueDown jump autocomplete** ([issue #71](https://github.com/pengzhengyi/dialoguedown/issues/71))
   already surfaces scene-heading slugs when *completing* a jump destination. This
   feature is its complement: copying a slug *out* from a heading.
 

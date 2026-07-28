@@ -35,7 +35,7 @@
       "_enableSearch": true,
       "_disableContribution": false,
       "_gitContribute": {
-        "repo": "https://github.com/pengzhengyi/godot-dialoguedown",
+        "repo": "https://github.com/pengzhengyi/dialoguedown",
         "branch": "main"
       }
     }

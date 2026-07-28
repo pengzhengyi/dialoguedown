@@ -60,7 +60,7 @@ analytics-layout tab (graph + resizable, collapsible stacked tables) with cross-
 highlighting; and wiring the tab through the existing report payload. **Out of scope:**
 changing the analyzer or its model; the flow graph (succession/choice/jump *edges*, a later
 component); editing from this tab; and speaker-driven autocomplete (the next component,
-tracked as [#71](https://github.com/pengzhengyi/godot-dialoguedown/issues/71)).
+tracked as [#71](https://github.com/pengzhengyi/dialoguedown/issues/71)).
 
 ## Ubiquitous language
 

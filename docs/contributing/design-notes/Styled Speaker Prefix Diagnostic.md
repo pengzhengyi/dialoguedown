@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented**
-> ([issue #168](https://github.com/pengzhengyi/godot-dialoguedown/issues/168)).
+> ([issue #168](https://github.com/pengzhengyi/dialoguedown/issues/168)).
 > Warns when a line looks like a speaker prefix but its name is Markdown-styled, so
 > the compiler does not recognize it and the line would otherwise be silently
 > unattributed.

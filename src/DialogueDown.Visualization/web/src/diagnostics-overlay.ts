@@ -5,7 +5,7 @@ import { positionToOffset } from "./lsp-position";
 import type { LspDiagnostic, LspSeverity } from "./model";
 
 /** The docs page whose per-code anchors the tooltip links to (mirrors the CLI's doc links). */
-const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/godot-dialoguedown/guide/error-codes.html";
+const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
 
 /** LSP severity numbers to the lint UI's kinds (which drive the squiggle and gutter color). */
 const SEVERITY_KIND: Record<LspSeverity, EditorDiagnostic["severity"]> = {

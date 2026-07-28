@@ -124,7 +124,7 @@ CI fails if line coverage drops below 90% and emits a warning when it is below
 
 ## Documentation
 
-📖 **[Documentation site](https://pengzhengyi.github.io/godot-dialoguedown/)** — the
+📖 **[Documentation site](https://pengzhengyi.github.io/dialoguedown/)** — the
 writer guide, the contributing docs and per-stage design notes, and the generated
 C# API reference, published from `docs/` on every merge to `main`.
 
@@ -144,7 +144,7 @@ In the repository:
 </p>
 
 > [!TIP]
-> **[▶ Try the live demo](https://pengzhengyi.github.io/godot-dialoguedown/demo/)** — an
+> **[▶ Try the live demo](https://pengzhengyi.github.io/dialoguedown/demo/)** — an
 > interactive, read-only report for a sample script, served from GitHub Pages and
 > rebuilt on every merge to `main`.
 
