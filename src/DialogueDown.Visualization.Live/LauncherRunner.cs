@@ -90,7 +90,7 @@ public sealed class LauncherRunner : ILauncherRunner
         await server.StartAsync();
 
         output.WriteLine($"Serving {launchRoot.RootDirectory}");
-        return await ServeUntilCanceledAsync(server.BaseUrl, noOpen, output, cancellationToken);
+        return await ServeUntilShutdownAsync(server, server.BaseUrl, noOpen, output, cancellationToken);
     }
 
     // A script opens directly on its report. The served root is resolved from the document — its own
@@ -138,13 +138,14 @@ public sealed class LauncherRunner : ILauncherRunner
         var url = server.BaseUrl.TrimEnd('/') + reportPath;
         var verb = mode == LaunchMode.Edit ? "editing" : "visualization";
         output.WriteLine($"Live {verb} of {displayPath}");
-        return await ServeUntilCanceledAsync(url, noOpen, output, cancellationToken);
+        return await ServeUntilShutdownAsync(server, url, noOpen, output, cancellationToken);
     }
 
-    // Opens the URL (unless noOpen) and keeps serving until canceled (Ctrl+C), completing normally
+    // Opens the URL (unless noOpen) and keeps serving until the web host shuts down — Ctrl+C (a
+    // termination signal the host handles) or the command's cancellation token; completing normally
     // rather than throwing so shutdown is not an exceptional path.
-    private async Task<int> ServeUntilCanceledAsync(
-        string url, bool noOpen, TextWriter output, CancellationToken cancellationToken)
+    private async Task<int> ServeUntilShutdownAsync(
+        LauncherServer server, string url, bool noOpen, TextWriter output, CancellationToken cancellationToken)
     {
         output.WriteLine($"  {url}  (press Ctrl+C to stop)");
         if (!noOpen)
@@ -152,9 +153,7 @@ public sealed class LauncherRunner : ILauncherRunner
             _browser.Open(url);
         }
 
-        var stopped = new TaskCompletionSource();
-        await using var registration = cancellationToken.Register(() => stopped.TrySetResult());
-        await stopped.Task;
+        await server.WaitForShutdownAsync(cancellationToken);
 
         return 0;
     }

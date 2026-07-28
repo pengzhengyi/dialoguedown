@@ -33,6 +33,14 @@ changes easy to categorize.
   above its folder still resolves them with your consent (or an explicit `--root`). See the
   [Unified Served Shell](docs/contributing/design-notes/Live%20Visualization%20-%20Unified%20Served%20Shell.md) note.
 
+### Fixed
+
+- **`ddown visualize` now stops on Ctrl+C** — the live server previously ignored the
+  interrupt and had to be killed, because the shutdown signal reached the web host but
+  not the command waiting on it. Pressing Ctrl+C (or sending a termination signal) now
+  stops the session promptly, ending any open hot-reload stream instead of blocking
+  shutdown.
+
 ## [0.1.0] - 2026-07-28
 
 ### Added
