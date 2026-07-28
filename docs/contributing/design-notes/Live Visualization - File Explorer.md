@@ -1,11 +1,12 @@
 # Live Visualization — File Explorer
 
 > [!NOTE]
-> Status: **implemented** for launcher-served reports — the standalone launcher is
-> folded into the served report as a collapsible **Explorer** sidebar, so a writer
-> sees the whole project beside the active script. Converging `visualize <script>`
-> (direct serve) onto the same project server is a deferred follow-up (see
-> [Decisions](#decisions)). It is the visualization precursor the
+> Status: **implemented**. The standalone launcher is folded into the served report
+> as a collapsible **Explorer** sidebar, so a writer sees the whole project beside
+> the active script. `visualize <script>` now serves through the same project server
+> too — the convergence this note deferred, delivered by the
+> [Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md)
+> note (see [Decisions](#decisions)). It is the visualization precursor the
 > [Cross-file jump resolution](./Cross-File%20Jump%20Resolution.md) note defers
 > ("a multi-script project view in the visualization").
 
@@ -314,11 +315,12 @@ Settled in review:
 
 1. **One project server (converge on the launcher's model).** The Explorer is
    served by the launcher's project server, which browses, opens, creates, and
-   switches sessions. Reports opened through the launcher (`visualize`,
-   `visualize <folder>`, `--pick`) carry the Explorer today. Converging
-   `visualize <script>` (direct serve) onto the same server is **deferred** to a
-   focused follow-up: it retires the separate direct-serve server and rewrites its
-   tests, so it earns its own change rather than riding this one.
+   switches sessions. Reports opened through the launcher (`visualize`, `--pick`)
+   carry the Explorer, and `visualize <script>` was **converged** onto the same
+   server by the
+   [Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md)
+   note — it retired the separate direct-serve server and rewrote its tests as its
+   own focused change rather than riding this one.
 2. **Root is the resolved serve root.** `--root` when given, else the document's
    folder — the value already flows into both serve paths, so no new option.
 3. **Switching respects the save mode.** Auto flushes silently before navigating;

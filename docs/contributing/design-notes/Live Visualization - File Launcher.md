@@ -1,15 +1,18 @@
 # Live Visualization — File Launcher
 
 > [!NOTE]
-> Status: **implemented** (Component 3 of live visualization). Component 1 (Hot Reload)
+> Status: **superseded as a page** (was Component 3 of live visualization). The
+> launcher *page* is retired by the
+> [Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md):
+> its browse/open/create behavior lives on as the report's **Explorer** sidebar, and
+> its "pick a file first" landing is now an empty state inside the report shell. The
+> rest of this note records the original design for context. Component 1 (Hot Reload)
 > shipped a `visualize` command that serves one document from a loopback server and
-> hot-reloads it. This component makes a **launcher** the uniform interactive entry
-> point: `visualize` opens a browser modal — like VS Code's Open File — to browse the
+> hot-reloads it. This component made a **launcher** the uniform interactive entry
+> point: `visualize` opened a browser modal — like VS Code's Open File — to browse the
 > **launch root** (set by `--root` or the current directory) for a `.dialogue.md`
-> **source** and pick a **mode**, then opens the report. CLI arguments pre-fill the
-> modal; a fully specified command skips it. **Live editing** (Component 2) and
-> **choosing a different root inside the modal** are deferred — the mode option shows
-> Live Edit disabled, and the root is set when the launcher starts.
+> **source** and pick a **mode**, then opened the report. CLI arguments pre-filled the
+> modal; a fully specified command skipped it.
 >
 > The mode options are now **View / Edit** (both enabled) — the two sides of the
 > served session's runtime toggle; see the
