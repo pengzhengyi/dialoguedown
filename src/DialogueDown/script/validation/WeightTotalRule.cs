@@ -43,7 +43,7 @@ internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDia
 
         // A query weight has no compile-time value, and a conditional option may be excluded, so
         // the achievable total is only known at runtime — the runtime resolves and re-normalizes it.
-        if (random.Options.Any(option => option.Weight is QueryWeight || option.IsConditional))
+        if (random.Options.Any(option => option.Weight is QueryWeight || option.IsConditional()))
         {
             return;
         }

@@ -135,6 +135,9 @@ internal static class DialogueAstAssert
 
     public static Line AssertLine(ScriptBlock actual) => Assert.IsType<Line>(actual);
 
+    public static ControlLine AssertControlLine(ScriptBlock actual) =>
+        Assert.IsType<ControlLine>(actual);
+
     public static Choices AssertChoices(ScriptBlock actual, bool isOrdered)
     {
         var choices = Assert.IsType<Choices>(actual);
@@ -146,6 +149,9 @@ internal static class DialogueAstAssert
         Assert.IsType<RandomChoices>(actual);
 
     public static Line AssertChoiceLine(Choice choice) => AssertLine(Assert.Single(choice.Body));
+
+    public static ControlLine AssertChoiceControlLine(Choice choice) =>
+        AssertControlLine(Assert.Single(choice.Body));
 
     public static Line AssertRandomOptionLine(RandomOption option) =>
         AssertLine(Assert.Single(option.Body));

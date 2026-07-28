@@ -8,6 +8,8 @@ namespace DialogueDown.Tests.Support;
 /// </summary>
 internal static class DialogueAstFactory
 {
+    public static ScriptDocument Document(params ScriptBlock[] body) => new(body);
+
     public static CustomTag CustomTag(string name, string? value = null) =>
         new(name, value, SourceSpanFactory.Span());
 
@@ -37,6 +39,12 @@ internal static class DialogueAstFactory
 
     public static Line ConditionalLine(Condition condition, params InlineFragment[] speech) =>
         new(null, speech, SourceSpanFactory.Span(), condition);
+
+    public static ControlLine ControlLine(params InlineFragment[] effects) =>
+        new(effects, SourceSpanFactory.Span());
+
+    public static ControlLine ConditionalControlLine(Condition condition, params InlineFragment[] effects) =>
+        new(effects, SourceSpanFactory.Span(), condition);
 
     public static Choice Choice(params ScriptBlock[] body) =>
         new(body, SourceSpanFactory.Span());

@@ -152,7 +152,7 @@ public sealed class JumpAssemblerTests
     {
         var result = JumpAssembler.Assemble([JumpIndicator(), Link("#play", Text("go"))]);
 
-        Assert.False(AssertJump(Assert.Single(result), "#play").IsConditional);
+        Assert.False(AssertJump(Assert.Single(result), "#play").IsConditional());
     }
 
     [Fact]

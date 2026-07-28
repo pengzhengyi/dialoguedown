@@ -20,6 +20,7 @@ internal static class CategoryPalette
         ["jump"] = "#06b6d4",
         ["media"] = "#f97316",
         ["call"] = "#ef4444",
+        ["control"] = "#6366f1",
         ["styling"] = "#f59e0b",
         ["break"] = "#9ca3af",
         ["tag"] = "#ec4899",

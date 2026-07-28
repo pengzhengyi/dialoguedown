@@ -182,6 +182,11 @@ changes easy to categorize.
 
 ### Changed
 
+- **A bare jump or a silent command is an effect, not speech** — a jump or a
+  game-state command on its own line is now an effect-only *control line* with no
+  speaker, so it is never attributed to a character or the configured default
+  speaker; narration by the default speaker is unchanged. See the
+  [Control Line](docs/contributing/design-notes/Control%20Line.md) note.
 - **One maximize control for the whole report.** The visualization report's *full screen*
   toggle now lives once at the right end of the tab bar (with a matching exit control while
   maximized), instead of a separate button in each tab's toolbar; `f` and `Escape` still toggle it.

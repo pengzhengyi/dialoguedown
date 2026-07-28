@@ -35,6 +35,7 @@ internal sealed class OrphanConditionRule : DiagnosticRule
     {
         Jump jump => ReferenceEquals(jump.Condition, condition),
         Line line => ReferenceEquals(line.Condition, condition),
+        ControlLine control => ReferenceEquals(control.Condition, condition),
         Choice choice => ReferenceEquals(choice.Condition, condition),
         RandomOption option => ReferenceEquals(option.Condition, condition),
         _ => false,

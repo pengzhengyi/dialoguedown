@@ -8,7 +8,7 @@ namespace DialogueDown.Script.Ast;
 /// but never null. <see cref="Label"/> is the shown text as an ordered fragment sequence,
 /// so it can carry <see cref="Tag"/>s and styling like any other speech.
 /// </summary>
-internal sealed record Jump : InlineFragment
+internal sealed record Jump : InlineFragment, IConditional
 {
     public Jump(
         string target, IReadOnlyList<InlineFragment> label, SourceSpan span,
@@ -27,7 +27,4 @@ internal sealed record Jump : InlineFragment
 
     /// <summary>The condition that guards this jump, or null for an unconditional jump.</summary>
     public Condition? Condition { get; }
-
-    /// <summary>Whether this jump is guarded by a condition.</summary>
-    public bool IsConditional => Condition is not null;
 }

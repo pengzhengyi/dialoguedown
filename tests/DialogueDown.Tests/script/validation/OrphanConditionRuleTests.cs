@@ -69,6 +69,15 @@ public sealed class OrphanConditionRuleTests
         Assert.Empty(Check(random));
     }
 
+    [Fact]
+    public void Check_AConditionBoundToAControlLine_ReportsNothing()
+    {
+        var control = ConditionalControlLine(
+            Condition("GateJammed"), new DefaultCommand("force", SourceSpanFactory.Span()));
+
+        Assert.Empty(Check(control));
+    }
+
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();

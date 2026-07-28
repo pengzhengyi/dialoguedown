@@ -1,54 +1,46 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
-using DialogueDown.Tests.Support;
-using static DialogueDown.Tests.Support.DialogueAstAssert;
+using NSubstitute;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Desugar;
 
 public sealed class DesugarerTests
 {
-    private readonly Desugarer _desugarer = new();
-
     [Fact]
-    public void Rewrite_FillsDefaultSpeakerAndAssemblesJump_OnOneLine()
+    public void Desugar_RunsEachRuleInOrder_FeedingOutputToTheNext()
     {
-        // A speaker-less line whose speech is "=> [go](#play)".
-        var document = Document(Line(JumpIndicator(), Link("#play", Text("go"))));
+        var afterFirst = new ScriptDocument([Line(Text("first"))]);
+        var afterSecond = new ScriptDocument([Line(Text("second"))]);
+        var first = Substitute.For<IDesugarRule>();
+        var second = Substitute.For<IDesugarRule>();
+        first.Apply(Arg.Any<ScriptDocument>()).Returns(afterFirst);
+        second.Apply(Arg.Any<ScriptDocument>()).Returns(afterSecond);
+        var input = new ScriptDocument([]);
 
-        var line = AssertLine(Rewrite(document).Body[0]);
+        var result = new Desugarer([first, second]).Desugar(input);
 
-        AssertDefaultSpeaker(line.Speaker);
-        AssertJump(Assert.Single(line.Speech), "#play");
+        Received.InOrder(() =>
+        {
+            first.Apply(input);
+            second.Apply(afterFirst); // the second rule sees the first rule's output
+        });
+        Assert.Same(afterSecond, result);
     }
 
     [Fact]
-    public void Rewrite_LeavesAPresentSpeakerAndItsSpeech()
+    public void Desugar_NoRules_ReturnsTheDocumentUnchanged()
     {
-        var document = Document(
-            new Line(SpeakerNameReference("Alice"), [Text("Hi")], SourceSpanFactory.Span()));
+        var input = new ScriptDocument([Line(Text("hi"))]);
 
-        var line = AssertLine(Rewrite(document).Body[0]);
-
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
-        AssertSingleText(line.Speech, "Hi");
+        Assert.Same(input, new Desugarer([]).Desugar(input));
     }
 
     [Fact]
-    public void Rewrite_ReachesIntoChoiceBodies()
-    {
-        // The rules must reach nested blocks, not only top-level lines.
-        var nested = Line(JumpIndicator(), Link("#play", Text("go")));
-        var document = Document(Choices(Choice(nested)));
+    public void Constructor_NullRules_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => new Desugarer(null!));
 
-        var choices = AssertChoices(Rewrite(document).Body[0], isOrdered: false);
-        var line = AssertChoiceLine(Assert.Single(choices.Options));
-
-        AssertDefaultSpeaker(line.Speaker);
-        AssertJump(Assert.Single(line.Speech), "#play");
-    }
-
-    private static ScriptDocument Document(params ScriptBlock[] body) => new(body);
-
-    private ScriptDocument Rewrite(ScriptDocument document) => _desugarer.Rewrite(document);
+    [Fact]
+    public void Desugar_NullDocument_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => new Desugarer([]).Desugar(null!));
 }
