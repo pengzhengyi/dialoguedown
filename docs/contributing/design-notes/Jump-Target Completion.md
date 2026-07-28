@@ -1,7 +1,7 @@
 # Jump-Target Completion
 
 > [!NOTE]
-> Status: **proposed**. An enhancement to
+> Status: **implemented**. An enhancement to
 > [Source Editor Autocompletion](./Source%20Editor%20Autocompletion.md) and
 > [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md):
 > when the writer types the jump indicator `=>`, offer the script's scenes and, on
@@ -75,23 +75,23 @@ one concept keeps one name across the spec, the code, and the completions.
 
 ## Functionality checklist
 
-- [ ] Typing the jump indicator `=>` offers **every scene** in the script (plus the
+- [x] Typing the jump indicator `=>` offers **every scene** in the script (plus the
       `#END` sentinel), each labelled by its heading.
-- [ ] A partial label after `=>` (e.g. `=> pla`) **filters** the offered scenes by
+- [x] A partial label after `=>` (e.g. `=> pla`) **filters** the offered scenes by
       heading prefix.
-- [ ] Accepting a scene inserts the **complete jump target** `[Heading](#slug)`,
+- [x] Accepting a scene inserts the **complete jump target** `[Heading](#slug)`,
       slugged exactly as the preview anchors (the compiler-projected `slug`).
-- [ ] The inserted **heading label is an editable field** — the cursor selects it, so
+- [x] The inserted **heading label is an editable field** — the cursor selects it, so
       the writer can retype the label, then Tab past it; the slug stays fixed.
-- [ ] A single space always separates `=>` from the inserted link (`=> [..]`, never
+- [x] A single space always separates `=>` from the inserted link (`=> [..]`, never
       `=>[..]`), regardless of whether the writer typed one.
-- [ ] The completion is **Edit-only** — inactive in read-only View and in the static
+- [x] The completion is **Edit-only** — inactive in read-only View and in the static
       export.
-- [ ] The popup's **info panel previews** the full `[Heading](#slug)` that will be
+- [x] The popup's **info panel previews** the full `[Heading](#slug)` that will be
       inserted, so the writer sees the enrichment before accepting.
-- [ ] The existing slug completion inside a hand-typed `](#…)` link is **unchanged**;
+- [x] The existing slug completion inside a hand-typed `](#…)` link is **unchanged**;
       the two sources complement each other.
-- [ ] No suggestions and no error on a script with no scenes.
+- [x] No suggestions and no error on a script with no scenes.
 
 ## Design
 
@@ -137,7 +137,7 @@ filters by the partial label typed against each heading.
 
 Renaming `jumpTargetCompletions` → `jumpSlugCompletions` keeps the ubiquitous
 language honest: it completes a **slug**, while the new source completes a whole
-**jump target**. (Naming open for review.)
+**jump target**.
 
 ## Key design decisions
 
@@ -205,11 +205,11 @@ report's `symbols`.
 
 ## Implementation checklist
 
-- [ ] Add `jumpIndicatorCompletions(symbols)` to `editor-completions.ts`: match the
+- [x] Add `jumpIndicatorCompletions(symbols)` to `editor-completions.ts`: match the
       `=>` indicator, map `jumpTargets` to `snippetCompletion("[${1:heading}](#slug)")`
       completions with an `info` preview, normalize the separating space.
-- [ ] Rename `jumpTargetCompletions` → `jumpSlugCompletions`; register both in
+- [x] Rename `jumpTargetCompletions` → `jumpSlugCompletions`; register both in
       `dialogueAutocompletion`.
-- [ ] Unit tests via `CompletionContext` (trigger, filter, enriched insert, boundary
+- [x] Unit tests via `CompletionContext` (trigger, filter, enriched insert, boundary
       cases); Playwright e2e for the accept round-trip.
-- [ ] Rebuild the committed `dist/report.html`; `CHANGELOG` + reading-guide entry.
+- [x] Rebuild the committed `dist/report.html`; `CHANGELOG` + reading-guide entry.
