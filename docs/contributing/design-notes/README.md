@@ -153,6 +153,7 @@ flowchart TB
     DGO --> CPE["20. Compiler-Projected Editor Semantics"]
     CPE --> PST["21. Precise Speaker Tokens"]
     PST --> HA["22. Live Visualization — Heading Anchors"]
+    HA --> JTC["23. Jump-Target Completion"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -179,6 +180,7 @@ flowchart TB
 | 20 | [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) | Source-editor highlighting and completions projected from the compiler's own parse (semantic tokens + resolved symbols), retiring the client-side grammar | Implemented |
 | 21 | [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md) | Speaker highlighting split into precise, non-overlapping name, `@id`, and separator tokens, from sub-spans the parser records on the AST | Implemented |
 | 22 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
+| 23 | [Jump-Target Completion](./Jump-Target%20Completion.md) | Complete the whole `[Heading](#slug)` jump target from the `=>` indicator, via a snippet with the heading as an editable field | Implemented |
 
 ### Other notes
 

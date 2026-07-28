@@ -2,6 +2,7 @@ import {
     autocompletion,
     acceptCompletion,
     completionKeymap,
+    snippetCompletion,
     type Completion,
     type CompletionContext,
     type CompletionResult,
@@ -35,8 +36,35 @@ export function completionsFrom(
     return filtered.length ? { from, options: filtered, validFor } : null;
 }
 
-/** Complete a jump destination `](#…)` with the slug of any scene heading. */
-export function jumpTargetCompletions(symbols: DialogueSymbolProvider): CompletionSource {
+/**
+ * Complete the jump indicator `=>` with a whole jump target. Offers every scene by its heading
+ * and, on accept, enriches into `[Heading](#slug)` — the heading as an editable snippet field
+ * (Tab past it), the compiler-correct slug fixed. Fires before the link brackets are typed; once
+ * the writer is inside `](#…)` the {@link jumpSlugCompletions} source takes over. A single space
+ * always follows `=>`, so the result reads `=> [..]`, never `=>[..]`.
+ */
+export function jumpIndicatorCompletions(symbols: DialogueSymbolProvider): CompletionSource {
+    return (context) => {
+        const match = context.matchBefore(/=>[ \t]*[^[\]()\n]*/);
+        if (!match) return null;
+        const { jumpTargets } = symbols();
+        if (!jumpTargets.length) return null;
+        const labelStart = /^=>[ \t]*/.exec(match.text)![0].length;
+        const space = /^=>[ \t]/.test(match.text) ? "" : " ";
+        const options = jumpTargets.map(({ slug, heading }) =>
+            snippetCompletion(`${space}[\${1:${heading}}](#${slug})`, {
+                label: heading,
+                detail: `#${slug}`,
+                info: `[${heading}](#${slug})`,
+                type: JUMP,
+            }),
+        );
+        return { from: match.from + labelStart, options, validFor: /^[^[\]()\n]*$/ };
+    };
+}
+
+/** Complete a jump destination `](#…)` typed by hand with the slug of any scene heading. */
+export function jumpSlugCompletions(symbols: DialogueSymbolProvider): CompletionSource {
     return (context) => {
         const match = context.matchBefore(/\]\(#[\w-]*/);
         if (!match) return null;
@@ -105,7 +133,8 @@ export function dialogueAutocompletion(
     return [
         autocompletion({
             override: [
-                jumpTargetCompletions(symbols),
+                jumpIndicatorCompletions(symbols),
+                jumpSlugCompletions(symbols),
                 speakerIdCompletions(symbols),
                 tagCompletions(symbols),
                 speakerCompletions(symbols),

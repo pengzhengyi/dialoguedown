@@ -19,5 +19,7 @@ ignores:
 
 config:
   MD013: false  # line length — design notes wrap prose at ~80 cols by intent
+  MD024:        # duplicate headings — a changelog repeats Added/Changed per version
+    siblings_only: true
   MD033: false  # inline HTML — the README banner uses <p>/<img>/<kbd> deliberately
   MD041: false  # first-line H1 — the README opens with the centered banner
