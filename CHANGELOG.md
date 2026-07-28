@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Styled speaker names are flagged** — when a line's speaker name is Markdown-styled
+  (`*Alice*:`), it is not recognized as a speaker prefix and the line would otherwise be left
+  silently unattributed; the compiler now warns and points at the fix — remove the styling to
+  declare the speaker (`Alice:`). See the
+  [Styled Speaker Prefix Diagnostic](docs/contributing/design-notes/Styled%20Speaker%20Prefix%20Diagnostic.md) note.
 - **Jump types in the Semantic tab** — the report's *Jump resolutions* table now leads with a
   color-coded **Type** column (Scene, End, Cross-file, Unresolved) so jumps group and read at a
   glance, prefixes a conditional jump with its guarding condition, and colors the *End* type with

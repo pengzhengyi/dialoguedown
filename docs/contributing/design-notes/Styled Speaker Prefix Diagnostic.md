@@ -1,10 +1,11 @@
 # Styled speaker prefix diagnostic
 
 > [!NOTE]
-> Status: **proposed**
+> Status: **implemented**
 > ([issue #168](https://github.com/pengzhengyi/godot-dialoguedown/issues/168)).
-> Warn when a line looks like a speaker prefix, but its name is Markdown-styled, so
-> the compiler does not recognize it — today the line is silently unattributed.
+> Warns when a line looks like a speaker prefix but its name is Markdown-styled, so
+> the compiler does not recognize it and the line would otherwise be silently
+> unattributed.
 
 ## Table of contents
 
@@ -46,17 +47,17 @@ rule configuration (no TOML knob).
 
 ## Functionality checklist
 
-- [ ] Add `DLG1107` as a `Syntax` diagnostic with `Warning` severity.
-- [ ] Detect a line with **no recognized speaker** whose styled leading run parses
+- [x] Add `DLG1107` as a `Syntax` diagnostic with `Warning` severity.
+- [x] Detect a line with **no recognized speaker** whose styled leading run parses
       as a speaker prefix once flattened to plain text.
-- [ ] Cover italic, bold, and strikethrough names (`*Alice*:`, `**Alice**:`,
+- [x] Cover italic, bold, and strikethrough names (`*Alice*:`, `**Alice**:`,
       `~~Alice~~:`), including bold-italic.
-- [ ] Require the terminating `:` to sit **outside** the styled run, so a
+- [x] Require the terminating `:` to sit **outside** the styled run, so a
       fully-styled line (`*Alice: hi*`) does not trigger.
-- [ ] Point the diagnostic at the would-be prefix (line start through the `:`).
-- [ ] Apply inside choice options too (any `Line`, not only top-level speech).
-- [ ] Emit from the line builder when the speaker peel fails on a styled run.
-- [ ] Add the generated error-code reference entry and a short writer-facing note.
+- [x] Point the diagnostic at the would-be prefix (line start through the `:`).
+- [x] Apply inside choice options too (any `Line`, not only top-level speech).
+- [x] Emit from the line builder when the speaker peel fails on a styled run.
+- [x] Add the generated error-code reference entry and a short writer-facing note.
 
 ## Ubiquitous language
 
@@ -217,14 +218,15 @@ what a "speaker prefix" is, so the warning never disagrees with recognition.
 The detector is pure over the leading Markdown inlines and needs no I/O, so it
 stays bottom-heavy on unit tests that build the inlines directly.
 
-- **Unit (`StyledSpeakerPrefixDetectorTests`):** each styled form warns; a plain
-  prefix shape does not; a fully-styled line (colon inside) does not; a styled
-  non-name does not; a styled prefix with a tag warns; styling within the name
-  warns; a styled run with no colon does not; the message names the would-be
-  prefix.
-- **Integration:** one end-to-end compile asserting the `DLG1107` code and its
-  location for `*Alice*: hi`, plus (via the compiler-verified error-code example)
-  that the fix `Alice: hi` stays clean.
+- **Unit (`StyledSpeakerPrefixDetectorTests`):** each styled form warns (italic,
+  bold, strikethrough, and bold-italic); a plain prefix shape does not; a
+  fully-styled line (colon inside) does not; a styled non-name does not; a styled
+  prefix with a tag warns; styling within the name warns; a styled run with no
+  colon does not; the message names the would-be prefix.
+- **Integration:** end-to-end compiles asserting the `DLG1107` code and its
+  location for `*Alice*: hi` and for a styled prefix inside a choice option, plus
+  (via the compiler-verified error-code example) that the fix `Alice: hi` stays
+  clean.
 
 ## Alternatives not chosen
 
