@@ -44,8 +44,8 @@ internal static class ScriptNodeExtensions
     internal static IEnumerable<ScriptNode> Children(this ScriptNode node) => node switch
     {
         ScriptBlock block => BlockChildren(block),
-        Choice choice => choice.IsConditional ? [choice.Condition!, .. choice.Body] : choice.Body,
-        RandomOption option => option.IsConditional
+        Choice choice => choice.IsConditional() ? [choice.Condition!, .. choice.Body] : choice.Body,
+        RandomOption option => option.IsConditional()
             ? [option.Condition!, option.Weight, .. option.Body]
             : [option.Weight, .. option.Body],
         ChoiceWeight => [],
@@ -104,7 +104,7 @@ internal static class ScriptNodeExtensions
         StyledText styled => styled.Children,
         Image image => image.Alt,
         Link link => link.Label,
-        Jump jump => jump.IsConditional ? [jump.Condition!, .. jump.Label] : jump.Label,
+        Jump jump => jump.IsConditional() ? [jump.Condition!, .. jump.Label] : jump.Label,
 
         _ => [],
     };

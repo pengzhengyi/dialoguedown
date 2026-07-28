@@ -11,8 +11,4 @@ namespace DialogueDown.Script.Ast;
 /// </summary>
 internal sealed record RandomOption(
     ChoiceWeight Weight, IReadOnlyList<ScriptBlock> Body, SourceSpan Span,
-    Condition? Condition = null) : ScriptNode(Span)
-{
-    /// <summary>Whether this option is guarded by a condition.</summary>
-    public bool IsConditional => Condition is not null;
-}
+    Condition? Condition = null) : ScriptNode(Span), IConditional;
