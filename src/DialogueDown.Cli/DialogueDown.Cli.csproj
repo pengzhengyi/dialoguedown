@@ -11,8 +11,25 @@
     <Version>0.1.0</Version>
     <!-- The command-line front-end for DialogueDown scripts. A thin Spectre.Console.Cli
          host over the library; the real work lives behind the compilation seam. -->
-    <Description>Command-line interface for DialogueDown scripts.</Description>
+    <Description>Compile and visualize DialogueDown dialogue scripts from the command line.</Description>
+
+    <!-- Ship as a cross-platform .NET global tool: `dotnet tool install -g DialogueDown.Cli`
+         puts a `ddown` command on the user's PATH. See docs/guide/cli.md. -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ddown</ToolCommandName>
+    <PackageId>DialogueDown.Cli</PackageId>
+    <Authors>Zhengyi Peng</Authors>
+    <PackageTags>dialogue;markdown;compiler;narrative;gamedev;cli</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/pengzhengyi/godot-dialoguedown</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/pengzhengyi/godot-dialoguedown.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="DialogueDown.Cli.Tests" />
