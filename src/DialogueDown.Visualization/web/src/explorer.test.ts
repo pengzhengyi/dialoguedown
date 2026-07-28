@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 import { ancestorFolders, initExplorer, type ExplorerPorts } from "./explorer";
-import type { BrowseListing } from "./launcher";
+import type { BrowseListing, CreateOutcome } from "./launcher";
 import type { ReportProject } from "./model";
 
 const rootListing: BrowseListing = {
@@ -21,6 +21,8 @@ function ports(overrides: Partial<ExplorerPorts> = {}): ExplorerPorts {
     return {
         browse: vi.fn(async (path: string) => (path === "act-1" ? act1Listing : rootListing)),
         openScript: vi.fn<(path: string) => void>(),
+        create: vi.fn(async () => ({ kind: "opened", url: "http://x/r/new/" }) as CreateOutcome),
+        confirm: vi.fn(() => true),
         ...overrides,
     };
 }
@@ -31,6 +33,15 @@ const settle = async () => {
 };
 const rowTexts = (root: HTMLElement, selector: string) =>
     [...root.querySelectorAll(selector)].map((node) => node.textContent);
+
+/** Open the New file field, type a name, and submit it with Enter. */
+async function createNamed(container: HTMLElement, name: string): Promise<void> {
+    (container.querySelector(".explorer-new") as HTMLElement).click();
+    const input = container.querySelector(".explorer-create-name") as HTMLInputElement;
+    input.value = name;
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    await settle();
+}
 
 describe("ancestorFolders", () => {
     it("lists ancestor folders root-first, excluding the file", () => {
@@ -89,5 +100,32 @@ describe("initExplorer", () => {
         introRow.click();
 
         expect(explorerPorts.openScript).toHaveBeenCalledWith("intro.dialogue.md");
+    });
+
+    it("creates a script in the active script's folder", async () => {
+        const container = document.createElement("aside");
+        const explorerPorts = ports();
+        initExplorer(container, revealing, explorerPorts); // active folder: act-1
+        await settle();
+
+        await createNamed(container, "villain");
+
+        expect(explorerPorts.create).toHaveBeenCalledWith("act-1/villain.dialogue.md");
+    });
+
+    it("offers to open an existing file when the name is taken", async () => {
+        const container = document.createElement("aside");
+        const explorerPorts = ports({
+            create: vi.fn(
+                async () =>
+                    ({ kind: "exists", path: "act-1/villain.dialogue.md" }) as CreateOutcome,
+            ),
+        });
+        initExplorer(container, revealing, explorerPorts);
+        await settle();
+
+        await createNamed(container, "villain.dialogue.md");
+
+        expect(explorerPorts.openScript).toHaveBeenCalledWith("act-1/villain.dialogue.md");
     });
 });

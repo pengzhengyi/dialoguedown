@@ -434,6 +434,43 @@ section.stage.error {
     transform: translateX(-50%);
 }
 
+.explorer-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.explorer-new {
+    width: auto;
+    margin: 0;
+    padding: 0 0.35rem;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--pico-primary);
+    font-size: 0.72rem;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+.explorer-new:hover {
+    background: var(--pico-secondary-background, rgb(128 128 128 / 12%));
+}
+
+.explorer-create-name {
+    width: 100%;
+    margin: 0;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.8rem;
+}
+
+.explorer-create-error {
+    margin: 0.25rem 0 0;
+    color: var(--dd-reference, var(--pico-del-color));
+    font-size: 0.75rem;
+}
+
 .explorer-title {
     margin: 0;
     color: var(--pico-muted-color);

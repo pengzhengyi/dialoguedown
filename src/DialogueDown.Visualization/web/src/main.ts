@@ -20,7 +20,7 @@ import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
 import { initExplorer } from "./explorer";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { type DialogueSymbols, EMPTY_SYMBOLS, type Report, type ServedMode } from "./model";
-import type { BrowseListing } from "./launcher";
+import type { BrowseListing, CreateOutcome } from "./launcher";
 
 /**
  * The .NET library replaces the `"__REPORT__"` slot in report.html with the
@@ -229,6 +229,16 @@ if (report.mode === "view" || report.mode === "edit") {
                     beginNavigation(() => {
                         void openScriptSession(path);
                     }),
+                create: async (path) => {
+                    // Resolve the current document save-safely first; a cancelled Manual save
+                    // aborts the create (empty message → the Explorer shows nothing).
+                    const live = activeLive();
+                    if (live && !(await resolveDocument(live))) {
+                        return { kind: "error", message: "" };
+                    }
+                    return createScriptSession(path);
+                },
+                confirm: (message) => window.confirm(message),
             });
             const explorerPanel = initCollapsiblePanel({
                 container: appEl,
@@ -250,6 +260,26 @@ if (report.mode === "view" || report.mode === "edit") {
             body: JSON.stringify({ source, mode }),
         });
         if (response.redirected) window.location.assign(response.url);
+    }
+
+    // Create a new script (POST /api/create) and follow the 303 to its report; a name clash is a
+    // 409 the Explorer turns into "open the existing one instead".
+    async function createScriptSession(path: string): Promise<CreateOutcome> {
+        const response = await fetch("/api/create", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ path }),
+        });
+        if (response.redirected) {
+            window.location.assign(response.url);
+            return { kind: "opened", url: response.url };
+        }
+        if (response.status === 409) {
+            const body = (await response.json().catch(() => ({}))) as { path?: string };
+            return { kind: "exists", path: body.path ?? path };
+        }
+        const body = (await response.json().catch(() => ({}))) as { message?: string };
+        return { kind: "error", message: body.message ?? "Could not create the file." };
     }
 
     if (header) initBackToLauncher(header, window.location.pathname);

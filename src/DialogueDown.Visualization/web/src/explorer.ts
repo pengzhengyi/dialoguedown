@@ -6,7 +6,13 @@
  * is injected through {@link ExplorerPorts}, mirroring the launcher.
  */
 
-import { leafName, type BrowseListing } from "./launcher";
+import {
+    leafName,
+    parentPath,
+    SCRIPT_EXTENSION,
+    type BrowseListing,
+    type CreateOutcome,
+} from "./launcher";
 import type { ReportProject } from "./model";
 
 /** The side-effecting collaborators, injected so the tree is testable without a server. */
@@ -15,6 +21,10 @@ export interface ExplorerPorts {
     browse(path: string): Promise<BrowseListing | null>;
     /** Open a script by its root-relative path — save-safe navigation, wired by the host. */
     openScript(path: string): void;
+    /** Create a script at a root-relative path — save-safe; the host navigates on success. */
+    create(path: string): Promise<CreateOutcome>;
+    /** Confirm a branching choice, e.g. opening an existing file instead of creating it. */
+    confirm(message: string): boolean;
 }
 
 /** A folder row and the handle needed to expand it and reach its child list, used when revealing. */
@@ -36,12 +46,70 @@ export function initExplorer(
 ): void {
     container.replaceChildren();
 
-    const heading = withText("header", "explorer-title", "Explorer");
+    const activeFolder = parentPath(project.activePath);
+    const createError = withText("p", "explorer-create-error", "");
+    createError.setAttribute("role", "alert");
+    createError.hidden = true;
+
+    const showError = (message: string): void => {
+        createError.textContent = message;
+        createError.hidden = message === "";
+    };
+
+    // Create a script in the active script's folder, reusing the launcher's rules: append the
+    // extension, open the new file, or — when the name is taken — offer to open the existing one.
+    const submitCreate = async (name: string): Promise<void> => {
+        const typed = name.trim();
+        if (typed === "") {
+            showError("Enter a name.");
+            return;
+        }
+        const fileName = typed.endsWith(SCRIPT_EXTENSION) ? typed : `${typed}${SCRIPT_EXTENSION}`;
+        const path = activeFolder === "" ? fileName : `${activeFolder}/${fileName}`;
+        const outcome = await ports.create(path);
+        if (outcome.kind === "exists") {
+            if (ports.confirm(`A file named ${fileName} already exists. Open it instead?`)) {
+                ports.openScript(outcome.path);
+            }
+        } else if (outcome.kind === "error" && outcome.message !== "") {
+            showError(outcome.message);
+        }
+        // "opened": the host navigates to the new file's report.
+    };
+
+    // The New file trigger turns into an inline name field; Enter creates, Escape cancels.
+    const startCreate = (trigger: HTMLElement): void => {
+        showError("");
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "explorer-create-name";
+        input.placeholder = "new-script";
+        input.setAttribute("aria-label", "New script name");
+        const restore = (): void => input.replaceWith(trigger);
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                void submitCreate(input.value).then(restore);
+            } else if (event.key === "Escape") {
+                event.preventDefault();
+                restore();
+            }
+        });
+        trigger.replaceWith(input);
+        input.focus();
+    };
+
+    const newFile = withText("button", "explorer-new", "New file") as HTMLButtonElement;
+    newFile.type = "button";
+    newFile.addEventListener("click", () => startCreate(newFile));
+
+    const heading = element("header", "explorer-header");
+    heading.append(withText("span", "explorer-title", "Explorer"), newFile);
     const root = withText("p", "explorer-root", project.root);
     root.title = project.root;
     const tree = element("ul", "explorer-tree");
     tree.setAttribute("role", "tree");
-    container.append(heading, root, tree);
+    container.append(heading, root, tree, createError);
 
     // Populate one folder's list with its sub-folders then its scripts. Returns the folder
     // handles by root-relative path, so a caller can walk them to reveal the active script.
