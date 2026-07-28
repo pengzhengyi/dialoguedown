@@ -39,6 +39,7 @@ model for developers.
     - [Jumps](#jumps)
     - [Conditional jumps](#conditional-jumps)
     - [Conditional lines](#conditional-lines)
+    - [Conditional choices](#conditional-choices)
     - [Ending a run](#ending-a-run)
     - [Comments](#comments)
     - [Front matter](#front-matter)
@@ -100,6 +101,7 @@ flowchart TD
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
 | Conditional jump | `` `"Rainy"?` => [Inn](#inn)`` | Jump only when a query reads as true. |
 | Conditional line | `` `"Angry"?` Guard: Leave.`` | Play a line only when a query reads as true. |
+| Conditional choice | ``- `"HasKey"?` Use the key.`` | Offer an option only when a query reads as true. |
 | End of run | `=> [The end](#END)` | Stop the dialogue at the reserved endpoint. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
@@ -786,9 +788,40 @@ often a second conditional line testing the opposite flag.
 `"NotAngry"?` Guard: Back so soon? Go on through.
 ```
 
-A condition needs a line to apply to: a `` `"key"?` `` alone on a line, or one
-buried mid-line after the speaker, applies to nothing and is reported as
-[`DLG1106`](error-codes.md#dlg1106).
+A condition must lead the line it guards; a `` `"key"?` `` alone on a line, or one
+buried mid-line after the speaker, has nothing to guard and is an error.
+
+### Conditional choices
+
+Front a **choice option** with a condition to offer it only when the query reads
+as true. The condition goes at the very start of the option:
+
+```markdown
+- `"HasKey"?` Use the key on the lock.
+- Search for another way in.
+```
+
+If `HasKey` is true the reader sees both options; if it is false only *Search for
+another way in* is offered. The condition guards the whole option, not just its
+first line.
+
+A [random option](#random-choices) can be conditional too — the condition comes
+**first, before the weight**:
+
+```markdown
+- `"IsAngry"?` `50%` The guard glares and blocks your path.
+- `30%` The guard waves you through.
+- `20%` The guard ignores you.
+```
+
+When `IsAngry` is true the engine picks among all three by weight; when it is false
+the first option is left out and the remaining weights are re-normalized — a random
+pool with a dynamic set of options.
+
+As with a [conditional jump](#conditional-jumps) or line, each option's condition
+is independent and there is no inline *else*: query an inverse flag for the
+opposite case. A condition must lead the option it guards; one with nothing to
+guard is an error.
 
 ### Ending a run
 
