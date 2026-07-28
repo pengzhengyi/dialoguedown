@@ -240,14 +240,13 @@ are untouched.
 - **CLI.** `visualize` and `--pick` open the empty shell; `visualize <script>` opens
   it on that script. `--emit`/`-o` are unchanged. `--root` pins the served root for
   a script and is the browse root for the empty shell.
-- **`fix/visualize-ctrl-c` overlap (coordinate merge).** That branch fixes a
-  **pre-existing** graceful-shutdown bug (the SSE stream holds Ctrl+C shutdown open)
-  on *both* servers and the runners. This convergence deliberately **does not touch
-  shutdown**: retiring `LiveVisualizationServer`/`ServeMode` makes that branch's
-  edits to those files moot, while its `LauncherServer`/runner shutdown fix still
-  applies to — and benefits — the surviving unified server. Whichever branch merges
-  first, the other resolves the overlap on `LauncherServer.cs`/`LauncherRunner.cs`
-  (a delete-vs-edit on the retired files; a content merge on the survivors).
+- **`fix/visualize-ctrl-c` (integrated).** That branch fixed a **pre-existing**
+  graceful-shutdown bug (the SSE stream held Ctrl+C shutdown open) on *both* servers
+  and the runners, and merged first as #185. This convergence deliberately **does not
+  touch shutdown**, so integrating `main` was mechanical: its edits to the retired
+  `LiveVisualizationServer`/`ServeMode` are moot (this branch deletes them), while its
+  `WaitForShutdownAsync` and SSE `ApplicationStopping` handling on the surviving
+  unified server are preserved — the runner's serve loop awaits `WaitForShutdownAsync`.
 
 ## Testability
 
@@ -283,7 +282,7 @@ Settled in review and confirmed at crosscheck:
    the [File Launcher](./Live%20Visualization%20-%20File%20Launcher.md) note is
    superseded as a *page* while its browse/open/create *behavior* lives on in the
    Explorer.
-2. **Shutdown is out of scope.** Owned by `fix/visualize-ctrl-c`; see
+2. **Shutdown was out of scope.** Fixed separately by #185 and integrated here; see
    [Integration](#integration).
 3. **One branch, A's commits then B's.** Reviewed at merge-ready as one pull
    request; B stayed cohesive enough not to warrant splitting.
