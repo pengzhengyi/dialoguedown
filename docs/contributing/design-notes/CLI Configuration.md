@@ -30,8 +30,8 @@
 
 The [Configuration](./Configuration.md) component made the compiler configurable and
 the [configuration loader](./Configuration%20Loader.md) reads a `dialogue.toml` into a
-`CompilerOptions`, but **nothing wires them into the CLI**: `dialoguedown compile` and
-`dialoguedown visualize` always build the compiler with `CompilerOptions.Default`. This
+`CompilerOptions`, but **nothing wires them into the CLI**: `ddown compile` and
+`ddown visualize` always build the compiler with `CompilerOptions.Default`. This
 component closes that last gap — a project's `dialogue.toml` reaches the compiler behind
 both commands, so configured speakers appear in a compiled script, in the visualization report,
 and in the report editor's **autocompletion**.

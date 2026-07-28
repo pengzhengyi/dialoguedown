@@ -32,7 +32,7 @@
 ## Goal and scope
 
 Turn the compiler's collected, offset-based diagnostics into a **public, located,
-human-readable view**, render that view as **errata** on the `dialoguedown compile` command —
+human-readable view**, render that view as **errata** on the `ddown compile` command —
 every problem at once, each pointing at `source(line,column)` — set a meaningful process **exit
 code**, and let the author choose the **compilation mode** with `--mode`.
 

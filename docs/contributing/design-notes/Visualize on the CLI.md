@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented**.
-> Make `dialoguedown visualize` render for real by delegating to the visualization
+> Make `ddown visualize` render for real by delegating to the visualization
 > engine, and retire the hand-rolled `System.CommandLine` entry point — one CLI.
 >
 > The launch surface has since changed: a script opens a **served session** (View by
@@ -30,7 +30,7 @@ This component makes it **do the visualization** — reusing the engine already 
 this branch (`DialogueDown.Visualization` + `DialogueDown.Visualization.Live`) —
 and **removes the second, hand-rolled CLI** so there is one entry point.
 
-**In scope:** `dialoguedown visualize <script>` covers the engine's current modes —
+**In scope:** `ddown visualize <script>` covers the engine's current modes —
 **static** (render a self-contained report and open it) and **watch** (loopback
 server + hot reload) — with the same options; the old `System.CommandLine`
 `VisualizeCli` is deleted.
@@ -42,7 +42,7 @@ later components; the transpiler stays stubbed (see D3).
 
 ```mermaid
 flowchart LR
-    User(["dialoguedown visualize &lt;script&gt; [--watch …]"]) --> Cmd["VisualizeCommand<br/>(DialogueDown.Cli)"]
+    User(["ddown visualize &lt;script&gt; [--watch …]"]) --> Cmd["VisualizeCommand<br/>(DialogueDown.Cli)"]
     Cmd --> Runner["IVisualizeRunner<br/>(injected seam)"]
     Runner --> Static["StaticMode"]
     Runner --> Watch["WatchMode + live server"]

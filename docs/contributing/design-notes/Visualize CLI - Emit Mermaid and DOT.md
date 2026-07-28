@@ -1,7 +1,7 @@
 # Visualize CLI — Emit Mermaid and DOT
 
 > [!NOTE]
-> Status: **implemented**. A `dialoguedown visualize --emit <format>` option that
+> Status: **implemented**. A `ddown visualize --emit <format>` option that
 > writes each stage's graph as **Mermaid** or **Graphviz DOT** text, reusing the
 > renderers that already exist. No frontend change.
 
@@ -26,7 +26,7 @@ only through the unused single-graph `HtmlRenderer`. The value of these formats 
 with Graphviz. A **CLI emit** delivers exactly that without touching the report
 bundle, keeping the self-contained report lean and offline.
 
-This component adds `dialoguedown visualize <script> --emit <format>`, which
+This component adds `ddown visualize <script> --emit <format>`, which
 compiles the script, renders every stage with the chosen renderer, and writes the
 text to `-o <file>` or standard output. It also teaches `MermaidRenderer` the
 per-category **colors** the interactive report uses, so an emitted Mermaid diagram
@@ -103,10 +103,10 @@ flowchart LR
 
 ```bash
 # Emit every stage as Mermaid to stdout
-dialoguedown visualize scene.dialogue.md --emit mermaid
+ddown visualize scene.dialogue.md --emit mermaid
 
 # Emit DOT to a file
-dialoguedown visualize scene.dialogue.md --emit dot -o scene.dot
+ddown visualize scene.dialogue.md --emit dot -o scene.dot
 ```
 
 Each stage is introduced by a comment header in the target format, e.g.
