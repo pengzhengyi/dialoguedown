@@ -1,11 +1,13 @@
 # Live Visualization — File Explorer
 
 > [!NOTE]
-> Status: **proposed** — a design, not yet implemented. It folds the standalone
-> launcher into the served report as a collapsible **Explorer** sidebar, so a
-> writer sees the whole project beside the active script. It is the visualization
-> precursor the [Cross-file jump resolution](./Cross-File%20Jump%20Resolution.md)
-> note defers ("a multi-script project view in the visualization").
+> Status: **implemented** for launcher-served reports — the standalone launcher is
+> folded into the served report as a collapsible **Explorer** sidebar, so a writer
+> sees the whole project beside the active script. Converging `visualize <script>`
+> (direct serve) onto the same project server is a deferred follow-up (see
+> [Decisions](#decisions)). It is the visualization precursor the
+> [Cross-file jump resolution](./Cross-File%20Jump%20Resolution.md) note defers
+> ("a multi-script project view in the visualization").
 
 ## Table of contents
 
@@ -64,20 +66,20 @@ backs browsing and opening from within a served report.
 
 ## Functionality checklist
 
-- [ ] Render a collapsible **Explorer** sidebar in a served report (View or Edit),
+- [x] Render a collapsible **Explorer** sidebar in a served report (View or Edit),
       absent in the static export.
-- [ ] Show a lazy, expand/collapse **tree** of the launch root — folders and
+- [x] Show a lazy, expand/collapse **tree** of the launch root — folders and
       `.dialogue.md` scripts — fetching each folder's children on expand.
-- [ ] Highlight the **active script** and reveal it in the tree on load.
-- [ ] Open another script on click, **navigating** to its report (View/Edit
+- [x] Highlight the **active script** and reveal it in the tree on load.
+- [x] Open another script on click, **navigating** to its report (View/Edit
       preserved).
-- [ ] Open a script from a **cross-file source link** (`chapter-02.md#anchor`) by
+- [x] Open a script from a **cross-file source link** (`chapter-02.md#anchor`) by
       navigating to that script.
-- [ ] Create a new script in a chosen folder (**New file**), reusing the launcher's
-      name/append/conflict rules, then open it in Edit.
-- [ ] Confine every path to the root (no `..`, absolute, or symlink escape).
-- [ ] Remember the sidebar's collapsed/expanded state across reloads.
-- [ ] Flush or guard unsaved edits before navigating away (Edit mode).
+- [x] Create a new script in the active script's folder (**New file**), reusing the
+      launcher's name/append/conflict rules, then open it in Edit.
+- [x] Confine every path to the root (no `..`, absolute, or symlink escape).
+- [x] Remember the sidebar's collapsed/expanded state across reloads.
+- [x] Flush or guard unsaved edits before navigating away (Edit mode).
 
 ## Ubiquitous language
 
@@ -300,9 +302,13 @@ The pyramid stays bottom-heavy, matching the launcher's existing tests.
 
 Settled in review:
 
-1. **One project server (converge on the launcher's model).** Every served report
-   runs on the launcher's project-server; `visualize <script>` enters it
-   pre-opened, rather than duplicating session-switching into the direct server.
+1. **One project server (converge on the launcher's model).** The Explorer is
+   served by the launcher's project server, which browses, opens, creates, and
+   switches sessions. Reports opened through the launcher (`visualize`,
+   `visualize <folder>`, `--pick`) carry the Explorer today. Converging
+   `visualize <script>` (direct serve) onto the same server is **deferred** to a
+   focused follow-up: it retires the separate direct-serve server and rewrites its
+   tests, so it earns its own change rather than riding this one.
 2. **Root is the resolved serve root.** `--root` when given, else the document's
    folder — the value already flows into both serve paths, so no new option.
 3. **Switching respects the save mode.** Auto flushes silently before navigating;
