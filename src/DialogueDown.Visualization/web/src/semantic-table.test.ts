@@ -322,3 +322,77 @@ describe("createTablePanel — faceted filters", () => {
         expect(panel.querySelector(".th-facet")).toBeNull();
     });
 });
+
+/** The match toggle button (Match case / Match whole word) by its accessible label. */
+function toggle(panel: HTMLElement, label: string): HTMLButtonElement {
+    return panel.querySelector<HTMLButtonElement>(`.dd-search-toggle[aria-label="${label}"]`)!;
+}
+
+/** The text of every highlight mark in the panel, in document order. */
+function marks(panel: HTMLElement): string[] {
+    return [...panel.querySelectorAll("mark.table-mark")].map((m) => m.textContent ?? "");
+}
+
+describe("createTablePanel — match highlighting and options", () => {
+    beforeEach(() => {
+        document.body.innerHTML = "";
+    });
+
+    it("wraps each match in a mark while leaving the rest of the cell as text", () => {
+        const panel = createTablePanel(castTable());
+
+        setFilter(panel, "li"); // Charlie and Alice (in both their name and id cells)
+        expect(firstColumn(panel)).toEqual(["Charlie", "Alice"]);
+        expect(marks(panel)).toEqual(["li", "li", "li", "li"]);
+
+        const alice = [...panel.querySelectorAll("tbody tr")].find((tr) =>
+            tr.textContent?.includes("Alice"),
+        )!;
+        const nameCell = alice.querySelector("td")!;
+        expect(nameCell.textContent).toBe("Alice");
+        expect(nameCell.querySelector("mark.table-mark")?.textContent).toBe("li");
+    });
+
+    it("adds no marks when the filter is empty", () => {
+        const panel = createTablePanel(castTable());
+
+        expect(marks(panel)).toEqual([]);
+        setFilter(panel, "ali");
+        setFilter(panel, "");
+        expect(marks(panel)).toEqual([]);
+    });
+
+    it("labels the toggles and leaves them unpressed by default", () => {
+        const panel = createTablePanel(castTable());
+        const caseToggle = toggle(panel, "Match case");
+        const wordToggle = toggle(panel, "Match whole word");
+
+        expect(caseToggle.textContent).toBe("Aa");
+        expect(wordToggle.textContent).toBe("ab|");
+        expect(caseToggle.getAttribute("aria-pressed")).toBe("false");
+        expect(wordToggle.getAttribute("aria-pressed")).toBe("false");
+    });
+
+    it("re-filters case-sensitively when Match case is pressed", () => {
+        const panel = createTablePanel(castTable());
+
+        setFilter(panel, "A"); // case-insensitive: Charlie, Alice (both have an 'a')
+        expect(firstColumn(panel)).toEqual(["Charlie", "Alice"]);
+
+        const caseToggle = toggle(panel, "Match case");
+        caseToggle.click();
+        expect(caseToggle.getAttribute("aria-pressed")).toBe("true");
+        expect(firstColumn(panel)).toEqual(["Alice"]); // only Alice has an uppercase 'A'
+        expect(marks(panel)).toEqual(["A"]);
+    });
+
+    it("re-filters to whole words when Match whole word is pressed", () => {
+        const panel = createTablePanel(castTable());
+
+        setFilter(panel, "Ali"); // substring of Alice / @alice
+        expect(firstColumn(panel)).toEqual(["Alice"]);
+
+        toggle(panel, "Match whole word").click();
+        expect(panel.querySelector(".table-nomatch")).not.toBeNull(); // "Ali" is not a whole word
+    });
+});

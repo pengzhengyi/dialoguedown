@@ -227,6 +227,26 @@ test("facets the Jump resolutions table by its Type column", async ({ page }) =>
     await expect(jumps.locator("tbody tr")).toHaveCount(2);
 });
 
+test("highlights filter matches and honors the Match case toggle", async ({ page }) => {
+    const anchors = page.locator('.table-panel:has(.table-panel-title:text-is("Anchors"))');
+
+    // Filter to "The": case-insensitively it matches both the lowercase anchors (#the-market …)
+    // and the capitalized scenes (The Market …), and every match is wrapped in a highlight mark.
+    await anchors.locator(".table-panel-search").click();
+    await anchors.locator("input.table-search").fill("The");
+    await expect(anchors.locator("mark.table-mark")).toHaveCount(6);
+    await expect(anchors.locator("mark.table-mark").first()).toBeVisible();
+
+    // Turn on Match case: only the capitalized scene cells still match, so the lowercase-anchor
+    // highlights disappear while the rows stay (their scene cell still matches).
+    const matchCase = anchors.locator('.dd-search-toggle[aria-label="Match case"]');
+    await expect(matchCase).toHaveAttribute("aria-pressed", "false");
+    await matchCase.click();
+    await expect(matchCase).toHaveAttribute("aria-pressed", "true");
+    await expect(anchors.locator("mark.table-mark")).toHaveCount(3);
+    await expect(anchors.locator("mark.table-mark").first()).toHaveText("The");
+});
+
 test("cross-links a scene across the graph, the anchor table, and a jump block", async ({
     page,
 }) => {
