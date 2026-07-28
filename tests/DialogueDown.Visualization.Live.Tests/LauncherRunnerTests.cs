@@ -14,8 +14,8 @@ public sealed class LauncherRunnerTests
         var runner = new LauncherRunner(new FakeBrowserLauncher());
 
         var code = await runner.RunAsync(
-            Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}"),
-            source: null,
+            script: null,
+            root: Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}"),
             LaunchMode.View,
             port: null,
             noOpen: true,
@@ -29,7 +29,7 @@ public sealed class LauncherRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ServesTheProjectShell_AndStopsOnCancellation()
+    public async Task RunAsync_NoScript_ServesTheEmptyShell_AndStopsOnCancellation()
     {
         using var tree = new TempTree();
         tree.File("scene.dialogue.md", "# Scene");
@@ -38,7 +38,8 @@ public sealed class LauncherRunnerTests
         using var stop = new CancellationTokenSource();
 
         var task = runner.RunAsync(
-            tree.Root, source: null, LaunchMode.View, port: 0, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default),
+            script: null, root: tree.Root, LaunchMode.View, port: 0, noOpen: false,
+            AppliedConfiguration.WithoutFile(CompilerOptions.Default),
             new StringWriter(), new StringWriter(), stop.Token);
         await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
 
@@ -51,6 +52,32 @@ public sealed class LauncherRunnerTests
         var landing = await client.GetStringAsync("/");
         Assert.StartsWith("<!doctype html", landing, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"project\":", landing);
+
+        stop.Cancel();
+        Assert.Equal(0, await task);
+    }
+
+    [Fact]
+    public async Task RunAsync_WithAScript_OpensItsReportUnderTheReportMount()
+    {
+        using var tree = new TempTree();
+        var scriptPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.\n");
+        var browser = new FakeBrowserLauncher();
+        var runner = new LauncherRunner(browser);
+        using var stop = new CancellationTokenSource();
+
+        var task = runner.RunAsync(
+            scriptPath, tree.Root, LaunchMode.View, port: 0, noOpen: false,
+            AppliedConfiguration.WithoutFile(CompilerOptions.Default),
+            new StringWriter(), new StringWriter(), stop.Token);
+        await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
+
+        // A script opens directly on its report under the /r mount, and that report carries the
+        // active document (its project payload names the script).
+        var url = Assert.Single(browser.Opened);
+        Assert.Contains("/r/", url);
+        using var client = new HttpClient { BaseAddress = new Uri(url) };
+        Assert.Contains("scene.dialogue.md", await client.GetStringAsync(url));
 
         stop.Cancel();
         Assert.Equal(0, await task);

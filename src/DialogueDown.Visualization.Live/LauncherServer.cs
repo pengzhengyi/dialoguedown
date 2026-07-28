@@ -19,7 +19,7 @@ internal sealed class LauncherServer : IAsyncDisposable
     private readonly WebApplication _app;
     private readonly LaunchRoot _root;
     private readonly string _launcherHtml;
-    private readonly Func<string, string, LiveSession> _sessionFactory;
+    private readonly Func<string, string, string?, LiveSession> _sessionFactory;
     private readonly object _gate = new();
     private ActiveDocument? _active;
 
@@ -31,11 +31,11 @@ internal sealed class LauncherServer : IAsyncDisposable
         LaunchRoot root,
         string launcherHtml,
         int port = 0,
-        Func<string, string, LiveSession>? sessionFactory = null)
+        Func<string, string, string?, LiveSession>? sessionFactory = null)
     {
         _root = root;
         _launcherHtml = launcherHtml;
-        _sessionFactory = sessionFactory ?? ((path, mode) => new LiveSession(path, mode));
+        _sessionFactory = sessionFactory ?? ((path, mode, displayPath) => new LiveSession(path, mode, displayPath: displayPath));
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         builder.Logging.ClearProviders();
@@ -52,6 +52,16 @@ internal sealed class LauncherServer : IAsyncDisposable
 
     /// <summary>Starts listening.</summary>
     public Task StartAsync() => _app.StartAsync();
+
+    /// <summary>
+    /// Activates the run's initial document — the script a served <c>visualize &lt;script&gt;</c>
+    /// starts on — and returns its report URL path under the <c>/r</c> mount, so the caller can
+    /// open the browser straight on the report rather than the empty shell. <paramref name="displayPath"/>
+    /// is the launched path shown to the reader (a symlink's link path) when it differs from the
+    /// resolved <paramref name="documentPath"/>.
+    /// </summary>
+    public string StartInitialDocument(string documentPath, string mode, string? displayPath = null) =>
+        ReportMount + Activate(documentPath, mode, displayPath);
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
@@ -101,7 +111,7 @@ internal sealed class LauncherServer : IAsyncDisposable
         });
         app.UseRouting();
 
-        app.MapGet("/", (HttpContext context) => NoStoreHtml(context, _launcherHtml));
+        app.MapGet("/", Root);
         app.MapGet("/api/browse", (string? path) => Browse(path ?? string.Empty));
         app.MapPost("/api/open", (OpenRequest request, HttpContext context) => Open(request, context));
         app.MapPost("/api/create", (CreateRequest request, HttpContext context) => Create(request, context));
@@ -120,6 +130,20 @@ internal sealed class LauncherServer : IAsyncDisposable
     {
         var listing = _root.Browse(path);
         return listing is null ? Results.NotFound() : Results.Json(listing.Value);
+    }
+
+    // The landing: an active document redirects to its report under the /r mount; with none it is
+    // the empty shell — the Explorer over the root and a create call to action.
+    private IResult Root(HttpContext context)
+    {
+        var active = Active();
+        if (active is null)
+        {
+            return NoStoreHtml(context, _launcherHtml);
+        }
+
+        context.Response.Headers.Location = ReportMount + active.ReportPath;
+        return Results.StatusCode(StatusCodes.Status303SeeOther);
     }
 
     private IResult Open(OpenRequest request, HttpContext context)
@@ -200,15 +224,25 @@ internal sealed class LauncherServer : IAsyncDisposable
     // by Open (an existing script) and Create (a freshly written one).
     private IResult StartSession(string source, string mode, HttpContext context)
     {
-        var sourceDirectory = Path.GetDirectoryName(source)!;
+        var reportPath = Activate(source, mode);
+        context.Response.Headers.Location = ReportMount + reportPath;
+        return Results.StatusCode(StatusCodes.Status303SeeOther);
+    }
+
+    // Replaces the active document with a fresh session for a root-confined absolute path and
+    // returns its report sub-path. Shared by the HTTP open/create routes and the initial document
+    // a served run may start on.
+    private string Activate(string documentPath, string mode, string? displayPath = null)
+    {
+        var sourceDirectory = Path.GetDirectoryName(documentPath)!;
         var reportPath = ServeRoot.For(_root.RootDirectory, sourceDirectory).ReportPath;
-        var session = _sessionFactory(source, mode);
+        var session = _sessionFactory(documentPath, mode, displayPath);
         // The Explorer sidebar needs the project root and this script's place in it; the launcher
         // always serves within a root, so every launcher-served report is project-aware.
-        session.Project = new ReportProject(_root.RootDirectory, _root.Relativize(source));
+        session.Project = new ReportProject(_root.RootDirectory, _root.Relativize(documentPath));
         // A served session always watches the file: View hot-reloads the report, Edit
         // surfaces a passive "changed on disk" chip.
-        var watcher = new DocumentWatcher(source, session.Refresh);
+        var watcher = new DocumentWatcher(documentPath, session.Refresh);
         // A session that already applies a config watches it too, so external config edits reload.
         var configWatcher = session.ConfigPath is { } configPath
             ? new DocumentWatcher(configPath, session.RefreshConfig)
@@ -218,14 +252,13 @@ internal sealed class LauncherServer : IAsyncDisposable
         {
             _active?.Watcher?.Dispose();
             _active?.ConfigWatcher?.Dispose();
-            _active = new ActiveDocument(session, reportPath.Trim('/'), watcher)
+            _active = new ActiveDocument(session, reportPath, watcher)
             {
                 ConfigWatcher = configWatcher,
             };
         }
 
-        context.Response.Headers.Location = ReportMount + reportPath;
-        return Results.StatusCode(StatusCodes.Status303SeeOther);
+        return reportPath;
     }
 
     private IResult Report(HttpContext context, string path)
@@ -452,10 +485,13 @@ internal sealed class LauncherServer : IAsyncDisposable
         }
     }
 
-    private sealed record ActiveDocument(LiveSession Session, string ReportRelative, DocumentWatcher? Watcher)
+    private sealed record ActiveDocument(LiveSession Session, string ReportPath, DocumentWatcher? Watcher)
     {
         /// <summary>The watcher for this document's <c>dialogue.toml</c>, once one is created.</summary>
         public DocumentWatcher? ConfigWatcher { get; set; }
+
+        /// <summary>The report path with its surrounding slashes stripped, to match the <c>/r/{**path}</c> route.</summary>
+        public string ReportRelative => ReportPath.Trim('/');
     }
 
     private sealed record OpenRequest(string? Source, string? Mode);

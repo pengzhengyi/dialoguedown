@@ -410,6 +410,27 @@ public sealed class LauncherServerTests
         Assert.Contains("\"name\":\"Bob\"", await save.Content.ReadAsStringAsync());
     }
 
+    [Fact]
+    public async Task StartInitialDocument_RootRedirectsToTheReport()
+    {
+        using var tree = new TempTree();
+        var scriptPath = tree.File("root/proj/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server, followRedirects: false);
+
+        var reportPath = server.StartInitialDocument(scriptPath, "view");
+
+        // The initial document (a served visualize <script>) is hosted under the /r mount, and the
+        // landing redirects to it rather than showing the empty shell.
+        Assert.Equal("/r/proj/", reportPath);
+        var landing = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.SeeOther, landing.StatusCode);
+        Assert.Equal("/r/proj/", landing.Headers.Location!.ToString());
+
+        var html = await client.GetStringAsync("/r/proj/");
+        Assert.Contains("\"activePath\":\"proj/scene.dialogue.md\"", html);
+    }
+
     private static async Task<LauncherServer> Started(TempTree tree)
     {
         var server = new LauncherServer(LaunchRoot.At(tree.Dir("root")), LandingHtml);

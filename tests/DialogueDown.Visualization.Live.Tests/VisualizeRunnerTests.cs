@@ -43,35 +43,4 @@ public sealed class VisualizeRunnerTests
             File.Delete(target);
         }
     }
-
-    [Fact]
-    public async Task RunServedAsync_ServesAndOpensAUrl_ThenStopsOnCancel()
-    {
-        using var doc = new TempDocument("# Scene");
-        var browser = new FakeBrowserLauncher();
-        var runner = new VisualizeRunner(browser);
-        using var stop = new CancellationTokenSource();
-
-        var task = runner.RunServedAsync(doc.Path, port: 0, noOpen: false, renderRoot: null, VisualizationMode.View, AppliedConfiguration.WithoutFile(CompilerOptions.Default), stop.Token);
-        await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
-
-        Assert.StartsWith("http://127.0.0.1:", browser.Opened[0]);
-
-        stop.Cancel();
-        Assert.Equal(0, await task);
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
-    {
-        var deadline = DateTime.UtcNow + timeout;
-        while (!condition() && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
-
-        if (!condition())
-        {
-            throw new TimeoutException("Condition was not met in time.");
-        }
-    }
 }

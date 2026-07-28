@@ -7,13 +7,13 @@ using Spectre.Console.Cli;
 namespace DialogueDown.Cli.Commands;
 
 /// <summary>
-/// The <c>visualize</c> command. Given a script it opens a <b>served session</b>
-/// directly — read-only <b>View</b> by default, or editable <b>Edit</b> with
-/// <c>--edit</c> — where the reader toggles View/Edit in the browser. With no script (or
-/// <c>--pick</c>) it opens the launcher to browse for one. <c>-o</c> is a non-interactive
-/// static export. Every report is compiled with the project's resolved
-/// <see cref="CompilerOptions"/>. The work is delegated to the visualization engine through
-/// <see cref="IVisualizeRunner"/> (direct) and <see cref="ILauncherRunner"/> (launcher).
+/// The <c>visualize</c> command. Given a script it opens a <b>served session</b> on the unified
+/// report shell — read-only <b>View</b> by default, or editable <b>Edit</b> with <c>--edit</c>,
+/// toggled in the browser — with the Explorer sidebar alongside it. With no script (or
+/// <c>--pick</c>) it lands on that shell's empty state to browse or create one. <c>-o</c> is a
+/// non-interactive static export. Every report is compiled with the project's resolved
+/// <see cref="CompilerOptions"/>. Static and text exports are delegated to
+/// <see cref="IVisualizeRunner"/>; the served shell is driven through <see cref="ILauncherRunner"/>.
 /// </summary>
 internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
 {
@@ -61,46 +61,20 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
 
         var mode = settings.Edit ? LaunchMode.Edit : LaunchMode.View;
 
-        // A script opens a served session directly (View, or Edit with --edit); the
-        // launcher is for browsing (no script) or when forced with --pick.
+        // A script opens directly on its report, with the Explorer sidebar alongside it; no script —
+        // or --pick — lands on the empty shell to browse or create one. One unified server serves both.
         if (hasScript && !settings.Pick)
         {
-            return _runner.RunServedAsync(
-                settings.Script, settings.Port, settings.NoOpen, settings.Root,
-                settings.Edit ? VisualizationMode.Edit : VisualizationMode.View,
+            return _launcher.RunAsync(
+                settings.Script, settings.Root, mode, settings.Port, settings.NoOpen,
                 ConfigurationForScript(settings), cancellationToken);
         }
 
-        var (root, source) = ResolveLaunch(settings.Script, hasScript, settings.Root);
+        var root = settings.Root ?? Directory.GetCurrentDirectory();
         var configuration = _configuration.ResolveApplied(settings.Config, root, root);
-        return _launcher.RunAsync(root, source, mode, settings.Port, settings.NoOpen, configuration, cancellationToken);
+        return _launcher.RunAsync(
+            null, root, mode, settings.Port, settings.NoOpen, configuration, cancellationToken);
     }
-
-    private static (string Root, string? Source) ResolveLaunch(string script, bool hasScript, string? rootOption)
-    {
-        var current = Directory.GetCurrentDirectory();
-        if (!hasScript)
-        {
-            return (rootOption ?? current, null);
-        }
-
-        var fullScript = Path.GetFullPath(script);
-        var root = rootOption
-            ?? (IsUnder(current, fullScript) ? current : Path.GetDirectoryName(fullScript)!);
-        var source = IsUnder(root, fullScript) ? Relative(root, fullScript) : null;
-        return (root, source);
-    }
-
-    private static bool IsUnder(string root, string fullPath)
-    {
-        var relative = Path.GetRelativePath(Path.GetFullPath(root), fullPath);
-        return relative != ".."
-            && !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
-            && !Path.IsPathRooted(relative);
-    }
-
-    private static string Relative(string root, string fullPath) =>
-        Path.GetRelativePath(Path.GetFullPath(root), fullPath).Replace(Path.DirectorySeparatorChar, '/');
 
     // Discover the project's applied configuration from the script's folder upward, never
     // above --root, so the report shows the exact dialogue.toml the compile used.

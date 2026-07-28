@@ -16,7 +16,7 @@ public sealed class VisualizeCommandTests
         """;
 
     [Fact]
-    public void Visualize_NoArguments_OpensLauncherAtCurrentDirectoryInView()
+    public void Visualize_NoArguments_OpensTheEmptyShellAtCurrentDirectoryInView()
     {
         var launcher = Launcher();
         var tester = CliTester.Create(launcher: launcher);
@@ -25,23 +25,23 @@ public sealed class VisualizeCommandTests
 
         Assert.Equal(0, result.ExitCode);
         launcher.Received(1).RunAsync(
-            Directory.GetCurrentDirectory(), null, LaunchMode.View,
+            null, Directory.GetCurrentDirectory(), LaunchMode.View,
             null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public void Visualize_ScriptOnly_OpensAServedViewSession()
+    public void Visualize_ScriptOnly_OpensTheServedReportInView()
     {
         using var script = new TempScript("# Scene");
-        var runner = Runner();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var launcher = Launcher();
+        var tester = CliTester.Create(launcher: launcher);
 
         var result = tester.Run("visualize", script.Path);
 
         Assert.Equal(0, result.ExitCode);
-        runner.Received(1).RunServedAsync(
-            script.Path, null, false, null, VisualizationMode.View,
-            Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        launcher.Received(1).RunAsync(
+            script.Path, null, LaunchMode.View,
+            null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -50,44 +50,44 @@ public sealed class VisualizeCommandTests
         using var dir = new TempDir();
         var scriptPath = dir.Write("scene.dialogue.md", "# Scene");
         dir.Write("dialogue.toml", NarratorConfig);
-        var runner = Runner();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var launcher = Launcher();
+        var tester = CliTester.Create(launcher: launcher);
 
         tester.Run("visualize", scriptPath);
 
-        runner.Received(1).RunServedAsync(
-            scriptPath, null, false, null, VisualizationMode.View,
-            Arg.Is<AppliedConfiguration>(c => c.Options.Speakers.Any(s => s.Name == "Narrator")),
+        launcher.Received(1).RunAsync(
+            scriptPath, null, LaunchMode.View, null, false,
+            Arg.Is<AppliedConfiguration>(c => c!.Options.Speakers.Any(s => s.Name == "Narrator")),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public void Visualize_ScriptWithEdit_OpensAServedEditSession()
+    public void Visualize_ScriptWithEdit_OpensTheServedReportInEdit()
     {
         using var script = new TempScript("# Scene");
         var root = Path.GetDirectoryName(script.Path)!;
-        var runner = Runner();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var launcher = Launcher();
+        var tester = CliTester.Create(launcher: launcher);
 
         var result = tester.Run("visualize", script.Path, "--edit", "--root", root, "--port", "5199");
 
         Assert.Equal(0, result.ExitCode);
-        runner.Received(1).RunServedAsync(
-            script.Path, 5199, false, root, VisualizationMode.Edit,
+        launcher.Received(1).RunAsync(
+            script.Path, root, LaunchMode.Edit, 5199, false,
             Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public void Visualize_EditWithoutRoot_StillOpensAServedEditSession()
+    public void Visualize_EditWithoutRoot_StillOpensTheServedReportInEdit()
     {
         using var script = new TempScript("# Scene");
-        var runner = Runner();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var launcher = Launcher();
+        var tester = CliTester.Create(launcher: launcher);
 
         tester.Run("visualize", script.Path, "--edit");
 
-        runner.Received(1).RunServedAsync(
-            script.Path, null, false, null, VisualizationMode.Edit,
+        launcher.Received(1).RunAsync(
+            script.Path, null, LaunchMode.Edit, null, false,
             Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -96,14 +96,15 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var launcher = Launcher();
+        var tester = CliTester.Create(runner: runner, launcher: launcher);
 
         tester.Run("visualize", script.Path, "-o", "out.html", "--no-open");
 
         runner.Received(1).RunStatic(script.Path, "out.html", true, Arg.Any<AppliedConfiguration>());
-        runner.DidNotReceive().RunServedAsync(
-            Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<bool>(), Arg.Any<string?>(),
-            Arg.Any<string>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        launcher.DidNotReceive().RunAsync(
+            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
+            Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -111,14 +112,15 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var launcher = Launcher();
+        var tester = CliTester.Create(runner: runner, launcher: launcher);
 
         tester.Run("visualize", script.Path, "--emit", "mermaid");
 
         runner.Received(1).RunEmit(script.Path, EmitFormat.Mermaid, null, Arg.Any<CompilerOptions>());
-        runner.DidNotReceive().RunServedAsync(
-            Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<bool>(), Arg.Any<string?>(),
-            Arg.Any<string>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        launcher.DidNotReceive().RunAsync(
+            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
+            Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -166,7 +168,7 @@ public sealed class VisualizeCommandTests
     public void Visualize_MissingConfig_FailsWithUsageError()
     {
         using var script = new TempScript("# Scene");
-        var tester = CliTester.Create(runner: Runner(), launcher: Launcher());
+        var tester = CliTester.Create(launcher: Launcher());
 
         var result = tester.Run("visualize", script.Path, "--config", "no-such.toml");
 
@@ -174,21 +176,17 @@ public sealed class VisualizeCommandTests
     }
 
     [Fact]
-    public void Visualize_Pick_OpensTheLauncherEvenWithAScript()
+    public void Visualize_Pick_OpensTheEmptyShellEvenWithAScript()
     {
         using var script = new TempScript("# Scene");
-        var root = Path.GetDirectoryName(Path.GetFullPath(script.Path))!;
-        var runner = Runner();
         var launcher = Launcher();
-        var tester = CliTester.Create(runner: runner, launcher: launcher);
+        var tester = CliTester.Create(launcher: launcher);
 
         tester.Run("visualize", script.Path, "--pick");
 
-        runner.DidNotReceive().RunServedAsync(
-            Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<bool>(), Arg.Any<string?>(),
-            Arg.Any<string>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        // --pick ignores the script and lands on the empty shell rooted at the current directory.
         launcher.Received(1).RunAsync(
-            root, Path.GetFileName(script.Path), LaunchMode.View,
+            null, Directory.GetCurrentDirectory(), LaunchMode.View,
             null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -212,23 +210,12 @@ public sealed class VisualizeCommandTests
         Assert.Equal(ExitCodes.UsageError, result.ExitCode);
     }
 
-    private static IVisualizeRunner Runner()
-    {
-        var runner = Substitute.For<IVisualizeRunner>();
-        runner
-            .RunServedAsync(
-                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<bool>(), Arg.Any<string?>(),
-                Arg.Any<string>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(0));
-        return runner;
-    }
-
     private static ILauncherRunner Launcher()
     {
         var launcher = Substitute.For<ILauncherRunner>();
         launcher
             .RunAsync(
-                Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
                 Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(0));
         return launcher;

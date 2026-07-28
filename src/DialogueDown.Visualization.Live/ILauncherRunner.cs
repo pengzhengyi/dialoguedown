@@ -3,23 +3,28 @@ using DialogueDown.Visualization.Configuration;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// Drives the launcher for the <c>dialoguedown visualize</c> command when the command is
-/// not fully specified: it serves the launcher page from a loopback server so a source,
-/// mode, and root can be chosen in the browser, and stays up until canceled. Injected so
-/// the command is testable with a substitute.
+/// Drives the served <c>dialoguedown visualize</c> experience: one loopback server that hosts the
+/// report shell with its Explorer sidebar, confined to a root. Given a <c>script</c> it opens that
+/// document's report directly (resolving the served root from the script, with consent when it
+/// references images above its folder); with no script it lands on the empty shell so a script can
+/// be browsed or created in the tree. Runs until canceled. Injected so the command is testable with
+/// a substitute.
 /// </summary>
 public interface ILauncherRunner
 {
     /// <summary>
-    /// Serves the launcher rooted at <paramref name="root"/> on a loopback port, pre-filled
-    /// with an optional root-relative <paramref name="source"/> and a <paramref name="mode"/>,
-    /// opening the browser unless <paramref name="noOpen"/>. Each report the launcher opens is
-    /// showing the applied <paramref name="configuration"/>. Runs until
-    /// <paramref name="cancellationToken"/> is canceled. Returns a process exit code.
+    /// Serves the report shell on a loopback port, opening the browser unless
+    /// <paramref name="noOpen"/>. When <paramref name="script"/> is given, the run opens that
+    /// document's report and hosts the served root resolved from it (pinned by
+    /// <paramref name="root"/> when set); otherwise it serves the empty shell rooted at
+    /// <paramref name="root"/> (the current directory when null). Every report the shell opens
+    /// shows the applied <paramref name="configuration"/>. <paramref name="mode"/> is the initial
+    /// side of the View/Edit toggle. Runs until <paramref name="cancellationToken"/> is canceled.
+    /// Returns a process exit code.
     /// </summary>
     Task<int> RunAsync(
-        string root,
-        string? source,
+        string? script,
+        string? root,
         LaunchMode mode,
         int? port,
         bool noOpen,
