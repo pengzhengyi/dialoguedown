@@ -484,12 +484,9 @@ Bob: Of course.
 Alice: Thank you!
 ```
 
-Under the hood, a silent command will compile to a command-only text line spoken
-by the default speaker.
-
-```markdown
-@default: `JoinClub("Alice", "Kung Fu")`
-```
+Under the hood, a silent command is an **effect**, not speech: it compiles to a
+command-only control line that has no speaker, so it is never attributed to a
+character or the default speaker.
 
 The compiler will emit a special node for each game-system call. The node shape
 and runtime execution contract are outside this document's scope.
