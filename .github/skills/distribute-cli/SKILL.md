@@ -67,8 +67,8 @@ sets `OutputType=Exe` and `<Version>`):
   <Description>Compile and visualize DialogueDown dialogue scripts from the command line.</Description>
   <PackageTags>dialogue;markdown;compiler;narrative;gamedev;cli</PackageTags>
   <PackageLicenseExpression>MIT</PackageLicenseExpression>
-  <PackageProjectUrl>https://github.com/pengzhengyi/godot-dialoguedown</PackageProjectUrl>
-  <RepositoryUrl>https://github.com/pengzhengyi/godot-dialoguedown.git</RepositoryUrl>
+  <PackageProjectUrl>https://github.com/pengzhengyi/dialoguedown</PackageProjectUrl>
+  <RepositoryUrl>https://github.com/pengzhengyi/dialoguedown.git</RepositoryUrl>
   <RepositoryType>git</RepositoryType>
   <PackageReadmeFile>README.md</PackageReadmeFile>
 </PropertyGroup>
