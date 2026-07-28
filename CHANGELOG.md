@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **File Explorer in the report** — a served report opened through the launcher now shows a
+  collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
+  highlighted, and open another by clicking it or following a cross-file link. A VS Code-style
+  header toolbar and right-click menus create files and folders and rename scripts and folders in
+  place, and a pinned `dialogue.toml` entry opens the Config tab; switching scripts respects the
+  save mode (Auto flushes, Manual prompts). See the
+  [Live Visualization — File Explorer](docs/contributing/design-notes/Live%20Visualization%20-%20File%20Explorer.md) note.
 - **Jump to a scene by typing `=>`** — the source editor now completes the whole jump
   target from the `=>` jump indicator: type `=>` and the report offers every scene by its
   heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an

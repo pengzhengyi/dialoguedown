@@ -29,13 +29,14 @@ internal static class HtmlTemplate
         ConfigurationReport? configuration = null,
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
-        ConfigStatusOverlay? configOverlay = null)
+        ConfigStatusOverlay? configOverlay = null,
+        ReportProject? project = null)
     {
         return EmbeddedAsset.ReadText("report.html")
             .Replace(
                 ReportSlot,
                 DisplayGraphJson.SerializeReport(
                     mode, path, source, stages, symbols, configuration, diagnostics,
-                    semanticTokens, configOverlay));
+                    semanticTokens, configOverlay, project));
     }
 }

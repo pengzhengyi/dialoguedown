@@ -97,6 +97,9 @@ internal sealed class LaunchRoot
         return new BrowseListing(self, parent, directories, sources);
     }
 
+    /// <summary>The root-relative, forward-slash path of a confined absolute path under the root.</summary>
+    public string Relativize(string absolutePath) => ToRelative(absolutePath);
+
     // Follows a terminal symlink to its final target so a symlink pointing outside the
     // root is caught by the containment check; leaves a non-link (or not-yet-existing)
     // path unchanged so callers can still confine and then existence-check it.

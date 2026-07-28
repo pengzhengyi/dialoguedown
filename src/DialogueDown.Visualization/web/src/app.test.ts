@@ -97,3 +97,17 @@ describe("runApp updateStages — inspector selection across a rebuild", () => {
         expect(detailTitle()).toBe("Node details");
     });
 });
+
+describe("runApp showConfigTab", () => {
+    it("activates the Config tab (the Explorer's open-config)", () => {
+        mountDom();
+        const app = runApp({ source: "root", stages: [stage()], configuration: { speakers: [] } });
+        const tabs = () => document.querySelectorAll<HTMLElement>("#tabs .tab");
+        // The Config tab is first (index 0); the report opens on Source, so Config starts inactive.
+        expect(tabs()[0].classList.contains("active")).toBe(false);
+
+        app.showConfigTab();
+
+        expect(tabs()[0].classList.contains("active")).toBe(true);
+    });
+});

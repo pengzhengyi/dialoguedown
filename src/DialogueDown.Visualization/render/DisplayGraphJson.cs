@@ -46,10 +46,11 @@ internal static class DisplayGraphJson
         ConfigurationReport? configuration = null,
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
-        ConfigStatusOverlay? configOverlay = null)
+        ConfigStatusOverlay? configOverlay = null,
+        ReportProject? project = null)
     {
         var json = JsonSerializer.Serialize(
-            new { mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens },
+            new { mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens, project },
             _options);
         return configOverlay is null ? json : ApplyConfigOverlay(json, configOverlay);
     }
@@ -68,10 +69,11 @@ internal static class DisplayGraphJson
         ConfigurationReport? configuration = null,
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
-        ConfigStatusOverlay? configOverlay = null)
+        ConfigStatusOverlay? configOverlay = null,
+        ReportProject? project = null)
     {
         var json = JsonSerializer.Serialize(
-            new { mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens },
+            new { mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens, project },
             _options);
         return configOverlay is null ? json : ApplyConfigOverlay(json, configOverlay);
     }

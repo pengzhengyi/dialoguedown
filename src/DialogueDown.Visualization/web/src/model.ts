@@ -91,6 +91,15 @@ export interface StageUnavailable {
  * The report payload the .NET library injects: the compiled source document and
  * each stage's display graph.
  */
+/**
+ * The served-mode project context behind the Explorer sidebar: the project `root` to display and
+ * the active script's root-relative `activePath` to highlight and reveal in the tree.
+ */
+export interface ReportProject {
+    root: string;
+    activePath: string;
+}
+
 export interface Report {
     /**
      * The original source document, shown in the Source tab. Absent when a single
@@ -102,6 +111,12 @@ export interface Report {
     path?: string;
     /** How the report is shown; drives the mode badge and whether to go live. */
     mode?: VisualizationMode;
+    /**
+     * The served-mode project context that backs the Explorer sidebar — the project root's
+     * display path and the active script's root-relative path. Present only for a served,
+     * browsable report; absent in the static export, so its presence gates the sidebar.
+     */
+    project?: ReportProject;
     /**
      * The semantic analyzer's resolved symbols (canonical speaker ids, merged tags,
      * validated jump targets), used to seed the Source editor's autocompletion.

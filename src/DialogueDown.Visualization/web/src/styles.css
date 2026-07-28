@@ -392,6 +392,292 @@ section.stage.error {
     display: none;
 }
 
+/* File Explorer sidebar. Hidden until main.ts adds `has-explorer` to #app for a served,
+   browsable report, so the static export is unchanged. Collapsible like the inspector. */
+#explorer,
+#explorer-resizer {
+    display: none;
+}
+
+#app.has-explorer #explorer {
+    display: flex;
+    flex: 0 0 15rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    padding-right: 0.4rem;
+    overflow-y: auto;
+}
+
+#app.has-explorer #explorer-resizer {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    width: 1px;
+    margin: 0 0.5rem;
+    background: var(--pico-muted-border-color);
+}
+
+#app.explorer-collapsed #explorer {
+    display: none;
+}
+
+#app.explorer-collapsed #explorer-resizer {
+    background: transparent;
+}
+
+/* The show/hide toggle sits on the divider, like the inspector's re-open handle. It carries the
+   left-hand `panel-left-*` glyphs (via side: "left"), so the chevrons already point the right way. */
+#explorer-resizer .collapse-toggle {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.explorer-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 1.6rem;
+}
+
+/* The header action toolbar (New file, New folder, Refresh, Collapse), VS Code style. */
+.explorer-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.05rem;
+}
+
+.explorer-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--pico-muted-color);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.explorer-action:hover {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+    color: var(--pico-color);
+}
+
+.explorer-action-icon {
+    font-size: 15px;
+}
+
+/* The inline create field lives inside a tree row, filling the space after the icon. A
+   theme-matched background and a mode-accent border keep it readable in light and dark. */
+.explorer-input-row .explorer-row {
+    cursor: default;
+}
+
+.explorer-tree .explorer-create-name {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    height: 1.4rem;
+    margin: 0;
+    padding: 0 0.25rem;
+    border: 1px solid var(--mode-accent, var(--pico-primary));
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-background-color);
+    color: var(--pico-color);
+    font-size: 0.8rem;
+    line-height: normal;
+}
+
+.explorer-create-ext {
+    flex: 0 0 auto;
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+}
+
+.explorer-create-error {
+    margin: 0.25rem 0 0;
+    color: var(--dd-reference, var(--pico-del-color));
+    font-size: 0.75rem;
+}
+
+.explorer-title {
+    margin: 0;
+    color: var(--pico-muted-color);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.explorer-root {
+    margin: 0 0 0.25rem;
+    overflow: hidden;
+    color: var(--pico-muted-color);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.explorer-tree,
+.explorer-children {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.explorer-tree li,
+.explorer-input-row {
+    margin: 0;
+    padding: 0;
+}
+
+.explorer-children {
+    /* A shallow indent with a faint guide line, like VS Code's tree. */
+    margin-left: 0.55rem;
+    padding-left: 0.4rem;
+    border-left: 1px solid var(--pico-muted-border-color);
+}
+
+.explorer-children[hidden] {
+    display: none;
+}
+
+.explorer-row {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    width: 100%;
+    min-height: 0;
+    height: 1.375rem;
+    margin: 0;
+    padding: 0 0.25rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: 0.8rem;
+    line-height: 1.375rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.explorer-row:hover {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 12%, transparent);
+}
+
+/* Pico paints buttons with a primary focus ring via the shared box-shadow; the rows and
+   toolbar buttons suppress it (box-shadow: none) and use a themed keyboard-only outline, so
+   mouse selection reads as a flat, on-accent VS Code tree rather than a blue Pico button. */
+.explorer-row:focus-visible,
+.explorer-action:focus-visible {
+    outline: 2px solid var(--mode-accent, var(--pico-primary));
+    outline-offset: -2px;
+}
+
+.explorer-chevron,
+.explorer-icon {
+    flex: 0 0 auto;
+    color: var(--pico-muted-color);
+    font-size: 15px;
+}
+
+.explorer-chevron {
+    width: 15px;
+    transition: transform 0.12s ease;
+}
+
+.explorer-folder.expanded > .explorer-folder-row .explorer-chevron {
+    transform: rotate(90deg);
+}
+
+.explorer-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Selected script: a subtle tint with a left accent bar following the View/Edit color —
+   not a heavy solid block. */
+.explorer-script.active > .explorer-script-row {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 22%, transparent);
+    box-shadow: inset 2px 0 0 var(--mode-accent, var(--pico-primary));
+    color: inherit;
+    font-weight: 500;
+}
+
+.explorer-script.active > .explorer-script-row .explorer-icon {
+    color: var(--mode-accent, var(--pico-primary));
+}
+
+.explorer-empty {
+    padding: 0.3rem;
+    color: var(--pico-muted-color);
+    font-size: 0.78rem;
+}
+
+/* The pinned project configuration entry (dialogue.toml), above the lazy tree — project-level,
+   so it sits apart from the script tree with a little breathing room and a hairline. */
+.explorer-config-row {
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    border-radius: 0;
+}
+
+/* A folder's right-click menu: a small floating card of actions (New File / New Folder),
+   anchored at the cursor. It reuses the tree's accent-tinted hover so it feels of a piece. */
+.explorer-context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 11rem;
+    padding: 0.25rem;
+    color: var(--pico-color);
+    background: var(--pico-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 28%);
+}
+
+.explorer-menu-item {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    text-align: left;
+    cursor: pointer;
+}
+
+.explorer-menu-item:hover,
+.explorer-menu-item:focus-visible {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
+    outline: none;
+}
+
+.explorer-menu-icon {
+    flex: 0 0 auto;
+    color: var(--pico-muted-color);
+    font-size: 15px;
+}
+
 /* Semantic tab: the scene-tree graph (left) beside stacked, collapsible tables (right).
    The graph reuses the tree view, so the column is a positioned box the legend and zoom
    controls anchor to, exactly as a plain stage. */
@@ -1779,7 +2065,8 @@ body.maximized #app {
 .detail-collapsed .collapse-toggle,
 .preview-collapsed .collapse-toggle,
 .config-collapsed .collapse-toggle,
-.tables-collapsed .collapse-toggle {
+.tables-collapsed .collapse-toggle,
+.explorer-collapsed .collapse-toggle {
     --pico-color: inherit;
 
     opacity: 1;
@@ -1803,14 +2090,16 @@ body.maximized #app {
 .detail-collapsed .collapse-toggle .icon-collapse,
 .preview-collapsed .collapse-toggle .icon-collapse,
 .config-collapsed .collapse-toggle .icon-collapse,
-.tables-collapsed .collapse-toggle .icon-collapse {
+.tables-collapsed .collapse-toggle .icon-collapse,
+.explorer-collapsed .collapse-toggle .icon-collapse {
     display: none;
 }
 
 .detail-collapsed .collapse-toggle .icon-expand,
 .preview-collapsed .collapse-toggle .icon-expand,
 .config-collapsed .collapse-toggle .icon-expand,
-.tables-collapsed .collapse-toggle .icon-expand {
+.tables-collapsed .collapse-toggle .icon-expand,
+.explorer-collapsed .collapse-toggle .icon-expand {
     display: block;
 }
 

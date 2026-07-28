@@ -66,6 +66,13 @@ internal sealed class LiveSession
     public string Mode { get; }
 
     /// <summary>
+    /// The served-mode project context carried in the report payload so the client renders the
+    /// Explorer sidebar — the project root and this document's root-relative path. Null when the
+    /// session is not part of a browsable project.
+    /// </summary>
+    public ReportProject? Project { get; set; }
+
+    /// <summary>
     /// The absolute path of the configuration file this session applies, or <c>null</c> when the
     /// document compiles on the built-in defaults. It becomes non-null once a config is created or
     /// adopted (see <see cref="CreateConfig"/>), so the caller can start watching it for external
@@ -78,13 +85,11 @@ internal sealed class LiveSession
 
     /// <summary>Renders the initial live report HTML for the current file.</summary>
     public string RenderInitialHtml() =>
-        _visualizer.RenderLiveReport(
-            DisplayPath, File.ReadAllText(DocumentPath), Mode, CurrentConfigOverlay());
+        RenderReportHtml(File.ReadAllText(DocumentPath), CurrentConfigOverlay());
 
     /// <summary>Serializes the current document payload (<c>{ mode, path, source, stages }</c>).</summary>
     public string CurrentDocumentJson() =>
-        _visualizer.SerializeDocument(
-            DisplayPath, File.ReadAllText(DocumentPath), Mode, CurrentConfigOverlay());
+        SerializeReportDocument(File.ReadAllText(DocumentPath), CurrentConfigOverlay());
 
     /// <summary>
     /// Applies one save request and returns a payload carrying a typed <c>outcome</c>:
@@ -186,7 +191,7 @@ internal sealed class LiveSession
             }
 
             Broadcaster.Broadcast(
-                new LiveEvent("reload", _visualizer.SerializeDocument(DisplayPath, current, Mode)));
+                new LiveEvent("reload", SerializeReportDocument(current)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -276,8 +281,7 @@ internal sealed class LiveSession
     private string InvalidConfigPayload(string source, string error, string outcome)
     {
         var overlay = new ConfigStatusOverlay(_configPath!, source, error);
-        var json = _visualizer.SerializeDocument(
-            DisplayPath, File.ReadAllText(DocumentPath), Mode, overlay);
+        var json = SerializeReportDocument(File.ReadAllText(DocumentPath), overlay);
         var node = JsonNode.Parse(json)!.AsObject();
         node["outcome"] = outcome;
         node["message"] = error;
@@ -402,7 +406,7 @@ internal sealed class LiveSession
                         if (disk == source)
                         {
                             _lastSaved = source; // idempotent: the disk already equals the requested source
-                            return WithOutcome(_visualizer.SerializeDocument(DisplayPath, source, Mode), "saved");
+                            return WithOutcome(SerializeReportDocument(source), "saved");
                         }
 
                         if (disk != input.ExpectedBaseline)
@@ -419,7 +423,7 @@ internal sealed class LiveSession
                         transaction.WriteForced(source); // confirmed overwrite
                     }
 
-                    return WithOutcome(_visualizer.SerializeDocument(DisplayPath, source, Mode), "saved");
+                    return WithOutcome(SerializeReportDocument(source), "saved");
                 },
                 afterReplace);
         }
@@ -538,7 +542,7 @@ internal sealed class LiveSession
 
         var current = File.ReadAllText(DocumentPath);
         _lastSaved = current;
-        return WithOutcome(_visualizer.SerializeDocument(DisplayPath, current, Mode), "loaded");
+        return WithOutcome(SerializeReportDocument(current), "loaded");
     }
 
     private string ReloadConfig()
@@ -565,8 +569,17 @@ internal sealed class LiveSession
         return InvalidConfigPayload(source, error, "invalid");
     }
 
+    // Render or serialize the payload through the visualizer with this session's constants — its
+    // display path, mode, and project context — so every payload it emits carries the Explorer's
+    // project for the client to render the sidebar.
+    private string RenderReportHtml(string source, ConfigStatusOverlay? overlay = null) =>
+        _visualizer.RenderLiveReport(DisplayPath, source, Mode, overlay, Project);
+
+    private string SerializeReportDocument(string source, ConfigStatusOverlay? overlay = null) =>
+        _visualizer.SerializeDocument(DisplayPath, source, Mode, overlay, Project);
+
     private string SerializeCurrent() =>
-        _visualizer.SerializeDocument(DisplayPath, File.ReadAllText(DocumentPath), Mode);
+        SerializeReportDocument(File.ReadAllText(DocumentPath));
 
     private bool TryParseConfig(string source, out CompilerOptions? options, out string error)
     {

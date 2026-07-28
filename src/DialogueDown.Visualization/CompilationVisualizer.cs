@@ -136,14 +136,15 @@ public sealed class CompilationVisualizer
     /// (subscribes for hot-reload pushes) instead of showing a static report.
     /// </summary>
     public string RenderLiveReport(
-        string documentPath, string source, string mode, ConfigStatusOverlay? configOverlay = null)
+        string documentPath, string source, string mode, ConfigStatusOverlay? configOverlay = null,
+        ReportProject? project = null)
     {
         ArgumentNullException.ThrowIfNull(documentPath);
         ArgumentNullException.ThrowIfNull(mode);
         var content = BuildContent(source);
         return HtmlTemplate.RenderPage(
             content.Stages, source, mode, documentPath, content.Symbols, content.Configuration,
-            content.Diagnostics, content.SemanticTokens, configOverlay);
+            content.Diagnostics, content.SemanticTokens, configOverlay, project);
     }
 
     /// <summary>
@@ -152,14 +153,15 @@ public sealed class CompilationVisualizer
     /// document API and its hot-reload push events.
     /// </summary>
     public string SerializeDocument(
-        string documentPath, string source, string mode, ConfigStatusOverlay? configOverlay = null)
+        string documentPath, string source, string mode, ConfigStatusOverlay? configOverlay = null,
+        ReportProject? project = null)
     {
         ArgumentNullException.ThrowIfNull(documentPath);
         ArgumentNullException.ThrowIfNull(mode);
         var content = BuildContent(source);
         return DisplayGraphJson.SerializeDocument(
             mode, documentPath, source, content.Stages, content.Symbols, content.Configuration,
-            content.Diagnostics, content.SemanticTokens, configOverlay);
+            content.Diagnostics, content.SemanticTokens, configOverlay, project);
     }
 
     private static IDisplayRenderer RendererFor(EmitFormat format) => format switch

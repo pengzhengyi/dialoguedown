@@ -59,6 +59,36 @@ public sealed class DisplayGraphJsonTests
     }
 
     [Fact]
+    public void SerializeReport_WithProject_IncludesRootAndActivePath()
+    {
+        var json = DisplayGraphJson.SerializeReport(
+            "view", "act-1/prologue.dialogue.md", "Alice: hi", [],
+            project: new ReportProject("/project/root", "act-1/prologue.dialogue.md"));
+
+        Assert.Contains("\"project\":{", json);
+        Assert.Contains("\"root\":\"/project/root\"", json);
+        Assert.Contains("\"activePath\":\"act-1/prologue.dialogue.md\"", json);
+    }
+
+    [Fact]
+    public void SerializeReport_WithoutProject_OmitsTheProjectContext()
+    {
+        var json = DisplayGraphJson.SerializeReport("view", "a.dialogue.md", "Alice: hi", []);
+
+        Assert.DoesNotContain("\"project\"", json);
+    }
+
+    [Fact]
+    public void SerializeDocument_WithProject_IncludesTheProjectContext()
+    {
+        var json = DisplayGraphJson.SerializeDocument(
+            "edit", "a.dialogue.md", "Alice: hi", [],
+            project: new ReportProject("/root", "a.dialogue.md"));
+
+        Assert.Contains("\"project\":{\"root\":\"/root\",\"activePath\":\"a.dialogue.md\"}", json);
+    }
+
+    [Fact]
     public void Serialize_IncludesNodeSourceWhenPresentAndOmitsWhenNull()
     {
         var graph = MakeGraph(

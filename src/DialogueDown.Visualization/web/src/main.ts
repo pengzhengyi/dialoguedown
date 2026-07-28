@@ -1,5 +1,6 @@
 import "@picocss/pico/css/pico.min.css";
 import "tippy.js/dist/tippy.css";
+import "@vscode/codicons/dist/codicon.css";
 import "./styles.css";
 
 import { runApp } from "./app";
@@ -17,7 +18,27 @@ import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
 import { initHelpToggle } from "./help";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
-import { type DialogueSymbols, EMPTY_SYMBOLS, type Report, type ServedMode } from "./model";
+import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
+import { initCollapsiblePanel } from "./collapse-toggle";
+import {
+    type ConfigReport,
+    type DialogueSymbols,
+    EMPTY_SYMBOLS,
+    type Report,
+    type ServedMode,
+} from "./model";
+import { parentPath, type BrowseListing, type CreateOutcome } from "./launcher";
+
+/**
+ * The Explorer's pinned configuration entry for a report — present only when a `dialogue.toml`
+ * was applied. The label is the file's leaf (separator-robust, so a Windows-authored report
+ * reads cleanly too).
+ */
+function configExplorerEntry(configuration: ConfigReport | undefined): ExplorerConfig | undefined {
+    const path = configuration?.file?.path;
+    if (path === undefined) return undefined;
+    return { label: path.split(/[\\/]/).pop() ?? path };
+}
 
 /**
  * The .NET library replaces the `"__REPORT__"` slot in report.html with the
@@ -208,6 +229,159 @@ if (report.mode === "view" || report.mode === "edit") {
         },
         onProblem: (message, target) => controller.onProblem(message, target),
     });
+    // The Explorer sidebar: present only for a served, browsable report (report.project is set by
+    // the project server). It reuses the launcher's browse/open endpoints and routes a file open
+    // through beginNavigation, so switching scripts respects the save mode (Auto flushes, Manual
+    // prompts) before the server switches sessions.
+    if (report.project) {
+        const explorerEl = document.getElementById("explorer");
+        const appEl = document.getElementById("app");
+        if (explorerEl && appEl) {
+            appEl.classList.add("has-explorer");
+            initExplorer(
+                explorerEl,
+                report.project,
+                {
+                    browse: async (path) => {
+                        const response = await fetch(
+                            `/api/browse?path=${encodeURIComponent(path)}`,
+                        );
+                        return response.ok ? ((await response.json()) as BrowseListing) : null;
+                    },
+                    openScript: (path) =>
+                        beginNavigation(() => {
+                            void openScriptSession(path);
+                        }),
+                    create: async (path) => {
+                        // Resolve the current document save-safely first; a cancelled Manual save
+                        // aborts the create (empty message → the Explorer shows nothing).
+                        const live = activeLive();
+                        if (live && !(await resolveDocument(live))) {
+                            return { kind: "error", message: "" };
+                        }
+                        return createScriptSession(path);
+                    },
+                    createFolder: async (path) => {
+                        const response = await fetch("/api/create-folder", {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ path }),
+                        });
+                        if (response.ok) return { ok: true };
+                        const body = (await response.json().catch(() => ({}))) as {
+                            message?: string;
+                        };
+                        return {
+                            ok: false,
+                            message: body.message ?? "Could not create the folder.",
+                        };
+                    },
+                    rename: async (from, to) => {
+                        // A rename that carries the document on screen — the file itself, or a
+                        // file inside a renamed folder — saves it first (save-safe) and reopens it
+                        // under the new path; a cancelled Manual save aborts the rename.
+                        const activePath = report.project?.activePath;
+                        const carriesActive =
+                            activePath === from || (activePath?.startsWith(`${from}/`) ?? false);
+                        if (carriesActive) {
+                            const live = activeLive();
+                            if (live && !(await resolveDocument(live))) {
+                                return { kind: "error", message: "" };
+                            }
+                        }
+                        const response = await fetch("/api/rename", {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ from, to }),
+                        });
+                        if (response.ok) {
+                            const body = (await response.json().catch(() => ({}))) as {
+                                path?: string;
+                                active?: boolean;
+                                activePath?: string;
+                            };
+                            const path = body.path ?? to;
+                            if (body.active) void openScriptSession(body.activePath ?? path);
+                            return { kind: "renamed", path };
+                        }
+                        if (response.status === 409) return { kind: "exists" };
+                        const body = (await response.json().catch(() => ({}))) as {
+                            message?: string;
+                        };
+                        return {
+                            kind: "error",
+                            message: body.message ?? "Could not rename the file.",
+                        };
+                    },
+                    confirm: (message) => window.confirm(message),
+                    openConfig: () => app.showConfigTab(),
+                },
+                configExplorerEntry(report.configuration),
+            );
+            const explorerPanel = initCollapsiblePanel({
+                container: appEl,
+                collapsedClass: "explorer-collapsed",
+                storageKey: "dd-explorer-collapsed",
+                name: "explorer",
+                side: "left",
+            });
+            document.getElementById("explorer-resizer")?.appendChild(explorerPanel.button);
+
+            // A cross-file link in the Source preview opens the target script like a hyperlink;
+            // same-file #anchors keep their native scroll, and the anchor part is dropped (the
+            // linker resolves anchors, deferred).
+            const activeFolder = parentPath(report.project.activePath);
+            for (const preview of document.querySelectorAll(".source-preview")) {
+                preview.addEventListener("click", (event) => {
+                    const anchor = (event.target as Element | null)?.closest("a");
+                    const href = anchor?.getAttribute("href");
+                    if (href == null || href.startsWith("#") || /^[a-z][\w+.-]*:/i.test(href)) {
+                        return;
+                    }
+                    event.preventDefault();
+                    const target = resolveProjectPath(activeFolder, href);
+                    if (target !== null) {
+                        beginNavigation(() => {
+                            void openScriptSession(target);
+                        });
+                    }
+                });
+            }
+        }
+    }
+
+    // Open another script: preserve the current View/Edit mode (read from the live accent the
+    // toggle sets), start its session, and follow the 303 to its report.
+    async function openScriptSession(source: string): Promise<void> {
+        const mode = document.documentElement.dataset.servedMode ?? initialMode;
+        const response = await fetch("/api/open", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ source, mode }),
+        });
+        if (response.redirected) window.location.assign(response.url);
+    }
+
+    // Create a new script (POST /api/create) and follow the 303 to its report; a name clash is a
+    // 409 the Explorer turns into "open the existing one instead".
+    async function createScriptSession(path: string): Promise<CreateOutcome> {
+        const response = await fetch("/api/create", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ path }),
+        });
+        if (response.redirected) {
+            window.location.assign(response.url);
+            return { kind: "opened", url: response.url };
+        }
+        if (response.status === 409) {
+            const body = (await response.json().catch(() => ({}))) as { path?: string };
+            return { kind: "exists", path: body.path ?? path };
+        }
+        const body = (await response.json().catch(() => ({}))) as { message?: string };
+        return { kind: "error", message: body.message ?? "Could not create the file." };
+    }
+
     if (header) initBackToLauncher(header, window.location.pathname);
 } else {
     // Static export: read-only, no server, no toggle.
