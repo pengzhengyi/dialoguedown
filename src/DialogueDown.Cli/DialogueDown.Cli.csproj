@@ -19,16 +19,31 @@
     <ToolCommandName>ddown</ToolCommandName>
     <PackageId>DialogueDown.Cli</PackageId>
     <Authors>Zhengyi Peng</Authors>
+    <Copyright>Copyright (c) 2026 Zhengyi Peng</Copyright>
     <PackageTags>dialogue;markdown;compiler;narrative;gamedev;cli</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/pengzhengyi/dialoguedown</PackageProjectUrl>
     <RepositoryUrl>https://github.com/pengzhengyi/dialoguedown.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>See the changelog: https://github.com/pengzhengyi/dialoguedown/blob/main/CHANGELOG.md</PackageReleaseNotes>
+
+    <!-- Source Link: embed repository + commit metadata and source so the tool is
+         debuggable, with a deterministic build in CI. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

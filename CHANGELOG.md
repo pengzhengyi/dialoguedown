@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project uses [Conventional Commits](https://www.conventionalcommits.org/) to keep
 changes easy to categorize.
 
-## Unreleased
+## [Unreleased]
 
 ### Added
 
@@ -15,6 +15,11 @@ changes easy to categorize.
   heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an
   editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
   [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
+
+## [0.1.0] - 2026-07-28
+
+### Added
+
 - **Install the `ddown` command-line tool** — DialogueDown's CLI now ships as a
   cross-platform .NET global tool: `dotnet tool install --global DialogueDown.Cli`
   puts a `ddown` command on your `PATH` to `compile` and `visualize` scripts. The
@@ -237,3 +242,6 @@ changes easy to categorize.
   bubble across the report and launcher, the favicon, and the demo.
 - Escaped inline punctuation (for example `\*`) no longer shifts the source spans of
   the text that follows it, so spans stay exact for diagnostics and the visualizer.
+
+[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/pengzhengyi/dialoguedown/releases/tag/v0.1.0
