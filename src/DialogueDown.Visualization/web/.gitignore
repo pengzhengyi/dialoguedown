@@ -17,8 +17,8 @@ e2e-live/.live-doc.dialogue.md
 # Live e2e --render-root temp tree
 e2e-live/.render-root/
 
-# Launcher e2e temp tree
-e2e-live/.launcher-tree/
+# Empty-shell e2e temp tree
+e2e-live/.shell-tree/
 e2e-live/.live-edit-doc.dialogue.md
 e2e-live/.semantic-autocomplete.dialogue.md
 

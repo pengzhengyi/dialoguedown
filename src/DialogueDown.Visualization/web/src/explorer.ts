@@ -240,7 +240,14 @@ export function initExplorer(
         }
         const item = element("li", "explorer-input-row");
         item.append(row);
-        const cancel = (): void => item.remove();
+        // Guard against a double teardown: removing the focused input fires blur, whose handler also
+        // cancels — without this the second remove throws "node is no longer a child".
+        let settled = false;
+        const cancel = (): void => {
+            if (settled) return;
+            settled = true;
+            item.remove();
+        };
         input.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
