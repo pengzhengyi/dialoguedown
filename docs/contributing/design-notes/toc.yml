@@ -28,6 +28,8 @@
     href: Conditional Choice.md
   - name: Block Controls
     href: Block Controls.md
+  - name: Control Line
+    href: Control Line.md
   - name: Cross-File Jump Resolution
     href: Cross-File Jump Resolution.md
 - name: Configuration
