@@ -18,45 +18,54 @@ internal static class StyledSpeakerPrefixDetector
 {
     public static void Report(IReadOnlyList<MarkdownInline> leading, IDiagnosticSink diagnostics)
     {
-        if (WouldBePrefix(leading) is { } prefix)
+        if (TryScanStyledPrefix(leading, out var text, out var span)
+            && SpeakerPrefixProbe.BeginsWithSpeakerPrefix(text))
         {
             diagnostics.Report(
-                new Diagnostic(DiagnosticCatalog.StyledSpeakerPrefix, prefix.Span, [prefix.Text]));
+                new Diagnostic(DiagnosticCatalog.StyledSpeakerPrefix, span, [text]));
         }
     }
 
-    // The leading run flattened to plain text up to a terminating ':' that sits outside any styling,
-    // reported only when a styled inline precedes that colon and the result parses as a prefix.
-    private static (string Text, SourceSpan Span)? WouldBePrefix(IReadOnlyList<MarkdownInline> leading)
+    // Flattens the leading run to plain text up to a ':' in a top-level text inline, but only when a
+    // styled inline precedes that colon — the candidate the caller then probes. Returns false when a
+    // functional inline (code span, link, image, or break) breaks the run, when no top-level colon
+    // terminates it, or when nothing is styled — the plain-prefix case the normal speaker peel
+    // already handles.
+    private static bool TryScanStyledPrefix(
+        IReadOnlyList<MarkdownInline> leading, out string text, out SourceSpan span)
     {
+        text = string.Empty;
+        span = default;
+
         var flattened = new StringBuilder();
         var sawStyle = false;
         foreach (var inline in leading)
         {
             if (inline.PlainText() is not { } plain)
             {
-                return null; // a code span, link, image, or break — never part of a prefix.
+                return false; // a code span, link, image, or break — never part of a prefix.
             }
 
             // Only a colon in a top-level text inline terminates the prefix; one inside styling
             // (a fully styled line) does not, so the styled run must end before the ':'.
-            if (inline is TextInline text && plain.IndexOf(':') is >= 0 and var colon)
+            if (inline is TextInline textInline && plain.IndexOf(':') is >= 0 and var colon)
             {
-                flattened.Append(plain, 0, colon + 1);
-                var candidate = flattened.ToString();
-                if (!sawStyle || !SpeakerPrefixProbe.BeginsWithSpeakerPrefix(candidate))
+                if (!sawStyle)
                 {
-                    return null;
+                    return false; // an unstyled prefix — recognized by the normal peel, not here.
                 }
 
-                var start = leading[0].Span.Start;
-                return (candidate, new SourceSpan(start, text.ContentSpan.Start + colon + 1 - start));
+                flattened.Append(plain, 0, colon + 1);
+                text = flattened.ToString();
+                span = SourceSpan.Inclusive(
+                    leading[0].Span.Start, textInline.ContentSpan.Start + colon);
+                return true;
             }
 
             sawStyle |= inline is EmphasisInline;
             flattened.Append(plain);
         }
 
-        return null;
+        return false;
     }
 }

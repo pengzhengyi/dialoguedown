@@ -6,8 +6,8 @@ namespace DialogueDown.Script.Transpiler.Parsers;
 /// <summary>
 /// Answers whether a plain-text run begins with a speaker prefix, by running the same
 /// <see cref="SpeakerPrefixParser"/> grammar the transpiler uses to recognize one. Shared
-/// so a consumer outside the transpiler — such as the styled-speaker-prefix validation
-/// rule — can ask the authoritative question without re-deriving the grammar.
+/// so the styled-speaker-prefix detector can ask the authoritative question without
+/// re-deriving the grammar.
 /// </summary>
 internal static class SpeakerPrefixProbe
 {
