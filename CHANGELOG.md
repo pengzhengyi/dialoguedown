@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Jump to a scene by typing `=>`** — the source editor now completes the whole jump
+  target from the `=>` jump indicator: type `=>` and the report offers every scene by its
+  heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an
+  editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
+  [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
 - **Install the `ddown` command-line tool** — DialogueDown's CLI now ships as a
   cross-platform .NET global tool: `dotnet tool install --global DialogueDown.Cli`
   puts a `ddown` command on your `PATH` to `compile` and `visualize` scripts. The
