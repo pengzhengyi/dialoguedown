@@ -588,3 +588,30 @@ test("quotes and unquotes the selection by keyboard and from the surround menu",
     await menu.getByRole("menuitem", { name: "Quote", exact: true }).click();
     await expect(editor).toContainText("> # Scene");
 });
+
+test("Tab indents the line and Esc leaves the editor, instead of Tab moving focus out", async ({
+    page,
+}) => {
+    await page.goto(`${base}/`);
+    const editor = page.locator(".source-pane .cm-content");
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    // Put the caret at the start of the "Alice" line, then press Tab.
+    await page.locator(".source-pane .cm-line", { hasText: "Alice" }).click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Tab");
+
+    // Tab indented the line (rather than tabbing out of the editor): the line now starts with
+    // whitespace, and the editor kept focus.
+    const indented = await page.evaluate(() =>
+        [...document.querySelectorAll(".source-pane .cm-line")].some((line) =>
+            /^\s+Alice: The first line\./.test(line.textContent ?? ""),
+        ),
+    );
+    expect(indented).toBe(true);
+    await expect(editor).toBeFocused();
+
+    // Escape is the keyboard escape hatch — it blurs the editor so Tab-to-indent is not a trap.
+    await page.keyboard.press("Escape");
+    await expect(editor).not.toBeFocused();
+});

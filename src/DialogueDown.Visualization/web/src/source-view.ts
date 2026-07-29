@@ -16,7 +16,7 @@ import {
     type Extension,
     type StateCommand,
 } from "@codemirror/state";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import {
     syntaxHighlighting,
@@ -121,6 +121,14 @@ function runInEditor(view: EditorView, command: StateCommand): void {
     command(view);
     view.focus();
 }
+
+/** Move keyboard focus out of the editor — the escape hatch that pairs with Tab-to-indent so the
+ *  editor is never a keyboard trap. Bound to Escape at low precedence, below a completion or search
+ *  dismiss, so it only fires when there is nothing else to close. */
+const blurEditor = (view: EditorView): boolean => {
+    view.contentDOM.blur();
+    return true;
+};
 
 /**
  * The editor's surround handlers (Edit mode only):
@@ -234,6 +242,11 @@ function editableConfig(editable: boolean, editableExtras: Extension[] = []) {
                   Prec.high(keymap.of(formatKeymap)),
                   surroundHandlers,
                   ...editableExtras,
+                  // Tab indents and Shift-Tab outdents, like a normal code editor. Low precedence so
+                  // an open completion's Tab (accept) still wins; Escape blurs the editor so
+                  // Tab-to-indent is not a keyboard trap (a completion/search dismiss, at higher
+                  // precedence, consumes Escape first).
+                  Prec.low(keymap.of([indentWithTab, { key: "Escape", run: blurEditor }])),
               ]
             : []),
     ];

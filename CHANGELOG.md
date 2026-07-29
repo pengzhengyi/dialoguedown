@@ -46,6 +46,9 @@ changes easy to categorize.
   not the command waiting on it. Pressing Ctrl+C (or sending a termination signal) now
   stops the session promptly, ending any open hot-reload stream instead of blocking
   shutdown.
+- **Tab now indents in the Source editor.** In Live Edit, Tab indents the line (and
+  Shift-Tab outdents) like a normal code editor, instead of moving focus out of the editor;
+  press Esc to move focus out. Tab still accepts an open autocomplete suggestion.
 
 ## [0.1.0] - 2026-07-28
 
