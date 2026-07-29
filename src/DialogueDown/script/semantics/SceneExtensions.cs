@@ -22,9 +22,11 @@ internal static class SceneExtensions
         {
             var scene = stack.Pop();
             blocks.AddRange(scene.Blocks);
-            for (var i = scene.Children.Count - 1; i >= 0; i--)
+
+            // Push children in reverse so the first child is popped — and visited — next (pre-order).
+            foreach (var child in scene.Children.Reverse())
             {
-                stack.Push(scene.Children[i]);
+                stack.Push(child);
             }
         }
 
