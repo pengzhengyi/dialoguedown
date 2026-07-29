@@ -859,6 +859,8 @@ section.stage.empty-shell {
 }
 
 .node-detail-heading {
+    display: flex;
+    align-items: center;
     margin: 0.45rem 0 0.1rem;
     font-weight: 600;
     font-size: 0.85rem;
@@ -2255,6 +2257,8 @@ body.maximized #app {
 }
 
 #detail-title {
+    display: flex;
+    align-items: center;
     margin-bottom: 0.75rem;
     font-weight: 600;
 }
@@ -2301,6 +2305,38 @@ body.maximized #app {
    scrollable region with nothing focusable in it. */
 .node-attributes {
     margin-bottom: 0.5rem;
+}
+
+/* The "Jump to source" action: an icon-only button beside the node title (a Tippy tooltip carries
+   the label) that takes the reader to the node's span in the Source editor. The icon is drawn in
+   the mode accent (blue in View, green in Edit) so it stays legible on the panel — never the
+   Pico button default, whose inverse text renders white-on-white here. */
+.node-jump {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    margin-left: auto;
+    padding: 0.2rem;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--mode-accent, var(--pico-primary));
+    box-shadow: none;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.node-jump:hover,
+.node-jump:focus-visible {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
+    outline: none;
+}
+
+.node-jump-icon {
+    flex: 0 0 auto;
+    font-size: 15px;
+    color: inherit;
 }
 
 .node-source {

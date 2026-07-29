@@ -10,6 +10,12 @@ changes easy to categorize.
 
 ### Added
 
+- **Jump from a graph node to its source** — the Node details panel now has a **Jump to source**
+  icon beside the node title (on the AST graph tabs and the Semantic Model tab) that opens the
+  Source tab with the node's text selected, so you can move from a node straight to the lines it
+  came from. A synthetic node the compiler inserted (a filled-in default speaker) has no text of
+  its own, so the jump places the cursor where it belongs instead.
+  See the [Node Editing](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Editing.md) note.
 - **File Explorer in the report** — a served report opened through the launcher now shows a
   collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
   highlighted, and open another by clicking it or following a cross-file link. A VS Code-style

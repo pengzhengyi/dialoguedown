@@ -44,6 +44,9 @@ const SOURCE_HELP = `
 const GRAPH_HELP = `
   <p><strong>Click a node</strong> (its label or details) to inspect the source it
      was produced from and a rendered preview.</p>
+  <p><strong>Jump to source</strong> — the icon beside a node's title (in the details panel)
+     opens the Source tab with the node's text selected, or, for a synthetic node the compiler
+     inserted, places the cursor where it belongs.</p>
   <p><strong>Click a node's circle</strong> to collapse or expand its children.</p>
   <p><strong>Drag</strong> to pan, <strong>scroll</strong> to zoom, and
      <strong>drag the divider</strong> to resize the detail panel — or use its
@@ -71,7 +74,8 @@ const SEMANTIC_HELP = `
      to, or every line a speaker speaks.</p>
   <p><strong>Node details:</strong> click a scene or block in the tree to see its source and a
      rendered preview in the <strong>Node details</strong> panel, pinned to the top of the right
-     column.</p>
+     column. The <strong>Jump to source</strong> icon beside a node's title opens the Source tab
+     with that node's text selected.</p>
   <p><strong>Tables column:</strong> drag the divider to resize it, or use the handle on the
      divider to hide the whole column and give the graph full width. Each table (and the node
      details) also <strong>collapses</strong> to a title strip on its own header bar. The

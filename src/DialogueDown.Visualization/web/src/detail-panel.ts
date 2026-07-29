@@ -2,7 +2,8 @@ import type { DialogueSymbolProvider, DisplayNode } from "./model";
 import { colorOf } from "./palette";
 import { escapeHtml, renderMarkdown } from "./text";
 import { createSourceView, type SourceViewHandle } from "./source-view";
-import { spanSplice } from "./span-splice";
+import { spanSplice, type Span } from "./span-splice";
+import { createJumpButton, type JumpButton } from "./jump-button";
 
 /** How the inspector participates in editing; absent for a static, read-only report. */
 export interface DetailEditOptions {
@@ -19,6 +20,12 @@ export interface DetailEditOptions {
 export interface DetailPanelOptions {
     /** Present for a served session (enables the editor); absent for a static export. */
     edit?: DetailEditOptions;
+    /**
+     * Jump to the selected node's source in the Source tab — selecting its span, or placing the
+     * cursor at a synthetic node's zero-width position. Absent when there is no Source tab to jump
+     * to (a single-graph render), which also hides the inspector's jump affordance.
+     */
+    jumpToSource?: (span: Span) => void;
 }
 
 export interface DetailPanel {
@@ -63,8 +70,9 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     const bodyEl = document.getElementById("detail-body")!;
     const edit = options.edit;
 
-    // Persistent body structure so the editor can be reused across selections: an attributes
-    // table, then a source area holding either the editor (nodes with source) or a note.
+    // Persistent body structure so the editor can be reused across selections: an optional
+    // jump-to-source action, an attributes table, then a source area holding either the editor
+    // (nodes with source) or a note.
     const attributes = document.createElement("div");
     attributes.className = "node-attributes";
     const note = document.createElement("p");
@@ -83,6 +91,14 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     // is clean (navigation is locked while dirty) so the splice base is always valid.
     let editingSpan: { start: number; end: number } | null = null;
     let editingBase = "";
+
+    // A "Jump to source" affordance (served or export, whenever there is a Source tab): an icon
+    // button placed beside the node title that takes the reader to the node's span in the Source
+    // editor. Shown only for a node that maps to a position — which now includes a synthetic node
+    // (a zero-width caret). Reused, not rebuilt, across selections.
+    const jump: JumpButton | null = options.jumpToSource
+        ? createJumpButton(options.jumpToSource)
+        : null;
 
     function ensureEditor(): SourceViewHandle {
         if (editor) return editor;
@@ -125,10 +141,20 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         note.hidden = false;
     }
 
+    // Render the title, then re-append the reused jump button (setting the title HTML/text drops
+    // any prior child) and reflect the node on it.
+    function renderTitle(html: string, node: DisplayNode | null): void {
+        titleEl.innerHTML = html;
+        if (jump) {
+            titleEl.appendChild(jump.element);
+            jump.update(node);
+        }
+    }
+
     return {
         show(node) {
             currentNode = node;
-            titleEl.innerHTML = nodeDetailTitle(node);
+            renderTitle(nodeDetailTitle(node), node);
             attributes.innerHTML = attributesTable(node.attributes);
             if (typeof node.source === "string") loadNode(node);
             else
@@ -138,7 +164,7 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         },
         clear() {
             currentNode = null;
-            titleEl.textContent = "Node details";
+            renderTitle(escapeHtml("Node details"), null);
             attributes.innerHTML = "";
             showNote(PLACEHOLDER_TEXT);
         },

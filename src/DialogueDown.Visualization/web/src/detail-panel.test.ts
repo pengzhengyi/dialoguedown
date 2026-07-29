@@ -128,4 +128,72 @@ describe("createDetailPanel", () => {
         panel.show({ id: "n2", label: "Speaker (default)", attributes: [] });
         expect(note()?.hidden).toBe(false);
     });
+
+    describe("jump to source", () => {
+        const jumpButton = () => title.querySelector<HTMLButtonElement>(".node-jump");
+
+        it("offers no jump affordance when no jump handler is provided", () => {
+            panel.show({
+                id: "n1",
+                label: "A",
+                attributes: [],
+                source: "# A",
+                span: { start: 0, end: 3 },
+            });
+            expect(jumpButton()).toBeNull();
+        });
+
+        it("selects a real node's span from a button beside the title", () => {
+            const jumps: Array<{ start: number; end: number }> = [];
+            const jumping = createDetailPanel({ jumpToSource: (span) => jumps.push(span) });
+            jumping.show({
+                id: "n1",
+                label: "Line",
+                attributes: [],
+                source: "Alice: Hi",
+                span: { start: 5, end: 14 },
+            });
+
+            const button = jumpButton()!;
+            expect(button.hidden).toBe(false);
+            expect(button.getAttribute("aria-label")).toBe("Jump to source");
+            button.click();
+            expect(jumps).toEqual([{ start: 5, end: 14 }]);
+        });
+
+        it("places the caret for a synthetic node's zero-width span", () => {
+            const jumps: Array<{ start: number; end: number }> = [];
+            const jumping = createDetailPanel({ jumpToSource: (span) => jumps.push(span) });
+            // A synthetic node has no source (shows the note) but now carries a zero-width caret.
+            jumping.show({
+                id: "n1",
+                label: "Speaker (default)",
+                attributes: [],
+                span: { start: 7, end: 7 },
+            });
+
+            const button = jumpButton()!;
+            expect(button.hidden).toBe(false);
+            button.click();
+            expect(jumps).toEqual([{ start: 7, end: 7 }]);
+        });
+
+        it("hides the jump for a node with no span, and after clear", () => {
+            const jumping = createDetailPanel({ jumpToSource: () => {} });
+            jumping.show({ id: "n1", label: "Orphan", attributes: [] });
+            expect(jumpButton()?.hidden).toBe(true);
+
+            jumping.show({
+                id: "n2",
+                label: "Line",
+                attributes: [],
+                source: "Hi",
+                span: { start: 0, end: 2 },
+            });
+            expect(jumpButton()?.hidden).toBe(false);
+
+            jumping.clear();
+            expect(jumpButton()?.hidden).toBe(true);
+        });
+    });
 });
