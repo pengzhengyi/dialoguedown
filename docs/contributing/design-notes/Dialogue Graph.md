@@ -261,7 +261,8 @@ flowchart LR
 | Type / seam | Responsibility | Collaborators |
 | --- | --- | --- |
 | `IDialogueGraphBuilder` | The stage seam: `SemanticModel` → `DialogueGraph`. | `ScriptCompiler`, DI |
-| `DialogueGraphBuilder` | Walks the model in document order; emits nodes, succession/divert edges, and Scene regions. | `SemanticModel`, `JumpResolutionTable`, `AnchorTable` |
+| `DialogueGraphBuilder` | Maps each script block to its graph node in document order; emits succession/divert edges and Scene regions, resolving every target through the id map. | `SemanticModel`, `INodeIdBuilder`, `Scene.DocumentOrder` |
+| `INodeIdBuilder` | Strategy that assigns a `NodeId` to each block and the End node (a `NodeIdMap`). `IndexNodeIdBuilder` numbers by document position; a source-derived strategy for incremental/JIT plugs in here. | `NodeIdMap` |
 | `DialogueGraph` | The immutable result: nodes, entry, End sentinel, region overlay. | consumed by the runtime and the report |
 | `DialogueNode` / `Edge` | The sealed node and edge unions (the flow). | — |
 | `Region` / `RegionTree` | The grouping overlay projected from the scene tree. | `Scene` |
