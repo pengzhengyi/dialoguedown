@@ -1,6 +1,15 @@
 import type { DisplayNode } from "./model";
+import type { Span } from "./span-splice";
 import { nodeDetailTitle, nodeDetailBody, NODE_DETAIL_PLACEHOLDER } from "./detail-panel";
+import { createJumpButton, type JumpButton } from "./jump-button";
 import { initCollapsiblePanel } from "./collapse-toggle";
+
+/** How the Semantic tab's node-details panel participates in navigation. */
+export interface NodeDetailPanelOptions {
+    /** Jump to the shown node's source in the Source tab (selecting a span, or placing the caret
+     *  for a synthetic node). Absent when there is no Source tab to jump to. */
+    jumpToSource?: (span: Span) => void;
+}
 
 /** The Semantic tab's node-details panel, plus its element to mount atop the tables column. */
 export interface NodeDetailPanel {
@@ -16,9 +25,10 @@ export interface NodeDetailPanel {
  * column (sticky, so it never scrolls out of view while the tables scroll beneath it). Clicking
  * a scene or a script block in the tree shows its attributes, source, and a rendered preview
  * here; selecting a node auto-expands the panel so the detail is always revealed. It reuses the
- * report's collapsible-panel mechanics and the shared node-detail rendering.
+ * report's collapsible-panel mechanics, the shared node-detail rendering, and — beside the title
+ * — the shared {@link createJumpButton} affordance to the Source tab.
  */
-export function createNodeDetailPanel(): NodeDetailPanel {
+export function createNodeDetailPanel(options: NodeDetailPanelOptions = {}): NodeDetailPanel {
     const panel = document.createElement("section");
     panel.className = "table-panel node-detail-panel";
 
@@ -57,12 +67,20 @@ export function createNodeDetailPanel(): NodeDetailPanel {
     });
     reflect();
 
+    const jump: JumpButton | null = options.jumpToSource
+        ? createJumpButton(options.jumpToSource)
+        : null;
+
     return {
         element: panel,
         show(node) {
             body.innerHTML =
                 `<div class="node-detail-heading">${nodeDetailTitle(node)}</div>` +
                 nodeDetailBody(node);
+            if (jump) {
+                body.querySelector(".node-detail-heading")?.appendChild(jump.element);
+                jump.update(node);
+            }
             if (collapsible.isCollapsed()) {
                 collapsible.toggle(); // reveal the detail the reader just asked for
                 reflect();
@@ -70,6 +88,7 @@ export function createNodeDetailPanel(): NodeDetailPanel {
         },
         clear() {
             body.innerHTML = NODE_DETAIL_PLACEHOLDER;
+            jump?.update(null);
         },
     };
 }

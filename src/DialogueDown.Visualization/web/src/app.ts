@@ -392,7 +392,12 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                 ...(source?.beginNavigation ? { onNodeSelect: deferNodeSelect } : {}),
             };
             if (isSemantic) {
-                const semantic = createSemanticView(stage, showNode, treeOptions);
+                const semantic = createSemanticView(
+                    stage,
+                    showNode,
+                    treeOptions,
+                    report.source != null ? jumpToSource : undefined,
+                );
                 view = semantic.view;
                 section.appendChild(semantic.element);
             } else {

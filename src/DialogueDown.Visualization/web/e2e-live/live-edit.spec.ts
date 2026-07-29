@@ -458,14 +458,14 @@ test("jumps from a graph node to its source, selecting the node's span", async (
     await page.locator(".tab", { hasText: "Dialogue AST" }).click();
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
 
-    // Select a Text node; the inspector offers a "Jump to source" for its span (a selection).
+    // Select a Text node; the inspector offers a "Jump to source" icon beside the title.
     await selectNode(page, "Text");
     const nodeSource = (
         (await page.locator(".node-source .cm-content").textContent()) ?? ""
     ).trim();
-    const jump = page.locator(".node-jump");
+    const jump = page.locator("#detail-title .node-jump");
     await expect(jump).toBeVisible();
-    await expect(jump).toHaveAttribute("title", /Select/);
+    await expect(jump).toHaveAttribute("aria-label", "Jump to source");
     await jump.click();
 
     // The Source tab is now active, its editor focused, with the node's exact text selected.
@@ -484,11 +484,10 @@ test("jumps from a synthetic node to its position, placing the caret without a s
     await page.locator(".tab", { hasText: "Desugared AST" }).click();
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
 
-    // Its jump is labeled a position (not a selection), and lands the caret rather than a range.
+    // Its jump lands the caret at the node's position rather than selecting a range.
     await selectNode(page, "default");
-    const jump = page.locator(".node-jump");
+    const jump = page.locator("#detail-title .node-jump");
     await expect(jump).toBeVisible();
-    await expect(jump).toHaveAttribute("title", /position/);
     await jump.click();
 
     await expect(page.locator(".tab.active")).toHaveText("Source");
@@ -496,6 +495,25 @@ test("jumps from a synthetic node to its position, placing the caret without a s
     // A zero-width caret places the cursor with nothing selected.
     const selected = await page.evaluate(() => window.getSelection()?.toString() ?? "");
     expect(selected).toBe("");
+});
+
+test("jumps from a Semantic-tab node to its source", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+    await page.locator(".tab", { hasText: "Semantic Model" }).click();
+    await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+    // The Semantic tab has its own node-details panel; it carries the same jump affordance.
+    await selectNode(page, "Market");
+    const jump = page.locator(".node-detail-heading .node-jump");
+    await expect(jump).toBeVisible();
+    await jump.click();
+
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    const selected = (await page.evaluate(() => window.getSelection()?.toString() ?? "")).trim();
+    expect(selected.length).toBeGreaterThan(0);
+    expect(NODE_DOC).toContain(selected);
 });
 
 test("navigation locks while a node edit is unsaved", async ({ page }) => {

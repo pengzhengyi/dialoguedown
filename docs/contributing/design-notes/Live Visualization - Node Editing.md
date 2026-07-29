@@ -223,18 +223,23 @@ removes an awkward detour through the Source tab.
 
 The inspector shows a node's source, but changing more than the node — or just reading it in
 its surrounding context — still meant hunting for the text on the Source tab. A **Jump to
-source** button closes that: it opens the Source tab with the node's span **selected**,
-routed through the same save-safe navigation guard as a tab click (an Auto save flushes, a
-Manual prompt resolves) so the jump never lands beside unsaved graph edits. A **synthetic**
-node has no source to select ([D5](#d5--synthetic-nodes-are-read-only-and-point-to-the-editable-parent)),
-but it carries a zero-width position, so the jump **places the caret** there instead — the
-button's label says which. The button appears whenever there is a Source tab to land in,
-including a static export (a read-only editor is still selectable), and is hidden for the
-rare node that maps to no position at all.
+source** icon beside the node title closes that: it opens the Source tab with the node's span
+**selected**, routed through the same save-safe navigation guard as a tab click (an Auto save
+flushes, a Manual prompt resolves) so the jump never lands beside unsaved graph edits. It is an
+icon-only button (a Tippy tooltip carries the label), drawn in the mode accent so it stays
+legible — the Pico button default paints its text white, which is invisible on the light panel.
+A **synthetic** node has no source to select
+([D5](#d5--synthetic-nodes-are-read-only-and-point-to-the-editable-parent)), but it carries a
+zero-width position, so the jump **places the caret** there instead. The button appears whenever
+there is a Source tab to land in, including a static export (a read-only editor is still
+selectable), and is hidden for the rare node that maps to no position at all. The same affordance
+is shared by both node-detail panels — the AST graph inspector and the **Semantic Model** tab's —
+so scenes and blocks jump there too; a scene lands on its heading.
 
-Exposing that position took a small core change: the Dialogue-AST projection now keeps a
-synthetic node's zero-width span (a caret) instead of dropping it, while still reporting no
-source **text** — so the "inserted by the compiler" note is unchanged.
+Exposing those positions took a small core change: the Dialogue-AST projection now keeps a
+synthetic node's zero-width span (a caret) instead of dropping it, and a scene now carries its
+heading span — while a synthetic node still reports no source **text**, so the "inserted by the
+compiler" note is unchanged.
 
 ## Error and boundary cases
 

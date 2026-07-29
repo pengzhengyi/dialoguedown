@@ -130,7 +130,7 @@ describe("createDetailPanel", () => {
     });
 
     describe("jump to source", () => {
-        const jumpButton = () => body.querySelector<HTMLButtonElement>(".node-jump");
+        const jumpButton = () => title.querySelector<HTMLButtonElement>(".node-jump");
 
         it("offers no jump affordance when no jump handler is provided", () => {
             panel.show({
@@ -143,7 +143,7 @@ describe("createDetailPanel", () => {
             expect(jumpButton()).toBeNull();
         });
 
-        it("selects a real node's span, labeling the action as a selection", () => {
+        it("selects a real node's span from a button beside the title", () => {
             const jumps: Array<{ start: number; end: number }> = [];
             const jumping = createDetailPanel({ jumpToSource: (span) => jumps.push(span) });
             jumping.show({
@@ -156,12 +156,12 @@ describe("createDetailPanel", () => {
 
             const button = jumpButton()!;
             expect(button.hidden).toBe(false);
-            expect(button.title).toContain("Select");
+            expect(button.getAttribute("aria-label")).toBe("Jump to source");
             button.click();
             expect(jumps).toEqual([{ start: 5, end: 14 }]);
         });
 
-        it("places the caret for a synthetic node's zero-width span, labeling it a position", () => {
+        it("places the caret for a synthetic node's zero-width span", () => {
             const jumps: Array<{ start: number; end: number }> = [];
             const jumping = createDetailPanel({ jumpToSource: (span) => jumps.push(span) });
             // A synthetic node has no source (shows the note) but now carries a zero-width caret.
@@ -174,7 +174,6 @@ describe("createDetailPanel", () => {
 
             const button = jumpButton()!;
             expect(button.hidden).toBe(false);
-            expect(button.title).toContain("position");
             button.click();
             expect(jumps).toEqual([{ start: 7, end: 7 }]);
         });

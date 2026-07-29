@@ -3,7 +3,7 @@ import { colorOf } from "./palette";
 import { escapeHtml, renderMarkdown } from "./text";
 import { createSourceView, type SourceViewHandle } from "./source-view";
 import { spanSplice, type Span } from "./span-splice";
-import { codicon } from "./codicon";
+import { createJumpButton, type JumpButton } from "./jump-button";
 
 /** How the inspector participates in editing; absent for a static, read-only report. */
 export interface DetailEditOptions {
@@ -92,43 +92,13 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     let editingSpan: { start: number; end: number } | null = null;
     let editingBase = "";
 
-    // A "Jump to source" button (served or export, whenever there is a Source tab): it takes the
-    // reader to the node's span in the Source editor. Shown only for a node that has a span — which
-    // now includes a synthetic node (a zero-width caret position). Prepended above the attributes.
-    const jump = options.jumpToSource;
-    const jumpButton = jump ? buildJumpButton() : null;
-    if (jumpButton) bodyEl.prepend(jumpButton);
-
-    function buildJumpButton(): HTMLButtonElement {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "node-jump";
-        button.append(
-            codicon("go-to-file", "node-jump-icon"),
-            document.createTextNode("Jump to source"),
-        );
-        button.addEventListener("click", () => {
-            const span = currentNode?.span;
-            if (span && jump) jump(span);
-        });
-        return button;
-    }
-
-    // Reflect the selected node on the jump button: hidden when the node maps to no position, and
-    // labeled for what the jump does — select a real node's source, or place the caret at a
-    // synthetic node's zero-width position.
-    function updateJump(node: DisplayNode | null): void {
-        if (!jumpButton) return;
-        const span = node?.span ?? null;
-        jumpButton.hidden = span === null;
-        if (span === null) return;
-        const label =
-            span.start === span.end
-                ? "Jump to this node's position in the source"
-                : "Select this node's source in the Source tab";
-        jumpButton.title = label;
-        jumpButton.setAttribute("aria-label", label);
-    }
+    // A "Jump to source" affordance (served or export, whenever there is a Source tab): an icon
+    // button placed beside the node title that takes the reader to the node's span in the Source
+    // editor. Shown only for a node that maps to a position — which now includes a synthetic node
+    // (a zero-width caret). Reused, not rebuilt, across selections.
+    const jump: JumpButton | null = options.jumpToSource
+        ? createJumpButton(options.jumpToSource)
+        : null;
 
     function ensureEditor(): SourceViewHandle {
         if (editor) return editor;
@@ -171,12 +141,21 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         note.hidden = false;
     }
 
+    // Render the title, then re-append the reused jump button (setting the title HTML/text drops
+    // any prior child) and reflect the node on it.
+    function renderTitle(html: string, node: DisplayNode | null): void {
+        titleEl.innerHTML = html;
+        if (jump) {
+            titleEl.appendChild(jump.element);
+            jump.update(node);
+        }
+    }
+
     return {
         show(node) {
             currentNode = node;
-            titleEl.innerHTML = nodeDetailTitle(node);
+            renderTitle(nodeDetailTitle(node), node);
             attributes.innerHTML = attributesTable(node.attributes);
-            updateJump(node);
             if (typeof node.source === "string") loadNode(node);
             else
                 showNote(
@@ -185,9 +164,8 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         },
         clear() {
             currentNode = null;
-            titleEl.textContent = "Node details";
+            renderTitle(escapeHtml("Node details"), null);
             attributes.innerHTML = "";
-            updateJump(null);
             showNote(PLACEHOLDER_TEXT);
         },
         setEditable(editable) {
