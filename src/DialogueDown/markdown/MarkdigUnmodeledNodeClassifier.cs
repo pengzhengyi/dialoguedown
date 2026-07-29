@@ -4,7 +4,6 @@ using MarkdigCodeBlock = Markdig.Syntax.CodeBlock;
 using MarkdigHtmlBlock = Markdig.Syntax.HtmlBlock;
 using MarkdigHtmlInline = Markdig.Syntax.Inlines.HtmlInline;
 using MarkdigInline = Markdig.Syntax.Inlines.Inline;
-using MarkdigQuoteBlock = Markdig.Syntax.QuoteBlock;
 using MarkdigTable = Markdig.Extensions.Tables.Table;
 using MarkdigThematicBreakBlock = Markdig.Syntax.ThematicBreakBlock;
 
@@ -22,7 +21,6 @@ internal static class MarkdigUnmodeledNodeClassifier
         MarkdigCodeBlock => UnmodeledNodeKind.CodeBlock,
         MarkdigThematicBreakBlock => UnmodeledNodeKind.ThematicBreak,
         MarkdigTable => UnmodeledNodeKind.Table,
-        MarkdigQuoteBlock => UnmodeledNodeKind.BlockQuote,
         MarkdigHtmlBlock => UnmodeledNodeKind.RawHtml,
         _ => UnmodeledNodeKind.Other,
     };
