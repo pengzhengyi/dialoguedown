@@ -160,7 +160,10 @@ core dependency.
 One focused module in the core, mirroring the other stages' shape (`IScriptTranspiler`,
 `IScriptDesugarer`, `ISemanticAnalyzer`):
 
-- **`IDialogueGraphBuilder`** — the stage seam: `DialogueGraph Build(SemanticModel model)`.
+- **`IDialogueGraphBuilder`** — the stage seam: `DialogueGraph Build(SemanticModel model,
+  DiagnosticsContext context)`. The builder emits no diagnostics today, but every sibling
+  stage takes the context, so the seam is threaded in now (reserved for planned reachability
+  and cycle diagnostics) rather than bolted on with a later signature change.
   A `DialogueGraphBuilder` walks the semantic model and assembles the graph.
 - **The IR types** — the immutable `DialogueGraph` and its node, edge, and region
   records, in the `DialogueDown.Graph` namespace. These replace the earlier primitive
@@ -184,7 +187,8 @@ readonly record struct NodeId(int Value);     // v1 local; cross-file seam widen
 readonly record struct RegionId(int Value);
 
 // ── Graph ── a flat immutable node list, a canonical entry, the End sentinel, and the overlay.
-sealed record DialogueGraph(
+// A `Node(NodeId)` lookup is backed by an id-keyed dictionary, so the id is a handle, not an index.
+sealed class DialogueGraph(
     IReadOnlyList<DialogueNode> Nodes, NodeId Entry, NodeId End, RegionTree Regions);
 
 // ── Nodes ── one per block; content plus ordered outgoing edges. Payload reuses the
@@ -302,10 +306,17 @@ flowchart LR
   AST `ChoiceWeight`. The tradeoff: the graph references AST types rather than standing
   fully alone — acceptable, since the core already ships the AST and this avoids a
   redundant projection (YAGNI).
-- **Immutable IR addressed by node id.** The graph is a frozen record; edges hold a
+- **Immutable IR addressed by an opaque node id.** The graph is immutable; edges hold a
   `NodeId`, never an object reference. Ids make cycles trivial (an edge to an earlier id)
   and let a builder assemble a cyclic graph without mutable back-references, matching the
-  repo's value-object grain.
+  repo's value-object grain. `NodeId` is an **opaque handle**, not a list index: callers
+  resolve a node through `DialogueGraph.Node`, backed by an id-keyed dictionary, so the
+  value can later become a **source-derived, stable id** (a scene anchor plus an intra-scene
+  ordinal, or the source span) for **incremental or just-in-time** compilation — where an
+  unchanged node must keep its id across rebuilds — without touching any caller. A random
+  UUID is deliberately *not* used: it adds uniqueness without the reuse-matching stability
+  incrementality needs, and it would make structural tests non-deterministic. Cross-file
+  ids widen to `(ScriptId, local)` rather than a global id, keeping *which script* explicit.
 - **Conditions and weights stay opaque.** A `Guard` (the AST `Condition`) carries a key
   and a `Weight` (the AST `ChoiceWeight`) a number or a key — the core never evaluates
   them; the host does at play time. This keeps the engine-agnostic core free of an
@@ -330,9 +341,10 @@ flowchart LR
 ## Integration
 
 The builder is stage six, after semantic analysis. `ScriptCompiler` gains an
-`IDialogueGraphBuilder`, calls `Build(semantics)` once analysis succeeds, and carries the
-graph on `CompilationResult.Complete(...)` beside the semantic model. `AddDialogueDown`
-registers the builder like the other stages. Nothing earlier in the pipeline changes; a
+`IDialogueGraphBuilder`, calls `Build(semantics, session.Context)` once analysis succeeds, and
+carries the graph on `CompilationResult.Complete(...)` beside the semantic model.
+`AddDialogueDown` registers the builder as a singleton like the other stages. Nothing earlier
+in the pipeline changes; a
 halted compile (which never produces a semantic model) produces no graph, exactly as it
 produces no model today.
 
