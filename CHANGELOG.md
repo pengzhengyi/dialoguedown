@@ -22,6 +22,11 @@ changes easy to categorize.
   heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an
   editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
   [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
+- **Quote and unquote blocks in the editor** — in Live Edit, `⌘/Ctrl->` wraps every line the
+  selection touches in a Markdown blockquote (nesting on an already-quoted line) and `⌘/Ctrl-<`
+  removes one level; a right-click **surround menu** offers the same alongside bold, italic, and
+  strikethrough. Handy for the blockquote-based block controls. See the
+  [Live Edit](docs/contributing/design-notes/Live%20Visualization%20-%20Live%20Edit.md) note.
 
 ### Changed
 
