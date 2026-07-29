@@ -169,7 +169,11 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     // so it gets one app-level control (at the right end of the tab-nav row) plus the
     // `f` / Escape keys, rather than a copy in every tab. Wired once for the app's lifetime.
     const fullscreen = initFullscreen();
-    installMaximizeControls(tabsEl.parentElement ?? appEl, appEl, fullscreen.toggle);
+    const maximizeButton = installMaximizeControls(
+        tabsEl.parentElement ?? appEl,
+        appEl,
+        fullscreen.toggle,
+    );
 
     build(report);
 
@@ -271,6 +275,9 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
         for (const stage of report.stages) {
             addStageTab(stage);
         }
+        // The whole-window maximize control only makes sense with a tab to maximize; the empty
+        // state (no config, source, or stages) has none, so hide it there.
+        maximizeButton.hidden = views.length === 0;
         // Open on the tab the reader last had open (remembered across a refresh), else Source
         // when present (after the Config tab), else the first available tab — unless a
         // just-created config asked the reloaded page to land on the Config tab. A disabled

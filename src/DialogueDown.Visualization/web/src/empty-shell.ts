@@ -1,6 +1,7 @@
 import { runApp } from "./app";
 import { initExplorer } from "./explorer";
 import { initCollapsiblePanel } from "./collapse-toggle";
+import { setHelp } from "./help";
 import type { Report } from "./model";
 import type { BrowseListing, CreateOutcome } from "./project-fs";
 
@@ -17,6 +18,9 @@ export function initEmptyShell(report: Report): void {
     // Build the shell chrome; with no source, stages, or config it renders no tabs — just the frame
     // the Explorer and the call to action sit in.
     runApp(report);
+
+    // There is no active tab to explain, so the footer help describes the Explorer instead.
+    setHelp("explorer");
 
     const explorerEl = document.getElementById("explorer");
     const appEl = document.getElementById("app");

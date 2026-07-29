@@ -23,6 +23,14 @@ describe("setHelp", () => {
         expect(html).toContain("collapse or expand");
     });
 
+    it("shows Explorer help on the empty state", () => {
+        setHelp("explorer");
+        expect(document.getElementById("help-summary")!.textContent).toContain("Explorer");
+        const html = document.getElementById("help-content")!.innerHTML;
+        expect(html).toContain("New file");
+        expect(html).toContain("Rename");
+    });
+
     it("swaps content when the context changes", () => {
         setHelp("graph");
         setHelp("source");

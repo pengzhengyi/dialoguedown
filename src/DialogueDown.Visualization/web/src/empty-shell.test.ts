@@ -67,6 +67,21 @@ describe("initEmptyShell", () => {
         expect(document.querySelector(".empty-shell-create")).not.toBeNull();
     });
 
+    it("hides the maximize control when there is no tab to maximize", () => {
+        initEmptyShell(emptyReport);
+
+        const maximize = document.querySelector(".tabbar-maximize") as HTMLElement | null;
+        expect(maximize).not.toBeNull();
+        expect(maximize!.hidden).toBe(true);
+    });
+
+    it("points the footer help at the Explorer", () => {
+        initEmptyShell(emptyReport);
+
+        expect(document.getElementById("help-summary")?.textContent).toBe("Using the Explorer");
+        expect(document.getElementById("help-content")?.innerHTML).toContain("New folder");
+    });
+
     it("the create button runs the Explorer's new-file flow", async () => {
         initEmptyShell(emptyReport);
         await settle();
