@@ -294,13 +294,14 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
-    public void Describe_SyntheticNode_HasNoSpan()
+    public void Describe_SyntheticNode_CarriesItsZeroWidthCaretPosition()
     {
-        // A filled default speaker carries an empty (zero-width) span: a position, not a
-        // range of source, so it maps to no editable span.
+        // A filled default speaker carries an empty (zero-width) span: a caret position, not a
+        // range of source. It has no source text to slice, but it keeps its position so a client
+        // can place the cursor there — a "jump to source" on a synthetic node.
         var description = _projection.Describe(new DefaultSpeaker(new SourceSpan(3, 0)));
 
-        Assert.Null(description.Span);
+        Assert.Equal(new DisplaySpan(3, 3), description.Span);
     }
 
     [Fact]
