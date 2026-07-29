@@ -1,9 +1,4 @@
-import {
-    EditorSelection,
-    type EditorState,
-    type Line,
-    type StateCommand,
-} from "@codemirror/state";
+import { EditorSelection, type EditorState, type Line, type StateCommand } from "@codemirror/state";
 
 /**
  * A command that toggles a wrapping marker (e.g. `**` for bold, `*` for italic) around

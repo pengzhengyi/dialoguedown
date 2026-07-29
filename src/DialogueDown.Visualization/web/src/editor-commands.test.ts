@@ -2,7 +2,13 @@
 
 import { describe, it, expect } from "vitest";
 import { EditorState, EditorSelection, type StateCommand } from "@codemirror/state";
-import { toggleWrap, insertLink, quoteSelection, unquoteSelection, headingFoldEndLine } from "./editor-commands";
+import {
+    toggleWrap,
+    insertLink,
+    quoteSelection,
+    unquoteSelection,
+    headingFoldEndLine,
+} from "./editor-commands";
 
 /** Run a command over a doc + selection and return the resulting doc and primary selection. */
 function run(
