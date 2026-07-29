@@ -44,6 +44,9 @@ const SOURCE_HELP = `
 const GRAPH_HELP = `
   <p><strong>Click a node</strong> (its label or details) to inspect the source it
      was produced from and a rendered preview.</p>
+  <p><strong>Jump to source</strong> (in the details panel) opens the Source tab with the
+     node's text selected — or, for a synthetic node the compiler inserted, places the cursor
+     where it belongs.</p>
   <p><strong>Click a node's circle</strong> to collapse or expand its children.</p>
   <p><strong>Drag</strong> to pan, <strong>scroll</strong> to zoom, and
      <strong>drag the divider</strong> to resize the detail panel — or use its

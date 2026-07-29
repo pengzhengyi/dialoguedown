@@ -244,6 +244,13 @@ export interface SourceViewHandle {
      * clears the highlighting — called on load, a hot-reload, or a save.
      */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
+    /**
+     * Select the half-open `[from, to)` range, scroll it into view, and focus the editor — a
+     * "jump to source" landing on the text a graph node came from. A zero-width range (`from ===
+     * to`, a synthetic node's caret position) places the cursor there instead of selecting. The
+     * editor need not be editable: a read-only (View) editor is still selectable and focusable.
+     */
+    selectRange(from: number, to: number): void;
 }
 
 const editability = new Compartment();
@@ -419,6 +426,18 @@ export function createSourceView(
         getContent: () => view.state.doc.toString(),
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
         setSemanticTokens: (tokens) => setEditorSemanticTokens(view, tokens),
+        selectRange: (from, to) => {
+            // Clamp to the document and order the pair, so a stale span can only ever land the
+            // cursor in-bounds rather than throw. A zero-width range collapses to a caret.
+            const max = view.state.doc.length;
+            const start = Math.max(0, Math.min(from, max));
+            const end = Math.max(start, Math.min(to, max));
+            view.dispatch({
+                selection: EditorSelection.single(start, end),
+                scrollIntoView: true,
+            });
+            view.focus();
+        },
     };
 }
 

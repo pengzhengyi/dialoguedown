@@ -452,6 +452,52 @@ test("a synthetic node offers no editor, only an inserted note", async ({ page }
     await expect(detailNote).toContainText("Edit the line to name one");
 });
 
+test("jumps from a graph node to its source, selecting the node's span", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+    await page.locator(".tab", { hasText: "Dialogue AST" }).click();
+    await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+    // Select a Text node; the inspector offers a "Jump to source" for its span (a selection).
+    await selectNode(page, "Text");
+    const nodeSource = (
+        (await page.locator(".node-source .cm-content").textContent()) ?? ""
+    ).trim();
+    const jump = page.locator(".node-jump");
+    await expect(jump).toBeVisible();
+    await expect(jump).toHaveAttribute("title", /Select/);
+    await jump.click();
+
+    // The Source tab is now active, its editor focused, with the node's exact text selected.
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    const selected = (await page.evaluate(() => window.getSelection()?.toString() ?? "")).trim();
+    expect(selected).toBe(nodeSource);
+});
+
+test("jumps from a synthetic node to its position, placing the caret without a selection", async ({
+    page,
+}) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+    // The filled default speaker is synthetic — inserted by desugar — so it appears here.
+    await page.locator(".tab", { hasText: "Desugared AST" }).click();
+    await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+    // Its jump is labeled a position (not a selection), and lands the caret rather than a range.
+    await selectNode(page, "default");
+    const jump = page.locator(".node-jump");
+    await expect(jump).toBeVisible();
+    await expect(jump).toHaveAttribute("title", /position/);
+    await jump.click();
+
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    // A zero-width caret places the cursor with nothing selected.
+    const selected = await page.evaluate(() => window.getSelection()?.toString() ?? "");
+    expect(selected).toBe("");
+});
+
 test("navigation locks while a node edit is unsaved", async ({ page }) => {
     writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
     await page.goto(`${base}/`);

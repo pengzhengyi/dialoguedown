@@ -2,7 +2,8 @@ import type { DialogueSymbolProvider, DisplayNode } from "./model";
 import { colorOf } from "./palette";
 import { escapeHtml, renderMarkdown } from "./text";
 import { createSourceView, type SourceViewHandle } from "./source-view";
-import { spanSplice } from "./span-splice";
+import { spanSplice, type Span } from "./span-splice";
+import { codicon } from "./codicon";
 
 /** How the inspector participates in editing; absent for a static, read-only report. */
 export interface DetailEditOptions {
@@ -19,6 +20,12 @@ export interface DetailEditOptions {
 export interface DetailPanelOptions {
     /** Present for a served session (enables the editor); absent for a static export. */
     edit?: DetailEditOptions;
+    /**
+     * Jump to the selected node's source in the Source tab — selecting its span, or placing the
+     * cursor at a synthetic node's zero-width position. Absent when there is no Source tab to jump
+     * to (a single-graph render), which also hides the inspector's jump affordance.
+     */
+    jumpToSource?: (span: Span) => void;
 }
 
 export interface DetailPanel {
@@ -63,8 +70,9 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     const bodyEl = document.getElementById("detail-body")!;
     const edit = options.edit;
 
-    // Persistent body structure so the editor can be reused across selections: an attributes
-    // table, then a source area holding either the editor (nodes with source) or a note.
+    // Persistent body structure so the editor can be reused across selections: an optional
+    // jump-to-source action, an attributes table, then a source area holding either the editor
+    // (nodes with source) or a note.
     const attributes = document.createElement("div");
     attributes.className = "node-attributes";
     const note = document.createElement("p");
@@ -83,6 +91,44 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     // is clean (navigation is locked while dirty) so the splice base is always valid.
     let editingSpan: { start: number; end: number } | null = null;
     let editingBase = "";
+
+    // A "Jump to source" button (served or export, whenever there is a Source tab): it takes the
+    // reader to the node's span in the Source editor. Shown only for a node that has a span — which
+    // now includes a synthetic node (a zero-width caret position). Prepended above the attributes.
+    const jump = options.jumpToSource;
+    const jumpButton = jump ? buildJumpButton() : null;
+    if (jumpButton) bodyEl.prepend(jumpButton);
+
+    function buildJumpButton(): HTMLButtonElement {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "node-jump";
+        button.append(
+            codicon("go-to-file", "node-jump-icon"),
+            document.createTextNode("Jump to source"),
+        );
+        button.addEventListener("click", () => {
+            const span = currentNode?.span;
+            if (span && jump) jump(span);
+        });
+        return button;
+    }
+
+    // Reflect the selected node on the jump button: hidden when the node maps to no position, and
+    // labeled for what the jump does — select a real node's source, or place the caret at a
+    // synthetic node's zero-width position.
+    function updateJump(node: DisplayNode | null): void {
+        if (!jumpButton) return;
+        const span = node?.span ?? null;
+        jumpButton.hidden = span === null;
+        if (span === null) return;
+        const label =
+            span.start === span.end
+                ? "Jump to this node's position in the source"
+                : "Select this node's source in the Source tab";
+        jumpButton.title = label;
+        jumpButton.setAttribute("aria-label", label);
+    }
 
     function ensureEditor(): SourceViewHandle {
         if (editor) return editor;
@@ -130,6 +176,7 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
             currentNode = node;
             titleEl.innerHTML = nodeDetailTitle(node);
             attributes.innerHTML = attributesTable(node.attributes);
+            updateJump(node);
             if (typeof node.source === "string") loadNode(node);
             else
                 showNote(
@@ -140,6 +187,7 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
             currentNode = null;
             titleEl.textContent = "Node details";
             attributes.innerHTML = "";
+            updateJump(null);
             showNote(PLACEHOLDER_TEXT);
         },
         setEditable(editable) {
