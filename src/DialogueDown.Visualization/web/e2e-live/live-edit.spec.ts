@@ -553,3 +553,38 @@ test("the active heading line reveals a #slug hint that copies the anchor", asyn
     await page.locator(".source-pane .cm-line", { hasText: "Alice" }).click();
     await expect(hint).toHaveCount(0);
 });
+
+test("quotes and unquotes the selection by keyboard and from the surround menu", async ({
+    page,
+}) => {
+    await page.goto(`${base}/`);
+    const editor = page.locator(".source-pane .cm-content");
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    // Select the whole document and quote it with Cmd/Ctrl+> (adds a marker to every line).
+    await editor.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("ControlOrMeta+Shift+Period");
+    await expect(editor).toContainText("> # Scene");
+    await expect(editor).toContainText("> Alice: The first line.");
+
+    // Unquote it back with Cmd/Ctrl+<.
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("ControlOrMeta+Shift+Comma");
+    await expect(editor).not.toContainText("> # Scene");
+
+    // Right-click offers the same surround actions; choosing Quote re-quotes the selection.
+    await page.keyboard.press("ControlOrMeta+a");
+    await editor.click({ button: "right" });
+    const menu = page.locator(".context-menu");
+    await expect(menu).toBeVisible();
+    await expect(menu.locator(".context-menu-item")).toHaveText([
+        "Bold",
+        "Italic",
+        "Strikethrough",
+        "Quote",
+        "Unquote",
+    ]);
+    await menu.getByRole("menuitem", { name: "Quote", exact: true }).click();
+    await expect(editor).toContainText("> # Scene");
+});
