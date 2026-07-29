@@ -3,10 +3,8 @@ namespace DialogueDown.Graph;
 /// <summary>
 /// The compiled flow of a script: an immutable, flat list of <see cref="DialogueNode"/>s joined
 /// by directed edges, with a canonical <see cref="Entry"/> where a run begins and the
-/// <see cref="End"/> sentinel. Nodes are addressed by <see cref="NodeId"/> through
-/// <see cref="Node"/>, a by-id lookup that does <b>not</b> assume the id is a list index — so the
-/// id stays a position-independent handle and a future incremental or just-in-time build can
-/// assign source-derived, stable ids without changing any caller.
+/// <see cref="End"/> sentinel. <see cref="Node"/> resolves a <see cref="NodeId"/> through an
+/// id-keyed lookup, so the id is a position-independent handle rather than a list index.
 /// </summary>
 internal sealed class DialogueGraph
 {
