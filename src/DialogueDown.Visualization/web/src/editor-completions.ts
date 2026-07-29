@@ -125,7 +125,7 @@ export function speakerCompletions(symbols: DialogueSymbolProvider): CompletionS
  * would reject. Bundles CodeMirror's completion keymap so accept/dismiss keys work only where
  * this extension is active (the editor's Edit-only compartment). Adds Tab as a second accept
  * key alongside Enter (the VS Code habit); with no completion open it falls through, so Tab
- * still moves focus out of the editor.
+ * indents the line instead (see `indentWithTab` in `source-view.ts`).
  */
 export function dialogueAutocompletion(
     symbols: DialogueSymbolProvider = () => EMPTY_SYMBOLS,

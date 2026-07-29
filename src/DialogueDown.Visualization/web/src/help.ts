@@ -17,8 +17,11 @@ const SOURCE_HELP = `
      adds a <kbd>&gt;</kbd> to every line the selection touches and nests on an already-quoted
      line, and unquoting removes one level — handy for the blockquote-based block controls.
      <strong>Right-click</strong> the editor for the same surround actions as a menu — bold,
-     italic, strikethrough, quote, and unquote. To learn more about how to use the editor,
-     check out <a href="https://codemirror.net/" target="_blank" rel="noopener noreferrer">CodeMirror</a>.</p>
+     italic, strikethrough, quote, and unquote. <kbd>Tab</kbd> indents at the start of a line
+     (or a multi-line selection) and inserts spaces elsewhere, <kbd>Shift-Tab</kbd> outdents (in
+     Live Edit); press <kbd>Esc</kbd> to move focus out of the editor. To learn more about how to
+     use the editor, check out
+     <a href="https://codemirror.net/" target="_blank" rel="noopener noreferrer">CodeMirror</a>.</p>
   <p><strong>Autocomplete</strong> (Live Edit): as you type, the editor suggests names
      from the document — a jump target after <kbd>](#</kbd>, a speaker id after
      <kbd>@</kbd>, a <kbd>#</kbd>tag, or a speaker at the start of a line. <kbd>Enter</kbd>

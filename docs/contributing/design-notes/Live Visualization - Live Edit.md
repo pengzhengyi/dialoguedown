@@ -181,9 +181,12 @@ level and its optional space — useful for the blockquote-based block controls;
 keys off the physical Period key, since a held Cmd on macOS can hide the shifted `>`). A
 **right-click surround menu** offers the same actions (bold, italic, strikethrough, quote,
 unquote), built from the shared `context-menu.ts` the Explorer also uses. The commands live
-in `editor-commands.ts`, unit-tested as pure state commands. List and blockquote
-continuation on Enter comes free from the Markdown language. The Source-tab help links to
-CodeMirror for the full keymap.
+in `editor-commands.ts`, unit-tested as pure state commands. A **smart Tab** (in `source-view.ts`)
+indents at a line's front or across a multi-line selection and inserts two spaces (the indent unit)
+mid-line, with **Shift-Tab** outdenting — added Edit-only and below the completion keymap so an
+open completion still accepts on Tab; **Escape** blurs the editor so Tab-to-indent is not a
+keyboard trap. List and blockquote continuation on Enter comes free from the Markdown language. The
+Source-tab help links to CodeMirror for the full keymap.
 
 **Why CodeMirror 6** (a lean, vetted shortlist):
 
