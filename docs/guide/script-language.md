@@ -41,6 +41,7 @@ model for developers.
     - [Conditional jumps](#conditional-jumps)
     - [Conditional lines](#conditional-lines)
     - [Conditional choices](#conditional-choices)
+    - [Conditional blocks](#conditional-blocks)
     - [Ending a run](#ending-a-run)
     - [Comments](#comments)
     - [Front matter](#front-matter)
@@ -103,6 +104,7 @@ flowchart TD
 | Conditional jump | `` `Rainy?` => [Inn](#inn)`` | Jump only when a query reads as true. |
 | Conditional line | `` `Angry?` Guard: Leave.`` | Play a line only when a query reads as true. |
 | Conditional choice | ``- `HasKey?` Use the key.`` | Offer an option only when a query reads as true. |
+| Conditional block | `` `if` `` `` `Rich?` `` in a `>` block | Guard a group with `if` / `elseif` / `else`. |
 | End of run | `=> [The end](#END)` | Stop the dialogue at the reserved endpoint. |
 | Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
 | Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
@@ -856,6 +858,82 @@ As with a [conditional jump](#conditional-jumps) or line, each option's conditio
 is independent and there is no inline *else*: query an inverse flag for the
 opposite case. A condition must lead the option it guards; one with nothing to
 guard is an error.
+
+### Conditional blocks
+
+The [conditional line](#conditional-lines), [choice](#conditional-choices), and
+[jump](#conditional-jumps) each guard **one** thing, on its own, with no *else*.
+To guard a whole **group** — several lines, a jump, a command — and give it a
+fallback, use a **conditional block**: `if` / `elseif` / `else` branches wrapped
+in one blockquote.
+
+```markdown
+> `if` `Rich?`
+>
+> Guard: Ah — my lord. The gate is yours.
+>
+> => [The courtyard](#the-courtyard)
+>
+> `elseif` `Poor?`
+>
+> Guard: Back to the gutter with you.
+>
+> `else`
+>
+> Guard: I don't know your face. What business have you?
+```
+
+Exactly one branch plays: the first `if` or `elseif` whose condition reads as
+true, or the `else` when none do. A branch may hold as many lines as you like,
+along with jumps and commands.
+
+**One blockquote, kept connected.** Every branch — the `if`, each `elseif`, and
+the `else` — lives in the **same** blockquote: each line starts with `>`, and the
+blank line *between* branches is a bare `>` so the quote never breaks. The
+blockquote itself marks where the block ends, so there is no closing keyword. If a
+plain blank line (without `>`) splits the branches apart, the stray `elseif` or
+`else` is an error — it is no longer connected to its `if`.
+
+**Write the marker as two code spans** — the keyword and the condition —
+`` `if` `` `` `Rich?` ``, not one. (`` `if Rich?` `` reads as a single condition on a
+key named *if Rich*.) The `` `else` `` takes no condition.
+
+**Nesting.** A branch can hold another conditional block, one level deeper with
+`> >`:
+
+```markdown
+> `if` `Rich?`
+>
+> Guard: Welcome.
+>
+> > `if` `Armed?`
+> >
+> > Guard: But leave your blade at the post.
+```
+
+**Blank lines are quoted — and they close a nested branch.** The blank line
+between utterances (which every line needs) is written with `>` inside a block, so
+the quote never breaks. That quoted blank line is also what **ends a nested block**:
+after a `> >` branch, a bare `>` line returns you to the outer branch. Omit it and
+Markdown pulls the next line — even an `elseif` or `else` — *into* the nested
+branch, so a marker that lands mid-paragraph is an error. Always write the bare `>`
+line where a nested block ends.
+
+**Choosing a scene by condition.** A conditional block groups *content*, not
+scenes — a scene heading may not sit inside a branch. To send the reader to one of
+several scenes by condition, use conditional [jumps](#conditional-jumps) to
+top-level scenes instead:
+
+```markdown
+`Rich?` => [The lord's hall](#the-lords-hall)
+`Poor?` => [The gutter](#the-gutter)
+```
+
+In a plain Markdown preview a conditional block renders as one indented, grouped
+quote — a single bar down the side, a nested branch one level deeper.
+
+As with every other conditional, there is no `not`: query a game-defined inverse
+flag for the opposite case.
 
 ### Ending a run
 
