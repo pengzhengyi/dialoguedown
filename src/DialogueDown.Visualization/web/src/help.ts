@@ -12,7 +12,12 @@ const SOURCE_HELP = `
   <p><strong>Editor.</strong> Find with <kbd>⌘/Ctrl-F</kbd> and fold a section from the
      gutter arrow. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
      <kbd>⌘/Ctrl-I</kbd> (italic) and <kbd>⌘/Ctrl-K</kbd> (link), or type <kbd>*</kbd>
-     around a selection to emphasize it. To learn more about how to use the editor,
+     around a selection to emphasize it. <strong>Quote a block</strong> with
+     <kbd>⌘/Ctrl-&gt;</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-&lt;</kbd>: quoting
+     adds a <kbd>&gt;</kbd> to every line the selection touches and nests on an already-quoted
+     line, and unquoting removes one level — handy for the blockquote-based block controls.
+     <strong>Right-click</strong> the editor for the same surround actions as a menu — bold,
+     italic, strikethrough, quote, and unquote. To learn more about how to use the editor,
      check out <a href="https://codemirror.net/" target="_blank" rel="noopener noreferrer">CodeMirror</a>.</p>
   <p><strong>Autocomplete</strong> (Live Edit): as you type, the editor suggests names
      from the document — a jump target after <kbd>](#</kbd>, a speaker id after
