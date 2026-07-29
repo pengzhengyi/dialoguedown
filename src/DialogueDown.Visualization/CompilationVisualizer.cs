@@ -148,6 +148,19 @@ public sealed class CompilationVisualizer
     }
 
     /// <summary>
+    /// Renders the served shell's <b>empty state</b>: a report carrying only the project (so the
+    /// client mounts the Explorer over <paramref name="root"/>) with no active document, source,
+    /// or stages. The reader opens a script from the tree or creates the first one.
+    /// </summary>
+    public string RenderEmptyShell(string root, string mode)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(mode);
+        return HtmlTemplate.RenderPage(
+            Array.Empty<DisplayGraph>(), mode: mode, project: new ReportProject(root, null));
+    }
+
+    /// <summary>
     /// Compiles the source and serializes the current document payload
     /// (<c>{ mode, path, source, stages }</c>) as JSON, for the live server's
     /// document API and its hot-reload push events.

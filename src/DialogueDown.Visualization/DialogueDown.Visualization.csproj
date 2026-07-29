@@ -31,7 +31,6 @@
          stage data into its data slot. Built and committed; CI verifies it stays in
          sync with web/ sources. See web/NOTICE.md for bundled third-party licenses. -->
     <EmbeddedResource Include="web\dist\report.html" />
-    <EmbeddedResource Include="web\dist\launcher.html" />
   </ItemGroup>
 
 </Project>

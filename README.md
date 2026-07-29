@@ -89,11 +89,11 @@ dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
 | --- | --- |
 | `src/DialogueDown/` | the reusable class library (net8.0, no engine refs) |
 | `src/DialogueDown.Visualization/` | diagnostics-only visualizer of compiler stages (not shipped in the core package) |
-| `src/DialogueDown.Visualization.Live/` | loopback server that serves the report, hot-reloads it on edit, and hosts the launcher |
+| `src/DialogueDown.Visualization.Live/` | loopback server that serves the report shell (with the Explorer), hot-reloads it on edit, and browses the project |
 | `src/DialogueDown.Cli/` | the `ddown` command-line interface (`compile`, `visualize`) |
 | `tests/DialogueDown.Tests/` | xUnit tests for the pure logic |
 | `tests/DialogueDown.Visualization.Tests/` | xUnit tests for the visualizer |
-| `tests/DialogueDown.Visualization.Live.Tests/` | xUnit tests for the live server and launcher |
+| `tests/DialogueDown.Visualization.Live.Tests/` | xUnit tests for the live server |
 | `tests/DialogueDown.Cli.Tests/` | xUnit tests for the CLI |
 
 ## Build and test
@@ -171,7 +171,7 @@ Render a script from the command line with the `ddown visualize` command
 ([setup guide](docs/guide/cli.md)):
 
 ```bash
-# Open the launcher to browse for a script (the uniform entry point)
+# Open the report shell on your project — browse or create a script in the Explorer
 ddown visualize
 
 # Serve a script's report and toggle View ⇄ Edit in the browser (auto-updates on save)

@@ -23,6 +23,16 @@ changes easy to categorize.
   editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
   [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
 
+### Changed
+
+- **One unified report shell for `visualize`** — the standalone launcher picker page is gone.
+  `visualize` (or `--pick`) now opens the report shell directly on an **empty state** — the
+  Explorer over your project beside a "create your first dialogue file" call to action — and
+  `visualize <script>` opens that same shell on your script, so the Explorer sidebar is available
+  whichever way you start and there is a single page to learn. Serving a script that links images
+  above its folder still resolves them with your consent (or an explicit `--root`). See the
+  [Unified Served Shell](docs/contributing/design-notes/Live%20Visualization%20-%20Unified%20Served%20Shell.md) note.
+
 ### Fixed
 
 - **`ddown visualize` now stops on Ctrl+C** — the live server previously ignored the

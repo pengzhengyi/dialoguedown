@@ -93,11 +93,12 @@ export interface StageUnavailable {
  */
 /**
  * The served-mode project context behind the Explorer sidebar: the project `root` to display and
- * the active script's root-relative `activePath` to highlight and reveal in the tree.
+ * the active script's root-relative `activePath` to highlight and reveal in the tree, or `null`
+ * when no document is active (the served shell's empty state).
  */
 export interface ReportProject {
     root: string;
-    activePath: string;
+    activePath?: string;
 }
 
 export interface Report {

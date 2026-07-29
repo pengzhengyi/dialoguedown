@@ -19,6 +19,7 @@ import { initTheme } from "./theme";
 import { initHelpToggle } from "./help";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
 import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
+import { initEmptyShell } from "./empty-shell";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import {
     type ConfigReport,
@@ -27,7 +28,7 @@ import {
     type Report,
     type ServedMode,
 } from "./model";
-import { parentPath, type BrowseListing, type CreateOutcome } from "./launcher";
+import { parentPath, type BrowseListing, type CreateOutcome } from "./project-fs";
 
 /**
  * The Explorer's pinned configuration entry for a report — present only when a `dialogue.toml`
@@ -60,7 +61,12 @@ const header = document.querySelector<HTMLElement>(".app-header");
 // Apply the saved color theme and mount the System/Light/Dark toggle (every mode).
 initTheme(header?.querySelector(".header-controls") ?? null);
 
-if (report.mode === "view" || report.mode === "edit") {
+if ((report.mode === "view" || report.mode === "edit") && report.source == null && report.project) {
+    // A served shell with no document open: mount the Explorer over the project root and show the
+    // empty-state call to action. No live session yet — opening or creating a script navigates to
+    // its report, which wires the editor, save modes, and hot reload.
+    initEmptyShell(report);
+} else if (report.mode === "view" || report.mode === "edit") {
     // A served session: two editable inputs to one dialogue compile — the dialogue source
     // (Source tab) and the config `dialogue.toml` (Config tab) — each read-only in View and
     // editable in Edit. The wiring closures reference the controllers only when invoked
@@ -330,7 +336,7 @@ if (report.mode === "view" || report.mode === "edit") {
             // A cross-file link in the Source preview opens the target script like a hyperlink;
             // same-file #anchors keep their native scroll, and the anchor part is dropped (the
             // linker resolves anchors, deferred).
-            const activeFolder = parentPath(report.project.activePath);
+            const activeFolder = parentPath(report.project.activePath ?? "");
             for (const preview of document.querySelectorAll(".source-preview")) {
                 preview.addEventListener("click", (event) => {
                     const anchor = (event.target as Element | null)?.closest("a");

@@ -6,7 +6,7 @@
   "description": "TypeScript client for the DialogueDown compilation-visualization report, bundled by Vite into a single self-contained HTML the .NET library embeds.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && VITE_ENTRY=launcher vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile .cache/typescript/tsconfig.tsbuildinfo",
     "test": "vitest run",

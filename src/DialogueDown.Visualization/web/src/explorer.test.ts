@@ -8,7 +8,7 @@ import {
     type ExplorerPorts,
     type RenameOutcome,
 } from "./explorer";
-import type { BrowseListing, CreateOutcome } from "./launcher";
+import type { BrowseListing, CreateOutcome } from "./project-fs";
 import type { ReportProject } from "./model";
 
 const rootListing: BrowseListing = {
@@ -91,6 +91,7 @@ describe("ancestorFolders", () => {
     it("lists ancestor folders root-first, excluding the file", () => {
         expect(ancestorFolders("act-1/scene/x.dialogue.md")).toEqual(["act-1", "act-1/scene"]);
         expect(ancestorFolders("intro.dialogue.md")).toEqual([]);
+        expect(ancestorFolders(undefined)).toEqual([]);
     });
 });
 

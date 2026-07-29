@@ -4,9 +4,10 @@ using DialogueDown.Visualization.Configuration;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// Drives the visualization run modes for the <c>dialoguedown visualize</c> command:
-/// a one-shot static export, or a served session that hosts the View/Edit toggle and
-/// runs until canceled. Injected so the command is testable with a substitute.
+/// Drives the non-interactive visualization outputs for the <c>dialoguedown visualize</c>
+/// command: a one-shot static HTML export, or a text emit of each stage's graph. The served
+/// View/Edit shell is driven separately through <see cref="ILauncherRunner"/>. Injected so the
+/// command is testable with a substitute.
 /// </summary>
 public interface IVisualizeRunner
 {
@@ -25,17 +26,4 @@ public interface IVisualizeRunner
     /// Returns a process exit code.
     /// </summary>
     int RunEmit(string file, EmitFormat format, string? output, CompilerOptions options);
-
-    /// <summary>
-    /// Serves an interactive report for <paramref name="file"/>, showing the applied
-    /// <paramref name="configuration"/> in the Config tab, on a loopback port and keeps it up
-    /// until <paramref name="cancellationToken"/> is canceled. The reader toggles View/Edit in
-    /// the browser; <paramref name="mode"/> is the initial side
-    /// (<see cref="VisualizationMode.View"/> or <see cref="VisualizationMode.Edit"/>).
-    /// <paramref name="renderRoot"/> pins the static-asset root (otherwise it is resolved,
-    /// with consent, from the document's referenced images). Returns a process exit code.
-    /// </summary>
-    Task<int> RunServedAsync(
-        string file, int? port, bool noOpen, string? renderRoot, string mode,
-        AppliedConfiguration configuration, CancellationToken cancellationToken);
 }

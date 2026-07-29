@@ -4,9 +4,8 @@ using DialogueDown.Visualization.Configuration;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// The default <see cref="IVisualizeRunner"/>: hides the server and consent wiring
-/// behind the static export and the served session, opening results with the injected
-/// browser launcher.
+/// The default <see cref="IVisualizeRunner"/>: hides the export wiring behind the static HTML
+/// export and the text emit, opening results with the injected browser launcher.
 /// </summary>
 public sealed class VisualizeRunner : IVisualizeRunner
 {
@@ -25,15 +24,4 @@ public sealed class VisualizeRunner : IVisualizeRunner
     /// <inheritdoc />
     public int RunEmit(string file, EmitFormat format, string? output, CompilerOptions options) =>
         EmitMode.Run(file, format, output, options, Console.Out, Console.Error);
-
-    /// <inheritdoc />
-    public Task<int> RunServedAsync(
-        string file, int? port, bool noOpen, string? renderRoot, string mode,
-        AppliedConfiguration configuration, CancellationToken cancellationToken)
-    {
-        var consent = new ConsoleHostConsent(!Console.IsInputRedirected, Console.In, Console.Out);
-        return ServeMode.RunAsync(
-            file, port, noOpen, renderRoot, configuration, _browser, consent, Console.Out, Console.Error,
-            cancellationToken, mode);
-    }
 }

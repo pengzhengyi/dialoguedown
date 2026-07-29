@@ -35,6 +35,11 @@
     --mode-accent: var(--pico-primary);
     --mode-accent-contrast: var(--pico-primary-inverse);
 
+    /* The Edit-mode green (matching the Save button): the accent while serving in Edit, and the
+       color of the empty state's "New dialogue file" action, which always opens the file in Edit. */
+    --edit-accent: #15803d;
+    --edit-accent-hover: #166534;
+
     /* Search-match highlight in the Semantic-tab tables: the query's matches in filtered rows
        get an amber "highlighter" fill, distinct from the amber cross-link tint (which sits on
        whole cells) by being an opaque marker on the matched text only. Dark overrides below. */
@@ -98,7 +103,7 @@
 
 /* Edit mode: switch the accent from blue to green (matching the Save button). */
 [data-served-mode="edit"] {
-    --mode-accent: #15803d;
+    --mode-accent: var(--edit-accent);
     --mode-accent-contrast: #fff;
 }
 
@@ -384,6 +389,44 @@ section.stage.error {
     white-space: pre-wrap;
     font-family: var(--pico-font-family-monospace);
     font-size: 0.85rem;
+}
+
+/* The served shell's empty state — no document open — centered in the main pane. */
+section.stage.empty-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.empty-shell-card {
+    max-width: 26rem;
+    text-align: center;
+}
+
+.empty-shell-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+}
+
+.empty-shell-hint {
+    margin: 0 0 1.25rem;
+    color: var(--pico-muted-color);
+}
+
+/* The empty state's create action always opens the new file in Edit, so it wears the Edit-mode
+   green regardless of the shell's current View/Edit accent. */
+.empty-shell-create {
+    width: auto;
+    margin: 0;
+    border: 1px solid var(--edit-accent);
+    background: var(--edit-accent);
+    color: #fff;
+}
+
+.empty-shell-create:hover {
+    border-color: var(--edit-accent-hover);
+    background: var(--edit-accent-hover);
 }
 
 /* The Source tab has no node-detail panel: hide it and let the split fill. */
@@ -2729,249 +2772,6 @@ body.maximized #app {
         align-self: flex-start;
         margin: 0;
     }
-}
-
-/* Launcher page (launcher.html): a centered card to pick a script and a mode. The whole
-   unit (brand + card) is centered in the viewport like a modal; auto margins split the
-   free space, and the listing scrolls internally so the card height stays bounded. */
-.launcher {
-    max-width: 40rem;
-    margin: auto;
-    padding: 2rem 1.25rem;
-}
-
-/* The report header's hover-morphing brand, centered above the picker card. On hover the
-   mark swaps to the pipeline glyph and the wordmark slides out, staying centered. */
-.launcher-brand {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1.6rem;
-}
-
-.launcher-brand .brand {
-    font-size: 1.35rem;
-}
-
-.launcher-brand .brand-mark {
-    width: 40px;
-    height: 40px;
-}
-
-.launcher-card {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1.85rem;
-    background: var(--pico-card-background-color);
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: var(--pico-border-radius);
-}
-
-.launcher-title {
-    margin: 0;
-    font-size: 1.3rem;
-}
-
-.launcher-subtitle {
-    margin: 0;
-    color: var(--pico-muted-color);
-    font-size: 0.85rem;
-}
-
-.launcher-root {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--pico-muted-color);
-}
-
-.launcher-root-path {
-    font-family: var(--pico-font-family-monospace);
-    overflow-wrap: anywhere;
-}
-
-.launcher-listing {
-    max-height: 22rem;
-    margin: 0;
-    padding: 0;
-    overflow-y: auto;
-    list-style: none;
-    background: var(--pico-background-color);
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: var(--pico-border-radius);
-}
-
-.launcher-item {
-    /* Pico gives list items a margin-bottom; drop it so rows sit flush and a hover or
-       selection highlight fills the whole row instead of leaving a white gap above and
-       below (100% emphasis on the hovered option). */
-    margin: 0;
-    padding: 0.4rem 0.8rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    border-bottom: 1px solid var(--pico-muted-border-color);
-    cursor: pointer;
-}
-
-.launcher-item:last-child {
-    border-bottom: 0;
-}
-
-.launcher-item:hover {
-    background: var(--pico-muted-border-color);
-}
-
-.launcher-item.selected {
-    background: var(--mode-accent);
-    color: var(--mode-accent-contrast);
-}
-
-.launcher-item.up::before {
-    content: "↑ ";
-    opacity: 0.7;
-}
-
-.launcher-item.dir::before {
-    content: "📁 ";
-}
-
-.launcher-item.src::before {
-    content: "📄 ";
-}
-
-.launcher-empty {
-    padding: 0.8rem;
-    color: var(--pico-muted-color);
-    font-style: italic;
-}
-
-/* The card's footer: the View/Edit capsule on the left, the Open action pushed to the
-   right — the modal-footer convention. */
-.launcher-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-top: 0.25rem;
-}
-
-.launcher-open {
-    /* Pico redefines --pico-color to white on buttons; keep our themed contrast. The
-       fill follows the mode accent (blue View / green Edit), matching the capsule and
-       the selected row. Sized down from Pico's chunky default so the primary action
-       stays proportional to the compact capsule and listing beside it. */
-    --pico-color: var(--mode-accent-contrast);
-
-    flex: 0 0 auto;
-    width: auto;
-    margin: 0;
-    padding: 0.4rem 1.25rem;
-    border: 1px solid var(--mode-accent);
-    border-radius: var(--pico-border-radius);
-    background: var(--mode-accent);
-    color: var(--mode-accent-contrast);
-    font-size: 0.85rem;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.launcher-open:not(:disabled):hover {
-    filter: brightness(1.08);
-}
-
-/* "New file" — the trailing listing row. Collapsed it is a muted trigger (a leading +);
-   clicking it swaps the row for an inline name field, so a file is named alongside the
-   others in the tree. */
-.launcher-item.launcher-new {
-    color: var(--pico-muted-color);
-}
-
-.launcher-item.launcher-new::before {
-    content: "+ ";
-    font-weight: 700;
-}
-
-.launcher-item.launcher-new:hover {
-    color: var(--pico-color);
-    background: var(--pico-muted-border-color);
-}
-
-.launcher-item.launcher-create-row {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    overflow: visible;
-    white-space: normal;
-    cursor: default;
-}
-
-.launcher-create-name {
-    /* Neutralize the Pico form-element defaults that fight this inline field. Pico's
-       input height calc reads the spacing vars, so shrinking them keeps the field the
-       size of the buttons and rows; --pico-spacing is Pico's default input
-       margin-bottom, so zeroing it lets the field's box center on the .dialogue.md
-       suffix instead of riding ~9px above it. Cleaner than !important overrides. */
-    --pico-form-element-spacing-vertical: 0.2rem;
-    --pico-form-element-spacing-horizontal: 0.45rem;
-    --pico-spacing: 0;
-
-    flex: 1 1 auto;
-    min-width: 4rem;
-    width: auto;
-    background: var(--pico-form-element-background-color);
-
-    /* Explicit so the typed name is legible in both themes (not white-on-white). */
-    color: var(--pico-color);
-    font-size: 0.9rem;
-}
-
-.launcher-create-ext {
-    flex: 0 0 auto;
-    color: var(--pico-muted-color);
-    font-family: var(--pico-font-family-monospace);
-    font-size: 0.82rem;
-}
-
-.launcher-create-submit,
-.launcher-create-cancel {
-    flex: 0 0 auto;
-    width: auto;
-    margin: 0;
-    padding: 0.2rem 0.7rem;
-    border-radius: var(--pico-border-radius);
-    font-size: 0.78rem;
-    font-weight: 600;
-    line-height: 1.4;
-    cursor: pointer;
-}
-
-.launcher-create-submit {
-    /* A new file always opens in Edit, so the create button carries the mode accent. */
-    --pico-color: var(--mode-accent-contrast);
-
-    border: 1px solid var(--mode-accent);
-    background: var(--mode-accent);
-    color: var(--mode-accent-contrast);
-}
-
-.launcher-create-submit:hover {
-    filter: brightness(1.08);
-}
-
-.launcher-create-cancel {
-    border: 1px solid var(--pico-muted-border-color);
-    background: transparent;
-    color: var(--pico-muted-color);
-}
-
-.launcher-create-cancel:hover {
-    color: var(--pico-color);
-}
-
-.launcher-create-error {
-    margin: 0.1rem 0 0;
-    color: #e5484d;
-    font-size: 0.8rem;
 }
 
 /* Dialogue-symbol completion icons: monochrome line glyphs (person / @ / # / arrow) that

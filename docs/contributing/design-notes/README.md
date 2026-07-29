@@ -155,6 +155,7 @@ flowchart TB
     PST --> HA["22. Live Visualization — Heading Anchors"]
     HA --> JTC["23. Jump-Target Completion"]
     JTC --> FE["24. Live Visualization — File Explorer"]
+    FE --> USS["25. Live Visualization — Unified Served Shell"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -167,7 +168,7 @@ flowchart TB
 | 6 | [Graph Position Preservation](./Graph%20Position%20Preservation.md) | Per-graph zoom/pan/fold memory and a root-centered default | Implemented |
 | 7 | [Source Editor Autocompletion](./Source%20Editor%20Autocompletion.md) | Document-aware editor completions behind a symbol-source seam | Implemented |
 | 8 | [Live Visualization — Hot Reload](./Live%20Visualization%20-%20Hot%20Reload.md) | Watch a script and hot-reload the report from a local server | Implemented |
-| 9 | [Live Visualization — File Launcher](./Live%20Visualization%20-%20File%20Launcher.md) | Browse and open a script in the launcher (the uniform `visualize` entry point) | Implemented |
+| 9 | [Live Visualization — File Launcher](./Live%20Visualization%20-%20File%20Launcher.md) | Browse and open a script in the launcher (the uniform `visualize` entry point) | Superseded |
 | 10 | [Live Visualization — Live Edit](./Live%20Visualization%20-%20Live%20Edit.md) | Edit the source in the report; compile-as-you-type and save to disk | Implemented |
 | 11 | [Live Visualization — View and Edit Modes](./Live%20Visualization%20-%20View%20and%20Edit%20Modes.md) | The current unified model: a served session with a runtime View⇄Edit toggle; static becomes an export | Implemented |
 | 12 | [Live Visualization — Autosave](./Live%20Visualization%20-%20Autosave.md) | Persisted Auto/Manual save modes with idle saves, conflict safety, and save-before-navigation | Implemented |
@@ -183,6 +184,7 @@ flowchart TB
 | 22 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
 | 23 | [Jump-Target Completion](./Jump-Target%20Completion.md) | Complete the whole `[Heading](#slug)` jump target from the `=>` indicator, via a snippet with the heading as an editable field | Implemented |
 | 24 | [Live Visualization — File Explorer](./Live%20Visualization%20-%20File%20Explorer.md) | Fold the launcher into the served report as a collapsible Explorer sidebar: browse the project tree, open a script by click or cross-file link, and create one | Implemented |
+| 25 | [Live Visualization — Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md) | Collapse the launcher page and the direct-serve server into one shell: the Explorer is the only navigator, no-document shows an empty-state CTA, and `visualize <script>` serves through the same server | Implemented |
 
 ### Other notes
 

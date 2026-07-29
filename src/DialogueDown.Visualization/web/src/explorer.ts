@@ -6,7 +6,7 @@
  * is injected through {@link ExplorerPorts}, mirroring the launcher.
  */
 
-import { leafName, SCRIPT_EXTENSION, type BrowseListing, type CreateOutcome } from "./launcher";
+import { leafName, SCRIPT_EXTENSION, type BrowseListing, type CreateOutcome } from "./project-fs";
 import type { ReportProject } from "./model";
 
 /** The outcome of a folder-create request. */
@@ -240,7 +240,14 @@ export function initExplorer(
         }
         const item = element("li", "explorer-input-row");
         item.append(row);
-        const cancel = (): void => item.remove();
+        // Guard against a double teardown: removing the focused input fires blur, whose handler also
+        // cancels — without this the second remove throws "node is no longer a child".
+        let settled = false;
+        const cancel = (): void => {
+            if (settled) return;
+            settled = true;
+            item.remove();
+        };
         input.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
@@ -461,9 +468,11 @@ export function initExplorer(
 
 /**
  * The ancestor folders of a root-relative path, root-first, excluding the file itself:
- * `"act-1/scene/x.dialogue.md"` → `["act-1", "act-1/scene"]`.
+ * `"act-1/scene/x.dialogue.md"` → `["act-1", "act-1/scene"]`. No active path (the empty state)
+ * has no ancestors to reveal.
  */
-export function ancestorFolders(activePath: string): string[] {
+export function ancestorFolders(activePath: string | undefined): string[] {
+    if (activePath === undefined) return [];
     const parts = activePath.split("/").filter(Boolean);
     parts.pop();
     return parts.map((_, index) => parts.slice(0, index + 1).join("/"));

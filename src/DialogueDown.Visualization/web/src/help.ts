@@ -1,5 +1,6 @@
-/** Which tab's help to show: the Source tab, a stage graph tab, or the Semantic tab. */
-export type HelpContext = "source" | "graph" | "semantic";
+/** Which tab's help to show: the Source tab, a stage graph tab, the Semantic tab, or — on the
+ *  empty state — the Explorer sidebar. */
+export type HelpContext = "source" | "graph" | "semantic" | "explorer";
 
 const SOURCE_HELP = `
   <p><strong>Source &amp; preview.</strong> The left pane is the document as written;
@@ -70,22 +71,43 @@ const SEMANTIC_HELP = `
   <p>The graph pans, zooms, folds, and goes full screen like the other tabs.</p>
 `;
 
+const EXPLORER_HELP = `
+  <p><strong>Browse the project.</strong> The tree on the left lists your
+     <kbd>.dialogue.md</kbd> scripts and their folders. <strong>Click a script</strong> to open
+     its report; <strong>click a folder</strong> to expand or collapse it.</p>
+  <p><strong>Create.</strong> The toolbar's <strong>New file</strong> and
+     <strong>New folder</strong> buttons add them at the project root — or
+     <strong>right-click a folder</strong> for <strong>New File</strong> / <strong>New Folder</strong>
+     inside it. Type the name and press <kbd>Enter</kbd> (<kbd>Esc</kbd> cancels); a script keeps
+     its <kbd>.dialogue.md</kbd> ending automatically. A new script opens straight in
+     <strong>Edit</strong>, so you can start writing.</p>
+  <p><strong>Rename.</strong> <strong>Right-click a script or folder</strong> and choose
+     <strong>Rename</strong>, then edit the name and press <kbd>Enter</kbd>.</p>
+  <p><strong>Refresh &amp; collapse.</strong> <strong>Refresh</strong> picks up files added or
+     changed on disk while keeping your expanded folders open; <strong>Collapse folders</strong>
+     closes the whole tree.</p>
+  <p><strong>Configuration.</strong> A <kbd>dialogue.toml</kbd> beside your scripts appears as a
+     pinned entry that opens in the <strong>Config</strong> tab once a script is open.</p>
+`;
+
 const SUMMARY: Record<HelpContext, string> = {
     source: "Using the Source tab",
     graph: "Using the graph",
     semantic: "Using the Semantic tab",
+    explorer: "Using the Explorer",
 };
 
 const CONTENT: Record<HelpContext, string> = {
     source: SOURCE_HELP,
     graph: GRAPH_HELP,
     semantic: SEMANTIC_HELP,
+    explorer: EXPLORER_HELP,
 };
 
 /**
- * Show help relevant to the active tab: the Source tab explains the source and
- * preview panes, a graph tab explains graph navigation. Keeps the footer help
- * focused on what the reader is actually looking at.
+ * Show help relevant to the active view: the Source tab explains the source and preview panes,
+ * a graph tab explains graph navigation, and the empty state explains the Explorer. Keeps the
+ * footer help focused on what the reader is actually looking at.
  */
 export function setHelp(context: HelpContext): void {
     const summary = document.getElementById("help-summary");
