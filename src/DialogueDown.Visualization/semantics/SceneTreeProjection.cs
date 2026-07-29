@@ -90,7 +90,20 @@ internal sealed class SceneTreeProjection : INodeProjection<object>
             source: scene.Heading is null ? null : Slice(scene.Heading.Span),
             category: StructureCategory,
             entityKey: SceneEntity.Key(scene),
-            typeName: "Scene");
+            typeName: "Scene")
+        {
+            // A scene maps to its heading, so a client can jump to the line that opens it.
+            Span = scene.Heading is null ? null : ToSpan(scene.Heading.Span),
+        };
+    }
+
+    // The clamped structured span of a scene's heading, so its detail panel can jump to the
+    // source. Mirrors Slice's clamping so a scene's span and its sliced source always agree.
+    private DisplaySpan ToSpan(SourceSpan span)
+    {
+        var start = Math.Clamp(span.Start, 0, _source.Length);
+        var end = Math.Clamp(span.End, start, _source.Length);
+        return new DisplaySpan(start, end);
     }
 
     // The original heading text a scene was opened by, so its detail panel shows real source.
