@@ -8,7 +8,14 @@ import {
     rectangularSelection,
     crosshairCursor,
 } from "@codemirror/view";
-import { EditorState, EditorSelection, Prec, Compartment, type Extension } from "@codemirror/state";
+import {
+    EditorState,
+    EditorSelection,
+    Prec,
+    Compartment,
+    type Extension,
+    type StateCommand,
+} from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import {
@@ -24,7 +31,14 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { tags } from "@lezer/highlight";
-import { toggleWrap, insertLink, headingFoldEndLine } from "./editor-commands";
+import {
+    toggleWrap,
+    insertLink,
+    quoteSelection,
+    unquoteSelection,
+    headingFoldEndLine,
+} from "./editor-commands";
+import { openContextMenu } from "./context-menu";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
 import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
@@ -94,12 +108,59 @@ const emphasisSurround = EditorView.inputHandler.of((view, from, to, text) => {
     return true;
 });
 
-/** VS Code-style Markdown formatting shortcuts (bold, italic, link). */
+/** VS Code-style Markdown formatting shortcuts (bold, italic, link). Blockquote quote/unquote are
+ *  handled by a dedicated keydown handler below, not here, so they can match the physical key. */
 const formatKeymap = [
     { key: "Mod-b", run: toggleWrap("**"), preventDefault: true },
     { key: "Mod-i", run: toggleWrap("*"), preventDefault: true },
     { key: "Mod-k", run: insertLink, preventDefault: true },
 ];
+
+/** Run an editor command and return focus to the editor, so a menu choice leaves you typing. */
+function runInEditor(view: EditorView, command: StateCommand): void {
+    command(view);
+    view.focus();
+}
+
+/**
+ * The editor's surround handlers (Edit mode only):
+ *
+ * - **keydown** binds the blockquote shortcut to the **Period key** (which bears `.` and `>`),
+ *   with Shift choosing the direction: **Cmd/Ctrl+.** quotes, **Cmd/Ctrl+Shift+.** unquotes. It
+ *   matches the physical key (`event.code === "Period"`) as well as the reported character, because
+ *   on macOS a held Cmd can surface `event.key` as the unshifted `.` even with Shift — which made
+ *   the plain CodeMirror keymap binding for `>` / `<` unreliable in Chrome and Safari. Comma is
+ *   deliberately avoided, since `Cmd/Ctrl+,` is Preferences in most apps.
+ * - **contextmenu** opens the shared menu of surround actions (bold, italic, strikethrough, quote,
+ *   unquote); each dispatches the matching command over the current selection.
+ *
+ * In View, both defer to the browser (selection copy, its own menu).
+ */
+const surroundHandlers = EditorView.domEventHandlers({
+    keydown(event, view) {
+        if (view.state.readOnly || event.altKey || !(event.metaKey || event.ctrlKey)) return false;
+        if (event.code !== "Period" && event.key !== "." && event.key !== ">") return false;
+        event.preventDefault();
+        if (event.shiftKey) unquoteSelection(view);
+        else quoteSelection(view);
+        return true;
+    },
+    contextmenu(event, view) {
+        if (view.state.readOnly) return false;
+        openContextMenu(event, [
+            { icon: "bold", label: "Bold", run: () => runInEditor(view, toggleWrap("**")) },
+            { icon: "italic", label: "Italic", run: () => runInEditor(view, toggleWrap("*")) },
+            {
+                icon: "strikethrough",
+                label: "Strikethrough",
+                run: () => runInEditor(view, toggleWrap("~~")),
+            },
+            { icon: "quote", label: "Quote", run: () => runInEditor(view, quoteSelection) },
+            { icon: "remove", label: "Unquote", run: () => runInEditor(view, unquoteSelection) },
+        ]);
+        return true;
+    },
+});
 
 /** Bounds for the draggable split, as a fraction of the container width. */
 const MIN_RATIO = 0.2;
@@ -171,6 +232,7 @@ function editableConfig(editable: boolean, editableExtras: Extension[] = []) {
                   closeBrackets(),
                   emphasisSurround,
                   Prec.high(keymap.of(formatKeymap)),
+                  surroundHandlers,
                   ...editableExtras,
               ]
             : []),

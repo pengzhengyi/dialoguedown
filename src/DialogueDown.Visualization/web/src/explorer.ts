@@ -7,6 +7,8 @@
  */
 
 import { leafName, SCRIPT_EXTENSION, type BrowseListing, type CreateOutcome } from "./project-fs";
+import { codicon } from "./codicon";
+import { openContextMenu } from "./context-menu";
 import type { ReportProject } from "./model";
 
 /** The outcome of a folder-create request. */
@@ -135,7 +137,7 @@ export function initExplorer(
         }
         row.addEventListener("click", () => ports.openScript(path));
         row.addEventListener("contextmenu", (event) =>
-            openMenu(event, [
+            openContextMenu(event, [
                 {
                     icon: "edit",
                     label: "Rename",
@@ -278,73 +280,6 @@ export function initExplorer(
         startInlineCreate(kind, folderPath, list);
     };
 
-    // A folder's right-click menu (New File / New Folder), VS Code style: anchored at the cursor and
-    // dismissed by choosing an item, Escape, or a click elsewhere. Only one is open at a time.
-    let activeMenu: (() => void) | null = null;
-    const dismissMenu = (): void => {
-        activeMenu?.();
-        activeMenu = null;
-    };
-    // A right-click menu of {@link items}, VS Code style: anchored at the cursor and dismissed by
-    // choosing an item, Escape, or a click elsewhere. Only one is open at a time — shared by the
-    // folder menu (New File / New Folder) and the script menu (Rename).
-    const openMenu = (
-        event: MouseEvent,
-        items: readonly { icon: string; label: string; run: () => void }[],
-    ): void => {
-        event.preventDefault();
-        dismissMenu();
-        const menu = element("div", "explorer-context-menu");
-        menu.setAttribute("role", "menu");
-        menu.setAttribute("aria-label", "Actions");
-        for (const entry of items) {
-            menu.append(
-                menuItem(entry.icon, entry.label, () => {
-                    dismissMenu();
-                    entry.run();
-                }),
-            );
-        }
-        const doc = container.ownerDocument;
-        const itemsOf = (): HTMLElement[] => [
-            ...menu.querySelectorAll<HTMLElement>('[role="menuitem"]'),
-        ];
-        const onPointerDown = (e: Event): void => {
-            if (!menu.contains(e.target as Node)) dismissMenu();
-        };
-        const onKeyDown = (e: KeyboardEvent): void => {
-            if (e.key === "Escape") {
-                e.preventDefault();
-                dismissMenu();
-            } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                e.preventDefault();
-                const all = itemsOf();
-                const index = all.indexOf(doc.activeElement as HTMLElement);
-                const step = e.key === "ArrowDown" ? 1 : -1;
-                all[(index + step + all.length) % all.length]?.focus();
-            }
-        };
-        doc.addEventListener("pointerdown", onPointerDown, true);
-        doc.addEventListener("keydown", onKeyDown, true);
-        activeMenu = (): void => {
-            menu.remove();
-            doc.removeEventListener("pointerdown", onPointerDown, true);
-            doc.removeEventListener("keydown", onKeyDown, true);
-        };
-        menu.style.left = `${event.clientX}px`;
-        menu.style.top = `${event.clientY}px`;
-        doc.body.append(menu);
-        // Keep the card within the viewport when opened near the right or bottom edge.
-        const view = doc.defaultView;
-        if (view) {
-            const overflowX = event.clientX + menu.offsetWidth - view.innerWidth + 8;
-            const overflowY = event.clientY + menu.offsetHeight - view.innerHeight + 8;
-            if (overflowX > 0) menu.style.left = `${event.clientX - overflowX}px`;
-            if (overflowY > 0) menu.style.top = `${event.clientY - overflowY}px`;
-        }
-        itemsOf()[0]?.focus();
-    };
-
     // The New File / New Folder / Rename menu for a folder row.
     const folderMenu = (
         event: MouseEvent,
@@ -353,7 +288,7 @@ export function initExplorer(
         expand: (expanded: boolean) => Promise<unknown>,
         row: HTMLElement,
     ): void => {
-        openMenu(event, [
+        openContextMenu(event, [
             {
                 icon: "new-file",
                 label: "New File",
@@ -530,15 +465,6 @@ function treeRow(
     return row;
 }
 
-// A VS Code codicon glyph; an empty name renders just the spacer (to align file rows under
-// folder rows, which carry a chevron).
-function codicon(name: string, extraClass: string): HTMLElement {
-    const span = document.createElement("span");
-    span.className = name === "" ? extraClass : `codicon codicon-${name} ${extraClass}`;
-    span.setAttribute("aria-hidden", "true");
-    return span;
-}
-
 // A small VS Code-style header action: an icon button with a tooltip.
 function actionButton(iconName: string, title: string, onClick: () => void): HTMLButtonElement {
     const button = element("button", "explorer-action") as HTMLButtonElement;
@@ -546,19 +472,6 @@ function actionButton(iconName: string, title: string, onClick: () => void): HTM
     button.title = title;
     button.setAttribute("aria-label", title);
     button.append(codicon(iconName, "explorer-action-icon"));
-    button.addEventListener("click", onClick);
-    return button;
-}
-
-// A context-menu entry: an icon and a label, VS Code style.
-function menuItem(iconName: string, label: string, onClick: () => void): HTMLButtonElement {
-    const button = element("button", "explorer-menu-item") as HTMLButtonElement;
-    button.type = "button";
-    button.setAttribute("role", "menuitem");
-    button.append(
-        codicon(iconName, "explorer-menu-icon"),
-        withText("span", "explorer-menu-label", label),
-    );
     button.addEventListener("click", onClick);
     return button;
 }

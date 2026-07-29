@@ -65,7 +65,7 @@ function openFolderContextMenu(container: HTMLElement, folderText: string): HTML
     folderRow.dispatchEvent(
         new MouseEvent("contextmenu", { bubbles: true, clientX: 12, clientY: 12 }),
     );
-    return document.querySelector(".explorer-context-menu") as HTMLElement;
+    return document.querySelector(".context-menu") as HTMLElement;
 }
 
 /** Right-click a folder, choose New File / New Folder, type a name, and submit it with Enter. */
@@ -262,10 +262,10 @@ describe("initExplorer", () => {
         await settle();
 
         openFolderContextMenu(container, "act-1");
-        expect(document.querySelector(".explorer-context-menu")).not.toBeNull();
+        expect(document.querySelector(".context-menu")).not.toBeNull();
 
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-        expect(document.querySelector(".explorer-context-menu")).toBeNull();
+        expect(document.querySelector(".context-menu")).toBeNull();
     });
 
     it("renames a script from its context menu", async () => {
@@ -280,7 +280,7 @@ describe("initExplorer", () => {
         scriptRow.dispatchEvent(
             new MouseEvent("contextmenu", { bubbles: true, clientX: 8, clientY: 8 }),
         );
-        const menu = document.querySelector(".explorer-context-menu") as HTMLElement;
+        const menu = document.querySelector(".context-menu") as HTMLElement;
         const rename = [...menu.querySelectorAll('[role="menuitem"]')].find(
             (node) => node.textContent === "Rename",
         ) as HTMLElement;
