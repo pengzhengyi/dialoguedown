@@ -108,13 +108,12 @@ const emphasisSurround = EditorView.inputHandler.of((view, from, to, text) => {
     return true;
 });
 
-/** VS Code-style Markdown formatting shortcuts (bold, italic, link, and blockquote quote/unquote). */
+/** VS Code-style Markdown formatting shortcuts (bold, italic, link). Blockquote quote/unquote are
+ *  handled by a dedicated keydown handler below, not here, so they can match the physical key. */
 const formatKeymap = [
     { key: "Mod-b", run: toggleWrap("**"), preventDefault: true },
     { key: "Mod-i", run: toggleWrap("*"), preventDefault: true },
     { key: "Mod-k", run: insertLink, preventDefault: true },
-    { key: "Mod->", run: quoteSelection, preventDefault: true },
-    { key: "Mod-<", run: unquoteSelection, preventDefault: true },
 ];
 
 /** Run an editor command and return focus to the editor, so a menu choice leaves you typing. */
@@ -124,11 +123,28 @@ function runInEditor(view: EditorView, command: StateCommand): void {
 }
 
 /**
- * The editor's right-click surround menu (Edit mode only): bold, italic, strikethrough, and
- * blockquote quote/unquote, each dispatching the matching command over the current selection.
- * In View the browser's own menu (copy, etc.) is left alone.
+ * The editor's surround handlers (Edit mode only):
+ *
+ * - **keydown** binds the blockquote shortcut to the **Period key** (which bears `.` and `>`),
+ *   with Shift choosing the direction: **Cmd/Ctrl+.** quotes, **Cmd/Ctrl+Shift+.** unquotes. It
+ *   matches the physical key (`event.code === "Period"`) as well as the reported character, because
+ *   on macOS a held Cmd can surface `event.key` as the unshifted `.` even with Shift — which made
+ *   the plain CodeMirror keymap binding for `>` / `<` unreliable in Chrome and Safari. Comma is
+ *   deliberately avoided, since `Cmd/Ctrl+,` is Preferences in most apps.
+ * - **contextmenu** opens the shared menu of surround actions (bold, italic, strikethrough, quote,
+ *   unquote); each dispatches the matching command over the current selection.
+ *
+ * In View, both defer to the browser (selection copy, its own menu).
  */
-const surroundContextMenu = EditorView.domEventHandlers({
+const surroundHandlers = EditorView.domEventHandlers({
+    keydown(event, view) {
+        if (view.state.readOnly || event.altKey || !(event.metaKey || event.ctrlKey)) return false;
+        if (event.code !== "Period" && event.key !== "." && event.key !== ">") return false;
+        event.preventDefault();
+        if (event.shiftKey) unquoteSelection(view);
+        else quoteSelection(view);
+        return true;
+    },
     contextmenu(event, view) {
         if (view.state.readOnly) return false;
         openContextMenu(event, [
@@ -216,7 +232,7 @@ function editableConfig(editable: boolean, editableExtras: Extension[] = []) {
                   closeBrackets(),
                   emphasisSurround,
                   Prec.high(keymap.of(formatKeymap)),
-                  surroundContextMenu,
+                  surroundHandlers,
                   ...editableExtras,
               ]
             : []),

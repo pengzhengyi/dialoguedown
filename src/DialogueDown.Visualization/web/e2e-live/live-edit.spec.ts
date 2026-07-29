@@ -561,16 +561,16 @@ test("quotes and unquotes the selection by keyboard and from the surround menu",
     const editor = page.locator(".source-pane .cm-content");
     await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
 
-    // Select the whole document and quote it with Cmd/Ctrl+> (adds a marker to every line).
+    // Select the whole document and quote it with Cmd/Ctrl+. (adds a marker to every line).
     await editor.click();
     await page.keyboard.press("ControlOrMeta+a");
-    await page.keyboard.press("ControlOrMeta+Shift+Period");
+    await page.keyboard.press("ControlOrMeta+Period");
     await expect(editor).toContainText("> # Scene");
     await expect(editor).toContainText("> Alice: The first line.");
 
-    // Unquote it back with Cmd/Ctrl+<.
+    // Unquote it back with Cmd/Ctrl+Shift+.
     await page.keyboard.press("ControlOrMeta+a");
-    await page.keyboard.press("ControlOrMeta+Shift+Comma");
+    await page.keyboard.press("ControlOrMeta+Shift+Period");
     await expect(editor).not.toContainText("> # Scene");
 
     // Right-click offers the same surround actions; choosing Quote re-quotes the selection.

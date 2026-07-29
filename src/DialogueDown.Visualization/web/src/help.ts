@@ -13,7 +13,7 @@ const SOURCE_HELP = `
      gutter arrow. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
      <kbd>⌘/Ctrl-I</kbd> (italic) and <kbd>⌘/Ctrl-K</kbd> (link), or type <kbd>*</kbd>
      around a selection to emphasize it. <strong>Quote a block</strong> with
-     <kbd>⌘/Ctrl-&gt;</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-&lt;</kbd>: quoting
+     <kbd>⌘/Ctrl-.</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-Shift-.</kbd>: quoting
      adds a <kbd>&gt;</kbd> to every line the selection touches and nests on an already-quoted
      line, and unquoting removes one level — handy for the blockquote-based block controls.
      <strong>Right-click</strong> the editor for the same surround actions as a menu — bold,

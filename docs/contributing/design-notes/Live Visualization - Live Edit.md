@@ -175,9 +175,10 @@ bracket matching, active-line and selection-match highlighting, and multi-cursor
 column selection. Live Edit additionally gets **auto-close and auto-surround** for
 brackets, quotes, backticks, and emphasis (select text and type `*` / `_` / `` ` `` to
 wrap it), plus VS Code-style formatting shortcuts — **⌘/Ctrl-B** bold, **⌘/Ctrl-I**
-italic, **⌘/Ctrl-K** link, and **⌘/Ctrl-&gt;** / **⌘/Ctrl-&lt;** to quote / unquote every
+italic, **⌘/Ctrl-K** link, and **⌘/Ctrl-.** / **⌘/Ctrl-Shift-.** to quote / unquote every
 line the selection touches as a Markdown blockquote (quoting nests, unquoting removes one
-level and its optional space — useful for the blockquote-based block controls). A
+level and its optional space — useful for the blockquote-based block controls; the shortcut
+keys off the physical Period key, since a held Cmd on macOS can hide the shifted `>`). A
 **right-click surround menu** offers the same actions (bold, italic, strikethrough, quote,
 unquote), built from the shared `context-menu.ts` the Explorer also uses. The commands live
 in `editor-commands.ts`, unit-tested as pure state commands. List and blockquote
