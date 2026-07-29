@@ -677,9 +677,10 @@ section.stage.empty-shell {
     border-radius: 0;
 }
 
-/* A folder's right-click menu: a small floating card of actions (New File / New Folder),
-   anchored at the cursor. It reuses the tree's accent-tinted hover so it feels of a piece. */
-.explorer-context-menu {
+/* A right-click context menu: a small floating card of actions, anchored at the cursor. Shared by
+   the Explorer's row menus and the editor's surround menu; it reuses the accent-tinted hover so it
+   feels of a piece with the tree. */
+.context-menu {
     position: fixed;
     z-index: 1000;
     min-width: 11rem;
@@ -691,7 +692,7 @@ section.stage.empty-shell {
     box-shadow: 0 6px 20px rgb(0 0 0 / 28%);
 }
 
-.explorer-menu-item {
+.context-menu-item {
     display: flex;
     gap: 0.45rem;
     align-items: center;
@@ -709,13 +710,13 @@ section.stage.empty-shell {
     cursor: pointer;
 }
 
-.explorer-menu-item:hover,
-.explorer-menu-item:focus-visible {
+.context-menu-item:hover,
+.context-menu-item:focus-visible {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
     outline: none;
 }
 
-.explorer-menu-icon {
+.context-menu-icon {
     flex: 0 0 auto;
     color: var(--pico-muted-color);
     font-size: 15px;
