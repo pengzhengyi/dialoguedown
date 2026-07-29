@@ -78,7 +78,7 @@ Design targets for the implementation:
 - [ ] Report a **scene heading inside a branch** — a scene stays a top-level unit.
 - [ ] Require a **quoted blank line** between markers/utterances and to close a nested
       branch; report a marker fused into content.
-- [ ] Keep a **non-marker blockquote** an unmodeled raw aside, unchanged.
+- [ ] Read a **non-marker blockquote** as a transparent wrapper — its inner blocks in place.
 - [ ] Preserve source spans of the block, each branch, and each condition.
 - [ ] Handle `ControlBlock` in every block switch (rewriter, traversal, projection,
       validation), enforced by the compiler.
@@ -200,8 +200,8 @@ utterances, a bare jump, a silent command, or a **nested** conditional (the `> >
 block above). Exactly one branch is taken at play time; that selection is the
 runtime's job.
 
-A blockquote that is **not** led by a marker is an ordinary raw aside, unchanged — the
-construct claims only marker-headed blockquotes.
+A blockquote that is **not** led by a marker is a transparent wrapper: its inner blocks
+read as ordinary content, in place.
 
 ## Grammar
 
@@ -242,7 +242,7 @@ flowchart LR
     MD["Markdig QuoteBlock<br/>(nested > > already nested)"] --> CV["Converter →<br/>Markdown AST QuoteBlock"]
     CV --> BB{"BlockBuilder:<br/>first child an if-marker?"}
     BB -->|"yes"| CB["ControlBlock<br/>arms split at markers;<br/>bodies recurse → nested ControlBlock"]
-    BB -->|"no"| RAW["unmodeled raw aside<br/>(unchanged)"]
+    BB -->|"no"| RAW["transparent wrapper<br/>(inner blocks in place)"]
 ```
 
 - **Markdown AST** gains a structural `QuoteBlock` block: the converter maps a Markdig
@@ -252,8 +252,8 @@ flowchart LR
   `` `if` `` marker, it builds a `ControlBlock` — splitting the quote's child blocks into
   branches at the `` `if` ``/`` `elseif` ``/`` `else` `` markers, each branch body
   recursing through the same `Build` (so a nested marker-headed quote becomes a nested
-  `ControlBlock`), exactly as a list becomes `Choices` today. A non-marker quote falls
-  back to the existing unmodeled raw-text handling.
+  `ControlBlock`), exactly as a list becomes `Choices` today. A non-marker quote is a
+  transparent wrapper — its inner blocks are transpiled in place.
 
 The AST mirrors `Choices`/`Choice`:
 
@@ -279,7 +279,7 @@ completeness the [Control Line](./Control%20Line.md) note relied on.
 | `QuoteBlock` (Markdown AST)     | Hold a blockquote's child blocks structurally.                                            | New; converter stops flattening quotes.          |
 | `MarkdigToMarkdownAstConverter` | Map a Markdig `QuoteBlock` to the new node.                                               | Add the case.                                    |
 | `MarkerRecognition`             | Read a paragraph as an `` `if` ``/`` `elseif` `` + condition, or `` `else` ``.            | New; reuses the condition reader.                |
-| `BlockBuilder`                  | On a marker-headed `QuoteBlock`, build a `ControlBlock`; else raw text.                   | Add the `QuoteBlock` case + `BuildControlBlock`. |
+| `BlockBuilder`                  | On a marker-headed `QuoteBlock`, build a `ControlBlock`; else transpile its inner blocks. | Add the `QuoteBlock` case + `BuildControlBlock`. |
 | `ControlBlock` / `Branch` (AST) | Model the construct and its arms; carry spans and each arm's condition.                   | New records.                                     |
 | `DialogueAstRewriter`           | Rewrite a `ControlBlock` and each branch body.                                            | New hook (like `RewriteChoice`).                 |
 | `ScriptNodeExtensions`          | Enumerate a `ControlBlock`'s branches and each branch's children.                         | New arms.                                        |
@@ -356,13 +356,12 @@ separators and documented with a before/after example in the guide.
 
 ## Markdown interaction
 
-A **marker-headed** blockquote becomes a `ControlBlock`; every other blockquote keeps
-its current unmodeled raw-text handling (see
-[Unmodeled Markdown Handling](./Unmodeled%20Markdown%20Handling.md)), so a plain
-`> aside` is unchanged and a future spoken-aside construct is not foreclosed. Arms are
-joined by a bare `>` line and nested by `> >` — both standard CommonMark, so no Markdig
-extension is needed. The marker spans are ordinary inline code, so a stock preview
-renders them as chips.
+A **marker-headed** blockquote becomes a `ControlBlock`; every other blockquote is a
+**transparent wrapper** whose inner blocks are read in place as ordinary content, so a
+plain `> aside` reads as narration rather than literal `> aside` text. Arms are joined by
+a bare `>` line and nested by `> >` — both standard CommonMark, so no Markdig extension is
+needed. The marker spans are ordinary inline code, so a stock preview renders them as
+chips.
 
 ## Diagnostics
 
@@ -394,7 +393,7 @@ New codes — three at transpile, one at validation — plus two reused checks
 | a second `` `else` ``, or `` `elseif` `` after `` `else` `` | marker-order error | branches must be `if` , `elseif`* , `else`? |
 | a scene heading inside a branch | scene-placement error (`DLG2015`) | a scene is a top-level unit |
 | a marker fused into a paragraph (no quoted blank line) | marker-standalone error (`DLG1110`) | a marker must be alone on its line |
-| a blockquote **not** led by a marker | raw aside (unchanged) | the construct claims only marker-headed quotes |
+| a blockquote **not** led by a marker | transparent wrapper (inner blocks in place) | the construct claims only marker-headed quotes |
 | `` `if Rich?` `` (one span) | a condition on the key `if Rich` | not a marker — see [D2](#d2--the-marker-is-the-two-span-form) |
 
 ## Testability
@@ -402,7 +401,7 @@ New codes — three at transpile, one at validation — plus two reused checks
 - **Marker recognition** — `` `if` ``/`` `elseif` `` + condition, and bare `` `else` ``;
   a one-span `` `if Rich?` `` stays a plain condition.
 - **Transpile** — a connected blockquote builds a `ControlBlock` with ordered branches;
-  a nested `> >` builds a nested `ControlBlock`; a non-marker quote stays raw text.
+  a nested `> >` builds a nested `ControlBlock`; a non-marker quote is a transparent wrapper.
 - **Diagnostics** — a severed `` `elseif` ``/`` `else` `` and a malformed marker order
   each report; a branch condition is not an orphan.
 - **Spans** — the block, each branch, and each condition preserve their source spans.

@@ -76,6 +76,15 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
             case ListBlock list:
                 blocks.Add(BuildBranch(list, diagnostics));
                 break;
+            case QuoteBlock quote:
+                // A blockquote is a transparent wrapper: its inner blocks are transpiled in place.
+                // (Recognizing a marker-headed quote as a control block is a later step.)
+                foreach (var child in quote.Blocks)
+                {
+                    Append(child, blocks, diagnostics);
+                }
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException(
                     nameof(block), block.GetType().Name,

@@ -277,6 +277,27 @@ public sealed class BlockBuilderTests
     }
 
     [Fact]
+    public void Blockquote_IsATransparentWrapper_ItsContentIsTranspiledInPlace()
+    {
+        // A non-marker blockquote wraps ordinary content; its inner blocks read as if unwrapped.
+        var body = Build([QuoteBlock(TextParagraph("Alice: Hi"), TextParagraph("Bob: Yo"))]);
+
+        Assert.Equal(2, body.Count);
+        AssertSpeakerNameReference(AssertLine(body[0]).Speaker!, "Alice");
+        AssertSpeechText(AssertLine(body[0]), "Hi");
+        AssertSpeakerNameReference(AssertLine(body[1]).Speaker!, "Bob");
+        AssertSpeechText(AssertLine(body[1]), "Yo");
+    }
+
+    [Fact]
+    public void Blockquote_Nested_RecursesThroughEachWrapper()
+    {
+        var body = Build([QuoteBlock(QuoteBlock(TextParagraph("Deep narration.")))]);
+
+        AssertSpeechText(AssertLine(Assert.Single(body)), "Deep narration.");
+    }
+
+    [Fact]
     public void UnknownBlockKind_Throws() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Build([new UnknownMarkdownBlock(Span())]));

@@ -53,6 +53,9 @@ internal static class MarkdownAstFactory
     public static ListBlock ListBlock(bool ordered = false, params ListItem[] items) =>
         new(ordered, items.Length == 0 ? [ListItem()] : items, Span());
 
+    public static QuoteBlock QuoteBlock(params MarkdownBlock[] blocks) =>
+        new(blocks.Length == 0 ? [Paragraph()] : blocks, Span());
+
     public static MarkdownDocument Document(params MarkdownBlock[] blocks) =>
         new(blocks);
 }

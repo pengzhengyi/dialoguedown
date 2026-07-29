@@ -46,7 +46,7 @@ public sealed class MarkdigUnmodeledNodeClassifierTests
 
     private static Block PipeTable() => new Table();
 
-    private static Block Quote() => new QuoteBlock(null!);
+    private static Block Quote() => new Markdig.Syntax.QuoteBlock(null!);
 
     private static Block HtmlBlockNode() => new HtmlBlock(null!);
 
