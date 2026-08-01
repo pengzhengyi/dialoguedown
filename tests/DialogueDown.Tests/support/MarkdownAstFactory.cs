@@ -33,6 +33,14 @@ internal static class MarkdownAstFactory
     public static CodeSpanInline CodeSpan(string? content = null) =>
         new(content ?? Faker.Lorem.Word(), Span());
 
+    public static MarkdownInline[] IfMarkerInlines(string condition) =>
+        ConditionalMarkerInlines("if", condition);
+
+    public static MarkdownInline[] ElseIfMarkerInlines(string condition) =>
+        ConditionalMarkerInlines("elseif", condition);
+
+    public static MarkdownInline[] ElseMarkerInlines() => [CodeSpan("else")];
+
     public static EmphasisInline Emphasis(EmphasisKind kind, params MarkdownInline[] children) =>
         new(kind, children.Length == 0 ? [Text()] : children, Span());
 
@@ -58,4 +66,8 @@ internal static class MarkdownAstFactory
 
     public static MarkdownDocument Document(params MarkdownBlock[] blocks) =>
         new(blocks);
+
+    private static MarkdownInline[] ConditionalMarkerInlines(
+        string keyword, string condition) =>
+        [CodeSpan(keyword), Text(" "), CodeSpan($"{condition}?")];
 }

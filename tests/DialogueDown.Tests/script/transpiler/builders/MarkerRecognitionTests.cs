@@ -10,7 +10,7 @@ public sealed class MarkerRecognitionTests
     [Fact]
     public void Read_IfWithCondition_YieldsAnIfMarkerWithTheConditionAndNoRemainder()
     {
-        MarkdownInline[] inlines = [CodeSpan("if"), Text(" "), CodeSpan("Rich?")];
+        var inlines = IfMarkerInlines("Rich");
 
         var marker = Assert.IsType<BranchMarker>(MarkerRecognition.Read(inlines));
 
@@ -22,7 +22,7 @@ public sealed class MarkerRecognitionTests
     [Fact]
     public void Read_ElseIfWithCondition_YieldsAnElseIfMarker()
     {
-        MarkdownInline[] inlines = [CodeSpan("elseif"), Text(" "), CodeSpan("Poor?")];
+        var inlines = ElseIfMarkerInlines("Poor");
 
         var marker = Assert.IsType<BranchMarker>(MarkerRecognition.Read(inlines));
 
@@ -33,7 +33,7 @@ public sealed class MarkerRecognitionTests
     [Fact]
     public void Read_BareElse_YieldsAnElseMarkerWithNoCondition()
     {
-        MarkdownInline[] inlines = [CodeSpan("else")];
+        var inlines = ElseMarkerInlines();
 
         var marker = Assert.IsType<BranchMarker>(MarkerRecognition.Read(inlines));
 
@@ -61,8 +61,7 @@ public sealed class MarkerRecognitionTests
     {
         // A fused marker (a missing quoted blank line) is recognized with a non-empty remainder,
         // which the validator reports as "a marker must stand alone".
-        MarkdownInline[] inlines =
-            [CodeSpan("if"), Text(" "), CodeSpan("Rich?"), Text(" Guard: hi")];
+        MarkdownInline[] inlines = [.. IfMarkerInlines("Rich"), Text(" Guard: hi")];
 
         var marker = Assert.IsType<BranchMarker>(MarkerRecognition.Read(inlines));
 

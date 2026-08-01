@@ -8,14 +8,28 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// <summary>
 /// Walks the Markdown block tree into the Dialogue AST skeleton. It orchestrates: a
 /// heading becomes a flat <see cref="SceneHeading"/> marker, a paragraph is handed to the
-/// <see cref="LineBuilder"/>, and a list becomes a branch — <see cref="Choices"/>, or a
-/// <see cref="RandomChoices"/> when any option leads with a weight (a <c>`…%`</c> code span).
-/// It is a faithful, local tokenizer — composition across siblings, such as grouping headings
-/// into scenes, is deferred to later stages. One shared, recursive <see cref="Build"/> serves
-/// both the document body and each choice body.
+/// <see cref="LineBuilder"/>, a list becomes <see cref="Choices"/> or
+/// <see cref="RandomChoices"/> when any option leads with a weight (a <c>`…%`</c> code span), and
+/// a marker-headed blockquote becomes a <see cref="ControlBlock"/>. It is a faithful, local
+/// tokenizer — composition across siblings, such as grouping headings into scenes, is deferred
+/// to later stages. One shared, recursive <see cref="Build"/> serves the document body, choice
+/// bodies, and control-branch bodies.
 /// </summary>
-internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder lineBuilder)
+internal sealed class BlockBuilder
 {
+    private readonly ControlBlockBuilder _controlBlockBuilder;
+    private readonly InlineBuilder _inlineBuilder;
+    private readonly LineBuilder _lineBuilder;
+
+    public BlockBuilder(InlineBuilder inlineBuilder, LineBuilder lineBuilder)
+    {
+        _inlineBuilder = inlineBuilder;
+        _lineBuilder = lineBuilder;
+        // Branch bodies re-enter Build; constructing the collaborator here avoids exposing a
+        // mutable, later-initialized back-reference.
+        _controlBlockBuilder = new ControlBlockBuilder(this);
+    }
+
     public IReadOnlyList<ScriptBlock> Build(
         IReadOnlyList<MarkdownBlock> blocks, IDiagnosticSink diagnostics)
     {
@@ -64,26 +78,20 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
         {
             case Heading heading:
                 blocks.Add(new SceneHeading(
-                    inlineBuilder.BuildTitle(heading.Inlines, diagnostics), heading.Level, heading.Span));
+                    _inlineBuilder.BuildTitle(heading.Inlines, diagnostics), heading.Level, heading.Span));
                 break;
             case Paragraph paragraph:
                 foreach (var group in SplitAtHardBreaks(paragraph.Inlines))
                 {
-                    blocks.Add(lineBuilder.Build(group, diagnostics));
+                    blocks.Add(_lineBuilder.Build(group, diagnostics));
                 }
 
                 break;
             case ListBlock list:
-                blocks.Add(BuildBranch(list, diagnostics));
+                blocks.Add(BuildChoices(list, diagnostics));
                 break;
             case QuoteBlock quote:
-                // A blockquote is a transparent wrapper: its inner blocks are transpiled in place.
-                // (Recognizing a marker-headed quote as a control block is a later step.)
-                foreach (var child in quote.Blocks)
-                {
-                    Append(child, blocks, diagnostics);
-                }
-
+                AppendQuoteBlock(quote, blocks, diagnostics);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(
@@ -93,10 +101,27 @@ internal sealed class BlockBuilder(InlineBuilder inlineBuilder, LineBuilder line
         }
     }
 
-    // A list becomes a branch: a player-facing Choices, or a RandomChoices when any option leads
-    // with a weight code span. Each list item's blocks recurse through the same walk, so a nested
-    // list inside an item becomes a nested branch inside that option.
-    private ScriptBlock BuildBranch(ListBlock list, IDiagnosticSink diagnostics) =>
+    private void AppendQuoteBlock(
+        QuoteBlock quote, List<ScriptBlock> blocks, IDiagnosticSink diagnostics)
+    {
+        // A quote has two meanings: a marker-headed quote is one control block; any other quote
+        // is a transparent wrapper whose ordinary child blocks are appended in place.
+        if (_controlBlockBuilder.TryBuild(quote, diagnostics, out var control))
+        {
+            blocks.Add(control);
+            return;
+        }
+
+        foreach (var child in quote.Blocks)
+        {
+            Append(child, blocks, diagnostics);
+        }
+    }
+
+    // A list becomes player-facing Choices, or RandomChoices when any option leads with a weight
+    // code span. Each list item's blocks recurse through the same walk, so a nested list inside
+    // an item becomes nested choices inside that option.
+    private ScriptBlock BuildChoices(ListBlock list, IDiagnosticSink diagnostics) =>
         list.Items.Any(RandomChoiceRecognition.HasLeadingWeight)
             ? BuildRandomChoices(list, diagnostics)
             : BuildPlayerChoices(list, diagnostics);

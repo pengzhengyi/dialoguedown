@@ -298,6 +298,20 @@ public sealed class BlockBuilderTests
     }
 
     [Fact]
+    public void Blockquote_StartingWithIfMarker_AppendsControlBlock()
+    {
+        var quote = QuoteBlock(
+            Paragraph(IfMarkerInlines("Rich")),
+            TextParagraph("Alice: Welcome upstairs."));
+
+        var control = AssertControlBlock(Assert.Single(Build([quote])));
+
+        var branch = Assert.Single(control.Branches);
+        AssertCondition(branch.Condition!, "Rich");
+        AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome upstairs.");
+    }
+
+    [Fact]
     public void UnknownBlockKind_Throws() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Build([new UnknownMarkdownBlock(Span())]));
