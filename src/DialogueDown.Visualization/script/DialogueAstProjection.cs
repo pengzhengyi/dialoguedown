@@ -97,6 +97,13 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
                 [new("weight", WeightText(option.Weight)), SpanAttribute(option.Span)],
                 Slice(option.Span),
                 ChoiceCategory),
+            ControlBlock control => new(
+                "Control block", [SpanAttribute(control.Span)], Slice(control.Span), ControlCategory),
+            Branch branch => new(
+                branch.Condition is null ? "Else branch" : "Branch",
+                [SpanAttribute(branch.Span)],
+                Slice(branch.Span),
+                ControlCategory),
             SpeakerDeclaration speaker => new(
                 "Speaker (declaration)",
                 [new("name", speaker.Name), .. Optional("id", speaker.Id), SpanAttribute(speaker.Span)],
@@ -196,6 +203,8 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
             Choice choice => choice.IsConditional() ? [choice.Condition!, .. choice.Body] : choice.Body,
             RandomChoices random => random.Options,
             RandomOption option => option.IsConditional() ? [option.Condition!, .. option.Body] : option.Body,
+            ControlBlock control => control.Branches,
+            Branch branch => branch.IsConditional() ? [branch.Condition!, .. branch.Body] : branch.Body,
             SpeakerDeclaration speaker => speaker.Tags,
             PartialSpeakerDeclaration speaker => speaker.Tags,
             StyledText styled => styled.Children,
