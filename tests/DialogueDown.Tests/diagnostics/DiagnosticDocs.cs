@@ -125,10 +125,10 @@ internal static class DiagnosticDocs
                 ["`10%`"])),
         new(
             DiagnosticCatalog.OrphanCondition,
-            "A condition guards the jump it precedes, the line it fronts, or the choice option it "
-            + "leads, so it must sit immediately before a `=>` jump or at the start of a line or "
-            + "choice. A `\"key\"?` code span anywhere else has nothing to guard. Move it in front "
-            + "of a jump, front a line or option with it, or remove the `?` to write a plain query.",
+            "A condition guards the jump it precedes, the line it fronts, the choice option it "
+            + "leads, or the control branch it opens. A `\"key\"?` code span anywhere else has "
+            + "nothing to guard. Move it to one of those positions, or remove the `?` to write a "
+            + "plain query.",
             new(
                 """
                 # Moor
@@ -445,6 +445,28 @@ internal static class DiagnosticDocs
                 """,
                 ["`0%`"],
                 ["`50%`"])),
+        new(
+            DiagnosticCatalog.SceneHeadingInsideBranch,
+            "Scene headings define document-level jump targets. A heading inside a control branch "
+            + "or choice option would not create a scene, so move it outside the branch and jump to "
+            + "it when that path should enter the scene.",
+            new(
+                """
+                > `if` `Rich?`
+                >
+                > # Upstairs
+                >
+                > Alice: Welcome.
+                """,
+                """
+                # Upstairs
+
+                > `if` `Rich?`
+                >
+                > Alice: Welcome.
+                """,
+                ["> # Upstairs"],
+                ["# Upstairs"])),
         new(
             DiagnosticCatalog.DeeplyNestedChoiceBranch,
             "Nested choices remain valid, but a fourth level becomes difficult to scan and "

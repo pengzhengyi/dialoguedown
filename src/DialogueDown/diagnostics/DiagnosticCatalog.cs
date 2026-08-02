@@ -64,13 +64,13 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG1106 — a condition code span guards neither a jump, a line, nor a choice.</summary>
+    /// <summary>DLG1106 — a condition guards no jump, line, choice, or control branch.</summary>
     public static readonly DiagnosticDescriptor OrphanCondition = new(
         "DLG1106",
         "Condition guards nothing",
-        "A condition (`\"{0}\"?`) must guard a jump, a line, or a choice. Put it immediately before "
-            + "a `=>` jump, or at the start of a line or choice option, or remove the `?` to write "
-            + "a plain query.",
+        "A condition (`\"{0}\"?`) must guard a jump, line, choice option, or control branch. Put it "
+            + "immediately before a `=>` jump, at the start of a line or choice option, or after an "
+            + "`if`/`elseif` marker; otherwise remove the `?` to write a plain query.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
@@ -216,6 +216,16 @@ internal static class DiagnosticCatalog
         "Random choice weights sum to zero",
         "Every weight in this random choice is 0, so no option can be selected. Give at least one "
             + "option a positive weight.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG2015 — a scene heading is nested inside a control or choice branch.</summary>
+    public static readonly DiagnosticDescriptor SceneHeadingInsideBranch = new(
+        "DLG2015",
+        "Scene heading inside a branch",
+        "A scene heading must be a document-level block; it cannot appear inside a control branch "
+            + "or choice option. Move the heading outside the branch, then jump to that scene when "
+            + "the branch should enter it.",
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 

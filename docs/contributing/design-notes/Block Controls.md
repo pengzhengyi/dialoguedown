@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > Status: **implementation in progress**. The Markdown shape, marker recognition,
-> Dialogue AST, control-block construction, and grammar diagnostics are implemented;
-> semantic validation and final integration remain. Runtime evaluation is deferred to the graph/runtime
+> Dialogue AST, construction, grammar diagnostics, and semantic validation are
+> implemented; final integration remains. Runtime evaluation is deferred to the graph/runtime
 > ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
 
 ## Table of contents
@@ -75,7 +75,7 @@ Design targets for the implementation:
 - [x] Nest via a nested `> >` blockquote, recursively.
 - [x] Report a **severed chain** (a `` `elseif` ``/`` `else` `` opening its own
       blockquote) and **malformed marker order** as errors; never silently re-pair.
-- [ ] Report a **scene heading inside a branch** — a scene stays a top-level unit.
+- [x] Report a **scene heading inside a branch** — a scene stays a top-level unit.
 - [x] Require a **quoted blank line** between markers/utterances and to close a nested
       branch; report a marker fused into content.
 - [x] Read a **non-marker blockquote** as a transparent wrapper — its inner blocks in place.
