@@ -164,6 +164,129 @@ A line that begins with a styled name followed by a colon — like `*Alice*:` �
 
 <pre class="dd-example"><code class="nohighlight"><mark class="dd-mark-fix">Alice:</mark> Hello there.</code></pre>
 
+### DLG1108
+
+<span class="dd-sev dd-sev--error">Error</span> · Severed control branch
+
+`{0}` starts a separate blockquote without a connected `if`. Keep the `if`, every `elseif`, and the optional `else` inside one connected blockquote.
+
+Every branch of a block conditional belongs to one connected blockquote. An `elseif` or `else` that starts another blockquote has no connected `if`; continue the original blockquote instead.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; <mark class="dd-mark-bad">`elseif`</mark> `Known?`
+&gt;
+&gt; Alice: Welcome back.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; <mark class="dd-mark-fix">`if`</mark> `Known?`
+&gt;
+&gt; Alice: Welcome back.</code></pre>
+
+### DLG1109
+
+<span class="dd-sev dd-sev--error">Error</span> · Malformed control branch order
+
+`{0}` cannot appear here. A control block must contain one `if`, followed by zero or more `elseif` branches, then at most one `else`.
+
+A block conditional has one `if`, then any `elseif` branches, then at most one `else`. Move a guarded branch before the fallback instead of adding another `else` afterward.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; `if` `Rich?`
+&gt;
+&gt; Alice: Welcome upstairs.
+&gt;
+&gt; `else`
+&gt;
+&gt; Alice: Try downstairs.
+&gt;
+&gt; <mark class="dd-mark-bad">`else`
+&gt;
+&gt; Alice: Welcome back.</mark></code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; `if` `Rich?`
+&gt;
+&gt; Alice: Welcome upstairs.
+&gt;
+&gt; <mark class="dd-mark-fix">`elseif` `Known?`
+&gt;
+&gt; Alice: Welcome back.</mark>
+&gt;
+&gt; `else`
+&gt;
+&gt; Alice: Try downstairs.</code></pre>
+
+### DLG1110
+
+<span class="dd-sev dd-sev--error">Error</span> · Control marker must stand alone
+
+A `{0}` marker must stand alone in its paragraph. Put a quoted blank line (`>`) between the marker and its branch body.
+
+A branch marker is its own paragraph. Keep the blockquote connected, but add a quoted blank line (`>`) before the branch body so Markdown does not fuse them together.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; `if` <mark class="dd-mark-bad">`Rich?`
+&gt; Alice</mark>: Welcome upstairs.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; `if` <mark class="dd-mark-fix">`Rich?`
+&gt;
+&gt; Alice</mark>: Welcome upstairs.</code></pre>
+
+### DLG1111
+
+<span class="dd-sev dd-sev--error">Error</span> · Missing control branch condition
+
+A `{0}` marker requires a condition in a separate code span, such as `{0}` `Rich?`.
+
+An `if` or `elseif` marker needs its guard in a second code span. Add a condition such as `Rich?`; only `else` is unguarded.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"><mark class="dd-mark-bad">&gt; `if`
+&gt;</mark>
+&gt; Alice: Welcome upstairs.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"><mark class="dd-mark-fix">&gt; `if` `Rich?`</mark>
+&gt;
+&gt; Alice: Welcome upstairs.</code></pre>
+
+### DLG1112
+
+<span class="dd-sev dd-sev--error">Error</span> · Else branch cannot have a condition
+
+An `else` marker cannot have the condition `{0}?`. Remove the condition for a fallback branch, or change `else` to `elseif`.
+
+An `else` is the unguarded fallback, so it cannot carry a condition. Remove the guard, or write `elseif` when the branch should be conditional.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; `if` `Rich?`
+&gt;
+&gt; Alice: Welcome upstairs.
+&gt;
+&gt; <mark class="dd-mark-bad">`else` `Known?`</mark>
+&gt;
+&gt; Alice: Welcome back.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">&gt; `if` `Rich?`
+&gt;
+&gt; Alice: Welcome upstairs.
+&gt;
+&gt; <mark class="dd-mark-fix">`else`</mark>
+&gt;
+&gt; Alice: Welcome back.</code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.

@@ -155,6 +155,115 @@ internal static class DiagnosticDocs
                 ["*Alice*:"],
                 ["Alice:"])),
         new(
+            DiagnosticCatalog.SeveredControlBranch,
+            "Every branch of a block conditional belongs to one connected blockquote. An `elseif` "
+            + "or `else` that starts another blockquote has no connected `if`; continue the original "
+            + "blockquote instead.",
+            new(
+                """
+                > `elseif` `Known?`
+                >
+                > Alice: Welcome back.
+                """,
+                """
+                > `if` `Known?`
+                >
+                > Alice: Welcome back.
+                """,
+                ["`elseif`"],
+                ["`if`"])),
+        new(
+            DiagnosticCatalog.MalformedControlBranchOrder,
+            "A block conditional has one `if`, then any `elseif` branches, then at most one `else`. "
+            + "Move a guarded branch before the fallback instead of adding another `else` afterward.",
+            new(
+                """
+                > `if` `Rich?`
+                >
+                > Alice: Welcome upstairs.
+                >
+                > `else`
+                >
+                > Alice: Try downstairs.
+                >
+                > `else`
+                >
+                > Alice: Welcome back.
+                """,
+                """
+                > `if` `Rich?`
+                >
+                > Alice: Welcome upstairs.
+                >
+                > `elseif` `Known?`
+                >
+                > Alice: Welcome back.
+                >
+                > `else`
+                >
+                > Alice: Try downstairs.
+                """,
+                ["`else`\n>\n> Alice: Welcome back."],
+                ["`elseif` `Known?`\n>\n> Alice: Welcome back."])),
+        new(
+            DiagnosticCatalog.ControlMarkerNotAlone,
+            "A branch marker is its own paragraph. Keep the blockquote connected, but add a quoted "
+            + "blank line (`>`) before the branch body so Markdown does not fuse them together.",
+            new(
+                """
+                > `if` `Rich?`
+                > Alice: Welcome upstairs.
+                """,
+                """
+                > `if` `Rich?`
+                >
+                > Alice: Welcome upstairs.
+                """,
+                ["`Rich?`\n> Alice"],
+                ["`Rich?`\n>\n> Alice"])),
+        new(
+            DiagnosticCatalog.MissingControlBranchCondition,
+            "An `if` or `elseif` marker needs its guard in a second code span. Add a condition such "
+            + "as `Rich?`; only `else` is unguarded.",
+            new(
+                """
+                > `if`
+                >
+                > Alice: Welcome upstairs.
+                """,
+                """
+                > `if` `Rich?`
+                >
+                > Alice: Welcome upstairs.
+                """,
+                ["> `if`\n>"],
+                ["> `if` `Rich?`"])),
+        new(
+            DiagnosticCatalog.UnexpectedElseCondition,
+            "An `else` is the unguarded fallback, so it cannot carry a condition. Remove the guard, "
+            + "or write `elseif` when the branch should be conditional.",
+            new(
+                """
+                > `if` `Rich?`
+                >
+                > Alice: Welcome upstairs.
+                >
+                > `else` `Known?`
+                >
+                > Alice: Welcome back.
+                """,
+                """
+                > `if` `Rich?`
+                >
+                > Alice: Welcome upstairs.
+                >
+                > `else`
+                >
+                > Alice: Welcome back.
+                """,
+                ["`else` `Known?`"],
+                ["`else`"])),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",

@@ -1,9 +1,9 @@
 # Block controls
 
 > [!NOTE]
-> Status: **designed, not yet implemented**. It records the chosen shape (a condensed
-> survey), then the grammar, AST, and transpile-time recognition ready to build.
-> Runtime evaluation is deferred to the graph/runtime
+> Status: **implementation in progress**. The Markdown shape, marker recognition,
+> Dialogue AST, control-block construction, and grammar diagnostics are implemented;
+> semantic validation and final integration remain. Runtime evaluation is deferred to the graph/runtime
 > ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
 
 ## Table of contents
@@ -65,21 +65,21 @@ first.
 
 Design targets for the implementation:
 
-- [ ] Recognize a **connected blockquote** led by an `` `if` `` marker as a single
+- [x] Recognize a **connected blockquote** led by an `` `if` `` marker as a single
       `ControlBlock` with mutually-exclusive branches.
-- [ ] Parse the **two-span marker** — `` `if` ``/`` `elseif` `` plus the verbatim
+- [x] Parse the **two-span marker** — `` `if` ``/`` `elseif` `` plus the verbatim
       condition span `` `cond?` ``, and a bare `` `else` `` — reusing the shipped
       condition reader.
-- [ ] Group each **branch body** across blank-line-separated utterances, bounded by
+- [x] Group each **branch body** across blank-line-separated utterances, bounded by
       the blockquote (no terminator keyword).
-- [ ] Nest via a nested `> >` blockquote, recursively.
-- [ ] Report a **severed chain** (a `` `elseif` ``/`` `else` `` opening its own
+- [x] Nest via a nested `> >` blockquote, recursively.
+- [x] Report a **severed chain** (a `` `elseif` ``/`` `else` `` opening its own
       blockquote) and **malformed marker order** as errors; never silently re-pair.
 - [ ] Report a **scene heading inside a branch** — a scene stays a top-level unit.
-- [ ] Require a **quoted blank line** between markers/utterances and to close a nested
+- [x] Require a **quoted blank line** between markers/utterances and to close a nested
       branch; report a marker fused into content.
-- [ ] Read a **non-marker blockquote** as a transparent wrapper — its inner blocks in place.
-- [ ] Preserve source spans of the block, each branch, and each condition.
+- [x] Read a **non-marker blockquote** as a transparent wrapper — its inner blocks in place.
+- [x] Preserve source spans of the block, each branch, and each condition.
 - [ ] Handle `ControlBlock` in every block switch (rewriter, traversal, projection,
       validation), enforced by the compiler.
 
@@ -240,20 +240,21 @@ rest of the pipeline recurses into branch bodies unchanged.
 ```mermaid
 flowchart LR
     MD["Markdig QuoteBlock<br/>(nested > > already nested)"] --> CV["Converter →<br/>Markdown AST QuoteBlock"]
-    CV --> BB{"BlockBuilder:<br/>first child an if-marker?"}
-    BB -->|"yes"| CB["ControlBlock<br/>arms split at markers;<br/>bodies recurse → nested ControlBlock"]
+    CV --> BB{"BlockBuilder:<br/>marker-headed quote?"}
+    BB -->|"yes"| CBB["ControlBlockBuilder<br/>validate + split markers"]
+    CBB --> CB["ControlBlock<br/>bodies recurse through BlockBuilder"]
     BB -->|"no"| RAW["transparent wrapper<br/>(inner blocks in place)"]
 ```
 
 - **Markdown AST** gains a structural `QuoteBlock` block: the converter maps a Markdig
   `QuoteBlock` to it (holding its converted child blocks) instead of flattening it, so a
   nested `> >` is a nested `QuoteBlock`.
-- **The transpiler's `BlockBuilder`** gains a `QuoteBlock` case. If the first child is an
-  `` `if` `` marker, it builds a `ControlBlock` — splitting the quote's child blocks into
-  branches at the `` `if` ``/`` `elseif` ``/`` `else` `` markers, each branch body
-  recursing through the same `Build` (so a nested marker-headed quote becomes a nested
-  `ControlBlock`), exactly as a list becomes `Choices` today. A non-marker quote is a
-  transparent wrapper — its inner blocks are transpiled in place.
+- **The transpiler's `BlockBuilder`** dispatches a `QuoteBlock`: a non-marker quote is a
+  transparent wrapper whose inner blocks are transpiled in place; a marker-headed quote
+  is delegated to `ControlBlockBuilder`.
+- **`ControlBlockBuilder`** validates and splits markers, builds each `Branch`, and calls
+  back into its owning `BlockBuilder` for branch bodies. The shared recursion makes a nested
+  marker-headed quote a nested `ControlBlock`.
 
 The AST mirrors `Choices`/`Choice`:
 
@@ -279,21 +280,23 @@ completeness the [Control Line](./Control%20Line.md) note relied on.
 | `QuoteBlock` (Markdown AST)     | Hold a blockquote's child blocks structurally.                                            | New; converter stops flattening quotes.          |
 | `MarkdigToMarkdownAstConverter` | Map a Markdig `QuoteBlock` to the new node.                                               | Add the case.                                    |
 | `MarkerRecognition`             | Read a paragraph as an `` `if` ``/`` `elseif` `` + condition, or `` `else` ``.            | New; reuses the condition reader.                |
-| `BlockBuilder`                  | On a marker-headed `QuoteBlock`, build a `ControlBlock`; else transpile its inner blocks. | Add the `QuoteBlock` case + `BuildControlBlock`. |
+| `BlockBuilder`                  | Dispatch a quote to control construction or transparently transpile its inner blocks.     | Add the `QuoteBlock` case.                       |
+| `ControlBlockBuilder`           | Validate and split markers, build branches, and recurse through `BlockBuilder`.           | New builder.                                     |
 | `ControlBlock` / `Branch` (AST) | Model the construct and its arms; carry spans and each arm's condition.                   | New records.                                     |
 | `DialogueAstRewriter`           | Rewrite a `ControlBlock` and each branch body.                                            | New hook (like `RewriteChoice`).                 |
 | `ScriptNodeExtensions`          | Enumerate a `ControlBlock`'s branches and each branch's children.                         | New arms.                                        |
 | `DialogueAstProjection`         | Project a `ControlBlock` to a report node.                                                | New arm.                                         |
-| Validation rules                | Treat a branch condition as a bound guard; report severed chains and marker-order errors. | New/extended rules.                              |
+| Validation rules                | Treat a branch condition as a bound guard; reject scene headings inside branch bodies.    | New/extended rules.                              |
 
 ## Key design decisions
 
 ### D1 — Recognize in the transpiler, from the blockquote structure
 
-A control block is a Markdown structure (a marker-headed blockquote), so it is built in
-`BlockBuilder` while that structure is present, not reconstructed later. This reuses the
-existing "a container block becomes a grouped Dialogue block" path (a list → `Choices`)
-rather than inventing a parser, and it keeps the nested-quote tree Markdig already built.
+A control block is a Markdown structure (a marker-headed blockquote), so
+`ControlBlockBuilder` builds it from the `QuoteBlock` passed by `BlockBuilder`, while that
+structure is present, rather than reconstructing it later. This reuses the existing
+"a container block becomes a grouped Dialogue block" path (a list → `Choices`) and keeps
+the nested-quote tree Markdig already built.
 
 ### D2 — The marker is the two-span form
 
@@ -365,8 +368,9 @@ chips.
 
 ## Diagnostics
 
-New codes — three at transpile, one at validation — plus two reused checks
-(illustrative numbers; assigned at implementation):
+Five grammar errors are reported during transpilation, before marker-only data is
+discarded from the semantic AST. One placement error belongs to validation; two existing
+checks recurse into branch bodies.
 
 - **Severed chain** (`DLG1108`) — a blockquote led by `` `elseif` `` or `` `else` ``
   with no connected `` `if` ``. Reported, never re-paired ([D3](#d3--one-connected-blockquote-enforced-a-severed-chain-is-an-error)).
@@ -376,6 +380,10 @@ New codes — three at transpile, one at validation — plus two reused checks
   marker fused into a paragraph (mid-line, or with trailing speech) instead of alone on
   its line; the fix is a quoted blank line. Catches the nested lazy-continuation merge
   ([D7](#d7--separate-every-marker-and-utterance-with-a-quoted-blank-line)).
+- **Missing branch condition** (`DLG1111`) — an `` `if` `` or `` `elseif` `` marker
+  lacks its required condition span.
+- **Unexpected `else` condition** (`DLG1112`) — an `` `else` `` carries a condition;
+  recovery keeps it as the unconditional fallback.
 - **Orphan condition** (`DLG1106`, reused) — a branch's condition is a *bound* guard, not
   an orphan, exactly as for a conditional line or control line.
 - **Unreachable after a jump** (reused) — the [Progression Order](./Progression%20Order.md)
@@ -391,6 +399,8 @@ New codes — three at transpile, one at validation — plus two reused checks
 | a nested `> >` quote led by `` `if` `` | a nested `ControlBlock` | Markdig nests it; `Build` recurses |
 | `` `elseif` ``/`` `else` `` opening its own blockquote | severed-chain error | not connected to an `if` |
 | a second `` `else` ``, or `` `elseif` `` after `` `else` `` | marker-order error | branches must be `if` , `elseif`* , `else`? |
+| `` `if` `` / `` `elseif` `` without a condition | missing-condition error (`DLG1111`) | guarded branches require the second code span |
+| `` `else` `` followed by a condition | unexpected-condition error (`DLG1112`) | the fallback is unconditional |
 | a scene heading inside a branch | scene-placement error (`DLG2015`) | a scene is a top-level unit |
 | a marker fused into a paragraph (no quoted blank line) | marker-standalone error (`DLG1110`) | a marker must be alone on its line |
 | a blockquote **not** led by a marker | transparent wrapper (inner blocks in place) | the construct claims only marker-headed quotes |
@@ -402,8 +412,8 @@ New codes — three at transpile, one at validation — plus two reused checks
   a one-span `` `if Rich?` `` stays a plain condition.
 - **Transpile** — a connected blockquote builds a `ControlBlock` with ordered branches;
   a nested `> >` builds a nested `ControlBlock`; a non-marker quote is a transparent wrapper.
-- **Diagnostics** — a severed `` `elseif` ``/`` `else` `` and a malformed marker order
-  each report; a branch condition is not an orphan.
+- **Diagnostics** — severed chains, malformed order, fused markers, missing conditions,
+  and an `else` condition each report; a branch condition is not an orphan.
 - **Spans** — the block, each branch, and each condition preserve their source spans.
 - **Completeness** — an architecture test asserts every block switch handles
   `ControlBlock`; traversal, rewriting, and projection each cover it.
@@ -429,5 +439,3 @@ New codes — three at transpile, one at validation — plus two reused checks
 - **Branch content rules** — whether a branch may be empty or effect-only. (A scene
   heading inside a branch is settled: it is a diagnostic — see
   [D6](#d6--a-scene-is-a-top-level-unit-no-heading-inside-a-branch).)
-- **Diagnostic wording and spans** — the exact messages and source spans for the
-  severed-chain, marker-order, and marker-standalone errors.
