@@ -144,6 +144,19 @@ describe("debugEditor", () => {
         expect(requestedBreakpointLines(view.state)).toEqual([]);
     });
 
+    it("removes a breakpoint when CodeMirror deletes a middle line with its preceding newline", async () => {
+        const { view } = mount();
+        const line = view.state.doc.line(3);
+        toggleBreakpointAt(view, line.from);
+        await flushDebugUpdate();
+
+        // This is the range CodeMirror's delete-line command uses for a non-first line.
+        view.dispatch({ changes: { from: line.from - 1, to: line.to } });
+        await flushDebugUpdate();
+
+        expect(requestedBreakpointLines(view.state)).toEqual([]);
+    });
+
     it("shows a separate execution arrow and paused-line decoration without moving selection", async () => {
         const { view, debug } = mount();
         const selection = view.state.selection.main;

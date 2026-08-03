@@ -324,11 +324,21 @@ function isWholeDocumentReplacement(transaction: Transaction): boolean {
 function lineWasDeleted(transaction: Transaction, lineNumber: number): boolean {
     const document = transaction.startState.doc;
     const line = document.line(lineNumber);
-    const from = lineNumber === document.lines && lineNumber > 1 ? line.from - 1 : line.from;
-    const to = lineNumber < document.lines ? line.to + 1 : line.to;
+    const deletionRanges: Array<{ from: number; to: number }> = [];
+    if (lineNumber < document.lines) {
+        deletionRanges.push({ from: line.from, to: line.to + 1 });
+    }
+    if (lineNumber > 1) {
+        deletionRanges.push({ from: line.from - 1, to: line.to });
+    }
     let deleted = false;
     transaction.changes.iterChangedRanges((fromA, toA, fromB, toB) => {
-        if (fromB === toB && fromA <= from && toA >= to) deleted = true;
+        if (
+            fromB === toB &&
+            deletionRanges.some((range) => fromA <= range.from && toA >= range.to)
+        ) {
+            deleted = true;
+        }
     });
     return deleted;
 }
