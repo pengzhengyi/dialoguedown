@@ -63,6 +63,9 @@ import {
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument } from "./text";
+import type { DebugController } from "./debug-controller";
+import { debugEditor } from "./debug-editor";
+import { createDebugToolbar } from "./debug-toolbar";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -222,12 +225,16 @@ export interface SourceViewOptions {
      * do not share one collapse state.
      */
     previewStorageKey?: string;
+    /** Optional line-debugger controller. Absent in every ordinary report. */
+    debug?: DebugController;
 }
 
 /** A handle to a live source view, letting the mode controller reconfigure it in place. */
 export interface SourceViewHandle {
     /** The source-view element (editor + divider + preview) to mount. */
     readonly element: HTMLElement;
+    /** Release the editor, listeners, and optional debugger subscription. */
+    destroy(): void;
     /** Switch the editor between editable (Edit) and read-only (View) without a rebuild. */
     setEditable(editable: boolean): void;
     /** Replace the buffer (a View-mode hot-reload), keeping the one editor instance. */
@@ -311,6 +318,7 @@ export function createSourceView(
         onChange,
         symbols = () => EMPTY_SYMBOLS,
         previewStorageKey = "dd-preview-collapsed",
+        debug,
     } = options;
 
     // The document-aware completions are an Edit-only authoring aid, so they live in the
@@ -321,6 +329,8 @@ export function createSourceView(
     container.className = "source-view";
     const sourcePane = document.createElement("div");
     sourcePane.className = "source-pane";
+    const debugToolbar = debug ? createDebugToolbar(debug) : null;
+    if (debugToolbar) sourcePane.appendChild(debugToolbar.element);
 
     const divider = document.createElement("div");
     divider.className = "source-divider";
@@ -354,6 +364,7 @@ export function createSourceView(
         state: EditorState.create({
             doc: source,
             extensions: [
+                ...(debug ? [debugEditor(debug)] : []),
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter(),
@@ -419,6 +430,12 @@ export function createSourceView(
 
     return {
         element: container,
+        destroy: () => {
+            narrow?.removeEventListener("change", syncScrollWithLayout);
+            disposeScrollSync?.();
+            debugToolbar?.destroy();
+            view.destroy();
+        },
         setEditable: (next) =>
             view.dispatch({ effects: editability.reconfigure(editableConfig(next, [completion])) }),
         setContent: (next) =>
