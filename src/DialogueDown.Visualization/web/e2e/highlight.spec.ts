@@ -106,6 +106,44 @@ test("colors the reserved #END terminator as its own token", async ({ page }) =>
     expect(colors.mark).not.toBe(colors.jump);
 });
 
+test("colors a control keyword over its nested Markdown code-span highlight", async ({ page }) => {
+    const controlUrl = writeReport({
+        source: "`if` `Rich?`\n",
+        stages: SAMPLE_STAGES,
+        semanticTokens: [
+            {
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 4 } },
+                kind: "ControlKeyword",
+            },
+        ],
+    });
+    await page.goto(controlUrl);
+    await expect(page.locator(".tab")).toHaveCount(2);
+
+    const active = page.locator("section.stage.active");
+    await expect(active.locator(".dd-tok-control-keyword")).toHaveText("`if`");
+
+    // A code span nests Markdown syntax elements inside the semantic-token decoration. The
+    // innermost element is what the reader sees, so it must inherit the control-keyword color
+    // instead of retaining the generic inline-code color used by the neighboring condition.
+    const colors = await active.evaluate((root) => {
+        const mark = root.querySelector(".dd-tok-control-keyword") as Element;
+        let leaf: Element = mark;
+        while (leaf.firstElementChild != null) leaf = leaf.firstElementChild;
+        const condition = [...root.querySelectorAll(".cm-content *")].find(
+            (element) => element.childElementCount === 0 && element.textContent === "Rich?",
+        ) as Element;
+        return {
+            mark: getComputedStyle(mark).color,
+            leaf: getComputedStyle(leaf).color,
+            condition: getComputedStyle(condition).color,
+        };
+    });
+
+    expect(colors.leaf).toBe(colors.mark);
+    expect(colors.mark).not.toBe(colors.condition);
+});
+
 test("keeps the tag a separate token, not nested inside a speaker token", async ({ page }) => {
     const active = page.locator("section.stage.active");
 

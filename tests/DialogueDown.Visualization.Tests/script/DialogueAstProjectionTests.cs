@@ -179,6 +179,69 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
+    public void Describe_ControlBlock_LabelsItWithTheControlCategory()
+    {
+        var description = _projection.Describe(new ControlBlock([], new SourceSpan(0, 5)));
+
+        Assert.Equal("Control block", description.Label);
+        Assert.Equal("control", description.Category);
+    }
+
+    [Fact]
+    public void Describe_Branch_LabelsAGuardedBranchWithTheControlCategory()
+    {
+        var span = new SourceSpan(0, 5);
+        var branch = new Branch(new Condition("Rich", span), [], span);
+
+        var description = _projection.Describe(branch);
+
+        Assert.Equal("Branch", description.Label);
+        Assert.Equal("control", description.Category);
+    }
+
+    [Fact]
+    public void Describe_ElseBranch_LabelsItAsAnElseBranch()
+    {
+        var span = new SourceSpan(0, 5);
+
+        var description = _projection.Describe(new Branch(null, [], span));
+
+        Assert.Equal("Else branch", description.Label);
+        Assert.Equal("control", description.Category);
+    }
+
+    [Fact]
+    public void Neighbors_ControlBlock_YieldsBranches()
+    {
+        var span = new SourceSpan(0, 5);
+        var branch = new Branch(new Condition("Rich", span), [], span);
+        var control = new ControlBlock([branch], span);
+
+        Assert.Equal(new object[] { branch }, _projection.Neighbors(control));
+    }
+
+    [Fact]
+    public void Neighbors_Branch_YieldsTheConditionThenBody()
+    {
+        var span = new SourceSpan(0, 5);
+        var condition = new Condition("Rich", span);
+        var line = new Line(null, [new Text("x", span)], span);
+        var branch = new Branch(condition, [line], span);
+
+        Assert.Equal(new object[] { condition, line }, _projection.Neighbors(branch));
+    }
+
+    [Fact]
+    public void Neighbors_ElseBranch_YieldsOnlyBody()
+    {
+        var span = new SourceSpan(0, 5);
+        var line = new Line(null, [new Text("x", span)], span);
+        var branch = new Branch(null, [line], span);
+
+        Assert.Equal(new object[] { line }, _projection.Neighbors(branch));
+    }
+
+    [Fact]
     public void Neighbors_Line_YieldsSpeakerThenSpeech()
     {
         var span = new SourceSpan(0, 5);
@@ -294,13 +357,14 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
-    public void Describe_SyntheticNode_HasNoSpan()
+    public void Describe_SyntheticNode_CarriesItsZeroWidthCaretPosition()
     {
-        // A filled default speaker carries an empty (zero-width) span: a position, not a
-        // range of source, so it maps to no editable span.
+        // A filled default speaker carries an empty (zero-width) span: a caret position, not a
+        // range of source. It has no source text to slice, but it keeps its position so a client
+        // can place the cursor there — a "jump to source" on a synthetic node.
         var description = _projection.Describe(new DefaultSpeaker(new SourceSpan(3, 0)));
 
-        Assert.Null(description.Span);
+        Assert.Equal(new DisplaySpan(3, 3), description.Span);
     }
 
     [Fact]

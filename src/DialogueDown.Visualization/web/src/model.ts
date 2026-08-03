@@ -13,8 +13,9 @@ export interface DisplayNode {
     source?: string;
     /**
      * The node's source location as a half-open `[start, end)` character range into the
-     * original document, so an edit can be spliced back into the exact source. Absent for a
-     * synthetic node (no source of its own); the whole document for the document-root node.
+     * original document, so an edit can be spliced back into the exact source — or the cursor
+     * moved there. A synthetic node (no source of its own) carries a zero-width span at the
+     * position where it belongs (a caret); the whole document for the document-root node.
      */
     span?: { start: number; end: number };
     /** A stable, cross-stage semantic category that drives color. */
@@ -193,7 +194,8 @@ export type TokenKind =
     | "CustomTag"
     | "ReservedTag"
     | "JumpIndicator"
-    | "ReservedAnchor";
+    | "ReservedAnchor"
+    | "ControlKeyword";
 
 /**
  * One positioned dialogue token the compiler projects from the parse: a zero-based

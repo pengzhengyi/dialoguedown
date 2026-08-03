@@ -9,12 +9,19 @@ public sealed class SemanticTokenProjectionTests
     private readonly SemanticTokenProjection _projection = new();
 
     [Fact]
+    public void Project_NullMarkdown_Throws() =>
+        Assert.Throws<ArgumentNullException>(() =>
+            _projection.Project(null!, Pipeline.Document("x"), "x"));
+
+    [Fact]
     public void Project_NullDocument_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => _projection.Project(null!, "x"));
+        Assert.Throws<ArgumentNullException>(() =>
+            _projection.Project(Pipeline.Compilation("x").Markdown, null!, "x"));
 
     [Fact]
     public void Project_NullSource_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => _projection.Project(Pipeline.Document(""), null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            _projection.Project(Pipeline.Compilation("").Markdown, Pipeline.Document(""), null!));
 
     [Fact]
     public void Project_EmptyDocument_HasNoTokens() =>
@@ -122,6 +129,52 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_ControlBlock_ProjectsEachMarkerKeyword()
+    {
+        var source =
+            """
+            > `if` `Rich?`
+            >
+            > Welcome.
+            >
+            > `elseif` `Known?`
+            >
+            > Welcome back.
+            >
+            > `else`
+            >
+            > Try downstairs.
+            """;
+
+        var keywords = Project(source)
+            .Where(token => token.Kind == TokenKind.ControlKeyword)
+            .Select(token => token.TextIn(source));
+
+        Assert.Equal(["`if`", "`elseif`", "`else`"], keywords);
+    }
+
+    [Fact]
+    public void Project_MarkerShapedTopLevelParagraph_IsNotAControlKeyword()
+    {
+        var tokens = Project("`if` `Rich?`");
+
+        Assert.DoesNotContain(tokens, token => token.Kind == TokenKind.ControlKeyword);
+    }
+
+    [Fact]
+    public void Project_MarkerShapedParagraphInAnOrdinaryQuote_IsNotAControlKeyword()
+    {
+        var tokens = Project(
+            """
+            > An aside.
+            >
+            > `if` `Rich?`
+            """);
+
+        Assert.DoesNotContain(tokens, token => token.Kind == TokenKind.ControlKeyword);
+    }
+
+    [Fact]
     public void Project_TerminalDivert_ProjectsAReservedAnchorTokenOverTheEnd()
     {
         var source = "Alice: Farewell => [the end](#END)";
@@ -194,6 +247,9 @@ public sealed class SemanticTokenProjectionTests
         }
     }
 
-    private IReadOnlyList<SemanticToken> Project(string source) =>
-        [.. _projection.Project(Pipeline.Document(source), source)];
+    private IReadOnlyList<SemanticToken> Project(string source)
+    {
+        var compilation = Pipeline.Compilation(source);
+        return [.. _projection.Project(compilation.Markdown, compilation.Script, source)];
+    }
 }

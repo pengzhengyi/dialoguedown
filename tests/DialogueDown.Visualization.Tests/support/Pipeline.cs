@@ -13,6 +13,9 @@ namespace DialogueDown.Visualization.Tests.Support;
 /// </summary>
 internal static class Pipeline
 {
+    public static CompilationResult Compilation(string source) =>
+        Compile(source, CompilerOptions.Default);
+
     public static ScriptDocument Document(string source) => Compile(source, CompilerOptions.Default).Script;
 
     public static SemanticModel Model(string source) => Model(source, CompilerOptions.Default);

@@ -49,6 +49,16 @@ public sealed class SceneTreeProjectionTests
     }
 
     [Fact]
+    public void Describe_Scene_CarriesItsHeadingSpan()
+    {
+        // A scene maps to its heading in the source, so its detail panel can jump there.
+        var heading = new SceneHeading([new Text("Hi", new SourceSpan(0, 2))], 2, new SourceSpan(0, 2));
+        var scene = Scene.ForHeading(heading, "hi");
+
+        Assert.Equal(new DisplaySpan(0, 2), _projection.Describe(scene).Span);
+    }
+
+    [Fact]
     public void Describe_Scene_CarriesItsHeadingSource()
     {
         // A scene's detail panel shows the heading it was opened by, not a "no source" note.

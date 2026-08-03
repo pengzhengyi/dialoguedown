@@ -6,12 +6,12 @@ namespace DialogueDown.Script.Validation;
 
 /// <summary>
 /// Reports a condition that guards nothing. A <c>`"key"?`</c> condition guards the jump it
-/// precedes, the line it fronts, or the choice option it leads; one that guards none — left over
-/// in speech, or with no content after it — cannot do anything, so it is an error. The condition
-/// keeps its span, so the diagnostic points at the code span itself. A condition is
-/// <em>bound</em> when it is exactly the <see cref="Condition"/> its parent jump, line, or option
-/// references, so a stray condition sharing a line with a real guard is still caught by identity
-/// rather than by its parent's type alone.
+/// precedes, the line it fronts, the choice option it leads, or the control branch it opens; one
+/// that guards none — left over in speech, or with no content after it — cannot do anything, so
+/// it is an error. The condition keeps its span, so the diagnostic points at the code span itself.
+/// A condition is <em>bound</em> when it is exactly the <see cref="Condition"/> its parent jump,
+/// line, option, or branch references, so a stray condition sharing a line with a real guard is
+/// still caught by identity rather than by its parent's type alone.
 /// </summary>
 internal sealed class OrphanConditionRule : DiagnosticRule
 {
@@ -38,6 +38,7 @@ internal sealed class OrphanConditionRule : DiagnosticRule
         ControlLine control => ReferenceEquals(control.Condition, condition),
         Choice choice => ReferenceEquals(choice.Condition, condition),
         RandomOption option => ReferenceEquals(option.Condition, condition),
+        Branch branch => ReferenceEquals(branch.Condition, condition),
         _ => false,
     };
 }

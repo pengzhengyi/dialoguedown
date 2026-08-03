@@ -78,4 +78,33 @@ describe("createNodeDetailPanel", () => {
         toggle.click();
         expect(panel.element.classList.contains("collapsed")).toBe(false);
     });
+
+    describe("jump to source", () => {
+        const jumpButton = (panel: { element: HTMLElement }) =>
+            panel.element.querySelector<HTMLButtonElement>(".node-detail-heading .node-jump");
+
+        it("offers no jump affordance without a jump handler", () => {
+            const panel = createNodeDetailPanel();
+            panel.show(node({ source: "# The Market", span: { start: 0, end: 12 } }));
+            expect(jumpButton(panel)).toBeNull();
+        });
+
+        it("jumps to a node's span from a button beside the heading", () => {
+            const jumps: Array<{ start: number; end: number }> = [];
+            const panel = createNodeDetailPanel({ jumpToSource: (span) => jumps.push(span) });
+            panel.show(node({ source: "# The Market", span: { start: 0, end: 12 } }));
+
+            const button = jumpButton(panel)!;
+            expect(button.hidden).toBe(false);
+            expect(button.getAttribute("aria-label")).toBe("Jump to source");
+            button.click();
+            expect(jumps).toEqual([{ start: 0, end: 12 }]);
+        });
+
+        it("hides the jump for a node with no span", () => {
+            const panel = createNodeDetailPanel({ jumpToSource: () => {} });
+            panel.show(node({ label: "Speaker (default)", source: undefined }));
+            expect(jumpButton(panel)?.hidden).toBe(true);
+        });
+    });
 });

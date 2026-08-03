@@ -10,6 +10,17 @@ changes easy to categorize.
 
 ### Added
 
+- **Block conditionals** — group dialogue, commands, choices, and jumps into connected
+  blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
+  `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
+  nested blocks, and highlights marker keywords in the source editor. See
+  [Block controls](docs/contributing/design-notes/Block%20Controls.md).
+- **Jump from a graph node to its source** — the Node details panel now has a **Jump to source**
+  icon beside the node title (on the AST graph tabs and the Semantic Model tab) that opens the
+  Source tab with the node's text selected, so you can move from a node straight to the lines it
+  came from. A synthetic node the compiler inserted (a filled-in default speaker) has no text of
+  its own, so the jump places the cursor where it belongs instead.
+  See the [Node Editing](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Editing.md) note.
 - **File Explorer in the report** — a served report opened through the launcher now shows a
   collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
   highlighted, and open another by clicking it or following a cross-file link. A VS Code-style
@@ -22,6 +33,12 @@ changes easy to categorize.
   heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an
   editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
   [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
+- **Quote and unquote blocks in the editor** — in Live Edit, `⌘/Ctrl-.` wraps every line the
+  selection touches in a Markdown blockquote (nesting on an already-quoted line) and
+  `⌘/Ctrl-Shift-.` removes one level; a right-click **surround menu** offers the same alongside
+  bold, italic, and strikethrough, and the preview marks each nesting level with its own color.
+  Handy for the blockquote-based block controls. See the
+  [Live Edit](docs/contributing/design-notes/Live%20Visualization%20-%20Live%20Edit.md) note.
 
 ### Changed
 
@@ -35,11 +52,17 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Block-control keywords keep their syntax color** — `` `if` ``, `` `elseif` ``, and
+  `` `else` `` no longer fall back to the generic inline-code gray in the Source editor.
 - **`ddown visualize` now stops on Ctrl+C** — the live server previously ignored the
   interrupt and had to be killed, because the shutdown signal reached the web host but
   not the command waiting on it. Pressing Ctrl+C (or sending a termination signal) now
   stops the session promptly, ending any open hot-reload stream instead of blocking
   shutdown.
+- **Tab now indents in the Source editor.** In Live Edit, Tab indents at the start of a line
+  or across a multi-line selection and inserts spaces mid-line (Shift-Tab outdents), like a
+  normal code editor, instead of moving focus out of the editor; press Esc to move focus out.
+  Tab still accepts an open autocomplete suggestion.
 
 ## [0.1.0] - 2026-07-28
 

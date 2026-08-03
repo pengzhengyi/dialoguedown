@@ -452,6 +452,70 @@ test("a synthetic node offers no editor, only an inserted note", async ({ page }
     await expect(detailNote).toContainText("Edit the line to name one");
 });
 
+test("jumps from a graph node to its source, selecting the node's span", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+    await page.locator(".tab", { hasText: "Dialogue AST" }).click();
+    await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+    // Select a Text node; the inspector offers a "Jump to source" icon beside the title.
+    await selectNode(page, "Text");
+    const nodeSource = (
+        (await page.locator(".node-source .cm-content").textContent()) ?? ""
+    ).trim();
+    const jump = page.locator("#detail-title .node-jump");
+    await expect(jump).toBeVisible();
+    await expect(jump).toHaveAttribute("aria-label", "Jump to source");
+    await jump.click();
+
+    // The Source tab is now active, its editor focused, with the node's exact text selected.
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    const selected = (await page.evaluate(() => window.getSelection()?.toString() ?? "")).trim();
+    expect(selected).toBe(nodeSource);
+});
+
+test("jumps from a synthetic node to its position, placing the caret without a selection", async ({
+    page,
+}) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+    // The filled default speaker is synthetic — inserted by desugar — so it appears here.
+    await page.locator(".tab", { hasText: "Desugared AST" }).click();
+    await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+    // Its jump lands the caret at the node's position rather than selecting a range.
+    await selectNode(page, "default");
+    const jump = page.locator("#detail-title .node-jump");
+    await expect(jump).toBeVisible();
+    await jump.click();
+
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    // A zero-width caret places the cursor with nothing selected.
+    const selected = await page.evaluate(() => window.getSelection()?.toString() ?? "");
+    expect(selected).toBe("");
+});
+
+test("jumps from a Semantic-tab node to its source", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+    await page.locator(".tab", { hasText: "Semantic Model" }).click();
+    await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+    // The Semantic tab has its own node-details panel; it carries the same jump affordance.
+    await selectNode(page, "Market");
+    const jump = page.locator(".node-detail-heading .node-jump");
+    await expect(jump).toBeVisible();
+    await jump.click();
+
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    const selected = (await page.evaluate(() => window.getSelection()?.toString() ?? "")).trim();
+    expect(selected.length).toBeGreaterThan(0);
+    expect(NODE_DOC).toContain(selected);
+});
+
 test("navigation locks while a node edit is unsaved", async ({ page }) => {
     writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
     await page.goto(`${base}/`);
@@ -552,4 +616,88 @@ test("the active heading line reveals a #slug hint that copies the anchor", asyn
     // Moving the caret off the heading line hides the hint (revealed on the active line only).
     await page.locator(".source-pane .cm-line", { hasText: "Alice" }).click();
     await expect(hint).toHaveCount(0);
+});
+
+test("quotes and unquotes the selection by keyboard and from the surround menu", async ({
+    page,
+}) => {
+    await page.goto(`${base}/`);
+    const editor = page.locator(".source-pane .cm-content");
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    // Select the whole document and quote it with Cmd/Ctrl+. (adds a marker to every line).
+    await editor.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("ControlOrMeta+Period");
+    await expect(editor).toContainText("> # Scene");
+    await expect(editor).toContainText("> Alice: The first line.");
+
+    // Unquote it back with Cmd/Ctrl+Shift+.
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("ControlOrMeta+Shift+Period");
+    await expect(editor).not.toContainText("> # Scene");
+
+    // Right-click offers the same surround actions; choosing Quote re-quotes the selection.
+    await page.keyboard.press("ControlOrMeta+a");
+    await editor.click({ button: "right" });
+    const menu = page.locator(".context-menu");
+    await expect(menu).toBeVisible();
+    await expect(menu.locator(".context-menu-item")).toHaveText([
+        "Bold",
+        "Italic",
+        "Strikethrough",
+        "Quote",
+        "Unquote",
+    ]);
+    await menu.getByRole("menuitem", { name: "Quote", exact: true }).click();
+    await expect(editor).toContainText("> # Scene");
+});
+
+test("Tab indents at the line front and Esc leaves the editor, instead of Tab moving focus out", async ({
+    page,
+}) => {
+    await page.goto(`${base}/`);
+    const editor = page.locator(".source-pane .cm-content");
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    // Put the caret at the start of the "Alice" line, then press Tab.
+    await page.locator(".source-pane .cm-line", { hasText: "Alice" }).click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Tab");
+
+    // Tab indented the line (rather than tabbing out of the editor): the line now starts with
+    // whitespace, and the editor kept focus.
+    const indented = await page.evaluate(() =>
+        [...document.querySelectorAll(".source-pane .cm-line")].some((line) =>
+            /^\s+Alice: The first line\./.test(line.textContent ?? ""),
+        ),
+    );
+    expect(indented).toBe(true);
+    await expect(editor).toBeFocused();
+
+    // Escape is the keyboard escape hatch — it blurs the editor so Tab-to-indent is not a trap.
+    await page.keyboard.press("Escape");
+    await expect(editor).not.toBeFocused();
+});
+
+test("Tab inserts spaces mid-line instead of indenting the whole line", async ({ page }) => {
+    await page.goto(`${base}/`);
+    const editor = page.locator(".source-pane .cm-content");
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    // Place the caret after the first character of the "Alice" line (past the leading edge), so
+    // Tab should insert spaces at the caret rather than re-indenting the line.
+    await page.locator(".source-pane .cm-line", { hasText: "Alice" }).click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Tab");
+
+    // Two spaces were inserted at the caret (splitting "Alice"), and the line front stayed flush.
+    const insertedMidLine = await page.evaluate(() =>
+        [...document.querySelectorAll(".source-pane .cm-line")].some((line) =>
+            /^A {2}lice: The first line\./.test(line.textContent ?? ""),
+        ),
+    );
+    expect(insertedMidLine).toBe(true);
+    await expect(editor).toBeFocused();
 });
