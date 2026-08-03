@@ -64,13 +64,13 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG1106 — a condition code span guards neither a jump, a line, nor a choice.</summary>
+    /// <summary>DLG1106 — a condition guards no jump, line, choice, or control branch.</summary>
     public static readonly DiagnosticDescriptor OrphanCondition = new(
         "DLG1106",
         "Condition guards nothing",
-        "A condition (`\"{0}\"?`) must guard a jump, a line, or a choice. Put it immediately before "
-            + "a `=>` jump, or at the start of a line or choice option, or remove the `?` to write "
-            + "a plain query.",
+        "A condition (`\"{0}\"?`) must guard a jump, line, choice option, or control branch. Put it "
+            + "immediately before a `=>` jump, at the start of a line or choice option, or after an "
+            + "`if`/`elseif` marker; otherwise remove the `?` to write a plain query.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
@@ -82,6 +82,50 @@ internal static class DiagnosticCatalog
             + "recognized and the line has no speaker. Remove the styling to declare the speaker.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Warning);
+
+    /// <summary>DLG1108 — an elseif or else starts a disconnected blockquote.</summary>
+    public static readonly DiagnosticDescriptor SeveredControlBranch = new(
+        "DLG1108",
+        "Severed control branch",
+        "`{0}` starts a separate blockquote without a connected `if`. Keep the `if`, every "
+            + "`elseif`, and the optional `else` inside one connected blockquote.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG1109 — a branch marker appears outside if, elseif*, else? order.</summary>
+    public static readonly DiagnosticDescriptor MalformedControlBranchOrder = new(
+        "DLG1109",
+        "Malformed control branch order",
+        "`{0}` cannot appear here. A control block must contain one `if`, followed by zero or "
+            + "more `elseif` branches, then at most one `else`.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG1110 — a control marker shares its paragraph with branch content.</summary>
+    public static readonly DiagnosticDescriptor ControlMarkerNotAlone = new(
+        "DLG1110",
+        "Control marker must stand alone",
+        "A `{0}` marker must stand alone in its paragraph. Put a quoted blank line (`>`) between "
+            + "the marker and its branch body.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG1111 — an if or elseif marker has no condition.</summary>
+    public static readonly DiagnosticDescriptor MissingControlBranchCondition = new(
+        "DLG1111",
+        "Missing control branch condition",
+        "A `{0}` marker requires a condition in a separate code span, such as `{0}` `Rich?`.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG1112 — an else marker incorrectly carries a condition.</summary>
+    public static readonly DiagnosticDescriptor UnexpectedElseCondition = new(
+        "DLG1112",
+        "Else branch cannot have a condition",
+        "An `else` marker cannot have the condition `{0}?`. Remove the condition for a fallback "
+            + "branch, or change `else` to `elseif`.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Error);
 
     // Semantic — DLG2xxx: a meaning-level conflict found during analysis.
 
@@ -172,6 +216,16 @@ internal static class DiagnosticCatalog
         "Random choice weights sum to zero",
         "Every weight in this random choice is 0, so no option can be selected. Give at least one "
             + "option a positive weight.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Error);
+
+    /// <summary>DLG2015 — a scene heading is nested inside a control or choice branch.</summary>
+    public static readonly DiagnosticDescriptor SceneHeadingInsideBranch = new(
+        "DLG2015",
+        "Scene heading inside a branch",
+        "A scene heading must be a document-level block; it cannot appear inside a control branch "
+            + "or choice option. Move the heading outside the branch, then jump to that scene when "
+            + "the branch should enter it.",
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 

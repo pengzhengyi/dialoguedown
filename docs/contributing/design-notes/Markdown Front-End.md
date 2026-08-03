@@ -268,8 +268,8 @@ discarded — D9). No other GFM syntax (task lists, GFM autolinks,
 subscript/superscript) is enabled. Consequences:
 
 - Other GFM syntax stays literal text the writer typed.
-- Any construct we do not model (blockquotes, thematic breaks, code blocks,
-  tables, stray HTML, …) is by **default flattened to its raw source text** via
+- Any construct we do not model (thematic breaks, code blocks, tables, stray
+  HTML, …) is by **default flattened to its raw source text** via
   the span mechanism (D2), never silently dropped — though the handling policy
   (D8) can instead **ignore** a given kind.
 
@@ -303,7 +303,7 @@ So each **unmodeled node kind** is resolved by a policy to either **`Ignore`**
 default).
 
 `DefaultUnmodeledNodeHandlingPolicy` ignores `CodeBlock`, `ThematicBreak`, and
-`Table` (authoring aids) and keeps `BlockQuote`, `RawHtml`, `Autolink`, and any
+`Table` (authoring aids) and keeps `RawHtml`, `Autolink`, and any
 `Other` unrecognized construct as raw text (possibly intended content). A caller
 can pass a custom `IUnmodeledNodeHandlingPolicy` to `MarkdigMarkdownParser` to
 override any kind. The converter classifies each unmodeled node with a static
@@ -346,7 +346,7 @@ content is an ordinary thematic break (handled per the policy — D8).
 | `HtmlInline`/`HtmlBlock` comment                                          | *(discarded)*                       | recognized and dropped so it never enters speech (D5)                                      |
 | `YamlFrontMatterBlock`                                                    | *(discarded)*                       | leading `---` metadata block, firmly dropped (D9)                                          |
 | unmodeled **inline** (autolink, other HTML)                               | `TextInline` (raw source)           | flatten via source span; never dropped                                                     |
-| unmodeled **block** (blockquote, thematic break, fenced code, other HTML) | `Paragraph` of one raw `TextInline` | flatten via source span; never dropped                                                     |
+| unmodeled **block** (thematic break, fenced code, other HTML)             | `Paragraph` of one raw `TextInline` | flatten via source span; never dropped                                                     |
 
 Conversion is a straightforward recursive walk; unmodeled nodes flatten to their
 raw source slice (D6):

@@ -5,6 +5,12 @@ export type HelpContext = "source" | "graph" | "semantic" | "explorer";
 const SOURCE_HELP = `
   <p><strong>Source &amp; preview.</strong> The left pane is the document as written;
      the right pane is a live Markdown preview.</p>
+  <p><strong>Syntax colors.</strong> The compiler distinguishes commands, value queries,
+     conditions, static and dynamic random weights, control keywords, and the reserved
+     <kbd>#END</kbd> target; ordinary code spans keep the Markdown code color.</p>
+  <p><strong>Jump ligature.</strong> In the rendered preview, <kbd>=&gt;</kbd> before a
+     link uses a bundled Fira Code ligature. The Source editor and saved script still keep
+     the literal <kbd>=</kbd> and <kbd>&gt;</kbd> characters.</p>
   <p><strong>Preview links</strong> jump to their headings within the preview.</p>
   <p><strong>Drag the divider</strong> between the panes to re-proportion them, or use its
      <strong>hide handle</strong> to collapse the preview and give the editor the full

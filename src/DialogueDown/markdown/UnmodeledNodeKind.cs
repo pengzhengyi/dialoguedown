@@ -16,9 +16,6 @@ internal enum UnmodeledNodeKind
     /// <summary>A GFM pipe table.</summary>
     Table,
 
-    /// <summary>A block quote (<c>&gt; ...</c>).</summary>
-    BlockQuote,
-
     /// <summary>Raw HTML that is not a comment (block or inline).</summary>
     RawHtml,
 

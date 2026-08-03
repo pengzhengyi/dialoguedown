@@ -14,7 +14,6 @@ public sealed class MarkdigUnmodeledNodeClassifierTests
         Assert.Equal(UnmodeledNodeKind.CodeBlock, ClassifyBlock(FencedCode()));
         Assert.Equal(UnmodeledNodeKind.ThematicBreak, ClassifyBlock(ThematicBreak()));
         Assert.Equal(UnmodeledNodeKind.Table, ClassifyBlock(PipeTable()));
-        Assert.Equal(UnmodeledNodeKind.BlockQuote, ClassifyBlock(Quote()));
         Assert.Equal(UnmodeledNodeKind.RawHtml, ClassifyBlock(HtmlBlockNode()));
     }
 
@@ -45,8 +44,6 @@ public sealed class MarkdigUnmodeledNodeClassifierTests
     private static Block ThematicBreak() => new ThematicBreakBlock(null!);
 
     private static Block PipeTable() => new Table();
-
-    private static Block Quote() => new QuoteBlock(null!);
 
     private static Block HtmlBlockNode() => new HtmlBlock(null!);
 
