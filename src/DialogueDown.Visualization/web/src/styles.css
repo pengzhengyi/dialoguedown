@@ -1,3 +1,12 @@
+@font-face {
+    font-family: "Fira Code";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("../node_modules/@fontsource/fira-code/files/fira-code-latin-400-normal.woff2")
+        format("woff2");
+}
+
 :root {
     --dd-reference: #cf222e;
 
@@ -1707,6 +1716,12 @@ g.node.entity-highlight text.label {
     border: none;
     border-radius: 0;
     scroll-behavior: smooth;
+}
+
+.source-preview .jump-ligature {
+    font-family: "Fira Code", var(--pico-font-family-monospace, ui-monospace, monospace);
+    font-feature-settings: "calt" 1;
+    font-variant-ligatures: contextual;
 }
 
 /* Preview blockquotes — the if/else block controls nest blockquotes, so mark each level with its

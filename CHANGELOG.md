@@ -42,6 +42,9 @@ changes easy to categorize.
 
 ### Changed
 
+- **Jump indicators use a preview ligature** — the Source tab's rendered Markdown preview
+  shows `=>` with a bundled Fira Code ligature, while the editor and underlying script keep
+  the original two characters.
 - **Semantic code-span colors in the Source editor** — commands, value queries,
   conditions, static random weights, and dynamic random weights now use distinct
   VS Code-inspired colors in light and dark themes, including inside blockquotes;
