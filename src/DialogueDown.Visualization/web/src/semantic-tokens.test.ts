@@ -33,6 +33,7 @@ describe("decoratedRanges", () => {
             "ReservedTag",
             "JumpIndicator",
             "ReservedAnchor",
+            "ControlKeyword",
         ];
 
         const classes = kinds.map(
@@ -47,6 +48,7 @@ describe("decoratedRanges", () => {
             "dd-tok-reserved-tag",
             "dd-tok-jump",
             "dd-tok-reserved-anchor",
+            "dd-tok-control-keyword",
         ]);
     });
 

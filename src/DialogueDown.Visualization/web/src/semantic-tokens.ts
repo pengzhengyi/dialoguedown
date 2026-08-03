@@ -15,6 +15,7 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
     ReservedTag: "dd-tok-reserved-tag",
     JumpIndicator: "dd-tok-jump",
     ReservedAnchor: "dd-tok-reserved-anchor",
+    ControlKeyword: "dd-tok-control-keyword",
 };
 
 /** One token resolved to editor offsets and its decoration class. */

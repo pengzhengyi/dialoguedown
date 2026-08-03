@@ -20,6 +20,7 @@
     --tok-reserved-tag: #953800;
     --tok-jump: #1b7c83;
     --tok-reserved-anchor: #cf222e;
+    --tok-control-keyword: #cf222e;
 
     /* Cross-link highlight: hovering a scene or speaker in the Semantic tab lights up
        every place it appears (graph node, table rows/cells). An amber "highlighter"
@@ -73,6 +74,7 @@
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
         --tok-reserved-anchor: #ff7b72;
+        --tok-control-keyword: #ff7b72;
         --table-mark-bg: #b0892b;
         --table-mark-fg: #f8fafc;
     }
@@ -97,6 +99,7 @@
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
     --tok-reserved-anchor: #ff7b72;
+    --tok-control-keyword: #ff7b72;
     --table-mark-bg: #b0892b;
     --table-mark-fg: #f8fafc;
 }
@@ -1366,6 +1369,11 @@ g.node.entity-highlight text.label {
 .source-pane .cm-content .dd-tok-reserved-anchor,
 .source-pane .cm-content .dd-tok-reserved-anchor * {
     color: var(--tok-reserved-anchor);
+    font-weight: 600;
+}
+
+.source-pane .cm-content .dd-tok-control-keyword {
+    color: var(--tok-control-keyword);
     font-weight: 600;
 }
 
