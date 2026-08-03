@@ -3,21 +3,70 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph;
 
 /// <summary>
-/// Assigns node ids by document position: the i-th block gets id <c>i</c>, and the End node the
-/// next id. Blocks are keyed by reference, so two blocks with identical content stay distinct.
+/// Assigns sequential node ids as blocks are added. Blocks are keyed by reference, so two blocks
+/// with identical content stay distinct.
 /// </summary>
 internal sealed class IndexNodeIdBuilder : INodeIdBuilder
 {
-    public NodeIdMap Assign(IReadOnlyList<ScriptBlock> blocks)
-    {
-        ArgumentNullException.ThrowIfNull(blocks);
+    private readonly Dictionary<ScriptBlock, NodeId> _nodeIdByBlock =
+        new(ReferenceEqualityComparer.Instance);
+    private NodeIdMap? _frozen;
+    private NodeId? _end;
+    private int _next;
 
-        var byBlock = new Dictionary<ScriptBlock, NodeId>(ReferenceEqualityComparer.Instance);
-        for (var i = 0; i < blocks.Count; i++)
+    public NodeId GetOrAssign(ScriptBlock block)
+    {
+        ArgumentNullException.ThrowIfNull(block);
+        AssertNotFrozen();
+
+        if (!_nodeIdByBlock.TryGetValue(block, out var id))
         {
-            byBlock[blocks[i]] = new NodeId(i);
+            id = NextId();
+            _nodeIdByBlock.Add(block, id);
         }
 
-        return new NodeIdMap(byBlock, new NodeId(blocks.Count));
+        return id;
+    }
+
+    public NodeId GetOrAssignEnd()
+    {
+        AssertNotFrozen();
+        return _end ??= NextId();
+    }
+
+    public NodeId Get(ScriptBlock block)
+    {
+        ArgumentNullException.ThrowIfNull(block);
+        return _nodeIdByBlock.TryGetValue(block, out var id)
+            ? id
+            : throw new ArgumentException(
+                "This block has not been assigned a graph node id.", nameof(block));
+    }
+
+    public NodeIdMap Freeze()
+    {
+        if (_frozen is not null)
+        {
+            return _frozen;
+        }
+
+        var end = _end ?? throw new InvalidOperationException(
+            "The End node must be assigned before node ids can be frozen.");
+        _frozen = new NodeIdMap(
+            new Dictionary<ScriptBlock, NodeId>(
+                _nodeIdByBlock,
+                ReferenceEqualityComparer.Instance),
+            end);
+        return _frozen;
+    }
+
+    private NodeId NextId() => new(_next++);
+
+    private void AssertNotFrozen()
+    {
+        if (_frozen is not null)
+        {
+            throw new InvalidOperationException("Node ids have already been frozen.");
+        }
     }
 }

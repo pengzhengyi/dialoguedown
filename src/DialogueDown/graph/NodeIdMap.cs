@@ -10,5 +10,5 @@ namespace DialogueDown.Graph;
 internal sealed record NodeIdMap(IReadOnlyDictionary<ScriptBlock, NodeId> ByBlock, NodeId End)
 {
     /// <summary>The id assigned to <paramref name="block"/>.</summary>
-    public NodeId Of(ScriptBlock block) => ByBlock[block];
+    public NodeId this[ScriptBlock block] => ByBlock[block];
 }
