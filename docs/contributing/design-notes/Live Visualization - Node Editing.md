@@ -31,6 +31,7 @@
     - [D5 — Synthetic nodes are read-only and point to the editable parent](#d5--synthetic-nodes-are-read-only-and-point-to-the-editable-parent)
     - [D6 — Preview-as-you-type, in the inspector](#d6--preview-as-you-type-in-the-inspector)
     - [D7 — Enter Edit from a graph tab](#d7--enter-edit-from-a-graph-tab)
+    - [D8 — Jump to source from the inspector](#d8--jump-to-source-from-the-inspector)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Integration](#integration)
   - [Testability](#testability)
@@ -198,7 +199,9 @@ for the one synthetic node the pipeline produces. Instead the synthetic node sta
 **read-only** and its note guides the reader to the editable parent line ("Inserted by the
 compiler because the line names no speaker. Edit the line to name one."). The call to
 action appears only in a **served** session, where editing is actually possible; a static
-export shows the explanation without it.
+export shows the explanation without it. The node still carries its zero-width position, so
+the inspector's **Jump to source** ([D8](#d8--jump-to-source-from-the-inspector)) can place
+the cursor there even though there is nothing to select.
 
 ### D6 — Preview-as-you-type, in the inspector
 
@@ -215,6 +218,28 @@ Because node editing happens on graph tabs, the View ⇄ Edit toggle is **thawed
 tabs** so a reader can switch to Edit while looking at a graph (today it is frozen there
 and only live on Source). The toggle still governs the whole session; thawing it just
 removes an awkward detour through the Source tab.
+
+### D8 — Jump to source from the inspector
+
+The inspector shows a node's source, but changing more than the node — or just reading it in
+its surrounding context — still meant hunting for the text on the Source tab. A **Jump to
+source** icon beside the node title closes that: it opens the Source tab with the node's span
+**selected**, routed through the same save-safe navigation guard as a tab click (an Auto save
+flushes, a Manual prompt resolves) so the jump never lands beside unsaved graph edits. It is an
+icon-only button (a Tippy tooltip carries the label), drawn in the mode accent so it stays
+legible — the Pico button default paints its text white, which is invisible on the light panel.
+A **synthetic** node has no source to select
+([D5](#d5--synthetic-nodes-are-read-only-and-point-to-the-editable-parent)), but it carries a
+zero-width position, so the jump **places the caret** there instead. The button appears whenever
+there is a Source tab to land in, including a static export (a read-only editor is still
+selectable), and is hidden for the rare node that maps to no position at all. The same affordance
+is shared by both node-detail panels — the AST graph inspector and the **Semantic Model** tab's —
+so scenes and blocks jump there too; a scene lands on its heading.
+
+Exposing those positions took a small core change: the Dialogue-AST projection now keeps a
+synthetic node's zero-width span (a caret) instead of dropping it, and a scene now carries its
+heading span — while a synthetic node still reports no source **text**, so the "inserted by the
+compiler" note is unchanged.
 
 ## Error and boundary cases
 

@@ -41,6 +41,17 @@
     --edit-accent: #15803d;
     --edit-accent-hover: #166534;
 
+    /* Blockquote nesting palette: the preview marks each nested level with its own left-border
+       color, cycling this small set, so the depth of the blockquote-based block controls reads at a
+       glance. These are the vivid "active" tones; the rule renders them grayed by default (mixed
+       toward a neutral) and shows the full color on hover. */
+    --dd-quote-1: #4c8dd6;
+    --dd-quote-2: #4fae82;
+    --dd-quote-3: #cf9a4a;
+    --dd-quote-4: #9a78c9;
+    --dd-quote-5: #cf7a9e;
+    --dd-quote-mute: #8a94a6;
+
     /* Search-match highlight in the Semantic-tab tables: the query's matches in filtered rows
        get an amber "highlighter" fill, distinct from the amber cross-link tint (which sits on
        whole cells) by being an opaque marker on the matched text only. Dark overrides below. */
@@ -680,9 +691,10 @@ section.stage.empty-shell {
     border-radius: 0;
 }
 
-/* A folder's right-click menu: a small floating card of actions (New File / New Folder),
-   anchored at the cursor. It reuses the tree's accent-tinted hover so it feels of a piece. */
-.explorer-context-menu {
+/* A right-click context menu: a small floating card of actions, anchored at the cursor. Shared by
+   the Explorer's row menus and the editor's surround menu; it reuses the accent-tinted hover so it
+   feels of a piece with the tree. */
+.context-menu {
     position: fixed;
     z-index: 1000;
     min-width: 11rem;
@@ -694,7 +706,7 @@ section.stage.empty-shell {
     box-shadow: 0 6px 20px rgb(0 0 0 / 28%);
 }
 
-.explorer-menu-item {
+.context-menu-item {
     display: flex;
     gap: 0.45rem;
     align-items: center;
@@ -712,13 +724,13 @@ section.stage.empty-shell {
     cursor: pointer;
 }
 
-.explorer-menu-item:hover,
-.explorer-menu-item:focus-visible {
+.context-menu-item:hover,
+.context-menu-item:focus-visible {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
     outline: none;
 }
 
-.explorer-menu-icon {
+.context-menu-icon {
     flex: 0 0 auto;
     color: var(--pico-muted-color);
     font-size: 15px;
@@ -850,6 +862,8 @@ section.stage.empty-shell {
 }
 
 .node-detail-heading {
+    display: flex;
+    align-items: center;
     margin: 0.45rem 0 0.1rem;
     font-weight: 600;
     font-size: 0.85rem;
@@ -1654,6 +1668,71 @@ g.node.entity-highlight text.label {
     scroll-behavior: smooth;
 }
 
+/* Preview blockquotes — the if/else block controls nest blockquotes, so mark each level with its
+   own left rule (each level sets --q to its palette color; the rule renders it grayed by default
+   and vivid on hover). The box is zero-height vertically so nested levels wrap the *same* content
+   and their rules align vertically at any depth — quoting a selection again just stacks another
+   aligned rule to its left rather than insetting a shorter, lower one. */
+.source-preview blockquote {
+    --q: var(--dd-quote-1);
+
+    margin: 0;
+    padding: 0 0 0 0.7rem;
+    border-left: 3px solid color-mix(in srgb, var(--q) 58%, var(--dd-quote-mute));
+    color: inherit;
+    background: none;
+    font-style: normal;
+    border-radius: 2px;
+    transition:
+        border-color 0.12s ease,
+        background-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.source-preview blockquote blockquote {
+    --q: var(--dd-quote-2);
+}
+
+.source-preview blockquote blockquote blockquote {
+    --q: var(--dd-quote-3);
+}
+
+.source-preview blockquote blockquote blockquote blockquote {
+    --q: var(--dd-quote-4);
+}
+
+.source-preview blockquote blockquote blockquote blockquote blockquote {
+    --q: var(--dd-quote-5);
+}
+
+/* A sixth level cycles back to the first color; deeper levels inherit it. */
+.source-preview blockquote blockquote blockquote blockquote blockquote blockquote {
+    --q: var(--dd-quote-1);
+}
+
+/* Only the outermost quote separates from surrounding text; nested levels stay flush so their
+   rules line up. Trimming the first/last child's outer margin makes each rule wrap the content. */
+.source-preview > blockquote {
+    margin: 0.5rem 0;
+}
+
+.source-preview blockquote > :first-child {
+    margin-top: 0;
+}
+
+.source-preview blockquote > :last-child {
+    margin-bottom: 0;
+}
+
+/* Hover highlights just the innermost level under the cursor (:has keeps a parent from lighting up
+   when a child is hovered): its rule brightens to the full color and a soft tint + glow marks the
+   area it encloses. */
+.source-preview blockquote:hover:not(:has(blockquote:hover)) {
+    border-left-color: var(--q);
+    background: color-mix(in srgb, var(--q) 12%, transparent);
+    box-shadow: 0 1px 12px color-mix(in srgb, var(--q) 30%, transparent);
+}
+
 .source-preview :is(h1, h2, h3, h4, h5, h6) {
     scroll-margin-top: 0.5rem;
 }
@@ -2186,6 +2265,8 @@ body.maximized #app {
 }
 
 #detail-title {
+    display: flex;
+    align-items: center;
     margin-bottom: 0.75rem;
     font-weight: 600;
 }
@@ -2232,6 +2313,38 @@ body.maximized #app {
    scrollable region with nothing focusable in it. */
 .node-attributes {
     margin-bottom: 0.5rem;
+}
+
+/* The "Jump to source" action: an icon-only button beside the node title (a Tippy tooltip carries
+   the label) that takes the reader to the node's span in the Source editor. The icon is drawn in
+   the mode accent (blue in View, green in Edit) so it stays legible on the panel — never the
+   Pico button default, whose inverse text renders white-on-white here. */
+.node-jump {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    margin-left: auto;
+    padding: 0.2rem;
+    border: 0;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--mode-accent, var(--pico-primary));
+    box-shadow: none;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.node-jump:hover,
+.node-jump:focus-visible {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
+    outline: none;
+}
+
+.node-jump-icon {
+    flex: 0 0 auto;
+    font-size: 15px;
+    color: inherit;
 }
 
 .node-source {

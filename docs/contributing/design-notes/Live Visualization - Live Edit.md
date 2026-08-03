@@ -175,9 +175,18 @@ bracket matching, active-line and selection-match highlighting, and multi-cursor
 column selection. Live Edit additionally gets **auto-close and auto-surround** for
 brackets, quotes, backticks, and emphasis (select text and type `*` / `_` / `` ` `` to
 wrap it), plus VS Code-style formatting shortcuts — **⌘/Ctrl-B** bold, **⌘/Ctrl-I**
-italic, **⌘/Ctrl-K** link (see `editor-commands.ts`, unit-tested as pure state
-commands). List and blockquote continuation on Enter comes free from the Markdown
-language. The Source-tab help links to CodeMirror for the full keymap.
+italic, **⌘/Ctrl-K** link, and **⌘/Ctrl-.** / **⌘/Ctrl-Shift-.** to quote / unquote every
+line the selection touches as a Markdown blockquote (quoting nests, unquoting removes one
+level and its optional space — useful for the blockquote-based block controls; the shortcut
+keys off the physical Period key, since a held Cmd on macOS can hide the shifted `>`). A
+**right-click surround menu** offers the same actions (bold, italic, strikethrough, quote,
+unquote), built from the shared `context-menu.ts` the Explorer also uses. The commands live
+in `editor-commands.ts`, unit-tested as pure state commands. A **smart Tab** (in `source-view.ts`)
+indents at a line's front or across a multi-line selection and inserts two spaces (the indent unit)
+mid-line, with **Shift-Tab** outdenting — added Edit-only and below the completion keymap so an
+open completion still accepts on Tab; **Escape** blurs the editor so Tab-to-indent is not a
+keyboard trap. List and blockquote continuation on Enter comes free from the Markdown language. The
+Source-tab help links to CodeMirror for the full keymap.
 
 **Why CodeMirror 6** (a lean, vetted shortlist):
 

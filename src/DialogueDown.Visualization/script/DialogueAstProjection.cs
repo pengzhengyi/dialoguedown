@@ -284,15 +284,12 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
         _ => null,
     };
 
-    // The structured, clamped span a client splices with — the same clamping as Slice, so a
-    // node's span and its sliced source always agree. An empty span yields none (synthetic).
-    private DisplaySpan? ToSpan(SourceSpan span)
+    // The structured, clamped span a client uses to locate — or splice — the node's source: the
+    // same clamping as Slice, so a node's span and its sliced source always agree. A synthetic
+    // node's empty span is kept as a zero-width caret position (Slice still yields no text), so a
+    // client can place the cursor where the node belongs even though it maps to no source range.
+    private DisplaySpan ToSpan(SourceSpan span)
     {
-        if (span.IsEmpty)
-        {
-            return null;
-        }
-
         var start = Math.Clamp(span.Start, 0, _source.Length);
         var end = Math.Clamp(span.End, start, _source.Length);
         return new DisplaySpan(start, end);

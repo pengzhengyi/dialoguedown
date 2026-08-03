@@ -8,8 +8,21 @@ import {
     rectangularSelection,
     crosshairCursor,
 } from "@codemirror/view";
-import { EditorState, EditorSelection, Prec, Compartment, type Extension } from "@codemirror/state";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import {
+    EditorState,
+    EditorSelection,
+    Prec,
+    Compartment,
+    type Extension,
+    type StateCommand,
+} from "@codemirror/state";
+import {
+    defaultKeymap,
+    history,
+    historyKeymap,
+    indentMore,
+    indentLess,
+} from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import {
     syntaxHighlighting,
@@ -19,12 +32,20 @@ import {
     codeFolding,
     foldKeymap,
     foldService,
+    indentUnit,
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { tags } from "@lezer/highlight";
-import { toggleWrap, insertLink, headingFoldEndLine } from "./editor-commands";
+import {
+    toggleWrap,
+    insertLink,
+    quoteSelection,
+    unquoteSelection,
+    headingFoldEndLine,
+} from "./editor-commands";
+import { openContextMenu } from "./context-menu";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
 import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
@@ -94,12 +115,90 @@ const emphasisSurround = EditorView.inputHandler.of((view, from, to, text) => {
     return true;
 });
 
-/** VS Code-style Markdown formatting shortcuts (bold, italic, link). */
+/** VS Code-style Markdown formatting shortcuts (bold, italic, link). Blockquote quote/unquote are
+ *  handled by a dedicated keydown handler below, not here, so they can match the physical key. */
 const formatKeymap = [
     { key: "Mod-b", run: toggleWrap("**"), preventDefault: true },
     { key: "Mod-i", run: toggleWrap("*"), preventDefault: true },
     { key: "Mod-k", run: insertLink, preventDefault: true },
 ];
+
+/** Run an editor command and return focus to the editor, so a menu choice leaves you typing. */
+function runInEditor(view: EditorView, command: StateCommand): void {
+    command(view);
+    view.focus();
+}
+
+/** Move keyboard focus out of the editor — the escape hatch that pairs with Tab-to-indent so the
+ *  editor is never a keyboard trap. Bound to Escape at low precedence, below a completion or search
+ *  dismiss, so it only fires when there is nothing else to close. */
+const blurEditor = (view: EditorView): boolean => {
+    view.contentDOM.blur();
+    return true;
+};
+
+/**
+ * Smart Tab, like a usual code editor: a selection that spans lines — or the caret sitting in a
+ * line's leading whitespace — indents the whole line(s); anywhere else, Tab just inserts one indent
+ * unit (spaces) at the caret. Shift-Tab always outdents (bound separately to indentLess).
+ */
+const smartTab = (view: EditorView): boolean => {
+    const { state } = view;
+    if (state.readOnly) return false;
+    const range = state.selection.main;
+    const spansLines = state.doc.lineAt(range.from).number !== state.doc.lineAt(range.to).number;
+    const line = state.doc.lineAt(range.head);
+    const inLeadingSpace =
+        range.empty && /^\s*$/.test(state.doc.sliceString(line.from, range.head));
+    if (spansLines || inLeadingSpace) return indentMore(view);
+    view.dispatch(
+        state.update(state.replaceSelection(state.facet(indentUnit)), {
+            scrollIntoView: true,
+            userEvent: "input",
+        }),
+    );
+    return true;
+};
+
+/**
+ * The editor's surround handlers (Edit mode only):
+ *
+ * - **keydown** binds the blockquote shortcut to the **Period key** (which bears `.` and `>`),
+ *   with Shift choosing the direction: **Cmd/Ctrl+.** quotes, **Cmd/Ctrl+Shift+.** unquotes. It
+ *   matches the physical key (`event.code === "Period"`) as well as the reported character, because
+ *   on macOS a held Cmd can surface `event.key` as the unshifted `.` even with Shift — which made
+ *   the plain CodeMirror keymap binding for `>` / `<` unreliable in Chrome and Safari. Comma is
+ *   deliberately avoided, since `Cmd/Ctrl+,` is Preferences in most apps.
+ * - **contextmenu** opens the shared menu of surround actions (bold, italic, strikethrough, quote,
+ *   unquote); each dispatches the matching command over the current selection.
+ *
+ * In View, both defer to the browser (selection copy, its own menu).
+ */
+const surroundHandlers = EditorView.domEventHandlers({
+    keydown(event, view) {
+        if (view.state.readOnly || event.altKey || !(event.metaKey || event.ctrlKey)) return false;
+        if (event.code !== "Period" && event.key !== "." && event.key !== ">") return false;
+        event.preventDefault();
+        if (event.shiftKey) unquoteSelection(view);
+        else quoteSelection(view);
+        return true;
+    },
+    contextmenu(event, view) {
+        if (view.state.readOnly) return false;
+        openContextMenu(event, [
+            { icon: "bold", label: "Bold", run: () => runInEditor(view, toggleWrap("**")) },
+            { icon: "italic", label: "Italic", run: () => runInEditor(view, toggleWrap("*")) },
+            {
+                icon: "strikethrough",
+                label: "Strikethrough",
+                run: () => runInEditor(view, toggleWrap("~~")),
+            },
+            { icon: "quote", label: "Quote", run: () => runInEditor(view, quoteSelection) },
+            { icon: "remove", label: "Unquote", run: () => runInEditor(view, unquoteSelection) },
+        ]);
+        return true;
+    },
+});
 
 /** Bounds for the draggable split, as a fraction of the container width. */
 const MIN_RATIO = 0.2;
@@ -145,6 +244,13 @@ export interface SourceViewHandle {
      * clears the highlighting — called on load, a hot-reload, or a save.
      */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
+    /**
+     * Select the half-open `[from, to)` range, scroll it into view, and focus the editor — a
+     * "jump to source" landing on the text a graph node came from. A zero-width range (`from ===
+     * to`, a synthetic node's caret position) places the cursor there instead of selecting. The
+     * editor need not be editable: a read-only (View) editor is still selectable and focusable.
+     */
+    selectRange(from: number, to: number): void;
 }
 
 const editability = new Compartment();
@@ -171,7 +277,19 @@ function editableConfig(editable: boolean, editableExtras: Extension[] = []) {
                   closeBrackets(),
                   emphasisSurround,
                   Prec.high(keymap.of(formatKeymap)),
+                  surroundHandlers,
                   ...editableExtras,
+                  // Smart Tab, like a usual editor: Tab indents at a line's front (or a multi-line
+                  // selection) and inserts spaces mid-line; Shift-Tab outdents. Low precedence so an
+                  // open completion's Tab (accept) wins first; Escape blurs the editor so
+                  // Tab-to-indent is not a keyboard trap (a completion/search dismiss, at higher
+                  // precedence, consumes Escape first).
+                  Prec.low(
+                      keymap.of([
+                          { key: "Tab", run: smartTab, shift: indentLess },
+                          { key: "Escape", run: blurEditor },
+                      ]),
+                  ),
               ]
             : []),
     ];
@@ -256,6 +374,8 @@ export function createSourceView(
                 markdown(),
                 syntaxHighlighting(markdownHighlightStyle),
                 EditorView.lineWrapping,
+                // Indent with two spaces (Tab / Shift-Tab and the smart-Tab insert all use this).
+                indentUnit.of("  "),
                 editability.of(editableConfig(editable, [completion])),
                 keymap.of([
                     ...closeBracketsKeymap,
@@ -306,6 +426,18 @@ export function createSourceView(
         getContent: () => view.state.doc.toString(),
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
         setSemanticTokens: (tokens) => setEditorSemanticTokens(view, tokens),
+        selectRange: (from, to) => {
+            // Clamp to the document and order the pair, so a stale span can only ever land the
+            // cursor in-bounds rather than throw. A zero-width range collapses to a caret.
+            const max = view.state.doc.length;
+            const start = Math.max(0, Math.min(from, max));
+            const end = Math.max(start, Math.min(to, max));
+            view.dispatch({
+                selection: EditorSelection.single(start, end),
+                scrollIntoView: true,
+            });
+            view.focus();
+        },
     };
 }
 

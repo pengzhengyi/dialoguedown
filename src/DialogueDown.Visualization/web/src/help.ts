@@ -12,8 +12,16 @@ const SOURCE_HELP = `
   <p><strong>Editor.</strong> Find with <kbd>⌘/Ctrl-F</kbd> and fold a section from the
      gutter arrow. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
      <kbd>⌘/Ctrl-I</kbd> (italic) and <kbd>⌘/Ctrl-K</kbd> (link), or type <kbd>*</kbd>
-     around a selection to emphasize it. To learn more about how to use the editor,
-     check out <a href="https://codemirror.net/" target="_blank" rel="noopener noreferrer">CodeMirror</a>.</p>
+     around a selection to emphasize it. <strong>Quote a block</strong> with
+     <kbd>⌘/Ctrl-.</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-Shift-.</kbd>: quoting
+     adds a <kbd>&gt;</kbd> to every line the selection touches and nests on an already-quoted
+     line, and unquoting removes one level — handy for the blockquote-based block controls.
+     <strong>Right-click</strong> the editor for the same surround actions as a menu — bold,
+     italic, strikethrough, quote, and unquote. <kbd>Tab</kbd> indents at the start of a line
+     (or a multi-line selection) and inserts spaces elsewhere, <kbd>Shift-Tab</kbd> outdents (in
+     Live Edit); press <kbd>Esc</kbd> to move focus out of the editor. To learn more about how to
+     use the editor, check out
+     <a href="https://codemirror.net/" target="_blank" rel="noopener noreferrer">CodeMirror</a>.</p>
   <p><strong>Autocomplete</strong> (Live Edit): as you type, the editor suggests names
      from the document — a jump target after <kbd>](#</kbd>, a speaker id after
      <kbd>@</kbd>, a <kbd>#</kbd>tag, or a speaker at the start of a line. <kbd>Enter</kbd>
@@ -36,6 +44,9 @@ const SOURCE_HELP = `
 const GRAPH_HELP = `
   <p><strong>Click a node</strong> (its label or details) to inspect the source it
      was produced from and a rendered preview.</p>
+  <p><strong>Jump to source</strong> — the icon beside a node's title (in the details panel)
+     opens the Source tab with the node's text selected, or, for a synthetic node the compiler
+     inserted, places the cursor where it belongs.</p>
   <p><strong>Click a node's circle</strong> to collapse or expand its children.</p>
   <p><strong>Drag</strong> to pan, <strong>scroll</strong> to zoom, and
      <strong>drag the divider</strong> to resize the detail panel — or use its
@@ -63,7 +74,8 @@ const SEMANTIC_HELP = `
      to, or every line a speaker speaks.</p>
   <p><strong>Node details:</strong> click a scene or block in the tree to see its source and a
      rendered preview in the <strong>Node details</strong> panel, pinned to the top of the right
-     column.</p>
+     column. The <strong>Jump to source</strong> icon beside a node's title opens the Source tab
+     with that node's text selected.</p>
   <p><strong>Tables column:</strong> drag the divider to resize it, or use the handle on the
      divider to hide the whole column and give the graph full width. Each table (and the node
      details) also <strong>collapses</strong> to a title strip on its own header bar. The

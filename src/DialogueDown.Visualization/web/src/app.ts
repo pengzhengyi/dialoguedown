@@ -129,8 +129,8 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     // The inspector edits a node by splicing its new text into the current document and
     // pushing that whole document back through the Source editor (so one buffer and one Save
     // stay authoritative). Only wired for a served session.
-    const panel = createDetailPanel(
-        source
+    const panel = createDetailPanel({
+        ...(source
             ? {
                   edit: {
                       isEditable: () => editable,
@@ -139,8 +139,26 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                       ...(source.symbols ? { symbols: source.symbols } : {}),
                   },
               }
-            : {},
-    );
+            : {}),
+        // A "Jump to source" is offered whenever there is a Source tab to land in — served or a
+        // static export — since a read-only editor is still selectable.
+        ...(report.source != null ? { jumpToSource } : {}),
+    });
+
+    // Jump from a selected graph node to its source in the Source tab: switch tabs (through the
+    // save-safe navigation guard, so an Auto save flushes or a Manual prompt resolves first), then
+    // select the node's span — or place the caret for a zero-width, synthetic node.
+    function jumpToSource(span: { start: number; end: number }): void {
+        if (!sourcePresent) return;
+        const target = configPresent ? 1 : 0; // the Source tab sits after an optional Config tab
+        const land = () => {
+            if (!sourceHandle) return;
+            activate(target);
+            sourceHandle.selectRange(span.start, span.end);
+        };
+        if (source?.beginNavigation) source.beginNavigation(land);
+        else land();
+    }
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).
     let views: (TreeView | null)[] = [];
@@ -374,7 +392,12 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                 ...(source?.beginNavigation ? { onNodeSelect: deferNodeSelect } : {}),
             };
             if (isSemantic) {
-                const semantic = createSemanticView(stage, showNode, treeOptions);
+                const semantic = createSemanticView(
+                    stage,
+                    showNode,
+                    treeOptions,
+                    report.source != null ? jumpToSource : undefined,
+                );
                 view = semantic.view;
                 section.appendChild(semantic.element);
             } else {
