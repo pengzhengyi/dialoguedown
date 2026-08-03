@@ -52,6 +52,8 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Block-control keywords keep their syntax color** — `` `if` ``, `` `elseif` ``, and
+  `` `else` `` no longer fall back to the generic inline-code gray in the Source editor.
 - **`ddown visualize` now stops on Ctrl+C** — the live server previously ignored the
   interrupt and had to be killed, because the shutdown signal reached the web host but
   not the command waiting on it. Pressing Ctrl+C (or sending a termination signal) now
