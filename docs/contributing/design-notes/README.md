@@ -186,7 +186,7 @@ flowchart TB
 | 23 | [Jump-Target Completion](./Jump-Target%20Completion.md) | Complete the whole `[Heading](#slug)` jump target from the `=>` indicator, via a snippet with the heading as an editable field | Implemented |
 | 24 | [Live Visualization — File Explorer](./Live%20Visualization%20-%20File%20Explorer.md) | Fold the launcher into the served report as a collapsible Explorer sidebar: browse the project tree, open a script by click or cross-file link, and create one | Implemented |
 | 25 | [Live Visualization — Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md) | Collapse the launcher page and the direct-serve server into one shell: the Explorer is the only navigator, no-document shows an empty-state CTA, and `visualize <script>` serves through the same server | Implemented |
-| 26 | [Live Visualization — Line Debugger Prototype](./Live%20Visualization%20-%20Line%20Debugger%20Prototype.md) | Branch-only CodeMirror breakpoint, paused-line, stepping, and fake-path UX exploration behind a replaceable controller seam | Proposed exploration |
+| 26 | [Live Visualization — Line Debugger Prototype](./Live%20Visualization%20-%20Line%20Debugger%20Prototype.md) | Branch-only CodeMirror breakpoint, paused-line, stepping, and fake-path UX exploration behind a replaceable controller seam | Implemented exploration; evaluation pending |
 
 ### Other notes
 

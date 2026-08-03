@@ -1,12 +1,12 @@
 # Live Visualization — Line Debugger Prototype
 
 > [!NOTE]
-> Status: **proposed exploration spike — not implemented and not intended to
-> merge**. This branch-only prototype evaluates a line-debugging experience in
-> the Source editor against an explicit fake debug program. It does not execute
-> DialogueDown's dialogue graph, game-system calls, guards, weights, or jumps.
-> Its reusable outcome is the editor UI and `DebugController` seam; the fake
-> controller is disposable.
+> Status: **implemented exploration spike — not adopted and not intended to
+> merge; visual evaluation pending**. This branch-only prototype evaluates a
+> line-debugging experience in the Source editor against an explicit fake debug
+> program. It does not execute DialogueDown's dialogue graph, game-system calls,
+> guards, weights, or jumps. Its reusable outcome is the editor UI and
+> `DebugController` seam; the fake controller is disposable.
 
 ## Table of contents
 
@@ -61,8 +61,9 @@ flowchart LR
   linear path, a branch, and a loop or jump-like edge.
 - A `DebugController` contract whose state drives the toolbar and editor
   decorations.
-- **Start**, **Continue**, **Step Over**, and **Stop** controls in a compact
-  toolbar above the Source editor.
+- **Start**, **Continue**, **Step Over**, and **Stop** execution controls in a
+  compact toolbar above the Source editor, plus an accessible **Breakpoint**
+  action for the cursor line.
 - A line breakpoint gutter with **verified** (filled) and **unverified** (hollow)
   markers.
 - A separate execution gutter with an arrow at the paused line, plus a subtle
@@ -102,27 +103,29 @@ flowchart LR
 
 ## Functionality checklist
 
-- [ ] Add the reusable `DebugController` state/command contract.
-- [ ] Add a dedicated sample script and explicit branching `FakeDebugProgram`.
-- [ ] Inject the fake controller only for `?debug=fake&fixture=line-debugger-v1`; leave ordinary reports unchanged.
-- [ ] Start paused on the program's entry execution point.
-- [ ] Continue until the next verified breakpoint, branch, or End.
-- [ ] Step over exactly one edge; stop before the target execution point.
-- [ ] Enter `awaiting-path` when an execution point has multiple outgoing paths.
-- [ ] Choose a path, move to its target, and remain paused there.
-- [ ] Stop the session and clear the execution arrow and paused-line decoration.
-- [ ] Toggle requested breakpoints from a dedicated CodeMirror gutter.
-- [ ] Render verified breakpoints as filled red dots and unverified breakpoints as hollow red rings.
-- [ ] Map requested breakpoint positions through editor changes.
-- [ ] Render a separate amber execution arrow and paused-line decoration.
-- [ ] Scroll the paused location into view without moving the user's text selection.
-- [ ] Show a Source-pane toolbar with the four controls, state text, and an inline path picker.
-- [ ] Disable Start while the source is dirty; editing an active session makes it stale.
-- [ ] Keep breakpoints after an edit and re-verify them when the sample program rebinds.
-- [ ] Detect a repeated execution point during one Continue command and pause with a prototype cycle message.
-- [ ] Label the UI **Prototype · fake program** so it cannot be mistaken for real execution.
-- [ ] Cover the controller, editor extension, toolbar, invalidation, and integrated happy path with tests.
-- [ ] Open a browser preview and record the spike's evaluation before deciding whether any code should be carried forward.
+- [x] Add the reusable `DebugController` state/command contract.
+- [x] Add a dedicated sample script and explicit branching `FakeDebugProgram`.
+- [x] Inject the fake controller only for `?debug=fake&fixture=line-debugger-v1`; leave ordinary reports unchanged.
+- [x] Start paused on the program's entry execution point.
+- [x] Continue until the next verified breakpoint, branch, or End.
+- [x] Step over exactly one edge; stop before the target execution point.
+- [x] Enter `awaiting-path` when an execution point has multiple outgoing paths.
+- [x] Choose a path, move to its target, and remain paused there.
+- [x] Stop the session and clear the execution arrow and paused-line decoration.
+- [x] Toggle requested breakpoints from a dedicated CodeMirror gutter.
+- [x] Offer a keyboard-accessible **Breakpoint** toolbar action for the cursor line.
+- [x] Render verified breakpoints as filled red dots and unverified breakpoints as hollow red rings.
+- [x] Map requested breakpoint positions through editor changes.
+- [x] Render a separate amber execution arrow and paused-line decoration.
+- [x] Scroll the paused location into view without moving the user's text selection.
+- [x] Show a Source-pane toolbar with the four execution controls, accessible
+  Breakpoint action, state text, and inline path picker.
+- [x] Disable Start while the source is dirty; editing an active session makes it stale.
+- [x] Keep breakpoints after an edit and re-verify them when the sample program rebinds.
+- [x] Detect a repeated execution point during one Continue command and pause with a prototype cycle message.
+- [x] Label the UI **Prototype · fake program** so it cannot be mistaken for real execution.
+- [x] Cover the controller, editor extension, toolbar, invalidation, and integrated happy path with tests.
+- [ ] Record the user's visual evaluation and decide whether any code should be carried forward.
 
 ## Survey findings
 
@@ -380,12 +383,14 @@ still executing.
 A compact toolbar sits directly above CodeMirror:
 
 ```text
-[Start] [Continue] [Step Over] [Stop]  Paused · line 12  Prototype · fake program
+[Breakpoint] [Start] [Continue] [Step Over] [Stop]  Paused · line 12  Prototype · fake program
 ```
 
 The path picker expands below this row only in `awaiting-path`. The controller
 publishes explicit control capabilities in each snapshot; the expected values
-are:
+below apply to the four execution controls. **Breakpoint** remains available
+whenever the fake debugger is mounted because CodeMirror, not the controller,
+owns requested breakpoints:
 
 | Status | Start | Continue | Step Over | Stop | Meaning |
 | --- | --- | --- | --- | --- | --- |
@@ -437,6 +442,13 @@ The spike changes only the visualization web client and its test/demo fixtures:
   fake program; unknown or absent ids leave ordinary reports unchanged. If the
   registered fixture cannot bind its exact line anchors, the toolbar shows
   **Prototype unavailable** and never fabricates locations.
+- `DebugEditorBridge` defers controller snapshots until the current CodeMirror
+  update completes. The fake controller can publish synchronously from a gutter
+  update, while CodeMirror forbids reentrant dispatch during that same update.
+- `SourceViewHandle.destroy()` releases the editor, scroll synchronization,
+  split-divider document listeners, media-query listener, and optional debugger
+  subscription. The cleanup was added when integration tests exposed
+  CodeMirror measurements surviving the test DOM.
 
 No core C# project, live-server route, report JSON contract, or dependency changes
 are required. CodeMirror and the existing icon/tooltip stack are already present.
@@ -496,6 +508,29 @@ One focused Playwright path on the dedicated sample:
 9. Save/rebind the sample and confirm Start and breakpoint verification return.
 
 ## Evaluation and exit criteria
+
+The built branch satisfies the functional crosscheck:
+
+- **Achieved:** controller seam, explicit fixture, requested/verified
+  breakpoints, edit mapping, two gutters, paused-line decoration, toolbar,
+  branch selection, cycle guard, clean-source invalidation/rebind, query
+  isolation, and the dedicated sample.
+- **Changed:** no designed behavior changed. The implementation added deferred
+  snapshot dispatch and deterministic Source-view teardown as lifecycle
+  requirements discovered during testing. Independent review also hardened
+  breakpoint mapping across ordinary/full-buffer edits, prevented same-location
+  scroll snapping, preserved paused execution across clean View/Edit switches,
+  added a keyboard-accessible breakpoint action, and restored focus after path
+  selection.
+- **Not implemented:** real runtime behavior remains deferred by design. The
+  user-facing visual evaluation and adopt/revise/reject decision are still
+  pending.
+
+Automated evidence: **526** frontend unit tests plus **15** infrastructure tests,
+**75** static Playwright tests, and **55** live Playwright tests pass. The live
+prototype test covers ordinary-report isolation, one verified and one unverified
+breakpoint, Start, clean View/Edit switching, Step Over, path selection,
+Continue, Stop, edit invalidation, save, and rebind.
 
 The branch is successful when the prototype answers these questions:
 
