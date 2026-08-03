@@ -39,7 +39,7 @@ internal sealed class MarkdownAstProjection : INodeProjection<object>
 
     public string Description =>
         "The Markdown syntax tree parsed from the source — its document, blocks " +
-        "(headings, paragraphs, lists), and inline spans, each tied to the text it came from.";
+        "(headings, paragraphs, lists, blockquotes), and inline spans, each tied to the text it came from.";
 
     public NodeDescription Describe(object node)
     {
@@ -60,6 +60,8 @@ internal sealed class MarkdownAstProjection : INodeProjection<object>
                 Slice(list.Span),
                 ChoiceCategory),
             ListItem item => new("List item", [SpanAttribute(item.Span)], Slice(item.Span), ChoiceCategory),
+            QuoteBlock quote => new(
+                "Block quote", [SpanAttribute(quote.Span)], Slice(quote.Span), StructureCategory),
             TextInline text => new(
                 "Text", [new("text", text.Text), SpanAttribute(text.Span)], Slice(text.Span), TextCategory),
             LinkInline link => new(
@@ -103,6 +105,7 @@ internal sealed class MarkdownAstProjection : INodeProjection<object>
             Paragraph paragraph => paragraph.Inlines,
             ListBlock list => list.Items,
             ListItem item => item.Blocks,
+            QuoteBlock quote => quote.Blocks,
             EmphasisInline emphasis => emphasis.Children,
             _ => [],
         };

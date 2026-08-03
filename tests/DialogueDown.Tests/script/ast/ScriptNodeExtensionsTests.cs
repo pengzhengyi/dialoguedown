@@ -64,6 +64,35 @@ public sealed class ScriptNodeExtensionsTests
     }
 
     [Fact]
+    public void Children_ControlBlock_YieldsBranches()
+    {
+        var ifBranch = Branch(Condition("Rich"), Line(Text("wealthy")));
+        var elseBranch = ElseBranch(Line(Text("broke")));
+        var control = ControlBlock(ifBranch, elseBranch);
+
+        Assert.Equal([ifBranch, elseBranch], control.Children());
+    }
+
+    [Fact]
+    public void Children_Branch_YieldsConditionThenBody()
+    {
+        var condition = Condition("Rich");
+        var body = Line(Text("wealthy"));
+        var branch = Branch(condition, body);
+
+        Assert.Equal([condition, body], branch.Children());
+    }
+
+    [Fact]
+    public void Children_ElseBranch_YieldsBodyOnly()
+    {
+        var body = Line(Text("broke"));
+        var branch = ElseBranch(body);
+
+        Assert.Equal([body], branch.Children());
+    }
+
+    [Fact]
     public void Children_Jump_YieldsConditionThenLabel()
     {
         var condition = Condition("Rainy");

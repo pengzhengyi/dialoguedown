@@ -34,9 +34,15 @@ Alice: This place is *wonderful*.
 
 `Alice.HasMap?` Alice: And I still have the old map — good.
 
-If she still carries the old map, a hidden trail winds back through the hills.
-
-`Alice.HasMap?` => [Brave the west road](#the-dark-forest)
+> `if` `Alice.HasMap?`
+>
+> Alice: The old map marks a hidden trail back through the hills.
+>
+> => [Follow the hidden trail](#the-dark-forest)
+>
+> `else`
+>
+> Merchant: Without a map, the crossroads are the safer way out.
 
 => [Leave town](#the-crossroads)
 

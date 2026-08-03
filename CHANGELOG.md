@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Block conditionals** — group dialogue, commands, choices, and jumps into connected
+  blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
+  `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
+  nested blocks, and highlights marker keywords in the source editor. See
+  [Block controls](docs/contributing/design-notes/Block%20Controls.md).
 - **Jump from a graph node to its source** — the Node details panel now has a **Jump to source**
   icon beside the node title (on the AST graph tabs and the Semantic Model tab) that opens the
   Source tab with the node's text selected, so you can move from a node straight to the lines it

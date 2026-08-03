@@ -23,9 +23,9 @@ projection and the rendering are reused unchanged when the language server arriv
 
 **In scope:**
 
-- A **semantic-token projection** in `.NET`: walk the Dialogue AST and emit positioned tokens,
-  each carrying a kind (`Speaker`, `CustomTag`, `ReservedTag`, `JumpIndicator`), carried in the
-  payload.
+- A **semantic-token projection** in `.NET`: walk the compiler's Markdown and Dialogue ASTs and
+  emit positioned tokens, each carrying a kind (`SpeakerName`, `CustomTag`, `JumpIndicator`,
+  `ControlKeyword`, and others), carried in the payload.
 - **Highlighting**: render those tokens as CodeMirror decorations, layered over the editor's
   existing Markdown highlighting and themed for light and dark.
 - **Completions from compiler symbols**: source the editor's completion list from the payload's
@@ -46,9 +46,9 @@ projection and the rendering are reused unchanged when the language server arriv
 
 | Term | Meaning |
 | --- | --- |
-| **Semantic token** | A positioned token — a source `range` plus a `kind` from the legend — projected from the AST for highlighting. The LSP `semanticTokens` concept. |
+| **Semantic token** | A positioned token — a source `range` plus a `kind` from the legend — projected from the compiler ASTs for highlighting. The LSP `semanticTokens` concept. |
 | **Token legend** | The stable vocabulary of token kinds the projection emits. A future LSP server publishes it as the semantic-tokens legend. |
-| **Token projection** | The pure mapping from the Dialogue AST to semantic tokens. The reusable seam. |
+| **Token projection** | The pure mapping from the compiler's Markdown and Dialogue ASTs to semantic tokens. The reusable seam. |
 | **Completion symbol** | A completable name from the compiler's resolved `SymbolSet` — a speaker, an `@id`, a `#tag`, or a jump target. |
 | **Source of truth** | The compiler. The editor renders projections; it never re-lexes or re-scans the dialogue grammar. |
 | **Transport** | How a projection reaches the editor: the report **payload** now; a **language server** later. |
@@ -73,9 +73,9 @@ projection and the rendering are reused unchanged when the language server arriv
 | Type / seam | Responsibility | Collaborators |
 | --- | --- | --- |
 | `SemanticToken` (`.NET`, new) | A positioned token: a zero-based `Range` and a `TokenKind`. | `LspRange`, `TokenKind` |
-| `TokenKind` (`.NET`, new) | The token legend enum: `SpeakerName`, `SpeakerId`, `Separator`, `CustomTag`, `ReservedTag`, `JumpIndicator`. | — |
-| `SemanticTokenProjection` (`.NET`, new) | Walk the Dialogue AST and emit `SemanticToken`s; the reusable seam. | `ScriptDocument` AST, `LineMap` |
-| `CompilationVisualizer.BuildContent` (`.NET`) | Project `result.Script` into tokens and include them in the payload. | `SemanticTokenProjection`, `DisplayGraphJson` |
+| `TokenKind` (`.NET`, new) | The token legend enum: `SpeakerName`, `SpeakerId`, `Separator`, `CustomTag`, `ReservedTag`, `JumpIndicator`, `ReservedAnchor`, `ControlKeyword`. | — |
+| `SemanticTokenProjection` (`.NET`, new) | Walk the Markdown and Dialogue ASTs and emit `SemanticToken`s; the reusable seam. | `MarkdownDocument`, `ScriptDocument`, `LspLineMap` |
+| `CompilationVisualizer.BuildContent` (`.NET`) | Project `result.Markdown` and `result.Script` into tokens and include them in the payload. | `SemanticTokenProjection`, `DisplayGraphJson` |
 | `DisplayGraphJson.SerializeReport` (`.NET`) | Serialize the tokens into the payload's `semanticTokens` field. | `SemanticToken` |
 | `Report.semanticTokens` (TS) | The document's semantic tokens; absent ⇒ none. | highlighting extension |
 | `semantic-tokens.ts` (TS, new) | Convert payload tokens to CodeMirror `Decoration.mark` ranges (range → offset), themed by kind. | `@codemirror/view`, `source-view.ts` |
@@ -127,12 +127,13 @@ grammar change touches the `.NET` parser and flows to the editor automatically, 
 and the compiler can never disagree. This is the durable idea; the two features are its
 application.
 
-### D2 — Semantic tokens projected from the Dialogue AST
+### D2 — Semantic tokens projected from compiler ASTs
 
-The transpiled **Dialogue AST** already carries a `SourceSpan` on every node, and the
-visualization's `DialogueAstProjection` already walks it. `SemanticTokenProjection` reuses that
-walk and maps the dialogue-bearing node types to tokens — each token is a node's **raw span**, so
-the projection never re-derives structure the compiler already parsed:
+The transpiled **Dialogue AST** supplies semantic nodes and their `SourceSpan`s.
+`SemanticTokenProjection` walks it and maps dialogue-bearing node types to tokens. The
+**Markdown AST** supplies the block-control keyword spans that the semantic-only `Branch` record
+deliberately omits; the projection reuses `MarkerRecognition`, so no browser grammar is added.
+Each token uses a compiler-produced raw span:
 
 | AST node | Token(s) |
 | --- | --- |
@@ -140,6 +141,7 @@ the projection never re-derives structure the compiler already parsed:
 | `CustomTag` | `CustomTag` (its span, includes `#` and any `=value`) |
 | `ReservedTag` | `ReservedTag` (its span, includes `##`) |
 | `JumpIndicator` | `JumpIndicator` (its span, the `=>`) |
+| A recognized marker paragraph inside a marker-headed `QuoteBlock` | `ControlKeyword` (the `` `if` `` / `` `elseif` `` / `` `else` `` code span) |
 
 A speaker node carries **sub-spans** for the parts it wrote — the name, the `@id`, and the `:`
 separator — and the projection emits one token per part from those spans. The tokens are
@@ -150,7 +152,8 @@ detailed in [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md).
 
 ### D3 — Tokens layer over Markdown highlighting
 
-The projection emits only the **dialogue-specific** tokens Markdown does not understand. Headings,
+The projection emits only the **dialogue-specific** tokens generic Markdown highlighting does not
+understand. Headings,
 emphasis, lists, links, images, and inline code keep the editor's existing Markdown highlighting;
 the decoration overlay adds dialogue colors on top. Because tokens come from AST nodes, they land
 only on real dialogue constructs — front matter, fenced code, and link destinations are never
@@ -160,7 +163,8 @@ mis-colored, which the AST-node origin guarantees rather than a regex having to 
 
 ```mermaid
 flowchart LR
-    AST["Dialogue AST<br/>(compiler)"] --> TP["SemanticTokenProjection"]
+    MD["Markdown AST<br/>(marker spans)"] --> TP["SemanticTokenProjection"]
+    AST["Dialogue AST<br/>(semantic spans)"] --> TP
     SM["SemanticModel<br/>(compiler)"] --> SP["SymbolProjection"]
     TP --> PAY["Report payload<br/>(now)"]
     SP --> PAY
@@ -201,12 +205,14 @@ The **instant per-keystroke lexer** (#139) and its cross-language conformance co
 and autosave-on-idle ([#140](https://github.com/pengzhengyi/dialoguedown/issues/140)) will
 shrink the recompile gap further.
 
-### D7 — Highlight the Dialogue AST, not the Desugared AST
+### D7 — Highlight compiler parse artifacts, not the Desugared AST
 
 Tokens come from the **transpiled Dialogue AST**, which reflects what the writer typed. The
 Desugared AST fills synthetic nodes (a default speaker on a speaker-less line) that have no source
 text; highlighting those would color positions the writer never wrote. The Dialogue AST has no
-synthetic nodes, so every token maps to real text.
+synthetic nodes, so every semantic token maps to real text. The marker-keyword exception comes
+from the earlier Markdown AST because `Branch` intentionally retains no marker kind; it still maps
+to compiler-parsed source, never a browser scan.
 
 ### D8 — Precise, non-overlapping speaker sub-tokens
 
@@ -250,6 +256,7 @@ The parser records each part's sub-span on the speaker AST node; the mechanics l
 - **`.NET` unit** (`SemanticTokenProjectionTests`): each dialogue node maps to the right kind and
   zero-based range; a speaker projects disjoint `SpeakerName`/`SpeakerId`/`Separator` tokens (a
   quoted name includes its quotes, an `@id` includes its `@`) that do not overlap its tag tokens;
+  recognized block-control markers project `ControlKeyword` only inside marker-headed quotes;
   synthetic or recovered speakers emit nothing; a halted compile still yields tokens.
 - **`.NET`** (`CompilationVisualizerTests`, `DisplayGraphJsonTests`): a compile's tokens reach the
   payload's `semanticTokens` field; an empty document carries an empty array.

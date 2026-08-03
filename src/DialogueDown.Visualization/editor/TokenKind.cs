@@ -29,4 +29,7 @@ internal enum TokenKind
 
     /// <summary>The reserved <c>#END</c> terminator anchor, including its leading <c>#</c>.</summary>
     ReservedAnchor,
+
+    /// <summary>A block-control keyword code span: <c>`if`</c>, <c>`elseif`</c>, or <c>`else`</c>.</summary>
+    ControlKeyword,
 }
