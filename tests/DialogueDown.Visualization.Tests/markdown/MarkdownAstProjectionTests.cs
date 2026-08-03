@@ -130,6 +130,7 @@ public sealed class MarkdownAstProjectionTests
         Assert.Equal("speech", _projection.Describe(new Paragraph([], span)).Category);
         Assert.Equal("choice", _projection.Describe(new ListBlock(false, [], span)).Category);
         Assert.Equal("choice", _projection.Describe(new ListItem([], span)).Category);
+        Assert.Equal("structure", _projection.Describe(new QuoteBlock([], span)).Category);
         Assert.Equal("text", _projection.Describe(new TextInline("x", span)).Category);
         Assert.Equal("jump", _projection.Describe(new LinkInline("t", [], span)).Category);
         Assert.Equal("media", _projection.Describe(new ImageInline("s", [], span)).Category);
@@ -173,6 +174,14 @@ public sealed class MarkdownAstProjectionTests
         var description = _projection.Describe(new ListItem([], new SourceSpan(0, 2)));
 
         Assert.Equal("List item", description.Label);
+    }
+
+    [Fact]
+    public void Describe_QuoteBlock_LabelsBlockQuote()
+    {
+        var description = _projection.Describe(new QuoteBlock([], new SourceSpan(0, 4)));
+
+        Assert.Equal("Block quote", description.Label);
     }
 
     [Fact]
@@ -283,6 +292,15 @@ public sealed class MarkdownAstProjectionTests
         var item = new ListItem([paragraph], new SourceSpan(0, 1));
 
         Assert.Equal(new object[] { paragraph }, _projection.Neighbors(item));
+    }
+
+    [Fact]
+    public void Neighbors_QuoteBlock_ReturnsBlocks()
+    {
+        var paragraph = new Paragraph([], new SourceSpan(0, 1));
+        var quote = new QuoteBlock([paragraph], new SourceSpan(0, 1));
+
+        Assert.Equal(new object[] { paragraph }, _projection.Neighbors(quote));
     }
 
     [Fact]
