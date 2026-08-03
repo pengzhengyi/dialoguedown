@@ -91,7 +91,7 @@ describe("createDebugToolbar", () => {
         expect(element.querySelector(".dd-debug-status")?.textContent).toBe("Ready");
     });
 
-    it("shows path choices only while awaiting a path and pauses at the chosen target", () => {
+    it("shows path choices only while awaiting a path and pauses at the chosen target", async () => {
         const { element } = mount();
         button(element, "Start debugging").click();
         button(element, "Step over").click();
@@ -106,9 +106,11 @@ describe("createDebugToolbar", () => {
         expect(button(element, "Continue").disabled).toBe(true);
 
         paths.querySelector<HTMLButtonElement>('button[data-path-id="left"]')!.click();
+        await Promise.resolve();
 
         expect(paths.hidden).toBe(true);
         expect(element.querySelector(".dd-debug-status")?.textContent).toBe("Paused · line 3");
+        expect(document.activeElement).toBe(button(element, "Step over"));
     });
 
     it("renders unavailable and stale messages with every run command disabled", () => {
@@ -127,5 +129,21 @@ describe("createDebugToolbar", () => {
         );
         expect(button(active.element, "Start debugging").disabled).toBe(true);
         expect(button(active.element, "Stop debugging").disabled).toBe(true);
+    });
+
+    it("offers an accessible breakpoint action when the editor supplies one", () => {
+        let toggles = 0;
+        const debug = createFakeDebugController(SOURCE, PROGRAM);
+        const toolbar = createDebugToolbar(debug, {
+            toggleBreakpoint: () => {
+                toggles += 1;
+            },
+        });
+        mounted.push(toolbar);
+        document.body.appendChild(toolbar.element);
+
+        button(toolbar.element, "Toggle breakpoint at cursor").click();
+
+        expect(toggles).toBe(1);
     });
 });

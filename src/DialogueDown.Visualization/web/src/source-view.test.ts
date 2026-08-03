@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createFakeDebugController, type FakeDebugProgram } from "./fake-debug-controller";
-import { createSourceView, type SourceViewHandle } from "./source-view";
+import { createSourceView, initSplitDivider, type SourceViewHandle } from "./source-view";
 
 const SOURCE = "Entry\nEnd\n";
 const PROGRAM: FakeDebugProgram = {
@@ -65,5 +65,37 @@ describe("createSourceView debugger integration", () => {
 
         expect(source.element.querySelector(".dd-debug-current-arrow")).not.toBeNull();
         expect(source.element.querySelector(".dd-debug-current-line")).not.toBeNull();
+    });
+
+    it("toggles a breakpoint on the cursor line from the accessible toolbar action", async () => {
+        const debug = createFakeDebugController(SOURCE, PROGRAM);
+        const source = sourceView({ debug });
+
+        source.element
+            .querySelector<HTMLButtonElement>('button[aria-label="Toggle breakpoint at cursor"]')!
+            .click();
+        await flushDebugUpdate();
+
+        expect(source.element.querySelector(".dd-debug-breakpoint-verified")).not.toBeNull();
+    });
+});
+
+describe("initSplitDivider", () => {
+    it("returns a disposer that removes document drag listeners", () => {
+        const container = document.createElement("div");
+        const divider = document.createElement("div");
+        container.appendChild(divider);
+        document.body.appendChild(container);
+        Object.defineProperty(container, "getBoundingClientRect", {
+            value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+        });
+        const dispose = initSplitDivider(container, divider);
+        divider.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+
+        dispose();
+        document.dispatchEvent(new MouseEvent("mousemove", { clientX: 75, bubbles: true }));
+
+        expect(container.style.getPropertyValue("--source-split")).toBe("");
+        expect(document.body.style.userSelect).toBe("");
     });
 });

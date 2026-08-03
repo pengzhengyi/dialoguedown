@@ -7,8 +7,17 @@ export interface DebugToolbar {
     destroy(): void;
 }
 
+/** Editor-owned actions that complement the controller's execution commands. */
+export interface DebugToolbarOptions {
+    /** Toggle a requested breakpoint on the CodeMirror cursor's line. */
+    toggleBreakpoint?: () => void;
+}
+
 /** Build the compact Source-pane toolbar driven entirely by {@link DebugController} snapshots. */
-export function createDebugToolbar(controller: DebugController): DebugToolbar {
+export function createDebugToolbar(
+    controller: DebugController,
+    options: DebugToolbarOptions = {},
+): DebugToolbar {
     const toolbar = document.createElement("div");
     toolbar.className = "dd-debug-toolbar";
     toolbar.setAttribute("role", "toolbar");
@@ -17,6 +26,14 @@ export function createDebugToolbar(controller: DebugController): DebugToolbar {
     const controls = document.createElement("div");
     controls.className = "dd-debug-controls";
 
+    const toggleBreakpoint = options.toggleBreakpoint
+        ? controlButton(
+              "debug-breakpoint",
+              "Toggle breakpoint at cursor",
+              "Breakpoint",
+              options.toggleBreakpoint,
+          )
+        : null;
     const start = controlButton("debug-start", "Start debugging", "Start", () =>
         controller.start(),
     );
@@ -27,6 +44,7 @@ export function createDebugToolbar(controller: DebugController): DebugToolbar {
         controller.stepOver(),
     );
     const stop = controlButton("debug-stop", "Stop debugging", "Stop", () => controller.stop());
+    if (toggleBreakpoint) controls.appendChild(toggleBreakpoint);
     controls.append(start, continueButton, stepOver, stop);
 
     const status = document.createElement("span");
@@ -53,7 +71,12 @@ export function createDebugToolbar(controller: DebugController): DebugToolbar {
         stepOver.disabled = !snapshot.controls.stepOver;
         stop.disabled = !snapshot.controls.stop;
         status.textContent = statusText(snapshot);
-        renderPaths(paths, snapshot, controller);
+        renderPaths(paths, snapshot, controller, () => {
+            const target = [stepOver, continueButton, start, stop].find(
+                (control) => !control.disabled,
+            );
+            target?.focus();
+        });
     };
 
     render(controller.snapshot());
@@ -80,6 +103,7 @@ function renderPaths(
     container: HTMLElement,
     snapshot: DebugSnapshot,
     controller: DebugController,
+    focusAfterChoice: () => void,
 ): void {
     container.replaceChildren();
     container.hidden = snapshot.status !== "awaiting-path";
@@ -94,7 +118,10 @@ function renderPaths(
         button.className = "dd-debug-path";
         button.dataset.pathId = path.id;
         button.textContent = path.label;
-        button.addEventListener("click", () => controller.choosePath(path.id));
+        button.addEventListener("click", () => {
+            controller.choosePath(path.id);
+            queueMicrotask(focusAfterChoice);
+        });
         container.appendChild(button);
     }
 }

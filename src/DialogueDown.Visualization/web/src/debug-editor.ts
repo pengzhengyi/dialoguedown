@@ -1,10 +1,10 @@
 import {
-    MapMode,
     RangeSet,
     StateEffect,
     StateField,
     type EditorState,
     type Extension,
+    type Transaction,
 } from "@codemirror/state";
 import {
     Decoration,
@@ -38,11 +38,7 @@ const breakpointField = StateField.define<BreakpointState>({
         let verifiedLines = value.verifiedLines;
 
         if (transaction.docChanged) {
-            positions = positions
-                .map((position) => transaction.changes.mapPos(position, 1, MapMode.TrackAfter))
-                .filter((position): position is number => position !== null)
-                .map((position) => transaction.state.doc.lineAt(position).from);
-            positions = uniqueSorted(positions);
+            positions = mapBreakpointPositions(positions, transaction);
             verifiedLines = new Set();
         }
 
@@ -177,6 +173,7 @@ class DebugEditorBridge {
     private destroyed = false;
     private queued = false;
     private pendingSnapshot: DebugSnapshot | null = null;
+    private lastSnapshot: DebugSnapshot | null = null;
     private readonly unsubscribe: () => void;
 
     public constructor(
@@ -210,11 +207,13 @@ class DebugEditorBridge {
             if (this.destroyed || this.pendingSnapshot === null) return;
             const next = this.pendingSnapshot;
             this.pendingSnapshot = null;
+            const reveal = shouldRevealDebugLocation(this.lastSnapshot, next);
+            this.lastSnapshot = next;
             const effects: StateEffect<unknown>[] = [
                 setDebugSnapshotEffect.of(next),
                 setBreakpointBindingsEffect.of(next.breakpoints),
             ];
-            if (next.location && (next.status === "paused" || next.status === "awaiting-path")) {
+            if (reveal && next.location) {
                 const line = lineAtNumber(this.view.state, next.location.line);
                 effects.push(EditorView.scrollIntoView(line.from, { y: "center" }));
             }
@@ -223,6 +222,18 @@ class DebugEditorBridge {
             });
         });
     }
+}
+
+/** Whether a snapshot moves execution to a location the editor has not already revealed. */
+export function shouldRevealDebugLocation(
+    previous: DebugSnapshot | null,
+    next: DebugSnapshot,
+): boolean {
+    if (!next.location || (next.status !== "paused" && next.status !== "awaiting-path")) {
+        return false;
+    }
+    const previousWasPaused = previous?.status === "paused" || previous?.status === "awaiting-path";
+    return !previousWasPaused || previous?.location?.id !== next.location.id;
 }
 
 function breakpointMarkers(state: EditorState): RangeSet<GutterMarker> {
@@ -277,6 +288,49 @@ function lineAtNumber(state: EditorState, lineNumber: number) {
 
 function uniqueSorted(values: readonly number[]): number[] {
     return [...new Set(values)].sort((a, b) => a - b);
+}
+
+function mapBreakpointPositions(positions: readonly number[], transaction: Transaction): number[] {
+    if (isWholeDocumentReplacement(transaction)) {
+        return uniqueSorted(
+            positions.map((position) => {
+                const oldLine = transaction.startState.doc.lineAt(position).number;
+                return transaction.state.doc.line(clamp(oldLine, 1, transaction.state.doc.lines))
+                    .from;
+            }),
+        );
+    }
+
+    return uniqueSorted(
+        positions.flatMap((position) => {
+            const lineNumber = transaction.startState.doc.lineAt(position).number;
+            if (lineWasDeleted(transaction, lineNumber)) return [];
+            const mapped = transaction.changes.mapPos(position, 1);
+            return [transaction.state.doc.lineAt(mapped).from];
+        }),
+    );
+}
+
+function isWholeDocumentReplacement(transaction: Transaction): boolean {
+    let ranges = 0;
+    let wholeReplacement = false;
+    transaction.changes.iterChangedRanges((fromA, toA, fromB, toB) => {
+        ranges += 1;
+        wholeReplacement = fromA === 0 && toA === transaction.startState.doc.length && toB > fromB;
+    });
+    return ranges === 1 && wholeReplacement;
+}
+
+function lineWasDeleted(transaction: Transaction, lineNumber: number): boolean {
+    const document = transaction.startState.doc;
+    const line = document.line(lineNumber);
+    const from = lineNumber === document.lines && lineNumber > 1 ? line.from - 1 : line.from;
+    const to = lineNumber < document.lines ? line.to + 1 : line.to;
+    let deleted = false;
+    transaction.changes.iterChangedRanges((fromA, toA, fromB, toB) => {
+        if (fromB === toB && fromA <= from && toA >= to) deleted = true;
+    });
+    return deleted;
 }
 
 function clamp(value: number, min: number, max: number): number {

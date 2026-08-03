@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { debugEditor, requestedBreakpointLines, toggleBreakpointAt } from "./debug-editor";
+import {
+    debugEditor,
+    requestedBreakpointLines,
+    shouldRevealDebugLocation,
+    toggleBreakpointAt,
+} from "./debug-editor";
 import {
     createFakeDebugController,
     type FakeDebugController,
@@ -97,6 +102,36 @@ describe("debugEditor", () => {
         expect(requestedBreakpointLines(view.state)).toEqual([4]);
     });
 
+    it("keeps a breakpoint when the first character of its line is edited", async () => {
+        const { view } = mount();
+        const line = view.state.doc.line(3);
+        toggleBreakpointAt(view, line.from);
+        await flushDebugUpdate();
+
+        view.dispatch({ changes: { from: line.from, to: line.from + 1, insert: "b" } });
+        await flushDebugUpdate();
+
+        expect(requestedBreakpointLines(view.state)).toEqual([3]);
+    });
+
+    it("keeps breakpoint line requests across a full-buffer replacement", async () => {
+        const { view } = mount();
+        toggleBreakpointAt(view, view.state.doc.line(1).from);
+        toggleBreakpointAt(view, view.state.doc.line(3).from);
+        await flushDebugUpdate();
+
+        view.dispatch({
+            changes: {
+                from: 0,
+                to: view.state.doc.length,
+                insert: `Prelude\n${view.state.doc.toString()}`,
+            },
+        });
+        await flushDebugUpdate();
+
+        expect(requestedBreakpointLines(view.state)).toEqual([1, 3]);
+    });
+
     it("removes a breakpoint when its entire line is deleted", async () => {
         const { view } = mount();
         const line = view.state.doc.line(3);
@@ -146,5 +181,20 @@ describe("debugEditor", () => {
 
         expect(gutters[0]).toContain("dd-debug-breakpoint-gutter");
         expect(gutters[1]).toContain("dd-debug-execution-gutter");
+    });
+
+    it("reveals only a newly paused location, not same-location snapshot updates", () => {
+        const { debug } = mount();
+        const ready = debug.snapshot();
+        debug.start();
+        const paused = debug.snapshot();
+        debug.setBreakpoints([1]);
+        const sameLocation = debug.snapshot();
+        debug.stepOver();
+        const nextLocation = debug.snapshot();
+
+        expect(shouldRevealDebugLocation(ready, paused)).toBe(true);
+        expect(shouldRevealDebugLocation(paused, sameLocation)).toBe(false);
+        expect(shouldRevealDebugLocation(sameLocation, nextLocation)).toBe(true);
     });
 });

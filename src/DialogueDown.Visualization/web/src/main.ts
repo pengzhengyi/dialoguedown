@@ -150,7 +150,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         type: "source",
         markDirty: (dirty) => {
             app.markSourceDirty(dirty);
-            if (!dirty) fakeDebug?.rebind(app.getSourceContent());
+            if (!dirty && fakeDebug?.snapshot().status === "stale") {
+                fakeDebug.rebind(app.getSourceContent());
+            }
         },
         setContent: app.setContent,
         applyReport: (applied) => {

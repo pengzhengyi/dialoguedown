@@ -743,6 +743,11 @@ test("the fake line debugger prototypes breakpoints, stepping, path choice, and 
     await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 3");
     await expect(page.locator(".dd-debug-current-arrow")).toHaveCount(1);
 
+    // A clean View/Edit switch reconfigures the editor but must not restart the debug session.
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 3");
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+
     await toolbar.getByRole("button", { name: "Step over" }).click();
     await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 4");
     await toolbar.getByRole("button", { name: "Step over" }).click();
