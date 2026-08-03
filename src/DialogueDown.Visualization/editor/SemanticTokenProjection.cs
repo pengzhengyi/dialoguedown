@@ -97,6 +97,21 @@ internal sealed class SemanticTokenProjection
     {
         switch (node)
         {
+            case Query query:
+                yield return Token(TokenKind.Query, query.Span, map);
+                break;
+            case Condition condition:
+                yield return Token(TokenKind.Condition, condition.Span, map);
+                break;
+            case NumberWeight or AutoWeight:
+                yield return Token(TokenKind.StaticWeight, node.Span, map);
+                break;
+            case QueryWeight:
+                yield return Token(TokenKind.DynamicWeight, node.Span, map);
+                break;
+            case DefaultCommand or CustomCommand:
+                yield return Token(TokenKind.Command, node.Span, map);
+                break;
             case ReservedTag tag:
                 yield return Token(TokenKind.ReservedTag, tag.Span, map);
                 break;

@@ -42,6 +42,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Semantic code-span colors in the Source editor** — commands, value queries,
+  conditions, static random weights, and dynamic random weights now use distinct
+  VS Code-inspired colors in light and dark themes, including inside blockquotes;
+  block-control keywords and `#END` also use separate keyword and constant hues.
 - **One unified report shell for `visualize`** — the standalone launcher picker page is gone.
   `visualize` (or `--pick`) now opens the report shell directly on an **empty state** — the
   Explorer over your project beside a "create your first dialogue file" call to action — and
