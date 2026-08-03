@@ -79,10 +79,18 @@ export function renderMarkdown(source: string): string {
  * anchor links work. Use for the whole-document Source preview.
  */
 export function renderDocument(source: string): string {
-    return renderFrontMatterAnd(
-        source,
-        (body) => documentMarked.parse(body, { async: false, breaks: false }) as string,
+    return renderFrontMatterAnd(source, (body) =>
+        decorateJumpIndicators(
+            documentMarked.parse(body, { async: false, breaks: false }) as string,
+        ),
     );
+}
+
+// The Source preview is presentation, not another parser: marked has already proved the
+// following HTML is a link. Wrap only an escaped `=>` immediately before that rendered link,
+// leaving prose arrows, code spans, and the Source editor's underlying characters untouched.
+function decorateJumpIndicators(html: string): string {
+    return html.replace(/=&gt;(?=\s*<a\b)/g, '<span class="jump-ligature">=&gt;</span>');
 }
 
 function renderFrontMatterAnd(source: string, parseBody: (body: string) => string): string {

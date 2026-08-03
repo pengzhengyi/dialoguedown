@@ -1,33 +1,90 @@
 using DialogueDown.Common;
+using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
+using DialogueDown.Script.Transpiler.Builders;
 using DialogueDown.Visualization.Lsp;
 
 namespace DialogueDown.Visualization.Editor;
 
 /// <summary>
-/// Projects the Dialogue AST into the editor's semantic tokens — the LSP-shaped highlighting the
-/// report payload carries and a future language server would publish unchanged. It walks the
-/// transpiled AST (what the writer typed, before desugaring fills synthetic nodes) and emits one
-/// token per dialogue-specific construct, layered over the editor's Markdown highlighting. Reads
-/// only the core AST, so it can move into a shared editor-services library when the language
-/// server arrives.
+/// Projects the compiler's Markdown and Dialogue ASTs into the editor's semantic tokens — the
+/// LSP-shaped highlighting the report payload carries and a future language server would publish
+/// unchanged. Dialogue nodes supply semantic constructs; the Markdown tree supplies block-control
+/// keyword spans that the semantic-only Dialogue AST deliberately discards.
 /// </summary>
 internal sealed class SemanticTokenProjection
 {
     /// <summary>
-    /// Projects <paramref name="document"/> into semantic tokens, in document order.
+    /// Projects <paramref name="markdown"/> and <paramref name="document"/> into semantic tokens,
+    /// in source order.
     /// <paramref name="source"/> is the original script text the AST spans index into.
     /// </summary>
-    public IEnumerable<SemanticToken> Project(ScriptDocument document, string source)
+    public IEnumerable<SemanticToken> Project(
+        MarkdownDocument markdown, ScriptDocument document, string source)
     {
+        ArgumentNullException.ThrowIfNull(markdown);
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(source);
 
         var map = new LspLineMap(source);
-        return document.Body
+        var dialogueTokens = document.Body
             .SelectMany(block => block.DescendantsAndSelf())
             .SelectMany(node => TokensOf(node, source, map));
+        return dialogueTokens
+            .Concat(ControlKeywordTokens(markdown, map))
+            .OrderBy(token => token.Range.Start.Line)
+            .ThenBy(token => token.Range.Start.Character);
+    }
+
+    private static IEnumerable<SemanticToken> ControlKeywordTokens(
+        MarkdownDocument document, LspLineMap map)
+    {
+        foreach (var quote in QuoteBlocksOf(document.Blocks))
+        {
+            if (quote.Blocks is not [Paragraph first, ..]
+                || MarkerRecognition.Read(first.Inlines) is null)
+            {
+                continue;
+            }
+
+            foreach (var paragraph in quote.Blocks.OfType<Paragraph>())
+            {
+                if (paragraph.Inlines is [CodeSpanInline keyword, ..]
+                    && MarkerRecognition.Read(paragraph.Inlines) is not null)
+                {
+                    yield return Token(TokenKind.ControlKeyword, keyword.Span, map);
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<QuoteBlock> QuoteBlocksOf(IEnumerable<MarkdownBlock> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            switch (block)
+            {
+                case QuoteBlock quote:
+                    yield return quote;
+                    foreach (var nested in QuoteBlocksOf(quote.Blocks))
+                    {
+                        yield return nested;
+                    }
+
+                    break;
+                case ListBlock list:
+                    foreach (var item in list.Items)
+                    {
+                        foreach (var nested in QuoteBlocksOf(item.Blocks))
+                        {
+                            yield return nested;
+                        }
+                    }
+
+                    break;
+            }
+        }
     }
 
     // The token(s) a node contributes, if any. Non-dialogue nodes (text, styled runs, the line
@@ -40,6 +97,21 @@ internal sealed class SemanticTokenProjection
     {
         switch (node)
         {
+            case Query query:
+                yield return Token(TokenKind.Query, query.Span, map);
+                break;
+            case Condition condition:
+                yield return Token(TokenKind.Condition, condition.Span, map);
+                break;
+            case NumberWeight or AutoWeight:
+                yield return Token(TokenKind.StaticWeight, node.Span, map);
+                break;
+            case QueryWeight:
+                yield return Token(TokenKind.DynamicWeight, node.Span, map);
+                break;
+            case DefaultCommand or CustomCommand:
+                yield return Token(TokenKind.Command, node.Span, map);
+                break;
             case ReservedTag tag:
                 yield return Token(TokenKind.ReservedTag, tag.Span, map);
                 break;

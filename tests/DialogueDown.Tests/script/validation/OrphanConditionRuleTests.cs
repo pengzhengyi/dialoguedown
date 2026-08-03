@@ -78,6 +78,16 @@ public sealed class OrphanConditionRuleTests
         Assert.Empty(Check(control));
     }
 
+    [Fact]
+    public void Check_AConditionBoundToAControlBranch_ReportsNothing()
+    {
+        var control = ControlBlock(
+            Branch(Condition("Rainy"), Line(Text("The moor is bleak."))),
+            ElseBranch(Line(Text("The sky is clear."))));
+
+        Assert.Empty(Check(control));
+    }
+
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();
