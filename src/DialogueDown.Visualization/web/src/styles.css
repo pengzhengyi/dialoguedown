@@ -1386,7 +1386,8 @@ g.node.entity-highlight text.label {
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-control-keyword {
+.source-pane .cm-content .dd-tok-control-keyword,
+.source-pane .cm-content .dd-tok-control-keyword * {
     color: var(--tok-control-keyword);
     font-weight: 600;
 }
