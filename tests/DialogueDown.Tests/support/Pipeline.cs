@@ -1,5 +1,6 @@
 using DialogueDown.Configuration;
 using DialogueDown.Markdown;
+using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Script.Transpiler;
@@ -28,4 +29,13 @@ internal static class Pipeline
 
     public static SemanticModel UntilAnalyzed(string source) =>
         _analyzer.Analyze(UntilDesugared(source), DiagnosticsContextFactory.Context(source));
+
+    public static IReadOnlyList<ScriptBlock> Blocks(string source) =>
+        Blocks(source, out _);
+
+    public static IReadOnlyList<ScriptBlock> Blocks(string source, out SemanticModel model)
+    {
+        model = UntilAnalyzed(source);
+        return model.SceneRoot.DocumentOrder();
+    }
 }

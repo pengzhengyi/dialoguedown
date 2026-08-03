@@ -1,6 +1,6 @@
 using DialogueDown.Graph;
-using DialogueDown.Script.Semantics;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.NodeIdAssert;
 
 namespace DialogueDown.Tests.Graph;
 
@@ -15,12 +15,12 @@ public sealed class IndexNodeIdBuilderTests
     [Fact]
     public void Assign_GivesEachBlockItsDocumentIndex_AndEndLast()
     {
-        var blocks = Pipeline.UntilAnalyzed("Alice: a\n\nBob: b").SceneRoot.DocumentOrder();
+        var blocks = Pipeline.Blocks("Alice: a\n\nBob: b");
 
         var ids = _builder.Assign(blocks);
 
-        Assert.Equal(new NodeId(0), ids.Of(blocks[0]));
-        Assert.Equal(new NodeId(1), ids.Of(blocks[1]));
-        Assert.Equal(new NodeId(2), ids.End);
+        AssertIdEqual(0, ids.Of(blocks[0]));
+        AssertIdEqual(1, ids.Of(blocks[1]));
+        AssertIdEqual(2, ids.End);
     }
 }
