@@ -25,6 +25,7 @@ import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
 import { escapeHtml } from "./text";
 import { setHelp } from "./help";
+import type { DebugController } from "./debug-controller";
 
 // The Source tab shows the compiler input, not a projected stage, so its hover
 // tip is a constant here rather than a field on the model.
@@ -83,6 +84,8 @@ export interface AppController {
     setEditable(editable: boolean): void;
     /** Replace the Source buffer (a View-mode hot-reload), keeping the one editor instance. */
     setContent(source: string): void;
+    /** The Source editor's current buffer (used by the fake debugger when a clean save rebinds). */
+    getSourceContent(): string;
     /** Replace the Source editor's diagnostics overlay after a recompile (hot-reload or save). */
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** Replace the Source editor's semantic-token highlighting after a recompile. */
@@ -111,7 +114,11 @@ export interface AppController {
  * Build the tabs — an optional Source tab followed by one per stage — wire the
  * shared interactions, and return a controller for live updates.
  */
-export function runApp(report: Report, source?: SourceOptions): AppController {
+export function runApp(
+    report: Report,
+    source?: SourceOptions,
+    debug?: DebugController,
+): AppController {
     const tabsEl = document.getElementById("tabs")!;
     const stagesEl = document.getElementById("stages")!;
     const appEl = document.getElementById("app")!;
@@ -231,6 +238,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             panel.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
+        getSourceContent: () => sourceHandle?.getContent() ?? "",
         setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
         setSemanticTokens: (tokens) => sourceHandle?.setSemanticTokens(tokens),
         setConfigEditable: (next) => configHandle?.setEditable(next),
@@ -283,6 +291,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
+                ...(debug ? { debug } : {}),
             });
             sourceHandle.setDiagnostics(report.diagnostics ?? []);
             sourceHandle.setSemanticTokens(report.semanticTokens ?? []);

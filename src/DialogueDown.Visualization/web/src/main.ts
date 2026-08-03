@@ -29,6 +29,7 @@ import {
     type ServedMode,
 } from "./model";
 import { parentPath, type BrowseListing, type CreateOutcome } from "./project-fs";
+import { createLineDebuggerPrototype } from "./debug-fixture";
 
 /**
  * The Explorer's pinned configuration entry for a report — present only when a `dialogue.toml`
@@ -56,6 +57,7 @@ function resolveReport(): Report {
 }
 
 const report = resolveReport();
+const fakeDebug = createLineDebuggerPrototype(report.source, window.location.search);
 const header = document.querySelector<HTMLElement>(".app-header");
 
 // Apply the saved color theme and mount the System/Light/Dark toggle (every mode).
@@ -126,26 +128,34 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         });
     }
 
-    const app = runApp(report, {
-        editable: initialMode === "edit",
-        onChange: (buffer) => controller.onEditorChange(buffer),
-        configOnChange: (buffer) => controller.onConfigEditorChange(buffer),
-        onCreateConfig: async () => {
-            await createConfig(browserConfigCreatePorts());
+    const app = runApp(
+        report,
+        {
+            editable: initialMode === "edit",
+            onChange: (buffer) => controller.onEditorChange(buffer),
+            configOnChange: (buffer) => controller.onConfigEditorChange(buffer),
+            onCreateConfig: async () => {
+                await createConfig(browserConfigCreatePorts());
+            },
+            beginNavigation,
+            onActiveTabChange: () => {
+                if (controllersReady) ui.reflectActiveDocument();
+            },
+            symbols: () => currentSymbols,
         },
-        beginNavigation,
-        onActiveTabChange: () => {
-            if (controllersReady) ui.reflectActiveDocument();
-        },
-        symbols: () => currentSymbols,
-    });
+        fakeDebug,
+    );
     const ui = initLiveEditUi(app, { active: () => activeLive() });
     const dialogueBinding: DocumentBinding = {
         type: "source",
-        markDirty: app.markSourceDirty,
+        markDirty: (dirty) => {
+            app.markSourceDirty(dirty);
+            if (!dirty) fakeDebug?.rebind(app.getSourceContent());
+        },
         setContent: app.setContent,
         applyReport: (applied) => {
             app.updateStages(applied.stages);
+            if (applied.source !== undefined) fakeDebug?.rebind(applied.source);
             // A save recompiles, so the analyzer's symbols change — refresh the completion
             // holder or the editor keeps offering the old speakers/ids.
             currentSymbols = applied.symbols ?? EMPTY_SYMBOLS;
@@ -391,7 +401,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     if (header) initBackToLauncher(header, window.location.pathname);
 } else {
     // Static export: read-only, no server, no toggle.
-    runApp(report);
+    runApp(report, undefined, fakeDebug);
     initModeBadge("static");
     if (header) initBackToLauncher(header, window.location.pathname);
 }
