@@ -5,26 +5,70 @@ namespace DialogueDown.Tests.Graph;
 
 public sealed class DialogueGraphBuilderTests
 {
-    private readonly DialogueGraphBuilder _builder = new();
+    private readonly List<IGraphBuildPass> _applied = [];
 
     [Fact]
     public void Build_NullModel_Throws() =>
         Assert.Throws<ArgumentNullException>(
-            () => _builder.Build(null!, DiagnosticsContextFactory.Context("")));
+            () => Builder().Build(null!, DiagnosticsContextFactory.Context("")));
 
     [Fact]
     public void Build_NullContext_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => _builder.Build(Pipeline.UntilAnalyzed(""), null!));
+        Assert.Throws<ArgumentNullException>(
+            () => Builder().Build(Pipeline.UntilAnalyzed(""), null!));
 
     [Fact]
-    public void Build_EmptyDocument_EntryIsTheEndNode()
+    public void Build_AppliesEachPassInOrderOnOneSharedDraft()
     {
-        var graph = Build("");
+        var terminate = new RecordingPass(_applied, addsEnd: true);
+        var follow = new RecordingPass(_applied);
+        var builder = new DialogueGraphBuilder(new IndexNodeIdBuilderFactory(), [terminate, follow]);
 
-        Assert.IsType<EndNode>(graph.Node(graph.Entry));
-        Assert.Equal(graph.Entry, graph.End);
+        builder.Build(Pipeline.UntilAnalyzed(""), DiagnosticsContextFactory.Context(""));
+
+        Assert.Equal([terminate, follow], _applied);
+        Assert.Same(terminate.LastDraft, follow.LastDraft);
     }
 
-    private DialogueGraph Build(string source) =>
-        _builder.Build(Pipeline.UntilAnalyzed(source), DiagnosticsContextFactory.Context(source));
+    [Fact]
+    public void Build_CreatesAFreshIdBuilderPerBuild()
+    {
+        var factory = new CountingIdBuilderFactory();
+        var builder = new DialogueGraphBuilder(factory, [new RecordingPass(_applied, addsEnd: true)]);
+
+        builder.Build(Pipeline.UntilAnalyzed(""), DiagnosticsContextFactory.Context(""));
+        builder.Build(Pipeline.UntilAnalyzed(""), DiagnosticsContextFactory.Context(""));
+
+        Assert.Equal(2, factory.Creates);
+    }
+
+    private DialogueGraphBuilder Builder() =>
+        new(new IndexNodeIdBuilderFactory(), [new RecordingPass(_applied, addsEnd: true)]);
+
+    private sealed class RecordingPass(List<IGraphBuildPass> applied, bool addsEnd = false)
+        : IGraphBuildPass
+    {
+        public GraphDraft? LastDraft { get; private set; }
+
+        public void Apply(GraphDraft draft, GraphBuildContext context)
+        {
+            LastDraft = draft;
+            applied.Add(this);
+            if (addsEnd)
+            {
+                draft.AddEnd();
+            }
+        }
+    }
+
+    private sealed class CountingIdBuilderFactory : INodeIdBuilderFactory
+    {
+        public int Creates { get; private set; }
+
+        public INodeIdBuilder Create()
+        {
+            Creates++;
+            return new IndexNodeIdBuilder();
+        }
+    }
 }

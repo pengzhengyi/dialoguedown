@@ -1,0 +1,16 @@
+namespace DialogueDown.Graph;
+
+/// <summary>
+/// Creates a graph builder with DialogueDown's built-in passes, in dependency order. Every
+/// composition root that needs the graph stage builds it here, so they all run the same passes.
+/// </summary>
+internal static class DialogueGraphBuilderFactory
+{
+    public static DialogueGraphBuilder CreateDefault() =>
+        new(
+            new IndexNodeIdBuilderFactory(),
+            [
+                new NodeCreationPass(),
+                new SuccessionPass(),
+            ]);
+}

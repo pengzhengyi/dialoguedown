@@ -6,16 +6,30 @@ namespace DialogueDown.Graph;
 /// <inheritdoc />
 internal sealed class DialogueGraphBuilder : IDialogueGraphBuilder
 {
+    private readonly INodeIdBuilderFactory _idBuilderFactory;
+    private readonly IReadOnlyList<IGraphBuildPass> _passes;
+
+    public DialogueGraphBuilder(
+        INodeIdBuilderFactory idBuilderFactory, IReadOnlyList<IGraphBuildPass> passes)
+    {
+        ArgumentNullException.ThrowIfNull(idBuilderFactory);
+        ArgumentNullException.ThrowIfNull(passes);
+        _idBuilderFactory = idBuilderFactory;
+        _passes = passes;
+    }
+
     public DialogueGraph Build(SemanticModel model, DiagnosticsContext context)
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(context);
 
-        var nodes = new List<DialogueNode>();
-        var end = new EndNode(new NodeId(nodes.Count));
-        nodes.Add(end);
+        var buildContext = new GraphBuildContext(model, context);
+        var draft = new GraphDraft(_idBuilderFactory.Create());
+        foreach (var pass in _passes)
+        {
+            pass.Apply(draft, buildContext);
+        }
 
-        // An empty document runs straight to the End sentinel.
-        return new DialogueGraph(nodes, entry: end.Id, end: end.Id);
+        return draft.Freeze();
     }
 }
