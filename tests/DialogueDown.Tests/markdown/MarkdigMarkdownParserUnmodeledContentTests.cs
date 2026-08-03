@@ -35,7 +35,6 @@ public sealed class MarkdigMarkdownParserUnmodeledContentTests : MarkdigMarkdown
     }
 
     [Theory]
-    [InlineData("> quote")]         // block quote
     [InlineData("<div>hi</div>")]   // raw HTML block
     public void Parse_RawTextByDefault_FlattensToParagraph(string source)
     {
@@ -45,6 +44,18 @@ public sealed class MarkdigMarkdownParserUnmodeledContentTests : MarkdigMarkdown
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertSingleText(paragraph.Inlines, source);
+    }
+
+    [Fact]
+    public void Parse_Blockquote_ModelsAQuoteBlockWrappingItsContent()
+    {
+        // A blockquote is kept structurally — a wrapper around its inner blocks — so a
+        // marker-headed quote can later be recognized as a block conditional.
+        var document = Parser.Parse("> quote");
+
+        var quote = AssertSingleBlock<QuoteBlock>(document);
+        var paragraph = Assert.IsType<Paragraph>(Assert.Single(quote.Blocks));
+        AssertSingleText(paragraph.Inlines, "quote");
     }
 
     [Theory]

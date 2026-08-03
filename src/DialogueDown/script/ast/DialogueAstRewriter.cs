@@ -20,6 +20,7 @@ internal abstract class DialogueAstRewriter
         ControlLine control => RewriteControlLine(control),
         Choices choices => RewriteChoices(choices),
         RandomChoices random => RewriteRandomChoices(random),
+        ControlBlock control => RewriteControlBlock(control),
         SceneHeading heading => RewriteSceneHeading(heading),
         _ => throw new ArgumentOutOfRangeException(
             nameof(block), block.GetType().Name,
@@ -62,6 +63,13 @@ internal abstract class DialogueAstRewriter
 
     protected virtual RandomOption RewriteRandomOption(RandomOption option) =>
         option with { Body = option.Body.Select(RewriteBlock).ToList() };
+
+    protected virtual ControlBlock RewriteControlBlock(ControlBlock control) =>
+        control with { Branches = control.Branches.Select(RewriteBranch).ToList() };
+
+    // A branch's guard is a leaf here (like a choice's), so only its body recurses.
+    protected virtual Branch RewriteBranch(Branch branch) =>
+        branch with { Body = branch.Body.Select(RewriteBlock).ToList() };
 
     protected virtual IReadOnlyList<InlineFragment> RewriteFragments(
         IReadOnlyList<InlineFragment> fragments) =>
