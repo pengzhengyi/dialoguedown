@@ -28,6 +28,10 @@ internal sealed class GraphDraft
         _idBuilder = idBuilder;
     }
 
+    /// <summary>The id of the terminal End node, once it has been added.</summary>
+    public NodeId End => _end ?? throw new InvalidOperationException(
+        "The End node has not been added to this draft yet.");
+
     /// <summary>Adds a block node draft and returns its assigned id.</summary>
     public NodeId AddBlock(ScriptBlock block, Func<NodeId, NodeDraft> createDraft)
     {
@@ -60,6 +64,9 @@ internal sealed class GraphDraft
 
     /// <summary>The draft of the node with the given <paramref name="id"/>.</summary>
     public NodeDraft Node(NodeId id) => _nodeDraftById[id];
+
+    /// <summary>The id assigned to <paramref name="block"/> when it was added.</summary>
+    public NodeId IdOf(ScriptBlock block) => _idBuilder.Get(block);
 
     /// <summary>Freezes the drafts into the immutable dialogue graph.</summary>
     public DialogueGraph Freeze()
