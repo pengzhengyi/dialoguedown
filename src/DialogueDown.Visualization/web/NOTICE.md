@@ -17,6 +17,7 @@ report HTML.
 | [highlight.js](https://highlightjs.org)                                    | 11.11.1 | BSD-3-Clause |
 | [Tippy.js](https://atomiks.github.io/tippyjs/)                             | 6.3.7   | MIT          |
 | [Popper](https://popper.js.org) (bundled by Tippy.js)                      | 2.11.8  | MIT          |
+| [Fira Code](https://github.com/tonsky/FiraCode) (via Fontsource)           | 5.3.0   | OFL-1.1      |
 
 To update a library, bump it in `web/package.json`, run `npm install` in
 `web/`, then rebuild (`npm run build`) and commit the refreshed
@@ -59,3 +60,10 @@ notice, the list of conditions, and the disclaimer are retained, and the name of
 the author may not be used to endorse products derived from this software without
 specific prior written permission. The full license text ships in the package
 (`highlight.js/LICENSE`) and at the project's repository.
+
+### Fira Code — SIL Open Font License 1.1
+
+Copyright 2014-2020 The Fira Code Project Authors
+(<https://github.com/tonsky/FiraCode>). DialogueDown embeds the unmodified Latin
+400 WOFF2 supplied by `@fontsource/fira-code`; the full license is preserved in
+[`FIRA_CODE_LICENSE.txt`](FIRA_CODE_LICENSE.txt).
