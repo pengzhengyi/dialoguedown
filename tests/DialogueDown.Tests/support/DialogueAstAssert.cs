@@ -8,6 +8,9 @@ namespace DialogueDown.Tests.Support;
 /// </summary>
 internal static class DialogueAstAssert
 {
+    public static Line AssertSingleLine(IReadOnlyList<ScriptBlock> blocks) =>
+        Assert.IsType<Line>(Assert.Single(blocks));
+
     public static Text AssertText(InlineFragment actual, string content)
     {
         var text = Assert.IsType<Text>(actual);
