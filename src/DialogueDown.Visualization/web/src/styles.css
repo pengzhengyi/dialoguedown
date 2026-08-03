@@ -21,6 +21,12 @@
     --tok-jump: #1b7c83;
     --tok-reserved-anchor: #cf222e;
 
+    /* Line-debugger prototype: red breakpoint requests and an amber paused-location marker.
+       The paused line is distinct from CodeMirror's neutral cursor-active line below. */
+    --debug-breakpoint: #cf222e;
+    --debug-current: #9a6700;
+    --debug-current-bg: rgb(210 153 34 / 18%);
+
     /* Cross-link highlight: hovering a scene or speaker in the Semantic tab lights up
        every place it appears (graph node, table rows/cells). An amber "highlighter"
        tint reads on both themes and stays clear of the category colors. */
@@ -84,6 +90,9 @@
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
         --tok-reserved-anchor: #ff7b72;
+        --debug-breakpoint: #ff7b72;
+        --debug-current: #e3b341;
+        --debug-current-bg: rgb(227 179 65 / 18%);
         --table-mark-bg: #b0892b;
         --table-mark-fg: #f8fafc;
     }
@@ -108,6 +117,9 @@
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
     --tok-reserved-anchor: #ff7b72;
+    --debug-breakpoint: #ff7b72;
+    --debug-current: #e3b341;
+    --debug-current-bg: rgb(227 179 65 / 18%);
     --table-mark-bg: #b0892b;
     --table-mark-fg: #f8fafc;
 }
@@ -1297,6 +1309,48 @@ g.node.entity-highlight text.label {
     color: var(--pico-muted-color);
 }
 
+/* Two independent debug lanes precede the line numbers: breakpoints stay visible when the
+   execution arrow stops on the same line. */
+.source-pane :is(.dd-debug-breakpoint-gutter, .dd-debug-execution-gutter) .cm-gutterElement {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0.9rem;
+    padding: 0 0.1rem;
+}
+
+.source-pane .dd-debug-breakpoint-gutter .cm-gutterElement {
+    cursor: pointer;
+}
+
+.dd-debug-breakpoint {
+    display: block;
+    box-sizing: border-box;
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 2px solid var(--debug-breakpoint);
+    border-radius: 50%;
+}
+
+.dd-debug-breakpoint-verified {
+    background: var(--debug-breakpoint);
+}
+
+.dd-debug-breakpoint-unverified {
+    background: transparent;
+}
+
+.dd-debug-current-arrow {
+    color: var(--debug-current);
+    font-size: 0.62rem;
+    line-height: 1;
+}
+
+.dd-debug-execution-spacer {
+    font-size: 0.62rem;
+}
+
 .source-pane .cm-content {
     color: var(--pico-color);
     caret-color: var(--pico-color);
@@ -1342,6 +1396,11 @@ g.node.entity-highlight text.label {
 :is(.source-pane, .config-source) .cm-activeLine,
 :is(.source-pane, .config-source) .cm-activeLineGutter {
     background: rgb(128 128 128 / 10%);
+}
+
+.source-pane .dd-debug-current-line {
+    background: var(--debug-current-bg);
+    box-shadow: inset 3px 0 0 var(--debug-current);
 }
 
 :is(.source-pane, .config-source) .cm-selectionMatch {
