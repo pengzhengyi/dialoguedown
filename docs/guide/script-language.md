@@ -883,8 +883,9 @@ in one blockquote.
 > Guard: I don't know your face. What business have you?
 ```
 
-Exactly one branch plays: the first `if` or `elseif` whose condition reads as
-true, or the `else` when none do. A branch may hold as many lines as you like,
+Zero or one branch plays: the first `if` or `elseif` whose condition reads as
+true, or the optional `else` when none do. Without a matching condition or an
+`else`, the whole block is skipped. A branch may hold as many lines as you like,
 along with jumps and commands.
 
 **One blockquote, kept connected.** Every branch — the `if`, each `elseif`, and
@@ -1045,7 +1046,17 @@ Alice: My favorite color is `"Alice.FavoriteColor"`. May I join the Photography 
 
 `("Alice joins Photography")`
 
-`Bob.Affection?` => [Discuss Christina's painting](#discuss-christinas-painting)
+> `if` `Bob.Affection?`
+>
+> Bob: Come — let me show you Christina's painting.
+>
+> => [Discuss Christina's painting](#discuss-christinas-painting)
+>
+> `else`
+>
+> Bob: Perhaps we can talk again another day.
+>
+> => [The end](#END)
 
 ## Discuss Christina's painting
 

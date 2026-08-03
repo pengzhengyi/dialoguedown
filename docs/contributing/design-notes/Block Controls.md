@@ -1,9 +1,7 @@
 # Block controls
 
 > [!NOTE]
-> Status: **implementation in progress**. The Markdown shape, marker recognition,
-> Dialogue AST, construction, grammar diagnostics, and semantic validation are
-> implemented; final integration remains. Runtime evaluation is deferred to the graph/runtime
+> Status: **implemented**. Runtime evaluation is deferred to the graph/runtime
 > ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
 
 ## Table of contents
@@ -34,6 +32,7 @@
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Testability](#testability)
   - [Alternatives not chosen](#alternatives-not-chosen)
+  - [Crosscheck](#crosscheck)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
@@ -80,8 +79,8 @@ Design targets for the implementation:
       branch; report a marker fused into content.
 - [x] Read a **non-marker blockquote** as a transparent wrapper — its inner blocks in place.
 - [x] Preserve source spans of the block, each branch, and each condition.
-- [ ] Handle `ControlBlock` in every block switch (rewriter, traversal, projection,
-      validation), enforced by the compiler.
+- [x] Handle `ControlBlock` in every block switch (rewriter, traversal, projection,
+      validation), with focused tests at each seam.
 
 ## Ubiquitous language
 
@@ -197,8 +196,8 @@ they are armed:
 The `` `if` `` opens the block; each `` `elseif` `` and the final `` `else` `` continue
 the **same** blockquote (note the bare `>` separators). A branch body may hold several
 utterances, a bare jump, a silent command, or a **nested** conditional (the `> >`
-block above). Exactly one branch is taken at play time; that selection is the
-runtime's job.
+block above). Zero or one branch is taken at play time: the first true guard, the
+optional `else`, or none when no guard matches.
 
 A blockquote that is **not** led by a marker is a transparent wrapper: its inner blocks
 read as ordinary content, in place.
@@ -322,12 +321,11 @@ introduced; existing recursion reaches inside.
 
 ### D5 — Editor support offsets the `>` authoring tax
 
-The connected blockquote's `>` prefix is maintained by the editor, not the writer: the
-compiler-projected editor seam (see
+CodeMirror's Markdown support continues the connected blockquote's `>` prefix when the
+writer presses Enter. The compiler-projected editor seam (see
 [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md))
-continues the container on a new line, completes the markers, and highlights them. The
-raw preview stays readable without any of that; editor support only removes the typing
-friction.
+highlights recognized `` `if` `` / `` `elseif` `` / `` `else` `` markers without a
+second browser grammar. The raw preview stays readable without either aid.
 
 ### D6 — A scene is a top-level unit; no heading inside a branch
 
@@ -415,8 +413,8 @@ checks recurse into branch bodies.
 - **Diagnostics** — severed chains, malformed order, fused markers, missing conditions,
   and an `else` condition each report; a branch condition is not an orphan.
 - **Spans** — the block, each branch, and each condition preserve their source spans.
-- **Completeness** — an architecture test asserts every block switch handles
-  `ControlBlock`; traversal, rewriting, and projection each cover it.
+- **Completeness** — traversal, rewriting, validation, compiler integration, and
+  projection each cover `ControlBlock`.
 
 ## Alternatives not chosen
 
@@ -432,10 +430,15 @@ checks recurse into branch bodies.
 - **Command-style marker** `` `If(Rich?)` `` — collides with the command form and inverts
   the "a command acts, a condition reads" distinction.
 
+## Crosscheck
+
+| Outcome | Result |
+| --- | --- |
+| **Achieved** | Connected and nested blockquotes build semantic `ControlBlock` / `Branch` nodes; grammar and placement diagnostics recover without polluting the AST; traversal, desugaring, validation, visualization, and editor highlighting cover the construct. |
+| **Changed** | Control construction moved from `BlockBuilder` into a dedicated `ControlBlockBuilder`; malformed marker shapes use five focused transpile diagnostics; marker highlighting combines the Markdown AST's keyword spans with the semantic Dialogue AST rather than retaining marker kinds on `Branch`. Empty and effect-only branch bodies remain valid. |
+| **Not implemented** | Runtime branch selection remains deferred to [#45](https://github.com/pengzhengyi/dialoguedown/issues/45). |
+
 ## Open questions and deferred work
 
 - **Runtime evaluation** — selecting and playing a branch belongs to the graph/runtime
   ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
-- **Branch content rules** — whether a branch may be empty or effect-only. (A scene
-  heading inside a branch is settled: it is a diagnostic — see
-  [D6](#d6--a-scene-is-a-top-level-unit-no-heading-inside-a-branch).)

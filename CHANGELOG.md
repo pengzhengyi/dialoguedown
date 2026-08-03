@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Block conditionals** — group dialogue, commands, choices, and jumps into connected
+  blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
+  `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
+  nested blocks, and highlights marker keywords in the source editor. See
+  [Block controls](docs/contributing/design-notes/Block%20Controls.md).
 - **File Explorer in the report** — a served report opened through the launcher now shows a
   collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
   highlighted, and open another by clicking it or following a cross-file link. A VS Code-style
