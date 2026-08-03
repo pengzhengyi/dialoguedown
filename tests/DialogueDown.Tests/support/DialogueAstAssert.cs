@@ -59,6 +59,15 @@ internal static class DialogueAstAssert
         return query;
     }
 
+    public static CustomCommand AssertCustomCommand(
+        InlineFragment actual, string name, params string[] args)
+    {
+        var command = Assert.IsType<CustomCommand>(actual);
+        Assert.Equal(name, command.Name);
+        Assert.Equal(args, command.Args);
+        return command;
+    }
+
     public static Condition AssertCondition(InlineFragment actual, string key)
     {
         var condition = Assert.IsType<Condition>(actual);

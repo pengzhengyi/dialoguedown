@@ -1,4 +1,5 @@
 using DialogueDown.Graph;
+using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.GraphBuildContextFactory;
 using static DialogueDown.Tests.Support.GraphDraftFactory;
 
@@ -27,6 +28,16 @@ public sealed class NodeCreationPassTests
         Assert.IsType<EndNode>(graph.Node(graph.End));
         Assert.Equal(graph.End, graph.Entry);
         Assert.Single(graph.Nodes);
+    }
+
+    [Fact]
+    public void Apply_LineWithInlineGameCall_CarriesItAsAnEffect()
+    {
+        var graph = Build("""Alice: You get `GiveGold("5")` gold.""");
+
+        var line = Assert.IsType<LineNode>(graph.Node(graph.Entry));
+
+        AssertCustomCommand(Assert.Single(line.Effects), "GiveGold", "5");
     }
 
     [Fact]
