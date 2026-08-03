@@ -28,5 +28,7 @@ internal static class TranspilerBuilderFactory
 
     public static BlockBuilder BlockBuilder() => new(InlineBuilder(), LineBuilder());
 
+    public static ControlBlockBuilder ControlBlockBuilder() => new(BlockBuilder());
+
     public static ScriptTranspiler ScriptTranspiler() => new(BlockBuilder());
 }

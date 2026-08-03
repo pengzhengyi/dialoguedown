@@ -82,6 +82,15 @@ internal static class DialogueAstFactory
     public static RandomChoices RandomChoices(int spanStart, params RandomOption[] options) =>
         new(options, SourceSpanFactory.Span(spanStart));
 
+    public static Branch Branch(Condition condition, params ScriptBlock[] body) =>
+        new(condition, body, SourceSpanFactory.Span());
+
+    public static Branch ElseBranch(params ScriptBlock[] body) =>
+        new(null, body, SourceSpanFactory.Span());
+
+    public static ControlBlock ControlBlock(params Branch[] branches) =>
+        new(branches, SourceSpanFactory.Span());
+
     public static SceneHeading SceneHeading(string title = "Scene", int level = 1) =>
         new([Text(title)], level, SourceSpanFactory.Span());
 
