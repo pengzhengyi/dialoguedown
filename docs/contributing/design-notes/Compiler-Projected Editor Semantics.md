@@ -73,7 +73,7 @@ projection and the rendering are reused unchanged when the language server arriv
 | Type / seam | Responsibility | Collaborators |
 | --- | --- | --- |
 | `SemanticToken` (`.NET`, new) | A positioned token: a zero-based `Range` and a `TokenKind`. | `LspRange`, `TokenKind` |
-| `TokenKind` (`.NET`, new) | The token legend enum: `SpeakerName`, `SpeakerId`, `Separator`, `CustomTag`, `ReservedTag`, `JumpIndicator`, `ReservedAnchor`, `ControlKeyword`. | — |
+| `TokenKind` (`.NET`, new) | The token legend enum: speaker parts, tags, jumps, block-control keywords, queries, conditions, static/dynamic weights, and commands. | — |
 | `SemanticTokenProjection` (`.NET`, new) | Walk the Markdown and Dialogue ASTs and emit `SemanticToken`s; the reusable seam. | `MarkdownDocument`, `ScriptDocument`, `LspLineMap` |
 | `CompilationVisualizer.BuildContent` (`.NET`) | Project `result.Markdown` and `result.Script` into tokens and include them in the payload. | `SemanticTokenProjection`, `DisplayGraphJson` |
 | `DisplayGraphJson.SerializeReport` (`.NET`) | Serialize the tokens into the payload's `semanticTokens` field. | `SemanticToken` |
@@ -109,7 +109,14 @@ export type TokenKind =
     | "Separator"
     | "CustomTag"
     | "ReservedTag"
-    | "JumpIndicator";
+    | "JumpIndicator"
+    | "ReservedAnchor"
+    | "ControlKeyword"
+    | "Query"
+    | "Condition"
+    | "StaticWeight"
+    | "DynamicWeight"
+    | "Command";
 
 export interface Report {
     // …existing fields…
@@ -142,6 +149,11 @@ Each token uses a compiler-produced raw span:
 | `ReservedTag` | `ReservedTag` (its span, includes `##`) |
 | `JumpIndicator` | `JumpIndicator` (its span, the `=>`) |
 | A recognized marker paragraph inside a marker-headed `QuoteBlock` | `ControlKeyword` (the `` `if` `` / `` `elseif` `` / `` `else` `` code span) |
+| `Query` | `Query` (a value read such as `` `"playerName"` ``) |
+| `Condition` | `Condition` (a boolean read such as `` `Rainy?` ``) |
+| `NumberWeight`, `AutoWeight` | `StaticWeight` (a numeric or remaining-share weight) |
+| `QueryWeight` | `DynamicWeight` (a game-state-driven weight) |
+| `DefaultCommand`, `CustomCommand` | `Command` |
 
 A speaker node carries **sub-spans** for the parts it wrote — the name, the `@id`, and the `:`
 separator — and the projection emits one token per part from those spans. The tokens are
@@ -153,11 +165,17 @@ detailed in [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md).
 ### D3 — Tokens layer over Markdown highlighting
 
 The projection emits only the **dialogue-specific** tokens generic Markdown highlighting does not
-understand. Headings,
-emphasis, lists, links, images, and inline code keep the editor's existing Markdown highlighting;
-the decoration overlay adds dialogue colors on top. Because tokens come from AST nodes, they land
-only on real dialogue constructs — front matter, fenced code, and link destinations are never
-mis-colored, which the AST-node origin guarantees rather than a regex having to avoid them.
+understand. Headings, emphasis, lists, links, images, and unrecognized inline code keep the
+editor's existing Markdown highlighting. Recognized code-span forms receive semantic colors that
+also override nested Markdown and blockquote styling, so their visible text keeps the projected
+color. Because tokens come from AST nodes, they land only on real dialogue constructs — front
+matter, fenced code, and link destinations are never mis-colored, which the AST-node origin
+guarantees rather than a regex having to avoid them.
+
+The code-span palette follows familiar VS Code Light+/Dark+ roles: control keywords use the
+control-flow keyword hue; `#END` uses the constant hue; commands use the function hue; static
+weights use the number hue; queries, conditions, and dynamic weights use distinct string,
+variable, and type hues. This separates neighboring forms without inventing a one-off color system.
 
 ### D4 — Transport is the payload now, LSP later
 
@@ -257,15 +275,17 @@ The parser records each part's sub-span on the speaker AST node; the mechanics l
   zero-based range; a speaker projects disjoint `SpeakerName`/`SpeakerId`/`Separator` tokens (a
   quoted name includes its quotes, an `@id` includes its `@`) that do not overlap its tag tokens;
   recognized block-control markers project `ControlKeyword` only inside marker-headed quotes;
-  synthetic or recovered speakers emit nothing; a halted compile still yields tokens.
+  queries, conditions, static/dynamic weights, and commands project their own kinds; synthetic or
+  recovered speakers emit nothing; a halted compile still yields tokens.
 - **`.NET`** (`CompilationVisualizerTests`, `DisplayGraphJsonTests`): a compile's tokens reach the
   payload's `semanticTokens` field; an empty document carries an empty array.
 - **TS unit** (`semantic-tokens.test.ts`): payload tokens convert to decorations at the right
   offsets and classes; completion tests assert the list comes from `Report.symbols` with no
   scanner.
-- **End-to-end:** a static report colors the speaker, tags, and the jump indicator distinctly in
-  light and dark; a live edit re-highlights after recompile; completions offer only compiler
-  symbols (a just-typed but compiler-rejected name is not offered).
+- **End-to-end:** a static report colors dialogue tokens and recognized code-span forms distinctly
+  in light and dark, including code spans nested in blockquotes; a live edit re-highlights after
+  recompile; completions offer only compiler symbols (a just-typed but compiler-rejected name is
+  not offered).
 
 ## Open questions
 

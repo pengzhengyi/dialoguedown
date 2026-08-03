@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { SAMPLE_STAGES, writeReport } from "./report";
-import type { Report } from "../src/model";
+import type { Report, TokenKind } from "../src/model";
 
 // "Alice @alice #happy: Hi." on line 0 — the speaker's name, @id, tag, and : separator as
 // disjoint tokens — and a jump indicator on line 1.
@@ -142,6 +142,80 @@ test("colors a control keyword over its nested Markdown code-span highlight", as
 
     expect(colors.leaf).toBe(colors.mark);
     expect(colors.mark).not.toBe(colors.condition);
+});
+
+test("gives quoted code-span forms distinct semantic colors in light and dark", async ({
+    page,
+}) => {
+    const source = [
+        "> `if` `Rainy?`",
+        '> `"playerName"`',
+        '> `playSound("wind")`',
+        "> `60%`",
+        "> `Luck%`",
+        "=> [end](#END)",
+    ].join("\n");
+    const token = (kind: TokenKind, text: string) => {
+        const offset = source.indexOf(text);
+        const before = source.slice(0, offset).split("\n");
+        const line = before.length - 1;
+        const character = before.at(-1)!.length;
+        return {
+            kind,
+            range: {
+                start: { line, character },
+                end: { line, character: character + text.length },
+            },
+        };
+    };
+    const codeSpanUrl = writeReport({
+        source,
+        stages: SAMPLE_STAGES,
+        semanticTokens: [
+            token("ControlKeyword", "`if`"),
+            token("Condition", "`Rainy?`"),
+            token("Query", '`"playerName"`'),
+            token("Command", '`playSound("wind")`'),
+            token("StaticWeight", "`60%`"),
+            token("DynamicWeight", "`Luck%`"),
+            token("ReservedAnchor", "#END"),
+        ],
+    });
+    await page.goto(codeSpanUrl);
+    await expect(page.locator(".tab")).toHaveCount(2);
+
+    const selectors = [
+        ".dd-tok-control-keyword",
+        ".dd-tok-condition",
+        ".dd-tok-query",
+        ".dd-tok-command",
+        ".dd-tok-static-weight",
+        ".dd-tok-dynamic-weight",
+        ".dd-tok-reserved-anchor",
+    ];
+    const visibleColors = async () =>
+        page.locator("section.stage.active").evaluate((root, tokenSelectors) => {
+            return tokenSelectors.map((selector) => {
+                const mark = root.querySelector(selector) as Element;
+                let leaf: Element = mark;
+                while (leaf.firstElementChild != null) leaf = leaf.firstElementChild;
+                return {
+                    mark: getComputedStyle(mark).color,
+                    leaf: getComputedStyle(leaf).color,
+                };
+            });
+        }, selectors);
+
+    const light = await visibleColors();
+    expect(light.every(({ mark, leaf }) => mark === leaf)).toBe(true);
+    expect(new Set(light.map(({ mark }) => mark)).size).toBe(selectors.length);
+
+    await page.evaluate(() => {
+        document.documentElement.dataset.theme = "dark";
+    });
+    const dark = await visibleColors();
+    expect(dark.every(({ mark, leaf }) => mark === leaf)).toBe(true);
+    expect(new Set(dark.map(({ mark }) => mark)).size).toBe(selectors.length);
 });
 
 test("keeps the tag a separate token, not nested inside a speaker token", async ({ page }) => {
