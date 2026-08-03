@@ -86,6 +86,44 @@ public sealed class DialogueAstRewriterTests
         AssertSpeechText(AssertRandomOptionLine(random.Options[1]), "TAILS");
     }
 
+    [Fact]
+    public void Identity_PreservesControlBlockBranchesAndGuards()
+    {
+        var control = AssertControlBlock(new IdentityRewriter().Rewrite(ControlBlockSample()).Body[0]);
+
+        Assert.Equal("Rich", control.Branches[0].Condition!.Key);
+        AssertSpeechText(AssertLine(control.Branches[0].Body[0]), "wealthy");
+        Assert.Null(control.Branches[1].Condition);
+        AssertSpeechText(AssertLine(control.Branches[1].Body[0]), "broke");
+    }
+
+    [Fact]
+    public void Override_RewriteBlock_ReachesControlBlockBranchBodies()
+    {
+        var control = AssertControlBlock(new UppercaseTextRewriter().Rewrite(ControlBlockSample()).Body[0]);
+
+        AssertSpeechText(AssertLine(control.Branches[0].Body[0]), "WEALTHY");
+        AssertSpeechText(AssertLine(control.Branches[1].Body[0]), "BROKE");
+    }
+
+    // A control block with a guarded `if` branch and a bare `else`, so both a branch's guard and
+    // its body survive a rewrite. Shape:
+    //
+    //   > if `Rich?`
+    //   > > wealthy
+    //   > else
+    //   > > broke
+    private static ScriptDocument ControlBlockSample() =>
+        new(
+        [
+            new ControlBlock(
+                [
+                    new Branch(Condition("Rich"), [Line(Text("wealthy"))], SourceSpanFactory.Span()),
+                    new Branch(null, [Line(Text("broke"))], SourceSpanFactory.Span()),
+                ],
+                SourceSpanFactory.Span()),
+        ]);
+
     // A random choice with a numeric and an auto weight, so both the weights and the option
     // bodies can be checked after a rewrite. Shape:
     //

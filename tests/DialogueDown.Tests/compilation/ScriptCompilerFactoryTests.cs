@@ -74,6 +74,41 @@ public sealed class ScriptCompilerFactoryTests
     }
 
     [Fact]
+    public void CreateDefault_CompilesAControlBlockThroughEveryStage()
+    {
+        var source =
+            """
+            # Entrance
+
+            > `if` `Rich?`
+            >
+            > Alice: Welcome upstairs.
+            >
+            > `else`
+            >
+            > Alice: Try downstairs.
+            """;
+
+        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+
+        Assert.Empty(result.Diagnostics);
+
+        var control = AssertControlBlock(result.Desugared.Body[1]);
+        Assert.Collection(
+            control.Branches,
+            branch =>
+            {
+                AssertCondition(branch.Condition!, "Rich");
+                AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome upstairs.");
+            },
+            branch =>
+            {
+                Assert.Null(branch.Condition);
+                AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Try downstairs.");
+            });
+    }
+
+    [Fact]
     public void CreateDefault_WithAConfiguredDefaultSpeaker_UsesItForSpeakerlessLines()
     {
         var options = new CompilerOptions { Speakers = [DefaultConfiguredSpeaker("Narrator")] };

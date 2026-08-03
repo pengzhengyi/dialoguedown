@@ -51,7 +51,6 @@ aids, keep ambiguous content:
 | `CodeBlock` | a fenced ` ```mermaid ` block | **Ignore** | Diagrams and code illustrate; they are not spoken |
 | `ThematicBreak` | `---` | **Ignore** | A visual divider, not words |
 | `Table` | `\| Speaker \| Mood \|` | **Ignore** | Organizes reference data; not spoken |
-| `BlockQuote` | `> an aside` | `AsRawText` | Could be an intended spoken aside |
 | `RawHtml` | `<div>`, `<br>` | `AsRawText` | Ambiguous; the author typed it deliberately |
 | `Autolink` | `<https://example.com>` | `AsRawText` | A URL that is content |
 | `Other` | any unrecognized unmodeled construct | `AsRawText` | Fallback; kept rather than silently dropped |
@@ -59,7 +58,7 @@ aids, keep ambiguous content:
 ## The policy seam
 
 ```csharp
-internal enum UnmodeledNodeKind { CodeBlock, ThematicBreak, Table, BlockQuote, RawHtml, Autolink, Other }
+internal enum UnmodeledNodeKind { CodeBlock, ThematicBreak, Table, RawHtml, Autolink, Other }
 
 internal enum UnmodeledNodeHandling { AsRawText, Ignore }
 
@@ -116,7 +115,6 @@ section, mapping each kind to `"ignore"` or `"raw-text"`:
 code-block     = "ignore"    # mermaid/code: illustration, not speech
 thematic-break = "ignore"
 table          = "ignore"
-block-quote    = "raw-text"
 raw-html       = "raw-text"
 autolink       = "raw-text"
 other          = "raw-text"
