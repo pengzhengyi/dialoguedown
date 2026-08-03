@@ -27,14 +27,14 @@ internal abstract class NodeDraft
         _out.Add(edge);
     }
 
-    public DialogueNode Freeze()
+    public virtual DialogueNode Freeze()
     {
         AssertNotFrozen();
         _isFrozen = true;
-        return CreateNode(_out.ToArray());
+        return CreateNode();
     }
 
-    protected abstract DialogueNode CreateNode(IReadOnlyList<Edge> edges);
+    protected abstract DialogueNode CreateNode();
 
     private void AssertNotFrozen()
     {
