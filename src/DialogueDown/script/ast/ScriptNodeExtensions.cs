@@ -44,7 +44,8 @@ internal static class ScriptNodeExtensions
     internal static IEnumerable<ScriptNode> Children(this ScriptNode node) => node switch
     {
         ScriptBlock block => BlockChildren(block),
-        Choice choice => choice.IsConditional() ? [choice.Condition!, .. choice.Body] : choice.Body,
+        Choice choice => ConditionalBodyChildren(choice.Condition, choice.Body),
+        Branch branch => ConditionalBodyChildren(branch.Condition, branch.Body),
         RandomOption option => option.IsConditional()
             ? [option.Condition!, option.Weight, .. option.Body]
             : [option.Weight, .. option.Body],
@@ -81,6 +82,7 @@ internal static class ScriptNodeExtensions
         ControlLine control => ControlLineChildren(control),
         Choices choices => choices.Options,
         RandomChoices random => random.Options,
+        ControlBlock control => control.Branches,
         SceneHeading heading => heading.Title,
 
         _ => throw new ArgumentOutOfRangeException(
@@ -109,6 +111,11 @@ internal static class ScriptNodeExtensions
 
         _ => [],
     };
+
+    // A potentially conditional arm yields its condition first, then its body blocks.
+    private static IEnumerable<ScriptNode> ConditionalBodyChildren(
+        Condition? condition, IReadOnlyList<ScriptBlock> body) =>
+        condition is not null ? [condition, .. body] : body;
 
     // A line's condition guard (when present) comes before its speaker and speech, so traversal
     // keeps document order and matches the guard-first reading.

@@ -194,7 +194,13 @@ export type TokenKind =
     | "CustomTag"
     | "ReservedTag"
     | "JumpIndicator"
-    | "ReservedAnchor";
+    | "ReservedAnchor"
+    | "ControlKeyword"
+    | "Query"
+    | "Condition"
+    | "StaticWeight"
+    | "DynamicWeight"
+    | "Command";
 
 /**
  * One positioned dialogue token the compiler projects from the parse: a zero-based

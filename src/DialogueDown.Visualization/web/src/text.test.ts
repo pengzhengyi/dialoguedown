@@ -153,4 +153,16 @@ describe("renderDocument", () => {
         expect(renderDocument("first line  \nsecond line")).toContain("<br>");
         expect(renderMarkdown("first line\\\nsecond line")).toContain("<br>");
     });
+
+    it("wraps a jump indicator before a rendered link for preview ligatures", () => {
+        const html = renderDocument("=> [Go](#go)");
+
+        expect(html).toContain('<span class="jump-ligature">=&gt;</span> <a href="#go">Go</a>');
+    });
+
+    it("does not wrap arrows in prose, inline code, or snippet previews", () => {
+        expect(renderDocument("Alice: A => B")).not.toContain("jump-ligature");
+        expect(renderDocument("Alice: `=> [Go](#go)`")).not.toContain("jump-ligature");
+        expect(renderMarkdown("=> [Go](#go)")).not.toContain("jump-ligature");
+    });
 });
