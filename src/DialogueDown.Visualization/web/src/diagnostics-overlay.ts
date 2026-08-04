@@ -1,6 +1,6 @@
 import { lintGutter, setDiagnostics, type Diagnostic as EditorDiagnostic } from "@codemirror/lint";
 import type { EditorState, Extension } from "@codemirror/state";
-import type { EditorView } from "@codemirror/view";
+import { tooltips, type EditorView } from "@codemirror/view";
 import { positionToOffset } from "./lsp-position";
 import type { LspDiagnostic, LspSeverity } from "./model";
 
@@ -22,7 +22,12 @@ const SEVERITY_KIND: Record<LspSeverity, EditorDiagnostic["severity"]> = {
  * compiler.
  */
 export function diagnosticsOverlay(): Extension {
-    return lintGutter();
+    return [
+        lintGutter(),
+        // The Source pane clips its editor to preserve the split layout. Portal fixed-position
+        // tooltips to the viewport so diagnostic popovers can cross that boundary.
+        tooltips({ parent: document.body, position: "fixed" }),
+    ];
 }
 
 /**

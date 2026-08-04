@@ -59,6 +59,9 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Diagnostic popovers stay visible at editor edges** — hover messages now overlay the report
+  chrome instead of being clipped by the Source pane, remain within the browser viewport, and
+  wrap to a compact reading width.
 - **Source and preview stay aligned while scrolling** — scroll synchronization now anchors
   matching Markdown paragraphs, lists, blockquotes, and headings instead of only scene headings;
   front matter no longer creates a false heading that shifts every scene pair.

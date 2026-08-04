@@ -1477,13 +1477,14 @@ g.node.entity-highlight text.label {
 }
 
 /* The diagnostics overlay. The squiggles and gutter markers use CodeMirror's built-in lint
-   theme (severity-colored); this themes the hover tooltip to match the report card and styles
-   the "more information" docs link inside it. Two tooltip shapes need theming: hovering a
-   squiggle nests the lint content in a .cm-tooltip-lint section inside a light-by-default
-   .cm-tooltip container (matched via :has), while hovering a gutter marker puts .cm-tooltip-lint
-   on the .cm-tooltip element itself. */
-:is(.source-pane, .config-source) .cm-tooltip.cm-tooltip-lint,
-:is(.source-pane, .config-source) .cm-tooltip:has(.cm-tooltip-lint) {
+   theme (severity-colored); this themes the body-mounted hover popover to match the report card
+   and keeps it above the report chrome. Two tooltip shapes need theming: hovering a squiggle
+   nests the lint content in a .cm-tooltip-lint section inside a light-by-default .cm-tooltip
+   container (matched via :has), while hovering a gutter marker puts .cm-tooltip-lint on the
+   .cm-tooltip element itself. */
+.cm-tooltip.cm-tooltip-lint,
+.cm-tooltip:has(.cm-tooltip-lint) {
+    z-index: 1000;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -1495,9 +1496,11 @@ g.node.entity-highlight text.label {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+    max-width: min(34ch, calc(100vw - 2rem));
     padding: 0.1rem 0.15rem;
     font-size: 0.78rem;
     line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .diagnostic-tooltip-link {
