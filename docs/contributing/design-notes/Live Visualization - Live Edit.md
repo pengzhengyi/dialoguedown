@@ -165,7 +165,7 @@ highlighting is driven by CSS variables (`--md-*`), so the editor follows the pa
 light/dark theme — including the header's **System / Light / Dark** toggle — live,
 without rebuilding the editor. The caret and text selection are themed to stay visible
 in both schemes. The right pane stays the live preview, kept scrolled **in sync** with
-the editor (see [D7](#d7--editor-and-preview-scroll-in-sync-anchored-on-headings)); the
+the editor (see [D7](#d7--editor-and-preview-scroll-in-sync-anchored-on-markdown-blocks)); the
 draggable divider is unchanged.
 
 **Authoring and navigation aids** — all CodeMirror-official extensions, from packages
@@ -312,21 +312,29 @@ duplicate the file on disk. So DialogueDown ships **no dedicated Save As** — t
 retired rather than deepen the mode discrepancy for a convenience a filesystem copy already
 covers.
 
-### D7 — Editor and preview scroll in sync, anchored on headings
+### D7 — Editor and preview scroll in sync, anchored on Markdown blocks
 
 Scrolling either pane scrolls the other to the matching place (the VS Code Markdown
 model), so a writer never loses their spot across the split. The map is
-**heading-anchored**: the top of each heading in the editor is paired with the same
-heading in the preview and the position interpolates linearly between those anchors
-(and proportionally before the first and after the last), so scenes line up exactly and
-drift cannot accumulate across them; a document with no headings falls back to a plain
-proportional map. Whichever pane you scroll owns the sync for a brief window, so the
-scroll our own write echoes on the follower cannot start a feedback loop — and that
-write is `instant`, never the preview's smooth `scroll-behavior` (a smooth animation
-would fire scroll events past the window and drive back). The pixel mapping is a pure,
-unit-tested function (`mapScroll`); the anchors come from CodeMirror's syntax tree (the
-editor) and the rendered headings (the preview). Because CodeMirror estimates the height
-of off-screen lines, a discontinuous *jump* to a far scene lands approximately and then
+**block-anchored**: each top-level Markdown block in CodeMirror (a paragraph, list,
+blockquote, heading, rule, or code block) is paired by position and type with the
+corresponding direct child in the rendered preview. The position interpolates linearly
+between those dense anchors, so different source/rendered heights do not accumulate into
+within-scene drift.
+
+Front matter is excluded from the body anchors: CodeMirror otherwise interprets its
+closing fence as a Setext heading, while the preview renders the metadata separately,
+which would shift every real heading pair by one. If the source and preview block
+sequences do not agree — for example, unsupported raw HTML produces a different DOM
+shape — synchronization falls back to headings matched by their unique GitHub-style
+slug, not by array index. With no matching anchors it uses a plain proportional map.
+
+Whichever pane you scroll owns the sync for a brief window, so the scroll our own write
+echoes on the follower cannot start a feedback loop — and that write is `instant`, never
+the preview's smooth `scroll-behavior` (a smooth animation would fire scroll events past
+the window and drive back). The pixel mapping and identity matcher are pure, unit-tested
+functions (`mapScroll`, `matchAnchorTops`). Because CodeMirror estimates the height of
+off-screen lines, a discontinuous *jump* to a far block lands approximately and then
 settles as that region renders — continuous scrolling, the common case, tracks exactly.
 
 ## Security
@@ -364,10 +372,10 @@ Same posture as Hot Reload and the Launcher, plus the first **write** route:
   updated, and dirty clears; edit the file on disk and assert the chip appears while
   the buffer is preserved.
 - **Scroll sync** (unit + end to end): `mapScroll`, the piecewise-linear position map,
-  is a pure function unit-tested for the ends, between-anchor interpolation, clamping,
-  and degenerate/mismatched anchors (vitest); the DOM wiring is browser-integration, so
-  the live Playwright suite scrolls the editor and asserts the preview brings the same
-  scene to its top, then scrolls the preview and asserts the editor follows.
+  and `matchAnchorTops`, the keyed anchor matcher, are pure functions unit-tested for
+  interpolation, clamping, front-matter mismatches, and dense block anchors (Vitest);
+  the live Playwright suite includes front matter and an uneven blockquote/list, scrolls
+  in both directions, and asserts the same source block reaches the top of each pane.
 
 ## Follow-ups
 

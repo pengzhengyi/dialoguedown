@@ -13,6 +13,7 @@ describe("setHelp", () => {
         expect(document.getElementById("help-summary")!.textContent).toContain("Source");
         const html = document.getElementById("help-content")!.innerHTML;
         expect(html).toContain("preview");
+        expect(html).toContain("Markdown blocks aligned");
         expect(html).toContain("commands, value queries");
         expect(html).toContain("Jump ligature");
         expect(html).toContain("Quote a block"); // the quote/unquote guidance

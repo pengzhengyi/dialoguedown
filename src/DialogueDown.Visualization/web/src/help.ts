@@ -4,7 +4,8 @@ export type HelpContext = "source" | "graph" | "semantic" | "explorer";
 
 const SOURCE_HELP = `
   <p><strong>Source &amp; preview.</strong> The left pane is the document as written;
-     the right pane is a live Markdown preview.</p>
+     the right pane is a live Markdown preview. Scrolling either pane keeps matching
+     Markdown blocks aligned in the other.</p>
   <p><strong>Syntax colors.</strong> The compiler distinguishes commands, value queries,
      conditions, static and dynamic random weights, control keywords, and the reserved
      <kbd>#END</kbd> target; ordinary code spans keep the Markdown code color.</p>
