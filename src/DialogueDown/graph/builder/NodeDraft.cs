@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// A node under construction: its <see cref="Id"/>, the out-edges passes accumulate on it, and

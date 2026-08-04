@@ -1,6 +1,6 @@
 using DialogueDown.Script.Ast;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// Incrementally assigns and caches graph node ids for one graph build. The strategy freezes

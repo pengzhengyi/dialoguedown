@@ -1,7 +1,8 @@
 using DialogueDown.Diagnostics;
+using DialogueDown.Graph.Passes;
 using DialogueDown.Script.Semantics;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <inheritdoc />
 internal sealed class DialogueGraphBuilder : IDialogueGraphBuilder

@@ -1,10 +1,11 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 using static DialogueDown.Tests.Support.SpeakerSymbolAssert;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Builder;
 
 public sealed class LineNodeDraftTests
 {

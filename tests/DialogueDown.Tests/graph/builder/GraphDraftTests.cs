@@ -1,4 +1,5 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Tests.Support;
@@ -6,7 +7,7 @@ using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 using static DialogueDown.Tests.Support.GraphDraftFactory;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Builder;
 
 public sealed class GraphDraftTests
 {

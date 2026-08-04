@@ -1,6 +1,6 @@
 using DialogueDown.Script.Ast;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// The node ids assigned to a script: a lookup from each block to its graph <see cref="NodeId"/>,

@@ -1,6 +1,6 @@
 using DialogueDown.Script.Ast;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// Assigns sequential node ids as blocks are added. Blocks are keyed by reference, so two blocks

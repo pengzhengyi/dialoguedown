@@ -1,4 +1,6 @@
-namespace DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
+
+namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Wires the default flow: each block falls through to the next block in document order, and the

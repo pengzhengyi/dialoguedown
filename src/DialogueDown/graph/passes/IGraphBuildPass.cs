@@ -1,4 +1,6 @@
-namespace DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
+
+namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// One construction pass over a graph draft. Passes run in dependency order and each owns a

@@ -1,9 +1,10 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Passes;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.GraphBuildContextFactory;
 using static DialogueDown.Tests.Support.GraphDraftFactory;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Passes;
 
 public sealed class NodeCreationPassTests
 {

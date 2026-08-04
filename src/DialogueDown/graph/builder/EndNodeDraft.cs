@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>The terminal End node under construction.</summary>
 internal sealed class EndNodeDraft(NodeId id) : NodeDraft(id)

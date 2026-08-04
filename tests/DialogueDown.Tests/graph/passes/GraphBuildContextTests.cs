@@ -1,7 +1,8 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Passes;
 using DialogueDown.Tests.Support;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Passes;
 
 public sealed class GraphBuildContextTests
 {

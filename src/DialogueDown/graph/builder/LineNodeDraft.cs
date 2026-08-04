@@ -1,7 +1,7 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// A spoken line under construction: its resolved speaker and displayable speech, combined with

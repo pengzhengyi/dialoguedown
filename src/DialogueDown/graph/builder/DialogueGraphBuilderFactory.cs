@@ -1,4 +1,6 @@
-namespace DialogueDown.Graph;
+using DialogueDown.Graph.Passes;
+
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// Creates a graph builder with DialogueDown's built-in passes, in dependency order. Every

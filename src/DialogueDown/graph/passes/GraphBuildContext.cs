@@ -2,7 +2,7 @@ using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// The immutable input shared by every graph-construction pass: the semantic model, diagnostic

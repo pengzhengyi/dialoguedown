@@ -1,8 +1,9 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Builder;
 
 public sealed class EndNodeDraftTests
 {

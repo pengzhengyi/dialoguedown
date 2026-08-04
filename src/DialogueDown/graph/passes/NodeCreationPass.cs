@@ -1,7 +1,8 @@
+using DialogueDown.Graph.Builder;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Creates one node draft per script block in document order, then adds the terminal End node.

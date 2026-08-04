@@ -1,6 +1,7 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Builder;
 
 public sealed class IndexNodeIdBuilderFactoryTests
 {

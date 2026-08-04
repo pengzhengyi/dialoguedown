@@ -1,6 +1,6 @@
 using DialogueDown.Script.Ast;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Builder;
 
 /// <summary>
 /// The dialogue graph under construction. Passes add node drafts and edges; <see cref="Freeze"/>

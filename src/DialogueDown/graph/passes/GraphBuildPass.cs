@@ -1,4 +1,6 @@
-namespace DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
+
+namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Base class for a graph build pass. It guards the shared inputs so a concrete pass implements
