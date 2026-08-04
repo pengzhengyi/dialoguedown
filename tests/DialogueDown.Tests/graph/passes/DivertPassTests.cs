@@ -26,6 +26,14 @@ public sealed class DivertPassTests
         Assert.Empty(graph.Node(graph.Entry).Out);
     }
 
+    [Fact]
+    public void Apply_TerminalJumpOnAControlLine_DivertsToEnd()
+    {
+        var graph = Build("=> [the end](#END)");
+
+        AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
+    }
+
     // Node creation assigns the ids and the End that divert wiring targets.
     private DialogueGraph Build(string source) =>
         GraphPasses.Build(source, new NodeCreationPass(), _pass);

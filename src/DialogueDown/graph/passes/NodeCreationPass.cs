@@ -27,6 +27,9 @@ internal sealed class NodeCreationPass : GraphBuildPass
                 var speaker = context.ResolveSpeaker(SpeakerOf(line));
                 draft.AddBlock(line, id => new LineNodeDraft(id, speaker, line.Speech));
                 break;
+            case ControlLine control:
+                draft.AddBlock(control, id => new ControlNodeDraft(id, [.. control.Effects.OfType<GameCall>()]));
+                break;
             default:
                 throw new NotSupportedException(
                     $"The dialogue graph builder does not yet lower {block.GetType().Name} blocks.");

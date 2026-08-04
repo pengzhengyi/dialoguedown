@@ -1,5 +1,6 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Passes;
+using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 
@@ -41,9 +42,31 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
+    public void Apply_SilentCommandControlLine_CreatesAControlNodeWithItsEffects()
+    {
+        var graph = Build("`(\"open the gate\")`");
+
+        var control = Assert.IsType<ControlNode>(graph.Node(graph.Entry));
+        var command = Assert.IsType<DefaultCommand>(Assert.Single(control.Effects));
+        Assert.Equal("open the gate", command.Action);
+    }
+
+    [Fact]
+    public void Apply_BareJumpControlLine_CreatesAnEffectlessControlNode()
+    {
+        var graph = Build("=> [the end](#END)");
+
+        var control = Assert.IsType<ControlNode>(graph.Node(graph.Entry));
+        Assert.Empty(control.Effects);
+    }
+
+    [Fact]
     public void Apply_BlockKindNotYetLowered_Throws() =>
-        // A bare jump desugars to a control line, which node creation does not lower yet.
-        Assert.Throws<NotSupportedException>(() => Build("=> [play](#play)"));
+        // A choice group is not lowered to a node yet.
+        Assert.Throws<NotSupportedException>(() => Build("""
+            - [Left](#left)
+            - [Right](#right)
+            """));
 
     private DialogueGraph Build(string source) => GraphPasses.Build(source, _pass);
 }

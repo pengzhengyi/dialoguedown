@@ -28,6 +28,7 @@ internal sealed class DivertPass : GraphBuildPass
     private static IEnumerable<Jump> Jumps(ScriptBlock block) => block switch
     {
         Line line => line.Speech.OfType<Jump>(),
+        ControlLine control => control.Effects.OfType<Jump>(),
         _ => [],
     };
 }
