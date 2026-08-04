@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createDebugToolbar } from "./debug-toolbar";
+import { clampDebugPanel, createDebugToolbar } from "./debug-toolbar";
 import {
     createFakeDebugController,
     type FakeDebugController,
@@ -184,5 +184,25 @@ describe("createDebugToolbar", () => {
         expect(element.style.top).toBe("150px");
         expect(element.style.right).toBe("auto");
         expect(element.style.transform).toBe("none");
+    });
+
+    it("reclamps a dragged panel after its container shrinks", () => {
+        const { element } = mount();
+        const container = document.createElement("div");
+        container.appendChild(element);
+        document.body.appendChild(container);
+        element.style.left = "500px";
+        element.style.top = "400px";
+        Object.defineProperty(container, "getBoundingClientRect", {
+            value: () => ({ left: 0, top: 0, width: 400, height: 250 }),
+        });
+        Object.defineProperty(element, "getBoundingClientRect", {
+            value: () => ({ left: 500, top: 400, width: 220, height: 60 }),
+        });
+
+        clampDebugPanel(element);
+
+        expect(element.style.left).toBe("176px");
+        expect(element.style.top).toBe("186px");
     });
 });

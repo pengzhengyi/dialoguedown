@@ -162,15 +162,48 @@ function makeDraggable(panel: HTMLElement, handle: HTMLElement): () => void {
         document.body.style.userSelect = "";
     };
 
+    const resize = (): void => clampDebugPanel(panel);
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(resize) : null;
+    queueMicrotask(() => {
+        if (!panel.parentElement) return;
+        observer?.observe(panel.parentElement);
+        observer?.observe(panel);
+    });
     handle.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("resize", resize);
     return () => {
         handle.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", resize);
+        observer?.disconnect();
         if (dragging) document.body.style.userSelect = "";
     };
+}
+
+/** Keep an explicitly positioned debugger palette inside its current Source pane. */
+export function clampDebugPanel(panel: HTMLElement): void {
+    const container = panel.parentElement;
+    if (!container || panel.style.left === "" || panel.style.top === "") return;
+    const parentBounds = container.getBoundingClientRect();
+    const panelBounds = panel.getBoundingClientRect();
+    if (parentBounds.width === 0 || parentBounds.height === 0) return;
+    const left = clamp(
+        Number.parseFloat(panel.style.left),
+        4,
+        Math.max(4, parentBounds.width - panelBounds.width - 4),
+    );
+    const top = clamp(
+        Number.parseFloat(panel.style.top),
+        4,
+        Math.max(4, parentBounds.height - panelBounds.height - 4),
+    );
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+    panel.style.right = "auto";
+    panel.style.transform = "none";
 }
 
 function clamp(value: number, min: number, max: number): number {

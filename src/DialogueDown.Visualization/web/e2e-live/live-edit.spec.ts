@@ -761,6 +761,40 @@ test("the fake line debugger prototypes breakpoints, stepping, path choice, and 
     expect(afterDrag?.x).toBeLessThan(beforeDrag.x - 30);
     expect(afterDrag?.y).toBeGreaterThan(beforeDrag.y + 30);
 
+    // Showing the preview shrinks the Source pane; maximizing expands it. The dragged palette
+    // re-clamps after either layout change instead of being clipped outside the editor.
+    await page.getByRole("button", { name: "Show preview" }).click();
+    await expect
+        .poll(async () => {
+            const [panel, pane] = await Promise.all([
+                toolbar.boundingBox(),
+                page.locator(".source-stage .source-pane").boundingBox(),
+            ]);
+            return (
+                !!panel &&
+                !!pane &&
+                panel.x >= pane.x &&
+                panel.x + panel.width <= pane.x + pane.width
+            );
+        })
+        .toBe(true);
+    await page.getByRole("button", { name: "Full screen" }).click();
+    await expect
+        .poll(async () => {
+            const [panel, pane] = await Promise.all([
+                toolbar.boundingBox(),
+                page.locator(".source-stage .source-pane").boundingBox(),
+            ]);
+            return (
+                !!panel &&
+                !!pane &&
+                panel.x >= pane.x &&
+                panel.x + panel.width <= pane.x + pane.width
+            );
+        })
+        .toBe(true);
+    await page.keyboard.press("Escape");
+
     // A blank-line request stays hollow; the final execution point binds as a filled dot.
     const blank = await breakpointCoordinates(page, 2);
     const lineNumbersBox = await page.locator(".source-stage .cm-lineNumbers").boundingBox();
