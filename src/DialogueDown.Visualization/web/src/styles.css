@@ -1454,7 +1454,7 @@ g.node.entity-highlight text.label {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 0.55rem;
+    min-width: 0.45rem;
     padding: 0;
 }
 
@@ -1466,8 +1466,8 @@ g.node.entity-highlight text.label {
     .dd-debug-breakpoint-gutter
     .cm-gutterElement:not(.cm-gutterElement-spacer, :has(.dd-debug-breakpoint))::after {
     box-sizing: border-box;
-    width: 0.38rem;
-    height: 0.38rem;
+    width: 0.32rem;
+    height: 0.32rem;
     border: 1px solid var(--debug-breakpoint);
     border-radius: 50%;
     opacity: 0;
@@ -1483,8 +1483,8 @@ g.node.entity-highlight text.label {
 .dd-debug-breakpoint {
     display: block;
     box-sizing: border-box;
-    width: 0.38rem;
-    height: 0.38rem;
+    width: 0.32rem;
+    height: 0.32rem;
     border: 1px solid var(--debug-breakpoint);
     border-radius: 50%;
 }
@@ -1499,12 +1499,12 @@ g.node.entity-highlight text.label {
 
 .dd-debug-current-arrow {
     color: var(--debug-current);
-    font-size: 0.48rem;
+    font-size: 0.4rem;
     line-height: 1;
 }
 
 .dd-debug-execution-spacer {
-    font-size: 0.48rem;
+    font-size: 0.4rem;
 }
 
 .source-pane .cm-content {
