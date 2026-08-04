@@ -124,6 +124,8 @@ flowchart LR
 - [x] Scroll the paused location into view without moving the user's text selection.
 - [x] Show a detached, draggable Source-pane palette with icon-only controls,
   accessible Breakpoint action, state text, and inline path picker.
+- [x] Re-clamp a dragged palette after preview show/hide, maximize, window
+  resizing, or path-row expansion.
 - [x] Disable Start while the source is dirty; editing an active session makes it stale.
 - [x] Keep breakpoints after an edit and re-verify them when the sample program rebinds.
 - [x] Detect a repeated execution point during one Continue command and pause with a prototype cycle message.
@@ -328,9 +330,10 @@ Two narrow gutters precede the existing line-number gutter:
    hollow red ring shows the request, and clicking toggles it.
 
 Separate lanes keep both states visible when execution stops on a breakpoint.
-They add a small amount of horizontal width, accepted for the clearer state.
-The paused line also receives a subtle amber decoration; the existing gray
-cursor-active-line treatment remains independent.
+Each lane is about nine pixels wide (roughly eighteen combined), keeping the
+line-number area close to CodeMirror/VS Code density while preserving the two
+independent states. The paused line also receives a subtle amber decoration; the
+existing gray cursor-active-line treatment remains independent.
 
 The breakpoint gutter renders an empty cell for every visible line. Hovering an
 unmarked cell reveals a faint dot and a **Click to add breakpoint** tooltip;
@@ -406,7 +409,10 @@ the same labels.
 The palette starts near the Source pane's top-right corner. Pointer-dragging the
 handle detaches it from that default and clamps it within the Source pane, so it
 can move away from the lines being inspected. The position is intentionally not
-persisted in this spike.
+persisted in this spike. A resize observer re-clamps an explicitly positioned
+palette whenever the Source pane or palette changes size—preview show/hide,
+maximize/restore, window resizing, or an expanded path row cannot leave it
+clipped outside the editor.
 
 The path picker expands below the icon row only in `awaiting-path`. The
 controller publishes explicit control capabilities in each snapshot; the
@@ -545,12 +551,14 @@ The built branch satisfies the functional crosscheck:
   breakpoint mapping across ordinary/full-buffer edits, prevented same-location
   scroll snapping, preserved paused execution across clean View/Edit switches,
   added a keyboard-accessible breakpoint action, and restored focus after path
-  selection.
+  selection. Visual review then tightened the debug lanes to about eighteen
+  pixels combined and added resize-aware palette clamping for preview and
+  maximize layout changes.
 - **Not implemented:** real runtime behavior remains deferred by design. The
   user-facing visual evaluation and adopt/revise/reject decision are still
   pending.
 
-Automated evidence: **528** frontend unit tests plus **15** infrastructure tests,
+Automated evidence: **529** frontend unit tests plus **15** infrastructure tests,
 **75** static Playwright tests, and **55** live Playwright tests pass. The live
 prototype test covers ordinary-report isolation, one verified and one unverified
 breakpoint, Start, clean View/Edit switching, Step Over, path selection,
