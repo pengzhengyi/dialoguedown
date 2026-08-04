@@ -27,7 +27,7 @@ public sealed class RegionPassTests
         var merchant = graph.Nodes[0].Id;
         Assert.Equal(merchant, region.Entry);
         Assert.Equal(merchant, region.Exit);
-        Assert.Equal(merchant, Assert.Single(region.Members));
+        Assert.Equal(merchant, Assert.Single(region.OwnNodes));
     }
 
     [Fact]
@@ -52,8 +52,8 @@ public sealed class RegionPassTests
         // The parent spans both nodes but owns only its own; the child owns the nested node.
         Assert.Equal(owned, crossroads.Entry);
         Assert.Equal(nested, crossroads.Exit);
-        Assert.Equal(owned, Assert.Single(crossroads.Members));
-        Assert.Equal(nested, Assert.Single(signpost.Members));
+        Assert.Equal(owned, Assert.Single(crossroads.OwnNodes));
+        Assert.Equal(nested, Assert.Single(signpost.OwnNodes));
         Assert.Equal(nested, signpost.Entry);
         Assert.Equal(nested, signpost.Exit);
     }
@@ -89,7 +89,7 @@ public sealed class RegionPassTests
             """);
 
         AssertSceneRegion(Assert.Single(graph.Regions.Roots), "a-scene");
-        Assert.DoesNotContain(graph.Nodes[0].Id, AllMembers(graph.Regions.Roots));
+        Assert.DoesNotContain(graph.Nodes[0].Id, AllRegionNodes(graph.Regions.Roots));
     }
 
     [Fact]
@@ -100,8 +100,8 @@ public sealed class RegionPassTests
         Assert.Empty(graph.Regions.Roots);
     }
 
-    private static IEnumerable<NodeId> AllMembers(IEnumerable<Region> regions) =>
-        regions.SelectMany(region => region.Members.Concat(AllMembers(region.Subregions)));
+    private static IEnumerable<NodeId> AllRegionNodes(IEnumerable<Region> regions) =>
+        regions.SelectMany(region => region.OwnNodes.Concat(AllRegionNodes(region.Subregions)));
 
     // Region building needs the ids and End that node creation assigns first.
     private DialogueGraph Build(string source)

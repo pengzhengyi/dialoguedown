@@ -11,7 +11,7 @@ internal sealed record SceneRegion(
     RegionId Id,
     NodeId Entry,
     NodeId Exit,
-    IReadOnlySet<NodeId> Members,
+    IReadOnlySet<NodeId> OwnNodes,
     IReadOnlyList<Region> Subregions,
     IReadOnlyList<InlineFragment> Label,
-    string Anchor) : Region(Id, Entry, Exit, Members, Subregions);
+    string Anchor) : Region(Id, Entry, Exit, OwnNodes, Subregions);

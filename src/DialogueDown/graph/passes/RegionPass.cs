@@ -41,7 +41,7 @@ internal sealed class RegionPass : GraphBuildPass
             ids.Next(),
             Entry: nodes[0],
             Exit: nodes[^1],
-            Members: scene.Blocks.Select(draft.IdOf).ToHashSet(),
+            OwnNodes: scene.Blocks.Select(draft.IdOf).ToHashSet(),
             Subregions: subregions,
             Label: scene.Heading!.Title,
             Anchor: scene.Anchor!);
