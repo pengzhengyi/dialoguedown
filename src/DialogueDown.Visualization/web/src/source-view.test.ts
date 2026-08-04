@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createFakeDebugController, type FakeDebugProgram } from "./fake-debug-controller";
+import {
+    createFakeDebugController,
+    type FakeDebugProgram,
+} from "./test-support/fake-debug-controller";
 import { createSourceView, initSplitDivider, type SourceViewHandle } from "./source-view";
 
 const SOURCE = "Entry\nEnd\n";

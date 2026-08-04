@@ -7,7 +7,7 @@ import type {
     DebugPath,
     DebugSnapshot,
     DebugStatus,
-} from "./debug-controller";
+} from "../debug-controller";
 
 /** One location in the explicit prototype fixture, bound by an exact unique source line. */
 export interface FakeDebugLocation {

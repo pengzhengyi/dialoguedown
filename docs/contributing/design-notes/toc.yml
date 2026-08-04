@@ -114,8 +114,8 @@
     href: Live Visualization - Unified Served Shell.md
   - name: Jump-Target Completion
     href: Jump-Target Completion.md
-  - name: Live Visualization — Line Debugger Prototype
-    href: Live Visualization - Line Debugger Prototype.md
+  - name: Live Visualization — Line Debugger UI
+    href: Live Visualization - Line Debugger UI.md
 - name: Other notes
   items:
   - name: BBCode Rendering

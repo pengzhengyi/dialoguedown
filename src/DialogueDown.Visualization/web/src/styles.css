@@ -1404,7 +1404,7 @@ g.node.entity-highlight text.label {
     white-space: nowrap;
 }
 
-.dd-debug-prototype {
+.dd-debug-label {
     margin-left: auto;
     padding: 0.1rem 0.35rem;
     border: 1px solid var(--pico-muted-border-color);

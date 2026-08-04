@@ -28,7 +28,7 @@ export function createDebugToolbar(
     const toolbar = document.createElement("div");
     toolbar.className = "dd-debug-toolbar";
     toolbar.setAttribute("role", "toolbar");
-    toolbar.setAttribute("aria-label", "Line debugger prototype");
+    toolbar.setAttribute("aria-label", "Line debugger");
 
     const controls = document.createElement("div");
     controls.className = "dd-debug-controls";
@@ -59,13 +59,13 @@ export function createDebugToolbar(
     status.className = "dd-debug-status";
     status.setAttribute("aria-live", "polite");
 
-    const prototype = document.createElement("span");
-    prototype.className = "dd-debug-prototype";
-    prototype.textContent = "Prototype · fake program";
+    const label = document.createElement("span");
+    label.className = "dd-debug-label";
+    label.textContent = "Debugger";
 
     const row = document.createElement("div");
     row.className = "dd-debug-toolbar-row";
-    row.append(dragHandle.element, controls, status, prototype);
+    row.append(dragHandle.element, controls, status, label);
 
     const paths = document.createElement("div");
     paths.className = "dd-debug-paths";

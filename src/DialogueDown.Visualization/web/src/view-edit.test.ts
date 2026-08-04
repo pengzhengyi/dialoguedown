@@ -29,7 +29,6 @@ function fakePorts(overrides: Partial<ModeControllerPorts> = {}) {
         updateStages: vi.fn(),
         setEditable: vi.fn(),
         setContent: vi.fn(),
-        getSourceContent: vi.fn(() => ""),
         setDiagnostics: vi.fn(),
         setSemanticTokens: vi.fn(),
         setConfigEditable: vi.fn(),

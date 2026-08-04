@@ -4,7 +4,7 @@ import {
     createFakeDebugController,
     type FakeDebugController,
     type FakeDebugProgram,
-} from "./fake-debug-controller";
+} from "./test-support/fake-debug-controller";
 
 const SOURCE = "Entry\nBranch\nLeft\nRight\nEnd\n";
 const PROGRAM: FakeDebugProgram = {
@@ -63,11 +63,12 @@ function button(element: HTMLElement, name: string): HTMLButtonElement {
 }
 
 describe("createDebugToolbar", () => {
-    it("starts ready with only Start enabled and a visible prototype label", () => {
+    it("starts ready with only Start enabled and a runtime-neutral label", () => {
         const { element } = mount();
 
+        expect(element.getAttribute("aria-label")).toBe("Line debugger");
         expect(element.querySelector(".dd-debug-status")?.textContent).toBe("Ready");
-        expect(element.querySelector(".dd-debug-prototype")?.textContent).toContain("Prototype");
+        expect(element.querySelector(".dd-debug-label")?.textContent).toBe("Debugger");
         expect(element.querySelector(".dd-debug-controls")?.textContent).toBe("");
         expect(button(element, "Start debugging").disabled).toBe(false);
         expect(button(element, "Continue").disabled).toBe(true);

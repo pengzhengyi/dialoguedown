@@ -47,6 +47,10 @@ export type DebugListener = (snapshot: DebugSnapshot) => void;
 /**
  * The UI-facing debugger seam. The exploration branch supplies an in-browser fake; a later
  * runtime adapter can implement the same commands and snapshots without changing CodeMirror.
+ *
+ * TODO(runtime-debugger, #45): Implement a server-backed adapter when graph traversal lands.
+ * It should translate runtime commands/events into this contract rather than coupling the
+ * CodeMirror UI to transport or graph types.
  */
 export interface DebugController {
     snapshot(): DebugSnapshot;

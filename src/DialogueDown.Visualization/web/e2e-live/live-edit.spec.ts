@@ -1,7 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { LIVE_EDIT_PORT, LIVE_EDIT_DOC, LIVE_EDIT_SOURCE } from "./fixture.mjs";
-import { LINE_DEBUGGER_FIXTURE_ID, LINE_DEBUGGER_SOURCE } from "../src/debug-fixture";
 
 // Live Edit end-to-end against the real .NET --live server: the Source tab is an
 // editable CodeMirror buffer, edits update the preview as you type, the Save button and
@@ -42,29 +41,6 @@ async function editNode(page: Page, text: string) {
     // insertText (not type): each node keystroke re-splices and re-renders the preview, so
     // synthetic char-by-char typing can outrun it and drop spaces; a real user never does.
     await page.keyboard.insertText(text);
-}
-
-/** Click the prototype breakpoint gutter beside one visible one-based source line. */
-async function breakpointCoordinates(page: Page, line: number) {
-    const number = page
-        .locator(".source-stage .cm-lineNumbers .cm-gutterElement")
-        .filter({ hasText: new RegExp(`^${line}$`) });
-    const [numberBox, gutterBox] = await Promise.all([
-        number.boundingBox(),
-        page.locator(".source-stage .dd-debug-breakpoint-gutter").boundingBox(),
-    ]);
-    if (!numberBox || !gutterBox) throw new Error(`Could not locate breakpoint line ${line}.`);
-    return {
-        x: gutterBox.x + gutterBox.width / 2,
-        y: numberBox.y + numberBox.height / 2,
-        gutterBox,
-        numberBox,
-    };
-}
-
-async function clickBreakpoint(page: Page, line: number) {
-    const { x, y } = await breakpointCoordinates(page, line);
-    await page.mouse.click(x, y);
 }
 
 test("edits update the preview and dirty state; the Save button writes the file", async ({
@@ -726,135 +702,9 @@ test("Tab inserts spaces mid-line instead of indenting the whole line", async ({
     await expect(editor).toBeFocused();
 });
 
-test("the fake line debugger prototypes breakpoints, stepping, path choice, and stale rebinding", async ({
-    page,
-}) => {
-    // Ordinary reports never expose the fake debugger.
+test("keeps the line debugger UI dormant in ordinary served reports", async ({ page }) => {
     await page.goto(`${base}/`);
     await expect(page.locator(".dd-debug-toolbar")).toHaveCount(0);
-
-    writeFileSync(LIVE_EDIT_DOC, LINE_DEBUGGER_SOURCE);
-    await page.goto(
-        `${base}/r/?debug=fake&fixture=${encodeURIComponent(LINE_DEBUGGER_FIXTURE_ID)}`,
-    );
-    expect(page.url()).toContain("debug=fake");
-
-    const toolbar = page.locator(".dd-debug-toolbar");
-    await expect(toolbar).toBeVisible();
-    await expect(toolbar.locator(".dd-debug-prototype")).toHaveText("Prototype · fake program");
-    await expect(toolbar.locator(".dd-debug-controls")).toHaveText("");
-
-    // Controls are icon-only with their descriptions in Tippy, and the detached palette can
-    // move out of the writer's way.
-    await toolbar.getByRole("button", { name: "Continue" }).locator("..").hover();
-    await expect(page.locator(".tippy-box").last()).toContainText("Continue");
-    await page.getByRole("button", { name: "Hide preview" }).click();
-    const beforeDrag = await toolbar.boundingBox();
-    const handle = toolbar.getByRole("button", { name: "Move debugger panel" });
-    const handleBox = await handle.boundingBox();
-    if (!beforeDrag || !handleBox) throw new Error("Could not locate the debugger panel.");
-    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(handleBox.x - 120, handleBox.y + 70);
-    await page.mouse.up();
-    const afterDrag = await toolbar.boundingBox();
-    expect(afterDrag?.x).toBeLessThan(beforeDrag.x - 30);
-    expect(afterDrag?.y).toBeGreaterThan(beforeDrag.y + 30);
-
-    // Showing the preview shrinks the Source pane; maximizing expands it. The dragged palette
-    // re-clamps after either layout change instead of being clipped outside the editor.
-    await page.getByRole("button", { name: "Show preview" }).click();
-    await expect
-        .poll(async () => {
-            const [panel, pane] = await Promise.all([
-                toolbar.boundingBox(),
-                page.locator(".source-stage .source-pane").boundingBox(),
-            ]);
-            return (
-                !!panel &&
-                !!pane &&
-                panel.x >= pane.x &&
-                panel.x + panel.width <= pane.x + pane.width
-            );
-        })
-        .toBe(true);
-    await page.getByRole("button", { name: "Full screen" }).click();
-    await expect
-        .poll(async () => {
-            const [panel, pane] = await Promise.all([
-                toolbar.boundingBox(),
-                page.locator(".source-stage .source-pane").boundingBox(),
-            ]);
-            return (
-                !!panel &&
-                !!pane &&
-                panel.x >= pane.x &&
-                panel.x + panel.width <= pane.x + pane.width
-            );
-        })
-        .toBe(true);
-    await page.keyboard.press("Escape");
-
-    // A blank-line request stays hollow; the final execution point binds as a filled dot.
-    const blank = await breakpointCoordinates(page, 2);
-    const lineNumbersBox = await page.locator(".source-stage .cm-lineNumbers").boundingBox();
-    if (!lineNumbersBox) throw new Error("Could not locate line numbers.");
-    expect(Math.abs(blank.gutterBox.x + blank.gutterBox.width - lineNumbersBox.x)).toBeLessThan(2);
-    await page.mouse.move(blank.x, blank.y);
-    await expect(page.locator(".tippy-box").last()).toContainText("Click to add breakpoint");
-    await clickBreakpoint(page, 2);
-    await clickBreakpoint(page, 13);
-    await expect(page.locator(".dd-debug-breakpoint-unverified")).toHaveCount(1);
-    await expect(page.locator(".dd-debug-breakpoint-verified")).toHaveCount(1);
-    const breakpointBox = await page.locator(".dd-debug-breakpoint-verified").boundingBox();
-    expect(breakpointBox?.width).toBeGreaterThanOrEqual(8);
-    expect(breakpointBox?.height).toBeGreaterThanOrEqual(8);
-
-    await toolbar.getByRole("button", { name: "Start debugging" }).click();
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 3");
-    await expect(page.locator(".dd-debug-current-arrow")).toHaveCount(1);
-    const arrowBox = await page.locator(".dd-debug-current-arrow").boundingBox();
-    expect(arrowBox?.width).toBeGreaterThanOrEqual(7);
-    expect(arrowBox?.height).toBeGreaterThanOrEqual(9);
-
-    // A clean View/Edit switch reconfigures the editor but must not restart the debug session.
-    await page.getByRole("button", { name: "View", exact: true }).click();
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 3");
-    await page.getByRole("button", { name: "Edit", exact: true }).click();
-
-    await toolbar.getByRole("button", { name: "Step over" }).click();
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 4");
-    await toolbar.getByRole("button", { name: "Step over" }).click();
-
-    const paths = toolbar.locator(".dd-debug-paths");
-    await expect(paths).toContainText("Choose path");
-    await paths.getByRole("button", { name: "Take the forest" }).click();
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 7");
-
-    await toolbar.getByRole("button", { name: "Continue" }).click();
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 13");
-
-    await toolbar.getByRole("button", { name: "Stop debugging" }).click();
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Ready");
-    await expect(page.locator(".dd-debug-current-arrow")).toHaveCount(0);
-    await expect(page.locator(".dd-debug-current-line")).toHaveCount(0);
-
-    // Editing invalidates execution but maps the requests with their lines; saving rebinds the
-    // exact fixture anchors and verifies the final-line breakpoint at its shifted line.
-    await toolbar.getByRole("button", { name: "Start debugging" }).click();
-    const editor = page.locator(".source-stage .cm-content");
-    await editor.click();
-    await page.keyboard.press("ControlOrMeta+Home");
-    await page.keyboard.insertText("\n");
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText(
-        "Source changed — save and restart.",
-    );
-    await expect(page.locator(".dd-debug-breakpoint-unverified")).toHaveCount(2);
-
-    await page.locator(".save-button").click();
-    await expect(page.locator(".tab.dirty")).toHaveCount(0);
-    await expect(toolbar.locator(".dd-debug-status")).toHaveText("Ready");
-    await expect(toolbar.getByRole("button", { name: "Start debugging" })).toBeEnabled();
-    await expect(page.locator(".dd-debug-breakpoint-unverified")).toHaveCount(1);
-    await expect(page.locator(".dd-debug-breakpoint-verified")).toHaveCount(1);
+    await expect(page.locator(".dd-debug-breakpoint-gutter")).toHaveCount(0);
+    await expect(page.locator(".dd-debug-execution-gutter")).toHaveCount(0);
 });

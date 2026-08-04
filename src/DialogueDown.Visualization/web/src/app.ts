@@ -84,8 +84,6 @@ export interface AppController {
     setEditable(editable: boolean): void;
     /** Replace the Source buffer (a View-mode hot-reload), keeping the one editor instance. */
     setContent(source: string): void;
-    /** The Source editor's current buffer (used by the fake debugger when a clean save rebinds). */
-    getSourceContent(): string;
     /** Replace the Source editor's diagnostics overlay after a recompile (hot-reload or save). */
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** Replace the Source editor's semantic-token highlighting after a recompile. */
@@ -119,6 +117,9 @@ export function runApp(
     source?: SourceOptions,
     debug?: DebugController,
 ): AppController {
+    // TODO(runtime-debugger, #45): Inject a server-backed DebugController here once the
+    // dialogue graph and runtime can publish source-mapped execution snapshots. Until then,
+    // production callers omit it and the debugger UI remains completely dormant.
     const tabsEl = document.getElementById("tabs")!;
     const stagesEl = document.getElementById("stages")!;
     const appEl = document.getElementById("app")!;
@@ -238,7 +239,6 @@ export function runApp(
             panel.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
-        getSourceContent: () => sourceHandle?.getContent() ?? "",
         setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
         setSemanticTokens: (tokens) => sourceHandle?.setSemanticTokens(tokens),
         setConfigEditable: (next) => configHandle?.setEditable(next),

@@ -11,7 +11,7 @@ import {
     createFakeDebugController,
     type FakeDebugController,
     type FakeDebugProgram,
-} from "./fake-debug-controller";
+} from "./test-support/fake-debug-controller";
 
 const SOURCE = "Alpha\n\nBeta\nGamma\n";
 const PROGRAM: FakeDebugProgram = {
