@@ -249,10 +249,11 @@ test("the Auto/Manual choice is persisted to a host-scoped cookie", async ({ pag
     expect(cookie).toContain("dd-save-mode-source=auto");
 });
 
-// A long, multi-scene document so both panes actually scroll. Headings anchor the sync.
+// A long, multi-scene document so both panes actually scroll. Front matter previously parsed as
+// a false editor heading, shifting every real scene pair by one.
 const SCENES = 8;
 const SCROLL_DOC =
-    "# Prologue\n\n" +
+    "---\ntitle: Scroll Sync\n---\n# Prologue\n\n" +
     Array.from({ length: SCENES }, (_, i) => {
         const body = Array.from(
             { length: 6 },
@@ -260,33 +261,40 @@ const SCROLL_DOC =
                 `Speaker${l % 3}: Line ${l} of scene ${i + 1}. Lorem ipsum dolor sit amet, ` +
                 "consectetur adipiscing elit, plenty of filler so the line wraps.",
         ).join("\n\n");
-        return `## Scene ${i + 1}\n\n${body}\n`;
+        const uneven =
+            i === 2
+                ? "\n\n> A tall blockquote changes preview height differently from source height.\n" +
+                  ">\n> - One nested item.\n> - Another nested item with extra words."
+                : "";
+        return `## Scene ${i + 1}\n\n${body}${uneven}\n`;
     }).join("\n");
 
-/** The heading nearest the top of each pane, and how far below the top it sits. */
-async function headingsAtTop(page: Page) {
+/** The labeled top-level block nearest the top of each pane. */
+async function blocksAtTop(page: Page) {
     return page.evaluate(() => {
-        const scene = (label: string | null) => label?.replace(/^#+\s*/, "").trim() ?? null;
+        const identity = (label: string | null) =>
+            /(?:Prologue|Scene \d+|Line \d+ of scene \d+)/.exec(label ?? "")?.[0] ?? null;
         const scroller = document.querySelector<HTMLElement>(".source-pane .cm-scroller")!;
         const preview = document.querySelector<HTMLElement>(".source-preview")!;
         const editorTop = scroller.getBoundingClientRect().top;
         const previewTop = preview.getBoundingClientRect().top;
-        const nearestEditor = [...scroller.querySelectorAll(".cm-line")]
-            .map((l) => ({
-                d: l.getBoundingClientRect().top - editorTop,
-                t: l.textContent!.trim(),
+        const nearestEditor = [...scroller.querySelectorAll<HTMLElement>(".cm-line")]
+            .map((line) => ({
+                d: line.getBoundingClientRect().top - editorTop,
+                t: line.textContent!.trim(),
             }))
-            .filter((o) => /^#{1,6}\s/.test(o.t))
+            .filter(({ t }) => identity(t) !== null)
             .sort((a, b) => Math.abs(a.d) - Math.abs(b.d))[0];
-        const nearestPreview = [...preview.querySelectorAll("h1,h2,h3,h4,h5,h6")]
-            .map((h) => ({
-                d: h.getBoundingClientRect().top - previewTop,
-                t: h.textContent!.trim(),
+        const nearestPreview = [...preview.children]
+            .map((block) => ({
+                d: block.getBoundingClientRect().top - previewTop,
+                t: block.textContent!.trim(),
             }))
+            .filter(({ t }) => identity(t) !== null)
             .sort((a, b) => Math.abs(a.d) - Math.abs(b.d))[0];
         return {
-            editorScene: scene(nearestEditor?.t ?? null),
-            previewScene: scene(nearestPreview?.t ?? null),
+            editorBlock: identity(nearestEditor?.t ?? null),
+            previewBlock: identity(nearestPreview?.t ?? null),
         };
     });
 }
@@ -305,7 +313,7 @@ const scrollBy = (page: Page, selector: string, total: number, step: number) =>
         [selector, total, step] as const,
     );
 
-test("the editor and preview scroll in sync, anchored on scenes", async ({ page }) => {
+test("the editor and preview scroll in sync, anchored on Markdown blocks", async ({ page }) => {
     writeFileSync(LIVE_EDIT_DOC, SCROLL_DOC);
     // The editor virtualizes its lines, so assert on the preview (full HTML) to know the
     // long document loaded. Reused between the two directions for a clean, unowned slate.
@@ -321,25 +329,24 @@ test("the editor and preview scroll in sync, anchored on scenes", async ({ page 
     const scrollTopOf = (selector: string) =>
         page.evaluate((s) => document.querySelector<HTMLElement>(s)!.scrollTop, selector);
 
-    // Scrolling the editor down carries the preview to the same scene. The panes have
+    // Scrolling the editor down carries the preview to the same source block. The panes have
     // different heights, so this is a real mapping (not a shared scrollbar), and the exact
-    // within-scene pixel offset depends on the platform's line metrics — so the robust
-    // invariant is that the follower moved off the top and shows the same scene.
+    // within-block pixel offset depends on the platform's line metrics.
     await load();
     await scrollBy(page, ".source-pane .cm-scroller", 1600, 150);
     await page.waitForTimeout(300);
-    const byEditor = await headingsAtTop(page);
+    const byEditor = await blocksAtTop(page);
     expect(await scrollTopOf(".source-preview")).toBeGreaterThan(100); // the preview followed
-    expect(byEditor.editorScene).toBe(byEditor.previewScene);
+    expect(byEditor.editorBlock).toBe(byEditor.previewBlock);
 
     // Reload for a clean slate (neither pane owns the sync), then drive from the preview:
     // scrolling it down carries the editor to the same scene (bidirectional).
     await load();
     await scrollBy(page, ".source-preview", 1600, 150);
     await page.waitForTimeout(300);
-    const byPreview = await headingsAtTop(page);
+    const byPreview = await blocksAtTop(page);
     expect(await scrollTopOf(".source-pane .cm-scroller")).toBeGreaterThan(100); // the editor followed
-    expect(byPreview.editorScene).toBe(byPreview.previewScene);
+    expect(byPreview.editorBlock).toBe(byPreview.previewBlock);
 });
 
 // A multi-node document with a speaker-less line, so the Dialogue AST has a synthetic
