@@ -1,3 +1,4 @@
+import tippy, { type Instance } from "tippy.js";
 import { codicon } from "./codicon";
 import type { DebugController, DebugSnapshot } from "./debug-controller";
 
@@ -13,11 +14,17 @@ export interface DebugToolbarOptions {
     toggleBreakpoint?: () => void;
 }
 
+interface IconControl {
+    button: HTMLButtonElement;
+    element: HTMLElement;
+}
+
 /** Build the compact Source-pane toolbar driven entirely by {@link DebugController} snapshots. */
 export function createDebugToolbar(
     controller: DebugController,
     options: DebugToolbarOptions = {},
 ): DebugToolbar {
+    const tips: Instance[] = [];
     const toolbar = document.createElement("div");
     toolbar.className = "dd-debug-toolbar";
     toolbar.setAttribute("role", "toolbar");
@@ -26,26 +33,27 @@ export function createDebugToolbar(
     const controls = document.createElement("div");
     controls.className = "dd-debug-controls";
 
+    const dragHandle = iconButton("grabber", "Move debugger panel", () => {}, tips);
+    dragHandle.button.classList.add("dd-debug-drag-handle");
     const toggleBreakpoint = options.toggleBreakpoint
-        ? controlButton(
+        ? iconButton(
               "debug-breakpoint",
               "Toggle breakpoint at cursor",
-              "Breakpoint",
               options.toggleBreakpoint,
+              tips,
           )
         : null;
-    const start = controlButton("debug-start", "Start debugging", "Start", () =>
-        controller.start(),
+    const start = iconButton("debug-start", "Start debugging", () => controller.start(), tips);
+    const continueButton = iconButton(
+        "debug-continue",
+        "Continue",
+        () => controller.continue(),
+        tips,
     );
-    const continueButton = controlButton("debug-continue", "Continue", "Continue", () =>
-        controller.continue(),
-    );
-    const stepOver = controlButton("debug-step-over", "Step over", "Step Over", () =>
-        controller.stepOver(),
-    );
-    const stop = controlButton("debug-stop", "Stop debugging", "Stop", () => controller.stop());
-    if (toggleBreakpoint) controls.appendChild(toggleBreakpoint);
-    controls.append(start, continueButton, stepOver, stop);
+    const stepOver = iconButton("debug-step-over", "Step over", () => controller.stepOver(), tips);
+    const stop = iconButton("debug-stop", "Stop debugging", () => controller.stop(), tips);
+    if (toggleBreakpoint) controls.appendChild(toggleBreakpoint.element);
+    controls.append(start.element, continueButton.element, stepOver.element, stop.element);
 
     const status = document.createElement("span");
     status.className = "dd-debug-status";
@@ -57,7 +65,7 @@ export function createDebugToolbar(
 
     const row = document.createElement("div");
     row.className = "dd-debug-toolbar-row";
-    row.append(controls, status, prototype);
+    row.append(dragHandle.element, controls, status, prototype);
 
     const paths = document.createElement("div");
     paths.className = "dd-debug-paths";
@@ -66,13 +74,13 @@ export function createDebugToolbar(
     toolbar.append(row, paths);
 
     const render = (snapshot: DebugSnapshot): void => {
-        start.disabled = !snapshot.controls.start;
-        continueButton.disabled = !snapshot.controls.continue;
-        stepOver.disabled = !snapshot.controls.stepOver;
-        stop.disabled = !snapshot.controls.stop;
+        start.button.disabled = !snapshot.controls.start;
+        continueButton.button.disabled = !snapshot.controls.continue;
+        stepOver.button.disabled = !snapshot.controls.stepOver;
+        stop.button.disabled = !snapshot.controls.stop;
         status.textContent = statusText(snapshot);
         renderPaths(paths, snapshot, controller, () => {
-            const target = [stepOver, continueButton, start, stop].find(
+            const target = [stepOver.button, continueButton.button, start.button, stop.button].find(
                 (control) => !control.disabled,
             );
             target?.focus();
@@ -81,22 +89,92 @@ export function createDebugToolbar(
 
     render(controller.snapshot());
     const unsubscribe = controller.subscribe(render);
-    return { element: toolbar, destroy: unsubscribe };
+    const disposeDrag = makeDraggable(toolbar, dragHandle.button);
+    return {
+        element: toolbar,
+        destroy() {
+            unsubscribe();
+            disposeDrag();
+            for (const tip of tips) tip.destroy();
+        },
+    };
 }
 
-function controlButton(
+function iconButton(
     iconName: string,
     ariaLabel: string,
-    label: string,
     onClick: () => void,
-): HTMLButtonElement {
+    tips: Instance[],
+): IconControl {
+    const wrapper = document.createElement("span");
+    wrapper.className = "dd-debug-control-wrap";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "dd-debug-control";
     button.setAttribute("aria-label", ariaLabel);
-    button.append(codicon(iconName, "dd-debug-control-icon"), document.createTextNode(label));
+    button.append(codicon(iconName, "dd-debug-control-icon"));
     button.addEventListener("click", onClick);
-    return button;
+    wrapper.appendChild(button);
+    tips.push(tippy(wrapper, { content: ariaLabel, placement: "bottom", delay: [150, 0] }));
+    return { button, element: wrapper };
+}
+
+function makeDraggable(panel: HTMLElement, handle: HTMLElement): () => void {
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const onMouseDown = (event: MouseEvent): void => {
+        if (event.button !== 0 || !panel.parentElement) return;
+        const bounds = panel.getBoundingClientRect();
+        offsetX = event.clientX - bounds.left;
+        offsetY = event.clientY - bounds.top;
+        dragging = true;
+        panel.classList.add("dd-debug-dragging");
+        document.body.style.userSelect = "none";
+        event.preventDefault();
+    };
+
+    const onMouseMove = (event: MouseEvent): void => {
+        const container = panel.parentElement;
+        if (!dragging || !container) return;
+        const parentBounds = container.getBoundingClientRect();
+        const panelBounds = panel.getBoundingClientRect();
+        const left = clamp(
+            event.clientX - parentBounds.left - offsetX,
+            4,
+            Math.max(4, parentBounds.width - panelBounds.width - 4),
+        );
+        const top = clamp(
+            event.clientY - parentBounds.top - offsetY,
+            4,
+            Math.max(4, parentBounds.height - panelBounds.height - 4),
+        );
+        panel.style.left = `${Math.round(left)}px`;
+        panel.style.top = `${Math.round(top)}px`;
+        panel.style.right = "auto";
+        panel.style.transform = "none";
+    };
+
+    const onMouseUp = (): void => {
+        dragging = false;
+        panel.classList.remove("dd-debug-dragging");
+        document.body.style.userSelect = "";
+    };
+
+    handle.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+        handle.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        if (dragging) document.body.style.userSelect = "";
+    };
+}
+
+function clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
 }
 
 function renderPaths(

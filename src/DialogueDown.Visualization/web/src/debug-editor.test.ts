@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { EditorState } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import { EditorView, lineNumbers } from "@codemirror/view";
 import {
     debugEditor,
     requestedBreakpointLines,
@@ -51,7 +51,7 @@ function mount(): { view: EditorView; debug: FakeDebugController } {
         state: EditorState.create({
             doc: SOURCE,
             selection: { anchor: SOURCE.indexOf("Beta") + 1 },
-            extensions: [debugEditor(debug)],
+            extensions: [debugEditor(debug), lineNumbers()],
         }),
     });
     mounted.push(view);
@@ -185,15 +185,40 @@ describe("debugEditor", () => {
         expect(view.dom.querySelectorAll(".dd-debug-breakpoint-unverified")).toHaveLength(1);
     });
 
-    it("renders distinct breakpoint and execution gutters before line numbers", () => {
+    it("renders the breakpoint gutter directly beside line numbers", () => {
         const { view } = mount();
 
         const gutters = [...view.dom.querySelectorAll(".cm-gutter")].map((gutter) =>
             gutter.className.toString(),
         );
 
-        expect(gutters[0]).toContain("dd-debug-breakpoint-gutter");
-        expect(gutters[1]).toContain("dd-debug-execution-gutter");
+        expect(gutters[0]).toContain("dd-debug-execution-gutter");
+        expect(gutters[1]).toContain("dd-debug-breakpoint-gutter");
+        expect(gutters[2]).toContain("cm-lineNumbers");
+    });
+
+    it("provides hover guidance for empty and occupied breakpoint cells", async () => {
+        const { view } = mount();
+        const emptyCell = view.dom.querySelector<HTMLElement>(
+            ".dd-debug-breakpoint-gutter .cm-gutterElement:not(.cm-gutterElement-spacer)",
+        )!;
+
+        emptyCell.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+        const emptyTip = emptyCell as HTMLElement & {
+            _tippy?: { props: { content: unknown } };
+        };
+        expect(emptyTip._tippy?.props.content).toBe("Click to add breakpoint");
+
+        toggleBreakpointAt(view, view.state.doc.line(1).from);
+        await flushDebugUpdate();
+        const occupied = view.dom.querySelector<HTMLElement>(
+            ".dd-debug-breakpoint-gutter .cm-gutterElement:has(.dd-debug-breakpoint)",
+        )!;
+        occupied.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+        const occupiedTip = occupied as HTMLElement & {
+            _tippy?: { props: { content: unknown } };
+        };
+        expect(occupiedTip._tippy?.props.content).toBe("Click to remove breakpoint");
     });
 
     it("reveals only a newly paused location, not same-location snapshot updates", () => {

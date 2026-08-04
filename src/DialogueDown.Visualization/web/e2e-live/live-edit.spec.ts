@@ -45,7 +45,7 @@ async function editNode(page: Page, text: string) {
 }
 
 /** Click the prototype breakpoint gutter beside one visible one-based source line. */
-async function clickBreakpoint(page: Page, line: number) {
+async function breakpointCoordinates(page: Page, line: number) {
     const number = page
         .locator(".source-stage .cm-lineNumbers .cm-gutterElement")
         .filter({ hasText: new RegExp(`^${line}$`) });
@@ -54,7 +54,17 @@ async function clickBreakpoint(page: Page, line: number) {
         page.locator(".source-stage .dd-debug-breakpoint-gutter").boundingBox(),
     ]);
     if (!numberBox || !gutterBox) throw new Error(`Could not locate breakpoint line ${line}.`);
-    await page.mouse.click(gutterBox.x + gutterBox.width / 2, numberBox.y + numberBox.height / 2);
+    return {
+        x: gutterBox.x + gutterBox.width / 2,
+        y: numberBox.y + numberBox.height / 2,
+        gutterBox,
+        numberBox,
+    };
+}
+
+async function clickBreakpoint(page: Page, line: number) {
+    const { x, y } = await breakpointCoordinates(page, line);
+    await page.mouse.click(x, y);
 }
 
 test("edits update the preview and dirty state; the Save button writes the file", async ({
@@ -732,8 +742,32 @@ test("the fake line debugger prototypes breakpoints, stepping, path choice, and 
     const toolbar = page.locator(".dd-debug-toolbar");
     await expect(toolbar).toBeVisible();
     await expect(toolbar.locator(".dd-debug-prototype")).toHaveText("Prototype · fake program");
+    await expect(toolbar.locator(".dd-debug-controls")).toHaveText("");
+
+    // Controls are icon-only with their descriptions in Tippy, and the detached palette can
+    // move out of the writer's way.
+    await toolbar.getByRole("button", { name: "Continue" }).locator("..").hover();
+    await expect(page.locator(".tippy-box").last()).toContainText("Continue");
+    await page.getByRole("button", { name: "Hide preview" }).click();
+    const beforeDrag = await toolbar.boundingBox();
+    const handle = toolbar.getByRole("button", { name: "Move debugger panel" });
+    const handleBox = await handle.boundingBox();
+    if (!beforeDrag || !handleBox) throw new Error("Could not locate the debugger panel.");
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handleBox.x - 120, handleBox.y + 70);
+    await page.mouse.up();
+    const afterDrag = await toolbar.boundingBox();
+    expect(afterDrag?.x).toBeLessThan(beforeDrag.x - 30);
+    expect(afterDrag?.y).toBeGreaterThan(beforeDrag.y + 30);
 
     // A blank-line request stays hollow; the final execution point binds as a filled dot.
+    const blank = await breakpointCoordinates(page, 2);
+    const lineNumbersBox = await page.locator(".source-stage .cm-lineNumbers").boundingBox();
+    if (!lineNumbersBox) throw new Error("Could not locate line numbers.");
+    expect(Math.abs(blank.gutterBox.x + blank.gutterBox.width - lineNumbersBox.x)).toBeLessThan(2);
+    await page.mouse.move(blank.x, blank.y);
+    await expect(page.locator(".tippy-box").last()).toContainText("Click to add breakpoint");
     await clickBreakpoint(page, 2);
     await clickBreakpoint(page, 13);
     await expect(page.locator(".dd-debug-breakpoint-unverified")).toHaveCount(1);

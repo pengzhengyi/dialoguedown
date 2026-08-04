@@ -15,6 +15,7 @@ import {
     type DecorationSet,
     type ViewUpdate,
 } from "@codemirror/view";
+import { delegate, type DelegateInstance } from "tippy.js";
 import type { BreakpointBinding, DebugController, DebugSnapshot } from "./debug-controller";
 
 interface BreakpointState {
@@ -97,7 +98,6 @@ class BreakpointMarker extends GutterMarker {
         marker.className = this.verified
             ? "dd-debug-breakpoint dd-debug-breakpoint-verified"
             : "dd-debug-breakpoint dd-debug-breakpoint-unverified";
-        marker.title = this.verified ? "Verified breakpoint" : "Unverified breakpoint";
         return marker;
     }
 }
@@ -133,6 +133,7 @@ const executionSpacer = new (class extends GutterMarker {
 
 const breakpointGutter = gutter({
     class: "dd-debug-breakpoint-gutter",
+    renderEmptyElements: true,
     markers: (view) => breakpointMarkers(view.state),
     initialSpacer: () => breakpointSpacer,
     lineMarkerChange: breakpointFieldChanged,
@@ -154,7 +155,7 @@ const executionGutter = gutter({
 /** Add breakpoint/current-line state, gutters, and controller synchronization to an editor. */
 export function debugEditor(controller: DebugController): Extension {
     const bridge = ViewPlugin.define((view) => new DebugEditorBridge(view, controller));
-    return [breakpointField, breakpointGutter, debugVisualField, executionGutter, bridge];
+    return [debugVisualField, executionGutter, breakpointField, breakpointGutter, bridge];
 }
 
 /** Toggle the requested breakpoint on the line containing `position`. Exported for testing. */
@@ -175,12 +176,22 @@ class DebugEditorBridge {
     private pendingSnapshot: DebugSnapshot | null = null;
     private lastSnapshot: DebugSnapshot | null = null;
     private readonly unsubscribe: () => void;
+    private readonly breakpointTooltip: DelegateInstance;
 
     public constructor(
         private readonly view: EditorView,
         private readonly controller: DebugController,
     ) {
         this.unsubscribe = controller.subscribe((snapshot) => this.queueSnapshot(snapshot));
+        this.breakpointTooltip = delegate(view.dom, {
+            target: ".dd-debug-breakpoint-gutter .cm-gutterElement",
+            placement: "right",
+            delay: [150, 0],
+            content: (reference) =>
+                reference.querySelector(".dd-debug-breakpoint")
+                    ? "Click to remove breakpoint"
+                    : "Click to add breakpoint",
+        });
         this.queueSnapshot(controller.snapshot());
     }
 
@@ -196,6 +207,7 @@ class DebugEditorBridge {
     public destroy(): void {
         this.destroyed = true;
         this.unsubscribe();
+        this.breakpointTooltip.destroy(true);
     }
 
     private queueSnapshot(snapshot: DebugSnapshot): void {

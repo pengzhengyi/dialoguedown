@@ -68,10 +68,17 @@ describe("createDebugToolbar", () => {
 
         expect(element.querySelector(".dd-debug-status")?.textContent).toBe("Ready");
         expect(element.querySelector(".dd-debug-prototype")?.textContent).toContain("Prototype");
+        expect(element.querySelector(".dd-debug-controls")?.textContent).toBe("");
         expect(button(element, "Start debugging").disabled).toBe(false);
         expect(button(element, "Continue").disabled).toBe(true);
         expect(button(element, "Step over").disabled).toBe(true);
         expect(button(element, "Stop debugging").disabled).toBe(true);
+        const continueControl = button(element, "Continue").closest(
+            ".dd-debug-control-wrap",
+        ) as HTMLElement & {
+            _tippy?: { props: { content: unknown } };
+        };
+        expect(continueControl._tippy?.props.content).toBe("Continue");
     });
 
     it("drives Start, Step Over, and Stop from the controller snapshot", () => {
@@ -145,5 +152,37 @@ describe("createDebugToolbar", () => {
         button(toolbar.element, "Toggle breakpoint at cursor").click();
 
         expect(toggles).toBe(1);
+    });
+
+    it("drags the detached panel within its Source-pane container", () => {
+        const { element } = mount();
+        const container = document.createElement("div");
+        container.appendChild(element);
+        document.body.appendChild(container);
+        Object.defineProperty(container, "getBoundingClientRect", {
+            value: () => ({ left: 10, top: 20, width: 800, height: 500 }),
+        });
+        Object.defineProperty(element, "getBoundingClientRect", {
+            value: () => ({ left: 200, top: 30, width: 220, height: 60 }),
+        });
+
+        const handle = button(element, "Move debugger panel");
+        handle.dispatchEvent(
+            new MouseEvent("mousedown", {
+                bubbles: true,
+                cancelable: true,
+                clientX: 210,
+                clientY: 40,
+            }),
+        );
+        document.dispatchEvent(
+            new MouseEvent("mousemove", { bubbles: true, clientX: 350, clientY: 180 }),
+        );
+        document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+
+        expect(element.style.left).toBe("330px");
+        expect(element.style.top).toBe("150px");
+        expect(element.style.right).toBe("auto");
+        expect(element.style.transform).toBe("none");
     });
 });
