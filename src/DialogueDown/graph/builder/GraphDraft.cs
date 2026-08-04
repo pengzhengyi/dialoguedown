@@ -1,3 +1,4 @@
+using DialogueDown.Graph.Regions;
 using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Graph.Builder;
@@ -82,7 +83,8 @@ internal sealed class GraphDraft
         return new DialogueGraph(
             _nodeDraftsInOrder.Select(node => node.Freeze()).ToArray(),
             entry,
-            end);
+            end,
+            RegionTree.Empty);
     }
 
     private static void AssertSingleEnd(NodeId end, NodeIdMap ids)

@@ -17,6 +17,7 @@ public sealed class DialogueGraphBuilderFactoryTests
         Assert.IsType<EndNode>(graph.Node(graph.Entry));
         Assert.Equal(graph.Entry, graph.End);
         Assert.Single(graph.Nodes);
+        Assert.Empty(graph.Regions.Roots);
     }
 
     [Fact]
