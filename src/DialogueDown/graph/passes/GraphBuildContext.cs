@@ -6,10 +6,13 @@ namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// The immutable input shared by every graph-construction pass: the semantic model, diagnostic
-/// context, and one cached document-order snapshot of the model's script blocks.
+/// context, and the reading-order views of the scene tree computed once per build — the
+/// document-order blocks and each scene's entry block.
 /// </summary>
 internal sealed class GraphBuildContext
 {
+    private readonly IReadOnlyDictionary<Scene, ScriptBlock?> _entryBlockByScene;
+
     public GraphBuildContext(SemanticModel semantics, DiagnosticsContext diagnostics)
     {
         ArgumentNullException.ThrowIfNull(semantics);
@@ -17,6 +20,7 @@ internal sealed class GraphBuildContext
         Semantics = semantics;
         Diagnostics = diagnostics;
         Blocks = semantics.SceneRoot.DocumentOrder();
+        _entryBlockByScene = semantics.SceneRoot.EntryBlocks();
     }
 
     /// <summary>The analyzed script being lowered.</summary>
@@ -33,4 +37,9 @@ internal sealed class GraphBuildContext
 
     /// <summary>Resolves a jump to what it points at.</summary>
     public JumpResolution ResolveJump(Jump jump) => Semantics.Jumps.Resolve(jump);
+
+    /// <summary>
+    /// The block reaching <paramref name="scene"/> lands on, or null when nothing follows it.
+    /// </summary>
+    public ScriptBlock? EntryBlockOf(Scene scene) => _entryBlockByScene[scene];
 }
