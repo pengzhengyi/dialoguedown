@@ -24,7 +24,7 @@ internal static class SceneExtensions
             blocks.AddRange(scene.Blocks);
 
             // Push children in reverse so the first child is popped — and visited — next (pre-order).
-            foreach (var child in scene.Children.Reverse())
+            foreach (var child in scene.ChildScenes.Reverse())
             {
                 stack.Push(child);
             }

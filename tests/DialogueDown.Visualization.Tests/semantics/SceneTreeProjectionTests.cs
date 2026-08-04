@@ -69,7 +69,7 @@ public sealed class SceneTreeProjectionTests
             """;
         var model = Pipeline.Model(source);
         var projection = new SceneTreeProjection(model, source);
-        var scene = model.SceneRoot.Children[0];
+        var scene = model.SceneRoot.ChildScenes[0];
 
         Assert.Contains("The Market", projection.Describe(scene).Source!);
     }
@@ -85,7 +85,7 @@ public sealed class SceneTreeProjectionTests
             """;
         var model = Pipeline.Model(source);
         var projection = new SceneTreeProjection(model, source);
-        var line = model.SceneRoot.Children[0].Blocks[0];
+        var line = model.SceneRoot.ChildScenes[0].Blocks[0];
 
         Assert.Equal("Line", projection.Describe(line).Label);
     }
@@ -105,7 +105,7 @@ public sealed class SceneTreeProjectionTests
             """;
         var model = Pipeline.Model(source);
         var projection = new SceneTreeProjection(model, source);
-        var scene = model.SceneRoot.Children[0];
+        var scene = model.SceneRoot.ChildScenes[0];
 
         var neighbors = projection.Neighbors(scene).ToList();
 

@@ -14,7 +14,7 @@ internal sealed class RegionPass : GraphBuildPass
     protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
     {
         var ids = new RegionIdSequence();
-        foreach (var scene in context.Semantics.SceneRoot.Children)
+        foreach (var scene in context.Semantics.SceneRoot.ChildScenes)
         {
             if (BuildRegion(scene, draft, ids) is { } region)
             {
@@ -32,7 +32,7 @@ internal sealed class RegionPass : GraphBuildPass
             return null;
         }
 
-        var subregions = scene.Children
+        var subregions = scene.ChildScenes
             .Select(child => BuildRegion(child, draft, ids))
             .OfType<Region>()
             .ToArray();
