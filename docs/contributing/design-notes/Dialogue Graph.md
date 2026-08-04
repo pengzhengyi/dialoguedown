@@ -1,7 +1,7 @@
 # Dialogue graph
 
-> [!NOTE]
-> Status: **proposed**. The compiler's next stage: lower the
+> [!IMPORTANT]
+> Status: **in progress**. The compiler's next stage: lower the
 > [Semantic Analyzer](./Semantic%20Analyzer.md)'s **semantic model** into an immutable
 > **dialogue graph** — a directed graph a runtime can walk. This note designs the
 > **compile-time** half of the deferred
@@ -10,6 +10,11 @@
 > that [Progression Order](./Progression%20Order.md) already fixed (succession, divert,
 > the End sentinel) as concrete nodes and edges. **Play-time traversal** — walking the
 > graph — is a separate later component and is out of scope here.
+>
+> Built so far: the immutable IR, the multi-pass builder, line and control nodes with
+> their effects, succession edges, diverts (`#END`, scene jumps, and jump guards), and
+> the Scene region overlay. Still to come: choices, block controls and block-level
+> guards, and wiring the stage into the compiler facade.
 
 ## Table of contents
 
@@ -92,10 +97,10 @@ plugs into the compiler facade as the stage after semantic analysis.
   This note reserves the `IEdgeSelector` seam it will plug into.
 - **The returning detour** and its call stack — reserved as the `Detour`/`Return` edge
   kinds; its syntax and return boundary are [Progression Order](./Progression%20Order.md) follow-ups.
-- **Block controls** (`if`/`elseif`/`else`) — reserved as the `Branch` region kind and a
-  guarded branch edge; the construct is the [Block Controls](./Block%20Controls.md) note.
-- **Cross-file links** — reserved by letting a `NodeId` widen to a project-qualified id
-  and a `File` region kind; resolution is the [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) note.
+- **Block controls** (`if`/`elseif`/`else`) — the `BranchRegion` kind and a guarded branch
+  edge are defined here, but producing them is the [Block Controls](./Block%20Controls.md) note.
+- **Cross-file links** — reserved by letting a `NodeId` widen to a project-qualified id;
+  a file grouping arrives with it. Resolution is the [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) note.
 
 ## Ubiquitous language
 
@@ -111,7 +116,10 @@ plugs into the compiler facade as the stage after semantic analysis.
 | **Guard** | An opaque `key?` condition — the AST `Condition` — carried on an edge; the host decides its truth at play time. |
 | **Weight** | An opaque option weight — the AST `ChoiceWeight` (`key%`, numeric, or auto); the host resolves the random pick. |
 | **Effect** | A game-system call — the AST `GameCall` (`GiveGold("5")`) — a node runs when it plays. |
-| **Region** | A named grouping of nodes overlaid on the flat graph — a scene now; a branch or a file later. Metadata, not flow. |
+| **Region** | A named grouping of nodes overlaid on the flat graph — a scene now; a branch or a file later. Metadata, not flow. Its **own nodes** are the ones it holds directly, and its **subregions** are the groupings nested in it. |
+| **Entry block** | The block reaching a scene lands on: its own first block, or — when it owns no content — the next block in reading order. |
+| **Draft** | The mutable graph under construction that passes add to; `Freeze` validates it and yields the immutable graph. |
+| **Pass** | One construction concern over the draft — node creation, diverts, succession, regions — run in dependency order. |
 | **End sentinel** | The terminal node; the `#END` divert and reaching the last block both lead here. |
 | **Edge selector** | *(runtime seam)* The strategy that picks one outgoing edge at a node — evaluating guards/weights in production, or forcing a path in a debugger. |
 | **Node id** | A node's stable identity; edges reference targets by id, so cycles need no object back-references. |
@@ -141,16 +149,16 @@ core dependency.
 
 ## Functionality checklist
 
-- [ ] Lower a `SemanticModel` into an immutable `DialogueGraph` of nodes and typed edges.
-- [ ] Emit one **node per block**: `LineNode`, `ControlNode`, `ChoiceNode`, and the single `EndNode`.
-- [ ] Wire a **Succession** edge from each block to the next block in document order (fall-through).
-- [ ] Lower a jump to a **Divert**: `SceneJump` → the target scene's entry node; `TerminalJump` → `EndNode`.
-- [ ] Carry a `key?` condition as a **Guard** on the divert/branch edge, with a fall-through sibling that skips the guarded content.
+- [x] Lower a `SemanticModel` into an immutable `DialogueGraph` of nodes and typed edges.
+- [ ] Emit one **node per block**: `LineNode`, `ControlNode`, `ChoiceNode`, and the single `EndNode`. *(`ChoiceNode` pending.)*
+- [x] Wire a **Succession** edge from each block to the next block in document order (fall-through).
+- [x] Lower a jump to a **Divert**: `SceneJump` → the target scene's entry node; `TerminalJump` → `EndNode`.
+- [ ] Carry a `key?` condition as a **Guard** on the divert/branch edge, with a fall-through sibling that skips the guarded content. *(A jump's guard ships; a guard on the block itself is pending.)*
 - [ ] Lower `Choices`/`RandomChoices` to a **ChoiceNode** fanning out **Option** edges; a random option carries its **Weight**; both weave back to the enclosing region's exit.
-- [ ] Carry a block's inline game calls as ordered **Effects** on its node.
-- [ ] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node.
-- [ ] Reference every target by **node id**, so cycles and cross-region diverts are ordinary edges.
-- [ ] Leave clean seams: the `IEdgeSelector` runtime hook, the `Detour`/`Return` edge kinds, and `Branch`/`File` region kinds.
+- [x] Carry a block's inline game calls as ordered **Effects** on its node.
+- [x] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node.
+- [x] Reference every target by **node id**, so cycles and cross-region diverts are ordinary edges.
+- [ ] Leave clean seams: the `IEdgeSelector` runtime hook and the `Detour`/`Return` edge kinds. *(The `BranchRegion` kind is defined; the edge kinds and the selector are pending.)*
 - [ ] Plug into the compiler facade as the stage after semantic analysis; expose the graph on the `CompilationResult`.
 
 ## Design
@@ -183,7 +191,7 @@ I/O and no engine dependency.
 
 ```csharp
 // ── Identity ── edges reference targets by id, so cycles need no object back-refs.
-readonly record struct NodeId(int Value);     // v1 local; cross-file seam widens the id
+readonly record struct NodeId(int Value);     // local today; the cross-file seam widens it
 readonly record struct RegionId(int Value);
 
 // ── Graph ── a flat immutable node list, a canonical entry, the End sentinel, and the overlay.
@@ -192,11 +200,14 @@ sealed class DialogueGraph(
     IReadOnlyList<DialogueNode> Nodes, NodeId Entry, NodeId End, RegionTree Regions);
 
 // ── Nodes ── one per block; content plus ordered outgoing edges. Payload reuses the
-//    semantic model and AST (bind, don't copy): a resolved SpeakerSymbol, the line's
-//    displayable InlineFragments, and its GameCalls as effects.
+//    semantic model and AST (bind, don't copy): a resolved SpeakerSymbol and the line's
+//    displayable InlineFragments. A line's Effects are a derived view of its speech.
 abstract record DialogueNode(NodeId Id, IReadOnlyList<Edge> Out);
 sealed record LineNode   (NodeId Id, SpeakerSymbol Speaker, IReadOnlyList<InlineFragment> Speech,
-                          IReadOnlyList<GameCall> Effects, IReadOnlyList<Edge> Out) : DialogueNode;
+                          IReadOnlyList<Edge> Out) : DialogueNode
+{
+    IReadOnlyList<GameCall> Effects => [.. Speech.OfType<GameCall>()];   // the calls it runs
+}
 sealed record ControlNode(NodeId Id, IReadOnlyList<GameCall> Effects,
                           IReadOnlyList<Edge> Out) : DialogueNode;  // effect-only, no speaker
 sealed record ChoiceNode (NodeId Id, IReadOnlyList<Edge> Out) : DialogueNode;  // fan-out via Option edges
@@ -212,31 +223,42 @@ sealed record Option    (NodeId Target, IReadOnlyList<InlineFragment> Label,
 sealed record Detour    (NodeId Target)                          : Edge(Target);  // SEAM: runtime pushes a continuation
 sealed record Return    ()                                       : Edge(default); // SEAM: runtime pops the call stack
 
-// ── Grouping overlay ── metadata over the flat graph, not part of its topology.
-sealed record RegionTree(IReadOnlyList<Region> Roots);
-sealed record Region(
-    RegionId Id, RegionKind Kind, string? Label, string? Anchor,
-    NodeId Entry, NodeId Exit,                       // named entry enables dynamic entry; exit drives weave-back
-    IReadOnlySet<NodeId> Members, IReadOnlyList<Region> Children, Condition? Guard);
-enum RegionKind { Scene, Branch, File }              // v1 emits Scene; Branch and File are seams
+// ── Grouping overlay ── metadata over the flat graph, not part of its topology. The kind is
+//    the type, so each grouping carries only the metadata it owns.
+sealed record RegionTree(IReadOnlyList<Region> Roots);   // .Of(roots) folds the empty case
+abstract record Region(
+    RegionId Id,
+    NodeId Entry, NodeId Exit,                   // named entry enables dynamic entry; exit drives weave-back
+    IReadOnlySet<NodeId> OwnNodes,               // the nodes it owns directly, not its subregions'
+    IReadOnlyList<Region> Subregions);
+sealed record SceneRegion (..., IReadOnlyList<InlineFragment> Label, string Anchor) : Region;
+sealed record BranchRegion(..., Condition? Guard) : Region;   // one arm of a block control
 ```
 
 ### Lowering flow
 
-The builder walks the scene tree in **document order** (the pre-order of the heading
-outline), emits a node per block wiring `Succession` to the next block, then turns each
-jump's resolution into a `Divert`. Scenes become the region overlay.
+The builder is a **pipeline of passes** over one mutable `GraphDraft`, not a single walk.
+Each pass owns one concern, so a new construct adds a pass instead of growing a monolith —
+the same shape as the desugarer's rule list. The draft freezes into the immutable graph.
 
 ```mermaid
 flowchart LR
-  SM["SemanticModel<br/>(scene tree · jumps · speakers)"] --> B["DialogueGraphBuilder"]
-  B --> N["flat nodes + succession edges"]
-  B --> J["jump resolutions → divert edges"]
-  B --> R["scene tree → Scene regions"]
-  N --> G["DialogueGraph"]
-  J --> G
-  R --> G
+  SM["SemanticModel<br/>(scene tree · jumps · speakers)"] --> C["GraphBuildContext<br/>(document order · scene entries)"]
+  C --> P1["NodeCreation<br/>a node per block, then End"]
+  P1 --> P2["Divert<br/>jump resolutions → divert edges"]
+  P2 --> P3["Succession<br/>fall-through, skipping nodes that already leave"]
+  P3 --> P4["Region<br/>scene tree → Scene regions"]
+  P4 --> F["GraphDraft.Freeze()"] --> G["DialogueGraph"]
 ```
+
+**Diverts run before succession.** A node that leaves unconditionally must not also fall
+through, and it is simpler to *withhold* an edge than to add one and remove it later — so
+succession skips any node that already carries an unguarded divert. A **guarded** divert
+leaves the fall-through in place, and that sibling edge *is* the "skip" path taken when the
+guard reads false.
+
+The context computes the two reading-order views once per build — the document-order blocks
+and each scene's **entry block** — so no pass recomputes them.
 
 A divert crosses region boundaries with no ceremony — it is a node id, and the region
 overlay is untouched:
@@ -261,8 +283,11 @@ flowchart LR
 | Type / seam | Responsibility | Collaborators |
 | --- | --- | --- |
 | `IDialogueGraphBuilder` | The stage seam: `SemanticModel` → `DialogueGraph`. | `ScriptCompiler`, DI |
-| `DialogueGraphBuilder` | Maps each script block to its graph node in document order; emits succession/divert edges and Scene regions, resolving every target through the id map. | `SemanticModel`, `INodeIdBuilder`, `Scene.DocumentOrder` |
-| `INodeIdBuilder` | Strategy that assigns a `NodeId` to each block and the End node (a `NodeIdMap`). `IndexNodeIdBuilder` numbers by document position; a source-derived strategy for incremental/JIT plugs in here. | `NodeIdMap` |
+| `DialogueGraphBuilder` | Orchestrates one build: a fresh id session and draft, each pass in order, then freeze. `DialogueGraphBuilderFactory` composes the default pass list. | `INodeIdBuilderFactory`, `IGraphBuildPass`, `GraphDraft` |
+| `GraphBuildContext` | The input every pass shares: the semantic model, the diagnostic sink, and the reading-order views computed once — document-order blocks and each scene's entry block. | `SemanticModel`, `Scene.DocumentOrder`, `Scene.EntryBlocks` |
+| `IGraphBuildPass` / `GraphBuildPass` | One construction concern over the draft; the base guards the shared inputs. `NodeCreationPass`, `DivertPass`, `SuccessionPass`, and `RegionPass` implement it. | `GraphDraft`, `GraphBuildContext` |
+| `GraphDraft` | The mutable construction boundary: tracks node drafts and edges, derives the entry and End, validates on `Freeze()`, and returns the immutable graph. | `NodeDraft`, `INodeIdBuilder`, `Region` |
+| `INodeIdBuilder` | Strategy that assigns a `NodeId` incrementally as blocks are added, freezing into a `NodeIdMap`. `IndexNodeIdBuilder` numbers by arrival; a source-derived strategy for incremental/JIT plugs in here, created per build by `INodeIdBuilderFactory`. | `NodeIdMap` |
 | `DialogueGraph` | The immutable result: nodes, entry, End sentinel, region overlay. | consumed by the runtime and the report |
 | `DialogueNode` / `Edge` | The sealed node and edge unions (the flow). | — |
 | `Region` / `RegionTree` | The grouping overlay projected from the scene tree. | `Scene` |
@@ -276,8 +301,23 @@ flowchart LR
   that *scene nesting is scope, not flow*. It keeps the common case — a divert into the
   middle of another scene — a plain edge, where a nested subgraph model would force a
   divert to pierce a container's single entry. The overlay also carries the grouping the
-  report and diagnostics want without complicating traversal. Branch and file grouping
-  land later as new region **kinds**, not a new structure.
+  report and diagnostics want without complicating traversal. A grouping's **kind is its
+  type**, not a discriminator field: `SceneRegion` carries a heading's label and anchor,
+  `BranchRegion` a block-control arm's guard, and each new grouping is a new subclass
+  rather than another nullable column on one record.
+- **The builder is a pass pipeline over a mutable draft.** Construction and the result are
+  separate types: passes add node drafts, edges, and regions to a `GraphDraft`, which
+  validates and freezes into the immutable `DialogueGraph`. Each pass owns one concern, so
+  a construct lands as a new pass rather than another branch in a growing walk — the shape
+  the desugarer's rule list already uses here. Ordering is the pipeline's contract:
+  diverts precede succession so fall-through can be *withheld* from a node that already
+  leaves, rather than added and then removed.
+- **Reading order is a semantic-layer rule, not a graph one.** *Which block reaching a
+  scene lands on* is the same fall-through idea document order already encodes, so it
+  lives beside it as `Scene.EntryBlocks`: a scene is entered at its own first block, or —
+  when it owns no content — at the next block in reading order, and a scene with nothing
+  after it ends the run. The graph layer only maps those blocks to nodes, and the rule
+  stays testable without building a graph at all.
 - **Conditions and dynamics ride edges, not synthetic nodes.** A `key?` guard sits on
   the edge it guards (`Divert(target, Guard)` with a fall-through sibling); a random pick
   is a `ChoiceNode` whose `Option` edges carry a `Weight`. This keeps the IR compact and
@@ -287,11 +327,16 @@ flowchart LR
   The runtime's `IEdgeSelector` is the single hook that a debugger swaps to force paths;
   the graph tab can still *render* a guarded edge as a decision glyph — a projection
   concern, not the IR's.
-- **Block-level nodes.** One node per block. An inline jump ending a line makes that
-  `LineNode`'s outgoing edge a `Divert` rather than a `Succession`; inline game calls
-  become the node's `Effects`. A conditional block is reached through a **guarded entry
-  edge** with a fall-through sibling that skips it — the predecessor chooses to enter or
-  skip, exactly Roslyn's conditional-versus-fall-through shape.
+- **A guard binds at the level it is written.** A guard on a **jump** rides that jump's
+  divert, so the node keeps its fall-through as the path taken when the guard reads false.
+  A guard on the **block** itself guards the block's whole content, so it needs an edge
+  that skips the block — a different lowering, and the builder rejects a guarded block
+  rather than silently dropping the guard until that lands.
+- **Block-level nodes.** One node per block. An inline jump ending a line adds a `Divert`
+  to that `LineNode` and withholds its `Succession`; inline game calls become the node's
+  `Effects`. A conditional block is reached through a **guarded entry edge** with a
+  fall-through sibling that skips it — the predecessor chooses to enter or skip, exactly
+  Roslyn's conditional-versus-fall-through shape.
 - **The node payload reuses the semantic model and AST (bind, don't copy).** A `Line`'s
   inline fragments partition three ways, and each part is kept as the type that already
   models it rather than copied into a parallel value hierarchy — matching how the semantic
@@ -332,10 +377,12 @@ flowchart LR
 | Case | Behavior |
 | --- | --- |
 | Empty document (root scene, no blocks) | A graph whose `Entry` is the `EndNode`; no error. |
-| Heading-only scene (no blocks) | Its region `Entry`/`Exit` is the fall-through target — the next block in document order (or `EndNode`). |
-| Content after a divert | The divert is the node's only outgoing edge; the unreachable content already drew `DLG1003` at analysis, so the builder simply does not wire it. |
-| `UnresolvedJump` (empty target) | The semantic analyzer already reported it; the builder emits no divert (a dead end), never throwing on a resolution the analyzer admitted. |
-| `FileScopedJump` | Not lowered in v1 — reserved for the cross-file seam; the builder leaves the node without a cross-file divert rather than failing. |
+| Heading-only scene (no blocks) | It bounds no region, since it owns no nodes. A divert to it lands on its fall-through target — the next block in document order, or the `EndNode` when nothing follows. |
+| Leading content before the first heading | Ordinary nodes that belong to no region; the root scene has no heading, so it is not itself a region. |
+| Content after a divert | An unguarded divert is the node's only outgoing edge; the unreachable content already drew `DLG1003` at analysis, so the builder simply does not wire it. |
+| `UnresolvedJump` (empty target, or a missing scene) | The semantic analyzer already reported it; the builder emits no divert (a dead end), never throwing on a resolution the analyzer admitted. |
+| `FileScopedJump` | Not lowered yet: the builder throws rather than silently dropping a jump the writer wrote. Cross-file resolution is a separate component. |
+| A construct not yet lowered (a choice group, a block control, a guarded block) | The builder throws, so an unimplemented lowering is loud rather than a silently wrong graph. |
 | Cycle (divert back to an earlier scene) | An ordinary edge to an earlier id — cycles are a feature, not an error. |
 | Last block of the document | Its `Succession` leads to the `EndNode` (reaching the end terminates the run). |
 
@@ -360,15 +407,21 @@ part of this component.
   a unit test compiles a small script (through the existing pipeline test helpers), builds
   the graph, and asserts its nodes, edges, and regions against multi-line script literals —
   the same style as the semantic-analyzer tests.
+- **A pass at a time.** Each pass is tested on its own: a shared helper runs a chosen pass
+  chain over a fresh draft and freezes it, so a test names only the passes its behavior
+  needs. The orchestrator is tested separately for pass order and per-build isolation.
+- **Reading-order rules without a graph.** `Scene.DocumentOrder` and `Scene.EntryBlocks`
+  are semantic-layer functions, so their boundary cases — an empty scene, a heading-only
+  document — are asserted directly, with no draft or pass involved.
 - **Shape assertions.** Cover each lowering rule: succession chains a line to the next
   block; a divert points at the target scene's entry; a `#END` divert reaches the End node;
-  a guarded line has a guarded entry edge plus a fall-through; a choice fans out and weaves
-  back; a cycle is an edge to an earlier id; effects ride their node.
+  a guarded jump keeps its fall-through sibling; a choice fans out and weaves back; a cycle
+  is an edge to an earlier id; effects ride their node.
 - **Boundary tests.** The empty document, a heading-only scene, content after a divert, an
   unresolved jump, and a file-scoped jump each assert the table above.
-- **Seams by construction.** Reserve the `IEdgeSelector`, `Detour`/`Return`, and
-  `Branch`/`File` kinds with a compiling type and a placeholder test, so the runtime and
-  the future constructs plug in without reshaping the IR.
+- **Seams by construction.** Reserve the `IEdgeSelector` and `Detour`/`Return` kinds with a
+  compiling type and a placeholder test, so the runtime and the future constructs plug in
+  without reshaping the IR.
 - Mirror the source layout, one test file per source file, and target the usual high,
   meaningful coverage.
 
@@ -376,7 +429,7 @@ part of this component.
 
 - **Reachability and cycle diagnostics.** A graph makes "no path reaches this scene" and
   "a cycle with no exit" detectable. Both are more valuable with the runtime and are left
-  out of v1; the line-level unreachable-after-divert warning already ships. Revisit as a
+  out of this component; the line-level unreachable-after-divert warning already ships. Revisit as a
   graph-analysis pass (optionally via a QuikGraph adapter).
 - **The detour's return boundary.** `Detour`/`Return` are reserved, but *where* a detour
   returns from is a Progression Order follow-up; the call stack itself is the runtime's.
@@ -389,9 +442,13 @@ part of this component.
 
 ## Implementation checklist
 
-- [ ] IR records: `DialogueGraph`, the node union, the edge union (guards/weights reuse the AST `Condition`/`ChoiceWeight`), `Region`/`RegionTree`, `NodeId`/`RegionId`.
-- [ ] `IDialogueGraphBuilder` + `DialogueGraphBuilder`: document-order walk, succession wiring, jump-to-divert lowering, guarded-entry lowering, choice fan-out and weave-back, effects, and the Scene region overlay.
-- [ ] Retire the primitive `DialogueDown.Graph` `INode`/`IEdge` sketch it supersedes, and reframe the `Graph` layering architecture test from a foundation leaf to a stage above the semantic analyzer.
+- [x] IR records: `DialogueGraph`, the node union, the edge union (guards/weights reuse the AST `Condition`/`ChoiceWeight`), `Region`/`RegionTree`, `NodeId`/`RegionId`.
+- [x] `IDialogueGraphBuilder` + `DialogueGraphBuilder`: the draft, the pass abstraction, and the orchestrator that runs a pass list and freezes.
+- [x] Node creation and succession wiring, including the fall-through to the End node.
+- [x] Jump-to-divert lowering: `#END`, scene jumps with their reading-order entry, and a jump's guard.
+- [x] The Scene region overlay from the scene tree.
+- [x] Retire the primitive `DialogueDown.Graph` `INode`/`IEdge` sketch it supersedes, and reframe the `Graph` layering architecture test from a foundation leaf to a stage above the semantic analyzer.
+- [ ] Guarded-entry lowering for a guarded block, and choice fan-out and weave-back.
 - [ ] Wire into `ScriptCompiler` and `AddDialogueDown`; expose the graph on `CompilationResult`.
-- [ ] Reserve the `IEdgeSelector` runtime seam and the `Detour`/`Return` and `Branch`/`File` kinds with placeholder coverage.
+- [ ] Reserve the `IEdgeSelector` runtime seam and the `Detour`/`Return` kinds with placeholder coverage.
 - [ ] Unit tests per lowering rule and boundary case; reading-guide and `CHANGELOG` entries.
