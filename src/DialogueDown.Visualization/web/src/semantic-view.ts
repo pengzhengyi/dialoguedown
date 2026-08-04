@@ -29,6 +29,7 @@ export function createSemanticView(
     onSelect: (node: DisplayNode) => void,
     options: TreeViewOptions,
     jumpToSource?: (span: Span) => void,
+    recognizeJumps = false,
 ): SemanticView {
     const container = document.createElement("div");
     container.className = "semantic-view";
@@ -45,7 +46,10 @@ export function createSemanticView(
 
     // Clicking a scene or block in the tree shows its detail in a panel pinned to the top of
     // the tables column; selecting a node also drives the shared inspector (hidden on this tab).
-    const nodeDetail = createNodeDetailPanel(jumpToSource ? { jumpToSource } : {});
+    const nodeDetail = createNodeDetailPanel({
+        ...(jumpToSource ? { jumpToSource } : {}),
+        recognizeJumps,
+    });
     const view = createTreeView(
         stage,
         (node) => {

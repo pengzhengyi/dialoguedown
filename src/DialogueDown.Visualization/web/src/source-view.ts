@@ -222,6 +222,8 @@ export interface SourceViewOptions {
      * do not share one collapse state.
      */
     previewStorageKey?: string;
+    /** Render the preview HTML. The Source tab defaults to the whole-document renderer. */
+    renderPreview?: (source: string) => string;
 }
 
 /** A handle to a live source view, letting the mode controller reconfigure it in place. */
@@ -311,6 +313,7 @@ export function createSourceView(
         onChange,
         symbols = () => EMPTY_SYMBOLS,
         previewStorageKey = "dd-preview-collapsed",
+        renderPreview = renderDocument,
     } = options;
 
     // The document-aware completions are an Edit-only authoring aid, so they live in the
@@ -333,7 +336,7 @@ export function createSourceView(
     preview.tabIndex = 0;
     preview.setAttribute("role", "region");
     preview.setAttribute("aria-label", "Preview");
-    preview.innerHTML = renderDocument(source);
+    preview.innerHTML = renderPreview(source);
     annotateHeadingAnchors(preview);
     // Delegated once on the stable preview element; each render re-annotates its headings.
     wireHeadingAnchorCopy(preview);
@@ -343,7 +346,7 @@ export function createSourceView(
     const onEdit = EditorView.updateListener.of((update) => {
         if (update.docChanged) {
             const value = update.state.doc.toString();
-            preview.innerHTML = renderDocument(value);
+            preview.innerHTML = renderPreview(value);
             annotateHeadingAnchors(preview);
             onChange?.(value);
         }
