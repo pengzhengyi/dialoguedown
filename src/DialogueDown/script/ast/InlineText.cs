@@ -1,6 +1,4 @@
-using DialogueDown.Script.Ast;
-
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Script.Ast;
 
 /// <summary>
 /// Flattens a run of inline fragments — a link or jump label, an image alt, a scene heading —

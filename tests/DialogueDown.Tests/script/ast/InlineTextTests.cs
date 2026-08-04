@@ -1,7 +1,7 @@
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 
-namespace DialogueDown.Visualization.Tests;
+namespace DialogueDown.Tests.Script.Ast;
 
 public sealed class InlineTextTests
 {
