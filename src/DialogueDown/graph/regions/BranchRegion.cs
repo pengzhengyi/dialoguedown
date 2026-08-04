@@ -11,5 +11,5 @@ internal sealed record BranchRegion(
     NodeId Entry,
     NodeId Exit,
     IReadOnlySet<NodeId> Members,
-    IReadOnlyList<Region> Children,
-    Condition? Guard) : Region(Id, Entry, Exit, Members, Children);
+    IReadOnlyList<Region> Subregions,
+    Condition? Guard) : Region(Id, Entry, Exit, Members, Subregions);

@@ -19,6 +19,7 @@ internal sealed class GraphDraft
     private readonly INodeIdBuilder _idBuilder;
     private readonly List<NodeDraft> _nodeDraftsInOrder = [];
     private readonly Dictionary<NodeId, NodeDraft> _nodeDraftById = [];
+    private readonly List<Region> _regions = [];
     private NodeId? _entry;
     private NodeId? _end;
     private bool _isFrozen;
@@ -63,6 +64,14 @@ internal sealed class GraphDraft
         Node(source).AddEdge(edge);
     }
 
+    /// <summary>Adds a root region to the grouping overlay.</summary>
+    public void AddRegion(Region region)
+    {
+        ArgumentNullException.ThrowIfNull(region);
+        AssertNotFrozen();
+        _regions.Add(region);
+    }
+
     /// <summary>The draft of the node with the given <paramref name="id"/>.</summary>
     public NodeDraft Node(NodeId id) => _nodeDraftById[id];
 
@@ -84,7 +93,7 @@ internal sealed class GraphDraft
             _nodeDraftsInOrder.Select(node => node.Freeze()).ToArray(),
             entry,
             end,
-            RegionTree.Empty);
+            RegionTree.Of(_regions));
     }
 
     private static void AssertSingleEnd(NodeId end, NodeIdMap ids)
