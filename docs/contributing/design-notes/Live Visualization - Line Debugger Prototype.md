@@ -24,7 +24,7 @@
   - [D5 — Prototype pausing before an execution point](#d5--prototype-pausing-before-an-execution-point)
   - [D6 — Path selection is explicit and remains paused](#d6--path-selection-is-explicit-and-remains-paused)
   - [D7 — Debug only a clean compiled document](#d7--debug-only-a-clean-compiled-document)
-  - [D8 — Keep controls in the Source pane](#d8--keep-controls-in-the-source-pane)
+  - [D8 — Float icon-only controls over the Source pane](#d8--float-icon-only-controls-over-the-source-pane)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Integration](#integration)
 - [Testability](#testability)
@@ -62,10 +62,12 @@ flowchart LR
 - A `DebugController` contract whose state drives the toolbar and editor
   decorations.
 - **Start**, **Continue**, **Step Over**, and **Stop** execution controls in a
-  compact toolbar above the Source editor, plus an accessible **Breakpoint**
-  action for the cursor line.
+  detached, draggable palette over the Source editor, plus an accessible
+  **Breakpoint** action for the cursor line. Controls are icon-only; `Tippy.js`
+  tooltips provide their descriptions.
 - A line breakpoint gutter with **verified** (filled) and **unverified** (hollow)
-  markers.
+  markers directly beside line numbers. Hovering an empty cell previews the
+  breakpoint dot and explains that a click adds one.
 - A separate execution gutter with an arrow at the paused line, plus a subtle
   full-line paused decoration.
 - An inline path picker when the fake program exposes multiple outgoing paths.
@@ -113,13 +115,15 @@ flowchart LR
 - [x] Choose a path, move to its target, and remain paused there.
 - [x] Stop the session and clear the execution arrow and paused-line decoration.
 - [x] Toggle requested breakpoints from a dedicated CodeMirror gutter.
+- [x] Place the breakpoint gutter immediately left of line numbers and show
+  tooltip guidance for adding or removing a breakpoint.
 - [x] Offer a keyboard-accessible **Breakpoint** toolbar action for the cursor line.
 - [x] Render verified breakpoints as filled red dots and unverified breakpoints as hollow red rings.
 - [x] Map requested breakpoint positions through editor changes.
 - [x] Render a separate amber execution arrow and paused-line decoration.
 - [x] Scroll the paused location into view without moving the user's text selection.
-- [x] Show a Source-pane toolbar with the four execution controls, accessible
-  Breakpoint action, state text, and inline path picker.
+- [x] Show a detached, draggable Source-pane palette with icon-only controls,
+  accessible Breakpoint action, state text, and inline path picker.
 - [x] Disable Start while the source is dirty; editing an active session makes it stale.
 - [x] Keep breakpoints after an edit and re-verify them when the sample program rebinds.
 - [x] Detect a repeated execution point during one Continue command and pause with a prototype cycle message.
@@ -177,7 +181,7 @@ The examples below define intent, not final method-by-method API.
 | `FakeDebugProgram` | Explicit fixture of locations and paths for the dedicated sample. | Spike-only |
 | `FakeDebugController` | Deterministic in-browser implementation of `DebugController`. | Spike-only |
 | `debugEditorExtension` | CodeMirror state/effects/gutters/decorations for breakpoints and the paused line. | Durable UI |
-| `createDebugToolbar` | Source-pane controls, status text, and path picker driven only by controller snapshots. | Durable UI |
+| `createDebugToolbar` | Floating Source-pane palette: icon controls with Tippy labels, drag handle, status text, and path picker driven only by controller snapshots. | Durable UI |
 
 Proposed contract shape:
 
@@ -319,13 +323,20 @@ them again.
 
 Two narrow gutters precede the existing line-number gutter:
 
-1. **Breakpoint gutter** — filled red dot or hollow red ring; clicking toggles the request.
-2. **Execution gutter** — amber arrow on the paused line.
+1. **Execution gutter** — amber arrow on the paused line.
+2. **Breakpoint gutter** — immediately beside line numbers; a filled red dot or
+   hollow red ring shows the request, and clicking toggles it.
 
 Separate lanes keep both states visible when execution stops on a breakpoint.
 They add a small amount of horizontal width, accepted for the clearer state.
 The paused line also receives a subtle amber decoration; the existing gray
 cursor-active-line treatment remains independent.
+
+The breakpoint gutter renders an empty cell for every visible line. Hovering an
+unmarked cell reveals a faint dot and a **Click to add breakpoint** tooltip;
+hovering a marked cell says **Click to remove breakpoint**. The toolbar's
+Breakpoint action remains the keyboard/assistive alternative because CodeMirror
+gutter DOM is not exposed as interactive accessibility content.
 
 ### D5 — Prototype pausing before an execution point
 
@@ -378,19 +389,30 @@ The editor stays editable; the spike does not lock it during debugging. This
 models the expected production behavior without pretending a stale graph is
 still executing.
 
-### D8 — Keep controls in the Source pane
+### D8 — Float icon-only controls over the Source pane
 
-A compact toolbar sits directly above CodeMirror:
+A detached palette floats over CodeMirror and can be dragged by its handle:
 
 ```text
-[Breakpoint] [Start] [Continue] [Step Over] [Stop]  Paused · line 12  Prototype · fake program
+[⋮⋮] [●] [▶] [↻] [↓] [■]  Paused · line 12  Prototype · fake program
 ```
 
-The path picker expands below this row only in `awaiting-path`. The controller
-publishes explicit control capabilities in each snapshot; the expected values
-below apply to the four execution controls. **Breakpoint** remains available
-whenever the fake debugger is mounted because CodeMirror, not the controller,
-owns requested breakpoints:
+The execution controls and Breakpoint action are icon-only; their accessible
+names and `Tippy.js` labels carry **Breakpoint**, **Start debugging**, **Continue**,
+**Step over**, and **Stop debugging**. This follows the compact VS Code debugger
+pattern without making the meanings discoverability-only: screen readers retain
+the same labels.
+
+The palette starts near the Source pane's top-right corner. Pointer-dragging the
+handle detaches it from that default and clamps it within the Source pane, so it
+can move away from the lines being inspected. The position is intentionally not
+persisted in this spike.
+
+The path picker expands below the icon row only in `awaiting-path`. The
+controller publishes explicit control capabilities in each snapshot; the
+expected values below apply to the four execution controls. **Breakpoint**
+remains available whenever the fake debugger is mounted because CodeMirror, not
+the controller, owns requested breakpoints:
 
 | Status | Start | Continue | Step Over | Stop | Meaning |
 | --- | --- | --- | --- | --- | --- |
@@ -434,7 +456,8 @@ The spike changes only the visualization web client and its test/demo fixtures:
 - `source-view.ts` accepts an optional `DebugController`.
 - `debug-editor.ts` owns CodeMirror effects, state fields, two gutters, and the
   paused-line decoration.
-- `debug-toolbar.ts` renders controls and subscribes to controller snapshots.
+- `debug-toolbar.ts` renders and drags the floating icon palette, owns control
+  tooltip instances, and subscribes to controller snapshots.
 - `fake-debug-controller.ts` and a dedicated fixture provide simulated state.
 - `debug-controller.ts` owns the durable contract and values.
 - The report app injects the fake controller only when the URL carries
@@ -512,9 +535,10 @@ One focused Playwright path on the dedicated sample:
 The built branch satisfies the functional crosscheck:
 
 - **Achieved:** controller seam, explicit fixture, requested/verified
-  breakpoints, edit mapping, two gutters, paused-line decoration, toolbar,
-  branch selection, cycle guard, clean-source invalidation/rebind, query
-  isolation, and the dedicated sample.
+  breakpoints, edit mapping, VS Code-style breakpoint hover guidance, two
+  gutters, paused-line decoration, floating draggable icon palette, branch
+  selection, cycle guard, clean-source invalidation/rebind, query isolation, and
+  the dedicated sample.
 - **Changed:** no designed behavior changed. The implementation added deferred
   snapshot dispatch and deterministic Source-view teardown as lifecycle
   requirements discovered during testing. Independent review also hardened
@@ -526,7 +550,7 @@ The built branch satisfies the functional crosscheck:
   user-facing visual evaluation and adopt/revise/reject decision are still
   pending.
 
-Automated evidence: **526** frontend unit tests plus **15** infrastructure tests,
+Automated evidence: **528** frontend unit tests plus **15** infrastructure tests,
 **75** static Playwright tests, and **55** live Playwright tests pass. The live
 prototype test covers ordinary-report isolation, one verified and one unverified
 breakpoint, Start, clean View/Edit switching, Step Over, path selection,
@@ -537,7 +561,8 @@ The branch is successful when the prototype answers these questions:
 1. Are the two gutters readable without crowding line numbers or fold controls?
 2. Can a user distinguish cursor-active, breakpoint, and paused-line states in
    light and dark themes?
-3. Does the toolbar feel discoverable without taking too much vertical space?
+3. Are the icon labels discoverable through hover, and can the floating palette
+   be moved without obscuring the source?
 4. Is the requested/verified breakpoint distinction understandable?
 5. Does the inline path picker make branch stepping clear?
 6. Do breakpoint mapping and clean-source invalidation feel predictable?
