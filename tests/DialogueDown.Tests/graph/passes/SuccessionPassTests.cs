@@ -1,8 +1,7 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Passes;
+using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.GraphAssert;
-using static DialogueDown.Tests.Support.GraphBuildContextFactory;
-using static DialogueDown.Tests.Support.GraphDraftFactory;
 
 namespace DialogueDown.Tests.Graph.Passes;
 
@@ -15,7 +14,7 @@ public sealed class SuccessionPassTests
     {
         var graph = Build("Alice: only");
 
-        AssertSuccession(graph.Node(graph.Entry), graph.End);
+        AssertOnlySuccession(graph.Node(graph.Entry), graph.End);
         Assert.Empty(graph.Node(graph.End).Out);
     }
 
@@ -29,8 +28,8 @@ public sealed class SuccessionPassTests
             """);
 
         var nodes = graph.Nodes;
-        AssertSuccession(nodes[0], nodes[1].Id);
-        AssertSuccession(nodes[1], graph.End);
+        AssertOnlySuccession(nodes[0], nodes[1].Id);
+        AssertOnlySuccession(nodes[1], graph.End);
         Assert.Empty(graph.Node(graph.End).Out);
     }
 
@@ -43,13 +42,21 @@ public sealed class SuccessionPassTests
         Assert.Single(graph.Nodes);
     }
 
-    // Node creation assigns the ids and adds the End that succession then wires.
-    private DialogueGraph Build(string source)
+    [Fact]
+    public void Apply_ANodeThatDivertsUnconditionally_GetsNoSuccession()
     {
-        var draft = Draft();
-        var context = Context(source);
-        new NodeCreationPass().Apply(draft, context);
-        _pass.Apply(draft, context);
-        return draft.Freeze();
+        var graph = Build("""
+            Alice: bye => [end](#END)
+
+            Bob: unreachable
+            """);
+
+        // Alice diverts to End, so she does not also fall through to Bob.
+        AssertOnlyDivert(graph.Nodes[0], graph.End);
     }
+
+    // Node creation assigns the ids and adds the End; diverts run before succession, which skips
+    // a node that already leaves unconditionally.
+    private DialogueGraph Build(string source) =>
+        GraphPasses.Build(source, new NodeCreationPass(), new DivertPass(), _pass);
 }

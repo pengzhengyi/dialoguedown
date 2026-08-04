@@ -27,7 +27,7 @@ public sealed class DialogueGraphBuilderFactoryTests
 
         var entry = Assert.IsType<LineNode>(graph.Node(graph.Entry));
         Assert.Equal("Alice", entry.Speaker.Name);
-        AssertSuccession(entry, graph.End);
+        AssertOnlySuccession(entry, graph.End);
     }
 
     [Fact]
@@ -40,8 +40,20 @@ public sealed class DialogueGraphBuilderFactoryTests
             """);
 
         var nodes = graph.Nodes;
-        AssertSuccession(nodes[0], nodes[1].Id);
-        AssertSuccession(nodes[1], graph.End);
+        AssertOnlySuccession(nodes[0], nodes[1].Id);
+        AssertOnlySuccession(nodes[1], graph.End);
+    }
+
+    [Fact]
+    public void Build_TerminalJump_DivertsToEndInsteadOfFallingThrough()
+    {
+        var graph = Build("""
+            Alice: farewell => [end](#END)
+
+            Bob: unreachable
+            """);
+
+        AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
     }
 
     private DialogueGraph Build(string source) =>

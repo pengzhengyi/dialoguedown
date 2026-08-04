@@ -13,6 +13,7 @@ internal static class DialogueGraphBuilderFactory
             new IndexNodeIdBuilderFactory(),
             [
                 new NodeCreationPass(),
+                new DivertPass(),
                 new SuccessionPass(),
                 new RegionPass(),
             ]);

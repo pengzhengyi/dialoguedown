@@ -1,6 +1,5 @@
 using DialogueDown.Graph.Builder;
 using DialogueDown.Script.Ast;
-using DialogueDown.Script.Semantics;
 
 namespace DialogueDown.Graph.Passes;
 
@@ -14,18 +13,18 @@ internal sealed class NodeCreationPass : GraphBuildPass
     {
         foreach (var block in context.Blocks)
         {
-            AddNode(draft, context.Semantics.Speakers, block);
+            AddNode(draft, context, block);
         }
 
         draft.AddEnd();
     }
 
-    private static void AddNode(GraphDraft draft, SpeakerTable speakers, ScriptBlock block)
+    private static void AddNode(GraphDraft draft, GraphBuildContext context, ScriptBlock block)
     {
         switch (block)
         {
             case Line line:
-                var speaker = speakers.Resolve(SpeakerOf(line));
+                var speaker = context.ResolveSpeaker(SpeakerOf(line));
                 draft.AddBlock(line, id => new LineNodeDraft(id, speaker, line.Speech));
                 break;
             default:

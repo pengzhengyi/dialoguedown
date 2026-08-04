@@ -27,4 +27,10 @@ internal sealed class GraphBuildContext
 
     /// <summary>The script blocks in document order, computed once for this graph build.</summary>
     public IReadOnlyList<ScriptBlock> Blocks { get; }
+
+    /// <summary>Resolves a line's speaker prefix to its resolved symbol.</summary>
+    public SpeakerSymbol ResolveSpeaker(Speaker speaker) => Semantics.Speakers.Resolve(speaker);
+
+    /// <summary>Resolves a jump to what it points at.</summary>
+    public JumpResolution ResolveJump(Jump jump) => Semantics.Jumps.Resolve(jump);
 }

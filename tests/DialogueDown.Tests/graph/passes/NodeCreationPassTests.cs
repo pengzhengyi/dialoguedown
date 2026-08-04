@@ -1,8 +1,7 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Passes;
+using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
-using static DialogueDown.Tests.Support.GraphBuildContextFactory;
-using static DialogueDown.Tests.Support.GraphDraftFactory;
 
 namespace DialogueDown.Tests.Graph.Passes;
 
@@ -42,18 +41,9 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
-    public void Apply_BlockKindNotYetLowered_Throws()
-    {
+    public void Apply_BlockKindNotYetLowered_Throws() =>
         // A bare jump desugars to a control line, which node creation does not lower yet.
-        var draft = Draft();
+        Assert.Throws<NotSupportedException>(() => Build("=> [play](#play)"));
 
-        Assert.Throws<NotSupportedException>(() => _pass.Apply(draft, Context("=> [play](#play)")));
-    }
-
-    private DialogueGraph Build(string source)
-    {
-        var draft = Draft();
-        _pass.Apply(draft, Context(source));
-        return draft.Freeze();
-    }
+    private DialogueGraph Build(string source) => GraphPasses.Build(source, _pass);
 }

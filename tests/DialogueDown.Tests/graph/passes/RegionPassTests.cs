@@ -1,8 +1,7 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Passes;
 using DialogueDown.Graph.Regions;
-using static DialogueDown.Tests.Support.GraphBuildContextFactory;
-using static DialogueDown.Tests.Support.GraphDraftFactory;
+using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.RegionAssert;
 
 namespace DialogueDown.Tests.Graph.Passes;
@@ -104,12 +103,6 @@ public sealed class RegionPassTests
         regions.SelectMany(region => region.OwnNodes.Concat(AllRegionNodes(region.Subregions)));
 
     // Region building needs the ids and End that node creation assigns first.
-    private DialogueGraph Build(string source)
-    {
-        var draft = Draft();
-        var context = Context(source);
-        new NodeCreationPass().Apply(draft, context);
-        _pass.Apply(draft, context);
-        return draft.Freeze();
-    }
+    private DialogueGraph Build(string source) =>
+        GraphPasses.Build(source, new NodeCreationPass(), _pass);
 }
