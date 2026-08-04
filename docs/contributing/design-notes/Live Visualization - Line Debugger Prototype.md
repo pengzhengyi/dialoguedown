@@ -330,10 +330,11 @@ Two narrow gutters precede the existing line-number gutter:
    hollow red ring shows the request, and clicking toggles it.
 
 Separate lanes keep both states visible when execution stops on a breakpoint.
-Each lane is about nine pixels wide (roughly eighteen combined), keeping the
-line-number area close to CodeMirror/VS Code density while preserving the two
-independent states. The paused line also receives a subtle amber decoration; the
-existing gray cursor-active-line treatment remains independent.
+Each lane is about eleven pixels wide (roughly twenty-two combined), keeping the
+line-number area close to CodeMirror/VS Code density while leaving enough visual
+weight for an 8–9 px breakpoint and a crisp amber execution triangle. The paused
+line also receives a subtle amber decoration; the existing gray
+cursor-active-line treatment remains independent.
 
 The breakpoint gutter renders an empty cell for every visible line. Hovering an
 unmarked cell reveals a faint dot and a **Click to add breakpoint** tooltip;
@@ -551,9 +552,9 @@ The built branch satisfies the functional crosscheck:
   breakpoint mapping across ordinary/full-buffer edits, prevented same-location
   scroll snapping, preserved paused execution across clean View/Edit switches,
   added a keyboard-accessible breakpoint action, and restored focus after path
-  selection. Visual review then tightened the debug lanes to about eighteen
-  pixels combined and added resize-aware palette clamping for preview and
-  maximize layout changes.
+  selection. Visual review then tightened the debug lanes to about twenty-two
+  pixels combined, strengthened the breakpoint and execution markers, and added
+  resize-aware palette clamping for preview and maximize layout changes.
 - **Not implemented:** real runtime behavior remains deferred by design. The
   user-facing visual evaluation and adopt/revise/reject decision are still
   pending.
