@@ -60,7 +60,7 @@ const GRAPH_HELP = `
      <strong>hide handle</strong> to collapse the panel and give the graph the full width
      (click again to bring it back).</p>
   <p><strong>Zoom controls</strong> (bottom-right): <kbd>+</kbd> / <kbd>−</kbd> to
-     zoom, and click the percentage to reset the view.</p>
+     zoom, type a percentage for an exact ratio, and use <kbd>↺</kbd> to reset the view.</p>
   <p><strong>Full screen</strong> (the bottom-right ⤢ button, or press <kbd>f</kbd>):
      fill the window with the graph; <kbd>f</kbd> or <kbd>Esc</kbd> to leave.</p>
   <p><strong>Hover a legend entry</strong> (top-right) to highlight its nodes;

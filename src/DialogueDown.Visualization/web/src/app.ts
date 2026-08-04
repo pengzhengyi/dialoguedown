@@ -24,6 +24,8 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
 import { escapeHtml } from "./text";
+
+const JUMP_AWARE_STAGE_TITLES = new Set(["Dialogue AST", "Desugared AST", "Semantic Model"]);
 import { setHelp } from "./help";
 
 // The Source tab shows the compiler input, not a projected stage, so its hover
@@ -178,9 +180,9 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     // Record the shown node's stable id, then drive the shared inspector. Wrapping `panel.show`
     // (rather than calling it directly) is what lets `updateStages` reselect the same node after
     // a rebuild, keeping the inspector editor open and rebound to the node's current source.
-    function showNode(node: DisplayNode): void {
+    function showNode(node: DisplayNode, recognizeJumps: boolean): void {
         selectedNodeId = node.id;
-        panel.show(node);
+        panel.show(node, { recognizeJumps });
     }
 
     // The whole-window maximize mode (graphs and the source split) — one page-level action,
@@ -374,6 +376,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
         // It is still a graph stage, so it reuses the tree view (camera memory, fold, full
         // screen) — only the surrounding layout differs.
         const isSemantic = stage.tables != null;
+        const recognizeJumps = JUMP_AWARE_STAGE_TITLES.has(stage.title);
         if (isSemantic) section.classList.add("semantic-stage");
         let view: TreeView | null = null;
         try {
@@ -394,9 +397,10 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             if (isSemantic) {
                 const semantic = createSemanticView(
                     stage,
-                    showNode,
+                    (node) => showNode(node, recognizeJumps),
                     treeOptions,
                     report.source != null ? jumpToSource : undefined,
+                    recognizeJumps,
                 );
                 view = semantic.view;
                 section.appendChild(semantic.element);
@@ -404,7 +408,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                 // A stage shows its own pinned camera, else the shared current one it
                 // inherits, else the default framing; its fold is always its own. Reader
                 // adjustments are recorded live through the callbacks above.
-                view = createTreeView(stage, showNode, treeOptions);
+                view = createTreeView(stage, (node) => showNode(node, recognizeJumps), treeOptions);
                 section.appendChild(view.svg);
                 section.appendChild(view.legend);
                 section.appendChild(view.controls);

@@ -1,6 +1,6 @@
 import type { DialogueSymbolProvider, DisplayNode } from "./model";
 import { colorOf } from "./palette";
-import { escapeHtml, renderMarkdown } from "./text";
+import { escapeHtml, renderNodePreview } from "./text";
 import { createSourceView, type SourceViewHandle } from "./source-view";
 import { spanSplice, type Span } from "./span-splice";
 import { createJumpButton, type JumpButton } from "./jump-button";
@@ -29,10 +29,15 @@ export interface DetailPanelOptions {
 }
 
 export interface DetailPanel {
-    show(node: DisplayNode): void;
+    show(node: DisplayNode, preview?: NodePreviewOptions): void;
     clear(): void;
     /** Reconfigure the shown node's editor when the session toggles View ⇄ Edit. */
     setEditable(editable: boolean): void;
+}
+
+export interface NodePreviewOptions {
+    /** The active stage has recognized Dialogue jump syntax. */
+    recognizeJumps?: boolean;
 }
 
 /** The body HTML shown when no node is selected. */
@@ -54,8 +59,8 @@ export function nodeDetailTitle(node: DisplayNode): string {
 }
 
 /** The body HTML for a node's detail: its attributes, then its source and a rendered preview. */
-export function nodeDetailBody(node: DisplayNode): string {
-    return attributesTable(node.attributes) + sourceSection(node.source);
+export function nodeDetailBody(node: DisplayNode, preview: NodePreviewOptions = {}): string {
+    return attributesTable(node.attributes) + sourceSection(node, preview);
 }
 
 /**
@@ -87,6 +92,7 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     // Guards a programmatic setContent (loading a node) from looking like a user edit.
     let loading = false;
     let currentNode: DisplayNode | null = null;
+    let currentPreview: NodePreviewOptions = {};
     // The span being edited and the document its offsets index — captured while the session
     // is clean (navigation is locked while dirty) so the splice base is always valid.
     let editingSpan: { start: number; end: number } | null = null;
@@ -105,6 +111,12 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         editor = createSourceView("", {
             editable: false,
             previewStorageKey: "dd-inspector-preview-collapsed",
+            renderPreview: (value) =>
+                renderNodePreview(
+                    value,
+                    currentNode?.label ?? "",
+                    currentPreview.recognizeJumps ?? false,
+                ),
             ...(edit?.symbols ? { symbols: edit.symbols } : {}),
             onChange: (value) => {
                 if (loading || !edit || editingSpan === null) return; // programmatic or read-only
@@ -152,8 +164,9 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     }
 
     return {
-        show(node) {
+        show(node, preview = {}) {
             currentNode = node;
+            currentPreview = preview;
             renderTitle(nodeDetailTitle(node), node);
             attributes.innerHTML = attributesTable(node.attributes);
             if (typeof node.source === "string") loadNode(node);
@@ -194,7 +207,8 @@ function attributesTable(attributes: DisplayNode["attributes"]): string {
     return `<table><tbody>${rows}</tbody></table>`;
 }
 
-function sourceSection(source: string | undefined): string {
+function sourceSection(node: DisplayNode, preview: NodePreviewOptions = {}): string {
+    const { source } = node;
     // A node with no source is synthetic — a stage inserted it (a filled default
     // speaker), so it maps to no text. Say so, instead of an empty Source block.
     if (typeof source !== "string") {
@@ -202,6 +216,10 @@ function sourceSection(source: string | undefined): string {
     }
     return (
         `<h4>Source</h4><pre><code>${escapeHtml(source)}</code></pre>` +
-        `<h4>Preview</h4><div class="preview">${renderMarkdown(source)}</div>`
+        `<h4>Preview</h4><div class="preview">${renderNodePreview(
+            source,
+            node.label,
+            preview.recognizeJumps ?? false,
+        )}</div>`
     );
 }

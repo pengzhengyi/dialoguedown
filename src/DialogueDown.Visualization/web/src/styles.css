@@ -1721,7 +1721,8 @@ g.node.entity-highlight text.label {
     scroll-behavior: smooth;
 }
 
-.source-preview .jump-ligature {
+.source-preview .jump-ligature,
+.preview .jump-ligature {
     font-family: "Fira Code", var(--pico-font-family-monospace, ui-monospace, monospace);
     font-feature-settings: "calt" 1;
     font-variant-ligatures: contextual;
@@ -2062,6 +2063,11 @@ svg.tree.has-focus .link:not(.related) {
     display: flex;
     align-items: center;
     border-inline: 1px solid var(--pico-muted-border-color);
+    border-bottom: 2px solid transparent;
+}
+
+.zoom-controls .zoom-field:focus-within {
+    border-bottom-color: var(--mode-accent, var(--pico-primary));
 }
 
 .zoom-controls .zoom-input {
@@ -2076,6 +2082,17 @@ svg.tree.has-focus .link:not(.related) {
     text-align: right;
     font-size: inherit;
     font-variant-numeric: tabular-nums;
+}
+
+.zoom-controls .zoom-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+@media (forced-colors: active) {
+    .zoom-controls .zoom-field:focus-within {
+        border-bottom-color: Highlight;
+    }
 }
 
 /* Hide the native number spinner so the compact toolbar stays clean. */

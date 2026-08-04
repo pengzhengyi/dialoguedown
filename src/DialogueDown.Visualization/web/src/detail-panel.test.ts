@@ -117,6 +117,56 @@ describe("createDetailPanel", () => {
         expect(body.querySelector(".node-source")?.textContent).toContain("# B");
     });
 
+    it("marks only a recognized jump indicator's preview for the ligature font", () => {
+        panel.show(
+            {
+                id: "n1",
+                label: "Jump indicator",
+                attributes: [],
+                source: "=>",
+            },
+            { recognizeJumps: true },
+        );
+        expect(body.querySelector(".source-preview .jump-ligature")?.textContent).toBe("=>");
+
+        panel.show({
+            id: "n2",
+            label: "Text",
+            attributes: [],
+            source: "=> [Go](#go)",
+        });
+        expect(body.querySelector(".source-preview .jump-ligature")).toBeNull();
+    });
+
+    it("marks the indicator inside an assembled jump preview", () => {
+        panel.show(
+            {
+                id: "n1",
+                label: "Jump",
+                attributes: [],
+                source: "=> [Go](#go)",
+            },
+            { recognizeJumps: true },
+        );
+
+        expect(body.querySelector(".source-preview .jump-ligature")?.textContent).toBe("=>");
+        expect(body.querySelector(".source-preview a")?.textContent).toBe("Go");
+    });
+
+    it("marks recognized jump syntax in a parent line preview", () => {
+        panel.show(
+            {
+                id: "n1",
+                label: "Line",
+                attributes: [],
+                source: "=> [Go](#go)\nGuide: Leave.",
+            },
+            { recognizeJumps: true },
+        );
+
+        expect(body.querySelector(".source-preview .jump-ligature")?.textContent).toBe("=>");
+    });
+
     it("hides the editor and shows the note when a synthetic node follows a sourced one", () => {
         panel.show({
             id: "n1",

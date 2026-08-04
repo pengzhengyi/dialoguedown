@@ -42,9 +42,10 @@ changes easy to categorize.
 
 ### Changed
 
-- **Jump indicators use a preview ligature** — the Source tab's rendered Markdown preview
-  shows `=>` with a bundled Fira Code ligature, while the editor and underlying script keep
-  the original two characters.
+- **Jump indicators use a preview ligature** — the Source tab and recognized
+  jump syntax in node previews from Dialogue AST through Semantic Model show `=>` with a bundled
+  Fira Code ligature, including parent Line/Document previews, while editors and underlying
+  scripts keep the original two characters.
 - **Semantic code-span colors in the Source editor** — commands, value queries,
   conditions, static random weights, and dynamic random weights now use distinct
   VS Code-inspired colors in light and dark themes, including inside blockquotes;
@@ -59,6 +60,8 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Graph zoom focus is visually lighter** — the editable percentage now uses a theme-accent
+  underline instead of a rounded input focus ring inside the compact toolbar.
 - **Diagnostic popovers stay visible at editor edges** — hover messages now overlay the report
   chrome instead of being clipped by the Source pane, remain within the browser viewport, and
   wrap to a compact reading width.
