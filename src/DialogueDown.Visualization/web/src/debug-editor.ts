@@ -116,7 +116,6 @@ const currentArrowMarker = new (class extends GutterMarker {
     public toDOM(): Node {
         const marker = document.createElement("span");
         marker.className = "dd-debug-current-arrow";
-        marker.textContent = "▶";
         marker.setAttribute("aria-label", "Current execution line");
         return marker;
     }
@@ -126,7 +125,6 @@ const executionSpacer = new (class extends GutterMarker {
     public toDOM(): Node {
         const spacer = document.createElement("span");
         spacer.className = "dd-debug-execution-spacer";
-        spacer.textContent = "▶";
         return spacer;
     }
 })();

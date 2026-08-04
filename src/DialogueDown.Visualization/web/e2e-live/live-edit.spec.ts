@@ -806,10 +806,16 @@ test("the fake line debugger prototypes breakpoints, stepping, path choice, and 
     await clickBreakpoint(page, 13);
     await expect(page.locator(".dd-debug-breakpoint-unverified")).toHaveCount(1);
     await expect(page.locator(".dd-debug-breakpoint-verified")).toHaveCount(1);
+    const breakpointBox = await page.locator(".dd-debug-breakpoint-verified").boundingBox();
+    expect(breakpointBox?.width).toBeGreaterThanOrEqual(8);
+    expect(breakpointBox?.height).toBeGreaterThanOrEqual(8);
 
     await toolbar.getByRole("button", { name: "Start debugging" }).click();
     await expect(toolbar.locator(".dd-debug-status")).toHaveText("Paused · line 3");
     await expect(page.locator(".dd-debug-current-arrow")).toHaveCount(1);
+    const arrowBox = await page.locator(".dd-debug-current-arrow").boundingBox();
+    expect(arrowBox?.width).toBeGreaterThanOrEqual(7);
+    expect(arrowBox?.height).toBeGreaterThanOrEqual(9);
 
     // A clean View/Edit switch reconfigures the editor but must not restart the debug session.
     await page.getByRole("button", { name: "View", exact: true }).click();
