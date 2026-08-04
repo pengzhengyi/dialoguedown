@@ -62,6 +62,15 @@ public sealed class DivertPassTests
     }
 
     [Fact]
+    public void Apply_GuardedJump_CarriesTheJumpsConditionAsTheDivertsGuard()
+    {
+        var graph = Build("""Alice: farewell `"Done"?` => [the end](#END)""");
+
+        var divert = AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
+        Assert.Equal("Done", divert.Guard?.Key);
+    }
+
+    [Fact]
     public void Apply_JumpToAMissingScene_WiresNoEdge()
     {
         // Analysis reports the missing scene and leaves the jump unresolved, so the graph still

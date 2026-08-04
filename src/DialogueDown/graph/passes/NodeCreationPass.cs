@@ -21,6 +21,7 @@ internal sealed class NodeCreationPass : GraphBuildPass
 
     private static void AddNode(GraphDraft draft, GraphBuildContext context, ScriptBlock block)
     {
+        AssertUnguarded(block);
         switch (block)
         {
             case Line line:
@@ -33,6 +34,17 @@ internal sealed class NodeCreationPass : GraphBuildPass
             default:
                 throw new NotSupportedException(
                     $"The dialogue graph builder does not yet lower {block.GetType().Name} blocks.");
+        }
+    }
+
+    // A guard on the block itself needs an edge that skips the block when it reads false, which no
+    // pass wires yet.
+    private static void AssertUnguarded(ScriptBlock block)
+    {
+        if (block is IConditional { Condition: not null })
+        {
+            throw new NotSupportedException(
+                $"The dialogue graph builder does not yet lower a guarded {block.GetType().Name}.");
         }
     }
 

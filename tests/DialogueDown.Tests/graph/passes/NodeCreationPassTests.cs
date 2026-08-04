@@ -68,5 +68,10 @@ public sealed class NodeCreationPassTests
             - [Right](#right)
             """));
 
+    [Fact]
+    public void Apply_BlockGuardedByACondition_Throws() =>
+        // A guard on the block needs an edge that skips it, which no pass wires yet.
+        Assert.Throws<NotSupportedException>(() => Build("""`"Brave"?` Alice: you enter"""));
+
     private DialogueGraph Build(string source) => GraphPasses.Build(source, _pass);
 }

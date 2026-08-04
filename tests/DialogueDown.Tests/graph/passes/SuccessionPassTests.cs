@@ -55,6 +55,22 @@ public sealed class SuccessionPassTests
         AssertOnlyDivert(graph.Nodes[0], graph.End);
     }
 
+    [Fact]
+    public void Apply_ANodeThatDivertsConditionally_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            Alice: maybe bye `"Done"?` => [end](#END)
+
+            Bob: reached when the guard reads false
+            """);
+
+        // The guard may not hold, so the fall-through is the sibling edge that skips the divert.
+        Assert.Collection(
+            graph.Nodes[0].Out,
+            edge => AssertDivert(edge, graph.End),
+            edge => AssertSuccession(edge, graph.Nodes[1].Id));
+    }
+
     // Node creation assigns the ids and adds the End; diverts run before succession, which skips
     // a node that already leaves unconditionally.
     private DialogueGraph Build(string source) =>

@@ -6,8 +6,9 @@ namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Lowers each block's jumps to divert edges: a jump to a scene diverts to the node reaching that
-/// scene lands on, and a jump to the reserved terminator (<c>#END</c>) diverts to the End node.
-/// Runs before succession, which then skips a node that already leaves unconditionally.
+/// scene lands on, and a jump to the reserved terminator (<c>#END</c>) diverts to the End node. A
+/// jump's own condition rides along as the divert's guard. Runs before succession, which then skips
+/// a node that already leaves unconditionally.
 /// </summary>
 internal sealed class DivertPass : GraphBuildPass
 {
@@ -19,7 +20,7 @@ internal sealed class DivertPass : GraphBuildPass
             {
                 if (TargetOf(jump, draft, context) is { } target)
                 {
-                    draft.AddEdge(draft.IdOf(block), new Divert(target));
+                    draft.AddEdge(draft.IdOf(block), new Divert(target, jump.Condition));
                 }
             }
         }
