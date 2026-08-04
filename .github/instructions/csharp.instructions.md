@@ -57,6 +57,16 @@ license does not affect the library's MIT license or reach consumers.
 
 - Follow **SOLID** and **composition over inheritance**; reach for a pattern only
   when it removes real duplication or coupling.
+- **Law of Demeter, scoped to behavior.** Reaching through an object to send a
+  message — `active.Session.Broadcaster.Subscribe()` — couples the caller to every
+  type it walks; put the method on the direct collaborator instead. Three shapes
+  are explicitly *not* violations and must not be "fixed": reading across the
+  immutable AST records (`node.Span.Start`) is data navigation, a fluent chain
+  (`parser.Or(x).Or(y).Located()`) returns the same abstraction, and third-party
+  APIs (`context.Response.Headers.Location`) follow their own shape. Enforcement is
+  by review for now; an automated depth check is parked in
+  [#217](https://github.com/pengzhengyi/dialoguedown/issues/217) until the runtime
+  introduces stateful object graphs.
 - Throw **specific, meaningful exceptions** that name the offending input and the
   expectation. Extract non-trivial validation into a small, well-named helper.
 - Use the project **error model** (exception hierarchy, spans, message

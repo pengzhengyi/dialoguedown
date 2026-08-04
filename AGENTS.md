@@ -73,6 +73,13 @@ Decision heuristics for changes here:
 - **SOLID, patterns applied judiciously.** Use a pattern only where it removes
   real duplication or coupling. Add a seam or interface where behavior is likely
   to change — but avoid premature generalization and over-abstraction (YAGNI).
+- **Law of Demeter — tell, don't ask.** Send messages to your own collaborators,
+  not to objects reached through them: prefer `owner.Send()` over
+  `owner.Collaborator.Stranger.Send()`, which couples the caller to two shapes at
+  once. This governs **objects with behavior, not data** — reading across the
+  immutable AST records (`node.Span.Start`) and fluent chains
+  (`parser.Or(x).Or(y)`) are deliberately exempt and must not be "fixed" into
+  pass-through wrappers.
 - **Enforce architecture with tests.** Adopt a fitting architectural pattern — here
   a dependency-light, engine-agnostic core with engine- and UI-specific code at the
   edges — and guard its boundaries with **architecture tests** that assert
