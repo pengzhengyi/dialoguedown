@@ -20,7 +20,7 @@ changes easy to categorize.
   Source tab with the node's text selected, so you can move from a node straight to the lines it
   came from. A synthetic node the compiler inserted (a filled-in default speaker) has no text of
   its own, so the jump places the cursor where it belongs instead.
-  See the [Node Editing](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Editing.md) note.
+  See the [Node Editing](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Inspector.md) note.
 - **File Explorer in the report** — a served report opened through the launcher now shows a
   collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
   highlighted, and open another by clicking it or following a cross-file link. A VS Code-style
@@ -42,6 +42,12 @@ changes easy to categorize.
 
 ### Changed
 
+- **One place to edit — the Source tab.** The graph tabs' node-details panel is now read-only
+  on every tab, matching the Semantic Model tab, and **Jump to source** takes you to the node's
+  text with its span selected. Editing a node in the side panel is gone: it duplicated the
+  editor in a narrower space (selecting the root Document node rendered the whole file there),
+  and only some tabs offered it. See the
+  [Node Inspector](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Inspector.md) note.
 - **Jump indicators use a preview ligature** — the Source tab and recognized
   jump syntax in node previews from Dialogue AST through Semantic Model show `=>` with a bundled
   Fira Code ligature, including parent Line/Document previews, while editors and underlying

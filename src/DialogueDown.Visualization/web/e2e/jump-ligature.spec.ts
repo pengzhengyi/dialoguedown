@@ -100,7 +100,7 @@ test("uses the jump ligature in every semantic-stage node preview", async ({ pag
     await page.evaluate(() => document.fonts.ready);
 
     await selectJumpNode(page, "Parse Tree", "Line");
-    await expect(page.locator("#detail .source-preview .jump-ligature")).toHaveCount(0);
+    await expect(page.locator("#detail-body .preview .jump-ligature")).toHaveCount(0);
 
     await selectJumpNode(page, "Custom Tables", "Line");
     await expect(
@@ -108,18 +108,18 @@ test("uses the jump ligature in every semantic-stage node preview", async ({ pag
     ).toHaveCount(0);
 
     await selectJumpNode(page, "Dialogue AST", "Line");
-    const dialogueIndicator = page.locator("#detail .source-preview .jump-ligature");
+    const dialogueIndicator = page.locator("#detail-body .preview .jump-ligature");
     await expect(dialogueIndicator).toHaveText("=>");
     await expect(dialogueIndicator).toHaveCSS("font-family", /Fira Code/);
     await expect(dialogueIndicator).toHaveCSS("font-feature-settings", '"calt"');
-    await expect(page.locator("#detail .source-pane")).toContainText("Guide: Leave.");
+    await expect(page.locator("#detail-body pre code")).toContainText("Guide: Leave.");
 
     await selectJumpNode(page, "Desugared AST", "Line");
-    const desugaredIndicator = page.locator("#detail .source-preview .jump-ligature");
+    const desugaredIndicator = page.locator("#detail-body .preview .jump-ligature");
     await expect(desugaredIndicator).toHaveText("=>");
     await expect(desugaredIndicator).toHaveCSS("font-family", /Fira Code/);
     await expect(desugaredIndicator).toHaveCSS("font-feature-settings", '"calt"');
-    await expect(page.locator("#detail .source-pane")).toContainText("Guide: Leave.");
+    await expect(page.locator("#detail-body pre code")).toContainText("Guide: Leave.");
 
     await selectJumpNode(page, "Semantic Model", "Line");
     const semanticIndicator = page.locator(

@@ -1,6 +1,5 @@
 import type { Stage } from "./model";
-import type { DisplayNode } from "./model";
-import type { Span } from "./span-splice";
+import type { DisplayNode, Span } from "./model";
 import { createTreeView, type TreeView, type TreeViewOptions } from "./tree-view";
 import { createTablePanel } from "./semantic-table";
 import { createNodeDetailPanel } from "./semantic-detail";
