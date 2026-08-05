@@ -219,16 +219,8 @@ export interface SourceViewOptions {
      * completions); a served session supplies a provider over its latest compile.
      */
     symbols?: DialogueSymbolProvider;
-    /**
-     * The `localStorage` key remembering whether the preview is collapsed. Defaults to the
-     * Source tab's key; a second source view (the node inspector) passes its own so the two
-     * do not share one collapse state.
-     */
-    previewStorageKey?: string;
     /** Optional line-debugger controller. Absent in every ordinary report. */
     debug?: DebugController;
-    /** Render the preview HTML. The Source tab defaults to the whole-document renderer. */
-    renderPreview?: (source: string) => string;
 }
 
 /** A handle to a live source view, letting the mode controller reconfigure it in place. */
@@ -315,14 +307,7 @@ export function createSourceView(
     source: string,
     options: SourceViewOptions = {},
 ): SourceViewHandle {
-    const {
-        editable = false,
-        onChange,
-        symbols = () => EMPTY_SYMBOLS,
-        previewStorageKey = "dd-preview-collapsed",
-        debug,
-        renderPreview = renderDocument,
-    } = options;
+    const { editable = false, onChange, symbols = () => EMPTY_SYMBOLS, debug } = options;
 
     // The document-aware completions are an Edit-only authoring aid, so they live in the
     // editability compartment alongside the other Edit-only aids.
@@ -345,7 +330,7 @@ export function createSourceView(
     preview.tabIndex = 0;
     preview.setAttribute("role", "region");
     preview.setAttribute("aria-label", "Preview");
-    preview.innerHTML = renderPreview(source);
+    preview.innerHTML = renderDocument(source);
     annotateHeadingAnchors(preview);
     // Delegated once on the stable preview element; each render re-annotates its headings.
     wireHeadingAnchorCopy(preview);
@@ -355,7 +340,7 @@ export function createSourceView(
     const onEdit = EditorView.updateListener.of((update) => {
         if (update.docChanged) {
             const value = update.state.doc.toString();
-            preview.innerHTML = renderPreview(value);
+            preview.innerHTML = renderDocument(value);
             annotateHeadingAnchors(preview);
             onChange?.(value);
         }
@@ -434,7 +419,7 @@ export function createSourceView(
     const previewPanel = initCollapsiblePanel({
         container,
         collapsedClass: "preview-collapsed",
-        storageKey: previewStorageKey,
+        storageKey: "dd-preview-collapsed",
         name: "preview",
     });
     divider.appendChild(previewPanel.button);

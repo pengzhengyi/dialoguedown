@@ -1,25 +1,9 @@
-import type { DialogueSymbolProvider, DisplayNode } from "./model";
+import type { DisplayNode, Span } from "./model";
 import { colorOf } from "./palette";
 import { escapeHtml, renderNodePreview } from "./text";
-import { createSourceView, type SourceViewHandle } from "./source-view";
-import { spanSplice, type Span } from "./span-splice";
 import { createJumpButton, type JumpButton } from "./jump-button";
 
-/** How the inspector participates in editing; absent for a static, read-only report. */
-export interface DetailEditOptions {
-    /** Whether the session is in Edit mode right now (so a node's editor is editable). */
-    isEditable(): boolean;
-    /** The current document a node edit splices into — the last-compiled source. */
-    getDocument(): string;
-    /** Apply a node edit: the whole document after splicing the node's new text in. */
-    onNodeEdit(nextDocument: string): void;
-    /** Symbols for the node editor's autocompletion (parity with the Source tab). */
-    symbols?: DialogueSymbolProvider;
-}
-
 export interface DetailPanelOptions {
-    /** Present for a served session (enables the editor); absent for a static export. */
-    edit?: DetailEditOptions;
     /**
      * Jump to the selected node's source in the Source tab — selecting its span, or placing the
      * cursor at a synthetic node's zero-width position. Absent when there is no Source tab to jump
@@ -31,8 +15,6 @@ export interface DetailPanelOptions {
 export interface DetailPanel {
     show(node: DisplayNode, preview?: NodePreviewOptions): void;
     clear(): void;
-    /** Reconfigure the shown node's editor when the session toggles View ⇄ Edit. */
-    setEditable(editable: boolean): void;
 }
 
 export interface NodePreviewOptions {
@@ -42,16 +24,8 @@ export interface NodePreviewOptions {
 
 /** The body HTML shown when no node is selected. */
 export const NODE_DETAIL_PLACEHOLDER =
-    "<p>Click any node to see the source it was produced from, and a rendered preview.</p>";
-
-/** The plain-text placeholder the inspector shows before any node is selected. */
-const PLACEHOLDER_TEXT = "Click any node to see and edit the source it was produced from.";
-
-/** The note shown for a synthetic node — one the compiler inserts for a line that names no
- *  speaker (the only sourceless node this editor inspector ever shows). In a served session
- *  the reader can act on it, so a call to action points them at the editable parent line. */
-const SYNTHETIC_SPEAKER_NOTE = "Inserted by the compiler because the line names no speaker.";
-const EDIT_THE_LINE_CTA = " Edit the line to name one.";
+    "<p>Click any node to see the source it was produced from, and a rendered preview. " +
+    "Use <strong>Jump to source</strong> to edit it in the Source tab.</p>";
 
 /** The title HTML for a node's detail: a category color dot beside the node's label. */
 export function nodeDetailTitle(node: DisplayNode): string {
@@ -64,97 +38,28 @@ export function nodeDetailBody(node: DisplayNode, preview: NodePreviewOptions = 
 }
 
 /**
- * The side panel showing a selected node's category, attributes, and source. For a served
- * session the source is a **reused Source editor** — read-only in View, editable in Edit —
- * so a writer can change the source behind a node in place; editing a node splices its new
- * text back into the document (see {@link spanSplice}) and the session's Save recompiles.
- * A synthetic node (no source) shows a note instead; a static export is read-only.
+ * The graph tabs' node inspector: a selected node's category, attributes, the source it was
+ * produced from, and a rendered preview.
+ *
+ * It is deliberately **read-only**. Editing lives in one place — the Source tab — and the
+ * **Jump to source** action beside the title takes the reader there with the node's span already
+ * selected. This panel and the Semantic tab's node-details panel therefore render identically
+ * through {@link nodeDetailTitle} and {@link nodeDetailBody}; only where they mount differs.
  */
 export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel {
     const titleEl = document.getElementById("detail-title")!;
     const bodyEl = document.getElementById("detail-body")!;
-    const edit = options.edit;
-
-    // Persistent body structure so the editor can be reused across selections: an optional
-    // jump-to-source action, an attributes table, then a source area holding either the editor
-    // (nodes with source) or a note.
-    const attributes = document.createElement("div");
-    attributes.className = "node-attributes";
-    const note = document.createElement("p");
-    note.className = "node-note";
-    const sourceArea = document.createElement("div");
-    sourceArea.className = "node-source";
-    bodyEl.replaceChildren(attributes, sourceArea, note);
-
-    // The inspector editor is created lazily on the first node with source, then reused (its
-    // content and editability swapped per selection) so clicking a node never rebuilds it.
-    let editor: SourceViewHandle | null = null;
-    // Guards a programmatic setContent (loading a node) from looking like a user edit.
-    let loading = false;
-    let currentNode: DisplayNode | null = null;
-    let currentPreview: NodePreviewOptions = {};
-    // The span being edited and the document its offsets index — captured while the session
-    // is clean (navigation is locked while dirty) so the splice base is always valid.
-    let editingSpan: { start: number; end: number } | null = null;
-    let editingBase = "";
 
     // A "Jump to source" affordance (served or export, whenever there is a Source tab): an icon
     // button placed beside the node title that takes the reader to the node's span in the Source
-    // editor. Shown only for a node that maps to a position — which now includes a synthetic node
+    // editor. Shown only for a node that maps to a position — which includes a synthetic node
     // (a zero-width caret). Reused, not rebuilt, across selections.
     const jump: JumpButton | null = options.jumpToSource
         ? createJumpButton(options.jumpToSource)
         : null;
 
-    function ensureEditor(): SourceViewHandle {
-        if (editor) return editor;
-        editor = createSourceView("", {
-            editable: false,
-            previewStorageKey: "dd-inspector-preview-collapsed",
-            renderPreview: (value) =>
-                renderNodePreview(
-                    value,
-                    currentNode?.label ?? "",
-                    currentPreview.recognizeJumps ?? false,
-                ),
-            ...(edit?.symbols ? { symbols: edit.symbols } : {}),
-            onChange: (value) => {
-                if (loading || !edit || editingSpan === null) return; // programmatic or read-only
-                edit.onNodeEdit(spanSplice(editingBase, editingSpan, value));
-            },
-        });
-        editor.element.classList.add("inspector-editor");
-        sourceArea.appendChild(editor.element);
-        return editor;
-    }
-
-    // Point the editor's editability (and the splice base) at the current node for the mode.
-    function applyEditability(editable: boolean): void {
-        const canEdit = !!edit && editable && currentNode?.span != null;
-        editor?.setEditable(canEdit);
-        editingSpan = canEdit ? currentNode!.span! : null;
-        editingBase = canEdit && edit ? edit.getDocument() : "";
-    }
-
-    function loadNode(node: DisplayNode): void {
-        const view = ensureEditor();
-        loading = true;
-        view.setContent(node.source ?? "");
-        loading = false;
-        applyEditability(edit ? edit.isEditable() : false);
-        view.element.hidden = false;
-        note.hidden = true;
-    }
-
-    function showNote(text: string): void {
-        editingSpan = null;
-        if (editor) editor.element.hidden = true;
-        note.textContent = text;
-        note.hidden = false;
-    }
-
-    // Render the title, then re-append the reused jump button (setting the title HTML/text drops
-    // any prior child) and reflect the node on it.
+    // Render the title, then re-append the reused jump button (setting the title HTML drops any
+    // prior child) and reflect the node on it.
     function renderTitle(html: string, node: DisplayNode | null): void {
         titleEl.innerHTML = html;
         if (jump) {
@@ -163,28 +68,16 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         }
     }
 
+    bodyEl.innerHTML = NODE_DETAIL_PLACEHOLDER;
+
     return {
         show(node, preview = {}) {
-            currentNode = node;
-            currentPreview = preview;
             renderTitle(nodeDetailTitle(node), node);
-            attributes.innerHTML = attributesTable(node.attributes);
-            if (typeof node.source === "string") loadNode(node);
-            else
-                showNote(
-                    edit ? SYNTHETIC_SPEAKER_NOTE + EDIT_THE_LINE_CTA : SYNTHETIC_SPEAKER_NOTE,
-                );
+            bodyEl.innerHTML = nodeDetailBody(node, preview);
         },
         clear() {
-            currentNode = null;
             renderTitle(escapeHtml("Node details"), null);
-            attributes.innerHTML = "";
-            showNote(PLACEHOLDER_TEXT);
-        },
-        setEditable(editable) {
-            if (editor && currentNode && typeof currentNode.source === "string") {
-                applyEditability(editable);
-            }
+            bodyEl.innerHTML = NODE_DETAIL_PLACEHOLDER;
         },
     };
 }
@@ -212,7 +105,7 @@ function sourceSection(node: DisplayNode, preview: NodePreviewOptions = {}): str
     // A node with no source is synthetic — a stage inserted it (a filled default
     // speaker), so it maps to no text. Say so, instead of an empty Source block.
     if (typeof source !== "string") {
-        return `<p class="inserted-note">Inserted by the compiler — no source.</p>`;
+        return `<p class="inserted-note">Inserted by the compiler — no source of its own.</p>`;
     }
     return (
         `<h4>Source</h4><pre><code>${escapeHtml(source)}</code></pre>` +

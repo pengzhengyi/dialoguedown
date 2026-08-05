@@ -7,8 +7,8 @@
 > report shows the **desugared** Dialogue AST as a third graph tab, sourced through
 > the [`IScriptCompiler`](./Script%20Compiler%20Facade.md) seam; synthetic
 > zero-width-span nodes render as inserted; and the View/Edit toggle stays enabled on
-> every tab (a node can be edited from a graph tab — see
-> [Node Editing](./Live%20Visualization%20-%20Node%20Editing.md)).
+> every tab (a node's text is reached by jumping to the Source tab — see
+> [Node Inspector](./Live%20Visualization%20-%20Node%20Inspector.md)).
 >
 > Like the rest of the visualization tooling, this surface is "vibe-coded" (see the
 > visualization note's maturity caveat); the core engine stays the reviewed surface.
@@ -168,13 +168,12 @@ The tab is named **Desugared AST** to sit in the series "Markdown AST → Dialog
 
 ### D5 — The View/Edit toggle stays enabled on every tab
 
-The mode toggle governs the whole session, and — since
-[node editing](./Live%20Visualization%20-%20Node%20Editing.md) made the graph tabs'
-inspector editable — a reader can begin editing a node while looking at a graph. So the
-toggle is **interactive on every tab**, not confined to the Source tab: switching to Edit
-on a graph tab is a real action (the inspector's node editor becomes editable), so it is no
-longer a misleading no-op. Navigation is instead guarded by the **one dirty document** rule
-— switching tabs or nodes while there are unsaved edits prompts to Save or Discard first —
+The mode toggle governs the whole session, so it is **interactive on every tab**, not
+confined to the Source tab. Switching to Edit while looking at a graph is a real action
+rather than a misleading no-op: it puts the session in Edit — the accent, the save
+controls, and the Source editor a
+[Jump to source](./Live%20Visualization%20-%20Node%20Inspector.md) is about to land in. Navigation is instead guarded by the **one dirty document** rule
+— switching tabs while there are unsaved edits prompts to Save or Discard first —
 so a stale graph is never shown beside unsaved edits.
 
 ## Error & boundary cases

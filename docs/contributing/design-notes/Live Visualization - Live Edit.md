@@ -208,10 +208,10 @@ meaningful:
 
 1. **Preview — client-side, as you type.** Each edit re-renders the Markdown preview
    from the buffer in the browser (the same `marked` render the Source tab already
-   uses). It is instant and never calls the server, so a writer can draft freely. The
-   node-details inspector edits the same one document the same way — see
-   [Node Editing](./Live%20Visualization%20-%20Node%20Editing.md) — so a node edit and a
-   Source edit share this buffer, dirty state, and Save.
+   uses). It is instant and never calls the server, so a writer can draft freely. This is
+   the one editing surface: a graph node's text is reached by jumping to its span here —
+   see [Node Inspector](./Live%20Visualization%20-%20Node%20Inspector.md) — so there is a
+   single buffer, dirty state, and Save.
 2. **Graphs — on Save.** The graph tabs recompile only when you Save: `POST
    /api/save` writes the file, the server compiles, and the **response carries the
    fresh `{ stages }`**, which the client applies **in place** (the editor text and

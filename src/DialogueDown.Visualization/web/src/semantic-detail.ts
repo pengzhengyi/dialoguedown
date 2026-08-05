@@ -1,5 +1,4 @@
-import type { DisplayNode } from "./model";
-import type { Span } from "./span-splice";
+import type { DisplayNode, Span } from "./model";
 import { nodeDetailTitle, nodeDetailBody, NODE_DETAIL_PLACEHOLDER } from "./detail-panel";
 import { createJumpButton, type JumpButton } from "./jump-button";
 import { initCollapsiblePanel } from "./collapse-toggle";

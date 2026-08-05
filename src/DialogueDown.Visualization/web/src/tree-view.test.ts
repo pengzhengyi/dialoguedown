@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { hierarchy } from "d3";
 import { lineageIds, createTreeView } from "./tree-view";
 import type { DisplayNode, Stage } from "./model";
@@ -62,29 +62,10 @@ function stageWith(spanA: { start: number; end: number }): Stage {
     };
 }
 
-const arrow = (key: string) => new KeyboardEvent("keydown", { key });
-
-describe("createTreeView — deferred selection by stable id", () => {
-    it("defers a moved selection by node id, not by the captured node object", () => {
-        const selected: DisplayNode[] = [];
-        const onNodeSelect = vi.fn();
-        const view = createTreeView(stageWith({ start: 0, end: 3 }), (n) => selected.push(n), {
-            onNodeSelect,
-        });
-
-        view.handleKey(arrow("ArrowDown")); // first key selects the root immediately (no move)
-        expect(selected.map((n) => n.id)).toEqual(["root"]);
-
-        view.handleKey(arrow("ArrowRight")); // move to child `a` — a navigation, so it is deferred
-        expect(onNodeSelect).toHaveBeenCalledWith("a", expect.any(Object), expect.any(Function));
-        expect(selected.map((n) => n.id)).toEqual(["root"]); // not selected until navigation resolves
-    });
-
+describe("createTreeView — selection by stable id", () => {
     it("selectById selects the resolved node and reports failure for an unknown id", () => {
         const selected: DisplayNode[] = [];
-        const view = createTreeView(stageWith({ start: 0, end: 3 }), (n) => selected.push(n), {
-            onNodeSelect: vi.fn(),
-        });
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), (n) => selected.push(n));
 
         expect(view.selectById("a")).toBe(true);
         expect(selected.at(-1)!.id).toBe("a");
@@ -96,18 +77,12 @@ describe("createTreeView — deferred selection by stable id", () => {
         // The click captured id "a" from the pre-save view (span 0..3). A save recompiled and
         // rebuilt the view with the node's span shifted (5..8). Resolving by id against the new
         // view selects the node with the CURRENT span, never the stale captured one.
-        const staleView = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
-            onNodeSelect: vi.fn(),
-        });
+        const staleView = createTreeView(stageWith({ start: 0, end: 3 }), () => {});
         void staleView;
 
         const freshSelected: DisplayNode[] = [];
-        const freshView = createTreeView(
-            stageWith({ start: 5, end: 8 }),
-            (n) => freshSelected.push(n),
-            {
-                onNodeSelect: vi.fn(),
-            },
+        const freshView = createTreeView(stageWith({ start: 5, end: 8 }), (n) =>
+            freshSelected.push(n),
         );
 
         expect(freshView.selectById("a")).toBe(true);
@@ -115,9 +90,7 @@ describe("createTreeView — deferred selection by stable id", () => {
     });
 
     it("selectById with toggle collapses the node's fold, like a circle click", () => {
-        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
-            onNodeSelect: vi.fn(),
-        });
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {});
         expect(view.svg.querySelectorAll("g.node").length).toBe(3); // root, a, b
 
         view.selectById("root", { toggle: true }); // fold the root, hiding its subtree

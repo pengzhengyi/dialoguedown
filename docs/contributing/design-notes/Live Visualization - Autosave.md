@@ -93,7 +93,7 @@ because transient TOML is often invalid while being typed.
 | **Report stale** | The file was written, but the latest source did not produce an accepted report (for example, an explicitly saved invalid config). |
 | **Saved-invalid Config** | Config text is persisted and therefore not dirty, but its parse failed and the last valid report remains stale. |
 | **Uncertain** | The request may have written, but no response established the outcome; automatic work pauses until reconciliation or confirmed overwrite. |
-| **Active document** | Dialogue Source (including node-inspector edits) or Config, whichever the current UI action targets. |
+| **Active document** | Dialogue Source or Config, whichever the current UI action targets. |
 
 ## Writer experience
 
@@ -403,7 +403,6 @@ hammer a dead local server or permission-denied path with background retries.
 | Navigate while Manual is dirty | Preserve the existing Save-or-Discard prompt. |
 | Switch active Source/Config document | Capsule and status reflect that document's controller. |
 | Close while dirty/saving | Existing browser confirmation remains the last-resort guard. |
-| Node inspector edits | Use the Source controller and Source save-mode preference. |
 | Config does not exist yet | No Config save controller or preference is active. After Create succeeds, the starter text is the saved baseline and Config starts with its persisted mode (Manual by default). |
 | Switch Auto/Manual while waiting/error/conflict/uncertain | Update and persist the preference, but keep the state paused until the normal recovery event. |
 | Edit while in Conflict or Uncertain | Update the buffer and dirty generation, but remain paused until Reload or confirmed overwrite. |
@@ -480,8 +479,7 @@ async navigation, browser coverage and docs, and this crosscheck).
 ### Achieved
 
 - The **Auto | Manual** capsule sits beside a separate Save button and a Discard
-  button in Edit, reflecting the active document (Config tab → config, else source,
-  including node-inspector edits).
+  button in Edit, reflecting the active document (Config tab → config, else source).
 - Per-document-type host-scoped **cookie** preferences (`dd-save-mode-source`,
   `dd-save-mode-config`, `SameSite=Strict`) with Source defaulting to Auto and Config
   to Manual — host-scoped so the choice survives each run's ephemeral server port,

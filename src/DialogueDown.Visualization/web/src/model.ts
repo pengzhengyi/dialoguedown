@@ -1,5 +1,14 @@
 /** The display model produced by the .NET walk and serialized into the report. */
 
+/**
+ * A half-open `[start, end)` character range into the original document. A zero-width span
+ * (`start === end`) is a caret position rather than a selection.
+ */
+export interface Span {
+    start: number;
+    end: number;
+}
+
 export interface DisplayAttribute {
     name: string;
     value: string;
@@ -13,11 +22,11 @@ export interface DisplayNode {
     source?: string;
     /**
      * The node's source location as a half-open `[start, end)` character range into the
-     * original document, so an edit can be spliced back into the exact source — or the cursor
-     * moved there. A synthetic node (no source of its own) carries a zero-width span at the
-     * position where it belongs (a caret); the whole document for the document-root node.
+     * original document, so a reader can be taken straight to the text a node came from. A
+     * synthetic node (no source of its own) carries a zero-width span at the position where it
+     * belongs (a caret); the whole document for the document-root node.
      */
-    span?: { start: number; end: number };
+    span?: Span;
     /** A stable, cross-stage semantic category that drives color. */
     category?: string;
     /** A cross-link key tying the node to a semantic entity (a scene), if any. */

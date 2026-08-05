@@ -87,17 +87,6 @@ export interface TreeViewOptions {
     onFoldChange?(collapsed: string[]): void;
     /** Fired when the reader clicks Revert, so the caller can drop remembered state. */
     onRevert?(): void;
-    /**
-     * Route a move of the selection to a different node through the app's navigation boundary. The
-     * app resolves navigation (an Auto flush, or a discard prompt) and then re-applies the
-     * operation to the node resolved by its stable {@link DisplayNode.id} against the freshly
-     * installed view — which a save-triggered rebuild may have replaced — cancelling safely if the
-     * id no longer exists, so a deferred selection never lands on a stale, detached node (or its
-     * stale source spans). `selectHere` applies it immediately in this view and is used only when
-     * there is no boundary (a static export). Absent means selection is always immediate. Only the
-     * latest navigation intent runs, so rapid clicks never replay stale moves.
-     */
-    onNodeSelect?(id: string, options: NodeSelectOptions, selectHere: () => void): void;
 }
 
 /** The operation a node gesture carries alongside selection: an optional fold toggle and recenter. */
@@ -130,7 +119,6 @@ export function createTreeView(
         onCameraChange,
         onFoldChange,
         onRevert,
-        onNodeSelect,
     } = options;
     const referenceEdges = stage.edges.filter((edge) => edge.kind === "Reference");
     const root = buildHierarchy(stage);
@@ -269,18 +257,10 @@ export function createTreeView(
         return null;
     }
 
-    // Selecting a different node is navigation: route it through the async boundary so an Auto
-    // flush or a Manual prompt resolves first, then the app re-applies the operation to the node
-    // resolved by its stable id against the freshly installed view (a save-triggered rebuild may
-    // have replaced this one). Re-selecting the same node runs immediately in place, as does the
-    // case with no navigation boundary (a static export).
+    // Selecting a different node applies immediately: the inspector is read-only, so a selection
+    // can never leave unsaved work behind.
     function guardSelect(node: TreeNode, options: NodeSelectOptions): void {
-        const selectHere = (): void => applyNodeSelection(node, options);
-        if (node === selected || !onNodeSelect) {
-            selectHere();
-            return;
-        }
-        onNodeSelect(node.data.id, options, selectHere);
+        applyNodeSelection(node, options);
     }
 
     function applySelection(): void {

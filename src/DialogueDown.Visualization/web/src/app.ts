@@ -9,7 +9,7 @@ import type {
     DisplayNode,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
-import { createTreeView, type TreeView, type NodeSelectOptions } from "./tree-view";
+import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
 import { GraphCameraStore } from "./graph-camera";
 import { createSourceView, type SourceViewHandle } from "./source-view";
@@ -133,27 +133,14 @@ export function runApp(
     let configHandle: ConfigViewHandle | null = null;
     let sourceTab: Element | null = null;
     let configTab: Element | null = null;
-    // The current View/Edit state, so the inspector knows whether a node is editable.
-    let editable = source?.editable ?? false;
 
-    // The inspector edits a node by splicing its new text into the current document and
-    // pushing that whole document back through the Source editor (so one buffer and one Save
-    // stay authoritative). Only wired for a served session.
-    const panel = createDetailPanel({
-        ...(source
-            ? {
-                  edit: {
-                      isEditable: () => editable,
-                      getDocument: () => sourceHandle?.getContent() ?? "",
-                      onNodeEdit: (nextDocument) => sourceHandle?.setContent(nextDocument),
-                      ...(source.symbols ? { symbols: source.symbols } : {}),
-                  },
-              }
-            : {}),
+    // The node inspector is read-only: editing lives solely in the Source tab, and the panel's
+    // "Jump to source" takes the reader there with the node's span selected.
+    const panel = createDetailPanel(
         // A "Jump to source" is offered whenever there is a Source tab to land in — served or a
         // static export — since a read-only editor is still selectable.
-        ...(report.source != null ? { jumpToSource } : {}),
-    });
+        report.source != null ? { jumpToSource } : {},
+    );
 
     // Jump from a selected graph node to its source in the Source tab: switch tabs (through the
     // save-safe navigation guard, so an Auto save flushes or a Manual prompt resolves first), then
@@ -236,9 +223,7 @@ export function runApp(
     return {
         updateStages,
         setEditable: (next) => {
-            editable = next;
             sourceHandle?.setEditable(next);
-            panel.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
         setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
@@ -326,22 +311,6 @@ export function runApp(
         return 0;
     }
 
-    // Route a node selection through the app's navigation boundary, then re-select the node by its
-    // stable id against the now-active view. The Auto flush that navigation awaits can save and
-    // rebuild the graph tabs, replacing the view the click came from; resolving by id against the
-    // freshly installed view (and cancelling safely when the id is gone) keeps the selection off
-    // the stale, detached node and its stale source spans.
-    function deferNodeSelect(id: string, options: NodeSelectOptions, selectHere: () => void): void {
-        const begin = source?.beginNavigation;
-        if (!begin) {
-            selectHere();
-            return;
-        }
-        begin(() => {
-            views[activeIndex]?.selectById(id, options);
-        });
-    }
-
     // Replace only the graph tabs (on a Live Edit save), leaving the Source tab and its
     // editor — and the reader's cursor — untouched. Each graph's remembered camera and
     // fold are recorded live (as the reader adjusts them), so a rebuilt stage restores
@@ -398,10 +367,6 @@ export function runApp(
                         : cameras.noteCamera(transform),
                 onFoldChange: (collapsed: string[]) => cameras.setFold(stage.title, collapsed),
                 onRevert: () => cameras.reset(stage.title),
-                // Selecting another node is navigation: route it through the async guard, then
-                // resolve the node by id against the active view (a save-triggered rebuild may have
-                // replaced this one) so the deferred selection never lands on a stale node.
-                ...(source?.beginNavigation ? { onNodeSelect: deferNodeSelect } : {}),
             };
             if (isSemantic) {
                 const semantic = createSemanticView(

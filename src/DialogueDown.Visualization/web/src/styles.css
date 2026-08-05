@@ -2609,14 +2609,6 @@ body.maximized #app {
     color: var(--pico-muted-color);
 }
 
-/* The node inspector's editor is a reused Source view (editor beside its live preview). The
-   editor needs an explicit height to lay out; keep it on the editor itself so the empty
-   state (a note, or the placeholder) reserves no height and the panel does not become a
-   scrollable region with nothing focusable in it. */
-.node-attributes {
-    margin-bottom: 0.5rem;
-}
-
 /* The "Jump to source" action: an icon-only button beside the node title (a Tippy tooltip carries
    the label) that takes the reader to the node's span in the Source editor. The icon is drawn in
    the mode accent (blue in View, green in Edit) so it stays legible on the panel — never the
@@ -2647,21 +2639,6 @@ body.maximized #app {
     flex: 0 0 auto;
     font-size: 15px;
     color: inherit;
-}
-
-.node-source {
-    margin-top: 0.5rem;
-}
-
-.node-source .inspector-editor {
-    height: 24rem;
-}
-
-.node-note {
-    margin: 0.75rem 0 0;
-    font-size: 0.8rem;
-    font-style: italic;
-    color: var(--pico-muted-color);
 }
 
 .frontmatter-label {
