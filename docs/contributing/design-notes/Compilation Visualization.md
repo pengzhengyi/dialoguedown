@@ -99,9 +99,9 @@ One concept, one name — used here, in code, and in tests.
 - [x] An **HTML renderer** emits an interactive, collapsible view with a detail
       panel: clicking a node (a generous hit area, not just the dot) shows its
       attributes and the source snippet it was produced from, with a rendered
-      Markdown preview. Arrow keys navigate; on-screen zoom controls (+/−, click
-      the ratio to reset) and a resizable panel round it out. The whole report is
-      one self-contained file, so it works offline.
+      Markdown preview. Arrow keys navigate; on-screen zoom controls (+/−, an
+      editable ratio, and revert) and a resizable panel round it out. The whole
+      report is one self-contained file, so it works offline.
 - [x] A **semantic color scheme**: each node carries a cross-stage category that
       the renderer maps to a color, shown on nodes, the panel, and an interactive
       legend that counts each type, highlights it on hover, and toggles it
@@ -278,9 +278,10 @@ embedded, no CDN, no external requests — so the report opens with no server an
 works fully offline, even air-gapped. The libraries are npm dependencies pinned by
 `package-lock.json` and tree-shaken into the bundle: D3 v7.9.0 (ISC), Pico.css
 v2.1.1 (MIT), marked v12.0.2 (MIT), and Tippy.js v6.3.7 (MIT, which bundles
-Popper); `web/NOTICE.md` records versions and licenses. The .NET side embeds this
-built file and injects only the per-report data — the source and each stage —
-into its data slot.
+Popper). Preview surfaces also embed the Fira Code Latin 400 WOFF2 (OFL-1.1)
+for jump-indicator ligatures. `web/NOTICE.md` records versions and licenses.
+The .NET side embeds this built file and injects only the per-report data — the
+source and each stage — into its data slot.
 
 The tradeoff is deliberate: the bundle pins specific, reviewed library versions
 (updated by bumping `package.json` and rebuilding) rather than floating to the
@@ -337,11 +338,25 @@ stage made of it.
 Preview **anchor links work**: headings carry GitHub-style ids (via marked's
 `gfm-heading-id` extension), so a `[…](#slug)` link scrolls to its heading within
 the preview. Front matter is shown as a labeled metadata block, not a heading,
-matching the node-snippet previews. The source is not a compiler stage, so it is
-modeled separately: the .NET side injects a `{ source, stages }` payload and the
-frontend prepends the Source tab only when a source is present (a bare
-single-graph render has none). The Source tab has no node-detail panel — that
-belongs to the graph tabs — so it takes the full width.
+matching the node-snippet previews. A rendered `=>` immediately before a Markdown
+link is wrapped with Fira Code and its contextual alternates enabled, producing
+the same kind of font-driven ligature VS Code enables through
+`editor.fontLigatures`; the Source editor and stored text remain the literal two
+characters. Once the pipeline reaches Dialogue AST, node-detail previews receive
+the same treatment for recognized jump syntax — both the focused Jump indicator/
+assembled Jump and parent Line/Document snippets containing it — through
+Desugared AST and Semantic Model. Markdown AST snippets remain literal because
+that stage has not yet assigned Dialogue semantics. The source is not a compiler
+stage, so it is modeled separately: the .NET side injects a
+`{ source, stages }` payload and the frontend prepends the Source tab only when a
+source is present (a bare single-graph render has none).
+
+The zoom percentage remains an editable numeric field for precise ratios, but its
+focus treatment belongs to the compact graph toolbar: a mode-accent underline
+replaces the browser/form-style rounded focus ring while retaining a visible
+keyboard focus indicator.
+The Source tab has no node-detail panel — that belongs to the graph tabs — so it
+takes the full width.
 
 ## Error and boundary cases
 

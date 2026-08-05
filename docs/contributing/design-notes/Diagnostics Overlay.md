@@ -66,6 +66,8 @@ Code extension.
 - [x] The source editor renders them as an **overlay**: an inline squiggle per
       diagnostic, a **gutter** marker, and a hover **tooltip** with the message.
 - [x] The tooltip links to the diagnostic's **error-code** entry (`#dlg<code>`).
+- [x] The tooltip behaves as a viewport-level **popover**, crossing the Source pane boundary
+      without being clipped while CodeMirror keeps it inside the browser viewport.
 - [x] Severity maps correctly: error, warning, and info are visually distinct.
 - [x] The overlay **refreshes on recompile** — save and hot-reload — without rebuilding
       the editor, and clears on a clean compile.
@@ -146,6 +148,15 @@ tooltips — for diagnostics from *any* source. It is also exactly what
 server, not a throwaway. Diagnostics are **pushed imperatively** with `setDiagnostics`,
 because they come from the server-side compile, not a client-side linter.
 
+The report mounts CodeMirror's tooltip layer under `document.body` with fixed positioning.
+The Source pane must retain `overflow: hidden` to contain the resizable split, but a diagnostic
+is a transient popover rather than pane content: portaling it to the viewport lets CodeMirror's
+collision handling place it above or below the range without clipping it at the pane boundary.
+The lint tooltip carries a high stacking order so it can overlay the tab bar and adjacent
+preview while its link remains interactive. Its message wraps at a compact character-based
+maximum width rather than being truncated, keeping the full diagnostic readable without a long
+horizontal eye movement.
+
 ### D3 — Diagnostics ride the existing payload and live channel
 
 No new transport. The static export and the live server's `/api/save` response and
@@ -209,6 +220,7 @@ tabs and belongs with user-selectable mode
 | Clean compile | No diagnostics; the overlay and gutter clear. |
 | Halted compile | The produced stages' diagnostics render; later tabs stay disabled. |
 | Info-severity diagnostic | Rendered as info (LSP severity 3), visually distinct from warnings and errors. |
+| Diagnostic near a pane or viewport edge | The body-mounted tooltip may overlap report content, but CodeMirror flips or constrains it to remain inside the browser viewport. Long messages wrap at a compact readable width without truncation. |
 
 ## Integration
 

@@ -1,13 +1,50 @@
 // @vitest-environment node
 
 import { describe, it, expect } from "vitest";
-import { mapScroll } from "./scroll-sync";
+import { mapScroll, matchAnchorTops } from "./scroll-sync";
 
 describe("mapScroll", () => {
     it("maps proportionally when there are no anchors", () => {
         expect(mapScroll(0, [], [], 100, 200)).toBe(0);
         expect(mapScroll(50, [], [], 100, 200)).toBe(100);
         expect(mapScroll(100, [], [], 100, 200)).toBe(200);
+    });
+
+    describe("matchAnchorTops", () => {
+        it("matches anchors by identity instead of shifting after an unmatched heading", () => {
+            const editor = [
+                { key: "heading:front-matter", top: 20 },
+                { key: "heading:market", top: 100 },
+                { key: "heading:forest", top: 300 },
+            ];
+            const preview = [
+                { key: "heading:market", top: 80 },
+                { key: "heading:forest", top: 260 },
+            ];
+
+            expect(matchAnchorTops(editor, preview)).toEqual({
+                from: [100, 300],
+                to: [80, 260],
+            });
+        });
+
+        it("keeps dense block anchors when their identities match", () => {
+            const editor = [
+                { key: "block:0:h1", top: 10 },
+                { key: "block:1:p", top: 40 },
+                { key: "block:2:blockquote", top: 90 },
+            ];
+            const preview = [
+                { key: "block:0:h1", top: 20 },
+                { key: "block:1:p", top: 85 },
+                { key: "block:2:blockquote", top: 180 },
+            ];
+
+            expect(matchAnchorTops(editor, preview)).toEqual({
+                from: [10, 40, 90],
+                to: [20, 85, 180],
+            });
+        });
     });
 
     it("pins the content top and bottom to the target ends", () => {

@@ -9,6 +9,8 @@ export interface NodeDetailPanelOptions {
     /** Jump to the shown node's source in the Source tab (selecting a span, or placing the caret
      *  for a synthetic node). Absent when there is no Source tab to jump to. */
     jumpToSource?: (span: Span) => void;
+    /** The active stage has recognized Dialogue jump syntax. */
+    recognizeJumps?: boolean;
 }
 
 /** The Semantic tab's node-details panel, plus its element to mount atop the tables column. */
@@ -76,7 +78,7 @@ export function createNodeDetailPanel(options: NodeDetailPanelOptions = {}): Nod
         show(node) {
             body.innerHTML =
                 `<div class="node-detail-heading">${nodeDetailTitle(node)}</div>` +
-                nodeDetailBody(node);
+                nodeDetailBody(node, { recognizeJumps: options.recognizeJumps ?? false });
             if (jump) {
                 body.querySelector(".node-detail-heading")?.appendChild(jump.element);
                 jump.update(node);

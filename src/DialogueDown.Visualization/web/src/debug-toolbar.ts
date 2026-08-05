@@ -121,6 +121,7 @@ function iconButton(
 
 function makeDraggable(panel: HTMLElement, handle: HTMLElement): () => void {
     let dragging = false;
+    let disposed = false;
     let offsetX = 0;
     let offsetY = 0;
 
@@ -165,15 +166,17 @@ function makeDraggable(panel: HTMLElement, handle: HTMLElement): () => void {
     const resize = (): void => clampDebugPanel(panel);
     const observer = typeof ResizeObserver === "function" ? new ResizeObserver(resize) : null;
     queueMicrotask(() => {
-        if (!panel.parentElement) return;
+        if (disposed || !panel.parentElement) return;
         observer?.observe(panel.parentElement);
         observer?.observe(panel);
+        clampDebugPanel(panel);
     });
     handle.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
     window.addEventListener("resize", resize);
     return () => {
+        disposed = true;
         handle.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
@@ -186,20 +189,20 @@ function makeDraggable(panel: HTMLElement, handle: HTMLElement): () => void {
 /** Keep an explicitly positioned debugger palette inside its current Source pane. */
 export function clampDebugPanel(panel: HTMLElement): void {
     const container = panel.parentElement;
-    if (!container || panel.style.left === "" || panel.style.top === "") return;
+    if (!container) return;
     const parentBounds = container.getBoundingClientRect();
     const panelBounds = panel.getBoundingClientRect();
     if (parentBounds.width === 0 || parentBounds.height === 0) return;
-    const left = clamp(
-        Number.parseFloat(panel.style.left),
-        4,
-        Math.max(4, parentBounds.width - panelBounds.width - 4),
-    );
-    const top = clamp(
-        Number.parseFloat(panel.style.top),
-        4,
-        Math.max(4, parentBounds.height - panelBounds.height - 4),
-    );
+    const currentLeft =
+        panel.style.left === ""
+            ? panelBounds.left - parentBounds.left
+            : Number.parseFloat(panel.style.left);
+    const currentTop =
+        panel.style.top === ""
+            ? panelBounds.top - parentBounds.top
+            : Number.parseFloat(panel.style.top);
+    const left = clamp(currentLeft, 4, Math.max(4, parentBounds.width - panelBounds.width - 4));
+    const top = clamp(currentTop, 4, Math.max(4, parentBounds.height - panelBounds.height - 4));
     panel.style.left = `${Math.round(left)}px`;
     panel.style.top = `${Math.round(top)}px`;
     panel.style.right = "auto";

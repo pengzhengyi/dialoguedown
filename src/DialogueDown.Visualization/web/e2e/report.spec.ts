@@ -349,6 +349,25 @@ test("the zoom input reflects, sets, and reverts the zoom", async ({ page }) => 
     // The default framing is a readable 100%.
     await expect(input).toHaveValue("100");
 
+    // Focus is a restrained theme underline, not a second rounded input card inside the toolbar.
+    await input.focus();
+    await expect(input).toHaveCSS("box-shadow", "none");
+    await expect(input).toHaveCSS("outline-style", "none");
+    const zoomField = page.locator("section.stage.active .zoom-field");
+    await expect(zoomField).toHaveCSS("border-bottom-style", "solid");
+    await expect(zoomField).toHaveCSS("border-bottom-width", "2px");
+    expect(
+        await zoomField.evaluate((element) => getComputedStyle(element).borderBottomColor),
+    ).not.toBe("rgba(0, 0, 0, 0)");
+
+    await page.emulateMedia({ forcedColors: "active" });
+    await input.focus();
+    await expect(zoomField).toHaveCSS("border-bottom-width", "2px");
+    expect(
+        await zoomField.evaluate((element) => getComputedStyle(element).borderBottomColor),
+    ).not.toBe("rgba(0, 0, 0, 0)");
+    await page.emulateMedia({ forcedColors: "none" });
+
     // Stepping with + raises the zoom.
     await page.locator("section.stage.active .zoom-controls button", { hasText: "+" }).click();
     await expect(input).not.toHaveValue("100");

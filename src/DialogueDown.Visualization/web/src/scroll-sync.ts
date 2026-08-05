@@ -1,18 +1,29 @@
 /**
  * Keep the Source tab's editor and its rendered preview scrolled together, VS Code-style.
  *
- * The mapping is heading-anchored: the top of each heading in the editor is paired with
- * the top of the matching heading in the preview, and scrolling interpolates linearly
- * between those anchors (and proportionally in the gaps before the first and after the
- * last). Scenes therefore line up exactly and drift cannot accumulate across them; with
- * no headings it degrades to a straight proportional map.
+ * The mapping is block-anchored: top-level Markdown blocks in the editor are paired with
+ * the matching rendered elements in the preview, and scrolling interpolates linearly
+ * between those anchors. When the block structures differ, headings are matched by their
+ * GitHub-style slug instead; with no matches it degrades to a straight proportional map.
  */
 
 import type { EditorView } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
+import GithubSlugger from "github-slugger";
+import { splitFrontMatter } from "./text";
 
 /** Lezer-Markdown names both ATX (`## x`) and Setext (underlined) headings by level. */
-const HEADING_NODE = /^(?:ATXHeading|SetextHeading)[1-6]$/;
+const HEADING_NODE = /^(?:ATXHeading|SetextHeading)([1-6])$/;
+
+interface ScrollAnchor {
+    key: string;
+    top: number;
+}
+
+interface AnchorTops {
+    from: number[];
+    to: number[];
+}
 
 /**
  * How long the pane that started a scroll keeps ownership after its last scroll event.
@@ -67,30 +78,134 @@ export function mapScroll(
     return toMax;
 }
 
-/** Content-relative pixel tops of every heading in the editor, top to bottom. */
-function editorHeadingTops(view: EditorView): number[] {
-    const tops: number[] = [];
-    syntaxTree(view.state).iterate({
-        enter: (node) => {
-            if (HEADING_NODE.test(node.name)) {
-                tops.push(view.lineBlockAt(node.from).top);
-            }
-        },
-    });
-    return tops;
+/** Pair keyed anchors in driving-axis order, dropping anything absent from the other pane. */
+export function matchAnchorTops(
+    fromAnchors: readonly ScrollAnchor[],
+    toAnchors: readonly ScrollAnchor[],
+): AnchorTops {
+    const targetByKey = new Map(toAnchors.map((anchor) => [anchor.key, anchor.top]));
+    const from: number[] = [];
+    const to: number[] = [];
+    for (const anchor of fromAnchors) {
+        const target = targetByKey.get(anchor.key);
+        if (target !== undefined) {
+            from.push(anchor.top);
+            to.push(target);
+        }
+    }
+    return { from, to };
 }
 
-/** Content-relative pixel tops of every heading in the preview, top to bottom. */
-function previewHeadingTops(preview: HTMLElement): number[] {
+/** Strip ATX markers from a heading line; a Setext node starts on its plain-text line. */
+function headingText(lineText: string): string {
+    return lineText
+        .replace(/^\s*#{1,6}\s+/, "")
+        .replace(/\s+#+\s*$/, "")
+        .trim();
+}
+
+/** Source offset where the Markdown body begins, after optional YAML front matter. */
+function bodyStart(view: EditorView): number {
+    const source = view.state.doc.toString();
+    return source.length - splitFrontMatter(source).body.length;
+}
+
+/** Content-relative tops of real source headings, keyed by their unique preview id. */
+function editorHeadingAnchors(view: EditorView): ScrollAnchor[] {
+    const anchors: ScrollAnchor[] = [];
+    const firstBodyOffset = bodyStart(view);
+    const slugger = new GithubSlugger();
+    syntaxTree(view.state).iterate({
+        enter: (node) => {
+            if (!HEADING_NODE.test(node.name) || node.from < firstBodyOffset) return;
+            const line = view.state.doc.lineAt(node.from);
+            const slug = slugger.slug(headingText(line.text));
+            if (slug)
+                anchors.push({ key: `heading:${slug}`, top: view.lineBlockAt(node.from).top });
+        },
+    });
+    return anchors;
+}
+
+/** Content-relative tops of rendered headings, keyed by their GitHub-style id. */
+function previewHeadingAnchors(preview: HTMLElement): ScrollAnchor[] {
     const base = preview.getBoundingClientRect().top - preview.scrollTop;
-    return [...preview.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(
-        (heading) => heading.getBoundingClientRect().top - base,
-    );
+    return [...preview.querySelectorAll("h1, h2, h3, h4, h5, h6")]
+        .filter((heading) => heading.id !== "")
+        .map((heading) => ({
+            key: `heading:${heading.id}`,
+            top: heading.getBoundingClientRect().top - base,
+        }));
+}
+
+function editorBlockKind(name: string): string | null {
+    const heading = HEADING_NODE.exec(name);
+    if (heading) return `h${heading[1]}`;
+    switch (name) {
+        case "Paragraph":
+            return "p";
+        case "BulletList":
+            return "ul";
+        case "OrderedList":
+            return "ol";
+        case "Blockquote":
+            return "blockquote";
+        case "HorizontalRule":
+            return "hr";
+        case "FencedCode":
+        case "CodeBlock":
+            return "pre";
+        default:
+            return null;
+    }
+}
+
+/** Direct body blocks from CodeMirror. An unsupported block makes dense pairing unsafe. */
+function editorBlockAnchors(view: EditorView): ScrollAnchor[] | null {
+    const firstBodyOffset = bodyStart(view);
+    const cursor = syntaxTree(view.state).cursor();
+    const anchors: ScrollAnchor[] = [];
+    if (!cursor.firstChild()) return anchors;
+    do {
+        if (cursor.from < firstBodyOffset) continue;
+        const kind = editorBlockKind(cursor.name);
+        if (kind === null) return null;
+        anchors.push({
+            key: `block:${anchors.length}:${kind}`,
+            top: view.lineBlockAt(cursor.from).top,
+        });
+    } while (cursor.nextSibling());
+    return anchors;
+}
+
+/** Direct rendered body blocks, excluding the two front-matter display elements. */
+function previewBlockAnchors(preview: HTMLElement): ScrollAnchor[] {
+    const base = preview.getBoundingClientRect().top - preview.scrollTop;
+    return [...preview.children]
+        .filter((element) => !element.matches(".frontmatter-label, .frontmatter"))
+        .map((element, index) => ({
+            key: `block:${index}:${element.tagName.toLowerCase()}`,
+            top: element.getBoundingClientRect().top - base,
+        }));
+}
+
+/** Prefer dense block anchors when the source and rendered block sequences agree exactly. */
+function scrollAnchorTops(view: EditorView, preview: HTMLElement): AnchorTops {
+    const editorBlocks = editorBlockAnchors(view);
+    const previewBlocks = previewBlockAnchors(preview);
+    if (
+        editorBlocks !== null &&
+        editorBlocks.length === previewBlocks.length &&
+        editorBlocks.every((anchor, index) => anchor.key === previewBlocks[index].key)
+    ) {
+        return matchAnchorTops(editorBlocks, previewBlocks);
+    }
+    return matchAnchorTops(editorHeadingAnchors(view), previewHeadingAnchors(preview));
 }
 
 /**
  * Bind the editor and its preview so scrolling either one scrolls the other to the
- * matching heading (see {@link mapScroll}). Whichever pane the user scrolls owns the sync
+ * matching block or heading (see {@link mapScroll}). Whichever pane the user scrolls owns the sync
  * for a short window ({@link DRIVER_HOLD_MS}), so the scroll our own write echoes back on
  * the other pane cannot start a feedback loop. Writes are coalesced to one per frame.
  * Returns a disposer that detaches the listeners.
@@ -122,10 +237,9 @@ export function initScrollSync(view: EditorView, preview: HTMLElement): () => vo
         if (frame) return; // one write per frame is enough
         frame = requestAnimationFrame(() => {
             frame = 0;
-            const eTops = editorHeadingTops(view);
-            const pTops = previewHeadingTops(preview);
-            if (who === "editor") follow(editor, eTops, preview, pTops);
-            else follow(preview, pTops, editor, eTops);
+            const anchors = scrollAnchorTops(view, preview);
+            if (who === "editor") follow(editor, anchors.from, preview, anchors.to);
+            else follow(preview, anchors.to, editor, anchors.from);
         });
     };
 

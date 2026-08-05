@@ -9,6 +9,6 @@ test("the production report contains no fake debugger activation path", () => {
     assert.doesNotMatch(main, /createLineDebuggerPrototype|debug=fake|test-support/);
     assert.doesNotMatch(
         report,
-        /line-debugger-v1|Prototype · fake program|Line debugger prototype|debug=fake/,
+        /line-debugger-v1|Prototype · fake program|Line debugger prototype|debug=fake|Prototype path target not found|Prototype fixture unavailable|browser-harness/,
     );
 });

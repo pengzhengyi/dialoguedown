@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { clampDebugPanel, createDebugToolbar } from "./debug-toolbar";
 import {
     createFakeDebugController,
@@ -205,5 +205,48 @@ describe("createDebugToolbar", () => {
 
         expect(element.style.left).toBe("176px");
         expect(element.style.top).toBe("186px");
+    });
+
+    it("initializes and clamps the default panel before the first drag", () => {
+        const { element } = mount();
+        const container = document.createElement("div");
+        container.appendChild(element);
+        document.body.appendChild(container);
+        Object.defineProperty(container, "getBoundingClientRect", {
+            value: () => ({ left: 10, top: 20, width: 81, height: 100 }),
+        });
+        Object.defineProperty(element, "getBoundingClientRect", {
+            value: () => ({ left: 16, top: 24, width: 75, height: 60 }),
+        });
+
+        clampDebugPanel(element);
+
+        expect(element.style.left).toBe("4px");
+        expect(element.style.top).toBe("4px");
+    });
+
+    it("does not attach its queued ResizeObserver after immediate teardown", async () => {
+        const original = globalThis.ResizeObserver;
+        const observe = vi.fn();
+        const disconnect = vi.fn();
+        globalThis.ResizeObserver = class {
+            public observe = observe;
+            public unobserve = vi.fn();
+            public disconnect = disconnect;
+        } as unknown as typeof ResizeObserver;
+
+        try {
+            const debug = createFakeDebugController(SOURCE, PROGRAM);
+            const toolbar = createDebugToolbar(debug);
+            document.body.appendChild(toolbar.element);
+
+            toolbar.destroy();
+            await Promise.resolve();
+
+            expect(disconnect).toHaveBeenCalledOnce();
+            expect(observe).not.toHaveBeenCalled();
+        } finally {
+            globalThis.ResizeObserver = original;
+        }
     });
 });

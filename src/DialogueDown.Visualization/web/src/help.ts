@@ -4,7 +4,14 @@ export type HelpContext = "source" | "graph" | "semantic" | "explorer";
 
 const SOURCE_HELP = `
   <p><strong>Source &amp; preview.</strong> The left pane is the document as written;
-     the right pane is a live Markdown preview.</p>
+     the right pane is a live Markdown preview. Scrolling either pane keeps matching
+     Markdown blocks aligned in the other.</p>
+  <p><strong>Syntax colors.</strong> The compiler distinguishes commands, value queries,
+     conditions, static and dynamic random weights, control keywords, and the reserved
+     <kbd>#END</kbd> target; ordinary code spans keep the Markdown code color.</p>
+  <p><strong>Jump ligature.</strong> In the rendered preview, <kbd>=&gt;</kbd> before a
+     link uses a bundled Fira Code ligature. The Source editor and saved script still keep
+     the literal <kbd>=</kbd> and <kbd>&gt;</kbd> characters.</p>
   <p><strong>Preview links</strong> jump to their headings within the preview.</p>
   <p><strong>Drag the divider</strong> between the panes to re-proportion them, or use its
      <strong>hide handle</strong> to collapse the preview and give the editor the full
@@ -53,7 +60,7 @@ const GRAPH_HELP = `
      <strong>hide handle</strong> to collapse the panel and give the graph the full width
      (click again to bring it back).</p>
   <p><strong>Zoom controls</strong> (bottom-right): <kbd>+</kbd> / <kbd>−</kbd> to
-     zoom, and click the percentage to reset the view.</p>
+     zoom, type a percentage for an exact ratio, and use <kbd>↺</kbd> to reset the view.</p>
   <p><strong>Full screen</strong> (the bottom-right ⤢ button, or press <kbd>f</kbd>):
      fill the window with the graph; <kbd>f</kbd> or <kbd>Esc</kbd> to leave.</p>
   <p><strong>Hover a legend entry</strong> (top-right) to highlight its nodes;

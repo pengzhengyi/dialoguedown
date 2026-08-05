@@ -15,6 +15,7 @@ using MarkdigListBlock = Markdig.Syntax.ListBlock;
 using MarkdigListItemBlock = Markdig.Syntax.ListItemBlock;
 using MarkdigLiteralInline = Markdig.Syntax.Inlines.LiteralInline;
 using MarkdigParagraphBlock = Markdig.Syntax.ParagraphBlock;
+using MarkdigQuoteBlock = Markdig.Syntax.QuoteBlock;
 using MarkdigSpan = Markdig.Syntax.SourceSpan;
 using MarkdigYamlFrontMatterBlock = Markdig.Extensions.Yaml.YamlFrontMatterBlock;
 
@@ -92,6 +93,7 @@ internal sealed class MarkdigToMarkdownAstConverter
         MarkdigHeadingBlock heading => ConvertHeading(heading),
         MarkdigParagraphBlock paragraph => ConvertParagraph(paragraph),
         MarkdigListBlock list => ConvertList(list),
+        MarkdigQuoteBlock quote => ConvertQuote(quote),
         _ => HandleUnmodeledBlock(block),
     };
 
@@ -117,6 +119,11 @@ internal sealed class MarkdigToMarkdownAstConverter
     }
 
     private ListItem ConvertListItem(MarkdigListItemBlock block) =>
+        new(ConvertBlocks(block), ConvertSpan(block.Span));
+
+    // A blockquote is kept as a structural wrapper around its inner blocks (not flattened) so a
+    // later stage can recognize a marker-headed quote as a block conditional.
+    private QuoteBlock ConvertQuote(MarkdigQuoteBlock block) =>
         new(ConvertBlocks(block), ConvertSpan(block.Span));
 
     private Heading ConvertHeading(MarkdigHeadingBlock block) =>

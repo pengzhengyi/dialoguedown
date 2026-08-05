@@ -15,7 +15,6 @@ export interface DebugLocation {
 export interface DebugPath {
     id: string;
     label: string;
-    targetId: string;
 }
 
 /** A requested source-line breakpoint and whether the bound program can stop there. */

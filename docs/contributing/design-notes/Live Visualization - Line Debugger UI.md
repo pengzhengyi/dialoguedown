@@ -137,7 +137,7 @@ sequenceDiagram
 | `DebugController` | Accept debugger commands and publish immutable snapshots. | UI depends on this; it depends on no UI type. |
 | `DebugSnapshot` | Status, source-mapped location, paths, bindings, capabilities, and message. | Runtime adapter → UI. |
 | `DebugLocation` | Stable location id plus one-based line and source offsets. | Runtime adapter → editor. |
-| `DebugPath` | Labeled outgoing runtime path. | Runtime adapter → palette. |
+| `DebugPath` | Opaque path id and label; runtime topology stays inside the controller. | Runtime adapter → palette. |
 | `BreakpointBinding` | One requested line and its verified state. | Controller → editor. |
 | `debugEditor(controller)` | CodeMirror extension for breakpoints and execution visuals. | Depends only on controller snapshots/commands. |
 | `createDebugToolbar(controller, options)` | Floating controls, status, path choices, and drag behavior. | Depends only on controller snapshots/commands. |
@@ -278,8 +278,8 @@ Coverage includes:
 - Source-view mounting/teardown and accessible breakpoint action; and
 - real served-report dormancy.
 
-The frontend gate passes **526** unit tests plus **16** infrastructure tests. The full browser
-gate passes **76** static and **55** live Playwright tests.
+The frontend gate passes **542** unit tests plus **16** infrastructure tests. The full browser
+gate passes **81** static and **55** live Playwright tests.
 
 ## Deferred runtime work
 

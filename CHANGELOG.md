@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Block conditionals** — group dialogue, commands, choices, and jumps into connected
+  blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
+  `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
+  nested blocks, and highlights marker keywords in the source editor. See
+  [Block controls](docs/contributing/design-notes/Block%20Controls.md).
 - **Jump from a graph node to its source** — the Node details panel now has a **Jump to source**
   icon beside the node title (on the AST graph tabs and the Semantic Model tab) that opens the
   Source tab with the node's text selected, so you can move from a node straight to the lines it
@@ -37,6 +42,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **Jump indicators use a preview ligature** — the Source tab and recognized
+  jump syntax in node previews from Dialogue AST through Semantic Model show `=>` with a bundled
+  Fira Code ligature, including parent Line/Document previews, while editors and underlying
+  scripts keep the original two characters.
+- **Semantic code-span colors in the Source editor** — commands, value queries,
+  conditions, static random weights, and dynamic random weights now use distinct
+  VS Code-inspired colors in light and dark themes, including inside blockquotes;
+  block-control keywords and `#END` also use separate keyword and constant hues.
 - **One unified report shell for `visualize`** — the standalone launcher picker page is gone.
   `visualize` (or `--pick`) now opens the report shell directly on an **empty state** — the
   Explorer over your project beside a "create your first dialogue file" call to action — and
@@ -47,6 +60,16 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Graph zoom focus is visually lighter** — the editable percentage now uses a theme-accent
+  underline instead of a rounded input focus ring inside the compact toolbar.
+- **Diagnostic popovers stay visible at editor edges** — hover messages now overlay the report
+  chrome instead of being clipped by the Source pane, remain within the browser viewport, and
+  wrap to a compact reading width.
+- **Source and preview stay aligned while scrolling** — scroll synchronization now anchors
+  matching Markdown paragraphs, lists, blockquotes, and headings instead of only scene headings;
+  front matter no longer creates a false heading that shifts every scene pair.
+- **Block-control keywords keep their syntax color** — `` `if` ``, `` `elseif` ``, and
+  `` `else` `` no longer fall back to the generic inline-code gray in the Source editor.
 - **`ddown visualize` now stops on Ctrl+C** — the live server previously ignored the
   interrupt and had to be killed, because the shutdown signal reached the web host but
   not the command waiting on it. Pressing Ctrl+C (or sending a termination signal) now

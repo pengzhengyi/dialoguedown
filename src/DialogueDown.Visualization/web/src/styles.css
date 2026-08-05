@@ -1,3 +1,12 @@
+@font-face {
+    font-family: "Fira Code";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("../node_modules/@fontsource/fira-code/files/fira-code-latin-400-normal.woff2")
+        format("woff2");
+}
+
 :root {
     --dd-reference: #cf222e;
 
@@ -9,19 +18,25 @@
     --md-muted: #6e7781;
     --cm-selection: rgb(20 100 210 / 22%);
 
-    /* Dialogue token highlighting: the compiler-projected semantic tokens, layered over the
-       Markdown colors above. Kept off blue so they stay distinct from headings and links. The
-       speaker's name, @id, and : separator get distinct hues; GitHub Primer light-syntax hues,
-       with dark overrides below. */
+    /* Dialogue token highlighting: compiler-projected semantic tokens layered over Markdown.
+       Existing dialogue tokens use GitHub Primer-inspired hues. Code-span semantics follow
+       VS Code Light+ roles: keyword, constant, string/read, variable/boolean, number,
+       type/dynamic value, and function. Dark+ counterparts override them below. */
     --tok-speaker-name: #8250df;
     --tok-speaker-id: #1a7f37;
     --tok-separator: #6e7781;
     --tok-custom-tag: #bf3989;
     --tok-reserved-tag: #953800;
     --tok-jump: #1b7c83;
-    --tok-reserved-anchor: #cf222e;
+    --tok-reserved-anchor: #0070c1;
+    --tok-control-keyword: #af00db;
+    --tok-query: #a31515;
+    --tok-condition: #001080;
+    --tok-static-weight: #098658;
+    --tok-dynamic-weight: #267f99;
+    --tok-command: #795e26;
 
-    /* Line-debugger prototype: red breakpoint requests and an amber paused-location marker.
+    /* Dormant line-debugger UI: red breakpoint requests and an amber paused-location marker.
        The paused line is distinct from CodeMirror's neutral cursor-active line below. */
     --debug-breakpoint: #cf222e;
     --debug-current: #9a6700;
@@ -89,7 +104,13 @@
         --tok-custom-tag: #f778ba;
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
-        --tok-reserved-anchor: #ff7b72;
+        --tok-reserved-anchor: #4fc1ff;
+        --tok-control-keyword: #c586c0;
+        --tok-query: #ce9178;
+        --tok-condition: #9cdcfe;
+        --tok-static-weight: #b5cea8;
+        --tok-dynamic-weight: #4ec9b0;
+        --tok-command: #dcdcaa;
         --debug-breakpoint: #ff7b72;
         --debug-current: #e3b341;
         --debug-current-bg: rgb(227 179 65 / 18%);
@@ -116,7 +137,13 @@
     --tok-custom-tag: #f778ba;
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
-    --tok-reserved-anchor: #ff7b72;
+    --tok-reserved-anchor: #4fc1ff;
+    --tok-control-keyword: #c586c0;
+    --tok-query: #ce9178;
+    --tok-condition: #9cdcfe;
+    --tok-static-weight: #b5cea8;
+    --tok-dynamic-weight: #4ec9b0;
+    --tok-command: #dcdcaa;
     --debug-breakpoint: #ff7b72;
     --debug-current: #e3b341;
     --debug-current-bg: rgb(227 179 65 / 18%);
@@ -1298,9 +1325,9 @@ g.node.entity-highlight text.label {
     font-size: 0.82rem;
 }
 
-/* Branch-only line-debugger prototype: a detached, draggable palette over CodeMirror. The
-   controls are icon-only (Tippy carries their labels), and the explicit foreground avoids
-   Pico's inverse button text on the light panel. */
+/* Dormant line-debugger UI: a detached, draggable palette over CodeMirror. The controls are
+   icon-only (Tippy carries their labels), and the explicit foreground avoids Pico's inverse
+   button text on the light panel. */
 .dd-debug-toolbar {
     position: absolute;
     z-index: 8;
@@ -1604,6 +1631,37 @@ g.node.entity-highlight text.label {
     font-weight: 600;
 }
 
+.source-pane .cm-content .dd-tok-control-keyword,
+.source-pane .cm-content .dd-tok-control-keyword * {
+    color: var(--tok-control-keyword);
+    font-weight: 600;
+}
+
+.source-pane .cm-content .dd-tok-query,
+.source-pane .cm-content .dd-tok-query * {
+    color: var(--tok-query);
+}
+
+.source-pane .cm-content .dd-tok-condition,
+.source-pane .cm-content .dd-tok-condition * {
+    color: var(--tok-condition);
+}
+
+.source-pane .cm-content .dd-tok-static-weight,
+.source-pane .cm-content .dd-tok-static-weight * {
+    color: var(--tok-static-weight);
+}
+
+.source-pane .cm-content .dd-tok-dynamic-weight,
+.source-pane .cm-content .dd-tok-dynamic-weight * {
+    color: var(--tok-dynamic-weight);
+}
+
+.source-pane .cm-content .dd-tok-command,
+.source-pane .cm-content .dd-tok-command * {
+    color: var(--tok-command);
+}
+
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
    The wrapper is a zero-size inline box; the chip floats as an absolute overlay so it adds no
    line height or wrap width (the editor/preview scroll-sync aligns on heading line tops). */
@@ -1640,13 +1698,14 @@ g.node.entity-highlight text.label {
 }
 
 /* The diagnostics overlay. The squiggles and gutter markers use CodeMirror's built-in lint
-   theme (severity-colored); this themes the hover tooltip to match the report card and styles
-   the "more information" docs link inside it. Two tooltip shapes need theming: hovering a
-   squiggle nests the lint content in a .cm-tooltip-lint section inside a light-by-default
-   .cm-tooltip container (matched via :has), while hovering a gutter marker puts .cm-tooltip-lint
-   on the .cm-tooltip element itself. */
-:is(.source-pane, .config-source) .cm-tooltip.cm-tooltip-lint,
-:is(.source-pane, .config-source) .cm-tooltip:has(.cm-tooltip-lint) {
+   theme (severity-colored); this themes the body-mounted hover popover to match the report card
+   and keeps it above the report chrome. Two tooltip shapes need theming: hovering a squiggle
+   nests the lint content in a .cm-tooltip-lint section inside a light-by-default .cm-tooltip
+   container (matched via :has), while hovering a gutter marker puts .cm-tooltip-lint on the
+   .cm-tooltip element itself. */
+.cm-tooltip.cm-tooltip-lint,
+.cm-tooltip:has(.cm-tooltip-lint) {
+    z-index: 1000;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -1658,9 +1717,11 @@ g.node.entity-highlight text.label {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+    max-width: min(34ch, calc(100vw - 2rem));
     padding: 0.1rem 0.15rem;
     font-size: 0.78rem;
     line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .diagnostic-tooltip-link {
@@ -1879,6 +1940,13 @@ g.node.entity-highlight text.label {
     border: none;
     border-radius: 0;
     scroll-behavior: smooth;
+}
+
+.source-preview .jump-ligature,
+.preview .jump-ligature {
+    font-family: "Fira Code", var(--pico-font-family-monospace, ui-monospace, monospace);
+    font-feature-settings: "calt" 1;
+    font-variant-ligatures: contextual;
 }
 
 /* Preview blockquotes — the if/else block controls nest blockquotes, so mark each level with its
@@ -2216,6 +2284,11 @@ svg.tree.has-focus .link:not(.related) {
     display: flex;
     align-items: center;
     border-inline: 1px solid var(--pico-muted-border-color);
+    border-bottom: 2px solid transparent;
+}
+
+.zoom-controls .zoom-field:focus-within {
+    border-bottom-color: var(--mode-accent, var(--pico-primary));
 }
 
 .zoom-controls .zoom-input {
@@ -2230,6 +2303,17 @@ svg.tree.has-focus .link:not(.related) {
     text-align: right;
     font-size: inherit;
     font-variant-numeric: tabular-nums;
+}
+
+.zoom-controls .zoom-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+@media (forced-colors: active) {
+    .zoom-controls .zoom-field:focus-within {
+        border-bottom-color: Highlight;
+    }
 }
 
 /* Hide the native number spinner so the compact toolbar stays clean. */

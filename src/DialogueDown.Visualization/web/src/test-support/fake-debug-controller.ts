@@ -10,11 +10,15 @@ import type {
 } from "../debug-controller";
 
 /** One location in the explicit prototype fixture, bound by an exact unique source line. */
+export interface FakeDebugPath extends DebugPath {
+    targetId: string;
+}
+
 export interface FakeDebugLocation {
     id: string;
     anchor: string;
     label: string;
-    paths: readonly DebugPath[];
+    paths: readonly FakeDebugPath[];
 }
 
 /** The branch-only fake execution graph. It does not represent DialogueDown runtime semantics. */
@@ -32,10 +36,10 @@ export interface FakeDebugController extends DebugController {
 interface BoundProgram {
     entryId: string;
     locations: ReadonlyMap<string, DebugLocation>;
-    paths: ReadonlyMap<string, readonly DebugPath[]>;
+    paths: ReadonlyMap<string, readonly FakeDebugPath[]>;
 }
 
-const NO_PATHS: readonly DebugPath[] = [];
+const NO_PATHS: readonly FakeDebugPath[] = [];
 
 /** Bind an explicit fixture and return the deterministic in-browser debugger used by the spike. */
 export function createFakeDebugController(
@@ -46,7 +50,7 @@ export function createFakeDebugController(
     let bound = bindProgram(source, program);
     let status: DebugStatus = bound?.locations.has(bound.entryId) ? "ready" : "unavailable";
     let currentId: string | undefined;
-    let pendingPaths: readonly DebugPath[] = NO_PATHS;
+    let pendingPaths: readonly FakeDebugPath[] = NO_PATHS;
     let requestedLines: number[] = [];
     let message = status === "unavailable" ? unavailableMessage(program) : undefined;
 
@@ -59,7 +63,7 @@ export function createFakeDebugController(
         nextStatus: DebugStatus,
         options: {
             locationId?: string;
-            paths?: readonly DebugPath[];
+            paths?: readonly FakeDebugPath[];
             message?: string;
         } = {},
     ): void => {
@@ -73,7 +77,7 @@ export function createFakeDebugController(
     const location = (id = currentId): DebugLocation | undefined =>
         id === undefined ? undefined : bound?.locations.get(id);
 
-    const pathsFrom = (id = currentId): readonly DebugPath[] =>
+    const pathsFrom = (id = currentId): readonly FakeDebugPath[] =>
         id === undefined ? NO_PATHS : (bound?.paths.get(id) ?? NO_PATHS);
 
     const moveTo = (targetId: string): DebugLocation | undefined => bound?.locations.get(targetId);
@@ -231,7 +235,7 @@ function bindProgram(source: string, program: FakeDebugProgram): BoundProgram {
     }
 
     const locations = new Map<string, DebugLocation>();
-    const paths = new Map<string, readonly DebugPath[]>();
+    const paths = new Map<string, readonly FakeDebugPath[]>();
     for (const spec of program.locations) {
         const matches: number[] = [];
         for (let index = 0; index < lines.length; index += 1) {
