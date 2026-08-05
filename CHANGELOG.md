@@ -42,6 +42,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Faster local .NET test feedback** — the documented contributor command and default VS Code
+  test task now execute test projects with three MSBuild workers, reducing the measured warm
+  local median by 28.8%. CI, release validation, builds, and coverage remain serial because their
+  measurements did not improve.
 - **One place to edit — the Source tab.** The graph tabs' node-details panel is now read-only
   on every tab, matching the Semantic Model tab, and **Jump to source** takes you to the node's
   text with its span selected. Editing a node in the side panel is gone: it duplicated the

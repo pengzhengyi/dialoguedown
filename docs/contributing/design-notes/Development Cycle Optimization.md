@@ -1,10 +1,12 @@
 # Development Cycle Optimization
 
 > [!NOTE]
-> Status: **implemented; the measured follow-up changes await review in
-> [PR #113](https://github.com/pengzhengyi/dialoguedown/pull/113)**.
-> Increments 1 and 3–11 are built and measured. Increment 2 was deliberately
-> skipped because Release coverage changed the sequence-point denominator.
+> Status: **implemented; the August 2026 .NET test follow-up is accepted for
+> local contributor commands and rejected for CI**. Increments 1 and 3–12 are built and
+> measured. Increment 2 was
+> deliberately skipped because Release coverage changed the sequence-point
+> denominator; Increment 13 was measured and rejected because it broke file
+> isolation.
 
 DialogueDown's verification remains comprehensive, but avoidable orchestration
 work delays feedback: repeated project evaluation, duplicate test execution,
@@ -35,6 +37,8 @@ bundle verification, or end-to-end behavior.
   - [9. Evaluate frontend quality caches independently](#9-evaluate-frontend-quality-caches-independently)
   - [10. Overlap live E2E preparation](#10-overlap-live-e2e-preparation)
   - [11. Run DOM-independent Vitest files in Node](#11-run-dom-independent-vitest-files-in-node)
+  - [12. Parallelize .NET test projects](#12-parallelize-net-test-projects)
+  - [13. Evaluate one VM-backed Vitest fork](#13-evaluate-one-vm-backed-vitest-fork)
 - [Approval-gated follow-ups](#approval-gated-follow-ups)
 - [Boundary cases and rollback](#boundary-cases-and-rollback)
 - [Testability and measurement](#testability-and-measurement)
@@ -145,6 +149,26 @@ Debug after the explicit Release build and Release test pass.
 | Release/no-build coverage experiment | 53.4 s |
 | Clean Release solution build, analyzers on/off | 48.1 s / 23.6 s |
 
+An August 2026 follow-up on `79890bb` refreshed the current, larger test
+inventory (1,622 .NET tests, 530 Vitest tests, 81 static and 49 live browser
+tests):
+
+| Command or operation | Cold | Warm baseline |
+| --- | ---: | ---: |
+| `dotnet restore` | 8.87 s | — |
+| Release solution build | 25.01 s | 4.34 s |
+| Release/no-build solution tests | 21.88 s | 28.57 s |
+| `npm ci` | 7.53 s | — |
+| `npm run check` | 56.84 s | 31.87 s |
+| Vitest | — | 20.85 s |
+| Static Playwright | 40.58 s | — |
+| Live Playwright (including CLI build) | 79.77 s | — |
+
+The warm .NET test range (27.81–39.09 seconds) is dominated by six test-host
+projects and solution orchestration; reported test-body durations are much
+smaller. The frontend gate is dominated by Vitest (22.84 seconds in the
+phase-by-phase baseline).
+
 The local runtime differs from CI (Node 26 vs Node 20; .NET SDK 10 vs SDK 8), so
 absolute local/CI values are not compared directly. Each implementation
 increment refreshes its own baseline and compares before/after runs in the same
@@ -199,6 +223,8 @@ run).
 | 9a–9d. Frontend caches | **Achieved** | Warm TypeScript 57.3% faster; ESLint 55.9%; Stylelint 29.8%; Prettier 83.5%. Every cache invalidation was tested | CI starts cold; caches target the local repeated loop |
 | 10. Overlapped live preparation | **Achieved** | Local `npm run e2e:live` remains unchanged | Live job: 89 s → 72 s; 17 s / 19.1%; 1.24×; three green runs |
 | 11. Node environment for pure Vitest files | **Achieved** | Ten-file target: 23.80 s → 11.46 s; 51.8%; 2.08×. Current full suite: 16.72 s → 14.34 s; 14.2%; 1.17× | Quality job: 42 s → 39 s; 7.1%; quality check: 29 s → 26 s; 10.3%; three green runs |
+| 12. Parallel .NET test projects | **Achieved locally; rejected in CI** | Warm solution-test median: 28.57 s → 20.35 s; 28.8%; 1.40× with `-m:3` | PR run: 13 s vs recent `main` range 11–12 s; CI stays serial |
+| 13. Single VM-backed Vitest fork | **Rejected** | Vitest median: 20.85 s → 11.29 s; 45.8%; 1.85×, but a cross-file probe proved leaked globals | Not pushed; default isolated forks retained |
 
 Increment 1 had one non-reproducing local cold launcher timeout. It then passed
 an isolated retry, one full retry, one clean-output run, three consecutive warm
@@ -457,8 +483,9 @@ Vitest file or one Playwright scenario would answer the current question.
 - one live Playwright spec when the built CLI is available.
 
 Retain `npm run check`, static E2E, live E2E, and `verify: all` as the full gate.
-Do not override Vitest's worker/pool defaults: the measured default warm run
-(15.7 seconds) outperformed tested thread/fixed-worker variants.
+The original thread/fixed-worker experiment did not beat Vitest's default pool,
+and the later VM-backed experiment was rejected after a cross-file isolation
+probe failed (see [Increment 13](#13-evaluate-one-vm-backed-vitest-fork)).
 
 **Acceptance:**
 
@@ -574,6 +601,66 @@ three CI attempts, the quality job median fell from 42 seconds to 39 seconds
 - all 60 static and 36 live Playwright tests remain unchanged and green;
 - the quality lane passes three CI attempts without retries or new warnings.
 
+### 12. Parallelize .NET test projects
+
+**Problem:** every test project already enables xUnit collection/assembly
+parallelism, but the solution-level `dotnet test` command evaluates its six test
+projects with one `MSBuild` node by default. Test-host startup and project
+orchestration dominate the wall clock: the six test projects take 5.0–12.2
+seconds individually even though the core project's 1,053 test bodies total only
+4.16 seconds.
+
+**Design:** add `-m:3` to the documented local Release/no-build solution command
+and the default VS Code test task. Keep targeted one-project tests unchanged.
+Keep CI, release validation, and build commands unchanged because those
+environments or phases did not reproduce a gain.
+
+Do **not** parallelize the coverage pass. The instrumented solution run regressed
+from 53.37 seconds to 78.23 seconds with `-m:3`, likely from instrumentation and
+result-output contention.
+
+**Local result:** the paired three-run median fell from 28.57 seconds to 20.35 seconds
+(28.8%; 1.40×). A direct five-run comparison found three
+(22.70 ± 1.24 seconds) and four workers (22.48 ± 0.71 seconds) statistically
+equivalent; five or more regressed to 25.35–27.44 seconds. Three is retained over
+four because it used materially less aggregate CPU/system time.
+
+**CI result:** the pull-request `.NET` Test step took 13 seconds. The five most
+recent successful `main` runs took 11, 12, 12, 12, and 12 seconds. GitHub's
+smaller runner therefore showed no benefit; CI and release validation remain
+serial.
+
+**Reuse finding:** production already registers the compiler pipeline as
+singletons. A standalone benchmark measured `CreateDefault()` at about
+0.0010 ms/1.1 KB and building/resolving a DI provider at about 0.038 ms/11 KB.
+Sharing test compilers/providers would not move solution time and would introduce
+parallel shared-state risk, so no singleton test fixture is added.
+
+### 13. Evaluate one VM-backed Vitest fork
+
+**Problem:** the 530-test Vitest suite spends most of its wall time and CPU
+starting isolated worker processes and `jsdom`/module environments. The warm phase
+baseline median is 20.85 seconds and about 164 seconds of aggregate user CPU.
+
+**Experiment:** test Vitest's `vmForks` pool with `maxWorkers: 1`. The
+operating-system fork is reused, and the suite initially appeared stable: ten
+shuffled seeds passed, and the complete gate stayed green.
+
+Global `isolate: false` was rejected even though it was fast: one shuffled run
+failed CodeMirror completion activation after shared worker state. Plain threads
+and fixed worker counts did not materially beat the default pool.
+
+Vitest documents VM-pool caveats: ESM modules remain cached and cross-realm
+native errors have different constructors. One worker limited the observed
+memory cost to about 336 MB versus 250 MB for default forks.
+
+**Result:** the five-run median was 11.29 seconds (45.8%; 1.85× faster than the
+20.85-second isolated-fork median). The complete `npm run check` median fell
+from 31.87 to 21.80 seconds (31.6%; 1.46×). However, a two-file probe deliberately
+leaked a `globalThis` value from one file; the second file observed it under
+`vmForks`/one worker. This contradicts the project's test-isolation invariant.
+The pool change is therefore reverted despite its speed.
+
 ## Approval-gated follow-ups
 
 These affect which tests run or materially restructure the test suite. They are
@@ -607,8 +694,8 @@ separate coverage matrix identifying:
 
 Ten pure files use the Node environment; the remaining suite keeps jsdom. Do not
 switch the whole suite to Node or `happy-dom`; CodeMirror compatibility needs a
-focused experiment. The default Vitest scheduler was faster than tested
-thread/worker overrides.
+focused experiment. Increment 13 confirms that the default isolated scheduler
+must remain unless Vitest provides a faster pool with verified file isolation.
 
 ### Use a Playwright container
 
@@ -678,6 +765,7 @@ For each CI-affecting increment:
 | Frontend split | Each lane independently | Combined inventory and generated diff |
 | Live preparation overlap | Infrastructure contract for build/install/wait ordering | Frontend CI live lane |
 | Selective Vitest environments | Ten DOM-independent files under Node | Existing `npm run check` + both E2E lanes |
+| Parallel .NET test projects | Full solution test command with `-m:3` | Coverage remains serial; full .NET/CI gate |
 | Analyzer-free .NET build | Fast full-solution build | Existing analyzer-enabled build |
 | Targeted .NET tests | Project/filter/watch commands | Existing full solution test |
 | Targeted frontend tests | Vitest/Playwright scoped commands | Existing `npm run check` + E2E |
@@ -705,6 +793,7 @@ Implemented:
 - parallel frontend quality/static/live lanes with a stable aggregate check;
 - overlapped CLI build and dependency/browser provisioning in the live lane;
 - Node environments for ten DOM-independent Vitest files;
+- three-way .NET test-project orchestration (normal pass only);
 - additive analyzer-free and targeted local tasks; and
 - ignored, content-aware caches for four frontend quality tools.
 
