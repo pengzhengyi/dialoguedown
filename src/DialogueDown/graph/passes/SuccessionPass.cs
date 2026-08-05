@@ -1,25 +1,34 @@
 using DialogueDown.Graph.Builder;
+using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Wires the default flow: each block falls through to the next block in document order, and the
-/// last block falls through to the End node. Runs after diverts, so a node that already leaves
-/// unconditionally — an unguarded divert — is left to terminate rather than also falling through.
+/// Wires the default flow: within a sequence of blocks each one falls through to the next, and the
+/// last falls through to the sequence's <b>continuation</b> — where control resumes once the
+/// sequence is exhausted. The document is one sequence continuing to the End node. Runs after
+/// diverts, so a node that already leaves unconditionally is left to terminate rather than also
+/// falling through.
 /// </summary>
 internal sealed class SuccessionPass : GraphBuildPass
 {
-    protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
-    {
-        var ids = context.Blocks.Select(draft.IdOf).ToArray();
-        var successors = ids.Skip(1).Append(draft.End);
+    protected override void ApplyCore(GraphDraft draft, GraphBuildContext context) =>
+        Chain(context.Blocks, draft.End, draft);
 
-        foreach (var (source, target) in ids.Zip(successors))
+    private static void Chain(IReadOnlyList<ScriptBlock> sequence, NodeId continuation, GraphDraft draft)
+    {
+        for (var position = 0; position < sequence.Count; position++)
         {
-            if (!draft.Node(source).Out.HasUnconditionalDivert())
+            var source = draft.IdOf(sequence[position]);
+            if (draft.Node(source).Out.HasUnconditionalDivert())
             {
-                draft.AddEdge(source, new Succession(target));
+                continue;
             }
+
+            var next = position + 1 < sequence.Count
+                ? draft.IdOf(sequence[position + 1])
+                : continuation;
+            draft.AddEdge(source, new Succession(next));
         }
     }
 }
