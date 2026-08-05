@@ -36,7 +36,7 @@ jobs:
         run: dotnet build DialogueDown.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test DialogueDown.sln --configuration Release --no-build
+        run: dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 
       - name: Restore local tools
         run: dotnet tool restore

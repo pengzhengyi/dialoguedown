@@ -29,7 +29,7 @@ Clone the repository and run:
 ```bash
 dotnet restore DialogueDown.sln
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 ```
 
 To collect coverage focused on production source code:
@@ -123,7 +123,7 @@ Before opening a pull request:
 
 - [ ] Add or update tests for behavior changes.
 - [ ] Update documentation for public API or script-language changes.
-- [ ] Run `dotnet test DialogueDown.sln`.
+- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build -m:3`.
 - [ ] Run source-focused coverage when changing tested behavior.
 - [ ] If you changed the visualization frontend (`web/`), rebuild and commit `web/dist/report.html` (CI auto-commits it if you forget).
 - [ ] Keep the pull request focused on one topic.

@@ -42,6 +42,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Faster .NET test feedback for contributors and CI** — normal full-solution test runs now
+  execute test projects with three MSBuild workers, reducing the measured warm local median by
+  28.8%. Builds and coverage remain unchanged because parallelizing either did not improve their
+  measurements.
 - **One place to edit — the Source tab.** The graph tabs' node-details panel is now read-only
   on every tab, matching the Semantic Model tab, and **Jump to source** takes you to the node's
   text with its span selected. Editing a node in the side panel is gone: it duplicated the

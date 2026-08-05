@@ -30,9 +30,9 @@
     },
     {
       "label": "test",
-      "detail": ".NET: run the test suite.",
+      "detail": ".NET: run the test projects with three MSBuild workers.",
       "type": "shell",
-      "command": "dotnet test DialogueDown.sln --configuration Release --no-build",
+      "command": "dotnet test DialogueDown.sln --configuration Release --no-build -m:3",
       "group": {
         "kind": "test",
         "isDefault": true
