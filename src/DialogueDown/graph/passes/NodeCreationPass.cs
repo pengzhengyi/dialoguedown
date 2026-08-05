@@ -4,14 +4,15 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Creates one node draft per script block in document order, then adds the terminal End node.
+/// Creates one node draft per script block in document order — including the blocks nested in a
+/// choice option's body — then adds the terminal End node.
 /// A later pass wires the edges between them.
 /// </summary>
 internal sealed class NodeCreationPass : GraphBuildPass
 {
     protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
     {
-        foreach (var block in context.Blocks)
+        foreach (var block in context.AllBlocks)
         {
             AddNode(draft, context, block);
         }
@@ -27,6 +28,9 @@ internal sealed class NodeCreationPass : GraphBuildPass
             case Line line:
                 var speaker = context.ResolveSpeaker(SpeakerOf(line));
                 draft.AddBlock(line, id => new LineNodeDraft(id, speaker, line.Speech));
+                break;
+            case Choices choices:
+                draft.AddBlock(choices, id => new ChoiceNodeDraft(id));
                 break;
             case ControlLine control:
                 draft.AddBlock(control, id => new ControlNodeDraft(id, [.. control.Effects.OfType<GameCall>()]));

@@ -62,10 +62,11 @@ public sealed class NodeCreationPassTests
 
     [Fact]
     public void Apply_BlockKindNotYetLowered_Throws() =>
-        // A choice group is not lowered to a node yet.
+        // A random choice is not lowered to a node yet.
         Assert.Throws<NotSupportedException>(() => Build("""
-            - [Left](#left)
-            - [Right](#right)
+            - `80%` Alice: Heads.
+
+            - `20%` Alice: Tails.
             """));
 
     [Fact]

@@ -1,34 +1,23 @@
 using DialogueDown.Graph.Builder;
-using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Wires the default flow: within a sequence of blocks each one falls through to the next, and the
-/// last falls through to the sequence's <b>continuation</b> — where control resumes once the
-/// sequence is exhausted. The document is one sequence continuing to the End node. Runs after
-/// diverts, so a node that already leaves unconditionally is left to terminate rather than also
-/// falling through.
+/// Wires the default flow: each block falls through to the node control reaches once it is done —
+/// the next block in its sequence, or that sequence's continuation. Runs after the passes that add
+/// diverts and options, so a node control already leaves is not also given a fall-through.
 /// </summary>
 internal sealed class SuccessionPass : GraphBuildPass
 {
-    protected override void ApplyCore(GraphDraft draft, GraphBuildContext context) =>
-        Chain(context.Blocks, draft.End, draft);
-
-    private static void Chain(IReadOnlyList<ScriptBlock> sequence, NodeId continuation, GraphDraft draft)
+    protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
     {
-        for (var position = 0; position < sequence.Count; position++)
+        foreach (var (block, next) in BlockSequence.WithSuccessors(context.Blocks, draft.End, draft))
         {
-            var source = draft.IdOf(sequence[position]);
-            if (draft.Node(source).Out.LeavesUnconditionally())
+            var source = draft.IdOf(block);
+            if (!draft.Node(source).Out.LeavesUnconditionally())
             {
-                continue;
+                draft.AddEdge(source, new Succession(next));
             }
-
-            var next = position + 1 < sequence.Count
-                ? draft.IdOf(sequence[position + 1])
-                : continuation;
-            draft.AddEdge(source, new Succession(next));
         }
     }
 }

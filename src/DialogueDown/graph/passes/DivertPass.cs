@@ -14,7 +14,7 @@ internal sealed class DivertPass : GraphBuildPass
 {
     protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
     {
-        foreach (var block in context.Blocks)
+        foreach (var block in context.AllBlocks)
         {
             foreach (var jump in Jumps(block))
             {

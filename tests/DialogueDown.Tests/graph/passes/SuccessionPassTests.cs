@@ -71,8 +71,59 @@ public sealed class SuccessionPassTests
             edge => AssertSuccession(edge, graph.Nodes[1].Id));
     }
 
-    // Node creation assigns the ids and adds the End; diverts run before succession, which skips
-    // a node that already leaves unconditionally.
+    [Fact]
+    public void Apply_ChoiceOptionBodies_WeaveBackToWhatFollowsTheChoice()
+    {
+        var graph = Build("""
+            Guide: Which way?
+
+            - Alice: Left.
+
+            - Alice: Right.
+
+            Guide: Onward.
+            """);
+
+        // 0 question, 1 choice, 2 left, 3 right, 4 onward.
+        var onward = graph.Nodes[4].Id;
+        AssertOnlySuccession(graph.Nodes[0], graph.Nodes[1].Id);
+        Assert.Empty(graph.Nodes[1].Out.OfType<Succession>());
+        AssertOnlySuccession(graph.Nodes[2], onward);
+        AssertOnlySuccession(graph.Nodes[3], onward);
+        AssertOnlySuccession(graph.Nodes[4], graph.End);
+    }
+
+    [Fact]
+    public void Apply_AChoiceEndingTheDocument_WeavesItsOptionsBackToEnd()
+    {
+        var graph = Build("""
+            - Alice: Left.
+
+            - Alice: Right.
+            """);
+
+        AssertOnlySuccession(graph.Nodes[1], graph.End);
+        AssertOnlySuccession(graph.Nodes[2], graph.End);
+    }
+
+    [Fact]
+    public void Apply_ABodyWithSeveralBlocks_ChainsInternallyThenWeavesBack()
+    {
+        var graph = Build("""
+            - Alice: Left.
+
+              Alice: And onward.
+
+            Guide: After.
+            """);
+
+        // 0 choice, 1 first body block, 2 second body block, 3 after.
+        AssertOnlySuccession(graph.Nodes[1], graph.Nodes[2].Id);
+        AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
+    }
+
+    // Node creation assigns the ids and adds the End; diverts and choices run before succession,
+    // which skips a node that already leaves unconditionally.
     private DialogueGraph Build(string source) =>
-        GraphPasses.Build(source, new NodeCreationPass(), new DivertPass(), _pass);
+        GraphPasses.Build(source, new NodeCreationPass(), new DivertPass(), new ChoicePass(), _pass);
 }

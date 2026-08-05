@@ -20,6 +20,7 @@ internal sealed class GraphBuildContext
         Semantics = semantics;
         Diagnostics = diagnostics;
         Blocks = semantics.SceneRoot.DocumentOrder();
+        AllBlocks = [.. Blocks.SelectMany(block => block.DescendantsAndSelf().OfType<ScriptBlock>())];
         _entryBlockByScene = semantics.SceneRoot.EntryBlocks();
     }
 
@@ -31,6 +32,12 @@ internal sealed class GraphBuildContext
 
     /// <summary>The script blocks in document order, computed once for this graph build.</summary>
     public IReadOnlyList<ScriptBlock> Blocks { get; }
+
+    /// <summary>
+    /// Every block in document order, including those nested inside a choice option's body —
+    /// each one becomes a node, whereas <see cref="Blocks"/> is the document's own sequence.
+    /// </summary>
+    public IReadOnlyList<ScriptBlock> AllBlocks { get; }
 
     /// <summary>Resolves a line's speaker prefix to its resolved symbol.</summary>
     public SpeakerSymbol ResolveSpeaker(Speaker speaker) => Semantics.Speakers.Resolve(speaker);
