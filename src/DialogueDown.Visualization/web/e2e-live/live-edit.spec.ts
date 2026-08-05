@@ -579,3 +579,10 @@ test("Tab inserts spaces mid-line instead of indenting the whole line", async ({
     expect(insertedMidLine).toBe(true);
     await expect(editor).toBeFocused();
 });
+
+test("keeps the line debugger UI dormant in ordinary served reports", async ({ page }) => {
+    await page.goto(`${base}/`);
+    await expect(page.locator(".dd-debug-toolbar")).toHaveCount(0);
+    await expect(page.locator(".dd-debug-breakpoint-gutter")).toHaveCount(0);
+    await expect(page.locator(".dd-debug-execution-gutter")).toHaveCount(0);
+});

@@ -36,6 +36,12 @@
     --tok-dynamic-weight: #267f99;
     --tok-command: #795e26;
 
+    /* Dormant line-debugger UI: red breakpoint requests and an amber paused-location marker.
+       The paused line is distinct from CodeMirror's neutral cursor-active line below. */
+    --debug-breakpoint: #cf222e;
+    --debug-current: #9a6700;
+    --debug-current-bg: rgb(210 153 34 / 18%);
+
     /* Cross-link highlight: hovering a scene or speaker in the Semantic tab lights up
        every place it appears (graph node, table rows/cells). An amber "highlighter"
        tint reads on both themes and stays clear of the category colors. */
@@ -105,6 +111,9 @@
         --tok-static-weight: #b5cea8;
         --tok-dynamic-weight: #4ec9b0;
         --tok-command: #dcdcaa;
+        --debug-breakpoint: #ff7b72;
+        --debug-current: #e3b341;
+        --debug-current-bg: rgb(227 179 65 / 18%);
         --table-mark-bg: #b0892b;
         --table-mark-fg: #f8fafc;
     }
@@ -135,6 +144,9 @@
     --tok-static-weight: #b5cea8;
     --tok-dynamic-weight: #4ec9b0;
     --tok-command: #dcdcaa;
+    --debug-breakpoint: #ff7b72;
+    --debug-current: #e3b341;
+    --debug-current-bg: rgb(227 179 65 / 18%);
     --table-mark-bg: #b0892b;
     --table-mark-fg: #f8fafc;
 }
@@ -1293,7 +1305,9 @@ g.node.entity-highlight text.label {
     flex: 0 0 var(--source-split, 50%);
     min-width: 0;
     overflow: hidden;
+    position: relative;
     display: flex;
+    flex-direction: column;
 }
 
 .source-view.preview-collapsed .source-pane {
@@ -1305,9 +1319,150 @@ g.node.entity-highlight text.label {
 .source-pane .cm-editor {
     flex: 1 1 auto;
     min-width: 0;
+    min-height: 0;
     height: 100%;
     background: transparent;
     font-size: 0.82rem;
+}
+
+/* Dormant line-debugger UI: a detached, draggable palette over CodeMirror. The controls are
+   icon-only (Tippy carries their labels), and the explicit foreground avoids Pico's inverse
+   button text on the light panel. */
+.dd-debug-toolbar {
+    position: absolute;
+    z-index: 8;
+    top: 0.55rem;
+    right: 0.7rem;
+    max-width: calc(100% - 1.4rem);
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: calc(var(--pico-border-radius) * 1.25);
+    background: color-mix(in srgb, var(--pico-background-color) 92%, var(--mode-accent));
+    color: var(--pico-color);
+    box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 16%);
+    font-size: 0.72rem;
+}
+
+.dd-debug-toolbar.dd-debug-dragging {
+    box-shadow: 0 0.55rem 1.35rem rgb(0 0 0 / 24%);
+}
+
+.dd-debug-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.2rem 0.35rem;
+}
+
+.dd-debug-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.dd-debug-control-wrap {
+    display: inline-flex;
+}
+
+.dd-debug-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: inherit;
+    line-height: 1.2;
+}
+
+.dd-debug-path {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+    width: auto;
+    margin: 0;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: inherit;
+    line-height: 1.2;
+}
+
+.dd-debug-control:hover:not(:disabled),
+.dd-debug-control:focus-visible,
+.dd-debug-path:hover,
+.dd-debug-path:focus-visible {
+    border-color: var(--mode-accent);
+    background: color-mix(in srgb, var(--mode-accent) 12%, transparent);
+}
+
+.dd-debug-control:disabled {
+    opacity: 0.38;
+}
+
+.dd-debug-control-icon {
+    color: var(--mode-accent);
+    font-size: 0.9rem;
+}
+
+.dd-debug-drag-handle {
+    color: var(--pico-muted-color);
+    cursor: grab;
+}
+
+.dd-debug-drag-handle:active {
+    cursor: grabbing;
+}
+
+.dd-debug-status {
+    flex: 1 1 6rem;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pico-muted-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dd-debug-label {
+    margin-left: auto;
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 999px;
+    color: var(--pico-muted-color);
+    font-size: 0.65rem;
+    white-space: nowrap;
+}
+
+.dd-debug-paths {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    align-items: center;
+    padding: 0.3rem 0.45rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.dd-debug-paths[hidden] {
+    display: none;
+}
+
+.dd-debug-paths strong {
+    margin-right: 0.15rem;
+    color: var(--pico-muted-color);
+    font-weight: 600;
 }
 
 .source-pane .cm-editor.cm-focused {
@@ -1322,6 +1477,72 @@ g.node.entity-highlight text.label {
     background: transparent;
     border-right: 1px solid var(--pico-muted-border-color);
     color: var(--pico-muted-color);
+}
+
+/* Two independent debug lanes precede the line numbers: breakpoints stay visible when the
+   execution arrow stops on the same line. */
+.source-pane :is(.dd-debug-breakpoint-gutter, .dd-debug-execution-gutter) .cm-gutterElement {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 11px;
+    padding: 0;
+}
+
+.source-pane .dd-debug-breakpoint-gutter .cm-gutterElement {
+    cursor: pointer;
+}
+
+.source-pane
+    .dd-debug-breakpoint-gutter
+    .cm-gutterElement:not(.cm-gutterElement-spacer, :has(.dd-debug-breakpoint))::after {
+    box-sizing: border-box;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--debug-breakpoint);
+    border-radius: 50%;
+    opacity: 0;
+    content: "";
+}
+
+.source-pane
+    .dd-debug-breakpoint-gutter
+    .cm-gutterElement:not(.cm-gutterElement-spacer):hover::after {
+    opacity: 0.38;
+}
+
+.dd-debug-breakpoint {
+    display: block;
+    box-sizing: border-box;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--debug-breakpoint);
+    border-radius: 50%;
+}
+
+.dd-debug-breakpoint-verified {
+    background: var(--debug-breakpoint);
+}
+
+.dd-debug-breakpoint-unverified {
+    background: transparent;
+}
+
+.dd-debug-current-arrow {
+    display: block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid var(--debug-current);
+    filter: drop-shadow(0 0 1px rgb(0 0 0 / 35%));
+}
+
+.dd-debug-execution-spacer {
+    display: block;
+    width: 8px;
+    height: 10px;
 }
 
 .source-pane .cm-content {
@@ -1369,6 +1590,11 @@ g.node.entity-highlight text.label {
 :is(.source-pane, .config-source) .cm-activeLine,
 :is(.source-pane, .config-source) .cm-activeLineGutter {
     background: rgb(128 128 128 / 10%);
+}
+
+.source-pane .dd-debug-current-line {
+    background: var(--debug-current-bg);
+    box-shadow: inset 3px 0 0 var(--debug-current);
 }
 
 :is(.source-pane, .config-source) .cm-selectionMatch {

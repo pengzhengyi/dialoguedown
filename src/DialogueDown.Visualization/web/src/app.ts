@@ -27,6 +27,7 @@ import { escapeHtml } from "./text";
 
 const JUMP_AWARE_STAGE_TITLES = new Set(["Dialogue AST", "Desugared AST", "Semantic Model"]);
 import { setHelp } from "./help";
+import type { DebugController } from "./debug-controller";
 
 // The Source tab shows the compiler input, not a projected stage, so its hover
 // tip is a constant here rather than a field on the model.
@@ -113,7 +114,14 @@ export interface AppController {
  * Build the tabs — an optional Source tab followed by one per stage — wire the
  * shared interactions, and return a controller for live updates.
  */
-export function runApp(report: Report, source?: SourceOptions): AppController {
+export function runApp(
+    report: Report,
+    source?: SourceOptions,
+    debug?: DebugController,
+): AppController {
+    // TODO(runtime-debugger, #45): Inject a server-backed DebugController here once the
+    // dialogue graph and runtime can publish source-mapped execution snapshots. Until then,
+    // production callers omit it and the debugger UI remains completely dormant.
     const tabsEl = document.getElementById("tabs")!;
     const stagesEl = document.getElementById("stages")!;
     const appEl = document.getElementById("app")!;
@@ -270,6 +278,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
+                ...(debug ? { debug } : {}),
             });
             sourceHandle.setDiagnostics(report.diagnostics ?? []);
             sourceHandle.setSemanticTokens(report.semanticTokens ?? []);
