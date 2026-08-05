@@ -126,3 +126,23 @@ test.describe("Config tab — no config file", () => {
         await expect(page.locator("#config-path")).toContainText("No config file");
     });
 });
+
+test("Zen mode leaves the TOML editor alone, and restores the speakers on exit", async ({
+    page,
+}) => {
+    await page.goto(writeReport(configured));
+    await page.locator(".tab", { hasText: "Config" }).click();
+
+    const speakers = page.locator(".config-view .config-side");
+    const editor = page.locator(".config-source .cm-editor");
+    await expect(speakers).toBeVisible();
+
+    await page.keyboard.press("z");
+
+    await expect(page.locator("body")).toHaveClass(/zen/);
+    await expect(speakers).toBeHidden();
+    await expect(editor).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(speakers).toBeVisible();
+});
