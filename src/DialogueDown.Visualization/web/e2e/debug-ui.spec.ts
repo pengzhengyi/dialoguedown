@@ -67,4 +67,25 @@ test("renders the dormant debugger UI through a test-only browser harness", asyn
             );
         })
         .toBe(true);
+
+    // The Source splitter allows a 20% pane. Every debugger action must wrap into view rather
+    // than being clipped by the floating panel's capped width.
+    await page.setViewportSize({ width: 900, height: 500 });
+    await page.locator(".source-view").evaluate((element) => {
+        (element as HTMLElement).style.setProperty("--source-split", "20%");
+    });
+    const pane = await page.locator(".source-pane").boundingBox();
+    if (!pane) throw new Error("Could not locate the narrow Source pane.");
+    for (const name of [
+        "Toggle breakpoint at cursor",
+        "Start debugging",
+        "Continue",
+        "Step over",
+        "Stop debugging",
+    ]) {
+        const control = await toolbar.getByRole("button", { name }).boundingBox();
+        expect(control).not.toBeNull();
+        expect(control!.x).toBeGreaterThanOrEqual(pane.x);
+        expect(control!.x + control!.width).toBeLessThanOrEqual(pane.x + pane.width);
+    }
 });

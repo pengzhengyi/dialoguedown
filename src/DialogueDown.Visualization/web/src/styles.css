@@ -1349,6 +1349,7 @@ g.node.entity-highlight text.label {
 
 .dd-debug-toolbar-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.35rem;
     align-items: center;
     min-height: 2rem;
@@ -1357,8 +1358,10 @@ g.node.entity-highlight text.label {
 
 .dd-debug-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.15rem;
     align-items: center;
+    min-width: 0;
 }
 
 .dd-debug-control-wrap {
@@ -1425,6 +1428,8 @@ g.node.entity-highlight text.label {
 }
 
 .dd-debug-status {
+    flex: 1 1 6rem;
+    min-width: 0;
     overflow: hidden;
     color: var(--pico-muted-color);
     text-overflow: ellipsis;

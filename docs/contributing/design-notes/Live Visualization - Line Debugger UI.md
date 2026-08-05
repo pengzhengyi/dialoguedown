@@ -97,6 +97,7 @@ flowchart LR
 - [x] Show path choices inline and restore keyboard focus after a choice.
 - [x] Let the palette drag within the Source pane and re-clamp after preview, maximize,
   window-size, or palette-size changes.
+- [x] Wrap palette controls so every action remains visible at the minimum 20% Source split.
 - [x] Release CodeMirror, tooltip, observer, drag, media, and document listeners on teardown.
 - [x] Keep fake execution code under test support and out of the production bundle.
 - [x] Guard production dormancy with source- and bundle-level infrastructure tests.
@@ -213,7 +214,8 @@ controls explainable while native button disabling still prevents activation.
 A grab handle moves the palette. Its explicit position is clamped within the Source pane and
 rechecked through `ResizeObserver` and window resize events. Preview show/hide,
 maximize/restore, window resizing, and path-row expansion cannot leave it clipped outside the
-editor. Position persistence is deferred.
+editor. The icon group and status row wrap at narrow widths, so the Source splitter's valid
+20% minimum never clips Step Over or Stop. Position persistence is deferred.
 
 ### D6 — Preserve editor intent and lifecycle safety
 
@@ -241,6 +243,7 @@ subscriptions.
 | Whole source buffer is replaced | Requested line numbers remain until the controller rebinds. |
 | Path choices replace the activated button | Focus moves to the next enabled debugger control. |
 | Source pane shrinks or palette grows | Palette re-clamps within the new bounds. |
+| Source pane reaches its 20% minimum | Palette rows wrap; every debugger action remains visible. |
 | Source view is destroyed during drag | Document listeners and body selection state are cleaned up. |
 
 ## Integration seam
