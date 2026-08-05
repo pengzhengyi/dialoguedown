@@ -2,8 +2,8 @@ using DialogueDown.Graph.Nodes;
 
 namespace DialogueDown.Graph.Builder;
 
-/// <summary>A branch point under construction; its option edges are added by a graph pass.</summary>
-internal sealed class ChoiceNodeDraft(NodeId id) : NodeDraft(id)
+/// <summary>A player branch under construction; its option edges are added by a graph pass.</summary>
+internal sealed class ChoiceNodeDraft(NodeId id, bool isOrdered) : NodeDraft(id)
 {
-    protected override DialogueNode CreateNode() => new ChoiceNode(Id, Out.ToArray());
+    protected override DialogueNode CreateNode() => new ChoiceNode(Id, isOrdered, Out.ToArray());
 }

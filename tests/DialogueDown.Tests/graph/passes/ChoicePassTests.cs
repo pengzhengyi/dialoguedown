@@ -2,6 +2,7 @@ using DialogueDown.Graph;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Passes;
+using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.GraphAssert;
 
@@ -59,6 +60,21 @@ public sealed class ChoicePassTests
     }
 
     [Fact]
+    public void Apply_ARandomChoice_CarriesEachArmsWeight()
+    {
+        var graph = Build("""
+            - `80%` Alice: Heads.
+
+            - `20%` Alice: Tails.
+            """);
+
+        Assert.Collection(
+            graph.Nodes[0].Out,
+            edge => Assert.Equal(80, AssertNumberWeight(edge)),
+            edge => Assert.Equal(20, AssertNumberWeight(edge)));
+    }
+
+    [Fact]
     public void Apply_GuardedOption_Throws() =>
         // Whether the option is offered at all is not something the edge can carry yet.
         Assert.Throws<NotSupportedException>(() => Build("""
@@ -66,6 +82,9 @@ public sealed class ChoicePassTests
 
             - Alice: Knock instead.
             """));
+
+    private static double AssertNumberWeight(Edge edge) =>
+        Assert.IsType<NumberWeight>(Assert.IsType<RandomOptionEdge>(edge).Weight).Percentage;
 
     // Node creation assigns the ids the option edges point at.
     private DialogueGraph Build(string source) =>

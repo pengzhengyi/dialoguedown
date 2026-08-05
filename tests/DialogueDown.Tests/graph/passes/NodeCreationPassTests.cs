@@ -62,12 +62,42 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
-    public void Apply_BlockKindNotYetLowered_Throws() =>
-        // A random choice is not lowered to a node yet.
-        Assert.Throws<NotSupportedException>(() => Build("""
+    public void Apply_AnOrderedChoiceList_KeepsThatTheOptionsMustBeOfferedInOrder()
+    {
+        var ordered = Assert.IsType<ChoiceNode>(Build("""
+            1. Alice: First.
+
+            2. Alice: Second.
+            """).Nodes[0]);
+        var unordered = Assert.IsType<ChoiceNode>(Build("""
+            - Alice: One.
+
+            - Alice: Other.
+            """).Nodes[0]);
+
+        Assert.True(ordered.IsOrdered);
+        Assert.False(unordered.IsOrdered);
+    }
+
+    [Fact]
+    public void Apply_ARandomChoice_CreatesAnEngineResolvedBranch()
+    {
+        var graph = Build("""
             - `80%` Alice: Heads.
 
             - `20%` Alice: Tails.
+            """);
+
+        Assert.IsType<RandomChoiceNode>(graph.Nodes[0]);
+    }
+
+    [Fact]
+    public void Apply_BlockKindNotYetLowered_Throws() =>
+        // A block control is not lowered to a node yet.
+        Assert.Throws<NotSupportedException>(() => Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
             """));
 
     [Fact]

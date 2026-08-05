@@ -5,9 +5,10 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Fans a choice group out into its options: one option edge per arm, leading to the first node of
-/// that arm's body. Runs after node creation, and before succession — which then leaves the choice
-/// without a fall-through, since taking an option is how control leaves it.
+/// Fans a choice group out into its arms: one edge per arm, leading to the first node of that arm's
+/// body. A player choice emits plain option edges; a random choice emits weighted ones, since the
+/// engine resolves the pick from the weight. Runs after node creation, and before succession —
+/// which then leaves the choice without a fall-through, since taking an arm is how control leaves it.
 /// </summary>
 internal sealed class ChoicePass : GraphBuildPass
 {
@@ -27,21 +28,33 @@ internal sealed class ChoicePass : GraphBuildPass
     {
         AssertNoGuardedOption(group);
         var choice = draft.IdOf(group);
-        foreach (var body in group.OptionBodies())
+        foreach (var edge in ArmEdges(group, continuation, draft))
         {
-            var target = EntryOf(body, continuation, draft);
-            var option = new OptionEdge(target);
-            draft.AddEdge(choice, option);
+            draft.AddEdge(choice, edge);
         }
     }
 
-    // An option with no content of its own plays nothing, so picking it resumes right where the
-    // choice itself would have continued.
+    // The two group kinds lead to their arms differently, so each builds the edge that carries what
+    // its runtime needs.
+    private static IEnumerable<Edge> ArmEdges(
+        ChoiceGroup group, NodeId continuation, GraphDraft draft) => group switch
+    {
+        Choices choices => choices.Options
+            .Select(option => (Edge)new OptionEdge(EntryOf(option.Body, continuation, draft))),
+        RandomChoices random => random.Options
+            .Select(option => (Edge)new RandomOptionEdge(
+                EntryOf(option.Body, continuation, draft), option.Weight)),
+        _ => throw new NotSupportedException(
+            $"The dialogue graph builder does not yet lower {group.GetType().Name} groups."),
+    };
+
+    // An arm with no content of its own plays nothing, so taking it resumes right where the choice
+    // itself would have continued.
     private static NodeId EntryOf(
         IReadOnlyList<ScriptBlock> body, NodeId continuation, GraphDraft draft) =>
         body.Count > 0 ? draft.IdOf(body[0]) : continuation;
 
-    // A guard decides whether an option is offered at all, which the option edge cannot yet carry.
+    // A guard decides whether an arm is offered at all, which the edges cannot yet carry.
     private static void AssertNoGuardedOption(ChoiceGroup group)
     {
         if (group.HasGuardedOption())

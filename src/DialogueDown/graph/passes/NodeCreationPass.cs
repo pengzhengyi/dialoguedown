@@ -30,7 +30,10 @@ internal sealed class NodeCreationPass : GraphBuildPass
                 draft.AddBlock(line, id => new LineNodeDraft(id, speaker, line.Speech));
                 break;
             case Choices choices:
-                draft.AddBlock(choices, id => new ChoiceNodeDraft(id));
+                draft.AddBlock(choices, id => new ChoiceNodeDraft(id, choices.IsOrdered));
+                break;
+            case RandomChoices random:
+                draft.AddBlock(random, id => new RandomChoiceNodeDraft(id));
                 break;
             case ControlLine control:
                 draft.AddBlock(control, id => new ControlNodeDraft(id, [.. control.Effects.OfType<GameCall>()]));
