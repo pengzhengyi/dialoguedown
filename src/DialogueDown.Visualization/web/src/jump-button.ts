@@ -1,7 +1,6 @@
 import tippy from "tippy.js";
 import { codicon } from "./codicon";
-import type { DisplayNode } from "./model";
-import type { Span } from "./span-splice";
+import type { DisplayNode, Span } from "./model";
 
 /**
  * A reusable **Jump to source** icon button for a node-details panel. It sits beside the node

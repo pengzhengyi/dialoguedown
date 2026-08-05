@@ -32,4 +32,19 @@ internal enum TokenKind
 
     /// <summary>A block-control keyword code span: <c>`if`</c>, <c>`elseif`</c>, or <c>`else`</c>.</summary>
     ControlKeyword,
+
+    /// <summary>A game-state value query code span, such as <c>`"playerName"`</c>.</summary>
+    Query,
+
+    /// <summary>A boolean condition code span, such as <c>`Rainy?`</c>.</summary>
+    Condition,
+
+    /// <summary>A fixed or automatic random-choice weight, such as <c>`60%`</c> or <c>`%`</c>.</summary>
+    StaticWeight,
+
+    /// <summary>A game-state-backed random-choice weight, such as <c>`Luck%`</c>.</summary>
+    DynamicWeight,
+
+    /// <summary>A default or named command code span, such as <c>`playSound("wind")`</c>.</summary>
+    Command,
 }

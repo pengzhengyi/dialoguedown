@@ -34,6 +34,11 @@ describe("decoratedRanges", () => {
             "JumpIndicator",
             "ReservedAnchor",
             "ControlKeyword",
+            "Query",
+            "Condition",
+            "StaticWeight",
+            "DynamicWeight",
+            "Command",
         ];
 
         const classes = kinds.map(
@@ -49,6 +54,11 @@ describe("decoratedRanges", () => {
             "dd-tok-jump",
             "dd-tok-reserved-anchor",
             "dd-tok-control-keyword",
+            "dd-tok-query",
+            "dd-tok-condition",
+            "dd-tok-static-weight",
+            "dd-tok-dynamic-weight",
+            "dd-tok-command",
         ]);
     });
 

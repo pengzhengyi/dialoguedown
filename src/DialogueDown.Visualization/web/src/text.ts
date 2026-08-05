@@ -75,14 +75,37 @@ export function renderMarkdown(source: string): string {
 }
 
 /**
+ * Render a node snippet. Once a stage has Dialogue semantics, linked jump syntax is known and
+ * may receive the preview-only ligature even when the selected node is a parent Line/Document.
+ */
+export function renderNodePreview(source: string, label: string, recognizeJumps = false): string {
+    const html = renderMarkdown(source);
+    if (!recognizeJumps) return html;
+    if (label === "Jump indicator") {
+        return html.replace(/=&gt;/, jumpLigatureHtml);
+    }
+    return decorateJumpIndicators(html);
+}
+
+/**
  * Like {@link renderMarkdown}, but adds GitHub-style heading ids so in-document
  * anchor links work. Use for the whole-document Source preview.
  */
 export function renderDocument(source: string): string {
-    return renderFrontMatterAnd(
-        source,
-        (body) => documentMarked.parse(body, { async: false, breaks: false }) as string,
+    return renderFrontMatterAnd(source, (body) =>
+        decorateJumpIndicators(
+            documentMarked.parse(body, { async: false, breaks: false }) as string,
+        ),
     );
+}
+
+// The Source preview is presentation, not another parser: marked has already proved the
+// following HTML is a link. Wrap only an escaped `=>` immediately before that rendered link,
+// leaving prose arrows, code spans, and the Source editor's underlying characters untouched.
+const jumpLigatureHtml = '<span class="jump-ligature">=&gt;</span>';
+
+function decorateJumpIndicators(html: string): string {
+    return html.replace(/=&gt;(?=[ \t]*<a\b)/g, jumpLigatureHtml);
 }
 
 function renderFrontMatterAnd(source: string, parseBody: (body: string) => string): string {

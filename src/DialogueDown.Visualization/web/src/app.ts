@@ -9,7 +9,7 @@ import type {
     DisplayNode,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
-import { createTreeView, type TreeView, type NodeSelectOptions } from "./tree-view";
+import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
 import { GraphCameraStore } from "./graph-camera";
 import { createSourceView, type SourceViewHandle } from "./source-view";
@@ -24,7 +24,10 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
 import { escapeHtml } from "./text";
+
+const JUMP_AWARE_STAGE_TITLES = new Set(["Dialogue AST", "Desugared AST", "Semantic Model"]);
 import { setHelp } from "./help";
+import type { DebugController } from "./debug-controller";
 
 // The Source tab shows the compiler input, not a projected stage, so its hover
 // tip is a constant here rather than a field on the model.
@@ -111,7 +114,14 @@ export interface AppController {
  * Build the tabs — an optional Source tab followed by one per stage — wire the
  * shared interactions, and return a controller for live updates.
  */
-export function runApp(report: Report, source?: SourceOptions): AppController {
+export function runApp(
+    report: Report,
+    source?: SourceOptions,
+    debug?: DebugController,
+): AppController {
+    // TODO(runtime-debugger, #45): Inject a server-backed DebugController here once the
+    // dialogue graph and runtime can publish source-mapped execution snapshots. Until then,
+    // production callers omit it and the debugger UI remains completely dormant.
     const tabsEl = document.getElementById("tabs")!;
     const stagesEl = document.getElementById("stages")!;
     const appEl = document.getElementById("app")!;
@@ -123,27 +133,14 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     let configHandle: ConfigViewHandle | null = null;
     let sourceTab: Element | null = null;
     let configTab: Element | null = null;
-    // The current View/Edit state, so the inspector knows whether a node is editable.
-    let editable = source?.editable ?? false;
 
-    // The inspector edits a node by splicing its new text into the current document and
-    // pushing that whole document back through the Source editor (so one buffer and one Save
-    // stay authoritative). Only wired for a served session.
-    const panel = createDetailPanel({
-        ...(source
-            ? {
-                  edit: {
-                      isEditable: () => editable,
-                      getDocument: () => sourceHandle?.getContent() ?? "",
-                      onNodeEdit: (nextDocument) => sourceHandle?.setContent(nextDocument),
-                      ...(source.symbols ? { symbols: source.symbols } : {}),
-                  },
-              }
-            : {}),
+    // The node inspector is read-only: editing lives solely in the Source tab, and the panel's
+    // "Jump to source" takes the reader there with the node's span selected.
+    const panel = createDetailPanel(
         // A "Jump to source" is offered whenever there is a Source tab to land in — served or a
         // static export — since a read-only editor is still selectable.
-        ...(report.source != null ? { jumpToSource } : {}),
-    });
+        report.source != null ? { jumpToSource } : {},
+    );
 
     // Jump from a selected graph node to its source in the Source tab: switch tabs (through the
     // save-safe navigation guard, so an Auto save flushes or a Manual prompt resolves first), then
@@ -178,9 +175,9 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     // Record the shown node's stable id, then drive the shared inspector. Wrapping `panel.show`
     // (rather than calling it directly) is what lets `updateStages` reselect the same node after
     // a rebuild, keeping the inspector editor open and rebound to the node's current source.
-    function showNode(node: DisplayNode): void {
+    function showNode(node: DisplayNode, recognizeJumps: boolean): void {
         selectedNodeId = node.id;
-        panel.show(node);
+        panel.show(node, { recognizeJumps });
     }
 
     // The whole-window maximize mode (graphs and the source split) — one page-level action,
@@ -226,9 +223,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     return {
         updateStages,
         setEditable: (next) => {
-            editable = next;
             sourceHandle?.setEditable(next);
-            panel.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
         setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
@@ -283,6 +278,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
+                ...(debug ? { debug } : {}),
             });
             sourceHandle.setDiagnostics(report.diagnostics ?? []);
             sourceHandle.setSemanticTokens(report.semanticTokens ?? []);
@@ -313,22 +309,6 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
     function firstAvailableIndex(): number {
         for (let i = 0; i < tabsEl.children.length; i++) if (!isTabDisabled(i)) return i;
         return 0;
-    }
-
-    // Route a node selection through the app's navigation boundary, then re-select the node by its
-    // stable id against the now-active view. The Auto flush that navigation awaits can save and
-    // rebuild the graph tabs, replacing the view the click came from; resolving by id against the
-    // freshly installed view (and cancelling safely when the id is gone) keeps the selection off
-    // the stale, detached node and its stale source spans.
-    function deferNodeSelect(id: string, options: NodeSelectOptions, selectHere: () => void): void {
-        const begin = source?.beginNavigation;
-        if (!begin) {
-            selectHere();
-            return;
-        }
-        begin(() => {
-            views[activeIndex]?.selectById(id, options);
-        });
     }
 
     // Replace only the graph tabs (on a Live Edit save), leaving the Source tab and its
@@ -374,6 +354,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
         // It is still a graph stage, so it reuses the tree view (camera memory, fold, full
         // screen) — only the surrounding layout differs.
         const isSemantic = stage.tables != null;
+        const recognizeJumps = JUMP_AWARE_STAGE_TITLES.has(stage.title);
         if (isSemantic) section.classList.add("semantic-stage");
         let view: TreeView | null = null;
         try {
@@ -386,17 +367,14 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                         : cameras.noteCamera(transform),
                 onFoldChange: (collapsed: string[]) => cameras.setFold(stage.title, collapsed),
                 onRevert: () => cameras.reset(stage.title),
-                // Selecting another node is navigation: route it through the async guard, then
-                // resolve the node by id against the active view (a save-triggered rebuild may have
-                // replaced this one) so the deferred selection never lands on a stale node.
-                ...(source?.beginNavigation ? { onNodeSelect: deferNodeSelect } : {}),
             };
             if (isSemantic) {
                 const semantic = createSemanticView(
                     stage,
-                    showNode,
+                    (node) => showNode(node, recognizeJumps),
                     treeOptions,
                     report.source != null ? jumpToSource : undefined,
+                    recognizeJumps,
                 );
                 view = semantic.view;
                 section.appendChild(semantic.element);
@@ -404,7 +382,7 @@ export function runApp(report: Report, source?: SourceOptions): AppController {
                 // A stage shows its own pinned camera, else the shared current one it
                 // inherits, else the default framing; its fold is always its own. Reader
                 // adjustments are recorded live through the callbacks above.
-                view = createTreeView(stage, showNode, treeOptions);
+                view = createTreeView(stage, (node) => showNode(node, recognizeJumps), treeOptions);
                 section.appendChild(view.svg);
                 section.appendChild(view.legend);
                 section.appendChild(view.controls);

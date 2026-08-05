@@ -15,14 +15,9 @@ describe("createDetailPanel", () => {
         panel = createDetailPanel();
     });
 
-    const note = () => body.querySelector<HTMLElement>(".node-note");
-    const editor = () => body.querySelector(".node-source .cm-editor");
-
-    it("starts with a placeholder after clear", () => {
-        panel.clear();
-        expect(title.textContent).toBe("Node details");
-        expect(note()?.hidden).toBe(false);
-        expect(note()?.textContent).toContain("Click any node");
+    it("starts with a placeholder that points at the Source tab", () => {
+        expect(body.textContent).toContain("Click any node");
+        expect(body.textContent).toContain("Jump to source");
     });
 
     it("shows a category color dot and the escaped label", () => {
@@ -56,13 +51,13 @@ describe("createDetailPanel", () => {
                 { name: "text", value: "Scene" },
             ],
         });
-        const rows = body.querySelectorAll(".node-attributes table tr");
+        const rows = body.querySelectorAll("table tr");
         expect(rows).toHaveLength(2);
         expect(rows[0].querySelector("th")?.textContent).toBe("level");
         expect(rows[0].querySelector("td")?.textContent).toBe("2");
     });
 
-    it("mounts an editor showing the node's source when source is present", () => {
+    it("shows the node's source and a rendered preview, read-only", () => {
         panel.show({
             id: "n1",
             label: "Heading",
@@ -70,63 +65,48 @@ describe("createDetailPanel", () => {
             source: "# Scene",
             span: { start: 0, end: 7 },
         });
-        expect(editor()).not.toBeNull();
-        expect(body.querySelector(".node-source")?.textContent).toContain("# Scene");
-        expect(note()?.hidden).toBe(true);
+
+        expect(body.querySelector("pre code")?.textContent).toBe("# Scene");
+        expect(body.querySelector(".preview")?.innerHTML).toContain("<h1>Scene</h1>");
+        // Editing lives in the Source tab; the inspector never mounts an editor.
+        expect(body.querySelector(".cm-editor")).toBeNull();
     });
 
-    it("shows an inserted note (no editor) for a synthetic node with no source", () => {
+    it("escapes source so a node's text cannot inject markup", () => {
+        panel.show({ id: "n1", label: "Text", attributes: [], source: "<img onerror=x>" });
+        expect(body.querySelector("pre code")?.textContent).toBe("<img onerror=x>");
+        expect(body.querySelector("pre code img")).toBeNull();
+    });
+
+    it("notes that a synthetic node has no source of its own", () => {
         panel.show({ id: "n1", label: "Speaker (default)", attributes: [] });
-        expect(note()?.hidden).toBe(false);
-        expect(note()?.textContent).toContain("Inserted by the compiler");
-        expect(note()?.textContent).toContain("names no speaker");
-        // A static panel (no edit) has nothing to act on, so it offers no edit call to action.
-        expect(note()?.textContent).not.toContain("Edit the line");
+        expect(body.querySelector(".inserted-note")?.textContent).toContain(
+            "Inserted by the compiler",
+        );
+        expect(body.querySelector("pre code")).toBeNull();
     });
 
-    it("adds an edit call to action to the synthetic note when the session is editable", () => {
-        const editablePanel = createDetailPanel({
-            edit: {
-                isEditable: () => true,
-                getDocument: () => "",
-                onNodeEdit: () => {},
-            },
-        });
-        editablePanel.show({ id: "n1", label: "Speaker (default)", attributes: [] });
-        expect(note()?.textContent).toContain("names no speaker");
-        expect(note()?.textContent).toContain("Edit the line to name one");
-    });
-
-    it("reuses the one editor across selections, swapping its content", () => {
-        panel.show({
+    it("marks recognized jump syntax only when the stage has Dialogue semantics", () => {
+        const jumpNode: DisplayNode = {
             id: "n1",
-            label: "A",
+            label: "Line",
             attributes: [],
-            source: "# A",
-            span: { start: 0, end: 3 },
-        });
-        const first = editor();
-        panel.show({
-            id: "n2",
-            label: "B",
-            attributes: [],
-            source: "# B",
-            span: { start: 0, end: 3 },
-        });
-        expect(editor()).toBe(first); // same editor instance
-        expect(body.querySelector(".node-source")?.textContent).toContain("# B");
+            source: "=> [Go](#go)",
+        };
+
+        panel.show(jumpNode, { recognizeJumps: true });
+        expect(body.querySelector(".preview .jump-ligature")?.textContent).toBe("=>");
+
+        panel.show(jumpNode);
+        expect(body.querySelector(".preview .jump-ligature")).toBeNull();
     });
 
-    it("hides the editor and shows the note when a synthetic node follows a sourced one", () => {
-        panel.show({
-            id: "n1",
-            label: "A",
-            attributes: [],
-            source: "# A",
-            span: { start: 0, end: 3 },
-        });
-        panel.show({ id: "n2", label: "Speaker (default)", attributes: [] });
-        expect(note()?.hidden).toBe(false);
+    it("clears back to the placeholder", () => {
+        panel.show({ id: "n1", label: "Heading", attributes: [], source: "# Scene" });
+        panel.clear();
+
+        expect(title.textContent).toBe("Node details");
+        expect(body.textContent).toContain("Click any node");
     });
 
     describe("jump to source", () => {
@@ -164,7 +144,7 @@ describe("createDetailPanel", () => {
         it("places the caret for a synthetic node's zero-width span", () => {
             const jumps: Array<{ start: number; end: number }> = [];
             const jumping = createDetailPanel({ jumpToSource: (span) => jumps.push(span) });
-            // A synthetic node has no source (shows the note) but now carries a zero-width caret.
+            // A synthetic node has no source (shows the note) but carries a zero-width caret.
             jumping.show({
                 id: "n1",
                 label: "Speaker (default)",

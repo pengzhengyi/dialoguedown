@@ -143,7 +143,7 @@ flowchart TB
     TT --> TABS["3-5. Stage tabs:<br/>Dialogue AST → Desugared AST → Semantic Model"]
     TABS --> GX["6. Graph Position Preservation"]
     GX --> AC["7. Source Editor Autocompletion"]
-    AC --> LIVE["8-13. Live session:<br/>Hot Reload → File Launcher → Live Edit → View and Edit Modes → Autosave → Node Editing"]
+    AC --> LIVE["8-13. Live session:<br/>Hot Reload → File Launcher → Live Edit → View and Edit Modes → Autosave → Node Inspector"]
     LIVE --> CFG["14. Configuration Tab"]
     CFG --> CFGLE["15. Configuration Tab — Live Edit"]
     CFGLE --> CFGAC["16. Configuration Tab — Autocompletion"]
@@ -156,6 +156,7 @@ flowchart TB
     HA --> JTC["23. Jump-Target Completion"]
     JTC --> FE["24. Live Visualization — File Explorer"]
     FE --> USS["25. Live Visualization — Unified Served Shell"]
+    USS --> LDU["26. Live Visualization — Line Debugger UI"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -172,7 +173,7 @@ flowchart TB
 | 10 | [Live Visualization — Live Edit](./Live%20Visualization%20-%20Live%20Edit.md) | Edit the source in the report; compile-as-you-type and save to disk | Implemented |
 | 11 | [Live Visualization — View and Edit Modes](./Live%20Visualization%20-%20View%20and%20Edit%20Modes.md) | The current unified model: a served session with a runtime View⇄Edit toggle; static becomes an export | Implemented |
 | 12 | [Live Visualization — Autosave](./Live%20Visualization%20-%20Autosave.md) | Persisted Auto/Manual save modes with idle saves, conflict safety, and save-before-navigation | Implemented |
-| 13 | [Live Visualization — Node Editing](./Live%20Visualization%20-%20Node%20Editing.md) | Edit the source behind a graph node in the inspector; splice it back and recompile | Implemented |
+| 13 | [Live Visualization — Node Inspector](./Live%20Visualization%20-%20Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
 | 14 | [Configuration Tab](./Configuration%20Tab.md) | The applied `dialogue.toml` as a first tab: TOML source beside its configured speakers (Stage 1, read-only) | Implemented |
 | 15 | [Configuration Tab — Live Edit](./Configuration%20Tab%20-%20Live%20Edit.md) | Edit the `dialogue.toml` in the report; Save recompiles and refreshes the configured speakers (Stage 2a) | Implemented |
 | 16 | [Configuration Tab — Autocompletion](./Configuration%20Tab%20-%20Autocompletion.md) | Schema autocompletion for the editable `dialogue.toml`: the `[[speakers]]` table, its keys, and the reserved tag names (Stage 2b) | Implemented |
@@ -185,6 +186,7 @@ flowchart TB
 | 23 | [Jump-Target Completion](./Jump-Target%20Completion.md) | Complete the whole `[Heading](#slug)` jump target from the `=>` indicator, via a snippet with the heading as an editable field | Implemented |
 | 24 | [Live Visualization — File Explorer](./Live%20Visualization%20-%20File%20Explorer.md) | Fold the launcher into the served report as a collapsible Explorer sidebar: browse the project tree, open a script by click or cross-file link, and create one | Implemented |
 | 25 | [Live Visualization — Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md) | Collapse the launcher page and the direct-serve server into one shell: the Explorer is the only navigator, no-document shows an empty-state CTA, and `visualize <script>` serves through the same server | Implemented |
+| 26 | [Live Visualization — Line Debugger UI](./Live%20Visualization%20-%20Line%20Debugger%20UI.md) | Dormant CodeMirror debugger presentation layer behind a runtime-neutral controller seam | Implemented (dormant) |
 
 ### Other notes
 

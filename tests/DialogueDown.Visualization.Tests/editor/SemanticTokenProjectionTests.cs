@@ -154,6 +154,32 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_CodeSpanForms_ProjectTheirSemanticKinds()
+    {
+        var source =
+            """
+            > `if` `Rainy?`
+            >
+            > `("fade in")`
+            >
+            > Alice: `playSound("wind")` `"playerName"`
+            >
+            > - `60%` Static weight.
+            > - `Luck%` Dynamic weight.
+            > - `%` Remaining weight.
+            """;
+        var tokens = Project(source);
+
+        Assert.Equal(
+            ["`(\"fade in\")`", "`playSound(\"wind\")`"],
+            TextsOf(tokens, TokenKind.Command, source));
+        Assert.Equal(["`\"playerName\"`"], TextsOf(tokens, TokenKind.Query, source));
+        Assert.Equal(["`Rainy?`"], TextsOf(tokens, TokenKind.Condition, source));
+        Assert.Equal(["`60%`", "`%`"], TextsOf(tokens, TokenKind.StaticWeight, source));
+        Assert.Equal(["`Luck%`"], TextsOf(tokens, TokenKind.DynamicWeight, source));
+    }
+
+    [Fact]
     public void Project_MarkerShapedTopLevelParagraph_IsNotAControlKeyword()
     {
         var tokens = Project("`if` `Rich?`");
@@ -230,6 +256,10 @@ public sealed class SemanticTokenProjectionTests
     private static void AssertToken(
         IEnumerable<SemanticToken> tokens, TokenKind kind, string expected, string source) =>
         Assert.Equal(expected, AssertSingleSemanticToken(tokens, kind).TextIn(source));
+
+    private static IReadOnlyList<string> TextsOf(
+        IEnumerable<SemanticToken> tokens, TokenKind kind, string source) =>
+        [.. tokens.Where(token => token.Kind == kind).Select(token => token.TextIn(source))];
 
     private static void AssertTokensDoNotOverlap(IReadOnlyList<SemanticToken> tokens)
     {

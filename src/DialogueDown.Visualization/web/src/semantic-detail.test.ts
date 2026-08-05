@@ -45,6 +45,20 @@ describe("createNodeDetailPanel", () => {
         );
     });
 
+    it("marks an assembled jump's indicator for the ligature font", () => {
+        const panel = createNodeDetailPanel({ recognizeJumps: true });
+        panel.show(node({ label: "Line", source: "=> [Go](#go)\nGuide: Leave." }));
+
+        expect(panel.element.querySelector(".preview .jump-ligature")?.textContent).toBe("=>");
+    });
+
+    it("keeps a table-bearing custom stage's jump-like text literal", () => {
+        const panel = createNodeDetailPanel();
+        panel.show(node({ label: "Line", source: "=> [Go](#go)" }));
+
+        expect(panel.element.querySelector(".preview .jump-ligature")).toBeNull();
+    });
+
     it("auto-expands when a node is selected while collapsed", () => {
         const panel = createNodeDetailPanel();
         const toggle = panel.element.querySelector<HTMLButtonElement>(".table-panel-toggle")!;

@@ -1,3 +1,12 @@
+@font-face {
+    font-family: "Fira Code";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("../node_modules/@fontsource/fira-code/files/fira-code-latin-400-normal.woff2")
+        format("woff2");
+}
+
 :root {
     --dd-reference: #cf222e;
 
@@ -9,18 +18,29 @@
     --md-muted: #6e7781;
     --cm-selection: rgb(20 100 210 / 22%);
 
-    /* Dialogue token highlighting: the compiler-projected semantic tokens, layered over the
-       Markdown colors above. Kept off blue so they stay distinct from headings and links. The
-       speaker's name, @id, and : separator get distinct hues; GitHub Primer light-syntax hues,
-       with dark overrides below. */
+    /* Dialogue token highlighting: compiler-projected semantic tokens layered over Markdown.
+       Existing dialogue tokens use GitHub Primer-inspired hues. Code-span semantics follow
+       VS Code Light+ roles: keyword, constant, string/read, variable/boolean, number,
+       type/dynamic value, and function. Dark+ counterparts override them below. */
     --tok-speaker-name: #8250df;
     --tok-speaker-id: #1a7f37;
     --tok-separator: #6e7781;
     --tok-custom-tag: #bf3989;
     --tok-reserved-tag: #953800;
     --tok-jump: #1b7c83;
-    --tok-reserved-anchor: #cf222e;
-    --tok-control-keyword: #cf222e;
+    --tok-reserved-anchor: #0070c1;
+    --tok-control-keyword: #af00db;
+    --tok-query: #a31515;
+    --tok-condition: #001080;
+    --tok-static-weight: #098658;
+    --tok-dynamic-weight: #267f99;
+    --tok-command: #795e26;
+
+    /* Dormant line-debugger UI: red breakpoint requests and an amber paused-location marker.
+       The paused line is distinct from CodeMirror's neutral cursor-active line below. */
+    --debug-breakpoint: #cf222e;
+    --debug-current: #9a6700;
+    --debug-current-bg: rgb(210 153 34 / 18%);
 
     /* Cross-link highlight: hovering a scene or speaker in the Semantic tab lights up
        every place it appears (graph node, table rows/cells). An amber "highlighter"
@@ -84,8 +104,16 @@
         --tok-custom-tag: #f778ba;
         --tok-reserved-tag: #ffa657;
         --tok-jump: #39c5cf;
-        --tok-reserved-anchor: #ff7b72;
-        --tok-control-keyword: #ff7b72;
+        --tok-reserved-anchor: #4fc1ff;
+        --tok-control-keyword: #c586c0;
+        --tok-query: #ce9178;
+        --tok-condition: #9cdcfe;
+        --tok-static-weight: #b5cea8;
+        --tok-dynamic-weight: #4ec9b0;
+        --tok-command: #dcdcaa;
+        --debug-breakpoint: #ff7b72;
+        --debug-current: #e3b341;
+        --debug-current-bg: rgb(227 179 65 / 18%);
         --table-mark-bg: #b0892b;
         --table-mark-fg: #f8fafc;
     }
@@ -109,8 +137,16 @@
     --tok-custom-tag: #f778ba;
     --tok-reserved-tag: #ffa657;
     --tok-jump: #39c5cf;
-    --tok-reserved-anchor: #ff7b72;
-    --tok-control-keyword: #ff7b72;
+    --tok-reserved-anchor: #4fc1ff;
+    --tok-control-keyword: #c586c0;
+    --tok-query: #ce9178;
+    --tok-condition: #9cdcfe;
+    --tok-static-weight: #b5cea8;
+    --tok-dynamic-weight: #4ec9b0;
+    --tok-command: #dcdcaa;
+    --debug-breakpoint: #ff7b72;
+    --debug-current: #e3b341;
+    --debug-current-bg: rgb(227 179 65 / 18%);
     --table-mark-bg: #b0892b;
     --table-mark-fg: #f8fafc;
 }
@@ -1269,7 +1305,9 @@ g.node.entity-highlight text.label {
     flex: 0 0 var(--source-split, 50%);
     min-width: 0;
     overflow: hidden;
+    position: relative;
     display: flex;
+    flex-direction: column;
 }
 
 .source-view.preview-collapsed .source-pane {
@@ -1281,9 +1319,150 @@ g.node.entity-highlight text.label {
 .source-pane .cm-editor {
     flex: 1 1 auto;
     min-width: 0;
+    min-height: 0;
     height: 100%;
     background: transparent;
     font-size: 0.82rem;
+}
+
+/* Dormant line-debugger UI: a detached, draggable palette over CodeMirror. The controls are
+   icon-only (Tippy carries their labels), and the explicit foreground avoids Pico's inverse
+   button text on the light panel. */
+.dd-debug-toolbar {
+    position: absolute;
+    z-index: 8;
+    top: 0.55rem;
+    right: 0.7rem;
+    max-width: calc(100% - 1.4rem);
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: calc(var(--pico-border-radius) * 1.25);
+    background: color-mix(in srgb, var(--pico-background-color) 92%, var(--mode-accent));
+    color: var(--pico-color);
+    box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 16%);
+    font-size: 0.72rem;
+}
+
+.dd-debug-toolbar.dd-debug-dragging {
+    box-shadow: 0 0.55rem 1.35rem rgb(0 0 0 / 24%);
+}
+
+.dd-debug-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.2rem 0.35rem;
+}
+
+.dd-debug-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.dd-debug-control-wrap {
+    display: inline-flex;
+}
+
+.dd-debug-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: inherit;
+    line-height: 1.2;
+}
+
+.dd-debug-path {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+    width: auto;
+    margin: 0;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-size: inherit;
+    line-height: 1.2;
+}
+
+.dd-debug-control:hover:not(:disabled),
+.dd-debug-control:focus-visible,
+.dd-debug-path:hover,
+.dd-debug-path:focus-visible {
+    border-color: var(--mode-accent);
+    background: color-mix(in srgb, var(--mode-accent) 12%, transparent);
+}
+
+.dd-debug-control:disabled {
+    opacity: 0.38;
+}
+
+.dd-debug-control-icon {
+    color: var(--mode-accent);
+    font-size: 0.9rem;
+}
+
+.dd-debug-drag-handle {
+    color: var(--pico-muted-color);
+    cursor: grab;
+}
+
+.dd-debug-drag-handle:active {
+    cursor: grabbing;
+}
+
+.dd-debug-status {
+    flex: 1 1 6rem;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pico-muted-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dd-debug-label {
+    margin-left: auto;
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 999px;
+    color: var(--pico-muted-color);
+    font-size: 0.65rem;
+    white-space: nowrap;
+}
+
+.dd-debug-paths {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    align-items: center;
+    padding: 0.3rem 0.45rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.dd-debug-paths[hidden] {
+    display: none;
+}
+
+.dd-debug-paths strong {
+    margin-right: 0.15rem;
+    color: var(--pico-muted-color);
+    font-weight: 600;
 }
 
 .source-pane .cm-editor.cm-focused {
@@ -1298,6 +1477,72 @@ g.node.entity-highlight text.label {
     background: transparent;
     border-right: 1px solid var(--pico-muted-border-color);
     color: var(--pico-muted-color);
+}
+
+/* Two independent debug lanes precede the line numbers: breakpoints stay visible when the
+   execution arrow stops on the same line. */
+.source-pane :is(.dd-debug-breakpoint-gutter, .dd-debug-execution-gutter) .cm-gutterElement {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 11px;
+    padding: 0;
+}
+
+.source-pane .dd-debug-breakpoint-gutter .cm-gutterElement {
+    cursor: pointer;
+}
+
+.source-pane
+    .dd-debug-breakpoint-gutter
+    .cm-gutterElement:not(.cm-gutterElement-spacer, :has(.dd-debug-breakpoint))::after {
+    box-sizing: border-box;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--debug-breakpoint);
+    border-radius: 50%;
+    opacity: 0;
+    content: "";
+}
+
+.source-pane
+    .dd-debug-breakpoint-gutter
+    .cm-gutterElement:not(.cm-gutterElement-spacer):hover::after {
+    opacity: 0.38;
+}
+
+.dd-debug-breakpoint {
+    display: block;
+    box-sizing: border-box;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--debug-breakpoint);
+    border-radius: 50%;
+}
+
+.dd-debug-breakpoint-verified {
+    background: var(--debug-breakpoint);
+}
+
+.dd-debug-breakpoint-unverified {
+    background: transparent;
+}
+
+.dd-debug-current-arrow {
+    display: block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid var(--debug-current);
+    filter: drop-shadow(0 0 1px rgb(0 0 0 / 35%));
+}
+
+.dd-debug-execution-spacer {
+    display: block;
+    width: 8px;
+    height: 10px;
 }
 
 .source-pane .cm-content {
@@ -1347,6 +1592,11 @@ g.node.entity-highlight text.label {
     background: rgb(128 128 128 / 10%);
 }
 
+.source-pane .dd-debug-current-line {
+    background: var(--debug-current-bg);
+    box-shadow: inset 3px 0 0 var(--debug-current);
+}
+
 :is(.source-pane, .config-source) .cm-selectionMatch {
     background: rgb(120 160 255 / 25%);
 }
@@ -1392,6 +1642,31 @@ g.node.entity-highlight text.label {
     font-weight: 600;
 }
 
+.source-pane .cm-content .dd-tok-query,
+.source-pane .cm-content .dd-tok-query * {
+    color: var(--tok-query);
+}
+
+.source-pane .cm-content .dd-tok-condition,
+.source-pane .cm-content .dd-tok-condition * {
+    color: var(--tok-condition);
+}
+
+.source-pane .cm-content .dd-tok-static-weight,
+.source-pane .cm-content .dd-tok-static-weight * {
+    color: var(--tok-static-weight);
+}
+
+.source-pane .cm-content .dd-tok-dynamic-weight,
+.source-pane .cm-content .dd-tok-dynamic-weight * {
+    color: var(--tok-dynamic-weight);
+}
+
+.source-pane .cm-content .dd-tok-command,
+.source-pane .cm-content .dd-tok-command * {
+    color: var(--tok-command);
+}
+
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
    The wrapper is a zero-size inline box; the chip floats as an absolute overlay so it adds no
    line height or wrap width (the editor/preview scroll-sync aligns on heading line tops). */
@@ -1428,13 +1703,14 @@ g.node.entity-highlight text.label {
 }
 
 /* The diagnostics overlay. The squiggles and gutter markers use CodeMirror's built-in lint
-   theme (severity-colored); this themes the hover tooltip to match the report card and styles
-   the "more information" docs link inside it. Two tooltip shapes need theming: hovering a
-   squiggle nests the lint content in a .cm-tooltip-lint section inside a light-by-default
-   .cm-tooltip container (matched via :has), while hovering a gutter marker puts .cm-tooltip-lint
-   on the .cm-tooltip element itself. */
-:is(.source-pane, .config-source) .cm-tooltip.cm-tooltip-lint,
-:is(.source-pane, .config-source) .cm-tooltip:has(.cm-tooltip-lint) {
+   theme (severity-colored); this themes the body-mounted hover popover to match the report card
+   and keeps it above the report chrome. Two tooltip shapes need theming: hovering a squiggle
+   nests the lint content in a .cm-tooltip-lint section inside a light-by-default .cm-tooltip
+   container (matched via :has), while hovering a gutter marker puts .cm-tooltip-lint on the
+   .cm-tooltip element itself. */
+.cm-tooltip.cm-tooltip-lint,
+.cm-tooltip:has(.cm-tooltip-lint) {
+    z-index: 1000;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -1446,9 +1722,11 @@ g.node.entity-highlight text.label {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+    max-width: min(34ch, calc(100vw - 2rem));
     padding: 0.1rem 0.15rem;
     font-size: 0.78rem;
     line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .diagnostic-tooltip-link {
@@ -1667,6 +1945,13 @@ g.node.entity-highlight text.label {
     border: none;
     border-radius: 0;
     scroll-behavior: smooth;
+}
+
+.source-preview .jump-ligature,
+.preview .jump-ligature {
+    font-family: "Fira Code", var(--pico-font-family-monospace, ui-monospace, monospace);
+    font-feature-settings: "calt" 1;
+    font-variant-ligatures: contextual;
 }
 
 /* Preview blockquotes — the if/else block controls nest blockquotes, so mark each level with its
@@ -2004,6 +2289,11 @@ svg.tree.has-focus .link:not(.related) {
     display: flex;
     align-items: center;
     border-inline: 1px solid var(--pico-muted-border-color);
+    border-bottom: 2px solid transparent;
+}
+
+.zoom-controls .zoom-field:focus-within {
+    border-bottom-color: var(--mode-accent, var(--pico-primary));
 }
 
 .zoom-controls .zoom-input {
@@ -2018,6 +2308,17 @@ svg.tree.has-focus .link:not(.related) {
     text-align: right;
     font-size: inherit;
     font-variant-numeric: tabular-nums;
+}
+
+.zoom-controls .zoom-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+@media (forced-colors: active) {
+    .zoom-controls .zoom-field:focus-within {
+        border-bottom-color: Highlight;
+    }
 }
 
 /* Hide the native number spinner so the compact toolbar stays clean. */
@@ -2308,14 +2609,6 @@ body.maximized #app {
     color: var(--pico-muted-color);
 }
 
-/* The node inspector's editor is a reused Source view (editor beside its live preview). The
-   editor needs an explicit height to lay out; keep it on the editor itself so the empty
-   state (a note, or the placeholder) reserves no height and the panel does not become a
-   scrollable region with nothing focusable in it. */
-.node-attributes {
-    margin-bottom: 0.5rem;
-}
-
 /* The "Jump to source" action: an icon-only button beside the node title (a Tippy tooltip carries
    the label) that takes the reader to the node's span in the Source editor. The icon is drawn in
    the mode accent (blue in View, green in Edit) so it stays legible on the panel — never the
@@ -2346,21 +2639,6 @@ body.maximized #app {
     flex: 0 0 auto;
     font-size: 15px;
     color: inherit;
-}
-
-.node-source {
-    margin-top: 0.5rem;
-}
-
-.node-source .inspector-editor {
-    height: 24rem;
-}
-
-.node-note {
-    margin: 0.75rem 0 0;
-    font-size: 0.8rem;
-    font-style: italic;
-    color: var(--pico-muted-color);
 }
 
 .frontmatter-label {

@@ -9,6 +9,7 @@ import {
     tooltipHtml,
     splitFrontMatter,
     renderMarkdown,
+    renderNodePreview,
     renderDocument,
 } from "./text";
 import type { DisplayNode } from "./model";
@@ -128,6 +129,32 @@ describe("renderMarkdown", () => {
     });
 });
 
+describe("renderNodePreview", () => {
+    it("wraps the bare marker for a Dialogue AST jump indicator", () => {
+        expect(renderNodePreview("=>", "Jump indicator", true)).toContain(
+            '<span class="jump-ligature">=&gt;</span>',
+        );
+    });
+
+    it("wraps only the marker in an assembled downstream jump", () => {
+        const html = renderNodePreview("=> [Go](#go)", "Jump", true);
+
+        expect(html).toContain('<span class="jump-ligature">=&gt;</span> <a href="#go">Go</a>');
+    });
+
+    it("decorates recognized jump syntax in a parent node's preview", () => {
+        expect(renderNodePreview("=> [Go](#go)", "Line", true)).toContain("jump-ligature");
+    });
+
+    it("does not cross a soft line break to decorate a dangling indicator", () => {
+        expect(renderNodePreview("=>\n[Go](#go)", "Line", true)).not.toContain("jump-ligature");
+    });
+
+    it("does not promote the same source before Dialogue semantics exist", () => {
+        expect(renderNodePreview("=> [Go](#go)", "Text")).not.toContain("jump-ligature");
+    });
+});
+
 describe("renderDocument", () => {
     it("adds GitHub-style heading ids so in-document anchor links resolve", () => {
         const html = renderDocument("## Discuss Bob's photo");
@@ -152,5 +179,18 @@ describe("renderDocument", () => {
     it("honors explicit hard breaks (two trailing spaces or a trailing backslash)", () => {
         expect(renderDocument("first line  \nsecond line")).toContain("<br>");
         expect(renderMarkdown("first line\\\nsecond line")).toContain("<br>");
+    });
+
+    it("wraps a jump indicator before a rendered link for preview ligatures", () => {
+        const html = renderDocument("=> [Go](#go)");
+
+        expect(html).toContain('<span class="jump-ligature">=&gt;</span> <a href="#go">Go</a>');
+    });
+
+    it("does not wrap arrows in prose, inline code, or snippet previews", () => {
+        expect(renderDocument("Alice: A => B")).not.toContain("jump-ligature");
+        expect(renderDocument("Alice: `=> [Go](#go)`")).not.toContain("jump-ligature");
+        expect(renderDocument("=>\n[Go](#go)")).not.toContain("jump-ligature");
+        expect(renderMarkdown("=> [Go](#go)")).not.toContain("jump-ligature");
     });
 });

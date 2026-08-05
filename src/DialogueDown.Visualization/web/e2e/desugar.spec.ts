@@ -54,10 +54,9 @@ test("a synthetic default-speaker node shows an inserted note, not an empty sour
     await page.locator("g.node", { hasText: "Speaker (default)" }).first().click();
 
     await expect(page.locator("#detail-title")).toContainText("Speaker (default)");
-    const detailNote = page.locator("#detail-body .node-note");
-    await expect(detailNote).toContainText("names no speaker");
-    // A static export cannot edit, so the note explains but offers no edit call to action.
-    await expect(detailNote).not.toContainText("Edit the line");
+    await expect(page.locator("#detail-body .inserted-note")).toContainText(
+        "Inserted by the compiler",
+    );
     // No misleading empty Source/Preview block for a node that has no source.
-    await expect(page.locator("#detail-body .node-source .cm-editor")).toHaveCount(0);
+    await expect(page.locator("#detail-body pre code")).toHaveCount(0);
 });
