@@ -4,12 +4,18 @@ namespace DialogueDown.Graph;
 internal static class EdgeExtensions
 {
     /// <summary>
-    /// Whether these out-edges include an unguarded divert, so control leaves the node
-    /// unconditionally and it does not fall through to the next block.
+    /// Whether control always leaves the node through one of these edges, so it does not also
+    /// fall through to the next block: an unguarded divert always fires, and a choice always
+    /// takes one of its options.
     /// </summary>
-    public static bool HasUnconditionalDivert(this IReadOnlyList<Edge> edges)
+    public static bool LeavesUnconditionally(this IReadOnlyList<Edge> edges)
     {
         ArgumentNullException.ThrowIfNull(edges);
-        return edges.OfType<Divert>().Any(divert => divert.Guard is null);
+        return edges.Any(edge => edge switch
+        {
+            Divert divert => divert.Guard is null,
+            Option => true,
+            _ => false,
+        });
     }
 }

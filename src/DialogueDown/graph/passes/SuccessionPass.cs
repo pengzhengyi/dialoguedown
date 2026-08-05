@@ -20,7 +20,7 @@ internal sealed class SuccessionPass : GraphBuildPass
         for (var position = 0; position < sequence.Count; position++)
         {
             var source = draft.IdOf(sequence[position]);
-            if (draft.Node(source).Out.HasUnconditionalDivert())
+            if (draft.Node(source).Out.LeavesUnconditionally())
             {
                 continue;
             }

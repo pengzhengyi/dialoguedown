@@ -10,26 +10,35 @@ public sealed class EdgeExtensionsTests
     private static readonly NodeId _target = NodeId(1);
 
     [Fact]
-    public void HasUnconditionalDivert_UnguardedDivert_IsTrue()
+    public void LeavesUnconditionally_UnguardedDivert_IsTrue()
     {
         IReadOnlyList<Edge> edges = [new Divert(_target)];
 
-        Assert.True(edges.HasUnconditionalDivert());
+        Assert.True(edges.LeavesUnconditionally());
     }
 
     [Fact]
-    public void HasUnconditionalDivert_GuardedDivert_IsFalse()
+    public void LeavesUnconditionally_GuardedDivert_IsFalse()
     {
         IReadOnlyList<Edge> edges = [new Divert(_target, new Condition("Brave", SourceSpanFactory.Span()))];
 
-        Assert.False(edges.HasUnconditionalDivert());
+        Assert.False(edges.LeavesUnconditionally());
     }
 
     [Fact]
-    public void HasUnconditionalDivert_OnlySuccession_IsFalse()
+    public void LeavesUnconditionally_Option_IsTrue()
+    {
+        // A choice always takes one of its options, so it never falls through.
+        IReadOnlyList<Edge> edges = [new Option(_target)];
+
+        Assert.True(edges.LeavesUnconditionally());
+    }
+
+    [Fact]
+    public void LeavesUnconditionally_OnlySuccession_IsFalse()
     {
         IReadOnlyList<Edge> edges = [new Succession(_target)];
 
-        Assert.False(edges.HasUnconditionalDivert());
+        Assert.False(edges.LeavesUnconditionally());
     }
 }

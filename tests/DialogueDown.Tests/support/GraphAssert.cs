@@ -34,4 +34,11 @@ internal static class GraphAssert
         ArgumentNullException.ThrowIfNull(node);
         return AssertDivert(Assert.Single(node.Out), target);
     }
+
+    /// <summary>Asserts the node's out-edges point at exactly <paramref name="targets"/>, in order.</summary>
+    public static void AssertTargets(DialogueNode node, params NodeId[] targets)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        Assert.Equal(targets, node.Out.Select(edge => edge.Target));
+    }
 }
