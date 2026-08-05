@@ -116,6 +116,8 @@
     href: Jump-Target Completion.md
   - name: Live Visualization — Line Debugger UI
     href: Live Visualization - Line Debugger UI.md
+  - name: Live Visualization — Zen Mode
+    href: Live Visualization - Zen Mode.md
 - name: Other notes
   items:
   - name: BBCode Rendering

@@ -157,6 +157,7 @@ flowchart TB
     JTC --> FE["24. Live Visualization — File Explorer"]
     FE --> USS["25. Live Visualization — Unified Served Shell"]
     USS --> LDU["26. Live Visualization — Line Debugger UI"]
+    LDU --> ZEN["27. Live Visualization — Zen Mode"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -187,6 +188,7 @@ flowchart TB
 | 24 | [Live Visualization — File Explorer](./Live%20Visualization%20-%20File%20Explorer.md) | Fold the launcher into the served report as a collapsible Explorer sidebar: browse the project tree, open a script by click or cross-file link, and create one | Implemented |
 | 25 | [Live Visualization — Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md) | Collapse the launcher page and the direct-serve server into one shell: the Explorer is the only navigator, no-document shows an empty-state CTA, and `visualize <script>` serves through the same server | Implemented |
 | 26 | [Live Visualization — Line Debugger UI](./Live%20Visualization%20-%20Line%20Debugger%20UI.md) | Dormant CodeMirror debugger presentation layer behind a runtime-neutral controller seam | Implemented (dormant) |
+| 27 | [Live Visualization — Zen Mode](./Live%20Visualization%20-%20Zen%20Mode.md) | A deeper full screen that also steps the tab's secondary panel aside, leaving the editor or the graph alone | Implemented |
 
 ### Other notes
 

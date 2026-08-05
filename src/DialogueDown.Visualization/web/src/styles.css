@@ -2388,6 +2388,46 @@ body.maximized .maximize-button .icon-compress {
     background: var(--pico-muted-border-color);
 }
 
+/* The Zen toggle sits immediately left of the maximize button, sharing its quiet tab-row
+   styling so the pair reads as one focus-mode cluster. Both are absolutely positioned, so
+   this one is offset by the maximize button's width plus a small gap. */
+.tabbar-zen {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    position: absolute;
+    right: 3.35rem;
+    bottom: 0.35rem;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    line-height: 0;
+    cursor: pointer;
+}
+
+.tabbar-zen:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
+/* Zen is a sticky mode, not a one-shot action, so the button shows it is engaged — in the
+   mode accent, matching how the other pressed toggles in the report read. */
+.tabbar-zen[aria-pressed="true"] {
+    color: var(--mode-accent, var(--pico-primary));
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
+}
+
+.zen-icon {
+    font-size: 15px;
+    color: inherit;
+}
+
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
    sits at the viewport's top-right corner (the conventional close-fullscreen spot, clear of
    the graph legend and zoom cluster). Revealed only while maximized. */
@@ -2431,6 +2471,42 @@ body.maximized #live-banner {
 
 body.maximized #app {
     padding: 0;
+}
+
+/* Zen: on top of the maximized chrome hiding, the active tab's *secondary* panel steps
+   aside so the primary content is alone — the editor on Source and Config, the graph on the
+   AST and Semantic Model tabs. The tab's own tools (the legend, the zoom cluster, the
+   editor's gutter) stay: Zen removes surrounding panels, not the content's instruments.
+
+   This is presentation only. It deliberately does NOT drive the hide/show controllers, so
+   Zen never overwrites the reader's remembered collapse choices — leaving Zen restores
+   exactly the layout they had, with no state to reconcile. Each rule therefore mirrors what
+   that panel's own collapsed class does, and the divider goes with it since there is
+   nothing left to resize. */
+body.zen .source-view > .source-preview,
+body.zen .source-view > .source-divider,
+body.zen .config-view > .config-side,
+body.zen .config-view > .config-divider,
+body.zen .semantic-view > .semantic-tables,
+body.zen .semantic-view > .semantic-divider,
+body.zen #detail,
+body.zen #resizer {
+    display: none;
+}
+
+/* The Explorer needs the `#app` in its selector to outrank `#app.has-explorer #explorer`,
+   which is what reveals the sidebar on a served report. Without it Zen would silently keep
+   the Explorer on exactly the reports that have one. */
+body.zen #app #explorer,
+body.zen #app #explorer-resizer {
+    display: none;
+}
+
+/* With its neighbour gone the primary pane takes the whole row, overriding the drag-set
+   split variable the same way each panel's collapsed class does. */
+body.zen .source-view > .source-pane,
+body.zen .config-view > .config-source {
+    flex-basis: 100%;
 }
 
 .dot {

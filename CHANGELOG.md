@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Zen mode in the report** — press `z` for a deeper full screen that also steps the active
+  tab's side panel aside: the editor alone on Source and Config, the graph alone on the AST and
+  Semantic Model tabs. `z` or `Esc` restores your layout exactly as it was. See the
+  [Zen Mode](docs/contributing/design-notes/Live%20Visualization%20-%20Zen%20Mode.md) note.
+
 - **Block conditionals** — group dialogue, commands, choices, and jumps into connected
   blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
   `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves

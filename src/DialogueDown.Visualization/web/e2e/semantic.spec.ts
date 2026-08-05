@@ -400,3 +400,17 @@ test("emphasizes the scene backbone over content nodes", async ({ page }) => {
 test("has no accessibility violations on the Semantic tab", async ({ page }) => {
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
+
+test("Zen mode leaves the scene tree alone by hiding the tables column", async ({ page }) => {
+    const tables = page.locator(".semantic-view .semantic-tables");
+    await expect(tables).toBeVisible();
+
+    await page.keyboard.press("z");
+
+    await expect(page.locator("body")).toHaveClass(/zen/);
+    await expect(tables).toBeHidden();
+    await expect(page.locator(".semantic-graph svg.tree")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(tables).toBeVisible();
+});

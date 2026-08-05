@@ -250,3 +250,18 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     await page.locator(".tab", { hasText: "Source" }).click();
     await expect(view).toBeEnabled();
 });
+
+test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) => {
+    await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+    await expect(page.locator("#explorer")).toBeVisible();
+
+    await page.keyboard.press("z");
+
+    // The Explorer's reveal rule is id-heavy, so Zen must outrank it rather than merely
+    // follow it in source order.
+    await expect(page.locator("#explorer")).toBeHidden();
+    await expect(page.locator("#explorer-resizer")).toBeHidden();
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#explorer")).toBeVisible();
+});

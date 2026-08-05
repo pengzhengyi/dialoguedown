@@ -46,6 +46,9 @@ const SOURCE_HELP = `
   <p><strong>Full screen</strong> (bottom-right ⤢, or press <kbd>f</kbd> outside the
      editor): fill the window with the source and preview; <kbd>f</kbd> or <kbd>Esc</kbd>
      to leave.</p>
+  <p><strong>Zen mode</strong> (the tab-row ⊟ button, or <kbd>z</kbd> outside the editor): full screen, plus the
+     side pane steps aside so you work with the editor alone. <kbd>z</kbd> or <kbd>Esc</kbd>
+     to leave — your pane and panel choices come back exactly as they were.</p>
 `;
 
 const GRAPH_HELP = `
@@ -62,7 +65,9 @@ const GRAPH_HELP = `
   <p><strong>Zoom controls</strong> (bottom-right): <kbd>+</kbd> / <kbd>−</kbd> to
      zoom, type a percentage for an exact ratio, and use <kbd>↺</kbd> to reset the view.</p>
   <p><strong>Full screen</strong> (the bottom-right ⤢ button, or press <kbd>f</kbd>):
-     fill the window with the graph; <kbd>f</kbd> or <kbd>Esc</kbd> to leave.</p>
+     fill the window with the graph; <kbd>f</kbd> or <kbd>Esc</kbd> to leave.
+     <strong>Zen mode</strong> (the tab-row ⊟ button or <kbd>z</kbd>) goes further, hiding the details panel so the
+     graph is alone; <kbd>z</kbd> or <kbd>Esc</kbd> restores your layout.</p>
   <p><strong>Hover a legend entry</strong> (top-right) to highlight its nodes;
      <strong>click</strong> it to dim or show that type. The count shows how many
      are present.</p>
@@ -87,7 +92,9 @@ const SEMANTIC_HELP = `
      divider to hide the whole column and give the graph full width. Each table (and the node
      details) also <strong>collapses</strong> to a title strip on its own header bar. The
      choices persist.</p>
-  <p>The graph pans, zooms, folds, and goes full screen like the other tabs.</p>
+  <p>The graph pans, zooms, folds, and goes full screen like the other tabs.
+     <strong>Zen mode</strong> (the tab-row ⊟ button or <kbd>z</kbd>) hides the tables column so the scene tree is
+     alone, without disturbing your saved column and table choices.</p>
 `;
 
 const EXPLORER_HELP = `
