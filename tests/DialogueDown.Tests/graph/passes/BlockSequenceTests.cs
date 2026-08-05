@@ -8,7 +8,7 @@ namespace DialogueDown.Tests.Graph.Passes;
 public sealed class BlockSequenceTests
 {
     [Fact]
-    public void WithSuccessors_FlatSequence_ChainsEachBlockThenReachesTheContinuation()
+    public void AllContinuations_FlatSequence_ChainsEachBlockThenReachesTheContinuation()
     {
         // n0 ▶ n1 ▶ End.
         Assert.Equal(
@@ -21,11 +21,11 @@ public sealed class BlockSequenceTests
     }
 
     [Fact]
-    public void WithSuccessors_EmptySequence_YieldsNothing() =>
+    public void AllContinuations_EmptySequence_YieldsNothing() =>
         Assert.Empty(Walk(""));
 
     [Fact]
-    public void WithSuccessors_Choice_GivesEveryArmTheChoicesOwnContinuation()
+    public void AllContinuations_Choice_GivesEveryArmTheChoicesOwnContinuation()
     {
         // n0 question, n1 choice, n2/n3 the arms, n4 what follows, n5 End. Both arms continue
         // at n4, and the choice does too, so picking either weaves back to the same place.
@@ -43,7 +43,7 @@ public sealed class BlockSequenceTests
     }
 
     [Fact]
-    public void WithSuccessors_ArmWithSeveralBlocks_ChainsInsideTheArmBeforeWeavingBack()
+    public void AllContinuations_ArmWithSeveralBlocks_ChainsInsideTheArmBeforeWeavingBack()
     {
         // n1 the choice, n2 ▶ n3 within the arm, then n3 weaves back to n4.
         Assert.Equal(
@@ -60,7 +60,7 @@ public sealed class BlockSequenceTests
     }
 
     [Fact]
-    public void WithSuccessors_NestedChoice_WeavesTheInnerArmsPastTheOuterOne()
+    public void AllContinuations_NestedChoice_WeavesTheInnerArmsPastTheOuterOne()
     {
         // n1 outer choice, n2 its arm, n3 the inner choice, n4/n5 the inner arms — all of which
         // continue at n6, where the outer body itself continues.
@@ -88,7 +88,7 @@ public sealed class BlockSequenceTests
         new NodeCreationPass().Apply(draft, context);
 
         return [.. BlockSequence
-            .WithSuccessors(context.Blocks, draft.End, draft)
-            .Select(step => (draft.IdOf(step.Block).Value, step.Next.Value))];
+            .AllContinuations(context.TopLevelBlocks, draft.End, draft)
+            .Select(step => (draft.IdOf(step.Block).Value, step.Continuation.Value))];
     }
 }

@@ -11,12 +11,13 @@ internal sealed class SuccessionPass : GraphBuildPass
 {
     protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
     {
-        foreach (var (block, next) in BlockSequence.WithSuccessors(context.Blocks, draft.End, draft))
+        foreach (var (block, continuation) in
+                 BlockSequence.AllContinuations(context.TopLevelBlocks, draft.End, draft))
         {
             var source = draft.IdOf(block);
             if (!draft.Node(source).Out.LeavesUnconditionally())
             {
-                draft.AddEdge(source, new Succession(next));
+                draft.AddEdge(source, new Succession(continuation));
             }
         }
     }

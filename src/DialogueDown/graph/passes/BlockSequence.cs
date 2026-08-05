@@ -5,9 +5,10 @@ namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Walks the blocks of a sequence — and of any option body nested in it — pairing each block with
-/// the node control reaches once that block is done: the next block in its own sequence, or the
-/// sequence's <b>continuation</b> when it is the last. Because an option's body continues where
-/// the choice itself would have, the arms of a branch weave back together:
+/// its <b>continuation</b>: the node control reaches once that block is done, which is the next
+/// block in its own sequence, or the sequence's own continuation when it is the last. Because an
+/// option's body continues where the choice itself would have, the arms of a branch weave back
+/// together:
 /// <code>
 /// Guide: Pick.        n0
 /// - Alice: Left.      n1 is the choice group; n2 is this arm's first block
@@ -20,21 +21,21 @@ namespace DialogueDown.Graph.Passes;
 ///                                                           ▼
 ///                                         n5 ──succession──▶ End
 /// </code>
-/// Both arms end at <c>n5</c>, the choice's own continuation. A nested choice repeats the shape
-/// one level down, so its arms weave back to wherever the enclosing body continues.
+/// Both arms continue at <c>n5</c>, the choice's own continuation. A nested choice repeats the
+/// shape one level down, so its arms weave back to wherever the enclosing body continues.
 /// </summary>
 internal static class BlockSequence
 {
-    public static IEnumerable<(ScriptBlock Block, NodeId Next)> WithSuccessors(
-        IReadOnlyList<ScriptBlock> sequence, NodeId continuation, GraphDraft draft)
+    public static IEnumerable<(ScriptBlock Block, NodeId Continuation)> AllContinuations(
+        IReadOnlyList<ScriptBlock> sequence, NodeId sequenceContinuation, GraphDraft draft)
     {
         for (var position = 0; position < sequence.Count; position++)
         {
             var block = sequence[position];
-            var next = position + 1 < sequence.Count
+            var continuation = position + 1 < sequence.Count
                 ? draft.IdOf(sequence[position + 1])
-                : continuation;
-            yield return (block, next);
+                : sequenceContinuation;
+            yield return (block, continuation);
 
             if (block is not ChoiceGroup group)
             {
@@ -43,7 +44,7 @@ internal static class BlockSequence
 
             foreach (var body in group.OptionBodies())
             {
-                foreach (var nested in WithSuccessors(body, next, draft))
+                foreach (var nested in AllContinuations(body, continuation, draft))
                 {
                     yield return nested;
                 }

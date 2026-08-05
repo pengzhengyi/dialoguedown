@@ -6,8 +6,8 @@ namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// The immutable input shared by every graph-construction pass: the semantic model, diagnostic
-/// context, and the reading-order views of the scene tree computed once per build — the
-/// document-order blocks and each scene's entry block.
+/// context, and the reading-order views of the scene tree computed once per build — the blocks in
+/// document order, both top-level and nested, and each scene's entry block.
 /// </summary>
 internal sealed class GraphBuildContext
 {
@@ -19,8 +19,8 @@ internal sealed class GraphBuildContext
         ArgumentNullException.ThrowIfNull(diagnostics);
         Semantics = semantics;
         Diagnostics = diagnostics;
-        Blocks = semantics.SceneRoot.DocumentOrder();
-        AllBlocks = [.. Blocks.SelectMany(block => block.DescendantsAndSelf().OfType<ScriptBlock>())];
+        TopLevelBlocks = semantics.SceneRoot.DocumentOrder();
+        AllBlocks = [.. TopLevelBlocks.SelectMany(block => block.DescendantsAndSelf().OfType<ScriptBlock>())];
         _entryBlockByScene = semantics.SceneRoot.EntryBlocks();
     }
 
@@ -30,12 +30,15 @@ internal sealed class GraphBuildContext
     /// <summary>The diagnostic context for this graph build.</summary>
     public DiagnosticsContext Diagnostics { get; }
 
-    /// <summary>The script blocks in document order, computed once for this graph build.</summary>
-    public IReadOnlyList<ScriptBlock> Blocks { get; }
+    /// <summary>
+    /// The blocks the scenes own directly, in document order — the document's own sequence, which
+    /// a pass chains against a continuation. It excludes blocks nested inside another block.
+    /// </summary>
+    public IReadOnlyList<ScriptBlock> TopLevelBlocks { get; }
 
     /// <summary>
-    /// Every block in document order, including those nested inside a choice option's body —
-    /// each one becomes a node, whereas <see cref="Blocks"/> is the document's own sequence.
+    /// Every block in document order, adding those nested inside a choice option's body to
+    /// <see cref="TopLevelBlocks"/>. Each one becomes a node.
     /// </summary>
     public IReadOnlyList<ScriptBlock> AllBlocks { get; }
 

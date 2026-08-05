@@ -12,11 +12,12 @@ internal sealed class ChoicePass : GraphBuildPass
 {
     protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
     {
-        foreach (var (block, next) in BlockSequence.WithSuccessors(context.Blocks, draft.End, draft))
+        foreach (var (block, continuation) in
+                 BlockSequence.AllContinuations(context.TopLevelBlocks, draft.End, draft))
         {
             if (block is ChoiceGroup group)
             {
-                FanOut(group, next, draft);
+                FanOut(group, continuation, draft);
             }
         }
     }
