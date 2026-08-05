@@ -11,8 +11,7 @@ const tasks = JSON.parse(
 const repositoryRoot = resolve(here, "../../../..");
 const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
 const release = readFileSync(resolve(repositoryRoot, ".github/workflows/release.yml"), "utf8");
-const normalTestCommand =
-    /dotnet test DialogueDown\.sln --configuration Release --no-build -m:3/;
+const normalTestCommand = /dotnet test DialogueDown\.sln --configuration Release --no-build -m:3/;
 const guidance = [
     "README.md",
     "CONTRIBUTING.md",
