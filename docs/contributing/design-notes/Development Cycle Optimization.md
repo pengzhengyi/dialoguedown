@@ -1,8 +1,8 @@
 # Development Cycle Optimization
 
 > [!NOTE]
-> Status: **implemented; the August 2026 .NET test follow-up is accepted locally,
-> with CI timing still to be observed**. Increments 1 and 3–12 are built and
+> Status: **implemented; the August 2026 .NET test follow-up is accepted for
+> local contributor commands and rejected for CI**. Increments 1 and 3–12 are built and
 > measured. Increment 2 was
 > deliberately skipped because Release coverage changed the sequence-point
 > denominator; Increment 13 was measured and rejected because it broke file
@@ -223,7 +223,7 @@ run).
 | 9a–9d. Frontend caches | **Achieved** | Warm TypeScript 57.3% faster; ESLint 55.9%; Stylelint 29.8%; Prettier 83.5%. Every cache invalidation was tested | CI starts cold; caches target the local repeated loop |
 | 10. Overlapped live preparation | **Achieved** | Local `npm run e2e:live` remains unchanged | Live job: 89 s → 72 s; 17 s / 19.1%; 1.24×; three green runs |
 | 11. Node environment for pure Vitest files | **Achieved** | Ten-file target: 23.80 s → 11.46 s; 51.8%; 2.08×. Current full suite: 16.72 s → 14.34 s; 14.2%; 1.17× | Quality job: 42 s → 39 s; 7.1%; quality check: 29 s → 26 s; 10.3%; three green runs |
-| 12. Parallel .NET test projects | **Achieved locally** | Warm solution-test median: 28.57 s → 20.35 s; 28.8%; 1.40× with `-m:3` | Awaiting CI measurement |
+| 12. Parallel .NET test projects | **Achieved locally; rejected in CI** | Warm solution-test median: 28.57 s → 20.35 s; 28.8%; 1.40× with `-m:3` | PR run: 13 s vs recent `main` range 11–12 s; CI stays serial |
 | 13. Single VM-backed Vitest fork | **Rejected** | Vitest median: 20.85 s → 11.29 s; 45.8%; 1.85×, but a cross-file probe proved leaked globals | Not pushed; default isolated forks retained |
 
 Increment 1 had one non-reproducing local cold launcher timeout. It then passed
@@ -610,21 +610,25 @@ orchestration dominate the wall clock: the six test projects take 5.0–12.2
 seconds individually even though the core project's 1,053 test bodies total only
 4.16 seconds.
 
-**Design:** add `-m:3` only to the normal Release/no-build solution test command
-in CI, release validation, contributor docs, and the default VS Code test task.
-Keep targeted one-project tests unchanged. Keep build commands unchanged because
-warm builds measured 4.34 seconds by default versus 4.52 seconds with three
-workers.
+**Design:** add `-m:3` to the documented local Release/no-build solution command
+and the default VS Code test task. Keep targeted one-project tests unchanged.
+Keep CI, release validation, and build commands unchanged because those
+environments or phases did not reproduce a gain.
 
 Do **not** parallelize the coverage pass. The instrumented solution run regressed
 from 53.37 seconds to 78.23 seconds with `-m:3`, likely from instrumentation and
 result-output contention.
 
-**Result:** the paired three-run median fell from 28.57 seconds to 20.35 seconds
+**Local result:** the paired three-run median fell from 28.57 seconds to 20.35 seconds
 (28.8%; 1.40×). A direct five-run comparison found three
 (22.70 ± 1.24 seconds) and four workers (22.48 ± 0.71 seconds) statistically
 equivalent; five or more regressed to 25.35–27.44 seconds. Three is retained over
 four because it used materially less aggregate CPU/system time.
+
+**CI result:** the pull-request `.NET` Test step took 13 seconds. The five most
+recent successful `main` runs took 11, 12, 12, 12, and 12 seconds. GitHub's
+smaller runner therefore showed no benefit; CI and release validation remain
+serial.
 
 **Reuse finding:** production already registers the compiler pipeline as
 singletons. A standalone benchmark measured `CreateDefault()` at about

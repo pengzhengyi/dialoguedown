@@ -9,8 +9,6 @@ const tasks = JSON.parse(
     readFileSync(resolve(here, "../../../../.vscode/tasks.json"), "utf8"),
 ).tasks;
 const repositoryRoot = resolve(here, "../../../..");
-const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
-const release = readFileSync(resolve(repositoryRoot, ".github/workflows/release.yml"), "utf8");
 const normalTestCommand = /dotnet test DialogueDown\.sln --configuration Release --no-build -m:3/;
 const guidance = [
     "README.md",
@@ -50,7 +48,7 @@ test("targeted .NET tasks select a project and optional filter", () => {
     assert.match(filtered.command, /--filter/);
 });
 
-test("full .NET test gates parallelize projects while coverage stays serial", () => {
+test("local .NET test guidance parallelizes projects while CI and coverage stay serial", () => {
     const full = tasks.find((task) => task.label === "test");
     const coverage = tasks.find((task) => task.label === "coverage");
 
@@ -59,14 +57,13 @@ test("full .NET test gates parallelize projects while coverage stays serial", ()
     assert.ok(coverage);
     assert.doesNotMatch(coverage.command, /-m:3/);
 
-    assert.match(ci, /- name: Test[\s\S]*?dotnet test DialogueDown\.sln[^\n]*-m:3/);
-    assert.match(ci, /- name: Collect coverage[\s\S]*?dotnet test DialogueDown\.sln/);
-    assert.doesNotMatch(
-        ci.match(/- name: Collect coverage[\s\S]*?(?=\n\s{6}- name:)/)?.[0] ?? "",
-        /-m:3/,
-    );
-    assert.match(release, /dotnet test DialogueDown\.sln[^\n]*-m:3/);
     for (const [path, content] of guidance) {
         assert.match(content, normalTestCommand, path);
+    }
+
+    for (const path of [".github/workflows/ci.yml", ".github/workflows/release.yml"]) {
+        const workflow = readFileSync(resolve(repositoryRoot, path), "utf8");
+        assert.match(workflow, /dotnet test DialogueDown\.sln --configuration Release --no-build/);
+        assert.doesNotMatch(workflow, /dotnet test DialogueDown\.sln[^\n]*-m:3/);
     }
 });
