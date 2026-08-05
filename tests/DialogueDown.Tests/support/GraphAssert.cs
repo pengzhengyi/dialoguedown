@@ -1,6 +1,7 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
+using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Tests.Support;
 
@@ -36,6 +37,20 @@ internal static class GraphAssert
         ArgumentNullException.ThrowIfNull(node);
         return AssertDivert(Assert.Single(node.Out), target);
     }
+
+    /// <summary>Asserts the edge is guarded by <paramref name="key"/>.</summary>
+    public static void AssertGuarded(Edge edge, string key) =>
+        Assert.Equal(key, Assert.IsAssignableFrom<IGuardedEdge>(edge).Guard?.Key);
+
+    /// <summary>Asserts the edge is one control may always take.</summary>
+    public static void AssertUnguarded(Edge edge) =>
+        Assert.Null(Assert.IsAssignableFrom<IGuardedEdge>(edge).Guard);
+
+    /// <summary>Asserts the edge is a random arm weighted at <paramref name="percentage"/>.</summary>
+    public static void AssertNumberWeight(Edge edge, double percentage) =>
+        Assert.Equal(
+            percentage,
+            Assert.IsType<NumberWeight>(Assert.IsType<RandomOptionEdge>(edge).Weight).Percentage);
 
     /// <summary>Asserts the node's out-edges point at exactly <paramref name="targets"/>, in order.</summary>
     public static void AssertTargets(DialogueNode node, params NodeId[] targets)

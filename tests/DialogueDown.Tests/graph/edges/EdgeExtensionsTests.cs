@@ -21,16 +21,41 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void LeavesUnconditionally_GuardedDivert_IsFalse()
     {
-        IReadOnlyList<Edge> edges = [new DivertEdge(_target, new Condition("Brave", SourceSpanFactory.Span()))];
+        IReadOnlyList<Edge> edges = [new DivertEdge(_target, Guard("Brave"))];
 
         Assert.False(edges.LeavesUnconditionally());
     }
 
     [Fact]
-    public void LeavesUnconditionally_Option_IsTrue()
+    public void LeavesUnconditionally_UnguardedOption_IsTrue()
     {
-        // A choice always takes one of its options, so it never falls through.
+        // The arm is always offered, so the choice always leaves through one of them.
         IReadOnlyList<Edge> edges = [new OptionEdge(_target)];
+
+        Assert.True(edges.LeavesUnconditionally());
+    }
+
+    [Fact]
+    public void LeavesUnconditionally_EveryOptionGuarded_IsFalse()
+    {
+        // Each guard may read false, so the choice can end up offering nothing.
+        IReadOnlyList<Edge> edges =
+        [
+            new OptionEdge(_target, Guard("HasKey")),
+            new OptionEdge(NodeId(2), Guard("HasRope")),
+        ];
+
+        Assert.False(edges.LeavesUnconditionally());
+    }
+
+    [Fact]
+    public void LeavesUnconditionally_OneUnguardedOptionAmongGuardedOnes_IsTrue()
+    {
+        IReadOnlyList<Edge> edges =
+        [
+            new OptionEdge(_target, Guard("HasKey")),
+            new OptionEdge(NodeId(2)),
+        ];
 
         Assert.True(edges.LeavesUnconditionally());
     }
@@ -42,4 +67,6 @@ public sealed class EdgeExtensionsTests
 
         Assert.False(edges.LeavesUnconditionally());
     }
+
+    private static Condition Guard(string key) => new(key, SourceSpanFactory.Span());
 }

@@ -6,9 +6,10 @@ namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Fans a choice group out into its arms: one edge per arm, leading to the first node of that arm's
-/// body. A player choice emits plain option edges; a random choice emits weighted ones, since the
-/// engine resolves the pick from the weight. Runs after node creation, and before succession —
-/// which then leaves the choice without a fall-through, since taking an arm is how control leaves it.
+/// body and carrying the guard that decides whether the arm is offered. A player choice emits plain
+/// option edges; a random choice emits weighted ones, since the engine resolves the pick from the
+/// weight. Runs after node creation, and before succession — which then gives the choice a
+/// fall-through only when every arm is guarded, since then none may be available.
 /// </summary>
 internal sealed class ChoicePass : GraphBuildPass
 {
@@ -26,7 +27,6 @@ internal sealed class ChoicePass : GraphBuildPass
 
     private static void FanOut(ChoiceGroup group, NodeId continuation, GraphDraft draft)
     {
-        AssertNoGuardedOption(group);
         var choice = draft.IdOf(group);
         foreach (var edge in ArmEdges(group, continuation, draft))
         {
@@ -39,11 +39,10 @@ internal sealed class ChoicePass : GraphBuildPass
     private static IEnumerable<Edge> ArmEdges(
         ChoiceGroup group, NodeId continuation, GraphDraft draft) => group switch
     {
-        Choices choices => choices.Options
-            .Select(option => (Edge)new OptionEdge(EntryOf(option.Body, continuation, draft))),
-        RandomChoices random => random.Options
-            .Select(option => (Edge)new RandomOptionEdge(
-                EntryOf(option.Body, continuation, draft), option.Weight)),
+        Choices choices => choices.Options.Select(option =>
+            (Edge)new OptionEdge(EntryOf(option.Body, continuation, draft), option.Condition)),
+        RandomChoices random => random.Options.Select(option => (Edge)new RandomOptionEdge(
+            EntryOf(option.Body, continuation, draft), option.Weight, option.Condition)),
         _ => throw new NotSupportedException(
             $"The dialogue graph builder does not yet lower {group.GetType().Name} groups."),
     };
@@ -53,14 +52,4 @@ internal sealed class ChoicePass : GraphBuildPass
     private static NodeId EntryOf(
         IReadOnlyList<ScriptBlock> body, NodeId continuation, GraphDraft draft) =>
         body.Count > 0 ? draft.IdOf(body[0]) : continuation;
-
-    // A guard decides whether an arm is offered at all, which the edges cannot yet carry.
-    private static void AssertNoGuardedOption(ChoiceGroup group)
-    {
-        if (group.HasGuardedOption())
-        {
-            throw new NotSupportedException(
-                "The dialogue graph builder does not yet lower a guarded choice option.");
-        }
-    }
 }

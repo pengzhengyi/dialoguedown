@@ -15,8 +15,4 @@ internal static class ChoiceGroupExtensions
             _ => throw new ArgumentOutOfRangeException(
                 nameof(group), group.GetType(), "Unhandled choice group in OptionBodies()."),
         };
-
-    /// <summary>Whether a condition guards any of the group's options.</summary>
-    public static bool HasGuardedOption(this ChoiceGroup group) =>
-        group.Children().OfType<IConditional>().Any(option => option.IsConditional());
 }

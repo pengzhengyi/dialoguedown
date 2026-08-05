@@ -123,6 +123,22 @@ public sealed class SuccessionPassTests
         AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
     }
 
+    [Fact]
+    public void Apply_AChoiceWhoseArmsAreAllGuarded_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            - `"HasKey"?` Alice: Use the key.
+
+            - `"HasRope"?` Alice: Climb in.
+
+            Guide: After.
+            """);
+
+        // Neither guard need hold, so the fall-through is the path left when nothing is offered.
+        var after = graph.Nodes[3].Id;
+        Assert.Equal(after, Assert.Single(graph.Nodes[0].Out.OfType<SuccessionEdge>()).Target);
+    }
+
     // Node creation assigns the ids and adds the End; diverts and choices run before succession,
     // which skips a node that already leaves unconditionally.
     private DialogueGraph Build(string source) =>
