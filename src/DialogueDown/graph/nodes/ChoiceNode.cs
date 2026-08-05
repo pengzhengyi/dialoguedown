@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Nodes;
 
 /// <summary>
 /// A branch point: control leaves it by taking exactly one of its <see cref="Option"/> edges,

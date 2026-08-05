@@ -1,4 +1,5 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Passes;
 using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;

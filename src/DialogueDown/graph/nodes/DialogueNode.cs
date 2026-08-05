@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Nodes;
 
 /// <summary>
 /// A node in the dialogue graph — a unit of flow identified by its <see cref="Id"/>, with the

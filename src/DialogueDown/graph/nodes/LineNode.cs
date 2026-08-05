@@ -1,7 +1,7 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Nodes;
 
 /// <summary>
 /// A spoken line: its resolved <see cref="Speaker"/> and the displayable <see cref="Speech"/>

@@ -1,3 +1,5 @@
+using DialogueDown.Graph.Nodes;
+
 namespace DialogueDown.Graph.Builder;
 
 /// <summary>A branch point under construction; its option edges are added by a graph pass.</summary>

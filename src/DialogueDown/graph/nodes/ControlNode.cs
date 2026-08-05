@@ -1,6 +1,6 @@
 using DialogueDown.Script.Ast;
 
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Nodes;
 
 /// <summary>
 /// An effect-only control block: the ordered game calls it runs when it plays. It carries no

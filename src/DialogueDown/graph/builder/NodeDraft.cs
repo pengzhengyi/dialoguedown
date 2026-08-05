@@ -1,3 +1,5 @@
+using DialogueDown.Graph.Nodes;
+
 namespace DialogueDown.Graph.Builder;
 
 /// <summary>

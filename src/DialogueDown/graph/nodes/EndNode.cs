@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Nodes;
 
 /// <summary>
 /// The terminal node of a run: reaching it ends the dialogue. The reserved <c>#END</c> target

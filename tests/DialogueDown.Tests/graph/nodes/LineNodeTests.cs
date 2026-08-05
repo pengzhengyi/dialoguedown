@@ -1,10 +1,11 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Nodes;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Nodes;
 
 public sealed class LineNodeTests
 {
