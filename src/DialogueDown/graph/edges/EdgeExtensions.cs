@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Edges;
 
 /// <summary>Queries over a node's out-edges.</summary>
 internal static class EdgeExtensions
@@ -13,8 +13,8 @@ internal static class EdgeExtensions
         ArgumentNullException.ThrowIfNull(edges);
         return edges.Any(edge => edge switch
         {
-            Divert divert => divert.Guard is null,
-            Option => true,
+            DivertEdge divert => divert.Guard is null,
+            OptionEdge => true,
             _ => false,
         });
     }

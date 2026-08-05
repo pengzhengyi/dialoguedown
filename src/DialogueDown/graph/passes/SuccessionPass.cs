@@ -1,4 +1,5 @@
 using DialogueDown.Graph.Builder;
+using DialogueDown.Graph.Edges;
 
 namespace DialogueDown.Graph.Passes;
 
@@ -17,7 +18,7 @@ internal sealed class SuccessionPass : GraphBuildPass
             var source = draft.IdOf(block);
             if (!draft.Node(source).Out.LeavesUnconditionally())
             {
-                draft.AddEdge(source, new Succession(continuation));
+                draft.AddEdge(source, new SuccessionEdge(continuation));
             }
         }
     }

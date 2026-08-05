@@ -1,4 +1,5 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 
 namespace DialogueDown.Tests.Support;
@@ -7,17 +8,17 @@ namespace DialogueDown.Tests.Support;
 internal static class GraphAssert
 {
     /// <summary>Asserts the edge is a succession to <paramref name="target"/>.</summary>
-    public static Succession AssertSuccession(Edge edge, NodeId target)
+    public static SuccessionEdge AssertSuccession(Edge edge, NodeId target)
     {
-        var succession = Assert.IsType<Succession>(edge);
+        var succession = Assert.IsType<SuccessionEdge>(edge);
         Assert.Equal(target, succession.Target);
         return succession;
     }
 
     /// <summary>Asserts the edge is a divert to <paramref name="target"/>.</summary>
-    public static Divert AssertDivert(Edge edge, NodeId target)
+    public static DivertEdge AssertDivert(Edge edge, NodeId target)
     {
-        var divert = Assert.IsType<Divert>(edge);
+        var divert = Assert.IsType<DivertEdge>(edge);
         Assert.Equal(target, divert.Target);
         return divert;
     }
@@ -30,7 +31,7 @@ internal static class GraphAssert
     }
 
     /// <summary>Asserts the node's only out-edge is a divert to <paramref name="target"/>.</summary>
-    public static Divert AssertOnlyDivert(DialogueNode node, NodeId target)
+    public static DivertEdge AssertOnlyDivert(DialogueNode node, NodeId target)
     {
         ArgumentNullException.ThrowIfNull(node);
         return AssertDivert(Assert.Single(node.Out), target);

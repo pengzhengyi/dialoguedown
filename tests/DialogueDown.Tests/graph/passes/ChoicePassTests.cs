@@ -1,4 +1,5 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Passes;
 using DialogueDown.Tests.Support;
@@ -24,7 +25,7 @@ public sealed class ChoicePassTests
         // node 0 the question, node 1 the choice, then one node per option body.
         var choice = Assert.IsType<ChoiceNode>(graph.Nodes[1]);
         AssertTargets(choice, graph.Nodes[2].Id, graph.Nodes[3].Id);
-        Assert.All(choice.Out, edge => Assert.IsType<Option>(edge));
+        Assert.All(choice.Out, edge => Assert.IsType<OptionEdge>(edge));
     }
 
     [Fact]

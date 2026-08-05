@@ -1,4 +1,5 @@
 using DialogueDown.Graph.Builder;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Graph.Passes;
@@ -29,7 +30,7 @@ internal sealed class ChoicePass : GraphBuildPass
         foreach (var body in group.OptionBodies())
         {
             var target = EntryOf(body, continuation, draft);
-            var option = new Option(target);
+            var option = new OptionEdge(target);
             draft.AddEdge(choice, option);
         }
     }

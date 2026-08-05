@@ -1,4 +1,5 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Passes;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.GraphAssert;
@@ -87,7 +88,7 @@ public sealed class SuccessionPassTests
         // 0 question, 1 choice, 2 left, 3 right, 4 onward.
         var onward = graph.Nodes[4].Id;
         AssertOnlySuccession(graph.Nodes[0], graph.Nodes[1].Id);
-        Assert.Empty(graph.Nodes[1].Out.OfType<Succession>());
+        Assert.Empty(graph.Nodes[1].Out.OfType<SuccessionEdge>());
         AssertOnlySuccession(graph.Nodes[2], onward);
         AssertOnlySuccession(graph.Nodes[3], onward);
         AssertOnlySuccession(graph.Nodes[4], graph.End);

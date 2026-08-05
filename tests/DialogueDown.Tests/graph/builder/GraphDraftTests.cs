@@ -1,5 +1,6 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Builder;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
@@ -70,7 +71,7 @@ public sealed class GraphDraftTests
         var draft = Draft();
         var lineId = AddLine(draft, model, line);
         draft.AddEnd();
-        draft.AddEdge(lineId, Succession(99));
+        draft.AddEdge(lineId, SuccessionEdge(99));
 
         Assert.Throws<InvalidOperationException>(() => draft.Freeze());
     }
@@ -82,13 +83,13 @@ public sealed class GraphDraftTests
         var draft = Draft();
         var lineId = AddLine(draft, model, line);
         var endId = draft.AddEnd();
-        draft.AddEdge(lineId, Succession(endId.Value));
+        draft.AddEdge(lineId, SuccessionEdge(endId.Value));
 
         var graph = draft.Freeze();
 
         Assert.Equal(lineId, graph.Entry);
         var entry = Assert.IsType<LineNode>(graph.Node(graph.Entry));
-        var edge = Assert.IsType<Succession>(Assert.Single(entry.Out));
+        var edge = Assert.IsType<SuccessionEdge>(Assert.Single(entry.Out));
         Assert.Equal(graph.End, edge.Target);
     }
 

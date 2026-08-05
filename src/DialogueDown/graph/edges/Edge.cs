@@ -1,4 +1,4 @@
-namespace DialogueDown.Graph;
+namespace DialogueDown.Graph.Edges;
 
 /// <summary>
 /// A directed connection from one node to a <see cref="Target"/>, of a specific kind. An edge

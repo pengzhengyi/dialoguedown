@@ -1,5 +1,6 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Builder;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
@@ -17,7 +18,7 @@ public sealed class NodeDraftTests
         var node = Assert.IsType<TestNode>(draft.Freeze());
 
         Assert.Equal(draft.Id, node.Id);
-        Assert.IsType<Succession>(Assert.Single(node.Out));
+        Assert.IsType<SuccessionEdge>(Assert.Single(node.Out));
         Assert.Throws<InvalidOperationException>(
             () => draft.AddSuccessionEdge(2));
     }

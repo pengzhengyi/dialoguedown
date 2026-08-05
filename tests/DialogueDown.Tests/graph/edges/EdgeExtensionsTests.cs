@@ -1,9 +1,10 @@
 using DialogueDown.Graph;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 
-namespace DialogueDown.Tests.Graph;
+namespace DialogueDown.Tests.Graph.Edges;
 
 public sealed class EdgeExtensionsTests
 {
@@ -12,7 +13,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void LeavesUnconditionally_UnguardedDivert_IsTrue()
     {
-        IReadOnlyList<Edge> edges = [new Divert(_target)];
+        IReadOnlyList<Edge> edges = [new DivertEdge(_target)];
 
         Assert.True(edges.LeavesUnconditionally());
     }
@@ -20,7 +21,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void LeavesUnconditionally_GuardedDivert_IsFalse()
     {
-        IReadOnlyList<Edge> edges = [new Divert(_target, new Condition("Brave", SourceSpanFactory.Span()))];
+        IReadOnlyList<Edge> edges = [new DivertEdge(_target, new Condition("Brave", SourceSpanFactory.Span()))];
 
         Assert.False(edges.LeavesUnconditionally());
     }
@@ -29,7 +30,7 @@ public sealed class EdgeExtensionsTests
     public void LeavesUnconditionally_Option_IsTrue()
     {
         // A choice always takes one of its options, so it never falls through.
-        IReadOnlyList<Edge> edges = [new Option(_target)];
+        IReadOnlyList<Edge> edges = [new OptionEdge(_target)];
 
         Assert.True(edges.LeavesUnconditionally());
     }
@@ -37,7 +38,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void LeavesUnconditionally_OnlySuccession_IsFalse()
     {
-        IReadOnlyList<Edge> edges = [new Succession(_target)];
+        IReadOnlyList<Edge> edges = [new SuccessionEdge(_target)];
 
         Assert.False(edges.LeavesUnconditionally());
     }

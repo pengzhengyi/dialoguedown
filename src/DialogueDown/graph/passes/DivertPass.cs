@@ -1,4 +1,5 @@
 using DialogueDown.Graph.Builder;
+using DialogueDown.Graph.Edges;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 
@@ -20,7 +21,7 @@ internal sealed class DivertPass : GraphBuildPass
             {
                 if (TargetOf(jump, draft, context) is { } target)
                 {
-                    draft.AddEdge(draft.IdOf(block), new Divert(target, jump.Condition));
+                    draft.AddEdge(draft.IdOf(block), new DivertEdge(target, jump.Condition));
                 }
             }
         }

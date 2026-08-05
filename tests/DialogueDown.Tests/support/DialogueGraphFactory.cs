@@ -1,5 +1,6 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Builder;
+using DialogueDown.Graph.Edges;
 
 namespace DialogueDown.Tests.Support;
 
@@ -8,11 +9,11 @@ internal static class DialogueGraphFactory
 {
     public static NodeId NodeId(int value) => new(value);
 
-    public static Succession Succession(int target) => new(NodeId(target));
+    public static SuccessionEdge SuccessionEdge(int target) => new(NodeId(target));
 
     public static void AddSuccessionEdge(this NodeDraft draft, int target)
     {
         ArgumentNullException.ThrowIfNull(draft);
-        draft.AddEdge(Succession(target));
+        draft.AddEdge(SuccessionEdge(target));
     }
 }

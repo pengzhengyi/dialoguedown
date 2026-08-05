@@ -1,3 +1,4 @@
+using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 
 namespace DialogueDown.Graph.Builder;
