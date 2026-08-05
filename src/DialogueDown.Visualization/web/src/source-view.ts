@@ -63,6 +63,9 @@ import {
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument } from "./text";
+import type { DebugController } from "./debug-controller";
+import { debugEditor, toggleBreakpointAt } from "./debug-editor";
+import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -222,6 +225,8 @@ export interface SourceViewOptions {
      * do not share one collapse state.
      */
     previewStorageKey?: string;
+    /** Optional line-debugger controller. Absent in every ordinary report. */
+    debug?: DebugController;
     /** Render the preview HTML. The Source tab defaults to the whole-document renderer. */
     renderPreview?: (source: string) => string;
 }
@@ -230,6 +235,8 @@ export interface SourceViewOptions {
 export interface SourceViewHandle {
     /** The source-view element (editor + divider + preview) to mount. */
     readonly element: HTMLElement;
+    /** Release the editor, listeners, and optional debugger subscription. */
+    destroy(): void;
     /** Switch the editor between editable (Edit) and read-only (View) without a rebuild. */
     setEditable(editable: boolean): void;
     /** Replace the buffer (a View-mode hot-reload), keeping the one editor instance. */
@@ -313,6 +320,7 @@ export function createSourceView(
         onChange,
         symbols = () => EMPTY_SYMBOLS,
         previewStorageKey = "dd-preview-collapsed",
+        debug,
         renderPreview = renderDocument,
     } = options;
 
@@ -324,6 +332,7 @@ export function createSourceView(
     container.className = "source-view";
     const sourcePane = document.createElement("div");
     sourcePane.className = "source-pane";
+    let debugToolbar: DebugToolbar | null = null;
 
     const divider = document.createElement("div");
     divider.className = "source-divider";
@@ -357,6 +366,7 @@ export function createSourceView(
         state: EditorState.create({
             doc: source,
             extensions: [
+                ...(debug ? [debugEditor(debug)] : []),
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter(),
@@ -391,9 +401,18 @@ export function createSourceView(
             ],
         }),
     });
+    if (debug) {
+        debugToolbar = createDebugToolbar(debug, {
+            toggleBreakpoint: () => {
+                toggleBreakpointAt(view, view.state.selection.main.head);
+                view.focus();
+            },
+        });
+        sourcePane.prepend(debugToolbar.element);
+    }
 
     container.append(sourcePane, divider, preview);
-    initSplitDivider(container, divider);
+    const disposeSplitDivider = initSplitDivider(container, divider);
 
     // Scroll the editor and its preview together (VS Code-style), anchored on headings — but
     // only side by side. In the stacked (narrow) layout the vertical axes don't correspond, so
@@ -422,6 +441,13 @@ export function createSourceView(
 
     return {
         element: container,
+        destroy: () => {
+            narrow?.removeEventListener("change", syncScrollWithLayout);
+            disposeScrollSync?.();
+            disposeSplitDivider();
+            debugToolbar?.destroy();
+            view.destroy();
+        },
         setEditable: (next) =>
             view.dispatch({ effects: editability.reconfigure(editableConfig(next, [completion])) }),
         setContent: (next) =>
@@ -450,19 +476,19 @@ export function initSplitDivider(
     divider: HTMLElement,
     splitVar = "--source-split",
     collapsedClass = "preview-collapsed",
-): void {
+): () => void {
     let dragging = false;
 
-    divider.addEventListener("mousedown", (event) => {
+    const onMouseDown = (event: MouseEvent): void => {
         // A collapsed side panel has nothing to resize — the divider is just its re-open
         // handle, so ignore drags (the toggle itself already swallows its own mousedown).
         if (container.classList.contains(collapsedClass)) return;
         dragging = true;
         document.body.style.userSelect = "none";
         event.preventDefault();
-    });
+    };
 
-    document.addEventListener("mousemove", (event) => {
+    const onMouseMove = (event: MouseEvent): void => {
         if (!dragging) return;
         const bounds = container.getBoundingClientRect();
         // Resize along the split axis: horizontal side by side, vertical when stacked.
@@ -472,10 +498,22 @@ export function initSplitDivider(
         const offset = vertical ? event.clientY - bounds.top : event.clientX - bounds.left;
         const clamped = Math.max(MIN_RATIO, Math.min(MAX_RATIO, offset / extent));
         container.style.setProperty(splitVar, `${(clamped * 100).toFixed(2)}%`);
-    });
+    };
 
-    document.addEventListener("mouseup", () => {
+    const onMouseUp = (): void => {
         dragging = false;
         document.body.style.userSelect = "";
-    });
+    };
+
+    divider.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+        divider.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        if (dragging) document.body.style.userSelect = "";
+        dragging = false;
+    };
 }
