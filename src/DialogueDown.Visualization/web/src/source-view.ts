@@ -190,6 +190,43 @@ const surroundHandlers = EditorView.domEventHandlers({
     },
 });
 
+/** The stage rows for the reverse Jump-to menu, each carrying the current source selection. */
+function jumpMenuItems(
+    view: EditorView,
+    jumpTargets: readonly SourceJumpTarget[],
+): ContextMenuItem[] {
+    const { from, to } = view.state.selection.main;
+    return jumpTargets.map((target) => ({
+        icon: target.icon ?? "list-tree",
+        label: target.title,
+        run: () => target.run(from, to),
+    }));
+}
+
+/** The caret's screen coordinates, or `null` off-screen or without layout (e.g. jsdom throws). */
+function caretCoords(view: EditorView): { left: number; bottom: number } | null {
+    try {
+        return view.coordsAtPos(view.state.selection.main.head);
+    } catch {
+        return null;
+    }
+}
+
+/** Open the reverse Jump-to picker at the caret — the keyboard entry to the "shortcut series". */
+function openJumpMenuAtCaret(view: EditorView, jumpTargets: readonly SourceJumpTarget[]): boolean {
+    if (jumpTargets.length === 0) return false;
+    const editor = view.dom.getBoundingClientRect();
+    const caret = caretCoords(view);
+    openContextMenu(
+        new MouseEvent("contextmenu", {
+            clientX: caret ? caret.left : editor.left + 8,
+            clientY: caret ? caret.bottom : editor.top + 8,
+        }),
+        jumpMenuItems(view, jumpTargets),
+    );
+    return true;
+}
+
 /** Bounds for the draggable split, as a fraction of the container width. */
 const MIN_RATIO = 0.2;
 const MAX_RATIO = 0.8;
@@ -366,15 +403,10 @@ export function createSourceView(
         contextmenu(event, view) {
             const items: ContextMenuItem[] = [];
             if (jumpTargets.length > 0) {
-                const { from, to } = view.state.selection.main;
                 items.push({
                     icon: "go-to-file",
                     label: "Jump to",
-                    submenu: jumpTargets.map((target) => ({
-                        icon: target.icon ?? "list-tree",
-                        label: target.title,
-                        run: () => target.run(from, to),
-                    })),
+                    submenu: jumpMenuItems(view, jumpTargets),
                 });
             }
             if (!view.state.readOnly) {
@@ -417,6 +449,9 @@ export function createSourceView(
                 semanticTokensExtension(),
                 reservedTargetsPanel(),
                 contextMenu,
+                keymap.of([
+                    { key: "Alt-j", run: (view) => openJumpMenuAtCaret(view, jumpTargets) },
+                ]),
                 headingSlugHints(),
                 foldHeadings,
                 codeFolding(),

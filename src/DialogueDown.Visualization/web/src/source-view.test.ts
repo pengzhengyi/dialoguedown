@@ -157,6 +157,18 @@ describe("createSourceView jump-to menu", () => {
         expect(run).toHaveBeenCalledWith(0, 5);
     });
 
+    it("opens the Jump-to picker at the caret on Alt-J", () => {
+        const run = vi.fn();
+        const source = sourceView({ jumpTargets: [{ title: "Semantic Model", run }] });
+
+        source.element
+            .querySelector(".cm-content")!
+            .dispatchEvent(new KeyboardEvent("keydown", { key: "j", altKey: true, bubbles: true }));
+
+        const item = document.querySelector<HTMLButtonElement>(".context-menu .context-menu-item");
+        expect(item?.textContent).toContain("Semantic Model");
+    });
+
     it("opens no menu in a read-only view with no jump targets", () => {
         const source = sourceView({ editable: false });
 
