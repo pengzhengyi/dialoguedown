@@ -80,6 +80,21 @@ public sealed class SymbolProjectionTests
         var symbols = Project("Alice: Farewell.");
 
         Assert.Contains(symbols.JumpTargets, target => target is { Slug: "END", Heading: "End the run" });
+        Assert.Equal(
+            [new ReservedTargetSymbol("END", "End", ReservedTargetRole.Terminal)],
+            symbols.ReservedTargets);
+    }
+
+    [Fact]
+    public void Baseline_IncludesTheReservedEndTargetWithoutDocumentSymbols()
+    {
+        Assert.Equal(["END"], SymbolSet.Baseline.JumpTargets.Select(target => target.Slug));
+        Assert.Equal(
+            [new ReservedTargetSymbol("END", "End", ReservedTargetRole.Terminal)],
+            SymbolSet.Baseline.ReservedTargets);
+        Assert.Empty(SymbolSet.Baseline.Speakers);
+        Assert.Empty(SymbolSet.Baseline.SpeakerIds);
+        Assert.Empty(SymbolSet.Baseline.Tags);
     }
 
     [Fact]

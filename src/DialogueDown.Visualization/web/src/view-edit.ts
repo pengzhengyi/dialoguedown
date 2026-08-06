@@ -100,6 +100,7 @@ export function createModeController(
             }
             ports.app.setDiagnostics(report.diagnostics ?? []);
             ports.app.setSemanticTokens(report.semanticTokens ?? []);
+            ports.app.setReservedTargets(report.symbols?.reservedTargets ?? []);
             ports.app.updateStages(report.stages);
         },
         onReloadConfig(report) {
@@ -114,6 +115,7 @@ export function createModeController(
             if (source != null) ports.app.setConfigContent(source);
             ports.app.setDiagnostics(report.diagnostics ?? []);
             ports.app.setSemanticTokens(report.semanticTokens ?? []);
+            ports.app.setReservedTargets(report.symbols?.reservedTargets ?? []);
             ports.app.updateStages(report.stages);
             // Adopt the external config as the config controller's clean baseline; an invalid
             // reload keeps the last valid report but adopts the (invalid) text as saved-invalid,

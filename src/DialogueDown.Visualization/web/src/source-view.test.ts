@@ -3,6 +3,7 @@ import {
     createFakeDebugController,
     type FakeDebugProgram,
 } from "./test-support/fake-debug-controller";
+import type { ReservedTarget } from "./model";
 import { createSourceView, initSplitDivider, type SourceViewHandle } from "./source-view";
 
 const SOURCE = "Entry\nEnd\n";
@@ -19,6 +20,7 @@ const PROGRAM: FakeDebugProgram = {
         { id: "end", anchor: "End", label: "End", paths: [] },
     ],
 };
+const END: ReservedTarget = { anchor: "END", label: "End", role: "Terminal" };
 
 let mounted: SourceViewHandle[] = [];
 
@@ -46,6 +48,27 @@ describe("createSourceView debugger integration", () => {
 
         expect(source.element.querySelector(".dd-debug-toolbar")).toBeNull();
         expect(source.element.querySelector(".dd-debug-breakpoint-gutter")).toBeNull();
+    });
+
+    describe("createSourceView reserved targets", () => {
+        it("mounts the compiler-projected End sentinel below the document", () => {
+            const source = sourceView({ reservedTargets: [END] });
+
+            expect(source.element.querySelector(".dd-reserved-target-label")?.textContent).toBe(
+                "End",
+            );
+            expect(source.element.querySelector(".dd-reserved-target-anchor")?.textContent).toBe(
+                "#END",
+            );
+        });
+
+        it("updates the fixed panel without rebuilding the editor", () => {
+            const source = sourceView({ reservedTargets: [END] });
+
+            source.setReservedTargets([]);
+
+            expect(source.element.querySelector(".dd-reserved-targets")).toBeNull();
+        });
     });
 
     it("mounts the toolbar and two gutters when a controller is supplied", () => {
