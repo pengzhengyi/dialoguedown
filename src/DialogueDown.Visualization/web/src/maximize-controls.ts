@@ -12,7 +12,10 @@ export interface FocusControls {
 /**
  * Install the app-level focus-mode controls. Both modes are page-level actions (they hide
  * the app chrome so the active tab fills the window), so each gets one control at the right
- * end of the tab-nav row rather than a copy tucked into every tab's toolbar.
+ * end of the tab row rather than a copy tucked into every tab's toolbar.
+ *
+ * They are placed in `actions`, a flex sibling of the tab nav rather than an overlay on it,
+ * so they stay pinned while the tabs scroll horizontally underneath on a narrow window.
  *
  * A second "exit" chip is placed in `contentRoot` but pinned to the viewport corner and
  * revealed by CSS only while a focus mode is active — the header, and therefore both tab-bar
@@ -23,18 +26,18 @@ export interface FocusControls {
  * maximize (the empty state has no tabs).
  */
 export function installMaximizeControls(
-    header: HTMLElement,
+    actions: HTMLElement,
     contentRoot: HTMLElement,
     onToggle: () => void,
     onToggleZen: () => void,
 ): FocusControls {
     const zen = createZenButton(onToggleZen);
     zen.classList.add("tabbar-zen");
-    header.appendChild(zen);
+    actions.appendChild(zen);
 
     const bar = createMaximizeButton(onToggle);
     bar.classList.add("tabbar-maximize");
-    header.appendChild(bar);
+    actions.appendChild(bar);
 
     const exit = createMaximizeButton(onToggle);
     exit.classList.add("maximize-exit");

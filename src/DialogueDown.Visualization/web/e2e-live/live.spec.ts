@@ -265,3 +265,47 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
     await page.keyboard.press("Escape");
     await expect(page.locator("#explorer")).toBeVisible();
 });
+
+test.describe("on a phone-sized window", () => {
+    test.use({ viewport: { width: 390, height: 780 } });
+
+    test("turns the Explorer seam with the stacked layout", async ({ page }) => {
+        await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+
+        const stacked = await page.evaluate(() => {
+            const app = getComputedStyle(document.querySelector("#app")!).flexDirection;
+            const seam = document.querySelector("#explorer-resizer")!.getBoundingClientRect();
+            const explorer = document.querySelector("#explorer")!.getBoundingClientRect();
+            const stage = document.querySelector("#stages")!.getBoundingClientRect();
+            return {
+                app,
+                seamHeight: seam.height,
+                seamSpansWidth: seam.width > 100,
+                explorerHeight: explorer.height,
+                stageHeight: stage.height,
+                windowHeight: window.innerHeight,
+            };
+        });
+
+        expect(stacked.app).toBe("column");
+        // The seam kept `width: 1px` in a column and measured 1x0px, so its collapse toggle
+        // could not be reached at all.
+        expect(stacked.seamHeight).toBeGreaterThan(0);
+        expect(stacked.seamSpansWidth).toBe(true);
+        // Content-sized rather than a rigid 15rem: this project holds a handful of files.
+        expect(stacked.explorerHeight).toBeLessThanOrEqual(stacked.windowHeight * 0.25 + 1);
+        // Which leaves the stage the bulk of the column instead of a quarter of it.
+        expect(stacked.stageHeight).toBeGreaterThan(stacked.explorerHeight);
+    });
+
+    test("hides and restores the Explorer from the turned seam", async ({ page }) => {
+        const toggle = page.locator("#explorer-resizer .collapse-toggle");
+        await expect(page.locator("#explorer")).toBeVisible();
+
+        await toggle.click();
+        await expect(page.locator("#explorer")).toBeHidden();
+
+        await toggle.click();
+        await expect(page.locator("#explorer")).toBeVisible();
+    });
+});

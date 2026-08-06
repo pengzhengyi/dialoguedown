@@ -32,3 +32,17 @@ export function rememberedActiveTab(storage = defaultStorage()): string | null {
         return null;
     }
 }
+
+/**
+ * Scroll the active tab into view along the tab row. The row is a horizontal scroller on a
+ * narrow window, so the tab activated by a keyboard shortcut or restored from the last
+ * session can sit outside the visible span.
+ *
+ * Only the row scrolls: `block: "nearest"` leaves the page where it is, so revealing a tab
+ * never pulls the report out from under the reader. `scrollIntoView` is absent in jsdom and
+ * in older engines, so the call is guarded rather than assumed.
+ */
+export function revealActiveTab(tabs: HTMLElement): void {
+    const active = tabs.querySelector<HTMLElement>(".tab.active");
+    active?.scrollIntoView?.({ behavior: "smooth", inline: "nearest", block: "nearest" });
+}

@@ -85,6 +85,16 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The report on a narrow window or a phone** — the stage now keeps the room it needs. The
+  stage tabs stay on one horizontally scrolling row instead of wrapping onto three, with the
+  Zen and full-screen controls pinned beside them; the Explorer turns into a compact top
+  section with a working collapse seam rather than an invisible one; and the expanded help
+  panel is bounded so it can no longer paint over the editor, and on a short window it floats
+  over the stage instead of being squeezed into an unreadable strip. Arrow buttons appear
+  beside the tabs when they overflow, so a mouse without horizontal scrolling can still reach
+  every stage. At 390px the stage went from a quarter of the window to just over half. See the
+  [Narrow Screen Layout](docs/contributing/design-notes/Live%20Visualization%20-%20Narrow%20Screen%20Layout.md)
+  note.
 - **Graph zoom focus is visually lighter** — the editable percentage now uses a theme-accent
   underline instead of a rounded input focus ring inside the compact toolbar.
 - **Diagnostic popovers stay visible at editor edges** — hover messages now overlay the report
