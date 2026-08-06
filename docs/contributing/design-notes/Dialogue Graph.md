@@ -97,8 +97,9 @@ plugs into the compiler facade as the stage after semantic analysis.
   This note reserves the `IEdgeSelector` seam it will plug into.
 - **The returning detour** and its call stack — reserved as the `Detour`/`Return` edge
   kinds; its syntax and return boundary are [Progression Order](./Progression%20Order.md) follow-ups.
-- **Block controls** (`if`/`elseif`/`else`) — the `BranchRegion` kind and a guarded branch
-  edge are defined here, but producing them is the [Block Controls](./Block%20Controls.md) note.
+- **Block controls** (`if`/`elseif`/`else`) — lowered here to a **Branch** node whose
+  guarded, ordered **Branch** edges the first satisfied one wins among; the construct
+  itself is the [Block Controls](./Block%20Controls.md) note.
 - **Cross-file links** — reserved by letting a `NodeId` widen to a project-qualified id;
   a file grouping arrives with it. Resolution is the [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) note.
 
@@ -158,7 +159,7 @@ core dependency.
 - [x] Carry a block's inline game calls as ordered **Effects** on its node.
 - [x] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node.
 - [x] Reference every target by **node id**, so cycles and cross-region diverts are ordinary edges.
-- [ ] Leave clean seams: the `IEdgeSelector` runtime hook and the `Detour`/`Return` edge kinds. *(The `BranchRegion` kind is defined; the edge kinds and the selector are pending.)*
+- [ ] Leave clean seams: the `IEdgeSelector` runtime hook and the `Detour`/`Return` edge kinds. *(Both are pending.)*
 - [ ] Plug into the compiler facade as the stage after semantic analysis; expose the graph on the `CompilationResult`.
 
 ## Design
@@ -228,11 +229,10 @@ sealed record Return    ()                                       : Edge(default)
 sealed record RegionTree(IReadOnlyList<Region> Roots);   // .Of(roots) folds the empty case
 abstract record Region(
     RegionId Id,
-    NodeId Entry, NodeId Exit,                   // named entry enables dynamic entry; exit drives weave-back
+    NodeId Entry, NodeId Exit,                   // the named entry a divert lands on
     IReadOnlySet<NodeId> OwnNodes,               // the nodes it owns directly, not its subregions'
     IReadOnlyList<Region> Subregions);
-sealed record SceneRegion (..., IReadOnlyList<InlineFragment> Label, string Anchor) : Region;
-sealed record BranchRegion(..., Condition? Guard) : Region;   // one arm of a block control
+sealed record SceneRegion(..., IReadOnlyList<InlineFragment> Label, string Anchor) : Region;
 ```
 
 ### Lowering flow
@@ -302,9 +302,17 @@ flowchart LR
   middle of another scene — a plain edge, where a nested subgraph model would force a
   divert to pierce a container's single entry. The overlay also carries the grouping the
   report and diagnostics want without complicating traversal. A grouping's **kind is its
-  type**, not a discriminator field: `SceneRegion` carries a heading's label and anchor,
-  `BranchRegion` a block-control arm's guard, and each new grouping is a new subclass
-  rather than another nullable column on one record.
+  type**, not a discriminator field: `SceneRegion` carries a heading's label and anchor, a
+  file grouping will carry its path, and each new grouping is a new subclass rather than
+  another nullable column on one record.
+- **A region groups what can be addressed.** A grouping earns a region only when something
+  outside it can **name it and enter it** — a scene by its anchor, later a file by its path.
+  That naming metadata is precisely what the edges cannot recover, which is why it is
+  overlaid rather than derived. A block control's branch is the counter-example: it has no
+  name, and control reaches it only by falling in from its own block, so nothing can address
+  it. Its extent is also fully recoverable from the flow — the branch node's arm edges bound
+  it and the block's continuation is where it rejoins — so grouping a branch is a **query
+  over the graph, not an overlay on it**, and no `BranchRegion` is produced.
 - **The builder is a pass pipeline over a mutable draft.** Construction and the result are
   separate types: passes add node drafts, edges, and regions to a `GraphDraft`, which
   validates and freezes into the immutable `DialogueGraph`. Each pass owns one concern, so
