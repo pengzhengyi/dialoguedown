@@ -169,13 +169,13 @@ export function runApp(
     function jumpToStageByTitle(title: string, from: number, to: number): void {
         const stage = currentStages.find((candidate) => candidate.title === title);
         if (stage == null || stage.unavailable != null) return;
-        const node = findEnclosingNode(stage.nodes, from, to);
-        if (node == null) return;
+        const match = findEnclosingNode(stage.nodes, stage.edges, from, to);
+        if (match == null) return;
         const index = titles.indexOf(title);
         if (index < 0) return;
         const land = (): void => {
             activate(index);
-            views[index]?.selectById(node.id, { center: true });
+            views[index]?.selectById(match.node.id, { center: true });
         };
         if (source?.beginNavigation) source.beginNavigation(land);
         else land();
@@ -185,7 +185,7 @@ export function runApp(
     function enclosingSpanByTitle(title: string, from: number, to: number): Span | null {
         const stage = currentStages.find((candidate) => candidate.title === title);
         if (stage == null || stage.unavailable != null) return null;
-        return findEnclosingNode(stage.nodes, from, to)?.span ?? null;
+        return findEnclosingNode(stage.nodes, stage.edges, from, to)?.extent ?? null;
     }
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).

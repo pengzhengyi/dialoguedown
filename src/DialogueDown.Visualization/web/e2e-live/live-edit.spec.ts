@@ -618,3 +618,27 @@ test("Alt-J opens the Jump-to picker from the source caret", async ({ page }) =>
     await expect(page.locator(".tab.active")).toHaveText("Semantic Model");
     await expect(page.locator("section.stage.active g.node.selected")).toHaveCount(1);
 });
+
+test("Jump to Semantic Model resolves a multi-line selection to its scene", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+
+    // Select across two body lines inside the "Market" scene (no single line encloses it).
+    const content = page.locator(".source-pane .cm-content");
+    await content.getByText("Welcome", { exact: false }).first().click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Shift+ArrowDown");
+    await page.keyboard.press("Shift+ArrowDown");
+    await page.keyboard.press("Shift+End");
+
+    await content.click({ button: "right" });
+    await page.locator(".context-menu-item", { hasText: "Jump to" }).hover();
+    await page
+        .locator(".context-submenu .context-menu-item", { hasText: "Semantic Model" })
+        .click();
+
+    // The jump lands on the scene, not the whole document or a stray fragment.
+    await expect(page.locator(".tab.active")).toHaveText("Semantic Model");
+    await expect(page.locator("section.stage.active g.node.selected")).toHaveCount(1);
+    await expect(page.locator(".node-detail-heading")).toContainText("Market");
+});
