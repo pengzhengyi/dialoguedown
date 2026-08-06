@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph;
 using DialogueDown.Graph.Builder;
 using DialogueDown.Graph.Edges;
@@ -23,12 +24,13 @@ public sealed class NodeDraftTests
             () => draft.AddSuccessionEdge(2));
     }
 
-    private sealed class TestNodeDraft(NodeId id) : NodeDraft(id)
+    private sealed class TestNodeDraft(NodeId id)
+        : NodeDraft(id, SourceSpanFactory.Span())
     {
         protected override DialogueNode CreateNode() =>
-            new TestNode(Id, Out.ToArray());
+            new TestNode(Id, Span, Out.ToArray());
     }
 
-    private sealed record TestNode(NodeId Id, IReadOnlyList<Edge> Out) :
-        DialogueNode(Id, Out);
+    private sealed record TestNode(NodeId Id, SourceSpan Span, IReadOnlyList<Edge> Out) :
+        DialogueNode(Id, Span, Out);
 }

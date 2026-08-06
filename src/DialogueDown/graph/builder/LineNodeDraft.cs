@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
@@ -15,9 +16,10 @@ internal sealed class LineNodeDraft : NodeDraft
 
     public LineNodeDraft(
         NodeId id,
+        SourceSpan span,
         SpeakerSymbol speaker,
         IReadOnlyList<InlineFragment> speech)
-        : base(id)
+        : base(id, span)
     {
         ArgumentNullException.ThrowIfNull(speaker);
         ArgumentNullException.ThrowIfNull(speech);
@@ -26,5 +28,5 @@ internal sealed class LineNodeDraft : NodeDraft
     }
 
     protected override DialogueNode CreateNode() =>
-        new LineNode(Id, _speaker, _speech, Out.ToArray());
+        new LineNode(Id, Span, _speaker, _speech, Out.ToArray());
 }

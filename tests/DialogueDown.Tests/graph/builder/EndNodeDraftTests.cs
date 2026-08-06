@@ -10,7 +10,7 @@ public sealed class EndNodeDraftTests
     [Fact]
     public void Freeze_NoEdges_CreatesTheEndNode()
     {
-        var draft = new EndNodeDraft(NodeId(0));
+        var draft = new EndNodeDraft(NodeId(0), SourceSpanFactory.Span());
 
         Assert.IsType<EndNode>(draft.Freeze());
     }
@@ -18,7 +18,7 @@ public sealed class EndNodeDraftTests
     [Fact]
     public void Freeze_OutgoingEdge_Throws()
     {
-        var draft = new EndNodeDraft(NodeId(0));
+        var draft = new EndNodeDraft(NodeId(0), SourceSpanFactory.Span());
         draft.AddSuccessionEdge(1);
 
         Assert.Throws<InvalidOperationException>(() => draft.Freeze());

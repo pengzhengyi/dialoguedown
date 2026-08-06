@@ -21,7 +21,7 @@ public sealed class GraphDraftTests
     public void AddEnd_MakesTheEndNodeBothEntryAndEnd()
     {
         var draft = Draft();
-        draft.AddEnd();
+        draft.AddEnd(SourceSpanFactory.Span());
 
         var graph = draft.Freeze();
 
@@ -36,7 +36,7 @@ public sealed class GraphDraftTests
         var draft = Draft();
         var firstId = AddLine(draft, model, (Line)blocks[0]);
         AddLine(draft, model, (Line)blocks[1]);
-        draft.AddEnd();
+        draft.AddEnd(SourceSpanFactory.Span());
 
         var graph = draft.Freeze();
 
@@ -51,7 +51,7 @@ public sealed class GraphDraftTests
         var draft = Draft();
 
         Assert.Throws<InvalidOperationException>(
-            () => draft.AddBlock(line, _ => new EndNodeDraft(NodeId(99))));
+            () => draft.AddBlock(line, _ => new EndNodeDraft(NodeId(99), SourceSpanFactory.Span())));
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public sealed class GraphDraftTests
         var line = AssertSingleLine(Pipeline.Blocks("Alice: a", out var model));
         var draft = Draft();
         var lineId = AddLine(draft, model, line);
-        draft.AddEnd();
+        draft.AddEnd(SourceSpanFactory.Span());
         draft.AddEdge(lineId, SuccessionEdge(99));
 
         Assert.Throws<InvalidOperationException>(() => draft.Freeze());
@@ -82,7 +82,7 @@ public sealed class GraphDraftTests
         var line = AssertSingleLine(Pipeline.Blocks("Alice: a", out var model));
         var draft = Draft();
         var lineId = AddLine(draft, model, line);
-        var endId = draft.AddEnd();
+        var endId = draft.AddEnd(SourceSpanFactory.Span());
         draft.AddEdge(lineId, SuccessionEdge(endId.Value));
 
         var graph = draft.Freeze();
@@ -97,7 +97,7 @@ public sealed class GraphDraftTests
     public void Freeze_Twice_Throws()
     {
         var draft = Draft();
-        draft.AddEnd();
+        draft.AddEnd(SourceSpanFactory.Span());
         draft.Freeze();
 
         Assert.Throws<InvalidOperationException>(() => draft.Freeze());
@@ -107,14 +107,14 @@ public sealed class GraphDraftTests
     public void AddEnd_AfterFreeze_Throws()
     {
         var draft = Draft();
-        draft.AddEnd();
+        draft.AddEnd(SourceSpanFactory.Span());
         draft.Freeze();
 
-        Assert.Throws<InvalidOperationException>(() => draft.AddEnd());
+        Assert.Throws<InvalidOperationException>(() => draft.AddEnd(SourceSpanFactory.Span()));
     }
 
     private static NodeId AddLine(GraphDraft draft, SemanticModel model, Line line) =>
         draft.AddBlock(
             line,
-            id => new LineNodeDraft(id, model.Speakers.Resolve(line.Speaker!), line.Speech));
+            id => new LineNodeDraft(id, line.Span, model.Speakers.Resolve(line.Speaker!), line.Speech));
 }

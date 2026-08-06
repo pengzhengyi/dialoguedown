@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Edges;
 
 namespace DialogueDown.Graph.Nodes;
@@ -9,4 +10,4 @@ namespace DialogueDown.Graph.Nodes;
 /// node instead of inferring which it is.
 /// </summary>
 internal sealed record RandomChoiceNode(
-    NodeId Id, IReadOnlyList<Edge> Out) : DialogueNode(Id, Out);
+    NodeId Id, SourceSpan Span, IReadOnlyList<Edge> Out) : DialogueNode(Id, Span, Out);

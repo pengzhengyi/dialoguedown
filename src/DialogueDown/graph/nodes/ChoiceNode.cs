@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Edges;
 
 namespace DialogueDown.Graph.Nodes;
@@ -9,4 +10,5 @@ namespace DialogueDown.Graph.Nodes;
 /// the options must be offered in edge order; otherwise a presenter may shuffle them.
 /// </summary>
 internal sealed record ChoiceNode(
-    NodeId Id, bool IsOrdered, IReadOnlyList<Edge> Out) : DialogueNode(Id, Out);
+    NodeId Id, SourceSpan Span, bool IsOrdered, IReadOnlyList<Edge> Out)
+    : DialogueNode(Id, Span, Out);

@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Script.Ast;
 
@@ -9,5 +10,6 @@ namespace DialogueDown.Graph.Nodes;
 /// </summary>
 internal sealed record ControlNode(
     NodeId Id,
+    SourceSpan Span,
     IReadOnlyList<GameCall> Effects,
-    IReadOnlyList<Edge> Out) : DialogueNode(Id, Out);
+    IReadOnlyList<Edge> Out) : DialogueNode(Id, Span, Out);

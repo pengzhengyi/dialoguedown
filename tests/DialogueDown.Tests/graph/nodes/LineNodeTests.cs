@@ -28,7 +28,7 @@ public sealed class LineNodeTests
     }
 
     private static LineNode Node(params InlineFragment[] speech) =>
-        new(NodeId(0), SpeakerSymbol.ForName("Alice"), speech, []);
+        new(NodeId(0), SourceSpanFactory.Span(), SpeakerSymbol.ForName("Alice"), speech, []);
 
     private static Text Text(string content) => DialogueAstFactory.Text(content);
 }

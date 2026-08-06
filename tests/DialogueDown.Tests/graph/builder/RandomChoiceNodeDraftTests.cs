@@ -1,6 +1,7 @@
 using DialogueDown.Graph.Builder;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
+using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 using static DialogueDown.Tests.Support.GraphAssert;
@@ -12,7 +13,7 @@ public sealed class RandomChoiceNodeDraftTests
     [Fact]
     public void Freeze_CarriesTheWeightedEdgesAddedToIt()
     {
-        var draft = new RandomChoiceNodeDraft(NodeId(0));
+        var draft = new RandomChoiceNodeDraft(NodeId(0), SourceSpanFactory.Span());
         draft.AddEdge(new RandomOptionEdge(NodeId(1), NumberWeight(80)));
         draft.AddEdge(new RandomOptionEdge(NodeId(2), NumberWeight(20)));
 

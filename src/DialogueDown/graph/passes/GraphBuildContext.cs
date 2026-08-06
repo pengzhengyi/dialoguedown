@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
@@ -22,6 +23,8 @@ internal sealed class GraphBuildContext
         TopLevelBlocks = semantics.SceneRoot.DocumentOrder();
         AllBlocks = [.. TopLevelBlocks.SelectMany(block => block.DescendantsAndSelf().OfType<ScriptBlock>())];
         _entryBlockByScene = semantics.SceneRoot.EntryBlocks();
+        DocumentEnd = new SourceSpan(
+            TopLevelBlocks.Count > 0 ? TopLevelBlocks[^1].Span.End : 0, length: 0);
     }
 
     /// <summary>The analyzed script being lowered.</summary>
@@ -41,6 +44,12 @@ internal sealed class GraphBuildContext
     /// option's or a control branch's — to <see cref="TopLevelBlocks"/>. Each one becomes a node.
     /// </summary>
     public IReadOnlyList<ScriptBlock> AllBlocks { get; }
+
+    /// <summary>
+    /// A zero-width span just past the document's last block — where the End node belongs, since
+    /// it is synthetic and owns no source text of its own.
+    /// </summary>
+    public SourceSpan DocumentEnd { get; }
 
     /// <summary>Resolves a line's speaker prefix to its resolved symbol.</summary>
     public SpeakerSymbol ResolveSpeaker(Speaker speaker) => Semantics.Speakers.Resolve(speaker);

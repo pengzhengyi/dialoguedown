@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Script.Ast;
 
@@ -11,12 +12,13 @@ internal sealed class ControlNodeDraft : NodeDraft
 {
     private readonly IReadOnlyList<GameCall> _effects;
 
-    public ControlNodeDraft(NodeId id, IReadOnlyList<GameCall> effects)
-        : base(id)
+    public ControlNodeDraft(NodeId id, SourceSpan span, IReadOnlyList<GameCall> effects)
+        : base(id, span)
     {
         ArgumentNullException.ThrowIfNull(effects);
         _effects = effects;
     }
 
-    protected override DialogueNode CreateNode() => new ControlNode(Id, _effects, Out.ToArray());
+    protected override DialogueNode CreateNode() =>
+        new ControlNode(Id, Span, _effects, Out.ToArray());
 }

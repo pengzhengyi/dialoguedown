@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Nodes;
 
 namespace DialogueDown.Graph.Builder;
@@ -5,7 +6,8 @@ namespace DialogueDown.Graph.Builder;
 /// <summary>
 /// An engine-resolved branch under construction; its weighted option edges are added by a graph pass.
 /// </summary>
-internal sealed class RandomChoiceNodeDraft(NodeId id) : NodeDraft(id)
+internal sealed class RandomChoiceNodeDraft(NodeId id, SourceSpan span) : NodeDraft(id, span)
 {
-    protected override DialogueNode CreateNode() => new RandomChoiceNode(Id, Out.ToArray());
+    protected override DialogueNode CreateNode() =>
+        new RandomChoiceNode(Id, Span, Out.ToArray());
 }

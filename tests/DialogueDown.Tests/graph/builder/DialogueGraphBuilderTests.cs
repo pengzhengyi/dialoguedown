@@ -57,7 +57,7 @@ public sealed class DialogueGraphBuilderTests
             applied.Add(this);
             if (addsEnd)
             {
-                draft.AddEnd();
+                draft.AddEnd(SourceSpanFactory.Span());
             }
         }
     }

@@ -17,7 +17,7 @@ internal sealed class NodeCreationPass : GraphBuildPass
             AddNode(draft, context, block);
         }
 
-        draft.AddEnd();
+        draft.AddEnd(context.DocumentEnd);
     }
 
     private static void AddNode(GraphDraft draft, GraphBuildContext context, ScriptBlock block)
@@ -27,19 +27,23 @@ internal sealed class NodeCreationPass : GraphBuildPass
         {
             case Line line:
                 var speaker = context.ResolveSpeaker(SpeakerOf(line));
-                draft.AddBlock(line, id => new LineNodeDraft(id, speaker, line.Speech));
+                draft.AddBlock(line, id => new LineNodeDraft(id, line.Span, speaker, line.Speech));
                 break;
             case Choices choices:
-                draft.AddBlock(choices, id => new ChoiceNodeDraft(id, choices.IsOrdered));
+                draft.AddBlock(
+                    choices, id => new ChoiceNodeDraft(id, choices.Span, choices.IsOrdered));
                 break;
             case RandomChoices random:
-                draft.AddBlock(random, id => new RandomChoiceNodeDraft(id));
+                draft.AddBlock(random, id => new RandomChoiceNodeDraft(id, random.Span));
                 break;
             case ControlLine control:
-                draft.AddBlock(control, id => new ControlNodeDraft(id, [.. control.Effects.OfType<GameCall>()]));
+                draft.AddBlock(
+                    control,
+                    id => new ControlNodeDraft(
+                        id, control.Span, [.. control.Effects.OfType<GameCall>()]));
                 break;
             case ControlBlock conditional:
-                draft.AddBlock(conditional, id => new BranchNodeDraft(id));
+                draft.AddBlock(conditional, id => new BranchNodeDraft(id, conditional.Span));
                 break;
             default:
                 throw new NotSupportedException(

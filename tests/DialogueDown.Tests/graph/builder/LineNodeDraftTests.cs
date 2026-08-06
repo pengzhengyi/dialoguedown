@@ -16,6 +16,7 @@ public sealed class LineNodeDraftTests
         var line = AssertSingleLine(Pipeline.Blocks("Alice: a", out var model));
         var draft = new LineNodeDraft(
             NodeId(0),
+            line.Span,
             AssertHasSpeaker(model, line.Speaker!, "Alice"),
             line.Speech);
         draft.AddSuccessionEdge(1);

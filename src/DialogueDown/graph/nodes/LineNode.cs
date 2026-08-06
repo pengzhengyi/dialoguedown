@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
@@ -11,9 +12,10 @@ namespace DialogueDown.Graph.Nodes;
 /// </summary>
 internal sealed record LineNode(
     NodeId Id,
+    SourceSpan Span,
     SpeakerSymbol Speaker,
     IReadOnlyList<InlineFragment> Speech,
-    IReadOnlyList<Edge> Out) : DialogueNode(Id, Out)
+    IReadOnlyList<Edge> Out) : DialogueNode(Id, Span, Out)
 {
     /// <summary>The game calls in the line's speech, in order — its effects.</summary>
     public IReadOnlyList<GameCall> Effects => [.. Speech.OfType<GameCall>()];

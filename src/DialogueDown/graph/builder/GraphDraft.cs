@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Regions;
 using DialogueDown.Script.Ast;
@@ -49,11 +50,11 @@ internal sealed class GraphDraft
     }
 
     /// <summary>Adds the terminal End node draft, records it as the End, and returns its id.</summary>
-    public NodeId AddEnd()
+    public NodeId AddEnd(SourceSpan span)
     {
         AssertNotFrozen();
         var id = _idBuilder.GetOrAssignEnd();
-        TrackNode(new EndNodeDraft(id));
+        TrackNode(new EndNodeDraft(id, span));
         _end = id;
         return id;
     }

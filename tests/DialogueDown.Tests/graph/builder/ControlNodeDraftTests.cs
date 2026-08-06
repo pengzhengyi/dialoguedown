@@ -13,7 +13,7 @@ public sealed class ControlNodeDraftTests
     public void Freeze_CombinesItsEffectsWithAccumulatedEdges()
     {
         var effects = new GameCall[] { new DefaultCommand("open the gate", SourceSpanFactory.Span()) };
-        var draft = new ControlNodeDraft(NodeId(0), effects);
+        var draft = new ControlNodeDraft(NodeId(0), SourceSpanFactory.Span(), effects);
         draft.AddSuccessionEdge(1);
 
         var node = Assert.IsType<ControlNode>(draft.Freeze());

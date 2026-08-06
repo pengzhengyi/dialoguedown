@@ -1,9 +1,10 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Nodes;
 
 namespace DialogueDown.Graph.Builder;
 
 /// <summary>The terminal End node under construction.</summary>
-internal sealed class EndNodeDraft(NodeId id) : NodeDraft(id)
+internal sealed class EndNodeDraft(NodeId id, SourceSpan span) : NodeDraft(id, span)
 {
     public override DialogueNode Freeze()
     {
@@ -11,7 +12,7 @@ internal sealed class EndNodeDraft(NodeId id) : NodeDraft(id)
         return base.Freeze();
     }
 
-    protected override DialogueNode CreateNode() => new EndNode(Id);
+    protected override DialogueNode CreateNode() => new EndNode(Id, Span);
 
     private void AssertNoOutEdges()
     {

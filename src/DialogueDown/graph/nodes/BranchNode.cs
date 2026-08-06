@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph.Edges;
 
 namespace DialogueDown.Graph.Nodes;
@@ -8,4 +9,5 @@ namespace DialogueDown.Graph.Nodes;
 /// player and a <see cref="RandomChoiceNode"/> asks the engine, this one needs neither — the
 /// state alone decides, so a runtime passes straight through it.
 /// </summary>
-internal sealed record BranchNode(NodeId Id, IReadOnlyList<Edge> Out) : DialogueNode(Id, Out);
+internal sealed record BranchNode(
+    NodeId Id, SourceSpan Span, IReadOnlyList<Edge> Out) : DialogueNode(Id, Span, Out);

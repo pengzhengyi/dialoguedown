@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Passes;
@@ -125,9 +126,40 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
+    public void Apply_EveryNode_CarriesTheSpanOfTheBlockItCameFrom()
+    {
+        const string source = """
+            Alice: hello
+
+            Bob: goodbye
+            """;
+
+        var graph = Build(source);
+
+        Assert.Collection(
+            graph.Nodes,
+            node => Assert.Equal("Alice: hello", Slice(source, node.Span)),
+            node => Assert.Equal("Bob: goodbye", Slice(source, node.Span)),
+            node => Assert.Equal(string.Empty, Slice(source, node.Span)));
+    }
+
+    [Fact]
+    public void Apply_EndNode_CarriesAZeroWidthSpanWhereTheDocumentEnds()
+    {
+        var graph = Build("Alice: hello");
+
+        var end = graph.Node(graph.End);
+        Assert.Equal(0, end.Span.Length);
+        Assert.Equal(graph.Node(graph.Entry).Span.End, end.Span.Start);
+    }
+
+    [Fact]
     public void Apply_BlockGuardedByACondition_Throws() =>
         // A guard on the block needs an edge that skips it, which no pass wires yet.
         Assert.Throws<NotSupportedException>(() => Build("""`"Brave"?` Alice: you enter"""));
+
+    private static string Slice(string source, SourceSpan span) =>
+        source.Substring(span.Start, span.Length);
 
     private DialogueGraph Build(string source) => GraphPasses.Build(source, _pass);
 }
