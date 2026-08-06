@@ -1851,6 +1851,12 @@ g.node.entity-highlight text.label {
     background: transparent;
     color: var(--pico-color);
     border: none;
+
+    /* CodeMirror defaults its panels to z-index 300. The top (find) panel re-raises itself to
+       20 below, but the bottom (reserved-target) panel must stay under the footer's floating
+       help overlay (z-index 20), which slides up over the editor on a short window — otherwise
+       the End row paints on top of the help text. */
+    z-index: 1;
 }
 
 :is(.source-pane, .config-source) .cm-panels-top {
