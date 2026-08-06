@@ -144,15 +144,27 @@ export function setHelp(context: HelpContext): void {
 
 /**
  * Wire the footer's "How to use" disclosure: the toggle stays on the status line, and
- * clicking it shows or hides the shortcut panel below the status bar (full width).
+ * clicking it shows or hides the shortcut panel. On a short window the panel floats over the
+ * stage instead of sharing the column with it, so it also carries its own close button —
+ * the toggle below it is still the way to reopen.
  */
 export function initHelpToggle(): void {
     const toggle = document.getElementById("help-toggle");
-    const content = document.getElementById("help-content");
-    if (!toggle || !content) return;
+    const panel = document.getElementById("help-panel");
+    if (!toggle || !panel) return;
+
+    const setOpen = (open: boolean): void => {
+        toggle.setAttribute("aria-expanded", String(open));
+        panel.hidden = !open;
+    };
+
     toggle.addEventListener("click", () => {
-        const open = toggle.getAttribute("aria-expanded") === "true";
-        toggle.setAttribute("aria-expanded", String(!open));
-        content.hidden = open;
+        setOpen(toggle.getAttribute("aria-expanded") !== "true");
+    });
+    document.getElementById("help-close")?.addEventListener("click", () => {
+        setOpen(false);
+        // Return the reader to the control they can reopen it with, rather than to the top
+        // of the document, since the button they pressed has just disappeared.
+        (toggle as HTMLElement).focus();
     });
 }

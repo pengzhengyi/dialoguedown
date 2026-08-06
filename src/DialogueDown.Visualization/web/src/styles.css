@@ -159,13 +159,23 @@
 
 html,
 body {
+    /* `100%` resolves against a viewport that mobile browsers resize as the URL bar hides
+       and reveals, which makes a fixed-height app shell jump mid-scroll. `dvh` is the unit
+       defined for that, with the percentage kept as the fallback for older engines. */
     height: 100%;
+    height: 100dvh;
 }
 
 body {
     margin: 0;
     display: flex;
     flex-direction: column;
+
+    /* A fixed-height app shell: every pane owns its own scroll, so the document itself never
+       should. Without this, a region that cannot shrink far enough on a short window leaks a
+       page scrollbar that reveals nothing but blank space. Overlays are positioned `fixed`,
+       so they are unaffected by this clip. */
+    overflow: hidden;
 }
 
 .app-header {
@@ -331,11 +341,101 @@ body {
     stroke: var(--dd-ink);
 }
 
+/* The tab row: the stage tabs scroll horizontally while the focus-mode controls stay pinned
+   at the end. They are flex siblings rather than an overlay, so the controls cannot be
+   scrolled away and need no hand-tuned offsets. */
+.tabbar {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+/* Pinned beside the scrolling tabs, and never squeezed by them. */
+.tabbar-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.15rem;
+    padding-bottom: 0.35rem;
+}
+
+/* Holders for the row's scroll arrows, flanking the tabs. They collapse to nothing when the
+   arrow inside hides itself, so a row that fits keeps its tabs flush with the header gutter. */
+.tab-arrows {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    padding-bottom: 0.35rem;
+}
+
+.tab-arrow {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.1rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    line-height: 0;
+    cursor: pointer;
+}
+
+.tab-arrow:hover:not(:disabled) {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
+/* Kept in place rather than removed at a spent end, so pressing repeatedly toward one side
+   never shifts the row out from under the cursor. */
+.tab-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.tab-arrow[hidden] {
+    display: none;
+}
+
 nav.tabs {
     display: flex;
     justify-content: flex-start;
     gap: 0.25rem;
-    flex-wrap: wrap;
+
+    /* One line at every width. The stage tabs are the compiler pipeline, so their order and
+       adjacency carry meaning that an overflow menu would hide; instead the row scrolls, the
+       way Material's scrollable tabs and GitHub's repository nav do. `min-width: 0` lets the
+       flex item shrink below its content so the overflow lands here and not on the document. */
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: auto hidden;
+    scroll-snap-type: x proximity;
+
+    /* Clipping the cross axis would cut off the focus ring, which Pico paints as a spread
+       box-shadow *outside* the tab's box — a tab exactly fills this row, so the ring had no
+       room and vanished. Overflow is clipped at the padding box, so this padding gives the
+       ring somewhere to land; the negative margin then takes the space back out of the
+       layout, keeping the active tab's underline flush with the header rule. */
+    padding-block: 3px;
+    margin-block: -3px;
+
+    /* The row is short and sits under the brand, where a scrollbar would read as a stray
+       rule; a fade at the trailing edge signals the overflow instead, so an off-screen tab
+       is discoverable rather than simply cut off. The fade is harmless when nothing
+       overflows, because the last tab then ends before it. */
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent 100%);
+}
+
+nav.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 button.tab {
@@ -347,6 +447,14 @@ button.tab {
     border: none;
     border-bottom: 2px solid transparent;
     border-radius: 0;
+
+    /* Tabs keep their natural width in the scroller instead of being squeezed to fit, and
+       snap to the row's start when scrolled to. The scroll margin keeps a revealed tab clear
+       of the trailing fade. */
+    flex: 0 0 auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    scroll-margin-inline: 1.5rem;
 }
 
 button.tab:hover {
@@ -2368,9 +2476,6 @@ body.maximized .maximize-button .icon-compress {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
-    position: absolute;
-    right: 1.25rem;
-    bottom: 0.35rem;
     width: auto;
     margin: 0;
     padding: 0.3rem 0.5rem;
@@ -2389,15 +2494,12 @@ body.maximized .maximize-button .icon-compress {
 }
 
 /* The Zen toggle sits immediately left of the maximize button, sharing its quiet tab-row
-   styling so the pair reads as one focus-mode cluster. Both are absolutely positioned, so
-   this one is offset by the maximize button's width plus a small gap. */
+   styling so the pair reads as one focus-mode cluster. Both are laid out by the
+   `.tabbar-actions` flex row, so neither needs a hand-tuned offset. */
 .tabbar-zen {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
-    position: absolute;
-    right: 3.35rem;
-    bottom: 0.35rem;
     width: auto;
     margin: 0;
     padding: 0.3rem 0.5rem;
@@ -2776,7 +2878,13 @@ body.zen .config-view > .config-source {
 }
 
 .app-footer {
-    flex: 0 0 auto;
+    /* The status line is permanent, but the help panel below it is a disclosure the reader
+       opened — transient content that should give way rather than push the stage off the
+       window. `min-height: 0` is what actually lets the footer shrink: its automatic minimum
+       is its content's min-content height, which a `min-height` on the panel inside cannot
+       reduce. The status line below opts out of shrinking, so only the help panel gives. */
+    flex: 0 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column; /* the status line, then the expandable help below it */
     border-top: 1px solid var(--pico-muted-border-color);
@@ -2789,6 +2897,10 @@ body.zen .config-view > .config-source {
     align-items: center;
     gap: 0.4rem 1rem;
     padding: 0.4rem 1.25rem;
+
+    /* Always readable: when the footer shrinks to make room for the stage, the help panel
+       below absorbs all of it and this line keeps its full height. */
+    flex: 0 0 auto;
 }
 
 /* Left status bar: the mode badge and the document path. */
@@ -3131,9 +3243,76 @@ body.zen .config-view > .config-source {
 
 /* The shortcut panel, shown full width below the status line when expanded. */
 .app-footer .shortcuts {
+    position: relative;
     padding: 0.5rem 1.25rem 0.6rem;
     border-top: 1px solid var(--pico-muted-border-color);
     background: var(--pico-card-background-color);
+
+    /* The footer sits beside `#app` in a fixed-height column, so an unbounded panel takes its
+       height straight out of the stage — on a phone the help text is taller than the whole
+       window and left the stage a 27px sliver. Bound it to half the window, let it shrink
+       below that when the window is short, and let it scroll itself; `contain` stops that
+       scroll from chaining out to the page once it reaches an end. */
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: 50dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Dismisses the panel from inside it. Only really needed once the panel floats over the
+   stage on a short window, but it costs nothing inline and saves a trip to the status line. */
+.help-close {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    position: absolute;
+    top: 0.35rem;
+    right: 0.6rem;
+    display: inline-flex;
+    width: auto;
+    margin: 0;
+    padding: 0.2rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    line-height: 0;
+    cursor: pointer;
+}
+
+.help-close:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
+/* On a short window the help cannot share the column with the stage and still be readable —
+   squeezed into the leftover strip it showed about one line at a time. So it stops competing
+   for the layout budget and floats over the stage instead, anchored just above the status
+   line that opened it, which stays visible as the way to dismiss it again. */
+@media (height <= 640px) {
+    .app-footer .shortcuts:not([hidden]) {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        right: 0;
+        z-index: 20;
+
+        /* Tall enough to actually read a few paragraphs, but never so tall that it swallows
+           the tab row above it — the reader is cross-referencing the help against the report,
+           so the way back to another stage should stay in sight. */
+        max-height: min(22rem, calc(100dvh - 11rem));
+        border-top: 1px solid var(--pico-muted-border-color);
+        border-bottom: 1px solid var(--pico-muted-border-color);
+        box-shadow: 0 -0.5rem 1.5rem rgb(0 0 0 / 22%);
+    }
+
+    /* The panel is positioned against the footer, not the page. */
+    .app-footer {
+        position: relative;
+    }
 }
 
 .app-footer .shortcuts p {
@@ -3149,6 +3328,45 @@ body.zen .config-view > .config-source {
 @media (width <= 800px) {
     #app {
         flex-direction: column;
+
+        /* A floor for the content area as a whole, so no sibling — an open Explorer, a tall
+           inspector, an expanded help panel — can squeeze it down to a sliver. It belongs
+           here rather than on `#stages`: a floor on the child would make the child overflow
+           this box and paint over the footer instead of holding the box open. Proportional
+           on a short landscape window, where a fixed floor could not fit at all. */
+        min-height: min(14rem, 45dvh);
+    }
+
+    /* Stacked, the Explorer is a top section rather than a sidebar, so its `15rem` basis
+       would become a rigid 15rem *height* — 240px reserved whether the tree holds one file
+       or forty, taken straight out of the stage. Size it to its content instead, and cap it
+       at a quarter of the window so a long tree scrolls inside the cap rather than pushing
+       the stage down; here the file list is a way to reach the document, not the content
+       the reader came for. */
+    #app.has-explorer #explorer {
+        flex: 0 1 auto;
+        max-height: 25dvh;
+        padding-right: 0;
+    }
+
+    /* The seam turns with the layout: a full-width rule with height, not a 1px-wide column,
+       which previously measured 1x0px and left the collapse toggle unreachable. */
+    #app.has-explorer #explorer-resizer {
+        width: auto;
+        height: 1px;
+        margin: 0.35rem 0;
+    }
+
+    /* Centered on a horizontal seam rather than hung from the top of a vertical one. */
+    #explorer-resizer .collapse-toggle {
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* A bottom-panel orientation now that the Explorer sits above the stage: down hides it,
+       up brings it back — the same rotation the Source and inspector dividers get. */
+    #explorer-resizer .collapse-icon {
+        transform: rotate(90deg);
     }
 
     /* Stacked: the graph and the node inspector share the column with a fixed 60/40 split.

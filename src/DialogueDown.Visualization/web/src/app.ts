@@ -15,7 +15,8 @@ import { GraphCameraStore } from "./graph-camera";
 import { createSourceView, type SourceViewHandle } from "./source-view";
 import { createConfigView, type ConfigViewHandle, type ConfigViewOptions } from "./config-view";
 import { consumeOpenConfigTab } from "./config-create";
-import { rememberActiveTab, rememberedActiveTab } from "./active-tab";
+import { rememberActiveTab, rememberedActiveTab, revealActiveTab } from "./active-tab";
+import { createTabScroller } from "./tab-scroller";
 import { createSemanticView } from "./semantic-view";
 import { initResizer } from "./resizer";
 import { initFullscreen } from "./fullscreen";
@@ -184,8 +185,14 @@ export function runApp(
     // so it gets one app-level control (at the right end of the tab-nav row) plus the
     // `f` / Escape keys, rather than a copy in every tab. Wired once for the app's lifetime.
     const fullscreen = initFullscreen();
+    // Arrow controls for the tab row, for readers whose pointing device cannot scroll
+    // horizontally. They flank the row and hide themselves whenever it already fits.
+    const tabScroller = createTabScroller(tabsEl);
+    document.getElementById("tab-arrows-before")?.appendChild(tabScroller.previous);
+    document.getElementById("tab-arrows-after")?.appendChild(tabScroller.next);
+
     const focusControls = installMaximizeControls(
-        tabsEl.parentElement ?? appEl,
+        document.getElementById("tabbar-actions") ?? tabsEl.parentElement ?? appEl,
         appEl,
         fullscreen.toggle,
         fullscreen.toggleZen,
@@ -454,6 +461,10 @@ export function runApp(
         activeIndex = index;
         rememberActiveTab(titles[index]);
         Array.from(tabsEl.children).forEach((el, i) => el.classList.toggle("active", i === index));
+        // Settle the arrows first: showing them narrows the row, so revealing the active tab
+        // against the pre-arrow width would leave it clipped by the arrow that just appeared.
+        tabScroller.refresh();
+        revealActiveTab(tabsEl);
         Array.from(stagesEl.children).forEach((el, i) =>
             el.classList.toggle("active", i === index),
         );
