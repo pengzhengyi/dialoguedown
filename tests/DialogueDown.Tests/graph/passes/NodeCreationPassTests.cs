@@ -92,13 +92,37 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
-    public void Apply_BlockKindNotYetLowered_Throws() =>
-        // A block control is not lowered to a node yet.
-        Assert.Throws<NotSupportedException>(() => Build("""
+    public void Apply_ConditionalBlock_CreatesABranchNode()
+    {
+        var graph = Build("""
             > `if` `"Rich"?`
             >
             > Alice: Welcome upstairs.
-            """));
+            """);
+
+        Assert.IsType<BranchNode>(graph.Nodes[0]);
+    }
+
+    [Fact]
+    public void Apply_ConditionalBlock_AlsoCreatesANodePerBlockInEveryBranch()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+            >
+            > `else`
+            >
+            > Alice: Take the side door.
+            """);
+
+        Assert.Collection(
+            graph.Nodes,
+            node => Assert.IsType<BranchNode>(node),
+            node => AssertSingleText(Assert.IsType<LineNode>(node).Speech, "Welcome upstairs."),
+            node => AssertSingleText(Assert.IsType<LineNode>(node).Speech, "Take the side door."),
+            node => Assert.IsType<EndNode>(node));
+    }
 
     [Fact]
     public void Apply_BlockGuardedByACondition_Throws() =>

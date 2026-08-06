@@ -37,8 +37,8 @@ internal sealed class GraphBuildContext
     public IReadOnlyList<ScriptBlock> TopLevelBlocks { get; }
 
     /// <summary>
-    /// Every block in document order, adding those nested inside a choice option's body to
-    /// <see cref="TopLevelBlocks"/>. Each one becomes a node.
+    /// Every block in document order, adding those nested inside another block's body — a choice
+    /// option's or a control branch's — to <see cref="TopLevelBlocks"/>. Each one becomes a node.
     /// </summary>
     public IReadOnlyList<ScriptBlock> AllBlocks { get; }
 

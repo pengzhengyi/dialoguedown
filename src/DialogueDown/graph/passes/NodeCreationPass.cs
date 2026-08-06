@@ -38,6 +38,9 @@ internal sealed class NodeCreationPass : GraphBuildPass
             case ControlLine control:
                 draft.AddBlock(control, id => new ControlNodeDraft(id, [.. control.Effects.OfType<GameCall>()]));
                 break;
+            case ControlBlock conditional:
+                draft.AddBlock(conditional, id => new BranchNodeDraft(id));
+                break;
             default:
                 throw new NotSupportedException(
                     $"The dialogue graph builder does not yet lower {block.GetType().Name} blocks.");
