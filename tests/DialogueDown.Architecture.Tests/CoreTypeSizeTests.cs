@@ -24,7 +24,7 @@ public sealed class CoreTypeSizeTests
     /// <summary>Maximum public methods a single core type may declare.</summary>
     private const int MaxPublicMethodsPerType = 20;
 
-    private static readonly HashSet<string> ObjectProtocol =
+    private static readonly HashSet<string> _objectProtocol =
     [
         "Equals", "GetHashCode", "ToString", "PrintMembers", "Deconstruct",
     ];
@@ -48,9 +48,21 @@ public sealed class CoreTypeSizeTests
 
     private static bool IsConsideredType(Type type)
     {
-        if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute))) return false;
-        if (type.Name.Contains('<') || type.IsEnum || type.IsInterface) return false;
-        if (typeof(Delegate).IsAssignableFrom(type)) return false;
+        if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute)))
+        {
+            return false;
+        }
+
+        if (type.Name.Contains('<') || type.IsEnum || type.IsInterface)
+        {
+            return false;
+        }
+
+        if (typeof(Delegate).IsAssignableFrom(type))
+        {
+            return false;
+        }
+
         return type.IsClass || type.IsValueType;
     }
 
@@ -60,5 +72,5 @@ public sealed class CoreTypeSizeTests
             .Count(method => !method.IsSpecialName &&
                              !method.Name.Contains('<') &&
                              !Attribute.IsDefined(method, typeof(CompilerGeneratedAttribute)) &&
-                             !ObjectProtocol.Contains(method.Name));
+                             !_objectProtocol.Contains(method.Name));
 }
