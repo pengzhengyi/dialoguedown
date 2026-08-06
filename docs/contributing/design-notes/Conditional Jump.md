@@ -98,7 +98,7 @@ jump**.
 
 ## Writer-facing behavior
 
-A condition is the game-state [query](../../guide/script-language.md#queries) you
+A condition is the game-state [query](../../guide/game-state.md#queries) you
 already write, with a `?` added inside the code span. Place it before a jump and
 the jump becomes optional:
 
@@ -148,7 +148,7 @@ If the key is found the reader takes the vault; otherwise the unconditional jump
 to the study runs.
 
 A conditional jump inherits every rule of an ordinary
-[jump](../../guide/script-language.md#jumps): it lives on one line, the pieces
+[jump](../../guide/structure-and-flow.md#jumps): it lives on one line, the pieces
 may be separated by spaces but not a line break, and it cannot appear inside a
 heading.
 
@@ -163,7 +163,7 @@ ConditionalJump = Condition , { Whitespace } , JumpIndicator , { Whitespace } , 
 JumpIndicator   = "=>" ;
 ```
 
-`QueryKey` is the same key a [query](../../guide/script-language.md#queries) uses,
+`QueryKey` is the same key a [query](../../guide/game-state.md#queries) uses,
 recognized by the same grammar; a condition reuses that recognition rather than
 re-deriving that a query is quoted.
 

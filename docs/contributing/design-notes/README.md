@@ -1,13 +1,11 @@
 # Implementation notes
 
 Design and rationale notes for DialogueDown's compiler. Each note covers one
-component; this README is a **reading guide** to them and records **cross-cutting conventions**
-that every component shares — starting with the error model.
+component; this README is the **reading guide** to them.
 
-> [!NOTE]
-> The error model below is a **proposed design**, not yet implemented. It defines
-> the exception types and message conventions each component will adopt as it is
-> built. Component notes link back here rather than redefining errors locally.
+Cross-cutting conventions live in their own notes rather than here, so this file
+stays an index. The one every component shares is the
+[Error model](./Error%20Model.md) — read it alongside the Core notes.
 
 ## Table of contents
 
@@ -19,15 +17,6 @@ that every component shares — starting with the error model.
   - [Command-line interface](#command-line-interface)
   - [Visualization](#visualization)
   - [Other notes](#other-notes)
-- [Error model](#error-model)
-  - [Principles](#principles)
-  - [Exception hierarchy](#exception-hierarchy)
-  - [What each stage raises](#what-each-stage-raises)
-  - [Domain errors vs usage errors](#domain-errors-vs-usage-errors)
-  - [Every error carries a location](#every-error-carries-a-location)
-  - [Message conventions](#message-conventions)
-  - [Error codes (optional, future)](#error-codes-optional-future)
-  - [Open choices](#open-choices)
 
 ## Reading guide
 
@@ -36,11 +25,13 @@ The notes below are grouped by area and ordered for reading. Start with
 Read **Command-line interface** or **Visualization** only when you work on that
 surface: both document tools built *on top of* the core, so they are optional
 for understanding the compiler. Each note keeps a one-line summary and a status
-(**Implemented**, **In progress**, or **Explored**).
+(**Implemented**, **Partially implemented**, **In progress**, **Explored**, or
+**Proposed**).
 
 > [!TIP]
-> New here? Read the Core notes in order, then the [Error model](#error-model)
-> below. That is enough to understand and change the compiler.
+> New here? Read the Core notes in order, then the
+> [Error model](./Error%20Model.md). That is enough to understand and change the
+> compiler.
 
 ### Core: the compiler pipeline
 
@@ -63,8 +54,10 @@ flowchart LR
 | 4 | [Semantic Analyzer](./Semantic%20Analyzer.md) | Desugared AST → semantic model (speakers, scenes, resolved jumps) | Implemented |
 | 5 | [Script Compiler Facade](./Script%20Compiler%20Facade.md) | One `IScriptCompiler` seam over the stages + `AddDialogueDown` DI | Implemented |
 
-The [Error model](#error-model) below is a cross-cutting core convention every
-stage adopts — read it alongside these.
+| 6 | [Error model](./Error%20Model.md) | The cross-cutting convention: collect a diagnostic, throw only when a stage cannot continue | Implemented |
+
+The Error model is a convention every stage adopts rather than a stage itself —
+read it alongside the five above.
 
 ### Language constructs
 
@@ -75,11 +68,11 @@ first, since a construct threads through them.
 
 | Note | What it covers | Status |
 | --- | --- | --- |
-| [Progression Order](./Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert vs. detour jump roles, and the `#END` terminator | Proposed |
+| [Progression Order](./Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert vs. detour jump roles, and the `#END` terminator | Partially implemented |
 | [Random Choice](./Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
-| [Conditional Jump](./Conditional%20Jump.md) | A condition (`` `"key"?` ``) that makes a jump fire only when a game-state query is true | Explored |
-| [Conditional Line](./Conditional%20Line.md) | The same condition (`` `"key"?` ``) fronting a line, so the line plays only when the query is true | Explored |
-| [Conditional Choice](./Conditional%20Choice.md) | The same condition guarding a choice option, so a player or random option is offered only when the query is true | Explored |
+| [Conditional Jump](./Conditional%20Jump.md) | A condition (`` `"key"?` ``) that makes a jump fire only when a game-state query is true | Implemented |
+| [Conditional Line](./Conditional%20Line.md) | The same condition (`` `"key"?` ``) fronting a line, so the line plays only when the query is true | Implemented |
+| [Conditional Choice](./Conditional%20Choice.md) | The same condition guarding a choice option, so a player or random option is offered only when the query is true | Implemented |
 | [Unquoted Keys](./Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
 | [Block Controls](./Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
@@ -108,7 +101,7 @@ cover individual rules and the surfaces that render them.
 
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
-| 1 | [Diagnostics and Validation](./Diagnostics%20and%20Validation.md) | The whole effort: the diagnostic model (built), the collect-and-continue collection seam, the validator and rules, and the renderer | In progress |
+| 1 | [Diagnostics and Validation](./Diagnostics%20and%20Validation.md) | The whole effort: the diagnostic model, the collect-and-continue collection seam, the validator and rules, and the renderer | Implemented |
 | 2 | [Choice Nesting Diagnostic](./Choice%20Nesting%20Diagnostic.md) | A style warning for choice branches nested beyond the recommended depth | Implemented |
 | 3 | [Styled Speaker Prefix Diagnostic](./Styled%20Speaker%20Prefix%20Diagnostic.md) | A warning when a styled name (`*Alice*:`) looks like a speaker prefix but is not recognized as one | Implemented |
 | 4 | [CLI Diagnostic Rendering](./CLI%20Diagnostic%20Rendering.md) | Renders collected diagnostics on the `dialoguedown` CLI (rich Errata blocks or greppable one-liners), sets the exit code, and exposes `--mode` | Implemented |
@@ -184,7 +177,7 @@ flowchart TB
 | 19 | [Diagnostics Overlay](./Diagnostics%20Overlay.md) | The compiler's diagnostics as a source-editor overlay — squiggles, gutter markers, and doc-linked tooltips — on a reusable LSP-shaped projection | Implemented |
 | 20 | [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) | Source-editor highlighting and completions projected from the compiler's own parse (semantic tokens + resolved symbols), retiring the client-side grammar | Implemented |
 | 21 | [Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md) | Speaker highlighting split into precise, non-overlapping name, `@id`, and separator tokens, from sub-spans the parser records on the AST | Implemented |
-| 22 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Proposed |
+| 22 | [Live Visualization — Heading Anchors](./Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Implemented |
 | 23 | [Jump-Target Completion](./Jump-Target%20Completion.md) | Complete the whole `[Heading](#slug)` jump target from the `=>` indicator, via a snippet with the heading as an editable field | Implemented |
 | 24 | [Live Visualization — File Explorer](./Live%20Visualization%20-%20File%20Explorer.md) | Fold the launcher into the served report as a collapsible Explorer sidebar: browse the project tree, open a script by click or cross-file link, and create one | Implemented |
 | 25 | [Live Visualization — Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md) | Collapse the launcher page and the direct-serve server into one shell: the Explorer is the only navigator, no-document shows an empty-state CTA, and `visualize <script>` serves through the same server | Implemented |
@@ -203,141 +196,3 @@ passes that sit outside the pipeline and its tools.
 | [Development Cycle Optimization](./Development%20Cycle%20Optimization.md) | Implemented: reduce local and CI feedback time through measured, behavior-preserving increments | Implemented |
 | [Interactive Playthrough](./Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
 | [README Shipping-Status Refresh](./README%20Shipping-Status%20Refresh.md) | A docs-only pass reconciling the README's visualization section with what actually ships | Implemented |
-
-## Error model
-
-The compiler runs in stages: **source → Markdown AST → Dialogue AST → graph →
-runtime**. A fault can occur at any stage, and callers (a game integrating the
-library) need to tell *what kind* of fault happened and *where*. The error model
-makes that explicit through **distinct exception types per stage and kind**, each
-carrying a clear, actionable message.
-
-### Principles
-
-- **Two axes.** Classify every fault by **kind** (is the input malformed, or
-  well-formed but meaningless?) and by **layer/language** (which stage/DSL raised
-  it). The type name encodes both, e.g. `MarkdownSyntaxError` vs
-  `DialogueSyntaxError` vs `DialogueSemanticError`.
-- **Syntax ≠ semantics.** A `SyntaxError` means the text could not be understood
-  structurally. A `SemanticError` means it parsed fine but violates meaning
-  (unknown speaker, dangling jump). They are different types, so callers and tools
-  can react differently.
-- **One base to catch them all.** Every domain fault derives from a single base
-  (`DialogueDownException`), so a caller can `catch` broadly or narrowly.
-- **Locate everything.** Every compilation error carries a
-  [`SourceSpan`](./Markdown%20Front-End.md#the-markdown-ast-model) so messages and
-  tooling can point at the exact offending characters.
-- **Fail with intent.** Messages state what is wrong, where, and how to fix it —
-  never a bare "parse error".
-- **Usage errors are not domain errors.** Programmer mistakes (a `null` argument,
-  an out-of-range value) use standard .NET exceptions and stay outside this
-  hierarchy (see [Domain errors vs usage errors](#domain-errors-vs-usage-errors)).
-
-### Exception hierarchy
-
-```mermaid
-classDiagram
-    class DialogueDownException {
-        <<abstract>>
-    }
-    class ScriptCompilationException {
-        <<abstract>>
-        +SourceSpan Span
-    }
-    class SyntaxError {
-        <<abstract>>
-    }
-    class SemanticError {
-        <<abstract>>
-    }
-    class MarkdownSyntaxError
-    class DialogueSyntaxError
-    class DialogueSemanticError
-
-    DialogueDownException <|-- ScriptCompilationException
-    ScriptCompilationException <|-- SyntaxError
-    ScriptCompilationException <|-- SemanticError
-    SyntaxError <|-- MarkdownSyntaxError
-    SyntaxError <|-- DialogueSyntaxError
-    SemanticError <|-- DialogueSemanticError
-```
-
-- **`DialogueDownException`** — abstract base for everything the library throws
-  as a domain fault. Callers catch this to handle "any DialogueDown error".
-- **`ScriptCompilationException`** — abstract; a fault while compiling a script.
-  Carries the `SourceSpan` (and, derived from it, a line/column) that locates the
-  problem. A future **runtime** branch (graph execution faults) can hang directly
-  off `DialogueDownException`, parallel to this one.
-- **`SyntaxError`** — abstract; structurally malformed input.
-- **`SemanticError`** — abstract; well-formed input that breaks a rule.
-- The concrete leaves are what each stage actually throws (next section).
-
-### What each stage raises
-
-| Stage | Type | Kind | Example |
-| --- | --- | --- | --- |
-| Markdown front-end | `MarkdownSyntaxError` | Syntax | Reserved for unrecoverable Markdown parse faults. The front-end is deliberately permissive — it **flattens** unmodeled constructs to raw text rather than failing — so this is rare in practice. |
-| Transpiler (DSL grammar) | `DialogueSyntaxError` | Syntax | A jump `=>` not followed by a Markdown link; a malformed tag (`#` with no name); a code-span command that is not valid query/command grammar. |
-| Reference validation / compile | `DialogueSemanticError` | Semantic | Unknown speaker reference; dangling jump (anchor/file does not exist); conflicting speaker metadata for the same speaker; duplicate section anchor; unknown reserved tag (`##foo`). |
-
-Each stage owns its type: the Markdown adapter never throws a `DialogueSyntaxError`,
-and the transpiler never throws a `MarkdownSyntaxError`. This keeps the failing
-layer unambiguous from the type alone.
-
-### Domain errors vs usage errors
-
-The hierarchy above is for **faults in the script being compiled** — bad *input*.
-It is **not** for **programmer mistakes** calling the API. Those stay as standard
-.NET exceptions:
-
-| Situation | Exception | Why |
-| --- | --- | --- |
-| `null` passed where a value is required | `ArgumentNullException` | Caller contract violation, not a script fault. |
-| An AST invariant is violated in code (e.g. a heading level outside 1–6, an empty text run, a non-positive span length) | `ArgumentException` / `ArgumentOutOfRangeException` | Internal construction bug, caught in tests, not something a script author can cause. |
-
-Rule of thumb: if a **script author** can trigger it by writing a bad `.dialogue.md`,
-it is a `DialogueDownException`. If only a **developer** can trigger it by
-misusing the API, it is a standard argument/usage exception.
-
-### Every error carries a location
-
-`ScriptCompilationException` exposes the `SourceSpan` of the offending text. Since
-`SourceSpan` is a start-offset + length into the original source, a line/column
-(and a source snippet) can be derived from it for display. Messages should render
-that location so authors can jump straight to the problem.
-
-### Message conventions
-
-A good message answers three questions: **what** is wrong, **where**, and **how**
-to fix it.
-
-- Lead with the problem, not the mechanics ("jump target not found", not
-  "null reference in ResolveJump").
-- Include the **offending token** and its **line:column**.
-- Suggest a fix or show the expected form when it is short.
-- Use plain language a script author understands; avoid internal type names.
-
-| Kind | Weak | Strong |
-| --- | --- | --- |
-| `DialogueSyntaxError` | `Invalid jump.` | `Syntax error at 12:5 — a jump must be '=> [label](target)'; found '=> play-tennis' with no link.` |
-| `DialogueSemanticError` | `Unknown speaker.` | `Unknown speaker 'Alicia' at 8:1 — declare it inline or add it to speakers.json (did you mean 'Alice'?).` |
-| `DialogueSemanticError` | `Bad jump.` | `Jump target '#play-tennis' at 3:4 does not match any section heading in this file.` |
-
-### Error codes (optional, future)
-
-For tooling (editor squiggles, documentation, suppression), errors may later carry
-a stable **code** alongside the message, e.g. `DLG1001` for "malformed jump". This
-is out of scope for the first implementation; the type + message are sufficient
-until an editor integration needs stable identifiers.
-
-### Open choices
-
-Flagged for confirmation before implementation:
-
-- **Base type name.** `DialogueDownException` (matches the library name) vs a
-  shorter `DialogueException`.
-- **Intermediate `ScriptCompilationException`.** Keep it as the span-carrying
-  parent (recommended, leaves room for a runtime branch), or fold `Span` directly
-  onto `SyntaxError`/`SemanticError` and drop the middle layer.
-- **Error codes.** Adopt a code scheme now, or defer until tooling needs it
-  (deferred above).

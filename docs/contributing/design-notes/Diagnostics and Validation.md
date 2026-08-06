@@ -1,13 +1,15 @@
 # Implementation note: Diagnostics and validation
 
 > [!NOTE]
-> Status: **in progress** — this note covers the whole diagnostics effort
+> Status: **implemented** — every component below has shipped; further ideas are
+> parked under [Later components](#later-components-deferred). This note covers the
+> whole diagnostics effort
 > ([#43](https://github.com/pengzhengyi/dialoguedown/issues/43)) as one design, built
 > in components. It gives the compiler a single, structured way to **collect** every problem
 > it finds (errors and warnings) instead of throwing at the first one, a **validator** that
 > reports author-facing problems as rules, and a **humanized renderer** so the CLI can show
-> them all at once. It evolves the throw-based [error model](./README.md#error-model) into a
-> collect-and-continue model. Each component's state is tracked below.
+> them all at once. It is the machinery behind the
+> [error model](./Error%20Model.md) convention. Each component's state is tracked below.
 
 ## Component status
 
@@ -141,9 +143,9 @@ The core owns the model, the sink, and (later) the offset↔line/column mapping.
 
 ## Relationship to the error model
 
-The [error model](./README.md#error-model) defines a throw-based exception hierarchy
-(`DialogueDownException → ScriptCompilationException → SyntaxError / SemanticError`). This effort
-**repartitions** faults along the recoverable axis rather than replacing that hierarchy:
+The [error model](./Error%20Model.md) partitions faults by whether the compiler can keep going.
+This effort builds the collecting side of that split, alongside the exception base types
+(`DialogueDownException → ScriptCompilationException`) that carry the rest:
 
 - **Recoverable, author-facing problems** — a malformed jump, a tag without a speaker, a dangling
   `=>`, an unknown speaker — become **collected `Error` or `Warning` diagnostics**. Compilation
@@ -154,11 +156,10 @@ The [error model](./README.md#error-model) defines a throw-based exception hiera
   remain standard `ArgumentException`/`ArgumentNullException`. Diagnostics are for scripts, not
   for calling code.
 
-The two share one vocabulary: a diagnostic's **kind** (syntax vs semantic) and **location**
-(`SourceSpan`) mean exactly what they mean in the error model, and the **code scheme** is the
-same `DLG####` namespace. When error reporting and the renderer land, the error-model note
-is updated so the README describes both channels (throw for unrecoverable, collect for the rest)
-as one coherent story.
+The two share one vocabulary: a diagnostic's **category** (syntax vs semantic) and **location**
+(`SourceSpan`) mean exactly what they mean in the error model, and both use the same `DLG####`
+code namespace. Now that error reporting and the renderer have landed, the
+[Error model](./Error%20Model.md) note describes both channels as one story.
 
 ## The diagnostic model — options compared
 
@@ -384,9 +385,9 @@ stage may hit.
   reporting it needs desugar to record that it dropped an arrow (see the corrected
   [DD4](#dd4--the-validator-is-a-set-of-pluggable-rules)). Deferred; not part of the producers
   component above.
-- **Editor seams** ([DD8](#dd8--lsp-and-web-rendering-are-planned-projection-seams)) — an LSP
-  projection and a web-report diagnostics overlay, plus a front-end record of **dropped unmodeled
-  Markdown** so it can be reported (today an `Ignore`d node leaves no trace).
+- **A front-end record of dropped unmodeled Markdown**, so it can be reported — today an
+  `Ignore`d node leaves no trace. The other half of [DD8](#dd8--lsp-and-web-rendering-are-planned-projection-seams),
+  the LSP projection and the web-report overlay, has since shipped.
 
 ## Key design decisions
 

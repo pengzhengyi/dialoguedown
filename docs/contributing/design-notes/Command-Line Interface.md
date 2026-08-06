@@ -223,7 +223,7 @@ this `CommandApp`, contributing the real command body. One CLI, one parser.
   and moves its renderer under `visualize`, consuming `IScriptCompiler`; the old
   `System.CommandLine` entry point is removed (D9).
 - **Error model.** When real compilation lands, the commands surface the library's
-  [error model](./README.md#error-model) (`ScriptCompilationException` and its
+  [error model](./Error%20Model.md) (`ScriptCompilationException` and its
   kinds) as friendly CLI messages; the skeleton only needs the not-implemented
   path.
 
