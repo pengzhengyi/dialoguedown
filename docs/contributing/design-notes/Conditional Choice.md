@@ -41,7 +41,7 @@
 A writer often wants an option to appear only under some game-state condition — a
 dialogue choice that shows *Use the key* only once the key is found, or a random
 reaction that enters the pool only when a character is angry. Today every option
-in a [choice](../../guide/script-language.md#choices) or a
+in a [choice](../../guide/structure-and-flow.md#choices) or a
 [random choice](./Random%20Choice.md) is always present.
 
 The [Conditional Jump](./Conditional%20Jump.md) and
@@ -108,7 +108,7 @@ over unchanged.
 
 ## Writer-facing behavior
 
-A condition is the game-state [query](../../guide/script-language.md#queries) with
+A condition is the game-state [query](../../guide/game-state.md#queries) with
 a `?`, from the [query-and-sigil family](./Conditional%20Jump.md#writer-facing-behavior).
 Place it at the *start of an option* and the whole option becomes conditional.
 

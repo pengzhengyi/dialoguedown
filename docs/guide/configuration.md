@@ -67,13 +67,13 @@ tags = ["main", "mood=cheerful"]
 | `tags`    | no       | Content tags for the speaker (see [Tags](#tags)).                       |
 
 A configured speaker behaves exactly like one
-[declared in a script](script-language.md#speaker): the two unify when they share a
+[declared in a script](speakers-and-lines.md#speaker): the two unify when they share a
 name, so `Alice: Hi.` in a script and the `Alice` entry above are one speaker.
 
 ## The default speaker
 
 When a line has no speaker prefix, it belongs to the **default speaker**. A script
-can name its own default with the [`##default`](script-language.md#default-speaker)
+can name its own default with the [`##default`](speakers-and-lines.md#default-speaker)
 tag; when it does not, the speaker you mark `default = true` in `dialogue.toml` fills
 those lines instead of the built-in anonymous fallback.
 
