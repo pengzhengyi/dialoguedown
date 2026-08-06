@@ -175,20 +175,30 @@ dotnet_naming_rule.locals_camel.style    = camel_case
 # ---------------------------------------------------------------------------
 # Size & complexity guardrails — CORE LIBRARY ONLY (src/DialogueDown/**).
 # Enforced by SonarAnalyzer.CSharp, which is referenced only by the core
-# project, so these never fire on the CLI or visualization assemblies.
-# Severities live here; the numeric thresholds live in src/DialogueDown/
-# SonarLint.xml because SonarAnalyzer reads rule parameters only from that
-# AdditionalFile, not from .editorconfig.
+# project, so these never fire on the CLI or visualization assemblies. They are
+# errors, not warnings, so a regression fails the build (and CI) instead of
+# scrolling past; the non-default `build: fast` task skips analyzers for the
+# inner loop. Severities live here; the numeric thresholds live in
+# src/DialogueDown/SonarLint.xml because SonarAnalyzer reads rule parameters only
+# from that AdditionalFile, not from .editorconfig. (Class size — too many public
+# methods — is guarded separately by an architecture test, because SonarAnalyzer's
+# S1448 does not activate through .editorconfig in this version.)
 # ---------------------------------------------------------------------------
 [src/DialogueDown/**.cs]
 
 # S138 method lines (<=40), S104 file lines (<=400), S107 params (<=7),
 # S1541 cyclomatic complexity (<=10), S3776 cognitive complexity (<=15).
-dotnet_diagnostic.S138.severity = warning
-dotnet_diagnostic.S104.severity = warning
-dotnet_diagnostic.S107.severity = warning
-dotnet_diagnostic.S1541.severity = warning
-dotnet_diagnostic.S3776.severity = warning
+dotnet_diagnostic.S138.severity = error
+dotnet_diagnostic.S104.severity = error
+dotnet_diagnostic.S107.severity = error
+dotnet_diagnostic.S1541.severity = error
+dotnet_diagnostic.S3776.severity = error
+
+# No mutable global state: externally visible, non-constant static fields.
+# CA2211 is a built-in .NET analyzer (no extra package); the core already
+# complies (static members are get-only singletons/defaults), so this locks in
+# that discipline for the core only.
+dotnet_diagnostic.CA2211.severity = error
 
 # Focused config: this project adopts SonarAnalyzer ONLY for the size/complexity
 # guardrails above. Referencing the package also activates Sonar's broader default
