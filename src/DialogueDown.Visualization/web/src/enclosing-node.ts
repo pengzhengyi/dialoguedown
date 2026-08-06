@@ -18,10 +18,17 @@ export function findEnclosingNode(
 ): DisplayNode | null {
     const low = Math.min(from, to);
     const high = Math.max(from, to);
-    return tightestEnclosing(nodes, low, high) ?? (low === high ? null : tightestEnclosing(nodes, low, low));
+    return (
+        tightestEnclosing(nodes, low, high) ??
+        (low === high ? null : tightestEnclosing(nodes, low, low))
+    );
 }
 
-function tightestEnclosing(nodes: readonly DisplayNode[], low: number, high: number): DisplayNode | null {
+function tightestEnclosing(
+    nodes: readonly DisplayNode[],
+    low: number,
+    high: number,
+): DisplayNode | null {
     let best: DisplayNode | null = null;
     let bestWidth = Number.POSITIVE_INFINITY;
     for (const node of nodes) {
