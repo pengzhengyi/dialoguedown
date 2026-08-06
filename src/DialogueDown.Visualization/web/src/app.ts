@@ -8,6 +8,7 @@ import type {
     SemanticToken,
     DialogueSymbolProvider,
     DisplayNode,
+    Span,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
 import { createTreeView, type TreeView } from "./tree-view";
@@ -179,6 +180,13 @@ export function runApp(
         if (source?.beginNavigation) source.beginNavigation(land);
         else land();
     }
+    // The source span of the node a reverse jump would land on, for the hover preview. Reads the
+    // live stage set, like the jump itself.
+    function enclosingSpanByTitle(title: string, from: number, to: number): Span | null {
+        const stage = currentStages.find((candidate) => candidate.title === title);
+        if (stage == null || stage.unavailable != null) return null;
+        return findEnclosingNode(stage.nodes, from, to)?.span ?? null;
+    }
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).
     let views: (TreeView | null)[] = [];
@@ -317,6 +325,7 @@ export function runApp(
                 .map((stage) => ({
                     title: stage.title,
                     run: (from, to) => jumpToStageByTitle(stage.title, from, to),
+                    preview: (from, to) => enclosingSpanByTitle(stage.title, from, to),
                 }));
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),

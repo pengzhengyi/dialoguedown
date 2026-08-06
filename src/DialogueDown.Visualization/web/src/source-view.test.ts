@@ -133,7 +133,9 @@ describe("createSourceView jump-to menu", () => {
 
     it("offers a Jump to submenu whose stage runs with the current selection", () => {
         const run = vi.fn();
-        const source = sourceView({ jumpTargets: [{ title: "Dialogue AST", run }] });
+        const source = sourceView({
+            jumpTargets: [{ title: "Dialogue AST", run, preview: () => null }],
+        });
         source.selectRange(0, 5);
 
         source.element
@@ -159,7 +161,9 @@ describe("createSourceView jump-to menu", () => {
 
     it("opens the Jump-to picker at the caret on Alt-J", () => {
         const run = vi.fn();
-        const source = sourceView({ jumpTargets: [{ title: "Semantic Model", run }] });
+        const source = sourceView({
+            jumpTargets: [{ title: "Semantic Model", run, preview: () => null }],
+        });
 
         source.element
             .querySelector(".cm-content")!
@@ -167,6 +171,31 @@ describe("createSourceView jump-to menu", () => {
 
         const item = document.querySelector<HTMLButtonElement>(".context-menu .context-menu-item");
         expect(item?.textContent).toContain("Semantic Model");
+    });
+
+    it("previews the enclosing span in the editor while a stage is hovered", () => {
+        const source = sourceView({
+            jumpTargets: [
+                { title: "Dialogue AST", run: () => {}, preview: () => ({ start: 0, end: 5 }) },
+            ],
+        });
+
+        source.element
+            .querySelector(".cm-content")!
+            .dispatchEvent(new MouseEvent("contextmenu", { bubbles: true }));
+        const jumpItem = [...document.querySelectorAll<HTMLElement>(".context-menu-item")].find(
+            (el) => el.textContent?.includes("Jump to"),
+        )!;
+        jumpItem.click();
+        const stageItem = document.querySelector<HTMLElement>(
+            ".context-submenu .context-menu-item",
+        )!;
+
+        stageItem.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+        expect(source.element.querySelector(".dd-jump-preview")).not.toBeNull();
+
+        stageItem.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
+        expect(source.element.querySelector(".dd-jump-preview")).toBeNull();
     });
 
     it("opens no menu in a read-only view with no jump targets", () => {

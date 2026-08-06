@@ -41,6 +41,11 @@ Jump-to menu at the caret is in scope.
       `ArrowLeft`/`Escape`).
 - [x] `Alt-J` opens the Jump-to picker at the caret (the entry point of the
       "shortcut series").
+- [x] Hovering a stage **previews** its enclosing span in the source with a faint
+      highlight, distinct from the live selection; it clears on leave or dismiss.
+- [x] The submenu is a **hover-intent flyout** — visible only while the pointer
+      rests on the `Jump to` parent or the flyout — and its stage rows carry no
+      icon (the label alone reads cleanly).
 - [x] Works in a read-only (View) editor as well as Edit — the source is always
       selectable.
 
@@ -50,7 +55,7 @@ Jump-to menu at the caret is in scope.
 | --- | --- | --- |
 | `findEnclosingNode(nodes, from, to)` (`enclosing-node.ts`) | Pure lookup: the tightest span-bearing node enclosing `[from, to)`, else the tightest enclosing `from`, else `null`. | `DisplayNode`, `Span` |
 | `ContextMenuItem` (extended, `context-menu.ts`) | Union of an **action** item (`run`) and a **submenu** item (`submenu: ContextMenuItem[]`). | `openContextMenu` |
-| `SourceJumpTarget` (`source-view.ts`) | One reverse-jump destination: a stable stage `title`/`icon` plus `run(from, to)` that resolves against the *live* stage and reveals its node. | `SourceViewOptions.jumpTargets` |
+| `SourceJumpTarget` (`source-view.ts`) | One reverse-jump destination: a stable stage `title`, `run(from, to)` that resolves against the *live* stage and reveals its node, and `preview(from, to)` returning that node's source span for the hover highlight. | `SourceViewOptions.jumpTargets` |
 | `jumpToStageByTitle(title, from, to)` (`app.ts`) | Find the enclosing node in the named stage (resolved against the *live* stage set), then `beginNavigation → activate(tab) → view.selectById(id, { center })`. | `findEnclosingNode`, `TreeView`, `activate` |
 
 The Source editor stays decoupled from app internals: it renders the injected
@@ -80,6 +85,14 @@ stage knowledge and revealing live in `app.ts`.
 - **Nested submenu over a flat list.** A `Jump to ▸` flyout groups the stage
   targets under one entry (the user's requested shape and the natural anchor for a
   keyboard series), rather than scattering `Jump to X` items across the top menu.
+  It behaves as a **hover-intent** flyout — opening on hover of the parent and
+  closing shortly after the pointer leaves both it and the parent — and its stage
+  rows are icon-less, since a repeated glyph adds no meaning.
+- **Hover preview.** Hovering a stage highlights, in the source, the span its jump
+  would reveal — the tightest enclosing node in that stage — via a CodeMirror
+  decoration (`jumpPreviewField` + `setJumpPreview`) kept fainter than the live
+  selection. It lets a writer see *which* node each stage would land on before
+  committing, and clears on leave or when the menu closes.
 
 ## Error and boundary cases
 

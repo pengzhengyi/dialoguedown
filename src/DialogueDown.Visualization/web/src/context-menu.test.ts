@@ -149,3 +149,57 @@ describe("openContextMenu — submenu", () => {
         expect(document.querySelector(".context-menu")).not.toBeNull();
     });
 });
+
+describe("openContextMenu — hover, callbacks, and dismissal", () => {
+    afterEach(() => {
+        vi.useRealTimers();
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+
+    it("renders an item with no icon as just a label", () => {
+        openContextMenu(contextEvent(), [{ label: "Dialogue AST", run: () => {} }]);
+
+        const item = document.querySelector(".context-menu-item")!;
+        expect(item.textContent).toBe("Dialogue AST");
+        expect(item.querySelector(".context-menu-icon")).toBeNull();
+    });
+
+    it("fires onHover and onBlur as the pointer enters and leaves an item", () => {
+        const onHover = vi.fn();
+        const onBlur = vi.fn();
+        openContextMenu(contextEvent(), [{ label: "Preview", run: () => {}, onHover, onBlur }]);
+        const item = document.querySelector<HTMLElement>(".context-menu-item")!;
+
+        item.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+        expect(onHover).toHaveBeenCalledOnce();
+
+        item.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
+        expect(onBlur).toHaveBeenCalledOnce();
+    });
+
+    it("runs onDismiss once when the menu closes", () => {
+        const onDismiss = vi.fn();
+        openContextMenu(contextEvent(), [{ label: "X", run: () => {} }], onDismiss);
+
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+
+        expect(onDismiss).toHaveBeenCalledOnce();
+    });
+
+    it("closes an open flyout shortly after the pointer leaves it, keeping the root", () => {
+        vi.useFakeTimers();
+        openContextMenu(contextEvent(), [
+            { label: "Jump to", submenu: [{ label: "Dialogue AST", run: () => {} }] },
+        ]);
+        document.querySelector<HTMLButtonElement>(".context-menu-item")!.click();
+        expect(document.querySelector(".context-submenu")).not.toBeNull();
+
+        document
+            .querySelector(".context-submenu")!
+            .dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
+        vi.advanceTimersByTime(200);
+
+        expect(document.querySelector(".context-submenu")).toBeNull();
+        expect(document.querySelector(".context-menu")).not.toBeNull();
+    });
+});

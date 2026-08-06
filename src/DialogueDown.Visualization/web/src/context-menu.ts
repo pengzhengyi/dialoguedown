@@ -1,15 +1,19 @@
 import { codicon } from "./codicon";
 
-/** A leaf entry in a right-click context menu: a codicon, a label, and the action it runs. */
+/** A leaf entry in a right-click context menu: an optional codicon, a label, and its action. */
 export interface ContextMenuAction {
-    icon: string;
+    icon?: string;
     label: string;
     run: () => void;
+    /** Fired while the pointer rests on the item (e.g. to preview what choosing it would do). */
+    onHover?: () => void;
+    /** Fired when the pointer leaves the item, to undo an {@link onHover} effect. */
+    onBlur?: () => void;
 }
 
-/** A parent entry whose codicon and label open a nested {@link ContextMenuItem} submenu. */
+/** A parent entry whose label opens a nested {@link ContextMenuItem} submenu. */
 export interface ContextMenuSubmenu {
-    icon: string;
+    icon?: string;
     label: string;
     submenu: readonly ContextMenuItem[];
 }
@@ -32,11 +36,16 @@ function dismiss(): void {
 
 /**
  * Open a VS Code-style context menu at the cursor listing {@link items}. A {@link ContextMenuSubmenu}
- * entry opens a nested flyout to its side. The menu is dismissed by choosing a leaf action, pressing
- * Escape, or clicking elsewhere; `ArrowRight`/`Enter` open a submenu and `ArrowLeft` closes it.
- * Shared by the Explorer's row menus and the editor's surround and Jump-to menus.
+ * entry opens a nested flyout that is visible only while the pointer rests on the parent or the
+ * flyout itself. The menu is dismissed by choosing a leaf action, pressing Escape, or clicking
+ * elsewhere; `ArrowRight`/`Enter` open a submenu and `ArrowLeft` closes it. {@link onDismiss} runs
+ * once when the whole menu closes, for whatever reason.
  */
-export function openContextMenu(event: MouseEvent, items: readonly ContextMenuItem[]): void {
+export function openContextMenu(
+    event: MouseEvent,
+    items: readonly ContextMenuItem[],
+    onDismiss?: () => void,
+): void {
     event.preventDefault();
     dismiss();
 
@@ -44,10 +53,25 @@ export function openContextMenu(event: MouseEvent, items: readonly ContextMenuIt
     // The open menus, root first; a submenu pushes a level, closing it pops back.
     const levels: { el: HTMLElement; parentItem: HTMLElement | null }[] = [];
     const openers = new WeakMap<HTMLElement, () => void>();
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
 
     const itemsOf = (menu: HTMLElement): HTMLElement[] => [
         ...menu.querySelectorAll<HTMLElement>(':scope > [role="menuitem"]'),
     ];
+
+    function cancelClose(): void {
+        if (closeTimer !== undefined) {
+            clearTimeout(closeTimer);
+            closeTimer = undefined;
+        }
+    }
+
+    // Leaving a flyout does not close it at once: a short grace period lets the pointer cross the
+    // gap between the parent item and its flyout without the flyout vanishing underneath it.
+    function scheduleClose(): void {
+        cancelClose();
+        closeTimer = setTimeout(() => closeDeeperThan(0), 160);
+    }
 
     function buildMenu(list: readonly ContextMenuItem[]): HTMLElement {
         const menu = doc.createElement("div");
@@ -66,6 +90,12 @@ export function openContextMenu(event: MouseEvent, items: readonly ContextMenuIt
             dismiss();
             entry.run();
         });
+        button.addEventListener("mouseenter", () => {
+            cancelClose();
+            closeDeeperThan(levelIndexContaining(button));
+            entry.onHover?.();
+        });
+        if (entry.onBlur) button.addEventListener("mouseleave", entry.onBlur);
         return button;
     }
 
@@ -78,6 +108,7 @@ export function openContextMenu(event: MouseEvent, items: readonly ContextMenuIt
         openers.set(button, open);
         button.addEventListener("click", open);
         button.addEventListener("mouseenter", open);
+        button.addEventListener("mouseleave", scheduleClose);
         return button;
     }
 
@@ -97,9 +128,12 @@ export function openContextMenu(event: MouseEvent, items: readonly ContextMenuIt
     }
 
     function openSubmenu(entry: ContextMenuSubmenu, parentItem: HTMLElement): void {
+        cancelClose();
         closeDeeperThan(levelIndexContaining(parentItem));
         const child = buildMenu(entry.submenu);
         child.classList.add("context-submenu");
+        child.addEventListener("mouseenter", cancelClose);
+        child.addEventListener("mouseleave", scheduleClose);
         parentItem.setAttribute("aria-expanded", "true");
         doc.body.append(child);
         placeSubmenu(child, parentItem);
@@ -152,10 +186,12 @@ export function openContextMenu(event: MouseEvent, items: readonly ContextMenuIt
     doc.addEventListener("pointerdown", onPointerDown, true);
     doc.addEventListener("keydown", onKeyDown, true);
     dismissActive = (): void => {
+        cancelClose();
         for (const level of levels) level.el.remove();
         levels.length = 0;
         doc.removeEventListener("pointerdown", onPointerDown, true);
         doc.removeEventListener("keydown", onKeyDown, true);
+        onDismiss?.();
     };
 
     const root = buildMenu(items);
@@ -174,8 +210,8 @@ export function openContextMenu(event: MouseEvent, items: readonly ContextMenuIt
     itemsOf(root)[0]?.focus();
 }
 
-// A context-menu entry button: an icon and a label, VS Code style.
-function itemButton(iconName: string, label: string): HTMLButtonElement {
+// A context-menu entry button: an optional icon and a label, VS Code style.
+function itemButton(iconName: string | undefined, label: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "context-menu-item";
@@ -183,6 +219,7 @@ function itemButton(iconName: string, label: string): HTMLButtonElement {
     const text = document.createElement("span");
     text.className = "context-menu-label";
     text.textContent = label;
-    button.append(codicon(iconName, "context-menu-icon"), text);
+    if (iconName) button.append(codicon(iconName, "context-menu-icon"));
+    button.append(text);
     return button;
 }

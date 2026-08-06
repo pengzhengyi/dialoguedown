@@ -7,12 +7,16 @@ import {
     drawSelection,
     rectangularSelection,
     crosshairCursor,
+    Decoration,
+    type DecorationSet,
 } from "@codemirror/view";
 import {
     EditorState,
     EditorSelection,
     Prec,
     Compartment,
+    StateField,
+    StateEffect,
     type Extension,
     type StateCommand,
 } from "@codemirror/state";
@@ -61,6 +65,7 @@ import {
     type LspDiagnostic,
     type ReservedTarget,
     type SemanticToken,
+    type Span,
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument } from "./text";
@@ -190,6 +195,31 @@ const surroundHandlers = EditorView.domEventHandlers({
     },
 });
 
+/** Toggles the faint highlight over the source span a hovered Jump-to target would reveal. */
+const setJumpPreviewEffect = StateEffect.define<{ from: number; to: number } | null>();
+
+const jumpPreviewMark = Decoration.mark({ class: "dd-jump-preview" });
+
+const jumpPreviewField = StateField.define<DecorationSet>({
+    create: () => Decoration.none,
+    update(preview, transaction) {
+        for (const effect of transaction.effects) {
+            if (effect.is(setJumpPreviewEffect)) {
+                const span = effect.value;
+                return span && span.to > span.from
+                    ? Decoration.set([jumpPreviewMark.range(span.from, span.to)])
+                    : Decoration.none;
+            }
+        }
+        return preview.map(transaction.changes);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+});
+
+function setJumpPreview(view: EditorView, span: { from: number; to: number } | null): void {
+    view.dispatch({ effects: setJumpPreviewEffect.of(span) });
+}
+
 /** The stage rows for the reverse Jump-to menu, each carrying the current source selection. */
 function jumpMenuItems(
     view: EditorView,
@@ -197,9 +227,14 @@ function jumpMenuItems(
 ): ContextMenuItem[] {
     const { from, to } = view.state.selection.main;
     return jumpTargets.map((target) => ({
-        icon: target.icon ?? "list-tree",
         label: target.title,
         run: () => target.run(from, to),
+        // On hover, preview the span this jump would land on — the enclosing node in that stage.
+        onHover: () => {
+            const span = target.preview(from, to);
+            setJumpPreview(view, span ? { from: span.start, to: span.end } : null);
+        },
+        onBlur: () => setJumpPreview(view, null),
     }));
 }
 
@@ -223,6 +258,7 @@ function openJumpMenuAtCaret(view: EditorView, jumpTargets: readonly SourceJumpT
             clientY: caret ? caret.bottom : editor.top + 8,
         }),
         jumpMenuItems(view, jumpTargets),
+        () => setJumpPreview(view, null),
     );
     return true;
 }
@@ -259,10 +295,10 @@ export interface SourceViewOptions {
 export interface SourceJumpTarget {
     /** The destination stage tab's title, shown in the Jump-to submenu. */
     title: string;
-    /** The submenu row's codicon; defaults to a tree icon. */
-    icon?: string;
     /** Reveal, in this stage, the node whose span encloses the source selection `[from, to)`. */
     run(from: number, to: number): void;
+    /** The source span of that enclosing node, previewed on hover; `null` when none matches. */
+    preview(from: number, to: number): Span | null;
 }
 
 /** A handle to a live source view, letting the mode controller reconfigure it in place. */
@@ -431,7 +467,7 @@ export function createSourceView(
                 );
             }
             if (items.length === 0) return false;
-            openContextMenu(event, items);
+            openContextMenu(event, items, () => setJumpPreview(view, null));
             return true;
         },
     });
@@ -448,6 +484,7 @@ export function createSourceView(
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
                 reservedTargetsPanel(),
+                jumpPreviewField,
                 contextMenu,
                 keymap.of([
                     { key: "Alt-j", run: (view) => openJumpMenuAtCaret(view, jumpTargets) },
