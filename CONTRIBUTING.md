@@ -75,7 +75,7 @@ normal analyzer-enabled `build`/`test` before pushing.
 The compilation report's client is a self-contained TypeScript + Vite project in
 `src/DialogueDown.Visualization/web/`. The .NET library embeds its **built**
 single-file report (`web/dist/report.html`), which is committed to the repo, so a
-plain `dotnet build` needs no Node. You only need Node (20+) to change the client:
+plain `dotnet build` needs no Node. You only need Node (24+) to change the client:
 
 ```bash
 cd src/DialogueDown.Visualization/web
