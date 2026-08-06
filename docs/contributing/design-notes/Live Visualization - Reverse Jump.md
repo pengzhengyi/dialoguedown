@@ -1,8 +1,7 @@
 # Live Visualization — Reverse Jump
 
-> [!IMPORTANT]
-> Status: **in progress** — building the source→node reverse navigation described
-> here.
+> [!NOTE]
+> Status: **implemented** — the source→node reverse navigation described here ships in the report.
 
 ## Goal and scope
 
@@ -27,21 +26,22 @@ Jump-to menu at the caret is in scope.
 
 ## Functionality checklist
 
-- [ ] Right-clicking the Source editor shows a **Jump to** item with a **submenu**
+- [x] Right-clicking the Source editor shows a **Jump to** item with a **submenu**
       of the available compiler-stage tabs.
-- [ ] Choosing a stage switches to that tab (save-safe) and selects the node whose
+- [x] Choosing a stage switches to that tab (save-safe) and selects the node whose
       span most tightly encloses the current selection, **centered** in view.
-- [ ] Matching uses the current selection `[from, to)`; with just a caret it uses
+- [x] Matching uses the current selection `[from, to)`; with just a caret it uses
       the caret offset. Falls back to the node enclosing `from` when no node
       encloses the whole selection.
-- [ ] Stages with no node carrying a span (an unavailable or empty stage) do not
-      appear as targets.
-- [ ] The context menu supports one level of nested submenu with mouse and
+- [x] Unavailable stages (a halted compile, no nodes) do not appear as targets;
+      every available stage's document root encloses any offset, so a match is
+      always found.
+- [x] The context menu supports one level of nested submenu with mouse and
       keyboard navigation (open with `ArrowRight`/`Enter`, leave with
       `ArrowLeft`/`Escape`).
-- [ ] A keybinding opens the **Jump to** submenu at the caret (the entry point of
-      the "shortcut series").
-- [ ] Works in a read-only (View) editor as well as Edit — the source is always
+- [x] `Alt-J` opens the Jump-to picker at the caret (the entry point of the
+      "shortcut series").
+- [x] Works in a read-only (View) editor as well as Edit — the source is always
       selectable.
 
 ## Interfaces and abstractions
@@ -51,7 +51,7 @@ Jump-to menu at the caret is in scope.
 | `findEnclosingNode(nodes, from, to)` (`enclosing-node.ts`) | Pure lookup: the tightest span-bearing node enclosing `[from, to)`, else the tightest enclosing `from`, else `null`. | `DisplayNode`, `Span` |
 | `ContextMenuItem` (extended, `context-menu.ts`) | Union of an **action** item (`run`) and a **submenu** item (`submenu: ContextMenuItem[]`). | `openContextMenu` |
 | `SourceJumpTarget` (`source-view.ts`) | One reverse-jump destination: a stable stage `title`/`icon` plus `run(from, to)` that resolves against the *live* stage and reveals its node. | `SourceViewOptions.jumpTargets` |
-| `jumpToStage(index, from, to)` (`app.ts`) | Find the enclosing node in stage `index`, then `beginNavigation → activate(tab) → view.selectById(id, { center })`. | `findEnclosingNode`, `TreeView`, `activate` |
+| `jumpToStageByTitle(title, from, to)` (`app.ts`) | Find the enclosing node in the named stage (resolved against the *live* stage set), then `beginNavigation → activate(tab) → view.selectById(id, { center })`. | `findEnclosingNode`, `TreeView`, `activate` |
 
 The Source editor stays decoupled from app internals: it renders the injected
 `jumpTargets` titles and calls `run(from, to)` with the current selection. All
@@ -83,8 +83,7 @@ stage knowledge and revealing live in `app.ts`.
 
 ## Error and boundary cases
 
-- **No enclosing node in a stage** → that stage is omitted from the submenu.
-- **Empty / unavailable stage** (no span-bearing nodes) → omitted.
+- **Unavailable stage** (a halted compile, no nodes) → omitted from the targets.
 - **Caret in inter-node whitespace** → resolves to the nearest enclosing ancestor
   (often a scene or the document root); acceptable and still informative.
 - **Selection spanning two siblings** → falls back to the node enclosing `from`.
@@ -96,7 +95,7 @@ stage knowledge and revealing live in `app.ts`.
 
 ```mermaid
 flowchart LR
-    sel["Source selection [from,to)"] -->|right-click / keybinding| menu["Jump to ▸ stage"]
+    sel["Source selection [from,to)"] -->|right-click / Alt-J| menu["Jump to ▸ stage"]
     menu -->|choose stage| run["target.run(from,to)"]
     run --> find["findEnclosingNode(stage.nodes, from, to)"]
     find -->|node.id| nav["beginNavigation → activate(tab)"]
@@ -105,8 +104,8 @@ flowchart LR
 
 `app.ts` builds one `SourceJumpTarget` per available stage and passes the list to
 `createSourceView`. The Source editor's `contextmenu` handler (already home to the
-surround menu) adds the `Jump to ▸` entry; a new editor keybinding opens the same
-submenu at the caret.
+surround menu) adds the `Jump to ▸` entry; the `Alt-J` binding opens the same
+stage list as a flat picker at the caret.
 
 ## Testability
 
@@ -119,10 +118,10 @@ submenu at the caret.
 - **e2e** — right-click the Source editor, open **Jump to**, pick a stage, and
   assert the corresponding node is selected and centered in that tab.
 
-## Open questions
+## Deferred
 
-- **Keyboard series depth.** This iteration ships a keybinding that *opens* the
-  Jump-to submenu at the caret; a full blind chord (leader then per-stage digit)
-  is deferred. Is the opener enough, or is the blind chord wanted next?
-- **Target ordering.** Submenu lists stages in pipeline order. A "most specific
-  match first" ordering was considered but rejected as less predictable.
+- **Blind keyboard chord.** `Alt-J` opens the Jump-to picker at the caret; a full
+  blind chord (a leader then a per-stage digit, jumping with no visible menu) is
+  deferred. The picker is data-driven, so the chord can reuse it later.
+- **Target ordering.** Stages are listed in pipeline order. A "most specific match
+  first" ordering was considered but rejected as less predictable.

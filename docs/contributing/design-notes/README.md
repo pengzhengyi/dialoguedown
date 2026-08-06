@@ -192,7 +192,7 @@ flowchart TB
 | 26 | [Live Visualization — Line Debugger UI](./Live%20Visualization%20-%20Line%20Debugger%20UI.md) | Dormant CodeMirror debugger presentation layer behind a runtime-neutral controller seam | Implemented (dormant) |
 | 27 | [Live Visualization — Zen Mode](./Live%20Visualization%20-%20Zen%20Mode.md) | A deeper full screen that also steps the tab's secondary panel aside, leaving the editor or the graph alone | Implemented |
 | 28 | [Live Visualization — Narrow Screen Layout](./Live%20Visualization%20-%20Narrow%20Screen%20Layout.md) | The report on a phone: a one-line scrolling tab strip, a turned Explorer seam, and panels bounded by the viewport so the stage keeps its room | Implemented |
-| 29 | [Live Visualization — Reverse Jump](./Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | In progress |
+| 29 | [Live Visualization — Reverse Jump](./Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
 
 ### Other notes
 
