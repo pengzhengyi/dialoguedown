@@ -15,6 +15,7 @@ internal static class DialogueGraphBuilderFactory
                 new NodeCreationPass(),
                 new DivertPass(),
                 new ChoicePass(),
+                new BranchPass(),
                 new SuccessionPass(),
                 new RegionPass(),
             ]);

@@ -139,8 +139,65 @@ public sealed class SuccessionPassTests
         Assert.Equal(after, Assert.Single(graph.Nodes[0].Out.OfType<SuccessionEdge>()).Target);
     }
 
-    // Node creation assigns the ids and adds the End; diverts and choices run before succession,
-    // which skips a node that already leaves unconditionally.
-    private DialogueGraph Build(string source) =>
-        GraphPasses.Build(source, new NodeCreationPass(), new DivertPass(), new ChoicePass(), _pass);
+    [Fact]
+    public void Apply_AConditionalBlockWithoutAnElse_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+
+            Guide: After.
+            """);
+
+        // No condition need hold, so the whole block is skipped and the fall-through is the path left.
+        var after = graph.Nodes[2].Id;
+        Assert.Equal(after, Assert.Single(graph.Nodes[0].Out.OfType<SuccessionEdge>()).Target);
+    }
+
+    [Fact]
+    public void Apply_AConditionalBlockWithAnElse_DoesNotFallThrough()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+            >
+            > `else`
+            >
+            > Alice: Take the side door.
+
+            Guide: After.
+            """);
+
+        // The else is always taken when no condition holds, so the block is never skipped.
+        Assert.Empty(graph.Nodes[0].Out.OfType<SuccessionEdge>());
+    }
+
+    [Fact]
+    public void Apply_ABranchBody_ChainsWithinItselfThenResumesAfterTheBlock()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+            >
+            > Alice: Mind the step.
+
+            Guide: After.
+            """);
+
+        AssertOnlySuccession(graph.Nodes[1], graph.Nodes[2].Id);
+        AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
+    }
+
+    // Node creation assigns the ids and adds the End; diverts, choices, and branches run before
+    // succession, which skips a node that already leaves unconditionally.
+    private DialogueGraph Build(string source) => GraphPasses.Build(
+        source,
+        new NodeCreationPass(),
+        new DivertPass(),
+        new ChoicePass(),
+        new BranchPass(),
+        _pass);
 }

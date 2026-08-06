@@ -42,6 +42,17 @@ internal static class GraphAssert
     public static void AssertGuarded(Edge edge, string key) =>
         Assert.Equal(key, Assert.IsAssignableFrom<IGuardedEdge>(edge).Guard?.Key);
 
+    /// <summary>
+    /// Asserts the edge is the branch arm tried at <paramref name="order"/>, guarded by
+    /// <paramref name="guard"/> — null for the <c>else</c> arm, which is always taken when reached.
+    /// </summary>
+    public static void AssertBranch(Edge edge, int order, string? guard)
+    {
+        var branch = Assert.IsType<BranchEdge>(edge);
+        Assert.Equal(order, branch.Order);
+        Assert.Equal(guard, branch.Guard?.Key);
+    }
+
     /// <summary>Asserts the edge is one control may always take.</summary>
     public static void AssertUnguarded(Edge edge) =>
         Assert.Null(Assert.IsAssignableFrom<IGuardedEdge>(edge).Guard);

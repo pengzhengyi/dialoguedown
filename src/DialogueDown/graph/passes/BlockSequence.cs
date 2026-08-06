@@ -4,7 +4,8 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Walks the blocks of a sequence — and of any option body nested in it — pairing each block with
+/// Walks the blocks of a sequence — and of any body nested in it, a choice option's or a
+/// conditional block's branch — pairing each block with
 /// its <b>continuation</b>: the node control reaches once that block is done, which is the next
 /// block in its own sequence, or the sequence's own continuation when it is the last. Because an
 /// option's body continues where the choice itself would have, the arms of a branch weave back
@@ -21,7 +22,7 @@ namespace DialogueDown.Graph.Passes;
 ///                                                           ▼
 ///                                         n5 ──succession──▶ End
 /// </code>
-/// Both arms continue at <c>n5</c>, the choice's own continuation. A nested choice repeats the
+/// Both arms continue at <c>n5</c>, the choice's own continuation. A nested group repeats the
 /// shape one level down, so its arms weave back to wherever the enclosing body continues.
 /// </summary>
 internal static class BlockSequence
@@ -37,12 +38,7 @@ internal static class BlockSequence
                 : sequenceContinuation;
             yield return (block, continuation);
 
-            if (block is not ChoiceGroup group)
-            {
-                continue;
-            }
-
-            foreach (var body in group.OptionBodies())
+            foreach (var body in NestedBodies(block))
             {
                 foreach (var nested in AllContinuations(body, continuation, draft))
                 {
@@ -51,4 +47,22 @@ internal static class BlockSequence
             }
         }
     }
+
+    /// <summary>
+    /// Where taking <paramref name="body"/> leads. A body with no content of its own plays
+    /// nothing, so taking it resumes right where the block holding it would have continued.
+    /// </summary>
+    public static NodeId EntryOf(
+        IReadOnlyList<ScriptBlock> body, NodeId continuation, GraphDraft draft) =>
+        body.Count > 0 ? draft.IdOf(body[0]) : continuation;
+
+    // The bodies a block holds, which continue where the block itself does. Both branching kinds
+    // weave back the same way, so the walk does not care which kind it is descending into.
+    private static IEnumerable<IReadOnlyList<ScriptBlock>> NestedBodies(ScriptBlock block) =>
+        block switch
+        {
+            ChoiceGroup group => group.OptionBodies(),
+            ControlBlock conditional => conditional.BranchBodies(),
+            _ => [],
+        };
 }

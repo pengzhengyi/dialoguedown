@@ -1,3 +1,4 @@
+using DialogueDown.Graph.Builder;
 using DialogueDown.Graph.Passes;
 using DialogueDown.Tests.Support;
 
@@ -77,16 +78,82 @@ public sealed class BlockSequenceTests
                 """));
     }
 
+    [Fact]
+    public void AllContinuations_ConditionalBlock_GivesEveryBranchTheBlocksOwnContinuation()
+    {
+        // n0 the block, n1/n2 the branch bodies, n3 what follows, n4 End. Both branches continue
+        // at n3, and the block does too, so taking any of them resumes at the same place.
+        Assert.Equal(
+            [(0, 3), (1, 3), (2, 3), (3, 4)],
+            Walk("""
+                > `if` `"Rich"?`
+                >
+                > Alice: Upstairs.
+                >
+                > `else`
+                >
+                > Alice: Side door.
+
+                Guide: Done.
+                """));
+    }
+
+    [Fact]
+    public void AllContinuations_BranchWithSeveralBlocks_ChainsInsideTheBranchBeforeResuming()
+    {
+        // n1 ▶ n2 within the branch, then n2 resumes at n3 where the block itself continues.
+        Assert.Equal(
+            [(0, 3), (1, 2), (2, 3), (3, 4)],
+            Walk("""
+                > `if` `"Rich"?`
+                >
+                > Alice: Upstairs.
+                >
+                > Alice: Mind the step.
+
+                Guide: Done.
+                """));
+    }
+
+    [Fact]
+    public void EntryOf_BodyWithBlocks_LeadsToItsFirstBlock()
+    {
+        var (draft, context) = Lowered("""
+            Alice: one
+
+            Bob: two
+            """);
+
+        Assert.Equal(
+            draft.IdOf(context.TopLevelBlocks[0]),
+            BlockSequence.EntryOf(context.TopLevelBlocks, draft.End, draft));
+    }
+
+    [Fact]
+    public void EntryOf_EmptyBody_LeadsToTheContinuationInstead()
+    {
+        var (draft, _) = Lowered("Alice: one");
+
+        Assert.Equal(draft.End, BlockSequence.EntryOf([], draft.End, draft));
+    }
+
     // Each pair is (the block's node id, the node control reaches once that block is done), so a
-    // test reads the walk as plain numbers. Node creation assigns the ids and the End node.
+    // test reads the walk as plain numbers.
     private static IReadOnlyList<(int Block, int Next)> Walk(string source)
     {
-        var draft = GraphDraftFactory.Draft();
-        var context = GraphBuildContextFactory.Context(source);
-        new NodeCreationPass().Apply(draft, context);
+        var (draft, context) = Lowered(source);
 
         return [.. BlockSequence
             .AllContinuations(context.TopLevelBlocks, draft.End, draft)
             .Select(step => (draft.IdOf(step.Block).Value, step.Continuation.Value))];
+    }
+
+    // Node creation assigns every block its id and adds the End, which the walk resolves against.
+    private static (GraphDraft Draft, GraphBuildContext Context) Lowered(string source)
+    {
+        var draft = GraphDraftFactory.Draft();
+        var context = GraphBuildContextFactory.Context(source);
+        new NodeCreationPass().Apply(draft, context);
+        return (draft, context);
     }
 }

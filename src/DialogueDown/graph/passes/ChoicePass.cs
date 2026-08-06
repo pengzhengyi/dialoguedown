@@ -39,17 +39,13 @@ internal sealed class ChoicePass : GraphBuildPass
     private static IEnumerable<Edge> ArmEdges(
         ChoiceGroup group, NodeId continuation, GraphDraft draft) => group switch
     {
-        Choices choices => choices.Options.Select(option =>
-            (Edge)new OptionEdge(EntryOf(option.Body, continuation, draft), option.Condition)),
+        Choices choices => choices.Options.Select(option => (Edge)new OptionEdge(
+            BlockSequence.EntryOf(option.Body, continuation, draft), option.Condition)),
         RandomChoices random => random.Options.Select(option => (Edge)new RandomOptionEdge(
-            EntryOf(option.Body, continuation, draft), option.Weight, option.Condition)),
+            BlockSequence.EntryOf(option.Body, continuation, draft),
+            option.Weight,
+            option.Condition)),
         _ => throw new NotSupportedException(
             $"The dialogue graph builder does not yet lower {group.GetType().Name} groups."),
     };
-
-    // An arm with no content of its own plays nothing, so taking it resumes right where the choice
-    // itself would have continued.
-    private static NodeId EntryOf(
-        IReadOnlyList<ScriptBlock> body, NodeId continuation, GraphDraft draft) =>
-        body.Count > 0 ? draft.IdOf(body[0]) : continuation;
 }
