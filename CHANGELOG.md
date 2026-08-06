@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Fixed End sentinel in the Source editor** — the compiler-projected `#END` target now appears
+  in a read-only row below the source with an infinity marker; clicking it copies
+  `[End](#END)`. It is reserved-target metadata, not a synthetic heading or source line, leaving
+  the same panel seam for a future `#START` entry target once its semantics are defined. See
+  [Progression order](docs/contributing/design-notes/Progression%20Order.md).
 - **Zen mode in the report** — press `z` for a deeper full screen that also steps the active
   tab's side panel aside: the editor alone on Source and Config, the graph alone on the AST and
   Semantic Model tabs. `z` or `Esc` restores your layout exactly as it was. See the

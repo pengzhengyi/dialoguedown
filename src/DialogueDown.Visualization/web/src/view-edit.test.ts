@@ -31,6 +31,7 @@ function fakePorts(overrides: Partial<ModeControllerPorts> = {}) {
         setContent: vi.fn(),
         setDiagnostics: vi.fn(),
         setSemanticTokens: vi.fn(),
+        setReservedTargets: vi.fn(),
         setConfigEditable: vi.fn(),
         setConfigContent: vi.fn(),
         updateConfig: vi.fn(),
@@ -101,6 +102,9 @@ describe("createModeController", () => {
                     kind: "ReservedTag",
                 },
             ],
+            symbols: {
+                reservedTargets: [{ anchor: "END", label: "End", role: "Terminal" }],
+            },
         } as unknown as Parameters<typeof c.onReload>[0];
         c.onReload(dialogueReport);
 
@@ -121,6 +125,9 @@ describe("createModeController", () => {
                 kind: "ReservedTag",
             },
         ]);
+        expect(app.setReservedTargets).toHaveBeenCalledWith([
+            { anchor: "END", label: "End", role: "Terminal" },
+        ]);
         expect(app.showBanner).toHaveBeenCalledWith(null);
         expect(ports.dialogueLive.onDiskChange).not.toHaveBeenCalled();
         // The dialogue controller adopts the external content as its clean baseline.
@@ -140,6 +147,9 @@ describe("createModeController", () => {
         const configReport = {
             stages: [],
             configuration: { file: { path: "dialogue.toml", source: 'mode = "best-effort"' } },
+            symbols: {
+                reservedTargets: [{ anchor: "END", label: "End", role: "Terminal" }],
+            },
             outcome: "loaded",
         } as unknown as Parameters<typeof c.onReloadConfig>[0];
         c.onReloadConfig(configReport);
@@ -147,6 +157,9 @@ describe("createModeController", () => {
         expect(app.updateConfig).toHaveBeenCalledOnce();
         expect(app.setConfigContent).toHaveBeenCalledWith('mode = "best-effort"');
         expect(app.updateStages).toHaveBeenCalledWith([]);
+        expect(app.setReservedTargets).toHaveBeenCalledWith([
+            { anchor: "END", label: "End", role: "Terminal" },
+        ]);
         expect(configLive.adoptDisk).toHaveBeenCalledWith(
             'mode = "best-effort"',
             true,

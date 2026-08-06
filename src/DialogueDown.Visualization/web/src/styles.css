@@ -1863,6 +1863,77 @@ g.node.entity-highlight text.label {
     border: none;
 }
 
+/* Compiler-projected reserved targets are editor panels, not synthetic document lines. The faux
+   gutter aligns with CodeMirror's real gutters and uses a non-numeric sentinel marker, while the
+   row remains fixed and read-only below the scrollable source. */
+.source-pane .cm-panels-bottom:has(.dd-reserved-targets) {
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.dd-reserved-targets {
+    background: color-mix(in srgb, var(--pico-background-color) 94%, var(--tok-reserved-anchor));
+    color: var(--pico-color);
+}
+
+.dd-reserved-target-row {
+    display: grid;
+    grid-template-columns: var(--dd-editor-gutter-width, 3rem) minmax(0, 1fr);
+    min-height: 1.8rem;
+}
+
+.dd-reserved-target-row + .dd-reserved-target-row {
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.dd-reserved-target-marker {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: var(--dd-reserved-marker-pad-right, 0.65rem);
+    border-right: 1px solid var(--pico-muted-border-color);
+    color: var(--tok-reserved-anchor);
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.dd-reserved-target-copy {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 0.25rem 0.65rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.78rem;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.dd-reserved-target-copy:hover,
+.dd-reserved-target-copy:focus-visible {
+    background: color-mix(in srgb, var(--tok-reserved-anchor) 10%, transparent);
+}
+
+.dd-reserved-target-label {
+    font-weight: 600;
+}
+
+.dd-reserved-target-anchor {
+    color: var(--tok-reserved-anchor);
+    font-weight: 600;
+}
+
+.dd-reserved-target-link-icon {
+    margin-left: auto;
+    color: var(--pico-muted-color);
+}
+
 .dd-search {
     display: grid;
     grid-template-columns: auto minmax(5rem, 13rem) auto; /* chevron | inputs (shrink if tight) | controls */

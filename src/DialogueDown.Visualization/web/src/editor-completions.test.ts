@@ -22,7 +22,14 @@ import {
 
 /** A symbol provider carrying just the parts a test needs; the rest default to empty. */
 function provide(partial: Partial<DialogueSymbols>): DialogueSymbolProvider {
-    return () => ({ jumpTargets: [], speakers: [], speakerIds: [], tags: [], ...partial });
+    return () => ({
+        jumpTargets: [],
+        speakers: [],
+        speakerIds: [],
+        tags: [],
+        reservedTargets: [],
+        ...partial,
+    });
 }
 
 /** Build a completion context with the cursor at `|` in `docWithCursor`. */

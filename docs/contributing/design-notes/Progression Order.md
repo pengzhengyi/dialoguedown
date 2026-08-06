@@ -135,6 +135,22 @@ Reaching the end of the last block also terminates naturally, so `#END` is only 
 stopping *early*. There is no `# End` heading to write: `#END` is always available.
 Any farewell "ceremony" is just ordinary content written before the terminator.
 
+**Editor sentinel row.** The Source editor keeps language-owned targets visible in a
+fixed, read-only panel below the scrollable document. The End sentinel appears as:
+
+```text
+∞   End                                              #END
+```
+
+Clicking it copies `[End](#END)`, matching a heading's paste-ready jump-link affordance.
+The infinity glyph is a **sentinel marker**, not a line number: the row does not change
+source text, line counts, selection, search, folding, diagnostics, or undo history.
+
+The report model names this concept a **reserved target** with one of two roles:
+`Entry` or `Terminal`. Only `#END` (`Terminal`) exists today. If `#START` entry semantics are adopted later,
+the compiler can project `#START` (`Entry`) through the same metadata and panel without
+turning either sentinel into a source heading.
+
 **Choices rejoin.** After the reader picks an option, that option's body plays, then
 control **continues after the choice block** — the branch weaves back into the main
 flow. The same holds for a random choice once its option is resolved.
@@ -192,7 +208,7 @@ content or a second jump on a line is reachable.
 | [Semantic Analyzer](./Semantic%20Analyzer.md) — jump resolution | Recognize the reserved `#END` anchor **before** `AnchorTable` lookup and resolve it to the **End sentinel**; ordinary anchors resolve as today. |
 | Validation | Add an **unreachable-after-divert** rule; reframe the existing multiple-jumps rule (see [diagnostics](#diagnostics)). |
 | Semantic model | Expose the End sentinel and reserved-anchor resolution so the graph builder and editor projections can consume them. |
-| Editor projections (visualization) | Surface `#END` through the **semantic symbol projection** so completion offers it as a divert target, and add a **semantic token** so it highlights as a reserved keyword. See the [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) note. |
+| Editor projections (visualization) | Surface `#END` through the **semantic symbol projection** so completion offers it as a divert target; project it as a typed reserved target for the fixed Source-editor panel; and add a **semantic token** so source occurrences highlight as a reserved keyword. See the [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) note. |
 | Flow graph / runtime — **deferred** | The succession/divert/detour **edges** and play-time traversal are the deferred graph/runtime ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)). This note only fixes their meaning. |
 
 ## Markdown interaction

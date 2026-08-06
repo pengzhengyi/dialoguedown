@@ -59,6 +59,7 @@ import {
     type DialogueSymbolProvider,
     EMPTY_SYMBOLS,
     type LspDiagnostic,
+    type ReservedTarget,
     type SemanticToken,
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
@@ -66,6 +67,7 @@ import { renderDocument } from "./text";
 import type { DebugController } from "./debug-controller";
 import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
+import { reservedTargetsPanel, setEditorReservedTargets } from "./reserved-targets-panel";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -219,6 +221,8 @@ export interface SourceViewOptions {
      * completions); a served session supplies a provider over its latest compile.
      */
     symbols?: DialogueSymbolProvider;
+    /** Language-owned jump targets shown in the fixed, read-only bottom panel. */
+    reservedTargets?: readonly ReservedTarget[];
     /** Optional line-debugger controller. Absent in every ordinary report. */
     debug?: DebugController;
 }
@@ -245,6 +249,8 @@ export interface SourceViewHandle {
      * clears the highlighting — called on load, a hot-reload, or a save.
      */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
+    /** Replace the language-owned targets shown below the source document. */
+    setReservedTargets(targets: readonly ReservedTarget[]): void;
     /**
      * Select the half-open `[from, to)` range, scroll it into view, and focus the editor — a
      * "jump to source" landing on the text a graph node came from. A zero-width range (`from ===
@@ -307,7 +313,13 @@ export function createSourceView(
     source: string,
     options: SourceViewOptions = {},
 ): SourceViewHandle {
-    const { editable = false, onChange, symbols = () => EMPTY_SYMBOLS, debug } = options;
+    const {
+        editable = false,
+        onChange,
+        symbols = () => EMPTY_SYMBOLS,
+        reservedTargets = [],
+        debug,
+    } = options;
 
     // The document-aware completions are an Edit-only authoring aid, so they live in the
     // editability compartment alongside the other Edit-only aids.
@@ -357,6 +369,7 @@ export function createSourceView(
                 foldGutter(),
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
+                reservedTargetsPanel(),
                 headingSlugHints(),
                 foldHeadings,
                 codeFolding(),
@@ -386,6 +399,7 @@ export function createSourceView(
             ],
         }),
     });
+    setEditorReservedTargets(view, reservedTargets);
     if (debug) {
         debugToolbar = createDebugToolbar(debug, {
             toggleBreakpoint: () => {
@@ -440,6 +454,7 @@ export function createSourceView(
         getContent: () => view.state.doc.toString(),
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
         setSemanticTokens: (tokens) => setEditorSemanticTokens(view, tokens),
+        setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
         selectRange: (from, to) => {
             // Clamp to the document and order the pair, so a stale span can only ever land the
             // cursor in-bounds rather than throw. A zero-width range collapses to a caret.

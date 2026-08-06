@@ -35,7 +35,11 @@ test("completes a jump target from the analyzer's resolved symbols", async ({ pa
             { slug: "scene", heading: "Scene" },
             { slug: "END", heading: "End the run" },
         ],
+        reservedTargets: [{ anchor: "END", label: "End", role: "Terminal" }],
     });
+    await expect(page.locator(".dd-reserved-targets")).toContainText("∞");
+    await expect(page.locator(".dd-reserved-targets")).toContainText("End");
+    await expect(page.locator(".dd-reserved-targets")).toContainText("#END");
 
     // Replace the buffer with a heading-less document: the current buffer no longer contains
     // the `scene` heading, so a completion offering it can only come from the payload symbols.

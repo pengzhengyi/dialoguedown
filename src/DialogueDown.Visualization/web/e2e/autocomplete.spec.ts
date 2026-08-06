@@ -18,6 +18,7 @@ const editUrl = writeReport({
         speakers: ["Alice", "Merchant"],
         speakerIds: ["guide", "merchant"],
         tags: ["happy", "wise"],
+        reservedTargets: [],
     },
 });
 const staticUrl = writeReport({ source: SAMPLE_SOURCE, stages: SAMPLE_STAGES });

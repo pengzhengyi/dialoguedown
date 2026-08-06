@@ -4,6 +4,7 @@ import type {
     StageUnavailable,
     ConfigReport,
     LspDiagnostic,
+    ReservedTarget,
     SemanticToken,
     DialogueSymbolProvider,
     DisplayNode,
@@ -91,6 +92,8 @@ export interface AppController {
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** Replace the Source editor's semantic-token highlighting after a recompile. */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
+    /** Replace the fixed panel's language-owned jump targets after a recompile. */
+    setReservedTargets(targets: readonly ReservedTarget[]): void;
     /** Switch the config (TOML) editor between editable (Edit) and read-only (View) in place. */
     setConfigEditable(editable: boolean): void;
     /** Replace the config editor's content — a discard/restore of the last saved TOML. */
@@ -236,6 +239,7 @@ export function runApp(
         setContent: (next) => sourceHandle?.setContent(next),
         setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
         setSemanticTokens: (tokens) => sourceHandle?.setSemanticTokens(tokens),
+        setReservedTargets: (targets) => sourceHandle?.setReservedTargets(targets),
         setConfigEditable: (next) => configHandle?.setEditable(next),
         setConfigContent: (next) => configHandle?.setContent(next),
         updateConfig: (config) => configHandle?.updateConfig(config),
@@ -286,6 +290,7 @@ export function runApp(
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
+                reservedTargets: report.symbols?.reservedTargets ?? [],
                 ...(debug ? { debug } : {}),
             });
             sourceHandle.setDiagnostics(report.diagnostics ?? []);
