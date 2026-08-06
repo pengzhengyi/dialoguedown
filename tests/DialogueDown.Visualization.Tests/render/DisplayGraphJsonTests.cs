@@ -246,7 +246,11 @@ public sealed class DisplayGraphJsonTests
     {
         var graph = MakeGraph("Semantic Model", [Node("n0", "Document")], []);
         var symbols = new SymbolSet(
-            [new JumpTargetSymbol("the-market", "The Market")], ["Guide"], ["guide"], ["wise"]);
+            [new JumpTargetSymbol("the-market", "The Market")],
+            ["Guide"],
+            ["guide"],
+            ["wise"],
+            [new ReservedTargetSymbol("END", "End", ReservedTargetRole.Terminal)]);
 
         var json = DisplayGraphJson.SerializeReport("static", null, "# Hi", [graph], symbols);
 
@@ -255,6 +259,9 @@ public sealed class DisplayGraphJsonTests
         Assert.Contains("\"speakers\":[\"Guide\"]", json);
         Assert.Contains("\"speakerIds\":[\"guide\"]", json);
         Assert.Contains("\"tags\":[\"wise\"]", json);
+        Assert.Contains(
+            "\"reservedTargets\":[{\"anchor\":\"END\",\"label\":\"End\",\"role\":\"Terminal\"}]",
+            json);
     }
 
     [Fact]

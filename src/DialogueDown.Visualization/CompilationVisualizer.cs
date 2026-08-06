@@ -240,7 +240,7 @@ public sealed class CompilationVisualizer
             ];
         var symbols = result.IsComplete
             ? new SymbolProjection().Project(result.Semantics)
-            : SymbolSet.Empty;
+            : SymbolSet.Baseline;
         var configuration = _configuration is null
             ? null
             : ConfigurationProjection.Project(_configuration);

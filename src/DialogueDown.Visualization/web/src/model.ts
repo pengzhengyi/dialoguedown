@@ -230,6 +230,19 @@ export interface JumpTarget {
     heading: string;
 }
 
+/** The structural role a language-owned jump target plays in a dialogue run. */
+export type ReservedTargetRole = "Entry" | "Terminal";
+
+/** A language-owned jump target presented outside the source document. */
+export interface ReservedTarget {
+    /** The reserved anchor without its leading `#`. */
+    anchor: string;
+    /** The concise title shown in the fixed editor panel. */
+    label: string;
+    /** Whether the target begins or terminates a run. */
+    role: ReservedTargetRole;
+}
+
 /**
  * The names a document contains, grouped by the DSL concept each completes — the semantic
  * analyzer's resolved symbols (canonical speaker ids, merged tags, validated jump targets)
@@ -244,6 +257,8 @@ export interface DialogueSymbols {
     speakerIds: string[];
     /** Speaker/line tags (without the `#`), for completing `#tag`. */
     tags: string[];
+    /** Language-owned targets such as the terminal `#END`, independent of source headings. */
+    reservedTargets: ReservedTarget[];
 }
 
 /** The empty symbol set — no completions, used when a report carried no resolved symbols. */
@@ -252,6 +267,7 @@ export const EMPTY_SYMBOLS: DialogueSymbols = {
     speakers: [],
     speakerIds: [],
     tags: [],
+    reservedTargets: [],
 };
 
 /**
