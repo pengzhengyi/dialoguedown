@@ -51,6 +51,25 @@ report is written to `coverage-report/index.html`.
 
 CI fails below 90% line coverage and warns below 100%.
 
+### Core quality guardrails
+
+The core library (`src/DialogueDown`) holds itself to size, complexity, and
+shape limits that **fail the build** on a regression (they are analyzer errors,
+not warnings). The CLI and visualization projects are intentionally exempt.
+
+- **Size and complexity** — SonarAnalyzer caps method length (≤ 40 lines), file
+  length (≤ 400 lines), parameters (≤ 7), and cyclomatic (≤ 10) / cognitive
+  (≤ 15) complexity. Thresholds live in `src/DialogueDown/SonarLint.xml`;
+  severities and scope in `.editorconfig`.
+- **No mutable global state** — `CA2211` forbids externally visible non-constant
+  static fields.
+- **No God classes** — an architecture test caps public methods per core type
+  (≤ 20); private helpers are not counted, so decomposing into small methods is
+  encouraged.
+
+Use the `build: fast` task (analyzers off) for the inner loop, but run the
+normal analyzer-enabled `build`/`test` before pushing.
+
 ### Visualization frontend (`web/`)
 
 The compilation report's client is a self-contained TypeScript + Vite project in

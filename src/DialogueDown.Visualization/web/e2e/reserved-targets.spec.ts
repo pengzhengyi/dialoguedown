@@ -82,3 +82,32 @@ test("shows a fixed, copyable End sentinel without changing source lines", async
     await expect(page.locator(".toast")).toHaveText("Copied [End](#END)");
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("[End](#END)");
 });
+
+test("stays behind the footer help overlay on a short window", async ({ page }) => {
+    // On a short window the footer help panel floats up over the editor (height <= 640px).
+    // CodeMirror defaults its panels to z-index 300, so without a reset the reserved End row
+    // painted on top of the help text. It must sit behind the overlay instead.
+    await page.setViewportSize({ width: 1150, height: 600 });
+
+    const panel = page.locator(".dd-reserved-targets");
+    await expect(panel).toBeVisible();
+
+    await page.locator("#help-toggle").click();
+    await expect(page.locator(".app-footer .shortcuts")).toBeVisible();
+
+    const verdict = await page.evaluate(() => {
+        const reserved = document.querySelector(".dd-reserved-targets");
+        const help = document.querySelector(".app-footer .shortcuts:not([hidden])");
+        if (!reserved || !help) return "missing";
+        const r = reserved.getBoundingClientRect();
+        const h = help.getBoundingClientRect();
+        if (r.bottom <= h.top || r.top >= h.bottom) return "no-overlap";
+        const x = Math.round(r.left + r.width / 2);
+        const y = Math.round((Math.max(r.top, h.top) + Math.min(r.bottom, h.bottom)) / 2);
+        const hit = document.elementFromPoint(x, y);
+        if (hit?.closest(".app-footer .shortcuts")) return "help-on-top";
+        if (hit?.closest(".dd-reserved-targets")) return "reserved-on-top";
+        return "other";
+    });
+    expect(verdict).toBe("help-on-top");
+});

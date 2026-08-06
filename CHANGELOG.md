@@ -52,6 +52,11 @@ changes easy to categorize.
 
 ### Changed
 
+- **Core quality guardrails now fail the build.** The engine-agnostic core
+  (`src/DialogueDown`) enforces its size and complexity limits as errors rather
+  than warnings, forbids mutable global state (`CA2211`), and caps public methods
+  per type via an architecture test. The CLI and visualization projects stay
+  exempt. See [Contributing](CONTRIBUTING.md#core-quality-guardrails).
 - **Faster local .NET test feedback** — the documented contributor command and default VS Code
   test task now execute test projects with three MSBuild workers, reducing the measured warm
   local median by 28.8%. CI, release validation, builds, and coverage remain serial because their
