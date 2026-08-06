@@ -7,7 +7,7 @@ applyTo: "src/DialogueDown.Visualization/web/**"
 The compilation report's client is a self-contained **TypeScript + Vite** project
 in `src/DialogueDown.Visualization/web/`. The .NET library embeds its **built**
 single-file report (`web/dist/report.html`), which is committed, so a plain
-`dotnet build` needs no Node. You only need **Node 20+** to change the client.
+`dotnet build` needs no Node. You only need **Node 24+** to change the client.
 Full context is in [`CONTRIBUTING.md`](../../CONTRIBUTING.md).
 
 ## Workflow

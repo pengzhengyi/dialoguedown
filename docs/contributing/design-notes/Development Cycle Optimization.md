@@ -169,7 +169,7 @@ projects and solution orchestration; reported test-body durations are much
 smaller. The frontend gate is dominated by Vitest (22.84 seconds in the
 phase-by-phase baseline).
 
-The local runtime differs from CI (Node 26 vs Node 20; .NET SDK 10 vs SDK 8), so
+The local runtime differs from CI (Node 26 vs Node 24; .NET SDK 10 vs SDK 8), so
 absolute local/CI values are not compared directly. Each implementation
 increment refreshes its own baseline and compares before/after runs in the same
 environment.
@@ -518,7 +518,7 @@ For each sub-increment:
 - place its data under one ignored project cache directory;
 - keep CI behavior unchanged initially;
 - benchmark and accept/reject it before starting the next tool; and
-- document Node-version drift (local Node 26 vs CI Node 20) without claiming a
+- document Node-version drift (local Node 26 vs CI Node 24) without claiming a
   runtime-version speedup.
 
 **Acceptance:**
