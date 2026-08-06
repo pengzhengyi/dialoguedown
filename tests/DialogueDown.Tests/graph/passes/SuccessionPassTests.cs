@@ -1,5 +1,4 @@
 using DialogueDown.Graph;
-using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Passes;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.GraphAssert;
@@ -88,7 +87,7 @@ public sealed class SuccessionPassTests
         // 0 question, 1 choice, 2 left, 3 right, 4 onward.
         var onward = graph.Nodes[4].Id;
         AssertOnlySuccession(graph.Nodes[0], graph.Nodes[1].Id);
-        Assert.Empty(graph.Nodes[1].Out.OfType<SuccessionEdge>());
+        AssertNoFallThrough(graph.Nodes[1]);
         AssertOnlySuccession(graph.Nodes[2], onward);
         AssertOnlySuccession(graph.Nodes[3], onward);
         AssertOnlySuccession(graph.Nodes[4], graph.End);
@@ -135,8 +134,7 @@ public sealed class SuccessionPassTests
             """);
 
         // Neither guard need hold, so the fall-through is the path left when nothing is offered.
-        var after = graph.Nodes[3].Id;
-        Assert.Equal(after, Assert.Single(graph.Nodes[0].Out.OfType<SuccessionEdge>()).Target);
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[3].Id);
     }
 
     [Fact]
@@ -151,8 +149,7 @@ public sealed class SuccessionPassTests
             """);
 
         // No condition need hold, so the whole block is skipped and the fall-through is the path left.
-        var after = graph.Nodes[2].Id;
-        Assert.Equal(after, Assert.Single(graph.Nodes[0].Out.OfType<SuccessionEdge>()).Target);
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[2].Id);
     }
 
     [Fact]
@@ -171,7 +168,7 @@ public sealed class SuccessionPassTests
             """);
 
         // The else is always taken when no condition holds, so the block is never skipped.
-        Assert.Empty(graph.Nodes[0].Out.OfType<SuccessionEdge>());
+        AssertNoFallThrough(graph.Nodes[0]);
     }
 
     [Fact]
@@ -189,6 +186,40 @@ public sealed class SuccessionPassTests
 
         AssertOnlySuccession(graph.Nodes[1], graph.Nodes[2].Id);
         AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_AGuardedBlockThatDivertsUnconditionally_StillFallsThrough()
+    {
+        var graph = Build("""
+            `"Brave"?` Alice: farewell => [on](#on)
+
+            Alice: after
+
+            # On
+
+            Alice: there
+            """);
+
+        // The guard may skip the whole line, its jump included, so control needs somewhere to go.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
+    }
+
+    [Fact]
+    public void Apply_ABlockGuardedBesideItsJumpsOwnGuard_FallsThroughOnce()
+    {
+        var graph = Build("""
+            `"Brave"?` Alice: farewell `"Rich"?` => [on](#on)
+
+            Alice: after
+
+            # On
+
+            Alice: there
+            """);
+
+        // Either guard failing lands on the same fall-through, so one is enough.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
     }
 
     // Node creation assigns the ids and adds the End; diverts, choices, and branches run before

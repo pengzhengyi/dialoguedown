@@ -28,6 +28,12 @@ internal abstract class NodeDraft
     /// <summary>The edges leaving this node.</summary>
     public IReadOnlyList<Edge> Out => _out;
 
+    /// <summary>
+    /// Whether control always leaves this node, so it needs no fall-through to the block after it.
+    /// A kind that can be guarded narrows this, since a guard may skip the node whole.
+    /// </summary>
+    public virtual bool LeavesUnconditionally() => Out.HasUnguardedRoute();
+
     public void AddEdge(Edge edge)
     {
         ArgumentNullException.ThrowIfNull(edge);

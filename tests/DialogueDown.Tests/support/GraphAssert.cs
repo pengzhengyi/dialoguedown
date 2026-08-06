@@ -25,6 +25,24 @@ internal static class GraphAssert
     }
 
     /// <summary>Asserts the node's only out-edge is a succession to <paramref name="target"/>.</summary>
+    /// <summary>
+    /// Asserts the node's one fall-through leads to <paramref name="target"/>, beside whatever
+    /// other routes it offers — unlike <see cref="AssertOnlySuccession"/>, which asserts the
+    /// fall-through is the only edge the node has.
+    /// </summary>
+    public static void AssertFallsThroughTo(DialogueNode node, NodeId target)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        AssertSuccession(Assert.Single(node.Out.OfType<SuccessionEdge>()), target);
+    }
+
+    /// <summary>Asserts the node has no fall-through, so control always leaves it another way.</summary>
+    public static void AssertNoFallThrough(DialogueNode node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        Assert.Empty(node.Out.OfType<SuccessionEdge>());
+    }
+
     public static void AssertOnlySuccession(DialogueNode node, NodeId target)
     {
         ArgumentNullException.ThrowIfNull(node);
@@ -52,6 +70,14 @@ internal static class GraphAssert
         Assert.Equal(order, branch.Order);
         Assert.Equal(guard, branch.Guard?.Key);
     }
+
+    /// <summary>Asserts the node's content plays only under <paramref name="key"/>.</summary>
+    public static void AssertGuarded(DialogueNode node, string key) =>
+        Assert.Equal(key, Assert.IsAssignableFrom<IGuardedNode>(node).Guard?.Key);
+
+    /// <summary>Asserts the node's content always plays.</summary>
+    public static void AssertUnguarded(DialogueNode node) =>
+        Assert.Null(Assert.IsAssignableFrom<IGuardedNode>(node).Guard);
 
     /// <summary>Asserts the edge is one control may always take.</summary>
     public static void AssertUnguarded(Edge edge) =>

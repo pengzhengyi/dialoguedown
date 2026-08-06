@@ -5,6 +5,7 @@ using DialogueDown.Graph.Passes;
 using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
+using static DialogueDown.Tests.Support.GraphAssert;
 
 namespace DialogueDown.Tests.Graph.Passes;
 
@@ -154,9 +155,28 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
-    public void Apply_BlockGuardedByACondition_Throws() =>
-        // A guard on the block needs an edge that skips it, which no pass wires yet.
-        Assert.Throws<NotSupportedException>(() => Build("""`"Brave"?` Alice: you enter"""));
+    public void Apply_AGuardedLine_CarriesItsConditionAsTheNodesGuard()
+    {
+        var graph = Build("""`"Brave"?` Alice: you enter""");
+
+        AssertGuarded(graph.Node(graph.Entry), "Brave");
+    }
+
+    [Fact]
+    public void Apply_AGuardedControlLine_CarriesItsConditionToo()
+    {
+        var graph = Build("""`"Brave"?` `("open the gate")`""");
+
+        AssertGuarded(graph.Node(graph.Entry), "Brave");
+    }
+
+    [Fact]
+    public void Apply_AnUnguardedLine_HasNoGuard()
+    {
+        var graph = Build("Alice: you enter");
+
+        AssertUnguarded(graph.Node(graph.Entry));
+    }
 
     private static string Slice(string source, SourceSpan span) =>
         source.Substring(span.Start, span.Length);

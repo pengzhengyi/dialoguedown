@@ -11,32 +11,32 @@ public sealed class EdgeExtensionsTests
     private static readonly NodeId _target = NodeId(1);
 
     [Fact]
-    public void LeavesUnconditionally_UnguardedDivert_IsTrue()
+    public void HasUnguardedRoute_UnguardedDivert_IsTrue()
     {
         IReadOnlyList<Edge> edges = [new DivertEdge(_target)];
 
-        Assert.True(edges.LeavesUnconditionally());
+        Assert.True(edges.HasUnguardedRoute());
     }
 
     [Fact]
-    public void LeavesUnconditionally_GuardedDivert_IsFalse()
+    public void HasUnguardedRoute_GuardedDivert_IsFalse()
     {
         IReadOnlyList<Edge> edges = [new DivertEdge(_target, Guard("Brave"))];
 
-        Assert.False(edges.LeavesUnconditionally());
+        Assert.False(edges.HasUnguardedRoute());
     }
 
     [Fact]
-    public void LeavesUnconditionally_UnguardedOption_IsTrue()
+    public void HasUnguardedRoute_UnguardedOption_IsTrue()
     {
         // The arm is always offered, so the choice always leaves through one of them.
         IReadOnlyList<Edge> edges = [new OptionEdge(_target)];
 
-        Assert.True(edges.LeavesUnconditionally());
+        Assert.True(edges.HasUnguardedRoute());
     }
 
     [Fact]
-    public void LeavesUnconditionally_EveryOptionGuarded_IsFalse()
+    public void HasUnguardedRoute_EveryOptionGuarded_IsFalse()
     {
         // Each guard may read false, so the choice can end up offering nothing.
         IReadOnlyList<Edge> edges =
@@ -45,11 +45,11 @@ public sealed class EdgeExtensionsTests
             new OptionEdge(NodeId(2), Guard("HasRope")),
         ];
 
-        Assert.False(edges.LeavesUnconditionally());
+        Assert.False(edges.HasUnguardedRoute());
     }
 
     [Fact]
-    public void LeavesUnconditionally_OneUnguardedOptionAmongGuardedOnes_IsTrue()
+    public void HasUnguardedRoute_OneUnguardedOptionAmongGuardedOnes_IsTrue()
     {
         IReadOnlyList<Edge> edges =
         [
@@ -57,15 +57,15 @@ public sealed class EdgeExtensionsTests
             new OptionEdge(NodeId(2)),
         ];
 
-        Assert.True(edges.LeavesUnconditionally());
+        Assert.True(edges.HasUnguardedRoute());
     }
 
     [Fact]
-    public void LeavesUnconditionally_OnlySuccession_IsFalse()
+    public void HasUnguardedRoute_OnlySuccession_IsFalse()
     {
         IReadOnlyList<Edge> edges = [new SuccessionEdge(_target)];
 
-        Assert.False(edges.LeavesUnconditionally());
+        Assert.False(edges.HasUnguardedRoute());
     }
 
     private static Condition Guard(string key) => new(key, SourceSpanFactory.Span());
