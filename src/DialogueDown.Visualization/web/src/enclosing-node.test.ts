@@ -3,7 +3,7 @@ import { findEnclosingNode } from "./enclosing-node";
 import type { DisplayNode } from "./model";
 
 function node(id: string, start: number, end: number): DisplayNode {
-    return { id, label: id, span: { start, end } };
+    return { id, label: id, attributes: [], span: { start, end } };
 }
 
 describe("findEnclosingNode", () => {
@@ -38,14 +38,19 @@ describe("findEnclosingNode", () => {
     });
 
     it("ignores zero-width (synthetic caret) spans as enclosers", () => {
-        const synthetic: DisplayNode = { id: "synthetic", label: "synthetic", span: { start: 25, end: 25 } };
+        const synthetic: DisplayNode = {
+            id: "synthetic",
+            label: "synthetic",
+            attributes: [],
+            span: { start: 25, end: 25 },
+        };
         const line = node("line", 20, 40);
         expect(findEnclosingNode([synthetic, line], 25, 25)?.id).toBe("line");
     });
 
     it("returns null when no span-bearing node encloses the offset", () => {
         const line = node("line", 20, 40);
-        const spanless: DisplayNode = { id: "spanless", label: "spanless" };
+        const spanless: DisplayNode = { id: "spanless", label: "spanless", attributes: [] };
         expect(findEnclosingNode([line, spanless], 50, 55)).toBeNull();
         expect(findEnclosingNode([], 0, 0)).toBeNull();
     });

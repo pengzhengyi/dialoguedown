@@ -13,7 +13,8 @@ import { createDetailPanel } from "./detail-panel";
 import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
 import { GraphCameraStore } from "./graph-camera";
-import { createSourceView, type SourceViewHandle } from "./source-view";
+import { createSourceView, type SourceViewHandle, type SourceJumpTarget } from "./source-view";
+import { findEnclosingNode } from "./enclosing-node";
 import { createConfigView, type ConfigViewHandle, type ConfigViewOptions } from "./config-view";
 import { consumeOpenConfigTab } from "./config-create";
 import { rememberActiveTab, rememberedActiveTab, revealActiveTab } from "./active-tab";
@@ -160,9 +161,30 @@ export function runApp(
         if (source?.beginNavigation) source.beginNavigation(land);
         else land();
     }
+
+    // Reverse of `jumpToSource`: from a Source selection, reveal the enclosing node in a stage.
+    // Reads the *live* stage set (not a build-time snapshot) so it stays correct after a save
+    // rebuilds the stages, then routes through the same save-safe navigation guard.
+    function jumpToStageByTitle(title: string, from: number, to: number): void {
+        const stage = currentStages.find((candidate) => candidate.title === title);
+        if (stage == null || stage.unavailable != null) return;
+        const node = findEnclosingNode(stage.nodes, from, to);
+        if (node == null) return;
+        const index = titles.indexOf(title);
+        if (index < 0) return;
+        const land = (): void => {
+            activate(index);
+            views[index]?.selectById(node.id, { center: true });
+        };
+        if (source?.beginNavigation) source.beginNavigation(land);
+        else land();
+    }
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).
     let views: (TreeView | null)[] = [];
+    // The stages of the latest render, kept live for reverse Jump-to lookups: a save replaces
+    // them through `updateStages`, and the Source view (with its Jump-to menu) outlives that.
+    let currentStages: readonly Stage[] = [];
     // Per tab: its camera-store key — the stage title for a graph tab, or null for
     // the Source tab (which has no graph and no camera).
     let keys: (string | null)[] = [];
@@ -268,6 +290,7 @@ export function runApp(
         titles = [];
         sourcePresent = report.source != null;
         configPresent = report.configuration != null;
+        currentStages = report.stages;
 
         // The Config tab comes first (a gear icon marks it), but the report still opens on
         // Source below — Config is one click away for a reader who just wants the dialogue.
@@ -287,10 +310,19 @@ export function runApp(
         if (report.source != null) {
             const section = document.createElement("section");
             section.className = "stage source-stage";
+            // One reverse-jump target per available stage; each resolves against the live stage
+            // set at click time, so it survives a save that rebuilds the stages.
+            const jumpTargets: SourceJumpTarget[] = report.stages
+                .filter((stage) => stage.unavailable == null)
+                .map((stage) => ({
+                    title: stage.title,
+                    run: (from, to) => jumpToStageByTitle(stage.title, from, to),
+                }));
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
                 reservedTargets: report.symbols?.reservedTargets ?? [],
+                jumpTargets,
                 ...(debug ? { debug } : {}),
             });
             sourceHandle.setDiagnostics(report.diagnostics ?? []);
@@ -335,6 +367,7 @@ export function runApp(
     // cancels safely and the inspector clears.
     function updateStages(stages: Stage[]): void {
         const reselectId = selectedNodeId;
+        currentStages = stages;
         const keep = (configPresent ? 1 : 0) + (sourcePresent ? 1 : 0);
         while (tabsEl.children.length > keep) tabsEl.lastElementChild!.remove();
         while (stagesEl.children.length > keep) stagesEl.lastElementChild!.remove();

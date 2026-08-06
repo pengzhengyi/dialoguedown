@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     createFakeDebugController,
     type FakeDebugProgram,
@@ -123,5 +123,47 @@ describe("initSplitDivider", () => {
 
         expect(container.style.getPropertyValue("--source-split")).toBe("");
         expect(document.body.style.userSelect).toBe("");
+    });
+});
+
+describe("createSourceView jump-to menu", () => {
+    afterEach(() => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+
+    it("offers a Jump to submenu whose stage runs with the current selection", () => {
+        const run = vi.fn();
+        const source = sourceView({ jumpTargets: [{ title: "Dialogue AST", run }] });
+        source.selectRange(0, 5);
+
+        source.element
+            .querySelector(".cm-content")!
+            .dispatchEvent(
+                new MouseEvent("contextmenu", { bubbles: true, clientX: 5, clientY: 5 }),
+            );
+
+        const jumpItem = [...document.querySelectorAll<HTMLElement>(".context-menu-item")].find(
+            (el) => el.textContent?.includes("Jump to"),
+        );
+        expect(jumpItem, "a Jump to entry should be offered").toBeDefined();
+        jumpItem!.click();
+
+        const stageItem = document.querySelector<HTMLButtonElement>(
+            ".context-submenu .context-menu-item",
+        );
+        expect(stageItem?.textContent).toContain("Dialogue AST");
+        stageItem!.click();
+
+        expect(run).toHaveBeenCalledWith(0, 5);
+    });
+
+    it("opens no menu in a read-only view with no jump targets", () => {
+        const source = sourceView({ editable: false });
+
+        source.element
+            .querySelector(".cm-content")!
+            .dispatchEvent(new MouseEvent("contextmenu", { bubbles: true }));
+
+        expect(document.querySelector(".context-menu")).toBeNull();
     });
 });
