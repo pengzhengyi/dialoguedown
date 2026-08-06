@@ -41,9 +41,10 @@ internal sealed class DivertPass : GraphBuildPass
             TerminalJump => draft.End,
             SceneJump target => EntryOf(target.Scene, draft, context),
 
-            // An unresolved jump points nowhere — analysis already reported the missing scene — so
-            // it wires no edge and the node keeps falling through.
-            UnresolvedJump => null,
+            // A jump analysis could not resolve points nowhere — it already reported the missing
+            // scene, or a target outside this script — so it wires no edge and the node keeps
+            // falling through.
+            UnresolvedJump or FileScopedJump => null,
             var resolution => throw new NotSupportedException(
                 $"The dialogue graph builder does not yet lower {resolution.GetType().Name} jumps."),
         };

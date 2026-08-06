@@ -81,10 +81,14 @@ public sealed class DivertPassTests
     }
 
     [Fact]
-    public void Apply_FileScopedJump_Throws() =>
-        // Resolving a target in another file is a later component.
-        Assert.Throws<NotSupportedException>(
-            () => Build("Alice: away => [next](chapter-02.md#the-vault)"));
+    public void Apply_FileScopedJump_WiresNoDivert()
+    {
+        // Analysis already warned that a target outside this script leads nowhere, so the jump
+        // wires no edge and the node keeps falling through — as an unresolved one does.
+        var graph = Build("Alice: away => [next](chapter-02.md#the-vault)");
+
+        Assert.Empty(graph.Node(graph.Entry).Out);
+    }
 
     // Node creation assigns the ids and the End that divert wiring targets.
     private DialogueGraph Build(string source) =>
