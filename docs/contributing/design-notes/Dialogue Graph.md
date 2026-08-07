@@ -3,19 +3,16 @@
 > [!NOTE]
 > Status: **implemented**. The compiler's sixth stage: lower the
 > [Semantic Analyzer](./Semantic%20Analyzer.md)'s **semantic model** into an immutable
-> **dialogue graph** — a directed graph a runtime can walk. This note designs the
-> **compile-time** half of the deferred
-> [dialogue graph and runtime](https://github.com/pengzhengyi/dialoguedown/issues/45):
-> the graph's shape and the builder that produces it. It realizes the flow *meaning*
-> that [Progression Order](./Progression%20Order.md) already fixed (succession, divert,
-> the End sentinel) as concrete nodes and edges. **Play-time traversal** — walking the
-> graph — is a separate later component and is out of scope here.
+> **dialogue graph**. It realizes the flow *meaning* that
+> [Progression Order](./Progression%20Order.md) already fixed — succession, divert, the
+> End sentinel — as concrete nodes and edges. Every construct the language has lowers,
+> and the stage runs inside the compiler, so a clean compile carries its graph on the
+> [compilation outcome](./Compilation%20Outcome.md).
 >
-> Every construct the language has now lowers, and the stage runs inside the compiler:
-> a clean compile carries its graph on the [compilation
-> outcome](./Compilation%20Outcome.md). The runtime seams this note reserved —
-> `IEdgeSelector` and the `Detour`/`Return` edge kinds — are deliberately **not** built,
-> since nothing produces or consumes them until the runtime does.
+> This note covers **building** the graph, and stops there. Walking it — evaluating a
+> guard, picking an edge, keeping a detour's call stack — belongs to the
+> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which owns those
+> shapes so the code that needs them can settle them.
 
 ## Table of contents
 
@@ -92,13 +89,12 @@ reading-order succession, the non-returning divert, choices and random choices, 
 lines, `#END`, and the `key?` guard on a conditional line, jump, or choice. The builder
 plugs into the compiler facade as the stage after semantic analysis.
 
-**Out of scope (deferred, with seams left here):**
+**Out of scope:**
 
-- **Play-time traversal** — walking the graph, evaluating guards/weights, running
-  effects — is the runtime half of [#45](https://github.com/pengzhengyi/dialoguedown/issues/45).
-  This note reserves the `IEdgeSelector` seam it will plug into.
-- **The returning detour** and its call stack — reserved as the `Detour`/`Return` edge
-  kinds; its syntax and return boundary are [Progression Order](./Progression%20Order.md) follow-ups.
+- **Everything at play time** — walking the graph, evaluating a guard or a weight,
+  running effects, picking an edge, and the returning detour's call stack. That is the
+  [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which shapes its own
+  hooks and edge kinds against a consumer rather than inheriting a guess from here.
 - **Block controls** (`if`/`elseif`/`else`) — lowered here to a **Branch** node whose
   guarded, ordered **Branch** edges the first satisfied one wins among; the construct
   itself is the [Block Controls](./Block%20Controls.md) note.
@@ -114,7 +110,6 @@ plugs into the compiler facade as the stage after semantic analysis.
 | **Edge** | A directed connection from one node to a target, of a specific **kind**. |
 | **Succession** | The default edge: fall-through to the next block in document order (see [Progression Order](./Progression%20Order.md)). |
 | **Divert** | A non-returning `=>` edge. A **guarded** divert (a `key?` condition) fires only when its guard reads true. |
-| **Detour** / **Return** | *(seam)* A returning jump edge and its pop marker; the runtime keeps a call stack. Deferred. |
 | **Option** | One arm of a choice: a target with a label, an optional guard, and an optional weight. |
 | **Guard** | An opaque `key?` condition — the AST `Condition` — carried on an edge; the host decides its truth at play time. |
 | **Weight** | An opaque option weight — the AST `ChoiceWeight` (`key%`, numeric, or auto); the host resolves the random pick. |
@@ -124,7 +119,6 @@ plugs into the compiler facade as the stage after semantic analysis.
 | **Draft** | The mutable graph under construction that passes add to; `Freeze` validates it and yields the immutable graph. |
 | **Pass** | One construction concern over the draft — node creation, diverts, succession, regions — run in dependency order. |
 | **End sentinel** | The terminal node; the `#END` divert and reaching the last block both lead here. |
-| **Edge selector** | *(runtime seam)* The strategy that picks one outgoing edge at a node — evaluating guards/weights in production, or forcing a path in a debugger. |
 | **Node id** | A node's stable identity; edges reference targets by id, so cycles need no object back-references. |
 
 One vocabulary spans code, tests, docs, and commits.
@@ -157,12 +151,11 @@ core dependency.
 - [x] Wire a **Succession** edge from each block to the next block in document order (fall-through).
 - [x] Lower a jump to a **Divert**: `SceneJump` → the target scene's entry node; `TerminalJump` → `EndNode`.
 - [x] Carry a `key?` condition as a **Guard**: on an edge when it withholds a route (a divert, a choice arm, a branch), on the **node** when it withholds a block's content. Either way a fall-through sibling is the path left.
-- [x] Lower `Choices`/`RandomChoices` to a **ChoiceNode**/**RandomChoiceNode** fanning out **Option** edges; a random option carries its **Weight**; both arms weave back through the walk's continuations, not through a region.
+- [x] Lower `Choices`/`RandomChoices` to a **Choice** or **Random choice** node fanning out **Option** edges; a random option carries its **Weight**; both arms weave back through the walk's continuations, not through a region.
 - [x] Carry a block's inline game calls as ordered **Effects** on its node.
 - [x] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node. Only an *addressable* grouping earns a region, so a block control's branch does not.
 - [x] Carry each node's **source span**, so a tool can point back at the script.
 - [x] Reference every target by **node id**, so cycles and cross-region diverts are ordinary edges.
-- [ ] Leave clean seams: the `IEdgeSelector` runtime hook and the `Detour`/`Return` edge kinds. *(Deferred to [#45](https://github.com/pengzhengyi/dialoguedown/issues/45): neither has a producer or a consumer yet, and an unused type is one more thing to keep true.)*
 - [x] Plug into the compiler facade as the stage after semantic analysis; expose the graph on a `CompilationSuccess`.
 
 ## Design
@@ -224,8 +217,6 @@ sealed record Succession(NodeId Target)                          : Edge(Target);
 sealed record Divert    (NodeId Target, Condition? Guard = null) : Edge(Target);  // => (conditional if guarded)
 sealed record Option    (NodeId Target, IReadOnlyList<InlineFragment> Label,
                          Condition? Guard, ChoiceWeight? Weight)  : Edge(Target);
-sealed record Detour    (NodeId Target)                          : Edge(Target);  // SEAM: runtime pushes a continuation
-sealed record Return    ()                                       : Edge(default); // SEAM: runtime pops the call stack
 
 // ── Grouping overlay ── metadata over the flat graph, not part of its topology. The kind is
 //    the type, so each grouping carries only the metadata it owns.
@@ -294,7 +285,6 @@ flowchart LR
 | `DialogueGraph` | The immutable result: nodes, entry, End sentinel, region overlay. | consumed by the runtime and the report |
 | `DialogueNode` / `Edge` | The sealed node and edge unions (the flow). | — |
 | `Region` / `RegionTree` | The grouping overlay projected from the scene tree. | `Scene` |
-| `IEdgeSelector` | *(runtime seam)* Picks one outgoing edge at a node — evaluate in production, force in a debugger. | deferred runtime |
 
 ## Key design decisions
 
@@ -336,8 +326,7 @@ flowchart LR
   every stop **source-mapped** to a block the writer wrote — decisive for a step-through
   debugger, where "force this path" and "override this condition" become one uniform
   action over a node's `Out` list, at real nodes rather than synthetic decision diamonds.
-  The runtime's `IEdgeSelector` is the single hook that a debugger swaps to force paths;
-  the graph tab can still *render* a guarded edge as a decision glyph — a projection
+  The graph tab can still *render* a guarded edge as a decision glyph — a projection
   concern, not the IR's.
 - **A guard binds at the level it is written.** A guard on a **jump** rides that jump's
   divert, so the node keeps its fall-through as the path taken when the guard reads false.
@@ -435,9 +424,6 @@ part of this component.
   is an edge to an earlier id; effects ride their node.
 - **Boundary tests.** The empty document, a heading-only scene, content after a divert, an
   unresolved jump, and a file-scoped jump each assert the table above.
-- **Seams by construction.** Reserve the `IEdgeSelector` and `Detour`/`Return` kinds with a
-  compiling type and a placeholder test, so the runtime and the future constructs plug in
-  without reshaping the IR.
 - Mirror the source layout, one test file per source file, and target the usual high,
   meaningful coverage.
 
@@ -448,23 +434,19 @@ part of this component.
 | **Achieved** | Every construct the language has lowers to nodes and typed edges: lines, control lines, player and random choices, block conditionals, jumps, and the End sentinel. Guards, weights, effects, source spans, and the scene overlay all ride along, and the stage runs inside the compiler so a clean compile carries its graph. |
 | **Changed** | Three shapes moved once the code pushed back. A guard on a **block** belongs on the node, not on an edge — an edge withholds a route, a node withholds content — which needed `IGuardedNode` beside the planned `IGuardedEdge`. Choice arms weave back through the **block walk's continuations**, not through a region's `Exit`, which made nesting fall out for free and left regions purely descriptive. And a `BranchRegion` was designed but never built: a region groups what can be **addressed**, and nothing can name a branch. |
 | **Also built** | Two things the design did not anticipate. Every node carries its **source span**, since the graph was otherwise a closed artifact a debugger could not map back to the script. And `DLG2016` warns that a jump outside the script leads nowhere — without it, wiring the stage in would have turned a documented cross-file jump into a compiler crash. |
-| **Not implemented** | The `IEdgeSelector` seam and the `Detour`/`Return` edge kinds, deliberately: neither has a producer or a consumer until the runtime lands ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)), and this component deleted an unused `BranchRegion` for exactly that reason. Reachability and cycle diagnostics stay deferred with them. |
+| **Scope returned** | An earlier draft reserved runtime shapes here — an edge-selector hook and `Detour`/`Return` edge kinds. None were built, because none had a producer or a consumer; this component deleted an unused `BranchRegion` for the same reason. They now belong to the [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which will shape them against real use. |
 
 ## Open questions and deferred work
 
 - **Reachability and cycle diagnostics.** A graph makes "no path reaches this scene" and
-  "a cycle with no exit" detectable. Both are more valuable with the runtime and are left
-  out of this component; the line-level unreachable-after-divert warning already ships. Revisit as a
-  graph-analysis pass (optionally via a QuikGraph adapter).
-- **The detour's return boundary.** `Detour`/`Return` are reserved, but *where* a detour
-  returns from is a Progression Order follow-up; the call stack itself is the runtime's.
+  "a cycle with no exit" detectable, as a graph-analysis pass over the built graph
+  (optionally through a QuikGraph adapter). Both are more valuable alongside the runtime
+  and are tracked with it ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45));
+  the line-level unreachable-after-divert warning already ships.
 - **`#START` / entry point.** The canonical entry is the document top; a reserved start
   sentinel and cross-file entry semantics are deferred.
 - **Cross-file node ids.** `NodeId` widens to a project-qualified id for cross-file
   diverts; the [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) linker owns resolution.
-- **Playing the graph.** The runtime that walks it — `IEdgeSelector`, the detour call
-  stack, and evaluating a guard or a weight against host state — is the other half of
-  [#45](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
 ## Implementation checklist
 
@@ -476,5 +458,4 @@ part of this component.
 - [x] Retire the primitive `DialogueDown.Graph` `INode`/`IEdge` sketch it supersedes, and reframe the `Graph` layering architecture test from a foundation leaf to a stage above the semantic analyzer.
 - [x] Choice, random-choice, and branch fan-out with weave-back, and a guard on a block itself.
 - [x] Wire into `ScriptCompiler` and both composition roots; expose the graph on a `CompilationSuccess`.
-- [ ] Reserve the `IEdgeSelector` runtime seam and the `Detour`/`Return` kinds. *(Dropped: a type with no producer and no consumer is one more thing to keep true, and the runtime that needs them will shape them better. See the outcome below.)*
 - [x] Unit tests per lowering rule and boundary case; reading-guide and `CHANGELOG` entries.
