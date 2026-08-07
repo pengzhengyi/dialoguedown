@@ -51,7 +51,7 @@ stage per note, in pipeline order; the facade note ties the stages together.
 flowchart LR
     FE["1. Markdown Front-End"] --> TR["2. Transpiler"]
     TR --> DS["3. Desugar"] --> SA["4. Semantic Analyzer"]
-    SA --> SF["5. Script Compiler Facade"]
+    SA --> SF["5. Script Compiler Facade"] --> GR["6. Dialogue Graph"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -62,7 +62,8 @@ flowchart LR
 | 3 | [Desugar](./Desugar.md) | Dialogue AST → normalized Dialogue AST (jump assembly, default speaker) | Implemented |
 | 4 | [Semantic Analyzer](./Semantic%20Analyzer.md) | Desugared AST → semantic model (speakers, scenes, resolved jumps) | Implemented |
 | 5 | [Script Compiler Facade](./Script%20Compiler%20Facade.md) | One `IScriptCompiler` seam over the stages + `AddDialogueDown` DI | Implemented |
-| 5a | [Compilation Outcome](./Compilation%20Outcome.md) | A facade detail: what one compile produces — a success carrying every artifact, or a failure carrying how far it got | In progress |
+| 5a | [Compilation Outcome](./Compilation%20Outcome.md) | A facade detail: what one compile produces — a success carrying every artifact, or a failure carrying how far it got | Implemented |
+| 6 | [Dialogue Graph](./Dialogue%20Graph.md) | Semantic model → the immutable flow graph a runtime walks | Implemented |
 
 The [Error model](#error-model) below is a cross-cutting core convention every
 stage adopts — read it alongside these.

@@ -16,6 +16,8 @@
     href: Script Compiler Facade.md
   - name: Compilation Outcome
     href: Compilation Outcome.md
+  - name: Dialogue Graph
+    href: Dialogue Graph.md
 - name: Language constructs
   items:
   - name: Progression Order

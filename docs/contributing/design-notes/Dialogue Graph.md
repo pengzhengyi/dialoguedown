@@ -1,7 +1,7 @@
 # Dialogue graph
 
-> [!IMPORTANT]
-> Status: **in progress**. The compiler's next stage: lower the
+> [!NOTE]
+> Status: **implemented**. The compiler's sixth stage: lower the
 > [Semantic Analyzer](./Semantic%20Analyzer.md)'s **semantic model** into an immutable
 > **dialogue graph** — a directed graph a runtime can walk. This note designs the
 > **compile-time** half of the deferred
@@ -11,10 +11,11 @@
 > the End sentinel) as concrete nodes and edges. **Play-time traversal** — walking the
 > graph — is a separate later component and is out of scope here.
 >
-> Built so far: the immutable IR, the multi-pass builder, line and control nodes with
-> their effects, succession edges, diverts (`#END`, scene jumps, and jump guards), and
-> the Scene region overlay. Still to come: choices, block controls and block-level
-> guards, and wiring the stage into the compiler facade.
+> Every construct the language has now lowers, and the stage runs inside the compiler:
+> a clean compile carries its graph on the [compilation
+> outcome](./Compilation%20Outcome.md). The runtime seams this note reserved —
+> `IEdgeSelector` and the `Detour`/`Return` edge kinds — are deliberately **not** built,
+> since nothing produces or consumes them until the runtime does.
 
 ## Table of contents
 
@@ -151,16 +152,17 @@ core dependency.
 ## Functionality checklist
 
 - [x] Lower a `SemanticModel` into an immutable `DialogueGraph` of nodes and typed edges.
-- [ ] Emit one **node per block**: `LineNode`, `ControlNode`, `ChoiceNode`, and the single `EndNode`. *(`ChoiceNode` pending.)*
+- [x] Emit one **node per block**: `LineNode`, `ControlNode`, `ChoiceNode`, `RandomChoiceNode`, `BranchNode`, and the single `EndNode`. A `SceneHeading` names a scene rather than playing, so it is no node.
 - [x] Wire a **Succession** edge from each block to the next block in document order (fall-through).
 - [x] Lower a jump to a **Divert**: `SceneJump` → the target scene's entry node; `TerminalJump` → `EndNode`.
-- [ ] Carry a `key?` condition as a **Guard** on the divert/branch edge, with a fall-through sibling that skips the guarded content. *(A jump's guard ships; a guard on the block itself is pending.)*
-- [ ] Lower `Choices`/`RandomChoices` to a **ChoiceNode** fanning out **Option** edges; a random option carries its **Weight**; both weave back to the enclosing region's exit.
+- [x] Carry a `key?` condition as a **Guard**: on an edge when it withholds a route (a divert, a choice arm, a branch), on the **node** when it withholds a block's content. Either way a fall-through sibling is the path left.
+- [x] Lower `Choices`/`RandomChoices` to a **ChoiceNode**/**RandomChoiceNode** fanning out **Option** edges; a random option carries its **Weight**; both arms weave back through the walk's continuations, not through a region.
 - [x] Carry a block's inline game calls as ordered **Effects** on its node.
-- [x] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node.
+- [x] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node. Only an *addressable* grouping earns a region, so a block control's branch does not.
+- [x] Carry each node's **source span**, so a tool can point back at the script.
 - [x] Reference every target by **node id**, so cycles and cross-region diverts are ordinary edges.
-- [ ] Leave clean seams: the `IEdgeSelector` runtime hook and the `Detour`/`Return` edge kinds. *(Both are pending.)*
-- [ ] Plug into the compiler facade as the stage after semantic analysis; expose the graph on the `CompilationResult`.
+- [ ] Leave clean seams: the `IEdgeSelector` runtime hook and the `Detour`/`Return` edge kinds. *(Deferred to [#45](https://github.com/pengzhengyi/dialoguedown/issues/45): neither has a producer or a consumer yet, and an unused type is one more thing to keep true.)*
+- [x] Plug into the compiler facade as the stage after semantic analysis; expose the graph on a `CompilationSuccess`.
 
 ## Design
 
@@ -285,7 +287,7 @@ flowchart LR
 | `IDialogueGraphBuilder` | The stage seam: `SemanticModel` → `DialogueGraph`. | `ScriptCompiler`, DI |
 | `DialogueGraphBuilder` | Orchestrates one build: a fresh id session and draft, each pass in order, then freeze. `DialogueGraphBuilderFactory` composes the default pass list. | `INodeIdBuilderFactory`, `IGraphBuildPass`, `GraphDraft` |
 | `GraphBuildContext` | The input every pass shares: the semantic model, the diagnostic sink, and the reading-order views computed once — document-order blocks and each scene's entry block. | `SemanticModel`, `Scene.DocumentOrder`, `Scene.EntryBlocks` |
-| `IGraphBuildPass` / `GraphBuildPass` | One construction concern over the draft; the base guards the shared inputs. `NodeCreationPass`, `DivertPass`, `SuccessionPass`, and `RegionPass` implement it. | `GraphDraft`, `GraphBuildContext` |
+| `IGraphBuildPass` / `GraphBuildPass` | One construction concern over the draft; the base guards the shared inputs. `NodeCreationPass`, `DivertPass`, `ChoicePass`, `BranchPass`, `SuccessionPass`, and `RegionPass` implement it, in that order. | `GraphDraft`, `GraphBuildContext` |
 | `GraphDraft` | The mutable construction boundary: tracks node drafts and edges, derives the entry and End, validates on `Freeze()`, and returns the immutable graph. | `NodeDraft`, `INodeIdBuilder`, `Region` |
 | `INodeIdBuilder` | Strategy that assigns a `NodeId` incrementally as blocks are added, freezing into a `NodeIdMap`. `IndexNodeIdBuilder` numbers by arrival; a source-derived strategy for incremental/JIT plugs in here, created per build by `INodeIdBuilderFactory`. | `NodeIdMap` |
 | `DialogueGraph` | The immutable result: nodes, entry, End sentinel, region overlay. | consumed by the runtime and the report |
@@ -317,9 +319,10 @@ flowchart LR
   separate types: passes add node drafts, edges, and regions to a `GraphDraft`, which
   validates and freezes into the immutable `DialogueGraph`. Each pass owns one concern, so
   a construct lands as a new pass rather than another branch in a growing walk — the shape
-  the desugarer's rule list already uses here. Ordering is the pipeline's contract:
-  diverts precede succession so fall-through can be *withheld* from a node that already
-  leaves, rather than added and then removed.
+  the desugarer's rule list already uses here. Ordering is the pipeline's contract: every
+  pass that gives a node a route of its own — diverts, choice arms, branches — runs before
+  succession, so fall-through is *withheld* from a node that already leaves rather than
+  added and then removed.
 - **Reading order is a semantic-layer rule, not a graph one.** *Which block reaching a
   scene lands on* is the same fall-through idea document order already encodes, so it
   lives beside it as `Scene.EntryBlocks`: a scene is entered at its own first block, or —
@@ -389,20 +392,24 @@ flowchart LR
 | Leading content before the first heading | Ordinary nodes that belong to no region; the root scene has no heading, so it is not itself a region. |
 | Content after a divert | An unguarded divert is the node's only outgoing edge; the unreachable content already drew `DLG1003` at analysis, so the builder simply does not wire it. |
 | `UnresolvedJump` (empty target, or a missing scene) | The semantic analyzer already reported it; the builder emits no divert (a dead end), never throwing on a resolution the analyzer admitted. |
-| `FileScopedJump` | Not lowered yet: the builder throws rather than silently dropping a jump the writer wrote. Cross-file resolution is a separate component. |
-| A construct not yet lowered (a choice group, a block control, a guarded block) | The builder throws, so an unimplemented lowering is loud rather than a silently wrong graph. |
+| `FileScopedJump` (another file, or a URL) | Analysis reports `DLG2016` and the builder wires no divert, so the line reads on. Cross-file resolution is [#59](https://github.com/pengzhengyi/dialoguedown/issues/59). |
+| A `SceneHeading` nested in a branch or an option body | Already reported (`DLG2015`) and left among the blocks, so the builder passes over it rather than failing on a script analysis admitted. |
+| A construct not yet lowered | The builder throws, so an unimplemented lowering is loud rather than a silently wrong graph. Every construct the language has today is lowered, so this guards the next one. |
+| A script with any error | No graph at all: the compile is a `CompilationFailure`, since a model analysis had to recover no longer describes what the writer wrote. |
 | Cycle (divert back to an earlier scene) | An ordinary edge to an earlier id — cycles are a feature, not an error. |
 | Last block of the document | Its `Succession` leads to the `EndNode` (reaching the end terminates the run). |
 
 ## Integration
 
-The builder is stage six, after semantic analysis. `ScriptCompiler` gains an
-`IDialogueGraphBuilder`, calls `Build(semantics, session.Context)` once analysis succeeds, and
-carries the graph on `CompilationResult.Complete(...)` beside the semantic model.
-`AddDialogueDown` registers the builder as a singleton like the other stages. Nothing earlier
-in the pipeline changes; a
-halted compile (which never produces a semantic model) produces no graph, exactly as it
-produces no model today.
+The builder is stage six, after semantic analysis. `ScriptCompiler` takes an
+`IDialogueGraphBuilder` and calls `Build(semantics, session.Context)`, carrying the result on
+a `CompilationSuccess` beside the semantic model. Both composition roots — the container-free
+`ScriptCompilerFactory` and the `AddDialogueDown` registration — wire the same builder.
+
+No condition guards the build. A compile that reported an error has already returned a
+[failure](./Compilation%20Outcome.md) by that point, so reaching the builder means the model
+still describes the script — which is why the graph is a non-null member of a success rather
+than an optional one behind a flag.
 
 The report's existing display graph (`DisplayGraph`/`DisplayNode`/`DisplayEdge`) stays a
 **visualization projection**; once this stage ships, that projection can be sourced from

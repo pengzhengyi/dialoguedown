@@ -1,7 +1,7 @@
 # Compilation outcome
 
-> [!IMPORTANT]
-> **Status: in progress.** Splits `CompilationResult` into a success/failure
+> [!NOTE]
+> **Status: implemented.** Splits `CompilationResult` into a success/failure
 > pair so a compile that produced a runnable graph is a different type from one
 > that did not. Prompted by the [Dialogue Graph](./Dialogue%20Graph.md) stage,
 > whose artifact exposed the strain in the single-class model.
