@@ -21,7 +21,10 @@ internal static class Pipeline
     public static SemanticModel Model(string source) => Model(source, CompilerOptions.Default);
 
     public static SemanticModel Model(string source, CompilerOptions options) =>
-        Compile(source, options).Semantics;
+        Compile(source, options) is CompilationSuccess success
+            ? success.Semantics
+            : throw new InvalidOperationException(
+                $"A projection test needs a compiled model, but this source did not compile: {source}");
 
     private static CompilationResult Compile(string source, CompilerOptions options) =>
         ScriptCompilerFactory.CreateDefault(options).Compile(source);

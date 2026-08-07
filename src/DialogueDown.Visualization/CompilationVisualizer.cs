@@ -223,13 +223,13 @@ public sealed class CompilationVisualizer
     private ReportContent BuildContent(string source)
     {
         var result = _compiler.Compile(source);
-        IReadOnlyList<DisplayGraph> stages = result.IsComplete
+        IReadOnlyList<DisplayGraph> stages = result is CompilationSuccess analyzed
             ?
             [
                 result.Markdown.ToDisplayGraph(source),
                 result.Script.ToDisplayGraph(source),
-                result.Desugared.ToDisplayGraph(source),
-                new SemanticProjection().Project(result.Semantics, source),
+                analyzed.Desugared.ToDisplayGraph(source),
+                new SemanticProjection().Project(analyzed.Semantics, source),
             ]
             :
             [
@@ -238,8 +238,8 @@ public sealed class CompilationVisualizer
                 ScriptDisplayExtensions.DesugaredUnavailable(StageUnavailableReason),
                 SemanticProjection.Unavailable(StageUnavailableReason),
             ];
-        var symbols = result.IsComplete
-            ? new SymbolProjection().Project(result.Semantics)
+        var symbols = result is CompilationSuccess resolved
+            ? new SymbolProjection().Project(resolved.Semantics)
             : SymbolSet.Empty;
         var configuration = _configuration is null
             ? null

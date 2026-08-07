@@ -4,6 +4,7 @@ using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.CompilationAssert;
 using static DialogueDown.Tests.Support.ConfigurationFactory;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
@@ -24,7 +25,7 @@ public sealed class ScriptCompilerFactoryTests
             No speaker here.
             """;
 
-        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
 
         Assert.Equal(source, result.Source);
         Assert.NotNull(result.Markdown);
@@ -60,7 +61,7 @@ public sealed class ScriptCompilerFactoryTests
             - `%` Alice: Tails.
             """;
 
-        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
 
         Assert.Empty(result.Diagnostics);
 
@@ -89,7 +90,7 @@ public sealed class ScriptCompilerFactoryTests
             > Alice: Try downstairs.
             """;
 
-        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
 
         Assert.Empty(result.Diagnostics);
 
@@ -113,7 +114,7 @@ public sealed class ScriptCompilerFactoryTests
     {
         var options = new CompilerOptions { Speakers = [DefaultConfiguredSpeaker("Narrator")] };
 
-        var result = ScriptCompilerFactory.CreateDefault(options).Compile("Hi.");
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault(options).Compile("Hi."));
 
         var speaker = result.Semantics.Speakers.Resolve(new DefaultSpeaker(SourceSpanFactory.Span()));
         Assert.Equal("Narrator", speaker.Name);
@@ -175,16 +176,16 @@ public sealed class ScriptCompilerFactoryTests
         // compile stops before analysis and returns a partial result.
         var result = ScriptCompilerFactory.CreateDefault().Compile("#lonely: Hi");
 
-        Assert.False(result.IsComplete);
+        AssertFailure(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
     }
 
     [Fact]
     public void CreateDefault_BestEffort_TagsWithoutSpeaker_RecoversToADefaultSpeaker()
     {
-        var result = BestEffortCompiler().Compile("#lonely: Hi");
+        var result = AssertSuccess(BestEffortCompiler().Compile("#lonely: Hi"));
 
-        Assert.True(result.IsComplete);
+        AssertSuccess(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
         AssertDefaultSpeaker(AssertLine(result.Desugared.Body[0]).Speaker);
     }
@@ -194,7 +195,7 @@ public sealed class ScriptCompilerFactoryTests
     {
         var result = ScriptCompilerFactory.CreateDefault().Compile("Alice: say `not a call`");
 
-        Assert.False(result.IsComplete);
+        AssertFailure(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.NotAGameCall);
     }
 
@@ -203,7 +204,7 @@ public sealed class ScriptCompilerFactoryTests
     {
         var result = BestEffortCompiler().Compile("Alice: say `not a call`");
 
-        Assert.True(result.IsComplete);
+        AssertSuccess(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.NotAGameCall);
     }
 

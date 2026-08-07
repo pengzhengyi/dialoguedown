@@ -58,7 +58,7 @@ internal sealed class ScriptCompiler : IScriptCompiler
         // is partial. A future desugar producer would add one more checkpoint below.
         if (session.ShouldHalt)
         {
-            return CompilationResult.Halted(source, markdown, script, session.Diagnostics);
+            return CompilationFailure.AtTranspile(source, markdown, script, session.Diagnostics);
         }
 
         var desugared = _desugarer.Desugar(script, session.Context);
@@ -66,8 +66,9 @@ internal sealed class ScriptCompiler : IScriptCompiler
         var semantics = _analyzer.Analyze(desugared, session.Context);
 
         // TODO(graph-build): build the flow graph from the semantic model here as that stage
-        // lands; it adds one more artifact to the result.
-        return CompilationResult.Complete(
+        // lands; it adds one more artifact to a success, and an erroring compile becomes a
+        // failure at analysis rather than a success without a graph.
+        return new CompilationSuccess(
             source, markdown, script, desugared, semantics, session.Diagnostics);
     }
 }

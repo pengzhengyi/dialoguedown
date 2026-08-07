@@ -83,7 +83,7 @@ public sealed class CompilationVisualizerTests
         var semantics = new SemanticAnalyzer(new SemanticAnalyzerOptions([]))
             .Analyze(desugared, new DiagnosticsContext("script source", new DiagnosticBag()));
         compiler.Compile("script source").Returns(
-            new CompilationResult("script source", markdown, script, desugared, semantics, []));
+            new CompilationSuccess("script source", markdown, script, desugared, semantics, []));
         var visualizer = new CompilationVisualizer(compiler);
 
         var stages = visualizer.BuildStages("script source");
@@ -116,7 +116,7 @@ public sealed class CompilationVisualizerTests
         // A halted compile: the transpiler produced the Dialogue AST, but desugar and semantic
         // analysis never ran, so their stages are unavailable.
         compiler.Compile("broken").Returns(
-            new CompilationResult("broken", markdown, script, desugared: null, semantics: null, []));
+            CompilationFailure.AtTranspile("broken", markdown, script, []));
 
         var stages = new CompilationVisualizer(compiler).BuildStages("broken");
 
@@ -159,7 +159,7 @@ public sealed class CompilationVisualizerTests
         ]);
         var compiler = Substitute.For<IScriptCompiler>();
         compiler.Compile("broken").Returns(
-            new CompilationResult("broken", markdown, script, desugared: null, semantics: null, []));
+            CompilationFailure.AtTranspile("broken", markdown, script, []));
 
         var html = new CompilationVisualizer(compiler).RenderHtmlReport("broken");
 

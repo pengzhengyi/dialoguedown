@@ -11,6 +11,7 @@ using DialogueDown.Script.Validation;
 using DialogueDown.Tests.Support;
 using NSubstitute;
 using NSubstitute.Extensions;
+using static DialogueDown.Tests.Support.CompilationAssert;
 
 namespace DialogueDown.Tests.Compilation;
 
@@ -31,7 +32,9 @@ public sealed class ScriptCompilerTests
         var validator = NSubstitute.Substitute.For<IStructuralValidator>();
         var analyzer = Substitute<ISemanticAnalyzer, SemanticModel>(semantics);
 
-        var result = new ScriptCompiler(parser, transpiler, desugarer, validator, analyzer, CompilationMode.BestEffort).Compile(source);
+        var result = AssertSuccess(
+            new ScriptCompiler(parser, transpiler, desugarer, validator, analyzer, CompilationMode.BestEffort)
+                .Compile(source));
 
         Assert.Equal(source, result.Source);
         Assert.Same(markdown, result.Markdown);
@@ -94,7 +97,7 @@ public sealed class ScriptCompilerTests
 
         var result = compiler.Compile("Alice: hi");
 
-        Assert.False(result.IsComplete);
+        AssertFailure(result);
         Assert.True(result.HasErrors);
         Assert.Contains(error, result.Diagnostics);
     }
@@ -107,7 +110,7 @@ public sealed class ScriptCompilerTests
 
         var result = compiler.Compile("Alice: hi");
 
-        Assert.True(result.IsComplete);
+        AssertSuccess(result);
         Assert.True(result.HasErrors);
         Assert.Contains(error, result.Diagnostics);
     }
