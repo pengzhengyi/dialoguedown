@@ -52,8 +52,8 @@ touching. The rain writes soft static over everything else.
 - `Yuki.Reserve%` Yuki: There — that keeps us both dry.
 - `%` Yuki: The rain does not seem to be stopping.
 
-Yuki: Can I ask you something silly? If the train never came — if it just *stayed*
-late forever — would that be so bad?
+Yuki: Can I ask you something ~~silly~~ real? If the train never came — if it just
+*stayed* late forever — would that be so bad?
 
 - Not if you were the one stranded with me.
     - `ShowSprite("yuki", "blushing")` Yuki: You— you cannot just *say* things like
@@ -85,7 +85,7 @@ to—
 >
 > `ShowSprite("yuki", "radiant")` `PlayBgm("theme_together")`
 >
-> Yuki: *Oh.* You too? All this time, you too?
+> Yuki: *Oh.* You too? All this time, you too? ![the two of you laughing under one umbrella #size=large #align=center](cg-together.png)
 >
 > The train sighs to a stop, doors open — and neither of you moves to board it.
 >
