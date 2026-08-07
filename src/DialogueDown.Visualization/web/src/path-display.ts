@@ -77,6 +77,7 @@ export function initConfigPath(config: ConfigReport | undefined): HTMLElement | 
     // The no-config state: a plain label, nothing to copy.
     button.querySelector(".path-head")!.textContent = "";
     button.querySelector(".path-tail")!.textContent = "No config file";
+    button.classList.add("config-missing");
     button.hidden = false;
     button.disabled = true;
     tippy(button, { content: "No dialogue.toml — using the built-in defaults.", maxWidth: 320 });

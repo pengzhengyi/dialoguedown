@@ -123,6 +123,8 @@ const EXPLORER_HELP = `
      pinned entry that opens in the <strong>Config</strong> tab once a script is open.</p>
 `;
 
+/** What the open panel covers. The button reads "Help"; this is its tooltip, so the context
+ * is still available without spending status-line width on it. */
 const SUMMARY: Record<HelpContext, string> = {
     source: "Using the Source tab",
     graph: "Using the graph",
@@ -145,33 +147,12 @@ const CONTENT: Record<HelpContext, string> = {
 export function setHelp(context: HelpContext): void {
     const summary = document.getElementById("help-summary");
     const content = document.getElementById("help-content");
-    if (summary) summary.textContent = SUMMARY[context];
+    // The button is a glyph, so its tooltip carries both what it is and which panel it opens.
+    summary?.closest("button")?.setAttribute("title", `Help — ${SUMMARY[context]}`);
     if (content) content.innerHTML = CONTENT[context];
 }
 
-/**
- * Wire the footer's "How to use" disclosure: the toggle stays on the status line, and
- * clicking it shows or hides the shortcut panel. On a short window the panel floats over the
- * stage instead of sharing the column with it, so it also carries its own close button —
- * the toggle below it is still the way to reopen.
- */
-export function initHelpToggle(): void {
-    const toggle = document.getElementById("help-toggle");
-    const panel = document.getElementById("help-panel");
-    if (!toggle || !panel) return;
-
-    const setOpen = (open: boolean): void => {
-        toggle.setAttribute("aria-expanded", String(open));
-        panel.hidden = !open;
-    };
-
-    toggle.addEventListener("click", () => {
-        setOpen(toggle.getAttribute("aria-expanded") !== "true");
-    });
-    document.getElementById("help-close")?.addEventListener("click", () => {
-        setOpen(false);
-        // Return the reader to the control they can reopen it with, rather than to the top
-        // of the document, since the button they pressed has just disappeared.
-        (toggle as HTMLElement).focus();
-    });
+/** The help panel's body, mounted as one panel of the footer drawer. */
+export function helpBody(): HTMLElement | null {
+    return document.getElementById("help-content");
 }

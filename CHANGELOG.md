@@ -10,6 +10,12 @@ changes easy to categorize.
 
 ### Added
 
+- **Problems panel** — every diagnostic the compiler reports, listed in a footer drawer, with
+  each row jumping to the text it describes. The status line now carries error, warning, and
+  info counts that open it, so problems are visible from every tab instead of only as squiggles
+  inside the Source editor. Press `p` to open it. See the
+  [Problems Panel](docs/contributing/design-notes/Live%20Visualization%20-%20Problems%20Panel.md) note.
+
 - **Jump from the source to a stage** — right-click a selection in the Source editor (or press
   `Alt-J`) and choose **Jump to ▸** a compiler stage to open that tab with the enclosing node
   revealed and centered. It is the reverse of **Jump to source**, and works in View and Edit. See

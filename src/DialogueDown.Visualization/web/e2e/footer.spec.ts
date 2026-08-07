@@ -33,9 +33,7 @@ test("the document path stays legible on hover (not white-on-white)", async ({ p
     expect(luminance).toBeLessThan(180);
 });
 
-test("the help expands full-width below the status bar, clear of the status line", async ({
-    page,
-}) => {
+test("the help expands full-width above the status line, clear of it", async ({ page }) => {
     await page.goto(writeReport(REPORT_WITH_PATH));
 
     const toggle = page.locator("#help-toggle");
@@ -49,10 +47,13 @@ test("the help expands full-width below the status bar, clear of the status line
     await expect(content).toBeVisible();
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
 
-    // The expanded help sits below the status line — not overlapping the document path.
+    // The panel opens *above* the status line, so the line stays pinned to the bottom edge as
+    // the report's constant footer and the panel reads as attached to the content it describes.
+    // Measure the drawer, not the help body: the body is the scroller's content, so its box
+    // reports the full unclipped text rather than what is on screen.
     const pathBox = (await page.locator("#doc-path").boundingBox())!;
-    const helpBox = (await content.boundingBox())!;
-    expect(helpBox.y).toBeGreaterThan(pathBox.y + pathBox.height - 1);
+    const drawerBox = (await page.locator("#footer-drawer").boundingBox())!;
+    expect(drawerBox.y + drawerBox.height).toBeLessThanOrEqual(pathBox.y + 1);
 
     // Collapsing hides it again.
     await toggle.click();

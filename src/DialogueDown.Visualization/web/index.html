@@ -224,6 +224,7 @@
             </aside>
         </main>
         <footer class="app-footer">
+            <div id="footer-drawer" class="shortcuts" hidden></div>
             <div class="status-line">
                 <div class="status-bar">
                     <span id="mode-badge" class="mode-badge"></span>
@@ -274,30 +275,13 @@
                     id="help-toggle"
                     class="help-toggle"
                     aria-expanded="false"
-                    aria-controls="help-panel"
+                    aria-controls="footer-drawer"
                 >
-                    <span id="help-summary">How to use</span>
-                    <span class="help-caret" aria-hidden="true"></span>
+                    <span class="codicon codicon-question help-icon" aria-hidden="true"></span>
+                    <span id="help-summary" class="help-label">Help</span>
                 </button>
             </div>
-            <div id="help-panel" class="shortcuts" hidden>
-                <button id="help-close" class="help-close" type="button" aria-label="Close help">
-                    <svg
-                        viewBox="0 0 24 24"
-                        width="14"
-                        height="14"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-                        <path d="M18 6 6 18M6 6l12 12" />
-                    </svg>
-                </button>
-                <div id="help-content"></div>
-            </div>
+            <div id="help-content" hidden></div>
         </footer>
         <script>
             window.__DD_REPORT__ = "__REPORT__";
