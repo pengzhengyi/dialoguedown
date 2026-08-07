@@ -34,6 +34,7 @@
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Integration](#integration)
   - [Testability](#testability)
+  - [Outcome](#outcome)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
   - [Implementation checklist](#implementation-checklist)
 
@@ -440,6 +441,15 @@ part of this component.
 - Mirror the source layout, one test file per source file, and target the usual high,
   meaningful coverage.
 
+## Outcome
+
+| Outcome | Result |
+| --- | --- |
+| **Achieved** | Every construct the language has lowers to nodes and typed edges: lines, control lines, player and random choices, block conditionals, jumps, and the End sentinel. Guards, weights, effects, source spans, and the scene overlay all ride along, and the stage runs inside the compiler so a clean compile carries its graph. |
+| **Changed** | Three shapes moved once the code pushed back. A guard on a **block** belongs on the node, not on an edge — an edge withholds a route, a node withholds content — which needed `IGuardedNode` beside the planned `IGuardedEdge`. Choice arms weave back through the **block walk's continuations**, not through a region's `Exit`, which made nesting fall out for free and left regions purely descriptive. And a `BranchRegion` was designed but never built: a region groups what can be **addressed**, and nothing can name a branch. |
+| **Also built** | Two things the design did not anticipate. Every node carries its **source span**, since the graph was otherwise a closed artifact a debugger could not map back to the script. And `DLG2016` warns that a jump outside the script leads nowhere — without it, wiring the stage in would have turned a documented cross-file jump into a compiler crash. |
+| **Not implemented** | The `IEdgeSelector` seam and the `Detour`/`Return` edge kinds, deliberately: neither has a producer or a consumer until the runtime lands ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)), and this component deleted an unused `BranchRegion` for exactly that reason. Reachability and cycle diagnostics stay deferred with them. |
+
 ## Open questions and deferred work
 
 - **Reachability and cycle diagnostics.** A graph makes "no path reaches this scene" and
@@ -452,8 +462,9 @@ part of this component.
   sentinel and cross-file entry semantics are deferred.
 - **Cross-file node ids.** `NodeId` widens to a project-qualified id for cross-file
   diverts; the [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) linker owns resolution.
-- **Choice weave-back target.** The enclosing region's `Exit` is the intended rejoin point;
-  the exact node for nested choices is a builder detail settled in TDD.
+- **Playing the graph.** The runtime that walks it — `IEdgeSelector`, the detour call
+  stack, and evaluating a guard or a weight against host state — is the other half of
+  [#45](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
 ## Implementation checklist
 
@@ -463,7 +474,7 @@ part of this component.
 - [x] Jump-to-divert lowering: `#END`, scene jumps with their reading-order entry, and a jump's guard.
 - [x] The Scene region overlay from the scene tree.
 - [x] Retire the primitive `DialogueDown.Graph` `INode`/`IEdge` sketch it supersedes, and reframe the `Graph` layering architecture test from a foundation leaf to a stage above the semantic analyzer.
-- [ ] Guarded-entry lowering for a guarded block, and choice fan-out and weave-back.
-- [ ] Wire into `ScriptCompiler` and `AddDialogueDown`; expose the graph on `CompilationResult`.
-- [ ] Reserve the `IEdgeSelector` runtime seam and the `Detour`/`Return` kinds with placeholder coverage.
-- [ ] Unit tests per lowering rule and boundary case; reading-guide and `CHANGELOG` entries.
+- [x] Choice, random-choice, and branch fan-out with weave-back, and a guard on a block itself.
+- [x] Wire into `ScriptCompiler` and both composition roots; expose the graph on a `CompilationSuccess`.
+- [ ] Reserve the `IEdgeSelector` runtime seam and the `Detour`/`Return` kinds. *(Dropped: a type with no producer and no consumer is one more thing to keep true, and the runtime that needs them will shape them better. See the outcome below.)*
+- [x] Unit tests per lowering rule and boundary case; reading-guide and `CHANGELOG` entries.
