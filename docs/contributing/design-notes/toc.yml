@@ -80,6 +80,8 @@
     href: Desugared AST Visualization Tab.md
   - name: Semantic Model Visualization Tab
     href: Semantic Model Visualization Tab.md
+  - name: Dialogue Graph Visualization Tab
+    href: Dialogue Graph Visualization Tab.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion
