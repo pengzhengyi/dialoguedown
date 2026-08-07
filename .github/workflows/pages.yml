@@ -50,6 +50,9 @@ jobs:
           cp -r docs/_site/. site/
           mkdir -p site/demo
           cp docs/demo/index.html site/demo/index.html
+          # Copy example image assets so the exported reports can resolve the
+          # relative <img> paths their Markdown previews render.
+          if [ -d examples/assets ]; then cp -r examples/assets site/demo/assets; fi
           # Export a self-contained, read-only report for every example script.
           # The "diagnostics" example is broken on purpose; the export still exits
           # 0 and renders it, so the live demo can showcase the diagnostics panel.
