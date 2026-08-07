@@ -5,6 +5,7 @@ using DialogueDown.Markdown;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Diagnostics;
 using DialogueDown.Visualization.Editor;
+using DialogueDown.Visualization.Graph;
 using DialogueDown.Visualization.Semantics;
 
 namespace DialogueDown.Visualization;
@@ -28,6 +29,11 @@ public sealed class CompilationVisualizer
     // diagnostics are surfaced separately (a planned report overlay), not here.
     private const string StageUnavailableReason =
         "This stage is unavailable due to compilation errors.";
+
+    // The graph is built only for a script that compiled cleanly, so its tab is unavailable
+    // whenever the compile reported an error — even one the later stages recovered from.
+    private const string GraphUnavailableReason =
+        "The dialogue graph is built only for a script that compiles without errors.";
 
     private readonly IScriptCompiler _compiler;
     private readonly AppliedConfiguration? _configuration;
@@ -218,6 +224,13 @@ public sealed class CompilationVisualizer
     private static CompilerOptions ForVisualization(CompilerOptions options) =>
         options with { Mode = CompilationMode.StageBoundary };
 
+    // The graph rides on a successful compile alone, so unlike the earlier stages it is not
+    // "how far did the compile get" but "did it succeed".
+    private static DisplayGraph GraphStage(CompilationResult result, string source) =>
+        result is CompilationSuccess success
+            ? new GraphProjection().Project(success.Graph, source)
+            : GraphProjection.Unavailable(GraphUnavailableReason);
+
     // Compiles the source once and projects both the stage graphs and the editor's resolved
     // symbols, so the report and the live document API share a single compilation.
     private ReportContent BuildContent(string source)
@@ -235,6 +248,7 @@ public sealed class CompilationVisualizer
                 result.Script.ToDisplayGraph(source),
                 desugared.ToDisplayGraph(source),
                 new SemanticProjection().Project(semantics, source),
+                GraphStage(result, source),
             ]
             :
             [
@@ -242,6 +256,7 @@ public sealed class CompilationVisualizer
                 result.Script.ToDisplayGraph(source),
                 ScriptDisplayExtensions.DesugaredUnavailable(StageUnavailableReason),
                 SemanticProjection.Unavailable(StageUnavailableReason),
+                GraphStage(result, source),
             ];
         var symbols = semantics is null
             ? SymbolSet.Baseline

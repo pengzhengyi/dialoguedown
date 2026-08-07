@@ -17,16 +17,20 @@ namespace DialogueDown.Visualization.Tests;
 public sealed class CompilationVisualizerTests
 {
     [Fact]
-    public void BuildStages_ErroringScriptThatReachedAnalysis_StillShowsEveryStage()
+    public void BuildStages_ErroringScriptThatReachedAnalysis_StillShowsEveryStageItReached()
     {
         // A jump to a missing scene is reported after the transpiler, so the compile runs every
         // stage and fails. Reaching a stage is not succeeding: the artifacts it produced are still
-        // worth inspecting, so no stage reads as unavailable.
+        // worth inspecting, so every stage before the graph reads as available.
         var stages = new CompilationVisualizer(ScriptCompilerFactory.CreateDefault())
             .BuildStages("Alice: away => [nowhere](#no-such-scene)");
 
-        Assert.All(stages, stage => Assert.Null(stage.Unavailable));
-        Assert.Equal(4, stages.Count);
+        Assert.Equal(5, stages.Count);
+        Assert.All(stages.Take(4), stage => Assert.Null(stage.Unavailable));
+
+        // The graph is the exception: it is built only for a script that compiled cleanly.
+        Assert.Equal("Dialogue Graph", stages[4].Title);
+        Assert.NotNull(stages[4].Unavailable);
     }
 
     [Fact]
@@ -119,7 +123,8 @@ public sealed class CompilationVisualizerTests
             markdownStage => Assert.Equal("Markdown AST", markdownStage.Title),
             dialogueStage => Assert.Equal("Dialogue AST", dialogueStage.Title),
             desugaredStage => Assert.Equal("Desugared AST", desugaredStage.Title),
-            semanticStage => Assert.Equal("Semantic Model", semanticStage.Title));
+            semanticStage => Assert.Equal("Semantic Model", semanticStage.Title),
+            graphStage => Assert.Equal("Dialogue Graph", graphStage.Title));
         Assert.Contains(stages[0].Nodes, n => n.Label == "Paragraph");
         Assert.Contains(stages[1].Nodes, n => n.Label == "Line");
         Assert.Contains(stages[2].Nodes, n => n.Label == "Line");
@@ -168,6 +173,12 @@ public sealed class CompilationVisualizerTests
                 Assert.Equal("Semantic Model", semanticStage.Title);
                 Assert.NotNull(semanticStage.Unavailable);
                 Assert.Empty(semanticStage.Nodes);
+            },
+            graphStage =>
+            {
+                Assert.Equal("Dialogue Graph", graphStage.Title);
+                Assert.NotNull(graphStage.Unavailable);
+                Assert.Empty(graphStage.Nodes);
             });
     }
 
@@ -218,7 +229,7 @@ public sealed class CompilationVisualizerTests
         // and render as disabled tabs.
         var stages = new CompilationVisualizer().BuildStages("#lonely: Hi");
 
-        Assert.Equal(4, stages.Count);
+        Assert.Equal(5, stages.Count);
         Assert.Null(stages[0].Unavailable); // Markdown AST — produced
         Assert.Null(stages[1].Unavailable); // Dialogue AST — produced
         Assert.Equal("Desugared AST", stages[2].Title);
@@ -226,6 +237,8 @@ public sealed class CompilationVisualizerTests
         Assert.Empty(stages[2].Nodes);
         Assert.Equal("Semantic Model", stages[3].Title);
         Assert.NotNull(stages[3].Unavailable); // disabled
+        Assert.Equal("Dialogue Graph", stages[4].Title);
+        Assert.NotNull(stages[4].Unavailable); // disabled
     }
 
     [Fact]
