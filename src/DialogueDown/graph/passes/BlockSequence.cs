@@ -28,8 +28,9 @@ namespace DialogueDown.Graph.Passes;
 internal static class BlockSequence
 {
     public static IEnumerable<(ScriptBlock Block, NodeId Continuation)> AllContinuations(
-        IReadOnlyList<ScriptBlock> sequence, NodeId sequenceContinuation, GraphDraft draft)
+        IReadOnlyList<ScriptBlock> blocks, NodeId sequenceContinuation, GraphDraft draft)
     {
+        var sequence = blocks.WithoutHeadings();
         for (var position = 0; position < sequence.Count; position++)
         {
             var block = sequence[position];
@@ -53,8 +54,11 @@ internal static class BlockSequence
     /// nothing, so taking it resumes right where the block holding it would have continued.
     /// </summary>
     public static NodeId EntryOf(
-        IReadOnlyList<ScriptBlock> body, NodeId continuation, GraphDraft draft) =>
-        body.Count > 0 ? draft.IdOf(body[0]) : continuation;
+        IReadOnlyList<ScriptBlock> body, NodeId continuation, GraphDraft draft)
+    {
+        var entry = body.WithoutHeadings();
+        return entry.Count > 0 ? draft.IdOf(entry[0]) : continuation;
+    }
 
     // The bodies a block holds, which continue where the block itself does. Both branching kinds
     // weave back the same way, so the walk does not care which kind it is descending into.

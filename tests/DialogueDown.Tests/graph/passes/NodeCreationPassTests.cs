@@ -155,6 +155,27 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
+    public void Apply_HeadingMisplacedInsideABranch_BecomesNoNode()
+    {
+        // Analysis reports a heading nested in a branch and recovers, leaving it among the
+        // branch's blocks, so the graph passes over it rather than failing on a script it
+        // admitted. A heading names a scene; it plays nothing.
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > # Upstairs
+            >
+            > Alice: Welcome.
+            """);
+
+        Assert.Collection(
+            graph.Nodes,
+            node => Assert.IsType<BranchNode>(node),
+            node => AssertSingleText(Assert.IsType<LineNode>(node).Speech, "Welcome."),
+            node => Assert.IsType<EndNode>(node));
+    }
+
+    [Fact]
     public void Apply_AGuardedLine_CarriesItsConditionAsTheNodesGuard()
     {
         var graph = Build("""`"Brave"?` Alice: you enter""");

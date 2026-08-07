@@ -20,8 +20,10 @@ internal sealed class GraphBuildContext
         ArgumentNullException.ThrowIfNull(diagnostics);
         Semantics = semantics;
         Diagnostics = diagnostics;
-        TopLevelBlocks = semantics.SceneRoot.DocumentOrder();
-        AllBlocks = [.. TopLevelBlocks.SelectMany(block => block.DescendantsAndSelf().OfType<ScriptBlock>())];
+        TopLevelBlocks = semantics.SceneRoot.DocumentOrder().WithoutHeadings();
+        AllBlocks = TopLevelBlocks
+            .SelectMany(block => block.DescendantsAndSelf().OfType<ScriptBlock>())
+            .WithoutHeadings();
         _entryBlockByScene = semantics.SceneRoot.EntryBlocks();
         DocumentEnd = new SourceSpan(
             TopLevelBlocks.Count > 0 ? TopLevelBlocks[^1].Span.End : 0, length: 0);
