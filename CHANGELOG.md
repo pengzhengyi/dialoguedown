@@ -61,6 +61,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Tighter report layout.** The visualization report trims the chrome so more of
+  the window goes to content: a more compact header, the active-tab underline sits
+  under its label, the main area runs edge to edge, and the Source tab's preview
+  drops its redundant frame.
 - **Core quality guardrails now fail the build.** The engine-agnostic core
   (`src/DialogueDown`) enforces its size and complexity limits as errors rather
   than warnings, forbids mutable global state (`CA2211`), and caps public methods
