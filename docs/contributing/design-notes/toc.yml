@@ -14,6 +14,8 @@
     href: Semantic Analyzer.md
   - name: Script Compiler Facade
     href: Script Compiler Facade.md
+  - name: Compilation Outcome
+    href: Compilation Outcome.md
 - name: Language constructs
   items:
   - name: Progression Order
