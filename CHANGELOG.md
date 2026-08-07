@@ -10,6 +10,15 @@ changes easy to categorize.
 
 ### Added
 
+- **Dialogue graph — the compiler's final stage** — a clean compile now lowers its semantic
+  model into an immutable **dialogue graph**: one node per block (a line, a control line, a
+  choice, a random choice, a block conditional, and the terminal End) joined by typed edges
+  (fall-through, jump, choice option, random option, and conditional branch). Guards ride the
+  edge when they withhold a route and the node when they withhold a block's content, every
+  node carries the source it came from, and scenes are overlaid as named regions a jump can
+  enter. This is the artifact a future runtime walks to play a script — playing it is still to
+  come ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)). See the
+  [Dialogue Graph](docs/contributing/design-notes/Dialogue%20Graph.md) note.
 - **Block conditionals** — group dialogue, commands, choices, and jumps into connected
   blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
   `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
@@ -42,6 +51,19 @@ changes easy to categorize.
 
 ### Changed
 
+- **A compile now succeeds or fails, and says which.** `Compile` returns a
+  `CompilationSuccess` carrying every stage artifact, or a `CompilationFailure` carrying how
+  far it got — instead of one result whose later artifacts might be missing. A script with an
+  error is a failure and produces no graph, since a model the compiler had to recover no
+  longer describes what you wrote; everything the compile did reach is still there, so the
+  report keeps showing a broken script's stages. `Source`, `HasErrors`, and
+  `LocatedDiagnostics` are unchanged. See the
+  [Compilation Outcome](docs/contributing/design-notes/Compilation%20Outcome.md) note.
+- **A jump to another file now warns instead of passing silently** — a target naming a file or
+  a URL (`=> [Meet Bob](chapter-02.md#meet-bob)`) reports **DLG2016** and leads nowhere, so
+  reading continues with the next line. Cross-file targets are not resolved yet
+  ([#59](https://github.com/pengzhengyi/dialoguedown/issues/59)); until they are, the warning
+  says so rather than leaving a jump that quietly goes nowhere.
 - **One place to edit — the Source tab.** The graph tabs' node-details panel is now read-only
   on every tab, matching the Semantic Model tab, and **Jump to source** takes you to the node's
   text with its span selected. Editing a node in the side panel is gone: it duplicated the
