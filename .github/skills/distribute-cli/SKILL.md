@@ -151,7 +151,7 @@ same-version iteration, `uninstall` then `install`, or pack with a bumped
 shipped.** Documentation drift is invisible between releases — nothing fails, no
 test goes red, and a note can keep describing a design that was abandoned months
 ago. A release is the last honest moment to catch it, because the published
-package freezes whatever the docs claim.
+package freezes whatever the docs claim — and whatever the live demo shows.
 
 Run this **before** setting the version. Anything it finds is fixed in its own
 PR, not folded into the release commit.
@@ -289,6 +289,80 @@ dotnet tool run docfx docs/docfx.json                 # expect the known warning
 Record the docfx warning baseline in the release notes if it changed, so the next
 release can tell a new warning from an inherited one.
 
+### H. The demo gallery reflects current features and constructs
+
+The published demo — the landing page `docs/demo/index.html` and the reports the
+Pages workflow exports from `examples/*.dialogue.md` — is frozen by the release
+exactly like the docs, and it drifts the same silent way: a new visualization
+stage, tab, or feature ships in the report while the hand-written landing page
+still advertises the old set, or a new language construct ships with no example
+that shows it. The reports regenerate from source on every deploy, so the risk is
+never a stale *report* — it is a stale landing page, or a construct that never made
+it into an example.
+
+Adding a construct's example and rendering it in the demo is
+[`add-dialogue-construct`](../add-dialogue-construct/SKILL.md)'s job; this gate
+only **verifies** that work landed before the package freezes it.
+
+**Every example is published and linked.** The workflow exports every
+`examples/*.dialogue.md`, so the only drift is a landing-page card that is missing
+or points nowhere. The scripts and the cards must match:
+
+```sh
+ls examples/*.dialogue.md | xargs -n1 basename | sed 's/\.dialogue\.md$//' | sort > /tmp/examples.txt
+grep -oE 'href="\./[a-z0-9-]+\.html"' docs/demo/index.html \
+  | sed 's|href="\./||; s|\.html"||' | sort -u > /tmp/cards.txt
+diff /tmp/examples.txt /tmp/cards.txt && echo "every example has a card, and every card an example"
+```
+
+**The landing page lists the stages the report renders.** The compiler-stage tabs
+come from the visualization's projections; a new one — say a future **Dialogue
+Graph** tab — appears in every export automatically, but the `<ul class="stages">`
+on the landing page is written by hand. Diff the two:
+
+```sh
+# Stage titles the visualizer emits, vs the stages the landing page advertises.
+ddown visualize examples/gallery.dialogue.md --emit dot \
+  | sed -n 's|^// ||p' | sort > /tmp/report-stages.txt
+grep -oE '<strong>[^<]+</strong>' docs/demo/index.html \
+  | sed 's/<[^>]*>//g' | grep -v '^Source$' | sort > /tmp/page-stages.txt
+diff /tmp/report-stages.txt /tmp/page-stages.txt && echo "the page lists exactly the rendered stages"
+```
+
+`Source` is the editor tab — always present, and not a `--emit` stage — so it is
+excluded. A non-empty diff means a stage shipped without a demo update (or the
+reverse): reconcile the stage list, and if the new stage needs a script that
+exercises it, an example, before releasing.
+
+> [!IMPORTANT]
+> A new report **feature that is not a stage** — a panel, an interaction, a mode —
+> will not appear in the `--emit` diff. Re-read the landing page's feature prose
+> ("open the Diagnostics panel", "zoom, pan, and collapse …") against the live
+> report and reconcile whatever the release adds or removes.
+
+**Every construct is demonstrated.** List the construct kinds the whole example
+corpus exercises — the Dialogue AST stage is where constructs surface — and prove
+each construct the language accepts is among them:
+
+```sh
+# Base construct kinds demonstrated across all examples (subtypes in () ignored).
+for f in examples/*.dialogue.md; do
+  ddown visualize "$f" --emit dot \
+    | awk '/^\/\/ Dialogue AST/{on=1;next} /^\/\//{on=0}
+           on && match($0,/label="[^"(\\]+/){print substr($0,RSTART+7,RLENGTH-7)}'
+done | sed 's/ *$//' | sort -u
+```
+
+Compare that against the construct inventory the language advertises — the syntax
+summary in
+[`docs/guide/script-language.md`](../../../docs/guide/script-language.md), which
+`add-dialogue-construct` keeps current — cross-checked against the label vocabulary
+in `src/DialogueDown.Visualization/script/DialogueAstProjection.cs`. A construct the
+compiler accepts but no example produces is a coverage gap: add a natural use to an
+example (through `add-dialogue-construct`), not a syntax dump, and re-run. The
+parenthetical on a label (`Command (PlayBgm)`, `Speaker (by id)`) is detail, not a
+separate construct — judge coverage on the base kind.
+
 ## 4. Release push (approval-gated)
 
 Run only when `maintain-oss` has cut a changelog release, the
@@ -352,11 +426,16 @@ only if a headless `ddown compile` CI use case emerges.
 - **Never publish against stale documentation** — the
   [documentation resync](#3-resync-the-documentation-release-gate) is a release
   gate, not a nicety. A push freezes whatever the docs claim about that version.
+- **Never release against a stale demo** — the live gallery
+  ([subsection H](#h-the-demo-gallery-reflects-current-features-and-constructs)) is
+  part of the same gate: a push freezes whatever the demo shows and whichever
+  constructs it fails to demonstrate.
 - **Verify before publish** — always install and run the packed tool against the
   release build first.
 - **Keep the contract in sync** — the package id, `ddown` command name, and
   runtime requirements must match across this skill, `docs/guide/cli.md`, and the
   CLI code.
 - **Compose, do not duplicate** — defer the changelog, version, and tag to
-  `maintain-oss`; run `polish-tech-doc` for the doc rewrites the resync turns up,
-  and when editing `docs/guide/cli.md` or this skill.
+  `maintain-oss`; the example-and-demo work for a new construct to
+  `add-dialogue-construct`; and run `polish-tech-doc` for the doc rewrites the
+  resync turns up, and when editing `docs/guide/cli.md` or this skill.
