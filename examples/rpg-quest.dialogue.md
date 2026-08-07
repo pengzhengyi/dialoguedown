@@ -90,7 +90,7 @@ falls quiet. The Ember Crown is warm in your hands.
 >
 > The old dragon lives, and watches you with one banked-coal eye.
 >
-> Vharos @dragon #ancient: Take it, thief. A crown was always a poor bed.
+> @dragon #humbled: Take it, thief. A crown was always a poor bed.
 >
 > => [The end](#END)
 >

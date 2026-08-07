@@ -22,9 +22,14 @@ internal static class CliConfigurator
         config.SetExceptionHandler(HandleException);
 
         config.AddCommand<CompileCommand>("compile")
-            .WithDescription("Compile a DialogueDown script.");
+            .WithDescription("Compile a DialogueDown script.")
+            .WithExample("compile", "scene.dialogue.md")
+            .WithExample("compile", "scene.dialogue.md", "--mode", "best-effort");
         config.AddCommand<VisualizeCommand>("visualize")
-            .WithDescription("Visualize a DialogueDown script's compilation.");
+            .WithDescription("Visualize a DialogueDown script's compilation.")
+            .WithExample("visualize", "scene.dialogue.md")
+            .WithExample("visualize", "scene.dialogue.md", "--edit")
+            .WithExample("visualize", "scene.dialogue.md", "-o", "report.html", "--no-open");
     }
 
     // Turn framework and command exceptions into a clean message and a meaningful

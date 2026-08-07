@@ -1,5 +1,7 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Graph;
+using DialogueDown.Graph.Builder;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
@@ -34,12 +36,15 @@ public static class DialogueDownServiceCollectionExtensions
         services.TryAddSingleton<IStructuralValidator>(
             _ => StructuralValidatorFactory.CreateDefault());
         services.TryAddSingleton<ISemanticAnalyzer>(_ => new SemanticAnalyzer(options.ForSemanticAnalyzer()));
+        services.TryAddSingleton<IDialogueGraphBuilder>(
+            _ => DialogueGraphBuilderFactory.CreateDefault());
         services.TryAddSingleton<IScriptCompiler>(provider => new ScriptCompiler(
             provider.GetRequiredService<IMarkdownParser>(),
             provider.GetRequiredService<IScriptTranspiler>(),
             provider.GetRequiredService<IScriptDesugarer>(),
             provider.GetRequiredService<IStructuralValidator>(),
             provider.GetRequiredService<ISemanticAnalyzer>(),
+            provider.GetRequiredService<IDialogueGraphBuilder>(),
             options.Mode));
 
         return services;

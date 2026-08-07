@@ -19,15 +19,15 @@ author: DialogueDown examples
 
 `ShowBackground("apartment", "night")` `PlaySound("fire_alarm")`
 
-The smoke detector shrieks. You are on floor `"Floor"`, and the hallway already
-smells of smoke.
+Narrator @narrator ##default: The smoke detector shrieks. You are on floor
+`"Floor"`, and the hallway already smells of smoke.
 
 Marshal @marshal #calm: Breathe — you have practiced this. First move: what do you
 do?
 
-- => [Feel the hallway door before you open it](#the-door)
-- => [Call the elevator and hurry down](#the-elevator)
-- Grab the laptop and the photos first #panic
+1. => [Feel the hallway door before you open it](#the-door)
+2. => [Call the elevator and hurry down](#the-elevator)
+3. Grab the laptop and the photos first #panic
     - Marshal: Things can be replaced. **You** cannot. Leave them and move.
     - => [Feel the hallway door before you open it](#the-door)
 

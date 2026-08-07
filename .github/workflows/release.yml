@@ -2,7 +2,7 @@ name: Release
 
 # Publishes the ddown CLI to NuGet when a version tag is pushed, using NuGet
 # Trusted Publishing (OIDC) — no long-lived API key is stored. See
-# docs/guide/cli.md and the distribute-cli skill. The matching trusted-publishing
+# docs/guide/cli.md and the release skill. The matching trusted-publishing
 # policy on nuget.org must reference this workflow file (release.yml).
 
 on:

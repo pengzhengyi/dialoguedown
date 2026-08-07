@@ -82,7 +82,7 @@ internal sealed class SymbolProjection
     private static IEnumerable<Scene> Descendants(Scene scene)
     {
         yield return scene;
-        foreach (var child in scene.Children)
+        foreach (var child in scene.ChildScenes)
         {
             foreach (var descendant in Descendants(child))
             {

@@ -2,6 +2,9 @@ using DialogueDown.Common;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
+using DialogueDown.Graph;
+using DialogueDown.Graph.Nodes;
+using DialogueDown.Graph.Regions;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
@@ -13,6 +16,19 @@ namespace DialogueDown.Visualization.Tests;
 
 public sealed class CompilationVisualizerTests
 {
+    [Fact]
+    public void BuildStages_ErroringScriptThatReachedAnalysis_StillShowsEveryStage()
+    {
+        // A jump to a missing scene is reported after the transpiler, so the compile runs every
+        // stage and fails. Reaching a stage is not succeeding: the artifacts it produced are still
+        // worth inspecting, so no stage reads as unavailable.
+        var stages = new CompilationVisualizer(ScriptCompilerFactory.CreateDefault())
+            .BuildStages("Alice: away => [nowhere](#no-such-scene)");
+
+        Assert.All(stages, stage => Assert.Null(stage.Unavailable));
+        Assert.Equal(4, stages.Count);
+    }
+
     [Fact]
     public void Constructor_NullCompiler_Throws()
     {
@@ -83,7 +99,16 @@ public sealed class CompilationVisualizerTests
         var semantics = new SemanticAnalyzer(new SemanticAnalyzerOptions([]))
             .Analyze(desugared, new DiagnosticsContext("script source", new DiagnosticBag()));
         compiler.Compile("script source").Returns(
-            new CompilationResult("script source", markdown, script, desugared, semantics, []));
+            new CompilationSuccess(
+                "script source",
+                markdown,
+                script,
+                desugared,
+                semantics,
+                // This AST is assembled here rather than desugared, so it carries none of the
+                // defaults lowering relies on; the visualizer projects no graph stage anyway.
+                EmptyGraph(),
+                []));
         var visualizer = new CompilationVisualizer(compiler);
 
         var stages = visualizer.BuildStages("script source");
@@ -116,7 +141,7 @@ public sealed class CompilationVisualizerTests
         // A halted compile: the transpiler produced the Dialogue AST, but desugar and semantic
         // analysis never ran, so their stages are unavailable.
         compiler.Compile("broken").Returns(
-            new CompilationResult("broken", markdown, script, desugared: null, semantics: null, []));
+            CompilationFailure.AtTranspile("broken", markdown, script, []));
 
         var stages = new CompilationVisualizer(compiler).BuildStages("broken");
 
@@ -159,7 +184,7 @@ public sealed class CompilationVisualizerTests
         ]);
         var compiler = Substitute.For<IScriptCompiler>();
         compiler.Compile("broken").Returns(
-            new CompilationResult("broken", markdown, script, desugared: null, semantics: null, []));
+            CompilationFailure.AtTranspile("broken", markdown, script, []));
 
         var html = new CompilationVisualizer(compiler).RenderHtmlReport("broken");
 
@@ -475,5 +500,12 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("// Dialogue AST", text);
         Assert.Contains("// Desugared AST", text);
         Assert.Contains("digraph", text);
+    }
+
+    private static DialogueGraph EmptyGraph()
+    {
+        var end = new NodeId(0);
+        return new DialogueGraph(
+            [new EndNode(end, new SourceSpan(0, 0))], entry: end, end: end, RegionTree.Empty);
     }
 }

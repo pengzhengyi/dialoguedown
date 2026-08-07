@@ -4,9 +4,10 @@ namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
 /// Group B — layering inside the core. The compiler pipeline flows
-/// <c>Markdown -> Script.Ast -> Desugar -> Validation -> Semantics -> Transpiler -> Compilation</c>
-/// atop the <c>Common</c> and <c>Graph</c> foundations. Each stage may depend only
-/// on stages beneath it, so a change to a later stage never ripples backward.
+/// <c>Markdown -> Script.Ast -> Desugar -> Validation -> Semantics -> Graph -> Compilation</c>
+/// atop the <c>Common</c> foundation. Each stage may depend only on stages beneath it, so a
+/// change to a later stage never ripples backward. The dialogue <c>Graph</c> is the late
+/// stage that lowers the semantic model, not a foundation leaf.
 /// </summary>
 public sealed class CoreLayeringTests
 {
@@ -59,15 +60,18 @@ public sealed class CoreLayeringTests
     }
 
     [Fact]
-    public void Graph_IsALeaf_WithNoDependencyOnPipelineLayers()
+    public void Graph_IsALateStage_DependingOnUpstreamNotTheOrchestrator()
     {
+        // The dialogue graph lowers the semantic model, so it may depend on Script.Ast and
+        // Script.Semantics, but never on the Markdown/Transpiler front stages or the
+        // Compilation orchestrator that drives it.
         Types.InAssembly(Architecture.CoreAssembly)
             .That()
             .ResideInNamespace(Architecture.Graph)
             .ShouldNot()
             .HaveDependencyOnAny(
                 Architecture.Markdown,
-                Architecture.Script,
+                Architecture.ScriptTranspiler,
                 Architecture.Compilation)
             .GetResult()
             .ShouldPass();

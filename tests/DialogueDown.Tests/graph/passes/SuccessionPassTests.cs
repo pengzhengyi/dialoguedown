@@ -1,0 +1,234 @@
+using DialogueDown.Graph;
+using DialogueDown.Graph.Passes;
+using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.GraphAssert;
+
+namespace DialogueDown.Tests.Graph.Passes;
+
+public sealed class SuccessionPassTests
+{
+    private readonly SuccessionPass _pass = new();
+
+    [Fact]
+    public void Apply_SingleLine_FallsThroughToEnd()
+    {
+        var graph = Build("Alice: only");
+
+        AssertOnlySuccession(graph.Node(graph.Entry), graph.End);
+        Assert.Empty(graph.Node(graph.End).Out);
+    }
+
+    [Fact]
+    public void Apply_MultipleLines_ChainsInDocumentOrderThenToEnd()
+    {
+        var graph = Build("""
+            Alice: one
+
+            Bob: two
+            """);
+
+        var nodes = graph.Nodes;
+        AssertOnlySuccession(nodes[0], nodes[1].Id);
+        AssertOnlySuccession(nodes[1], graph.End);
+        Assert.Empty(graph.Node(graph.End).Out);
+    }
+
+    [Fact]
+    public void Apply_EmptyDocument_AddsNoEdges()
+    {
+        var graph = Build("");
+
+        Assert.Empty(graph.Node(graph.End).Out);
+        Assert.Single(graph.Nodes);
+    }
+
+    [Fact]
+    public void Apply_ANodeThatDivertsUnconditionally_GetsNoSuccession()
+    {
+        var graph = Build("""
+            Alice: bye => [end](#END)
+
+            Bob: unreachable
+            """);
+
+        // Alice diverts to End, so she does not also fall through to Bob.
+        AssertOnlyDivert(graph.Nodes[0], graph.End);
+    }
+
+    [Fact]
+    public void Apply_ANodeThatDivertsConditionally_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            Alice: maybe bye `"Done"?` => [end](#END)
+
+            Bob: reached when the guard reads false
+            """);
+
+        // The guard may not hold, so the fall-through is the sibling edge that skips the divert.
+        Assert.Collection(
+            graph.Nodes[0].Out,
+            edge => AssertDivert(edge, graph.End),
+            edge => AssertSuccession(edge, graph.Nodes[1].Id));
+    }
+
+    [Fact]
+    public void Apply_ChoiceOptionBodies_WeaveBackToWhatFollowsTheChoice()
+    {
+        var graph = Build("""
+            Guide: Which way?
+
+            - Alice: Left.
+
+            - Alice: Right.
+
+            Guide: Onward.
+            """);
+
+        // 0 question, 1 choice, 2 left, 3 right, 4 onward.
+        var onward = graph.Nodes[4].Id;
+        AssertOnlySuccession(graph.Nodes[0], graph.Nodes[1].Id);
+        AssertNoFallThrough(graph.Nodes[1]);
+        AssertOnlySuccession(graph.Nodes[2], onward);
+        AssertOnlySuccession(graph.Nodes[3], onward);
+        AssertOnlySuccession(graph.Nodes[4], graph.End);
+    }
+
+    [Fact]
+    public void Apply_AChoiceEndingTheDocument_WeavesItsOptionsBackToEnd()
+    {
+        var graph = Build("""
+            - Alice: Left.
+
+            - Alice: Right.
+            """);
+
+        AssertOnlySuccession(graph.Nodes[1], graph.End);
+        AssertOnlySuccession(graph.Nodes[2], graph.End);
+    }
+
+    [Fact]
+    public void Apply_ABodyWithSeveralBlocks_ChainsInternallyThenWeavesBack()
+    {
+        var graph = Build("""
+            - Alice: Left.
+
+              Alice: And onward.
+
+            Guide: After.
+            """);
+
+        // 0 choice, 1 first body block, 2 second body block, 3 after.
+        AssertOnlySuccession(graph.Nodes[1], graph.Nodes[2].Id);
+        AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_AChoiceWhoseArmsAreAllGuarded_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            - `"HasKey"?` Alice: Use the key.
+
+            - `"HasRope"?` Alice: Climb in.
+
+            Guide: After.
+            """);
+
+        // Neither guard need hold, so the fall-through is the path left when nothing is offered.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_AConditionalBlockWithoutAnElse_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+
+            Guide: After.
+            """);
+
+        // No condition need hold, so the whole block is skipped and the fall-through is the path left.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[2].Id);
+    }
+
+    [Fact]
+    public void Apply_AConditionalBlockWithAnElse_DoesNotFallThrough()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+            >
+            > `else`
+            >
+            > Alice: Take the side door.
+
+            Guide: After.
+            """);
+
+        // The else is always taken when no condition holds, so the block is never skipped.
+        AssertNoFallThrough(graph.Nodes[0]);
+    }
+
+    [Fact]
+    public void Apply_ABranchBody_ChainsWithinItselfThenResumesAfterTheBlock()
+    {
+        var graph = Build("""
+            > `if` `"Rich"?`
+            >
+            > Alice: Welcome upstairs.
+            >
+            > Alice: Mind the step.
+
+            Guide: After.
+            """);
+
+        AssertOnlySuccession(graph.Nodes[1], graph.Nodes[2].Id);
+        AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_AGuardedBlockThatDivertsUnconditionally_StillFallsThrough()
+    {
+        var graph = Build("""
+            `"Brave"?` Alice: farewell => [on](#on)
+
+            Alice: after
+
+            # On
+
+            Alice: there
+            """);
+
+        // The guard may skip the whole line, its jump included, so control needs somewhere to go.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
+    }
+
+    [Fact]
+    public void Apply_ABlockGuardedBesideItsJumpsOwnGuard_FallsThroughOnce()
+    {
+        var graph = Build("""
+            `"Brave"?` Alice: farewell `"Rich"?` => [on](#on)
+
+            Alice: after
+
+            # On
+
+            Alice: there
+            """);
+
+        // Either guard failing lands on the same fall-through, so one is enough.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
+    }
+
+    // Node creation assigns the ids and adds the End; diverts, choices, and branches run before
+    // succession, which skips a node that already leaves unconditionally.
+    private DialogueGraph Build(string source) => GraphPasses.Build(
+        source,
+        new NodeCreationPass(),
+        new DivertPass(),
+        new ChoicePass(),
+        new BranchPass(),
+        _pass);
+}

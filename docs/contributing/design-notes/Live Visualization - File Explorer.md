@@ -315,7 +315,7 @@ Settled in review:
 
 1. **One project server (converge on the launcher's model).** The Explorer is
    served by the launcher's project server, which browses, opens, creates, and
-   switches sessions. Reports opened through the launcher (`visualize`, `--pick`)
+   switches sessions. Reports opened through the launcher (`visualize`)
    carry the Explorer, and `visualize <script>` was **converged** onto the same
    server by the
    [Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md)

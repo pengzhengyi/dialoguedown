@@ -257,7 +257,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     padding-right: 8.5rem; /* keep the brand clear of the top-right controls */
 }
 
@@ -434,19 +434,25 @@ nav.tabs {
     mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent 100%);
 }
 
-nav.tabs::-webkit-scrollbar {
+nav.tabs::-webkit-scrollbar,
+.status-bar::-webkit-scrollbar {
     display: none;
 }
 
 button.tab {
     width: auto;
     margin: 0;
-    padding: 0.4rem 0.9rem;
+    padding: 0.3rem 0.9rem 0.15rem;
     color: var(--pico-muted-color);
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     border-radius: 0;
+
+    /* The active underline sits directly under the label rather than dropping to the header rule:
+       a slim bottom padding keeps the 2px border close to the text, and the margin below takes the
+       tab down to the header edge so the row keeps its height. */
+    margin-bottom: 0.2rem;
 
     /* Tabs keep their natural width in the scroller instead of being squeezed to fit, and
        snap to the row's start when scrolled to. The scroll margin keeps a revealed tab clear
@@ -509,10 +515,10 @@ button.tab.dirty::after {
     display: flex;
     min-height: 0;
 
-    /* Inset the content area to the same gutter as the header and footer, with a little
-       vertical breathing room, so the whole document reads as one connected surface
-       rather than the graph/editor running flush to the window edges. */
-    padding: 0.85rem 1.25rem;
+    /* Full-bleed main: no vertical inset, so the editor and graphs use the whole height between
+       the header rule and the footer; a slim horizontal inset keeps the editor's line gutter (and
+       its debug lane) and the graph controls off the window edge without boxing the content in. */
+    padding: 0 0.4rem;
 }
 
 #stages {
@@ -2138,11 +2144,15 @@ g.node.entity-highlight text.label {
     border-left-color: var(--pico-primary);
 }
 
-.source-preview {
+/* The Source tab's preview shares the `.preview` class with the graph tabs' detail boxes, which
+   frame themselves in a bordered, rounded card. Here that frame would double up against the split
+   divider and the editor gutter, so this compound selector outranks `.preview` to drop the box and
+   let the preview read as one surface with the editor beside it. */
+.source-preview.preview {
     flex: 1 1 auto;
     min-width: 0;
     overflow: auto;
-    padding: 0.75rem 1.25rem;
+    padding: 0.5rem 0.85rem;
     border: none;
     border-radius: 0;
     scroll-behavior: smooth;
@@ -2971,6 +2981,10 @@ body.zen .config-view > .config-source {
 }
 
 .app-footer {
+    /* The framework's own <footer> block padding was dead space; a small top inset keeps the
+       chrome from sitting flush against the content without reinstating that band. */
+    padding-block: 6px 0;
+
     /* The status line is permanent, but the help panel below it is a disclosure the reader
        opened — transient content that should give way rather than push the stage off the
        window. `min-height: 0` is what actually lets the footer shrink: its automatic minimum
@@ -2988,8 +3002,16 @@ body.zen .config-view > .config-source {
 .status-line {
     display: flex;
     align-items: center;
-    gap: 0.4rem 1rem;
-    padding: 0.4rem 1.25rem;
+
+    /* A constant strip. The framework scales the root font size by viewport, so left in `rem`
+       this row grew from 27px to 34px purely because the window widened — chrome drifting
+       wider the more room the content has. Its height is pinned in px and its controls size
+       from that (`em`), the way an editor's status bar stays put at every window size.
+       The *inline* padding stays in `rem` so the row keeps aligning with the content gutter
+       above it, which does scale. */
+    font-size: 13px;
+    gap: 4px 1rem;
+    padding: 0 1.25rem;
 
     /* Always readable: when the footer shrinks to make room for the stage, the help panel
        below absorbs all of it and this line keeps its full height. */
@@ -3000,16 +3022,29 @@ body.zen .config-view > .config-source {
 .status-bar {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+
+    /* Each control carries its own inline padding, so the visual separation between two
+       adjacent glyphs is this gap *plus* both paddings. Keeping the gap small is what makes
+       icon-only controls sit evenly rather than drifting apart, and keeping it in px holds
+       that spacing constant with the pinned strip. */
+    gap: 6px;
+    padding-block: 6px;
+
+    /* In Edit mode the row carries nine controls — the mode toggle, both paths, the counts,
+       the save-mode capsule, its status, and three buttons — and on a small window they
+       genuinely do not fit. Scrolling is the honest outcome: a control that cannot shrink
+       otherwise overlaps its neighbour, which is worse than being one gesture away. */
+    overflow-x: auto;
+    scrollbar-width: none;
     min-width: 0; /* allow the path to shrink and ellipsise */
     flex: 1 1 auto;
 }
 
 .mode-badge {
     flex: 0 0 auto;
-    padding: 0.1rem 0.5rem;
+    padding: 1px 6px;
     border-radius: 999px;
-    font-size: 0.72rem;
+    font-size: 1em;
     font-weight: 600;
     letter-spacing: 0.02em;
     color: #fff;
@@ -3051,12 +3086,13 @@ body.zen .config-view > .config-source {
     gap: 0.3rem;
     width: auto;
     margin: 0;
-    padding: 0.12rem 0.6rem;
+    padding: 2px 8px;
     border: none;
     border-radius: 0;
     background: transparent;
     color: var(--pico-muted-color);
-    font-size: 0.74rem;
+    font-size: 1em;
+    font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
     cursor: pointer;
@@ -3100,12 +3136,12 @@ body.zen .config-view > .config-source {
     flex: 0 0 auto;
     width: auto;
     margin: 0;
-    padding: 0.12rem 0.55rem;
+    padding: 2px 8px;
     border: none;
     border-radius: 0;
     background: transparent;
     color: var(--pico-muted-color);
-    font-size: 0.72rem;
+    font-size: 1em;
     font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
@@ -3130,7 +3166,7 @@ body.zen .config-view > .config-source {
    failure never reads as an ordinary "Saved". */
 .save-status {
     flex: 0 0 auto;
-    font-size: 0.72rem;
+    font-size: 1em;
     font-weight: 600;
     white-space: nowrap;
     color: var(--pico-muted-color);
@@ -3163,12 +3199,12 @@ body.zen .config-view > .config-source {
     flex: 0 0 auto;
     width: auto;
     margin: 0;
-    padding: 0.12rem 0.7rem;
+    padding: 2px 9px;
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
     background: transparent;
     color: var(--pico-muted-color);
-    font-size: 0.74rem;
+    font-size: 1em;
     font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
@@ -3190,12 +3226,12 @@ body.zen .config-view > .config-source {
     flex: 0 0 auto;
     width: auto;
     margin: 0;
-    padding: 0.12rem 0.7rem;
+    padding: 2px 9px;
     border: 1px solid #166534;
     border-radius: var(--pico-border-radius);
     background: #15803d; /* green-700: ~5:1 contrast with white text */
     color: #fff;
-    font-size: 0.74rem;
+    font-size: 1em;
     font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
@@ -3224,12 +3260,12 @@ body.zen .config-view > .config-source {
     flex: 0 0 auto;
     width: auto;
     margin: 0;
-    padding: 0.12rem 0.7rem;
+    padding: 2px 9px;
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
     background: transparent;
     color: var(--pico-muted-color);
-    font-size: 0.74rem;
+    font-size: 1em;
     font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
@@ -3264,13 +3300,13 @@ body.zen .config-view > .config-source {
     max-width: 24rem;
     width: auto;
     margin: 0;
-    padding: 0.1rem 0.4rem;
+    padding: 1px 5px;
     border: 1px solid transparent;
     border-radius: var(--pico-border-radius);
     background: transparent;
     color: var(--pico-muted-color);
     font-family: var(--pico-font-family-monospace);
-    font-size: 0.74rem;
+    font-size: 1em;
     cursor: pointer;
 }
 
@@ -3312,34 +3348,60 @@ body.zen .config-view > .config-source {
     gap: 0.3rem;
     width: auto;
     margin: 0 0 0 auto;
-    padding: 0.1rem 0.3rem;
+    padding: 1px 4px;
     border: none;
     background: transparent;
     color: var(--pico-muted-color);
-    font-size: 0.8rem;
+    font-size: 1em;
     cursor: pointer;
+}
+
+/* Every glyph in the status line is the same size. The inline SVGs are authored at 12px and
+   the codicon font defaults to 16px, so left alone the document and gear read as undersized
+   beside the severity circles they sit next to. */
+.status-bar .path-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.status-line .codicon {
+    font-size: 14px;
+}
+
+.help-icon {
+    font-size: 14px;
+}
+
+/* The glyph is the control; the word is kept in the DOM as its accessible name and shown at
+   widths where the extra few characters cost nothing. */
+.help-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .app-footer .help-toggle:hover {
     color: var(--pico-color);
 }
 
-.app-footer .help-caret::before {
-    content: "›";
-    display: inline-block;
-    transition: transform 0.15s ease;
-}
-
-.app-footer .help-toggle[aria-expanded="true"] .help-caret::before {
-    transform: rotate(90deg);
-}
-
 /* The shortcut panel, shown full width below the status line when expanded. */
 .app-footer .shortcuts {
     position: relative;
-    padding: 0.5rem 1.25rem 0.6rem;
-    border-top: 1px solid var(--pico-muted-border-color);
+    padding: 0.35rem 1.25rem 0.5rem;
+
+    /* It sits above the status line, so its rule goes on the bottom edge; the line's own
+       border closes the footer off from the content. */
+    border-bottom: 1px solid var(--pico-muted-border-color);
     background: var(--pico-card-background-color);
+
+    /* Sized from the status line rather than the article: the panel is chrome attached to
+       that strip, and at the page's reading size it dwarfed the row it belongs to. */
+    font-size: 14px;
 
     /* The footer sits beside `#app` in a fixed-height column, so an unbounded panel takes its
        height straight out of the stage — on a phone the help text is taller than the whole
@@ -3349,19 +3411,229 @@ body.zen .config-view > .config-source {
     flex: 0 1 auto;
     min-height: 0;
     max-height: 50dvh;
+    overscroll-behavior: contain;
+
+    /* A column so the tab bar stays put while only the panel body scrolls — a bar that
+       scrolled away would take the way to switch panels with it. */
+    display: flex;
+    flex-direction: column;
+}
+
+/* The drawer's tab bar: panel tabs on the left, the close control pinned right. */
+.drawer-bar {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.drawer-tabs {
+    display: flex;
+    gap: 0.15rem;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.drawer-tab {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    padding: 0.15rem 0.5rem 0.3rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--pico-muted-color);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.drawer-tab:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: transparent;
+}
+
+.drawer-tab:not(.active) {
+    /* Explicit, and with no transition: the framework animates border colours on buttons, so
+       the tab just left kept a fading underline that read as a second selected tab. */
+    border-bottom-color: transparent;
+    transition: none;
+}
+
+.drawer-tab.active {
+    color: var(--mode-accent, var(--pico-primary));
+    border-bottom-color: var(--mode-accent, var(--pico-primary));
+    transition: none;
+}
+
+/* Only the body scrolls, so the bar above it is always reachable. */
+.drawer-bodies {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    padding-top: 0.4rem;
+}
+
+/* The Problems list: one row per diagnostic, each a button that navigates to its text. */
+.problem-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* The row is a plain container: the jump and the docs link are siblings inside it, so the
+   framework button reset belongs on the jump rather than here. */
+.problem-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding-right: 0.3rem;
+    border-radius: var(--pico-border-radius);
+    font-size: 14px;
+}
+
+.problem-row:hover {
+    background: var(--pico-muted-border-color);
+}
+
+.problem-jump {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: flex;
+    flex: 1 1 auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+    width: auto;
+    margin: 0;
+    padding: 0.2rem 0.3rem;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--pico-color);
+    font-size: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.problem-jump:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: transparent;
+}
+
+.problem-icon {
+    flex: 0 0 auto;
+    font-size: 13px;
+    align-self: center;
+}
+
+/* Severity reads from the icon's color, so one error among forty infos still stands out
+   without the list needing to group or collapse anything. */
+.problem-row[data-severity="error"] .problem-icon {
+    color: var(--pico-del-color, #b3261e);
+}
+
+.problem-row[data-severity="warning"] .problem-icon {
+    color: var(--debug-current, #9a6700);
+}
+
+.problem-row[data-severity="info"] .problem-icon {
+    color: var(--pico-primary);
+}
+
+.problem-message {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.problem-code,
+.problem-location {
+    flex: 0 0 auto;
+    align-self: center;
+    color: var(--pico-muted-color);
+    font-family: var(--pico-font-family-monospace);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.problem-code {
+    text-decoration: underline dotted;
+}
+
+.problem-code:hover {
+    color: var(--pico-primary);
+}
+
+.problem-empty {
+    margin: 0.3rem 0;
+    color: var(--pico-muted-color);
+}
+
+/* The status-line summary: the entry point, and the only diagnostic signal present on the
+   graph tabs, where the editor's squiggles are not on screen at all. */
+.diagnostic-summary {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    margin: 0;
+    padding: 1px 5px;
+    border: 1px solid transparent;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--pico-muted-color);
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.diagnostic-summary:hover {
+    --pico-color: inherit;
+
+    border-color: var(--pico-muted-border-color);
+    color: var(--pico-color);
+    background: var(--pico-card-background-color);
+}
+
+.diagnostic-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.diagnostic-icon {
+    font-size: 12px;
+}
+
+.diagnostic-summary:not(.clean) .diagnostic-error .diagnostic-icon {
+    color: var(--pico-del-color, #b3261e);
+}
+
+.diagnostic-summary:not(.clean) .diagnostic-warning .diagnostic-icon {
+    color: var(--debug-current, #9a6700);
 }
 
 /* Dismisses the panel from inside it. Only really needed once the panel floats over the
    stage on a short window, but it costs nothing inline and saves a trip to the status line. */
-.help-close {
+.drawer-close {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
-    position: absolute;
-    top: 0.35rem;
-    right: 0.6rem;
+    flex: 0 0 auto;
     display: inline-flex;
     width: auto;
     margin: 0;
@@ -3374,7 +3646,7 @@ body.zen .config-view > .config-source {
     cursor: pointer;
 }
 
-.help-close:hover {
+.drawer-close:hover {
     --pico-color: inherit;
 
     color: var(--pico-color);
@@ -3414,8 +3686,8 @@ body.zen .config-view > .config-source {
 }
 
 .app-footer kbd {
-    padding: 0.05rem 0.35rem;
-    font-size: 0.75rem;
+    padding: 1px 5px;
+    font-size: 13px;
 }
 
 @media (width <= 800px) {
@@ -3541,23 +3813,16 @@ body.zen .config-view > .config-source {
         cursor: default;
     }
 
-    /* On a phone-width screen the status line stacks (status bar above the help toggle) and
-       the status bar wraps, so the mode toggle, document paths, and save controls flow onto
-       multiple lines instead of overlapping in one cramped row. */
+    /* One row at every width. The document path ellipsises, so it yields space before
+       anything wraps; below 720px the paths drop to their icons entirely (see the rule at the
+       end of this file). Stacking the line into a column here — the previous answer — is what
+       produced a three-row status line. */
     .status-line {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.4rem;
-    }
-
-    .status-bar {
-        flex-wrap: wrap;
-        row-gap: 0.35rem;
+        gap: 0.3rem 0.6rem;
     }
 
     .app-footer .help-toggle {
-        align-self: flex-start;
-        margin: 0;
+        margin-left: auto;
     }
 }
 
@@ -3930,6 +4195,21 @@ button.tab.tab-with-icon {
     font-size: 0.9em;
 }
 
+/* Both path chips must be able to give up width. A chip that cannot shrink does not wrap when
+   the row runs out of room — it simply overlaps its neighbour, which is what the config label
+   did once Edit mode added the save controls beside it. */
+#doc-path,
+#config-path {
+    min-width: 0;
+    overflow: hidden;
+}
+
+#config-path .path-tail {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* The status-bar config path sits beside the document path, marked by a small gear. */
 .config-path[disabled] {
     cursor: default;
@@ -3976,5 +4256,63 @@ button.tab.tab-with-icon {
     .toast {
         transition: opacity 0.14s ease;
         transform: translate(-50%, 0);
+    }
+}
+
+/* The config label collapses first, and earlier than the document path. "No config file" is
+   pure status — the marker below and the tooltip already say it — whereas the path identifies
+   *which* document is open, so it earns its space longer. The label is also `nowrap`, so left
+   in place it overlaps the diagnostic counts rather than shrinking. */
+@media (width <= 900px) {
+    #config-path .path-head,
+    #config-path .path-tail {
+        display: none;
+    }
+
+    #config-path {
+        position: relative;
+        flex: 0 0 auto;
+        padding-inline: 0.25rem;
+    }
+
+    /* A config button reduced to a bare gear reads the same whether a dialogue.toml was found
+       or not, so mark the missing state explicitly. */
+    #config-path.config-missing::after {
+        content: "\00d7";
+        position: absolute;
+        right: 0;
+        bottom: -0.1rem;
+        color: var(--pico-del-color, #b3261e);
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+}
+
+/* Below this the document path drops to its icon too. Both buttons keep the tooltip carrying
+   their full path, so nothing is lost — it leaves the row as
+   mode · document · config · problems · help. */
+@media (width <= 720px) {
+    #doc-path .path-head,
+    #doc-path .path-tail {
+        display: none;
+    }
+
+    #doc-path {
+        flex: 0 0 auto;
+        padding-inline: 0.25rem;
+    }
+
+    .diagnostic-summary {
+        gap: 0.4rem;
+        padding-inline: 0.25rem;
+    }
+
+    .status-line {
+        gap: 0.3rem 0.5rem;
+    }
+
+    .app-footer .help-toggle {
+        margin-left: 0;
     }
 }

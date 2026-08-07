@@ -8,3 +8,9 @@
 # construct and the `Id` property — deliberately lowercase to match the syntax.
 # LanguageTool's ID_CASING wants "ID"; that is wrong for this vocabulary.
 ID_CASING
+
+# "a compile" is established vocabulary here — the compiler's own docs say
+# "Whether the compile ran to completion" and "a stage-boundary compile halted".
+# LanguageTool's A_INFINITIVE reads `compile` as a verb and objects to the
+# article; the noun is standard usage in this domain.
+A_INFINITIVE

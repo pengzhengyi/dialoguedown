@@ -16,7 +16,6 @@ import { initModeBadge } from "./mode-badge";
 import { initPathDisplay, initConfigPath } from "./path-display";
 import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
-import { initHelpToggle } from "./help";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
 import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
 import { initEmptyShell } from "./empty-shell";
@@ -400,4 +399,3 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
 
 initPathDisplay(report.path);
 initConfigPath(report.configuration);
-initHelpToggle();

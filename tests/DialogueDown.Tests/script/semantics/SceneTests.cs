@@ -13,7 +13,7 @@ public sealed class SceneTests
         Assert.Null(root.Heading);
         Assert.Equal(0, root.Level);
         Assert.Null(root.Anchor);
-        Assert.Empty(root.Children);
+        Assert.Empty(root.ChildScenes);
         Assert.Empty(root.Blocks);
     }
 
@@ -39,7 +39,7 @@ public sealed class SceneTests
         parent.AddChild(first);
         parent.AddChild(second);
 
-        Assert.Equal([first, second], parent.Children);
+        Assert.Equal([first, second], parent.ChildScenes);
     }
 
     [Fact]

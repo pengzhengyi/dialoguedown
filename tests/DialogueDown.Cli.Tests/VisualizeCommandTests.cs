@@ -176,21 +176,6 @@ public sealed class VisualizeCommandTests
     }
 
     [Fact]
-    public void Visualize_Pick_OpensTheEmptyShellEvenWithAScript()
-    {
-        using var script = new TempScript("# Scene");
-        var launcher = Launcher();
-        var tester = CliTester.Create(launcher: launcher);
-
-        tester.Run("visualize", script.Path, "--pick");
-
-        // --pick ignores the script and lands on the empty shell rooted at the current directory.
-        launcher.Received(1).RunAsync(
-            null, Directory.GetCurrentDirectory(), LaunchMode.View,
-            null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
     public void Visualize_MissingFile_FailsWithUsageError()
     {
         var tester = CliTester.Create(launcher: Launcher());

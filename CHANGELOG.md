@@ -10,9 +10,25 @@ changes easy to categorize.
 
 ### Added
 
+- **Dialogue graph — the compiler's final stage** — a clean compile now lowers its semantic
+  model into an immutable **dialogue graph**: one node per block (a line, a control line, a
+  choice, a random choice, a block conditional, and the terminal End) joined by typed edges
+  (fall-through, jump, choice option, random option, and conditional branch). Guards ride the
+  edge when they withhold a route and the node when they withhold a block's content, every
+  node carries the source it came from, and scenes are overlaid as named regions a jump can
+  enter. This is the artifact a future runtime walks to play a script — playing it is still to
+  come ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)). See the
+  [Dialogue Graph](docs/contributing/design-notes/Dialogue%20Graph.md) note.
+- **`ddown` shows usage examples** — the `compile` and `visualize` commands now list example
+  invocations in their `--help` output.
 - **Example scripts and a live demo gallery** — three genre examples (a high-rise fire-safety
   drill, an RPG quest, and a visual novel) plus a deliberately-broken diagnostics tour, published
   as a multi-example gallery on the docs demo site beside the original walkthrough script.
+- **Problems panel** — every diagnostic the compiler reports, listed in a footer drawer, with
+  each row jumping to the text it describes. The status line now carries error, warning, and
+  info counts that open it, so problems are visible from every tab instead of only as squiggles
+  inside the Source editor. Press `p` to open it. See the
+  [Problems Panel](docs/contributing/design-notes/Live%20Visualization%20-%20Problems%20Panel.md) note.
 - **Jump from the source to a stage** — right-click a selection in the Source editor (or press
   `Alt-J`) and choose **Jump to ▸** a compiler stage to open that tab with the enclosing node
   revealed and centered. It is the reverse of **Jump to source**, and works in View and Edit. See
@@ -26,7 +42,6 @@ changes easy to categorize.
   tab's side panel aside: the editor alone on Source and Config, the graph alone on the AST and
   Semantic Model tabs. `z` or `Esc` restores your layout exactly as it was. See the
   [Zen Mode](docs/contributing/design-notes/Live%20Visualization%20-%20Zen%20Mode.md) note.
-
 - **Block conditionals** — group dialogue, commands, choices, and jumps into connected
   blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
   `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
@@ -59,6 +74,23 @@ changes easy to categorize.
 
 ### Changed
 
+- **Tighter report layout.** The visualization report trims the chrome so more of
+  the window goes to content: a more compact header, the active-tab underline sits
+  under its label, the main area runs edge to edge, and the Source tab's preview
+  drops its redundant frame.
+- **A compile now succeeds or fails, and says which.** `Compile` returns a
+  `CompilationSuccess` carrying every stage artifact, or a `CompilationFailure` carrying how
+  far it got — instead of one result whose later artifacts might be missing. A script with an
+  error is a failure and produces no graph, since a model the compiler had to recover no
+  longer describes what you wrote; everything the compile did reach is still there, so the
+  report keeps showing a broken script's stages. `Source`, `HasErrors`, and
+  `LocatedDiagnostics` are unchanged. See the
+  [Compilation Outcome](docs/contributing/design-notes/Compilation%20Outcome.md) note.
+- **A jump to another file now warns instead of passing silently** — a target naming a file or
+  a URL (`=> [Meet Bob](chapter-02.md#meet-bob)`) reports **DLG2016** and leads nowhere, so
+  reading continues with the next line. Cross-file targets are not resolved yet
+  ([#59](https://github.com/pengzhengyi/dialoguedown/issues/59)); until they are, the warning
+  says so rather than leaving a jump that quietly goes nowhere.
 - **Core quality guardrails now fail the build.** The engine-agnostic core
   (`src/DialogueDown`) enforces its size and complexity limits as errors rather
   than warnings, forbids mutable global state (`CA2211`), and caps public methods
@@ -83,7 +115,7 @@ changes easy to categorize.
   VS Code-inspired colors in light and dark themes, including inside blockquotes;
   block-control keywords and `#END` also use separate keyword and constant hues.
 - **One unified report shell for `visualize`** — the standalone launcher picker page is gone.
-  `visualize` (or `--pick`) now opens the report shell directly on an **empty state** — the
+  `visualize` now opens the report shell directly on an **empty state** — the
   Explorer over your project beside a "create your first dialogue file" call to action — and
   `visualize <script>` opens that same shell on your script, so the Explorer sidebar is available
   whichever way you start and there is a single page to learn. Serving a script that links images

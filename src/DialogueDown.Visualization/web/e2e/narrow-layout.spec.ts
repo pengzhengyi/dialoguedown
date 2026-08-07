@@ -132,10 +132,11 @@ test("bounds the expanded help so it cannot starve the stage", async ({ page }) 
     const after = await page.evaluate(() => {
         const app = document.querySelector("#app")!.getBoundingClientRect();
         const shortcuts = document.querySelector(".shortcuts")!;
+        const scroller = document.querySelector(".drawer-bodies")!;
         return {
             appHeight: app.height,
             helpHeight: shortcuts.getBoundingClientRect().height,
-            helpScrolls: shortcuts.scrollHeight > shortcuts.clientHeight,
+            helpScrolls: scroller.scrollHeight > scroller.clientHeight,
         };
     });
 
@@ -234,11 +235,11 @@ test.describe("with too little height for a docked help panel", () => {
         const appBefore = await page.locator("#app").boundingBox();
 
         await page.locator("#help-toggle").click();
-        const panel = page.locator("#help-panel");
+        const panel = page.locator("#footer-drawer");
         await expect(panel).toBeVisible();
 
         const floating = await page.evaluate(() => {
-            const p = document.querySelector("#help-panel")!;
+            const p = document.querySelector("#footer-drawer")!;
             const footer = document.querySelector(".app-footer")!.getBoundingClientRect();
             const box = p.getBoundingClientRect();
             return {
@@ -263,7 +264,7 @@ test.describe("with too little height for a docked help panel", () => {
         expect(appAfter!.height).toBe(appBefore!.height);
 
         // And it closes from its own button, returning focus to the toggle that reopens it.
-        await page.locator("#help-close").click();
+        await page.locator(".drawer-close").click();
         await expect(panel).toBeHidden();
         await expect(page.locator("#help-toggle")).toBeFocused();
     });

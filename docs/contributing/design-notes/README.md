@@ -42,7 +42,7 @@ stage per note, in pipeline order; the facade note ties the stages together.
 flowchart LR
     FE["1. Markdown Front-End"] --> TR["2. Transpiler"]
     TR --> DS["3. Desugar"] --> SA["4. Semantic Analyzer"]
-    SA --> SF["5. Script Compiler Facade"]
+    SA --> SF["5. Script Compiler Facade"] --> GR["6. Dialogue Graph"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -53,6 +53,8 @@ flowchart LR
 | 3 | [Desugar](./Desugar.md) | Dialogue AST → normalized Dialogue AST (jump assembly, default speaker) | Implemented |
 | 4 | [Semantic Analyzer](./Semantic%20Analyzer.md) | Desugared AST → semantic model (speakers, scenes, resolved jumps) | Implemented |
 | 5 | [Script Compiler Facade](./Script%20Compiler%20Facade.md) | One `IScriptCompiler` seam over the stages + `AddDialogueDown` DI | Implemented |
+| 5a | [Compilation Outcome](./Compilation%20Outcome.md) | A facade detail: what one compile produces — a success carrying every artifact, or a failure carrying how far it got | Implemented |
+| 6 | [Dialogue Graph](./Dialogue%20Graph.md) | Semantic model → the immutable flow graph a runtime walks | Implemented |
 
 | 6 | [Error model](./Error%20Model.md) | The cross-cutting convention: collect a diagnostic, throw only when a stage cannot continue | Implemented |
 
@@ -185,6 +187,7 @@ flowchart TB
 | 26 | [Live Visualization — Line Debugger UI](./Live%20Visualization%20-%20Line%20Debugger%20UI.md) | Dormant CodeMirror debugger presentation layer behind a runtime-neutral controller seam | Implemented (dormant) |
 | 27 | [Live Visualization — Zen Mode](./Live%20Visualization%20-%20Zen%20Mode.md) | A deeper full screen that also steps the tab's secondary panel aside, leaving the editor or the graph alone | Implemented |
 | 28 | [Live Visualization — Narrow Screen Layout](./Live%20Visualization%20-%20Narrow%20Screen%20Layout.md) | The report on a phone: a one-line scrolling tab strip, a turned Explorer seam, and panels bounded by the viewport so the stage keeps its room | Implemented |
+| 29 | [Live Visualization — Problems Panel](./Live%20Visualization%20-%20Problems%20Panel.md) | Every diagnostic as a navigable list in a tabbed footer drawer, summarized on the status line so problems are visible from every tab | Implemented |
 | 29 | [Live Visualization — Reverse Jump](./Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
 
 ### Other notes
