@@ -50,6 +50,8 @@
     href: Compilation Mode Configuration.md
 - name: Diagnostics
   items:
+  - name: Error Model
+    href: Error Model.md
   - name: Diagnostics and Validation
     href: Diagnostics and Validation.md
   - name: Choice Nesting Diagnostic
@@ -120,6 +122,12 @@
     href: Jump-Target Completion.md
   - name: Live Visualization — Line Debugger UI
     href: Live Visualization - Line Debugger UI.md
+  - name: Live Visualization — Zen Mode
+    href: Live Visualization - Zen Mode.md
+  - name: Live Visualization — Narrow Screen Layout
+    href: Live Visualization - Narrow Screen Layout.md
+  - name: Live Visualization — Reverse Jump
+    href: Live Visualization - Reverse Jump.md
 - name: Other notes
   items:
   - name: BBCode Rendering

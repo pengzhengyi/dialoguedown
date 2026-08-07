@@ -117,7 +117,7 @@ measured slower than a direct project run on the development machine, so it is
 not part of the recommended loop.
 
 ```bash
-dotnet test DialogueDown.sln --configuration Release
+dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 ```
 
 Run source-focused coverage when you change tested behavior (see

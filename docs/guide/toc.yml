@@ -1,9 +1,18 @@
 - name: Overview
   href: overview.md
+- name: Your first script
+  href: first-script.md
 - name: Command line
   href: cli.md
 - name: Script language
   href: script-language.md
+  items:
+    - name: Speakers and lines
+      href: speakers-and-lines.md
+    - name: Game state
+      href: game-state.md
+    - name: Structure and flow
+      href: structure-and-flow.md
 - name: Project configuration
   href: configuration.md
 - name: Error codes

@@ -7,12 +7,16 @@ import {
     drawSelection,
     rectangularSelection,
     crosshairCursor,
+    Decoration,
+    type DecorationSet,
 } from "@codemirror/view";
 import {
     EditorState,
     EditorSelection,
     Prec,
     Compartment,
+    StateField,
+    StateEffect,
     type Extension,
     type StateCommand,
 } from "@codemirror/state";
@@ -45,7 +49,7 @@ import {
     unquoteSelection,
     headingFoldEndLine,
 } from "./editor-commands";
-import { openContextMenu } from "./context-menu";
+import { openContextMenu, type ContextMenuItem } from "./context-menu";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
 import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
@@ -59,13 +63,16 @@ import {
     type DialogueSymbolProvider,
     EMPTY_SYMBOLS,
     type LspDiagnostic,
+    type ReservedTarget,
     type SemanticToken,
+    type Span,
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument } from "./text";
 import type { DebugController } from "./debug-controller";
 import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
+import { reservedTargetsPanel, setEditorReservedTargets } from "./reserved-targets-panel";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -172,10 +179,10 @@ const smartTab = (view: EditorView): boolean => {
  *   on macOS a held Cmd can surface `event.key` as the unshifted `.` even with Shift — which made
  *   the plain CodeMirror keymap binding for `>` / `<` unreliable in Chrome and Safari. Comma is
  *   deliberately avoided, since `Cmd/Ctrl+,` is Preferences in most apps.
- * - **contextmenu** opens the shared menu of surround actions (bold, italic, strikethrough, quote,
- *   unquote); each dispatches the matching command over the current selection.
+ * - **contextmenu** is handled per instance (it must also open in read-only View), so it is not
+ *   wired here — see the editor's context-menu handler built in {@link createSourceView}.
  *
- * In View, both defer to the browser (selection copy, its own menu).
+ * In View, the keydown shortcuts defer to the browser (selection copy, its own menu).
  */
 const surroundHandlers = EditorView.domEventHandlers({
     keydown(event, view) {
@@ -186,22 +193,75 @@ const surroundHandlers = EditorView.domEventHandlers({
         else quoteSelection(view);
         return true;
     },
-    contextmenu(event, view) {
-        if (view.state.readOnly) return false;
-        openContextMenu(event, [
-            { icon: "bold", label: "Bold", run: () => runInEditor(view, toggleWrap("**")) },
-            { icon: "italic", label: "Italic", run: () => runInEditor(view, toggleWrap("*")) },
-            {
-                icon: "strikethrough",
-                label: "Strikethrough",
-                run: () => runInEditor(view, toggleWrap("~~")),
-            },
-            { icon: "quote", label: "Quote", run: () => runInEditor(view, quoteSelection) },
-            { icon: "remove", label: "Unquote", run: () => runInEditor(view, unquoteSelection) },
-        ]);
-        return true;
-    },
 });
+
+/** Toggles the faint highlight over the source span a hovered Jump-to target would reveal. */
+const setJumpPreviewEffect = StateEffect.define<{ from: number; to: number } | null>();
+
+const jumpPreviewMark = Decoration.mark({ class: "dd-jump-preview" });
+
+const jumpPreviewField = StateField.define<DecorationSet>({
+    create: () => Decoration.none,
+    update(preview, transaction) {
+        for (const effect of transaction.effects) {
+            if (effect.is(setJumpPreviewEffect)) {
+                const span = effect.value;
+                return span && span.to > span.from
+                    ? Decoration.set([jumpPreviewMark.range(span.from, span.to)])
+                    : Decoration.none;
+            }
+        }
+        return preview.map(transaction.changes);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+});
+
+function setJumpPreview(view: EditorView, span: { from: number; to: number } | null): void {
+    view.dispatch({ effects: setJumpPreviewEffect.of(span) });
+}
+
+/** The stage rows for the reverse Jump-to menu, each carrying the current source selection. */
+function jumpMenuItems(
+    view: EditorView,
+    jumpTargets: readonly SourceJumpTarget[],
+): ContextMenuItem[] {
+    const { from, to } = view.state.selection.main;
+    return jumpTargets.map((target) => ({
+        label: target.title,
+        run: () => target.run(from, to),
+        // On hover, preview the span this jump would land on — the enclosing node in that stage.
+        onHover: () => {
+            const span = target.preview(from, to);
+            setJumpPreview(view, span ? { from: span.start, to: span.end } : null);
+        },
+        onBlur: () => setJumpPreview(view, null),
+    }));
+}
+
+/** The caret's screen coordinates, or `null` off-screen or without layout (e.g. jsdom throws). */
+function caretCoords(view: EditorView): { left: number; bottom: number } | null {
+    try {
+        return view.coordsAtPos(view.state.selection.main.head);
+    } catch {
+        return null;
+    }
+}
+
+/** Open the reverse Jump-to picker at the caret — the keyboard entry to the "shortcut series". */
+function openJumpMenuAtCaret(view: EditorView, jumpTargets: readonly SourceJumpTarget[]): boolean {
+    if (jumpTargets.length === 0) return false;
+    const editor = view.dom.getBoundingClientRect();
+    const caret = caretCoords(view);
+    openContextMenu(
+        new MouseEvent("contextmenu", {
+            clientX: caret ? caret.left : editor.left + 8,
+            clientY: caret ? caret.bottom : editor.top + 8,
+        }),
+        jumpMenuItems(view, jumpTargets),
+        () => setJumpPreview(view, null),
+    );
+    return true;
+}
 
 /** Bounds for the draggable split, as a fraction of the container width. */
 const MIN_RATIO = 0.2;
@@ -219,8 +279,26 @@ export interface SourceViewOptions {
      * completions); a served session supplies a provider over its latest compile.
      */
     symbols?: DialogueSymbolProvider;
+    /** Language-owned jump targets shown in the fixed, read-only bottom panel. */
+    reservedTargets?: readonly ReservedTarget[];
+    /**
+     * Reverse-navigation destinations for the **Jump to ▸ \<stage\>** context menu: each
+     * compiler-stage tab a source selection can reach, with `run` revealing the node that
+     * encloses the selection. Empty for a bare render with no stages.
+     */
+    jumpTargets?: readonly SourceJumpTarget[];
     /** Optional line-debugger controller. Absent in every ordinary report. */
     debug?: DebugController;
+}
+
+/** One reverse-jump destination: a stage tab, and the action that reveals its enclosing node. */
+export interface SourceJumpTarget {
+    /** The destination stage tab's title, shown in the Jump-to submenu. */
+    title: string;
+    /** Reveal, in this stage, the node whose span encloses the source selection `[from, to)`. */
+    run(from: number, to: number): void;
+    /** The source span of that enclosing node, previewed on hover; `null` when none matches. */
+    preview(from: number, to: number): Span | null;
 }
 
 /** A handle to a live source view, letting the mode controller reconfigure it in place. */
@@ -245,6 +323,8 @@ export interface SourceViewHandle {
      * clears the highlighting — called on load, a hot-reload, or a save.
      */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
+    /** Replace the language-owned targets shown below the source document. */
+    setReservedTargets(targets: readonly ReservedTarget[]): void;
     /**
      * Select the half-open `[from, to)` range, scroll it into view, and focus the editor — a
      * "jump to source" landing on the text a graph node came from. A zero-width range (`from ===
@@ -307,7 +387,14 @@ export function createSourceView(
     source: string,
     options: SourceViewOptions = {},
 ): SourceViewHandle {
-    const { editable = false, onChange, symbols = () => EMPTY_SYMBOLS, debug } = options;
+    const {
+        editable = false,
+        onChange,
+        symbols = () => EMPTY_SYMBOLS,
+        reservedTargets = [],
+        jumpTargets = [],
+        debug,
+    } = options;
 
     // The document-aware completions are an Edit-only authoring aid, so they live in the
     // editability compartment alongside the other Edit-only aids.
@@ -346,6 +433,45 @@ export function createSourceView(
         }
     });
 
+    // The editor's right-click menu, always installed so it opens in read-only View too: reverse
+    // **Jump to ▸ <stage>** (whenever the report has stages), plus the surround actions in Edit.
+    const contextMenu = EditorView.domEventHandlers({
+        contextmenu(event, view) {
+            const items: ContextMenuItem[] = [];
+            if (jumpTargets.length > 0) {
+                items.push({
+                    icon: "go-to-file",
+                    label: "Jump to",
+                    submenu: jumpMenuItems(view, jumpTargets),
+                });
+            }
+            if (!view.state.readOnly) {
+                items.push(
+                    { icon: "bold", label: "Bold", run: () => runInEditor(view, toggleWrap("**")) },
+                    {
+                        icon: "italic",
+                        label: "Italic",
+                        run: () => runInEditor(view, toggleWrap("*")),
+                    },
+                    {
+                        icon: "strikethrough",
+                        label: "Strikethrough",
+                        run: () => runInEditor(view, toggleWrap("~~")),
+                    },
+                    { icon: "quote", label: "Quote", run: () => runInEditor(view, quoteSelection) },
+                    {
+                        icon: "remove",
+                        label: "Unquote",
+                        run: () => runInEditor(view, unquoteSelection),
+                    },
+                );
+            }
+            if (items.length === 0) return false;
+            openContextMenu(event, items, () => setJumpPreview(view, null));
+            return true;
+        },
+    });
+
     const view = new EditorView({
         parent: sourcePane,
         state: EditorState.create({
@@ -357,6 +483,12 @@ export function createSourceView(
                 foldGutter(),
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
+                reservedTargetsPanel(),
+                jumpPreviewField,
+                contextMenu,
+                keymap.of([
+                    { key: "Alt-j", run: (view) => openJumpMenuAtCaret(view, jumpTargets) },
+                ]),
                 headingSlugHints(),
                 foldHeadings,
                 codeFolding(),
@@ -386,6 +518,7 @@ export function createSourceView(
             ],
         }),
     });
+    setEditorReservedTargets(view, reservedTargets);
     if (debug) {
         debugToolbar = createDebugToolbar(debug, {
             toggleBreakpoint: () => {
@@ -440,6 +573,7 @@ export function createSourceView(
         getContent: () => view.state.doc.toString(),
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
         setSemanticTokens: (tokens) => setEditorSemanticTokens(view, tokens),
+        setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
         selectRange: (from, to) => {
             // Clamp to the document and order the pair, so a stale span can only ever land the
             // cursor in-bounds rather than throw. A zero-width range collapses to a caret.

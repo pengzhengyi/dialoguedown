@@ -112,7 +112,7 @@ self-invoking it**.
 | `CliConfigurator` | Configure the app: name, version, the subcommands, and the exception handler that maps exceptions to a clean message and an exit code. | `IConfigurator`, `ExitCodes` |
 | `CliServices` | Register the CLI's services (the `IScriptCompiler` seam) for injection. | `IServiceCollection` |
 | `TypeRegistrar` / `TypeResolver` | Adapt Spectre's `ITypeRegistrar`/`ITypeResolver` onto `Microsoft.Extensions.DependencyInjection`, so commands get constructor-injected services. | `IServiceCollection` |
-| `CompileCommand` + `CompileSettings` | The `compile` command shell: `<script>` argument (plus `-o` / `--output`), validate, then invoke the seam. | `IScriptCompiler` |
+| `CompileCommand` + `CompileSettings` | The `compile` command shell: `<script>` argument, validate, then invoke the seam. | `IScriptCompiler` |
 | `VisualizeCommand` + `VisualizeSettings` | The `visualize` command shell: `<script>` argument, validate, then invoke the seam. | `IScriptCompiler` |
 | `IScriptCompiler` | The seam: `Compile(source) → CompilationResult`. The single place compilation happens. | `CompilationResult` |
 | `CompilationResult` | The compiled form of a script (placeholder; enriched by the transpiler). | — |
@@ -223,7 +223,7 @@ this `CommandApp`, contributing the real command body. One CLI, one parser.
   and moves its renderer under `visualize`, consuming `IScriptCompiler`; the old
   `System.CommandLine` entry point is removed (D9).
 - **Error model.** When real compilation lands, the commands surface the library's
-  [error model](./README.md#error-model) (`ScriptCompilationException` and its
+  [error model](./Error%20Model.md) (`ScriptCompilationException` and its
   kinds) as friendly CLI messages; the skeleton only needs the not-implemented
   path.
 

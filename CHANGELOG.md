@@ -19,6 +19,24 @@ changes easy to categorize.
   enter. This is the artifact a future runtime walks to play a script — playing it is still to
   come ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)). See the
   [Dialogue Graph](docs/contributing/design-notes/Dialogue%20Graph.md) note.
+- **`ddown` shows usage examples** — the `compile` and `visualize` commands now list example
+  invocations in their `--help` output.
+- **Example scripts and a live demo gallery** — three genre examples (a high-rise fire-safety
+  drill, an RPG quest, and a visual novel) plus a deliberately-broken diagnostics tour, published
+  as a multi-example gallery on the docs demo site beside the original walkthrough script.
+- **Jump from the source to a stage** — right-click a selection in the Source editor (or press
+  `Alt-J`) and choose **Jump to ▸** a compiler stage to open that tab with the enclosing node
+  revealed and centered. It is the reverse of **Jump to source**, and works in View and Edit. See
+  [Reverse Jump](docs/contributing/design-notes/Live%20Visualization%20-%20Reverse%20Jump.md).
+- **Fixed End sentinel in the Source editor** — the compiler-projected `#END` target now appears
+  in a read-only row below the source with an infinity marker; clicking it copies
+  `[End](#END)`. It is reserved-target metadata, not a synthetic heading or source line, leaving
+  the same panel seam for a future `#START` entry target once its semantics are defined. See
+  [Progression order](docs/contributing/design-notes/Progression%20Order.md).
+- **Zen mode in the report** — press `z` for a deeper full screen that also steps the active
+  tab's side panel aside: the editor alone on Source and Config, the graph alone on the AST and
+  Semantic Model tabs. `z` or `Esc` restores your layout exactly as it was. See the
+  [Zen Mode](docs/contributing/design-notes/Live%20Visualization%20-%20Zen%20Mode.md) note.
 - **Block conditionals** — group dialogue, commands, choices, and jumps into connected
   blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
   `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
@@ -64,6 +82,15 @@ changes easy to categorize.
   reading continues with the next line. Cross-file targets are not resolved yet
   ([#59](https://github.com/pengzhengyi/dialoguedown/issues/59)); until they are, the warning
   says so rather than leaving a jump that quietly goes nowhere.
+- **Core quality guardrails now fail the build.** The engine-agnostic core
+  (`src/DialogueDown`) enforces its size and complexity limits as errors rather
+  than warnings, forbids mutable global state (`CA2211`), and caps public methods
+  per type via an architecture test. The CLI and visualization projects stay
+  exempt. See [Contributing](CONTRIBUTING.md#core-quality-guardrails).
+- **Faster local .NET test feedback** — the documented contributor command and default VS Code
+  test task now execute test projects with three MSBuild workers, reducing the measured warm
+  local median by 28.8%. CI, release validation, builds, and coverage remain serial because their
+  measurements did not improve.
 - **One place to edit — the Source tab.** The graph tabs' node-details panel is now read-only
   on every tab, matching the Semantic Model tab, and **Jump to source** takes you to the node's
   text with its span selected. Editing a node in the side panel is gone: it duplicated the
@@ -79,7 +106,7 @@ changes easy to categorize.
   VS Code-inspired colors in light and dark themes, including inside blockquotes;
   block-control keywords and `#END` also use separate keyword and constant hues.
 - **One unified report shell for `visualize`** — the standalone launcher picker page is gone.
-  `visualize` (or `--pick`) now opens the report shell directly on an **empty state** — the
+  `visualize` now opens the report shell directly on an **empty state** — the
   Explorer over your project beside a "create your first dialogue file" call to action — and
   `visualize <script>` opens that same shell on your script, so the Explorer sidebar is available
   whichever way you start and there is a single page to learn. Serving a script that links images
@@ -88,6 +115,16 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The report on a narrow window or a phone** — the stage now keeps the room it needs. The
+  stage tabs stay on one horizontally scrolling row instead of wrapping onto three, with the
+  Zen and full-screen controls pinned beside them; the Explorer turns into a compact top
+  section with a working collapse seam rather than an invisible one; and the expanded help
+  panel is bounded so it can no longer paint over the editor, and on a short window it floats
+  over the stage instead of being squeezed into an unreadable strip. Arrow buttons appear
+  beside the tabs when they overflow, so a mouse without horizontal scrolling can still reach
+  every stage. At 390px the stage went from a quarter of the window to just over half. See the
+  [Narrow Screen Layout](docs/contributing/design-notes/Live%20Visualization%20-%20Narrow%20Screen%20Layout.md)
+  note.
 - **Graph zoom focus is visually lighter** — the editable percentage now uses a theme-accent
   underline instead of a rounded input focus ring inside the compact toolbar.
 - **Diagnostic popovers stay visible at editor edges** — hover messages now overlay the report

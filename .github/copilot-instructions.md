@@ -22,7 +22,7 @@ A plain `dotnet build` needs no Node — the built web report is committed.
 # .NET library, CLI, and tests
 dotnet restore DialogueDown.sln
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 
 # Source-focused coverage (CI fails below 90% line coverage, warns below 100%)
 dotnet tool restore

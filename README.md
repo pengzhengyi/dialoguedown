@@ -103,7 +103,7 @@ Restore, build, and test the solution:
 ```bash
 dotnet restore DialogueDown.sln
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln
+dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 ```
 
 To collect source-focused coverage for the core library:

@@ -189,7 +189,9 @@ public sealed class CompilationVisualizerTests
         var html = new CompilationVisualizer(compiler).RenderHtmlReport("broken");
 
         Assert.Contains(
-            "\"symbols\":{\"jumpTargets\":[],\"speakers\":[],\"speakerIds\":[],\"tags\":[]}",
+            "\"symbols\":{\"jumpTargets\":[{\"slug\":\"END\",\"heading\":\"End the run\"}],"
+            + "\"speakers\":[],\"speakerIds\":[],\"tags\":[],"
+            + "\"reservedTargets\":[{\"anchor\":\"END\",\"label\":\"End\",\"role\":\"Terminal\"}]}",
             html,
             StringComparison.Ordinal);
     }

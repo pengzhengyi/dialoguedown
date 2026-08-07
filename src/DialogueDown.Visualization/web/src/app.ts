@@ -4,18 +4,22 @@ import type {
     StageUnavailable,
     ConfigReport,
     LspDiagnostic,
+    ReservedTarget,
     SemanticToken,
     DialogueSymbolProvider,
     DisplayNode,
+    Span,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
 import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
 import { GraphCameraStore } from "./graph-camera";
-import { createSourceView, type SourceViewHandle } from "./source-view";
+import { createSourceView, type SourceViewHandle, type SourceJumpTarget } from "./source-view";
+import { findEnclosingNode } from "./enclosing-node";
 import { createConfigView, type ConfigViewHandle, type ConfigViewOptions } from "./config-view";
 import { consumeOpenConfigTab } from "./config-create";
-import { rememberActiveTab, rememberedActiveTab } from "./active-tab";
+import { rememberActiveTab, rememberedActiveTab, revealActiveTab } from "./active-tab";
+import { createTabScroller } from "./tab-scroller";
 import { createSemanticView } from "./semantic-view";
 import { initResizer } from "./resizer";
 import { initFullscreen } from "./fullscreen";
@@ -90,6 +94,8 @@ export interface AppController {
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** Replace the Source editor's semantic-token highlighting after a recompile. */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
+    /** Replace the fixed panel's language-owned jump targets after a recompile. */
+    setReservedTargets(targets: readonly ReservedTarget[]): void;
     /** Switch the config (TOML) editor between editable (Edit) and read-only (View) in place. */
     setConfigEditable(editable: boolean): void;
     /** Replace the config editor's content — a discard/restore of the last saved TOML. */
@@ -156,9 +162,37 @@ export function runApp(
         if (source?.beginNavigation) source.beginNavigation(land);
         else land();
     }
+
+    // Reverse of `jumpToSource`: from a Source selection, reveal the enclosing node in a stage.
+    // Reads the *live* stage set (not a build-time snapshot) so it stays correct after a save
+    // rebuilds the stages, then routes through the same save-safe navigation guard.
+    function jumpToStageByTitle(title: string, from: number, to: number): void {
+        const stage = currentStages.find((candidate) => candidate.title === title);
+        if (stage == null || stage.unavailable != null) return;
+        const match = findEnclosingNode(stage.nodes, stage.edges, from, to);
+        if (match == null) return;
+        const index = titles.indexOf(title);
+        if (index < 0) return;
+        const land = (): void => {
+            activate(index);
+            views[index]?.selectById(match.node.id, { center: true });
+        };
+        if (source?.beginNavigation) source.beginNavigation(land);
+        else land();
+    }
+    // The source span of the node a reverse jump would land on, for the hover preview. Reads the
+    // live stage set, like the jump itself.
+    function enclosingSpanByTitle(title: string, from: number, to: number): Span | null {
+        const stage = currentStages.find((candidate) => candidate.title === title);
+        if (stage == null || stage.unavailable != null) return null;
+        return findEnclosingNode(stage.nodes, stage.edges, from, to)?.extent ?? null;
+    }
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).
     let views: (TreeView | null)[] = [];
+    // The stages of the latest render, kept live for reverse Jump-to lookups: a save replaces
+    // them through `updateStages`, and the Source view (with its Jump-to menu) outlives that.
+    let currentStages: readonly Stage[] = [];
     // Per tab: its camera-store key — the stage title for a graph tab, or null for
     // the Source tab (which has no graph and no camera).
     let keys: (string | null)[] = [];
@@ -184,10 +218,17 @@ export function runApp(
     // so it gets one app-level control (at the right end of the tab-nav row) plus the
     // `f` / Escape keys, rather than a copy in every tab. Wired once for the app's lifetime.
     const fullscreen = initFullscreen();
-    const maximizeButton = installMaximizeControls(
-        tabsEl.parentElement ?? appEl,
+    // Arrow controls for the tab row, for readers whose pointing device cannot scroll
+    // horizontally. They flank the row and hide themselves whenever it already fits.
+    const tabScroller = createTabScroller(tabsEl);
+    document.getElementById("tab-arrows-before")?.appendChild(tabScroller.previous);
+    document.getElementById("tab-arrows-after")?.appendChild(tabScroller.next);
+
+    const focusControls = installMaximizeControls(
+        document.getElementById("tabbar-actions") ?? tabsEl.parentElement ?? appEl,
         appEl,
         fullscreen.toggle,
+        fullscreen.toggleZen,
     );
 
     build(report);
@@ -228,6 +269,7 @@ export function runApp(
         setContent: (next) => sourceHandle?.setContent(next),
         setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
         setSemanticTokens: (tokens) => sourceHandle?.setSemanticTokens(tokens),
+        setReservedTargets: (targets) => sourceHandle?.setReservedTargets(targets),
         setConfigEditable: (next) => configHandle?.setEditable(next),
         setConfigContent: (next) => configHandle?.setContent(next),
         updateConfig: (config) => configHandle?.updateConfig(config),
@@ -256,6 +298,7 @@ export function runApp(
         titles = [];
         sourcePresent = report.source != null;
         configPresent = report.configuration != null;
+        currentStages = report.stages;
 
         // The Config tab comes first (a gear icon marks it), but the report still opens on
         // Source below — Config is one click away for a reader who just wants the dialogue.
@@ -275,9 +318,20 @@ export function runApp(
         if (report.source != null) {
             const section = document.createElement("section");
             section.className = "stage source-stage";
+            // One reverse-jump target per available stage; each resolves against the live stage
+            // set at click time, so it survives a save that rebuilds the stages.
+            const jumpTargets: SourceJumpTarget[] = report.stages
+                .filter((stage) => stage.unavailable == null)
+                .map((stage) => ({
+                    title: stage.title,
+                    run: (from, to) => jumpToStageByTitle(stage.title, from, to),
+                    preview: (from, to) => enclosingSpanByTitle(stage.title, from, to),
+                }));
             sourceHandle = createSourceView(report.source, {
                 ...(source ? { editable: source.editable, onChange: source.onChange } : {}),
                 ...(source?.symbols ? { symbols: source.symbols } : {}),
+                reservedTargets: report.symbols?.reservedTargets ?? [],
+                jumpTargets,
                 ...(debug ? { debug } : {}),
             });
             sourceHandle.setDiagnostics(report.diagnostics ?? []);
@@ -289,9 +343,11 @@ export function runApp(
         for (const stage of report.stages) {
             addStageTab(stage);
         }
-        // The whole-window maximize control only makes sense with a tab to maximize; the empty
-        // state (no config, source, or stages) has none, so hide it there.
-        maximizeButton.hidden = views.length === 0;
+        // The focus-mode controls only make sense with a tab to focus; the empty state (no
+        // config, source, or stages) has none, so hide them there.
+        const nothingToFocus = views.length === 0;
+        focusControls.maximize.hidden = nothingToFocus;
+        focusControls.zen.hidden = nothingToFocus;
         // Open on the tab the reader last had open (remembered across a refresh), else Source
         // when present (after the Config tab), else the first available tab — unless a
         // just-created config asked the reloaded page to land on the Config tab. A disabled
@@ -320,6 +376,7 @@ export function runApp(
     // cancels safely and the inspector clears.
     function updateStages(stages: Stage[]): void {
         const reselectId = selectedNodeId;
+        currentStages = stages;
         const keep = (configPresent ? 1 : 0) + (sourcePresent ? 1 : 0);
         while (tabsEl.children.length > keep) tabsEl.lastElementChild!.remove();
         while (stagesEl.children.length > keep) stagesEl.lastElementChild!.remove();
@@ -451,6 +508,10 @@ export function runApp(
         activeIndex = index;
         rememberActiveTab(titles[index]);
         Array.from(tabsEl.children).forEach((el, i) => el.classList.toggle("active", i === index));
+        // Settle the arrows first: showing them narrows the row, so revealing the active tab
+        // against the pre-arrow width would leave it clipped by the arrow that just appeared.
+        tabScroller.refresh();
+        revealActiveTab(tabsEl);
         Array.from(stagesEl.children).forEach((el, i) =>
             el.classList.toggle("active", i === index),
         );

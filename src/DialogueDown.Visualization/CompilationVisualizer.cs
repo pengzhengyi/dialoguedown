@@ -244,7 +244,7 @@ public sealed class CompilationVisualizer
                 SemanticProjection.Unavailable(StageUnavailableReason),
             ];
         var symbols = semantics is null
-            ? SymbolSet.Empty
+            ? SymbolSet.Baseline
             : new SymbolProjection().Project(semantics);
         var configuration = _configuration is null
             ? null

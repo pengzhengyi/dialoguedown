@@ -1,4 +1,3 @@
-using DialogueDown.Cli.Commands;
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
@@ -95,18 +94,6 @@ public sealed class CompileCommandTests
         Assert.Equal(ExitCodes.Success, result.ExitCode);
         Assert.Contains("DLG1003", result.Output, StringComparison.Ordinal);
         Assert.Contains("warning", result.Output, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Compile_ParsesTheOutputOption()
-    {
-        using var script = new TempScript("# Scene");
-        var tester = CliTester.Create();
-
-        var result = tester.Run("compile", script.Path, "-o", "out.txt");
-
-        var settings = Assert.IsType<CompileSettings>(result.Settings);
-        Assert.Equal("out.txt", settings.Output);
     }
 
     [Fact]

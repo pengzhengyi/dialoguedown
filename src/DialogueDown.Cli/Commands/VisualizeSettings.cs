@@ -20,10 +20,6 @@ internal sealed class VisualizeSettings : CommandSettings
     [Description("Open the report in Edit mode (editable, saves back to the file). Default: View (read-only, auto-updating).")]
     public bool Edit { get; init; }
 
-    [CommandOption("--pick")]
-    [Description("Always open the launcher, even when the script and root are given.")]
-    public bool Pick { get; init; }
-
     [CommandOption("-o|--output <path>")]
     [Description("Write a self-contained report to this path (a non-interactive export; requires a script).")]
     public string? Output { get; init; }

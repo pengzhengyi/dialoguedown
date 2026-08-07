@@ -29,7 +29,7 @@ Clone the repository and run:
 ```bash
 dotnet restore DialogueDown.sln
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 ```
 
 To collect coverage focused on production source code:
@@ -51,12 +51,31 @@ report is written to `coverage-report/index.html`.
 
 CI fails below 90% line coverage and warns below 100%.
 
+### Core quality guardrails
+
+The core library (`src/DialogueDown`) holds itself to size, complexity, and
+shape limits that **fail the build** on a regression (they are analyzer errors,
+not warnings). The CLI and visualization projects are intentionally exempt.
+
+- **Size and complexity** — SonarAnalyzer caps method length (≤ 40 lines), file
+  length (≤ 400 lines), parameters (≤ 7), and cyclomatic (≤ 10) / cognitive
+  (≤ 15) complexity. Thresholds live in `src/DialogueDown/SonarLint.xml`;
+  severities and scope in `.editorconfig`.
+- **No mutable global state** — `CA2211` forbids externally visible non-constant
+  static fields.
+- **No God classes** — an architecture test caps public methods per core type
+  (≤ 20); private helpers are not counted, so decomposing into small methods is
+  encouraged.
+
+Use the `build: fast` task (analyzers off) for the inner loop, but run the
+normal analyzer-enabled `build`/`test` before pushing.
+
 ### Visualization frontend (`web/`)
 
 The compilation report's client is a self-contained TypeScript + Vite project in
 `src/DialogueDown.Visualization/web/`. The .NET library embeds its **built**
 single-file report (`web/dist/report.html`), which is committed to the repo, so a
-plain `dotnet build` needs no Node. You only need Node (20+) to change the client:
+plain `dotnet build` needs no Node. You only need Node (24+) to change the client:
 
 ```bash
 cd src/DialogueDown.Visualization/web
@@ -123,7 +142,7 @@ Before opening a pull request:
 
 - [ ] Add or update tests for behavior changes.
 - [ ] Update documentation for public API or script-language changes.
-- [ ] Run `dotnet test DialogueDown.sln`.
+- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build -m:3`.
 - [ ] Run source-focused coverage when changing tested behavior.
 - [ ] If you changed the visualization frontend (`web/`), rebuild and commit `web/dist/report.html` (CI auto-commits it if you forget).
 - [ ] Keep the pull request focused on one topic.

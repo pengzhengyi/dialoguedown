@@ -151,6 +151,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             currentSymbols = applied.symbols ?? EMPTY_SYMBOLS;
             app.setDiagnostics(applied.diagnostics ?? []);
             app.setSemanticTokens(applied.semanticTokens ?? []);
+            app.setReservedTargets(currentSymbols.reservedTargets);
         },
         diskSource: (applied) => applied.source ?? "",
     };
@@ -184,6 +185,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             // A config recompile also changes the dialogue's highlighting (a newly known
             // speaker), so refresh the semantic tokens from the same report.
             app.setSemanticTokens(applied.semanticTokens ?? []);
+            app.setReservedTargets(currentSymbols.reservedTargets);
         },
         diskSource: (applied) => applied.configuration?.file?.source ?? "",
         // The speakers pane is stale whenever the buffer's config is not the compiled report.

@@ -41,7 +41,7 @@
 A writer often wants a single line to appear only under some game-state
 condition — a guard who mutters a threat only when angry, a narrator who adds a
 sentence only on a return visit, a companion whose aside depends on a flag.
-Today a [line](../Markdown%20to%20Dialogue%20AST%20Transpiler.md) is
+Today a [line](./Markdown%20to%20Dialogue%20AST%20Transpiler.md) is
 unconditional: it always plays.
 
 The [Conditional Jump](./Conditional%20Jump.md) note added the **condition**
@@ -101,7 +101,7 @@ The **condition**, **check**, and **guard-first** terms carry over unchanged.
 
 ## Writer-facing behavior
 
-A condition is the game-state [query](../../guide/script-language.md#queries) you
+A condition is the game-state [query](../../guide/game-state.md#queries) you
 already write, with a `?` added inside the code span (see the
 [query-and-sigil family](./Conditional%20Jump.md#writer-facing-behavior)). Place
 it at the *start of a line* and the whole line becomes conditional:

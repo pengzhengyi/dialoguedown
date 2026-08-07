@@ -13,6 +13,13 @@ const SOURCE_HELP = `
      link uses a bundled Fira Code ligature. The Source editor and saved script still keep
      the literal <kbd>=</kbd> and <kbd>&gt;</kbd> characters.</p>
   <p><strong>Preview links</strong> jump to their headings within the preview.</p>
+  <p><strong>Reserved targets.</strong> The fixed row below the editor shows language-owned
+     destinations that are not source headings. <strong>End</strong> (<kbd>#END</kbd>) uses an
+     infinity marker; click the row to copy <kbd>[End](#END)</kbd>.</p>
+  <p><strong>Jump to a stage.</strong> <strong>Right-click</strong> a selection (or press
+     <kbd>Alt-J</kbd>) and choose <strong>Jump to&nbsp;▸</strong> a compiler stage to open that
+     tab with the enclosing node revealed and centered — the reverse of <strong>Jump to
+     source</strong>. Works in View and Edit.</p>
   <p><strong>Drag the divider</strong> between the panes to re-proportion them, or use its
      <strong>hide handle</strong> to collapse the preview and give the editor the full
      width (click again to bring it back).</p>
@@ -46,6 +53,9 @@ const SOURCE_HELP = `
   <p><strong>Full screen</strong> (bottom-right ⤢, or press <kbd>f</kbd> outside the
      editor): fill the window with the source and preview; <kbd>f</kbd> or <kbd>Esc</kbd>
      to leave.</p>
+  <p><strong>Zen mode</strong> (the tab-row ⊟ button, or <kbd>z</kbd> outside the editor): full screen, plus the
+     side pane steps aside so you work with the editor alone. <kbd>z</kbd> or <kbd>Esc</kbd>
+     to leave — your pane and panel choices come back exactly as they were.</p>
 `;
 
 const GRAPH_HELP = `
@@ -62,7 +72,9 @@ const GRAPH_HELP = `
   <p><strong>Zoom controls</strong> (bottom-right): <kbd>+</kbd> / <kbd>−</kbd> to
      zoom, type a percentage for an exact ratio, and use <kbd>↺</kbd> to reset the view.</p>
   <p><strong>Full screen</strong> (the bottom-right ⤢ button, or press <kbd>f</kbd>):
-     fill the window with the graph; <kbd>f</kbd> or <kbd>Esc</kbd> to leave.</p>
+     fill the window with the graph; <kbd>f</kbd> or <kbd>Esc</kbd> to leave.
+     <strong>Zen mode</strong> (the tab-row ⊟ button or <kbd>z</kbd>) goes further, hiding the details panel so the
+     graph is alone; <kbd>z</kbd> or <kbd>Esc</kbd> restores your layout.</p>
   <p><strong>Hover a legend entry</strong> (top-right) to highlight its nodes;
      <strong>click</strong> it to dim or show that type. The count shows how many
      are present.</p>
@@ -87,7 +99,9 @@ const SEMANTIC_HELP = `
      divider to hide the whole column and give the graph full width. Each table (and the node
      details) also <strong>collapses</strong> to a title strip on its own header bar. The
      choices persist.</p>
-  <p>The graph pans, zooms, folds, and goes full screen like the other tabs.</p>
+  <p>The graph pans, zooms, folds, and goes full screen like the other tabs.
+     <strong>Zen mode</strong> (the tab-row ⊟ button or <kbd>z</kbd>) hides the tables column so the scene tree is
+     alone, without disturbing your saved column and table choices.</p>
 `;
 
 const EXPLORER_HELP = `
@@ -137,15 +151,27 @@ export function setHelp(context: HelpContext): void {
 
 /**
  * Wire the footer's "How to use" disclosure: the toggle stays on the status line, and
- * clicking it shows or hides the shortcut panel below the status bar (full width).
+ * clicking it shows or hides the shortcut panel. On a short window the panel floats over the
+ * stage instead of sharing the column with it, so it also carries its own close button —
+ * the toggle below it is still the way to reopen.
  */
 export function initHelpToggle(): void {
     const toggle = document.getElementById("help-toggle");
-    const content = document.getElementById("help-content");
-    if (!toggle || !content) return;
+    const panel = document.getElementById("help-panel");
+    if (!toggle || !panel) return;
+
+    const setOpen = (open: boolean): void => {
+        toggle.setAttribute("aria-expanded", String(open));
+        panel.hidden = !open;
+    };
+
     toggle.addEventListener("click", () => {
-        const open = toggle.getAttribute("aria-expanded") === "true";
-        toggle.setAttribute("aria-expanded", String(!open));
-        content.hidden = open;
+        setOpen(toggle.getAttribute("aria-expanded") !== "true");
+    });
+    document.getElementById("help-close")?.addEventListener("click", () => {
+        setOpen(false);
+        // Return the reader to the control they can reopen it with, rather than to the top
+        // of the document, since the button they pressed has just disappeared.
+        (toggle as HTMLElement).focus();
     });
 }

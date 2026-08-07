@@ -50,8 +50,17 @@ jobs:
           cp -r docs/_site/. site/
           mkdir -p site/demo
           cp docs/demo/index.html site/demo/index.html
-          dotnet run --project src/DialogueDown.Cli -c Release --no-build -- \
-            visualize examples/gallery.dialogue.md -o site/demo/gallery.html
+          # Copy example image assets so the exported reports can resolve the
+          # relative <img> paths their Markdown previews render.
+          if [ -d examples/assets ]; then cp -r examples/assets site/demo/assets; fi
+          # Export a self-contained, read-only report for every example script.
+          # The "diagnostics" example is broken on purpose; the export still exits
+          # 0 and renders it, so the live demo can showcase the diagnostics panel.
+          for script in examples/*.dialogue.md; do
+            name="$(basename "$script" .dialogue.md)"
+            dotnet run --project src/DialogueDown.Cli -c Release --no-build -- \
+              visualize "$script" -o "site/demo/$name.html"
+          done
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

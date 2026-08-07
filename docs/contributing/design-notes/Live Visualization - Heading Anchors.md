@@ -1,7 +1,7 @@
 # Live visualization — heading anchors
 
 > [!NOTE]
-> Status: **proposed**. Copy a scene heading's GitHub-style anchor straight from
+> Status: **implemented**. Copy a scene heading's GitHub-style anchor straight from
 > the Source view: a chain-link on each rendered preview heading copies the full
 > jump target, while an inline slug hint on the active editor heading copies the
 > bare anchor. Pure frontend — no core, projection, or payload change.
