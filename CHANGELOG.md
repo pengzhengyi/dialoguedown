@@ -10,6 +10,8 @@ changes easy to categorize.
 
 ### Added
 
+- **`ddown` shows usage examples** — the `compile` and `visualize` commands now list example
+  invocations in their `--help` output.
 - **Example scripts and a live demo gallery** — three genre examples (a high-rise fire-safety
   drill, an RPG quest, and a visual novel) plus a deliberately-broken diagnostics tour, published
   as a multi-example gallery on the docs demo site beside the original walkthrough script.
@@ -83,7 +85,7 @@ changes easy to categorize.
   VS Code-inspired colors in light and dark themes, including inside blockquotes;
   block-control keywords and `#END` also use separate keyword and constant hues.
 - **One unified report shell for `visualize`** — the standalone launcher picker page is gone.
-  `visualize` (or `--pick`) now opens the report shell directly on an **empty state** — the
+  `visualize` now opens the report shell directly on an **empty state** — the
   Explorer over your project beside a "create your first dialogue file" call to action — and
   `visualize <script>` opens that same shell on your script, so the Explorer sidebar is available
   whichever way you start and there is a single page to learn. Serving a script that links images
