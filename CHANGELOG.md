@@ -10,6 +10,9 @@ changes easy to categorize.
 
 ### Added
 
+- **Example scripts and a live demo gallery** — three genre examples (a high-rise fire-safety
+  drill, an RPG quest, and a visual novel) plus a deliberately-broken diagnostics tour, published
+  as a multi-example gallery on the docs demo site beside the original walkthrough script.
 - **Jump from the source to a stage** — right-click a selection in the Source editor (or press
   `Alt-J`) and choose **Jump to ▸** a compiler stage to open that tab with the enclosing node
   revealed and centered. It is the reverse of **Jump to source**, and works in View and Edit. See
