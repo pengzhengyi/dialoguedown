@@ -129,7 +129,7 @@ public sealed class NodeCreationPassTests
     [Fact]
     public void Apply_EveryNode_CarriesTheSpanOfTheBlockItCameFrom()
     {
-        const string source = """
+        var source = """
             Alice: hello
 
             Bob: goodbye
