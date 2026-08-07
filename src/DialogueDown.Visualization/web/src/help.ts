@@ -16,6 +16,10 @@ const SOURCE_HELP = `
   <p><strong>Reserved targets.</strong> The fixed row below the editor shows language-owned
      destinations that are not source headings. <strong>End</strong> (<kbd>#END</kbd>) uses an
      infinity marker; click the row to copy <kbd>[End](#END)</kbd>.</p>
+  <p><strong>Jump to a stage.</strong> <strong>Right-click</strong> a selection (or press
+     <kbd>Alt-J</kbd>) and choose <strong>Jump to&nbsp;▸</strong> a compiler stage to open that
+     tab with the enclosing node revealed and centered — the reverse of <strong>Jump to
+     source</strong>. Works in View and Edit.</p>
   <p><strong>Drag the divider</strong> between the panes to re-proportion them, or use its
      <strong>hide handle</strong> to collapse the preview and give the editor the full
      width (click again to bring it back).</p>

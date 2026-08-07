@@ -10,6 +10,10 @@ changes easy to categorize.
 
 ### Added
 
+- **Jump from the source to a stage** — right-click a selection in the Source editor (or press
+  `Alt-J`) and choose **Jump to ▸** a compiler stage to open that tab with the enclosing node
+  revealed and centered. It is the reverse of **Jump to source**, and works in View and Edit. See
+  [Reverse Jump](docs/contributing/design-notes/Live%20Visualization%20-%20Reverse%20Jump.md).
 - **Fixed End sentinel in the Source editor** — the compiler-projected `#END` target now appears
   in a read-only row below the source with an infinity marker; clicking it copies
   `[End](#END)`. It is reserved-target metadata, not a synthetic heading or source line, leaving

@@ -515,12 +515,13 @@ test("quotes and unquotes the selection by keyboard and from the surround menu",
     await page.keyboard.press("ControlOrMeta+Shift+Period");
     await expect(editor).not.toContainText("> # Scene");
 
-    // Right-click offers the same surround actions; choosing Quote re-quotes the selection.
+    // Right-click offers Jump-to plus the same surround actions; choosing Quote re-quotes.
     await page.keyboard.press("ControlOrMeta+a");
     await editor.click({ button: "right" });
     const menu = page.locator(".context-menu");
     await expect(menu).toBeVisible();
     await expect(menu.locator(".context-menu-item")).toHaveText([
+        "Jump to",
         "Bold",
         "Italic",
         "Strikethrough",
@@ -585,4 +586,59 @@ test("keeps the line debugger UI dormant in ordinary served reports", async ({ p
     await expect(page.locator(".dd-debug-toolbar")).toHaveCount(0);
     await expect(page.locator(".dd-debug-breakpoint-gutter")).toHaveCount(0);
     await expect(page.locator(".dd-debug-execution-gutter")).toHaveCount(0);
+});
+
+test("jumps from a Source selection to the enclosing node in a chosen stage", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+
+    // Source is the default tab; put the caret in the scene heading, then reverse-jump.
+    const content = page.locator(".source-pane .cm-content");
+    await content.getByText("Market", { exact: false }).first().click();
+    await content.getByText("Market", { exact: false }).first().click({ button: "right" });
+
+    await page.locator(".context-menu-item", { hasText: "Jump to" }).hover();
+    await page.locator(".context-submenu .context-menu-item", { hasText: "Dialogue AST" }).click();
+
+    // The Dialogue AST tab is now active with the enclosing node selected (and centered).
+    await expect(page.locator(".tab.active")).toHaveText("Dialogue AST");
+    await expect(page.locator("section.stage.active g.node.selected")).toHaveCount(1);
+});
+
+test("Alt-J opens the Jump-to picker from the source caret", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+
+    const content = page.locator(".source-pane .cm-content");
+    await content.getByText("Welcome", { exact: false }).first().click();
+    await page.keyboard.press("Alt+j");
+
+    // The picker lists the stages directly; choosing one reveals the enclosing node there.
+    await page.locator(".context-menu .context-menu-item", { hasText: "Semantic Model" }).click();
+    await expect(page.locator(".tab.active")).toHaveText("Semantic Model");
+    await expect(page.locator("section.stage.active g.node.selected")).toHaveCount(1);
+});
+
+test("Jump to Semantic Model resolves a multi-line selection to its scene", async ({ page }) => {
+    writeFileSync(LIVE_EDIT_DOC, NODE_DOC);
+    await page.goto(`${base}/`);
+
+    // Select across two body lines inside the "Market" scene (no single line encloses it).
+    const content = page.locator(".source-pane .cm-content");
+    await content.getByText("Welcome", { exact: false }).first().click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Shift+ArrowDown");
+    await page.keyboard.press("Shift+ArrowDown");
+    await page.keyboard.press("Shift+End");
+
+    await content.click({ button: "right" });
+    await page.locator(".context-menu-item", { hasText: "Jump to" }).hover();
+    await page
+        .locator(".context-submenu .context-menu-item", { hasText: "Semantic Model" })
+        .click();
+
+    // The jump lands on the scene, not the whole document or a stray fragment.
+    await expect(page.locator(".tab.active")).toHaveText("Semantic Model");
+    await expect(page.locator("section.stage.active g.node.selected")).toHaveCount(1);
+    await expect(page.locator(".node-detail-heading")).toContainText("Market");
 });

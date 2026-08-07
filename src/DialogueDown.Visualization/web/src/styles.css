@@ -880,6 +880,14 @@ section.stage.empty-shell {
     font-size: 15px;
 }
 
+/* Push the submenu chevron to the trailing edge of a "Jump to ▸" parent item. */
+.context-menu-chevron {
+    flex: 0 0 auto;
+    margin-left: auto;
+    color: var(--pico-muted-color);
+    font-size: 14px;
+}
+
 /* Semantic tab: the scene-tree graph (left) beside stacked, collapsible tables (right).
    The graph reuses the tree view, so the column is a positioned box the legend and zoom
    controls anchor to, exactly as a plain stage. */
@@ -1656,6 +1664,14 @@ g.node.entity-highlight text.label {
 .source-pane .cm-content {
     color: var(--pico-color);
     caret-color: var(--pico-color);
+}
+
+/* The faint highlight previewing the source span a hovered Jump-to target would reveal — the
+   enclosing node in that stage. Kept lighter than the real selection so both read at once: the
+   selection stays the strong mark, the preview a soft wash over the wider enclosing span. */
+.source-pane .cm-content .dd-jump-preview {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 20%, transparent);
+    border-radius: 2px;
 }
 
 /* A prominent caret and a readable selection in both themes (drawSelection draws its
