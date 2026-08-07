@@ -2,6 +2,7 @@ using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
 using DialogueDown.Diagnostics.Errors;
+using DialogueDown.Graph;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
@@ -31,16 +32,19 @@ public sealed class ScriptCompilerTests
         var desugarer = Substitute<IScriptDesugarer, DesugaredScriptDocument>(desugared);
         var validator = NSubstitute.Substitute.For<IStructuralValidator>();
         var analyzer = Substitute<ISemanticAnalyzer, SemanticModel>(semantics);
+        var graph = DialogueGraphFactory.EmptyGraph();
+        var graphBuilder = Substitute<IDialogueGraphBuilder, DialogueGraph>(graph);
 
-        var result = AssertSuccess(
-            new ScriptCompiler(parser, transpiler, desugarer, validator, analyzer, CompilationMode.BestEffort)
-                .Compile(source));
+        var result = AssertSuccess(new ScriptCompiler(
+                parser, transpiler, desugarer, validator, analyzer, graphBuilder, CompilationMode.BestEffort)
+            .Compile(source));
 
         Assert.Equal(source, result.Source);
         Assert.Same(markdown, result.Markdown);
         Assert.Same(script, result.Script);
         Assert.Same(desugared, result.Desugared);
         Assert.Same(semantics, result.Semantics);
+        Assert.Same(graph, result.Graph);
         Received.InOrder(() =>
         {
             parser.Parse(source);
@@ -48,6 +52,7 @@ public sealed class ScriptCompilerTests
             desugarer.Desugar(Arg.Is(script), Arg.Is<DiagnosticsContext>(c => c!.Source == source));
             validator.Validate(Arg.Is(desugared), Arg.Any<IDiagnosticSink>());
             analyzer.Analyze(Arg.Is(desugared), Arg.Is<DiagnosticsContext>(c => c!.Source == source));
+            graphBuilder.Build(Arg.Is(semantics), Arg.Is<DiagnosticsContext>(c => c!.Source == source));
         });
     }
 
@@ -124,6 +129,7 @@ public sealed class ScriptCompilerTests
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(4)]
+    [InlineData(5)]
     public void Constructor_NullDependency_Throws(int nullIndex)
     {
         var parser = nullIndex == 0 ? null! : Substitute<IMarkdownParser, MarkdownDocument>();
@@ -131,9 +137,10 @@ public sealed class ScriptCompilerTests
         var desugarer = nullIndex == 2 ? null! : Substitute<IScriptDesugarer, DesugaredScriptDocument>();
         var validator = nullIndex == 3 ? null! : NSubstitute.Substitute.For<IStructuralValidator>();
         var analyzer = nullIndex == 4 ? null! : Substitute<ISemanticAnalyzer, SemanticModel>();
+        var graphBuilder = nullIndex == 5 ? null! : Substitute<IDialogueGraphBuilder, DialogueGraph>();
 
-        Assert.Throws<ArgumentNullException>(
-            () => new ScriptCompiler(parser, transpiler, desugarer, validator, analyzer, CompilationMode.BestEffort));
+        Assert.Throws<ArgumentNullException>(() => new ScriptCompiler(
+            parser, transpiler, desugarer, validator, analyzer, graphBuilder, CompilationMode.BestEffort));
     }
 
     // Builds a compiler whose stages are substitutes that yield empty artifacts, so a test can focus
@@ -153,6 +160,7 @@ public sealed class ScriptCompilerTests
             Substitute<IScriptDesugarer, DesugaredScriptDocument>(desugared),
             NSubstitute.Substitute.For<IStructuralValidator>(),
             analyzer,
+            Substitute<IDialogueGraphBuilder, DialogueGraph>(DialogueGraphFactory.EmptyGraph()),
             mode);
     }
 

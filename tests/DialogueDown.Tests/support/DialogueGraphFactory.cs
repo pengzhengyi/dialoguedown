@@ -1,6 +1,9 @@
+using DialogueDown.Common;
 using DialogueDown.Graph;
 using DialogueDown.Graph.Builder;
 using DialogueDown.Graph.Edges;
+using DialogueDown.Graph.Nodes;
+using DialogueDown.Graph.Regions;
 
 namespace DialogueDown.Tests.Support;
 
@@ -8,6 +11,14 @@ namespace DialogueDown.Tests.Support;
 internal static class DialogueGraphFactory
 {
     public static NodeId NodeId(int value) => new(value);
+
+    /// <summary>The smallest valid graph: an End node a run starts and finishes on.</summary>
+    public static DialogueGraph EmptyGraph()
+    {
+        var end = NodeId(0);
+        return new DialogueGraph(
+            [new EndNode(end, new SourceSpan(0, 0))], entry: end, end: end, RegionTree.Empty);
+    }
 
     public static SuccessionEdge SuccessionEdge(int target) => new(NodeId(target));
 

@@ -2,6 +2,9 @@ using DialogueDown.Common;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
+using DialogueDown.Graph;
+using DialogueDown.Graph.Nodes;
+using DialogueDown.Graph.Regions;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
@@ -96,7 +99,16 @@ public sealed class CompilationVisualizerTests
         var semantics = new SemanticAnalyzer(new SemanticAnalyzerOptions([]))
             .Analyze(desugared, new DiagnosticsContext("script source", new DiagnosticBag()));
         compiler.Compile("script source").Returns(
-            new CompilationSuccess("script source", markdown, script, desugared, semantics, []));
+            new CompilationSuccess(
+                "script source",
+                markdown,
+                script,
+                desugared,
+                semantics,
+                // This AST is assembled here rather than desugared, so it carries none of the
+                // defaults lowering relies on; the visualizer projects no graph stage anyway.
+                EmptyGraph(),
+                []));
         var visualizer = new CompilationVisualizer(compiler);
 
         var stages = visualizer.BuildStages("script source");
@@ -486,5 +498,12 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("// Dialogue AST", text);
         Assert.Contains("// Desugared AST", text);
         Assert.Contains("digraph", text);
+    }
+
+    private static DialogueGraph EmptyGraph()
+    {
+        var end = new NodeId(0);
+        return new DialogueGraph(
+            [new EndNode(end, new SourceSpan(0, 0))], entry: end, end: end, RegionTree.Empty);
     }
 }

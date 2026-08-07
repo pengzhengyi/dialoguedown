@@ -222,6 +222,38 @@ public sealed class ScriptCompilerFactoryTests
         Assert.Contains("names no speaker", located.Message);
     }
 
+    [Fact]
+    public void CreateDefault_CleanScript_CompilesAllTheWayToAGraph()
+    {
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile("""
+            # Gate
+
+            Alice: Who goes there?
+
+            => [The end](#END)
+            """));
+
+        Assert.False(result.HasErrors);
+        Assert.NotEmpty(result.Graph.Nodes);
+    }
+
+    [Fact]
+    public void CreateDefault_ScriptWithErrors_ProducesNoGraph()
+    {
+        // A misplaced heading is reported and recovered, so analysis still describes the script.
+        // There is no coherent flow to run, so the outcome is a failure and carries no graph.
+        var result = AssertFailure(ScriptCompilerFactory.CreateDefault().Compile("""
+            > `if` `"Rich"?`
+            >
+            > # Upstairs
+            >
+            > Alice: Welcome.
+            """));
+
+        Assert.True(result.HasErrors);
+        Assert.NotNull(result.Semantics);
+    }
+
     private static IScriptCompiler BestEffortCompiler() =>
         ScriptCompilerFactory.CreateDefault(new CompilerOptions { Mode = CompilationMode.BestEffort });
 }

@@ -1,4 +1,5 @@
 using DialogueDown.Configuration;
+using DialogueDown.Graph;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
@@ -9,7 +10,7 @@ namespace DialogueDown.Compilation;
 
 /// <summary>
 /// The default <see cref="IScriptCompiler"/>: it drives the stages — parse, transpile, desugar,
-/// validate, analyze — in order, reporting each through a <see cref="CompilationSession"/> that
+/// validate, analyze, build the graph — in order, reporting each through a <see cref="CompilationSession"/> that
 /// owns the sink and the <see cref="CompilationMode"/> flow policy, and assembles their artifacts
 /// into a <see cref="CompilationResult"/>. The compiler stays a plain phase driver: the session
 /// decides which sink to report through and whether to stop at a stage boundary.
@@ -21,6 +22,7 @@ internal sealed class ScriptCompiler : IScriptCompiler
     private readonly IScriptDesugarer _desugarer;
     private readonly IStructuralValidator _validator;
     private readonly ISemanticAnalyzer _analyzer;
+    private readonly IDialogueGraphBuilder _graphBuilder;
     private readonly CompilationMode _mode;
 
     internal ScriptCompiler(
@@ -29,6 +31,7 @@ internal sealed class ScriptCompiler : IScriptCompiler
         IScriptDesugarer desugarer,
         IStructuralValidator validator,
         ISemanticAnalyzer analyzer,
+        IDialogueGraphBuilder graphBuilder,
         CompilationMode mode)
     {
         ArgumentNullException.ThrowIfNull(parser);
@@ -36,11 +39,13 @@ internal sealed class ScriptCompiler : IScriptCompiler
         ArgumentNullException.ThrowIfNull(desugarer);
         ArgumentNullException.ThrowIfNull(validator);
         ArgumentNullException.ThrowIfNull(analyzer);
+        ArgumentNullException.ThrowIfNull(graphBuilder);
         _parser = parser;
         _transpiler = transpiler;
         _desugarer = desugarer;
         _validator = validator;
         _analyzer = analyzer;
+        _graphBuilder = graphBuilder;
         _mode = mode;
     }
 
@@ -74,9 +79,11 @@ internal sealed class ScriptCompiler : IScriptCompiler
                 source, markdown, script, desugared, semantics, session.Diagnostics);
         }
 
-        // TODO(graph-build): build the flow graph from the semantic model here as that stage
-        // lands; it adds one more artifact to a success.
+        // Only a clean compile reaches here, so the graph is built from a model that still
+        // describes the script — there is no separate gate to keep in step.
+        var graph = _graphBuilder.Build(semantics, session.Context);
+
         return new CompilationSuccess(
-            source, markdown, script, desugared, semantics, session.Diagnostics);
+            source, markdown, script, desugared, semantics, graph, session.Diagnostics);
     }
 }

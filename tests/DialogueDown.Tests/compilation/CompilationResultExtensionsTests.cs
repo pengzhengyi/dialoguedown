@@ -62,6 +62,7 @@ public sealed class CompilationResultExtensionsTests
             _script,
             desugared,
             semantics ?? SemanticModelFactory.Minimal(desugared),
+            DialogueGraphFactory.EmptyGraph(),
             []);
 
     private CompilationFailure FailureAtTranspile() =>

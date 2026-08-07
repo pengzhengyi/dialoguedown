@@ -20,6 +20,7 @@ public sealed class CompilationSuccessTests
 
         Assert.Same(desugared, success.Desugared);
         Assert.Same(semantics, success.Semantics);
+        Assert.NotNull(success.Graph);
     }
 
     [Fact]
@@ -29,6 +30,7 @@ public sealed class CompilationSuccessTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
+    [InlineData(2)]
     public void NullArtifact_Throws(int nullIndex)
     {
         var script = new ScriptDocument([]);
@@ -40,6 +42,7 @@ public sealed class CompilationSuccessTests
             script,
             nullIndex == 0 ? null! : desugared,
             nullIndex == 1 ? null! : SemanticModelFactory.Minimal(desugared),
+            nullIndex == 2 ? null! : DialogueGraphFactory.EmptyGraph(),
             []));
     }
 
@@ -56,6 +59,7 @@ public sealed class CompilationSuccessTests
             script,
             desugared,
             semantics ?? SemanticModelFactory.Minimal(desugared),
+            DialogueGraphFactory.EmptyGraph(),
             []);
     }
 }
