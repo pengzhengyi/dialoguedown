@@ -43,6 +43,16 @@ public sealed class JumpResolverTests
     }
 
     [Fact]
+    public void Resolve_FileScopedTarget_WarnsThatItLeadsNowhereYet()
+    {
+        ResolveOne(Jump("chapter-02.md#meet-bob"), new AnchorTable(), out var diagnostics);
+
+        var diagnostic = AssertReported(
+            diagnostics.Diagnostics, DiagnosticCatalog.ExternalJumpNotResolved);
+        Assert.Equal(DiagnosticSeverity.Warning, diagnostic.Severity);
+    }
+
+    [Fact]
     public void Resolve_FileScopedWithoutAnchor_HasNoAnchor()
     {
         var fileScoped = Assert.IsType<FileScopedJump>(ResolveOne(Jump("chapter-02.md"), new AnchorTable()));
@@ -52,12 +62,16 @@ public sealed class JumpResolverTests
     }
 
     [Fact]
-    public void Resolve_UrlTarget_IsFileScoped_NotAnError()
+    public void Resolve_UrlTarget_IsFileScoped_WarnedNotErrored()
     {
         var fileScoped = Assert.IsType<FileScopedJump>(
-            ResolveOne(Jump("http://example.com"), new AnchorTable()));
+            ResolveOne(Jump("http://example.com"), new AnchorTable(), out var diagnostics));
 
         Assert.Equal("http://example.com", fileScoped.File);
+        Assert.Equal(
+            DiagnosticSeverity.Warning,
+            AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.ExternalJumpNotResolved)
+                .Severity);
     }
 
     [Fact]

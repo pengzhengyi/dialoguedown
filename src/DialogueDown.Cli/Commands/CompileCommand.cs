@@ -7,8 +7,8 @@ namespace DialogueDown.Cli.Commands;
 /// <summary>
 /// The <c>compile</c> command: resolve the project's <see cref="CompilerOptions"/>, build a
 /// compiler configured with them, compile the script through the facade, render any diagnostics as
-/// errata, and return a data-error exit code when the script has errors. The compiled output is not
-/// emitted yet; it will honor <c>--output</c> once the later stages produce something to write.
+/// errata, and return a data-error exit code when the script has errors. The compiler does not emit
+/// a serializable artifact yet; an output option will return once the later stages produce one.
 /// </summary>
 internal sealed class CompileCommand : Command<CompileSettings>
 {
@@ -46,8 +46,8 @@ internal sealed class CompileCommand : Command<CompileSettings>
 
         _errata.Render(settings.Script, source, result.LocatedDiagnostics);
 
-        // TODO(compiler): emit the compiled output, honoring --output, once the later
-        // stages produce a serializable result.
+        // TODO(compiler): add an output option that writes a serializable result once
+        // the later stages produce one.
         return result.HasErrors ? ExitCodes.DataError : ExitCodes.Success;
     }
 

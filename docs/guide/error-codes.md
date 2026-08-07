@@ -526,6 +526,28 @@ Scene headings define document-level jump targets. A heading inside a control br
 &gt;
 &gt; Alice: Welcome.</code></pre>
 
+### DLG2016
+
+<span class="dd-sev dd-sev--warning">Warning</span> · Jump outside this script is not resolved yet
+
+This jump names '{0}', which is outside this script. Targets outside the script are not resolved yet, so the jump leads nowhere. Point it at a scene in this script — '#the-scene' — until cross-file jumps land.
+
+A jump reaches a scene in the script it is written in. Reaching one in another script is not built yet, so a target naming a file or a URL resolves to nothing and the line simply reads on. Keep the destination in this script until cross-file jumps land.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">Alice: To the vault.
+
+=&gt; [The vault](<mark class="dd-mark-bad">chapter-02.md#the-vault</mark>)</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">Alice: To the vault.
+
+=&gt; [The vault](<mark class="dd-mark-fix">#the-vault</mark>)
+
+# The vault</code></pre>
+
 ## Style (`DLG3xxx`)
 
 A valid script that reads correctly but could read better.

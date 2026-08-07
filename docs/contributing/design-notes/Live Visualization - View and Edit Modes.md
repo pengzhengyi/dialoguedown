@@ -157,7 +157,7 @@ one thing; `view`/`edit` only choose the **initial** side of the toggle.
 | `visualize <script>`                      | Served session, **View**.                  |
 | `visualize <script> --edit`               | Served session, **Edit**.                  |
 | `visualize <script> -o <out.html>`        | **Static export** (offline snapshot).      |
-| `--root`, `--port`, `--no-open`, `--pick` | Unchanged.                                 |
+| `--root`, `--port`, `--no-open`           | Unchanged.                                 |
 
 - **Removed:** `--watch`, `--live`, `--mode`. (`--edit` is the only mode flag; View is
   the default; export is `-o`.)

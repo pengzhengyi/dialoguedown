@@ -6,7 +6,7 @@
     <title>DialogueDown — compilation visualization demo</title>
     <meta
       name="description"
-      content="A live demo of DialogueDown: explore a dialogue script's compiler stages as interactive graphs."
+      content="Live demos of DialogueDown: explore each example script's compiler stages as interactive graphs."
     />
     <link
       rel="icon"
@@ -39,7 +39,7 @@
       }
       main {
         width: 100%;
-        max-width: 46rem;
+        max-width: 52rem;
         background: var(--card);
         border: 1px solid var(--border);
         border-radius: 16px;
@@ -159,6 +159,67 @@
         padding: 0.1em 0.4em;
         font-size: 0.9em;
       }
+      /* Example gallery — one card per exported report. */
+      .examples {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0 1.75rem;
+      }
+      a.card-ex {
+        display: flex;
+        flex-direction: column;
+        background: #0b1220;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.1rem 1.2rem;
+        text-decoration: none;
+        color: var(--fg);
+        transition:
+          border-color 0.15s ease,
+          transform 0.15s ease;
+      }
+      a.card-ex:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .card-ex .genre {
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.45rem;
+      }
+      .card-ex h3 {
+        margin: 0 0 0.35rem;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
+      }
+      .card-ex p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        flex: 1;
+      }
+      .card-ex .open {
+        margin-top: 0.85rem;
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.88rem;
+      }
+      .badge {
+        display: inline-block;
+        margin-left: 0.4rem;
+        padding: 0.05em 0.5em;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: normal;
+        background: #7c2d12;
+        color: #fed7aa;
+        vertical-align: middle;
+      }
     </style>
   </head>
   <body>
@@ -225,24 +286,61 @@
       </p>
 
       <p>
-        This page hosts a live, read-only export of the visualization report for one sample script,
-        <code>examples/gallery.dialogue.md</code>. It runs entirely in your browser — no server.
+        Each demo below is a live, read-only export of the visualization report for one example
+        script. They run entirely in your browser — no server. Zoom, pan, and collapse the stage
+        graphs; click a node to inspect the source it came from; open the Diagnostics panel; and
+        toggle the light/dark theme.
       </p>
+
+      <div class="examples">
+        <a class="card-ex" href="./gallery.html">
+          <span class="genre">Guided tour</span>
+          <h3>The Curious Traveler</h3>
+          <p>Every construct in one script — scenes, choices, jumps, conditions, random branches,
+            and game calls.</p>
+          <span class="open">Open demo →</span>
+        </a>
+        <a class="card-ex" href="./highrise-fire.html">
+          <span class="genre">Interactive drill</span>
+          <h3>The Twelfth Floor</h3>
+          <p>A high-rise fire drill — conditional blocks, tagged choices, and multiple endings —
+            teaching real fire-safety guidance.</p>
+          <span class="open">Open demo →</span>
+        </a>
+        <a class="card-ex" href="./rpg-quest.html">
+          <span class="genre">Fantasy RPG</span>
+          <h3>The Ember Crown</h3>
+          <p>A quest with item and courage conditions, weighted-random combat, and branching
+            win/lose endings.</p>
+          <span class="open">Open demo →</span>
+        </a>
+        <a class="card-ex" href="./visual-novel.html">
+          <span class="genre">Visual novel</span>
+          <h3>The Last Train</h3>
+          <p>Sprite and music presentation actions, an affection-weighted reaction, and two tender
+            endings.</p>
+          <span class="open">Open demo →</span>
+        </a>
+        <a class="card-ex" href="./diagnostics.html">
+          <span class="genre">Diagnostics<span class="badge">broken on purpose</span></span>
+          <h3>A Tour of Errors &amp; Warnings</h3>
+          <p>Deliberately broken, to show how the report surfaces errors and warnings — inline on
+            the source and in the Diagnostics panel.</p>
+          <span class="open">Open demo →</span>
+        </a>
+      </div>
+
+      <p>Every report walks the same compiler stages:</p>
 
       <ul class="stages">
         <li><strong>Source</strong> — the dialogue script beside a live Markdown preview.</li>
         <li><strong>Markdown AST</strong> — the syntax tree parsed from the source.</li>
         <li><strong>Dialogue AST</strong> — speakers, choices, game calls, and jump indicators.</li>
         <li><strong>Desugared AST</strong> — jumps assembled and default speakers filled in.</li>
+        <li><strong>Semantic Model</strong> — speakers, scenes, and jumps resolved and validated.</li>
       </ul>
 
-      <p>
-        Zoom, pan, and collapse the graphs; click a node to inspect the source it came from; and
-        toggle the light/dark theme. Each graph remembers where you left it.
-      </p>
-
       <div class="actions">
-        <a class="button primary" href="./gallery.html">Open the live demo →</a>
         <a class="button secondary" href="../">Documentation</a>
         <a class="button secondary" href="https://github.com/pengzhengyi/dialoguedown"
           >View on GitHub</a
@@ -251,9 +349,8 @@
 
       <footer>
         Generated from
-        <a
-          href="https://github.com/pengzhengyi/dialoguedown/blob/main/examples/gallery.dialogue.md"
-          >examples/gallery.dialogue.md</a
+        <a href="https://github.com/pengzhengyi/dialoguedown/tree/main/examples"
+          >examples/*.dialogue.md</a
         >
         by <code>ddown visualize</code>. Rebuilt on every merge to <code>main</code>.
       </footer>

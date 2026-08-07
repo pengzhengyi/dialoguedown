@@ -112,7 +112,7 @@ self-invoking it**.
 | `CliConfigurator` | Configure the app: name, version, the subcommands, and the exception handler that maps exceptions to a clean message and an exit code. | `IConfigurator`, `ExitCodes` |
 | `CliServices` | Register the CLI's services (the `IScriptCompiler` seam) for injection. | `IServiceCollection` |
 | `TypeRegistrar` / `TypeResolver` | Adapt Spectre's `ITypeRegistrar`/`ITypeResolver` onto `Microsoft.Extensions.DependencyInjection`, so commands get constructor-injected services. | `IServiceCollection` |
-| `CompileCommand` + `CompileSettings` | The `compile` command shell: `<script>` argument (plus `-o` / `--output`), validate, then invoke the seam. | `IScriptCompiler` |
+| `CompileCommand` + `CompileSettings` | The `compile` command shell: `<script>` argument, validate, then invoke the seam. | `IScriptCompiler` |
 | `VisualizeCommand` + `VisualizeSettings` | The `visualize` command shell: `<script>` argument, validate, then invoke the seam. | `IScriptCompiler` |
 | `IScriptCompiler` | The seam: `Compile(source) → CompilationResult`. The single place compilation happens. | `CompilationResult` |
 | `CompilationResult` | The compiled form of a script (placeholder; enriched by the transpiler). | — |

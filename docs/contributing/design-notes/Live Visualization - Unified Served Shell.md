@@ -70,7 +70,7 @@ navigate-per-file); and any new Explorer capability.
 ## Functionality checklist
 
 - [x] Serve the **report shell** (with the Explorer) at `/` for every browse entry
-      (`visualize`, `--pick`), replacing the launcher page.
+      (`visualize`), replacing the launcher page.
 - [x] Render an **empty state** — Explorer plus a centered call to action — when no
       document is active, so a reader opens one from the tree or creates the first.
 - [x] The empty state's **"New dialogue file"** action creates a first script and
@@ -96,13 +96,13 @@ flowchart LR
     subgraph Before
         direction TB
         CLI1["visualize &lt;script&gt;"] --> DS["LiveVisualizationServer<br/>(ServeMode) — no Explorer"]
-        CLI2["visualize / --pick"] --> L["LauncherServer<br/>serves launcher.html at /"]
+        CLI2["visualize"] --> L["LauncherServer<br/>serves launcher.html at /"]
         L -- "open" --> R1["report.html (/r/...)<br/>+ Explorer"]
     end
     subgraph After
         direction TB
         CLI3["visualize &lt;script&gt;"] --> U["Unified server<br/>(LauncherServer)"]
-        CLI4["visualize / --pick"] --> U
+        CLI4["visualize"] --> U
         U -- "no active doc" --> E["report shell at /<br/>Explorer + empty state"]
         U -- "a document" --> R2["report shell (/r/...)<br/>Explorer + tabs"]
     end
@@ -178,7 +178,7 @@ are untouched.
 | `CompilationVisualizer` | `RenderEmptyShell(root, mode)` added | Render the project-only empty shell for a served run |
 | `ReportProject` | `ActivePath` → optional | Carry the root and the active document *or its absence* |
 | `LauncherRunner` (`ILauncherRunner`) | `RunAsync(script?, root?, mode, …)` — one method, two branches | Serve the empty shell (no script) or open a document (resolve served root, start it, open `/r/…`) |
-| `VisualizeCommand` | Route `visualize <script>` to the unified runner | One serve path; `--pick`/no-script open the empty shell |
+| `VisualizeCommand` | Route `visualize <script>` to the unified runner | One serve path; no-script opens the empty shell |
 | `ServeRootResolver`, `SymlinkResolver`, `ServeRoot`, `IHostConsent` | Reused by the unified runner | Resolve the served root and the document's real path, with consent |
 | `LiveVisualizationServer`, `ServeMode`, `IVisualizeRunner.RunServedAsync` | **Deleted** | — |
 | `LauncherPage` (`__LAUNCHER__`) | **Deleted** | — |
@@ -237,7 +237,7 @@ are untouched.
 
 ## Integration
 
-- **CLI.** `visualize` and `--pick` open the empty shell; `visualize <script>` opens
+- **CLI.** `visualize` (no script) opens the empty shell; `visualize <script>` opens
   it on that script. `--emit`/`-o` are unchanged. `--root` pins the served root for
   a script and is the browse root for the empty shell.
 - **`fix/visualize-ctrl-c` (integrated).** That branch fixed a **pre-existing**
@@ -286,8 +286,8 @@ Settled in review and confirmed at crosscheck:
    [Integration](#integration).
 3. **One branch, A's commits then B's.** Reviewed at merge-ready as one pull
    request; B stayed cohesive enough not to warrant splitting.
-4. **`--pick` stays as a synonym.** With one navigation surface, `--pick` and
-   no-script both open the empty shell; `--pick` is kept as a harmless, documented
-   alias rather than removing a flag.
+4. **`--pick` (later removed).** It duplicated the no-script path — both opened the
+   empty shell — so the redundant flag was dropped; browse by running `visualize`
+   with no script.
 5. **The empty state offers only "create your first script."** The Config tab owns
    `dialogue.toml` creation once a document is open.

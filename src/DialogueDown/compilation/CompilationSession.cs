@@ -27,6 +27,9 @@ internal sealed class CompilationSession
     /// <summary>The diagnostics collected so far, in report order.</summary>
     public IReadOnlyList<Diagnostic> Diagnostics => _diagnostics.Diagnostics;
 
+    /// <summary>Whether any stage has reported an error, so the script is not valid.</summary>
+    public bool HasErrors => _diagnostics.HasErrors;
+
     /// <summary>
     /// Whether the compile should stop at the current stage boundary: true only when a
     /// stage-boundary compile has collected an error, whose recovery leaves the later stages
