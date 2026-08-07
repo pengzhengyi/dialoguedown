@@ -1,7 +1,7 @@
 # Dialogue graph visualization tab
 
 > [!NOTE]
-> Status: **proposed**. Adds the report's fifth stage tab: the
+> Status: **implemented**. Adds the report's fifth stage tab: the
 > [dialogue graph](./Dialogue%20Graph.md) — the compiler's final artifact — rendered
 > beside the four stages already shown.
 
@@ -20,6 +20,7 @@
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Integration](#integration)
 - [Testability](#testability)
+- [Outcome](#outcome)
 - [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
@@ -54,15 +55,15 @@ and the screen without translating.
 
 ## Functionality checklist
 
-- [ ] Add a **Dialogue Graph** tab as the fifth stage, after Semantic Model.
-- [ ] Emit **one display node per graph node**, in the graph's own order.
-- [ ] Label each node by kind and content — a line by its speech, a choice by its arm count.
-- [ ] Carry each node's **source span**, so the existing jump-to-source works unchanged.
-- [ ] Emit **one display edge per graph edge**, labeled by kind with its guard or weight.
-- [ ] Show a node's **scene** and its **guard** as attributes.
-- [ ] Show an **orphan** — a node nothing reaches — so unreachable content is visible.
-- [ ] Render the tab as **unavailable** when the compile produced no graph.
-- [ ] Cross-link a divert to its target scene with the existing `scene:<anchor>` key.
+- [x] Add a **Dialogue Graph** tab as the fifth stage, after Semantic Model.
+- [x] Emit **one display node per graph node**, in the graph's own order.
+- [x] Label each node by kind and content — a line by its speech, a choice by its arm count.
+- [x] Carry each node's **source span**, so the existing jump-to-source works unchanged.
+- [x] Emit **one display edge per graph edge**, resolving its target by id so a cycle is ordinary.
+- [x] Show a node's **scene** and its **guard** as attributes.
+- [x] Show an **orphan** — a node nothing reaches — so unreachable content is visible.
+- [x] Render the tab as **unavailable** when the compile produced no graph, with its own reason: the graph needs a clean compile, not merely a stage reached.
+- [ ] Cross-link a divert to its target scene with the existing `scene:<anchor>` key. *(Not implemented: the graph resolves a jump to a node id, and recovering which scene that node opens means re-deriving the anchor the region already knows. Deferred below.)*
 
 ## What already exists
 
@@ -129,15 +130,15 @@ on every tab. Attributes carry the node's **scene** and, when guarded, its
 
 Every edge becomes a `DisplayEdge`. Because the target may be any node — including
 an earlier one — the projection maps a `NodeId` straight to its display id rather
-than discovering targets by traversal, so a cycle needs no special case.
+than discovering targets by traversal, so a cycle needs no special case and needs
+no visited set.
 
-| Edge | Label |
-| --- | --- |
-| `SuccessionEdge` | *(unlabeled — the default flow)* |
-| `DivertEdge` | `=>`, plus its guard when guarded |
-| `OptionEdge` | `option`, plus its guard |
-| `RandomOptionEdge` | the weight (`80%`), plus its guard |
-| `BranchEdge` | `if` / `elseif` / `else` by order and guard |
+**Edges carry no label of their own.** `DisplayEdge` is `(FromId, ToId, Kind)` —
+the report's edge shape across every stage — so the kind of a route is read from
+the node it leaves: a `Choice (2 options)` node's two out-edges are its arms, and a
+`(jump)` node's edge is its divert. Labeling an edge would mean widening a type
+every stage shares, which is a change to the report's display model rather than to
+this tab; it is deferred below.
 
 ### The region overlay
 
@@ -200,6 +201,15 @@ IReadOnlyList<DisplayGraph> stages =
   when the compile produced no graph.
 - No new client tests: the client is unchanged.
 
+## Outcome
+
+| Outcome | Result |
+| --- | --- |
+| **Achieved** | The fifth tab ships: every graph node in graph order, labeled by kind and content, carrying its source span, scene, and guard; every edge resolved by id, so a cycle and an orphan both read naturally. The tab is unavailable when the compile produced no graph. |
+| **Changed** | The design gave each edge a label naming its kind. `DisplayEdge` carries no label — it is `(FromId, ToId, Kind)` for every stage — so the kind is read from the node an edge leaves, which a `Choice (2 options)` or `(jump)` label already states. Widening a shared display type is a change to the report's model, not to this tab. |
+| **Also built** | Two things the design did not anticipate. The graph tab needed its **own unavailable reason**: the other stages ask "did the compile reach here", but the graph asks "did it succeed", and reusing their wording would have misled. And English pluralization is not a suffix rule — a test caught `2 branchs`, so a count spells both forms. |
+| **Not implemented** | Cross-linking a divert to its target scene. The graph resolves a jump to a node id, so recovering the anchor means re-deriving what the region overlay already holds — worth doing when a reader asks for it, not on speculation. |
+
 ## Open questions and deferred work
 
 - **Rendering an orphan distinctly.** The projection makes an orphan visible; giving
@@ -209,3 +219,9 @@ IReadOnlyList<DisplayGraph> stages =
   scene) would need client work; the attribute is enough to start.
 - **Playing the graph from the tab.** Stepping through the flow belongs to the
   [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
+- **Labeling an edge by its kind.** Reading the kind from the node an edge leaves
+  works, but a divert and a fall-through still look alike. Naming them would widen
+  `DisplayEdge`, which every stage shares — a display-model change worth making
+  deliberately rather than as a side effect of this tab.
+- **Cross-linking a divert to its scene.** Hovering a jump could highlight its
+  target scene in the Semantic tab's tables, as the earlier stages already do.
