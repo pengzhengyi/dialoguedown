@@ -1,16 +1,17 @@
 ---
-name: distribute-cli
-description: Package, locally test, and publish the DialogueDown `ddown` CLI as a cross-platform .NET global tool on NuGet. Refresh the locally installed tool after a merge to main, and on a changelog release resync the documentation against the code as a release gate, then set the semantic version, pack, and push the package. Composes with maintain-oss and polish-tech-doc, and keeps docs/guide/cli.md as the user-facing source of truth. Self-contained binaries and a Homebrew tap are a planned second channel.
+name: release
+description: Cut and publish a DialogueDown release. Package, locally test, and publish the `ddown` CLI as a cross-platform .NET global tool on NuGet; refresh the locally installed tool after a merge to main; and on a changelog release resync the documentation against the code as a release gate, then set the semantic version, pack, and push the package. Composes with maintain-oss and polish-tech-doc, and keeps docs/guide/cli.md as the user-facing source of truth. Self-contained binaries and a Homebrew tap are a planned second channel.
 ---
 
-# Distribute the ddown CLI
+# Release DialogueDown
 
-Package and ship DialogueDown's command-line tool, `ddown`
-(`src/DialogueDown.Cli`), as a **.NET global tool** on NuGet — the first
-distribution channel. This skill owns the packaging metadata, local testing, the
-pre-release documentation resync, and the release push. It does **not** own the
-changelog, version decision, or tag; those belong to `maintain-oss`. Invoke this
-skill from within that release flow.
+Cut and publish a DialogueDown release. Today the project ships as its
+command-line tool, `ddown` (`src/DialogueDown.Cli`), packaged as a **.NET global
+tool** on NuGet — the first distribution channel — so this skill owns the release
+mechanics: the packaging metadata, local testing, the pre-release documentation
+resync, and the release push. It does **not** own the changelog, version
+decision, or tag; those belong to `maintain-oss`. Invoke this skill from within
+that release flow.
 
 > [!IMPORTANT]
 > Publishing to NuGet, creating tags, adding a publishing workflow or its secret, and
