@@ -30,7 +30,10 @@ import { isTextEntryTarget } from "./text-entry";
 import { escapeHtml } from "./text";
 
 const JUMP_AWARE_STAGE_TITLES = new Set(["Dialogue AST", "Desugared AST", "Semantic Model"]);
-import { setHelp } from "./help";
+import { setHelp, helpBody } from "./help";
+import { createProblemsPanel } from "./problems-panel";
+import { createDiagnosticSummary } from "./diagnostic-summary";
+import { createFooterDrawer } from "./footer-drawer";
 import type { DebugController } from "./debug-controller";
 
 // The Source tab shows the compiler input, not a projected stage, so its hover
@@ -163,6 +166,49 @@ export function runApp(
         else land();
     }
 
+    // The Problems panel and its status-line summary. Both live here rather than in the page
+    // chrome because this is where the diagnostics and the save-safe jump already are.
+    const problems = createProblemsPanel({
+        goTo: (diagnostic) => {
+            // The source view resolves the range, so a row and its squiggle can never
+            // disagree about where the problem is.
+            const span = sourceHandle?.resolveRange(diagnostic.range);
+            if (span) jumpToSource(span);
+        },
+    });
+    const summary = createDiagnosticSummary(() => drawer?.open("problems", summary.element));
+    const helpToggle = document.getElementById("help-toggle");
+    const help = helpBody();
+    const drawerHost = document.getElementById("footer-drawer");
+    // The footer is page chrome, not part of the report: a bare library render (and the unit
+    // fixtures) mount the stages alone. Everything below degrades to absent rather than throwing.
+    const drawer = drawerHost
+        ? createFooterDrawer({
+              host: drawerHost,
+              panels: [
+                  { id: "problems", label: "Problems", body: problems.element },
+                  ...(help ? [{ id: "help", label: "Help", body: help }] : []),
+              ],
+              onToggle: (open) => {
+                  summary.setOpen(open);
+                  helpToggle?.setAttribute("aria-expanded", String(open));
+              },
+          })
+        : null;
+    if (drawer) helpToggle?.addEventListener("click", () => drawer.open("help", helpToggle));
+    document.querySelector(".status-bar")?.appendChild(summary.element);
+
+    /**
+     * The one place diagnostics fan out. Updating the editor overlay, the list, and the counts
+     * from separate call sites is how a stale badge survives a fix — the squiggle clears while
+     * the summary still says three.
+     */
+    function applyDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
+        sourceHandle?.setDiagnostics(diagnostics);
+        problems.setDiagnostics(diagnostics);
+        summary.setCounts(problems.counts());
+    }
+
     // Reverse of `jumpToSource`: from a Source selection, reveal the enclosing node in a stage.
     // Reads the *live* stage set (not a build-time snapshot) so it stays correct after a save
     // rebuilds the stages, then routes through the same save-safe navigation guard.
@@ -242,6 +288,12 @@ export function runApp(
         if (isTextEntryTarget(target) || (target instanceof Element && target.closest("button"))) {
             return;
         }
+        // `p` opens the Problems panel, joining `f` for full screen and `z` for Zen.
+        if (event.key === "p" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+            event.preventDefault();
+            drawer?.open("problems", summary.element);
+            return;
+        }
         views[activeIndex]?.handleKey(event);
     });
     initResizer();
@@ -267,7 +319,7 @@ export function runApp(
             sourceHandle?.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
-        setDiagnostics: (diagnostics) => sourceHandle?.setDiagnostics(diagnostics),
+        setDiagnostics: (diagnostics) => applyDiagnostics(diagnostics),
         setSemanticTokens: (tokens) => sourceHandle?.setSemanticTokens(tokens),
         setReservedTargets: (targets) => sourceHandle?.setReservedTargets(targets),
         setConfigEditable: (next) => configHandle?.setEditable(next),
@@ -334,7 +386,7 @@ export function runApp(
                 jumpTargets,
                 ...(debug ? { debug } : {}),
             });
-            sourceHandle.setDiagnostics(report.diagnostics ?? []);
+            applyDiagnostics(report.diagnostics ?? []);
             sourceHandle.setSemanticTokens(report.semanticTokens ?? []);
             section.appendChild(sourceHandle.element);
             addTab("Source", section, null, SOURCE_TIP, null);

@@ -17,8 +17,9 @@ function mountDom(): void {
         </main>
         <footer>
             <span id="mode-badge"></span>
-            <span id="help-summary"></span>
-            <button id="help-toggle" aria-expanded="false" aria-controls="help-content"></button>
+            <button id="help-toggle" aria-expanded="false" aria-controls="footer-drawer">
+                <span id="help-summary">Help</span>
+            </button>
             <div id="help-content" hidden></div>
         </footer>`;
 }
@@ -78,7 +79,9 @@ describe("initEmptyShell", () => {
     it("points the footer help at the Explorer", () => {
         initEmptyShell(emptyReport);
 
-        expect(document.getElementById("help-summary")?.textContent).toBe("Using the Explorer");
+        expect(document.getElementById("help-toggle")?.getAttribute("title")).toBe(
+            "Help — Using the Explorer",
+        );
         expect(document.getElementById("help-content")?.innerHTML).toContain("New folder");
     });
 

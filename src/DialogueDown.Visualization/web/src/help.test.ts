@@ -4,13 +4,13 @@ import { setHelp } from "./help";
 describe("setHelp", () => {
     beforeEach(() => {
         document.body.innerHTML = `
-      <summary id="help-summary"></summary>
+      <button><span id="help-summary">Help</span></button>
       <div id="help-content"></div>`;
     });
 
     it("shows source-pane help on the Source tab", () => {
         setHelp("source");
-        expect(document.getElementById("help-summary")!.textContent).toContain("Source");
+        expect(document.querySelector("button")!.getAttribute("title")).toContain("Source");
         const html = document.getElementById("help-content")!.innerHTML;
         expect(html).toContain("preview");
         expect(html).toContain("Markdown blocks aligned");
@@ -29,7 +29,7 @@ describe("setHelp", () => {
 
     it("shows Explorer help on the empty state", () => {
         setHelp("explorer");
-        expect(document.getElementById("help-summary")!.textContent).toContain("Explorer");
+        expect(document.querySelector("button")!.getAttribute("title")).toContain("Explorer");
         const html = document.getElementById("help-content")!.innerHTML;
         expect(html).toContain("New file");
         expect(html).toContain("Rename");

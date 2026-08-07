@@ -53,6 +53,7 @@ import { openContextMenu, type ContextMenuItem } from "./context-menu";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
 import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
+import { positionToOffset } from "./lsp-position";
 import { annotateHeadingAnchors, wireHeadingAnchorCopy } from "./heading-anchors";
 import { headingSlugHints } from "./heading-slug-hints";
 import {
@@ -63,6 +64,7 @@ import {
     type DialogueSymbolProvider,
     EMPTY_SYMBOLS,
     type LspDiagnostic,
+    type LspRange,
     type ReservedTarget,
     type SemanticToken,
     type Span,
@@ -332,6 +334,13 @@ export interface SourceViewHandle {
      * editor need not be editable: a read-only (View) editor is still selectable and focusable.
      */
     selectRange(from: number, to: number): void;
+    /**
+     * Resolve an LSP line/character range to a half-open `[start, end)` offset pair against the
+     * current buffer. Exposed so a caller that holds LSP-shaped data — the Problems panel — can
+     * navigate without reaching for the editor state, and so it resolves positions exactly the
+     * way the diagnostics overlay does.
+     */
+    resolveRange(range: LspRange): { start: number; end: number };
 }
 
 const editability = new Compartment();
@@ -574,6 +583,10 @@ export function createSourceView(
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
         setSemanticTokens: (tokens) => setEditorSemanticTokens(view, tokens),
         setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
+        resolveRange: (range) => {
+            const start = positionToOffset(view.state, range.start);
+            return { start, end: Math.max(start, positionToOffset(view.state, range.end)) };
+        },
         selectRange: (from, to) => {
             // Clamp to the document and order the pair, so a stale span can only ever land the
             // cursor in-bounds rather than throw. A zero-width range collapses to a caret.
