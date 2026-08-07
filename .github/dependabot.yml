@@ -1,14 +1,42 @@
+# Grouping policy
+#
+# Routine updates arrive as one pull request per ecosystem per week, because a
+# batch of patch and minor bumps is reviewed as a unit and rarely needs to be
+# picked apart. Major updates stay ungrouped on purpose: they carry the breaking
+# changes, and a failure has to be attributable to one package. The jsdom 29 -> 30
+# bump is the case in point — it dropped a Node version and took the whole test
+# suite down, which would have been far harder to diagnose inside a batch.
+#
+# Security fixes are grouped separately from version updates: Dependabot never
+# folds them into a version-update group, so without `applies-to` they arrive one
+# pull request per advisory.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      nuget:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      nuget-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/src/DialogueDown.Visualization/web"
@@ -16,6 +44,11 @@ updates:
       interval: "weekly"
     groups:
       npm:
+        applies-to: version-updates
         update-types:
           - "minor"
           - "patch"
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"

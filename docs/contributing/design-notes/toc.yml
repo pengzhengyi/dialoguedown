@@ -46,6 +46,8 @@
     href: Compilation Mode Configuration.md
 - name: Diagnostics
   items:
+  - name: Error Model
+    href: Error Model.md
   - name: Diagnostics and Validation
     href: Diagnostics and Validation.md
   - name: Choice Nesting Diagnostic

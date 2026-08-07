@@ -420,7 +420,7 @@ updated to match.)
 ### D10 — Errors: DialogueSyntaxError, friendly messages
 
 Malformed **dialogue grammar** raises **`DialogueSyntaxError`** (the type the
-[error model](./README.md#exception-hierarchy) reserves for this stage): a code
+[error model](./Error%20Model.md#the-throw-channel) reserves for this stage): a code
 span that is neither a valid query nor command, a malformed tag. Messages are
 **located** via `SourceSpan`, written in **plain language for writers and
 developers alike**, and **suggest the fix** — e.g. *"code spans are only for game
