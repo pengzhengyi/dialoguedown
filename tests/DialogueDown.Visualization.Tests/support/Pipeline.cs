@@ -1,5 +1,6 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Graph;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 
@@ -19,6 +20,13 @@ internal static class Pipeline
     public static ScriptDocument Document(string source) => Compile(source, CompilerOptions.Default).Script;
 
     public static SemanticModel Model(string source) => Model(source, CompilerOptions.Default);
+
+    /// <summary>The dialogue graph a clean compile produced — the graph tab's input.</summary>
+    public static DialogueGraph Graph(string source) =>
+        Compile(source, CompilerOptions.Default) is CompilationSuccess success
+            ? success.Graph
+            : throw new InvalidOperationException(
+                $"A projection test needs a compiled graph, but this source did not compile: {source}");
 
     public static SemanticModel Model(string source, CompilerOptions options) =>
         Compile(source, options) is CompilationSuccess success

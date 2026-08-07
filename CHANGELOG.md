@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Dialogue Graph tab** — the report now shows the compiled flow as a fifth stage: every block
+  as a node, joined by the edges that lead between them, so you can see where a choice goes,
+  which scene a jump enters, and — because the tab shows every node rather than only the ones a
+  walk reaches — which lines nothing reaches at all. See the
+  [Dialogue Graph Visualization Tab](docs/contributing/design-notes/Dialogue%20Graph%20Visualization%20Tab.md) note.
 - **Dialogue graph — the compiler's final stage** — a clean compile now lowers its semantic
   model into an immutable **dialogue graph**: one node per block (a line, a control line, a
   choice, a random choice, a block conditional, and the terminal End) joined by typed edges

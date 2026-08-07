@@ -135,7 +135,7 @@ shared graph experience, and finally the live session.
 ```mermaid
 flowchart TB
     CV["1. Compilation Visualization"] --> TT["2. Compiler Stage Tooltips"]
-    TT --> TABS["3-5. Stage tabs:<br/>Dialogue AST → Desugared AST → Semantic Model"]
+    TT --> TABS["3-5, 31. Stage tabs:<br/>Dialogue AST → Desugared AST → Semantic Model → Dialogue Graph"]
     TABS --> GX["6. Graph Position Preservation"]
     GX --> AC["7. Source Editor Autocompletion"]
     AC --> LIVE["8-13. Live session:<br/>Hot Reload → File Launcher → Live Edit → View and Edit Modes → Autosave → Node Inspector"]
@@ -188,7 +188,8 @@ flowchart TB
 | 27 | [Live Visualization — Zen Mode](./Live%20Visualization%20-%20Zen%20Mode.md) | A deeper full screen that also steps the tab's secondary panel aside, leaving the editor or the graph alone | Implemented |
 | 28 | [Live Visualization — Narrow Screen Layout](./Live%20Visualization%20-%20Narrow%20Screen%20Layout.md) | The report on a phone: a one-line scrolling tab strip, a turned Explorer seam, and panels bounded by the viewport so the stage keeps its room | Implemented |
 | 29 | [Live Visualization — Problems Panel](./Live%20Visualization%20-%20Problems%20Panel.md) | Every diagnostic as a navigable list in a tabbed footer drawer, summarized on the status line so problems are visible from every tab | Implemented |
-| 29 | [Live Visualization — Reverse Jump](./Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
+| 30 | [Live Visualization — Reverse Jump](./Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
+| 31 | [Dialogue Graph Visualization Tab](./Dialogue%20Graph%20Visualization%20Tab.md) | The compiled dialogue graph as a fifth stage tab: every node in graph order, typed edges, and orphans made visible | Implemented |
 
 ### Other notes
 

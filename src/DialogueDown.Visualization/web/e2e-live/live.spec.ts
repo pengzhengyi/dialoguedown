@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 test("serves a view report bound to the document", async ({ page }) => {
     // The payload is a served session, so the tabs render. Config leads (it always has a
     // configuration context here), while the report still opens on Source.
-    await expect(page.locator(".tab")).toHaveCount(6); // Config + Source + Markdown/Dialogue/Desugared AST + Semantic Model
+    await expect(page.locator(".tab")).toHaveCount(7); // Config + Source + Markdown/Dialogue/Desugared AST + Semantic Model + Dialogue Graph
     await expect(page.locator(".tab").first()).toHaveText("Config");
     await expect(page.locator(".tab.active")).toHaveText("Source");
     // The View/Edit toggle is shown, starting in View.
