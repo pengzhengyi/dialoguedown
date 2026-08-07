@@ -183,11 +183,12 @@ public sealed class ScriptCompilerFactoryTests
     [Fact]
     public void CreateDefault_BestEffort_TagsWithoutSpeaker_RecoversToADefaultSpeaker()
     {
-        var result = AssertSuccess(BestEffortCompiler().Compile("#lonely: Hi"));
+        // Best-effort runs every stage, so the recovery is visible — but the error means the
+        // compile did not succeed, and the desugared tree rides along on the failure.
+        var result = AssertFailure(BestEffortCompiler().Compile("#lonely: Hi"));
 
-        AssertSuccess(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
-        AssertDefaultSpeaker(AssertLine(result.Desugared.Body[0]).Speaker);
+        AssertDefaultSpeaker(AssertLine(result.Desugared!.Body[0]).Speaker);
     }
 
     [Fact]
@@ -202,9 +203,8 @@ public sealed class ScriptCompilerFactoryTests
     [Fact]
     public void CreateDefault_BestEffort_NotAGameCall_RecoversToLiteralText()
     {
-        var result = BestEffortCompiler().Compile("Alice: say `not a call`");
+        var result = AssertFailure(BestEffortCompiler().Compile("Alice: say `not a call`"));
 
-        AssertSuccess(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.NotAGameCall);
     }
 

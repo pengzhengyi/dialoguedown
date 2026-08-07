@@ -223,13 +223,18 @@ public sealed class CompilationVisualizer
     private ReportContent BuildContent(string source)
     {
         var result = _compiler.Compile(source);
-        IReadOnlyList<DisplayGraph> stages = result is CompilationSuccess analyzed
+
+        // A stage is shown when the compile reached it, which is not the same as succeeding: a
+        // script with errors still has a desugared tree and a semantic model worth inspecting.
+        var desugared = result.ReachedDesugared();
+        var semantics = result.ReachedSemantics();
+        IReadOnlyList<DisplayGraph> stages = desugared is not null && semantics is not null
             ?
             [
                 result.Markdown.ToDisplayGraph(source),
                 result.Script.ToDisplayGraph(source),
-                analyzed.Desugared.ToDisplayGraph(source),
-                new SemanticProjection().Project(analyzed.Semantics, source),
+                desugared.ToDisplayGraph(source),
+                new SemanticProjection().Project(semantics, source),
             ]
             :
             [
@@ -238,9 +243,9 @@ public sealed class CompilationVisualizer
                 ScriptDisplayExtensions.DesugaredUnavailable(StageUnavailableReason),
                 SemanticProjection.Unavailable(StageUnavailableReason),
             ];
-        var symbols = result is CompilationSuccess resolved
-            ? new SymbolProjection().Project(resolved.Semantics)
-            : SymbolSet.Empty;
+        var symbols = semantics is null
+            ? SymbolSet.Empty
+            : new SymbolProjection().Project(semantics);
         var configuration = _configuration is null
             ? null
             : ConfigurationProjection.Project(_configuration);

@@ -65,9 +65,17 @@ internal sealed class ScriptCompiler : IScriptCompiler
         _validator.Validate(desugared, session.Context.Diagnostics);
         var semantics = _analyzer.Analyze(desugared, session.Context);
 
+        // An error means the recovered model no longer describes what the writer wrote, so the
+        // compile did not succeed however far it got. Everything it reached rides along, since a
+        // tool still describes a broken script.
+        if (session.HasErrors)
+        {
+            return CompilationFailure.AtAnalysis(
+                source, markdown, script, desugared, semantics, session.Diagnostics);
+        }
+
         // TODO(graph-build): build the flow graph from the semantic model here as that stage
-        // lands; it adds one more artifact to a success, and an erroring compile becomes a
-        // failure at analysis rather than a success without a graph.
+        // lands; it adds one more artifact to a success.
         return new CompilationSuccess(
             source, markdown, script, desugared, semantics, session.Diagnostics);
     }

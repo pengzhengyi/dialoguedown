@@ -103,14 +103,17 @@ public sealed class ScriptCompilerTests
     }
 
     [Fact]
-    public void Compile_BestEffort_ATranspileError_RunsEveryStageToACompleteResult()
+    public void Compile_BestEffort_ATranspileError_RunsEveryStageButStillFails()
     {
         var error = DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Error);
         var compiler = CompilerWhoseTranspilerReports(CompilationMode.BestEffort, error);
 
-        var result = compiler.Compile("Alice: hi");
+        // Best-effort never halts, so analysis ran and its artifacts are here — reaching every
+        // stage is not the same as succeeding.
+        var result = AssertFailure(compiler.Compile("Alice: hi"));
 
-        AssertSuccess(result);
+        Assert.NotNull(result.Desugared);
+        Assert.NotNull(result.Semantics);
         Assert.True(result.HasErrors);
         Assert.Contains(error, result.Diagnostics);
     }

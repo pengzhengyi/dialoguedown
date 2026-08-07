@@ -14,6 +14,19 @@ namespace DialogueDown.Visualization.Tests;
 public sealed class CompilationVisualizerTests
 {
     [Fact]
+    public void BuildStages_ErroringScriptThatReachedAnalysis_StillShowsEveryStage()
+    {
+        // A jump to a missing scene is reported after the transpiler, so the compile runs every
+        // stage and fails. Reaching a stage is not succeeding: the artifacts it produced are still
+        // worth inspecting, so no stage reads as unavailable.
+        var stages = new CompilationVisualizer(ScriptCompilerFactory.CreateDefault())
+            .BuildStages("Alice: away => [nowhere](#no-such-scene)");
+
+        Assert.All(stages, stage => Assert.Null(stage.Unavailable));
+        Assert.Equal(4, stages.Count);
+    }
+
+    [Fact]
     public void Constructor_NullCompiler_Throws()
     {
         Assert.Throws<ArgumentNullException>(() => new CompilationVisualizer((IScriptCompiler)null!));
