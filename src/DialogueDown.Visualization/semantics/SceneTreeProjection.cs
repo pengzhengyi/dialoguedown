@@ -67,7 +67,7 @@ internal sealed class SceneTreeProjection : INodeProjection<object>
             yield return block;
         }
 
-        foreach (var child in scene.Children)
+        foreach (var child in scene.ChildScenes)
         {
             yield return child;
         }

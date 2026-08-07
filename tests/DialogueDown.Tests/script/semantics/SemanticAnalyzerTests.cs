@@ -77,7 +77,7 @@ public sealed class SemanticAnalyzerTests
             Alice: Ready?
             """);
 
-        var scene = Assert.Single(model.SceneRoot.Children);
+        var scene = Assert.Single(model.SceneRoot.ChildScenes);
         Assert.Equal("play-tennis", scene.Anchor);
         Assert.True(model.Anchors.TryResolve("play-tennis", out _));
     }

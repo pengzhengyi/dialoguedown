@@ -446,6 +446,27 @@ internal static class DiagnosticDocs
                 ["`0%`"],
                 ["`50%`"])),
         new(
+            DiagnosticCatalog.ExternalJumpNotResolved,
+            "A jump reaches a scene in the script it is written in. Reaching one in another script "
+            + "is not built yet, so a target naming a file or a URL resolves to nothing and the "
+            + "line simply reads on. Keep the destination in this script until cross-file jumps "
+            + "land.",
+            new(
+                """
+                Alice: To the vault.
+
+                => [The vault](chapter-02.md#the-vault)
+                """,
+                """
+                Alice: To the vault.
+
+                => [The vault](#the-vault)
+
+                # The vault
+                """,
+                ["chapter-02.md#the-vault"],
+                ["#the-vault"])),
+        new(
             DiagnosticCatalog.SceneHeadingInsideBranch,
             "Scene headings define document-level jump targets. A heading inside a control branch "
             + "or choice option would not create a scene, so move it outside the branch and jump to "

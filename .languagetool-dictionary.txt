@@ -1,0 +1,16 @@
+# Per-repo LanguageTool accepted terms for `polish-tech-doc` (lt-check.py).
+# One term per line; case-insensitive; `#` comments and blank lines are ignored.
+# Only add a term after confirming it is a false positive. Grammar/style rules
+# belong in `.languagetool-disabled-rules.txt`, not here.
+#
+# Identifiers written in backticks are stripped before checking and need no entry;
+# these are terms that appear as ordinary prose in the design notes.
+
+# DialogueDown's own vocabulary.
+desugarer
+subgraph
+
+# Prior art named in the design notes.
+Inkle
+Articy
+QuikGraph

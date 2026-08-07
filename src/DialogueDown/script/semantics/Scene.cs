@@ -12,7 +12,7 @@ namespace DialogueDown.Script.Semantics;
 /// </summary>
 internal sealed class Scene
 {
-    private readonly List<Scene> _children = [];
+    private readonly List<Scene> _childScenes = [];
     private readonly List<ScriptBlock> _blocks = [];
 
     private Scene(SceneHeading? heading, string? anchor)
@@ -31,7 +31,7 @@ internal sealed class Scene
     public string? Anchor { get; }
 
     /// <summary>The scenes nested directly under this one, in document order.</summary>
-    public IReadOnlyList<Scene> Children => _children;
+    public IReadOnlyList<Scene> ChildScenes => _childScenes;
 
     /// <summary>The blocks this scene owns directly, in document order.</summary>
     public IReadOnlyList<ScriptBlock> Blocks => _blocks;
@@ -42,7 +42,7 @@ internal sealed class Scene
     /// <summary>A scene opened by <paramref name="heading"/> with the given slug anchor.</summary>
     public static Scene ForHeading(SceneHeading heading, string anchor) => new(heading, anchor);
 
-    internal void AddChild(Scene child) => _children.Add(child);
+    internal void AddChild(Scene child) => _childScenes.Add(child);
 
     internal void AddBlock(ScriptBlock block) => _blocks.Add(block);
 }

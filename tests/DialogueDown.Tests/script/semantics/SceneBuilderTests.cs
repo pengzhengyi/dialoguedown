@@ -15,7 +15,7 @@ public sealed class SceneBuilderTests
         var (root, anchors) = Build();
 
         Assert.Null(root.Heading);
-        Assert.Empty(root.Children);
+        Assert.Empty(root.ChildScenes);
         Assert.Empty(root.Blocks);
         Assert.False(anchors.TryResolve("anything", out _));
     }
@@ -28,7 +28,7 @@ public sealed class SceneBuilderTests
         var (root, _) = Build(leading, SceneHeading("Scene", 1));
 
         Assert.Equal([leading], root.Blocks);
-        Assert.Single(root.Children);
+        Assert.Single(root.ChildScenes);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public sealed class SceneBuilderTests
     {
         var (root, _) = Build(SceneHeading("A", 1), SceneHeading("B", 1));
 
-        Assert.Equal(["a", "b"], root.Children.Select(scene => scene.Anchor));
+        Assert.Equal(["a", "b"], root.ChildScenes.Select(scene => scene.Anchor));
     }
 
     [Fact]
@@ -44,8 +44,8 @@ public sealed class SceneBuilderTests
     {
         var (root, _) = Build(SceneHeading("A", 1), SceneHeading("A one", 2));
 
-        var a = Assert.Single(root.Children);
-        var childAnchors = a.Children.Select(scene => scene.Anchor);
+        var a = Assert.Single(root.ChildScenes);
+        var childAnchors = a.ChildScenes.Select(scene => scene.Anchor);
         Assert.Equal(["a-one"], childAnchors);
     }
 
@@ -58,8 +58,8 @@ public sealed class SceneBuilderTests
             SceneHeading("A one", 3),
             SceneHeading("B", 2));
 
-        Assert.Equal(["a", "b"], root.Children.Select(scene => scene.Anchor));
-        Assert.Equal(["a-one"], root.Children[0].Children.Select(scene => scene.Anchor));
+        Assert.Equal(["a", "b"], root.ChildScenes.Select(scene => scene.Anchor));
+        Assert.Equal(["a-one"], root.ChildScenes[0].ChildScenes.Select(scene => scene.Anchor));
     }
 
     [Fact]
@@ -72,8 +72,8 @@ public sealed class SceneBuilderTests
             SceneHeading("A", 1), inA,
             SceneHeading("B", 1), inB);
 
-        Assert.Equal([inA], root.Children[0].Blocks);
-        Assert.Equal([inB], root.Children[1].Blocks);
+        Assert.Equal([inA], root.ChildScenes[0].Blocks);
+        Assert.Equal([inB], root.ChildScenes[1].Blocks);
     }
 
     [Fact]

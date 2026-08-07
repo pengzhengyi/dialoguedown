@@ -4,6 +4,7 @@ using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.CompilationAssert;
 using static DialogueDown.Tests.Support.ConfigurationFactory;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
@@ -24,7 +25,7 @@ public sealed class ScriptCompilerFactoryTests
             No speaker here.
             """;
 
-        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
 
         Assert.Equal(source, result.Source);
         Assert.NotNull(result.Markdown);
@@ -60,7 +61,7 @@ public sealed class ScriptCompilerFactoryTests
             - `%` Alice: Tails.
             """;
 
-        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
 
         Assert.Empty(result.Diagnostics);
 
@@ -89,7 +90,7 @@ public sealed class ScriptCompilerFactoryTests
             > Alice: Try downstairs.
             """;
 
-        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
 
         Assert.Empty(result.Diagnostics);
 
@@ -113,7 +114,7 @@ public sealed class ScriptCompilerFactoryTests
     {
         var options = new CompilerOptions { Speakers = [DefaultConfiguredSpeaker("Narrator")] };
 
-        var result = ScriptCompilerFactory.CreateDefault(options).Compile("Hi.");
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault(options).Compile("Hi."));
 
         var speaker = result.Semantics.Speakers.Resolve(new DefaultSpeaker(SourceSpanFactory.Span()));
         Assert.Equal("Narrator", speaker.Name);
@@ -175,18 +176,19 @@ public sealed class ScriptCompilerFactoryTests
         // compile stops before analysis and returns a partial result.
         var result = ScriptCompilerFactory.CreateDefault().Compile("#lonely: Hi");
 
-        Assert.False(result.IsComplete);
+        AssertFailure(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
     }
 
     [Fact]
     public void CreateDefault_BestEffort_TagsWithoutSpeaker_RecoversToADefaultSpeaker()
     {
-        var result = BestEffortCompiler().Compile("#lonely: Hi");
+        // Best-effort runs every stage, so the recovery is visible — but the error means the
+        // compile did not succeed, and the desugared tree rides along on the failure.
+        var result = AssertFailure(BestEffortCompiler().Compile("#lonely: Hi"));
 
-        Assert.True(result.IsComplete);
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
-        AssertDefaultSpeaker(AssertLine(result.Desugared.Body[0]).Speaker);
+        AssertDefaultSpeaker(AssertLine(result.Desugared!.Body[0]).Speaker);
     }
 
     [Fact]
@@ -194,16 +196,15 @@ public sealed class ScriptCompilerFactoryTests
     {
         var result = ScriptCompilerFactory.CreateDefault().Compile("Alice: say `not a call`");
 
-        Assert.False(result.IsComplete);
+        AssertFailure(result);
         AssertReported(result.Diagnostics, DiagnosticCatalog.NotAGameCall);
     }
 
     [Fact]
     public void CreateDefault_BestEffort_NotAGameCall_RecoversToLiteralText()
     {
-        var result = BestEffortCompiler().Compile("Alice: say `not a call`");
+        var result = AssertFailure(BestEffortCompiler().Compile("Alice: say `not a call`"));
 
-        Assert.True(result.IsComplete);
         AssertReported(result.Diagnostics, DiagnosticCatalog.NotAGameCall);
     }
 
@@ -219,6 +220,38 @@ public sealed class ScriptCompilerFactoryTests
             DiagnosticSeverity.Error,
             new LinePosition(1, 1));
         Assert.Contains("names no speaker", located.Message);
+    }
+
+    [Fact]
+    public void CreateDefault_CleanScript_CompilesAllTheWayToAGraph()
+    {
+        var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile("""
+            # Gate
+
+            Alice: Who goes there?
+
+            => [The end](#END)
+            """));
+
+        Assert.False(result.HasErrors);
+        Assert.NotEmpty(result.Graph.Nodes);
+    }
+
+    [Fact]
+    public void CreateDefault_ScriptWithErrors_ProducesNoGraph()
+    {
+        // A misplaced heading is reported and recovered, so analysis still describes the script.
+        // There is no coherent flow to run, so the outcome is a failure and carries no graph.
+        var result = AssertFailure(ScriptCompilerFactory.CreateDefault().Compile("""
+            > `if` `"Rich"?`
+            >
+            > # Upstairs
+            >
+            > Alice: Welcome.
+            """));
+
+        Assert.True(result.HasErrors);
+        Assert.NotNull(result.Semantics);
     }
 
     private static IScriptCompiler BestEffortCompiler() =>
