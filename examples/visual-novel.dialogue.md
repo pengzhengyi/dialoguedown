@@ -85,7 +85,7 @@ to—
 >
 > `ShowSprite("yuki", "radiant")` `PlayBgm("theme_together")`
 >
-> Yuki: *Oh.* You too? All this time, you too? ![the two of you laughing under one umbrella #size=large #align=center](cg-together.png)
+> Yuki: *Oh.* You too? All this time, you too? ![the rain over your one umbrella #size=large #align=center](assets/umbrella-rain.jpg)
 >
 > The train sighs to a stop, doors open — and neither of you moves to board it.
 >
