@@ -69,6 +69,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Tighter report layout.** The visualization report trims the chrome so more of
+  the window goes to content: a more compact header, the active-tab underline sits
+  under its label, the main area runs edge to edge, and the Source tab's preview
+  drops its redundant frame.
 - **A compile now succeeds or fails, and says which.** `Compile` returns a
   `CompilationSuccess` carrying every stage artifact, or a `CompilationFailure` carrying how
   far it got — instead of one result whose later artifacts might be missing. A script with an

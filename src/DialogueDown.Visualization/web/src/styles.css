@@ -257,7 +257,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     padding-right: 8.5rem; /* keep the brand clear of the top-right controls */
 }
 
@@ -441,12 +441,17 @@ nav.tabs::-webkit-scrollbar {
 button.tab {
     width: auto;
     margin: 0;
-    padding: 0.4rem 0.9rem;
+    padding: 0.3rem 0.9rem 0.15rem;
     color: var(--pico-muted-color);
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     border-radius: 0;
+
+    /* The active underline sits directly under the label rather than dropping to the header rule:
+       a slim bottom padding keeps the 2px border close to the text, and the margin below takes the
+       tab down to the header edge so the row keeps its height. */
+    margin-bottom: 0.2rem;
 
     /* Tabs keep their natural width in the scroller instead of being squeezed to fit, and
        snap to the row's start when scrolled to. The scroll margin keeps a revealed tab clear
@@ -509,10 +514,10 @@ button.tab.dirty::after {
     display: flex;
     min-height: 0;
 
-    /* Inset the content area to the same gutter as the header and footer, with a little
-       vertical breathing room, so the whole document reads as one connected surface
-       rather than the graph/editor running flush to the window edges. */
-    padding: 0.85rem 1.25rem;
+    /* Full-bleed main: no vertical inset, so the editor and graphs use the whole height between
+       the header rule and the footer; a slim horizontal inset keeps the editor's line gutter (and
+       its debug lane) and the graph controls off the window edge without boxing the content in. */
+    padding: 0 0.4rem;
 }
 
 #stages {
@@ -2138,11 +2143,15 @@ g.node.entity-highlight text.label {
     border-left-color: var(--pico-primary);
 }
 
-.source-preview {
+/* The Source tab's preview shares the `.preview` class with the graph tabs' detail boxes, which
+   frame themselves in a bordered, rounded card. Here that frame would double up against the split
+   divider and the editor gutter, so this compound selector outranks `.preview` to drop the box and
+   let the preview read as one surface with the editor beside it. */
+.source-preview.preview {
     flex: 1 1 auto;
     min-width: 0;
     overflow: auto;
-    padding: 0.75rem 1.25rem;
+    padding: 0.5rem 0.85rem;
     border: none;
     border-radius: 0;
     scroll-behavior: smooth;
