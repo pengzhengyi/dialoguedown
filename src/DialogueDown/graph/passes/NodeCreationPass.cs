@@ -1,0 +1,62 @@
+using DialogueDown.Graph.Builder;
+using DialogueDown.Script.Ast;
+
+namespace DialogueDown.Graph.Passes;
+
+/// <summary>
+/// Creates one node draft per script block in document order — including the blocks nested in a
+/// choice option's body — then adds the terminal End node.
+/// A later pass wires the edges between them.
+/// </summary>
+internal sealed class NodeCreationPass : GraphBuildPass
+{
+    protected override void ApplyCore(GraphDraft draft, GraphBuildContext context)
+    {
+        foreach (var block in context.AllBlocks)
+        {
+            AddNode(draft, context, block);
+        }
+
+        draft.AddEnd(context.DocumentEnd);
+    }
+
+    private static void AddNode(GraphDraft draft, GraphBuildContext context, ScriptBlock block)
+    {
+        switch (block)
+        {
+            case Line line:
+                var speaker = context.ResolveSpeaker(SpeakerOf(line));
+                draft.AddBlock(
+                    line,
+                    id => new LineNodeDraft(
+                        id, line.Span, speaker, line.Speech, line.Condition));
+                break;
+            case Choices choices:
+                draft.AddBlock(
+                    choices, id => new ChoiceNodeDraft(id, choices.Span, choices.IsOrdered));
+                break;
+            case RandomChoices random:
+                draft.AddBlock(random, id => new RandomChoiceNodeDraft(id, random.Span));
+                break;
+            case ControlLine control:
+                draft.AddBlock(
+                    control,
+                    id => new ControlNodeDraft(
+                        id,
+                        control.Span,
+                        [.. control.Effects.OfType<GameCall>()],
+                        control.Condition));
+                break;
+            case ControlBlock conditional:
+                draft.AddBlock(conditional, id => new BranchNodeDraft(id, conditional.Span));
+                break;
+            default:
+                throw new NotSupportedException(
+                    $"The dialogue graph builder does not yet lower {block.GetType().Name} blocks.");
+        }
+    }
+
+    private static Speaker SpeakerOf(Line line) =>
+        line.Speaker ?? throw new InvalidOperationException(
+            "Analysis fills a default speaker on every line, so a line's speaker is never null here.");
+}

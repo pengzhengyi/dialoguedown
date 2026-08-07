@@ -7,6 +7,7 @@ using DialogueDown.Script.Transpiler;
 using DialogueDown.Tests.Support;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using static DialogueDown.Tests.Support.CompilationAssert;
 using static DialogueDown.Tests.Support.ConfigurationFactory;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
 
@@ -30,7 +31,7 @@ public sealed class DialogueDownServiceCollectionExtensionsTests
         var options = new CompilerOptions { Speakers = [DefaultConfiguredSpeaker("Narrator")] };
         using var provider = new ServiceCollection().AddDialogueDown(options).BuildServiceProvider();
 
-        var result = provider.GetRequiredService<IScriptCompiler>().Compile("Hi.");
+        var result = AssertSuccess(provider.GetRequiredService<IScriptCompiler>().Compile("Hi."));
 
         var speaker = result.Semantics.Speakers.Resolve(new DefaultSpeaker(SourceSpanFactory.Span()));
         Assert.Equal("Narrator", speaker.Name);

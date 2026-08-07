@@ -8,6 +8,9 @@ namespace DialogueDown.Tests.Support;
 /// </summary>
 internal static class DialogueAstAssert
 {
+    public static Line AssertSingleLine(IReadOnlyList<ScriptBlock> blocks) =>
+        Assert.IsType<Line>(Assert.Single(blocks));
+
     public static Text AssertText(InlineFragment actual, string content)
     {
         var text = Assert.IsType<Text>(actual);
@@ -54,6 +57,15 @@ internal static class DialogueAstAssert
         var query = Assert.IsType<Query>(actual);
         Assert.Equal(key, query.Key);
         return query;
+    }
+
+    public static CustomCommand AssertCustomCommand(
+        InlineFragment actual, string name, params string[] args)
+    {
+        var command = Assert.IsType<CustomCommand>(actual);
+        Assert.Equal(name, command.Name);
+        Assert.Equal(args, command.Args);
+        return command;
     }
 
     public static Condition AssertCondition(InlineFragment actual, string key)

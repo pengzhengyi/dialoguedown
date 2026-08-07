@@ -219,6 +219,16 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG2016 — a jump names a target outside this script, which is not resolved yet.</summary>
+    public static readonly DiagnosticDescriptor ExternalJumpNotResolved = new(
+        "DLG2016",
+        "Jump outside this script is not resolved yet",
+        "This jump names '{0}', which is outside this script. Targets outside the script are not "
+            + "resolved yet, so the jump leads nowhere. Point it at a scene in this script — "
+            + "'#the-scene' — until cross-file jumps land.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Warning);
+
     /// <summary>DLG2015 — a scene heading is nested inside a control or choice branch.</summary>
     public static readonly DiagnosticDescriptor SceneHeadingInsideBranch = new(
         "DLG2015",
