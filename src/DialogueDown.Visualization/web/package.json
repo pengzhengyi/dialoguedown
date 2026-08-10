@@ -33,7 +33,7 @@
     "@fontsource/fira-code": "^5.3.0",
     "@lezer/highlight": "^1.2.3",
     "@picocss/pico": "^2.0.6",
-    "@tanstack/table-core": "^8.21.3",
+    "@tanstack/table-core": "^9.0.0",
     "@vscode/codicons": "^0.0.46-24",
     "codemirror": "^6.0.2",
     "d3": "^7.9.0",
