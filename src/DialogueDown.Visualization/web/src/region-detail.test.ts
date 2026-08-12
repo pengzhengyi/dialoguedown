@@ -36,38 +36,41 @@ describe("regionDetailOf", () => {
     });
 
     it("names the outside node each arriving route comes from", () => {
-        expect(regionDetailOf(stage, "The Gate").entering.map((edge) => edge.label)).toEqual([
+        expect(regionDetailOf(stage, "The Gate").entering.map((edge) => edge.from.label)).toEqual([
             "Guide: Inside.",
         ]);
     });
 
     it("names the outside node each departing route goes to", () => {
-        expect(regionDetailOf(stage, "The Gate").leaving.map((edge) => edge.label)).toEqual([
+        expect(regionDetailOf(stage, "The Gate").leaving.map((edge) => edge.to.label)).toEqual([
             "Guide: Inside.",
         ]);
     });
 
     it("keeps the inside end too, so a row can name the edge it stands for", () => {
         const [arriving] = regionDetailOf(stage, "The Gate").entering;
-        expect(arriving.id).toBe("inside");
-        expect(arriving.ownerId).toBe("open");
+        expect(arriving.from.id).toBe("inside");
+        expect(arriving.to.id).toBe("open");
     });
 
     it("carries the route's own kind, so the border reads as more than a list of names", () => {
-        expect(regionDetailOf(stage, "The Gate").entering[0].edgeCategory).toBe("jump");
+        expect(regionDetailOf(stage, "The Gate").entering[0].category).toBe("jump");
     });
 
     it("ignores a route that stays inside the region — a border is what crosses it", () => {
         // open -> choose runs from one Gate node to another, so it is not part of the border.
         const detail = regionDetailOf(stage, "The Gate");
+        // A crossing always has exactly one end outside The Gate.
         const insideIds = new Set(["open", "choose"]);
         expect(
-            [...detail.entering, ...detail.leaving].every((edge) => !insideIds.has(edge.id)),
+            [...detail.entering, ...detail.leaving].every(
+                (edge) => insideIds.has(edge.from.id) !== insideIds.has(edge.to.id),
+            ),
         ).toBe(true);
     });
 
     it("counts a route from unregioned ground as arriving from outside", () => {
-        expect(regionDetailOf(stage, "The Hall").entering.map((edge) => edge.id)).toEqual([
+        expect(regionDetailOf(stage, "The Hall").entering.map((edge) => edge.from.id)).toEqual([
             "choose",
             "loose",
         ]);

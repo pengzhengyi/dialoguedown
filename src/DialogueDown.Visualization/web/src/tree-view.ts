@@ -139,6 +139,15 @@ export interface TreeViewOptions {
     /** The scale to open at when there is no pinned camera — inherited, not the default. */
     initialZoom?: number | null;
     /**
+     * Whether a node can be folded away.
+     *
+     * A tree's children *are* its content, so hiding them hides only detail. A graph's are an
+     * accident of which route happened to reach them first: folding one takes away nodes other
+     * routes still lead to, and the edges into them, leaving a picture of the flow that is not
+     * true. A graph stage therefore says no.
+     */
+    foldable?: boolean;
+    /**
      * Fired when the camera changes; `byUser` is true for reader gestures (wheel,
      * drag, the zoom controls) and false for programmatic applies (a reveal, the
      * default framing).
@@ -189,6 +198,7 @@ export function createTreeView(
         initialCamera = null,
         initialFold = [],
         initialZoom = null,
+        foldable = true,
         onCameraChange,
         onFoldChange,
         onSelectEdge,
@@ -727,7 +737,15 @@ export function createTreeView(
     function applyCategoryFilter(): void {
         gNodes
             .selectAll<SVGGElement, TreeNode>("g.node")
-            .classed("dimmed", (d) => Boolean(d.data.category && dimmed.has(d.data.category)));
+            .classed("dimmed", (d) =>
+                Boolean(
+                    (d.data.category && dimmed.has(d.data.category)) ||
+                    (d.data.region && dimmed.has(d.data.region)),
+                ),
+            );
+        gRegions
+            .selectAll<SVGGElement, { region: string }>("g.region")
+            .classed("dimmed", (datum) => dimmed.has(datum.region));
         eachLink((link, category) =>
             link.classList.toggle("dimmed", Boolean(category && dimmed.has(category))),
         );
@@ -736,13 +754,20 @@ export function createTreeView(
     function highlightCategory(category: string): void {
         gNodes
             .selectAll<SVGGElement, TreeNode>("g.node")
-            .classed("highlight", (d) => d.data.category === category);
+            .classed(
+                "highlight",
+                (d) => d.data.category === category || d.data.region === category,
+            );
         eachLink((link, own) => link.classList.toggle("highlight", own === category));
+        gRegions
+            .selectAll<SVGGElement, { region: string }>("g.region")
+            .classed("highlight", (datum) => datum.region === category);
     }
 
     function clearHighlight(): void {
         gNodes.selectAll<SVGGElement, TreeNode>("g.node").classed("highlight", false);
         eachLink((link) => link.classList.remove("highlight"));
+        gRegions.selectAll<SVGGElement, { region: string }>("g.region").classed("highlight", false);
     }
 
     function eachLink(apply: (link: SVGPathElement, category?: string) => void): void {
@@ -785,12 +810,14 @@ export function createTreeView(
     /* --- collapse / expand --- */
 
     function toggle(node: TreeNode): void {
+        if (!foldable) return;
         node.children = node.children ? undefined : node._children;
         update();
         onFoldChange?.(collapsedIds());
     }
 
     function expand(node: TreeNode): void {
+        if (!foldable) return;
         if (!node.children && node._children) {
             node.children = node._children;
             update();
@@ -996,7 +1023,7 @@ export function createTreeView(
             .attr("r", (d) => (isSceneNode(d.data) ? SCENE_NODE_RADIUS : CONTENT_NODE_RADIUS))
             .style("fill", (d) => colorOf(d.data.category))
             .on("click", (_event, d) => {
-                guardSelect(d, { toggle: true });
+                guardSelect(d, { toggle: foldable });
             });
 
         group

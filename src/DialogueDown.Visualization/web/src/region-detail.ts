@@ -1,5 +1,25 @@
 import type { Span, Stage } from "./model";
-import { isFlow, type Neighbor } from "./neighbors";
+import { isFlow } from "./neighbors";
+
+/** One end of a route, as a region's border table names it. */
+export interface CrossingEnd {
+    id: string;
+    label: string;
+    category?: string;
+}
+
+/**
+ * A route that crosses a region's edge, named at both ends.
+ *
+ * Which node outside leads in matters, but so does where inside it lands — a scene entered at its
+ * first line and a scene entered halfway are different stories, and only both ends tell them
+ * apart.
+ */
+export interface BorderCrossing {
+    from: CrossingEnd;
+    to: CrossingEnd;
+    category?: string;
+}
 import { tintsOf } from "./region-bands";
 
 /**
@@ -14,10 +34,10 @@ export interface RegionDetail {
     name: string;
     /** How many nodes the region holds. */
     nodeCount: number;
-    /** Routes arriving from outside; each names the outside node it comes from. */
-    entering: Neighbor[];
-    /** Routes leaving for outside; each names the outside node it goes to. */
-    leaving: Neighbor[];
+    /** Routes arriving from outside, naming both ends so the crossing itself is legible. */
+    entering: BorderCrossing[];
+    /** Routes leaving for outside, naming both ends. */
+    leaving: BorderCrossing[];
     /**
      * The stretch of document the region covers, taken as the reach of its nodes' own spans, so a
      * client can show the text a scene was written as.
@@ -39,31 +59,21 @@ export interface RegionDetail {
 export function regionDetailOf(stage: Stage, region: string): RegionDetail {
     const byId = new Map(stage.nodes.map((node) => [node.id, node]));
     const inside = stage.nodes.filter((node) => node.region === region);
-    const entering: Neighbor[] = [];
-    const leaving: Neighbor[] = [];
+    const entering: BorderCrossing[] = [];
+    const leaving: BorderCrossing[] = [];
 
     for (const edge of stage.edges) {
         if (!isFlow(edge)) continue;
         const from = byId.get(edge.fromId);
         const to = byId.get(edge.toId);
         if (!from || !to || from.region === to.region) continue;
-        if (to.region === region) {
-            entering.push({
-                id: from.id,
-                ownerId: to.id,
-                label: from.label,
-                nodeCategory: from.category,
-                edgeCategory: edge.category,
-            });
-        } else if (from.region === region) {
-            leaving.push({
-                id: to.id,
-                ownerId: from.id,
-                label: to.label,
-                nodeCategory: to.category,
-                edgeCategory: edge.category,
-            });
-        }
+        const crossing: BorderCrossing = {
+            from: { id: from.id, label: from.label, category: from.category },
+            to: { id: to.id, label: to.label, category: to.category },
+            category: edge.category,
+        };
+        if (to.region === region) entering.push(crossing);
+        else if (from.region === region) leaving.push(crossing);
     }
 
     const declared = stage.regions?.find((each) => each.name === region);

@@ -6,10 +6,18 @@ import { ellipsize, escapeHtml, renderNodePreview } from "./text";
 const MAX_TITLE_TEXT = 80;
 /** The longest label that still reads as a heading rather than as content. */
 const MAX_TITLE_LABEL = 40;
+/**
+ * How much of a node's words a table cell shows.
+ *
+ * A row names a node so the reader can go there; a whole line of dialogue in a narrow column
+ * builds a tower of wrapped words and pushes the columns beside it off the panel. Clicking
+ * through shows the whole of it.
+ */
+const MAX_CELL_TEXT = 28;
 import { createJumpButton, type JumpButton } from "./jump-button";
 import { edgeStyle } from "./edge-style";
 import type { Neighbor, Neighbors } from "./neighbors";
-import type { RegionDetail } from "./region-detail";
+import type { BorderCrossing, CrossingEnd, RegionDetail } from "./region-detail";
 
 /** One end of an edge, as the inspector shows it. */
 export interface EdgeEnd {
@@ -287,6 +295,39 @@ function neighborSection(
     );
 }
 
+/**
+ * A region's border, named at both ends.
+ *
+ * A node's own tables can leave one end implied — it is the node you are looking at — but a
+ * crossing has two nodes the reader does not yet know, so both are spelled out.
+ */
+function crossingSection(heading: string, crossings: BorderCrossing[]): string {
+    const rows = crossings.length
+        ? crossings.map(crossingRow).join("")
+        : `<tr><td class="neighbor-empty" colspan="3">None</td></tr>`;
+    return (
+        `<h4>${escapeHtml(heading)}</h4>` +
+        `<table class="neighbors crossings"><thead><tr>` +
+        `<th scope="col">Source</th><th scope="col">Edge</th><th scope="col">Destination</th>` +
+        `</tr></thead><tbody>${rows}</tbody></table>`
+    );
+}
+
+function crossingRow(crossing: BorderCrossing): string {
+    return (
+        `<tr><td>${endCell(crossing.from)}</td>` +
+        `<td>${edgeCell(crossing.from.id, crossing.to.id, crossing.category)}</td>` +
+        `<td>${endCell(crossing.to)}</td></tr>`
+    );
+}
+
+function endCell(end: CrossingEnd): string {
+    return (
+        `<button type="button" class="neighbor" data-node-id="${escapeHtml(end.id)}">` +
+        `${categoryDot(end.category)}${escapeHtml(ellipsize(end.label, MAX_CELL_TEXT))}</button>`
+    );
+}
+
 function neighborRow(incoming: boolean, neighbor: Neighbor): string {
     // An edge is named by the pair it joins, so a row can point at the same edge the drawing does.
     const [fromId, toId] = incoming
@@ -302,7 +343,8 @@ function neighborRow(incoming: boolean, neighbor: Neighbor): string {
 function nodeCell(neighbor: Neighbor): string {
     return (
         `<button type="button" class="neighbor" data-node-id="${escapeHtml(neighbor.id)}">` +
-        `${categoryDot(neighbor.nodeCategory)}${escapeHtml(neighbor.label)}</button>`
+        `${categoryDot(neighbor.nodeCategory)}` +
+        `${escapeHtml(ellipsize(neighbor.label, MAX_CELL_TEXT))}</button>`
     );
 }
 
@@ -346,8 +388,7 @@ export function regionDetailBody(
     ].join("");
     const count = `<table><tbody>${facts}</tbody></table>`;
     const border =
-        neighborSection("Entering", "Source", true, region.entering) +
-        neighborSection("Leaving", "Destination", false, region.leaving);
+        crossingSection("Entering", region.entering) + crossingSection("Leaving", region.leaving);
     const text =
         typeof source === "string"
             ? `<h4>Source</h4><pre><code>${escapeHtml(source)}</code></pre>` +

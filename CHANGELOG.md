@@ -25,6 +25,13 @@ changes easy to categorize.
   strength under a resting pointer, so the click looked like it had done nothing.
 - **Selecting a node by name reveals it.** A search hit or a neighbor row inside a collapsed
   branch was marked but never shown; the fold over it now opens.
+- **A region's border names both of its ends** — Source, Edge, Destination — because a scene
+  entered at its first line and one entered halfway are different stories, and only both ends tell
+  them apart. Regions also take their own group in the legend, with the tint their band is drawn
+  with and how much each holds.
+- **A graph's nodes no longer fold.** A tree's children are its content, so hiding them hides only
+  detail; a graph's are an accident of which route happened to reach them first, and folding one
+  took away nodes other routes still lead to, along with the edges into them.
 - **A graph frames itself when you arrive at it.** An untouched tab inherited the whole camera,
   pan included — and a pan means something only against the graph it was made on. The dialogue
   graph runs far wider than the trees beside it, so arriving from a panned tab left the reader

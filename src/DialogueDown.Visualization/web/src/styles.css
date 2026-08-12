@@ -2312,6 +2312,10 @@ svg.tree {
     stroke-width: 2px;
 }
 
+.region.dimmed {
+    opacity: 0.2;
+}
+
 .region-name {
     font-size: 10px;
     font-weight: 600;
@@ -2579,6 +2583,17 @@ svg.tree.has-focus .link:not(.related) {
     width: 0.7rem;
     height: 0.7rem;
     border-radius: 50%;
+    flex: none;
+}
+
+/* A region's row wears its band's tint as a small square, so the word and the color are learned
+   together wherever the region is named. */
+.legend .region-swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 1px solid var(--dd-region-mark);
+    border-radius: 3px;
+    background: var(--dd-region-mark);
     flex: none;
 }
 

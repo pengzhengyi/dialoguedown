@@ -339,8 +339,20 @@ describe("createDetailPanel", () => {
             {
                 name: "The Gate",
                 nodeCount: 4,
-                entering: [{ id: "out", ownerId: "in", label: "(jump)", edgeCategory: "jump" }],
-                leaving: [{ id: "next", ownerId: "last", label: "End", edgeCategory: "break" }],
+                entering: [
+                    {
+                        from: { id: "out", label: "(jump)" },
+                        to: { id: "in", label: "Guide: Hello." },
+                        category: "jump",
+                    },
+                ],
+                leaving: [
+                    {
+                        from: { id: "last", label: "Guide: Bye." },
+                        to: { id: "next", label: "End" },
+                        category: "break",
+                    },
+                ],
                 tint: 0,
             },
             "# The Gate\n\n- Alice: Left.\n",

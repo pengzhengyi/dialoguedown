@@ -572,6 +572,9 @@ export function runApp(
                 // adjustments are recorded live through the callbacks above.
                 view = createTreeView(stage, (node) => showNode(node, recognizeJumps, stage), {
                     ...treeOptions,
+                    // A graph's "children" are an accident of which route reached them first, so
+                    // folding one would hide nodes other routes still lead to.
+                    foldable: !stage.edges.some((edge) => edge.category),
                     onSelectEdge: (edge) => showEdge(stage, edge),
                     onSelectRegion: (region) => showRegion(stage, region),
                 });

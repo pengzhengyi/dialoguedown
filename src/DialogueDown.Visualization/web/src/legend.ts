@@ -1,6 +1,8 @@
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import { CATEGORY_COLORS } from "./palette";
 import { edgeStyle } from "./edge-style";
+import { tintsOf } from "./region-bands";
+
 import { baseLabel } from "./text";
 
 export interface CategoryStat {
@@ -21,6 +23,15 @@ export function categoryStats(nodes: DisplayNode[]): Record<string, CategoryStat
         if (!stat.names.includes(name)) stat.names.push(name);
     }
     return stats;
+}
+
+/** How many nodes each region holds, in the order the stage first names them. */
+export function regionCounts(nodes: DisplayNode[]): Map<string, number> {
+    const counts = new Map<string, number>();
+    for (const node of nodes) {
+        if (node.region) counts.set(node.region, (counts.get(node.region) ?? 0) + 1);
+    }
+    return counts;
 }
 
 /** How many edges of each category the stage draws, for the edge legend. */
@@ -66,12 +77,35 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         .filter((category) => edgeCounts[category])
         .map((category) => edgeItem(category, edgeCounts[category]));
 
-    if (edgeItems.length > 0) {
-        legend.append(groupHeading("Nodes"), ...nodeItems, groupHeading("Edges"), ...edgeItems);
+    // A region is a third kind of thing the drawing shows, so it earns its own group — and its
+    // rows behave as the others do: hover to pick it out, click to fade it.
+    const regions = regionCounts(stage.nodes);
+    const tints = tintsOf(stage.nodes.map((node) => node.region));
+    const regionItems = [...regions].map(([name, count]) =>
+        regionItem(name, tints.get(name) ?? 0, count),
+    );
+
+    if (edgeItems.length > 0 || regionItems.length > 0) {
+        legend.append(groupHeading("Nodes"), ...nodeItems);
+        if (edgeItems.length > 0) legend.append(groupHeading("Edges"), ...edgeItems);
+        if (regionItems.length > 0) legend.append(groupHeading("Regions"), ...regionItems);
     } else {
         legend.append(...nodeItems);
     }
     return legend;
+
+    function regionItem(name: string, tint: number, count: number): HTMLButtonElement {
+        // The region's own name is its key: the legend's dim and highlight channel is keyed by
+        // string, and a region name cannot collide with a palette category.
+        const item = interactiveItem(name, name, count);
+        item.classList.add("legend-region");
+        item.dataset.region = name;
+        const swatch = item.querySelector<HTMLElement>(".swatch")!;
+        swatch.className = "swatch region-swatch";
+        swatch.dataset.tint = String(tint);
+        swatch.style.background = "";
+        return item;
+    }
 
     function groupHeading(text: string): HTMLElement {
         const heading = document.createElement("p");
