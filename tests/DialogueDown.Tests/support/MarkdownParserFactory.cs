@@ -9,4 +9,12 @@ namespace DialogueDown.Tests.Support;
 internal static class MarkdownParserFactory
 {
     public static IMarkdownParser MarkdownParser() => new MarkdigMarkdownParser();
+
+    /// <summary>Parses with the default policy and a throwaway diagnostics context.</summary>
+    public static MarkdownDocument Parse(string source) =>
+        MarkdownParser().Parse(source, DiagnosticsContextFactory.Context(source));
+
+    /// <summary>Parses under a policy that deviates from the default.</summary>
+    public static MarkdownDocument Parse(string source, IUnmodeledNodeHandlingPolicy policy) =>
+        new MarkdigMarkdownParser(policy).Parse(source, DiagnosticsContextFactory.Context(source));
 }

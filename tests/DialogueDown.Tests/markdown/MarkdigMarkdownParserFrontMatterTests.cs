@@ -1,5 +1,6 @@
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.MarkdownAstAssert;
 
 namespace DialogueDown.Tests.Markdown;
@@ -9,7 +10,7 @@ public sealed class MarkdigMarkdownParserFrontMatterTests : MarkdigMarkdownParse
     [Fact]
     public void Parse_FrontMatter_IsDiscarded_ContentPreserved()
     {
-        var document = Parser.Parse(
+        var document = Parse(
             """
             ---
             title: Scene 1
@@ -26,7 +27,7 @@ public sealed class MarkdigMarkdownParserFrontMatterTests : MarkdigMarkdownParse
     [Fact]
     public void Parse_FrontMatterOnly_ProducesNoBlocks()
     {
-        var document = Parser.Parse(
+        var document = Parse(
             """
             ---
             title: Scene 1
@@ -44,21 +45,35 @@ public sealed class MarkdigMarkdownParserFrontMatterTests : MarkdigMarkdownParse
         // policy — not front matter (which only matches at the document start). A
         // policy that keeps thematic breaks proves the "---" survives as raw text,
         // whereas front matter would be discarded regardless of policy.
-        var parser = new MarkdigMarkdownParser(
-            TestUnmodeledNodePolicy.Default.Keep(UnmodeledNodeKind.ThematicBreak));
-
-        var document = parser.Parse(
+        var document = MarkdownParserFactory.Parse(
             """
             Alice: Hi
 
             ---
 
             Bob: Bye
-            """);
+            """,
+            TestUnmodeledNodePolicy.Default.Keep(UnmodeledNodeKind.ThematicBreak));
 
         Assert.Equal(3, document.Blocks.Count);
         var divider = Assert.IsType<Paragraph>(document.Blocks[1]);
         var text = Assert.IsType<TextInline>(Assert.Single(divider.Inlines));
         Assert.StartsWith("---", text.Text);
+    }
+
+    [Fact]
+    public void Parse_FrontMatter_IsNotNotedAsDroppedMarkdown()
+    {
+        // Front matter is discarded before the handling policy is consulted, so it is not a drop.
+        Parse(
+            """
+            ---
+            title: Scene 1
+            ---
+            Alice: Hello
+            """,
+            out var diagnostics);
+
+        AssertNotReported(diagnostics.Diagnostics);
     }
 }

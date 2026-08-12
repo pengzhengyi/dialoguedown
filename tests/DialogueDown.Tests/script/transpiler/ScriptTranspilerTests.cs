@@ -53,7 +53,7 @@ public sealed class ScriptTranspilerTests
             - Go left
             - Go right
             """;
-        var document = MarkdownParserFactory.MarkdownParser().Parse(source);
+        var document = MarkdownParserFactory.Parse(source);
 
         var script = _transpiler.Transpile(document, DiagnosticsContextFactory.Context(source));
 
@@ -75,7 +75,7 @@ public sealed class ScriptTranspilerTests
         // speech into "x " and "* y"; the second fragment must anchor at the star's real
         // position (index 6), not drift onto the backslash.
         var source = @"A: x \* y";
-        var document = MarkdownParserFactory.MarkdownParser().Parse(source);
+        var document = MarkdownParserFactory.Parse(source);
 
         var script = _transpiler.Transpile(document, DiagnosticsContextFactory.Context(source));
 

@@ -130,6 +130,9 @@ changes easy to categorize.
 
 ### Changed
 
+- **The report's tables now run on `table-core` v9.** Sorting, searching, and faceted filtering
+  behave exactly as before; the upgrade keeps the report on a supported major of its headless
+  table engine.
 - **Tighter report layout.** The visualization report trims the chrome so more of
   the window goes to content: a more compact header, the active-tab underline sits
   under its label, the main area runs edge to edge, and the Source tab's preview

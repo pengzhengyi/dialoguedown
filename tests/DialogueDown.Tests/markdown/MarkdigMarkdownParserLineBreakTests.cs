@@ -13,7 +13,7 @@ public sealed class MarkdigMarkdownParserLineBreakTests : MarkdigMarkdownParserT
     {
         // A plain newline (either line-ending style) is a soft break: the two
         // lines stay in one paragraph and the compiler later joins them.
-        var document = Parser.Parse(source);
+        var document = Parse(source);
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         Assert.Collection(
@@ -30,7 +30,7 @@ public sealed class MarkdigMarkdownParserLineBreakTests : MarkdigMarkdownParserT
     {
         // Two trailing spaces or a trailing backslash both make a hard break,
         // which the compiler later reads as the boundary between two speeches.
-        var document = Parser.Parse(source);
+        var document = Parse(source);
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         Assert.Collection(
@@ -47,7 +47,7 @@ public sealed class MarkdigMarkdownParserLineBreakTests : MarkdigMarkdownParserT
         // LiteralInline's Content.Start is relative to that buffer (0), not the source. The
         // ContentSpan must still be the absolute source position (taken from the reliable
         // Span), or a speaker or tokenizer anchored at ContentSpan lands at the top of the file.
-        var document = Parser.Parse("# Heading\n\nAlice: the first line\nsoftwraps onto a second.");
+        var document = Parse("# Heading\n\nAlice: the first line\nsoftwraps onto a second.");
 
         var paragraph = document.Blocks.OfType<Paragraph>().Single();
         var firstText = paragraph.Inlines.OfType<TextInline>().First();
