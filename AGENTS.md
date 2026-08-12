@@ -21,6 +21,7 @@ A plain `dotnet build` needs no Node — the built web report is committed.
 ```bash
 # .NET library, CLI, and tests
 dotnet restore DialogueDown.sln
+dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
 dotnet test DialogueDown.sln --configuration Release --no-build -m:3
 
@@ -33,6 +34,14 @@ cd src/DialogueDown.Visualization/web && npm ci && npm run check && npm run buil
 # Live integration — builds the CLI once, then launches the built DLL per server
 cd src/DialogueDown.Visualization/web && npm run e2e:live
 ```
+
+`dotnet format --verify-no-changes` is the code-style gate, and CI runs it
+before the build. Run it too: code-style rules (`IDE####`, such as naming) do
+**not** run during `dotnet build`, so a green build alone does not mean a green
+CI. Note also that analyzer warnings are emitted only when a project actually
+recompiles — repeating `dotnet build` with no changes prints zero warnings even
+when violations exist. `dotnet format` always analyzes; the `build: verify` task
+adds `--no-incremental` when a build's warning count has to be trusted.
 
 ## Conventions
 

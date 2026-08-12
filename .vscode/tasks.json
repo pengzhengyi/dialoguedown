@@ -29,6 +29,15 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "format: verify",
+      "detail": ".NET: the same formatting and code-style gate CI runs; catches what an incremental build cannot.",
+      "type": "shell",
+      "command": "dotnet format DialogueDown.sln --verify-no-changes --no-restore",
+      "group": "test",
+      "dependsOn": "restore",
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "test",
       "detail": ".NET: run the test projects with three MSBuild workers.",
       "type": "shell",
@@ -155,9 +164,18 @@
       "problemMatcher": []
     },
     {
+      "label": "build: verify",
+      "detail": ".NET: rebuild from scratch so every analyzer runs; an up-to-date build reports no warnings even when violations exist.",
+      "type": "shell",
+      "command": "dotnet build DialogueDown.sln --configuration Release --no-restore --no-incremental",
+      "group": "build",
+      "dependsOn": "restore",
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "verify: all",
-      "detail": "Run every check: .NET tests, web check, and web e2e.",
-      "dependsOn": ["test", "web: check", "web: e2e"],
+      "detail": "Run every check: formatting, a fresh .NET build, tests, web check, and web e2e.",
+      "dependsOn": ["format: verify", "build: verify", "test", "web: check", "web: e2e"],
       "dependsOrder": "sequence",
       "group": "test",
       "problemMatcher": []
