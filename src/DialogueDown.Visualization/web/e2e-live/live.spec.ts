@@ -923,12 +923,23 @@ test("folds the legend away, and back", async ({ page }) => {
     const legend = page.locator("section.stage.active .legend");
     const fold = legend.locator(".legend-fold");
 
+    // The button keeps one place and one size in both states, so the glyph never jumps and the
+    // reader can fold and unfold without moving the pointer.
+    const open = (await fold.boundingBox())!;
     await fold.click();
     await expect(legend.locator(".legend-item").first()).toBeHidden();
+    await expect(fold.locator(".legend-fold-show")).toBeVisible();
+
+    const folded = (await fold.boundingBox())!;
+    expect(Math.round(folded.x)).toBe(Math.round(open.x));
+    expect(Math.round(folded.y)).toBe(Math.round(open.y));
+    expect(Math.round(folded.width)).toBe(Math.round(open.width));
+    expect(Math.round(folded.height)).toBe(Math.round(open.height));
 
     // Folded, the button *is* the legend — it must still be reachable to open again.
     await fold.click();
     await expect(legend.locator(".legend-item").first()).toBeVisible();
+    await expect(fold.locator(".legend-fold-hide")).toBeVisible();
 });
 
 test("names each kind of route with its own pointer", async ({ page }) => {
