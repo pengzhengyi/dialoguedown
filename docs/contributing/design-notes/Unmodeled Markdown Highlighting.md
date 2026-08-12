@@ -1,7 +1,7 @@
 # Unmodeled Markdown Highlighting
 
 > [!NOTE]
-> Status: **proposed**. Extends
+> Status: **implemented**. Extends
 > [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) so the
 > editor shows what a construct's fate is — ignored, or dialogue — instead of muting the
 > blockquotes that carry control blocks and coloring ignored material as if it played.
@@ -43,14 +43,14 @@ needs no change when it lands. Front-matter rendering is a pre-existing gap, tra
 
 ## Functionality checklist
 
-- [ ] Add a token kind for Markdown the policy **ignores**.
-- [ ] Derive it from the policy's own decision, not a second classification.
-- [ ] Cover block and inline constructs alike.
-- [ ] Reach constructs nested in a list item or blockquote.
-- [ ] Style ignored material as present in the file but absent from the dialogue.
-- [ ] Stop muting blockquotes, so a control block reads as live dialogue.
-- [ ] Style Markdown comments as the writer-only notes they are.
-- [ ] Leave dialogue constructs' existing tokens untouched.
+- [x] Add a token kind for Markdown the policy **ignores**.
+- [x] Derive it from the policy's own decision, not a second classification.
+- [x] Cover block and inline constructs alike.
+- [x] Reach constructs nested in a list item or blockquote.
+- [x] Style ignored material as present in the file but absent from the dialogue.
+- [x] Stop muting blockquotes, so a control block reads as live dialogue.
+- [x] Style Markdown comments as the writer-only notes they are.
+- [x] Leave dialogue constructs' existing tokens untouched.
 
 ## Ubiquitous language
 
@@ -121,7 +121,7 @@ flowchart LR
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
 | `TokenKind` | Gains `IgnoredMarkdown`. | — |
-| `SemanticTokenProjection` | Emits a token for each ignored construct, from the reported spans. | the diagnostics of one compile |
+| `SemanticTokenProjection` | Emits a token for each ignored construct, from the reported spans. | `LocatedDiagnostic`, `DiagnosticCatalog` |
 | `IUnmodeledNodeHandlingPolicy` | Unchanged: still the single authority on a kind's fate. | `UnmodeledNodeKind` |
 | `semantic-tokens.ts` | Maps the new kind to its CSS class. | `styles.css` |
 | `source-view.ts` | Stops muting blockquotes; styles comments. | the Markdown highlight style |
@@ -161,6 +161,16 @@ correctly with no change here.
 The tradeoff: the highlighting depends on that diagnostic being produced, so demoting or
 suppressing `DLG1114` would silently take the coloring with it. A test pins the pair together so
 it cannot happen unnoticed.
+
+### DD2a — The diagnostics reach the projection as an optional argument
+
+`Project` takes the compile's located diagnostics as a trailing optional parameter, so a caller
+that only wants dialogue tokens — the projection's existing tests among them — is unchanged, and
+a caller that has diagnostics passes them. The compile that renders a report always has them.
+
+The coupling to `DLG1114` is made in code rather than by a literal: the projection compares
+against `DiagnosticCatalog.DroppedUnmodeledMarkdown.Code`, so the code cannot drift from the
+catalog silently.
 
 ### DD3 — Kept material is styled as dialogue, because that is what it becomes
 
@@ -218,10 +228,9 @@ dialogue.
   no ignored construct emits none; nesting is covered.
 - **Unit — the DD2 coupling:** a test asserts an ignored construct produces both the diagnostic
   and the token, so demoting one cannot silently break the other.
-- **Unit — client:** the new kind maps to a class; an unknown kind is skipped rather than
-  throwing.
-- **Integration — editor:** a script with all four fates decorates the expected ranges, a
-  blockquote's contents are not muted, and a comment is styled.
+- **Unit — client:** the new kind maps to its class, alongside every existing kind.
+- **Unit — Markdown layer:** `markdownHighlightStyle` is asserted to leave a blockquote unstyled
+  and to style a comment, so neither decision can be undone by reflex.
 
 ## Alternatives not chosen
 
