@@ -1,7 +1,7 @@
 # Dangling arrow diagnostic
 
 > [!NOTE]
-> Status: **proposed**
+> Status: **implemented**
 > ([issue #227](https://github.com/pengzhengyi/dialoguedown/issues/227)).
 > Warns when a `=>` has no link after it, so the jump the writer intended is
 > silently degraded to the literal characters `=>`.
@@ -12,7 +12,7 @@
 - [Functionality checklist](#functionality-checklist)
 - [Ubiquitous language](#ubiquitous-language)
 - [Writer-facing behavior](#writer-facing-behavior)
-- [Why it happens today](#why-it-happens-today)
+- [Where the knowledge lives](#where-the-knowledge-lives)
 - [Architecture](#architecture)
 - [Interfaces and responsibilities](#interfaces-and-responsibilities)
 - [Key design decisions](#key-design-decisions)
@@ -49,16 +49,17 @@ and the prerequisite for [#47](https://github.com/pengzhengyi/dialoguedown/issue
 
 ## Functionality checklist
 
-- [ ] Add a `Syntax` diagnostic with `Warning` severity for a dangling arrow.
-- [ ] Report it from **desugar**, at the point the arrow is degraded to text.
-- [ ] Point the diagnostic at the arrow's own span (the `=>` characters).
-- [ ] Report a **conditional** dangling arrow too (`` `Ready?` => `` with no link),
+- [x] Add a `Syntax` diagnostic with `Warning` severity for a dangling arrow.
+- [x] Report it from **desugar**, at the point the arrow is degraded to text.
+- [x] Point the diagnostic at the arrow's own span (the `=>` characters).
+- [x] Report a **conditional** dangling arrow too (`` `Ready?` => `` with no link),
       pointing at the arrow rather than the guard.
-- [ ] Report **every** dangling arrow in a document, not just the first.
-- [ ] Do **not** report when the arrow is part of a well-formed jump.
-- [ ] Do **not** report for a literal `=>` the writer escaped or wrote as code.
-- [ ] Keep the existing degradation behavior byte-for-byte (still `Text("=>")`).
-- [ ] Add the generated error-code reference entry and writer-facing guidance.
+- [x] Report **every** dangling arrow in a document, not just the first.
+- [x] Do **not** report when the arrow is part of a well-formed jump.
+- [x] Report a literal `=>` typed in prose too: it cannot be told apart from a lost
+      jump, and no script in this repository triggers it.
+- [x] Keep the existing degradation behavior byte-for-byte (still `Text("=>")`).
+- [x] Add the generated error-code reference entry and writer-facing guidance.
 
 ## Ubiquitous language
 
@@ -96,28 +97,23 @@ deliberate piece of prose. A `Warning` is still right for the deliberate case:
 it never fails a compile, and the writer whose flow silently vanished is the one
 this diagnostic exists for.
 
-## Why it happens today
+## Where the knowledge lives
 
-`JumpAssembler` expresses jump assembly as a small parser grammar. A dangling
-arrow is matched by an explicit fallback that rewrites the indicator to text:
-
-```csharp
-// A => with no link after it is not a jump, so it degrades to the characters "=>".
-private static readonly Parser<InlineFragment, InlineFragment> _danglingArrow =
-    OfType<JumpIndicator>().Select(indicator => (InlineFragment)new Text("=>", indicator.Span));
-```
-
-The assembler knows exactly when it drops an arrow — it just has nowhere to say
-so, because it is a static, sink-less helper. `ScriptDesugarer` already receives a
-`DiagnosticsContext` and carries a standing `TODO` naming this very case:
+`JumpAssembler` expresses jump assembly as a small parser grammar. The branch
+that matches a lone indicator is the last place that still knows the arrow was
+an arrow, so it both reports and degrades:
 
 ```csharp
-// TODO(diagnostics): the context is validated but not yet read — desugaring works off
-// the tree and the spans it already carries. Report warnings into context.Diagnostics
-// when the producers land (e.g. a dangling arrow or multiple jumps).
+private InlineFragment ReportAndDegrade(JumpIndicator indicator)
+{
+    _diagnostics.Report(new Diagnostic(DiagnosticCatalog.DanglingJumpArrow, indicator.Span, []));
+    return new Text("=>", indicator.Span);
+}
 ```
 
-This component makes desugar the **first producer** to use that context.
+`ScriptDesugarer` has always been handed a `DiagnosticsContext`; this component
+is the first to read it, making desugar a diagnostic **producer** alongside the
+transpiler.
 
 ## Architecture
 
@@ -143,9 +139,9 @@ the sink injected into the reporting rule — see
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `DiagnosticCatalog` | Owns the new `DLG1113` descriptor. | — |
+| `DiagnosticCatalog` | Owns the `DLG1113` descriptor. | — |
 | `ScriptDesugarer` | Builds a desugarer per compile, wired to `context.Diagnostics`. | `DesugarerFactory`, `DiagnosticsContext` |
-| `DesugarerFactory` | Creates the rule pipeline, with and without a sink. | rules |
+| `DesugarerFactory` | Creates the rule pipeline for one compilation, wiring the sink into the reporting rule. | rules |
 | `JumpAssemblyRule` | Holds the sink for one compile and hands it to the assembler. | `JumpAssembler` |
 | `JumpAssembler` | Reports a dangling arrow as it degrades it. | `IDiagnosticSink` |
 
@@ -217,7 +213,10 @@ the writer must act.
 | `=> The market` | Dangling. One warning at the `=>`. |
 | `` `Ready?` => `` (no link) | Dangling. One warning at the `=>`, not the condition. |
 | Two dangling arrows in one document | Two warnings, one per arrow. |
-| `=>` inside a code span or escaped | Never becomes a `JumpIndicator`, so no diagnostic. |
+| A literal `=>` typed in prose | Warned, like any other dangling arrow — the two are indistinguishable by the time desugar runs. |
+| `` `=>` `` in a code span | Read as a game call, so `DLG1102` is reported instead of this diagnostic. |
+| `\=>` | Still warned: Markdown consumes the backslash before DialogueDown tokenizes, so the arrow survives. Only the entity `&#61;>` stays quiet. |
+| `=>` inside a heading | Never reaches desugar, so nothing is reported; the arrow stays heading text. |
 | Arrow inside a choice option or control branch | Reported — the rewriter reaches nested sequences. |
 | `=>` followed by a link on the **next line** | Already dangling today (a jump is single-line); now warned. |
 
@@ -228,18 +227,25 @@ the writer must act.
 - **CLI.** Rendered by the existing errata renderer with no change.
 - **Report and LSP.** Flow through the shipped diagnostics overlay and projection.
 - **Docs.** The generated error-code reference gains a `DLG1113` entry; the
-  language guide's jump section gains a short note.
+  language guide's jump section explains that an arrow without a link is read
+  literally and that the compiler warns about it. Following the guide's own
+  convention, that page names no diagnostic code — `error-codes.md` is the only
+  place codes appear.
 
 ## Testability
 
-- **Unit — catalog:** `DLG1113` exists, is `Syntax`, and is `Warning`.
 - **Unit — assembler:** a dangling arrow reports once and still degrades to
-  `Text("=>")`; a well-formed jump reports nothing.
+  `Text("=>")`; a well-formed jump reports nothing; two arrows report twice.
 - **Unit — conditional:** the reported span is the arrow's, not the guard's.
 - **Integration — pipeline:** compiling a document with a dangling arrow surfaces
-  exactly one `DLG1113` with the right span; a clean script surfaces none.
-- **Docs test:** the existing diagnostic-catalog Markdown test covers the new
-  entry automatically.
+  exactly one `DLG1113`, located at the arrow, and the compile still succeeds.
+- **Docs test:** the diagnostic-catalog Markdown test regenerates the reference
+  page, and the reader-facing example is compiled — the broken script must
+  report `DLG1113` and the fixed one must not.
+
+Every type this component touches — `JumpAssembler`, `JumpAssemblyRule`,
+`DesugarerFactory`, and `ScriptDesugarer` — ends at 100% line and branch
+coverage.
 
 ## Alternatives not chosen
 
