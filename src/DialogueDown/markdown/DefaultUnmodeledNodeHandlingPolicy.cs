@@ -1,8 +1,9 @@
+using DialogueDown.Configuration;
 namespace DialogueDown.Markdown;
 
 /// <summary>
-/// The default handling policy: drop authoring aids that are not speech (code
-/// blocks, thematic breaks, tables) and keep everything else as raw text.
+/// The default handling policy: ignore authoring aids that are not dialogue (code
+/// blocks, thematic breaks, tables) and keep everything else.
 /// </summary>
 internal sealed class DefaultUnmodeledNodeHandlingPolicy : IUnmodeledNodeHandlingPolicy
 {
@@ -17,6 +18,6 @@ internal sealed class DefaultUnmodeledNodeHandlingPolicy : IUnmodeledNodeHandlin
         UnmodeledNodeKind.CodeBlock
             or UnmodeledNodeKind.ThematicBreak
             or UnmodeledNodeKind.Table => UnmodeledNodeHandling.Ignore,
-        _ => UnmodeledNodeHandling.AsRawText,
+        _ => UnmodeledNodeHandling.Keep,
     };
 }

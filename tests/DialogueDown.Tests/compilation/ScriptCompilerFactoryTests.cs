@@ -211,10 +211,10 @@ public sealed class ScriptCompilerFactoryTests
 
         var result = ScriptCompilerFactory.CreateDefault().Compile(source);
 
-        AssertReported(result.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        AssertReported(result.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown);
         var located = AssertLocated(
             result.LocatedDiagnostics,
-            DiagnosticCatalog.DroppedUnmodeledMarkdown,
+            DiagnosticCatalog.IgnoredUnmodeledMarkdown,
             DiagnosticSeverity.Info,
             new LinePosition(3, 1));
 

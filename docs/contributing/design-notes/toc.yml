@@ -60,8 +60,8 @@
     href: Styled Speaker Prefix Diagnostic.md
   - name: Dangling Arrow Diagnostic
     href: Dangling Arrow Diagnostic.md
-  - name: Dropped Markdown Diagnostic
-    href: Dropped Markdown Diagnostic.md
+  - name: Ignored Markdown Diagnostic
+    href: Ignored Markdown Diagnostic.md
   - name: CLI Diagnostic Rendering
     href: CLI Diagnostic Rendering.md
 - name: Command-line interface

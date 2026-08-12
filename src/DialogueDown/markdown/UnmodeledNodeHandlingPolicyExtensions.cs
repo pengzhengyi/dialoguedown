@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using MarkdigBlock = Markdig.Syntax.Block;
 using MarkdigInline = Markdig.Syntax.Inlines.Inline;
 
@@ -21,9 +22,9 @@ internal static class UnmodeledNodeHandlingPolicyExtensions
 
     public static bool ShouldKeep(this IUnmodeledNodeHandlingPolicy policy, MarkdigBlock block) =>
         policy.HandlingFor(MarkdigUnmodeledNodeClassifier.ClassifyBlock(block))
-            == UnmodeledNodeHandling.AsRawText;
+            == UnmodeledNodeHandling.Keep;
 
     public static bool ShouldKeep(this IUnmodeledNodeHandlingPolicy policy, MarkdigInline inline) =>
         policy.HandlingFor(MarkdigUnmodeledNodeClassifier.ClassifyInline(inline))
-            == UnmodeledNodeHandling.AsRawText;
+            == UnmodeledNodeHandling.Keep;
 }

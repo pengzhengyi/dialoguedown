@@ -1,9 +1,9 @@
-# Dropped Markdown diagnostic
+# Ignored Markdown diagnostic
 
 > [!NOTE]
 > Status: **implemented**
 > ([issue #227](https://github.com/pengzhengyi/dialoguedown/issues/227)).
-> Notes each Markdown construct the front end drops, so a table or divider that
+> Notes each Markdown construct the front end ignores, so a table or divider that
 > never reaches the script does not disappear without a word.
 
 ## Table of contents
@@ -26,21 +26,21 @@
 DialogueDown models the Markdown a dialogue needs. Everything else is an
 **unmodeled construct**, and an
 [`IUnmodeledNodeHandlingPolicy`](./Unmodeled%20Markdown%20Handling.md) decides
-whether it survives as raw speech text or is **dropped**. By default a code
-block, a thematic break, and a table are dropped — they are authoring aids, not
+whether it is **kept** as dialogue text or **ignored**. By default a code
+block, a thematic break, and a table are ignored — they are authoring aids, not
 speech.
 
 Dropping is the right behavior; doing it in total silence is not. A writer who
 lays out a table of rumors, or separates two beats with `---`, gets a script
 where that content simply is not there, with nothing to explain why.
 
-This note makes the front end **say what it dropped**: one `Info` diagnostic per
-dropped construct, naming the kind and pointing at it.
+This note makes the front end **say what it left out**: one `Info` diagnostic per
+ignored construct, naming the kind and pointing at it.
 
 **In scope:** an `Info` diagnostic reported by the Markdown front end, widening
 the parser seam so it can report, and the reference entry.
 
-**Out of scope:** changing *what* is dropped (the default policy is unchanged);
+**Out of scope:** changing *what* is ignored (the default policy is unchanged);
 reading the policy from `dialogue.toml`, which is
 [#47](https://github.com/pengzhengyi/dialoguedown/issues/47); and the dangling
 arrow, which shipped as
@@ -48,12 +48,12 @@ arrow, which shipped as
 
 ## Functionality checklist
 
-- [x] Add a diagnostic with `Info` severity for a dropped unmodeled construct.
-- [x] Report it from the **Markdown front end**, where the construct is dropped.
+- [x] Add a diagnostic with `Info` severity for an ignored unmodeled construct.
+- [x] Report it from the **Markdown front end**, where the construct is ignored.
 - [x] Name the construct in the message in a writer's words ("table", not `Table`).
-- [x] Point the diagnostic at the dropped construct's own span.
-- [x] Report **block** and **inline** drops alike.
-- [x] Report **every** drop, including several of the same kind.
+- [x] Point the diagnostic at the ignored construct's own span.
+- [x] Report **block** and **inline** constructs alike.
+- [x] Report **every** ignored construct, including several of the same kind.
 - [x] Do **not** report a construct the policy keeps as raw text.
 - [x] Do **not** report front matter or an HTML comment, which never reach the
       policy.
@@ -68,7 +68,6 @@ arrow, which shipped as
 | --- | --- |
 | **Unmodeled construct** | Markdown DialogueDown does not model as dialogue, classified as an `UnmodeledNodeKind`. |
 | **Handling** | What the policy decides for a kind: `AsRawText` or `Ignore`. |
-| **Drop** | Carrying out `Ignore` — the construct never reaches the script. |
 | **Degrade** | Carrying out `AsRawText` — the construct survives as its exact source text. |
 | **Front end** | The Markdown stage: `IMarkdownParser`, and the converter and unmodeled-node handler behind it. |
 
@@ -90,12 +89,12 @@ The compiler reports `DLG1114` — title **Markdown left out of the script**,
 category `Syntax`, severity `Info`:
 
 ```text
-scene.dialogue.md(3,1): info DLG1114: A table is not dialogue, so it was left
-out of the script. That is expected for notes and diagrams; write it as
-dialogue text if it should be spoken.
+scene.dialogue.md(3,1): info DLG1114: This table is not dialogue, so the compiler
+left it out of the script. That is expected for notes and diagrams; write it as
+dialogue if it should be spoken.
 ```
 
-`Info` is deliberate. Unlike a dangling arrow, a drop is usually exactly what
+`Info` is deliberate. Unlike a dangling arrow, ignoring is usually exactly what
 the writer wanted — a code block can never be speech, so dropping it is the
 whole point. The compiler cannot read intent, so it states the fact without
 implying a mistake. This is the catalog's first `Info`, which is what the
@@ -105,7 +104,7 @@ severity was defined for: "a neutral note".
 
 `MarkdigUnmodeledNodeHandler` is the one place that decides the fate of a
 construct DialogueDown does not model: it asks the policy, then either degrades
-the construct to raw speech text or drops it — and a drop is where the note is
+the construct as dialogue text or ignores it — and ignoring is where the note is
 written.
 
 ```csharp
@@ -113,7 +112,7 @@ public MarkdownBlock? Handle(MarkdigBlock block)
 {
     if (_policy.ShouldIgnore(block))
     {
-        Drop(MarkdigUnmodeledNodeClassifier.ClassifyBlock(block), block.Span);
+        Ignore(MarkdigUnmodeledNodeClassifier.ClassifyBlock(block), block.Span);
         return null;
     }
 
@@ -152,7 +151,7 @@ flowchart LR
 | `DiagnosticCatalog` | Owns the `DLG1114` descriptor. | — |
 | `IMarkdownParser` | Widened to `Parse(string, DiagnosticsContext)`, matching the other stages. | `ScriptCompiler` |
 | `MarkdigMarkdownParser` | Builds the handler per parse, with the compilation's sink. | `MarkdigUnmodeledNodeHandler` |
-| `MarkdigUnmodeledNodeHandler` | Degrades or drops an unmodeled construct, and notes every drop. | `IUnmodeledNodeHandlingPolicy`, `IDiagnosticSink` |
+| `MarkdigUnmodeledNodeHandler` | Keeps or ignores an unmodeled construct, and notes every one it ignores. | `IUnmodeledNodeHandlingPolicy`, `IDiagnosticSink` |
 | `UnmodeledNodeHandlingPolicyExtensions` | Answers `ShouldIgnore` and `ShouldKeep` about a node, hiding classification. | `MarkdigUnmodeledNodeClassifier` |
 | `MarkdigToMarkdownAstConverter` | Converts the constructs that are dialogue, and defers the rest. | `MarkdigUnmodeledNodeHandler` |
 
@@ -162,10 +161,10 @@ flowchart LR
 
 `IMarkdownParser.Parse` grows a `DiagnosticsContext`, exactly like
 `IScriptTranspiler.Transpile` and `IScriptDesugarer.Desugar`. The front end then
-reports for itself instead of handing back a list of drops for `ScriptCompiler`
+reports for itself instead of handing back a list of omissions for `ScriptCompiler`
 to translate.
 
-The alternative — returning the dropped constructs as data on the parse result —
+The alternative — returning the ignored constructs as data on the parse result —
 keeps `Parse` a pure function, which is genuinely attractive for a stage whose
 job is to isolate a third-party library. It was rejected because it makes the
 front end the one stage that cannot report, forces a second type to carry the
@@ -188,23 +187,23 @@ diagnostic follows.
 
 ### DD3 — Info, not Warning
 
-A drop is usually intended, so a warning would nag by design: every code block
+Ignoring is usually intended, so a warning would nag by design: every code block
 in every script would raise one. `Info` states what happened and leaves the
 judgment to the writer. Nothing about the compile changes — `Info` never affects
 `HasErrors` or an exit code.
 
-### DD4 — Report inline drops too
+### DD4 — Report ignored inlines too
 
-The converter drops inlines as well as blocks, though the default policy keeps
+The converter ignores inlines as well as blocks, though the default policy keeps
 every inline kind as raw text. Reporting both sites means a project that
 configures the policy through [#47](https://github.com/pengzhengyi/dialoguedown/issues/47)
-gets the same account of its inline drops, with no second pass over this code.
+gets the same account of its ignored inlines, with no second pass over this code.
 
 ### DD5 — `Syntax`, with the category summary widened
 
 The diagnostic belongs to `Syntax` (`DLG1xxx`). That category's summary is
 narrower than the category itself has become — "a line's surface does not parse
-as intended" describes a malformed line, whereas a dropped table is well-formed
+as intended" describes a malformed line, whereas an ignored table is well-formed
 Markdown that simply is not dialogue.
 
 Rather than invent a fourth category for a single diagnostic, the summary is
@@ -229,10 +228,10 @@ policy, so this is encapsulation rather than a seam.
 a node instead of classifying it and comparing handlings. They are deliberately
 not each other's negation — a handling this code has never seen answers "no" to
 both, which is what lets the handler throw instead of guessing whether to keep
-or drop the writer's content.
+or ignore the writer's content.
 
 The extraction is what makes the note testable without parsing: every reporting
-case, including kinds only a configured policy drops, is exercised against the
+case, including kinds only a configured policy ignores, is exercised against the
 handler directly.
 
 ### DD7 — Two labelled fixes, because the right edit depends on intent
@@ -251,14 +250,14 @@ whenever a second exists.
 
 | Case | Behavior |
 | --- | --- |
-| A table, code block, or `---` divider | Dropped by the default policy. One `Info` at the construct. |
-| Several drops in one document | One `Info` each, in source order. |
-| A construct the policy keeps as raw text | Not dropped, so nothing is reported. |
-| YAML front matter | Skipped before the policy is consulted. Not a drop, and not reported. |
-| An HTML comment | Skipped before the policy is consulted. Not a drop, and not reported. |
-| A dropped construct inside a list item or blockquote | Reported — the converter recurses into nested blocks and hands each to the handler. |
+| A table, code block, or `---` divider | Ignored by the default policy. One `Info` at the construct. |
+| Several ignored constructs in one document | One `Info` each, in source order. |
+| A construct the policy keeps | Not ignored, so nothing is reported. |
+| YAML front matter | Skipped before the policy is consulted. Not ignored by the policy, and not reported. |
+| An HTML comment | Skipped before the policy is consulted. Not ignored by the policy, and not reported. |
+| An ignored construct inside a list item or blockquote | Reported — the converter recurses into nested blocks and hands each to the handler. |
 | A policy answering neither keep nor ignore | Rejected with a `NotSupportedException` naming the construct, rather than guessing. |
-| An empty document | Nothing to drop, nothing reported. |
+| An empty document | Nothing to ignore, nothing reported. |
 
 ## Integration
 
@@ -275,14 +274,14 @@ whenever a second exists.
 
 ## Testability
 
-- **Unit — handler:** each dropped kind is noted once, named in a writer's words
+- **Unit — handler:** each ignored kind is noted once, named in a writer's words
   and pointing at the construct; a kept construct is degraded and not noted; a
   handling the code does not know is rejected. Kinds only a configured policy
-  drops are covered here, without parsing.
+  ignored constructs are covered here, without parsing.
 - **Unit — policy extensions:** `ShouldIgnore` and `ShouldKeep` follow the
   policy for a kind, and both answer "no" to a handling this code does not know.
-- **Integration — parser:** a real parse notes each drop with the right kind and
-  span, including a drop nested inside a list item; front matter and comments
+- **Integration — parser:** a real parse notes each ignored construct with the right
+  kind and span, including one nested inside a list item; front matter and comments
   stay silent.
 - **Integration — pipeline:** compiling a script with a table surfaces exactly
   one `DLG1114`, located at the table, and the compile still succeeds.
@@ -297,7 +296,7 @@ Every type this component adds or touches — `MarkdigUnmodeledNodeHandler`,
 
 | Alternative | Why not |
 | --- | --- |
-| Return the drops as data and report from `ScriptCompiler` | Makes the front end the only stage that cannot report, and moves its internals into the compiler ([DD1](#dd1--widen-the-parser-seam-rather-than-return-a-record)). |
-| A code per dropped kind | Multiplies the catalog as `UnmodeledNodeKind` grows, for one question a writer asks once ([DD2](#dd2--one-code-with-the-kind-as-a-message-argument)). |
+| Return the omissions as data and report from `ScriptCompiler` | Makes the front end the only stage that cannot report, and moves its internals into the compiler ([DD1](#dd1--widen-the-parser-seam-rather-than-return-a-record)). |
+| A code per ignored kind | Multiplies the catalog as `UnmodeledNodeKind` grows, for one question a writer asks once ([DD2](#dd2--one-code-with-the-kind-as-a-message-argument)). |
 | Warning severity | Fires on every deliberate authoring aid ([DD3](#dd3--info-not-warning)). |
-| Keep the construct in the AST and report downstream | The point of the policy is that dropped material never reaches the script; carrying it further would undo that. |
+| Keep the construct in the AST and report downstream | The point of the policy is that ignored material never reaches the script; carrying it further would undo that. |
