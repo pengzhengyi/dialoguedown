@@ -15,7 +15,13 @@ import {
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import type { CameraTransform } from "./graph-camera";
 import { edgeStyle } from "./edge-style";
-import { edgePath, labelBlockWidth, labelClearance, LABEL_BLOCK_ORIGIN, type Point } from "./edge-path";
+import {
+    edgePath,
+    labelBlockWidth,
+    labelClearance,
+    LABEL_BLOCK_ORIGIN,
+    type Point,
+} from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
 import { colorOf } from "./palette";
 import { ellipsize, MAX_INLINE_TEXT, tooltipHtml } from "./text";
@@ -435,7 +441,10 @@ export function createTreeView(
      * A scene names an area of the document, so it is written once around that area rather than
      * repeated under every line inside it — which is both quieter and one line shorter per node.
      */
-    function drawRegions(nodes: readonly TreeNode[], measured: Map<string, { width: number }>): void {
+    function drawRegions(
+        nodes: readonly TreeNode[],
+        measured: Map<string, { width: number }>,
+    ): void {
         const placed: PlacedNode[] = nodes.map((node) => ({
             region: node.data.region,
             x: node.y,
@@ -584,8 +593,7 @@ export function createTreeView(
             "d",
             points
                 .map(
-                    (point, index) =>
-                        `${index === 0 ? "M" : "L"}${trim(point.x)},${trim(point.y)}`,
+                    (point, index) => `${index === 0 ? "M" : "L"}${trim(point.x)},${trim(point.y)}`,
                 )
                 .join(""),
         );

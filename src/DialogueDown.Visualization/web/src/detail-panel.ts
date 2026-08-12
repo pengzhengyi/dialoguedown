@@ -170,7 +170,12 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
             renderTitle(
                 regionDetailTitle(region),
                 region.declaredAt
-                    ? { id: region.name, label: region.name, attributes: [], span: region.declaredAt }
+                    ? {
+                          id: region.name,
+                          label: region.name,
+                          attributes: [],
+                          span: region.declaredAt,
+                      }
                     : null,
             );
             bodyEl.innerHTML = regionDetailBody(region, source, preview);
@@ -253,7 +258,9 @@ function neighborSection(
 
 function neighborRow(incoming: boolean, neighbor: Neighbor): string {
     // An edge is named by the pair it joins, so a row can point at the same edge the drawing does.
-    const [fromId, toId] = incoming ? [neighbor.id, neighbor.ownerId] : [neighbor.ownerId, neighbor.id];
+    const [fromId, toId] = incoming
+        ? [neighbor.id, neighbor.ownerId]
+        : [neighbor.ownerId, neighbor.id];
     // Each row reads in the direction control travels: *that node, along this edge, to here* on
     // the way in; *from here, along this edge, to that node* on the way out.
     const node = `<td>${nodeCell(neighbor)}</td>`;

@@ -359,7 +359,7 @@ test("keeps every edge clear of the words it runs past", async ({ page }) => {
             "",
             "Guide: You are inside the courtyard now.",
             "",
-            "> `if` `\"Rich\"?`",
+            '> `if` `"Rich"?`',
             ">",
             "> Guard: Welcome, my lord and master.",
             ">",
@@ -392,7 +392,9 @@ test("keeps every edge clear of the words it runs past", async ({ page }) => {
                     const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
                     const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
                     if (x > box.left + 2 && x < box.right - 2 && Math.abs(y - middle) < 5) {
-                        crossings.push(`${label.textContent} / ${path.querySelector("title")?.textContent}`);
+                        crossings.push(
+                            `${label.textContent} / ${path.querySelector("title")?.textContent}`,
+                        );
                         break;
                     }
                 }
@@ -432,14 +434,12 @@ test("gives each cross-link a lane of its own, so two never share a line", async
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active path.reference")).not.toHaveCount(0);
 
-    const lanes = await page
-        .locator("section.stage.active path.reference")
-        .evaluateAll((paths) =>
-            paths.map((path) => {
-                const box = (path as SVGPathElement).getBBox();
-                return Math.round(box.y + box.height);
-            }),
-        );
+    const lanes = await page.locator("section.stage.active path.reference").evaluateAll((paths) =>
+        paths.map((path) => {
+            const box = (path as SVGPathElement).getBBox();
+            return Math.round(box.y + box.height);
+        }),
+    );
 
     expect(new Set(lanes).size).toBe(lanes.length);
 });
@@ -506,10 +506,7 @@ test("lists a node's routes in and out, and walks them", async ({ page }) => {
     await expect(page.locator("#detail-body h4").first()).toHaveText("Incoming");
     const incoming = page.locator("#detail-body table.neighbors").first();
     await expect(incoming.locator("thead th")).toHaveText(["Source", "Edge"]);
-    await expect(incoming.locator("button.neighbor")).toHaveText([
-        "Alice: Left.",
-        "Alice: Right.",
-    ]);
+    await expect(incoming.locator("button.neighbor")).toHaveText(["Alice: Left.", "Alice: Right."]);
     await expect(incoming.locator("button.route")).toHaveText(["Succession", "Succession"]);
 
     // Walking a row selects that node — in the drawing, not only in the panel.
@@ -850,7 +847,7 @@ test("names each kind of route with its own pointer", async ({ page }) => {
             "",
             "- Alice: Right.",
             "",
-            "> `if` `\"Calm\"?`",
+            '> `if` `"Calm"?`',
             ">",
             "> Guide: All is quiet.",
             ">",

@@ -85,7 +85,10 @@ describe("neighborsOf", () => {
     it("leaves out a placement link — it is a visual clue, not a way control travels", () => {
         const placed: Stage = {
             ...stage,
-            edges: [...stage.edges, { fromId: "inside", toId: "orphan", category: "deferred", kind: "Reference" }],
+            edges: [
+                ...stage.edges,
+                { fromId: "inside", toId: "orphan", category: "deferred", kind: "Reference" },
+            ],
             nodes: [...stage.nodes, node("orphan", "Guide: Nobody reads this.")],
         };
 

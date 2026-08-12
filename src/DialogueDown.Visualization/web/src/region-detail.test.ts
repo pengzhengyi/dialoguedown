@@ -86,7 +86,9 @@ describe("regionDetailOf", () => {
     it("says what kind of grouping it is, and the slug a divert names it by", () => {
         const declared: Stage = {
             ...stage,
-            regions: [{ name: "The Gate", kind: "Scene", anchor: "the-gate", span: { start: 0, end: 8 } }],
+            regions: [
+                { name: "The Gate", kind: "Scene", anchor: "the-gate", span: { start: 0, end: 8 } },
+            ],
         };
 
         const detail = regionDetailOf(declared, "The Gate");

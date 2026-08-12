@@ -137,8 +137,7 @@ export function edgePath(from: Point, to: Point, options: RouteOptions = {}): st
         return `M${at(start)}C${at(control1)},${at(control2)},${at(end)}`;
     }
     const { start, drop, rise, end } = laneRoute(from, to, lane, options.corridor ?? 0);
-    const corner = (turn: Point, into: Point): string =>
-        `C${at(turn)},${at(turn)},${at(into)}`;
+    const corner = (turn: Point, into: Point): string => `C${at(turn)},${at(turn)},${at(into)}`;
     return [
         `M${at(start)}`,
         corner({ x: start.x, y: lane }, drop),

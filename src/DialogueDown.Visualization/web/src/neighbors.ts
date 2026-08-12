@@ -70,5 +70,5 @@ export function neighborsOf(stage: Stage, nodeId: string): Neighbors {
 }
 
 function labelOf(node: DisplayNode): string {
-    return node.label.trim() === "" ? node.typeName ?? node.id : node.label;
+    return node.label.trim() === "" ? (node.typeName ?? node.id) : node.label;
 }

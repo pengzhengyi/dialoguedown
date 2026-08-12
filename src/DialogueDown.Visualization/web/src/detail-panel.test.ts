@@ -203,7 +203,9 @@ describe("createDetailPanel", () => {
         ]);
         expect(
             [...body.querySelectorAll("table.neighbors thead th")].map((t) => t.textContent),
-        ).toEqual(["Edge", "Source", "Edge", "Destination"]);
+            // Each table reads in the direction control travels: *that node, along this edge, to
+            // here* on the way in; *from here, along this edge, to that node* on the way out.
+        ).toEqual(["Source", "Edge", "Edge", "Destination"]);
         expect([...body.querySelectorAll("button.route")].map((t) => t.textContent)).toEqual([
             "Choice",
             "Succession",
