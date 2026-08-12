@@ -2586,6 +2586,39 @@ svg.tree.has-focus .link:not(.related) {
     flex: none;
 }
 
+/* A kind of region — a scene today, a file later — folds away as a group, so the legend has a
+   shelf ready for the next kind rather than one flat list that grows. */
+.legend-kind-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.1rem 0.3rem;
+    border: none;
+    background: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: left;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+}
+
+.legend-kind-toggle::before {
+    content: "▾";
+    font-size: 0.6rem;
+    line-height: 1;
+    transition: transform 0.1s ease;
+}
+
+.legend-kind-toggle[aria-expanded="false"]::before {
+    transform: rotate(-90deg);
+}
+
+.legend-kind-body {
+    padding-left: 0.5rem;
+}
+
 /* A region's row wears its band's tint as a small square, so the word and the color are learned
    together wherever the region is named. */
 .legend .region-swatch {
@@ -3084,8 +3117,48 @@ body.zen .config-view > .config-source {
     flex: none;
 }
 
+/* Fixed columns, and one line per cell: a row names a node so the reader can go there, and a
+   whole line of dialogue would otherwise wrap into a tower and push the columns beside it off the
+   panel. The words in full are a click away. */
+#detail-body table.neighbors,
+.node-detail-body table.neighbors {
+    width: 100%;
+    table-layout: fixed;
+}
+
+#detail-body table.neighbors td,
+#detail-body table.neighbors th,
+.node-detail-body table.neighbors td,
+.node-detail-body table.neighbors th {
+    overflow: hidden;
+}
+
+#detail-body .cell-text,
+.node-detail-body .cell-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* The route column carries a short name, so it yields its width to the nodes either side. */
+#detail-body table.crossings th:nth-child(1),
+#detail-body table.crossings th:nth-child(3),
+.node-detail-body table.crossings th:nth-child(1),
+.node-detail-body table.crossings th:nth-child(3) {
+    width: 35%;
+}
+
+#detail-body table.crossings th:nth-child(2),
+.node-detail-body table.crossings th:nth-child(2) {
+    width: 30%;
+}
+
 #detail-body table.neighbors thead th,
 .node-detail-body table.neighbors thead th {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;

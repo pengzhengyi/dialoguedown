@@ -28,7 +28,8 @@ changes easy to categorize.
 - **A region's border names both of its ends** — Source, Edge, Destination — because a scene
   entered at its first line and one entered halfway are different stories, and only both ends tell
   them apart. Regions also take their own group in the legend, with the tint their band is drawn
-  with and how much each holds.
+  with and how much each holds, grouped under the kind of grouping they are — a fold that already
+  has a shelf for the next kind.
 - **A graph's nodes no longer fold.** A tree's children are its content, so hiding them hides only
   detail; a graph's are an accident of which route happened to reach them first, and folding one
   took away nodes other routes still lead to, along with the edges into them.

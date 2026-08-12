@@ -7,13 +7,18 @@ const MAX_TITLE_TEXT = 80;
 /** The longest label that still reads as a heading rather than as content. */
 const MAX_TITLE_LABEL = 40;
 /**
- * How much of a node's words a table cell shows.
+ * How much of a node's words a table cell keeps.
  *
- * A row names a node so the reader can go there; a whole line of dialogue in a narrow column
- * builds a tower of wrapped words and pushes the columns beside it off the panel. Clicking
- * through shows the whole of it.
+ * The visible clipping is the stylesheet's — one line, ellipsised to whatever width the column
+ * has — because a character count cannot know how wide a panel the reader has dragged. This is
+ * only a bound on how much text is written into the document at all.
  */
-const MAX_CELL_TEXT = 28;
+const MAX_CELL_TEXT = 120;
+
+// A cell's words, in an element the stylesheet can clip to one line.
+function cellText(label: string): string {
+    return `<span class="cell-text">${escapeHtml(ellipsize(label, MAX_CELL_TEXT))}</span>`;
+}
 import { createJumpButton, type JumpButton } from "./jump-button";
 import { edgeStyle } from "./edge-style";
 import type { Neighbor, Neighbors } from "./neighbors";
@@ -324,7 +329,7 @@ function crossingRow(crossing: BorderCrossing): string {
 function endCell(end: CrossingEnd): string {
     return (
         `<button type="button" class="neighbor" data-node-id="${escapeHtml(end.id)}">` +
-        `${categoryDot(end.category)}${escapeHtml(ellipsize(end.label, MAX_CELL_TEXT))}</button>`
+        `${categoryDot(end.category)}${cellText(end.label)}</button>`
     );
 }
 
@@ -343,8 +348,7 @@ function neighborRow(incoming: boolean, neighbor: Neighbor): string {
 function nodeCell(neighbor: Neighbor): string {
     return (
         `<button type="button" class="neighbor" data-node-id="${escapeHtml(neighbor.id)}">` +
-        `${categoryDot(neighbor.nodeCategory)}` +
-        `${escapeHtml(ellipsize(neighbor.label, MAX_CELL_TEXT))}</button>`
+        `${categoryDot(neighbor.nodeCategory)}${cellText(neighbor.label)}</button>`
     );
 }
 
@@ -355,7 +359,7 @@ function edgeCell(fromId: string, toId: string, category: string | undefined): s
         `<button type="button" class="route" data-from-id="${escapeHtml(fromId)}" ` +
         `data-to-id="${escapeHtml(toId)}">` +
         `<span class="route-swatch" style="background:${colorOf(category)}"></span>` +
-        `${escapeHtml(route.label)}</button>`
+        `${cellText(route.label)}</button>`
     );
 }
 

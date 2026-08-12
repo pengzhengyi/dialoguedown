@@ -81,18 +81,52 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     // rows behave as the others do: hover to pick it out, click to fade it.
     const regions = regionCounts(stage.nodes);
     const tints = tintsOf(stage.nodes.map((node) => node.region));
-    const regionItems = [...regions].map(([name, count]) =>
-        regionItem(name, tints.get(name) ?? 0, count),
-    );
+    // A region is grouped under the kind of grouping it is — a scene today, a file later — so the
+    // legend already has a shelf to put the next kind on.
+    const byKind = new Map<string, HTMLElement[]>();
+    for (const [name, count] of regions) {
+        const kind = stage.regions?.find((each) => each.name === name)?.kind ?? "Region";
+        const rows = byKind.get(kind) ?? [];
+        rows.push(regionItem(name, tints.get(name) ?? 0, count));
+        byKind.set(kind, rows);
+    }
 
-    if (edgeItems.length > 0 || regionItems.length > 0) {
+    if (edgeItems.length > 0 || byKind.size > 0) {
         legend.append(groupHeading("Nodes"), ...nodeItems);
         if (edgeItems.length > 0) legend.append(groupHeading("Edges"), ...edgeItems);
-        if (regionItems.length > 0) legend.append(groupHeading("Regions"), ...regionItems);
+        if (byKind.size > 0) {
+            legend.append(groupHeading("Regions"));
+            for (const [kind, rows] of byKind) legend.append(kindGroup(kind, rows));
+        }
     } else {
         legend.append(...nodeItems);
     }
     return legend;
+
+    /** One kind of region, as a disclosure the reader can fold away when it is not the question. */
+    function kindGroup(kind: string, rows: HTMLElement[]): HTMLElement {
+        const group = document.createElement("div");
+        group.className = "legend-kind";
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "legend-kind-toggle";
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.textContent = `${kind} ${rows.length === 1 ? "region" : "regions"}`;
+
+        const body = document.createElement("div");
+        body.className = "legend-kind-body";
+        body.append(...rows);
+
+        toggle.addEventListener("click", () => {
+            const open = toggle.getAttribute("aria-expanded") === "true";
+            toggle.setAttribute("aria-expanded", String(!open));
+            body.hidden = open;
+        });
+
+        group.append(toggle, body);
+        return group;
+    }
 
     function regionItem(name: string, tint: number, count: number): HTMLButtonElement {
         // The region's own name is its key: the legend's dim and highlight channel is keyed by
