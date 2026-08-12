@@ -26,5 +26,18 @@ test("frontend inner-loop tasks target one unit or browser scope", () => {
 test("frontend full verification tasks remain available", () => {
     assert.equal(task("web: check").command, "npm run check");
     assert.equal(task("web: e2e").command, "npm run e2e");
-    assert.deepEqual(task("verify: all").dependsOn, ["test", "web: check", "web: e2e"]);
+    assert.deepEqual(task("verify: all").dependsOn, [
+        "format: verify",
+        "build: verify",
+        "test",
+        "web: check",
+        "web: e2e",
+    ]);
+});
+
+test("full verification runs the gates a plain build cannot", () => {
+    // Code-style rules do not run during dotnet build, and analyzer warnings are emitted only
+    // when a project recompiles, so full verification has to format-check and rebuild fresh.
+    assert.match(task("format: verify").command, /dotnet format .* --verify-no-changes/);
+    assert.match(task("build: verify").command, /--no-incremental/);
 });

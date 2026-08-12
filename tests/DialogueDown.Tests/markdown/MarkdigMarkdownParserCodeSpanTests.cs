@@ -9,7 +9,7 @@ public sealed class MarkdigMarkdownParserCodeSpanTests : MarkdigMarkdownParserTe
     [Fact]
     public void Parse_CodeSpan_ProducesCodeSpanInlineWithRawContent()
     {
-        var document = Parser.Parse("`\"Alice.FavoriteColor\"`");
+        var document = Parse("`\"Alice.FavoriteColor\"`");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var code = AssertSingleInline<CodeSpanInline>(paragraph.Inlines);
@@ -20,7 +20,7 @@ public sealed class MarkdigMarkdownParserCodeSpanTests : MarkdigMarkdownParserTe
     public void Parse_CodeSpanWithMarkers_KeepsRawContent()
     {
         // Anything inside a code span is verbatim, including would-be styling markers.
-        var document = Parser.Parse("`it *stays* raw`");
+        var document = Parse("`it *stays* raw`");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var code = AssertSingleInline<CodeSpanInline>(paragraph.Inlines);
@@ -31,7 +31,7 @@ public sealed class MarkdigMarkdownParserCodeSpanTests : MarkdigMarkdownParserTe
     public void Parse_WhitespaceOnlyCodeSpan_IsAccepted()
     {
         // Syntactically valid; an empty/whitespace command is rejected later, not here.
-        var document = Parser.Parse("` `");
+        var document = Parse("` `");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var code = AssertSingleInline<CodeSpanInline>(paragraph.Inlines);

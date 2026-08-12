@@ -8,40 +8,6 @@ changes easy to categorize.
 
 ## [Unreleased]
 
-### Fixed
-
-- **The Dialogue Graph tab now renders.** It shipped unable to draw anything: the client lays
-  every stage out as a tree, and a dialogue graph is not one, so any document with a cycle
-  reported `Failed to render stage: cycle`. The projection now names one parent per node and
-  draws the remaining edges as cross-links.
-- **Lines no longer strike through the words they belong to.** A node writes its label to the
-  right of its dot, so an edge leaving from the dot ran through its own text, and a long
-  cross-link lay across every row it passed. Text is now measured rather than estimated, and a
-  cross-link travels a lane below the drawing.
-- **A list in a node preview renders as a list.** The framework's reset made every `li` a plain
-  block, and a marker is only drawn for a list-item box — so a choice's arms read as loose
-  paragraphs. This affected every preview in the report, not only the graph tab.
-- **Dimming a legend row shows immediately.** The row's hover preview held the category at full
-  strength under a resting pointer, so the click looked like it had done nothing.
-- **Selecting a node by name reveals it.** A search hit or a neighbor row inside a collapsed
-  branch was marked but never shown; the fold over it now opens.
-- **A region's border names both of its ends** — Source, Edge, Destination — because a scene
-  entered at its first line and one entered halfway are different stories, and only both ends tell
-  them apart. Regions also take their own group in the legend, with the tint their band is drawn
-  with and how much each holds, grouped under the kind of grouping they are — a fold that already
-  has a shelf for the next kind.
-- **A graph's nodes no longer fold.** A tree's children are its content, so hiding them hides only
-  detail; a graph's are an accident of which route happened to reach them first, and folding one
-  took away nodes other routes still lead to, along with the edges into them.
-- **A graph frames itself when you arrive at it.** An untouched tab inherited the whole camera,
-  pan included — and a pan means something only against the graph it was made on. The dialogue
-  graph runs far wider than the trees beside it, so arriving from a panned tab left the reader
-  looking at empty canvas. Only the zoom travels between graphs now.
-- **Routes ending at one node can be told apart.** Every jump into a scene lands on its entry, and
-  all of them climbed in that node's own column — one line to the eye, and a coin toss to the
-  pointer. Each now climbs in a corridor of its own and leans in from its own row, and the pointer
-  resolves to the line nearest it rather than to whichever target happens to be on top.
-
 ### Added
 
 - **Dialogue Graph tab** — the report now shows the compiled flow as a fifth stage: every block
@@ -173,6 +139,47 @@ changes easy to categorize.
   [Unified Served Shell](docs/contributing/design-notes/Live%20Visualization%20-%20Unified%20Served%20Shell.md) note.
 
 ### Fixed
+
+- **A stage opens on what it draws.** Every graph tab used to open at full size anchored on its
+  root, which on a long script showed a handful of nodes and left the reader to hunt for the rest.
+  A stage now frames the whole of itself, clear of the legend — and where the whole of it will not
+  fit legibly, it opens at the start of it rather than shrinking to an unreadable smudge. A zoom
+  chosen on another tab is still inherited exactly.
+- **The legend folds away.** It floats over the drawing it describes and has grown — nodes, edges,
+  and now regions — so a reader who has learned it can fold it down to a single button and have
+  the canvas back.
+
+- **The Dialogue Graph tab now renders.** It shipped unable to draw anything: the client lays
+  every stage out as a tree, and a dialogue graph is not one, so any document with a cycle
+  reported `Failed to render stage: cycle`. The projection now names one parent per node and
+  draws the remaining edges as cross-links.
+- **Lines no longer strike through the words they belong to.** A node writes its label to the
+  right of its dot, so an edge leaving from the dot ran through its own text, and a long
+  cross-link lay across every row it passed. Text is now measured rather than estimated, and a
+  cross-link travels a lane below the drawing.
+- **A list in a node preview renders as a list.** The framework's reset made every `li` a plain
+  block, and a marker is only drawn for a list-item box — so a choice's arms read as loose
+  paragraphs. This affected every preview in the report, not only the graph tab.
+- **Dimming a legend row shows immediately.** The row's hover preview held the category at full
+  strength under a resting pointer, so the click looked like it had done nothing.
+- **Selecting a node by name reveals it.** A search hit or a neighbor row inside a collapsed
+  branch was marked but never shown; the fold over it now opens.
+- **A region's border names both of its ends** — Source, Edge, Destination — because a scene
+  entered at its first line and one entered halfway are different stories, and only both ends tell
+  them apart. Regions also take their own group in the legend, with the tint their band is drawn
+  with and how much each holds, grouped under the kind of grouping they are — a fold that already
+  has a shelf for the next kind.
+- **A graph's nodes no longer fold.** A tree's children are its content, so hiding them hides only
+  detail; a graph's are an accident of which route happened to reach them first, and folding one
+  took away nodes other routes still lead to, along with the edges into them.
+- **A graph frames itself when you arrive at it.** An untouched tab inherited the whole camera,
+  pan included — and a pan means something only against the graph it was made on. The dialogue
+  graph runs far wider than the trees beside it, so arriving from a panned tab left the reader
+  looking at empty canvas. Only the zoom travels between graphs now.
+- **Routes ending at one node can be told apart.** Every jump into a scene lands on its entry, and
+  all of them climbed in that node's own column — one line to the eye, and a coin toss to the
+  pointer. Each now climbs in a corridor of its own and leans in from its own row, and the pointer
+  resolves to the line nearest it rather than to whichever target happens to be on top.
 
 - **The report on a narrow window or a phone** — the stage now keeps the room it needs. The
   stage tabs stay on one horizontally scrolling row instead of wrapping onto three, with the

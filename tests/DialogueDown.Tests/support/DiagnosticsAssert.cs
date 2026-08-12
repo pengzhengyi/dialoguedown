@@ -24,6 +24,15 @@ internal static class DiagnosticsAssert
     public static Diagnostic AssertReported(IReadOnlyList<Diagnostic> diagnostics, string code) =>
         Assert.Single(diagnostics, diagnostic => diagnostic.Descriptor.Code == code);
 
+    /// <summary>Asserts nothing at all was reported.</summary>
+    public static void AssertNotReported(IReadOnlyList<Diagnostic> diagnostics) =>
+        Assert.Empty(diagnostics);
+
+    /// <summary>Asserts no diagnostic matching <paramref name="descriptor"/> was reported.</summary>
+    public static void AssertNotReported(
+        IReadOnlyList<Diagnostic> diagnostics, DiagnosticDescriptor descriptor) =>
+        Assert.DoesNotContain(diagnostics, diagnostic => diagnostic.Descriptor.Code == descriptor.Code);
+
     /// <summary>
     /// Asserts exactly one located diagnostic matching <paramref name="descriptor"/> is in the
     /// view, optionally checking its <paramref name="severity"/> and <paramref name="start"/>

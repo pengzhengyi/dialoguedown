@@ -9,7 +9,7 @@ public sealed class MarkdigMarkdownParserImageTests : MarkdigMarkdownParserTestB
     [Fact]
     public void Parse_Image_ProducesImageInlineWithSourceAndAlt()
     {
-        var document = Parser.Parse("![Play tennis](tennis.png)");
+        var document = Parse("![Play tennis](tennis.png)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var image = AssertSingleInline<ImageInline>(paragraph.Inlines);
@@ -21,7 +21,7 @@ public sealed class MarkdigMarkdownParserImageTests : MarkdigMarkdownParserTestB
     public void Parse_ImageWithEmptySource_IsAccepted()
     {
         // Syntactically valid; a missing image source is rejected later, not here.
-        var document = Parser.Parse("![alt]()");
+        var document = Parse("![alt]()");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var image = AssertSingleInline<ImageInline>(paragraph.Inlines);
@@ -33,7 +33,7 @@ public sealed class MarkdigMarkdownParserImageTests : MarkdigMarkdownParserTestB
     public void Parse_ImageWithEmptyAlt_IsAccepted()
     {
         // An empty alt is valid; a presentation layer may still render the image.
-        var document = Parser.Parse("![](tennis.png)");
+        var document = Parse("![](tennis.png)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var image = AssertSingleInline<ImageInline>(paragraph.Inlines);
@@ -45,7 +45,7 @@ public sealed class MarkdigMarkdownParserImageTests : MarkdigMarkdownParserTestB
     public void Parse_ImageAltWithCodeSpan_PreservesStructure()
     {
         // An alt is inline content, so a code span inside it is kept as structure.
-        var document = Parser.Parse("![a `b` c](x.png)");
+        var document = Parse("![a `b` c](x.png)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var image = AssertSingleInline<ImageInline>(paragraph.Inlines);
@@ -62,7 +62,7 @@ public sealed class MarkdigMarkdownParserImageTests : MarkdigMarkdownParserTestB
     {
         // An image can sit inline with speech (e.g. a portrait or emoji mid-chat),
         // so the surrounding text stays its own runs.
-        var document = Parser.Parse("see ![alt](x.png) end");
+        var document = Parse("see ![alt](x.png) end");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         Assert.Collection(

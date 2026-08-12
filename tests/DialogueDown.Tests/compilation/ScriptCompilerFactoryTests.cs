@@ -194,6 +194,36 @@ public sealed class ScriptCompilerFactoryTests
     }
 
     [Fact]
+    public void CreateDefault_ATableInAScript_SurfacesTheFrontEndNote()
+    {
+        // The front end reports before any other stage runs, so its note rides along with the
+        // rest and the compile still succeeds.
+        var source =
+            """
+            # The Tavern
+
+            | Rumor | Source |
+            | --- | --- |
+            | The bridge is out | The miller |
+
+            Innkeeper: Ask around.
+            """;
+
+        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+
+        AssertReported(result.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        var located = AssertLocated(
+            result.LocatedDiagnostics,
+            DiagnosticCatalog.DroppedUnmodeledMarkdown,
+            DiagnosticSeverity.Info,
+            new LinePosition(3, 1));
+
+        Assert.Equal(source.IndexOf("| Rumor", StringComparison.Ordinal), located.StartOffset);
+        Assert.False(result.HasErrors);
+        AssertSuccess(result);
+    }
+
+    [Fact]
     public void CreateDefault_TagsWithoutSpeaker_HaltsAtTheStageBoundary()
     {
         // The tags-without-speaker error is reported during transpile, so a stage-boundary

@@ -68,6 +68,38 @@ public sealed class DiagnosticDocsTests
 
         Assert.All(example.BrokenHighlights, highlight => Assert.Contains(highlight, example.Broken));
         Assert.All(example.FixedHighlights, highlight => Assert.Contains(highlight, example.Fixed));
+        if (example.Alternative is { } alternative)
+        {
+            Assert.All(alternative.Highlights, highlight => Assert.Contains(highlight, alternative.Fixed));
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(CodesWithExamples))]
+    public void AnAlternativeFixAlsoNoLongerReportsTheCode(string code)
+    {
+        // A second fix is only offered when the right edit depends on what the writer meant, so
+        // both must genuinely resolve the diagnostic.
+        if (DiagnosticDocs.ByCode[code].Example!.Alternative is not { } alternative)
+        {
+            return;
+        }
+
+        Assert.DoesNotContain(code, ReportedCodes(alternative.Fixed));
+    }
+
+    [Theory]
+    [MemberData(nameof(CodesWithExamples))]
+    public void AnAlternativeFixIsLabelledAlongsideTheFirst(string code)
+    {
+        // Two unlabelled fixes would read as one being the default, which is the impression this
+        // page must not give.
+        var example = DiagnosticDocs.ByCode[code].Example!;
+
+        if (example.Alternative is not null)
+        {
+            Assert.NotNull(example.FixWhen);
+        }
     }
 
     // Best-effort so every stage runs and reports, even when an earlier error would otherwise halt

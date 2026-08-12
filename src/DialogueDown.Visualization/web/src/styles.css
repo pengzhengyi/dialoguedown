@@ -2579,6 +2579,74 @@ svg.tree.has-focus .link:not(.related) {
     margin-top: 0;
 }
 
+/* Folding the legend away gives the canvas back: the button stays, everything else goes.
+   It keeps one position and one hit area in both states, so the glyph never jumps — the reader
+   folds and unfolds without moving the pointer. */
+.legend-fold {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: none;
+    line-height: 1;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+}
+
+.legend-fold .codicon {
+    font-size: 0.85rem;
+}
+
+.legend-fold:hover {
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+}
+
+/* One glyph at a time: the close mark while the legend is open, the list once it is folded. */
+.legend-fold .legend-fold-show,
+.legend-fold[aria-expanded="false"] .legend-fold-hide {
+    display: none;
+}
+
+.legend-fold[aria-expanded="false"] .legend-fold-show {
+    display: inline-block;
+}
+
+.legend.folded > *:not(.legend-fold) {
+    display: none;
+}
+
+/* Folded, the button *is* the legend: the card's own frame drops away so nothing is left around
+   the glyph but the button's own edge — a panel shrunk to a chip, rather than a chip sitting in a
+   panel. The box still wraps the button at its own offsets, and the legend is anchored top-right,
+   so the glyph lands on the same pixels folded as open. */
+.legend.folded {
+    min-width: 0;
+    width: 2rem;
+    height: 1.9rem;
+    padding: 0;
+    background: none;
+    border-color: transparent;
+    overflow: hidden;
+}
+
+.legend.folded .legend-fold {
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+}
+
+.legend.folded .legend-fold:hover {
+    background: var(--pico-secondary-background);
+}
+
 .legend .swatch {
     width: 0.7rem;
     height: 0.7rem;

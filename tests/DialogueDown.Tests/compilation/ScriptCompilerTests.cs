@@ -47,7 +47,8 @@ public sealed class ScriptCompilerTests
         Assert.Same(graph, result.Graph);
         Received.InOrder(() =>
         {
-            parser.Parse(source);
+            parser.Parse(
+                Arg.Is(source), Arg.Is<DiagnosticsContext>(c => c!.Source == source));
             transpiler.Transpile(Arg.Is(markdown), Arg.Is<DiagnosticsContext>(c => c!.Source == source));
             desugarer.Desugar(Arg.Is(script), Arg.Is<DiagnosticsContext>(c => c!.Source == source));
             validator.Validate(Arg.Is(desugared), Arg.Any<IDiagnosticSink>());

@@ -42,7 +42,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
     {
         // `~~~` opens a tilde-fenced code block (like ```), not strikethrough. The
         // default policy drops code blocks, so the document ends up empty.
-        var document = Parser.Parse("~~~word~~~");
+        var document = Parse("~~~word~~~");
 
         Assert.Empty(document.Blocks);
     }
@@ -51,7 +51,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
     public void Parse_BoldItalic_NestsEmphasis()
     {
         // ***x*** is italic wrapping bold in Markdig, so nesting covers bold-italic.
-        var document = Parser.Parse("***word***");
+        var document = Parse("***word***");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var outer = AssertSingleInline<EmphasisInline>(paragraph.Inlines);
@@ -65,7 +65,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
     public void Parse_CodeSpanInsideBold_StaysParsed()
     {
         // A query (code span) inside bold keeps its structure, not frozen as text.
-        var document = Parser.Parse("**Hello `\"X.Name\"`!**");
+        var document = Parse("**Hello `\"X.Name\"`!**");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var bold = AssertSingleInline<EmphasisInline>(paragraph.Inlines);
@@ -81,7 +81,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
     public void Parse_LinkInsideEmphasis_StaysParsed()
     {
         // A jump (link) inside emphasis keeps its target and label.
-        var document = Parser.Parse("*go [here](#x)*");
+        var document = Parse("*go [here](#x)*");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var emphasis = AssertSingleInline<EmphasisInline>(paragraph.Inlines);
@@ -99,7 +99,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
     [Fact]
     public void Parse_EmphasisAmongText_KeepsSurroundingText()
     {
-        var document = Parser.Parse("I *really* mean it");
+        var document = Parse("I *really* mean it");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         Assert.Collection(
@@ -123,7 +123,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
     public void Parse_NonEmphasis_StaysLiteralText(string source, string expected)
     {
         // Escaped asterisks and intraword underscores never form emphasis.
-        var document = Parser.Parse(source);
+        var document = Parse(source);
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertAllText(paragraph.Inlines, expected);
@@ -131,7 +131,7 @@ public sealed class MarkdigMarkdownParserEmphasisTests : MarkdigMarkdownParserTe
 
     private EmphasisInline SingleEmphasis(string source)
     {
-        var paragraph = AssertSingleBlock<Paragraph>(Parser.Parse(source));
+        var paragraph = AssertSingleBlock<Paragraph>(Parse(source));
         return AssertSingleInline<EmphasisInline>(paragraph.Inlines);
     }
 }
