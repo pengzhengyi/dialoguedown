@@ -2624,15 +2624,27 @@ svg.tree.has-focus .link:not(.related) {
     display: none;
 }
 
-/* Sized to exactly wrap the button at its own offsets. The legend is anchored top-right, so the
-   button lands on the same pixels folded as open — and stays inside the box, where the canvas
-   cannot be painted over it. */
+/* Folded, the button *is* the legend: the card's own frame drops away so nothing is left around
+   the glyph but the button's own edge — a panel shrunk to a chip, rather than a chip sitting in a
+   panel. The box still wraps the button at its own offsets, and the legend is anchored top-right,
+   so the glyph lands on the same pixels folded as open. */
 .legend.folded {
     min-width: 0;
     width: 2rem;
     height: 1.9rem;
     padding: 0;
+    background: none;
+    border-color: transparent;
     overflow: hidden;
+}
+
+.legend.folded .legend-fold {
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+}
+
+.legend.folded .legend-fold:hover {
+    background: var(--pico-secondary-background);
 }
 
 .legend .swatch {
