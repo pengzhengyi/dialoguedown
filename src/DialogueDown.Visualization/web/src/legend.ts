@@ -2,6 +2,13 @@ import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import { CATEGORY_COLORS } from "./palette";
 import { edgeStyle } from "./edge-style";
 import { tintsOf } from "./region-bands";
+import { codicon } from "./codicon";
+
+function nameFold(button: HTMLButtonElement, open: boolean): void {
+    const label = open ? "Hide the legend" : "Show the legend";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+}
 
 import { baseLabel } from "./text";
 
@@ -61,6 +68,29 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
 
     const legend = document.createElement("div");
     legend.className = "legend";
+
+    // The legend floats over the drawing it describes, and it has grown — nodes, edges, and now
+    // regions. A reader who has learned it can fold it away and have the canvas back.
+    //
+    // Both glyphs are rendered and the stylesheet shows one, as the inspector's own collapse
+    // toggle does: the close mark the rest of the app dismisses a floating panel with, and — once
+    // folded — a list, which is what a legend is.
+    const fold = document.createElement("button");
+    fold.type = "button";
+    fold.className = "legend-fold";
+    fold.setAttribute("aria-expanded", "true");
+    fold.append(
+        codicon("chrome-close", "legend-fold-hide"),
+        codicon("list-unordered", "legend-fold-show"),
+    );
+    nameFold(fold, true);
+    fold.addEventListener("click", () => {
+        const open = fold.getAttribute("aria-expanded") === "true";
+        fold.setAttribute("aria-expanded", String(!open));
+        nameFold(fold, !open);
+        legend.classList.toggle("folded", open);
+    });
+    legend.append(fold);
 
     const nodeItems: HTMLElement[] = [];
     for (const category of Object.keys(CATEGORY_COLORS)) {
