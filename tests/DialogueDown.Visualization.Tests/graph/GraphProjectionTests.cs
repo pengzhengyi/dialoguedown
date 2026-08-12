@@ -32,7 +32,8 @@ public sealed class GraphProjectionTests
             Bob: two
             """);
 
-        // Two lines and the End sentinel, in the order the compiler emitted them.
+        // Two lines and the End sentinel in the order the compiler emitted them — a display id
+        // mirrors the compiler's own node id.
         Assert.Collection(
             graph.Nodes,
             node => Assert.Equal("n0", node.Id),
@@ -101,6 +102,7 @@ public sealed class GraphProjectionTests
     {
         var graph = Project("");
 
+        // The sentinel is the entry, so it is the whole graph and needs no edge to place it.
         Assert.Equal("End", Assert.Single(graph.Nodes).Label);
         Assert.Empty(graph.Edges);
     }
@@ -118,7 +120,12 @@ public sealed class GraphProjectionTests
 
         var orphan = graph.Nodes[1];
         Assert.Equal("Alice: nobody reads this", orphan.Label);
-        Assert.DoesNotContain(graph.Edges, edge => edge.ToId == orphan.Id);
+
+        // Only a placement link reaches it, from the block before it in the script — no route
+        // runs into it, which is exactly what makes it unreachable.
+        var placement = Assert.Single(graph.Edges, edge => edge.ToId == orphan.Id);
+        Assert.Equal("n0", placement.FromId);
+        Assert.Equal("deferred", placement.Category);
     }
 
     [Fact]
@@ -145,9 +152,50 @@ public sealed class GraphProjectionTests
             Alice: Hi.
             """);
 
-        Assert.Contains(
-            graph.Nodes[0].Attributes,
-            attribute => attribute.Name == "scene" && attribute.Value == "The Market");
+        Assert.Equal("The Market", graph.Nodes[0].Region);
+    }
+
+    [Fact]
+    public void Project_ALineNestedInAChoiceArm_StillBelongsToTheSceneItWasWrittenUnder()
+    {
+        // A scene owns only the blocks directly beneath its heading, so a line inside a choice arm
+        // is not among them — but a reader plainly reads it as part of the scene.
+        var graph = Project("""
+            # The Market
+
+            Alice: Which stall?
+
+            - Alice: The baker.
+
+              Alice: Warm bread.
+            """);
+
+        Assert.All(graph.Nodes, node => Assert.Equal("The Market", node.Region));
+    }
+
+    [Fact]
+    public void Project_ANodeBeforeAnyHeading_BelongsToNoScene()
+    {
+        var graph = Project("Alice: Before anything.");
+
+        Assert.Null(graph.Nodes[0].Region);
+    }
+
+    [Fact]
+    public void Project_ASecondHeading_StartsANewSceneFromThatPointOn()
+    {
+        var graph = Project("""
+            # The Market
+
+            Alice: Stalls.
+
+            # The Docks
+
+            Alice: Ships.
+            """);
+
+        Assert.Equal("The Market", graph.Nodes[0].Region);
+        Assert.Equal("The Docks", graph.Nodes[^1].Region);
     }
 
     [Fact]
@@ -161,19 +209,22 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_ARandomChoice_IsLabeledByItsArmCount()
+    public void Project_ARandomChoice_IsLabeledByItsKindAloneRatherThanItsArmCount()
     {
+        // The graph already draws one edge per arm; counting them in the label only says twice
+        // what the picture says once.
         var graph = Project("""
             - `80%` Alice: Heads.
 
             - `20%` Alice: Tails.
             """);
 
-        Assert.Equal("Random choice (2 options)", graph.Nodes[0].Label);
+        Assert.Equal("Random choice", graph.Nodes[0].Label);
+        Assert.Equal(2, graph.Edges.Count(edge => edge.FromId == graph.Nodes[0].Id));
     }
 
     [Fact]
-    public void Project_AConditionalBlock_IsLabeledByItsBranchCount()
+    public void Project_AConditionalBlock_IsLabeledByItsKindAloneRatherThanItsBranchCount()
     {
         var graph = Project("""
             > `if` `"Rich"?`
@@ -185,7 +236,8 @@ public sealed class GraphProjectionTests
             > Alice: Side door.
             """);
 
-        Assert.Equal("Conditional (2 branches)", graph.Nodes[0].Label);
+        Assert.Equal("Conditional", graph.Nodes[0].Label);
+        Assert.Equal(2, graph.Edges.Count(edge => edge.FromId == graph.Nodes[0].Id));
     }
 
     [Fact]
@@ -207,6 +259,67 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
+    public void Project_EveryNode_HasExactlyOneParentSoTheLayoutIsATree()
+    {
+        // The report lays every stage out as a tree, so a node reached from several places — and
+        // a cycle — must still leave each node exactly one parent, or the layout refuses to draw.
+        var graph = Project("""
+            # Loop
+
+            Guide: Pick.
+
+            - Alice: Left.
+
+            - Alice: Right.
+
+            => [Loop](#loop)
+            """);
+
+        var parented = graph.Edges
+            .Where(edge => edge.Kind == DisplayEdgeKind.Child)
+            .GroupBy(edge => edge.ToId);
+
+        // Every node but the entry has exactly one parent; the entry is the single root.
+        Assert.All(parented, targets => Assert.Single(targets));
+        Assert.Equal(graph.Nodes.Count - 1, parented.Count());
+    }
+
+    [Fact]
+    public void Project_ACycle_IsAReferenceBackToAnEarlierNode()
+    {
+        var graph = Project("""
+            # Loop
+
+            Alice: Again.
+
+            => [Loop](#loop)
+            """);
+
+        var back = Assert.Single(graph.Edges, edge => edge.FromId == "n1" && edge.ToId == "n0");
+        Assert.Equal(DisplayEdgeKind.Reference, back.Kind);
+    }
+
+    [Fact]
+    public void Project_AWeaveBack_IsAReferenceFromTheSecondArm()
+    {
+        var graph = Project("""
+            Guide: Pick.
+
+            - Alice: Left.
+
+            - Alice: Right.
+
+            Guide: Done.
+            """);
+
+        // Both arms continue at the same node; only the first to reach it can parent it.
+        var joins = graph.Edges.Where(edge => edge.ToId == "n4").ToArray();
+        Assert.Equal(2, joins.Length);
+        Assert.Single(joins, edge => edge.Kind == DisplayEdgeKind.Child);
+        Assert.Single(joins, edge => edge.Kind == DisplayEdgeKind.Reference);
+    }
+
+    [Fact]
     public void Unavailable_CarriesTheStageTitleAndTheReason()
     {
         var graph = GraphProjection.Unavailable("no graph");
@@ -214,6 +327,43 @@ public sealed class GraphProjectionTests
         Assert.Equal("Dialogue Graph", graph.Title);
         Assert.Equal("no graph", graph.Unavailable!.Reason);
         Assert.Empty(graph.Nodes);
+    }
+
+    [Fact]
+    public void Project_AScene_IsDescribedAsARegionNamingItsKindAndAnchor()
+    {
+        var graph = Project("""
+            # The Market
+
+            Alice: Stalls.
+            """);
+
+        var region = Assert.Single(graph.Regions);
+        Assert.Equal("The Market", region.Name);
+        Assert.Equal("Scene", region.Kind);
+        Assert.Equal("the-market", region.Anchor);
+    }
+
+    [Fact]
+    public void Project_AScene_PointsAtItsHeadingRatherThanTheLinesBeneathIt()
+    {
+        // A reader taken to a scene expects to land on the words that name it.
+        const string Source = """
+            # The Market
+
+            Alice: Stalls.
+            """;
+
+        var region = Assert.Single(Project(Source).Regions);
+
+        var span = Assert.NotNull(region.Span);
+        Assert.Equal("The Market", Source[span.Start..span.End]);
+    }
+
+    [Fact]
+    public void Project_ADocumentWithNoHeading_DescribesNoRegion()
+    {
+        Assert.Empty(Project("Alice: Nowhere in particular.").Regions);
     }
 
     private static DisplayGraph Project(string source) =>

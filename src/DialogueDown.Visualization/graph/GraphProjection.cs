@@ -8,11 +8,19 @@ namespace DialogueDown.Visualization.Graph;
 
 /// <summary>
 /// Projects a <see cref="DialogueGraph"/> into the Dialogue Graph tab's payload: one display node
-/// per graph node and one display edge per graph edge, each labeled by the kind that gives it
-/// meaning. Unlike the stage tabs before it, this one does not walk a tree from a root — it emits
-/// every node in the graph's own order, so a node nothing reaches still appears. That orphan is
-/// unreachable content the writer likely did not intend, and this is the tab where it shows.
-/// Emitting in graph order also keeps a display id equal to the compiler's own node id.
+/// per graph node and one display edge per graph edge.
+///
+/// <para>The report lays every stage out as a <b>tree</b>, so a graph — which has back-edges and
+/// nodes reached from several places — has to name one parent per node. A walk from the entry
+/// picks that spanning tree: the first edge to reach a node is its parent, and every other edge
+/// is a <see cref="DisplayEdgeKind.Reference"/> the layout draws without following. A cycle is
+/// therefore an ordinary reference back to an earlier node.</para>
+///
+/// <para>Every node appears, not only the ones the walk reaches. A node nothing points at is
+/// unreachable content the writer likely did not intend, and this is the tab where it shows. It is
+/// placed after the block before it in the script, so it reads where a reader looks for it, and
+/// the link that places it is drawn as placement rather than as a route. The entry is the one node
+/// with no parent, so a run starts at the leftmost thing on screen.</para>
 /// </summary>
 internal sealed class GraphProjection
 {
@@ -28,6 +36,16 @@ internal sealed class GraphProjection
     private const string StructureCategory = "structure";
     private const string TerminalCategory = "terminal";
 
+    // Edge categories reuse the node palette, so a concept keeps one color across the report: a
+    // divert is colored like the jump it came from, an option like the choice it leaves.
+    private const string SuccessionCategory = "break";
+    private const string DivertCategory = "jump";
+    private const string OptionCategory = "choice";
+    private const string BranchCategory = "control";
+
+    // Not a route: the link that places a node the flow never reaches.
+    private const string PlacementCategory = "deferred";
+
     /// <summary>
     /// A placeholder for the stage when the compile produced no graph, carrying the stage's title
     /// and description with no nodes.
@@ -41,13 +59,20 @@ internal sealed class GraphProjection
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(source);
 
-        var sceneByNode = ScenesByNode(graph.Regions);
+        var sceneByNode = ScenesByNode(graph.Regions, graph.Nodes);
+        var layout = SpanningTree.Of(graph);
+
         var nodes = graph.Nodes.Select(node => Describe(node, source, sceneByNode)).ToArray();
+
         var edges = graph.Nodes
-            .SelectMany(node => node.Out.Select(edge => Describe(node, edge)))
+            .SelectMany(node => node.Out.Select(edge => Describe(node, edge, layout)))
+            .Concat(layout.Placements.Select(Place))
             .ToArray();
 
-        return new DisplayGraph(StageTitle, StageDescription, nodes, edges);
+        return new DisplayGraph(StageTitle, StageDescription, nodes, edges)
+        {
+            Regions = RegionsOf(graph.Regions),
+        };
     }
 
     private static DisplayNode Describe(
@@ -57,24 +82,28 @@ internal sealed class GraphProjection
         return new DisplayNode(
             DisplayId(node.Id),
             label,
-            Attributes(node, sceneByNode),
+            Attributes(node),
             Source: Slice(source, node),
             Category: category,
             TypeName: TypeNameOf(node))
         {
             Span = SpanOf(node),
+            // A region is drawn around the nodes that share it, so it is named once there rather
+            // than repeated as a line of text under every one of them.
+            Region = sceneByNode.GetValueOrDefault(node.Id),
         };
     }
 
-    // A node reads as what a writer recognizes: a line by what is said, a branching node by how
-    // many ways it leads, the sentinel by its name.
+    // A node reads as what a writer recognizes: a line by what is said, a branching node by what
+    // kind of branch it is, the sentinel by its name. How many ways it leads is not spelled out —
+    // the graph already draws one edge per way, and the label would only repeat the picture.
     private static (string Label, string Category) LabelOf(DialogueNode node) => node switch
     {
         LineNode line => (LineLabel(line), SpeechCategory),
         ControlNode control => (ControlLabel(control), CallCategory),
-        ChoiceNode choice => ($"Choice ({Count(choice.Out, "option", "options")})", StructureCategory),
-        RandomChoiceNode random => ($"Random choice ({Count(random.Out, "option", "options")})", StructureCategory),
-        BranchNode branch => ($"Conditional ({Count(branch.Out, "branch", "branches")})", StructureCategory),
+        ChoiceNode => ("Choice", StructureCategory),
+        RandomChoiceNode => ("Random choice", StructureCategory),
+        BranchNode => ("Conditional", StructureCategory),
         EndNode => ("End", TerminalCategory),
         _ => (node.GetType().Name, StructureCategory),
     };
@@ -99,11 +128,6 @@ internal sealed class GraphProjection
         _ => call.GetType().Name,
     };
 
-    // Both forms are spelled out: English pluralization is not a suffix rule ("branches", not
-    // "branchs"), and a label a reader sees is not the place to be approximately right.
-    private static string Count(IReadOnlyList<Edge> edges, string singular, string plural) =>
-        edges.Count == 1 ? $"1 {singular}" : $"{edges.Count} {plural}";
-
     private static string? TypeNameOf(DialogueNode node) => node switch
     {
         LineNode => "Line",
@@ -111,15 +135,9 @@ internal sealed class GraphProjection
         _ => null,
     };
 
-    private static IReadOnlyList<DisplayAttribute> Attributes(
-        DialogueNode node, IReadOnlyDictionary<NodeId, string> sceneByNode)
+    private static IReadOnlyList<DisplayAttribute> Attributes(DialogueNode node)
     {
         var attributes = new List<DisplayAttribute>();
-        if (sceneByNode.TryGetValue(node.Id, out var scene))
-        {
-            attributes.Add(new DisplayAttribute("scene", scene));
-        }
-
         if (node is IGuardedNode { Guard: { } guard })
         {
             attributes.Add(new DisplayAttribute("guard", $"{guard.Key}?"));
@@ -128,16 +146,78 @@ internal sealed class GraphProjection
         return attributes;
     }
 
-    // An edge reads as the kind of route it is, so a reader tells a fall-through from a jump or a
-    // chosen arm at a glance. Succession is the default flow and needs no word for it.
-    private static DisplayEdge Describe(DialogueNode from, Edge edge) =>
-        new(DisplayId(from.Id), DisplayId(edge.Target), DisplayEdgeKind.Child);
+    // An edge the walk followed to first reach its target is that node's parent in the layout;
+    // every other edge — a weave-back, a jump to an earlier scene — is drawn as a reference so the
+    // tree stays a tree while the flow stays complete. Its category says what kind of route it is,
+    // so a reader tells a fall-through from a jump or a chosen arm by color.
+    private static DisplayEdge Describe(DialogueNode from, Edge edge, SpanningTree layout) =>
+        new(
+            DisplayId(from.Id),
+            DisplayId(edge.Target),
+            layout.IsParentOf(from.Id, edge.Target) ? DisplayEdgeKind.Child : DisplayEdgeKind.Reference)
+        {
+            Category = CategoryOf(edge),
+        };
 
-    // The scene each node belongs to. A region is metadata rather than flow, so it rides along as
-    // an attribute instead of becoming an edge that would imply control enters a grouping.
-    private static IReadOnlyDictionary<NodeId, string> ScenesByNode(RegionTree regions)
+    // Scaffolding, not flow: it says where an unreachable node sits, and nothing travels it.
+    private static DisplayEdge Place((NodeId From, NodeId To) placement) =>
+        new(DisplayId(placement.From), DisplayId(placement.To), DisplayEdgeKind.Child)
+        {
+            Category = PlacementCategory,
+        };
+
+    private static string CategoryOf(Edge edge) => edge switch
     {
-        var sceneByNode = new Dictionary<NodeId, string>();
+        SuccessionEdge => SuccessionCategory,
+        DivertEdge => DivertCategory,
+        OptionEdge or RandomOptionEdge => OptionCategory,
+        BranchEdge => BranchCategory,
+        _ => SuccessionCategory,
+    };
+
+    /// <summary>
+    /// The regions the stage draws, each naming itself and pointing back at the text that
+    /// declares it — a scene's heading — so a reader can be taken to where the region begins.
+    /// </summary>
+    private static IReadOnlyList<DisplayRegion> RegionsOf(RegionTree regions) =>
+        Descendants(regions.Roots)
+            .OfType<SceneRegion>()
+            .Select(scene => new DisplayRegion(
+                InlineText.Of(scene.Label).Trim(), "Scene", scene.Anchor)
+            {
+                Span = HeadingSpan(scene),
+            })
+            .ToArray();
+
+    // A scene is declared by its heading, and the heading's own fragments carry the only spans
+    // that name it. Their reach is the title text — where a reader expects to land.
+    private static DisplaySpan? HeadingSpan(SceneRegion scene)
+    {
+        if (scene.Label.Count == 0)
+        {
+            return null;
+        }
+
+        var start = scene.Label.Min(fragment => fragment.Span.Start);
+        var end = scene.Label.Max(fragment => fragment.Span.End);
+        return new DisplaySpan(start, end);
+    }
+
+    /// <summary>
+    /// The scene each node reads as belonging to.
+    /// </summary>
+    /// <remarks>
+    /// A scene owns the blocks written directly beneath its heading, so a line nested inside a
+    /// choice arm is not among its <c>OwnNodes</c> — yet a reader plainly considers it part of the
+    /// scene it was written under. Document order settles it: a heading opens a scene and
+    /// everything after it belongs there until the next heading, so an unowned node inherits the
+    /// scene of the text above it. Nodes written before any heading belong to no scene, and say so
+    /// by having none.
+    /// </remarks>
+    private static IReadOnlyDictionary<NodeId, string> ScenesByNode(
+        RegionTree regions, IReadOnlyList<DialogueNode> nodes)
+    {
+        var owned = new Dictionary<NodeId, string>();
         foreach (var region in Descendants(regions.Roots))
         {
             if (region is not SceneRegion scene)
@@ -147,7 +227,22 @@ internal sealed class GraphProjection
 
             foreach (var id in scene.OwnNodes)
             {
-                sceneByNode[id] = InlineText.Of(scene.Label).Trim();
+                owned[id] = InlineText.Of(scene.Label).Trim();
+            }
+        }
+
+        var sceneByNode = new Dictionary<NodeId, string>();
+        string? current = null;
+        foreach (var node in nodes)
+        {
+            if (owned.TryGetValue(node.Id, out var scene))
+            {
+                current = scene;
+            }
+
+            if (current is not null)
+            {
+                sceneByNode[node.Id] = current;
             }
         }
 

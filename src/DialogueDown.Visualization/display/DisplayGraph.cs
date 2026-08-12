@@ -17,6 +17,12 @@ public sealed record DisplayGraph(
     StageUnavailable? Unavailable = null)
 {
     /// <summary>
+    /// The named areas the nodes sit in — a scene, and later a file. Empty for a stage that has
+    /// no grouping to show.
+    /// </summary>
+    public IReadOnlyList<DisplayRegion> Regions { get; init; } = [];
+
+    /// <summary>
     /// A placeholder for a stage the compile did not produce (a halted compile): it carries the
     /// stage's <paramref name="title"/> and <paramref name="description"/> but no graph, plus a
     /// <paramref name="reason"/> the reader sees on its disabled tab.

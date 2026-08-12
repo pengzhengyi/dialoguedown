@@ -28,4 +28,11 @@ public sealed record DisplayNode(
     /// (no source of its own); the whole document for the document-root node.
     /// </summary>
     public DisplaySpan? Span { get; init; }
+
+    /// <summary>
+    /// The named area of the document this node sits in — a scene. Nodes sharing a region belong
+    /// together, so a client can draw the region once around them instead of repeating its name
+    /// under every node.
+    /// </summary>
+    public string? Region { get; init; }
 }
