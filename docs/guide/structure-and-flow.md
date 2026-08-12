@@ -215,6 +215,15 @@ dialogue.
 > The `=>` becomes plain text and the link stays an ordinary link — two separate
 > pieces, not a jump.
 
+An arrow with no link after it is not a jump at all: it is read literally and
+stays on the page as the two characters. Because an intended jump would
+otherwise vanish without a trace, the compiler warns about it — including the
+line-break case above, where the arrow and its link are split apart.
+
+```markdown
+=> The market
+```
+
 Example:
 
 ```markdown
