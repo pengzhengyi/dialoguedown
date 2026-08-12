@@ -140,6 +140,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The editor shows what becomes of a script's Markdown** — the constructs the handling policy
+  leaves out are struck through instead of reading like speech, the blockquotes that carry
+  control blocks are no longer muted, and comments read as the writer-only notes they are. See
+  the [Unmodeled Markdown Highlighting](docs/contributing/design-notes/Unmodeled%20Markdown%20Highlighting.md)
+  note.
+
 - **A stage opens on what it draws.** Every graph tab used to open at full size anchored on its
   root, which on a long script showed a handful of nodes and left the reader to hunt for the rest.
   A stage now frames the whole of itself, clear of the legend — and where the whole of it will not
