@@ -11,6 +11,9 @@ import type {
     Span,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
+import { neighborsOf } from "./neighbors";
+import { regionDetailOf } from "./region-detail";
+import { tintsOf } from "./region-bands";
 import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
 import { GraphCameraStore } from "./graph-camera";
@@ -29,7 +32,21 @@ import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
 import { escapeHtml } from "./text";
 
-const JUMP_AWARE_STAGE_TITLES = new Set(["Dialogue AST", "Desugared AST", "Semantic Model"]);
+/**
+ * The stages that have read Dialogue meaning into the document, and so render `=>` as the jump
+ * ligature the writer meant.
+ *
+ * Markdown AST is deliberately absent: there `=>` is still two characters of text. The list is
+ * opt-in rather than "everything but Markdown AST" because a stage of unknown provenance — one a
+ * host adds — has not interpreted anything, and must not be assumed to have.
+ */
+const JUMP_AWARE_STAGE_TITLES = new Set([
+    "Dialogue AST",
+    "Desugared AST",
+    "Semantic Model",
+    "Dialogue Graph",
+]);
+const recognizesJumps = (title: string): boolean => JUMP_AWARE_STAGE_TITLES.has(title);
 import { setHelp, helpBody } from "./help";
 import { createProblemsPanel } from "./problems-panel";
 import { createDiagnosticSummary } from "./diagnostic-summary";
@@ -145,11 +162,62 @@ export function runApp(
 
     // The node inspector is read-only: editing lives solely in the Source tab, and the panel's
     // "Jump to source" takes the reader there with the node's span selected.
-    const panel = createDetailPanel(
+    const panel = createDetailPanel({
         // A "Jump to source" is offered whenever there is a Source tab to land in — served or a
         // static export — since a read-only editor is still selectable.
-        report.source != null ? { jumpToSource } : {},
-    );
+        ...(report.source != null ? { jumpToSource } : {}),
+        // A neighbor row walks the flow: selecting the node it names re-renders the inspector
+        // around it, so the reader can follow a route without hunting for the dot.
+        selectNode: (id) => {
+            views[activeIndex]?.selectById(id, { center: true, reveal: true });
+        },
+        selectEdge: (fromId, toId) => {
+            if (!views[activeIndex]?.selectEdgeBetween(fromId, toId)) showEdgeBetween(fromId, toId);
+        },
+        selectRegion: (region) => views[activeIndex]?.selectRegion(region),
+        highlight: (what) => views[activeIndex]?.spotlight(what),
+    });
+
+    // A region is shown as itself: how much it holds, what crosses its border, and the stretch of
+    // document it was written as — sliced from the source the report already carries.
+    function showRegion(stage: Stage, region: string): void {
+        const detail = regionDetailOf(stage, region);
+        const text =
+            report.source != null && detail.span
+                ? report.source.slice(detail.span.start, detail.span.end)
+                : undefined;
+        selectedNodeId = null;
+        shownStage = stage;
+        panel.showRegion(detail, text, {
+            recognizeJumps: recognizesJumps(stage.title),
+        });
+    }
+
+    // The stage the inspector is currently describing. The panel names an edge by the pair of ids
+    // it joins; the stage is what turns that pair back into the edge.
+    let shownStage: Stage | null = null;
+
+    function showEdgeBetween(fromId: string, toId: string): void {
+        const edge = shownStage?.edges.find(
+            (candidate) => candidate.fromId === fromId && candidate.toId === toId,
+        );
+        if (shownStage && edge) showEdge(shownStage, edge);
+    }
+
+    function showEdge(stage: Stage, edge: Stage["edges"][number]): void {
+        const byId = new Map(stage.nodes.map((node) => [node.id, node]));
+        const end = (id: string) => {
+            const node = byId.get(id);
+            return { id, label: node?.label ?? id, category: node?.category };
+        };
+        selectedNodeId = null;
+        shownStage = stage;
+        panel.showEdge({
+            category: edge.category,
+            source: end(edge.fromId),
+            target: end(edge.toId),
+        });
+    }
 
     // Jump from a selected graph node to its source in the Source tab: switch tabs (through the
     // save-safe navigation guard, so an Auto save flushes or a Manual prompt resolves first), then
@@ -221,7 +289,7 @@ export function runApp(
         if (index < 0) return;
         const land = (): void => {
             activate(index);
-            views[index]?.selectById(match.node.id, { center: true });
+            views[index]?.selectById(match.node.id, { center: true, reveal: true });
         };
         if (source?.beginNavigation) source.beginNavigation(land);
         else land();
@@ -255,9 +323,19 @@ export function runApp(
     // Record the shown node's stable id, then drive the shared inspector. Wrapping `panel.show`
     // (rather than calling it directly) is what lets `updateStages` reselect the same node after
     // a rebuild, keeping the inspector editor open and rebound to the node's current source.
-    function showNode(node: DisplayNode, recognizeJumps: boolean): void {
+    function showNode(node: DisplayNode, recognizeJumps: boolean, stage?: Stage): void {
         selectedNodeId = node.id;
-        panel.show(node, { recognizeJumps });
+        shownStage = stage ?? null;
+        // Only a stage whose edges carry a meaning lists a node's neighbors: in a tree, a node's
+        // parent and children are already plain from the drawing.
+        const flow = stage?.edges.some((edge) => edge.category);
+        panel.show(node, {
+            recognizeJumps,
+            ...(flow && stage ? { neighbors: neighborsOf(stage, node.id) } : {}),
+            ...(stage && node.region
+                ? { regionTint: tintsOf(stage.nodes.map((each) => each.region)).get(node.region) }
+                : {}),
+        });
     }
 
     // The whole-window maximize mode (graphs and the source split) — one page-level action,
@@ -463,12 +541,13 @@ export function runApp(
         // It is still a graph stage, so it reuses the tree view (camera memory, fold, full
         // screen) — only the surrounding layout differs.
         const isSemantic = stage.tables != null;
-        const recognizeJumps = JUMP_AWARE_STAGE_TITLES.has(stage.title);
+        const recognizeJumps = recognizesJumps(stage.title);
         if (isSemantic) section.classList.add("semantic-stage");
         let view: TreeView | null = null;
         try {
             const treeOptions = {
                 initialCamera: cameras.cameraFor(stage.title),
+                initialZoom: cameras.inheritedZoom(stage.title),
                 initialFold: cameras.foldFor(stage.title),
                 onCameraChange: (transform: CameraTransform, byUser: boolean) =>
                     byUser
@@ -491,7 +570,14 @@ export function runApp(
                 // A stage shows its own pinned camera, else the shared current one it
                 // inherits, else the default framing; its fold is always its own. Reader
                 // adjustments are recorded live through the callbacks above.
-                view = createTreeView(stage, (node) => showNode(node, recognizeJumps), treeOptions);
+                view = createTreeView(stage, (node) => showNode(node, recognizeJumps, stage), {
+                    ...treeOptions,
+                    // A graph's "children" are an accident of which route reached them first, so
+                    // folding one would hide nodes other routes still lead to.
+                    foldable: !stage.edges.some((edge) => edge.category),
+                    onSelectEdge: (edge) => showEdge(stage, edge),
+                    onSelectRegion: (region) => showRegion(stage, region),
+                });
                 section.appendChild(view.svg);
                 section.appendChild(view.legend);
                 section.appendChild(view.controls);
@@ -592,6 +678,6 @@ export function runApp(
         const view = views[index];
         const key = keys[index];
         if (!view || !key) return;
-        view.applyView(cameras.cameraFor(key), cameras.foldFor(key));
+        view.applyView(cameras.cameraFor(key), cameras.foldFor(key), cameras.inheritedZoom(key));
     }
 }

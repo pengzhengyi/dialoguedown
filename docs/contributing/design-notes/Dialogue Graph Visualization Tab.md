@@ -73,7 +73,7 @@ stating explicitly, since the natural instinct is to build more than is required
 | Need | Already provided by |
 | --- | --- |
 | Rendering a cyclic graph | `GraphWalk`'s visited set and `Reference` edges |
-| A fifth tab in the client | `app.ts` iterates `report.stages` generically — no client change |
+| A fifth tab in the client | `app.ts` iterates `report.stages` generically |
 | Access to the internal `DialogueGraph` | `InternalsVisibleTo("DialogueDown.Visualization")` |
 | A disabled tab with a reason | `DisplayGraph.ForUnavailableStage` |
 | Jump-to-source from a node | `DisplayNode.Span`, already carried per node |
@@ -199,7 +199,10 @@ IReadOnlyList<DisplayGraph> stages =
   edge kind's label.
 - **A visualizer test** asserts the fifth stage appears, and that it is unavailable
   when the compile produced no graph.
-- No new client tests: the client is unchanged.
+- **Client tests** cover the pure geometry (edge routing, region bands), the
+  neighbor and region queries, the inspector's rendering, and — as live end-to-end
+  tests — that a cyclic document renders at all, that no line crosses a label, and
+  that one thing is chosen at a time.
 
 ## Outcome
 
@@ -209,19 +212,41 @@ IReadOnlyList<DisplayGraph> stages =
 | **Changed** | The design gave each edge a label naming its kind. `DisplayEdge` carries no label — it is `(FromId, ToId, Kind)` for every stage — so the kind is read from the node an edge leaves, which a `Choice (2 options)` or `(jump)` label already states. Widening a shared display type is a change to the report's model, not to this tab. |
 | **Also built** | Two things the design did not anticipate. The graph tab needed its **own unavailable reason**: the other stages ask "did the compile reach here", but the graph asks "did it succeed", and reusing their wording would have misled. And English pluralization is not a suffix rule — a test caught `2 branchs`, so a count spells both forms. |
 | **Not implemented** | Cross-linking a divert to its target scene. The graph resolves a jump to a node id, so recovering the anchor means re-deriving what the region overlay already holds — worth doing when a reader asks for it, not on speculation. |
+| **Wrong** | Two claims above were false, and one of them shipped a broken tab. "Rendering a cyclic graph — already provided" reads `GraphWalk` backwards: it *survives* a cycle by marking the back-edge a `Reference`, and the client lays every stage out with d3 `stratify`, which is a strict tree builder. A projection that emitted every edge as a `Child` therefore threw `cycle` and rendered nothing. And "no client change" was wrong by a wide margin — see below. The lesson is recorded in [Reviewing a visual change](#reviewing-a-visual-change). |
+
+## What the client needed after all
+
+The claim that no client change was required did not survive contact with a real
+document. The tab now rests on client work of its own:
+
+| Concern | What it took |
+| --- | --- |
+| A graph is not a tree | `SpanningTree` names one parent per node so `stratify` succeeds; every other edge is a `Reference` |
+| Telling routes apart | `edge-style.ts` — one table owning each route's name, dash, arrow, pointer, glyph, and meaning |
+| Lines crossing words | `edge-path.ts` — a line leaves past its source's *measured* label; a cross-link drops into a lane below every row, runs, and rises in its target's own column |
+| A scene is an area | `region-bands.ts` draws it as a tinted band named once, replacing a `scene:` line under every node |
+| Reading the flow as text | `neighbors.ts` and `region-detail.ts` answer what leads here, what it leads to, and what crosses a region's border |
+| Choosing a thing | A node, a route, or a region is the reader's current object — and only one at a time |
+
+### Reviewing a visual change
+
+The tab shipped unable to render and the tests were green, because nothing
+asserted that a real document draws. Two habits close that gap, and both are now
+in the suite: **open a preview and look** before merging anything visual, and
+**measure what the eye would judge** — count the lines that cross a label, the
+routes that share a lane, the labels that overprint — so the next regression is
+caught by a number rather than by a reader.
 
 ## Open questions and deferred work
 
-- **Rendering an orphan distinctly.** The projection makes an orphan visible; giving
-  it a dashed border or a legend entry is a client change and is deliberately not
-  part of this component.
-- **Region grouping in the layout.** Showing regions as visual containers (a box per
-  scene) would need client work; the attribute is enough to start.
+- **The legend floats over the canvas.** It is absolutely positioned top-right and
+  now taller, so it can sit over the drawing at some zooms.
+- **The camera opens at 100%.** A large graph therefore starts off-screen; a
+  fit-to-view default would frame it, and is a change every stage tab shares.
 - **Playing the graph from the tab.** Stepping through the flow belongs to the
   [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
-- **Labeling an edge by its kind.** Reading the kind from the node an edge leaves
-  works, but a divert and a fall-through still look alike. Naming them would widen
-  `DisplayEdge`, which every stage shares — a display-model change worth making
-  deliberately rather than as a side effect of this tab.
 - **Cross-linking a divert to its scene.** Hovering a jump could highlight its
   target scene in the Semantic tab's tables, as the earlier stages already do.
+- **A stage saying whether it has read Dialogue meaning.** Whether `=>` renders as
+  a ligature is decided by matching stage titles. A flag on the stage would let a
+  host-added stage answer for itself instead of being guessed at by name.

@@ -35,6 +35,22 @@ export interface DisplayNode {
     typeName?: string;
     /** A cross-link key when the node *references* an entity (a jump's scene, a speaker mention). */
     refKey?: string;
+    /**
+     * The named area of the document this node sits in — a scene. Nodes sharing a region are
+     * drawn inside one band named once, rather than each repeating the name under its label.
+     */
+    region?: string;
+}
+
+/** A named area of the document the stage's nodes sit in — a scene today, a file later. */
+export interface DisplayRegion {
+    name: string;
+    /** What kind of grouping it is, as the compiler names it. */
+    kind: string;
+    /** The slug a divert names it by. */
+    anchor?: string;
+    /** Where the region is declared — a scene's heading — so a reader can be taken there. */
+    span?: Span;
 }
 
 export type DisplayEdgeKind = "Child" | "Reference";
@@ -43,6 +59,8 @@ export interface DisplayEdge {
     fromId: string;
     toId: string;
     kind: DisplayEdgeKind;
+    /** What the link means — a fall-through, a jump, a chosen arm — driving its color. */
+    category?: string;
 }
 
 /** One cell of a {@link SemanticTable}. */
@@ -84,6 +102,8 @@ export interface Stage {
      * jump-resolution tables. Absent for a plain graph stage.
      */
     tables?: SemanticTable[];
+    /** The named areas the nodes sit in. Absent for a stage with no grouping to show. */
+    regions?: DisplayRegion[];
     /**
      * Present when the stage's artifact was not produced (a halted compile). The stage
      * renders as a disabled tab; `nodes`/`edges` are empty.

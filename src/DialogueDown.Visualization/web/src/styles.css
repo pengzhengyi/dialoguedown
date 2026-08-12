@@ -2295,10 +2295,74 @@ svg.tree {
     display: block;
 }
 
+/* A region — a scene — drawn as the ground its nodes stand on, named once at its top-left
+   instead of repeated under every node inside it. The tints are faint on purpose: this is the
+   backdrop, and the flow drawn over it has to stay the thing the eye follows. */
+.region rect {
+    fill: var(--dd-region-tint);
+    stroke: var(--dd-region-tint-edge);
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+/* A region answers the pointer the way its nodes do: a firmer edge while it is hovered or while
+   a row elsewhere names it. */
+.region rect:hover,
+.region.highlight rect {
+    stroke-width: 2px;
+}
+
+.region.dimmed {
+    opacity: 0.2;
+}
+
+.region-name {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    fill: var(--pico-muted-color);
+    pointer-events: none;
+}
+
+[data-tint="0"] {
+    --dd-region-tint: rgb(59 130 246 / 6%);
+    --dd-region-tint-edge: rgb(59 130 246 / 22%);
+    --dd-region-mark: rgb(59 130 246 / 60%);
+}
+
+[data-tint="1"] {
+    --dd-region-tint: rgb(16 185 129 / 6%);
+    --dd-region-tint-edge: rgb(16 185 129 / 22%);
+    --dd-region-mark: rgb(16 185 129 / 60%);
+}
+
+[data-tint="2"] {
+    --dd-region-tint: rgb(168 85 247 / 6%);
+    --dd-region-tint-edge: rgb(168 85 247 / 22%);
+    --dd-region-mark: rgb(168 85 247 / 60%);
+}
+
+[data-tint="3"] {
+    --dd-region-tint: rgb(245 158 11 / 7%);
+    --dd-region-tint-edge: rgb(245 158 11 / 24%);
+    --dd-region-mark: rgb(245 158 11 / 62%);
+}
+
+[data-tint="4"] {
+    --dd-region-tint: rgb(236 72 153 / 6%);
+    --dd-region-tint-edge: rgb(236 72 153 / 22%);
+    --dd-region-mark: rgb(236 72 153 / 60%);
+}
+
 .link {
     fill: none;
     stroke: var(--pico-muted-border-color);
     stroke-width: 1.5px;
+
+    /* Round, so a dotted route stays dots as it thickens on hover. With butt caps a one-unit dash
+       grows sideways into a bar, and the line changes pattern just as the reader touches it. */
+    stroke-linecap: round;
 }
 
 /* A scene-backbone edge (root→scene, scene→subscene) is bolder and darker than the edges to a
@@ -2308,9 +2372,60 @@ svg.tree {
     stroke-width: 2.5px;
 }
 
+/* A route names itself on hover, so the pointer gets a target worth aiming at and the line
+   answers when it is found. */
+.link.routed {
+    pointer-events: stroke;
+    cursor: help;
+    transition:
+        stroke-width 0.1s ease,
+        opacity 0.1s ease;
+}
+
+/* A touched line answers, but only just: a route drawn as dots or crosses loses its shape when
+   it is bolded, so the response is a small step up rather than a doubling. */
+.link.routed:hover,
+.link.routed.hovered {
+    stroke-width: 2.25px;
+}
+
+/* The invisible twin that carries a line's pointer target. Wide enough to aim at, drawn above the
+   nodes so a node's roomy click target cannot swallow it. Each route sets its own pointer shape. */
+.edge-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 12px;
+    pointer-events: stroke;
+    cursor: help;
+}
+
 .link.reference {
     stroke: var(--dd-reference);
     stroke-dasharray: 4 3;
+}
+
+/* A route answers the legend as a node does: dimmed when its row is switched off, and lifted
+   clear when its row is hovered. Placed after the reference and category rules so the reader's
+   own gesture always wins over the line's resting look. */
+.link.dimmed {
+    opacity: 0.12;
+}
+
+.link.highlight {
+    opacity: 1;
+    stroke-width: 2.25px;
+}
+
+/* The reader's current object. Only one thing is selected at a time — a node, a route, or a
+   region — so choosing one plainly lets the last one go. */
+.link.selected {
+    opacity: 1;
+    stroke-width: 3px;
+}
+
+.region.selected rect {
+    stroke-width: 2.5px;
+    stroke-dasharray: 6 3;
 }
 
 .node circle {
@@ -2450,11 +2565,91 @@ svg.tree.has-focus .link:not(.related) {
     font-variant-numeric: tabular-nums;
 }
 
+.legend-heading {
+    margin: 0.25rem 0 0.1rem;
+    padding: 0 0.3rem;
+    color: var(--pico-muted-color);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.legend-heading:first-child {
+    margin-top: 0;
+}
+
 .legend .swatch {
     width: 0.7rem;
     height: 0.7rem;
     border-radius: 50%;
     flex: none;
+}
+
+/* A kind of region — a scene today, a file later — folds away as a group, so the legend has a
+   shelf ready for the next kind rather than one flat list that grows. */
+.legend-kind-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.1rem 0.3rem;
+    border: none;
+    background: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: left;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+}
+
+.legend-kind-toggle::before {
+    content: "▾";
+    font-size: 0.6rem;
+    line-height: 1;
+    transition: transform 0.1s ease;
+}
+
+.legend-kind-toggle[aria-expanded="false"]::before {
+    transform: rotate(-90deg);
+}
+
+.legend-kind-body {
+    padding-left: 0.5rem;
+}
+
+/* A region's row wears its band's tint as a small square, so the word and the color are learned
+   together wherever the region is named. */
+.legend .region-swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 1px solid var(--dd-region-mark);
+    border-radius: 3px;
+    background: var(--dd-region-mark);
+    flex: none;
+}
+
+/* A line, so an edge never reads as a node's dot. */
+.legend .edge-swatch {
+    width: 0.85rem;
+    height: 0.18rem;
+    border-radius: 1px;
+}
+
+/* A stamped route writes its glyph instead of a bar, so the legend shows the mark to look for. */
+.legend .symbol-swatch {
+    display: flex;
+    align-items: center;
+    width: auto;
+    min-width: 0.85rem;
+    height: 0.7rem;
+    background: none;
+    border-radius: 0;
+    font-size: 0.6rem;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
 }
 
 .zoom-controls {
@@ -2854,6 +3049,12 @@ body.zen .config-view > .config-source {
     font-weight: 600;
 }
 
+/* The dot carries the node's category, so its shape is information: a wrapping title must not
+   squeeze it into an ellipse. */
+#detail-title .dot {
+    flex: none;
+}
+
 #detail table,
 .node-detail-body table {
     font-size: 0.8rem;
@@ -2886,6 +3087,176 @@ body.zen .config-view > .config-source {
 .node-detail-body .inserted-note {
     margin: 0.75rem 0 0;
     font-size: 0.8rem;
+    font-style: italic;
+    color: var(--pico-muted-color);
+}
+
+/* A node's routes in and out, listed as rows the reader can walk. The route name is the row's
+   header and the node it reaches is the button, so scanning down the column reads as a list of
+   destinations rather than a list of line styles. */
+#detail-body table.neighbors th.route,
+.node-detail-body table.neighbors th.route {
+    width: 1%;
+    font-weight: 400;
+    white-space: nowrap;
+    color: var(--pico-muted-color);
+}
+
+#detail-body .route-name,
+.node-detail-body .route-name {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+#detail-body .route-swatch,
+.node-detail-body .route-swatch {
+    width: 0.7rem;
+    height: 0.15rem;
+    border-radius: 1px;
+    flex: none;
+}
+
+/* Fixed columns, and one line per cell: a row names a node so the reader can go there, and a
+   whole line of dialogue would otherwise wrap into a tower and push the columns beside it off the
+   panel. The words in full are a click away. */
+#detail-body table.neighbors,
+.node-detail-body table.neighbors {
+    width: 100%;
+    table-layout: fixed;
+}
+
+#detail-body table.neighbors td,
+#detail-body table.neighbors th,
+.node-detail-body table.neighbors td,
+.node-detail-body table.neighbors th {
+    overflow: hidden;
+}
+
+#detail-body .cell-text,
+.node-detail-body .cell-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* The route column carries a short name, so it yields its width to the nodes either side. */
+#detail-body table.crossings th:nth-child(1),
+#detail-body table.crossings th:nth-child(3),
+.node-detail-body table.crossings th:nth-child(1),
+.node-detail-body table.crossings th:nth-child(3) {
+    width: 35%;
+}
+
+#detail-body table.crossings th:nth-child(2),
+.node-detail-body table.crossings th:nth-child(2) {
+    width: 30%;
+}
+
+#detail-body table.neighbors thead th,
+.node-detail-body table.neighbors thead th {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pico-muted-color);
+}
+
+#detail-body .route-meaning,
+.node-detail-body .route-meaning {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+}
+
+/* The band's own mark, so the region reads the same in the panel as on the drawing. */
+#detail-title .region-swatch,
+#detail-body .region-swatch,
+.node-detail-body .region-swatch {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-right: 0.45rem;
+    border: 1px solid var(--dd-region-mark);
+    border-radius: 3px;
+
+    /* The band's tint is faint because it is a backdrop; a chip this small needs the same hue
+       stated firmly, or the color the panel and the drawing share cannot be seen at all. */
+    background: var(--dd-region-mark);
+    vertical-align: middle;
+    flex: none;
+}
+
+#detail-body button.region-link,
+.node-detail-body button.region-link {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.1rem 0.3rem;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: none;
+    font-size: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+#detail-body button.region-link:hover,
+.node-detail-body button.region-link:hover {
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+}
+
+/* A wrapped label must not squeeze the dot beside it into an ellipse: the dot carries the node's
+   category, so its shape is information. */
+#detail-body .dot,
+#detail-body .route-swatch,
+.node-detail-body .dot,
+.node-detail-body .route-swatch {
+    flex: none;
+}
+
+#detail-body button.neighbor,
+#detail-body table.neighbors button.route,
+.node-detail-body button.neighbor,
+.node-detail-body table.neighbors button.route {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 0.1rem 0.3rem;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: none;
+    font-size: inherit;
+    line-height: 1.35;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+#detail-body button.neighbor:hover,
+#detail-body table.neighbors button.route:hover,
+.node-detail-body button.neighbor:hover,
+.node-detail-body table.neighbors button.route:hover {
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+}
+
+#detail-body table.neighbors button.route,
+.node-detail-body table.neighbors button.route {
+    gap: 0.35rem;
+    white-space: nowrap;
+    color: var(--pico-muted-color);
+}
+
+#detail-body .neighbor-empty,
+.node-detail-body .neighbor-empty {
     font-style: italic;
     color: var(--pico-muted-color);
 }
@@ -2965,7 +3336,11 @@ body.zen .config-view > .config-source {
     list-style-type: decimal;
 }
 
+/* A marker is drawn only for a list-item box. The framework's reset makes every `li` a plain
+   block, which silently swallows the bullets and turns a choice's arms into loose paragraphs —
+   the one thing the preview of a list has to show. */
 .preview li {
+    display: list-item;
     list-style-type: inherit;
 }
 

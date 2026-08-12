@@ -51,7 +51,13 @@ test("a synthetic default-speaker node shows an inserted note, not an empty sour
     page,
 }) => {
     await page.locator(".tab", { hasText: "Desugared AST" }).click();
-    await page.locator("g.node", { hasText: "Speaker (default)" }).first().click();
+    // The node's own hit area, dispatched: a wide graph can place a node under the inspector's
+    // edge controls, and this test is about what the panel says, not about pointer interception.
+    await page
+        .locator("g.node", { hasText: "Speaker (default)" })
+        .first()
+        .locator("rect.hit")
+        .dispatchEvent("click");
 
     await expect(page.locator("#detail-title")).toContainText("Speaker (default)");
     await expect(page.locator("#detail-body .inserted-note")).toContainText(

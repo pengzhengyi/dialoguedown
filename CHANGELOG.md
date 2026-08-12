@@ -8,12 +8,54 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Dialogue Graph tab now renders.** It shipped unable to draw anything: the client lays
+  every stage out as a tree, and a dialogue graph is not one, so any document with a cycle
+  reported `Failed to render stage: cycle`. The projection now names one parent per node and
+  draws the remaining edges as cross-links.
+- **Lines no longer strike through the words they belong to.** A node writes its label to the
+  right of its dot, so an edge leaving from the dot ran through its own text, and a long
+  cross-link lay across every row it passed. Text is now measured rather than estimated, and a
+  cross-link travels a lane below the drawing.
+- **A list in a node preview renders as a list.** The framework's reset made every `li` a plain
+  block, and a marker is only drawn for a list-item box — so a choice's arms read as loose
+  paragraphs. This affected every preview in the report, not only the graph tab.
+- **Dimming a legend row shows immediately.** The row's hover preview held the category at full
+  strength under a resting pointer, so the click looked like it had done nothing.
+- **Selecting a node by name reveals it.** A search hit or a neighbor row inside a collapsed
+  branch was marked but never shown; the fold over it now opens.
+- **A region's border names both of its ends** — Source, Edge, Destination — because a scene
+  entered at its first line and one entered halfway are different stories, and only both ends tell
+  them apart. Regions also take their own group in the legend, with the tint their band is drawn
+  with and how much each holds, grouped under the kind of grouping they are — a fold that already
+  has a shelf for the next kind.
+- **A graph's nodes no longer fold.** A tree's children are its content, so hiding them hides only
+  detail; a graph's are an accident of which route happened to reach them first, and folding one
+  took away nodes other routes still lead to, along with the edges into them.
+- **A graph frames itself when you arrive at it.** An untouched tab inherited the whole camera,
+  pan included — and a pan means something only against the graph it was made on. The dialogue
+  graph runs far wider than the trees beside it, so arriving from a panned tab left the reader
+  looking at empty canvas. Only the zoom travels between graphs now.
+- **Routes ending at one node can be told apart.** Every jump into a scene lands on its entry, and
+  all of them climbed in that node's own column — one line to the eye, and a coin toss to the
+  pointer. Each now climbs in a corridor of its own and leans in from its own row, and the pointer
+  resolves to the line nearest it rather than to whichever target happens to be on top.
+
 ### Added
 
 - **Dialogue Graph tab** — the report now shows the compiled flow as a fifth stage: every block
   as a node, joined by the edges that lead between them, so you can see where a choice goes,
   which scene a jump enters, and — because the tab shows every node rather than only the ones a
-  walk reaches — which lines nothing reaches at all. See the
+  walk reaches — which lines nothing reaches at all.
+
+  Each kind of route is drawn as itself: a succession is a plain arrow, a jump a long dash, a
+  choice arm a fine dotted line, a conditional branch a dashed one, and a line nothing reaches
+  is barred with crosses. Every route names itself on hover, carries a pointer that says what it
+  does, and can be clicked to read what that kind of route means and which two nodes it joins.
+  A scene is drawn as a tinted band around the nodes written under it — clickable in turn, to
+  see how much it holds, what crosses its border, and the text it was written as. Selecting a
+  node lists what leads to it and where it leads, and every row walks the flow. See the
   [Dialogue Graph Visualization Tab](docs/contributing/design-notes/Dialogue%20Graph%20Visualization%20Tab.md) note.
 - **Dialogue graph — the compiler's final stage** — a clean compile now lowers its semantic
   model into an immutable **dialogue graph**: one node per block (a line, a control line, a
