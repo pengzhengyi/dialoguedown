@@ -86,6 +86,8 @@
     href: Semantic Model Visualization Tab.md
   - name: Dialogue Graph Visualization Tab
     href: Dialogue Graph Visualization Tab.md
+  - name: Unmodeled Markdown Highlighting
+    href: Unmodeled Markdown Highlighting.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion
