@@ -5,16 +5,36 @@ import { colorOf } from "./palette";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { findMatches, hasMatch, type MatchOptions, type MatchRange } from "./text-match";
 import {
-    createTable,
-    functionalUpdate,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getSortedRowModel,
+    columnFilteringFeature,
+    constructTable,
+    createFilteredRowModel,
+    createSortedRowModel,
+    filterFns,
+    globalFilteringFeature,
+    rowSortingFeature,
+    tableFeatures,
     type ColumnDef,
     type FilterFn,
     type Table,
-    type TableState,
 } from "@tanstack/table-core";
+import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
+
+// The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
+// rather than bundling every feature: sorting, per-column (facet) filtering, and the global
+// search, each with its row model. Registering the stock `filterFns` keeps naming a filter by
+// string ("equalsString") valid. Vanilla use must also supply the reactivity bindings, because
+// no framework adapter is present to wire the table's state atoms into a render.
+const features = tableFeatures({
+    coreReactivityFeature: storeReactivityBindings(),
+    columnFilteringFeature,
+    globalFilteringFeature,
+    rowSortingFeature,
+    filteredRowModel: createFilteredRowModel(),
+    sortedRowModel: createSortedRowModel(),
+    filterFns,
+});
+
+type SemanticFeatures = typeof features;
 
 /** The table's search: the typed query plus the Match Case / Match Whole Word toggle state. */
 interface SearchQuery extends MatchOptions {
@@ -23,7 +43,7 @@ interface SearchQuery extends MatchOptions {
 
 // The global filter: a row is kept when any of its cells contains the query under the current
 // case/whole-word options. The highlight uses the same matcher, so the marks match what stays.
-const globalMatch: FilterFn<SemanticRow> = (row, columnId, value) => {
+const globalMatch: FilterFn<SemanticFeatures, SemanticRow> = (row, columnId, value) => {
     const search = value as SearchQuery;
     return hasMatch(String(row.getValue(columnId) ?? ""), search.query, search);
 };
@@ -169,36 +189,27 @@ function buildInteractiveTable(
 
     // One column per source column; each reads its cell's text so sort and filter act on what the
     // reader sees. A categorical column also matches by exact value, for its faceted filter.
-    const columns: ColumnDef<SemanticRow>[] = table.columns.map((name, index) => ({
-        id: name,
-        header: name,
-        accessorFn: (row) => row.cells[index]?.text ?? "",
-        filterFn: facetNames.has(name) ? "equalsString" : "includesString",
-    }));
+    const columns: ColumnDef<SemanticFeatures, SemanticRow>[] = table.columns.map(
+        (name, index) => ({
+            id: name,
+            header: name,
+            accessorFn: (row) => row.cells[index]?.text ?? "",
+            filterFn: facetNames.has(name) ? "equalsString" : "includesString",
+        }),
+    );
 
-    let state: TableState;
-
-    const instance = createTable<SemanticRow>({
+    const instance = constructTable({
+        features,
         data: table.rows,
         columns,
         globalFilterFn: globalMatch,
         enableSortingRemoval: true,
-        state: {},
-        onStateChange: (updater) => {
-            state = functionalUpdate(updater, instance.getState());
-            instance.setOptions((prev) => ({ ...prev, state }));
-            render();
-        },
         renderFallbackValue: null,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
     });
 
-    // Seed the full default state (column pinning, order, sizing, …) so the headless header code
-    // has its defaults; from here we only ever change sorting and the filters through it.
-    state = instance.initialState;
-    instance.setOptions((prev) => ({ ...prev, state }));
+    // v9 tables own their state, so a change is observed rather than fed back in: every sort or
+    // filter update publishes to the store, and re-rendering from that keeps the body in step.
+    instance.store.subscribe(() => render());
 
     // Header cells built once so a keyboard sort keeps focus; render() only refreshes aria-sort.
     const headerCells = instance.getFlatHeaders().map((headerColumn) => {
@@ -234,7 +245,7 @@ function buildInteractiveTable(
             th.setAttribute("aria-sort", ariaSort(instance.getColumn(id)?.getIsSorted()));
         }
 
-        const query = instance.getState().globalFilter as SearchQuery | undefined;
+        const query = instance.store.state.globalFilter as SearchQuery | undefined;
         const rows = instance.getRowModel().rows;
         if (rows.length === 0) {
             tbody.replaceChildren(noMatchRow(table.columns.length));
@@ -304,7 +315,7 @@ function matchToggle(label: string, title: string): HTMLButtonElement {
 function buildFacetControl(
     table: SemanticTable,
     columnName: string,
-    instance: Table<SemanticRow>,
+    instance: Table<SemanticFeatures, SemanticRow>,
 ): HTMLElement | null {
     const index = table.columns.indexOf(columnName);
     const values = distinctValues(table.rows, index);
