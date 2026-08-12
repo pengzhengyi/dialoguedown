@@ -89,8 +89,8 @@ Given a script:
 
 | Construct | Fate | How it reads |
 | --- | --- | --- |
-| The comment | Never compiled | Faint and italic — a note to the writer |
-| The table | Ignored | Faded and struck through — in the file, absent from the dialogue |
+| The comment | Never compiled | Light gray and italic — a note to the writer |
+| The table | Ignored | Dark gray — legible for inspection, but visibly inert |
 | The `if` quote | Dialogue | Fully colored, keyword highlighted — it plays |
 | The `<div>` | Kept | Ordinary dialogue text, because that is exactly what it becomes |
 
@@ -193,12 +193,14 @@ control block, and any other quote is a transparent wrapper whose contents are d
 the only thing overriding them. Removing it lets the existing projection show through, with no
 new token and no new span arithmetic.
 
-### DD5 — Style by weight and decoration, not by adding hues
+### DD5 — Use a two-level gray hierarchy, not more hues
 
-Ignored material is **faded and struck through**; a comment is **faded and italic**. Both survive
-a colorblind reader and both themes, where new hues in an already thirteen-color legend would
-not. Strikethrough also carries the meaning literally: this text is in the file and not in the
-dialogue.
+Ignored material is **dark gray**; a comment is **lighter gray and italic**. Both survive a
+colorblind reader and both themes, where new hues in an already thirteen-color legend would not.
+The difference in opacity carries intent: comments are expected writer-only notes, while ignored
+Markdown stays more legible because it may be an accidental omission the writer needs to inspect.
+A strikethrough was rejected after preview because it added visual noise across multi-line tables
+and code blocks.
 
 ## Error and boundary cases
 

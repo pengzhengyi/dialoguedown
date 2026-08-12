@@ -1797,14 +1797,14 @@ g.node.entity-highlight text.label {
     color: var(--tok-command);
 }
 
-/* Markdown the handling policy leaves out of the dialogue: in the file, absent from the script.
-   Faded and struck rather than tinted, so the meaning survives both themes and a colorblind
-   reader — and so it reads as removed rather than as one more kind of dialogue. */
+/* Markdown the handling policy leaves out of the dialogue: dark gray, so it is visibly inert
+   without the visual noise of a strikethrough. Comments are lighter (45% opacity) because they
+   are expected writer-only notes; ignored Markdown stays more legible because it may be an
+   accidental omission the writer needs to inspect. */
 .source-pane .cm-content .dd-tok-ignored-markdown,
 .source-pane .cm-content .dd-tok-ignored-markdown * {
     color: var(--md-muted);
-    text-decoration: line-through;
-    opacity: 0.7;
+    opacity: 0.72;
 }
 
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
