@@ -16,9 +16,6 @@ internal sealed class ScriptTranspiler(BlockBuilder blockBuilder) : IScriptTrans
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(context);
 
-        // TODO(diagnostics): the inline builders (game calls, disallowed labels) still throw; they
-        // will report into context.Diagnostics when their producers land. The speaker prefix
-        // already reports here through the block builder.
         return new ScriptDocument(blockBuilder.Build(document.Blocks, context.Diagnostics));
     }
 }
