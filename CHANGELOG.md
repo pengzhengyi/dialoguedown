@@ -144,6 +144,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Cross-links in the Dialogue Graph are far enough apart to aim between.** Node labels are now
+  clipped to a measured width rather than a count of characters — thirty `W`s are more than twice
+  thirty `i`s, so the gap the routes climb in was unknown and could not be widened safely. With the
+  gap a known width, routes climbing in one column each take a corridor of their own, 18 units
+  apart instead of 7.
 - **A stage opens on what it draws.** Every graph tab used to open at full size anchored on its
   root, which on a long script showed a handful of nodes and left the reader to hunt for the rest.
   A stage now frames the whole of itself, clear of the legend — and where the whole of it will not

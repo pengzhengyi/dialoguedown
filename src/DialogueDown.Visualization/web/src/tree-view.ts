@@ -20,12 +20,15 @@ import {
     labelBlockWidth,
     labelClearance,
     LABEL_BLOCK_ORIGIN,
+    LABEL_INSET,
+    MAX_CORRIDOR_REACH,
     type Point,
 } from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
-import { ellipsize, MAX_INLINE_TEXT, tooltipHtml } from "./text";
+import { tooltipHtml } from "./text";
+import { clipToWidth } from "./clip-text";
 import { createLegend } from "./legend";
 import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
 
@@ -85,10 +88,18 @@ interface CrossLinkTrack {
 }
 
 /**
- * The horizontal distance between one depth and the next: room for a full-width label, plus the
- * gap the cross-link corridors climb in beside it.
+ * How a column's width is spent.
+ *
+ * A column holds a node's dot, the words beside it, and the gutter the cross-link corridors climb
+ * in before they reach the next column. Those three add up to the step, and the budget is what is
+ * left for the words — so widening the gutter shortens the labels unless the step grows with it.
+ * Stating the arithmetic here keeps that trade honest: it cannot be broken by tuning one number.
  */
-const COLUMN_STEP = 260;
+const COLUMN_STEP = 320;
+/** Air between the widest a label may run and the outermost corridor beside it. */
+const CORRIDOR_AIR = 18;
+const CORRIDOR_GUTTER = MAX_CORRIDOR_REACH + CORRIDOR_AIR;
+const LABEL_BUDGET = COLUMN_STEP - LABEL_INSET - CORRIDOR_GUTTER;
 
 /**
  * A scene-tree backbone node — a scene or the implicit document root. The Semantic tab
@@ -462,7 +473,7 @@ export function createTreeView(
         const measured = new Map<string, { clearance: number; width: number }>();
         gNodes.selectAll<SVGGElement, TreeNode>("g.node").each(function (datum) {
             const widest = [...this.querySelectorAll<SVGTextElement>("text")].reduce(
-                (width, text) => Math.max(width, text.getComputedTextLength?.() ?? 0),
+                (width, text) => Math.max(width, clipLabel(text)),
                 0,
             );
             const width = labelBlockWidth(widest);
@@ -514,6 +525,24 @@ export function createTreeView(
             .text((datum) => datum.region);
     }
 
+    /**
+     * Clips one drawn label to the column's budget, and reports the width it ended up.
+     *
+     * Measured rather than counted: a character count cannot say how wide a label will be, and the
+     * corridors climbing beside it need the answer. A DOM that lays no text out measures nothing,
+     * so the text is left as written — shorter lines, never misplaced ones.
+     */
+    function clipLabel(text: SVGTextElement): number {
+        if (!text.getComputedTextLength) return 0;
+        const written = text.dataset.label ?? text.textContent ?? "";
+        text.dataset.label = written;
+        text.textContent = clipToWidth(written, LABEL_BUDGET, (candidate) => {
+            text.textContent = candidate;
+            return text.getComputedTextLength();
+        });
+        return text.getComputedTextLength();
+    }
+
     // The empty band under the deepest row, where cross-links travel. Each cross-link gets a lane
     // of its own so two never share a line: the shortest hop runs closest to the drawing and a
     // longer one passes beneath it, the way nested brackets never cross.
@@ -525,15 +554,18 @@ export function createTreeView(
         const floor = nodes.reduce((low, node) => Math.max(low, node.x), 0) + LANE_GAP;
         const spanOf = (edge: DisplayEdge): number =>
             Math.abs(positionById.get(edge.toId)!.y - positionById.get(edge.fromId)!.y);
-        // Routes ending at one node queue up: each takes the next corridor back from that node's
-        // column, and leans in from its own row, so none of them lies on top of another.
-        const arrivals = new Map<string, number>();
+        // Routes climbing in one column queue up: each takes the next corridor back from it, and
+        // leans in from its own row, so none of them lies on top of another. The queue is keyed by
+        // the column rather than by the target, because two routes to *different* nodes standing
+        // at the same depth climb in the same place and would coincide just as badly.
+        const arrivals = new Map<number, number>();
         return new Map(
             [...edges]
                 .sort((left, right) => spanOf(left) - spanOf(right))
                 .map((edge, depth) => {
-                    const queued = arrivals.get(edge.toId) ?? 0;
-                    arrivals.set(edge.toId, queued + 1);
+                    const column = positionById.get(edge.toId)!.y;
+                    const queued = arrivals.get(column) ?? 0;
+                    arrivals.set(column, queued + 1);
                     return [
                         edgeKey(edge),
                         {
@@ -1049,10 +1081,10 @@ export function createTreeView(
             .attr("class", "label")
             .attr("dy", "0.32em")
             .attr("x", 12)
-            // Clipped to the same width as the attributes beneath it. A line of dialogue can run
-            // longer than the column it sits in, and an unclipped label overprints its neighbor;
-            // the inspector and the hover tip carry the whole of it.
-            .text((d) => ellipsize(d.data.label, MAX_INLINE_TEXT));
+            // Clipped to a *measured* budget once drawn, so the gutter beside it is a known width
+            // rather than whatever thirty characters happened to come to. The inspector and the
+            // hover tip carry the whole of it.
+            .text((d) => d.data.label);
 
         group.each(function (d) {
             d.data.attributes.forEach((attr, i) => {
@@ -1060,7 +1092,7 @@ export function createTreeView(
                 text.setAttribute("class", "attr");
                 text.setAttribute("x", "12");
                 text.setAttribute("dy", String(15 + i * 12));
-                text.textContent = ellipsize(`${attr.name}: ${attr.value}`, MAX_INLINE_TEXT);
+                text.textContent = `${attr.name}: ${attr.value}`;
                 this.appendChild(text);
             });
         });
