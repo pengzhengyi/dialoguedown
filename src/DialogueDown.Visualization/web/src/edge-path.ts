@@ -61,7 +61,8 @@ export interface RouteOptions {
 /** Where a node's text block starts, relative to its dot. Negative: it reaches back a little. */
 export const LABEL_BLOCK_ORIGIN = -8;
 
-const LABEL_INSET = 12;
+/** How far a node's words start from its dot. */
+export const LABEL_INSET = 12;
 const LABEL_PADDING = 10;
 const LEAD_GAP = 6;
 
@@ -75,13 +76,13 @@ const LANE_CORNER = 24;
 /**
  * How far apart neighboring corridors sit, and how far back they may reach in total.
  *
- * A corridor climbs in the gap between the previous column's words and this one's dot, so the
- * reach is bounded by that gap: past it, a corridor climbs straight through a label. Widening the
- * separation therefore means widening the gap first — clipping labels to a measured budget rather
- * than a character count — which is why these stay narrow for now.
+ * A corridor climbs in the gutter between the previous column's words and this column's dot, so
+ * the reach is bounded by that gutter: past it, a corridor would climb straight through a label.
+ * The gutter is a known width because labels are clipped to a measured budget, and the layout
+ * derives that budget from this reach — so the two cannot drift apart.
  */
-const CORRIDOR_STEP = 7;
-const MAX_CORRIDOR_REACH = 38;
+export const CORRIDOR_STEP = 18;
+export const MAX_CORRIDOR_REACH = LANE_CORNER + CORRIDOR_STEP * 5;
 
 /**
  * The width of the block a node's label and attributes occupy, measured from
