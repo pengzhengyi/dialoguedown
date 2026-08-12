@@ -62,6 +62,23 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     const legend = document.createElement("div");
     legend.className = "legend";
 
+    // The legend floats over the drawing it describes, and it has grown — nodes, edges, and now
+    // regions. A reader who has learned it can fold it away and have the canvas back.
+    const fold = document.createElement("button");
+    fold.type = "button";
+    fold.className = "legend-fold";
+    fold.setAttribute("aria-expanded", "true");
+    fold.setAttribute("aria-label", "Hide the legend");
+    fold.title = "Hide the legend";
+    fold.addEventListener("click", () => {
+        const open = fold.getAttribute("aria-expanded") === "true";
+        fold.setAttribute("aria-expanded", String(!open));
+        fold.setAttribute("aria-label", open ? "Show the legend" : "Hide the legend");
+        fold.title = open ? "Show the legend" : "Hide the legend";
+        legend.classList.toggle("folded", open);
+    });
+    legend.append(fold);
+
     const nodeItems: HTMLElement[] = [];
     for (const category of Object.keys(CATEGORY_COLORS)) {
         const stat = stats[category];

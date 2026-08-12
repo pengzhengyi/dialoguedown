@@ -346,8 +346,11 @@ test("the zoom input reflects, sets, and reverts the zoom", async ({ page }) => 
         "section.stage.active .zoom-controls button[aria-label='Revert to default view']",
     );
 
-    // The default framing is a readable 100%.
-    await expect(input).toHaveValue("100");
+    // A stage opens framed on what it draws, so the default is whatever shows the whole of it —
+    // not a fixed 100%. The input reports that framing, and Revert returns to it.
+    await expect(input).not.toHaveValue("");
+    const framed = (await input.inputValue())!;
+    expect(Number(framed)).toBeGreaterThan(0);
 
     // Focus is a restrained theme underline, not a second rounded input card inside the toolbar.
     await input.focus();
@@ -370,7 +373,7 @@ test("the zoom input reflects, sets, and reverts the zoom", async ({ page }) => 
 
     // Stepping with + raises the zoom.
     await page.locator("section.stage.active .zoom-controls button", { hasText: "+" }).click();
-    await expect(input).not.toHaveValue("100");
+    await expect(input).not.toHaveValue(framed);
 
     // Typing a percentage sets the zoom directly.
     await input.fill("150");
@@ -378,9 +381,9 @@ test("the zoom input reflects, sets, and reverts the zoom", async ({ page }) => 
     await expect(input).toHaveValue("150");
     await expect.poll(() => scaleOf(viewport)).toBeCloseTo(1.5, 1);
 
-    // Revert returns to the default framing (100%).
+    // Revert returns to the default framing.
     await revert.click();
-    await expect(input).toHaveValue("100");
+    await expect(input).toHaveValue(framed);
 });
 
 test("a stage keeps its zoom when you leave the tab and come back", async ({ page }) => {

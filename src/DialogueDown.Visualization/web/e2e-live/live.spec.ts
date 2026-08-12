@@ -869,6 +869,68 @@ test("frames a graph from its own root rather than inheriting where you were loo
     expect(framed).toBe(true);
 });
 
+test("opens a stage showing the whole of it, clear of the legend", async ({ page }) => {
+    // A stage used to open at full size anchored on its root, which showed a handful of nodes and
+    // left the reader to hunt for the rest — and the legend covered part of what it described.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "  Guide: You climb.",
+            "",
+            "- Alice: Right.",
+            "",
+            "  Guide: It swings open.",
+            "",
+            "Guide: You are inside.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await expect(page.locator("section.stage.active g.node")).not.toHaveCount(0);
+
+    const framing = await page.evaluate(() => {
+        const stage = document.querySelector("section.stage.active")!;
+        const canvas = stage.querySelector("svg.tree")!.getBoundingClientRect();
+        const legend = stage.querySelector(".legend")!.getBoundingClientRect();
+        const nodes = [...stage.querySelectorAll("g.node")];
+        const within = (box: DOMRect, area: DOMRect) =>
+            box.right > area.left &&
+            box.left < area.right &&
+            box.bottom > area.top &&
+            box.top < area.bottom;
+        return {
+            total: nodes.length,
+            framed: nodes.filter((node) => within(node.getBoundingClientRect(), canvas)).length,
+            behindLegend: nodes.filter((node) => within(node.getBoundingClientRect(), legend))
+                .length,
+        };
+    });
+
+    expect(framing.framed).toBe(framing.total);
+    expect(framing.behindLegend).toBe(0);
+});
+
+test("folds the legend away, and back", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const legend = page.locator("section.stage.active .legend");
+    const fold = legend.locator(".legend-fold");
+
+    await fold.click();
+    await expect(legend.locator(".legend-item").first()).toBeHidden();
+
+    // Folded, the button *is* the legend — it must still be reachable to open again.
+    await fold.click();
+    await expect(legend.locator(".legend-item").first()).toBeVisible();
+});
+
 test("names each kind of route with its own pointer", async ({ page }) => {
     writeFileSync(
         LIVE_DOC,

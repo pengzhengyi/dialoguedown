@@ -23,6 +23,7 @@ import {
     type Point,
 } from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
+import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
 import { ellipsize, MAX_INLINE_TEXT, tooltipHtml } from "./text";
 import { createLegend } from "./legend";
@@ -186,6 +187,21 @@ const NAVIGATION_KEYS = ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Ent
 const DEFAULT_ZOOM = 1;
 const ROOT_ANCHOR_X = 0.2;
 
+/** Air between the drawing and a panel floating over the canvas. */
+const FLOATING_PANEL_GAP = 12;
+
+/** How far out the reader may zoom by hand. */
+const MIN_ZOOM = 0.03;
+
+/**
+ * The smallest scale a stage will *open* at.
+ *
+ * Fitting a long script would shrink it to an unreadable smudge, so a stage that cannot be shown
+ * whole at this scale opens at the start of itself instead. The reader can still zoom further out
+ * than this — a default just should not choose it for them.
+ */
+const LEGIBLE_ZOOM = 0.15;
+
 /** Render one stage as an interactive, collapsible D3 tree with legend + zoom.
  *  `options` supply the initial camera/fold and hooks so the app can remember a
  *  graph's position across tab switches and hot-reloads. */
@@ -303,7 +319,9 @@ export function createTreeView(
     const gEdgeHits = viewport.append("g").attr("class", "edge-hits");
 
     const zoomBehavior = zoom<SVGSVGElement, undefined>()
-        .scaleExtent([0.1, 3])
+        // The floor is low enough that even a long script fits on arrival; a reader who wants to
+        // read rather than survey zooms straight back in.
+        .scaleExtent([MIN_ZOOM, 3])
         // Use the container size as the extent so zoom centers correctly and does not
         // depend on the SVG's intrinsic size.
         .extent(() => {
@@ -1091,26 +1109,73 @@ export function createTreeView(
     }
 
     /**
-     * Frame the default (root-centered) view once the container has a real size. A
-     * just-shown or hidden tab reads zero until it lays out, so retry next frame (capped
-     * so a never-shown tab does not loop forever). The `token` aborts the retry if a later
-     * applyView has superseded this one.
+     * Frame the stage once the container has a real size. A just-shown or hidden tab reads zero
+     * until it lays out, so retry next frame (capped so a never-shown tab does not loop forever).
+     * The `token` aborts the retry if a later applyView has superseded this one.
+     *
+     * A stage opens on the whole of what it draws, kept clear of the panels floating over the
+     * canvas. Where the drawing cannot be measured — a DOM that lays nothing out — it falls back
+     * to anchoring the root, which needs no measurement.
      */
     function scheduleDefaultView(token: number, attempt = 0): void {
         if (token !== viewToken) return;
-        const parent = svg.node()?.parentElement;
+        const parent = svg.node()?.parentElement ?? null;
         const width = parent?.clientWidth ?? 0;
         const height = parent?.clientHeight ?? 0;
-        if (!width || !height) {
+        if (!parent || !width || !height) {
             if (attempt < 30) requestAnimationFrame(() => scheduleDefaultView(token, attempt + 1));
             return;
         }
+        const insets = floatingPanelInsets(parent);
+        // A reader who chose a zoom elsewhere keeps it: moving between stages should not silently
+        // resize them. Only a stage arrived at with no zoom to inherit frames itself.
+        const content = inheritedZoom === null ? drawnExtent() : null;
+        if (content) {
+            const fitted = frameToFit(content, { width, height }, insets, {
+                minScale: LEGIBLE_ZOOM,
+            });
+            // Shrinking a long script until every node is on screen leaves an unreadable smudge.
+            // Where the whole of it will not fit legibly, open at the start of it instead — the
+            // reader can zoom out further by hand than a default should ever choose for them.
+            if (fitted.k > LEGIBLE_ZOOM) {
+                applyTransform(fitted);
+                return;
+            }
+        }
         const rootX = (root as TreeNode).x ?? 0; // vertical position after layout
         const rootY = (root as TreeNode).y ?? 0; // horizontal position (0 at the root)
-        const scale = inheritedZoom ?? DEFAULT_ZOOM;
-        const tx = width * ROOT_ANCHOR_X - scale * rootY;
+        const scale = content ? LEGIBLE_ZOOM : (inheritedZoom ?? DEFAULT_ZOOM);
+        // Anchor the root inside the free rectangle, not the whole viewport: a stage that opens
+        // at its start should no more begin underneath the legend than one that opens framed.
+        const free = width - (insets.left ?? 0) - (insets.right ?? 0);
+        const tx = (insets.left ?? 0) + free * ROOT_ANCHOR_X - scale * rootY;
         const ty = height / 2 - scale * rootX;
         applyTransform({ k: scale, x: tx, y: ty });
+    }
+
+    /** Everything the stage draws, in its own coordinates — bands, lines, and labels alike. */
+    function drawnExtent(): Extent | null {
+        const group = viewport.node();
+        if (!group?.getBBox) return null;
+        try {
+            const box = group.getBBox();
+            return box.width > 0 && box.height > 0 ? box : null;
+        } catch {
+            return null; // a DOM that lays nothing out has nothing to measure
+        }
+    }
+
+    /**
+     * The room the panels floating over the canvas ask to be kept clear of.
+     *
+     * The legend is the one that matters: it sits at the top right and has grown tall enough to
+     * cover a good part of the drawing it describes.
+     */
+    function floatingPanelInsets(parent: Element): Insets {
+        const canvas = parent.getBoundingClientRect?.();
+        const panel = legend.getBoundingClientRect?.();
+        if (!canvas || !panel || panel.width === 0) return {};
+        return { right: Math.max(0, canvas.right - panel.left) + FLOATING_PANEL_GAP };
     }
 
     function centerOn(node: TreeNode): void {

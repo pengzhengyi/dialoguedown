@@ -2579,6 +2579,54 @@ svg.tree.has-focus .link:not(.related) {
     margin-top: 0;
 }
 
+/* Folding the legend away gives the canvas back: the button stays, everything else goes. */
+.legend-fold {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.4rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: none;
+    line-height: 1;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+}
+
+.legend-fold::before {
+    content: "\2013"; /* en dash: the "hide" affordance */
+    font-size: 0.8rem;
+}
+
+.legend-fold[aria-expanded="false"]::before {
+    content: "\2261"; /* three bars: the folded legend, ready to open */
+}
+
+.legend-fold:hover {
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+}
+
+.legend.folded > *:not(.legend-fold) {
+    display: none;
+}
+
+.legend.folded {
+    min-width: 0;
+    padding: 0;
+}
+
+/* Folded, the button *is* the legend: absolutely positioned it would sit outside the shrunken
+   box, where the canvas is painted over it and the legend could never be opened again. */
+.legend.folded .legend-fold {
+    position: static;
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
 .legend .swatch {
     width: 0.7rem;
     height: 0.7rem;

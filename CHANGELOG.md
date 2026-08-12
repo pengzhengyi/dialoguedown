@@ -10,6 +10,15 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A stage opens on what it draws.** Every graph tab used to open at full size anchored on its
+  root, which on a long script showed a handful of nodes and left the reader to hunt for the rest.
+  A stage now frames the whole of itself, clear of the legend — and where the whole of it will not
+  fit legibly, it opens at the start of it rather than shrinking to an unreadable smudge. A zoom
+  chosen on another tab is still inherited exactly.
+- **The legend folds away.** It floats over the drawing it describes and has grown — nodes, edges,
+  and now regions — so a reader who has learned it can fold it down to a single button and have
+  the canvas back.
+
 - **The Dialogue Graph tab now renders.** It shipped unable to draw anything: the client lays
   every stage out as a tree, and a dialogue graph is not one, so any document with a cycle
   reported `Failed to render stage: cycle`. The projection now names one parent per node and
