@@ -82,13 +82,16 @@ import { reservedTargetsPanel, setEditorReservedTargets } from "./reserved-targe
  * switching the theme re-colors the editor without rebuilding it. Strong and emphasis
  * keep the foreground color and lean on weight/slant, which reads in both themes.
  */
-const markdownHighlightStyle = HighlightStyle.define([
+export const markdownHighlightStyle = HighlightStyle.define([
     { tag: tags.heading, color: "var(--md-heading)", fontWeight: "600" },
     { tag: tags.strong, fontWeight: "700" },
     { tag: tags.emphasis, fontStyle: "italic" },
     { tag: [tags.link, tags.url], color: "var(--md-link)", textDecoration: "underline" },
     { tag: tags.monospace, color: "var(--md-code)" },
-    { tag: tags.quote, color: "var(--md-muted)" },
+    // A blockquote is never decoration here: a marker-headed quote is a control block, and any
+    // other quote is a transparent wrapper whose contents are spoken. Muting it would gray out
+    // live dialogue, and the compiler's own tokens already color what is inside.
+    { tag: tags.comment, color: "var(--md-muted)", fontStyle: "italic" },
     // Mute the list MARKER (`-`, `1.`) and separators, but NOT list content: @lezer/markdown
     // tags a list's whole content `tags.list` (not just its marker, which is a
     // processingInstruction), so muting `tags.list` here would gray out every token nested in

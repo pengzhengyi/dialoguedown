@@ -21,6 +21,7 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
     StaticWeight: "dd-tok-static-weight",
     DynamicWeight: "dd-tok-dynamic-weight",
     Command: "dd-tok-command",
+    IgnoredMarkdown: "dd-tok-ignored-markdown",
 };
 
 /** One token resolved to editor offsets and its decoration class. */

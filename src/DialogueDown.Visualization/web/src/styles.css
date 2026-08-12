@@ -1797,6 +1797,16 @@ g.node.entity-highlight text.label {
     color: var(--tok-command);
 }
 
+/* Markdown the handling policy leaves out of the dialogue: in the file, absent from the script.
+   Faded and struck rather than tinted, so the meaning survives both themes and a colorblind
+   reader — and so it reads as removed rather than as one more kind of dialogue. */
+.source-pane .cm-content .dd-tok-ignored-markdown,
+.source-pane .cm-content .dd-tok-ignored-markdown * {
+    color: var(--md-muted);
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
    The wrapper is a zero-size inline box; the chip floats as an absolute overlay so it adds no
    line height or wrap width (the editor/preview scroll-sync aligns on heading line tops). */
