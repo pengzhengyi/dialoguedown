@@ -264,6 +264,34 @@ internal static class DiagnosticDocs
                 ["`else` `Known?`"],
                 ["`else`"])),
         new(
+            DiagnosticCatalog.DanglingJumpArrow,
+            "`=>` is the jump sigil: it becomes a jump only when a Markdown link follows it. With "
+            + "no link there is nothing to jump to, so the arrow is read literally — it stays on "
+            + "the page as the two characters and the script simply continues to the next line. "
+            + "That is fine when you meant to type an arrow; when you meant to jump, give it a "
+            + "target.",
+            new(
+                """
+                # Crossroads
+                Alice: Which way?
+
+                => The market
+
+                # The market
+                Merchant: Wares!
+                """,
+                """
+                # Crossroads
+                Alice: Which way?
+
+                => [The market](#the-market)
+
+                # The market
+                Merchant: Wares!
+                """,
+                ["=> The market"],
+                ["=> [The market](#the-market)"])),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",

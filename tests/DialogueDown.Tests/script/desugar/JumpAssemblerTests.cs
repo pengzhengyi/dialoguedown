@@ -1,6 +1,8 @@
 using DialogueDown.Common;
+using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
@@ -8,11 +10,13 @@ namespace DialogueDown.Tests.Script.Desugar;
 
 public sealed class JumpAssemblerTests
 {
+    private readonly DiagnosticBag _diagnostics = new();
+
     [Fact]
     public void IndicatorImmediatelyBeforeLink_BecomesAJump()
     {
         // => [go](#play)
-        var result = JumpAssembler.Assemble([JumpIndicator(), Link("#play", Text("go"))]);
+        var result = Assemble([JumpIndicator(), Link("#play", Text("go"))]);
 
         var jump = AssertJump(Assert.Single(result), "#play");
         AssertSingleText(jump.Label, "go");
@@ -22,7 +26,7 @@ public sealed class JumpAssemblerTests
     public void SameLineWhitespaceBetweenIndicatorAndLink_IsFoldedIn()
     {
         // "=>   [go](#play)" — any run of same-line spaces is consumed.
-        var result = JumpAssembler.Assemble(
+        var result = Assemble(
             [JumpIndicator(), Text("   "), Link("#play", Text("go"))]);
 
         AssertJump(Assert.Single(result), "#play");
@@ -35,7 +39,7 @@ public sealed class JumpAssemblerTests
         // degrades to text, the break stays, and the link is left bare.
         var link = Link("#play", Text("go"));
 
-        var result = JumpAssembler.Assemble([JumpIndicator(), LineBreak(), link]);
+        var result = Assemble([JumpIndicator(), LineBreak(), link]);
 
         Assert.Equal(3, result.Count);
         AssertText(result[0], "=>");
@@ -49,7 +53,7 @@ public sealed class JumpAssemblerTests
         var indicator = new JumpIndicator(new SourceSpan(0, 2));
         var link = new Link("#play", [Text("go")], new SourceSpan(5, 12));
 
-        var jump = AssertJump(Assert.Single(JumpAssembler.Assemble([indicator, link])), "#play");
+        var jump = AssertJump(Assert.Single(Assemble([indicator, link])), "#play");
 
         Assert.Equal(0, jump.Span.Start);
         Assert.Equal(17, jump.Span.End);
@@ -60,7 +64,7 @@ public sealed class JumpAssemblerTests
     {
         var link = Link("#play", Text("go"));
 
-        Assert.Same(link, Assert.Single(JumpAssembler.Assemble([link])));
+        Assert.Same(link, Assert.Single(Assemble([link])));
     }
 
     [Fact]
@@ -68,7 +72,7 @@ public sealed class JumpAssemblerTests
     {
         // "the " => " arrow" — no link follows, so the arrow is just the text "=>". It
         // stays its own run; folding adjacent text is a later, rendering-stage concern.
-        var result = JumpAssembler.Assemble([Text("the "), JumpIndicator(), Text(" arrow")]);
+        var result = Assemble([Text("the "), JumpIndicator(), Text(" arrow")]);
 
         Assert.Equal(3, result.Count);
         AssertText(result[0], "the ");
@@ -79,7 +83,7 @@ public sealed class JumpAssemblerTests
     [Fact]
     public void DanglingIndicatorAtStart_DegradesAndKeepsFollowingText()
     {
-        var result = JumpAssembler.Assemble([JumpIndicator(), Text(" not a link")]);
+        var result = Assemble([JumpIndicator(), Text(" not a link")]);
 
         Assert.Equal(2, result.Count);
         AssertText(result[0], "=>");
@@ -89,7 +93,7 @@ public sealed class JumpAssemblerTests
     [Fact]
     public void DanglingIndicatorAlone_BecomesPlainArrowText()
     {
-        AssertText(Assert.Single(JumpAssembler.Assemble([JumpIndicator()])), "=>");
+        AssertText(Assert.Single(Assemble([JumpIndicator()])), "=>");
     }
 
     [Fact]
@@ -98,7 +102,7 @@ public sealed class JumpAssemblerTests
         // => x [go](#play) — text sits between, so the arrow is dangling and the link stays.
         var link = Link("#play", Text("go"));
 
-        var result = JumpAssembler.Assemble([JumpIndicator(), Text(" x "), link]);
+        var result = Assemble([JumpIndicator(), Text(" x "), link]);
 
         Assert.Equal(3, result.Count);
         AssertText(result[0], "=>");
@@ -109,7 +113,7 @@ public sealed class JumpAssemblerTests
     [Fact]
     public void MultipleJumps_AreEachAssembled()
     {
-        var result = JumpAssembler.Assemble(
+        var result = Assemble(
         [
             JumpIndicator(), Link("#a", Text("a")),
             Text(" and "),
@@ -127,7 +131,7 @@ public sealed class JumpAssemblerTests
     {
         var fragments = new InlineFragment[] { Text("hello "), CustomTag("wave") };
 
-        var result = JumpAssembler.Assemble(fragments);
+        var result = Assemble(fragments);
 
         Assert.Equal(2, result.Count);
         AssertText(result[0], "hello ");
@@ -140,7 +144,7 @@ public sealed class JumpAssemblerTests
         // `"Rainy"?` => [go](#play)
         var condition = Condition("Rainy");
 
-        var result = JumpAssembler.Assemble(
+        var result = Assemble(
             [condition, Text(" "), JumpIndicator(), Text(" "), Link("#play", Text("go"))]);
 
         var jump = AssertJump(Assert.Single(result), "#play");
@@ -150,7 +154,7 @@ public sealed class JumpAssemblerTests
     [Fact]
     public void JumpWithoutAPrecedingCondition_HasNoCondition()
     {
-        var result = JumpAssembler.Assemble([JumpIndicator(), Link("#play", Text("go"))]);
+        var result = Assemble([JumpIndicator(), Link("#play", Text("go"))]);
 
         Assert.False(AssertJump(Assert.Single(result), "#play").IsConditional());
     }
@@ -161,7 +165,7 @@ public sealed class JumpAssemblerTests
         // Go `"Rainy"?` => [there](#play)
         var condition = Condition("Rainy");
 
-        var result = JumpAssembler.Assemble(
+        var result = Assemble(
             [Text("Go "), condition, JumpIndicator(), Link("#play", Text("there"))]);
 
         Assert.Collection(
@@ -176,7 +180,7 @@ public sealed class JumpAssemblerTests
         // `"Rainy"?` =>   (no link) — the arrow degrades to text, the condition is left as-is.
         var condition = Condition("Rainy");
 
-        var result = JumpAssembler.Assemble([condition, Text(" "), JumpIndicator()]);
+        var result = Assemble([condition, Text(" "), JumpIndicator()]);
 
         Assert.Collection(
             result,
@@ -184,4 +188,50 @@ public sealed class JumpAssemblerTests
             second => AssertText(second, " "),
             third => AssertText(third, "=>"));
     }
+
+    [Fact]
+    public void DanglingArrow_ReportsADanglingJumpArrowWarningAtTheArrow()
+    {
+        var indicator = new JumpIndicator(new SourceSpan(6, 2));
+
+        Assemble([Text("Go to "), indicator, Text(" the market")]);
+
+        var diagnostic = AssertReported(_diagnostics.Diagnostics, DiagnosticCatalog.DanglingJumpArrow);
+        Assert.Equal(DiagnosticSeverity.Warning, diagnostic.Severity);
+        Assert.Equal(DiagnosticCategory.Syntax, diagnostic.Descriptor.Category);
+        Assert.Equal(indicator.Span, diagnostic.Span);
+    }
+
+    [Fact]
+    public void DanglingArrowAfterACondition_ReportsAtTheArrowNotTheGuard()
+    {
+        // The guard is valid; the arrow is what failed to become a jump, so that is where the
+        // writer must act.
+        var indicator = new JumpIndicator(new SourceSpan(10, 2));
+
+        Assemble([Condition("Ready"), Text(" "), indicator]);
+
+        Assert.Equal(
+            indicator.Span,
+            AssertReported(_diagnostics.Diagnostics, DiagnosticCatalog.DanglingJumpArrow).Span);
+    }
+
+    [Fact]
+    public void WellFormedJump_ReportsNothing()
+    {
+        Assemble([JumpIndicator(), Link("#play", Text("go"))]);
+
+        Assert.Empty(_diagnostics.Diagnostics);
+    }
+
+    [Fact]
+    public void EveryDanglingArrow_IsReportedOnce()
+    {
+        Assemble([JumpIndicator(), Text(" and "), JumpIndicator()]);
+
+        Assert.Equal(2, _diagnostics.Diagnostics.Count);
+    }
+
+    private IReadOnlyList<InlineFragment> Assemble(IReadOnlyList<InlineFragment> fragments) =>
+        new JumpAssembler(_diagnostics).Assemble(fragments);
 }

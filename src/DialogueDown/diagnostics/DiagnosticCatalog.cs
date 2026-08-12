@@ -127,6 +127,16 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG1113 — a jump arrow has no link after it, so it degrades to plain text.</summary>
+    public static readonly DiagnosticDescriptor DanglingJumpArrow = new(
+        "DLG1113",
+        "Dangling jump arrow",
+        "`=>` makes a jump only when a link follows it. With no link here it is read literally, "
+            + "staying as the characters \"=>\". If you meant to jump, add a target: "
+            + "`=> [The market](#the-market)`.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Warning);
+
     // Semantic — DLG2xxx: a meaning-level conflict found during analysis.
 
     /// <summary>DLG2001 — two headings slug to the same anchor.</summary>

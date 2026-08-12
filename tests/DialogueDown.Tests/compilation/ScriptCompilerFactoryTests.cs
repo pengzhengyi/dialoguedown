@@ -170,6 +170,30 @@ public sealed class ScriptCompilerFactoryTests
     }
 
     [Fact]
+    public void CreateDefault_ADanglingArrow_SurfacesTheWarningAtTheArrow()
+    {
+        // Desugar reports it: by validation time the arrow has already degraded to plain text.
+        var source =
+            """
+            # Crossroads
+
+            => The market
+            """;
+
+        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+
+        AssertReported(result.Diagnostics, DiagnosticCatalog.DanglingJumpArrow);
+        var located = AssertLocated(
+            result.LocatedDiagnostics,
+            DiagnosticCatalog.DanglingJumpArrow,
+            DiagnosticSeverity.Warning,
+            new LinePosition(3, 1));
+
+        Assert.Equal(source.IndexOf("=>", StringComparison.Ordinal), located.StartOffset);
+        Assert.False(result.HasErrors);
+    }
+
+    [Fact]
     public void CreateDefault_TagsWithoutSpeaker_HaltsAtTheStageBoundary()
     {
         // The tags-without-speaker error is reported during transpile, so a stage-boundary
