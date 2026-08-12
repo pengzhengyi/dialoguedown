@@ -1,7 +1,7 @@
 # Dropped Markdown diagnostic
 
 > [!NOTE]
-> Status: **proposed**
+> Status: **implemented**
 > ([issue #227](https://github.com/pengzhengyi/dialoguedown/issues/227)).
 > Notes each Markdown construct the front end drops, so a table or divider that
 > never reaches the script does not disappear without a word.
@@ -48,19 +48,19 @@ arrow, which shipped as
 
 ## Functionality checklist
 
-- [ ] Add a diagnostic with `Info` severity for a dropped unmodeled construct.
-- [ ] Report it from the **Markdown front end**, where the construct is dropped.
-- [ ] Name the construct in the message in a writer's words ("table", not `Table`).
-- [ ] Point the diagnostic at the dropped construct's own span.
-- [ ] Report **block** and **inline** drops alike.
-- [ ] Report **every** drop, including several of the same kind.
-- [ ] Do **not** report a construct the policy keeps as raw text.
-- [ ] Do **not** report front matter or an HTML comment, which never reach the
+- [x] Add a diagnostic with `Info` severity for a dropped unmodeled construct.
+- [x] Report it from the **Markdown front end**, where the construct is dropped.
+- [x] Name the construct in the message in a writer's words ("table", not `Table`).
+- [x] Point the diagnostic at the dropped construct's own span.
+- [x] Report **block** and **inline** drops alike.
+- [x] Report **every** drop, including several of the same kind.
+- [x] Do **not** report a construct the policy keeps as raw text.
+- [x] Do **not** report front matter or an HTML comment, which never reach the
       policy.
-- [ ] Keep the dropping behavior itself unchanged.
-- [ ] Widen the `Syntax` category summary to cover Markdown that never
+- [x] Keep the dropping behavior itself unchanged.
+- [x] Widen the `Syntax` category summary to cover Markdown that never
       becomes dialogue.
-- [ ] Add the generated error-code reference entry.
+- [x] Add the generated error-code reference entry.
 
 ## Ubiquitous language
 
@@ -69,7 +69,8 @@ arrow, which shipped as
 | **Unmodeled construct** | Markdown DialogueDown does not model as dialogue, classified as an `UnmodeledNodeKind`. |
 | **Handling** | What the policy decides for a kind: `AsRawText` or `Ignore`. |
 | **Drop** | Carrying out `Ignore` — the construct never reaches the script. |
-| **Front end** | The Markdown stage: `IMarkdownParser` and the Markdig-to-AST converter behind it. |
+| **Degrade** | Carrying out `AsRawText` — the construct survives as its exact source text. |
+| **Front end** | The Markdown stage: `IMarkdownParser`, and the converter and unmodeled-node handler behind it. |
 
 ## Writer-facing behavior
 
@@ -102,21 +103,32 @@ severity was defined for: "a neutral note".
 
 ## Where the knowledge lives
 
-`MarkdigToMarkdownAstConverter` consults the policy and drops a construct by
-returning `null` for it, at two sites — one for blocks, one for inlines:
+`MarkdigUnmodeledNodeHandler` is the one place that decides the fate of a
+construct DialogueDown does not model: it asks the policy, then either degrades
+the construct to raw speech text or drops it — and a drop is where the note is
+written.
 
 ```csharp
-private MarkdownBlock? HandleUnmodeledBlock(MarkdigBlock block) =>
-    HandlingForBlock(block) switch
+public MarkdownBlock? Handle(MarkdigBlock block)
+{
+    if (_policy.ShouldIgnore(block))
     {
-        UnmodeledNodeHandling.Ignore => null,
-        _ => FlattenBlock(block), // AsRawText: keep the construct as raw text.
-    };
+        Drop(MarkdigUnmodeledNodeClassifier.ClassifyBlock(block), block.Span);
+        return null;
+    }
+
+    if (_policy.ShouldKeep(block))
+    {
+        return Degrade(block);
+    }
+
+    throw UnknownHandling(block);
+}
 ```
 
-The converter is already built per parse, holding the source and the policy, so
-it is the natural place to hold a sink as well. What it lacks is a way to be
-given one: `IMarkdownParser.Parse` takes only the source.
+The handler is built per parse, holding the source it slices from, the policy,
+and the compilation's sink. `MarkdigToMarkdownAstConverter` is handed one and is
+left to convert only the constructs that are dialogue.
 
 ## Architecture
 
@@ -126,10 +138,11 @@ desugar. The context reaches it the same way it reaches every other stage.
 ```mermaid
 flowchart LR
     C["ScriptCompiler:<br/>owns the DiagnosticsContext"] --> P["IMarkdownParser:<br/>Parse(source, context)"]
-    P --> V["MarkdigToMarkdownAstConverter:<br/>built per parse, holds the sink"]
-    V --> D["Policy says Ignore:<br/>drop the construct"]
-    D --> S["IDiagnosticSink:<br/>reports DLG1114"]
-    D --> A["Markdown AST:<br/>the construct is absent, as before"]
+    P --> H["MarkdigUnmodeledNodeHandler:<br/>built per parse, holds the sink"]
+    P --> V["MarkdigToMarkdownAstConverter:<br/>converts what is dialogue"]
+    V --> H
+    H --> S["IDiagnosticSink:<br/>reports DLG1114"]
+    H --> A["Markdown AST:<br/>the construct is absent, as before"]
 ```
 
 ## Interfaces and responsibilities
@@ -138,9 +151,10 @@ flowchart LR
 | --- | --- | --- |
 | `DiagnosticCatalog` | Owns the `DLG1114` descriptor. | — |
 | `IMarkdownParser` | Widened to `Parse(string, DiagnosticsContext)`, matching the other stages. | `ScriptCompiler` |
-| `MarkdigMarkdownParser` | Passes the compilation's sink to the converter it already builds per parse. | `MarkdigToMarkdownAstConverter` |
-| `MarkdigToMarkdownAstConverter` | Reports each construct as it drops it. | `IUnmodeledNodeHandlingPolicy`, `IDiagnosticSink` |
-| `UnmodeledNodeKind` naming | Maps a kind to the words a writer would use. | — |
+| `MarkdigMarkdownParser` | Builds the handler per parse, with the compilation's sink. | `MarkdigUnmodeledNodeHandler` |
+| `MarkdigUnmodeledNodeHandler` | Degrades or drops an unmodeled construct, and notes every drop. | `IUnmodeledNodeHandlingPolicy`, `IDiagnosticSink` |
+| `UnmodeledNodeHandlingPolicyExtensions` | Answers `ShouldIgnore` and `ShouldKeep` about a node, hiding classification. | `MarkdigUnmodeledNodeClassifier` |
+| `MarkdigToMarkdownAstConverter` | Converts the constructs that are dialogue, and defers the rest. | `MarkdigUnmodeledNodeHandler` |
 
 ## Key design decisions
 
@@ -202,6 +216,37 @@ new category would fragment the `DLG####` numbering for no gain to a reader.
 The summary lives in two places that must agree: the `DiagnosticCategory` enum's
 documentation and the section header rendered onto the error-code page.
 
+### DD6 — One handler owns the whole unmodeled decision
+
+Classifying a construct, asking the policy, degrading it, and dropping it were
+spread through the converter, which made the class half about converting
+dialogue and half about disposing of everything else.
+`MarkdigUnmodeledNodeHandler` now owns all four, and the converter is handed
+one. There is no interface behind it: the flexibility already lives in the
+policy, so this is encapsulation rather than a seam.
+
+`ShouldIgnore` and `ShouldKeep` extensions let the handler ask the policy about
+a node instead of classifying it and comparing handlings. They are deliberately
+not each other's negation — a handling this code has never seen answers "no" to
+both, which is what lets the handler throw instead of guessing whether to keep
+or drop the writer's content.
+
+The extraction is what makes the note testable without parsing: every reporting
+case, including kinds only a configured policy drops, is exercised against the
+handler directly.
+
+### DD7 — Two labelled fixes, because the right edit depends on intent
+
+The reference page carries two fixes for `DLG1114`, each labelled with the case
+it applies to: write the construct in DialogueDown's terms, or remove it if it
+arrived by accident. Both are compiled and must stop reporting the code.
+
+A single unlabelled fix would have implied the construct was unwelcome, when
+keeping it is usually correct. Keeping it is stated in the explanation rather
+than shown, since it is the triggering example unchanged. The docs model grew an
+optional second fix for this, and a test forbids an unlabelled first fix
+whenever a second exists.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -211,7 +256,8 @@ documentation and the section header rendered onto the error-code page.
 | A construct the policy keeps as raw text | Not dropped, so nothing is reported. |
 | YAML front matter | Skipped before the policy is consulted. Not a drop, and not reported. |
 | An HTML comment | Skipped before the policy is consulted. Not a drop, and not reported. |
-| A dropped construct inside a list item or blockquote | Reported — the converter recurses into nested blocks. |
+| A dropped construct inside a list item or blockquote | Reported — the converter recurses into nested blocks and hands each to the handler. |
+| A policy answering neither keep nor ignore | Rejected with a `NotSupportedException` naming the construct, rather than guessing. |
 | An empty document | Nothing to drop, nothing reported. |
 
 ## Integration
@@ -229,14 +275,23 @@ documentation and the section header rendered onto the error-code page.
 
 ## Testability
 
-- **Unit — converter:** each dropped kind reports once, with the kind named and
-  the span pointing at the construct; a kept construct reports nothing.
-- **Unit — exclusions:** front matter and an HTML comment report nothing.
-- **Unit — nesting:** a drop inside a list item or blockquote is reported.
+- **Unit — handler:** each dropped kind is noted once, named in a writer's words
+  and pointing at the construct; a kept construct is degraded and not noted; a
+  handling the code does not know is rejected. Kinds only a configured policy
+  drops are covered here, without parsing.
+- **Unit — policy extensions:** `ShouldIgnore` and `ShouldKeep` follow the
+  policy for a kind, and both answer "no" to a handling this code does not know.
+- **Integration — parser:** a real parse notes each drop with the right kind and
+  span, including a drop nested inside a list item; front matter and comments
+  stay silent.
 - **Integration — pipeline:** compiling a script with a table surfaces exactly
-  one `DLG1114`, and the compile still succeeds.
-- **Docs test:** the reader-facing example is compiled, so the documented
-  triggering script must actually report `DLG1114`.
+  one `DLG1114`, located at the table, and the compile still succeeds.
+- **Docs test:** the explanation's examples are compiled — the triggering script
+  must report `DLG1114`, and both fixes must not.
+
+Every type this component adds or touches — `MarkdigUnmodeledNodeHandler`,
+`UnmodeledNodeHandlingPolicyExtensions`, `MarkdigToMarkdownAstConverter`, and
+`MarkdigMarkdownParser` — ends at 100% line and branch coverage.
 
 ## Alternatives not chosen
 
