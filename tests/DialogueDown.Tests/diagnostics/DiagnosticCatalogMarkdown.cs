@@ -86,9 +86,20 @@ internal static class DiagnosticCatalogMarkdown
                 builder, "dd-eg-bad", "Triggering example", "dd-mark-bad",
                 example.Broken, example.BrokenHighlights);
             AppendExample(
-                builder, "dd-eg-fix", "Fix", "dd-mark-fix", example.Fixed, example.FixedHighlights);
+                builder, "dd-eg-fix", FixLabel(example.FixWhen), "dd-mark-fix",
+                example.Fixed, example.FixedHighlights);
+            if (example.Alternative is { } alternative)
+            {
+                AppendExample(
+                    builder, "dd-eg-fix", FixLabel(alternative.When), "dd-mark-fix",
+                    alternative.Fixed, alternative.Highlights);
+            }
         }
     }
+
+    // A diagnostic with one remedy just says "Fix"; one whose right edit depends on what the writer
+    // meant labels each with the case it applies to.
+    private static string FixLabel(string? when) => when is null ? "Fix" : $"Fix — {when}";
 
     // Renders one example as an HTML code block so the changed tokens can be <mark>-highlighted; a
     // fenced block cannot carry inline markup. The label and the marks are themed (red for the broken

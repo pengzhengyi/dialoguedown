@@ -315,6 +315,42 @@ Alice: Which way?
 # The market
 Merchant: Wares!</code></pre>
 
+### DLG1114
+
+<span class="dd-sev dd-sev--info">Info</span> · Markdown left out of the script
+
+This {0} is not dialogue, so the compiler left it out of the script. That is expected for notes and diagrams; write it as dialogue if it should be spoken.
+
+DialogueDown models the Markdown a dialogue needs; everything else is an authoring aid. A code block, a table, or a divider is left out of the script rather than spoken, which is usually the point — a diagram or a note belongs beside the dialogue, not in it. If that is what you meant, keep it: this is a note, not a fault, and nothing about the compile changes. It exists so the omission is never a surprise. If the construct was meant to shape the dialogue, write it in DialogueDown's own terms — a scene break is a heading. If it arrived by accident, remove it.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Chapter One
+
+Alice: We should go.
+
+<mark class="dd-mark-bad">---</mark>
+
+Alice: The road was long.</code></pre>
+
+<span class="dd-eg-fix">Fix — if it was meant to break the scene</span>
+
+<pre class="dd-example"><code class="nohighlight"># Chapter One
+
+Alice: We should go.
+
+<mark class="dd-mark-fix"># On The Road</mark>
+
+Alice: The road was long.</code></pre>
+
+<span class="dd-eg-fix">Fix — if it arrived by accident</span>
+
+<pre class="dd-example"><code class="nohighlight"># Chapter One
+
+Alice: We should go.
+
+<mark class="dd-mark-fix">Alice: The road was long.</mark></code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.

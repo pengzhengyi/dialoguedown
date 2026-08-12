@@ -137,6 +137,15 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Warning);
 
+    /// <summary>DLG1114 — unmodeled Markdown was left out of the script by the handling policy.</summary>
+    public static readonly DiagnosticDescriptor DroppedUnmodeledMarkdown = new(
+        "DLG1114",
+        "Markdown left out of the script",
+        "This {0} is not dialogue, so the compiler left it out of the script. That is expected "
+            + "for notes and diagrams; write it as dialogue if it should be spoken.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Info);
+
     // Semantic — DLG2xxx: a meaning-level conflict found during analysis.
 
     /// <summary>DLG2001 — two headings slug to the same anchor.</summary>

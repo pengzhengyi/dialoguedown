@@ -1,5 +1,7 @@
+using DialogueDown.Diagnostics;
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.MarkdigNodeFactory;
 
 namespace DialogueDown.Tests.Markdown;
@@ -83,7 +85,104 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
         Assert.Throws<NotSupportedException>(() => handler.Handle(InlineHtml()));
     }
 
+    [Fact]
+    public void Handle_ADroppedBlock_IsNotedWithTheKindInAWritersWords()
+    {
+        const string Source = "---";
+        var handler = Handler(Source, out var diagnostics);
+
+        handler.Handle(ThematicBreak(Whole(Source)));
+
+        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        Assert.Equal(DiagnosticSeverity.Info, note.Severity);
+        Assert.Equal("divider", Assert.Single(note.MessageArguments));
+        Assert.Equal(Source.Length, note.Span.Length);
+    }
+
+    [Theory]
+    [InlineData("code block")]
+    [InlineData("table")]
+    public void Handle_EachDroppedKind_IsNamedForTheWriter(string expected)
+    {
+        var handler = Handler("x", out var diagnostics);
+
+        handler.Handle(expected == "table" ? PipeTable() : FencedCode());
+
+        Assert.Equal(
+            expected,
+            Assert.Single(
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                    .MessageArguments));
+    }
+
+    [Fact]
+    public void Handle_ADroppedInline_IsNotedLikeABlock()
+    {
+        const string Source = "<https://example.com>";
+        var handler = Handler(
+            Source, out var diagnostics, TestUnmodeledNodePolicy.Default.Ignore(UnmodeledNodeKind.Autolink));
+
+        handler.Handle(Autolink(Whole(Source)));
+
+        Assert.Equal(
+            "autolink",
+            Assert.Single(
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                    .MessageArguments));
+    }
+
+    [Fact]
+    public void Handle_ADroppedKindTheDefaultPolicyKeeps_IsStillNamed()
+    {
+        // Only a configured policy drops raw HTML, so this names the kind for the projects that
+        // choose to.
+        const string Source = "<div>hi</div>";
+        var handler = Handler(
+            Source, out var diagnostics, TestUnmodeledNodePolicy.Default.Ignore(UnmodeledNodeKind.RawHtml));
+
+        handler.Handle(HtmlBlockNode(Whole(Source)));
+
+        Assert.Equal(
+            "raw HTML",
+            Assert.Single(
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                    .MessageArguments));
+    }
+
+    [Fact]
+    public void Handle_ADroppedConstructWithNoKindOfItsOwn_IsNamedGenerically()
+    {
+        var handler = Handler(
+            "x", out var diagnostics, TestUnmodeledNodePolicy.Default.Ignore(UnmodeledNodeKind.Other));
+
+        handler.Handle(UnrecognizedBlock());
+
+        Assert.Equal(
+            "piece of Markdown",
+            Assert.Single(
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                    .MessageArguments));
+    }
+
+    [Fact]
+    public void Handle_AKeptConstruct_IsNotNoted()
+    {
+        const string Source = "<div>hi</div>";
+        var handler = Handler(Source, out var diagnostics);
+
+        handler.Handle(HtmlBlockNode(Whole(Source)));
+
+        AssertNotReported(diagnostics.Diagnostics);
+    }
+
     private static MarkdigUnmodeledNodeHandler Handler(
         string source, IUnmodeledNodeHandlingPolicy? policy = null) =>
-        new(source, policy ?? DefaultUnmodeledNodeHandlingPolicy.Instance);
+        new(source, policy ?? DefaultUnmodeledNodeHandlingPolicy.Instance, new DiagnosticBag());
+
+    private static MarkdigUnmodeledNodeHandler Handler(
+        string source, out DiagnosticBag diagnostics, IUnmodeledNodeHandlingPolicy? policy = null)
+    {
+        diagnostics = new DiagnosticBag();
+        return new(source, policy ?? DefaultUnmodeledNodeHandlingPolicy.Instance, diagnostics);
+    }
 }
