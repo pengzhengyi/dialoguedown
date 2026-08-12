@@ -29,7 +29,11 @@ internal static class DiagnosticCatalogMarkdown
     // A category with no descriptors yet (Style) is listed here but only rendered once it has one.
     private static readonly IReadOnlyList<CategorySection> _sections =
     [
-        new(DiagnosticCategory.Syntax, "DLG1xxx", "A line's surface does not parse as intended."),
+        new(
+            DiagnosticCategory.Syntax,
+            "DLG1xxx",
+            "The script's surface: text that does not parse as intended, or Markdown that never "
+            + "becomes dialogue."),
         new(
             DiagnosticCategory.Semantic,
             "DLG2xxx",

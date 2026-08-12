@@ -4,7 +4,7 @@ DialogueDown reports each problem it finds as a **diagnostic** with a stable `DL
 
 ## Syntax (`DLG1xxx`)
 
-A line's surface does not parse as intended.
+The script's surface: text that does not parse as intended, or Markdown that never becomes dialogue.
 
 ### DLG1003
 
