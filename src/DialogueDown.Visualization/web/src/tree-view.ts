@@ -83,7 +83,10 @@ interface CrossLinkTrack {
     port: number;
 }
 
-/** The horizontal distance between one depth and the next. */
+/**
+ * The horizontal distance between one depth and the next: room for a full-width label, plus the
+ * gap the cross-link corridors climb in beside it.
+ */
 const COLUMN_STEP = 260;
 
 /**
@@ -121,7 +124,7 @@ export interface TreeView {
      * Show the given camera and fold. A `null` camera uses the default (root-centered)
      * framing. Call after the tab becomes visible so the framing uses real dimensions.
      */
-    applyView(camera: CameraTransform | null, fold: string[]): void;
+    applyView(camera: CameraTransform | null, fold: string[], zoom?: number | null): void;
 }
 
 /** Hooks that let the app remember and restore a graph's position across tabs. */
@@ -133,6 +136,8 @@ export interface TreeViewOptions {
     initialCamera?: CameraTransform | null;
     /** The collapsed node ids to restore on creation. */
     initialFold?: string[];
+    /** The scale to open at when there is no pinned camera — inherited, not the default. */
+    initialZoom?: number | null;
     /**
      * Fired when the camera changes; `byUser` is true for reader gestures (wheel,
      * drag, the zoom controls) and false for programmatic applies (a reveal, the
@@ -183,6 +188,7 @@ export function createTreeView(
     const {
         initialCamera = null,
         initialFold = [],
+        initialZoom = null,
         onCameraChange,
         onFoldChange,
         onSelectEdge,
@@ -222,6 +228,9 @@ export function createTreeView(
     // earlier applyView, e.g. this tab's hidden construction) aborts instead of clobbering
     // a camera a later applyView (e.g. the reveal) has since applied.
     let viewToken = 0;
+    // The scale an untouched graph opens at, inherited from wherever the reader was. Only the
+    // scale travels between graphs; where they are looking does not.
+    let inheritedZoom: number | null = null;
 
     const svg = create<SVGSVGElement>("svg").attr("class", "tree");
 
@@ -327,7 +336,7 @@ export function createTreeView(
     // The tree lays out depth along y and rows along x; the drawing reads the other way round.
     const at = (node: { x: number; y: number }): Point => ({ x: node.y, y: node.x });
 
-    applyView(initialCamera, initialFold);
+    applyView(initialCamera, initialFold, initialZoom);
 
     return {
         svg: svg.node()!,
@@ -1039,7 +1048,8 @@ export function createTreeView(
     }
 
     /** Show a camera and fold; a `null` camera uses the default (root-centered) framing. */
-    function applyView(camera: CameraTransform | null, fold: string[]): void {
+    function applyView(camera: CameraTransform | null, fold: string[], zoom?: number | null): void {
+        inheritedZoom = zoom ?? null;
         const token = ++viewToken;
         setFold(fold);
         update();
@@ -1070,9 +1080,10 @@ export function createTreeView(
         }
         const rootX = (root as TreeNode).x ?? 0; // vertical position after layout
         const rootY = (root as TreeNode).y ?? 0; // horizontal position (0 at the root)
-        const tx = width * ROOT_ANCHOR_X - DEFAULT_ZOOM * rootY;
-        const ty = height / 2 - DEFAULT_ZOOM * rootX;
-        applyTransform({ k: DEFAULT_ZOOM, x: tx, y: ty });
+        const scale = inheritedZoom ?? DEFAULT_ZOOM;
+        const tx = width * ROOT_ANCHOR_X - scale * rootY;
+        const ty = height / 2 - scale * rootX;
+        applyTransform({ k: scale, x: tx, y: ty });
     }
 
     function centerOn(node: TreeNode): void {

@@ -25,6 +25,10 @@ changes easy to categorize.
   strength under a resting pointer, so the click looked like it had done nothing.
 - **Selecting a node by name reveals it.** A search hit or a neighbor row inside a collapsed
   branch was marked but never shown; the fold over it now opens.
+- **A graph frames itself when you arrive at it.** An untouched tab inherited the whole camera,
+  pan included — and a pan means something only against the graph it was made on. The dialogue
+  graph runs far wider than the trees beside it, so arriving from a panned tab left the reader
+  looking at empty canvas. Only the zoom travels between graphs now.
 - **Routes ending at one node can be told apart.** Every jump into a scene lands on its entry, and
   all of them climbed in that node's own column — one line to the eye, and a coin toss to the
   pointer. Each now climbs in a corridor of its own and leans in from its own row, and the pointer

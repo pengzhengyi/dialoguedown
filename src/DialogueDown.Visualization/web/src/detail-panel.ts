@@ -1,6 +1,11 @@
 import type { DisplayNode, Span } from "./model";
 import { colorOf } from "./palette";
-import { escapeHtml, renderNodePreview } from "./text";
+import { ellipsize, escapeHtml, renderNodePreview } from "./text";
+
+/** How much of a content node's words its detail row shows before the full text below. */
+const MAX_TITLE_TEXT = 80;
+/** The longest label that still reads as a heading rather than as content. */
+const MAX_TITLE_LABEL = 40;
 import { createJumpButton, type JumpButton } from "./jump-button";
 import { edgeStyle } from "./edge-style";
 import type { Neighbor, Neighbors } from "./neighbors";
@@ -68,16 +73,35 @@ export const NODE_DETAIL_PLACEHOLDER =
     "<p>Click any node to see the source it was produced from, and a rendered preview. " +
     "Use <strong>Jump to source</strong> to edit it in the Source tab.</p>";
 
-/** The title HTML for a node's detail: a category color dot beside the node's label. */
+/**
+ * The title HTML for a node's detail: a category color dot beside what the node *is*.
+ *
+ * A node whose label carries content — a line of dialogue — is titled by its kind instead, and
+ * the words themselves become the first detail below. A whole paragraph in a heading crowds out
+ * the panel, and the same text is already spelled out under Source and Preview.
+ */
 export function nodeDetailTitle(node: DisplayNode): string {
-    return categoryDot(node.category) + escapeHtml(node.label);
+    return (
+        categoryDot(node.category) + escapeHtml(titlesByKind(node) ? node.typeName! : node.label)
+    );
+}
+
+/**
+ * Whether the node's label is too long to serve as a title.
+ *
+ * A scene's title names it in three words and belongs in the heading; a line of dialogue can run a
+ * paragraph and crowds the panel out. Length is what separates them — not the stage they came
+ * from — so short labels keep their heading wherever they are.
+ */
+function titlesByKind(node: DisplayNode): boolean {
+    return Boolean(node.typeName) && node.label.length > MAX_TITLE_LABEL;
 }
 
 /** The body HTML for a node's detail: its attributes, then its source and a rendered preview. */
 export function nodeDetailBody(node: DisplayNode, preview: NodePreviewOptions = {}): string {
     return (
         regionSection(node, preview.regionTint) +
-        attributesTable(node.attributes) +
+        attributesTable(contentRow(node).concat(node.attributes)) +
         neighborSections(preview.neighbors) +
         sourceSection(node, preview)
     );
@@ -201,6 +225,13 @@ function categoryDot(category: string | undefined): string {
 
 // The region is drawn around the node rather than under it, so the inspector is where its name
 // is spelled out in full.
+// The words a content node carries, shown as its first detail because the title names its kind.
+// Clipped: the whole of it is right below, under Source and Preview.
+function contentRow(node: DisplayNode): DisplayNode["attributes"] {
+    if (!titlesByKind(node)) return [];
+    return [{ name: node.typeName!.toLowerCase(), value: ellipsize(node.label, MAX_TITLE_TEXT) }];
+}
+
 function regionSection(node: DisplayNode, tint: number | undefined): string {
     if (!node.region) return "";
     return (

@@ -377,4 +377,28 @@ describe("createDetailPanel", () => {
 
         expect(opened).toEqual(["The Gate"]);
     });
+
+    it("titles a content node by its kind, and shows its words as the first detail", () => {
+        // A whole paragraph of dialogue in a heading crowds the panel out; the words themselves
+        // are spelled out under Source and Preview a moment below.
+        panel.show({
+            id: "n1",
+            label: "Vharos folds down into the hoard with a sound like a closing forge.",
+            typeName: "Line",
+            category: "speech",
+            attributes: [],
+        });
+
+        expect(title.textContent).toBe("Line");
+        expect(body.querySelector("table")?.textContent).toContain("Vharos folds down");
+    });
+
+    it("keeps the label as the title when it is short enough to be one", () => {
+        // A scene's title names it in three words and belongs in the heading; only a label that
+        // runs to a paragraph gives way to its kind.
+        panel.show({ id: "n1", label: "The Market", typeName: "Scene", attributes: [] });
+
+        expect(title.textContent).toBe("The Market");
+        expect(body.querySelector("table")).toBeNull();
+    });
 });

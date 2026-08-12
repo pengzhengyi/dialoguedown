@@ -547,6 +547,7 @@ export function runApp(
         try {
             const treeOptions = {
                 initialCamera: cameras.cameraFor(stage.title),
+                initialZoom: cameras.inheritedZoom(stage.title),
                 initialFold: cameras.foldFor(stage.title),
                 onCameraChange: (transform: CameraTransform, byUser: boolean) =>
                     byUser
@@ -674,6 +675,6 @@ export function runApp(
         const view = views[index];
         const key = keys[index];
         if (!view || !key) return;
-        view.applyView(cameras.cameraFor(key), cameras.foldFor(key));
+        view.applyView(cameras.cameraFor(key), cameras.foldFor(key), cameras.inheritedZoom(key));
     }
 }

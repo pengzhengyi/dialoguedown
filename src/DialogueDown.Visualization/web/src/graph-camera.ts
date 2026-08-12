@@ -8,8 +8,8 @@ export interface CameraTransform {
 /**
  * Remembers graph positions with a hybrid policy:
  *
- * - a shared **current** camera that untouched graphs inherit, so switching to a
- *   graph you have not positioned keeps you at roughly the same view;
+ * - a shared **current** *zoom* that untouched graphs inherit, so moving between
+ *   graphs keeps them at one scale;
  * - a per-graph **override** that a graph pins the moment the reader adjusts it, so
  *   an adjusted graph keeps its own camera regardless of the shared one;
  * - per-graph **fold** state (which nodes are collapsed), always independent
@@ -24,11 +24,21 @@ export class GraphCameraStore {
     private current: CameraTransform | null = null;
 
     /**
-     * The camera a graph should show: its own pinned override, else the shared
-     * current camera, else `null` (meaning "use the default framing").
+     * The camera a graph should show: its own pinned override, else `null` (meaning "frame it
+     * from its own root").
+     *
+     * Only the *zoom* is shared — see {@link inheritedZoom}. A pan means something only against
+     * the graph it was made on, and graphs differ wildly in extent: the dialogue graph runs far
+     * wider than the trees beside it, so carrying a pan into it scrolls its nodes off-screen and
+     * leaves the reader looking at nothing.
      */
     cameraFor(title: string): CameraTransform | null {
-        return this.overrides.get(title) ?? this.current;
+        return this.overrides.get(title) ?? null;
+    }
+
+    /** The zoom an untouched graph opens at, so moving between graphs keeps one scale. */
+    inheritedZoom(title: string): number | null {
+        return this.overrides.has(title) ? null : (this.current?.k ?? null);
     }
 
     /** The collapsed node ids remembered for a graph (empty when untouched). */

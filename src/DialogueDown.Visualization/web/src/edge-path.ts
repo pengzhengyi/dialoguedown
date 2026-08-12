@@ -72,8 +72,16 @@ const MIN_RUN = 12;
 const LANE_LEAD = 14;
 /** The radius of the turn where a cross-link's drop meets its run, and its run meets its rise. */
 const LANE_CORNER = 24;
-/** How far apart neighboring corridors sit — narrow, to stay inside the gap between columns. */
+/**
+ * How far apart neighboring corridors sit, and how far back they may reach in total.
+ *
+ * A corridor climbs in the gap between the previous column's words and this one's dot, so the
+ * reach is bounded by that gap: past it, a corridor climbs straight through a label. Widening the
+ * separation therefore means widening the gap first — clipping labels to a measured budget rather
+ * than a character count — which is why these stay narrow for now.
+ */
 const CORRIDOR_STEP = 7;
+const MAX_CORRIDOR_REACH = 38;
 
 /**
  * The width of the block a node's label and attributes occupy, measured from
@@ -120,7 +128,7 @@ export function laneRoute(from: Point, to: Point, lane: number, corridor = 0): L
     const start = { x: from.x + (backward ? -LANE_LEAD : LANE_LEAD), y: from.y };
     const step = backward ? -LANE_CORNER : LANE_CORNER;
     // Climb one corridor further back for each route already claiming this target's approach.
-    const reach = LANE_CORNER + corridor * CORRIDOR_STEP;
+    const reach = Math.min(LANE_CORNER + corridor * CORRIDOR_STEP, MAX_CORRIDOR_REACH);
     return {
         start,
         drop: { x: start.x + step, y: lane },

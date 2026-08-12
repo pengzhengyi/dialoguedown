@@ -3001,6 +3001,12 @@ body.zen .config-view > .config-source {
     font-weight: 600;
 }
 
+/* The dot carries the node's category, so its shape is information: a wrapping title must not
+   squeeze it into an ellipse. */
+#detail-title .dot {
+    flex: none;
+}
+
 #detail table,
 .node-detail-body table {
     font-size: 0.8rem;

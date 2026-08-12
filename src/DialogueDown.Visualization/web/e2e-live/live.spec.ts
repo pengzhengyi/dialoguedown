@@ -835,6 +835,40 @@ test("gives routes ending at one node a corridor each, and picks the nearest", a
     expect(lit).toEqual({ first: true, second: false });
 });
 
+test("frames a graph from its own root rather than inheriting where you were looking", async ({
+    page,
+}) => {
+    // The dialogue graph runs far wider than the trees beside it, so carrying a pan into it
+    // scrolls its nodes off-screen and leaves the reader looking at nothing.
+    writeFileSync(
+        LIVE_DOC,
+        ["# The Gate", "", "Guide: Which way?", "", "Guide: You are inside.", ""].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Markdown AST" }).click();
+    const canvas = page.locator("section.stage.active svg.tree");
+    const box = (await canvas.boundingBox())!;
+    await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 40, box.y + 40, { steps: 12 });
+    await page.mouse.up();
+
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+
+    const framed = await page.evaluate(() => {
+        const stage = document.querySelector("section.stage.active")!;
+        const view = stage.querySelector("svg.tree")!.getBoundingClientRect();
+        const entry = stage.querySelector("g.node")!.getBoundingClientRect();
+        return (
+            entry.right > view.left &&
+            entry.left < view.right &&
+            entry.bottom > view.top &&
+            entry.top < view.bottom
+        );
+    });
+    expect(framed).toBe(true);
+});
+
 test("names each kind of route with its own pointer", async ({ page }) => {
     writeFileSync(
         LIVE_DOC,
