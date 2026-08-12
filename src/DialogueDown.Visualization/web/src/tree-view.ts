@@ -14,7 +14,7 @@ import {
 } from "d3";
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import type { CameraTransform } from "./graph-camera";
-import { edgeStyle } from "./edge-style";
+import { ARROWHEAD_PATH, CROSS_PATH, edgeStyle } from "./edge-style";
 import {
     edgePath,
     labelBlockWidth,
@@ -283,7 +283,7 @@ export function createTreeView(
                 // not rotated into a plus by a vertical stretch of route.
                 .attr("orient", "0")
                 .append("path")
-                .attr("d", "M 2 2 L 8 8 M 8 2 L 2 8")
+                .attr("d", CROSS_PATH)
                 .attr("stroke", colorOf(category))
                 .attr("stroke-width", 1.6)
                 .attr("fill", "none");
@@ -302,7 +302,7 @@ export function createTreeView(
                 .attr("markerUnits", "userSpaceOnUse")
                 .attr("orient", "auto-start-reverse")
                 .append("path")
-                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("d", ARROWHEAD_PATH)
                 .attr("fill", colorOf(category));
         }
     }
