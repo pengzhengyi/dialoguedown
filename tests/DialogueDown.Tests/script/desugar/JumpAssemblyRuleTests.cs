@@ -1,3 +1,4 @@
+using DialogueDown.Diagnostics;
 using DialogueDown.Script.Desugar;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
@@ -6,7 +7,7 @@ namespace DialogueDown.Tests.Script.Desugar;
 
 public sealed class JumpAssemblyRuleTests
 {
-    private readonly JumpAssemblyRule _rule = new();
+    private readonly JumpAssemblyRule _rule = new(new DiagnosticBag());
 
     [Fact]
     public void Apply_AssemblesABareJumpFromItsArrowAndLink()

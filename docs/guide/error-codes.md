@@ -287,6 +287,34 @@ An `else` is the unguarded fallback, so it cannot carry a condition. Remove the 
 &gt;
 &gt; Alice: Welcome back.</code></pre>
 
+### DLG1113
+
+<span class="dd-sev dd-sev--warning">Warning</span> · Dangling jump arrow
+
+`=>` makes a jump only when a link follows it. With no link here it is read literally, staying as the characters "=>". If you meant to jump, add a target: `=> [The market](#the-market)`.
+
+`=>` is the jump sigil: it becomes a jump only when a Markdown link follows it. With no link there is nothing to jump to, so the arrow is read literally — it stays on the page as the two characters and the script simply continues to the next line. That is fine when you meant to type an arrow; when you meant to jump, give it a target.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Crossroads
+Alice: Which way?
+
+<mark class="dd-mark-bad">=&gt; The market</mark>
+
+# The market
+Merchant: Wares!</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Crossroads
+Alice: Which way?
+
+<mark class="dd-mark-fix">=&gt; [The market](#the-market)</mark>
+
+# The market
+Merchant: Wares!</code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.
