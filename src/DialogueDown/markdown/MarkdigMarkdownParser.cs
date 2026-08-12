@@ -24,7 +24,8 @@ internal sealed class MarkdigMarkdownParser : IMarkdownParser
         ArgumentNullException.ThrowIfNull(source);
 
         var parsed = Markdig.Markdown.Parse(source, _pipeline);
-        return new MarkdigToMarkdownAstConverter(source, _policy).Convert(parsed);
+        var unmodeled = new MarkdigUnmodeledNodeHandler(source, _policy);
+        return new MarkdigToMarkdownAstConverter(unmodeled).Convert(parsed);
     }
 
     private static MarkdownPipeline BuildPipeline() =>

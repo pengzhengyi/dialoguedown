@@ -24,20 +24,16 @@ namespace DialogueDown.Markdown;
 /// <summary>
 /// Converts a Markdig syntax tree into our own Markdown AST. Keeping this
 /// translation in one place is what isolates the rest of the compiler from the
-/// Markdig library. A fresh instance is created per parse and holds the source
-/// text and a handling policy, so an unmodeled construct can be sliced back to
-/// raw text or dropped, as the policy directs.
+/// Markdig library. A fresh instance is created per parse; anything DialogueDown
+/// does not model is left to a <see cref="MarkdigUnmodeledNodeHandler"/>, so this
+/// class only converts the constructs that are dialogue.
 /// </summary>
 internal sealed class MarkdigToMarkdownAstConverter
 {
-    private readonly string _source;
-    private readonly IUnmodeledNodeHandlingPolicy _policy;
+    private readonly MarkdigUnmodeledNodeHandler _unmodeled;
 
-    public MarkdigToMarkdownAstConverter(string source, IUnmodeledNodeHandlingPolicy policy)
-    {
-        _source = source;
-        _policy = policy;
-    }
+    public MarkdigToMarkdownAstConverter(MarkdigUnmodeledNodeHandler unmodeled) =>
+        _unmodeled = unmodeled;
 
     public MarkdownDocument Convert(MarkdigDocument document) => new(ConvertBlocks(document));
 
@@ -50,7 +46,7 @@ internal sealed class MarkdigToMarkdownAstConverter
     private static bool IsComment(MarkdigInline inline) =>
         inline is MarkdigHtmlInline html && html.Tag.StartsWith("<!--", StringComparison.Ordinal);
 
-    private static SourceSpan ConvertSpan(MarkdigSpan span) => new(span.Start, span.Length);
+    private static SourceSpan ConvertSpan(MarkdigSpan span) => span.ToSourceSpan();
 
     // A literal's unescaped content sits at its raw Span, shifted past any stripped leading
     // escape. Markdig's Content.Start is unreliable — for a soft-wrapped paragraph it rebuilds
@@ -94,18 +90,8 @@ internal sealed class MarkdigToMarkdownAstConverter
         MarkdigParagraphBlock paragraph => ConvertParagraph(paragraph),
         MarkdigListBlock list => ConvertList(list),
         MarkdigQuoteBlock quote => ConvertQuote(quote),
-        _ => HandleUnmodeledBlock(block),
+        _ => _unmodeled.Handle(block),
     };
-
-    private MarkdownBlock? HandleUnmodeledBlock(MarkdigBlock block) =>
-        HandlingForBlock(block) switch
-        {
-            UnmodeledNodeHandling.Ignore => null,
-            _ => FlattenBlock(block), // AsRawText: keep the construct as raw text.
-        };
-
-    private UnmodeledNodeHandling HandlingForBlock(MarkdigBlock block) =>
-        _policy.HandlingFor(MarkdigUnmodeledNodeClassifier.ClassifyBlock(block));
 
     private ListBlock ConvertList(MarkdigListBlock block)
     {
@@ -133,14 +119,6 @@ internal sealed class MarkdigToMarkdownAstConverter
     private Paragraph ConvertParagraph(MarkdigParagraphBlock block) =>
         // A parsed paragraph always has inline content, so Inline is never null here.
         new(ConvertInlines(block.Inline!), ConvertSpan(block.Span));
-
-    private Paragraph FlattenBlock(MarkdigBlock block)
-    {
-        // A construct we do not model (blockquote, raw HTML, ...) survives as a
-        // paragraph of its exact source text, so nothing is silently dropped.
-        var span = ConvertSpan(block.Span);
-        return new Paragraph([new TextInline(Slice(block.Span), span)], span);
-    }
 
     private IReadOnlyList<MarkdownInline> ConvertInlines(MarkdigContainerInline container)
     {
@@ -171,26 +149,8 @@ internal sealed class MarkdigToMarkdownAstConverter
         MarkdigLinkInline image => ConvertImage(image),
         MarkdigCodeInline code => new CodeSpanInline(code.Content, ConvertSpan(code.Span)),
         MarkdigLineBreakInline lineBreak => new LineBreak(lineBreak.IsHard, ConvertSpan(lineBreak.Span)),
-        _ => HandleUnmodeledInline(inline),
+        _ => _unmodeled.Handle(inline),
     };
-
-    private MarkdownInline? HandleUnmodeledInline(MarkdigInline inline) =>
-        HandlingForInline(inline) switch
-        {
-            UnmodeledNodeHandling.Ignore => null,
-            _ => FlattenInline(inline), // AsRawText: keep the construct as raw text.
-        };
-
-    private UnmodeledNodeHandling HandlingForInline(MarkdigInline inline) =>
-        _policy.HandlingFor(MarkdigUnmodeledNodeClassifier.ClassifyInline(inline));
-
-    private TextInline FlattenInline(MarkdigInline inline)
-    {
-        // A construct we do not model (autolink, raw HTML, ...) survives as its
-        // exact source text so no spoken content is lost.
-        var span = ConvertSpan(inline.Span);
-        return new TextInline(Slice(inline.Span), span);
-    }
 
     private LinkInline ConvertLink(MarkdigLinkInline link) =>
         // A parsed inline link always has a URL (empty string when omitted), never null.
@@ -203,6 +163,4 @@ internal sealed class MarkdigToMarkdownAstConverter
         // Same shape as a link: the URL is the source and the bracket content is the alt,
         // kept as inline nodes so it can carry styling.
         new(image.Url!, ConvertInlines(image), ConvertSpan(image.Span));
-
-    private string Slice(MarkdigSpan span) => _source.Substring(span.Start, span.Length);
 }
