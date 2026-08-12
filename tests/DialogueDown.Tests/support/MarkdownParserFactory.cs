@@ -8,7 +8,8 @@ namespace DialogueDown.Tests.Support;
 /// </summary>
 internal static class MarkdownParserFactory
 {
-    public static IMarkdownParser MarkdownParser() => new MarkdigMarkdownParser();
+    public static IMarkdownParser MarkdownParser() =>
+        new MarkdigMarkdownParser(DefaultUnmodeledNodeHandlingPolicy.Instance);
 
     /// <summary>Parses with the default policy and a throwaway diagnostics context.</summary>
     public static MarkdownDocument Parse(string source) =>

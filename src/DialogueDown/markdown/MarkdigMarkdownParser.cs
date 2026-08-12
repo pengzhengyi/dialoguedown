@@ -9,8 +9,8 @@ namespace DialogueDown.Markdown;
 /// Markdown AST. The pipeline is CommonMark plus pipe tables (so a table can be
 /// recognized and then handled per policy); emphasis is parsed so styling can be
 /// modeled. An <see cref="IUnmodeledNodeHandlingPolicy"/> decides whether each
-/// unmodeled construct is kept as raw text or dropped, and each drop is noted into the
-/// compilation's diagnostics.
+/// unmodeled construct is kept or ignored, and every ignored construct is noted
+/// in the compilation's diagnostics.
 /// </summary>
 internal sealed class MarkdigMarkdownParser : IMarkdownParser
 {
@@ -18,8 +18,11 @@ internal sealed class MarkdigMarkdownParser : IMarkdownParser
 
     private readonly IUnmodeledNodeHandlingPolicy _policy;
 
-    public MarkdigMarkdownParser(IUnmodeledNodeHandlingPolicy? policy = null) =>
-        _policy = policy ?? DefaultUnmodeledNodeHandlingPolicy.Instance;
+    public MarkdigMarkdownParser(IUnmodeledNodeHandlingPolicy policy)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        _policy = policy;
+    }
 
     public MarkdownDocument Parse(string source, DiagnosticsContext context)
     {
