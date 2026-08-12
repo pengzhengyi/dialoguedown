@@ -1,3 +1,4 @@
+using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Script.Desugar;
@@ -8,7 +9,11 @@ namespace DialogueDown.Script.Desugar;
 /// </summary>
 internal sealed class JumpAssemblyRule : DesugarRule
 {
+    private readonly JumpAssembler _assembler;
+
+    public JumpAssemblyRule(IDiagnosticSink diagnostics) => _assembler = new JumpAssembler(diagnostics);
+
     protected override IReadOnlyList<InlineFragment> RewriteFragments(
         IReadOnlyList<InlineFragment> fragments) =>
-        JumpAssembler.Assemble(base.RewriteFragments(fragments));
+        _assembler.Assemble(base.RewriteFragments(fragments));
 }

@@ -9,16 +9,15 @@ namespace DialogueDown.Script.Desugar;
 /// </summary>
 internal sealed class ScriptDesugarer : IScriptDesugarer
 {
-    private readonly Desugarer _desugarer = DesugarerFactory.CreateDefault();
-
     public DesugaredScriptDocument Desugar(ScriptDocument document, DiagnosticsContext context)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(context);
 
-        // TODO(diagnostics): the context is validated but not yet read — desugaring works off
-        // the tree and the spans it already carries. Report warnings into context.Diagnostics
-        // when the producers land (e.g. a dangling arrow or multiple jumps).
-        return new DesugaredScriptDocument(_desugarer.Desugar(document));
+        // Built per compilation, not once per process: a desugar rule reports into this
+        // compilation's sink, and this class is registered as a singleton, so a rule kept in a
+        // field would outlive the compilation it reports for.
+        var desugarer = DesugarerFactory.CreateDefault(context.Diagnostics);
+        return new DesugaredScriptDocument(desugarer.Desugar(document));
     }
 }
