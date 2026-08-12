@@ -1,5 +1,6 @@
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.MarkdownAstAssert;
 
 namespace DialogueDown.Tests.Markdown;
@@ -61,5 +62,14 @@ public sealed class MarkdigMarkdownParserCommentTests : MarkdigMarkdownParserTes
         var document = Parse("<!--- weird --->");
 
         Assert.Empty(document.Blocks);
+    }
+
+    [Fact]
+    public void Parse_AComment_IsNotNotedAsDroppedMarkdown()
+    {
+        // A comment is stripped before the handling policy is consulted, so it is not a drop.
+        Parse("Alice: Hi <!-- note --> there", out var diagnostics);
+
+        AssertNotReported(diagnostics.Diagnostics);
     }
 }

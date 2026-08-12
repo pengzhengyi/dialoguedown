@@ -1,5 +1,7 @@
+using DialogueDown.Diagnostics;
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.MarkdownAstAssert;
 
 namespace DialogueDown.Tests.Markdown;
@@ -78,5 +80,83 @@ public sealed class MarkdigMarkdownParserUnmodeledContentTests : MarkdigMarkdown
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertAllText(paragraph.Inlines, "<b>hi</b>");
+    }
+
+    [Theory]
+    [InlineData("---", "divider")]
+    [InlineData(CodeBlockSource, "code block")]
+    [InlineData(TableSource, "table")]
+    public void Parse_ADroppedConstruct_IsNotedWithItsKind(string source, string kind)
+    {
+        Parse(source, out var diagnostics);
+
+        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        Assert.Equal(DiagnosticSeverity.Info, note.Severity);
+        Assert.Equal(kind, Assert.Single(note.MessageArguments));
+    }
+
+    [Fact]
+    public void Parse_ADroppedConstruct_PointsAtTheConstruct()
+    {
+        var source =
+            $"""
+            Alice: Hi
+
+            {TableSource}
+            """;
+
+        Parse(source, out var diagnostics);
+
+        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        Assert.Equal(source.IndexOf("| Speaker", StringComparison.Ordinal), note.Span.Start);
+    }
+
+    [Fact]
+    public void Parse_AConstructKeptAsRawText_IsNotNoted()
+    {
+        Parse("<div>hi</div>", out var diagnostics);
+
+        AssertNotReported(diagnostics.Diagnostics);
+    }
+
+    [Fact]
+    public void Parse_SeveralDroppedConstructs_AreEachNoted()
+    {
+        // The dividers follow content, so they are ordinary thematic breaks rather than the front
+        // matter a leading "---" would open.
+        Parse(
+            """
+            Alice: Hi
+
+            ---
+
+            Bob: Bye
+
+            ---
+            """,
+            out var diagnostics);
+
+        Assert.Equal(2, diagnostics.Diagnostics.Count);
+    }
+
+    [Fact]
+    public void Parse_ADropInsideAListItem_IsNoted()
+    {
+        // The converter recurses into nested blocks, so a drop there is reported too.
+        Parse(
+            """
+            - Alice: Hi
+
+                ```mermaid
+                graph TD
+                ```
+            """,
+            out var diagnostics);
+
+        Assert.Equal(
+            "code block",
+            Assert.Single(
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                    .MessageArguments));
     }
 }

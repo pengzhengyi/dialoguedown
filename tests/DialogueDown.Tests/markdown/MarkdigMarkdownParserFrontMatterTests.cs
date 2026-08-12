@@ -1,5 +1,6 @@
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.MarkdownAstAssert;
 
 namespace DialogueDown.Tests.Markdown;
@@ -58,5 +59,21 @@ public sealed class MarkdigMarkdownParserFrontMatterTests : MarkdigMarkdownParse
         var divider = Assert.IsType<Paragraph>(document.Blocks[1]);
         var text = Assert.IsType<TextInline>(Assert.Single(divider.Inlines));
         Assert.StartsWith("---", text.Text);
+    }
+
+    [Fact]
+    public void Parse_FrontMatter_IsNotNotedAsDroppedMarkdown()
+    {
+        // Front matter is discarded before the handling policy is consulted, so it is not a drop.
+        Parse(
+            """
+            ---
+            title: Scene 1
+            ---
+            Alice: Hello
+            """,
+            out var diagnostics);
+
+        AssertNotReported(diagnostics.Diagnostics);
     }
 }
