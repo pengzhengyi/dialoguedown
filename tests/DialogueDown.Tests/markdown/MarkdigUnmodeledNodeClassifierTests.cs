@@ -1,8 +1,6 @@
 using DialogueDown.Markdown;
-using Markdig.Extensions.Tables;
-using Markdig.Syntax;
-using Markdig.Syntax.Inlines;
 using static DialogueDown.Markdown.MarkdigUnmodeledNodeClassifier;
+using static DialogueDown.Tests.Support.MarkdigNodeFactory;
 
 namespace DialogueDown.Tests.Markdown;
 
@@ -35,23 +33,4 @@ public sealed class MarkdigUnmodeledNodeClassifierTests
     {
         Assert.Equal(UnmodeledNodeKind.Other, ClassifyInline(UnrecognizedInline()));
     }
-
-    // Markdig block constructors take a parser argument the classifier ignores;
-    // these local factories hide that noise. Kept local — no other test builds
-    // raw Markdig nodes (the rest go through the parser).
-    private static Block FencedCode() => new FencedCodeBlock(null!);
-
-    private static Block ThematicBreak() => new ThematicBreakBlock(null!);
-
-    private static Block PipeTable() => new Table();
-
-    private static Block HtmlBlockNode() => new HtmlBlock(null!);
-
-    private static Block UnrecognizedBlock() => new ParagraphBlock();
-
-    private static Inline Autolink() => new AutolinkInline("https://x");
-
-    private static Inline InlineHtml() => new HtmlInline("<b>");
-
-    private static Inline UnrecognizedInline() => new LiteralInline("x");
 }

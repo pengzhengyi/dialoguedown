@@ -10,7 +10,7 @@ public sealed class MarkdigMarkdownParserEscapeTests : MarkdigMarkdownParserTest
     public void Parse_EscapedPunctuation_UnescapesTheTextButKeepsTheRawSpan()
     {
         // "\* b" — the backslash escapes the star; the text is "* b" without it.
-        var document = Parser.Parse(@"\* b");
+        var document = Parse(@"\* b");
 
         var text = AssertSingleTextInline(document);
         Assert.Equal("* b", text.Text);
@@ -26,7 +26,7 @@ public sealed class MarkdigMarkdownParserEscapeTests : MarkdigMarkdownParserTest
     public void Parse_EscapeInTheMiddle_AnchorsTheSecondRunPastTheBackslash()
     {
         // "ab\*cd" — Markdig splits at the escape into "ab" and "*cd".
-        var document = Parser.Parse(@"ab\*cd");
+        var document = Parse(@"ab\*cd");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         Assert.Equal(2, paragraph.Inlines.Count);
@@ -40,7 +40,7 @@ public sealed class MarkdigMarkdownParserEscapeTests : MarkdigMarkdownParserTest
     [Fact]
     public void Parse_PlainText_ContentSpanEqualsSpan()
     {
-        var document = Parser.Parse("plain");
+        var document = Parse("plain");
 
         var text = AssertSingleTextInline(document);
         Assert.Equal(text.Span, text.ContentSpan);

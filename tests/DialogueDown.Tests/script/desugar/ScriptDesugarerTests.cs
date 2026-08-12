@@ -54,7 +54,7 @@ public sealed class ScriptDesugarerTests
 
     private DesugaredScriptDocument Desugar(string source)
     {
-        var document = MarkdownParserFactory.MarkdownParser().Parse(source);
+        var document = MarkdownParserFactory.Parse(source);
         var script = TranspilerBuilderFactory.ScriptTranspiler().Transpile(document, DiagnosticsContextFactory.Context(source));
         return _desugarer.Desugar(script, DiagnosticsContextFactory.Context(source));
     }

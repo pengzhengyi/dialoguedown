@@ -13,7 +13,6 @@ namespace DialogueDown.Tests.Script.Transpiler.Builders;
 public sealed class ControlBlockBuilderTests
 {
     private readonly ControlBlockBuilder _builder = TranspilerBuilderFactory.ControlBlockBuilder();
-    private readonly IMarkdownParser _parser = MarkdownParserFactory.MarkdownParser();
 
     [Fact]
     public void TryBuild_NonMarkerHeadedQuote_ReturnsFalse()
@@ -264,5 +263,5 @@ public sealed class ControlBlockBuilderTests
     }
 
     private QuoteBlock ParseQuote(string source) =>
-        AssertSingleBlock<QuoteBlock>(_parser.Parse(source));
+        AssertSingleBlock<QuoteBlock>(MarkdownParserFactory.Parse(source));
 }

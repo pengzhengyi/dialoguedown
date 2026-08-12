@@ -10,15 +10,13 @@ public sealed class MarkdigMarkdownParserCustomPolicyTests
     public void CustomPolicy_KeepingTablesAsRawText_FlattensTableToText()
     {
         // Override the default (which ignores tables) to keep the table as raw text.
-        var parser = new MarkdigMarkdownParser(
-            TestUnmodeledNodePolicy.Default.Keep(UnmodeledNodeKind.Table));
-
-        var document = parser.Parse(
+        var document = MarkdownParserFactory.Parse(
             """
             | a | b |
             | --- | --- |
             | x | y |
-            """);
+            """,
+            TestUnmodeledNodePolicy.Default.Keep(UnmodeledNodeKind.Table));
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var text = Assert.IsType<TextInline>(Assert.Single(paragraph.Inlines));
@@ -29,10 +27,9 @@ public sealed class MarkdigMarkdownParserCustomPolicyTests
     public void CustomPolicy_IgnoringAutolinks_DropsAutolinkFromSpeech()
     {
         // Override the default (which keeps autolinks) to drop them.
-        var parser = new MarkdigMarkdownParser(
+        var document = MarkdownParserFactory.Parse(
+            "see <https://example.com> end",
             TestUnmodeledNodePolicy.Default.Ignore(UnmodeledNodeKind.Autolink));
-
-        var document = parser.Parse("see <https://example.com> end");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertAllText(paragraph.Inlines, "see  end");

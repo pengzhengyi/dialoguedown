@@ -292,6 +292,48 @@ internal static class DiagnosticDocs
                 ["=> The market"],
                 ["=> [The market](#the-market)"])),
         new(
+            DiagnosticCatalog.DroppedUnmodeledMarkdown,
+            "DialogueDown models the Markdown a dialogue needs; everything else is an authoring "
+            + "aid. A code block, a table, or a divider is left out of the script rather than "
+            + "spoken, which is usually the point — a diagram or a note belongs beside the "
+            + "dialogue, not in it. If that is what you meant, keep it: this is a note, not a "
+            + "fault, and nothing about the compile changes. It exists so the omission is never "
+            + "a surprise. If the construct was meant to shape the dialogue, write it in "
+            + "DialogueDown's own terms — a scene break is a heading. If it arrived by accident, "
+            + "remove it.",
+            new(
+                """
+                # Chapter One
+
+                Alice: We should go.
+
+                ---
+
+                Alice: The road was long.
+                """,
+                """
+                # Chapter One
+
+                Alice: We should go.
+
+                # On The Road
+
+                Alice: The road was long.
+                """,
+                ["---"],
+                ["# On The Road"],
+                "if it was meant to break the scene",
+                new(
+                    "if it arrived by accident",
+                    """
+                    # Chapter One
+
+                    Alice: We should go.
+
+                    Alice: The road was long.
+                    """,
+                    ["Alice: The road was long."]))),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",
