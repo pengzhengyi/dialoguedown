@@ -176,4 +176,203 @@ describe("createDetailPanel", () => {
             expect(jumpButton()?.hidden).toBe(true);
         });
     });
+
+    it("lists what leads to a node and what it leads to, naming the route of each", () => {
+        const node: DisplayNode = {
+            id: "n1",
+            label: "Guide: You are inside.",
+            attributes: [],
+            source: "Guide: You are inside.",
+        };
+
+        panel.show(node, {
+            neighbors: {
+                incoming: [
+                    { id: "left", ownerId: "n1", label: "Alice: Left.", edgeCategory: "choice" },
+                    { id: "right", ownerId: "n1", label: "Alice: Right.", edgeCategory: "break" },
+                ],
+                outgoing: [{ id: "end", ownerId: "n1", label: "End", edgeCategory: "break" }],
+            },
+        });
+
+        expect([...body.querySelectorAll("h4")].map((h) => h.textContent)).toEqual([
+            "Incoming",
+            "Outgoing",
+            "Source",
+            "Preview",
+        ]);
+        expect(
+            [...body.querySelectorAll("table.neighbors thead th")].map((t) => t.textContent),
+        ).toEqual(["Edge", "Source", "Edge", "Destination"]);
+        expect([...body.querySelectorAll("button.route")].map((t) => t.textContent)).toEqual([
+            "Choice",
+            "Succession",
+            "Succession",
+        ]);
+        expect([...body.querySelectorAll("button.neighbor")].map((b) => b.textContent)).toEqual([
+            "Alice: Left.",
+            "Alice: Right.",
+            "End",
+        ]);
+    });
+
+    it("says so plainly when nothing leads to a node", () => {
+        panel.show(
+            { id: "n1", label: "Guide: Hello.", attributes: [] },
+            { neighbors: { incoming: [], outgoing: [] } },
+        );
+
+        expect([...body.querySelectorAll(".neighbor-empty")].map((c) => c.textContent)).toEqual([
+            "None",
+            "None",
+        ]);
+    });
+
+    it("omits the lists for a stage that does not describe a flow", () => {
+        panel.show({ id: "n1", label: "Heading", attributes: [] });
+
+        expect(body.querySelector("table.neighbors")).toBeNull();
+    });
+
+    it("takes the reader to the node a row names", () => {
+        document.body.innerHTML = `<h2 id="detail-title"></h2><div id="detail-body"></div>`;
+        body = document.getElementById("detail-body")!;
+        const visited: string[] = [];
+        const walking = createDetailPanel({ selectNode: (id) => visited.push(id) });
+
+        walking.show(
+            { id: "n1", label: "Guide: Hello.", attributes: [] },
+            { neighbors: { incoming: [], outgoing: [{ id: "end", ownerId: "n1", label: "End" }] } },
+        );
+        body.querySelector<HTMLButtonElement>("button.neighbor")!.click();
+
+        expect(visited).toEqual(["end"]);
+    });
+
+    it("escapes a neighbor's label, so a node cannot inject markup through the panel", () => {
+        panel.show(
+            { id: "n1", label: "Guide: Hello.", attributes: [] },
+            {
+                neighbors: {
+                    incoming: [],
+                    outgoing: [{ id: "x", ownerId: "n1", label: "<img src=x onerror=alert(1)>" }],
+                },
+            },
+        );
+
+        expect(body.querySelector("button.neighbor img")).toBeNull();
+        expect(body.querySelector("button.neighbor")?.textContent).toBe(
+            "<img src=x onerror=alert(1)>",
+        );
+    });
+
+    it("shows a route: what it means, and the two nodes it joins", () => {
+        panel.showEdge({
+            category: "break",
+            source: { id: "a", label: "Guide: Hello.", category: "speech" },
+            target: { id: "b", label: "End", category: "terminal" },
+        });
+
+        expect(title.textContent).toBe("Succession");
+        expect(body.querySelector(".route-meaning")?.textContent).toContain("natural order");
+        expect([...body.querySelectorAll("table.neighbors th")].map((t) => t.textContent)).toEqual([
+            "Source",
+            "Destination",
+        ]);
+        expect([...body.querySelectorAll("button.neighbor")].map((b) => b.textContent)).toEqual([
+            "Guide: Hello.",
+            "End",
+        ]);
+    });
+
+    it("lets a reader walk off an edge to either end of it", () => {
+        document.body.innerHTML = `<h2 id="detail-title"></h2><div id="detail-body"></div>`;
+        body = document.getElementById("detail-body")!;
+        const visited: string[] = [];
+        const walking = createDetailPanel({ selectNode: (id) => visited.push(id) });
+
+        walking.showEdge({
+            category: "break",
+            source: { id: "a", label: "Guide: Hello." },
+            target: { id: "b", label: "End" },
+        });
+        body.querySelectorAll<HTMLButtonElement>("button.neighbor")[1].click();
+
+        expect(visited).toEqual(["b"]);
+    });
+
+    it("opens the route an edge cell names", () => {
+        document.body.innerHTML = `<h2 id="detail-title"></h2><div id="detail-body"></div>`;
+        body = document.getElementById("detail-body")!;
+        const opened: string[] = [];
+        const walking = createDetailPanel({
+            selectEdge: (fromId, toId) => opened.push(`${fromId}->${toId}`),
+        });
+
+        walking.show(
+            { id: "n1", label: "Guide: Hello.", attributes: [] },
+            {
+                neighbors: {
+                    incoming: [{ id: "a", ownerId: "n1", label: "Before", edgeCategory: "break" }],
+                    outgoing: [{ id: "b", ownerId: "n1", label: "After", edgeCategory: "jump" }],
+                },
+            },
+        );
+        const routes = body.querySelectorAll<HTMLButtonElement>("button.route");
+        routes[0].click();
+        routes[1].click();
+
+        // An incoming row names the edge that arrives here; an outgoing one, the edge that leaves.
+        expect(opened).toEqual(["a->n1", "n1->b"]);
+    });
+
+    it("names the region a node sits in, since the drawing names it only once", () => {
+        panel.show({ id: "n1", label: "Guide: Hello.", attributes: [], region: "The Gate" });
+
+        expect(body.querySelector("table")?.textContent).toContain("The Gate");
+    });
+
+    it("shows a region: how much it holds, and what crosses its border", () => {
+        panel.showRegion(
+            {
+                name: "The Gate",
+                nodeCount: 4,
+                entering: [{ id: "out", ownerId: "in", label: "(jump)", edgeCategory: "jump" }],
+                leaving: [{ id: "next", ownerId: "last", label: "End", edgeCategory: "break" }],
+                tint: 0,
+            },
+            "# The Gate\n\n- Alice: Left.\n",
+        );
+
+        expect(title.textContent).toBe("The Gate");
+        expect(body.querySelector("table")?.textContent).toContain("4");
+        expect([...body.querySelectorAll("h4")].map((h) => h.textContent)).toEqual([
+            "Entering",
+            "Leaving",
+            "Source",
+            "Preview",
+        ]);
+        expect(body.querySelector(".preview li")).not.toBeNull();
+    });
+
+    it("leaves out a region's text when the report has no source to slice", () => {
+        panel.showRegion({ name: "The Gate", nodeCount: 1, entering: [], leaving: [], tint: 1 });
+
+        expect([...body.querySelectorAll("h4")].map((h) => h.textContent)).toEqual([
+            "Entering",
+            "Leaving",
+        ]);
+    });
+
+    it("makes the region a node sits in a way into that region", () => {
+        document.body.innerHTML = `<h2 id="detail-title"></h2><div id="detail-body"></div>`;
+        body = document.getElementById("detail-body")!;
+        const opened: string[] = [];
+        const walking = createDetailPanel({ selectRegion: (name) => opened.push(name) });
+
+        walking.show({ id: "n1", label: "Guide: Hello.", attributes: [], region: "The Gate" });
+        body.querySelector<HTMLButtonElement>("button.region-link")!.click();
+
+        expect(opened).toEqual(["The Gate"]);
+    });
 });
