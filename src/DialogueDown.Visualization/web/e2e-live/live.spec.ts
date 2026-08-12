@@ -309,3 +309,578 @@ test.describe("on a phone-sized window", () => {
         await expect(page.locator("#explorer")).toBeVisible();
     });
 });
+
+test("renders the dialogue graph, including a cycle and unreachable content", async ({ page }) => {
+    // A jump back to the scene it is inside makes the flow cyclic, and the line after an
+    // unconditional divert is unreachable. Both are ordinary in a graph but not in a tree, so
+    // this is the case a tree-shaped renderer fails on.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# Loop",
+            "",
+            "Alice: Around again.",
+            "",
+            "=> [Loop](#loop)",
+            "",
+            "Alice: Nobody reads this.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+
+    // The stage renders rather than reporting a layout failure.
+    await expect(page.locator("section.stage.error")).toHaveCount(0);
+    const stage = page.locator("section.stage.active");
+    await expect(stage.locator("g.node")).not.toHaveCount(0);
+    await expect(stage.locator('g.node:has-text("Around again")').first()).toBeVisible();
+    await expect(stage.locator('g.node:has-text("Nobody reads this")').first()).toBeVisible();
+});
+
+test("keeps every edge clear of the words it runs past", async ({ page }) => {
+    // A node writes its label to the right of its dot, so a line leaving from the dot would strike
+    // through the very text it belongs to, and a long cross-link would lie across every row it
+    // passes. Both make a busy graph unreadable, so neither is allowed.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way do you go, traveler?",
+            "",
+            "- Alice: Through the gate, quickly.",
+            "",
+            "  Guide: It swings open before you.",
+            "",
+            "- Alice: Over the wall, then.",
+            "",
+            "  Guide: You climb, slowly, and drop.",
+            "",
+            "Guide: You are inside the courtyard now.",
+            "",
+            "> `if` `\"Rich\"?`",
+            ">",
+            "> Guard: Welcome, my lord and master.",
+            ">",
+            "> `else`",
+            ">",
+            "> Guard: State your business, stranger.",
+            "",
+            "=> [The Gate](#the-gate)",
+            "",
+            "Guide: Nobody ever reaches this line.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await expect(page.locator("section.stage.active g.node")).not.toHaveCount(0);
+
+    const struck = await page.evaluate(() => {
+        const stage = document.querySelector("section.stage.active")!;
+        const paths = [...stage.querySelectorAll<SVGPathElement>("path.link")];
+        const crossings: string[] = [];
+        for (const label of stage.querySelectorAll<SVGTextElement>("g.node text.label")) {
+            const box = label.getBoundingClientRect();
+            const middle = (box.top + box.bottom) / 2;
+            for (const path of paths) {
+                const length = path.getTotalLength();
+                const matrix = path.getScreenCTM()!;
+                for (let step = 0; step <= 60; step++) {
+                    const point = path.getPointAtLength((length * step) / 60);
+                    const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
+                    const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
+                    if (x > box.left + 2 && x < box.right - 2 && Math.abs(y - middle) < 5) {
+                        crossings.push(`${label.textContent} / ${path.querySelector("title")?.textContent}`);
+                        break;
+                    }
+                }
+            }
+        }
+        return crossings;
+    });
+
+    expect(struck).toEqual([]);
+});
+
+test("gives each cross-link a lane of its own, so two never share a line", async ({ page }) => {
+    // Two routes drawn along the same y would read as one line with mysterious branches. Each
+    // takes its own lane instead, the shorter hop nearer the drawing.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way do you go, traveler?",
+            "",
+            "- Alice: Through the gate, quickly.",
+            "",
+            "  Guide: It swings open before you.",
+            "",
+            "- Alice: Over the wall, then.",
+            "",
+            "  Guide: You climb, slowly, and drop.",
+            "",
+            "Guide: You are inside the courtyard now.",
+            "",
+            "=> [The Gate](#the-gate)",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await expect(page.locator("section.stage.active path.reference")).not.toHaveCount(0);
+
+    const lanes = await page
+        .locator("section.stage.active path.reference")
+        .evaluateAll((paths) =>
+            paths.map((path) => {
+                const box = (path as SVGPathElement).getBBox();
+                return Math.round(box.y + box.height);
+            }),
+        );
+
+    expect(new Set(lanes).size).toBe(lanes.length);
+});
+
+test("draws a succession solidly even where it is routed as a cross-link", async ({ page }) => {
+    // Where a node is reached twice, the second arrival is drawn as a cross-link. It is still an
+    // ordinary succession, so it must look like one rather than borrowing the reference dash.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "- Alice: Right.",
+            "",
+            "Guide: You are inside.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+
+    const succession = page
+        .locator("section.stage.active path.reference")
+        .filter({ has: page.locator("title", { hasText: "Succession" }) })
+        .first();
+    await expect(succession).toHaveCount(1);
+    expect(await succession.evaluate((path) => getComputedStyle(path).strokeDasharray)).toBe(
+        "none",
+    );
+});
+
+test("lists a node's routes in and out, and walks them", async ({ page }) => {
+    // The drawing shows every edge but cannot name them all at once. The inspector names the ones
+    // that touch the node the reader asked about, and each row is a way to go there.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "- Alice: Right.",
+            "",
+            "Guide: You are inside.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+    await stage
+        .locator("g.node")
+        .filter({ hasText: "You are inside" })
+        .first()
+        .locator("circle")
+        .dispatchEvent("click");
+
+    await expect(page.locator("#detail-body h4").first()).toHaveText("Incoming");
+    const incoming = page.locator("#detail-body table.neighbors").first();
+    await expect(incoming.locator("thead th")).toHaveText(["Source", "Edge"]);
+    await expect(incoming.locator("button.neighbor")).toHaveText([
+        "Alice: Left.",
+        "Alice: Right.",
+    ]);
+    await expect(incoming.locator("button.route")).toHaveText(["Succession", "Succession"]);
+
+    // Walking a row selects that node — in the drawing, not only in the panel.
+    await incoming.locator("button.neighbor").first().click();
+    await expect(page.locator("#detail-title")).toContainText("Alice: Left.");
+    await expect(stage.locator("g.node.selected text.label")).toHaveText("Alice: Left.");
+});
+
+test("leaves the neighbor lists out of a stage that is a tree, not a flow", async ({ page }) => {
+    writeFileSync(LIVE_DOC, ["# The Gate", "", "Guide: Hello.", ""].join("\n"));
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Desugared AST" }).click();
+    await page
+        .locator("section.stage.active g.node")
+        .nth(1)
+        .locator("circle")
+        .dispatchEvent("click");
+
+    await expect(page.locator("#detail-body table.neighbors")).toHaveCount(0);
+});
+
+test("stamps the not-reached line with crosses rather than a fourth dash pattern", async ({
+    page,
+}) => {
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# Loop",
+            "",
+            "Alice: Around again.",
+            "",
+            "=> [Loop](#loop)",
+            "",
+            "Alice: Nobody reads this.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+
+    const barred = page
+        .locator("section.stage.active path.link")
+        .filter({ has: page.locator("title", { hasText: "Not reached" }) })
+        .first();
+    await expect(barred).toHaveAttribute("marker-mid", /url\(#tick-/);
+    // A curve has only two ends; the glyph needs vertices to stand on, so the line is resampled.
+    const vertices = await barred.evaluate(
+        (path) => (path.getAttribute("d") ?? "").split("L").length - 1,
+    );
+    expect(vertices).toBeGreaterThan(2);
+});
+
+test("opens a route from the drawing, and walks off it to either end", async ({ page }) => {
+    writeFileSync(
+        LIVE_DOC,
+        ["# The Gate", "", "Guide: Which way?", "", "Guide: You are inside.", ""].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+
+    await stage.locator("path.edge-hit").first().dispatchEvent("click");
+
+    await expect(page.locator("#detail-title")).toHaveText("Succession");
+    await expect(page.locator("#detail-body .route-meaning")).toContainText("natural order");
+    await expect(page.locator("#detail-body table.neighbors th")).toHaveText([
+        "Source",
+        "Destination",
+    ]);
+
+    await page.locator("#detail-body button.neighbor").last().click();
+    await expect(stage.locator("g.node.selected text.label")).toHaveText("Guide: You are inside.");
+});
+
+test("draws a scene as a band around its nodes rather than a line under each", async ({ page }) => {
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "# The Hall",
+            "",
+            "Guide: Inside.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+
+    await expect(stage.locator("g.region text.region-name")).toHaveText(["The Gate", "The Hall"]);
+    // The name is written once, on the band — never repeated under a node.
+    const attributes = await stage.locator("g.node text.attr").allTextContents();
+    expect(attributes.filter((text) => text.startsWith("scene"))).toEqual([]);
+});
+
+test("opens a region from its band, and names its border", async ({ page }) => {
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "# The Hall",
+            "",
+            "Guide: Inside.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+
+    await stage.locator("g.region rect").first().dispatchEvent("click");
+
+    await expect(page.locator("#detail-title")).toHaveText("The Gate");
+    await expect(page.locator("#detail-body h4")).toHaveText([
+        "Entering",
+        "Leaving",
+        "Source",
+        "Preview",
+    ]);
+    // A scene's text is a stretch of the document, so its preview renders as Markdown does.
+    await expect(page.locator("#detail-body .preview li")).not.toHaveCount(0);
+});
+
+test("renders a list in the preview as a list, markers and all", async ({ page }) => {
+    writeFileSync(
+        LIVE_DOC,
+        ["# The Gate", "", "- Alice: Left.", "", "- Alice: Right.", ""].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await page
+        .locator("section.stage.active g.node")
+        .filter({ hasText: "Choice" })
+        .first()
+        .locator("circle")
+        .dispatchEvent("click");
+
+    const item = page.locator("#detail-body .preview li").first();
+    await expect(item).toBeVisible();
+    // A marker is drawn only for a list-item box; a plain block silently swallows the bullets.
+    expect(await item.evaluate((li) => getComputedStyle(li).display)).toBe("list-item");
+});
+
+test("holds one chosen thing at a time — a node, a route, or a region", async ({ page }) => {
+    // Choosing is choosing, whatever the thing is: picking a new one plainly lets the last go.
+    writeFileSync(
+        LIVE_DOC,
+        ["# The Gate", "", "Guide: Which way?", "", "Guide: You are inside.", ""].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+
+    // The node's hit area selects without folding — a click on its circle would collapse it and
+    // take the edges out of the drawing along with it.
+    await stage.locator("g.node rect.hit").first().dispatchEvent("click");
+    await expect(stage.locator("g.node.selected")).toHaveCount(1);
+
+    await stage.locator("path.edge-hit").first().dispatchEvent("click");
+    await expect(stage.locator("path.link.selected")).toHaveCount(1);
+    await expect(stage.locator("g.node.selected")).toHaveCount(0);
+
+    await stage.locator("g.region rect").first().dispatchEvent("click");
+    await expect(stage.locator("g.region.selected")).toHaveCount(1);
+    await expect(stage.locator("path.link.selected")).toHaveCount(0);
+
+    await stage.locator("g.node rect.hit").first().dispatchEvent("click");
+    await expect(stage.locator("g.node.selected")).toHaveCount(1);
+    await expect(stage.locator("g.region.selected")).toHaveCount(0);
+});
+
+test("keeps a placement link out of the flow it is not part of", async ({ page }) => {
+    // The line after an unconditional divert is unreachable. It gets a line so it is not adrift,
+    // but control never travels it — so it is neither a destination nor a route to open.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# Loop",
+            "",
+            "Alice: Around again.",
+            "",
+            "=> [Loop](#loop)",
+            "",
+            "Alice: Nobody reads this.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+
+    await stage
+        .locator("g.node")
+        .filter({ hasText: "(jump)" })
+        .first()
+        .locator("rect.hit")
+        .dispatchEvent("click");
+    await expect(page.locator("#detail-title")).toContainText("(jump)");
+    await expect(page.locator("#detail-body button.route")).not.toHaveText(["Not reached"]);
+
+    // And clicking the line itself opens nothing: there is no route there to open. The click
+    // carries real coordinates, because the pointer resolves to the nearest line rather than to
+    // whichever target it was dispatched on.
+    await page.evaluate(() => {
+        const stage = document.querySelector("section.stage.active")!;
+        const barred = [...stage.querySelectorAll<SVGPathElement>("path.link")].find(
+            (path) => path.querySelector("title")?.textContent === "Not reached",
+        )!;
+        const point = barred.getPointAtLength(barred.getTotalLength() / 2);
+        const matrix = barred.getScreenCTM()!;
+        const twins = [...stage.querySelectorAll<SVGPathElement>("path.edge-hit")];
+        const twin = twins.find((each) => each.getAttribute("d") === barred.getAttribute("d"))!;
+        twin.dispatchEvent(
+            new MouseEvent("click", {
+                bubbles: true,
+                clientX: matrix.a * point.x + matrix.c * point.y + matrix.e,
+                clientY: matrix.b * point.x + matrix.d * point.y + matrix.f,
+            }),
+        );
+    });
+    await expect(stage.locator("path.link.selected")).toHaveCount(0);
+    await expect(page.locator("#detail-title")).toContainText("(jump)");
+});
+
+test("names a region's kind and takes the reader to the heading that declares it", async ({
+    page,
+}) => {
+    writeFileSync(LIVE_DOC, ["# The Gate", "", "Guide: Which way?", ""].join("\n"));
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+
+    await page.locator("section.stage.active g.region rect").first().dispatchEvent("click");
+
+    await expect(page.locator("#detail-body table").first()).toContainText("Scene");
+    await expect(page.locator("#detail-body table").first()).toContainText("the-gate");
+    await page.locator("#detail-title button").click();
+    // The Source tab opens with the heading's own words selected, not the lines beneath them.
+    await expect(page.locator(".source-stage")).toBeVisible();
+});
+
+test("reads a jump as a jump in every stage that has interpreted one", async ({ page }) => {
+    writeFileSync(
+        LIVE_DOC,
+        ["# The Gate", "", "Guide: Which way?", "", "=> [The Gate](#the-gate)", ""].join("\n"),
+    );
+    await page.goto("/");
+
+    for (const tab of ["Dialogue Graph", "Semantic Model", "Desugared AST", "Dialogue AST"]) {
+        await page.locator(".tab", { hasText: tab }).click();
+        await page
+            .locator("section.stage.active g.node")
+            .filter({ hasText: "=>" })
+            .or(page.locator("section.stage.active g.node").filter({ hasText: "jump" }))
+            .first()
+            .locator("rect.hit")
+            .dispatchEvent("click");
+        await expect(page.locator("#detail-body .preview .jump-ligature")).toHaveCount(1);
+    }
+});
+
+test("gives routes ending at one node a corridor each, and picks the nearest", async ({ page }) => {
+    // Every jump into a scene lands on its entry. Climbing in that node's own column would stack
+    // them into one line to the eye and a coin toss to the pointer.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "  => [The Gate](#the-gate)",
+            "",
+            "- Alice: Right.",
+            "",
+            "  => [The Gate](#the-gate)",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+    await expect(stage.locator("path.reference")).not.toHaveCount(0);
+
+    // Each climbs in its own corridor: no two share the column they rise in.
+    const corridors = await stage.locator("path.reference").evaluateAll((paths) =>
+        paths.map((path) => {
+            const numbers = (path.getAttribute("d") ?? "").match(/-?\d+(\.\d+)?/g) ?? [];
+            return numbers[numbers.length - 6];
+        }),
+    );
+    expect(new Set(corridors).size).toBe(corridors.length);
+
+    // And the pointer finds the line it is actually over, not whichever twin is on top: entering
+    // the second route's target while aiming at a point on the first still lights the first.
+    const lit = await page.evaluate(() => {
+        const stage = document.querySelector("section.stage.active")!;
+        const [first, second] = [...stage.querySelectorAll<SVGPathElement>("path.reference")];
+        const point = first.getPointAtLength(first.getTotalLength() / 2);
+        const matrix = first.getScreenCTM()!;
+        const twins = [...stage.querySelectorAll<SVGPathElement>("path.edge-hit")];
+        const decoy = twins.find((twin) => twin.getAttribute("d") === second.getAttribute("d"))!;
+        decoy.dispatchEvent(
+            new MouseEvent("mouseenter", {
+                bubbles: true,
+                clientX: matrix.a * point.x + matrix.c * point.y + matrix.e,
+                clientY: matrix.b * point.x + matrix.d * point.y + matrix.f,
+            }),
+        );
+        return {
+            first: first.classList.contains("hovered"),
+            second: second.classList.contains("hovered"),
+        };
+    });
+    expect(lit).toEqual({ first: true, second: false });
+});
+
+test("names each kind of route with its own pointer", async ({ page }) => {
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "- Alice: Right.",
+            "",
+            "> `if` `\"Calm\"?`",
+            ">",
+            "> Guide: All is quiet.",
+            ">",
+            "> `else`",
+            ">",
+            "> Guide: Something stirs.",
+            "",
+            "=> [The Gate](#the-gate)",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await expect(page.locator("section.stage.active path.edge-hit")).not.toHaveCount(0);
+
+    const pointers = await page
+        .locator("section.stage.active path.edge-hit")
+        .evaluateAll((hits) =>
+            [
+                ...new Set(
+                    hits.map(
+                        (hit) =>
+                            `${hit.querySelector("title")?.textContent}=${(hit as SVGPathElement).style.cursor}`,
+                    ),
+                ),
+            ].sort(),
+        );
+
+    expect(pointers).toContain("Choice=pointer");
+    expect(pointers).toContain("Conditional branch=help");
+    expect(pointers).toContain("Jump=alias");
+    expect(pointers).toContain("Succession=e-resize");
+});
