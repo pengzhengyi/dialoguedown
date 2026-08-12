@@ -291,9 +291,9 @@ An `else` is the unguarded fallback, so it cannot carry a condition. Remove the 
 
 <span class="dd-sev dd-sev--warning">Warning</span> · Dangling jump arrow
 
-This `=>` has no link after it, so it is not a jump and reads as the characters "=>". Add a link target, such as `=> [The market](#the-market)`.
+`=>` makes a jump only when a link follows it. With no link here it is read literally, staying as the characters "=>". If you meant to jump, add a target: `=> [The market](#the-market)`.
 
-A jump is `=>` followed by a Markdown link. With no link after it, the arrow cannot become a jump, so it stays on the page as the two characters `=>` and the flow silently continues to the next line. Give the arrow a link to the scene it should go to.
+`=>` is the jump sigil: it becomes a jump only when a Markdown link follows it. With no link there is nothing to jump to, so the arrow is read literally — it stays on the page as the two characters and the script simply continues to the next line. That is fine when you meant to type an arrow; when you meant to jump, give it a target.
 
 <span class="dd-eg-bad">Triggering example</span>
 

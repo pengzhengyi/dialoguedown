@@ -83,12 +83,18 @@ The compiler reports `DLG1113` — title **Dangling jump arrow**, category
 `Syntax`, severity `Warning`:
 
 ```text
-scene.dialogue.md(3,1): warning DLG1113: This `=>` has no link after it, so it is
-not a jump and reads as the characters "=>". Add a link target, such as
-`=> [The market](#the-market)`.
+scene.dialogue.md(3,1): warning DLG1113: `=>` makes a jump only when a link
+follows it. With no link here it is read literally, staying as the characters
+"=>". If you meant to jump, add a target: `=> [The market](#the-market)`.
 ```
 
 The line still renders as `=> The market`; the warning explains why.
+
+The message states the rule before the remedy, and offers the fix conditionally
+("if you meant to jump"), because the same arrow can be a mistake or a
+deliberate piece of prose. A `Warning` is still right for the deliberate case:
+it never fails a compile, and the writer whose flow silently vanished is the one
+this diagnostic exists for.
 
 ## Why it happens today
 
@@ -185,8 +191,10 @@ public DesugaredScriptDocument Desugar(ScriptDocument document, DiagnosticsConte
 `JumpAssemblyRule` then holds the sink for exactly one compile, and the rewriter
 hierarchy is untouched. The rules are cheap, stateless value-like objects, so
 constructing them per compile costs nothing measurable and removes the shared
-mutable state a singleton rule would otherwise carry. The factory keeps a
-sink-less overload for callers that do not report.
+mutable state a singleton rule would otherwise carry. The sink is required
+rather than optional: `ScriptDesugarer` is the factory's only caller, so a
+sink-less overload would be dead API and would force every rule to handle a
+missing sink.
 
 ### DD3 — Warning, not error
 

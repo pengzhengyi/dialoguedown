@@ -265,10 +265,11 @@ internal static class DiagnosticDocs
                 ["`else`"])),
         new(
             DiagnosticCatalog.DanglingJumpArrow,
-            "A jump is `=>` followed by a Markdown link. With no link after it, the arrow cannot "
-            + "become a jump, so it stays on the page as the two characters `=>` and the flow "
-            + "silently continues to the next line. Give the arrow a link to the scene it should "
-            + "go to.",
+            "`=>` is the jump sigil: it becomes a jump only when a Markdown link follows it. With "
+            + "no link there is nothing to jump to, so the arrow is read literally — it stays on "
+            + "the page as the two characters and the script simply continues to the next line. "
+            + "That is fine when you meant to type an arrow; when you meant to jump, give it a "
+            + "target.",
             new(
                 """
                 # Crossroads

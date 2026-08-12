@@ -131,8 +131,9 @@ internal static class DiagnosticCatalog
     public static readonly DiagnosticDescriptor DanglingJumpArrow = new(
         "DLG1113",
         "Dangling jump arrow",
-        "This `=>` has no link after it, so it is not a jump and reads as the characters \"=>\". "
-            + "Add a link target, such as `=> [The market](#the-market)`.",
+        "`=>` makes a jump only when a link follows it. With no link here it is read literally, "
+            + "staying as the characters \"=>\". If you meant to jump, add a target: "
+            + "`=> [The market](#the-market)`.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Warning);
 
