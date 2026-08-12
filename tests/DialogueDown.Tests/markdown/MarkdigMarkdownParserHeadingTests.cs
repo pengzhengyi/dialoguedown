@@ -12,7 +12,7 @@ public sealed class MarkdigMarkdownParserHeadingTests : MarkdigMarkdownParserTes
     [InlineData("###### Six", 6, "Six")]
     public void Parse_Heading_ProducesHeadingWithLevelAndText(string source, int level, string expected)
     {
-        var document = Parser.Parse(source);
+        var document = Parse(source);
 
         var heading = AssertSingleBlock<Heading>(document);
         Assert.Equal(level, heading.Level);
@@ -25,7 +25,7 @@ public sealed class MarkdigMarkdownParserHeadingTests : MarkdigMarkdownParserTes
     public void Parse_HeadingWithSurroundingSpaces_KeepsOnlyContent(string source)
     {
         // CommonMark trims the spaces around heading content, so the text is clean.
-        var document = Parser.Parse(source);
+        var document = Parse(source);
 
         var heading = AssertSingleBlock<Heading>(document);
         AssertSingleText(heading.Inlines, "Title");
@@ -34,7 +34,7 @@ public sealed class MarkdigMarkdownParserHeadingTests : MarkdigMarkdownParserTes
     [Fact]
     public void Parse_EmptyHeading_HasNoInlinesAndSpansTheHashes()
     {
-        var document = Parser.Parse("##");
+        var document = Parse("##");
 
         var heading = AssertSingleBlock<Heading>(document);
         Assert.Equal(2, heading.Level);
@@ -46,7 +46,7 @@ public sealed class MarkdigMarkdownParserHeadingTests : MarkdigMarkdownParserTes
     public void Parse_HashNotAtLineStart_IsLiteralText()
     {
         // Only a leading '#' starts a heading; a '#' inside a line stays literal.
-        var document = Parser.Parse("Alice #tag");
+        var document = Parse("Alice #tag");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertSingleText(paragraph.Inlines, "Alice #tag");

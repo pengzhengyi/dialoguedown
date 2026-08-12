@@ -71,6 +71,6 @@ public sealed class UnquotedKeyTranspilationTests
 
     private ScriptDocument Transpile(string source) =>
         _transpiler.Transpile(
-            MarkdownParserFactory.MarkdownParser().Parse(source),
+            MarkdownParserFactory.Parse(source),
             DiagnosticsContextFactory.Context(source));
 }

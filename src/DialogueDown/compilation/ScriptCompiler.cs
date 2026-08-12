@@ -55,7 +55,7 @@ internal sealed class ScriptCompiler : IScriptCompiler
         ArgumentNullException.ThrowIfNull(source);
         var session = CompilationSession.Start(source, _mode);
 
-        var markdown = _parser.Parse(source);
+        var markdown = _parser.Parse(source, session.Context);
         var script = _transpiler.Transpile(markdown, session.Context);
 
         // The transpiler is the only stage that reports errors before analysis, so a stage-boundary

@@ -1,3 +1,4 @@
+using DialogueDown.Diagnostics;
 using Markdig;
 using Markdig.Extensions.EmphasisExtras;
 
@@ -19,9 +20,10 @@ internal sealed class MarkdigMarkdownParser : IMarkdownParser
     public MarkdigMarkdownParser(IUnmodeledNodeHandlingPolicy? policy = null) =>
         _policy = policy ?? DefaultUnmodeledNodeHandlingPolicy.Instance;
 
-    public MarkdownDocument Parse(string source)
+    public MarkdownDocument Parse(string source, DiagnosticsContext context)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(context);
 
         var parsed = Markdig.Markdown.Parse(source, _pipeline);
         var unmodeled = new MarkdigUnmodeledNodeHandler(source, _policy);

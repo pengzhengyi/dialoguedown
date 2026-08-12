@@ -22,7 +22,7 @@ internal static class Pipeline
     public static DesugaredScriptDocument UntilDesugared(string source)
     {
         var context = DiagnosticsContextFactory.Context(source);
-        var markdown = _parser.Parse(source);
+        var markdown = _parser.Parse(source, context);
         var script = _transpiler.Transpile(markdown, context);
         return _desugarer.Desugar(script, context);
     }

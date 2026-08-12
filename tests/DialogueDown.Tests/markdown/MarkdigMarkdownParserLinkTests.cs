@@ -9,7 +9,7 @@ public sealed class MarkdigMarkdownParserLinkTests : MarkdigMarkdownParserTestBa
     [Fact]
     public void Parse_Link_ProducesLinkInlineWithTargetAndLabel()
     {
-        var document = Parser.Parse("[Play tennis](#play-tennis)");
+        var document = Parse("[Play tennis](#play-tennis)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var link = AssertSingleInline<LinkInline>(paragraph.Inlines);
@@ -21,7 +21,7 @@ public sealed class MarkdigMarkdownParserLinkTests : MarkdigMarkdownParserTestBa
     public void Parse_LinkLabelWithEmphasis_PreservesStructure()
     {
         // A label is inline content, so its emphasis is kept as structure, not flattened.
-        var document = Parser.Parse("[Play *tennis*](#x)");
+        var document = Parse("[Play *tennis*](#x)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var link = AssertSingleInline<LinkInline>(paragraph.Inlines);
@@ -41,7 +41,7 @@ public sealed class MarkdigMarkdownParserLinkTests : MarkdigMarkdownParserTestBa
     public void Parse_LinkWithEmptyTarget_IsAccepted()
     {
         // Syntactically valid; an empty jump target is rejected later, not here.
-        var document = Parser.Parse("[label]()");
+        var document = Parse("[label]()");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var link = AssertSingleInline<LinkInline>(paragraph.Inlines);
@@ -54,7 +54,7 @@ public sealed class MarkdigMarkdownParserLinkTests : MarkdigMarkdownParserTestBa
     {
         // An empty label is syntactically valid; whether a jump needs display text
         // is decided downstream, not here.
-        var document = Parser.Parse("[](#x)");
+        var document = Parse("[](#x)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var link = AssertSingleInline<LinkInline>(paragraph.Inlines);
@@ -66,7 +66,7 @@ public sealed class MarkdigMarkdownParserLinkTests : MarkdigMarkdownParserTestBa
     public void Parse_LinkLabelWithCodeSpan_PreservesStructure()
     {
         // A code span inside a label is kept as a CodeSpanInline, not flattened to text.
-        var document = Parser.Parse("[a `b` c](#x)");
+        var document = Parse("[a `b` c](#x)");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         var link = AssertSingleInline<LinkInline>(paragraph.Inlines);

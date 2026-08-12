@@ -7,7 +7,7 @@ public sealed class MarkdigMarkdownParserTests : MarkdigMarkdownParserTestBase
     [Fact]
     public void Parse_NullSource_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => Parser.Parse(null!));
+        Assert.Throws<ArgumentNullException>(() => Parse(null!));
     }
 
     [Theory]
@@ -16,7 +16,7 @@ public sealed class MarkdigMarkdownParserTests : MarkdigMarkdownParserTestBase
     [InlineData("\n\n")]
     public void Parse_EmptyOrWhitespace_ReturnsEmptyDocument(string source)
     {
-        var document = Parser.Parse(source);
+        var document = Parse(source);
 
         Assert.Empty(document.Blocks);
     }
