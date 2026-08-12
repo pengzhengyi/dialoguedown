@@ -39,10 +39,13 @@ export const EDGE_STYLES: Readonly<Record<string, EdgeStyle>> = {
         cursor: "e-resize",
         meaning: "The natural order: when this node is done, the next one runs.",
     },
-    // Long dashes echo the `=>` a jump is written with; `alias` is the shortcut pointer.
+    // Dash-dot: a long leap, then a landing — the engineering convention for a path that leaves
+    // the sequence and rejoins it elsewhere. A plain long dash differed from a conditional's dash
+    // only in *length*, which the eye cannot judge without the two side by side, and which a
+    // legend swatch is far too short to show repeating at all. `alias` is the shortcut pointer.
     jump: {
         label: "Jump",
-        dash: "10 4",
+        dash: "10 4 1 4",
         isRoute: true,
         cursor: "alias",
         meaning: "A divert (`=>`): control leaves the written order and resumes at the target.",
@@ -57,7 +60,9 @@ export const EDGE_STYLES: Readonly<Record<string, EdgeStyle>> = {
     },
     // Dashed: taken only when its condition holds, so the pointer asks the question.
     control: {
-        label: "Conditional branch",
+        // Short, because the legend names a route in a narrow column; the inspector spells out
+        // what it means in full.
+        label: "Conditional",
         dash: "6 4",
         isRoute: true,
         cursor: "help",
@@ -77,6 +82,15 @@ export const EDGE_STYLES: Readonly<Record<string, EdgeStyle>> = {
             "unreachable node sits in the document.",
     },
 };
+
+/**
+ * The arrowhead a route is drawn with, in a 0-10 marker viewBox. Shared so the legend points with
+ * the same head the canvas points with, rather than a second drawing free to drift from it.
+ */
+export const ARROWHEAD_PATH = "M 0 0 L 10 5 L 0 10 z";
+
+/** The cross a withheld line is stamped with, in the same 0-10 marker viewBox. */
+export const CROSS_PATH = "M 2 2 L 8 8 M 8 2 L 2 8";
 
 export function edgeStyle(category: string | undefined): EdgeStyle | undefined {
     return category ? EDGE_STYLES[category] : undefined;

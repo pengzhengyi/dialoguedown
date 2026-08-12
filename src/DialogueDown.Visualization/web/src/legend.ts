@@ -1,6 +1,7 @@
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import { CATEGORY_COLORS } from "./palette";
 import { edgeStyle } from "./edge-style";
+import { edgeSwatch } from "./edge-swatch";
 import { tintsOf } from "./region-bands";
 import { codicon } from "./codicon";
 
@@ -65,6 +66,9 @@ export interface LegendHandlers {
 export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElement {
     const stats = categoryStats(stage.nodes);
     const dimmed = new Set<string>();
+    // Every stage's legend lives in the one document, so an arrowhead's `id` has to say which
+    // stage it belongs to — otherwise each stage would point with the first stage's color.
+    const scope = stage.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     const legend = document.createElement("div");
     legend.className = "legend";
@@ -186,23 +190,9 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         const item = interactiveItem(category, style?.label ?? category, count);
         item.classList.add("legend-edge");
 
-        // The swatch draws the line's own pattern, so the legend shows what to look for rather
-        // than only what color it is.
-        const swatch = item.querySelector<HTMLElement>(".swatch")!;
-        swatch.classList.add("edge-swatch");
-        if (style?.symbol) {
-            // A line the graph stamps with a glyph shows the glyph here too, rather than a dash
-            // pattern the reader will not find anywhere on the drawing.
-            swatch.classList.add("symbol-swatch");
-            swatch.textContent = SYMBOL_GLYPHS[style.symbol];
-            // The shared builder painted a bar here; a glyph is drawn in ink, not filled.
-            swatch.style.background = "";
-            swatch.style.color = CATEGORY_COLORS[category];
-            return item;
-        }
-        swatch.style.background = style?.dash
-            ? `repeating-linear-gradient(to right, ${CATEGORY_COLORS[category]} 0 ${dashOn(style.dash)}px, transparent ${dashOn(style.dash)}px ${dashPeriod(style.dash)}px)`
-            : CATEGORY_COLORS[category];
+        // The swatch is the route drawn as the canvas draws it — same dashes, same arrowhead,
+        // same stamped glyphs — so what the reader learns here is what they will find there.
+        item.querySelector(".swatch")!.replaceWith(edgeSwatch(category, scope));
         return item;
     }
 
@@ -248,17 +238,4 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         item.addEventListener("blur", handlers.onLeave);
         return item;
     }
-}
-
-/** How a stamped glyph is written in the legend, where there is no path to stamp it along. */
-const SYMBOL_GLYPHS: Record<string, string> = { cross: "\u00d7\u00d7\u00d7" };
-
-// A dash pattern is "on off"; the swatch repeats that at the same proportions.
-function dashOn(dash: string): number {
-    return Number(dash.split(/\s+/)[0]);
-}
-
-function dashPeriod(dash: string): number {
-    const [on, off] = dash.split(/\s+/).map(Number);
-    return on + off;
 }

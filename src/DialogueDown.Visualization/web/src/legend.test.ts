@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { categoryStats, createLegend, edgeCategoryCounts, type LegendHandlers } from "./legend";
 import { CATEGORY_COLORS } from "./palette";
 import type { DisplayNode, Stage } from "./model";
+import { ARROWHEAD_PATH, CROSS_PATH, edgeStyle } from "./edge-style";
+import { edgeSwatch, periodsShown } from "./edge-swatch";
 
 function node(id: string, label: string, category?: string): DisplayNode {
     return { id, label, category, attributes: [] };
@@ -156,10 +158,29 @@ describe("createLegend edge group", () => {
     it("colors an edge row from the shared palette, so a route matches its node", () => {
         const legend = createLegend(flowStage, handlers);
 
-        // The first edge row is the jump, following palette order. A patterned line paints as a
-        // repeating gradient, so the color appears inside it rather than as a flat background.
-        const swatch = legend.querySelector<HTMLElement>(".legend-edge .edge-swatch");
-        expect(swatch?.style.background).toContain(rgb(CATEGORY_COLORS.jump));
+        // The first edge row is the jump, following palette order.
+        const line = legend.querySelector(".legend-edge .edge-swatch .swatch-line");
+        expect(line?.getAttribute("stroke")).toBe(CATEGORY_COLORS.jump);
+    });
+
+    it("draws an edge row with the route's own dash pattern, not an approximation of it", () => {
+        const legend = createLegend(flowStage, handlers);
+
+        const line = legend.querySelector(".legend-edge .edge-swatch .swatch-line");
+        expect(line?.getAttribute("stroke-dasharray")).toBe(edgeStyle("jump")?.dash);
+    });
+
+    it("points an edge row with an arrowhead, because a route has a direction", () => {
+        const legend = createLegend(flowStage, handlers);
+
+        const swatch = legend.querySelector(".legend-edge .edge-swatch")!;
+        const marker = swatch.querySelector("marker")!.id;
+        expect(swatch.querySelector(".swatch-line")!.getAttribute("marker-end")).toBe(
+            `url(#${marker})`,
+        );
+        // Every stage's legend shares the one document, so the id has to name its stage or one
+        // stage would point with another's color.
+        expect(marker).toContain("dialogue-graph");
     });
 
     it("omits the groups entirely when no edge carries a meaning", () => {
@@ -205,8 +226,73 @@ describe("createLegend edge group", () => {
     });
 });
 
-// A style property set from a hex color reads back as rgb().
-function rgb(hex: string): string {
-    const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16));
-    return `rgb(${r}, ${g}, ${b})`;
-}
+describe("edgeSwatch", () => {
+    it("draws the route's own dash pattern, so the legend cannot drift from the drawing", () => {
+        const swatch = edgeSwatch("jump", "graph");
+
+        expect(swatch.querySelector(".swatch-line")?.getAttribute("stroke-dasharray")).toBe(
+            edgeStyle("jump")?.dash,
+        );
+    });
+
+    it("draws a solid line for a route with no pattern, rather than an invented one", () => {
+        const swatch = edgeSwatch("break", "graph");
+
+        expect(swatch.querySelector(".swatch-line")?.hasAttribute("stroke-dasharray")).toBe(false);
+    });
+
+    it("colors the line from the shared palette, so a route matches its node", () => {
+        const swatch = edgeSwatch("jump", "graph");
+
+        expect(swatch.querySelector(".swatch-line")?.getAttribute("stroke")).toBe(
+            CATEGORY_COLORS.jump,
+        );
+    });
+
+    it("points a route with an arrowhead, because a route leads somewhere", () => {
+        const swatch = edgeSwatch("jump", "graph");
+
+        const marker = swatch.querySelector("marker")!;
+        expect(swatch.querySelector(".swatch-line")!.getAttribute("marker-end")).toBe(
+            `url(#${marker.id})`,
+        );
+        expect(marker.querySelector("path")?.getAttribute("fill")).toBe(CATEGORY_COLORS.jump);
+    });
+
+    it("namespaces the arrowhead per stage, since every legend shares one document", () => {
+        expect(edgeSwatch("jump", "desugared").querySelector("marker")!.id).not.toBe(
+            edgeSwatch("jump", "dialogue-graph").querySelector("marker")!.id,
+        );
+    });
+
+    it("stamps a withheld route with crosses and never points it, because it leads nowhere", () => {
+        const swatch = edgeSwatch("deferred", "graph");
+
+        const line = swatch.querySelector(".swatch-line")!;
+        expect(line.getAttribute("marker-end")).toBeNull();
+        expect(line.getAttribute("marker-mid")).toContain("tick-");
+        // A glyph is stamped at a vertex, so a stamped line has to be drawn as several segments.
+        expect(line.getAttribute("d")!.split("L").length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("carries the canvas's own marker shapes, so the legend cannot draw a different arrow", () => {
+        expect(edgeSwatch("jump", "graph").querySelector("marker path")?.getAttribute("d")).toBe(
+            ARROWHEAD_PATH,
+        );
+        expect(
+            edgeSwatch("deferred", "graph").querySelector("marker path")?.getAttribute("d"),
+        ).toBe(CROSS_PATH);
+    });
+});
+
+describe("periodsShown", () => {
+    // A pattern the reader cannot see repeat is not a pattern; it is one bar of unknown length.
+    // This is what made a jump and a conditional indistinguishable at the old swatch width.
+    it.each(["jump", "choice", "control"])("repeats %s's pattern at least twice", (category) => {
+        expect(periodsShown(edgeStyle(category))).toBeGreaterThanOrEqual(2);
+    });
+
+    it("treats a solid line as its own pattern at any length", () => {
+        expect(periodsShown(edgeStyle("break"))).toBe(Infinity);
+    });
+});

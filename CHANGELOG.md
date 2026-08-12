@@ -87,6 +87,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **The graph legend now draws each route as the line it really is** — the same dashes the canvas
+  draws, ending in the same arrowhead, and stamped with the same crosses where a line marks a node
+  nothing reaches. A jump is drawn dash‑dot so it differs from a conditional in kind rather than
+  only in dash length, and the legend row reads "Conditional".
 - **The report's tables now run on `table-core` v9.** Sorting, searching, and faceted filtering
   behave exactly as before; the upgrade keeps the report on a supported major of its headless
   table engine.
