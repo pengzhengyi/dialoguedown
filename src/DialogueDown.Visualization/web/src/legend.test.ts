@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { categoryStats, createLegend, type LegendHandlers } from "./legend";
+import { categoryStats, createLegend, edgeCategoryCounts, type LegendHandlers } from "./legend";
 import { CATEGORY_COLORS } from "./palette";
 import type { DisplayNode, Stage } from "./model";
 
@@ -109,3 +109,104 @@ describe("createLegend", () => {
         expect(handlers.onLeave).toHaveBeenCalledTimes(2);
     });
 });
+
+describe("edgeCategoryCounts", () => {
+    it("counts edges per category and ignores uncategorized ones", () => {
+        const counts = edgeCategoryCounts([
+            { fromId: "n0", toId: "n1", kind: "Child", category: "break" },
+            { fromId: "n1", toId: "n2", kind: "Child", category: "break" },
+            { fromId: "n2", toId: "n0", kind: "Reference", category: "jump" },
+            { fromId: "n3", toId: "n4", kind: "Child" },
+        ]);
+
+        expect(counts).toEqual({ break: 2, jump: 1 });
+    });
+});
+
+describe("createLegend edge group", () => {
+    const handlers: LegendHandlers = { onToggle: vi.fn(), onHover: vi.fn(), onLeave: vi.fn() };
+
+    const flowStage: Stage = {
+        title: "Dialogue Graph",
+        description: "The compiled flow.",
+        nodes: [node("n0", "Alice: Hi.", "speech"), node("n1", "End", "terminal")],
+        edges: [
+            { fromId: "n0", toId: "n1", kind: "Child", category: "break" },
+            { fromId: "n1", toId: "n0", kind: "Reference", category: "jump" },
+        ],
+    };
+
+    it("names the two groups when the stage's edges carry meaning", () => {
+        const legend = createLegend(flowStage, handlers);
+
+        expect([...legend.querySelectorAll(".legend-heading")].map((el) => el.textContent)).toEqual(
+            ["Nodes", "Edges"],
+        );
+    });
+
+    it("labels an edge row by the route it is, not by the node kind it borrows color from", () => {
+        const legend = createLegend(flowStage, handlers);
+
+        const labels = [...legend.querySelectorAll(".legend-edge .legend-label")].map(
+            (el) => el.textContent,
+        );
+        expect(labels).toEqual(["Jump", "Succession"]);
+    });
+
+    it("colors an edge row from the shared palette, so a route matches its node", () => {
+        const legend = createLegend(flowStage, handlers);
+
+        // The first edge row is the jump, following palette order. A patterned line paints as a
+        // repeating gradient, so the color appears inside it rather than as a flat background.
+        const swatch = legend.querySelector<HTMLElement>(".legend-edge .edge-swatch");
+        expect(swatch?.style.background).toContain(rgb(CATEGORY_COLORS.jump));
+    });
+
+    it("omits the groups entirely when no edge carries a meaning", () => {
+        const plain: Stage = { ...flowStage, edges: [{ fromId: "n0", toId: "n1", kind: "Child" }] };
+
+        const legend = createLegend(plain, handlers);
+
+        expect(legend.querySelectorAll(".legend-heading")).toHaveLength(0);
+        expect(legend.querySelectorAll(".legend-edge")).toHaveLength(0);
+    });
+
+    it("answers the pointer as a node row does, so alike rows behave alike", () => {
+        const onHover = vi.fn();
+        const onLeave = vi.fn();
+        const legend = createLegend(flowStage, { onToggle: vi.fn(), onHover, onLeave });
+
+        const row = legend.querySelector<HTMLElement>(".legend-edge")!;
+        row.dispatchEvent(new MouseEvent("mouseenter"));
+        expect(onHover).toHaveBeenCalledWith("jump");
+
+        row.dispatchEvent(new MouseEvent("mouseleave"));
+        expect(onLeave).toHaveBeenCalled();
+    });
+
+    it("switches its own route off and on again when clicked", () => {
+        const onToggle = vi.fn();
+        const legend = createLegend(flowStage, { onToggle, onHover: vi.fn(), onLeave: vi.fn() });
+
+        const row = legend.querySelector<HTMLButtonElement>(".legend-edge")!;
+        row.click();
+        expect(onToggle).toHaveBeenLastCalledWith("jump", true);
+        expect(row.getAttribute("aria-pressed")).toBe("false");
+
+        row.click();
+        expect(onToggle).toHaveBeenLastCalledWith("jump", false);
+        expect(row.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    it("is a button, so a keyboard reaches it too", () => {
+        const legend = createLegend(flowStage, handlers);
+
+        expect(legend.querySelector(".legend-edge")?.tagName).toBe("BUTTON");
+    });
+});
+
+// A style property set from a hex color reads back as rgb().
+function rgb(hex: string): string {
+    const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16));
+    return `rgb(${r}, ${g}, ${b})`;
+}

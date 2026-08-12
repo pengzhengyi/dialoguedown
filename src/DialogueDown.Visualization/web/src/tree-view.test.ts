@@ -97,4 +97,28 @@ describe("createTreeView — selection by stable id", () => {
 
         expect(view.svg.querySelectorAll("g.node").length).toBe(1); // only the collapsed root remains
     });
+
+    it("leaves a closed fold closed when a selection is merely restored", () => {
+        // A rebuild reselects the node that was showing. It must not reopen a branch the reader
+        // deliberately shut — only deliberate navigation asks to be shown.
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {});
+        view.selectById("root", { toggle: true });
+
+        expect(view.selectById("a")).toBe(true);
+
+        expect(view.svg.querySelectorAll("g.node").length).toBe(1);
+    });
+
+    it("opens whatever is folded over a node reached by name, so selecting it shows it", () => {
+        // A node reached from a search or a neighbor row may sit inside a collapsed branch.
+        // Marking it there would fill the inspector while the drawing stayed shut.
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {});
+        view.selectById("root", { toggle: true });
+        expect(view.svg.querySelectorAll("g.node").length).toBe(1);
+
+        expect(view.selectById("a", { reveal: true })).toBe(true);
+
+        expect(view.svg.querySelectorAll("g.node").length).toBe(3);
+        expect(view.svg.querySelector("g.node.selected")).not.toBeNull();
+    });
 });

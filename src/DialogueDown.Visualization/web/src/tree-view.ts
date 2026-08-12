@@ -1,6 +1,6 @@
 import {
     create,
-    linkHorizontal,
+    pointer,
     stratify,
     tree,
     zoom,
@@ -14,6 +14,9 @@ import {
 } from "d3";
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import type { CameraTransform } from "./graph-camera";
+import { edgeStyle } from "./edge-style";
+import { edgePath, labelBlockWidth, labelClearance, LABEL_BLOCK_ORIGIN, type Point } from "./edge-path";
+import { bandsOf, type PlacedNode } from "./region-bands";
 import { colorOf } from "./palette";
 import { ellipsize, MAX_INLINE_TEXT, tooltipHtml } from "./text";
 import { createLegend } from "./legend";
@@ -38,6 +41,45 @@ export function lineageIds<T extends { id: string }>(node: HierarchyNode<T>): Se
 const SCENE_NODE_RADIUS = 7;
 const CONTENT_NODE_RADIUS = 5;
 
+// The arrowhead's drawn size in user units, and how far its tip sits back from the node center so
+// it stops exactly on the circle's edge: the node's radius plus the half of its stroke that sits
+// outside the circle.
+const ARROW_SIZE = 9;
+const ARROW_STANDOFF = CONTENT_NODE_RADIUS + 0.75;
+
+/**
+ * The drawn size of a repeated glyph, and how far apart the line stamps them. The spacing is a
+ * whole multiple of the dot pitch of the line it rides on, so the glyphs land on dots instead of
+ * beating against them.
+ */
+const SYMBOL_SIZE = 7;
+const SYMBOL_SPACING = 18;
+/** How many dots ride between one glyph and the next. */
+const DOTS_PER_SYMBOL = 3;
+
+/** How far below the deepest row the first cross-link lane sits — one row's worth of clear air. */
+const LANE_GAP = 62;
+
+/** How far apart stacked cross-link lanes sit, so two routes never share a line. */
+const LANE_STEP = 26;
+
+/** How far apart the approach rows of routes ending at one node sit. */
+const PORT_STEP = 9;
+
+/** How finely a route is walked when deciding which one the pointer is nearest. */
+const PICK_SAMPLE_SPACING = 12;
+const PICK_SAMPLES = 160;
+
+/** Where one cross-link travels: its own lane, its own corridor, its own approach row. */
+interface CrossLinkTrack {
+    lane: number;
+    corridor: number;
+    port: number;
+}
+
+/** The horizontal distance between one depth and the next. */
+const COLUMN_STEP = 260;
+
 /**
  * A scene-tree backbone node — a scene or the implicit document root. The Semantic tab
  * emphasizes these (a larger, thicker-ringed circle and bolder connecting edges) so the tab
@@ -61,6 +103,14 @@ export interface TreeView {
      * after a save-triggered rebuild.
      */
     selectById(id: string, options?: NodeSelectOptions): boolean;
+    /** Choose the route between two nodes, as clicking it in the drawing does. */
+    selectEdgeBetween(fromId: string, toId: string): boolean;
+    /** Choose a region, as clicking its band does. */
+    selectRegion(region: string): void;
+    /** Light up one node, or one route, while the pointer rests on a row naming it elsewhere. */
+    spotlight(
+        what: { nodeId?: string; fromId?: string; toId?: string; region?: string } | null,
+    ): void;
     /**
      * Show the given camera and fold. A `null` camera uses the default (root-centered)
      * framing. Call after the tab becomes visible so the framing uses real dimensions.
@@ -85,6 +135,10 @@ export interface TreeViewOptions {
     onCameraChange?(transform: CameraTransform, byUser: boolean): void;
     /** Fired when the reader collapses or expands a node. */
     onFoldChange?(collapsed: string[]): void;
+    /** Fired when the reader clicks an edge, so the caller can show the route it is. */
+    onSelectEdge?(edge: DisplayEdge): void;
+    /** Fired when the reader clicks a region band, so the caller can show the region it is. */
+    onSelectRegion?(region: string): void;
     /** Fired when the reader clicks Revert, so the caller can drop remembered state. */
     onRevert?(): void;
 }
@@ -95,6 +149,13 @@ export interface NodeSelectOptions {
     toggle?: boolean;
     /** Recenter the camera on the node, as keyboard navigation does. */
     center?: boolean;
+    /**
+     * Open whatever is folded over the node, so it is actually on screen. For deliberate
+     * navigation — a search hit, a neighbor row — where landing on a hidden node would look like
+     * nothing happened. Restoring a selection after a rebuild leaves it off, so a fold the reader
+     * closed stays closed.
+     */
+    reveal?: boolean;
 }
 
 const NAVIGATION_KEYS = ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Enter", " "];
@@ -118,9 +179,22 @@ export function createTreeView(
         initialFold = [],
         onCameraChange,
         onFoldChange,
+        onSelectEdge,
+        onSelectRegion,
         onRevert,
     } = options;
     const referenceEdges = stage.edges.filter((edge) => edge.kind === "Reference");
+
+    // A stage whose edges mean different things colors them; the lookup is by the pair they join,
+    // which is unique because a node is reached from a given node at most once.
+    const edgeCategories = new Map(
+        stage.edges
+            .filter((edge) => edge.category)
+            .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.category!]),
+    );
+    const categoryOfLink = (fromId: string, toId: string): string | undefined =>
+        edgeCategories.get(`${fromId}->${toId}`);
+    const edgeCategoriesPresent = [...new Set(edgeCategories.values())];
     const root = buildHierarchy(stage);
     root.each((node) => {
         (node as TreeNode)._children = (node as TreeNode).children;
@@ -128,6 +202,11 @@ export function createTreeView(
 
     let selected: TreeNode | null = null;
     const dimmed = new Set<string>();
+    // The reader's current object, when it is not a node. Exactly one of these three is set at a
+    // time: choosing a route or a region is as much a choice as choosing a node, and the drawing
+    // says so by letting the last one go.
+    let selectedEdge: { fromId: string; toId: string } | null = null;
+    let selectedRegion: string | null = null;
     // The node whose lineage is currently spotlighted on hover (null when not hovering).
     let focused: TreeNode | null = null;
     // Set while a control-driven (user) zoom is applied, so the zoom handler can tell
@@ -139,10 +218,64 @@ export function createTreeView(
     let viewToken = 0;
 
     const svg = create<SVGSVGElement>("svg").attr("class", "tree");
+
+    // Flow reads one way, so a stage whose edges mean something points them. A marker cannot
+    // inherit its line's color, so each category gets its own, and the id is namespaced per stage
+    // because several stages share one document.
+    const markerScope = stage.title.replace(/\W+/g, "-").toLowerCase();
+    const arrowFor = (category: string | undefined): string | null =>
+        category && edgeStyle(category)?.isRoute ? `url(#arrow-${markerScope}-${category})` : null;
+    const symbolFor = (category: string | undefined): string | null =>
+        category && edgeStyle(category)?.symbol ? `url(#tick-${markerScope}-${category})` : null;
+    if (edgeCategoriesPresent.length > 0) {
+        const defs = svg.append("defs");
+        for (const category of edgeCategoriesPresent.filter((c) => edgeStyle(c)?.symbol)) {
+            defs.append("marker")
+                .attr("id", `tick-${markerScope}-${category}`)
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 5)
+                .attr("refY", 5)
+                .attr("markerWidth", SYMBOL_SIZE)
+                .attr("markerHeight", SYMBOL_SIZE)
+                .attr("markerUnits", "userSpaceOnUse")
+                // Upright rather than along the line: a cross reads as a cross only when it is
+                // not rotated into a plus by a vertical stretch of route.
+                .attr("orient", "0")
+                .append("path")
+                .attr("d", "M 2 2 L 8 8 M 8 2 L 2 8")
+                .attr("stroke", colorOf(category))
+                .attr("stroke-width", 1.6)
+                .attr("fill", "none");
+        }
+        for (const category of edgeCategoriesPresent.filter((c) => edgeStyle(c)?.isRoute)) {
+            defs.append("marker")
+                .attr("id", `arrow-${markerScope}-${category}`)
+                .attr("viewBox", "0 0 10 10")
+                // A link ends at its target's center, so the head is pushed back to the circle's
+                // edge — otherwise the arrow is drawn underneath the dot and never seen. refX is
+                // in viewBox units, which the marker scales to ARROW_SIZE across.
+                .attr("refX", 10 + (ARROW_STANDOFF * 10) / ARROW_SIZE)
+                .attr("refY", 5)
+                .attr("markerWidth", ARROW_SIZE)
+                .attr("markerHeight", ARROW_SIZE)
+                .attr("markerUnits", "userSpaceOnUse")
+                .attr("orient", "auto-start-reverse")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", colorOf(category));
+        }
+    }
+
     const viewport = svg.append("g");
+    // Regions are the ground the drawing stands on, so they are laid down before anything else.
+    const gRegions = viewport.append("g").attr("class", "regions");
     const gLinks = viewport.append("g");
     const gReferences = viewport.append("g");
     const gNodes = viewport.append("g");
+    // A node's click target is a generous rectangle that reaches into the corridor its own
+    // outgoing edges travel through, so it would swallow every hover aimed at a line. The lines
+    // therefore get an invisible, wider twin above the nodes: on the stroke, the edge wins.
+    const gEdgeHits = viewport.append("g").attr("class", "edge-hits");
 
     const zoomBehavior = zoom<SVGSVGElement, undefined>()
         .scaleExtent([0.1, 3])
@@ -182,13 +315,11 @@ export function createTreeView(
         onLeave: () => clearHighlight(),
     });
 
-    const layout = tree<DisplayNode>().nodeSize([62, 220]);
-    const diagonal = linkHorizontal<
-        HierarchyPointLink<DisplayNode>,
-        HierarchyPointNode<DisplayNode>
-    >()
-        .x((node) => node.y)
-        .y((node) => node.x);
+    // The column step is wide enough for a full-width label plus the lead-out its outgoing line
+    // needs, so a node's own words never run into the next column or get struck through.
+    const layout = tree<DisplayNode>().nodeSize([62, COLUMN_STEP]);
+    // The tree lays out depth along y and rows along x; the drawing reads the other way round.
+    const at = (node: { x: number; y: number }): Point => ({ x: node.y, y: node.x });
 
     applyView(initialCamera, initialFold);
 
@@ -199,13 +330,266 @@ export function createTreeView(
         handleKey,
         clearSelection: () => {
             selected = null;
+            selectedEdge = null;
+            selectedRegion = null;
             applySelection();
         },
         selectById,
+        selectEdgeBetween: (fromId, toId) => {
+            const edge = edgeBetween(fromId, toId);
+            if (edge) selectEdge(edge);
+            return Boolean(edge);
+        },
+        selectRegion,
+        spotlight,
         applyView,
     };
 
+    /**
+     * Lights up whatever a row elsewhere is naming — a node, or a route — so the reader can see
+     * that the words and the drawing are the same thing seen twice.
+     */
+    function spotlight(
+        what: { nodeId?: string; fromId?: string; toId?: string; region?: string } | null,
+    ): void {
+        gRegions
+            .selectAll<SVGGElement, { region: string }>("g.region")
+            .classed("highlight", (datum) => datum.region === what?.region);
+        gNodes
+            .selectAll<SVGGElement, TreeNode>("g.node")
+            .classed(
+                "highlight",
+                (d) =>
+                    (Boolean(what?.nodeId) && d.data.id === what?.nodeId) ||
+                    (Boolean(what?.region) && d.data.region === what?.region),
+            );
+        viewport
+            .selectAll<SVGPathElement, unknown>("path.link")
+            .nodes()
+            .forEach((link) =>
+                link.classList.toggle(
+                    "highlight",
+                    Boolean(what?.fromId) &&
+                        link.dataset.fromId === what?.fromId &&
+                        link.dataset.toId === what?.toId,
+                ),
+            );
+    }
+
+    // Names the route a line is, so hovering it says what it means and a screen reader can read
+    // it. The class is what the stylesheet thickens on hover — an edge is thin, so it needs a
+    // generous target and a clear response.
+    function describeEdge<Datum>(
+        selection: Selection<SVGPathElement, Datum, SVGGElement, unknown>,
+        categoryOfDatum: (datum: Datum) => string | undefined,
+        endsOfDatum: (datum: Datum) => { fromId: string; toId: string },
+    ): void {
+        selection
+            .classed("routed", (datum) => Boolean(edgeStyle(categoryOfDatum(datum))))
+            .each(function (datum) {
+                const ends = endsOfDatum(datum);
+                this.dataset.fromId = ends.fromId;
+                this.dataset.toId = ends.toId;
+                // A fresh title each join, so a rebuilt edge never keeps a stale name.
+                this.replaceChildren();
+                const category = categoryOfDatum(datum);
+                const style = edgeStyle(category);
+                delete this.dataset.cursor;
+                delete this.dataset.category;
+                if (!style) return;
+                this.dataset.cursor = style.cursor;
+                this.dataset.category = category;
+                const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                title.textContent = style.label;
+                this.appendChild(title);
+            });
+    }
+
     /* --- hierarchy --- */
+
+    /**
+     * Measures every drawn node and sizes its click target to match, returning how far past each
+     * node's dot an outgoing line must start to clear its own words.
+     *
+     * The text is measured rather than estimated: a character-count guess is wrong by exactly the
+     * amount that puts a line through a label. A DOM that does not lay text out (a test's) has
+     * nothing to measure, and reports zero — the lines are then merely shorter, never misplaced.
+     */
+    function measureLabelBlocks(): Map<string, { clearance: number; width: number }> {
+        const measured = new Map<string, { clearance: number; width: number }>();
+        gNodes.selectAll<SVGGElement, TreeNode>("g.node").each(function (datum) {
+            const widest = [...this.querySelectorAll<SVGTextElement>("text")].reduce(
+                (width, text) => Math.max(width, text.getComputedTextLength?.() ?? 0),
+                0,
+            );
+            const width = labelBlockWidth(widest);
+            measured.set(datum.data.id, { clearance: labelClearance(widest), width });
+            this.querySelector("rect.hit")?.setAttribute("width", String(width));
+        });
+        return measured;
+    }
+
+    /**
+     * Draws each region as a band behind the nodes that share it.
+     *
+     * A scene names an area of the document, so it is written once around that area rather than
+     * repeated under every line inside it — which is both quieter and one line shorter per node.
+     */
+    function drawRegions(nodes: readonly TreeNode[], measured: Map<string, { width: number }>): void {
+        const placed: PlacedNode[] = nodes.map((node) => ({
+            region: node.data.region,
+            x: node.y,
+            y: node.x,
+            width: measured.get(node.data.id)?.width ?? 0,
+        }));
+
+        const band = gRegions
+            .selectAll<SVGGElement, ReturnType<typeof bandsOf>[number]>("g.region")
+            .data(bandsOf(placed), (datum) => datum.region);
+        band.exit().remove();
+        const entering = band.enter().append("g").attr("class", "region");
+        entering
+            .append("rect")
+            // A region is a thing a reader can ask about, so the band it is drawn as answers.
+            .on("click", (_event, datum) => selectRegion(datum.region));
+        entering.append("text").attr("class", "region-name");
+
+        const all = gRegions.selectAll<SVGGElement, ReturnType<typeof bandsOf>[number]>("g.region");
+        all.attr("data-tint", (datum) => datum.tint);
+        all.select("rect")
+            .attr("x", (datum) => datum.x)
+            .attr("y", (datum) => datum.y)
+            .attr("width", (datum) => datum.width)
+            .attr("height", (datum) => datum.height)
+            .attr("rx", 10);
+        all.select("text")
+            .attr("x", (datum) => datum.x + 12)
+            .attr("y", (datum) => datum.y + 17)
+            .text((datum) => datum.region);
+    }
+
+    // The empty band under the deepest row, where cross-links travel. Each cross-link gets a lane
+    // of its own so two never share a line: the shortest hop runs closest to the drawing and a
+    // longer one passes beneath it, the way nested brackets never cross.
+    function assignLanes(
+        edges: readonly DisplayEdge[],
+        positionById: Map<string, TreeNode>,
+        nodes: readonly TreeNode[],
+    ): Map<string, CrossLinkTrack> {
+        const floor = nodes.reduce((low, node) => Math.max(low, node.x), 0) + LANE_GAP;
+        const spanOf = (edge: DisplayEdge): number =>
+            Math.abs(positionById.get(edge.toId)!.y - positionById.get(edge.fromId)!.y);
+        // Routes ending at one node queue up: each takes the next corridor back from that node's
+        // column, and leans in from its own row, so none of them lies on top of another.
+        const arrivals = new Map<string, number>();
+        return new Map(
+            [...edges]
+                .sort((left, right) => spanOf(left) - spanOf(right))
+                .map((edge, depth) => {
+                    const queued = arrivals.get(edge.toId) ?? 0;
+                    arrivals.set(edge.toId, queued + 1);
+                    return [
+                        edgeKey(edge),
+                        {
+                            lane: floor + depth * LANE_STEP,
+                            corridor: queued,
+                            port: portOffset(queued),
+                        },
+                    ] as const;
+                }),
+        );
+    }
+
+    // Ports fan either side of the target's own row — 0, above, below, further above — so the
+    // first route arrives dead level and the rest lean off it symmetrically.
+    function portOffset(queued: number): number {
+        const rank = Math.ceil(queued / 2);
+        return queued === 0 ? 0 : (queued % 2 === 1 ? -1 : 1) * rank * PORT_STEP;
+    }
+
+    function edgeKey(edge: DisplayEdge): string {
+        return `${edge.fromId}->${edge.toId}`;
+    }
+
+    function edgeBetween(fromId?: string, toId?: string): DisplayEdge | undefined {
+        return stage.edges.find((edge) => edge.fromId === fromId && edge.toId === toId);
+    }
+
+    function clearHovered(): void {
+        viewport
+            .selectAll<SVGPathElement, unknown>("path.link.hovered")
+            .nodes()
+            .forEach((link) => link.classList.remove("hovered"));
+    }
+
+    /**
+     * The route actually closest to the pointer, rather than whichever twin happens to be on top.
+     *
+     * A route's pointer target is deliberately wider than its line, so where two run close
+     * together their targets overlap and the topmost one wins by accident of draw order. Measuring
+     * makes the answer the one the reader was aiming at.
+     */
+    function nearestTo(event: PointerEvent | MouseEvent, fallback: SVGPathElement): SVGPathElement {
+        const twins = gEdgeHits.selectAll<SVGPathElement, SVGPathElement>("path.edge-hit").data();
+        if (twins.length < 2 || !fallback.getPointAtLength) return fallback;
+        const [x, y] = pointer(event, viewport.node()!);
+        let best = fallback;
+        let bestDistance = Infinity;
+        for (const route of twins) {
+            const distance = distanceToPath(route, x, y);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = route;
+            }
+        }
+        return best;
+    }
+
+    /** How far a point lies from a path, measured by walking it — near enough, and exact enough. */
+    function distanceToPath(path: SVGPathElement, x: number, y: number): number {
+        const length = path.getTotalLength();
+        const steps = Math.max(2, Math.min(PICK_SAMPLES, Math.round(length / PICK_SAMPLE_SPACING)));
+        let nearest = Infinity;
+        for (let step = 0; step <= steps; step++) {
+            const point = path.getPointAtLength((length * step) / steps);
+            nearest = Math.min(nearest, (point.x - x) ** 2 + (point.y - y) ** 2);
+        }
+        return nearest;
+    }
+
+    function trim(value: number): number {
+        return Math.round(value * 100) / 100;
+    }
+
+    /**
+     * Rewrites a symbol-carrying line as an evenly sampled polyline, so its `marker-mid` glyph
+     * lands at regular intervals along it.
+     *
+     * SVG stamps a marker at a path's vertices, and a curve has only its two ends — so a repeated
+     * glyph needs vertices to stand on. The samples are close enough that the polyline is
+     * indistinguishable from the curve it replaces. A DOM that measures nothing (a test's) leaves
+     * the curve as it is.
+     */
+    function stampSymbols(path: SVGPathElement, category: string | undefined): void {
+        if (!edgeStyle(category)?.symbol || !path.getTotalLength) return;
+        const length = path.getTotalLength();
+        const steps = Math.max(2, Math.round(length / SYMBOL_SPACING));
+        const points = Array.from({ length: steps + 1 }, (_, step) =>
+            path.getPointAtLength((length * step) / steps),
+        );
+        // The dots between the glyphs take their pitch from the glyphs' own spacing, so the two
+        // patterns stay in step instead of drifting against each other along the line.
+        path.style.strokeDasharray = `0 ${trim(length / steps / DOTS_PER_SYMBOL)}`;
+        path.setAttribute(
+            "d",
+            points
+                .map(
+                    (point, index) =>
+                        `${index === 0 ? "M" : "L"}${trim(point.x)},${trim(point.y)}`,
+                )
+                .join(""),
+        );
+    }
 
     function buildHierarchy(stage: Stage): TreeNode {
         const parentOf = new Map<string, string>();
@@ -221,6 +605,8 @@ export function createTreeView(
 
     function select(node: TreeNode): void {
         selected = node;
+        selectedEdge = null;
+        selectedRegion = null;
         applySelection();
         onSelect(node.data);
     }
@@ -242,8 +628,26 @@ export function createTreeView(
     function selectById(id: string, options: NodeSelectOptions = {}): boolean {
         const node = findNodeById(id);
         if (node === null) return false;
+        if (options.reveal) unfoldOver(node);
         applyNodeSelection(node, options);
         return true;
+    }
+
+    /**
+     * Opens whatever is folded over a node, so selecting it actually shows it.
+     *
+     * A node reached by name — from a search, or from a neighbor row — may sit inside a collapsed
+     * branch. Selecting it there would mark a node that is nowhere on screen: the inspector would
+     * fill in and the drawing would not move.
+     */
+    function unfoldOver(node: TreeNode): void {
+        const folded = node
+            .ancestors()
+            .filter((ancestor) => !ancestor.children && ancestor._children) as TreeNode[];
+        if (folded.length === 0) return;
+        for (const ancestor of folded) ancestor.children = ancestor._children;
+        update();
+        onFoldChange?.(collapsedIds());
     }
 
     function findNodeById(id: string): TreeNode | null {
@@ -267,22 +671,68 @@ export function createTreeView(
         gNodes
             .selectAll<SVGGElement, TreeNode>("g.node")
             .classed("selected", (d) => d === selected);
+        viewport
+            .selectAll<SVGPathElement, unknown>("path.link")
+            .nodes()
+            .forEach((link) =>
+                link.classList.toggle(
+                    "selected",
+                    link.dataset.fromId === selectedEdge?.fromId &&
+                        link.dataset.toId === selectedEdge?.toId,
+                ),
+            );
+        gRegions
+            .selectAll<SVGGElement, { region: string }>("g.region")
+            .classed("selected", (datum) => datum.region === selectedRegion);
     }
 
+    /** Make this route the reader's current object, letting go of whatever was chosen before. */
+    function selectEdge(edge: DisplayEdge): void {
+        selected = null;
+        selectedRegion = null;
+        selectedEdge = { fromId: edge.fromId, toId: edge.toId };
+        applySelection();
+        onSelectEdge?.(edge);
+    }
+
+    /** Make this region the reader's current object, letting go of whatever was chosen before. */
+    function selectRegion(region: string): void {
+        selected = null;
+        selectedEdge = null;
+        selectedRegion = region;
+        applySelection();
+        onSelectRegion?.(region);
+    }
+
+    // Nodes and routes answer the legend the same way. Their category names never collide — a
+    // stage's nodes and its edges are drawn from disjoint parts of the palette — so one dimmed set
+    // serves both.
     function applyCategoryFilter(): void {
         gNodes
             .selectAll<SVGGElement, TreeNode>("g.node")
             .classed("dimmed", (d) => Boolean(d.data.category && dimmed.has(d.data.category)));
+        eachLink((link, category) =>
+            link.classList.toggle("dimmed", Boolean(category && dimmed.has(category))),
+        );
     }
 
     function highlightCategory(category: string): void {
         gNodes
             .selectAll<SVGGElement, TreeNode>("g.node")
             .classed("highlight", (d) => d.data.category === category);
+        eachLink((link, own) => link.classList.toggle("highlight", own === category));
     }
 
     function clearHighlight(): void {
         gNodes.selectAll<SVGGElement, TreeNode>("g.node").classed("highlight", false);
+        eachLink((link) => link.classList.remove("highlight"));
+    }
+
+    function eachLink(apply: (link: SVGPathElement, category?: string) => void): void {
+        viewport
+            .selectAll<SVGPathElement, unknown>("path.link")
+            .nodes()
+            .forEach((link) => apply(link, link.dataset.category));
     }
 
     /* --- lineage focus (hover) --- */
@@ -377,33 +827,9 @@ export function createTreeView(
         const nodes = root.descendants() as TreeNode[];
         const positionById = new Map(nodes.map((node) => [node.data.id, node]));
 
-        gLinks
-            .selectAll<SVGPathElement, HierarchyPointLink<DisplayNode>>("path.link")
-            .data(root.links(), (link) => (link.target as TreeNode).data.id)
-            .join("path")
-            .attr("class", "link")
-            // A link into a scene is part of the scene backbone (root→scene, scene→subscene);
-            // emphasize it over the edges to a scene's content blocks.
-            .classed("scene", (link) => (link.target as TreeNode).data.typeName === "Scene")
-            .attr("d", diagonal);
-
-        gReferences
-            .selectAll<SVGPathElement, DisplayEdge>("path.reference")
-            .data(
-                referenceEdges.filter(
-                    (edge) => positionById.has(edge.fromId) && positionById.has(edge.toId),
-                ),
-                (edge) => `${edge.fromId}->${edge.toId}`,
-            )
-            .join("path")
-            .attr("class", "link reference")
-            .attr("d", (edge) =>
-                diagonal({
-                    source: positionById.get(edge.fromId)!,
-                    target: positionById.get(edge.toId)!,
-                }),
-            );
-
+        // Nodes are placed and measured before any line is drawn, because a line's shape depends
+        // on how wide the words it leaves behind actually are. Paint order is unaffected: the
+        // link, reference, and node layers were appended once, in that order.
         const node = gNodes
             .selectAll<SVGGElement, TreeNode>("g.node")
             .data(nodes, (datum) => datum.data.id);
@@ -415,9 +841,118 @@ export function createTreeView(
             .attr("transform", (d) => `translate(${d.y},${d.x})`)
             .classed("collapsed", (d) => !d.children && Boolean(d._children));
 
+        const measured = measureLabelBlocks();
+        const clearanceOf = (id: string): number => measured.get(id)?.clearance ?? 0;
+        drawRegions(nodes, measured);
+
+        const categoryOf = (link: HierarchyPointLink<DisplayNode>): string | undefined =>
+            categoryOfLink((link.source as TreeNode).data.id, (link.target as TreeNode).data.id);
+        const categoryColor = (link: HierarchyPointLink<DisplayNode>): string | null => {
+            const category = categoryOf(link);
+            return category ? colorOf(category) : null;
+        };
+        const dashOfLink = (link: HierarchyPointLink<DisplayNode>): string | null =>
+            edgeStyle(categoryOf(link))?.dash ?? null;
+
+        gLinks
+            .selectAll<SVGPathElement, HierarchyPointLink<DisplayNode>>("path.link")
+            .data(root.links(), (link) => (link.target as TreeNode).data.id)
+            .join("path")
+            .attr("class", "link")
+            // A link into a scene is part of the scene backbone (root→scene, scene→subscene);
+            // emphasize it over the edges to a scene's content blocks.
+            .classed("scene", (link) => (link.target as TreeNode).data.typeName === "Scene")
+            // A style, not an attribute: the stylesheet's own `.link` stroke would win over one.
+            .style("stroke", (link) => categoryColor(link))
+            .style("stroke-dasharray", (link) => dashOfLink(link))
+            .attr("marker-end", (link) => arrowFor(categoryOf(link)))
+            .attr("marker-mid", (link) => symbolFor(categoryOf(link)))
+            .call(
+                describeEdge,
+                (link: HierarchyPointLink<DisplayNode>) => categoryOf(link),
+                (link: HierarchyPointLink<DisplayNode>) => ({
+                    fromId: (link.source as TreeNode).data.id,
+                    toId: (link.target as TreeNode).data.id,
+                }),
+            )
+            .attr("d", (link) =>
+                edgePath(at(link.source), at(link.target), {
+                    clearance: clearanceOf((link.source as TreeNode).data.id),
+                }),
+            )
+            .each(function (link) {
+                stampSymbols(this, categoryOf(link));
+            });
+
+        const crossLinks = referenceEdges.filter(
+            (edge) => positionById.has(edge.fromId) && positionById.has(edge.toId),
+        );
+        const laneOf = assignLanes(crossLinks, positionById, nodes);
+
+        gReferences
+            .selectAll<SVGPathElement, DisplayEdge>("path.reference")
+            .data(crossLinks, (edge) => edgeKey(edge))
+            .join("path")
+            .attr("class", "link reference")
+            .style("stroke", (edge) => (edge.category ? colorOf(edge.category) : null))
+            // A categorized line owns its pattern outright, so a plain succession that happens to
+            // be drawn as a cross-link stays solid rather than inheriting the reference dash.
+            .style("stroke-dasharray", (edge) =>
+                edge.category ? (edgeStyle(edge.category)?.dash ?? "none") : null,
+            )
+            .attr("marker-end", (edge) => arrowFor(edge.category))
+            .attr("marker-mid", (edge) => symbolFor(edge.category))
+            .call(
+                describeEdge,
+                (edge: DisplayEdge) => edge.category,
+                (edge: DisplayEdge) => ({ fromId: edge.fromId, toId: edge.toId }),
+            )
+            // A cross-link spans the drawing rather than one step of it, so it travels its own
+            // lane below every row instead of lying across the words in between.
+            .attr("d", (edge) =>
+                edgePath(at(positionById.get(edge.fromId)!), at(positionById.get(edge.toId)!), {
+                    clearance: clearanceOf(edge.fromId),
+                    ...(laneOf.get(edgeKey(edge)) ?? {}),
+                }),
+            )
+            .each(function (edge) {
+                stampSymbols(this, edge.category);
+            });
+
         applySelection();
         applyCategoryFilter();
         applyFocus();
+        syncEdgeHits();
+    }
+
+    // Mirrors every named route as an invisible wide path above the nodes, and lends its hover to
+    // the real line. Kept in sync after each render rather than joined on its own data, so the
+    // twin can never disagree with the line it stands for.
+    function syncEdgeHits(): void {
+        const routes = viewport.selectAll<SVGPathElement, unknown>("path.link.routed").nodes();
+
+        gEdgeHits
+            .selectAll<SVGPathElement, SVGPathElement>("path.edge-hit")
+            .data(routes)
+            .join("path")
+            .attr("class", "edge-hit")
+            .attr("d", (route) => route.getAttribute("d"))
+            // The pointer names the route before the tooltip does — a question mark over a
+            // conditional, a hand over a choice arm, the barred circle over what is never reached.
+            .style("cursor", (route) => route.dataset.cursor ?? null)
+            .each(function (route) {
+                this.replaceChildren();
+                const title = route.querySelector("title");
+                if (title) this.appendChild(title.cloneNode(true));
+            })
+            .on("mouseenter", (event, route) => nearestTo(event, route).classList.add("hovered"))
+            .on("mouseleave", () => clearHovered())
+            .on("click", (event, route) => {
+                const picked = nearestTo(event, route);
+                const edge = edgeBetween(picked.dataset.fromId, picked.dataset.toId);
+                // A placement link is a visual clue, not flow: there is no route to open.
+                if (edge && edgeStyle(edge.category)?.isRoute) selectEdge(edge);
+            });
     }
 
     function appendEnteringNodes(
@@ -452,7 +987,10 @@ export function createTreeView(
             .attr("class", "label")
             .attr("dy", "0.32em")
             .attr("x", 12)
-            .text((d) => d.data.label);
+            // Clipped to the same width as the attributes beneath it. A line of dialogue can run
+            // longer than the column it sits in, and an unclipped label overprints its neighbor;
+            // the inspector and the hover tip carry the whole of it.
+            .text((d) => ellipsize(d.data.label, MAX_INLINE_TEXT));
 
         group.each(function (d) {
             d.data.attributes.forEach((attr, i) => {
@@ -465,20 +1003,13 @@ export function createTreeView(
             });
         });
 
-        // A generous transparent hit area behind the label and attributes, so the
-        // whole node block is clickable to inspect. Size is estimated from the
-        // (ellipsised) text, so it never depends on getBBox.
+        // A generous transparent hit area behind the label and attributes, so the whole node block
+        // is clickable to inspect. Its width is set from the measured text once the node is drawn.
         group.each(function (d) {
-            const lines = [
-                d.data.label,
-                ...d.data.attributes.map((a) => `${a.name}: ${a.value}`),
-            ].map((line) => ellipsize(line, MAX_INLINE_TEXT));
-            const longest = lines.reduce((max, line) => Math.max(max, line.length), 0);
             const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             rect.setAttribute("class", "hit");
-            rect.setAttribute("x", "-8");
+            rect.setAttribute("x", String(LABEL_BLOCK_ORIGIN));
             rect.setAttribute("y", "-12");
-            rect.setAttribute("width", String(12 + longest * 6.5 + 10));
             rect.setAttribute("height", String(20 + d.data.attributes.length * 12));
             rect.addEventListener("click", () => {
                 guardSelect(d, {});
