@@ -21,6 +21,8 @@ internal sealed class ConfiguredSpeakerReader
 
     public IReadOnlyList<ConfiguredSpeaker> Read(DocumentSyntax document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         var speakers = new List<ConfiguredSpeaker>();
         string? firstDefaultName = null;
 
@@ -76,7 +78,8 @@ internal sealed class ConfiguredSpeakerReader
     {
         if (item.Value is not ArraySyntax array)
         {
-            throw Error("'tags' must be an array of tag strings or inline tables.", item.Value!);
+            throw TomlErrors.At(
+                "'tags' must be an array of tag strings or inline tables.", item.Value!);
         }
 
         foreach (var element in array.Items)
@@ -89,7 +92,8 @@ internal sealed class ConfiguredSpeakerReader
     {
         InlineTableSyntax inline => ReadInlineTag(inline),
         StringValueSyntax shorthand => ParseShorthandTag(shorthand.Value!),
-        _ => throw Error("A tag must be a string or an inline table with a 'name'.", value),
+        _ => throw TomlErrors.At(
+            "A tag must be a string or an inline table with a 'name'.", value),
     };
 
     private static ConfiguredTag ParseShorthandTag(string shorthand)
@@ -116,7 +120,7 @@ internal sealed class ConfiguredSpeakerReader
                     value = RequireString(pair);
                     break;
                 default:
-                    throw Error(
+                    throw TomlErrors.At(
                         $"An inline-table tag has only 'name' and 'value'; "
                         + $"'{TomlKeys.Name(pair.Key)}' is not allowed.", pair.Value!);
             }
@@ -124,7 +128,7 @@ internal sealed class ConfiguredSpeakerReader
 
         if (name is null)
         {
-            throw Error("An inline-table tag must have a 'name'.", inline);
+            throw TomlErrors.At("An inline-table tag must have a 'name'.", inline);
         }
 
         return new ConfiguredTag(name, value);
@@ -135,7 +139,7 @@ internal sealed class ConfiguredSpeakerReader
         var name = TomlKeys.Name(item.Key);
         if (!ReservedTagNames.Known.Contains(name))
         {
-            throw Error(
+            throw TomlErrors.At(
                 $"Unknown speaker key '{name}'. Use 'name', 'id', 'tags', or a known reserved tag.",
                 item.Key!);
         }
@@ -151,7 +155,8 @@ internal sealed class ConfiguredSpeakerReader
                 into.Add(new ConfiguredTag(name, valued.Value!));
                 break;
             default:
-                throw Error($"Reserved tag '{name}' must be a boolean or a string.", item.Value!);
+                throw TomlErrors.At(
+                    $"Reserved tag '{name}' must be a boolean or a string.", item.Value!);
         }
     }
 
@@ -160,7 +165,7 @@ internal sealed class ConfiguredSpeakerReader
     {
         if (firstDefaultName is not null)
         {
-            throw Error(
+            throw TomlErrors.At(
                 $"Two speakers are marked default ('{firstDefaultName}' and '{speaker.Name}'); "
                 + "only one default speaker is allowed.", entry);
         }
@@ -172,21 +177,18 @@ internal sealed class ConfiguredSpeakerReader
         speaker.ReservedTags.Any(tag => tag.Name == ReservedTagNames.Default);
 
     private static string RequireName(string? name, TableArraySyntax entry) =>
-        name ?? throw Error("A speaker must have a 'name'.", entry);
+        name ?? throw TomlErrors.At("A speaker must have a 'name'.", entry);
 
     private static string RequireNonEmptyString(KeyValueSyntax item)
     {
         var value = RequireString(item);
         return value.Length > 0
             ? value
-            : throw Error($"'{TomlKeys.Name(item.Key)}' must not be empty.", item.Value!);
+            : throw TomlErrors.At(
+                $"'{TomlKeys.Name(item.Key)}' must not be empty.", item.Value!);
     }
 
     private static string RequireString(KeyValueSyntax item) => item.Value is StringValueSyntax text
         ? text.Value!
-        : throw Error($"'{TomlKeys.Name(item.Key)}' must be a string.", item.Value!);
-
-    private static DialogueConfigurationException Error(string message, SyntaxNode node) =>
-        new(message, TomlLocation.From(node.Span));
-
+        : throw TomlErrors.At($"'{TomlKeys.Name(item.Key)}' must be a string.", item.Value!);
 }

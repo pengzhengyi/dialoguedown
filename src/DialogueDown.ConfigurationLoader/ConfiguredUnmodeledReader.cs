@@ -43,7 +43,7 @@ internal sealed class ConfiguredUnmodeledReader
     {
         var name = TomlKeys.Name(entry.Key);
         return UnmodeledMarkdownNames.TryParseKind(name)
-            ?? throw Error(
+            ?? throw TomlErrors.At(
                 $"Unknown unmodeled Markdown kind '{name}'. "
                     + $"Use {UnmodeledMarkdownNames.KindNamesDescription}.",
                 entry.Key!);
@@ -53,17 +53,14 @@ internal sealed class ConfiguredUnmodeledReader
     {
         if (entry.Value is not StringValueSyntax text)
         {
-            throw Error(
+            throw TomlErrors.At(
                 $"'{TomlKeys.Name(entry.Key)}' must be a string.", entry.Value!);
         }
 
         return UnmodeledMarkdownNames.TryParseHandling(text.Value!)
-            ?? throw Error(
+            ?? throw TomlErrors.At(
                 $"Unknown handling '{text.Value}'. "
                     + $"Use {UnmodeledMarkdownNames.HandlingNamesDescription}.",
                 entry.Value);
     }
-
-    private static DialogueConfigurationException Error(string message, SyntaxNode node) =>
-        new(message, TomlLocation.From(node.Span));
 }

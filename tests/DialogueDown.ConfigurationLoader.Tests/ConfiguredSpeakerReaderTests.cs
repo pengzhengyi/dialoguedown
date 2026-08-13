@@ -6,6 +6,10 @@ namespace DialogueDown.ConfigurationLoader.Tests;
 public sealed class ConfiguredSpeakerReaderTests
 {
     [Fact]
+    public void Read_NullDocument_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => new ConfiguredSpeakerReader().Read(null!));
+
+    [Fact]
     public void Read_EmptyDocument_ReturnsEmpty()
     {
         Assert.Empty(Read(string.Empty));
