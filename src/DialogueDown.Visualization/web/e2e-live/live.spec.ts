@@ -806,10 +806,16 @@ test("gives routes ending at one node a corridor each, and picks the nearest", a
     const corridors = await stage.locator("path.reference").evaluateAll((paths) =>
         paths.map((path) => {
             const numbers = (path.getAttribute("d") ?? "").match(/-?\d+(\.\d+)?/g) ?? [];
-            return numbers[numbers.length - 6];
+            return Number(numbers[numbers.length - 6]);
         }),
     );
     expect(new Set(corridors).size).toBe(corridors.length);
+
+    // And they are far enough apart to aim between, not merely distinct.
+    const spacing = [...corridors]
+        .sort((left, right) => left - right)
+        .map((corridor, index, all) => (index === 0 ? Infinity : corridor - all[index - 1]));
+    expect(Math.min(...spacing)).toBeGreaterThanOrEqual(12);
 
     // And the pointer finds the line it is actually over, not whichever twin is on top: entering
     // the second route's target while aiming at a point on the first still lights the first.
@@ -872,24 +878,12 @@ test("frames a graph from its own root rather than inheriting where you were loo
 test("opens a stage showing the whole of it, clear of the legend", async ({ page }) => {
     // A stage used to open at full size anchored on its root, which showed a handful of nodes and
     // left the reader to hunt for the rest — and the legend covered part of what it described.
+    // Short enough to fit the canvas the test leaves once both panels have their room. A script
+    // too wide to fit at a legible scale opens at its start instead, and then some of it is
+    // behind the legend by necessity — that is the fold's job, not the framing's.
     writeFileSync(
         LIVE_DOC,
-        [
-            "# The Gate",
-            "",
-            "Guide: Which way?",
-            "",
-            "- Alice: Left.",
-            "",
-            "  Guide: You climb.",
-            "",
-            "- Alice: Right.",
-            "",
-            "  Guide: It swings open.",
-            "",
-            "Guide: You are inside.",
-            "",
-        ].join("\n"),
+        ["# The Gate", "", "Guide: Which way?", "", "Guide: Inside.", ""].join("\n"),
     );
     await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
@@ -905,7 +899,9 @@ test("opens a stage showing the whole of it, clear of the legend", async ({ page
             box.left < area.right &&
             box.bottom > area.top &&
             box.top < area.bottom;
+        const transform = stage.querySelector("svg.tree g")!.getAttribute("transform") ?? "";
         return {
+            scale: Number(/scale\(([\d.]+)\)/.exec(transform)?.[1] ?? 0),
             total: nodes.length,
             framed: nodes.filter((node) => within(node.getBoundingClientRect(), canvas)).length,
             behindLegend: nodes.filter((node) => within(node.getBoundingClientRect(), legend))
@@ -913,6 +909,10 @@ test("opens a stage showing the whole of it, clear of the legend", async ({ page
         };
     });
 
+    // A graph too wide to show legibly falls back to anchoring on its root, and then its far end
+    // lands wherever it lands — including under the legend. Assert the fit was really taken, so
+    // this can never pass merely because the drawing happened to stop short of the panel.
+    expect(framing.scale).toBeGreaterThan(0.15);
     expect(framing.framed).toBe(framing.total);
     expect(framing.behindLegend).toBe(0);
 });
@@ -940,6 +940,46 @@ test("folds the legend away, and back", async ({ page }) => {
     await fold.click();
     await expect(legend.locator(".legend-item").first()).toBeVisible();
     await expect(fold.locator(".legend-fold-hide")).toBeVisible();
+});
+
+test("clips a label to the width it is allowed, leaving the corridors their gutter", async ({
+    page,
+}) => {
+    // A character count cannot say how wide a label will be — thirty `W`s are more than twice
+    // thirty `i`s — so the gap the corridors climb in was unknown. Measuring makes it a number.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+            "",
+            "Guide: iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const labels = page.locator("section.stage.active g.node text.label");
+    await expect(labels).not.toHaveCount(0);
+
+    const widths = await labels.evaluateAll((texts) =>
+        texts.map((text) => (text as SVGTextElement).getComputedTextLength()),
+    );
+    const drawn = await labels.allTextContents();
+
+    // Both are clipped to one budget — so their widths agree closely while their character
+    // counts do not, which is the whole point of measuring instead of counting.
+    const wide = drawn.find((text) => text.includes("WWW"))!;
+    const narrow = drawn.find((text) => text.includes("iii"))!;
+    expect(wide.length).toBeLessThan(narrow.length / 2);
+    expect(wide.endsWith("…")).toBe(true);
+    expect(narrow.endsWith("…")).toBe(true);
+
+    // The budget is what the column leaves once the corridors have their gutter.
+    const budget = 176;
+    expect(Math.max(...widths)).toBeLessThanOrEqual(budget);
+    expect(Math.min(...widths.filter((width) => width > 50))).toBeGreaterThan(budget * 0.9);
 });
 
 test("names each kind of route with its own pointer", async ({ page }) => {
@@ -984,7 +1024,50 @@ test("names each kind of route with its own pointer", async ({ page }) => {
         );
 
     expect(pointers).toContain("Choice=pointer");
-    expect(pointers).toContain("Conditional branch=help");
+    expect(pointers).toContain("Conditional=help");
     expect(pointers).toContain("Jump=alias");
     expect(pointers).toContain("Succession=e-resize");
+});
+
+test("shows each route in the legend as the line it actually is", async ({ page }) => {
+    // The legend used to approximate each route with a CSS gradient: a second drawing of the same
+    // vocabulary, free to drift, and with no way to show that a route points somewhere. It now
+    // draws the route itself, so the reader learns exactly what they will find on the canvas.
+    writeFileSync(
+        LIVE_DOC,
+        ["# The Gate", "", "Guide: Farewell => [the end](#END)", "", "Guide: Unheard.", ""].join(
+            "\n",
+        ),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const legend = page.locator("section.stage.active .legend");
+    await expect(legend.locator(".legend-edge")).not.toHaveCount(0);
+
+    const rows = await legend.locator(".legend-edge").evaluateAll((items) =>
+        items.map((item) => {
+            const line = item.querySelector(".swatch-line")!;
+            return {
+                label: item.querySelector(".legend-label")!.textContent,
+                dash: line.getAttribute("stroke-dasharray"),
+                points: Boolean(line.getAttribute("marker-end")),
+                stamped: Boolean(line.getAttribute("marker-mid")),
+            };
+        }),
+    );
+
+    // A jump leads somewhere and says so with an arrowhead; "not reached" is not a route at all,
+    // so it is stamped with crosses and points nowhere.
+    expect(rows).toContainEqual({ label: "Jump", dash: "10 4 1 4", points: true, stamped: false });
+    expect(rows).toContainEqual({
+        label: "Not reached",
+        dash: "0 6",
+        points: false,
+        stamped: true,
+    });
+
+    // Every pattern repeats at swatch width, which is what tells one route from another. A jump's
+    // period is the longest at 19px, and the drawn line is 43px.
+    const width = (await legend.locator(".edge-swatch").first().boundingBox())!.width;
+    expect(width).toBeGreaterThanOrEqual(48);
 });

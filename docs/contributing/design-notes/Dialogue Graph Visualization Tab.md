@@ -240,7 +240,12 @@ caught by a number rather than by a reader.
 ## Open questions and deferred work
 
 - **The legend floats over the canvas.** It is absolutely positioned top-right and
-  now taller, so it can sit over the drawing at some zooms.
+  now taller, so it can sit over the drawing at some zooms. Drawing each route as
+  a real line also made it wider, and on a narrow canvas — the live server splits
+  the window between source and report — the legend can take enough room that a
+  graph no longer fits above the legibility floor and falls back to anchoring on
+  its root. Folding the legend when the fit would otherwise fail is the obvious
+  next move.
 - **The camera opens at 100%.** A large graph therefore starts off-screen; a
   fit-to-view default would frame it, and is a change every stage tab shares.
 - **Playing the graph from the tab.** Stepping through the flow belongs to the
