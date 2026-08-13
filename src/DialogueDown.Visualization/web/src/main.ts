@@ -16,6 +16,7 @@ import { initModeBadge } from "./mode-badge";
 import { initPathDisplay, initConfigPath } from "./path-display";
 import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
+import { mermaidPreviews } from "./mermaid-preview";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
 import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
 import { initEmptyShell } from "./empty-shell";
@@ -58,7 +59,9 @@ const report = resolveReport();
 const header = document.querySelector<HTMLElement>(".app-header");
 
 // Apply the saved color theme and mount the System/Light/Dark toggle (every mode).
-initTheme(header?.querySelector(".header-controls") ?? null);
+initTheme(header?.querySelector(".header-controls") ?? null, () => {
+    void mermaidPreviews.rerenderAll();
+});
 
 if ((report.mode === "view" || report.mode === "edit") && report.source == null && report.project) {
     // A served shell with no document open: mount the Explorer over the project root and show the

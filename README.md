@@ -157,15 +157,16 @@ DialogueDown is **transparent end to end**: you can *see* what the compiler
 produced at each stage. The optional
 [`DialogueDown.Visualization`](src/DialogueDown.Visualization/) project renders the
 compiler's stages as a **single, self-contained HTML report** — a **Source** tab
-with a live preview and working anchor links, a graph tab per stage (**Markdown
-AST**, **Dialogue AST**, **Desugared AST**) with pan, zoom, and click-to-collapse,
-and a **Semantic Model** tab that pairs the resolved scene tree with cross-linked
-speaker, anchor, and jump-resolution tables. A served report toggles between
-read-only **View** and an in-browser **Edit** mode — with document-aware
-autocomplete for jump targets, speakers, `@id`s, and `#tag`s — that saves back to
-the file. It bundles all its assets (D3, CodeMirror, Pico.css, marked, Tippy.js)
-so it works fully offline, and reads the compiler through the same seams the tests
-use, never touching the shipped core package.
+with a live preview, working anchor links, and rendered fenced Mermaid diagrams;
+graph tabs for the **Markdown AST**, **Dialogue AST**, **Desugared AST**, and
+**Dialogue Graph**; and a **Semantic Model** tab that pairs the resolved scene
+tree with cross-linked speaker, anchor, and jump-resolution tables. A served
+report toggles between read-only **View** and an in-browser **Edit** mode — with
+document-aware autocomplete for jump targets, speakers, `@id`s, and `#tag`s —
+that saves back to the file. It bundles all its assets (D3, Mermaid, DOMPurify,
+CodeMirror, Pico.css, marked, and Tippy.js) so it works fully offline, and reads
+the compiler through the same seams the tests use, never touching the shipped
+core package.
 
 Render a script from the command line with the `ddown visualize` command
 ([setup guide](docs/guide/cli.md)):
@@ -183,8 +184,7 @@ ddown visualize scene.dialogue.md --edit --root .
 # Export a self-contained report to a file (no server, no browser)
 ddown visualize scene.dialogue.md -o report.html
 
-# Emit each stage's graph as portable Mermaid or Graphviz DOT text (to stdout or -o)
-ddown visualize scene.dialogue.md --emit mermaid
+# Emit each stage's graph as Graphviz DOT text (to stdout or -o)
 ddown visualize scene.dialogue.md --emit dot -o scene.dot
 ```
 

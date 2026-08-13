@@ -25,7 +25,7 @@ internal sealed class VisualizeSettings : CommandSettings
     public string? Output { get; init; }
 
     [CommandOption("--emit <format>")]
-    [Description("Emit each stage's graph as text instead of a report: 'mermaid' or 'dot' (requires a script; writes to --output or stdout).")]
+    [Description("Emit each stage's graph as Graphviz DOT text instead of a report (requires a script; writes to --output or stdout).")]
     public string? Emit { get; init; }
 
     [CommandOption("--config <path>")]
@@ -48,9 +48,6 @@ internal sealed class VisualizeSettings : CommandSettings
     {
         switch (value.Trim().ToLowerInvariant())
         {
-            case "mermaid":
-                format = EmitFormat.Mermaid;
-                return true;
             case "dot":
                 format = EmitFormat.Dot;
                 return true;
@@ -81,9 +78,16 @@ internal sealed class VisualizeSettings : CommandSettings
                 return ValidationResult.Error("--emit requires a <script>.");
             }
 
+            if (string.Equals(Emit.Trim(), "mermaid", StringComparison.OrdinalIgnoreCase))
+            {
+                return ValidationResult.Error(
+                    "Mermaid stage emission was removed. Use '--emit dot' for compiler graphs; " +
+                    "fenced `mermaid` blocks render in the HTML report.");
+            }
+
             if (!TryParseEmitFormat(Emit, out _))
             {
-                return ValidationResult.Error($"Unknown --emit format '{Emit}'. Use 'mermaid' or 'dot'.");
+                return ValidationResult.Error($"Unknown --emit format '{Emit}'. Use 'dot'.");
             }
         }
 

@@ -70,8 +70,8 @@
     href: Command-Line Interface.md
   - name: Visualize on the CLI
     href: Visualize on the CLI.md
-  - name: Visualize CLI — Emit Mermaid and DOT
-    href: Visualize CLI - Emit Mermaid and DOT.md
+  - name: Visualize CLI — Emit DOT
+    href: Visualize CLI - Emit DOT.md
 - name: Visualization
   items:
   - name: Compilation Visualization
@@ -88,6 +88,8 @@
     href: Dialogue Graph Visualization Tab.md
   - name: Unmodeled Markdown Highlighting
     href: Unmodeled Markdown Highlighting.md
+  - name: Mermaid Authoring Diagrams
+    href: Mermaid Authoring Diagrams.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion

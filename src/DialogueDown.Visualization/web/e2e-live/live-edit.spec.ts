@@ -59,6 +59,25 @@ test("edits update the preview and dirty state; the Save button writes the file"
     await expect.poll(() => readFileSync(LIVE_EDIT_DOC, "utf8")).toContain("Wave()");
 });
 
+test("renders and repairs a Mermaid authoring aid while typing", async ({ page }) => {
+    await page.goto(`${base}/`);
+    await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
+
+    await replaceSource(page, "# Scene\n\n```mermaid\nflowchart LR\nA --> B\n```\n");
+    const diagram = page.locator(".source-preview .mermaid-diagram");
+    await expect(diagram.locator("svg")).toBeVisible();
+    await expect(diagram.locator("svg")).toContainText("A");
+
+    await replaceSource(page, "# Scene\n\n```mermaid\nnot a diagram\n```\n");
+    await expect(diagram.locator("svg")).toHaveCount(0);
+    await expect(diagram.locator(".mermaid-source")).toContainText("not a diagram");
+    await expect(diagram.locator(".mermaid-error")).toBeVisible();
+
+    await replaceSource(page, "# Scene\n\n```mermaid\nflowchart LR\nLatest --> Result\n```\n");
+    await expect(diagram.locator("svg")).toBeVisible();
+    await expect(diagram.locator("svg")).toContainText("Latest");
+});
+
 test("the Discard button confirms, then restores the last saved version", async ({ page }) => {
     await page.goto(`${base}/`);
     await expect(page.locator(".source-pane .cm-editor")).toBeVisible();
