@@ -240,8 +240,8 @@ function normalizeMarkdown(value: string): string {
 
 function addClassToFirstElement(html: string, className: string): string {
     return html.replace(/^<([a-z][\w:-]*)([^>]*)>/i, (_whole, tag: string, attributes: string) =>
-        attributes.includes("class=")
-            ? `<${tag}${attributes.replace(/class="([^"]*)"/, `class="$1 ${className}"`)}>`
+        /(?:^|\s)class="/.test(attributes)
+            ? `<${tag}${attributes.replace(/(\sclass=")([^"]*)"/, `$1$2 ${className}"`)}>`
             : `<${tag} class="${className}"${attributes}>`,
     );
 }

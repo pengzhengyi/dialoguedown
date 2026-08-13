@@ -226,6 +226,18 @@ describe("renderDocument", () => {
         expect(html).toContain('title="Ignored autolink: &lt;https://example.com&gt;"');
     });
 
+    it("does not mistake class= inside an autolink URL for an HTML class attribute", () => {
+        const source = "<https://example.com/?class=route>";
+
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('<a class="dd-preview-ignored"');
+        expect(html).toContain('href="https://example.com/?class=route"');
+    });
+
     it("shows ignored inline HTML as escaped source without unbalancing the Preview DOM", () => {
         const source = "Before <span>inside</span> after";
         const opening = source.indexOf("<span>");
