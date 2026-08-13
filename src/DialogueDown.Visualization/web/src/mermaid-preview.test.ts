@@ -58,6 +58,37 @@ describe("createMermaidPreviewService", () => {
         expect(api.render).not.toHaveBeenCalled();
     });
 
+    it("does not trust a Mermaid marker forged in raw Markdown HTML", async () => {
+        const api = fakeMermaid();
+        const service = createMermaidPreviewService({ load: async () => api });
+        const preview = document.createElement("div");
+        mountPreviewHtml(
+            preview,
+            '<div data-dd-mermaid="attacker">' +
+                '<pre class="mermaid-source"><code>flowchart LR\nA --> B</code></pre>' +
+                "</div>",
+        );
+        document.body.appendChild(preview);
+
+        await service.renderNow(preview);
+
+        expect(api.parse).not.toHaveBeenCalled();
+        expect(api.render).not.toHaveBeenCalled();
+    });
+
+    it("does not retain or load a host with no genuine Mermaid placeholder", async () => {
+        const load = vi.fn(async () => fakeMermaid());
+        const service = createMermaidPreviewService({ load });
+        const preview = document.createElement("div");
+        preview.innerHTML = "<p>Ordinary preview</p>";
+        document.body.appendChild(preview);
+
+        await service.renderNow(preview);
+        await service.rerenderAll();
+
+        expect(load).not.toHaveBeenCalled();
+    });
+
     it("gives every mounted diagram a unique render id", async () => {
         const api = fakeMermaid();
         const service = createMermaidPreviewService({ load: async () => api });

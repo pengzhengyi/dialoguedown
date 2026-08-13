@@ -10,6 +10,8 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 export interface SemanticView {
     element: HTMLElement;
     view: TreeView;
+    /** Release resources owned by the semantic-only side panels. */
+    destroy(): void;
 }
 
 const MIN_TABLES_WIDTH = 220;
@@ -77,7 +79,11 @@ export function createSemanticView(
     divider.appendChild(tablesPanel.button);
 
     createEntityHighlighter(container);
-    return { element: container, view };
+    return {
+        element: container,
+        view,
+        destroy: () => nodeDetail.destroy(),
+    };
 }
 
 /**

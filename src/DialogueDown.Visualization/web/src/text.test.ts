@@ -134,7 +134,7 @@ describe("renderMarkdown", () => {
             const html = renderMarkdown(`\`\`\`${language}\nflowchart LR\nA --> B\n\`\`\``);
 
             expect(html).toContain('class="mermaid-diagram"');
-            expect(html).toContain("data-mermaid");
+            expect(html).toContain("data-dd-mermaid");
             expect(html).toContain('data-preview-block="pre"');
             expect(html).toContain('<pre class="mermaid-source"><code>flowchart LR');
         },
@@ -243,7 +243,7 @@ describe("renderDocument", () => {
         });
 
         expect(html).toContain(
-            '<div class="dd-preview-ignored-region" title="Ignored — not included in dialogue">' +
+            '<div class="dd-preview-ignored-region" title="Ignored — not included in dialogue" data-preview-block="pre">' +
                 '<div class="mermaid-diagram dd-preview-ignored"',
         );
     });

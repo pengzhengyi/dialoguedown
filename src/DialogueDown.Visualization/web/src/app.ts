@@ -304,6 +304,8 @@ export function runApp(
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).
     let views: (TreeView | null)[] = [];
+    // Per tab: resources owned outside the tree view, such as Semantic preview renderers.
+    let disposers: Array<() => void> = [];
     // The stages of the latest render, kept live for reverse Jump-to lookups: a save replaces
     // them through `updateStages`, and the Source view (with its Jump-to menu) outlives that.
     let currentStages: readonly Stage[] = [];
@@ -421,9 +423,11 @@ export function runApp(
     };
 
     function build(report: Report): void {
+        disposers.forEach((dispose) => dispose());
         tabsEl.replaceChildren();
         stagesEl.replaceChildren();
         views = [];
+        disposers = [];
         keys = [];
         titles = [];
         sourcePresent = report.source != null;
@@ -508,9 +512,11 @@ export function runApp(
         const reselectId = selectedNodeId;
         currentStages = stages;
         const keep = (configPresent ? 1 : 0) + (sourcePresent ? 1 : 0);
+        disposers.slice(keep).forEach((dispose) => dispose());
         while (tabsEl.children.length > keep) tabsEl.lastElementChild!.remove();
         while (stagesEl.children.length > keep) stagesEl.lastElementChild!.remove();
         views = views.slice(0, keep);
+        disposers = disposers.slice(0, keep);
         keys = keys.slice(0, keep);
         titles = titles.slice(0, keep);
         for (const stage of stages) {
@@ -544,6 +550,7 @@ export function runApp(
         const recognizeJumps = recognizesJumps(stage.title);
         if (isSemantic) section.classList.add("semantic-stage");
         let view: TreeView | null = null;
+        let dispose = (): void => undefined;
         try {
             const treeOptions = {
                 initialCamera: cameras.cameraFor(stage.title),
@@ -565,6 +572,7 @@ export function runApp(
                     recognizeJumps,
                 );
                 view = semantic.view;
+                dispose = semantic.destroy;
                 section.appendChild(semantic.element);
             } else {
                 // A stage shows its own pinned camera, else the shared current one it
@@ -586,7 +594,16 @@ export function runApp(
             section.classList.add("error");
             section.textContent = `Failed to render stage: ${(error as Error).message}`;
         }
-        addTab(stage.title, section, view, stage.description, stage.title);
+        addTab(
+            stage.title,
+            section,
+            view,
+            stage.description,
+            stage.title,
+            undefined,
+            undefined,
+            dispose,
+        );
     }
 
     function addTab(
@@ -597,6 +614,7 @@ export function runApp(
         key: string | null,
         icon?: string,
         unavailable?: StageUnavailable,
+        dispose: () => void = () => undefined,
     ): void {
         const index = views.length;
         const tab = document.createElement("button");
@@ -633,6 +651,7 @@ export function runApp(
         tabsEl.appendChild(tab);
         stagesEl.appendChild(section);
         views.push(view);
+        disposers.push(dispose);
         keys.push(key);
         titles.push(title);
     }

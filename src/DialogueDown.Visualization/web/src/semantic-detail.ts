@@ -21,6 +21,8 @@ export interface NodeDetailPanel {
     show(node: DisplayNode): void;
     /** Reset to the "nothing selected" placeholder. */
     clear(): void;
+    /** Release preview work retained for this panel. */
+    destroy(): void;
 }
 
 /**
@@ -98,6 +100,9 @@ export function createNodeDetailPanel(options: NodeDetailPanelOptions = {}): Nod
             mermaidPreviews.dispose(body);
             body.innerHTML = NODE_DETAIL_PLACEHOLDER;
             jump?.update(null);
+        },
+        destroy() {
+            mermaidPreviews.dispose(body);
         },
     };
 }

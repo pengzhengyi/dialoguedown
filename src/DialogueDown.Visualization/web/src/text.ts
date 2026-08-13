@@ -1,6 +1,7 @@
 import { Marked, type MarkedExtension, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
 import type { DisplayNode, Span } from "./model";
+import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
 
 /** Longest inline label/attribute drawn on a node before it is ellipsised. */
 export const MAX_INLINE_TEXT = 30;
@@ -55,7 +56,7 @@ const mermaidCodeBlocks: MarkedExtension = {
         code(token) {
             if (!isMermaidFence(token.lang)) return false;
             return (
-                '<div class="mermaid-diagram" data-mermaid data-preview-block="pre">' +
+                `<div class="mermaid-diagram" ${MERMAID_PLACEHOLDER_ATTRIBUTE}="${MERMAID_PLACEHOLDER_TOKEN}" data-preview-block="pre">` +
                 `<pre class="mermaid-source"><code>${escapeHtml(token.text)}</code></pre>` +
                 "</div>\n"
             );
@@ -212,7 +213,8 @@ function ignoredRegion(token: Token, html: string): string {
         token.type === "link" || (token.type === "html" && !(token as Tokens.HTML).block);
     const tag = inline ? "span" : "div";
     const inlineClass = inline ? " dd-preview-ignored-region-inline" : "";
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue">${content}</${tag}>`;
+    const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue"${sourceBlock}>${content}</${tag}>`;
 }
 
 // Marked removes list/blockquote indentation before handing a nested token to a renderer, while

@@ -1,8 +1,9 @@
 import type { Mermaid, MermaidConfig, ParseOptions, ParseResult, RenderResult } from "mermaid";
+import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
 
 const MAX_TEXT_SIZE = 50_000;
 const SOURCE_SELECTOR = ".mermaid-source code";
-const DIAGRAM_SELECTOR = "[data-mermaid]";
+const DIAGRAM_SELECTOR = `[${MERMAID_PLACEHOLDER_ATTRIBUTE}="${MERMAID_PLACEHOLDER_TOKEN}"]`;
 
 export interface MermaidApi {
     initialize(config: MermaidConfig): void;
@@ -60,26 +61,29 @@ export function createMermaidPreviewService(
     }
 
     function renderNow(host: HTMLElement): Promise<void> {
+        if (!host.querySelector(DIAGRAM_SELECTOR)) {
+            const existing = hosts.get(host);
+            if (existing) invalidate(existing);
+            return existing?.running ?? Promise.resolve();
+        }
         const state = stateOf(host);
         state.revision++;
         if (state.timer !== null) {
             window.clearTimeout(state.timer);
             state.timer = null;
         }
-        if (!host.querySelector(DIAGRAM_SELECTOR)) {
-            return state.running ?? Promise.resolve();
-        }
         return ensureHostRender(host, state);
     }
 
     function schedule(host: HTMLElement, delay = 200): void {
+        if (!host.querySelector(DIAGRAM_SELECTOR)) {
+            const existing = hosts.get(host);
+            if (existing) invalidate(existing);
+            return;
+        }
         const state = stateOf(host);
         state.revision++;
         if (state.timer !== null) window.clearTimeout(state.timer);
-        if (!host.querySelector(DIAGRAM_SELECTOR)) {
-            state.timer = null;
-            return;
-        }
         const revision = state.revision;
         state.timer = window.setTimeout(() => {
             state.timer = null;
@@ -171,11 +175,14 @@ export function createMermaidPreviewService(
 
     function dispose(host: HTMLElement): void {
         const state = hosts.get(host);
-        if (state) {
-            state.revision++;
-            if (state.timer != null) window.clearTimeout(state.timer);
-        }
+        if (state) invalidate(state);
         hosts.delete(host);
+    }
+
+    function invalidate(state: HostState): void {
+        state.revision++;
+        if (state.timer != null) window.clearTimeout(state.timer);
+        state.timer = null;
     }
 
     return { renderNow, schedule, rerenderAll, dispose };
