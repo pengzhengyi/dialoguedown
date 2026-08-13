@@ -231,11 +231,35 @@ function sourceLineCount(raw: string): number {
 // the compiler's span slices the original source. Ignoring leading indentation per line makes
 // those two views of the same construct compare equal without re-implementing Markdown parsing.
 function normalizeMarkdown(value: string): string {
-    return value
-        .trim()
-        .split(/\r?\n/)
-        .map((line) => line.trimStart())
+    const lines = value.trim().split(/\r?\n/);
+    const continuationDepths = lines
+        .slice(1)
+        .filter((line) => line.trim().length > 0)
+        .map(leadingQuoteDepth);
+    const quoteDepth = continuationDepths.length === 0 ? 0 : Math.min(...continuationDepths);
+    return lines
+        .map((line, index) => stripQuoteDepth(line, index === 0 ? 0 : quoteDepth))
         .join("\n");
+}
+
+function leadingQuoteDepth(line: string): number {
+    let rest = line.trimStart();
+    let depth = 0;
+    while (rest.startsWith(">")) {
+        depth += 1;
+        rest = rest.slice(1);
+        if (rest.startsWith(" ")) rest = rest.slice(1);
+    }
+    return depth;
+}
+
+function stripQuoteDepth(line: string, depth: number): string {
+    let rest = line.trimStart();
+    for (let level = 0; level < depth && rest.startsWith(">"); level += 1) {
+        rest = rest.slice(1);
+        if (rest.startsWith(" ")) rest = rest.slice(1);
+    }
+    return rest.trimStart();
 }
 
 function addClassToFirstElement(html: string, className: string): string {

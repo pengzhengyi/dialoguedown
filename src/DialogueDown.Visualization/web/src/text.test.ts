@@ -268,4 +268,29 @@ describe("renderDocument", () => {
 
         expect(html).toContain('<code class="dd-preview-control-keyword">if</code>');
     });
+
+    it("matches an ignored table nested inside a blockquote", () => {
+        const source = "> | A | B |\n> | - | - |\n> | x | y |";
+        const start = source.indexOf("|");
+
+        const html = renderDocument(source, {
+            ignored: [{ start, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('data-ignored-summary="Table · 3 lines"');
+    });
+
+    it("preserves a literal quote marker inside an ignored blockquoted code block", () => {
+        const source = "> ```text\n> > literal quote\n> ```";
+        const start = source.indexOf("```");
+
+        const html = renderDocument(source, {
+            ignored: [{ start, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('data-ignored-kind="Code block"');
+        expect(html).toContain("&gt; literal quote");
+    });
 });
