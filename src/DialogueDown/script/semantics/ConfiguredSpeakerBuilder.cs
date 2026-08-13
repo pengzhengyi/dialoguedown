@@ -16,7 +16,7 @@ internal static class ConfiguredSpeakerBuilder
     {
         var span = SourceSpan.EmptyAt(0);
 
-        var tags = new List<Tag>(speaker.ReservedTags.Count + speaker.CustomTags.Count);
+        var tags = new List<Tag>(speaker.ReservedTags.Length + speaker.CustomTags.Length);
         foreach (var reserved in speaker.ReservedTags)
         {
             tags.Add(new ReservedTag(reserved.Name, reserved.Value, span));

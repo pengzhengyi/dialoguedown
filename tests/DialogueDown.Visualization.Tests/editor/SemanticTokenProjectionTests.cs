@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
 using DialogueDown.Visualization.Editor;
@@ -335,10 +336,9 @@ public sealed class SemanticTokenProjectionTests
             """;
         var options = CompilerOptions.Default with
         {
-            UnmodeledMarkdown = new Dictionary<UnmodeledNodeKind, UnmodeledNodeHandling>
-            {
-                [UnmodeledNodeKind.Table] = UnmodeledNodeHandling.Keep,
-            },
+            UnmodeledMarkdown =
+                ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling>.Empty
+                    .Add(UnmodeledNodeKind.Table, UnmodeledNodeHandling.Keep),
         };
 
         Assert.DoesNotContain(
@@ -351,10 +351,9 @@ public sealed class SemanticTokenProjectionTests
         const string Source = "<div>writer note</div>";
         var options = CompilerOptions.Default with
         {
-            UnmodeledMarkdown = new Dictionary<UnmodeledNodeKind, UnmodeledNodeHandling>
-            {
-                [UnmodeledNodeKind.RawHtml] = UnmodeledNodeHandling.Ignore,
-            },
+            UnmodeledMarkdown =
+                ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling>.Empty
+                    .Add(UnmodeledNodeKind.RawHtml, UnmodeledNodeHandling.Ignore),
         };
 
         Assert.Equal(
