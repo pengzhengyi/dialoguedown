@@ -1,11 +1,12 @@
 # Implementation note: Configuration
 
 > [!IMPORTANT]
-> Status: **implemented**. Configuration is a
+> Status: **approved; immutable-value refactor in progress**. Configuration is a
 > **cross-cutting concern**: the seam through which a consumer tunes how DialogueDown
 > compiles a script, without editing the script itself. `CompilerOptions` currently
 > carries the compilation mode, the configured speaker registry, and
-> unmodeled-Markdown handling overrides.
+> unmodeled-Markdown handling overrides. The approved refactor makes that public
+> configuration graph deeply immutable with structural value equality.
 
 ## Table of contents
 
@@ -22,6 +23,7 @@
     - [DD3 — Project options into each stage at the composition roots](#dd3--project-options-into-each-stage-at-the-composition-roots)
     - [DD4 — A configured speaker registry with layered default precedence](#dd4--a-configured-speaker-registry-with-layered-default-precedence)
     - [DD5 — Configured speakers as edge data, bridged to the AST](#dd5--configured-speakers-as-edge-data-bridged-to-the-ast)
+    - [DD6 — Deeply immutable configuration values with structural equality](#dd6--deeply-immutable-configuration-values-with-structural-equality)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Integration](#integration)
   - [Testability](#testability)
@@ -30,10 +32,11 @@
 
 ## Goal and scope
 
-This component provides a **configuration seam** — an immutable
+This component provides a **configuration seam** — a deeply immutable
 **`CompilerOptions`** umbrella that the composition roots unpack into the
 specific values and collaborators each stage reads. A consumer can tune the
-compiler without editing the script or replacing a whole pipeline stage.
+compiler without editing the script or replacing a whole pipeline stage, and
+can compare, cache, and share equivalent options as values.
 
 **Configured speakers.** A consumer may supply speakers
 (`CompilerOptions.Speakers`) the compiler binds alongside a script's own. One entry may
@@ -42,9 +45,11 @@ speakerless lines resolve to that configured default instead of the anonymous on
 a configured speaker whose name also appears in the script is the **same speaker**.
 
 **In scope:** the `CompilerOptions` umbrella (`Mode`, `Speakers`, and
-`UnmodeledMarkdown`); the semantic-analyzer view; both composition roots
-threading options into the parser, compiler session, and semantic analyzer; and
-the configured-speaker binding with default-speaker precedence. **Out of scope
+`UnmodeledMarkdown`); deeply immutable configured speakers and tag collections;
+structural equality and stable hashing; the semantic-analyzer view; both
+composition roots threading options into the parser, compiler session, and
+semantic analyzer; and the configured-speaker binding with default-speaker
+precedence. **Out of scope
 (deferred, tracked as issues):** remaining knobs such as DSL syntax tokens, slug
 normalization, runtime settings, and command-layer policy (see
 [Deferred knobs](#deferred-knobs)). Reading options from a file is handled by the separate
@@ -89,6 +94,7 @@ boundary an architecture test guards (see [Integration](#integration)).
 | Term                           | Meaning                                                                                                                      |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | **Compiler options**           | The immutable `CompilerOptions` value that configures one compile: mode, speakers, and unmodeled-Markdown overrides.         |
+| **Configuration value graph**  | `CompilerOptions` and every nested configured speaker, tag list, and handling map, owned immutably and compared by content.  |
 | **Stage projection**           | The value or collaborator a composition root derives from the umbrella for one stage.                                        |
 | **Configured speaker**         | A speaker supplied through `CompilerOptions.Speakers` (a `ConfiguredSpeaker`) the binder seeds alongside a script's own.     |
 | **Handling override**          | A `keep` or `ignore` setting for one `UnmodeledNodeKind`; omitted kinds keep their built-in defaults.                        |
@@ -114,6 +120,14 @@ boundary an architecture test guards (see [Integration](#integration)).
       parser's handling policy from `UnmodeledMarkdown`.
 - [x] An **architecture test** asserts `DialogueDown.Configuration` is a foundation
       leaf with no dependency on other core layers.
+- [ ] Public collection properties use immutable collection types; assigning
+      caller-owned sequences snapshots their contents.
+- [ ] `ConfiguredSpeaker` compares name, id, and both ordered tag lists by
+      content.
+- [ ] `CompilerOptions` compares mode and ordered speakers by content, and
+      handling overrides independent of dictionary insertion order.
+- [ ] Equal configuration values produce equal, stable hash codes; mutating a
+      source collection after construction cannot change either value or hash.
 - [x] With **no `##default` and a configured default**, speakerless lines resolve to
       that speaker; if its name also appears in the script, they are the **same
       speaker** (unified, referable).
@@ -125,12 +139,12 @@ boundary an architecture test guards (see [Integration](#integration)).
 
 | Type                       | Visibility | Responsibility                                                                                           | Collaborators                                 |
 | -------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `CompilerOptions`          | public     | immutable options umbrella: mode, speakers, unmodeled handling, `Default`, and the semantic projection   | composition roots, `ISemanticAnalyzerOptions` |
+| `CompilerOptions`          | public     | immutable options: mode, speakers/map, structural equality, `Default`, and stage projections             | composition roots, `ISemanticAnalyzerOptions` |
 | `CompilationMode`          | public     | how far compilation proceeds after an error                                                              | compiler session, CLI, loader                 |
 | `UnmodeledNodeKind`        | public     | the configuration vocabulary of unmodeled Markdown kinds                                                 | options, loader, Markdown policy              |
 | `UnmodeledNodeHandling`    | public     | the `Keep` / `Ignore` outcome for an unmodeled kind                                                      | options, loader, Markdown policy              |
 | `UnmodeledMarkdownNames`   | public     | canonical kebab-case names shared by author-facing surfaces                                              | loader and display tools                      |
-| `ConfiguredSpeaker`        | public     | a config-supplied speaker: name, optional id, and tags partitioned into custom and reserved              | `CompilerOptions`, `ConfiguredTag`            |
+| `ConfiguredSpeaker`        | public     | immutable speaker value: name, optional id, and immutable ordered custom/reserved tags                   | `CompilerOptions`, `ConfiguredTag`            |
 | `ConfiguredTag`            | public     | a config tag: a name and optional value, serving a custom or reserved tag                                | `ConfiguredSpeaker`                           |
 | `ReservedTagNames`         | public     | the closed vocabulary of reserved tag names (`default`, …) that config validates against                 | loader, binder, tag validator                 |
 | `ISemanticAnalyzerOptions` | internal   | the per-stage view the analyzer reads (the configured speakers)                                          | `CompilerOptions`, `SemanticAnalyzer`         |
@@ -222,6 +236,35 @@ the binder then treats a configured speaker exactly like a declared one. Validat
 lives at the **edge** (the configuration loader), so the data reaching the binder is
 already well-formed, and the binder keeps its single concern: speaker semantics.
 
+### DD6 — Deeply immutable configuration values with structural equality
+
+Configuration values may be shared across compilers, compared to suppress a
+redundant recompile, or used as cache keys. The whole graph must therefore be
+both **owned immutably** and **equal by content**:
+
+- `ConfiguredSpeaker.CustomTags` and `ReservedTags`, and
+  `CompilerOptions.Speakers`, are `ImmutableArray<T>`.
+- `CompilerOptions.UnmodeledMarkdown` is an
+  `ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling>`.
+- constructors accept general sequences where compatibility and ergonomics
+  benefit, then snapshot them into the immutable representation.
+- typed equality compares ordered arrays element by element and dictionaries by
+  key/value content, independent of insertion order.
+- hash codes use the same structure and a deterministic key order.
+
+Immutable collections solve ownership, not equality: two separately allocated
+`ImmutableArray<T>` or `ImmutableDictionary<TKey, TValue>` values do not compare
+equal merely because their contents match. `ConfiguredSpeaker` and
+`CompilerOptions` therefore define typed equality and matching hash codes
+explicitly rather than relying on synthesized record equality.
+
+The public immutable types are intentional even though they are a larger API
+change than hidden defensive copies. They state the domain invariant directly,
+prevent callers from observing a mutable configuration graph, and provide a
+sound base for incremental compilation, caching, overlays, and concurrent
+sharing. DialogueDown is pre-1.0, so this is the right point to make the
+contract honest.
+
 ## Error and boundary cases
 
 | Case                                              | Behavior                                                                 |
@@ -235,6 +278,9 @@ already well-formed, and the binder keeps its single concern: speaker semantics.
 | One unmodeled kind overridden                     | that kind changes; every omitted kind keeps its built-in handling.       |
 | Empty unmodeled override map                      | the shared default handling policy is reused; no allocation.             |
 | `null` options passed to a composition root       | falls back to `CompilerOptions.Default` for every knob.                  |
+| `null` collection assigned to config              | rejected at construction or initialization.                              |
+| Source collection mutated after construction      | the immutable configuration value and its hash remain unchanged.         |
+| Equivalent maps with different insertion order    | options compare equal and produce the same hash code.                    |
 
 ## Integration
 
@@ -258,7 +304,13 @@ already well-formed, and the binder keeps its single concern: speaker semantics.
 ## Testability
 
 - **`CompilerOptions` and projections**: unit-test defaults, semantic speaker
-  projection, and configured handling layered over built-in defaults.
+  projection, configured handling layered over built-in defaults, structural
+  equality, and stable hashing.
+- **`ConfiguredSpeaker`**: equal content in separately allocated tag sequences
+  compares equal; tag order remains significant; source-sequence mutation does
+  not affect the speaker.
+- **Collection ownership**: mutate each caller-owned source collection after
+  construction and assert the configuration value and hash are unchanged.
 - **`SpeakerBinder`**: the precedence cases each get a test — in-file default wins;
   configured default when no in-file; unified when a configured name is in the script;
   anonymous when neither is present.
