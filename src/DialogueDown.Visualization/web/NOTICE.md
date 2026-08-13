@@ -3,23 +3,27 @@
 The compilation report is built by the `web/` Vite project into a single,
 self-contained HTML file (`web/dist/report.html`) with all JavaScript and CSS
 inlined, so a generated report works fully offline with no CDN or network
-access. The libraries below are bundled into that file. Exact versions are
-pinned by `web/package-lock.json`; **none** of them is a NuGet or runtime
-dependency of the DialogueDown packages — they ship only inside generated
-report HTML.
+access. The principal direct libraries and separately attributed assets below
+are bundled into that file. Exact direct and transitive versions are pinned by
+`web/package-lock.json`; **none** of them is a NuGet or runtime dependency of
+the DialogueDown packages — they ship only inside generated report HTML.
 
-| Library                                                                    | Version | License      |
-| -------------------------------------------------------------------------- | ------- | ------------ |
-| [D3.js](https://d3js.org)                                                  | 7.9.0   | ISC          |
-| [DOMPurify](https://github.com/cure53/DOMPurify)                           | 3.4.13  | MIT          |
-| [Mermaid](https://mermaid.js.org)                                          | 11.16.1 | MIT          |
-| [Pico.css](https://picocss.com)                                            | 2.1.1   | MIT          |
-| [marked](https://marked.js.org)                                            | 12.0.2  | MIT          |
-| [marked-gfm-heading-id](https://github.com/markedjs/marked-gfm-heading-id) | 3.2.0   | MIT          |
-| [highlight.js](https://highlightjs.org)                                    | 11.11.1 | BSD-3-Clause |
-| [Tippy.js](https://atomiks.github.io/tippyjs/)                             | 6.3.7   | MIT          |
-| [Popper](https://popper.js.org) (bundled by Tippy.js)                      | 2.11.8  | MIT          |
-| [Fira Code](https://github.com/tonsky/FiraCode) (via Fontsource)           | 5.3.0   | OFL-1.1      |
+| Library                                                                    | Version      | License    |
+| -------------------------------------------------------------------------- | ------------ | ---------- |
+| [CodeMirror](https://codemirror.net/)                                      | 6.x packages | MIT        |
+| [D3.js](https://d3js.org)                                                  | 7.9.0        | ISC        |
+| [DOMPurify](https://github.com/cure53/DOMPurify)                           | 3.4.13       | Apache-2.0 |
+| [GitHub Slugger](https://github.com/Flet/github-slugger)                   | 2.0.0        | ISC        |
+| [Lezer Highlight](https://github.com/lezer-parser/highlight)               | 1.2.3        | MIT        |
+| [Mermaid](https://mermaid.js.org)                                          | 11.16.1      | MIT        |
+| [Pico.css](https://picocss.com)                                            | 2.1.1        | MIT        |
+| [TanStack Table Core](https://tanstack.com/table/)                         | 9.1.2        | MIT        |
+| [VS Code Codicons](https://github.com/microsoft/vscode-codicons)           | 0.0.46-24    | CC-BY-4.0  |
+| [marked](https://marked.js.org)                                            | 18.0.9       | MIT        |
+| [marked-gfm-heading-id](https://github.com/markedjs/marked-gfm-heading-id) | 4.1.4        | MIT        |
+| [Tippy.js](https://atomiks.github.io/tippyjs/)                             | 6.3.7        | MIT        |
+| [Popper](https://popper.js.org) (bundled by Tippy.js)                      | 2.11.8       | MIT        |
+| [Fira Code](https://github.com/tonsky/FiraCode) (via Fontsource)           | 5.3.0        | OFL-1.1    |
 
 To update a library, bump it in `web/package.json`, run `npm install` in
 `web/`, then rebuild (`npm run build`) and commit the refreshed
@@ -27,7 +31,7 @@ To update a library, bump it in `web/package.json`, run `npm install` in
 
 ## Licenses
 
-### D3.js — ISC
+### D3.js and GitHub Slugger — ISC
 
 ```text
 Copyright 2010-2023 Mike Bostock
@@ -45,24 +49,29 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ```
 
-### DOMPurify, Mermaid, Pico.css, marked, marked-gfm-heading-id, Tippy.js, and Popper — MIT
+GitHub Slugger carries the same ISC terms, copyright 2015 Dan Flettre.
 
-These are distributed under the MIT License (Copyright, respectively: Mario
-Heiderich and DOMPurify contributors; Mermaid contributors; 2019-2024 Pico.css
-contributors; 2011-2024 Christopher Jeffrey; 2023 marked contributors
-(marked-gfm-heading-id); 2017-2021 atomiks (Tippy.js); 2019 Federico Zivolo
-(Popper)). The MIT License permits use, copy, modification, and distribution
-provided the copyright and permission notice are retained; the full notice is
-preserved in each package's distribution and at the projects' repositories.
+### DOMPurify — Apache-2.0
 
-### highlight.js — BSD-3-Clause
+DialogueDown uses DOMPurify under the Apache License 2.0 option of its
+`(MPL-2.0 OR Apache-2.0)` dual license. The complete license is preserved in
+[`DOMPURIFY_LICENSE.txt`](DOMPURIFY_LICENSE.txt).
 
-Copyright (c) 2006, Ivan Sagalaev. Redistribution and use in source and binary
-forms, with or without modification, are permitted provided that the copyright
-notice, the list of conditions, and the disclaimer are retained, and the name of
-the author may not be used to endorse products derived from this software without
-specific prior written permission. The full license text ships in the package
-(`highlight.js/LICENSE`) and at the project's repository.
+### CodeMirror, Lezer, Mermaid, Pico.css, TanStack Table, marked, Tippy.js, and Popper — MIT
+
+These libraries and their directly listed companion packages are distributed
+under the MIT License. The MIT License permits use, copy, modification, and
+distribution provided the copyright and permission notice are retained; the
+full notices are preserved in each package's distribution and at the projects'
+repositories.
+
+### VS Code Codicons — CC-BY-4.0
+
+Codicons are copyright Microsoft Corporation and contributors, licensed under
+Creative Commons Attribution 4.0 International. DialogueDown uses the packaged
+font and CSS without modifying the icon artwork. The complete terms are
+preserved in `node_modules/@vscode/codicons/LICENSE` and at the
+[Codicons repository](https://github.com/microsoft/vscode-codicons).
 
 ### Fira Code — SIL Open Font License 1.1
 

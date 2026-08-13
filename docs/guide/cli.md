@@ -75,6 +75,15 @@ ddown visualize my-scene.dialogue.md
 script. Press **Ctrl + C** in the terminal to stop it. Add `--help` to any command
 to see its options (for example, `ddown visualize --help`).
 
+Export every compiler-stage graph as Graphviz DOT text:
+
+```sh
+ddown visualize my-scene.dialogue.md --emit dot -o stages.dot
+```
+
+Fenced `mermaid` blocks are authoring aids, not compiler-stage output. The HTML
+report renders them directly in its Markdown previews.
+
 ## Keep ddown up to date
 
 Get the newest version, or remove it, at any time:

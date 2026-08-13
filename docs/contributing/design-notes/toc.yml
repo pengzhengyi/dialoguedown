@@ -70,7 +70,7 @@
     href: Command-Line Interface.md
   - name: Visualize on the CLI
     href: Visualize on the CLI.md
-  - name: Visualize CLI — Emit Mermaid and DOT
+  - name: Visualize CLI — Emit DOT
     href: Visualize CLI - Emit Mermaid and DOT.md
 - name: Visualization
   items:

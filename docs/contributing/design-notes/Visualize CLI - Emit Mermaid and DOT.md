@@ -1,182 +1,148 @@
-# Visualize CLI — Emit Mermaid and DOT
+# Visualize CLI — emit DOT
 
 > [!NOTE]
-> Status: **implemented**. A `ddown visualize --emit <format>` option that
-> writes each stage's graph as **Mermaid** or **Graphviz DOT** text, reusing the
-> renderers that already exist. No frontend change.
+> Status: **implemented**. `ddown visualize --emit dot` writes every compiler
+> stage as Graphviz DOT text.
 
 ## Table of contents
 
-- [Goal & scope](#goal--scope)
+- [Goal and scope](#goal-and-scope)
 - [Functionality checklist](#functionality-checklist)
-- [Ubiquitous language](#ubiquitous-language)
 - [Design](#design)
 - [CLI surface](#cli-surface)
 - [Key design decisions](#key-design-decisions)
-- [Error & boundary cases](#error--boundary-cases)
+- [Error and boundary cases](#error-and-boundary-cases)
 - [Integration](#integration)
 - [Testability](#testability)
 
-## Goal & scope
+## Goal and scope
 
-The library already renders a display graph as **Mermaid** and **DOT** text
-(`MermaidRenderer`, `DotRenderer`), but nothing surfaces them — they are reachable
-only through the unused single-graph `HtmlRenderer`. The value of these formats is
-**portable embedding**: pasting Mermaid into a GitHub doc, or laying a graph out
-with Graphviz. A **CLI emit** delivers exactly that without touching the report
-bundle, keeping the self-contained report lean and offline.
+Emit compiler-stage graphs as portable Graphviz DOT text without opening the
+interactive report. The command writes every stage to standard output or one
+requested file, with a comment header that identifies each stage.
 
-This component adds `ddown visualize <script> --emit <format>`, which
-compiles the script, renders every stage with the chosen renderer, and writes the
-text to `-o <file>` or standard output. It also teaches `MermaidRenderer` the
-per-category **colors** the interactive report uses, so an emitted Mermaid diagram
-is as legible as the on-screen one.
+This is a diagnostics export over the report's `DisplayGraph`; it is not a
+stable dialogue interchange format. Future exporters such as Yarn Spinner or
+Mermaid belong after a stable serialized dialogue/runtime IR exists.
 
 In scope:
 
-- `--emit mermaid|dot` on `visualize`, writing every stage's text to stdout (or the
-  `-o` file), with a clear per-stage delimiter.
-- A `RenderText` seam on the visualization engine that maps a format to a renderer
-  and joins the stages.
-- Per-category `classDef` coloring in `MermaidRenderer`.
+- `--emit dot` on `visualize`.
+- Standard-output and `--output` file destinations.
+- A `RenderText` seam that renders every current stage through `DotRenderer`.
+- Helpful validation for missing scripts, unknown formats, and the retired
+  `mermaid` value.
 
 Out of scope:
 
-- Any in-browser Mermaid/DOT rendering or a report "rendering mode" — deliberately
-  dropped (bundling Mermaid offline costs ~900 KB gzipped; see D1).
-- New renderers or diagram formats beyond the two that exist.
-- Rendering DOT/Mermaid to an image (that is the user's Graphviz/Mermaid toolchain).
+- Rendering DOT in the browser.
+- One file per stage.
+- Dialogue/runtime serialization or third-party dialogue-language exporters.
+- Mermaid stage graphs. Fenced Mermaid authoring aids render in the report's
+  Markdown previews; see
+  [Mermaid authoring diagrams](./Mermaid%20Authoring%20Diagrams.md).
 
 ## Functionality checklist
 
-- [x] `visualize <script> --emit mermaid` writes every stage as Mermaid to stdout.
-- [x] `visualize <script> --emit dot` writes every stage as DOT to stdout.
-- [x] `--emit … -o <file>` writes the same text to a file instead of stdout.
-- [x] Stages are separated by a clear, format-appropriate delimiter (a comment
-      header naming the stage).
-- [x] An unknown `--emit` value fails validation with a helpful message.
-- [x] `--emit` requires a `<script>` (no launcher), and rejects combining with
-      report-only options that do not apply.
-- [x] `MermaidRenderer` emits per-category `classDef`s and tags each node, matching
-      the report palette.
-- [x] A bad document exits non-zero with the validation message (same as `-o`).
-
-## Ubiquitous language
-
-| Term | Meaning |
-| --- | --- |
-| **Emit** | Write a stage's graph as text in a target **format**, for embedding elsewhere — distinct from the interactive **report** and the static **export** (`-o` HTML). |
-| **Format** | `mermaid` or `dot` — each backed by an `IDisplayRenderer`. |
-| **Renderer** | The existing strategy that turns one `DisplayGraph` into one format's text. |
+- [x] `visualize <script> --emit dot` writes every stage as DOT to standard
+      output.
+- [x] `--emit dot -o <file>` writes the same text to a file.
+- [x] Each stage begins with a `// <stage title>` comment.
+- [x] An unknown format fails validation and names `dot` as the valid format.
+- [x] `--emit mermaid` fails with migration guidance and writes no output.
+- [x] A missing or invalid script exits nonzero before emitting partial text.
 
 ## Design
 
 ```mermaid
 flowchart LR
-    cli["visualize --emit mermaid|dot"] --> runner["IVisualizeRunner.RunEmit"]
-    runner --> viz["CompilationVisualizer.RenderText(source, format)"]
+    cli["visualize --emit dot"] --> runner["IVisualizeRunner.RunEmit"]
+    runner --> viz["CompilationVisualizer.RenderText"]
     viz --> stages["BuildStages"]
-    stages --> r{"format"}
-    r -- mermaid --> mr["MermaidRenderer"]
-    r -- dot --> dr["DotRenderer"]
-    mr --> join["join stages with headers"]
-    dr --> join
-    join --> out["stdout or -o file"]
+    stages --> dot["DotRenderer"]
+    dot --> joined["stage headers + DOT graphs"]
+    joined --> target{"destination"}
+    target --> stdout["standard output"]
+    target --> file["--output file"]
 ```
 
-- **`CompilationVisualizer.RenderText(string source, EmitFormat format)`** builds the
-  stages (the same `BuildStages` the report uses) and renders each with the format's
-  `IDisplayRenderer`, joining them under a per-stage header comment. One small method
-  on the existing facade; the renderers and stage projections are unchanged except
-  for the Mermaid color enhancement.
-- **`EmitFormat`** is a small enum (`Mermaid`, `Dot`) mapped to a renderer, so adding
-  a format later is one arm.
-- **CLI**: `VisualizeSettings` gains `--emit <format>`; `VisualizeCommand` routes to a
-  new `IVisualizeRunner.RunEmit(file, format, output)` before the served/launcher
-  paths (emit is non-interactive, like `-o`). `RunEmit` validates the document, calls
-  `RenderText`, and writes to the file or stdout.
-- **`MermaidRenderer` colors**: emit one `classDef <cat> fill:…,color:#fff` per
-  category present and tag each node `:::cat<category>`. Class names are prefixed
-  (`cat…`) so a category like `call` cannot collide with a Mermaid reserved word.
+`CompilationVisualizer.RenderText(source, EmitFormat.Dot)` builds the same
+stages as the HTML report. It renders each `DisplayGraph` with `DotRenderer` and
+joins them under `//` stage headers. `EmitMode` validates the document before it
+writes anything, then selects standard output or the requested file.
 
 ## CLI surface
 
 ```bash
-# Emit every stage as Mermaid to stdout
-ddown visualize scene.dialogue.md --emit mermaid
+# Emit every stage to standard output
+ddown visualize scene.dialogue.md --emit dot
 
-# Emit DOT to a file
+# Write the same multi-stage text to a file
 ddown visualize scene.dialogue.md --emit dot -o scene.dot
 ```
 
-Each stage is introduced by a comment header in the target format, e.g.
-`%% Markdown AST` (Mermaid) or `// Markdown AST` (DOT), so a multi-stage emit is
-self-describing and a reader can copy one stage out.
+The output is one stream containing several `digraph` definitions. A consumer
+that needs separate files splits on the stage headers.
+
+For one release, the retired value gives a specific migration message:
+
+```text
+Mermaid stage emission was removed. Use '--emit dot' for compiler graphs;
+fenced `mermaid` blocks render in the HTML report.
+```
 
 ## Key design decisions
 
-### D1 — Emit at the CLI, not in the report
+### D1 — Keep emission non-interactive
 
-Rendering Mermaid **in the browser** would need mermaid.js **bundled** into the
-self-contained offline report — measured at **~900 KB gzipped** (npm `mermaid` pulls
-in every diagram type plus KaTeX), roughly quintupling the report. The interactive
-D3 graph is already the superior on-screen view; the unique value of Mermaid/DOT is
-**portable text for embedding**, which a CLI emit delivers at **zero bundle cost**
-and keeps the report fully offline. So the report is unchanged and the formats live
-at the CLI, next to the existing `-o` export.
+`--emit` behaves like static `--output`: it requires a script, returns a process
+exit code, and never starts the launcher or loopback server. The command checks
+emission before HTML export, so `--emit dot -o scene.dot` cannot accidentally
+write a report.
 
-### D2 — One `RenderText` seam, renderer per format
+### D2 — Keep DOT on the display graph
 
-`RenderText(source, format)` is the single engine entry point, mapping the format to
-its `IDisplayRenderer` and joining stages. This mirrors `RenderHtmlReport`/
-`SerializeDocument` on the same facade, reuses `BuildStages`, and keeps the CLI thin
-(it only parses the option and writes bytes).
+DOT remains useful for diagnostics and external graph-layout tools. It is a thin
+formatter over `DisplayGraph` and does not claim to serialize executable
+dialogue. The boundary stays explicit so future runtime exporters do not inherit
+the report's presentation model.
 
-### D3 — Emit is non-interactive, alongside `-o`
+### D3 — Do not preserve a speculative Mermaid exporter
 
-`--emit` behaves like `-o`: it requires a `<script>`, never opens a server or the
-launcher, and returns a process exit code. It composes with `-o` to choose file vs
-stdout. This keeps the mental model simple: interactive report by default, `-o` for
-an HTML artifact, `--emit` for graph text.
+The report's D3 stage views already provide the interactive compiler
+visualization. Authors use Mermaid for a different purpose: diagrams written
+inside the dialogue Markdown. If a future stable IR needs a Mermaid exporter, it
+can add one with a concrete consumer and format contract.
 
-### D4 — Color Mermaid to match the report
+## Error and boundary cases
 
-An emitted Mermaid diagram should carry the same category signal as the interactive
-graph (Document gray, speech green, call red…), so `MermaidRenderer` gains
-per-category `classDef`s. DOT keeps its plain output — Graphviz users typically
-restyle at layout time, and DOT node coloring is a possible later addition.
-
-## Error & boundary cases
-
-- **Unknown format** — `--emit yaml` fails `Validate()` with a message listing the
-  valid formats (`mermaid`, `dot`).
-- **No script** — `--emit` without a `<script>` fails validation (like `-o`).
-- **Bad document** — a document that fails `DocumentValidation` writes the problem to
-  stderr and exits non-zero, before any text is emitted.
-- **Empty stages** — a document that still produces stages emits their headers and
-  bodies; an empty graph renders as a valid, if sparse, diagram.
+| Case | Behavior |
+| --- | --- |
+| Unknown format | Usage error naming `dot` as the valid format. |
+| `--emit mermaid` | Usage error with migration guidance; no output. |
+| No script | Usage error: `--emit` requires a script. |
+| Missing or invalid document | Nonzero exit with the validation message; no partial output. |
+| Empty stage | Emit its header and valid sparse `digraph`. |
+| Output path supplied | Write only to the file, not standard output. |
+| Special characters in labels | Escape them for DOT quoted strings. |
 
 ## Integration
 
-- **`VisualizeSettings` / `VisualizeCommand`** (CLI) — one new option, one new route
-  arm before the served/launcher paths.
-- **`IVisualizeRunner` / `VisualizeRunner`** — a new `RunEmit`, mirroring `RunStatic`;
-  a substitute keeps the command unit-testable.
-- **`CompilationVisualizer`** — a new `RenderText`; existing methods untouched.
-- **`MermaidRenderer`** — colored output; `DisplayGraph`/projections unchanged.
-- **README/CHANGELOG** — document `--emit` and restore an accurate mention that the
-  CLI (not the report) emits Mermaid/DOT.
+- **`VisualizeSettings`** — validates `dot` and the Mermaid migration case.
+- **`VisualizeCommand`** — routes a valid emit before HTML export or served
+  modes.
+- **`IVisualizeRunner` / `VisualizeRunner`** — carry the format and destination
+  to `EmitMode`.
+- **`CompilationVisualizer`** — builds stages and joins rendered text.
+- **`DotRenderer`** — formats one `DisplayGraph`.
+- **README / CLI docs / changelog** — advertise DOT only.
 
 ## Testability
 
-- **`MermaidRenderer`** (unit, .NET): emits `classDef` per present category and tags
-  nodes; class names are prefixed so `call` does not collide; escaping preserved.
-- **`RenderText`** (unit, .NET): a small script emits multiple stages with the right
-  headers; `mermaid` starts each stage `flowchart`, `dot` each `digraph`; a stub
-  compiler proves it reads the seam.
-- **`RunEmit`** (unit, .NET): writes to the file when given, else stdout; a bad
-  document returns non-zero and writes nothing.
-- **`VisualizeSettings.Validate`** (unit, .NET): unknown format and missing-script
-  cases fail with messages; valid formats pass.
-- **`VisualizeCommand`** (unit, .NET): `--emit` routes to `RunEmit` with the parsed
-  format and output, not the served/launcher paths (substituted runner).
+- **CLI settings/command** — DOT routes to `RunEmit`; Mermaid and unknown values
+  fail without invoking a runner; no-script validation remains.
+- **`CompilationVisualizer`** — every stage has a `//` header and `digraph`
+  body.
+- **`DotRenderer`** — nodes, edges, attributes, and escaping.
+- **`EmitMode`** — standard output versus file output, plus no partial output on
+  validation failure.

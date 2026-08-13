@@ -1,7 +1,7 @@
 # Mermaid authoring diagrams
 
 > [!NOTE]
-> Status: **approved**. Implementation has not started.
+> Status: **implemented**.
 
 ## Table of contents
 
@@ -43,25 +43,25 @@ Out of scope:
 
 ## Functionality checklist
 
-- [ ] A fenced block whose first info-string token is `mermaid`
+- [x] A fenced block whose first info-string token is `mermaid`
       (case-insensitive) renders as an SVG diagram in every Markdown preview
       surface.
-- [ ] Other fenced code blocks keep their ordinary source rendering.
-- [ ] An ignored Mermaid block keeps the compiler-projected **Ignored** cue around
+- [x] Other fenced code blocks keep their ordinary source rendering.
+- [x] An ignored Mermaid block keeps the compiler-projected **Ignored** cue around
       its rendered diagram.
-- [ ] Editing diagram source updates the preview without allowing an older
+- [x] Editing diagram source updates the preview without allowing an older
       asynchronous render to replace newer content.
-- [ ] Invalid or incomplete Mermaid keeps its source visible and shows a compact,
+- [x] Invalid or incomplete Mermaid keeps its source visible and shows a compact,
       local rendering message.
-- [ ] Diagram colors follow Light, Dark, and System theme changes.
-- [ ] Diagram output has an accessible name and description where the source
+- [x] Diagram colors follow Light, Dark, and System theme changes.
+- [x] Diagram output has an accessible name and description where the source
       supplies `accTitle` / `accDescr`, with a useful fallback otherwise.
-- [ ] Markdown HTML and Mermaid SVG cross explicit sanitization boundaries.
-- [ ] The report remains one self-contained, offline HTML file.
-- [ ] CI rejects a generated `report.html` larger than 5 MB raw.
-- [ ] `--emit dot` behaves unchanged.
-- [ ] `--emit mermaid` fails with a migration message for one release.
-- [ ] The C# Mermaid output surface is removed.
+- [x] Markdown HTML and Mermaid SVG cross explicit sanitization boundaries.
+- [x] The report remains one self-contained, offline HTML file.
+- [x] CI rejects a generated `report.html` larger than 5 MB raw.
+- [x] `--emit dot` behaves unchanged.
+- [x] `--emit mermaid` fails with a migration message for one release.
+- [x] The C# Mermaid output surface is removed.
 
 ## Ubiquitous language
 
@@ -156,7 +156,7 @@ The cost is deliberate and measured against the current report:
 | Build | Raw HTML | Gzip | Change |
 | --- | ---: | ---: | ---: |
 | Current report | 1.37 MB | 465 KB | — |
-| Report importing `mermaid@11.16.1` | 4.73 MB | 1.36 MB | +3.36 MB raw / +890 KB gzip |
+| Implemented report with `mermaid@11.16.1` | 4.74 MB | 1.36 MB | +3.37 MB raw / +893 KB gzip |
 
 These numbers come from a disposable copy of the actual Vite project: add the
 single Mermaid import, run `npm run build`, then compare `wc -c` and `gzip -c`
@@ -169,7 +169,7 @@ without a CDN, a server-only asset path, or a second build artifact. The
 dependency and its license are added to `web/NOTICE.md`.
 
 The existing report-bundle verification also gains a 5 MB raw size limit. The
-measured Mermaid build leaves about 270 KB of headroom. Crossing the limit
+implemented 4,742,002-byte report leaves about 258 KB of headroom. Crossing the limit
 requires an explicit dependency or threshold review rather than silently making
 every report heavier.
 
@@ -219,9 +219,9 @@ renderBatch(host, revision):
 
 ### D5 — Make both trust boundaries explicit
 
-Marked does not sanitize its output. Before this component, the report inserted
-that HTML directly. Add DOMPurify as a direct dependency and sanitize all Marked
-output before mounting it. The HTML policy must:
+Marked does not sanitize its output. DOMPurify 3.4.13, used under its
+Apache-2.0 license option, sanitizes all Marked output before mounting it. The
+HTML policy:
 
 - remove scripts, event handlers, unsafe URL schemes, and active embeds;
 - preserve safe Markdown HTML, heading IDs, preview classes, local image/link
@@ -267,7 +267,8 @@ model into a compatibility promise.
 No placeholder exporter interface is added here. Yarn Spinner, Mermaid, JSON, or
 other outputs should consume the future stable serialized dialogue/runtime IR,
 not the interactive report's `DisplayGraph`. That work gets its own design
-component when the IR exists.
+component when the IR exists; [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)
+tracks it.
 
 ## Error and boundary cases
 
@@ -304,8 +305,9 @@ component when the IR exists.
   arm; keep DOT and the temporary migration error.
 - **Docs** — update the README, CLI guide, authoring-aids guide, compilation
   visualization note, CLI emit note, design-note index, and changelog.
-- **Future work** — file a separate stable-IR/exporter design issue rather than
-  preserving the current renderer as a speculative seam.
+- **Future work** — [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)
+  tracks the stable-IR/exporter design rather than preserving the current
+  renderer as a speculative seam.
 
 ## Testability
 
@@ -352,7 +354,6 @@ format, coverage, and report-bundle verification.
 
 ## Open questions
 
-No architectural question is blocking implementation. Visual review should
-confirm that the invalid-diagram fallback and ignored-region presentation stay
-quiet enough during normal editing. The one-release migration message is
-considered sufficient for the 0.1 public tool.
+None. Light and dark live previews confirmed that the diagram, invalid-source,
+and ignored-region presentation remain legible and unobtrusive. The
+one-release migration message is sufficient for the 0.1 public tool.
