@@ -229,6 +229,11 @@ HTML policy:
 - express required additions as a small explicit allowlist rather than disabling
   sanitization for a preview feature.
 
+Genuine placeholders carry a random per-page capability token generated outside
+author-controlled Markdown. The enhancer renders only a placeholder carrying
+that exact token, so raw HTML cannot forge the internal Mermaid marker even
+though safe `data-*` attributes survive sanitization.
+
 Initialize Mermaid with `startOnLoad: false` and `securityLevel: "strict"`.
 Global configuration locks security and theme settings so diagram-local
 directives cannot weaken them. Mermaid's strict path already sanitizes the
@@ -283,6 +288,7 @@ tracks it.
 | Duplicate diagram source | Render each occurrence independently; IDs remain unique. |
 | Huge diagram | Set `maxTextSize` to 50,000 characters and fall back to source when exceeded. |
 | Raw HTML around a diagram | Sanitize it at the Marked boundary before Mermaid enhancement. |
+| Raw HTML forging a Mermaid marker | Ignore it because it cannot carry the page's private placeholder token. |
 | Script or event syntax in a diagram | Mermaid's strict renderer encodes or disables it before the SVG is mounted. |
 | Theme changes mid-render | The new theme schedules a newer revision; the old result cannot mount. |
 | Static `file://` report | Render normally with bundled code and no storage or network requirement. |
@@ -295,6 +301,8 @@ tracks it.
 - **Report-bundle verification** — fail CI when generated `report.html` exceeds
   5 MB raw.
 - **`text.ts`** — mark explicit Mermaid fences without performing DOM work.
+- **`mermaid-placeholder.ts`** — share the page-private marker between the
+  Marked renderer and Mermaid enhancer without exposing a forgeable constant.
 - **Source and detail preview hosts** — sanitize mounted HTML and invoke the
   shared enhancer after each render.
 - **`theme.ts`** — expose the effective-theme change needed by the enhancer,
@@ -317,6 +325,7 @@ tracks it.
   fence unchanged.
 - Sanitization removes scripts, event handlers, and unsafe link/image URLs while
   preserving headings, local assets, ignored regions, and diagram placeholders.
+- Raw HTML carrying a guessed Mermaid marker never reaches the renderer.
 - The enhancer renders valid source, keeps invalid source, assigns unique IDs,
   coalesces pending host updates, serializes Mermaid calls, and rejects
   stale/detached results.
