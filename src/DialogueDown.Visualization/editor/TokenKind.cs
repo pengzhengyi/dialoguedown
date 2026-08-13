@@ -47,4 +47,10 @@ internal enum TokenKind
 
     /// <summary>A default or named command code span, such as <c>`playSound("wind")`</c>.</summary>
     Command,
+
+    /// <summary>
+    /// Markdown the handling policy leaves out of the dialogue, such as a table or a divider. It
+    /// is in the file but not in the script, so the editor shows it as absent rather than played.
+    /// </summary>
+    IgnoredMarkdown,
 }

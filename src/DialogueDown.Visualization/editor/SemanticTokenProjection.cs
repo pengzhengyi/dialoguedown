@@ -1,4 +1,5 @@
 using DialogueDown.Common;
+using DialogueDown.Diagnostics;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
@@ -11,7 +12,8 @@ namespace DialogueDown.Visualization.Editor;
 /// Projects the compiler's Markdown and Dialogue ASTs into the editor's semantic tokens — the
 /// LSP-shaped highlighting the report payload carries and a future language server would publish
 /// unchanged. Dialogue nodes supply semantic constructs; the Markdown tree supplies block-control
-/// keyword spans that the semantic-only Dialogue AST deliberately discards.
+/// keyword spans that the semantic-only Dialogue AST deliberately discards; and the compile's own
+/// diagnostics supply the Markdown its handling policy left out of the dialogue.
 /// </summary>
 internal sealed class SemanticTokenProjection
 {
@@ -21,7 +23,10 @@ internal sealed class SemanticTokenProjection
     /// <paramref name="source"/> is the original script text the AST spans index into.
     /// </summary>
     public IEnumerable<SemanticToken> Project(
-        MarkdownDocument markdown, ScriptDocument document, string source)
+        MarkdownDocument markdown,
+        ScriptDocument document,
+        string source,
+        IReadOnlyList<LocatedDiagnostic>? diagnostics = null)
     {
         ArgumentNullException.ThrowIfNull(markdown);
         ArgumentNullException.ThrowIfNull(document);
@@ -33,8 +38,27 @@ internal sealed class SemanticTokenProjection
             .SelectMany(node => TokensOf(node, source, map));
         return dialogueTokens
             .Concat(ControlKeywordTokens(markdown, map))
+            .Concat(IgnoredMarkdownTokens(diagnostics ?? [], map))
             .OrderBy(token => token.Range.Start.Line)
             .ThenBy(token => token.Range.Start.Character);
+    }
+
+    // Markdown the handling policy left out of the dialogue. An ignored construct is absent from
+    // the tree — being left out is what ignoring means — so it cannot be found by walking one.
+    // The compile already located every one of them while reporting it, and reading that report
+    // keeps the policy the only authority on what is ignored: a project that configures the
+    // policy colors correctly with nothing to change here.
+    private static IEnumerable<SemanticToken> IgnoredMarkdownTokens(
+        IReadOnlyList<LocatedDiagnostic> diagnostics, LspLineMap map)
+    {
+        foreach (var diagnostic in diagnostics)
+        {
+            if (diagnostic.Code == DiagnosticCatalog.DroppedUnmodeledMarkdown.Code)
+            {
+                yield return new SemanticToken(
+                    map.Range(diagnostic.StartOffset, diagnostic.EndOffset), TokenKind.IgnoredMarkdown);
+            }
+        }
     }
 
     private static IEnumerable<SemanticToken> ControlKeywordTokens(

@@ -39,6 +39,7 @@ describe("decoratedRanges", () => {
             "StaticWeight",
             "DynamicWeight",
             "Command",
+            "IgnoredMarkdown",
         ];
 
         const classes = kinds.map(
@@ -59,6 +60,7 @@ describe("decoratedRanges", () => {
             "dd-tok-static-weight",
             "dd-tok-dynamic-weight",
             "dd-tok-command",
+            "dd-tok-ignored-markdown",
         ]);
     });
 

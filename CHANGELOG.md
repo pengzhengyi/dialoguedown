@@ -144,6 +144,13 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The editor shows what becomes of a script's Markdown** — the constructs the handling policy
+  leaves out are dimmed and enclosed in eye-marked Preview regions instead of reading like
+  dialogue, the blockquotes that carry control blocks are no longer muted and carry a question
+  sticker, and comments read as the writer-only notes they are. See
+  the [Unmodeled Markdown Highlighting](docs/contributing/design-notes/Unmodeled%20Markdown%20Highlighting.md)
+  note.
+
 - **Cross-links in the Dialogue Graph are far enough apart to aim between.** Node labels are now
   clipped to a measured width rather than a count of characters — thirty `W`s are more than twice
   thirty `i`s, so the gap the routes climb in was unknown and could not be widened safely. With the

@@ -229,7 +229,8 @@ export type TokenKind =
     | "Condition"
     | "StaticWeight"
     | "DynamicWeight"
-    | "Command";
+    | "Command"
+    | "IgnoredMarkdown";
 
 /**
  * One positioned dialogue token the compiler projects from the parse: a zero-based

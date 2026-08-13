@@ -1,3 +1,4 @@
+using DialogueDown.Diagnostics;
 using DialogueDown.Visualization.Editor;
 using DialogueDown.Visualization.Lsp;
 using DialogueDown.Visualization.Tests.Support;
@@ -249,6 +250,113 @@ public sealed class SemanticTokenProjectionTests
         Assert.Equal(2, token.Range.Start.Line); // zero-based: the third line, not the heading
     }
 
+    [Fact]
+    public void Project_AnIgnoredTable_MarksItAsLeftOutOfTheDialogue()
+    {
+        var source =
+            """
+            Alice: Ask around.
+
+            | Rumor | Source |
+            | --- | --- |
+            | The bridge is out | The miller |
+            """;
+
+        var tokens = Project(source);
+
+        var token = AssertSingleSemanticToken(tokens, TokenKind.IgnoredMarkdown);
+        Assert.StartsWith("| Rumor", token.TextIn(source), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Project_AnIgnoredDivider_IsMarked()
+    {
+        var source =
+            """
+            Alice: Hi
+
+            ---
+
+            Bob: Bye
+            """;
+
+        Assert.Equal("---", AssertSingleSemanticToken(Project(source), TokenKind.IgnoredMarkdown).TextIn(source));
+    }
+
+    [Fact]
+    public void Project_SeveralIgnoredConstructs_AreEachMarked()
+    {
+        var source =
+            """
+            Alice: Hi
+
+            ---
+
+            Bob: Bye
+
+            ---
+            """;
+
+        Assert.Equal(2, Project(source).Count(token => token.Kind == TokenKind.IgnoredMarkdown));
+    }
+
+    [Fact]
+    public void Project_AnIgnoredConstructInsideAChoice_IsMarked()
+    {
+        // The diagnostic carries the construct's span wherever it sat, so nesting needs no walk.
+        var source =
+            """
+            - Alice: Look
+
+                ```mermaid
+                graph TD
+                ```
+            """;
+
+        Assert.Single(Project(source), token => token.Kind == TokenKind.IgnoredMarkdown);
+    }
+
+    [Fact]
+    public void Project_KeptMarkdown_IsNotMarked()
+    {
+        // Kept text becomes dialogue text, so it reads as dialogue rather than as something apart.
+        Assert.DoesNotContain(
+            Project("<div>hi</div>"), token => token.Kind == TokenKind.IgnoredMarkdown);
+    }
+
+    [Fact]
+    public void Project_AComment_IsNotMarked() =>
+        // A comment is always left out, so the editor's own Markdown parser styles it.
+        Assert.DoesNotContain(
+            Project("Alice: Hi <!-- note --> there"),
+            token => token.Kind == TokenKind.IgnoredMarkdown);
+
+    [Fact]
+    public void Project_AScriptWithNothingIgnored_MarksNothing() =>
+        Assert.DoesNotContain(
+            Project("Alice: Hello there."), token => token.Kind == TokenKind.IgnoredMarkdown);
+
+    [Fact]
+    public void Project_AnIgnoredConstruct_IsMarkedWhereverTheDiagnosticReportsIt()
+    {
+        // The coupling this projection rests on: the diagnostic locates what the policy ignored,
+        // so demoting or suppressing it would silently take the highlighting with it.
+        var source =
+            """
+            Alice: Hi
+
+            ---
+            """;
+        var compilation = Pipeline.Compilation(source);
+
+        var reported = compilation.LocatedDiagnostics
+            .Single(diagnostic => diagnostic.Code == DiagnosticCatalog.DroppedUnmodeledMarkdown.Code);
+        var token = AssertSingleSemanticToken(Project(source), TokenKind.IgnoredMarkdown);
+
+        Assert.Equal(reported.StartOffset, token.Range.Start.OffsetIn(source));
+        Assert.Equal(reported.EndOffset, token.Range.End.OffsetIn(source));
+    }
+
     private static SemanticToken AssertSingleSemanticToken(
         IEnumerable<SemanticToken> tokens, TokenKind kind) =>
         Assert.Single(tokens, token => token.Kind == kind);
@@ -280,6 +388,10 @@ public sealed class SemanticTokenProjectionTests
     private IReadOnlyList<SemanticToken> Project(string source)
     {
         var compilation = Pipeline.Compilation(source);
-        return [.. _projection.Project(compilation.Markdown, compilation.Script, source)];
+        return
+        [
+            .. _projection.Project(
+                compilation.Markdown, compilation.Script, source, compilation.LocatedDiagnostics),
+        ];
     }
 }

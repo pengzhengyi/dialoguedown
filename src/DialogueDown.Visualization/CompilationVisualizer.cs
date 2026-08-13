@@ -266,7 +266,8 @@ public sealed class CompilationVisualizer
             : ConfigurationProjection.Project(_configuration);
         var diagnostics = new DiagnosticProjection().Project(result.LocatedDiagnostics);
         IReadOnlyList<SemanticToken> semanticTokens =
-            [.. new SemanticTokenProjection().Project(result.Markdown, result.Script, source)];
+            [.. new SemanticTokenProjection()
+                .Project(result.Markdown, result.Script, source, result.LocatedDiagnostics)];
         return new ReportContent(stages, symbols, configuration, diagnostics, semanticTokens);
     }
 
