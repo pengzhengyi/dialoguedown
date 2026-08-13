@@ -41,11 +41,13 @@ export function createIgnoredPreviewController(
         preview.classList.toggle("ignored-preview-collapsed", collapsed && regionCount > 0);
         for (const region of preview.querySelectorAll<HTMLElement>(".dd-preview-ignored-region")) {
             if (collapsed) {
+                region.setAttribute("role", "group");
                 region.setAttribute(
                     "aria-label",
                     `Ignored ${region.dataset.ignoredSummary ?? "Markdown"}`,
                 );
             } else {
+                region.removeAttribute("role");
                 region.removeAttribute("aria-label");
             }
         }

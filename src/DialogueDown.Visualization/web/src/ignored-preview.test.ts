@@ -46,6 +46,9 @@ describe("createIgnoredPreviewController", () => {
         expect(
             preview.querySelector(".dd-preview-ignored-region")?.getAttribute("aria-label"),
         ).toBe("Ignored Table · 3 lines");
+        expect(preview.querySelector(".dd-preview-ignored-region")?.getAttribute("role")).toBe(
+            "group",
+        );
     });
 
     it("restores one view preference in a newly created Preview", () => {
