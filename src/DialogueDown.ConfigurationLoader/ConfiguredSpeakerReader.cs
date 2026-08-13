@@ -26,7 +26,7 @@ internal sealed class ConfiguredSpeakerReader
         var speakers = new List<ConfiguredSpeaker>();
         string? firstDefaultName = null;
 
-        foreach (var entry in SpeakerEntries(document))
+        foreach (var entry in TomlTables.Named<TableArraySyntax>(document, SpeakersTableName))
         {
             var speaker = ReadSpeaker(entry);
             if (IsDefault(speaker))
@@ -39,11 +39,6 @@ internal sealed class ConfiguredSpeakerReader
 
         return speakers;
     }
-
-    private static IEnumerable<TableArraySyntax> SpeakerEntries(DocumentSyntax document) =>
-        document.Tables
-            .OfType<TableArraySyntax>()
-            .Where(entry => TomlKeys.Name(entry.Name) == SpeakersTableName);
 
     private static ConfiguredSpeaker ReadSpeaker(TableArraySyntax entry)
     {

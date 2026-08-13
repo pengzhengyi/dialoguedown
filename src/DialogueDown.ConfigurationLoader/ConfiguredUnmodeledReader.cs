@@ -23,7 +23,7 @@ internal sealed class ConfiguredUnmodeledReader
         ArgumentNullException.ThrowIfNull(document);
 
         var handling = new Dictionary<UnmodeledNodeKind, UnmodeledNodeHandling>();
-        foreach (var table in UnmodeledTables(document))
+        foreach (var table in TomlTables.Named<TableSyntax>(document, UnmodeledTableName))
         {
             foreach (var entry in table.Items)
             {
@@ -33,11 +33,6 @@ internal sealed class ConfiguredUnmodeledReader
 
         return handling;
     }
-
-    private static IEnumerable<TableSyntax> UnmodeledTables(DocumentSyntax document) =>
-        document.Tables
-            .OfType<TableSyntax>()
-            .Where(table => TomlKeys.Name(table.Name) == UnmodeledTableName);
 
     private static UnmodeledNodeKind ReadKind(KeyValueSyntax entry)
     {
