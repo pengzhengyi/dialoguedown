@@ -71,7 +71,7 @@
   - name: Visualize on the CLI
     href: Visualize on the CLI.md
   - name: Visualize CLI — Emit DOT
-    href: Visualize CLI - Emit Mermaid and DOT.md
+    href: Visualize CLI - Emit DOT.md
 - name: Visualization
   items:
   - name: Compilation Visualization

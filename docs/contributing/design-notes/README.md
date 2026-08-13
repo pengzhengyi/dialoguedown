@@ -125,7 +125,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 1 | [Command-Line Interface](./Command-Line%20Interface.md) | The `dialoguedown` CLI: `compile` + `visualize` (Spectre.Console.Cli) | Implemented |
 | 2 | [Visualize on the CLI](./Visualize%20on%20the%20CLI.md) | Wire `ddown visualize` to the engine; retire the hand-rolled CLI | Implemented |
-| 3 | [Visualize CLI — Emit DOT](./Visualize%20CLI%20-%20Emit%20Mermaid%20and%20DOT.md) | `visualize --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
+| 3 | [Visualize CLI — Emit DOT](./Visualize%20CLI%20-%20Emit%20DOT.md) | `visualize --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
 
 ### Visualization
 
