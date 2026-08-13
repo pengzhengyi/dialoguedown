@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Markdown;
 
 namespace DialogueDown.Tests.Support;
@@ -22,7 +23,7 @@ internal sealed class TestUnmodeledNodePolicy : IUnmodeledNodeHandlingPolicy
 
     /// <summary>Overrides <paramref name="kind"/> to keep it as raw text.</summary>
     public TestUnmodeledNodePolicy Keep(UnmodeledNodeKind kind) =>
-        With(kind, UnmodeledNodeHandling.AsRawText);
+        With(kind, UnmodeledNodeHandling.Keep);
 
     /// <summary>Overrides <paramref name="kind"/> to drop it.</summary>
     public TestUnmodeledNodePolicy Ignore(UnmodeledNodeKind kind) =>

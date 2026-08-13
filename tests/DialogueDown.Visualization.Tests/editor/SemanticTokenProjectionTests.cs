@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
 using DialogueDown.Visualization.Editor;
 using DialogueDown.Visualization.Lsp;
@@ -325,6 +326,44 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_DefaultIgnoredMarkdownConfiguredToKeep_IsNotMarked()
+    {
+        const string Source = """
+            | Speaker | Mood |
+            | --- | --- |
+            | Alice | calm |
+            """;
+        var options = CompilerOptions.Default with
+        {
+            UnmodeledMarkdown = new Dictionary<UnmodeledNodeKind, UnmodeledNodeHandling>
+            {
+                [UnmodeledNodeKind.Table] = UnmodeledNodeHandling.Keep,
+            },
+        };
+
+        Assert.DoesNotContain(
+            Project(Source, options), token => token.Kind == TokenKind.IgnoredMarkdown);
+    }
+
+    [Fact]
+    public void Project_DefaultKeptMarkdownConfiguredToIgnore_IsMarked()
+    {
+        const string Source = "<div>writer note</div>";
+        var options = CompilerOptions.Default with
+        {
+            UnmodeledMarkdown = new Dictionary<UnmodeledNodeKind, UnmodeledNodeHandling>
+            {
+                [UnmodeledNodeKind.RawHtml] = UnmodeledNodeHandling.Ignore,
+            },
+        };
+
+        Assert.Equal(
+            Source,
+            AssertSingleSemanticToken(
+                Project(Source, options), TokenKind.IgnoredMarkdown).TextIn(Source));
+    }
+
+    [Fact]
     public void Project_AComment_IsNotMarked() =>
         // A comment is always left out, so the editor's own Markdown parser styles it.
         Assert.DoesNotContain(
@@ -350,7 +389,7 @@ public sealed class SemanticTokenProjectionTests
         var compilation = Pipeline.Compilation(source);
 
         var reported = compilation.LocatedDiagnostics
-            .Single(diagnostic => diagnostic.Code == DiagnosticCatalog.DroppedUnmodeledMarkdown.Code);
+            .Single(diagnostic => diagnostic.Code == DiagnosticCatalog.IgnoredUnmodeledMarkdown.Code);
         var token = AssertSingleSemanticToken(Project(source), TokenKind.IgnoredMarkdown);
 
         Assert.Equal(reported.StartOffset, token.Range.Start.OffsetIn(source));
@@ -387,7 +426,12 @@ public sealed class SemanticTokenProjectionTests
 
     private IReadOnlyList<SemanticToken> Project(string source)
     {
-        var compilation = Pipeline.Compilation(source);
+        return Project(source, CompilerOptions.Default);
+    }
+
+    private IReadOnlyList<SemanticToken> Project(string source, CompilerOptions options)
+    {
+        var compilation = Pipeline.Compilation(source, options);
         return
         [
             .. _projection.Project(

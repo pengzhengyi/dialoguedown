@@ -30,7 +30,8 @@ public static class DialogueDownServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         options ??= CompilerOptions.Default;
 
-        services.TryAddSingleton<IMarkdownParser>(_ => new MarkdigMarkdownParser());
+        services.TryAddSingleton<IMarkdownParser>(
+            _ => new MarkdigMarkdownParser(UnmodeledNodeHandlingPolicies.For(options.UnmodeledMarkdown)));
         services.TryAddSingleton<IScriptTranspiler>(_ => ScriptTranspilerFactory.CreateDefault());
         services.TryAddSingleton<IScriptDesugarer, ScriptDesugarer>();
         services.TryAddSingleton<IStructuralValidator>(

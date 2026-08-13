@@ -138,7 +138,7 @@ internal static class DiagnosticCatalog
         DiagnosticSeverity.Warning);
 
     /// <summary>DLG1114 — unmodeled Markdown was left out of the script by the handling policy.</summary>
-    public static readonly DiagnosticDescriptor DroppedUnmodeledMarkdown = new(
+    public static readonly DiagnosticDescriptor IgnoredUnmodeledMarkdown = new(
         "DLG1114",
         "Markdown left out of the script",
         "This {0} is not dialogue, so the compiler left it out of the script. That is expected "

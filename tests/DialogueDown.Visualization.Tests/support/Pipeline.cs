@@ -17,6 +17,9 @@ internal static class Pipeline
     public static CompilationResult Compilation(string source) =>
         Compile(source, CompilerOptions.Default);
 
+    public static CompilationResult Compilation(string source, CompilerOptions options) =>
+        Compile(source, options);
+
     public static ScriptDocument Document(string source) => Compile(source, CompilerOptions.Default).Script;
 
     public static SemanticModel Model(string source) => Model(source, CompilerOptions.Default);

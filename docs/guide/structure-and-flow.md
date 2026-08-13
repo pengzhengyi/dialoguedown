@@ -499,8 +499,8 @@ Alice: Hello, Bob!
 
 Markdown constructs that organize the script rather than say something —
 **tables**, **fenced code blocks** (including diagrams like mermaid), and
-**thematic breaks** (`---`) — are treated as author-only aids and are **dropped
-from speech by default**, much like comments. Use them freely to document
+**thematic breaks** (`---`) — are treated as author-only aids and are **ignored
+by default**, much like comments. Use them freely to document
 speakers, sketch scene relationships, or divide sections.
 
 The web report renders a fenced `mermaid` block as a diagram while keeping it
@@ -527,6 +527,7 @@ Alice: Nice to see you, Bob!
 ```
 
 > [!NOTE]
-> Which unmodeled constructs are dropped versus kept as literal speech is
-> configurable per project in a `dialogue.toml` file. See the internal
-> *Unmodeled Markdown Handling* note for the defaults and how to override them.
+> Which unmodeled constructs are ignored or kept as dialogue text is
+> configurable per project in `dialogue.toml`. See
+> [Project configuration](configuration.md#unmodeled-markdown) for the defaults
+> and override syntax.
