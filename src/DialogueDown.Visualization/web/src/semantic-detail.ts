@@ -2,6 +2,7 @@ import type { DisplayNode, Span } from "./model";
 import { nodeDetailTitle, nodeDetailBody, NODE_DETAIL_PLACEHOLDER } from "./detail-panel";
 import { createJumpButton, type JumpButton } from "./jump-button";
 import { initCollapsiblePanel } from "./collapse-toggle";
+import { mountPreviewHtml } from "./preview-html";
 
 /** How the Semantic tab's node-details panel participates in navigation. */
 export interface NodeDetailPanelOptions {
@@ -75,9 +76,13 @@ export function createNodeDetailPanel(options: NodeDetailPanelOptions = {}): Nod
     return {
         element: panel,
         show(node) {
-            body.innerHTML =
+            mountPreviewHtml(
+                body,
                 `<div class="node-detail-heading">${nodeDetailTitle(node)}</div>` +
-                nodeDetailBody(node, { recognizeJumps: options.recognizeJumps ?? false });
+                    nodeDetailBody(node, {
+                        recognizeJumps: options.recognizeJumps ?? false,
+                    }),
+            );
             if (jump) {
                 body.querySelector(".node-detail-heading")?.appendChild(jump.element);
                 jump.update(node);

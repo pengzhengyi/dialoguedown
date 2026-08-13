@@ -72,6 +72,7 @@ import {
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument, type PreviewSemantics } from "./text";
+import { mountPreviewHtml } from "./preview-html";
 import type { DebugController } from "./debug-controller";
 import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
@@ -461,7 +462,7 @@ export function createSourceView(
         controlKeywords: [],
     };
     const renderPreview = (value: string): void => {
-        preview.innerHTML = renderDocument(value, previewSemantics);
+        mountPreviewHtml(preview, renderDocument(value, previewSemantics));
         annotatePreviewControlRegions(preview);
         annotateHeadingAnchors(preview);
     };

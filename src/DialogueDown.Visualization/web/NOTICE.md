@@ -11,6 +11,7 @@ report HTML.
 | Library                                                                    | Version | License      |
 | -------------------------------------------------------------------------- | ------- | ------------ |
 | [D3.js](https://d3js.org)                                                  | 7.9.0   | ISC          |
+| [DOMPurify](https://github.com/cure53/DOMPurify)                           | 3.4.13  | MIT          |
 | [Pico.css](https://picocss.com)                                            | 2.1.1   | MIT          |
 | [marked](https://marked.js.org)                                            | 12.0.2  | MIT          |
 | [marked-gfm-heading-id](https://github.com/markedjs/marked-gfm-heading-id) | 3.2.0   | MIT          |
@@ -43,14 +44,15 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ```
 
-### Pico.css, marked, marked-gfm-heading-id, Tippy.js, and Popper — MIT
+### DOMPurify, Pico.css, marked, marked-gfm-heading-id, Tippy.js, and Popper — MIT
 
-These are distributed under the MIT License (Copyright, respectively: 2019-2024
-Pico.css contributors; 2011-2024 Christopher Jeffrey; 2023 marked contributors
-(marked-gfm-heading-id); 2017-2021 atomiks (Tippy.js); 2019 Federico Zivolo
-(Popper)). The MIT License permits use, copy, modification, and distribution
-provided the copyright and permission notice are retained; the full notice is
-preserved in each package's distribution and at the projects' repositories.
+These are distributed under the MIT License (Copyright, respectively: Mario
+Heiderich and DOMPurify contributors; 2019-2024 Pico.css contributors; 2011-2024
+Christopher Jeffrey; 2023 marked contributors (marked-gfm-heading-id); 2017-2021
+atomiks (Tippy.js); 2019 Federico Zivolo (Popper)). The MIT License permits use,
+copy, modification, and distribution provided the copyright and permission
+notice are retained; the full notice is preserved in each package's distribution
+and at the projects' repositories.
 
 ### highlight.js — BSD-3-Clause
 
