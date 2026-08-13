@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Mermaid authoring diagrams** — fenced `mermaid` blocks render as
+  theme-aware SVG diagrams in every Markdown preview while remaining outside the
+  compiled dialogue. Invalid diagrams keep their source visible, and the
+  self-contained report stays fully offline. See
+  [Mermaid authoring diagrams](docs/contributing/design-notes/Mermaid%20Authoring%20Diagrams.md).
 - **Configure unmodeled Markdown per project** — `dialogue.toml` can now choose
   `keep` or `ignore` for code blocks, thematic breaks, tables, raw HTML,
   autolinks, and other unmodeled constructs. Omitted kinds retain their built-in
@@ -146,6 +151,13 @@ changes easy to categorize.
   whichever way you start and there is a single page to learn. Serving a script that links images
   above its folder still resolves them with your consent (or an explicit `--root`). See the
   [Unified Served Shell](docs/contributing/design-notes/Live%20Visualization%20-%20Unified%20Served%20Shell.md) note.
+
+### Removed
+
+- **Compiler-stage Mermaid emission** — `ddown visualize --emit mermaid`,
+  `EmitFormat.Mermaid`, and the C# `MermaidRenderer` have been removed. Use
+  `--emit dot` for compiler graphs; fenced Mermaid blocks now render in the HTML
+  report.
 
 ### Fixed
 

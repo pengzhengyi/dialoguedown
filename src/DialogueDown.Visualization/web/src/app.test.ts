@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { runApp } from "./app";
 import type { Report, Stage } from "./model";
+import { mermaidPreviews } from "./mermaid-preview";
 
 /**
  * The report skeleton `runApp` binds to — the ids it and its helpers query. The nodes below are
@@ -95,6 +96,22 @@ describe("runApp updateStages — inspector selection across a rebuild", () => {
 
         expect(() => app.updateStages([stage()])).not.toThrow();
         expect(detailTitle()).toBe("Node details");
+    });
+
+    it("disposes a Semantic preview host before replacing its stage", () => {
+        const dispose = vi.spyOn(mermaidPreviews, "dispose");
+        const semantic = { ...stage(), title: "Semantic Model", tables: [] };
+        const app = runApp(
+            { source: "root\nalpha\nbeta", stages: [semantic] },
+            { editable: true, onChange: () => {} },
+        );
+        const oldBody = document.querySelector<HTMLElement>(".semantic-stage .node-detail-body")!;
+        dispose.mockClear();
+
+        app.updateStages([{ ...semantic, nodes: [...semantic.nodes] }]);
+
+        expect(dispose).toHaveBeenCalledWith(oldBody);
+        dispose.mockRestore();
     });
 });
 

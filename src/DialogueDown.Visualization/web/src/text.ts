@@ -1,6 +1,7 @@
-import { marked, Marked, type Token, type Tokens } from "marked";
+import { Marked, type MarkedExtension, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
 import type { DisplayNode, Span } from "./model";
+import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
 
 /** Longest inline label/attribute drawn on a node before it is ellipsised. */
 export const MAX_INLINE_TEXT = 30;
@@ -50,14 +51,31 @@ export function splitFrontMatter(source: string): FrontMatterSplit {
     return { frontMatter: null, body: source };
 }
 
+const mermaidCodeBlocks: MarkedExtension = {
+    renderer: {
+        code(token) {
+            if (!isMermaidFence(token.lang)) return false;
+            return (
+                `<div class="mermaid-diagram" ${MERMAID_PLACEHOLDER_ATTRIBUTE}="${MERMAID_PLACEHOLDER_TOKEN}" data-preview-block="pre">` +
+                `<pre class="mermaid-source"><code>${escapeHtml(token.text)}</code></pre>` +
+                "</div>\n"
+            );
+        },
+    },
+};
+
+/** A snippet parser with Mermaid placeholders but no document-level heading ids. */
+const fragmentMarked = new Marked();
+fragmentMarked.use(mermaidCodeBlocks);
+
 /**
  * A dedicated marked instance that adds GitHub-style heading ids, so anchor
  * links in the whole-document preview (`[text](#slug)`) resolve to their
- * headings. Kept separate from the default instance so node-snippet previews
- * (fragments) stay id-free and cannot collide with the document's ids.
+ * headings. Kept separate from the fragment instance so node-snippet previews
+ * stay id-free and cannot collide with the document's ids.
  */
 const documentMarked = new Marked();
-documentMarked.use(gfmHeadingId());
+documentMarked.use(gfmHeadingId(), mermaidCodeBlocks);
 
 /**
  * Render Markdown to HTML, handling a leading YAML front matter block.
@@ -70,7 +88,7 @@ documentMarked.use(gfmHeadingId());
 export function renderMarkdown(source: string): string {
     return renderFrontMatterAnd(
         source,
-        (body) => marked.parse(body, { async: false, breaks: false }) as string,
+        (body) => fragmentMarked.parse(body, { async: false, breaks: false }) as string,
     );
 }
 
@@ -136,7 +154,7 @@ function documentParser(source: string, semantics: PreviewSemantics): Marked {
             .map((span) => normalizeMarkdown(source.slice(span.start, span.end))),
     );
     const parser = new Marked();
-    parser.use(gfmHeadingId(), {
+    parser.use(gfmHeadingId(), mermaidCodeBlocks, {
         extensions: [
             decoratedToken("table", ignoredSource, (token, render) =>
                 ignoredRegion(token, render.table(token as Tokens.Table)),
@@ -162,6 +180,10 @@ function documentParser(source: string, semantics: PreviewSemantics): Marked {
         ],
     });
     return parser;
+}
+
+function isMermaidFence(language: string | undefined): boolean {
+    return language?.trim().split(/\s+/, 1)[0].toLowerCase() === "mermaid";
 }
 
 type DefaultRenderer = Marked["defaults"]["renderer"];
@@ -191,7 +213,8 @@ function ignoredRegion(token: Token, html: string): string {
         token.type === "link" || (token.type === "html" && !(token as Tokens.HTML).block);
     const tag = inline ? "span" : "div";
     const inlineClass = inline ? " dd-preview-ignored-region-inline" : "";
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue">${content}</${tag}>`;
+    const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue"${sourceBlock}>${content}</${tag}>`;
 }
 
 // Marked removes list/blockquote indentation before handing a nested token to a renderer, while

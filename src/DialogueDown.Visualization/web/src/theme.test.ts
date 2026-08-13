@@ -4,6 +4,7 @@ import {
     applyThemePreference,
     createThemeSelect,
     createThemeControl,
+    initTheme,
     themeIcon,
     type ThemePreference,
 } from "./theme";
@@ -125,5 +126,30 @@ describe("createThemeControl", () => {
         // the sun icon uses a circle; the monitor (system) icon uses a rect
         expect(control.querySelector(".theme-icon")!.innerHTML).toContain("<circle");
         expect(control.querySelector(".theme-icon")!.innerHTML).not.toContain("<rect");
+    });
+});
+
+describe("initTheme", () => {
+    it("reports an effective System-theme change and removes its listener on dispose", () => {
+        vi.stubGlobal("localStorage", fakeStorage());
+        let listener: (() => void) | undefined;
+        const remove = vi.fn();
+        vi.stubGlobal(
+            "matchMedia",
+            vi.fn(() => ({
+                matches: false,
+                addEventListener: (_event: string, next: () => void) => (listener = next),
+                removeEventListener: remove,
+            })),
+        );
+        const changed = vi.fn();
+
+        const dispose = initTheme(document.createElement("div"), changed);
+        listener?.();
+        dispose();
+
+        expect(changed).toHaveBeenCalledOnce();
+        expect(remove).toHaveBeenCalledWith("change", listener);
+        vi.unstubAllGlobals();
     });
 });
