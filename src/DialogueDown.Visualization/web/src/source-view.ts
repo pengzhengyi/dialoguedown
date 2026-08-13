@@ -57,6 +57,7 @@ import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay"
 import { positionToOffset } from "./lsp-position";
 import { annotateHeadingAnchors, wireHeadingAnchorCopy } from "./heading-anchors";
 import { headingSlugHints } from "./heading-slug-hints";
+import { createIgnoredPreviewController } from "./ignored-preview";
 import {
     semanticTokens as semanticTokensExtension,
     setEditorSemanticTokens,
@@ -460,10 +461,12 @@ export function createSourceView(
         ignored: [],
         controlKeywords: [],
     };
+    const ignoredPreview = createIgnoredPreviewController(preview);
     const renderPreview = (value: string): void => {
         preview.innerHTML = renderDocument(value, previewSemantics);
         annotatePreviewControlRegions(preview);
         annotateHeadingAnchors(preview);
+        ignoredPreview.refresh();
     };
     renderPreview(source);
     // Delegated once on the stable preview element; each render re-annotates its headings.
@@ -579,7 +582,10 @@ export function createSourceView(
         sourcePane.prepend(debugToolbar.element);
     }
 
-    container.append(sourcePane, divider, preview);
+    const previewShell = document.createElement("div");
+    previewShell.className = "source-preview-shell";
+    previewShell.append(preview, ignoredPreview.footer);
+    container.append(sourcePane, divider, previewShell);
     const disposeSplitDivider = initSplitDivider(container, divider);
 
     // Scroll the editor and its preview together (VS Code-style), anchored on headings — but
@@ -614,6 +620,7 @@ export function createSourceView(
             disposeScrollSync?.();
             disposeSplitDivider();
             debugToolbar?.destroy();
+            ignoredPreview.destroy();
             view.destroy();
         },
         setEditable: (next) =>

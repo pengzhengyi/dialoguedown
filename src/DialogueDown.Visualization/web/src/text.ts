@@ -186,12 +186,45 @@ function decoratedToken(
 }
 
 function ignoredRegion(token: Token, html: string): string {
-    const content = addClassToFirstElement(html, "dd-preview-ignored");
+    // Ignored HTML must be shown as source, not executed as markup. Markdig reports opening and
+    // closing inline tags separately; wrapping their rendered HTML would create unbalanced DOM.
+    const content =
+        token.type === "html"
+            ? `<code class="dd-preview-ignored dd-preview-ignored-source">${escapeHtml(token.raw)}</code>`
+            : addClassToFirstElement(html, "dd-preview-ignored");
     const inline =
         token.type === "link" || (token.type === "html" && !(token as Tokens.HTML).block);
     const tag = inline ? "span" : "div";
     const inlineClass = inline ? " dd-preview-ignored-region-inline" : "";
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue">${content}</${tag}>`;
+    const kind = ignoredKind(token);
+    const lineCount = sourceLineCount(token.raw);
+    const summary = `${kind} · ${lineCount} ${lineCount === 1 ? "line" : "lines"}`;
+    const source = token.raw.trim();
+    const title = inline
+        ? `Ignored ${kind.toLowerCase()}: ${source}`
+        : "Ignored — not included in dialogue";
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" title="${escapeHtml(title)}">${content}</${tag}>`;
+}
+
+function ignoredKind(token: Token): string {
+    switch (token.type) {
+        case "table":
+            return "Table";
+        case "code":
+            return "Code block";
+        case "hr":
+            return "Divider";
+        case "html":
+            return "Raw HTML";
+        case "link":
+            return "Autolink";
+        default:
+            return "Markdown";
+    }
+}
+
+function sourceLineCount(raw: string): number {
+    return raw.replace(/\r?\n$/, "").split(/\r?\n/).length;
 }
 
 // Marked removes list/blockquote indentation before handing a nested token to a renderer, while

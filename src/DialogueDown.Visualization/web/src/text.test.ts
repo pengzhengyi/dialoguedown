@@ -195,16 +195,17 @@ describe("renderDocument", () => {
     });
 
     it.each([
-        ["table", "| A | B |\n| - | - |\n| x | y |", "<table"],
-        ["code block", "```mermaid\ngraph TD\n```", "<pre"],
-        ["divider", "---", "<hr"],
-    ])("marks an ignored %s in the rendered preview", (_kind, source, element) => {
+        ["table", "| A | B |\n| - | - |\n| x | y |", "<table", "Table · 3 lines"],
+        ["code block", "```mermaid\ngraph TD\n```", "<pre", "Code block · 3 lines"],
+        ["divider", "---", "<hr", "Divider · 1 line"],
+    ])("marks an ignored %s in the rendered preview", (_kind, source, element, summary) => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
         });
 
         expect(html).toContain('class="dd-preview-ignored-region"');
+        expect(html).toContain(`data-ignored-summary="${summary}"`);
         expect(html).toContain(`${element} class="dd-preview-ignored"`);
     });
 
@@ -214,16 +215,34 @@ describe("renderDocument", () => {
         expect(renderDocument(source)).not.toContain("dd-preview-ignored");
     });
 
-    it.each([
-        ["raw HTML", "<div>hi</div>", '<div class="dd-preview-ignored"'],
-        ["an autolink", "<https://example.com>", '<a class="dd-preview-ignored"'],
-    ])("marks %s when a configured policy ignores it", (_kind, source, element) => {
+    it("marks an autolink when a configured policy ignores it", () => {
+        const source = "<https://example.com>";
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
         });
 
-        expect(html).toContain(element);
+        expect(html).toContain('<a class="dd-preview-ignored"');
+        expect(html).toContain('title="Ignored autolink: &lt;https://example.com&gt;"');
+    });
+
+    it("shows ignored inline HTML as escaped source without unbalancing the Preview DOM", () => {
+        const source = "Before <span>inside</span> after";
+        const opening = source.indexOf("<span>");
+        const closing = source.indexOf("</span>");
+
+        const html = renderDocument(source, {
+            ignored: [
+                { start: opening, end: opening + "<span>".length },
+                { start: closing, end: closing + "</span>".length },
+            ],
+            controlKeywords: [],
+        });
+
+        expect(html.match(/data-ignored-kind="Raw HTML"/g)).toHaveLength(2);
+        expect(html).toContain("&lt;span&gt;");
+        expect(html).toContain("&lt;/span&gt;");
+        expect(html).not.toContain("<span>inside</span>");
     });
 
     it("marks a compiler-projected control keyword for region annotation", () => {
