@@ -3,6 +3,7 @@ import { nodeDetailTitle, nodeDetailBody, NODE_DETAIL_PLACEHOLDER } from "./deta
 import { createJumpButton, type JumpButton } from "./jump-button";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { mountPreviewHtml } from "./preview-html";
+import { mermaidPreviews } from "./mermaid-preview";
 
 /** How the Semantic tab's node-details panel participates in navigation. */
 export interface NodeDetailPanelOptions {
@@ -83,6 +84,7 @@ export function createNodeDetailPanel(options: NodeDetailPanelOptions = {}): Nod
                         recognizeJumps: options.recognizeJumps ?? false,
                     }),
             );
+            void mermaidPreviews.renderNow(body);
             if (jump) {
                 body.querySelector(".node-detail-heading")?.appendChild(jump.element);
                 jump.update(node);
@@ -93,6 +95,7 @@ export function createNodeDetailPanel(options: NodeDetailPanelOptions = {}): Nod
             }
         },
         clear() {
+            mermaidPreviews.dispose(body);
             body.innerHTML = NODE_DETAIL_PLACEHOLDER;
             jump?.update(null);
         },

@@ -1,13 +1,23 @@
 // @vitest-environment node
 
 import { describe, it, expect } from "vitest";
-import { mapScroll, matchAnchorTops } from "./scroll-sync";
+import { mapScroll, matchAnchorTops, previewBlockKind } from "./scroll-sync";
 
 describe("mapScroll", () => {
     it("maps proportionally when there are no anchors", () => {
         expect(mapScroll(0, [], [], 100, 200)).toBe(0);
         expect(mapScroll(50, [], [], 100, 200)).toBe(100);
         expect(mapScroll(100, [], [], 100, 200)).toBe(200);
+    });
+
+    describe("previewBlockKind", () => {
+        it("keeps a rendered Mermaid wrapper paired with its fenced code source block", () => {
+            expect(previewBlockKind("DIV", "pre")).toBe("pre");
+        });
+
+        it("uses the rendered element name when no source-block identity is supplied", () => {
+            expect(previewBlockKind("BLOCKQUOTE")).toBe("blockquote");
+        });
     });
 
     describe("matchAnchorTops", () => {

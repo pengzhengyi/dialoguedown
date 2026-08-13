@@ -35,7 +35,8 @@ describe("createMermaidPreviewService", () => {
                 startOnLoad: false,
                 securityLevel: "strict",
                 maxTextSize: 50_000,
-                theme: "dark",
+                theme: "base",
+                themeVariables: expect.objectContaining({ darkMode: true }),
             }),
         );
         expect(api.render).toHaveBeenCalledWith(

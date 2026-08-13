@@ -121,8 +121,31 @@ export function createThemeControl(
     return control;
 }
 
-/** Apply the stored preference on load and mount the toggle into the header controls. */
-export function initTheme(host: Element | null): void {
-    applyThemePreference(readThemePreference());
-    host?.prepend(createThemeControl());
+/**
+ * Apply the stored preference, mount its control, and report every effective-theme change.
+ * System changes arrive through the media query even though `data-theme` stays absent.
+ */
+export function initTheme(
+    host: Element | null,
+    onEffectiveThemeChange: () => void = () => undefined,
+): () => void {
+    let preference = readThemePreference();
+    applyThemePreference(preference);
+    host?.prepend(
+        createThemeControl((next) => {
+            preference = next;
+            applyThemePreference(next);
+            onEffectiveThemeChange();
+        }, preference),
+    );
+
+    const media =
+        typeof window.matchMedia === "function"
+            ? window.matchMedia("(prefers-color-scheme: dark)")
+            : null;
+    const onSystemChange = (): void => {
+        if (preference === "system") onEffectiveThemeChange();
+    };
+    media?.addEventListener("change", onSystemChange);
+    return () => media?.removeEventListener("change", onSystemChange);
 }

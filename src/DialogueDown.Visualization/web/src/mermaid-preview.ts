@@ -65,6 +65,7 @@ export function createMermaidPreviewService(
             window.clearTimeout(state.timer);
             state.timer = null;
         }
+        if (!host.querySelector(DIAGRAM_SELECTOR)) return Promise.resolve();
         return renderRevision(host, state, state.revision);
     }
 
@@ -72,6 +73,10 @@ export function createMermaidPreviewService(
         const state = stateOf(host);
         state.revision++;
         if (state.timer !== null) window.clearTimeout(state.timer);
+        if (!host.querySelector(DIAGRAM_SELECTOR)) {
+            state.timer = null;
+            return;
+        }
         const revision = state.revision;
         state.timer = window.setTimeout(() => {
             state.timer = null;
@@ -142,7 +147,10 @@ export function createMermaidPreviewService(
 
     function dispose(host: HTMLElement): void {
         const state = hosts.get(host);
-        if (state?.timer != null) window.clearTimeout(state.timer);
+        if (state) {
+            state.revision++;
+            if (state.timer != null) window.clearTimeout(state.timer);
+        }
         hosts.delete(host);
     }
 
@@ -171,7 +179,7 @@ function configFor(theme: MermaidTheme): MermaidConfig {
         startOnLoad: false,
         securityLevel: "strict",
         maxTextSize: MAX_TEXT_SIZE,
-        theme: dark ? "dark" : "base",
+        theme: "base",
         secure: [
             "securityLevel",
             "startOnLoad",
@@ -182,6 +190,7 @@ function configFor(theme: MermaidTheme): MermaidConfig {
         ],
         themeVariables: dark
             ? {
+                  darkMode: true,
                   background: "#111827",
                   primaryColor: "#1f2937",
                   primaryTextColor: "#e5e7eb",
@@ -191,6 +200,7 @@ function configFor(theme: MermaidTheme): MermaidConfig {
                   tertiaryColor: "#0f172a",
               }
             : {
+                  darkMode: false,
                   background: "#ffffff",
                   primaryColor: "#f8fafc",
                   primaryTextColor: "#1f2937",
