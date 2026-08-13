@@ -2168,6 +2168,78 @@ g.node.entity-highlight text.label {
     scroll-behavior: smooth;
 }
 
+/* Mirror the Source editor's semantic cue in the rendered Markdown. These regions come from
+   compiler-projected IgnoredMarkdown spans, not HTML element types, so a future project policy
+   that keeps tables or code blocks automatically leaves them at full strength here too. The eye
+   sticker is persistent; the tint and glow appear on hover, matching the blockquote region
+   language without boxing authoring aids into permanent cards. */
+.source-preview .dd-preview-ignored-region {
+    --i: var(--md-muted);
+
+    position: relative;
+    margin: 0.55rem 0;
+    padding: 0.4rem 0.45rem 0.3rem 0.75rem;
+    border-left: 3px solid color-mix(in srgb, var(--i) 68%, transparent);
+    border-radius: 3px;
+    transition:
+        border-color 0.12s ease,
+        background-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.source-preview .dd-preview-ignored-region:hover {
+    border-left-color: var(--i);
+    background: color-mix(in srgb, var(--i) 8%, transparent);
+    box-shadow: 0 1px 12px color-mix(in srgb, var(--i) 22%, transparent);
+}
+
+.source-preview .dd-preview-ignored-region::after,
+.source-preview .dd-preview-control-region::after {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.35rem;
+    display: grid;
+    place-items: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--i) 12%, var(--pico-background-color));
+    color: var(--i);
+    font:
+        normal normal normal 0.72rem/1 codicon,
+        sans-serif;
+}
+
+.source-preview .dd-preview-ignored-region::after {
+    content: "\eae7"; /* codicon-eye-closed */
+}
+
+.source-preview .dd-preview-ignored-region > .dd-preview-ignored {
+    margin: 0;
+}
+
+.source-preview .dd-preview-ignored {
+    opacity: 0.72;
+}
+
+.source-preview .dd-preview-ignored-region-inline {
+    display: inline-block;
+    margin: 0;
+    padding: 0 1.55rem 0 0.2rem;
+}
+
+.source-preview .dd-preview-control-region {
+    position: relative;
+}
+
+.source-preview .dd-preview-control-region::after {
+    --i: var(--q);
+
+    top: 0.2rem;
+    right: 0.3rem;
+    content: "\eb32"; /* codicon-question */
+}
+
 .source-preview .jump-ligature,
 .preview .jump-ligature {
     font-family: "Fira Code", var(--pico-font-family-monospace, ui-monospace, monospace);

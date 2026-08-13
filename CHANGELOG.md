@@ -141,8 +141,9 @@ changes easy to categorize.
 ### Fixed
 
 - **The editor shows what becomes of a script's Markdown** — the constructs the handling policy
-  leaves out are dimmed instead of reading like dialogue, the blockquotes that carry
-  control blocks are no longer muted, and comments read as the writer-only notes they are. See
+  leaves out are dimmed and enclosed in eye-marked Preview regions instead of reading like
+  dialogue, the blockquotes that carry control blocks are no longer muted and carry a question
+  sticker, and comments read as the writer-only notes they are. See
   the [Unmodeled Markdown Highlighting](docs/contributing/design-notes/Unmodeled%20Markdown%20Highlighting.md)
   note.
 

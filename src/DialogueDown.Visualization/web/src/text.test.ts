@@ -193,4 +193,48 @@ describe("renderDocument", () => {
         expect(renderDocument("=>\n[Go](#go)")).not.toContain("jump-ligature");
         expect(renderMarkdown("=> [Go](#go)")).not.toContain("jump-ligature");
     });
+
+    it.each([
+        ["table", "| A | B |\n| - | - |\n| x | y |", "<table"],
+        ["code block", "```mermaid\ngraph TD\n```", "<pre"],
+        ["divider", "---", "<hr"],
+    ])("marks an ignored %s in the rendered preview", (_kind, source, element) => {
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('class="dd-preview-ignored-region"');
+        expect(html).toContain(`${element} class="dd-preview-ignored"`);
+    });
+
+    it("leaves the same Markdown at full strength when the policy keeps it", () => {
+        const source = "| A | B |\n| - | - |\n| x | y |";
+
+        expect(renderDocument(source)).not.toContain("dd-preview-ignored");
+    });
+
+    it.each([
+        ["raw HTML", "<div>hi</div>", '<div class="dd-preview-ignored"'],
+        ["an autolink", "<https://example.com>", '<a class="dd-preview-ignored"'],
+    ])("marks %s when a configured policy ignores it", (_kind, source, element) => {
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain(element);
+    });
+
+    it("marks a compiler-projected control keyword for region annotation", () => {
+        const source = "> `if` `Ready?`\n>\n> Alice: Go.";
+        const start = source.indexOf("`if`");
+
+        const html = renderDocument(source, {
+            ignored: [],
+            controlKeywords: [{ start, end: start + "`if`".length }],
+        });
+
+        expect(html).toContain('<code class="dd-preview-control-keyword">if</code>');
+    });
 });

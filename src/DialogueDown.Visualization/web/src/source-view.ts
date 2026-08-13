@@ -17,6 +17,7 @@ import {
     Compartment,
     StateField,
     StateEffect,
+    type ChangeDesc,
     type Extension,
     type StateCommand,
 } from "@codemirror/state";
@@ -70,7 +71,7 @@ import {
     type Span,
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
-import { renderDocument } from "./text";
+import { renderDocument, type PreviewSemantics } from "./text";
 import type { DebugController } from "./debug-controller";
 import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
@@ -223,6 +224,32 @@ const jumpPreviewField = StateField.define<DecorationSet>({
 
 function setJumpPreview(view: EditorView, span: { from: number; to: number } | null): void {
     view.dispatch({ effects: setJumpPreviewEffect.of(span) });
+}
+
+/**
+ * Carry compiler-projected preview spans through unsaved edits. Insertions at a span's opening
+ * boundary belong before it; insertions at its closing boundary belong after it. Edits inside the
+ * span still grow or shrink it, while deleting the whole construct removes the empty range.
+ */
+export function mapPreviewSpans(spans: readonly Span[], changes: ChangeDesc): Span[] {
+    return spans
+        .map((span) => ({
+            start: changes.mapPos(span.start, 1),
+            end: changes.mapPos(span.end, -1),
+        }))
+        .filter((span) => span.end > span.start);
+}
+
+function annotatePreviewControlRegions(preview: HTMLElement): void {
+    const regions = new Set(
+        [...preview.querySelectorAll(".dd-preview-control-keyword")]
+            .map((keyword) => keyword.closest("blockquote"))
+            .filter((region): region is HTMLQuoteElement => region !== null),
+    );
+    for (const region of regions) {
+        region.classList.add("dd-preview-control-region");
+        region.title = "Conditional dialogue";
+    }
 }
 
 /** The stage rows for the reverse Jump-to menu, each carrying the current source selection. */
@@ -429,8 +456,16 @@ export function createSourceView(
     preview.tabIndex = 0;
     preview.setAttribute("role", "region");
     preview.setAttribute("aria-label", "Preview");
-    preview.innerHTML = renderDocument(source);
-    annotateHeadingAnchors(preview);
+    let previewSemantics: PreviewSemantics = {
+        ignored: [],
+        controlKeywords: [],
+    };
+    const renderPreview = (value: string): void => {
+        preview.innerHTML = renderDocument(value, previewSemantics);
+        annotatePreviewControlRegions(preview);
+        annotateHeadingAnchors(preview);
+    };
+    renderPreview(source);
     // Delegated once on the stable preview element; each render re-annotates its headings.
     wireHeadingAnchorCopy(preview);
 
@@ -439,8 +474,11 @@ export function createSourceView(
     const onEdit = EditorView.updateListener.of((update) => {
         if (update.docChanged) {
             const value = update.state.doc.toString();
-            preview.innerHTML = renderDocument(value);
-            annotateHeadingAnchors(preview);
+            previewSemantics = {
+                ignored: mapPreviewSpans(previewSemantics.ignored, update.changes),
+                controlKeywords: mapPreviewSpans(previewSemantics.controlKeywords, update.changes),
+            };
+            renderPreview(value);
             onChange?.(value);
         }
     });
@@ -584,7 +622,21 @@ export function createSourceView(
             view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: next } }),
         getContent: () => view.state.doc.toString(),
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
-        setSemanticTokens: (tokens) => setEditorSemanticTokens(view, tokens),
+        setSemanticTokens: (tokens) => {
+            setEditorSemanticTokens(view, tokens);
+            const spansOf = (kind: SemanticToken["kind"]): Span[] =>
+                tokens
+                    .filter((token) => token.kind === kind)
+                    .map((token) => ({
+                        start: positionToOffset(view.state, token.range.start),
+                        end: positionToOffset(view.state, token.range.end),
+                    }));
+            previewSemantics = {
+                ignored: spansOf("IgnoredMarkdown"),
+                controlKeywords: spansOf("ControlKeyword"),
+            };
+            renderPreview(view.state.doc.toString());
+        },
         setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
         resolveRange: (range) => {
             const start = positionToOffset(view.state, range.start);

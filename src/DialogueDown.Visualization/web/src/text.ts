@@ -1,6 +1,6 @@
-import { marked, Marked } from "marked";
+import { marked, Marked, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
-import type { DisplayNode } from "./model";
+import type { DisplayNode, Span } from "./model";
 
 /** Longest inline label/attribute drawn on a node before it is ellipsised. */
 export const MAX_INLINE_TEXT = 30;
@@ -91,11 +91,125 @@ export function renderNodePreview(source: string, label: string, recognizeJumps 
  * Like {@link renderMarkdown}, but adds GitHub-style heading ids so in-document
  * anchor links work. Use for the whole-document Source preview.
  */
-export function renderDocument(source: string): string {
+export interface PreviewSemantics {
+    ignored: readonly Span[];
+    controlKeywords: readonly Span[];
+}
+
+const EMPTY_PREVIEW_SEMANTICS: PreviewSemantics = {
+    ignored: [],
+    controlKeywords: [],
+};
+
+export function renderDocument(
+    source: string,
+    semantics: PreviewSemantics = EMPTY_PREVIEW_SEMANTICS,
+): string {
     return renderFrontMatterAnd(source, (body) =>
         decorateJumpIndicators(
-            documentMarked.parse(body, { async: false, breaks: false }) as string,
+            documentParser(source, semantics).parse(body, {
+                async: false,
+                breaks: false,
+            }) as string,
         ),
+    );
+}
+
+/**
+ * A document parser that marks only the Markdown the compiler says it ignored. The source
+ * snippets, not Markdown kinds, drive this: when project configuration changes a kind from
+ * Ignore to Keep, its semantic token disappears and the same preview renders at full strength.
+ */
+function documentParser(source: string, semantics: PreviewSemantics): Marked {
+    if (semantics.ignored.length === 0 && semantics.controlKeywords.length === 0) {
+        return documentMarked;
+    }
+
+    const ignoredSource = new Set(
+        semantics.ignored
+            .filter((span) => span.end > span.start)
+            .map((span) => normalizeMarkdown(source.slice(span.start, span.end))),
+    );
+    const controlKeywordSource = new Set(
+        semantics.controlKeywords
+            .filter((span) => span.end > span.start)
+            .map((span) => normalizeMarkdown(source.slice(span.start, span.end))),
+    );
+    const parser = new Marked();
+    parser.use(gfmHeadingId(), {
+        extensions: [
+            decoratedToken("table", ignoredSource, (token, render) =>
+                ignoredRegion(token, render.table(token as Tokens.Table)),
+            ),
+            decoratedToken("code", ignoredSource, (token, render) =>
+                ignoredRegion(token, render.code(token as Tokens.Code)),
+            ),
+            decoratedToken("hr", ignoredSource, (token, render) =>
+                ignoredRegion(token, render.hr(token as Tokens.Hr)),
+            ),
+            decoratedToken("html", ignoredSource, (token, render) =>
+                ignoredRegion(token, render.html(token as Tokens.HTML)),
+            ),
+            decoratedToken("link", ignoredSource, (token, render) =>
+                ignoredRegion(token, render.link(token as Tokens.Link)),
+            ),
+            decoratedToken("codespan", controlKeywordSource, (token, render) =>
+                addClassToFirstElement(
+                    render.codespan(token as Tokens.Codespan),
+                    "dd-preview-control-keyword",
+                ),
+            ),
+        ],
+    });
+    return parser;
+}
+
+type DefaultRenderer = Marked["defaults"]["renderer"];
+
+/**
+ * Wrap one core Marked renderer, decorating it only when the token's exact source is among the
+ * compiler-projected spans for that semantic kind.
+ */
+function decoratedToken(
+    name: string,
+    decoratedSource: ReadonlySet<string>,
+    decorate: (token: Token, renderer: NonNullable<DefaultRenderer>) => string,
+) {
+    return {
+        name,
+        renderer(this: { parser: { renderer: NonNullable<DefaultRenderer> } }, token: Token) {
+            return decoratedSource.has(normalizeMarkdown(token.raw))
+                ? decorate(token, this.parser.renderer)
+                : false;
+        },
+    };
+}
+
+function ignoredRegion(token: Token, html: string): string {
+    const content = addClassToFirstElement(html, "dd-preview-ignored");
+    const inline =
+        token.type === "link" || (token.type === "html" && !(token as Tokens.HTML).block);
+    const tag = inline ? "span" : "div";
+    const inlineClass = inline ? " dd-preview-ignored-region-inline" : "";
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue">${content}</${tag}>`;
+}
+
+// Marked removes list/blockquote indentation before handing a nested token to a renderer, while
+// the compiler's span slices the original source. Ignoring leading indentation per line makes
+// those two views of the same construct compare equal without re-implementing Markdown parsing.
+function normalizeMarkdown(value: string): string {
+    return value
+        .trim()
+        .split(/\r?\n/)
+        .map((line) => line.trimStart())
+        .join("\n");
+}
+
+function addClassToFirstElement(html: string, className: string): string {
+    return html.replace(/^<([a-z][\w:-]*)([^>]*)>/i, (_whole, tag: string, attributes: string) =>
+        attributes.includes("class=")
+            ? `<${tag}${attributes.replace(/class="([^"]*)"/, `class="$1 ${className}"`)}>`
+            : `<${tag} class="${className}"${attributes}>`,
     );
 }
 

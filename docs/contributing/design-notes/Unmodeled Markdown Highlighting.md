@@ -47,8 +47,11 @@ needs no change when it lands. Front-matter rendering is a pre-existing gap, tra
 - [x] Derive it from the policy's own decision, not a second classification.
 - [x] Cover block and inline constructs alike.
 - [x] Reach constructs nested in a list item or blockquote.
-- [x] Style ignored material as present in the file but absent from the dialogue.
+- [x] Style ignored material as present in the file but absent from the dialogue, in both Source
+      and Preview.
 - [x] Stop muting blockquotes, so a control block reads as live dialogue.
+- [x] Mark a conditional blockquote with a question sticker, from its compiler-projected control
+      keyword.
 - [x] Style Markdown comments as the writer-only notes they are.
 - [x] Leave dialogue constructs' existing tokens untouched.
 
@@ -90,8 +93,8 @@ Given a script:
 | Construct | Fate | How it reads |
 | --- | --- | --- |
 | The comment | Never compiled | Light gray and italic — a note to the writer |
-| The table | Ignored | Dark gray — legible for inspection, but visibly inert |
-| The `if` quote | Dialogue | Fully colored, keyword highlighted — it plays |
+| The table | Ignored | Dark gray inside an eye-marked region; the region glows on hover |
+| The `if` quote | Dialogue | Fully colored inside a question-marked region — it plays |
 | The `<div>` | Kept | Ordinary dialogue text, because that is exactly what it becomes |
 
 The blockquote is the point of the change: today it is the dimmest thing on screen, though it is
@@ -112,7 +115,8 @@ flowchart LR
     D --> T["SemanticToken list:<br/>carried in the report"]
     K --> T
     I --> T
-    T --> E["Editor:<br/>one CSS class per kind"]
+    T --> E["Source editor:<br/>one CSS class per kind"]
+    T --> V["Markdown Preview:<br/>semantic regions + stickers"]
     E --> M["Markdown highlighting:<br/>comments, quotes"]
 ```
 
@@ -124,7 +128,8 @@ flowchart LR
 | `SemanticTokenProjection` | Emits a token for each ignored construct, from the reported spans. | `LocatedDiagnostic`, `DiagnosticCatalog` |
 | `IUnmodeledNodeHandlingPolicy` | Unchanged: still the single authority on a kind's fate. | `UnmodeledNodeKind` |
 | `semantic-tokens.ts` | Maps the new kind to its CSS class. | `styles.css` |
-| `source-view.ts` | Stops muting blockquotes; styles comments. | the Markdown highlight style |
+| `text.ts` | Marks rendered Markdown from ignored and control-keyword source spans. | `marked` |
+| `source-view.ts` | Maps tokens through edits, mirrors ignored regions in Preview, stops muting blockquotes, and styles comments. | the Markdown highlight style |
 
 ## Key design decisions
 
@@ -184,7 +189,7 @@ flattened construct is byte-for-byte indistinguishable from ordinary text in the
 so recognizing it would have required a new record threaded out of the parse for no reader
 benefit.
 
-### DD4 — Stop muting blockquotes rather than re-coloring them per quote
+### DD4 — Stop muting blockquotes; mark control regions from existing tokens
 
 The fix is to delete `{ tag: tags.quote, color: "var(--md-muted)" }`, not to add a token that
 re-colors quotes. In DialogueDown a blockquote is always live: a marker-headed quote is a
@@ -193,7 +198,11 @@ control block, and any other quote is a transparent wrapper whose contents are d
 the only thing overriding them. Removing it lets the existing projection show through, with no
 new token and no new span arithmetic.
 
-### DD5 — Use a two-level gray hierarchy, not more hues
+The Preview adds a question sticker only when an existing `ControlKeyword` token lands inside
+the rendered blockquote. It does not recognize `if` strings in TypeScript. This preserves the
+same boundary as DD1: the compiler decides DialogueDown grammar; the client renders it.
+
+### DD5 — Use semantic regions and a two-level gray hierarchy
 
 Ignored material is **dark gray**; a comment is **lighter gray and italic**. Both survive a
 colorblind reader and both themes, where new hues in an already thirteen-color legend would not.
@@ -202,15 +211,28 @@ Markdown stays more legible because it may be an accidental omission the writer 
 A strikethrough was rejected after preview because it added visual noise across multi-line tables
 and code blocks.
 
+Opacity alone was also rejected for Preview: it was too easy to overlook, and an adjacent badge
+did not say which content it covered. The final design wraps each ignored rendered construct in a
+region with a persistent closed-eye sticker and left rail. Hovering brightens the rail and adds
+the same soft tint and glow blockquotes already use. A conditional blockquote gets a question
+sticker in the same corner. The stickers add no separate row, so the document's vertical flow is
+unchanged.
+
+The Preview regions are still policy-driven. `renderDocument` receives the same
+`IgnoredMarkdown` spans as Source and matches them to Marked's source tokens; it does **not**
+dim every `table`, `pre`, or `hr`. When configuration changes a kind from `Ignore` to `Keep`, its
+token disappears and both panes return it to full strength.
+
 ## Error and boundary cases
 
 | Case | Behavior |
 | --- | --- |
-| An ignored table, code block, or divider | One ignored token over the construct's span. |
+| An ignored table, code block, or divider | One ignored token over the construct's span; Source and Preview show the same opacity, and Preview encloses it in an eye-marked region. |
 | Raw HTML kept as dialogue text | No token — it reads as the dialogue text it becomes. |
 | An HTML comment, block or inline | Styled by the editor's Markdown parser; never projected. |
 | An ignored construct inside a list item or blockquote | Tokenized — the diagnostic carries its span wherever it sat. |
-| A blockquote of any kind | No unmodeled token; its contents keep their own colors. |
+| A conditional blockquote | Its contents keep their own colors; its existing control-keyword token adds the question sticker in Preview. |
+| A non-conditional blockquote | No question sticker; its contents keep their own colors. |
 | A project that configures the policy | Follows the configured fate, with no change here. |
 | An ignored construct in a script that fails to compile | Reported and colored as far as the front end ran; later stages add nothing here. |
 
@@ -219,8 +241,10 @@ and code blocks.
 - **Report payload.** One more `TokenKind` value; the payload shape is unchanged.
 - **LSP.** The kind rides the same legend a language server would publish, so the projection is
   reused unchanged when it arrives.
-- **Editor.** One CSS class following the existing `dd-tok-*` convention, plus two lines in the
-  Markdown highlight style.
+- **Source editor.** One CSS class following the existing `dd-tok-*` convention, plus two lines
+  in the Markdown highlight style.
+- **Markdown Preview.** The same semantic spans add ignored/control region classes and codicon
+  stickers. Spans map through unsaved edits until the next compile.
 - **Diagnostics overlay.** An ignored construct also carries its `DLG1114` note; the two agree
   because they come from the same report.
 
@@ -233,6 +257,11 @@ and code blocks.
 - **Unit — client:** the new kind maps to its class, alongside every existing kind.
 - **Unit — Markdown layer:** `markdownHighlightStyle` is asserted to leave a blockquote unstyled
   and to style a comment, so neither decision can be undone by reflex.
+- **Unit — Preview renderer:** ignored tables, code blocks, dividers, raw HTML, and autolinks are
+  wrapped only when their projected spans are supplied; kept Markdown stays full-strength.
+- **Integration — Source view:** setting and clearing semantic tokens adds and removes ignored
+  Preview regions, a control-keyword token marks its enclosing blockquote, and ranges map through
+  unsaved edits.
 
 ## Alternatives not chosen
 
@@ -241,4 +270,6 @@ and code blocks.
 | Re-run the policy inside the projection | Two authorities on one question, and an ignored node is no longer in the tree to classify ([DD2](#dd2--recover-ignored-spans-from-the-diagnostic-the-front-end-already-reports)). |
 | Thread a record of every fate out of the parse | A second transport for something the diagnostic already carries, to distinguish kept text that should not be distinguished ([DD3](#dd3--kept-material-is-styled-as-dialogue-because-that-is-what-it-becomes)). |
 | A projected token kind for comments | Duplicates what the editor's Markdown parser already recognizes, for a fate that never varies ([DD1](#dd1--project-what-the-policy-decides-style-natively-what-markdown-already-knows)). |
-| Re-color blockquotes with a new token | The mute was the problem; the contents already have their own colors ([DD4](#dd4--stop-muting-blockquotes-rather-than-re-coloring-them-per-quote)). |
+| Re-color blockquotes with a new token | The mute was the problem; the contents already have their own colors ([DD4](#dd4--stop-muting-blockquotes-mark-control-regions-from-existing-tokens)). |
+| Opacity alone in Preview | Too easy to overlook; a semantic region preserves flow while making coverage explicit ([DD5](#dd5--use-semantic-regions-and-a-two-level-gray-hierarchy)). |
+| A badge on its own row | Breaks the Markdown's vertical rhythm and does not clearly enclose the content it labels. |
