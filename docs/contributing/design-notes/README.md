@@ -158,6 +158,7 @@ flowchart TB
     ZEN --> NSL["28. Live Visualization — Narrow Screen Layout"]
     NSL --> RJ["29. Live Visualization — Reverse Jump"]
     RJ --> UMH["32. Unmodeled Markdown Highlighting"]
+    UMH --> MAD["33. Mermaid Authoring Diagrams"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -194,6 +195,7 @@ flowchart TB
 | 30 | [Live Visualization — Reverse Jump](./Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
 | 31 | [Dialogue Graph Visualization Tab](./Dialogue%20Graph%20Visualization%20Tab.md) | The compiled dialogue graph as a fifth stage tab: every node in graph order, typed edges, and orphans made visible | Implemented |
 | 32 | [Unmodeled Markdown Highlighting](./Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores, stops muting the blockquotes that carry control blocks, and styles comments as writer-only notes | Implemented |
+| 33 | [Mermaid Authoring Diagrams](./Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Proposed |
 
 ### Other notes
 

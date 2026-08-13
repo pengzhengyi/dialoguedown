@@ -88,6 +88,8 @@
     href: Dialogue Graph Visualization Tab.md
   - name: Unmodeled Markdown Highlighting
     href: Unmodeled Markdown Highlighting.md
+  - name: Mermaid Authoring Diagrams
+    href: Mermaid Authoring Diagrams.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion
