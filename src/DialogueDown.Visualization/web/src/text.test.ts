@@ -127,6 +127,32 @@ describe("renderMarkdown", () => {
         const html = renderMarkdown("---\nnote: a<b>\n---\n");
         expect(html).toContain("a&lt;b&gt;");
     });
+
+    it.each(["mermaid", "Mermaid", "MERMAID compact"])(
+        "marks a %s fence as a source-preserving diagram placeholder",
+        (language) => {
+            const html = renderMarkdown(`\`\`\`${language}\nflowchart LR\nA --> B\n\`\`\``);
+
+            expect(html).toContain('class="mermaid-diagram"');
+            expect(html).toContain("data-mermaid");
+            expect(html).toContain('data-preview-block="pre"');
+            expect(html).toContain('<pre class="mermaid-source"><code>flowchart LR');
+        },
+    );
+
+    it("escapes Mermaid source inside the placeholder", () => {
+        const html = renderMarkdown("```mermaid\nA[<script>] --> B\n```");
+
+        expect(html).toContain("A[&lt;script&gt;] --&gt; B");
+        expect(html).not.toContain("<script>");
+    });
+
+    it("leaves an ordinary fenced code block unchanged", () => {
+        const html = renderMarkdown("```typescript\nconst value = 1;\n```");
+
+        expect(html).toContain('<code class="language-typescript">');
+        expect(html).not.toContain("mermaid-diagram");
+    });
 });
 
 describe("renderNodePreview", () => {
@@ -195,17 +221,31 @@ describe("renderDocument", () => {
     });
 
     it.each([
-        ["table", "| A | B |\n| - | - |\n| x | y |", "<table"],
-        ["code block", "```mermaid\ngraph TD\n```", "<pre"],
-        ["divider", "---", "<hr"],
-    ])("marks an ignored %s in the rendered preview", (_kind, source, element) => {
+        ["table", "| A | B |\n| - | - |\n| x | y |", '<table class="dd-preview-ignored"'],
+        ["code block", "```mermaid\ngraph TD\n```", 'class="mermaid-diagram dd-preview-ignored"'],
+        ["divider", "---", '<hr class="dd-preview-ignored"'],
+    ])("marks an ignored %s in the rendered preview", (_kind, source, ignoredElement) => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
         });
 
         expect(html).toContain('class="dd-preview-ignored-region"');
-        expect(html).toContain(`${element} class="dd-preview-ignored"`);
+        expect(html).toContain(ignoredElement);
+    });
+
+    it("keeps the ignored-region wrapper around a rendered Mermaid placeholder", () => {
+        const source = "```mermaid\nflowchart LR\nA --> B\n```";
+
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain(
+            '<div class="dd-preview-ignored-region" title="Ignored — not included in dialogue">' +
+                '<div class="mermaid-diagram dd-preview-ignored"',
+        );
     });
 
     it("leaves the same Markdown at full strength when the policy keeps it", () => {

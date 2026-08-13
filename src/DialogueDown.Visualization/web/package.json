@@ -41,6 +41,7 @@
     "github-slugger": "^2.0.0",
     "marked": "^18.0.9",
     "marked-gfm-heading-id": "^4.1.4",
+    "mermaid": "^11.16.1",
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {
