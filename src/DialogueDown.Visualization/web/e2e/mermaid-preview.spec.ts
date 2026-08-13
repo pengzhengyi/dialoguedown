@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import type { Report, Stage } from "../src/model";
 import { writeReport } from "./report";
 
@@ -74,6 +75,8 @@ test("re-renders diagrams when the effective theme changes", async ({ page }) =>
     await page.locator(".theme-select").selectOption("dark");
 
     await expect.poll(() => svg.getAttribute("id")).not.toBe(firstId);
+    const accessibility = await new AxeBuilder({ page }).include(".source-preview").analyze();
+    expect(accessibility.violations).toEqual([]);
 });
 
 test("sanitizes raw Markdown HTML before it reaches the preview", async ({ page }) => {
