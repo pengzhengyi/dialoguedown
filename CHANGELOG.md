@@ -87,6 +87,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **The graph legend now draws each route as the line it really is** — the same dashes the canvas
+  draws, ending in the same arrowhead, and stamped with the same crosses where a line marks a node
+  nothing reaches. A jump is drawn dash‑dot so it differs from a conditional in kind rather than
+  only in dash length, and the legend row reads "Conditional".
 - **The report's tables now run on `table-core` v9.** Sorting, searching, and faceted filtering
   behave exactly as before; the upgrade keeps the report on a supported major of its headless
   table engine.
@@ -147,6 +151,11 @@ changes easy to categorize.
   the [Unmodeled Markdown Highlighting](docs/contributing/design-notes/Unmodeled%20Markdown%20Highlighting.md)
   note.
 
+- **Cross-links in the Dialogue Graph are far enough apart to aim between.** Node labels are now
+  clipped to a measured width rather than a count of characters — thirty `W`s are more than twice
+  thirty `i`s, so the gap the routes climb in was unknown and could not be widened safely. With the
+  gap a known width, routes climbing in one column each take a corridor of their own, 18 units
+  apart instead of 7.
 - **A stage opens on what it draws.** Every graph tab used to open at full size anchored on its
   root, which on a long script showed a handful of nodes and left the reader to hunt for the rest.
   A stage now frames the whole of itself, clear of the legend — and where the whole of it will not

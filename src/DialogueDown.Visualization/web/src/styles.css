@@ -2601,7 +2601,12 @@ svg.tree.has-focus .link:not(.related) {
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
-    min-width: 9.5rem;
+    min-width: 11rem;
+
+    /* The legend floats over the canvas, so it must never be the thing that makes the page wider
+       than the window — on a phone a long type name would otherwise push the whole document into
+       a horizontal scroll. It gives way instead, and its labels trail off. */
+    max-width: calc(100% - 1.5rem);
     max-height: 90%;
     overflow: auto;
     padding: 0.4rem 0.5rem;
@@ -2637,7 +2642,9 @@ svg.tree.has-focus .link:not(.related) {
 }
 
 .legend-item .legend-label {
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .legend-item .count {
@@ -2780,26 +2787,13 @@ svg.tree.has-focus .link:not(.related) {
     flex: none;
 }
 
-/* A line, so an edge never reads as a node's dot. */
+/* The route itself, drawn small: long enough for a pattern to repeat and to end in an arrowhead,
+   so an edge never reads as a node's dot and a reader can tell one route from another. */
 .legend .edge-swatch {
-    width: 0.85rem;
-    height: 0.18rem;
-    border-radius: 1px;
-}
-
-/* A stamped route writes its glyph instead of a bar, so the legend shows the mark to look for. */
-.legend .symbol-swatch {
-    display: flex;
-    align-items: center;
-    width: auto;
-    min-width: 0.85rem;
-    height: 0.7rem;
-    background: none;
-    border-radius: 0;
-    font-size: 0.6rem;
-    line-height: 1;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
+    width: 48px;
+    height: 12px;
+    flex: none;
+    overflow: visible;
 }
 
 .zoom-controls {
