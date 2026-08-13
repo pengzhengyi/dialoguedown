@@ -1,7 +1,7 @@
 # Ignored Markdown Preview Toggle
 
 > [!NOTE]
-> Status: **approved — in progress**. Extends
+> Status: **implemented**. Extends
 > [Unmodeled Markdown Highlighting](./Unmodeled%20Markdown%20Highlighting.md) with one global
 > Preview control: show every ignored construct in full, or collapse all of them while preserving
 > where and what they were.
@@ -37,16 +37,16 @@ per-region expansion, or storing a different state per script.
 
 ## Functionality checklist
 
-- [ ] Always render a Preview footer matching the Source editor's `#END` footer height.
-- [ ] Show the ignored-region count and current Preview state.
-- [ ] Disable the action when the count is zero.
-- [ ] Default to expanded, preserving current behavior.
-- [ ] Collapse every ignored block to `Kind · N lines` at its original position.
-- [ ] Collapse every ignored inline to one closed-eye chip with a source tooltip.
-- [ ] Keep Source editor content visible and dimmed in either state.
-- [ ] Persist one view preference across file switches and hot reloads.
-- [ ] Reapply the state when a recompile changes the ignored regions.
-- [ ] Verify an ignored inline through a real `dialogue.toml` override.
+- [x] Always render a Preview footer matching the Source editor's `#END` footer height.
+- [x] Show the ignored-region count and current Preview state.
+- [x] Disable the action when the count is zero.
+- [x] Default to expanded, preserving current behavior.
+- [x] Collapse every ignored block to `Kind · N lines` at its original position.
+- [x] Collapse every ignored inline to one closed-eye chip with a source tooltip.
+- [x] Keep Source editor content visible and dimmed in either state.
+- [x] Persist one view preference across file switches and hot reloads.
+- [x] Reapply the state when a recompile changes the ignored regions.
+- [x] Verify an ignored inline through a real `dialogue.toml` override.
 
 ## Writer-facing behavior
 
@@ -90,7 +90,7 @@ flowchart LR
 | Type | Responsibility |
 | --- | --- |
 | `renderDocument` | Emits ignored regions with kind, source-line count, and source tooltip metadata. |
-| `IgnoredPreviewController` | Owns global state, persistence, footer rendering, and reapplication after Preview renders. |
+| `createIgnoredPreviewController` | Creates the stable footer and owns global state, guarded persistence, recounting, and reapplication after Preview renders. |
 | `source-view.ts` | Hosts a Preview shell: scrollable document above, fixed footer below; refreshes the controller after each render. |
 | `styles.css` | Mirrors the `#END` footer dimensions and defines expanded blocks, collapsed summaries, and inline chips. |
 
@@ -105,6 +105,9 @@ a floating glyph had ambiguous scope.
 The footer is always present. At zero it says `0 ignored` and disables the eye, preserving pane
 alignment and making "nothing omitted" an explicit status.
 
+The static browser test compares both footer rows' rendered position and height, pinning the
+alignment rather than relying only on matching CSS declarations.
+
 ### D2 — Collapse Preview only
 
 Source remains the editable truth. Its ignored text stays visible and dimmed so a writer can
@@ -118,6 +121,10 @@ The count is mechanical—not a guessed row count—and remains meaningful for a
 
 Inline content cannot become a row without breaking its sentence. It becomes one closed-eye chip
 in place, with a tooltip containing the kind and exact source text.
+
+Ignored HTML is shown as escaped source rather than executed markup. Markdig exposes inline
+opening and closing tags as separate tokens; rendering them as HTML after the compiler ignored
+them would unbalance Preview DOM. Escaped source also better communicates what was left out.
 
 ### D4 — One persisted view preference
 
@@ -147,10 +154,14 @@ controller never classifies source or hardcodes which kinds are ignored.
 ## Testability
 
 - **Renderer unit tests:** metadata for each supported Marked kind, exact source-line counts, and
-  escaped inline tooltip source.
+  escaped inline tooltip source; separately ignored HTML tags remain balanced.
 - **Controller unit tests:** zero/expanded/collapsed footer states, action semantics, persistence,
   refresh after rerender, and storage failure.
-- **Source-view integration:** fixed footer always exists, global state applies to new regions,
-  Source remains unchanged, and Preview hide/show owns the whole shell.
-- **Live integration:** a real `dialogue.toml` sets `autolink = "ignore"`; Preview collapses its
-  rendered link to an inline eye chip and restores it globally.
+- **Source-view integration:** the fixed footer always exists, global state applies to new
+  regions, Source remains unchanged, and Preview hide/show owns the whole shell.
+- **Static browser integration:** the Preview footer matches the `#END` footer's position and
+  height, Zen hides the whole Preview shell, narrow layout stays bounded, and axe reports no
+  accessibility violations.
+- **Live integration:** a real `dialogue.toml` sets `autolink = "ignore"`; one global footer
+  controls the configured inline link and a default-ignored table, persists across reload, and
+  restores both globally.

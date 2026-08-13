@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **Ignored-content Preview footer** — a fixed footer matching Source's `#END` row reports how
+  much Markdown the compiler left out and globally shows or collapses it. Blocks retain kind and
+  source-line count; configured ignored inline content becomes an eye chip in place; Source stays
+  visible and editable. See the
+  [Ignored Markdown Preview Toggle](docs/contributing/design-notes/Ignored%20Markdown%20Preview%20Toggle.md)
+  note.
+
 - **Configure unmodeled Markdown per project** — `dialogue.toml` can now choose
   `keep` or `ignore` for code blocks, thematic breaks, tables, raw HTML,
   autolinks, and other unmodeled constructs. Omitted kinds retain their built-in
