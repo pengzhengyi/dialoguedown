@@ -40,22 +40,14 @@ public static class TomlConfigurationLoader
         IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> unmodeled =
             new ConfiguredUnmodeledReader().Read(document);
 
-        var options = CompilerOptions.Default;
-        if (speakers.Count > 0)
+        if (speakers.Count == 0 && mode is null && unmodeled.Count == 0)
         {
-            options = options with { Speakers = speakers };
+            return CompilerOptions.Default;
         }
 
-        if (mode is { } resolvedMode)
-        {
-            options = options with { Mode = resolvedMode };
-        }
-
-        if (unmodeled.Count > 0)
-        {
-            options = options with { UnmodeledMarkdown = unmodeled };
-        }
-
-        return options;
+        return new CompilerOptions(
+            mode ?? CompilerOptions.Default.Mode,
+            speakers,
+            unmodeled);
     }
 }

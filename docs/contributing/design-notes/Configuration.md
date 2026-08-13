@@ -255,8 +255,20 @@ both **owned immutably** and **equal by content**:
 Immutable collections solve ownership, not equality: two separately allocated
 `ImmutableArray<T>` or `ImmutableDictionary<TKey, TValue>` values do not compare
 equal merely because their contents match. `ConfiguredSpeaker` and
-`CompilerOptions` therefore define typed equality and matching hash codes
-explicitly rather than relying on synthesized record equality.
+`CompilerOptions` therefore use
+[`Generator.Equals`](https://github.com/diegofrata/Generator.Equals) to generate
+typed equality and matching hash codes from property-level semantics:
+
+- `[OrderedEquality]` on speaker and tag arrays preserves order.
+- `[UnorderedEquality]` on the handling map ignores dictionary insertion order.
+- scalar properties use their default equality.
+- private backing fields use `[IgnoreEquality]`, so the public properties are
+  the single equality surface.
+
+The MIT-licensed generator is a private build dependency; its 18 KB runtime
+comparer/attribute assembly is the only package dependency exposed to
+consumers. This avoids repeated handwritten collection folds while keeping the
+generated C# inspectable, reflection-free, and covered by domain tests.
 
 The public immutable types are intentional even though they are a larger API
 change than hidden defensive copies. They state the domain invariant directly,

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Markdown;
@@ -25,10 +26,8 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
 
     private static readonly CompilerOptions _keepsTables = CompilerOptions.Default with
     {
-        UnmodeledMarkdown = new Dictionary<UnmodeledNodeKind, UnmodeledNodeHandling>
-        {
-            [UnmodeledNodeKind.Table] = UnmodeledNodeHandling.Keep,
-        },
+        UnmodeledMarkdown = ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling>.Empty
+            .Add(UnmodeledNodeKind.Table, UnmodeledNodeHandling.Keep),
     };
 
     [Fact]

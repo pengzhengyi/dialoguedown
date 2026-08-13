@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Generator.Equals;
 
 namespace DialogueDown.Configuration;
 
@@ -9,9 +10,13 @@ namespace DialogueDown.Configuration;
 /// into a speaker declaration to bind alongside the script's own speakers. A speaker is the
 /// default when its <see cref="ReservedTags"/> include the <c>default</c> reserved tag.
 /// </summary>
-public sealed record ConfiguredSpeaker
+[Equatable]
+public sealed partial record ConfiguredSpeaker
 {
+    [IgnoreEquality]
     private ImmutableArray<ConfiguredTag> _customTags = ImmutableArray<ConfiguredTag>.Empty;
+
+    [IgnoreEquality]
     private ImmutableArray<ConfiguredTag> _reservedTags = ImmutableArray<ConfiguredTag>.Empty;
 
     /// <summary>Creates an immutable snapshot of a configured speaker and its tag sequences.</summary>
@@ -37,6 +42,7 @@ public sealed record ConfiguredSpeaker
     public string? Id { get; init; }
 
     /// <summary>The custom tags in configured order.</summary>
+    [OrderedEquality]
     public ImmutableArray<ConfiguredTag> CustomTags
     {
         get => _customTags;
@@ -44,30 +50,11 @@ public sealed record ConfiguredSpeaker
     }
 
     /// <summary>The reserved tags in configured order.</summary>
+    [OrderedEquality]
     public ImmutableArray<ConfiguredTag> ReservedTags
     {
         get => _reservedTags;
         init => _reservedTags = RequireInitialized(value, nameof(ReservedTags));
-    }
-
-    /// <summary>Compares the speaker and both ordered tag sequences by content.</summary>
-    public bool Equals(ConfiguredSpeaker? other) =>
-        ReferenceEquals(this, other)
-        || (other is not null
-            && Name == other.Name
-            && Id == other.Id
-            && CustomTags.SequenceEqual(other.CustomTags)
-            && ReservedTags.SequenceEqual(other.ReservedTags));
-
-    /// <inheritdoc />
-    public override int GetHashCode()
-    {
-        var hash = new HashCode();
-        hash.Add(Name, StringComparer.Ordinal);
-        hash.Add(Id, StringComparer.Ordinal);
-        AddTags(ref hash, CustomTags);
-        AddTags(ref hash, ReservedTags);
-        return hash.ToHashCode();
     }
 
     /// <summary>Deconstructs the speaker into the same four parts as the original positional record.</summary>
@@ -89,12 +76,4 @@ public sealed record ConfiguredSpeaker
             ? throw new ArgumentException("The immutable tag array must be initialized.", propertyName)
             : tags;
 
-    private static void AddTags(ref HashCode hash, ImmutableArray<ConfiguredTag> tags)
-    {
-        hash.Add(tags.Length);
-        foreach (var tag in tags)
-        {
-            hash.Add(tag);
-        }
-    }
 }
