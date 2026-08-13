@@ -64,8 +64,8 @@ public sealed class ConfigurationProjectionTests
         var speaker = new ConfiguredSpeaker(
             "Alice",
             "A",
-            CustomTags: [new ConfiguredTag("role", "guide"), new ConfiguredTag("main")],
-            ReservedTags: [new ConfiguredTag("default")]);
+            customTags: [new ConfiguredTag("role", "guide"), new ConfiguredTag("main")],
+            reservedTags: [new ConfiguredTag("default")]);
         var applied = AppliedConfiguration.FromFile(
             "/p", "x", new CompilerOptions { Speakers = [speaker] });
 

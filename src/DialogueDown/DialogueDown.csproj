@@ -28,6 +28,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Generate collection-aware value equality at build time. The generator is private;
+         generated code uses the tiny runtime comparer/attribute assembly, so that dependency
+         intentionally flows to package consumers. -->
+    <PackageReference Include="Generator.Equals" Version="4.0.2" PrivateAssets="all" />
+    <PackageReference Include="Generator.Equals.Runtime" Version="4.0.2" />
     <PackageReference Include="Markdig" Version="1.3.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
     <PackageReference Include="Pidgin" Version="3.5.1" />

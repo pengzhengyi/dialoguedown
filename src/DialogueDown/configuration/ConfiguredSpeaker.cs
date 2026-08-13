@@ -1,14 +1,79 @@
+using System.Collections.Immutable;
+using Generator.Equals;
+
 namespace DialogueDown.Configuration;
 
 /// <summary>
 /// A speaker supplied by configuration rather than declared in a script: a display name, an
-/// optional stable id, and its tags partitioned into custom and reserved. It is plain data,
-/// validated and partitioned at the configuration edge; the semantic stage turns it into a
-/// speaker declaration to bind alongside the script's own speakers. A speaker is the default
-/// when its <see cref="ReservedTags"/> include the <c>default</c> reserved tag.
+/// optional stable id, and its tags partitioned into immutable custom and reserved sequences. It
+/// is plain data, validated and partitioned at the configuration edge; the semantic stage turns it
+/// into a speaker declaration to bind alongside the script's own speakers. A speaker is the
+/// default when its <see cref="ReservedTags"/> include the <c>default</c> reserved tag.
 /// </summary>
-public sealed record ConfiguredSpeaker(
-    string Name,
-    string? Id,
-    IReadOnlyList<ConfiguredTag> CustomTags,
-    IReadOnlyList<ConfiguredTag> ReservedTags);
+[Equatable]
+public sealed partial record ConfiguredSpeaker
+{
+    [IgnoreEquality]
+    private ImmutableArray<ConfiguredTag> _customTags = ImmutableArray<ConfiguredTag>.Empty;
+
+    [IgnoreEquality]
+    private ImmutableArray<ConfiguredTag> _reservedTags = ImmutableArray<ConfiguredTag>.Empty;
+
+    /// <summary>Creates an immutable snapshot of a configured speaker and its tag sequences.</summary>
+    public ConfiguredSpeaker(
+        string name,
+        string? id,
+        IEnumerable<ConfiguredTag> customTags,
+        IEnumerable<ConfiguredTag> reservedTags)
+    {
+        ArgumentNullException.ThrowIfNull(customTags);
+        ArgumentNullException.ThrowIfNull(reservedTags);
+
+        Name = name;
+        Id = id;
+        CustomTags = customTags.ToImmutableArray();
+        ReservedTags = reservedTags.ToImmutableArray();
+    }
+
+    /// <summary>The speaker's display name.</summary>
+    public string Name { get; init; }
+
+    /// <summary>The optional stable id the script references as <c>@id</c>.</summary>
+    public string? Id { get; init; }
+
+    /// <summary>The custom tags in configured order.</summary>
+    [OrderedEquality]
+    public ImmutableArray<ConfiguredTag> CustomTags
+    {
+        get => _customTags;
+        init => _customTags = RequireInitialized(value, nameof(CustomTags));
+    }
+
+    /// <summary>The reserved tags in configured order.</summary>
+    [OrderedEquality]
+    public ImmutableArray<ConfiguredTag> ReservedTags
+    {
+        get => _reservedTags;
+        init => _reservedTags = RequireInitialized(value, nameof(ReservedTags));
+    }
+
+    /// <summary>Deconstructs the speaker into the same four parts as the original positional record.</summary>
+    public void Deconstruct(
+        out string name,
+        out string? id,
+        out ImmutableArray<ConfiguredTag> customTags,
+        out ImmutableArray<ConfiguredTag> reservedTags)
+    {
+        name = Name;
+        id = Id;
+        customTags = CustomTags;
+        reservedTags = ReservedTags;
+    }
+
+    private static ImmutableArray<ConfiguredTag> RequireInitialized(
+        ImmutableArray<ConfiguredTag> tags, string propertyName) =>
+        tags.IsDefault
+            ? throw new ArgumentException("The immutable tag array must be initialized.", propertyName)
+            : tags;
+
+}
