@@ -35,7 +35,7 @@ public sealed class CompilerOptionsTests
         var configured = Assert.Single(options.ForSemanticAnalyzer().ConfiguredSpeakers);
         Assert.Equal("Narrator", configured.Name);
         Assert.Equal("narrator", configured.Id);
-        Assert.Equal([ConfiguredTag("mood", "happy")], configured.CustomTags);
-        Assert.Equal([DefaultTag()], configured.ReservedTags);
+        Assert.Equal(ConfiguredTag("mood", "happy"), Assert.Single(configured.CustomTags));
+        Assert.Equal(DefaultTag(), Assert.Single(configured.ReservedTags));
     }
 }
