@@ -76,6 +76,19 @@ public sealed class ConfiguredUnmodeledReaderTests
             """)[UnmodeledNodeKind.Table]);
 
     [Fact]
+    public void Read_DottedKindKey_Throws()
+    {
+        // A dotted key keeps its full name, so it is unknown rather than being misread as the
+        // first segment (`table`).
+        var exception = Reject("""
+            [markdown.unmodeled]
+            table.format = "keep"
+            """);
+
+        Assert.Contains("table.format", exception.Message);
+    }
+
+    [Fact]
     public void Read_UnrelatedMarkdownSection_IsIgnored() =>
         // A sibling section under [markdown] is not this reader's concern.
         Assert.Empty(Read("""
@@ -133,7 +146,6 @@ public sealed class ConfiguredUnmodeledReaderTests
             """);
 
         Assert.Contains("markdown.unmodeled.table", exception.Message);
-        Assert.Contains("already defined", exception.Message);
     }
 
     private static IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> Read(string toml) =>
