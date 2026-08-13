@@ -19,7 +19,7 @@
     - [D3 — Faithful-to-Markdown boundary](#d3--faithful-to-markdown-boundary)
     - [D4 — Immutability and source spans](#d4--immutability-and-source-spans)
     - [D5 — Comment handling: recognize and discard](#d5--comment-handling-recognize-and-discard)
-    - [D6 — Minimal pipeline; unmodeled constructs become raw text](#d6--minimal-pipeline-unmodeled-constructs-become-raw-text)
+    - [D6 — Minimal pipeline; unmodeled constructs follow a handling policy](#d6--minimal-pipeline-unmodeled-constructs-follow-a-handling-policy)
     - [D7 — Line breaks preserved with a hard/soft flag](#d7--line-breaks-preserved-with-a-hardsoft-flag)
     - [D8 — Configurable unmodeled-node handling](#d8--configurable-unmodeled-node-handling)
     - [D9 — Discard front matter](#d9--discard-front-matter)
@@ -107,8 +107,9 @@ Grouping headings into sections, splitting `Speaker: Speech`, and interpreting
 | Type                            | Kind                              | Responsibility                                                                                                                                                                                                 | Collaborators                            |
 | ------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `IMarkdownParser`               | `internal interface`              | Port: `MarkdownDocument Parse(string source)`. The stable seam the rest of the compiler depends on.                                                                                                            | consumed by the transpiler               |
-| `MarkdigMarkdownParser`         | `internal sealed class`           | Adapter: configures a narrowed Markdig pipeline and converts Markdig's tree to our AST.                                                                                                                        | Markdig, `MarkdigToMarkdownAstConverter` |
-| `MarkdigToMarkdownAstConverter` | `internal sealed class`           | Pure translation of Markdig nodes into our AST (no I/O). Holds the source per parse so unmodeled constructs flatten to raw text (D6). Isolated so it is unit-testable and the Markdig dependency is contained. | Markdig types → our AST                  |
+| `MarkdigMarkdownParser`         | `internal sealed class`           | Adapter: configures a narrowed Markdig pipeline, requires an explicit unmodeled-node policy, and builds the handler and converter for one parse.                                                               | Markdig, handler, converter              |
+| `MarkdigUnmodeledNodeHandler`   | `internal sealed class`           | Carries out `Keep` / `Ignore`, preserving kept source text and reporting `DLG1114` for each ignored construct.                                                                                                 | policy, diagnostics, source spans        |
+| `MarkdigToMarkdownAstConverter` | `internal sealed class`           | Pure translation of modeled Markdig nodes into our AST; delegates every unmodeled node to the handler.                                                                                                         | Markdig types, unmodeled handler         |
 | `MarkdownDocument` + node types | `internal record`                 | Our minimal, immutable Markdown AST (see next section).                                                                                                                                                        | produced here, consumed downstream       |
 | `SourceSpan`                    | `internal readonly record struct` | Start-offset + length range into the source for diagnostics.                                                                                                                                                   | every node                               |
 
@@ -167,7 +168,7 @@ Notes:
 - **Inlines** are six kinds — text, link, image, code span, emphasis, and line
   break. `EmphasisInline` is the only inline that **contains other inlines**
   (italic/bold, with parsed children); anything Markdig would treat as an autolink
-  or other unmodeled inline collapses into `TextInline` raw text (see decisions
+  or other unmodeled inline follows its configured handling (see decisions
   below); recognized HTML comments are discarded (D5). A `LineBreak` records an
   in-paragraph break and its `IsHard` flag, with no speech meaning attached here
   (D7).
@@ -257,7 +258,7 @@ keeping the recognition means nodes can be re-introduced trivially if one appear
   comments carry no dialogue meaning. Recognition is required either way, so
   dropping costs nothing extra now.
 
-### D6 — Minimal pipeline; unmodeled constructs become raw text
+### D6 — Minimal pipeline; unmodeled constructs follow a handling policy
 
 The input is a *dialogue script*, not a general document, so the pipeline stays
 **close to CommonMark core**. Three Markdig extensions are enabled: **pipe
@@ -269,14 +270,13 @@ subscript/superscript) is enabled. Consequences:
 
 - Other GFM syntax stays literal text the writer typed.
 - Any construct we do not model (thematic breaks, code blocks, tables, stray
-  HTML, …) is by **default flattened to its raw source text** via
-  the span mechanism (D2), never silently dropped — though the handling policy
-  (D8) can instead **ignore** a given kind.
+  HTML, …) is classified and handled according to D8. Keeping uses the span
+  mechanism (D2) to preserve the exact source text; ignoring reports `DLG1114`
+  before leaving the construct out.
 
-Rationale: in a dialogue script, ambiguous Markdown is far more likely to be text
-the writer typed than structural intent. Erring toward raw text preserves speech
-and keeps the recognized structural set tiny (document, heading, list/item,
-paragraph, link, image, code span, emphasis, line break).
+Rationale: the modeled structural set stays tiny (document, heading, list/item,
+paragraph, link, image, code span, emphasis, line break), while the handling
+policy distinguishes ambiguous content from authoring aids.
 
 ### D7 — Line breaks preserved with a hard/soft flag
 
@@ -296,25 +296,24 @@ spec's *Succession* section for the author-facing rule.
 
 ### D8 — Configurable unmodeled-node handling
 
-Some unmodeled constructs are authoring aids, not speech — a table of speakers, a
-mermaid diagram, a section divider. Leaking them into speech as raw text is noise.
-So each **unmodeled node kind** is resolved by a policy to either **`Ignore`**
-(drop it, like a comment) or **`AsRawText`** (keep it as literal speech — the
-default).
+Some unmodeled constructs are authoring aids, not dialogue — a table of speakers,
+a mermaid diagram, a section divider. Leaking them into dialogue is noise. Each
+**unmodeled node kind** therefore resolves to either **`Ignore`** (leave it out,
+like a comment) or **`Keep`** (preserve its source as dialogue text).
 
 `DefaultUnmodeledNodeHandlingPolicy` ignores `CodeBlock`, `ThematicBreak`, and
 `Table` (authoring aids) and keeps `RawHtml`, `Autolink`, and any
-`Other` unrecognized construct as raw text (possibly intended content). A caller
-can pass a custom `IUnmodeledNodeHandlingPolicy` to `MarkdigMarkdownParser` to
-override any kind. The converter classifies each unmodeled node with a static
-`MarkdigUnmodeledNodeClassifier`, then drops or flattens it per the policy;
-comments stay firmly discarded (D5), outside the policy. Recognizing a `Table`
-requires enabling Markdig's pipe-table extension (D6).
+`Other` unrecognized construct (possibly intended content). The composition
+root builds an `IUnmodeledNodeHandlingPolicy` from `CompilerOptions`, and
+`MarkdigMarkdownParser` requires it explicitly. `MarkdigUnmodeledNodeHandler`
+classifies each unmodeled node, keeps or ignores it, and reports every ignored
+construct. Comments stay firmly discarded (D5), outside the policy. Recognizing
+a `Table` requires enabling Markdig's pipe-table extension (D6).
 
 See **[Unmodeled Markdown Handling](./Unmodeled%20Markdown%20Handling.md)** for the
-full kind list, defaults, and how to plug in a custom policy. A project selects a
-policy from a **TOML** config file (`dialogue.toml`); the loader that reads it is
-future work.
+full kind list, defaults, and custom-policy seam. A project selects handling
+overrides from its **TOML** config file (`dialogue.toml`), which
+`TomlConfigurationLoader` reads into `CompilerOptions`.
 
 ### D9 — Discard front matter
 
@@ -345,11 +344,11 @@ content is an ordinary thematic break (handled per the policy — D8).
 | `LineBreakInline`                                                         | `LineBreak`                         | keep the `IsHard` flag; no speech meaning here (D7)                                        |
 | `HtmlInline`/`HtmlBlock` comment                                          | *(discarded)*                       | recognized and dropped so it never enters speech (D5)                                      |
 | `YamlFrontMatterBlock`                                                    | *(discarded)*                       | leading `---` metadata block, firmly dropped (D9)                                          |
-| unmodeled **inline** (autolink, other HTML)                               | `TextInline` (raw source)           | flatten via source span; never dropped                                                     |
-| unmodeled **block** (thematic break, fenced code, other HTML)             | `Paragraph` of one raw `TextInline` | flatten via source span; never dropped                                                     |
+| unmodeled **inline** (autolink, other HTML)                               | `TextInline` / none                 | `Keep` preserves the source; `Ignore` reports `DLG1114`                                    |
+| unmodeled **block** (thematic break, fenced code, table, other HTML)      | `Paragraph` / none                  | `Keep` preserves the source; `Ignore` reports `DLG1114`                                    |
 
-Conversion is a straightforward recursive walk; unmodeled nodes flatten to their
-raw source slice (D6):
+Conversion is a straightforward recursive walk; unmodeled nodes delegate to
+their handler (D6):
 
 ```text
 convert(document)      -> MarkdownDocument(children.map(convertBlock))
@@ -382,11 +381,11 @@ convertInline(comment) -> (discarded; excluded from surrounding text)
 | Emphasis `*italic*` / `**bold**` / `~~struck~~`     | Modeled as `EmphasisInline` (Kind + parsed children); a literal `*` or `~` needs escaping (`\*`, `\~`) (D2).                                                             |
 | Escaped `\*` or intraword `keep_the_underscores`    | Stays literal `TextInline` — no emphasis (standard CommonMark).                                                                                                          |
 | Unbalanced or single tilde (`~x~`, `~~x~`)          | Stays literal — only balanced `~~...~~` is strikethrough.                                                                                                                |
-| `~~~...~~~` at line start                           | A tilde-fenced **code block** (like ```` ``` ````), not strikethrough — handled per the unmodeled-node policy (dropped by default).                                      |
+| `~~~...~~~` at line start                           | A tilde-fenced **code block** (like ```` ``` ````), not strikethrough — handled per the unmodeled-node policy (ignored by default).                                      |
 | Image `![alt](src)`                                 | Modeled as `ImageInline` (source + inline alt), like a link; the transpiler decides inline rendering.                                                                    |
 | Bracketed text that is not a link                   | Follows CommonMark link rules; a valid link becomes `LinkInline`. Downstream decides relevance.                                                                          |
 | Task lists / other GFM (autolinks, sub/superscript) | These extensions are **not** enabled (D6); they remain literal text.                                                                                                     |
-| Pipe tables (GFM)                                   | Recognized via the pipe-table extension (D6), then handled per the unmodeled-node policy — dropped by default (D8).                                                      |
+| Pipe tables (GFM)                                   | Recognized via the pipe-table extension (D6), then handled per the unmodeled-node policy — ignored by default (D8).                                                      |
 | Leading `---`-fenced front matter                   | Recognized and discarded (D9); a `---` after content is a thematic break.                                                                                                |
 | Multiple lines in one paragraph                     | Each in-paragraph break becomes a `LineBreak` node carrying its `IsHard` flag. No speech meaning is assigned here; the transpiler maps hard→new speech, soft→space (D7). |
 
@@ -449,8 +448,8 @@ guard.
   (source + inline alt), mirroring links, so the transpiler can render images inline
   in a chat.
 - **Markdig dependency:** adopt **Markdig** (BSD-2-Clause) as the backing parser.
-- **Unknown-node policy:** flatten unmodeled constructs to raw text (D6); do not
-  silently drop them.
+- **Unknown-node policy:** classify each unmodeled construct and apply its
+  `Keep` / `Ignore` handling (D6/D8); every ignored construct is reported.
 
 ## Status
 

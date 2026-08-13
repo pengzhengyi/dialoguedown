@@ -1,9 +1,14 @@
+using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Markdown;
 
 public sealed class MarkdigMarkdownParserTests : MarkdigMarkdownParserTestBase
 {
+    [Fact]
+    public void Constructor_NullPolicy_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => new MarkdigMarkdownParser(null!));
+
     [Fact]
     public void Parse_NullSource_Throws()
     {

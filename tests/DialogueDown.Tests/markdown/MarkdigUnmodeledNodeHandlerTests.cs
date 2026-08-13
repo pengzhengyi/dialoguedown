@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
@@ -93,7 +94,7 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
 
         handler.Handle(ThematicBreak(Whole(Source)));
 
-        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown);
         Assert.Equal(DiagnosticSeverity.Info, note.Severity);
         Assert.Equal("divider", Assert.Single(note.MessageArguments));
         Assert.Equal(Source.Length, note.Span.Length);
@@ -111,7 +112,7 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
         Assert.Equal(
             expected,
             Assert.Single(
-                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown)
                     .MessageArguments));
     }
 
@@ -127,7 +128,7 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
         Assert.Equal(
             "autolink",
             Assert.Single(
-                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown)
                     .MessageArguments));
     }
 
@@ -145,7 +146,7 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
         Assert.Equal(
             "raw HTML",
             Assert.Single(
-                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown)
                     .MessageArguments));
     }
 
@@ -160,7 +161,7 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
         Assert.Equal(
             "piece of Markdown",
             Assert.Single(
-                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown)
                     .MessageArguments));
     }
 

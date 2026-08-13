@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using MarkdigAutolinkInline = Markdig.Syntax.Inlines.AutolinkInline;
 using MarkdigBlock = Markdig.Syntax.Block;
 using MarkdigCodeBlock = Markdig.Syntax.CodeBlock;

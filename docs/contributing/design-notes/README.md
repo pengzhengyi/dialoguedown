@@ -48,7 +48,7 @@ flowchart LR
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
 | 1 | [Markdown Front-End](./Markdown%20Front-End.md) | Source text → Markdown AST (Markdig adapter) | Implemented |
-| 1a | [Unmodeled Markdown Handling](./Unmodeled%20Markdown%20Handling.md) | A front-end detail: which Markdown is ignored vs kept as raw text | Implemented |
+| 1a | [Unmodeled Markdown Handling](./Unmodeled%20Markdown%20Handling.md) | A front-end detail: which unmodeled Markdown is ignored or kept as dialogue text | Implemented |
 | 2 | [Markdown to Dialogue AST Transpiler](./Markdown%20to%20Dialogue%20AST%20Transpiler.md) | Markdown AST → Dialogue AST | Implemented |
 | 3 | [Desugar](./Desugar.md) | Dialogue AST → normalized Dialogue AST (jump assembly, default speaker) | Implemented |
 | 4 | [Semantic Analyzer](./Semantic%20Analyzer.md) | Desugared AST → semantic model (speakers, scenes, resolved jumps) | Implemented |
@@ -88,7 +88,7 @@ edge, a satellite that reads a `dialogue.toml` into those options.
 
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
-| 1 | [Configuration](./Configuration.md) | The `CompilerOptions` seam: a configured speaker registry (default via the reserved tag) threaded into the semantic stage | Implemented |
+| 1 | [Configuration](./Configuration.md) | The `CompilerOptions` seam: compilation mode, configured speakers, and unmodeled-Markdown handling projected into their stages | Implemented |
 | 2 | [Configuration Loader](./Configuration%20Loader.md) | The TOML edge: reads `dialogue.toml` into a `CompilerOptions`, validating with located errors, in its own satellite assembly | Implemented |
 | 3 | [CLI Configuration](./CLI%20Configuration.md) | Threads a project's `dialogue.toml` through the `dialoguedown` CLI into `compile` and `visualize` (and the report's autocompletion) | Implemented |
 | 4 | [Compilation Mode Configuration](./Compilation%20Mode%20Configuration.md) | Makes the compilation `mode` settable in `dialogue.toml` and shown in the Config tab (CLI `--mode` already ships) | Implemented |
@@ -107,7 +107,7 @@ cover individual rules and the surfaces that render them.
 | 2 | [Choice Nesting Diagnostic](./Choice%20Nesting%20Diagnostic.md) | A style warning for choice branches nested beyond the recommended depth | Implemented |
 | 3 | [Styled Speaker Prefix Diagnostic](./Styled%20Speaker%20Prefix%20Diagnostic.md) | A warning when a styled name (`*Alice*:`) looks like a speaker prefix but is not recognized as one | Implemented |
 | 4 | [Dangling Arrow Diagnostic](./Dangling%20Arrow%20Diagnostic.md) | A warning when a `=>` has no link after it, so the intended jump degrades to plain text | Implemented |
-| 5 | [Dropped Markdown Diagnostic](./Dropped%20Markdown%20Diagnostic.md) | A neutral note when the front end drops unmodeled Markdown, such as a table or a divider | Implemented |
+| 5 | [Ignored Markdown Diagnostic](./Ignored%20Markdown%20Diagnostic.md) | A neutral note when the front end ignores unmodeled Markdown, such as a table or a divider | Implemented |
 | 6 | [CLI Diagnostic Rendering](./CLI%20Diagnostic%20Rendering.md) | Renders collected diagnostics on the `dialoguedown` CLI (rich Errata blocks or greppable one-liners), sets the exit code, and exposes `--mode` | Implemented |
 
 ### Command-line interface

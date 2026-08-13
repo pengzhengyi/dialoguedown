@@ -34,15 +34,12 @@ internal sealed class ConfiguredModeReader
     {
         if (entry.Value is not StringValueSyntax text)
         {
-            throw Error("'mode' must be a string.", entry.Value!);
+            throw TomlErrors.At("'mode' must be a string.", entry.Value!);
         }
 
         return CompilationModes.TryParse(text.Value!)
-            ?? throw Error(
+            ?? throw TomlErrors.At(
                 $"Unknown mode '{text.Value}'. Use {CompilationModes.SettableNamesDescription}.",
                 entry.Value);
     }
-
-    private static DialogueConfigurationException Error(string message, SyntaxNode node) =>
-        new(message, TomlLocation.From(node.Span));
 }

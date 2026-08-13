@@ -292,7 +292,7 @@ internal static class DiagnosticDocs
                 ["=> The market"],
                 ["=> [The market](#the-market)"])),
         new(
-            DiagnosticCatalog.DroppedUnmodeledMarkdown,
+            DiagnosticCatalog.IgnoredUnmodeledMarkdown,
             "DialogueDown models the Markdown a dialogue needs; everything else is an authoring "
             + "aid. A code block, a table, or a divider is left out of the script rather than "
             + "spoken, which is usually the point — a diagram or a note belongs beside the "

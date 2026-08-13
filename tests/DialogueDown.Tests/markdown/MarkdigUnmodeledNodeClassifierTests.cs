@@ -1,4 +1,4 @@
-using DialogueDown.Markdown;
+using DialogueDown.Configuration;
 using static DialogueDown.Markdown.MarkdigUnmodeledNodeClassifier;
 using static DialogueDown.Tests.Support.MarkdigNodeFactory;
 

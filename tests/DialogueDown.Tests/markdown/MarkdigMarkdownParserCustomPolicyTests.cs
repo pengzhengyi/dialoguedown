@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Markdown;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.MarkdownAstAssert;
@@ -7,7 +8,7 @@ namespace DialogueDown.Tests.Markdown;
 public sealed class MarkdigMarkdownParserCustomPolicyTests
 {
     [Fact]
-    public void CustomPolicy_KeepingTablesAsRawText_FlattensTableToText()
+    public void CustomPolicy_KeepingTables_FlattensTableToText()
     {
         // Override the default (which ignores tables) to keep the table as raw text.
         var document = MarkdownParserFactory.Parse(

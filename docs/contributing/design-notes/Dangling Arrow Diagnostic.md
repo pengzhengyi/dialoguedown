@@ -44,7 +44,7 @@ writer-facing guidance, and the generated error-code entry.
 **Out of scope:** changing how a dangling arrow *behaves* (it still degrades to
 text — we warn, we do not fail the compile or invent a jump target); the second
 half of [#227](https://github.com/pengzhengyi/dialoguedown/issues/227) (a
-front-end record of dropped unmodeled Markdown), which is a separate component
+front-end diagnostic for ignored unmodeled Markdown), which is a separate component
 and the prerequisite for [#47](https://github.com/pengzhengyi/dialoguedown/issues/47).
 
 ## Functionality checklist

@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Markdown;
 
 namespace DialogueDown.Tests.Markdown;
@@ -23,13 +24,13 @@ public sealed class DefaultUnmodeledNodeHandlingPolicyTests
     }
 
     [Fact]
-    public void HandlingFor_EveryOtherKind_IsAsRawText()
+    public void HandlingFor_EveryOtherKind_IsKeep()
     {
         // Any kind not explicitly ignored is kept as raw text — including kinds
         // added to the enum in the future.
         var rawTextKinds = Enum.GetValues<UnmodeledNodeKind>().Except(_ignoredKinds);
 
         Assert.All(rawTextKinds, kind =>
-            Assert.Equal(UnmodeledNodeHandling.AsRawText, _policy.HandlingFor(kind)));
+            Assert.Equal(UnmodeledNodeHandling.Keep, _policy.HandlingFor(kind)));
     }
 }

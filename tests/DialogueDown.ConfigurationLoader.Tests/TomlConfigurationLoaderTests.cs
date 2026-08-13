@@ -123,4 +123,52 @@ public sealed class TomlConfigurationLoaderTests
             File.Delete(path);
         }
     }
+
+    [Fact]
+    public void Parse_WithUnmodeledHandling_WrapsItInOptions()
+    {
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
+            [markdown.unmodeled]
+            table      = "keep"
+            code-block = "ignore"
+            """, SourceName);
+
+        Assert.Equal(
+            UnmodeledNodeHandling.Keep, options.UnmodeledMarkdown[UnmodeledNodeKind.Table]);
+        Assert.Equal(
+            UnmodeledNodeHandling.Ignore, options.UnmodeledMarkdown[UnmodeledNodeKind.CodeBlock]);
+    }
+
+    [Fact]
+    public void Parse_NoUnmodeledSection_KeepsTheDefaults() =>
+        Assert.Empty(TomlConfigurationLoader.Parse("""
+            [[speakers]]
+            name = "Alice"
+            """, SourceName).UnmodeledMarkdown);
+
+    [Fact]
+    public void Parse_UnmodeledWithSpeakersAndMode_AppliesAll()
+    {
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
+            mode = "best-effort"
+
+            [[speakers]]
+            name = "Alice"
+
+            [markdown.unmodeled]
+            table = "keep"
+            """, SourceName);
+
+        Assert.Equal(CompilationMode.BestEffort, options.Mode);
+        Assert.Single(options.Speakers);
+        Assert.Equal(
+            UnmodeledNodeHandling.Keep, options.UnmodeledMarkdown[UnmodeledNodeKind.Table]);
+    }
+
+    [Fact]
+    public void Parse_InvalidUnmodeledKind_Throws() =>
+        Assert.Throws<DialogueConfigurationException>(() => TomlConfigurationLoader.Parse("""
+            [markdown.unmodeled]
+            footnote = "ignore"
+            """, SourceName));
 }

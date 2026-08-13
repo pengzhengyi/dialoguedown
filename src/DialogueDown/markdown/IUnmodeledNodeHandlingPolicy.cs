@@ -1,8 +1,9 @@
+using DialogueDown.Configuration;
 namespace DialogueDown.Markdown;
 
 /// <summary>
 /// Decides how the front-end handles each kind of unmodeled Markdown construct —
-/// keep it as raw text or ignore it. Supply a custom implementation to override
+/// keep it or ignore it. Supply a custom implementation to override
 /// the <see cref="DefaultUnmodeledNodeHandlingPolicy"/> defaults.
 /// </summary>
 internal interface IUnmodeledNodeHandlingPolicy

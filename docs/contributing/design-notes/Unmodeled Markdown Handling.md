@@ -1,14 +1,14 @@
 # Unmodeled Markdown handling
 
 How the Markdown front-end treats Markdown constructs it does **not** model as
-dialogue — each is either kept **as raw text** or **ignored** — and how to
-override the defaults with a custom policy.
+dialogue — each is either **kept** or **ignored** — and how to override the
+defaults, in code or from a project's `dialogue.toml`.
 
 > [!NOTE]
-> The in-code policy and defaults below are implemented and are the source of
-> truth for *behavior*. The **configuration format** is TOML (a project
-> `dialogue.toml`; see [Configuration format](#configuration-format)); the loader
-> that reads it is future work.
+> Status: **implemented**. The policy, its defaults, and the
+> [configuration format](#configuration-format) that overrides them are all in
+> place; `TomlConfigurationLoader` reads the `[markdown.unmodeled]` section into
+> `CompilerOptions`.
 
 ## Table of contents
 
@@ -18,6 +18,7 @@ override the defaults with a custom policy.
 - [The policy seam](#the-policy-seam)
 - [Custom policy](#custom-policy)
 - [Recognizing tables](#recognizing-tables)
+- [Visualization provenance](#visualization-provenance)
 - [Configuration format](#configuration-format)
 
 ## Background
@@ -26,42 +27,44 @@ The front-end models only the constructs the DSL uses — headings, paragraphs,
 lists, links, images, code spans, emphasis, and line breaks (see
 [Markdown Front-End](./Markdown%20Front-End.md)). Everything else is *unmodeled*.
 
-By default, an unmodeled construct is flattened to its raw source text so nothing
-is silently lost. But some constructs are **authoring aids, not speech** — a
-table listing speakers and their moods, or a mermaid diagram showing how scenes
-connect. Leaking those into speech as raw text is noise. The handling policy lets
-each unmodeled kind be **ignored** instead.
+By default, an unmodeled construct is **kept** — flattened to its raw source text
+so nothing is silently lost. But some constructs are **authoring aids, not
+dialogue** — a table listing speakers and their moods, or a mermaid diagram
+showing how scenes connect. Leaking those into the dialogue is noise. The
+handling policy lets each unmodeled kind be **ignored** instead.
 
 ## Handling model
 
-Each unmodeled kind resolves to one of two actions:
+Each unmodeled kind resolves to one of two handlings:
 
 | Handling | Meaning |
 | --- | --- |
-| `AsRawText` (default) | Keep the construct as literal speech text, flattened from its source span. |
-| `Ignore` | Drop it entirely, like a comment — it never reaches speech. |
+| `Keep` (default) | The construct's source text becomes dialogue text, flattened from its source span. Its **text** is kept, not its structure. |
+| `Ignore` | The construct is left out of the dialogue entirely, like a comment. |
 
 ## Kinds and defaults
 
-`DefaultUnmodeledNodeHandlingPolicy` applies these defaults — drop authoring
+`DefaultUnmodeledNodeHandlingPolicy` applies these defaults — ignore authoring
 aids, keep ambiguous content:
 
 | Kind (`UnmodeledNodeKind`) | Example | Default | Why |
 | --- | --- | --- | --- |
-| `CodeBlock` | a fenced ` ```mermaid ` block | **Ignore** | Diagrams and code illustrate; they are not spoken |
-| `ThematicBreak` | `---` | **Ignore** | A visual divider, not words |
-| `Table` | `\| Speaker \| Mood \|` | **Ignore** | Organizes reference data; not spoken |
-| `RawHtml` | `<div>`, `<br>` | `AsRawText` | Ambiguous; the author typed it deliberately |
-| `Autolink` | `<https://example.com>` | `AsRawText` | A URL that is content |
-| `Other` | any unrecognized unmodeled construct | `AsRawText` | Fallback; kept rather than silently dropped |
+| `CodeBlock` | a fenced ` ```mermaid ` block | `Ignore` | Diagrams and code illustrate; they are not dialogue |
+| `ThematicBreak` | `---` | `Ignore` | A visual divider, not words |
+| `Table` | `\| Speaker \| Mood \|` | `Ignore` | Organizes reference data; not dialogue |
+| `RawHtml` | `<div>`, `<br>` | `Keep` | Ambiguous; the author typed it deliberately |
+| `Autolink` | `<https://example.com>` | `Keep` | A URL that is content |
+| `Other` | any unrecognized unmodeled construct | `Keep` | Fallback; kept rather than silently lost |
 
 ## The policy seam
 
 ```csharp
-internal enum UnmodeledNodeKind { CodeBlock, ThematicBreak, Table, RawHtml, Autolink, Other }
+// DialogueDown.Configuration — the vocabulary a project configures with.
+public enum UnmodeledNodeKind { CodeBlock, ThematicBreak, Table, RawHtml, Autolink, Other }
 
-internal enum UnmodeledNodeHandling { AsRawText, Ignore }
+public enum UnmodeledNodeHandling { Keep, Ignore }
 
+// DialogueDown.Markdown — the seam the front-end reads.
 internal interface IUnmodeledNodeHandlingPolicy
 {
     UnmodeledNodeHandling HandlingFor(UnmodeledNodeKind kind);
@@ -69,21 +72,27 @@ internal interface IUnmodeledNodeHandlingPolicy
 ```
 
 For each unmodeled node the converter asks the policy `HandlingFor(kind)`:
-`Ignore` drops the node, `AsRawText` flattens it to raw text.
+`Ignore` leaves the node out, `Keep` flattens it to its source text.
 `DefaultUnmodeledNodeHandlingPolicy` is a singleton implementing the defaults
-above. Comments are always discarded and are **not** part of this policy.
+above. Comments are always ignored and are **not** part of this policy.
+
+The two enums live in `DialogueDown.Configuration`, not alongside the policy,
+because they are the vocabulary a project writes in `dialogue.toml` — and because
+configuration is a foundation layer that must not depend on the Markdown
+front-end. The policy that reads them stays in `DialogueDown.Markdown`, so the
+dependency runs one way: Markdown → Configuration.
 
 ## Custom policy
 
 Supply a custom `IUnmodeledNodeHandlingPolicy` to override any kind — for example,
-keep tables as raw text while leaving the other defaults intact:
+keep tables while leaving the other defaults intact:
 
 ```csharp
 internal sealed class KeepTablesHandlingPolicy : IUnmodeledNodeHandlingPolicy
 {
     public UnmodeledNodeHandling HandlingFor(UnmodeledNodeKind kind) => kind switch
     {
-        UnmodeledNodeKind.Table => UnmodeledNodeHandling.AsRawText,
+        UnmodeledNodeKind.Table => UnmodeledNodeHandling.Keep,
         _ => DefaultUnmodeledNodeHandlingPolicy.Instance.HandlingFor(kind),
     };
 }
@@ -99,29 +108,55 @@ var parser = new MarkdigMarkdownParser(new KeepTablesHandlingPolicy());
 
 To *ignore* a table, Markdig must first recognize it as one, which needs the
 **pipe-table** extension. The front-end enables it, so a valid table becomes a
-`Table` block (dropped by default); stray pipes that do not form a table stay
+`Table` block (ignored by default); stray pipes that do not form a table stay
 literal text. No other GitHub-flavored extensions are enabled.
+
+## Visualization provenance
+
+The report shows the policy's effect without reimplementing it in TypeScript:
+
+- an **ignored** occurrence produces `DLG1114`; the semantic-token projection
+  turns that diagnostic range into `IgnoredMarkdown`, and Source and Preview
+  render it as present in the file but absent from the dialogue;
+- a **kept** occurrence becomes ordinary dialogue text, so it keeps the normal
+  Markdown and dialogue presentation rather than receiving an "unmodeled"
+  style;
+- a project override changes whether `DLG1114` exists, so highlighting follows
+  the configured policy automatically.
+
+This is sufficient to show each construct's fate: ignored or dialogue. The
+report still does not retain a distinct "kept because it was unmodeled"
+provenance after flattening, nor does the Config tab project the resolved
+handling for every kind. A future UI that needs either distinction should
+capture `kind`, `handling`, and `span` at `MarkdigUnmodeledNodeHandler`, the one
+site that knows all three, instead of re-parsing the source client-side. The
+public vocabulary and the single handler leave that extension local.
 
 ## Configuration format
 
 A DialogueDown project is configured by a **TOML** file at the project root
 (`dialogue.toml`). Unmodeled-node handling lives under a `[markdown.unmodeled]`
-section, mapping each kind to `"ignore"` or `"raw-text"`:
+section, mapping each kind to `"keep"` or `"ignore"`:
 
 ```toml
 # dialogue.toml
 
 [markdown.unmodeled]
-code-block     = "ignore"    # mermaid/code: illustration, not speech
+code-block     = "ignore"    # mermaid/code: illustration, not dialogue
 thematic-break = "ignore"
 table          = "ignore"
-raw-html       = "raw-text"
-autolink       = "raw-text"
-other          = "raw-text"
+raw-html       = "keep"
+autolink       = "keep"
+other          = "keep"
 ```
 
-Omitted keys fall back to the built-in defaults. Other project concerns (speakers,
-runtime, …) get their own top-level sections in the same file.
+Omitted keys fall back to the built-in defaults, so the section is a list of
+exceptions rather than a full replacement. `UnmodeledMarkdownNames` holds the
+kebab-case names above — the single vocabulary shared by the loader and any tool
+that displays the configuration, so the surfaces cannot drift. An unknown kind or
+handling is rejected with a located error rather than silently falling back.
+Other project concerns (speakers, mode, …) get their own sections in the same
+file; see the [configuration guide](../../guide/configuration.md).
 
 ### Why TOML
 
@@ -140,6 +175,6 @@ developers and writers**, **editor support**, and being a **standard**:
   nested sections.
 
 > [!NOTE]
-> This records the *format* decision only. The loader that reads `dialogue.toml`
-> and builds an `IUnmodeledNodeHandlingPolicy` (and other project settings) is a
-> separate, future component.
+> This records the *format* decision only. `TomlConfigurationLoader` reads it —
+> see the [Configuration Loader](./Configuration%20Loader.md) note for how a
+> `dialogue.toml` becomes `CompilerOptions`.

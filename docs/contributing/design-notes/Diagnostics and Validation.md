@@ -385,9 +385,9 @@ stage may hit.
   reporting it needs desugar to record that it dropped an arrow (see the corrected
   [DD4](#dd4--the-validator-is-a-set-of-pluggable-rules)). Deferred; not part of the producers
   component above.
-- **A front-end record of dropped unmodeled Markdown**, so it can be reported — today an
-  `Ignore`d node leaves no trace. The other half of [DD8](#dd8--lsp-and-web-rendering-are-planned-projection-seams),
-  the LSP projection and the web-report overlay, has since shipped.
+- **Ignored unmodeled Markdown — delivered.** `MarkdigUnmodeledNodeHandler`
+  reports `DLG1114` at the policy decision site before the node leaves the AST.
+  The LSP and web-report projections carry that diagnostic range and code.
 
 ## Key design decisions
 
@@ -458,7 +458,7 @@ elsewhere — checking how the pipeline actually represents each condition recla
 | --- | --- | --- |
 | Dangling jump arrow (`DLG1002`) | desugar rewrites a linkless `=>` into plain `Text("=>")` with no provenance, so the desugared tree cannot tell it from ordinary text | **Deferred** — a later desugar reporting site emits it where it degrades the arrow |
 | Tag without a speaker (`DLG1101`) | the transpiler already **throws** `DialogueSyntaxError` for tags naming no speaker; the desugared tree never carries it | **Error reporting and recovery** — migrate that throw to a reported diagnostic |
-| Dropped unmodeled Markdown (`DLG3001`) | an `Ignore`d node is dropped in the front-end and leaves no marker, count, or trace to detect | **Editor seams / future** — needs the front-end to record drops first |
+| Ignored unmodeled Markdown (`DLG1114`) | the handler sees the policy decision before the node leaves the front-end AST | **Delivered** — report an `Info` diagnostic at the ignore site |
 
 ### DD5 — The sink threads through the facade via a diagnostics context
 

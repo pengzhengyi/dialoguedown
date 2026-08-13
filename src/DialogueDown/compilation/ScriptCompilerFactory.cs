@@ -26,7 +26,7 @@ public static class ScriptCompilerFactory
     {
         options ??= CompilerOptions.Default;
         return new ScriptCompiler(
-            new MarkdigMarkdownParser(),
+            new MarkdigMarkdownParser(UnmodeledNodeHandlingPolicies.For(options.UnmodeledMarkdown)),
             ScriptTranspilerFactory.CreateDefault(),
             new ScriptDesugarer(),
             StructuralValidatorFactory.CreateDefault(),

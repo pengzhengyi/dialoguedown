@@ -3,10 +3,9 @@
 > [!IMPORTANT]
 > Status: **implemented**. Configuration is a
 > **cross-cutting concern**: the seam through which a consumer tunes how DialogueDown
-> compiles a script, without editing the script itself. This note establishes the
-> seam and its first knob — a **configured speaker registry**, whose default is one
-> entry marked with the reserved default tag — and lists the further knobs it will
-> grow to carry.
+> compiles a script, without editing the script itself. `CompilerOptions` currently
+> carries the compilation mode, the configured speaker registry, and
+> unmodeled-Markdown handling overrides.
 
 ## Table of contents
 
@@ -20,7 +19,7 @@
   - [Key design decisions](#key-design-decisions)
     - [DD1 — A plain immutable options record, not `IOptions<T>`](#dd1--a-plain-immutable-options-record-not-ioptionst)
     - [DD2 — A `Configuration` foundation namespace](#dd2--a-configuration-foundation-namespace)
-    - [DD3 — Per-stage options behind an interface seam](#dd3--per-stage-options-behind-an-interface-seam)
+    - [DD3 — Project options into each stage at the composition roots](#dd3--project-options-into-each-stage-at-the-composition-roots)
     - [DD4 — A configured speaker registry with layered default precedence](#dd4--a-configured-speaker-registry-with-layered-default-precedence)
     - [DD5 — Configured speakers as edge data, bridged to the AST](#dd5--configured-speakers-as-edge-data-bridged-to-the-ast)
   - [Error and boundary cases](#error-and-boundary-cases)
@@ -31,26 +30,24 @@
 
 ## Goal and scope
 
-Today every default is hardcoded in the two composition roots
-(`ScriptCompilerFactory.CreateDefault` and the `AddDialogueDown` DI registration),
-so a consumer cannot tune the compiler without swapping a whole pipeline stage.
-This component introduces a **configuration seam** — an immutable **`CompilerOptions`**
-umbrella that the composition roots separate into a small **per-stage options view**,
-handed to the one stage that reads it — and proves it with one real knob.
+This component provides a **configuration seam** — an immutable
+**`CompilerOptions`** umbrella that the composition roots unpack into the
+specific values and collaborators each stage reads. A consumer can tune the
+compiler without editing the script or replacing a whole pipeline stage.
 
-**First knob — a configured speaker registry.** A consumer may supply speakers
+**Configured speakers.** A consumer may supply speakers
 (`CompilerOptions.Speakers`) the compiler binds alongside a script's own. One entry may
 carry the reserved **default** tag; when a script declares no in-file default,
 speakerless lines resolve to that configured default instead of the anonymous one, and
 a configured speaker whose name also appears in the script is the **same speaker**.
 
-**In scope:** the `CompilerOptions` umbrella (a `Speakers` registry), the
-`ISemanticAnalyzerOptions` seam it exposes, both composition roots threading the
-umbrella into the semantic analyzer, and the configured-speaker binding with
-default-speaker precedence. **Out of scope (deferred, tracked as issues):** every other
-knob the survey surfaced — DSL syntax tokens, the Markdig pipeline, slug normalization,
-the live server, and the CLI (see [Deferred knobs](#deferred-knobs)). Reading options
-from a file is handled by the separate
+**In scope:** the `CompilerOptions` umbrella (`Mode`, `Speakers`, and
+`UnmodeledMarkdown`); the semantic-analyzer view; both composition roots
+threading options into the parser, compiler session, and semantic analyzer; and
+the configured-speaker binding with default-speaker precedence. **Out of scope
+(deferred, tracked as issues):** remaining knobs such as DSL syntax tokens, slug
+normalization, runtime settings, and command-layer policy (see
+[Deferred knobs](#deferred-knobs)). Reading options from a file is handled by the separate
 [configuration loader](./Configuration%20Loader.md); the core stays binding-agnostic and
 takes a `CompilerOptions` directly. The project's config format is settled as **TOML**
 (`dialogue.toml`) — see [Configuration format](#configuration-format).
@@ -67,13 +64,16 @@ flowchart LR
         D["AddDialogueDown(configure)"]
     end
     O["CompilerOptions<br/>(public umbrella)"]
-    S["ISemanticAnalyzerOptions<br/>(per-stage seam)"]
-    A["SemanticAnalyzer"]
-    B["SpeakerBinder"]
+    M["MarkdigMarkdownParser<br/>handling policy"]
+    C["ScriptCompiler<br/>compilation mode"]
+    S["ISemanticAnalyzerOptions<br/>speaker view"]
+    A["SemanticAnalyzer / SpeakerBinder"]
 
     F --> O
     D --> O
-    O -->|"ForSemanticAnalyzer()"| S --> A --> B
+    O -->|"UnmodeledMarkdown"| M
+    O -->|"Mode"| C
+    O -->|"ForSemanticAnalyzer()"| S --> A
     style O fill:#2d6,stroke:#0a0,color:#000
     style S fill:#2d6,stroke:#0a0,color:#000
 ```
@@ -88,9 +88,10 @@ boundary an architecture test guards (see [Integration](#integration)).
 
 | Term                           | Meaning                                                                                                                      |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Compiler options**           | The immutable `CompilerOptions` value that configures one compile; carries the configured `Speakers` and defaults.           |
-| **Per-stage options**          | A small per-stage view (`ISemanticAnalyzerOptions`) the umbrella exposes, so a stage sees only the options it reads.         |
+| **Compiler options**           | The immutable `CompilerOptions` value that configures one compile: mode, speakers, and unmodeled-Markdown overrides.         |
+| **Stage projection**           | The value or collaborator a composition root derives from the umbrella for one stage.                                        |
 | **Configured speaker**         | A speaker supplied through `CompilerOptions.Speakers` (a `ConfiguredSpeaker`) the binder seeds alongside a script's own.     |
+| **Handling override**          | A `keep` or `ignore` setting for one `UnmodeledNodeKind`; omitted kinds keep their built-in defaults.                        |
 | **Configured default**         | The one configured speaker marked with the reserved `default` tag; the fallback when the script declares no in-file default. |
 | **In-file default**            | A speaker the script itself marks default with the reserved `##default` tag.                                                 |
 | **Anonymous default**          | The nameless fallback speaker the binder synthesizes when nothing else names a default (today's behavior).                   |
@@ -99,7 +100,8 @@ boundary an architecture test guards (see [Integration](#integration)).
 ## Functionality checklist
 
 - [x] A **`CompilerOptions`** immutable umbrella record carries the configured
-      `Speakers` with a shared `Default` instance.
+      `Mode`, `Speakers`, and `UnmodeledMarkdown` overrides with a shared
+      `Default` instance.
 - [x] The umbrella exposes a per-stage **`ISemanticAnalyzerOptions`** view
       (`ForSemanticAnalyzer()`), so the analyzer depends only on the options it uses.
 - [x] Both composition roots accept options:
@@ -108,6 +110,8 @@ boundary an architecture test guards (see [Integration](#integration)).
       `CompilerOptions.Default`.
 - [x] The root constructs the **`SemanticAnalyzer`** from that view; the analyzer seeds
       the **`SpeakerBinder`**'s configured layer with the configured speakers.
+- [x] The roots pass `Mode` to the compiler session and build the Markdown
+      parser's handling policy from `UnmodeledMarkdown`.
 - [x] An **architecture test** asserts `DialogueDown.Configuration` is a foundation
       leaf with no dependency on other core layers.
 - [x] With **no `##default` and a configured default**, speakerless lines resolve to
@@ -121,7 +125,11 @@ boundary an architecture test guards (see [Integration](#integration)).
 
 | Type                       | Visibility | Responsibility                                                                                           | Collaborators                                 |
 | -------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `CompilerOptions`          | public     | immutable options umbrella: the configured `Speakers`, a `Default` instance, and `ForSemanticAnalyzer()` | composition roots, `ISemanticAnalyzerOptions` |
+| `CompilerOptions`          | public     | immutable options umbrella: mode, speakers, unmodeled handling, `Default`, and the semantic projection   | composition roots, `ISemanticAnalyzerOptions` |
+| `CompilationMode`          | public     | how far compilation proceeds after an error                                                              | compiler session, CLI, loader                 |
+| `UnmodeledNodeKind`        | public     | the configuration vocabulary of unmodeled Markdown kinds                                                 | options, loader, Markdown policy              |
+| `UnmodeledNodeHandling`    | public     | the `Keep` / `Ignore` outcome for an unmodeled kind                                                      | options, loader, Markdown policy              |
+| `UnmodeledMarkdownNames`   | public     | canonical kebab-case names shared by author-facing surfaces                                              | loader and display tools                      |
 | `ConfiguredSpeaker`        | public     | a config-supplied speaker: name, optional id, and tags partitioned into custom and reserved              | `CompilerOptions`, `ConfiguredTag`            |
 | `ConfiguredTag`            | public     | a config tag: a name and optional value, serving a custom or reserved tag                                | `ConfiguredSpeaker`                           |
 | `ReservedTagNames`         | public     | the closed vocabulary of reserved tag names (`default`, …) that config validates against                 | loader, binder, tag validator                 |
@@ -142,7 +150,8 @@ per-stage view and the stages that read it stay internal.
 ### DD1 — A plain immutable options record, not `IOptions<T>`
 
 `CompilerOptions` is a plain immutable `record` in the core (the public umbrella over
-the per-stage view in [DD3](#dd3--per-stage-options-behind-an-interface-seam)), not
+the stage projections in
+[DD3](#dd3--project-options-into-each-stage-at-the-composition-roots)), not
 `Microsoft.Extensions.Options`. This is the documented best practice for reusable
 libraries: an engine consumer (Godot, a test, a console tool) uses it with **no DI
 container and no forced `Microsoft.Extensions.Options` dependency**, while the
@@ -160,25 +169,29 @@ on `Compilation` — a backward dependency the core-layering architecture tests 
 dedicated namespace (over folding it into the `Common` grab-bag) names the cross-cutting
 concern and gives the deferred knobs a home.
 
-### DD3 — Per-stage options behind an interface seam
+### DD3 — Project options into each stage at the composition roots
 
-Each stage receives its **own small options view**, not the whole umbrella. The public
-`CompilerOptions` exposes an internal per-stage seam — here `ISemanticAnalyzerOptions`,
-carrying just the configured speakers — through `ForSemanticAnalyzer()`, and the
-composition root constructs each stage from its view. A stage's constructor therefore
-names exactly the options it depends on (interface segregation): the analyzer takes
-`ISemanticAnalyzerOptions`, never sees an unrelated Markdig or CLI knob, and cannot
-accidentally couple to one. Making the view an **interface** (over a concrete slice
-record) adds a seam the analyzer's tests mock directly, keeping the analyzer unaware of
-`CompilerOptions` entirely.
+No stage receives the whole umbrella. The composition roots project
+`CompilerOptions` into the narrowest contract each collaborator needs:
 
-The alternative — passing the whole `CompilerOptions` to every stage — is simpler by
-one type but lets any stage read any knob and carries the whole bag as tramp data. An
-**ambient/global** configuration context (the build-system style) was rejected
-outright: it hides dependencies and defeats test isolation, against this repo's "clean
-and isolated over global mutation" grain. The seam keeps configuration **explicit** and
-each stage's surface honest, with the mapping in one place (the umbrella's
-`ForSemanticAnalyzer`), so adding a stage's view stays a local change.
+- `Mode` is already a stable value object, so it goes directly to
+  `ScriptCompiler`.
+- the Markdown front end receives an `IUnmodeledNodeHandlingPolicy` built by
+  `UnmodeledNodeHandlingPolicies` from the override map;
+- semantic analysis receives `ISemanticAnalyzerOptions`, a dedicated view over
+  the configured speakers.
+
+This keeps dependencies explicit without manufacturing an interface for every
+single enum or map. The Markdown policy factory lives in the Markdown layer,
+not on `CompilerOptions`, because `Configuration` is a foundation namespace
+that must not depend on a pipeline stage. Making the semantic view an interface
+remains valuable because the analyzer consumes a richer collection and its
+tests substitute that collaborator directly.
+
+The alternatives — passing the whole `CompilerOptions` to every stage or using
+an ambient/global context — let stages read unrelated knobs and hide their
+dependencies. Projection at the roots keeps each surface honest and the
+configuration layer dependency-free.
 
 ### DD4 — A configured speaker registry with layered default precedence
 
@@ -219,31 +232,33 @@ already well-formed, and the binder keeps its single concern: speaker semantics.
 | Configured default, name **is** in the script     | unified with that speaker; it becomes the default (referable).           |
 | Configured default **and** an in-file `##default` | the in-file default wins; the configured default yields.                 |
 | Two configured speakers marked default            | rejected as a speaker conflict (also caught earlier at the loader edge). |
-| `null` options passed to a composition root       | falls back to `CompilerOptions.Default` (empty registry).                |
+| One unmodeled kind overridden                     | that kind changes; every omitted kind keeps its built-in handling.       |
+| Empty unmodeled override map                      | the shared default handling policy is reused; no allocation.             |
+| `null` options passed to a composition root       | falls back to `CompilerOptions.Default` for every knob.                  |
 
 ## Integration
 
 - **Core** (`DialogueDown`): the `DialogueDown.Configuration` namespace holds
-  `CompilerOptions`, `ConfiguredSpeaker`, `ConfiguredTag`, `ReservedTagNames`, and the
-  `ISemanticAnalyzerOptions` seam. The `SemanticAnalyzer` takes an
-  `ISemanticAnalyzerOptions` and seeds `SpeakerBinder`'s configured layer through
-  `ConfiguredSpeakerBuilder`.
+  `CompilerOptions`, the mode and unmodeled-Markdown vocabulary,
+  `ConfiguredSpeaker`, `ConfiguredTag`, `ReservedTagNames`, and the
+  `ISemanticAnalyzerOptions` seam.
 - **Composition roots**: `ScriptCompilerFactory.CreateDefault(CompilerOptions?)` and
-  `AddDialogueDown(this IServiceCollection, CompilerOptions?)` build the analyzer from
-  `options.ForSemanticAnalyzer()`; both default to `CompilerOptions.Default`.
+  `AddDialogueDown(this IServiceCollection, CompilerOptions?)` project the
+  umbrella into the Markdown parser, compiler session, and semantic analyzer;
+  both default to `CompilerOptions.Default`.
 - **Configuration loader** (`DialogueDown.ConfigurationLoader`): the separate satellite
   that reads a `dialogue.toml` into a `CompilerOptions` — see
   [Configuration loader](./Configuration%20Loader.md).
 - **Architecture tests**: a `Configuration_IsAFoundationLeaf` test asserts the
   namespace has no dependency on other core layers, mirroring the `Common` layering
   test.
-- **CLI / visualization** (later): a `--config` option and server knobs can map onto
-  `CompilerOptions` once those deferred knobs land.
+- **CLI / visualization**: config discovery and `--config` load the umbrella
+  before constructing the compiler and report.
 
 ## Testability
 
-- **`CompilerOptions`**: unit-test the `Default` instance and that `ForSemanticAnalyzer`
-  exposes the configured speakers.
+- **`CompilerOptions` and projections**: unit-test defaults, semantic speaker
+  projection, and configured handling layered over built-in defaults.
 - **`SpeakerBinder`**: the precedence cases each get a test — in-file default wins;
   configured default when no in-file; unified when a configured name is in the script;
   anonymous when neither is present.
@@ -251,8 +266,9 @@ already well-formed, and the binder keeps its single concern: speaker semantics.
   (name, id, reserved and custom tags).
 - **`SemanticAnalyzer`**: the configured speakers reach the binder (they appear in the
   resolved model), driven through a mocked `ISemanticAnalyzerOptions`.
-- **Composition roots**: `CreateDefault(options)` and a configured `AddDialogueDown`
-  produce a compiler whose model honors the configured default, over the real pipeline.
+- **Composition roots**: `CreateDefault(options)` and configured
+  `AddDialogueDown` compilers honor speakers and unmodeled handling over the
+  real pipeline; mode has its own stage-boundary tests.
 - **Architecture**: the `Configuration_IsAFoundationLeaf` test above.
 - Construction goes through the shared test factory; inputs are multi-line raw string
   literals so the parsed shape is visible.
@@ -267,7 +283,7 @@ issue rather than riding in this seam:
 | Configurable `##default` **tag name**                | `ReservedTagNames`, binder, validator | Reserved-tag vocabulary; a natural next step on this same seam. |
 | Missing-default **strict mode** (error vs anonymous) | binder                                | An authoring-strictness policy.                                 |
 | DSL **syntax tokens** (`@`, `:`, `=>`, `#`/`##`)     | parser, tokenizer                     | Deep and risky; touches the grammar.                            |
-| **Markdig** pipeline features                        | Markdown front-end                    | Front-end parser options.                                       |
+| Other **Markdig** pipeline features                  | Markdown front-end                    | Unmodeled handling is configurable; parser extensions are not.  |
 | **Slug** normalization (trim/collapse)               | `Slug`                                | Anchor policy.                                                  |
 | Live-server **port / host / debounce**               | `DialogueDown.Visualization.Live`     | A different assembly's settings.                                |
 | **CLI** output paths / defaults                      | `DialogueDown.Cli`                    | Command-layer policy.                                           |
@@ -307,5 +323,14 @@ carries the same "at most one default" rule as the in-script `##default`, enforc
 loader. Because the default is itself a registry speaker, it is inherently referable and
 unified (per [DD4](#dd4--a-configured-speaker-registry-with-layered-default-precedence)).
 
-This supersedes the earlier `speakers.json` sketch in the language guide, which a later
-doc pass should reconcile.
+The same file carries the other implemented knobs:
+
+```toml
+mode = "best-effort"
+
+[markdown.unmodeled]
+table = "keep"
+```
+
+See the user-facing [project configuration guide](../../guide/configuration.md)
+for the complete schema.

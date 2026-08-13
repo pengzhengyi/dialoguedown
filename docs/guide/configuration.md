@@ -1,15 +1,15 @@
 # Project configuration
 
 A `dialogue.toml` file configures how DialogueDown compiles the scripts in your
-project — the **speakers** your dialogue uses (and which one is the **default**)
-and the **compilation mode**. It sits at your project root, and the
-`ddown` CLI finds it automatically, so your scripts stay free of
-project-wide setup.
+project — the **speakers** your dialogue uses (and which one is the **default**),
+the **compilation mode**, and how **unmodeled Markdown** is handled. It sits at
+your project root, and the `ddown` CLI finds it automatically, so your scripts
+stay free of project-wide setup.
 
 > [!NOTE]
-> DialogueDown is in early development. Configuration currently covers speakers
-> and the compilation mode; more knobs (documented in the design notes) will
-> follow.
+> DialogueDown is in early development. Configuration currently covers speakers,
+> the compilation mode, and unmodeled-Markdown handling; more knobs (documented
+> in the design notes) will follow.
 
 ## Table of contents
 
@@ -20,6 +20,7 @@ project-wide setup.
   - [The default speaker](#the-default-speaker)
   - [Tags](#tags)
   - [Compilation mode](#compilation-mode)
+  - [Unmodeled Markdown](#unmodeled-markdown)
   - [Using it with the CLI](#using-it-with-the-cli)
   - [Autocompletion in the report](#autocompletion-in-the-report)
 
@@ -117,6 +118,56 @@ for a single run, so the order of precedence is **`--mode` > `dialogue.toml` >
 the default**. For the rationale — and why the `fail-fast` mode is an embedding
 contract rather than a settable value — see the
 [Compilation Mode Configuration](../contributing/design-notes/Compilation%20Mode%20Configuration.md)
+design note.
+
+## Unmodeled Markdown
+
+Your scripts are Markdown, but DialogueDown only **models** the constructs
+dialogue uses — headings, paragraphs, lists, links, images, code spans, emphasis,
+and line breaks. Every other construct is **unmodeled**, and you choose what
+becomes of each one:
+
+| Handling | Meaning |
+| --- | --- |
+| `keep` | The construct's source text becomes dialogue text, exactly as written. |
+| `ignore` | The construct is left out of the dialogue entirely, like a comment. |
+
+Keeping a construct keeps its **text**, not its structure: a kept table becomes
+the characters you typed, pipes and all — DialogueDown does not read it as a
+table, because it does not model one.
+
+The defaults `ignore` **authoring aids** and `keep` anything that might be
+content:
+
+| Construct | Example | Default | Why |
+| --- | --- | --- | --- |
+| `code-block` | a fenced ` ```mermaid ` block | `ignore` | Diagrams and code illustrate; they are not dialogue. |
+| `thematic-break` | `---` | `ignore` | A visual divider, not words. |
+| `table` | `\| Speaker \| Mood \|` | `ignore` | Organizes reference data; not dialogue. |
+| `raw-html` | `<div>`, `<br>` | `keep` | Ambiguous — you typed it deliberately. |
+| `autolink` | `<https://example.com>` | `keep` | A URL that is content. |
+| `other` | anything else unmodeled | `keep` | Kept rather than silently lost. |
+
+Override any of them under `[markdown.unmodeled]`:
+
+```toml
+# dialogue.toml
+
+[markdown.unmodeled]
+table      = "keep"     # this project writes dialogue in tables
+code-block = "ignore"
+```
+
+**Only the constructs you name change.** Every key you leave out keeps its
+default, so the section is a short list of exceptions rather than a full
+replacement. An unknown construct name or handling value is a configuration
+error, reported with its file, line, and column.
+
+> [!NOTE]
+> Comments are always ignored, and are not part of this setting.
+
+For the rationale and the full model, see the
+[Unmodeled Markdown Handling](../contributing/design-notes/Unmodeled%20Markdown%20Handling.md)
 design note.
 
 ## Using it with the CLI

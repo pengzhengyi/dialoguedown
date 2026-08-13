@@ -4,8 +4,9 @@
 > Status: **implemented**. The **edge** that reads a
 > project's `dialogue.toml` and produces a [`CompilerOptions`](./Configuration.md)
 > for the compiler. It lives in its own satellite assembly so the engine-agnostic
-> core stays free of a TOML dependency: the core keeps taking a plain options
-> object, and this loader is the optional, file-backed way to build one.
+> core stays free of a TOML dependency: the core keeps taking a plain
+> `CompilerOptions` value, and this loader is the optional, file-backed way to
+> build one.
 
 ## Table of contents
 
@@ -29,17 +30,19 @@
 
 ## Goal and scope
 
-The [Configuration](./Configuration.md) component keeps the core **binding-agnostic**:
-the compiler takes a `CompilerOptions` object and never reads a file. This component
-is the **edge** that turns a project's `dialogue.toml` into that object — parsing,
-**partitioning** each speaker's keys into custom and reserved tags, and **validating**
-before anything reaches the compiler.
+The [Configuration](./Configuration.md) component keeps the core
+**binding-agnostic**: the compiler takes a `CompilerOptions` object and never
+reads a file. This component is the **edge** that turns a project's
+`dialogue.toml` into that object — parsing the document, delegating each section
+to a focused schema reader, and **validating** before anything reaches the
+compiler.
 
-**In scope:** a `TomlConfigurationLoader` that reads a TOML file (or string) into a
-`CompilerOptions`, the `dialogue.toml` **speakers** schema, edge validation, and a
-`DialogueConfigurationException` with source locations. **Out of scope (deferred):**
-non-speaker configuration sections (unmodeled-node handling, runtime), and any config
-format other than TOML — see [Deferred](#deferred).
+**In scope:** a `TomlConfigurationLoader` that reads a TOML file (or string) into
+a `CompilerOptions`; the `mode`, `[[speakers]]`, and
+`[markdown.unmodeled]` schemas; edge validation; and a
+`DialogueConfigurationException` with source locations. **Out of scope
+(deferred):** runtime configuration and any format other than TOML — see
+[Deferred](#deferred).
 
 ## Where it sits
 
@@ -64,9 +67,11 @@ A consumer that wants file-backed config references
 | Term                     | Meaning                                                                                                                |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | **Configuration loader** | The component that reads `dialogue.toml` into a `CompilerOptions`.                                                     |
+| **Schema reader**        | An internal reader that owns one configuration concern: mode, speakers, or unmodeled Markdown.                         |
 | **Structural key**       | A speaker key the schema defines directly: `name`, `id`, `tags`.                                                       |
 | **Reserved key**         | Any other speaker key — a reserved tag (`default`, and future `voice`, …), validated against `ReservedTagNames.Known`. |
 | **Tag shorthand**        | A custom tag written as a DSL-style string, `"name"` or `"name=value"`.                                                |
+| **Handling override**    | A named unmodeled-Markdown kind whose built-in `keep` or `ignore` handling the project changes.                        |
 | **Edge validation**      | Rejecting a malformed or invalid config here, before it reaches the compiler.                                          |
 
 ## The `dialogue.toml` schema
@@ -96,15 +101,35 @@ A `[[speakers]]` entry maps to one `ConfiguredSpeaker`:
 So `default = true` marks the default speaker exactly as the DSL's `##default` does,
 and the author writes typed keys rather than tag strings.
 
+A top-level `mode` key selects the settable compilation mode:
+
+```toml
+mode = "best-effort"
+```
+
+The `[markdown.unmodeled]` table maps unmodeled Markdown kinds to `keep` or
+`ignore`. Omitted kinds remain absent from `CompilerOptions.UnmodeledMarkdown`,
+so the core preserves their built-in defaults:
+
+```toml
+[markdown.unmodeled]
+table      = "keep"
+code-block = "ignore"
+```
+
 ## Functionality checklist
 
 - [x] `TomlConfigurationLoader.Load(path)` builds a `CompilerOptions` from a
       `[[speakers]]` array (with an internal `Parse(toml, sourceName)` for in-memory input).
+- [x] A top-level `mode` maps to a settable `CompilationMode`; an absent mode
+      keeps the default.
+- [x] `[markdown.unmodeled]` maps each known kind to `keep` or `ignore`; omitted
+      kinds remain absent so their built-in defaults survive.
 - [x] Structural keys (`name`, `id`, `tags`) map to their `ConfiguredSpeaker` fields,
-      each resolved by its semantic name so a quoted key equals its bare form.
+      each resolved by its semantic name, so a quoted key equals its bare form.
 - [x] Custom `tags` accept a shorthand string (split at the first `=`) or an inline
       table (`{ name, value }`), for full DSL parity including a name containing `=`.
-- [x] Every other key partitions into a **reserved tag** (bool → name-only, string →
+- [x] Every other key partitions into a **reserved tag** (boolean → name-only, string →
       valued), validated against `ReservedTagNames.Known`.
 - [x] Edge validation rejects a missing or empty `name`, an empty `id`, a wrong-typed
       key, an unknown key, a reserved tag that is neither boolean nor string, an
@@ -112,24 +137,30 @@ and the author writes typed keys rather than tag strings.
       second `default`.
 - [x] A `DialogueConfigurationException` reports the message and source location
       (source, line, column), for both TOML syntax errors and schema violations.
-- [x] Empty or speaker-less config yields `CompilerOptions.Default` (no speakers).
+- [x] Empty config yields `CompilerOptions.Default`; a config that sets only one
+      concern leaves the others at their defaults.
 - [x] An architecture test guards the direction: the core does not depend on the
       loader, and the loader depends only on the core (and Tomlyn).
 
 ## Interfaces and abstractions
 
-| Type                             | Visibility | Responsibility                                                          | Collaborators                                   |
-| -------------------------------- | ---------- | ----------------------------------------------------------------------- | ----------------------------------------------- |
-| `TomlConfigurationLoader`        | public     | `Load(path)` → `CompilerOptions`; the composition root                  | `TomlDocumentParser`, `ConfiguredSpeakerReader` |
-| `TomlDocumentParser`             | internal   | parses text into Tomlyn's `DocumentSyntax`, failing on a syntax error   | Tomlyn                                          |
-| `ConfiguredSpeakerReader`        | internal   | maps and validates each `[[speakers]]` entry into a `ConfiguredSpeaker` | `CompilerOptions` model, Tomlyn syntax          |
-| `DialogueConfigurationException` | public     | a config error carrying a source location                               | `ConfigurationSourceLocation`                   |
-| `ConfigurationSourceLocation`    | public     | the source, line, and column of a config error                          | —                                               |
-| `TomlLocation`                   | internal   | maps a Tomlyn span to a `ConfigurationSourceLocation`                   | Tomlyn syntax                                   |
+| Type                                | Visibility | Responsibility                                                               | Collaborators                                      |
+| ----------------------------------- | ---------- | ---------------------------------------------------------------------------- | -------------------------------------------------- |
+| `TomlConfigurationLoader`           | public     | `Load(path)` / `Parse(text, source)` → `CompilerOptions`; composes readers   | parser and schema readers                          |
+| `TomlDocumentParser`                | internal   | parses text into Tomlyn's `DocumentSyntax`, failing on a syntax error        | Tomlyn                                             |
+| `ConfiguredModeReader`              | internal   | reads and validates the top-level compilation mode                           | `CompilationModes`, Tomlyn syntax                  |
+| `ConfiguredSpeakerReader`           | internal   | maps and validates each `[[speakers]]` entry                                 | configuration model, Tomlyn syntax                 |
+| `ConfiguredUnmodeledReader`         | internal   | reads `[markdown.unmodeled]` as handling overrides                           | `UnmodeledMarkdownNames`, Tomlyn syntax            |
+| `TomlTables`                        | internal   | selects named regular or array tables consistently                           | `TomlKeys`, Tomlyn syntax                          |
+| `TomlErrors`                        | internal   | creates a located configuration error at a syntax node                       | `TomlLocation`                                     |
+| `DialogueConfigurationException`    | public     | a config error carrying a source location                                    | `ConfigurationSourceLocation`                      |
+| `ConfigurationSourceLocation`       | public     | the source, line, and column of a config error                               | —                                                  |
+| `TomlLocation`                      | internal   | maps a Tomlyn span to a `ConfigurationSourceLocation`                        | Tomlyn syntax                                      |
 
-Internally the loader walks Tomlyn's syntax tree: the document parser isolates the
-Tomlyn dependency and the speaker reader maps and validates each `[[speakers]]` entry,
-so those helpers stay internal behind the public `Load`.
+Internally the loader walks Tomlyn's syntax tree. The document parser isolates
+syntax parsing; each schema reader maps one concern; `TomlTables`, `TomlKeys`,
+`TomlErrors`, and `TomlLocation` keep the syntax-level mechanics consistent.
+All remain internal behind `Load` and `Parse`.
 
 ## Key design decisions
 
@@ -137,7 +168,7 @@ so those helpers stay internal behind the public `Load`.
 
 The loader is its own project (`DialogueDown.ConfigurationLoader`) depending on the
 core plus **Tomlyn**, so the engine-agnostic core never takes a TOML dependency (its
-guiding constraint). Tomlyn is the de-facto .NET TOML library — by the same author as
+guiding constraint). Tomlyn is the de facto .NET TOML library — by the same author as
 Markdig (already used here), used by the .NET SDK, permissively licensed, and its
 parser yields **precise line/column diagnostics**, which is what edge validation
 needs. The project is format-named-agnostic (`ConfigurationLoader`, not `.Toml`) since
@@ -146,13 +177,13 @@ format at the API.
 
 ### DD2 — Traverse Tomlyn's syntax tree, not a fixed POCO
 
-A speaker's **reserved keys are open-ended** (`default`, later `voice`, …), so a fixed
-POCO cannot capture them. Tomlyn 2.x replaced its untyped `TomlTable` model with a
-round-trippable **syntax tree**, so the loader parses to a `DocumentSyntax`
-(`SyntaxParser.Parse`) and walks each `[[speakers]]` entry (a `TableArraySyntax`)
-itself, reading keys as it goes and partitioning them. Every syntax node carries a
-native span, giving precise line/column error locations for free. This trades a little
-traversal code for control over partitioning and diagnostics.
+A speaker's **reserved keys are open-ended** (`default`, later `voice`, …), and
+the unmodeled-Markdown table has its own closed vocabulary, so a fixed POCO
+would either lose unknown-key validation or mix unrelated schemas. The loader
+therefore parses to Tomlyn's round-trippable `DocumentSyntax` and gives each
+section to a focused reader. Every syntax node carries a native span, giving
+precise line/column error locations. This trades a little traversal code for
+control over partitioning and diagnostics.
 
 ### DD3 — Reserved as typed keys, custom as shorthand with a structured escape hatch
 
@@ -169,10 +200,12 @@ tags.
 
 ### DD4 — Validate at the edge, fail with a location
 
-The loader is where a config is proven well-formed, so it rejects everything the
-compiler would otherwise mishandle — missing name, wrong types, an unknown reserved
-key, two defaults — as a `DialogueConfigurationException` carrying the path, line, and
-column. The compiler downstream can then trust its `CompilerOptions`.
+The loader is where a config is proven well-formed, so it rejects everything
+the compiler would otherwise mishandle — missing names, wrong types, unknown
+keys or values, two defaults — as a `DialogueConfigurationException` carrying
+the path, line, and column. `TomlErrors` centralizes that syntax-node-to-location
+mapping; readers retain ownership of their domain-specific messages. The
+compiler downstream can then trust its `CompilerOptions`.
 
 ## Error and boundary cases
 
@@ -184,8 +217,11 @@ column. The compiler downstream can then trust its `CompilerOptions`.
 | Unknown reserved key (not `name`/`id`/`tags`, not in `Known`) | `DialogueConfigurationException`.                                        |
 | Inline-table tag without a `name`                             | `DialogueConfigurationException`.                                        |
 | More than one `default = true`                                | `DialogueConfigurationException`.                                        |
+| Unknown or non-settable `mode`                                | `DialogueConfigurationException`.                                        |
+| Unknown unmodeled kind or handling                            | `DialogueConfigurationException`.                                        |
+| Non-string unmodeled handling                                 | `DialogueConfigurationException`.                                        |
 | `default = false` or omitted                                  | contributes no reserved tag.                                             |
-| Empty file / no `[[speakers]]`                                | `CompilerOptions.Default` (no speakers).                                 |
+| Empty file                                                    | `CompilerOptions.Default`.                                               |
 | `Load` on a missing file                                      | the underlying IO exception (a usage error, not a config error).         |
 
 ## Integration
@@ -196,21 +232,21 @@ column. The compiler downstream can then trust its `CompilerOptions`.
 - **Loader** (`DialogueDown.ConfigurationLoader`): the new satellite; `TomlConfigurationLoader`
   produces a `CompilerOptions` a caller hands to `ScriptCompilerFactory.CreateDefault`
   or `AddDialogueDown`.
-- **CLI / consumers** (later): a `--config dialogue.toml` option can call the loader
-  and pass the result to the compiler.
+- **CLI / visualization**: config discovery and `--config` load through this
+  edge before constructing the compiler and report.
 - **Architecture**: a test asserts the core does not depend on the loader and the
   loader depends only on the core (and Tomlyn), guarding the satellite direction.
 
 ## Testability
 
-- **Parsing**: valid TOML → the expected `CompilerOptions` (names, ids, partitioned
-  tags), with multi-line raw-string TOML so the input's shape is visible.
+- **Parsing**: valid TOML → the expected `CompilerOptions` (mode, speakers,
+  unmodeled handling), with multi-line raw-string TOML so the input's shape is
+  visible.
 - **Validation**: each error case above gets a test asserting the thrown
   `DialogueConfigurationException` and its reported location.
-- **Round-trip**: that a loaded `CompilerOptions` actually compiles — a speaker-less
-  line resolving to the configured default — is covered in the core by
-  `ScriptCompilerFactoryTests`, which owns the internals; the loader's own tests assert
-  the parsed `CompilerOptions.Speakers` value directly, needing no core internals.
+- **Integration**: loader tests assert the composed `CompilerOptions`; core tests
+  prove that both composition roots apply the configured speaker and
+  unmodeled-Markdown settings to a real compile.
 - **Architecture**: the dependency-direction test above (core ⊄ loader; loader → core
   only), extending the existing assembly-boundary suite.
 - Construction goes through a small TOML test helper; the loader is stateless and
@@ -218,9 +254,9 @@ column. The compiler downstream can then trust its `CompilerOptions`.
 
 ## Deferred
 
-| Item                                                 | Note                                                                                                                |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Non-speaker config (`[markdown.unmodeled]`, runtime) | Other top-level sections, tracked with their own components.                                                        |
-| Config formats other than TOML                       | TOML is the decided format; the project name leaves room but no other loader is planned.                            |
-| Duplicate-name detection at the edge                 | The speaker binder already reports speaker conflicts; edge de-duplication can follow.                               |
-| Aggregate / collected diagnostics                    | Fails fast on the first error like every stage; collecting all config problems joins the planned diagnostics phase. |
+| Item                              | Note                                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Runtime configuration             | Belongs to the runtime component once its public settings exist.                                                    |
+| Config formats other than TOML    | TOML is the decided format; the project name leaves room but no other loader is planned.                            |
+| Duplicate-name detection at edge  | The speaker binder already reports speaker conflicts; edge de-duplication can follow.                               |
+| Aggregate / collected diagnostics | Fails fast on the first error like every stage; collecting all config problems joins the planned diagnostics phase. |

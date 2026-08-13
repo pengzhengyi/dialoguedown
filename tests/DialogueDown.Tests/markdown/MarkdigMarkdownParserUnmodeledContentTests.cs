@@ -90,7 +90,7 @@ public sealed class MarkdigMarkdownParserUnmodeledContentTests : MarkdigMarkdown
     {
         Parse(source, out var diagnostics);
 
-        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown);
         Assert.Equal(DiagnosticSeverity.Info, note.Severity);
         Assert.Equal(kind, Assert.Single(note.MessageArguments));
     }
@@ -107,12 +107,12 @@ public sealed class MarkdigMarkdownParserUnmodeledContentTests : MarkdigMarkdown
 
         Parse(source, out var diagnostics);
 
-        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown);
+        var note = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown);
         Assert.Equal(source.IndexOf("| Speaker", StringComparison.Ordinal), note.Span.Start);
     }
 
     [Fact]
-    public void Parse_AConstructKeptAsRawText_IsNotNoted()
+    public void Parse_AKeptConstruct_IsNotNoted()
     {
         Parse("<div>hi</div>", out var diagnostics);
 
@@ -156,7 +156,7 @@ public sealed class MarkdigMarkdownParserUnmodeledContentTests : MarkdigMarkdown
         Assert.Equal(
             "code block",
             Assert.Single(
-                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DroppedUnmodeledMarkdown)
+                AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.IgnoredUnmodeledMarkdown)
                     .MessageArguments));
     }
 }
