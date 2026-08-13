@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { EditorState } from "@codemirror/state";
 import {
     createFakeDebugController,
     type FakeDebugProgram,
 } from "./test-support/fake-debug-controller";
-import type { ReservedTarget } from "./model";
-import { createSourceView, initSplitDivider, type SourceViewHandle } from "./source-view";
+import type { ReservedTarget, SemanticToken } from "./model";
+import {
+    createSourceView,
+    initSplitDivider,
+    mapPreviewSpans,
+    type SourceViewHandle,
+} from "./source-view";
 
 const SOURCE = "Entry\nEnd\n";
 const PROGRAM: FakeDebugProgram = {
@@ -31,7 +37,14 @@ afterEach(() => {
 });
 
 function sourceView(options: Parameters<typeof createSourceView>[1] = {}): SourceViewHandle {
-    const source = createSourceView(SOURCE, options);
+    return mountSource(SOURCE, options);
+}
+
+function mountSource(
+    content: string,
+    options: Parameters<typeof createSourceView>[1] = {},
+): SourceViewHandle {
+    const source = createSourceView(content, options);
     mounted.push(source);
     document.body.appendChild(source.element);
     return source;
@@ -41,6 +54,86 @@ async function flushDebugUpdate(): Promise<void> {
     await Promise.resolve();
     await Promise.resolve();
 }
+
+describe("createSourceView ignored Markdown preview", () => {
+    const table = "| A | B |\n| - | - |\n| x | y |";
+    const ignoredTable: SemanticToken = {
+        kind: "IgnoredMarkdown",
+        range: {
+            start: { line: 0, character: 0 },
+            end: { line: 2, character: 9 },
+        },
+    };
+
+    it("mirrors the compiler's ignored cue in the rendered preview", () => {
+        const source = mountSource(table);
+
+        source.setSemanticTokens([ignoredTable]);
+
+        expect(
+            source.element
+                .querySelector(".source-preview table")
+                ?.classList.contains("dd-preview-ignored"),
+        ).toBe(true);
+        expect(source.element.querySelector(".dd-preview-ignored-region")).not.toBeNull();
+    });
+
+    it("restores full-strength preview rendering when the compiler keeps the construct", () => {
+        const source = mountSource(table);
+        source.setSemanticTokens([ignoredTable]);
+
+        source.setSemanticTokens([]);
+
+        expect(
+            source.element
+                .querySelector(".source-preview table")
+                ?.classList.contains("dd-preview-ignored"),
+        ).toBe(false);
+        expect(source.element.querySelector(".dd-preview-ignored-region")).toBeNull();
+    });
+
+    it("marks a conditional blockquote from the compiler's control-keyword token", () => {
+        const source = mountSource("> `if` `Ready?`\n>\n> Alice: Go.");
+        const controlKeyword: SemanticToken = {
+            kind: "ControlKeyword",
+            range: {
+                start: { line: 0, character: 2 },
+                end: { line: 0, character: 6 },
+            },
+        };
+
+        source.setSemanticTokens([controlKeyword]);
+
+        const region = source.element.querySelector(".source-preview blockquote");
+        expect(region?.classList.contains("dd-preview-control-region")).toBe(true);
+        expect(region?.getAttribute("title")).toBe("Conditional dialogue");
+    });
+});
+
+describe("mapPreviewSpans", () => {
+    const span = { start: 0, end: 5 };
+
+    it("keeps text inserted immediately before a construct outside its preview span", () => {
+        const state = EditorState.create({ doc: "table" });
+        const changes = state.update({ changes: { from: 0, insert: "note\n" } }).changes;
+
+        expect(mapPreviewSpans([span], changes)).toEqual([{ start: 5, end: 10 }]);
+    });
+
+    it("keeps text inserted immediately after a construct outside its preview span", () => {
+        const state = EditorState.create({ doc: "table" });
+        const changes = state.update({ changes: { from: 5, insert: "\nnote" } }).changes;
+
+        expect(mapPreviewSpans([span], changes)).toEqual([span]);
+    });
+
+    it("drops a preview span when its construct is deleted", () => {
+        const state = EditorState.create({ doc: "table" });
+        const changes = state.update({ changes: { from: 0, to: 5 } }).changes;
+
+        expect(mapPreviewSpans([span], changes)).toEqual([]);
+    });
+});
 
 describe("createSourceView debugger integration", () => {
     it("mounts no debugger UI in an ordinary source view", () => {
