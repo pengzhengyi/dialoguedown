@@ -131,4 +131,43 @@ describe("createMermaidPreviewService", () => {
 
         expect(mostActive).toBe(1);
     });
+
+    it("coalesces host updates behind the render already in progress", async () => {
+        let resolveFirst: ((value: { svg: string }) => void) | undefined;
+        const first = new Promise<{ svg: string }>((resolve) => (resolveFirst = resolve));
+        const api = fakeMermaid({
+            render: vi
+                .fn()
+                .mockReturnValueOnce(first)
+                .mockImplementation(async (_id, source) => ({
+                    svg: `<svg data-source="${source}"></svg>`,
+                })),
+        });
+        const service = createMermaidPreviewService({ load: async () => api });
+        const preview = host("flowchart LR\nold --> result");
+        const running = service.renderNow(preview);
+        await vi.waitFor(() => expect(api.render).toHaveBeenCalledTimes(1));
+
+        mountPreviewHtml(
+            preview,
+            renderMarkdown("```mermaid\nflowchart LR\nmiddle --> result\n```"),
+        );
+        const middle = service.renderNow(preview);
+        mountPreviewHtml(
+            preview,
+            renderMarkdown("```mermaid\nflowchart LR\nlatest --> result\n```"),
+        );
+        const latest = service.renderNow(preview);
+
+        expect(middle).toBe(running);
+        expect(latest).toBe(running);
+        resolveFirst?.({ svg: "<svg></svg>" });
+        await running;
+
+        expect(api.render).toHaveBeenCalledTimes(2);
+        expect(api.render).toHaveBeenLastCalledWith(
+            expect.any(String),
+            "flowchart LR\nlatest --> result",
+        );
+    });
 });

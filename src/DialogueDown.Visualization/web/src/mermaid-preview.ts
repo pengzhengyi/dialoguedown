@@ -20,6 +20,7 @@ interface MermaidPreviewDependencies {
 interface HostState {
     revision: number;
     timer: number | null;
+    running: Promise<void> | null;
 }
 
 export interface MermaidPreviewService {
@@ -47,7 +48,7 @@ export function createMermaidPreviewService(
     function stateOf(host: HTMLElement): HostState {
         const existing = hosts.get(host);
         if (existing) return existing;
-        const created = { revision: 0, timer: null };
+        const created = { revision: 0, timer: null, running: null };
         hosts.set(host, created);
         return created;
     }
@@ -65,8 +66,10 @@ export function createMermaidPreviewService(
             window.clearTimeout(state.timer);
             state.timer = null;
         }
-        if (!host.querySelector(DIAGRAM_SELECTOR)) return Promise.resolve();
-        return renderRevision(host, state, state.revision);
+        if (!host.querySelector(DIAGRAM_SELECTOR)) {
+            return state.running ?? Promise.resolve();
+        }
+        return ensureHostRender(host, state);
     }
 
     function schedule(host: HTMLElement, delay = 200): void {
@@ -80,8 +83,29 @@ export function createMermaidPreviewService(
         const revision = state.revision;
         state.timer = window.setTimeout(() => {
             state.timer = null;
-            void renderRevision(host, state, revision);
+            if (state.revision === revision) void ensureHostRender(host, state);
         }, delay);
+    }
+
+    function ensureHostRender(host: HTMLElement, state: HostState): Promise<void> {
+        if (state.running) return state.running;
+        const work = async (): Promise<void> => {
+            let renderedRevision = -1;
+            while (
+                hosts.get(host) === state &&
+                host.isConnected &&
+                state.revision !== renderedRevision &&
+                host.querySelector(DIAGRAM_SELECTOR)
+            ) {
+                renderedRevision = state.revision;
+                await renderRevision(host, state, renderedRevision);
+            }
+        };
+        const running = work().finally(() => {
+            if (state.running === running) state.running = null;
+        });
+        state.running = running;
+        return running;
     }
 
     function renderRevision(host: HTMLElement, state: HostState, revision: number): Promise<void> {
