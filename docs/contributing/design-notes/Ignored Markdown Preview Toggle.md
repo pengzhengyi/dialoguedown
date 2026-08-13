@@ -138,6 +138,11 @@ same report origin. A fresh origin defaults to expanded.
 metadata at that point, where both the compiler decision and Markdown token are known. The
 controller never classifies source or hardcodes which kinds are ignored.
 
+Marked removes blockquote prefixes before rendering nested tokens, while Markdig diagnostics retain
+them on continuation lines. Matching strips only the common container depth; a literal `>` inside
+ignored code remains content. Adding the ignored CSS class also recognizes only a real
+whitespace-delimited HTML `class` attribute, not `class=` inside an autolink query string.
+
 ## Boundary cases
 
 | Case | Behavior |
@@ -147,6 +152,8 @@ controller never classifies source or hardcodes which kinds are ignored.
 | File switch | New document receives the persisted view state. |
 | Ignored inline among words | One inline chip preserves surrounding spaces and flow. |
 | Several adjacent inline regions | One chip per compiler-projected span. |
+| Ignored content inside a blockquote | Region still matches and collapses; literal quote markers inside code remain. |
+| Autolink URL containing `class=` | Link still receives the ignored class and collapses. |
 | Preview pane hidden | Footer hides with its Preview shell. |
 | Narrow stacked layout | Footer stays below the Preview document, matching desktop semantics. |
 | Storage unavailable | Toggle still works for the current view; it simply does not persist. |
@@ -154,9 +161,10 @@ controller never classifies source or hardcodes which kinds are ignored.
 ## Testability
 
 - **Renderer unit tests:** metadata for each supported Marked kind, exact source-line counts, and
-  escaped inline tooltip source; separately ignored HTML tags remain balanced.
+  escaped inline tooltip source; separately ignored HTML tags remain balanced; nested blockquote
+  prefixes and class-like autolink queries cannot bypass matching.
 - **Controller unit tests:** zero/expanded/collapsed footer states, action semantics, persistence,
-  refresh after rerender, and storage failure.
+  refresh after rerender, storage failure, and valid accessible names for collapsed groups.
 - **Source-view integration:** the fixed footer always exists, global state applies to new
   regions, Source remains unchanged, and Preview hide/show owns the whole shell.
 - **Static browser integration:** the Preview footer matches the `#END` footer's position and
@@ -164,4 +172,4 @@ controller never classifies source or hardcodes which kinds are ignored.
   accessibility violations.
 - **Live integration:** a real `dialogue.toml` sets `autolink = "ignore"`; one global footer
   controls the configured inline link and a default-ignored table, persists across reload, and
-  restores both globally.
+  restores both globally. Axe also checks the collapsed live state.
