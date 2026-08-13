@@ -97,6 +97,15 @@ changes easy to categorize.
 
 ### Changed
 
+- **Breaking (pre-1.0): configuration values are deeply immutable and compare by
+  content.** `CompilerOptions.Speakers` and configured-speaker tag lists are now
+  `ImmutableArray<T>`; `CompilerOptions.UnmodeledMarkdown` is now an
+  `ImmutableDictionary<TKey, TValue>`. Equivalent options compare equal
+  regardless of map insertion order, and snapshot constructors accept mutable
+  sequences safely. Callers assigning an existing mutable list or dictionary
+  directly to a property must use a collection expression, convert it to the
+  matching immutable type, or use the snapshot constructor. See
+  [Configuration](docs/contributing/design-notes/Configuration.md).
 - **The graph legend now draws each route as the line it really is** — the same dashes the canvas
   draws, ending in the same arrowhead, and stamped with the same crosses where a line marks a node
   nothing reaches. A jump is drawn dash‑dot so it differs from a conditional in kind rather than

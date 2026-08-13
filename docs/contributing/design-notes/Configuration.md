@@ -1,12 +1,12 @@
 # Implementation note: Configuration
 
 > [!IMPORTANT]
-> Status: **approved; immutable-value refactor in progress**. Configuration is a
+> Status: **implemented**. Configuration is a
 > **cross-cutting concern**: the seam through which a consumer tunes how DialogueDown
 > compiles a script, without editing the script itself. `CompilerOptions` currently
 > carries the compilation mode, the configured speaker registry, and
-> unmodeled-Markdown handling overrides. The approved refactor makes that public
-> configuration graph deeply immutable with structural value equality.
+> unmodeled-Markdown handling overrides. The public configuration graph is deeply
+> immutable with structural value equality.
 
 ## Table of contents
 
@@ -120,13 +120,13 @@ boundary an architecture test guards (see [Integration](#integration)).
       parser's handling policy from `UnmodeledMarkdown`.
 - [x] An **architecture test** asserts `DialogueDown.Configuration` is a foundation
       leaf with no dependency on other core layers.
-- [ ] Public collection properties use immutable collection types; assigning
+- [x] Public collection properties use immutable collection types; assigning
       caller-owned sequences snapshots their contents.
-- [ ] `ConfiguredSpeaker` compares name, id, and both ordered tag lists by
+- [x] `ConfiguredSpeaker` compares name, id, and both ordered tag lists by
       content.
-- [ ] `CompilerOptions` compares mode and ordered speakers by content, and
+- [x] `CompilerOptions` compares mode and ordered speakers by content, and
       handling overrides independent of dictionary insertion order.
-- [ ] Equal configuration values produce equal, stable hash codes; mutating a
+- [x] Equal configuration values produce equal, stable hash codes; mutating a
       source collection after construction cannot change either value or hash.
 - [x] With **no `##default` and a configured default**, speakerless lines resolve to
       that speaker; if its name also appears in the script, they are the **same
@@ -250,7 +250,9 @@ both **owned immutably** and **equal by content**:
   benefit, then snapshot them into the immutable representation.
 - typed equality compares ordered arrays element by element and dictionaries by
   key/value content, independent of insertion order.
-- hash codes use the same structure and a deterministic key order.
+- generated hash codes use the same ordered/unordered semantics. They are stable
+  for the lifetime of an immutable value within one process, not persistent
+  cross-process identifiers.
 
 Immutable collections solve ownership, not equality: two separately allocated
 `ImmutableArray<T>` or `ImmutableDictionary<TKey, TValue>` values do not compare
