@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createNodeDetailPanel } from "./semantic-detail";
 import type { DisplayNode } from "./model";
+import { mermaidPreviews } from "./mermaid-preview";
 
 function node(overrides: Partial<DisplayNode> = {}): DisplayNode {
     return { id: "n1", label: "The Market", attributes: [], category: "structure", ...overrides };
@@ -78,6 +79,16 @@ describe("createNodeDetailPanel", () => {
         expect(panel.element.querySelector(".node-detail-body")?.textContent).toContain(
             "Click any node",
         );
+    });
+
+    it("releases Mermaid preview work when the panel is destroyed", () => {
+        const dispose = vi.spyOn(mermaidPreviews, "dispose");
+        const panel = createNodeDetailPanel();
+
+        panel.destroy();
+
+        expect(dispose).toHaveBeenCalledWith(panel.element.querySelector(".node-detail-body"));
+        dispose.mockRestore();
     });
 
     it("collapses and reopens from the caret toggle", () => {

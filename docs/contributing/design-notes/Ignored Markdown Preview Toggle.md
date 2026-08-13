@@ -165,6 +165,7 @@ and file switches. This component deliberately keeps one binary Preview preferen
 | Several adjacent inline regions | One chip per compiler-projected span. |
 | Ignored content inside a blockquote | Region still matches and collapses; literal quote markers inside code remain. |
 | Autolink URL containing `class=` | Link still receives the ignored class and collapses. |
+| Ignored Mermaid code block | Expanded Preview renders the authoring diagram; collapsed Preview replaces the entire diagram with its code-block summary. |
 | Preview pane hidden | Footer hides with its Preview shell. |
 | Narrow stacked layout | Footer stays below the Preview document, matching desktop semantics. |
 | Storage unavailable | Toggle still works for the current view; it simply does not persist. |
@@ -173,7 +174,8 @@ and file switches. This component deliberately keeps one binary Preview preferen
 
 - **Renderer unit tests:** metadata for each supported Marked kind, exact source-line counts, and
   escaped inline tooltip source; separately ignored HTML tags remain balanced; nested blockquote
-  prefixes and class-like autolink queries cannot bypass matching.
+  prefixes and class-like autolink queries cannot bypass matching; ignored Mermaid placeholders
+  remain inside their semantic region.
 - **Controller unit tests:** zero/expanded/collapsed footer states, action semantics, persistence,
   refresh after rerender, storage failure, and valid accessible names for collapsed groups.
 - **Source-view integration:** the fixed footer always exists, global state applies to new

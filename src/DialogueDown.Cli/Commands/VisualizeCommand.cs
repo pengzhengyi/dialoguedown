@@ -38,7 +38,7 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
         ArgumentNullException.ThrowIfNull(settings);
         var hasScript = !string.IsNullOrWhiteSpace(settings.Script);
 
-        // A non-interactive emit writes stage text (Mermaid/DOT) to --output or stdout,
+        // A non-interactive emit writes DOT stage text to --output or stdout,
         // never a server. Checked before the HTML export so `--emit dot -o x.dot` emits
         // text rather than an HTML report. The format is validated in settings, so
         // parsing here always succeeds.

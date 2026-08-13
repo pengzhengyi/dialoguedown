@@ -184,9 +184,17 @@ function previewBlockAnchors(preview: HTMLElement): ScrollAnchor[] {
     return [...preview.children]
         .filter((element) => !element.matches(".frontmatter-label, .frontmatter"))
         .map((element, index) => ({
-            key: `block:${index}:${element.tagName.toLowerCase()}`,
+            key: `block:${index}:${previewBlockKind(
+                element.tagName,
+                element.getAttribute("data-preview-block"),
+            )}`,
             top: element.getBoundingClientRect().top - base,
         }));
+}
+
+/** The source-block kind a rendered preview element represents. */
+export function previewBlockKind(tagName: string, sourceKind: string | null = null): string {
+    return sourceKind ?? tagName.toLowerCase();
 }
 
 /** Prefer dense block anchors when the source and rendered block sequences agree exactly. */

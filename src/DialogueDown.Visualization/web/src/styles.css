@@ -2348,6 +2348,26 @@ g.node.entity-highlight text.label {
     font-variant-ligatures: contextual;
 }
 
+.mermaid-diagram {
+    margin: 0.75rem 0;
+    overflow-x: auto;
+    text-align: center;
+}
+
+.mermaid-diagram svg {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.mermaid-error {
+    margin: 0.25rem 0 0;
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+}
+
 /* Preview blockquotes — the if/else block controls nest blockquotes, so mark each level with its
    own left rule (each level sets --q to its palette color; the rule renders it grayed by default
    and vivid on hover). The box is zero-height vertically so nested levels wrap the *same* content

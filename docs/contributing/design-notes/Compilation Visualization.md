@@ -116,8 +116,7 @@ One concept, one name — used here, in code, and in tests.
 - [x] A **report** facade compiles a source string and assembles a **Source tab**
       (the document with a live preview) and one **tab per stage** into a single
       self-contained HTML page.
-- [x] **Mermaid** and **DOT** renderers (fast-follow extras) emit graph text from
-      the same display graph.
+- [x] A **DOT** renderer emits portable graph text from the same display graph.
 - [x] A **Dialogue AST** projection seam (landed with the transpiler).
 - [x] Handles empty input, deep nesting, cycles, and special characters safely
       (escaping).
@@ -132,8 +131,8 @@ record; the components are sequenced by dependency:
    `INodeProjection<TNode>` seam, and the graph-aware `Walk`. Pure, no
    dependencies, no core changes. The foundation everything else builds on.
 2. **Renderers** — the `IDisplayRenderer` strategy and its concretes:
-   `HtmlRenderer` (interactive, bundled JS) first, then `MermaidRenderer` and
-   `DotRenderer` as extras.
+   `HtmlRenderer` (interactive, bundled JS) and `DotRenderer` (portable graph
+   text).
 3. **Compilation report** — the Markdown AST projection (and later the Dialogue
    AST projection) plus the `CompilationVisualizer` facade that runs the stages
    and assembles the multi-tab report. This is where the core seam is consumed.
@@ -157,7 +156,6 @@ flowchart LR
     DP --> Walk
     Walk --> DG["DisplayGraph"]
     DG --> HTML["HtmlRenderer"]
-    DG --> MMD["MermaidRenderer"]
     DG --> DOT["DotRenderer"]
     HTML --> Report["Multi-tab HTML report"]
 ```
@@ -202,7 +200,7 @@ out-edges) for its IR family; the walk supplies the graph-aware mechanics.
 | `GraphWalk` | Generic graph-aware traversal: `Walk(root, projection) → DisplayGraph`, with cycle-safe visited tracking. | every projection |
 | `MarkdownAstProjection` | `INodeProjection` over `MarkdownDocument` and its node types; titled "Markdown AST". | `IMarkdownParser` |
 | `IDisplayRenderer` | Turns a `DisplayGraph` into one output format (string). | `DisplayGraph` |
-| `HtmlRenderer` / `MermaidRenderer` / `DotRenderer` | Concrete renderers per format. | `DisplayGraph` |
+| `HtmlRenderer` / `DotRenderer` | Concrete renderers per format. | `DisplayGraph` |
 | `CompilationVisualizer` | Facade: compile a source string, run each available projection, assemble a multi-tab report. | parser, projections, renderers |
 
 Extension methods (e.g. `markdownDocument.ToDisplayGraph()`) wrap the matching
@@ -275,24 +273,24 @@ non-developers: you can see exactly which text became which node.
 The client is a small **TypeScript** application (in `web/`) that **Vite** builds
 and inlines into **one self-contained HTML file** — every script and stylesheet
 embedded, no CDN, no external requests — so the report opens with no server and
-works fully offline, even air-gapped. The libraries are npm dependencies pinned by
-`package-lock.json` and tree-shaken into the bundle: D3 v7.9.0 (ISC), Pico.css
-v2.1.1 (MIT), marked v12.0.2 (MIT), and Tippy.js v6.3.7 (MIT, which bundles
-Popper). Preview surfaces also embed the Fira Code Latin 400 WOFF2 (OFL-1.1)
-for jump-indicator ligatures. `web/NOTICE.md` records versions and licenses.
-The .NET side embeds this built file and injects only the per-report data — the
-source and each stage — into its data slot.
+works fully offline, even air-gapped. The npm dependencies are pinned by
+`package-lock.json`; `web/NOTICE.md` is the versioned source of truth for their
+licenses. Preview surfaces also embed the Fira Code Latin 400 WOFF2 (OFL-1.1)
+for jump-indicator ligatures. The .NET side embeds the built file and injects
+only the per-report data — the source and each stage — into its data slot.
 
 The tradeoff is deliberate: the bundle pins specific, reviewed library versions
 (updated by bumping `package.json` and rebuilding) rather than floating to the
 latest, in exchange for a reproducible, zero-network, offline-first artifact.
 
-### D6 — Mermaid and DOT as fast-follow text formats
+### D6 — DOT as a fast-follow text format
 
-HTML lands first. From the same display graph, **Mermaid** (`flowchart` text —
-already used in these docs, renders on GitHub) and **DOT** (Graphviz) follow as
-extras. Both are pure string formatting over a graph and need no heavy dependency;
-if a fluent DOT builder is later wanted, `DotNetGraph` (MIT) is the vetted choice.
+From the same display graph, **DOT** (Graphviz) is a pure string-formatting
+extra for graph tools. Fenced Mermaid blocks have a separate authoring role in
+the Markdown preview; they do not render compiler-stage graphs. A future
+Mermaid exporter, if needed, belongs after a stable serialized dialogue/runtime
+IR exists. See
+[Mermaid authoring diagrams](./Mermaid%20Authoring%20Diagrams.md).
 
 ### D7 — One self-contained page: a Source tab, then one tab per stage
 
@@ -365,7 +363,7 @@ takes the full width.
 | Empty source | Compiles to an empty document; the display graph is a lone root with no edges; renderers show an empty-but-valid diagram. |
 | Deeply nested inlines (nested emphasis, nested lists) | The walk recurses; renderers must not assume shallow depth. |
 | Cyclic or shared-node graph IR (future runtime graph) | The visited set stops re-expansion; a revisited node becomes a **reference edge** to its first occurrence, so traversal terminates and the diagram stays finite. |
-| Special characters in labels (`<`, `>`, `&`, quotes, newlines) | Each renderer escapes for its format (HTML entities, Mermaid/DOT quoting) so output stays valid and safe. |
+| Special characters in labels (`<`, `>`, `&`, quotes, newlines) | Each renderer escapes for its format (HTML entities or DOT quoting) so output stays valid and safe. |
 | A stage that fails to compile | Planned for when more than one stage exists: the report will show the stages that compiled and surface the error for the failing one. With today's single Markdown stage, a compile failure has nothing else to show, so it propagates as an exception. |
 | A stage that fails to render in the browser | The client guards each tab independently: a render error shows an inline message for that stage instead of blanking the whole page. |
 | A stage not present on `main` yet (Dialogue AST) | Its tab is simply absent until the stage exists; no dead UI. |

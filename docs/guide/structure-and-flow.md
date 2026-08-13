@@ -55,7 +55,7 @@ several source lines for readability. It is still spoken as one speech.
 ```
 
 A hard break separates two speeches without a blank line. The trailing backslash
-below is one of the two hard-break forms; two trailing spaces is the other:
+below is one of the two hard-break forms; two trailing spaces are the other:
 
 ```markdown
 Alice: Hello, Bob!\
@@ -502,6 +502,18 @@ Markdown constructs that organize the script rather than say something —
 **thematic breaks** (`---`) — are treated as author-only aids and are **ignored
 by default**, much like comments. Use them freely to document
 speakers, sketch scene relationships, or divide sections.
+
+The web report renders a fenced `mermaid` block as a diagram while keeping it
+outside the compiled dialogue:
+
+````markdown
+```mermaid
+flowchart LR
+    arrival[Arrival] --> choice{Trust the guide?}
+    choice -->|yes| market[Market]
+    choice -->|no| forest[Forest]
+```
+````
 
 ```markdown
 <!-- A table of who appears in this scene — never spoken. -->

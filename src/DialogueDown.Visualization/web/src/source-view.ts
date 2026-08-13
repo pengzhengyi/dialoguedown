@@ -73,6 +73,8 @@ import {
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument, type PreviewSemantics } from "./text";
+import { mountPreviewHtml } from "./preview-html";
+import { mermaidPreviews } from "./mermaid-preview";
 import type { DebugController } from "./debug-controller";
 import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
@@ -462,11 +464,12 @@ export function createSourceView(
         controlKeywords: [],
     };
     const ignoredPreview = createIgnoredPreviewController(preview);
-    const renderPreview = (value: string): void => {
-        preview.innerHTML = renderDocument(value, previewSemantics);
+    const renderPreview = (value: string, delay = 0): void => {
+        mountPreviewHtml(preview, renderDocument(value, previewSemantics));
         annotatePreviewControlRegions(preview);
         annotateHeadingAnchors(preview);
         ignoredPreview.refresh();
+        mermaidPreviews.schedule(preview, delay);
     };
     renderPreview(source);
     // Delegated once on the stable preview element; each render re-annotates its headings.
@@ -481,7 +484,7 @@ export function createSourceView(
                 ignored: mapPreviewSpans(previewSemantics.ignored, update.changes),
                 controlKeywords: mapPreviewSpans(previewSemantics.controlKeywords, update.changes),
             };
-            renderPreview(value);
+            renderPreview(value, 200);
             onChange?.(value);
         }
     });
@@ -621,6 +624,7 @@ export function createSourceView(
             disposeSplitDivider();
             debugToolbar?.destroy();
             ignoredPreview.destroy();
+            mermaidPreviews.dispose(preview);
             view.destroy();
         },
         setEditable: (next) =>

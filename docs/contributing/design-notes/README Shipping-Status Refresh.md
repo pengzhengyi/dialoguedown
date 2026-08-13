@@ -42,11 +42,9 @@ Out of scope:
 ### D1 — Describe only what the report actually does
 
 The README is user-facing, so it must not advertise a capability the report does
-not have. Mermaid/DOT are real *renderers* in the library (documented in the
-Compilation Visualization note), but the interactive report never surfaces them,
-so the README should not imply a user can get "Mermaid and DOT text" from it. When
-the Rendering Mode (Mermaid) and the DOT CLI emit land, their own components update
-the README.
+not have. The report renders Mermaid only when an author writes a fenced
+`mermaid` block in the dialogue Markdown; it does not offer Mermaid versions of
+compiler-stage graphs. Graphviz DOT remains a separate CLI emission mode.
 
 ### D2 — Keep it a light touch
 

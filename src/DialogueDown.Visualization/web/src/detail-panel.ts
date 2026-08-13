@@ -1,6 +1,8 @@
 import type { DisplayNode, Span } from "./model";
 import { colorOf } from "./palette";
 import { ellipsize, escapeHtml, renderNodePreview } from "./text";
+import { mountPreviewHtml } from "./preview-html";
+import { mermaidPreviews } from "./mermaid-preview";
 
 /** How much of a content node's words its detail row shows before the full text below. */
 const MAX_TITLE_TEXT = 80;
@@ -199,7 +201,8 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     return {
         show(node, preview = {}) {
             renderTitle(nodeDetailTitle(node), node);
-            bodyEl.innerHTML = nodeDetailBody(node, preview);
+            mountPreviewHtml(bodyEl, nodeDetailBody(node, preview));
+            void mermaidPreviews.renderNow(bodyEl);
         },
         showRegion(region, source, preview = {}) {
             // A region is declared by its heading, so it offers the same jump a node does — and
@@ -215,14 +218,17 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
                       }
                     : null,
             );
-            bodyEl.innerHTML = regionDetailBody(region, source, preview);
+            mountPreviewHtml(bodyEl, regionDetailBody(region, source, preview));
+            void mermaidPreviews.renderNow(bodyEl);
         },
         showEdge(edge) {
             // An edge has no source span of its own, so it offers no jump — the nodes it joins do.
+            mermaidPreviews.dispose(bodyEl);
             renderTitle(edgeDetailTitle(edge.category), null);
             bodyEl.innerHTML = edgeDetailBody(edge);
         },
         clear() {
+            mermaidPreviews.dispose(bodyEl);
             renderTitle(escapeHtml("Node details"), null);
             bodyEl.innerHTML = NODE_DETAIL_PLACEHOLDER;
         },
