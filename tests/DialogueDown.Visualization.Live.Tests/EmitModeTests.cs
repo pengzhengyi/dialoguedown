@@ -6,20 +6,6 @@ namespace DialogueDown.Visualization.Live.Tests;
 public sealed class EmitModeTests
 {
     [Fact]
-    public void Run_Mermaid_WritesFlowchartToStandardOutput()
-    {
-        using var doc = new TempDocument("# Scene\n\nAlice: Hi.");
-        var writer = new StringWriter();
-
-        var code = EmitMode.Run(doc.Path, EmitFormat.Mermaid, output: null, CompilerOptions.Default, writer, new StringWriter());
-
-        Assert.Equal(0, code);
-        var text = writer.ToString();
-        Assert.Contains("%% Markdown AST", text);
-        Assert.Contains("flowchart TD", text);
-    }
-
-    [Fact]
     public void Run_Dot_WithOutput_WritesDigraphToTheFileNotStdout()
     {
         using var doc = new TempDocument("# Scene\n\nAlice: Hi.");
@@ -48,7 +34,7 @@ public sealed class EmitModeTests
         var writer = new StringWriter();
         var error = new StringWriter();
 
-        var code = EmitMode.Run(missing, EmitFormat.Mermaid, output: null, CompilerOptions.Default, writer, error);
+        var code = EmitMode.Run(missing, EmitFormat.Dot, output: null, CompilerOptions.Default, writer, error);
 
         Assert.NotEqual(0, code);
         Assert.NotEqual(string.Empty, error.ToString());

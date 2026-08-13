@@ -108,19 +108,20 @@ public sealed class VisualizeCommandTests
     }
 
     [Fact]
-    public void Visualize_EmitMermaid_RoutesToRunEmitWithTheFormat()
+    public void Visualize_EmitMermaid_FailsWithMigrationGuidance()
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var launcher = Launcher();
-        var tester = CliTester.Create(runner: runner, launcher: launcher);
+        var tester = CliTester.Create(runner: runner, launcher: Launcher());
 
-        tester.Run("visualize", script.Path, "--emit", "mermaid");
+        var result = tester.Run("visualize", script.Path, "--emit", "mermaid");
 
-        runner.Received(1).RunEmit(script.Path, EmitFormat.Mermaid, null, Arg.Any<CompilerOptions>());
-        launcher.DidNotReceive().RunAsync(
-            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
-            Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        Assert.Contains("Mermaid stage emission was removed", result.Output, StringComparison.Ordinal);
+        Assert.Contains("--emit dot", result.Output, StringComparison.Ordinal);
+        Assert.Contains("fenced `mermaid` blocks", result.Output, StringComparison.Ordinal);
+        runner.DidNotReceive().RunEmit(
+            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
     }
 
     [Fact]

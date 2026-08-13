@@ -81,7 +81,7 @@ public sealed class CompilationVisualizer
 
     /// <summary>
     /// Compiles the source and renders every stage as text in the given
-    /// <paramref name="format"/> (Mermaid or DOT), joined with a per-stage header
+    /// <paramref name="format"/>, joined with a per-stage header
     /// comment so a multi-stage emit is self-describing. For embedding a stage's graph
     /// elsewhere — the report itself stays HTML.
     /// </summary>
@@ -185,7 +185,6 @@ public sealed class CompilationVisualizer
 
     private static IDisplayRenderer RendererFor(EmitFormat format) => format switch
     {
-        EmitFormat.Mermaid => new MermaidRenderer(),
         EmitFormat.Dot => new DotRenderer(),
         _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown emit format."),
     };
@@ -193,7 +192,6 @@ public sealed class CompilationVisualizer
     // The stage-header comment leader in each format's syntax.
     private static string CommentPrefixFor(EmitFormat format) => format switch
     {
-        EmitFormat.Mermaid => "%%",
         EmitFormat.Dot => "//",
         _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown emit format."),
     };
