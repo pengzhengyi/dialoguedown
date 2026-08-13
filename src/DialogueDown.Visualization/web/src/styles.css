@@ -2221,7 +2221,7 @@ g.node.entity-highlight text.label {
 }
 
 .source-preview .dd-preview-ignored-region::after {
-    content: "\eae7"; /* codicon-eye-closed */
+    content: "\eabd"; /* codicon-circle-slash */
 }
 
 .source-preview .dd-preview-ignored-region > .dd-preview-ignored {

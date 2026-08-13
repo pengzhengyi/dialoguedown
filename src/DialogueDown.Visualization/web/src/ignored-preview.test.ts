@@ -27,7 +27,7 @@ describe("createIgnoredPreviewController", () => {
         expect(action(controller).getAttribute("aria-label")).toBe(
             "Hide all ignored content in Preview",
         );
-        expect(action(controller).querySelector(".codicon-eye-closed")).not.toBeNull();
+        expect(action(controller).querySelector(".codicon-collapse-all")).not.toBeNull();
     });
 
     it("collapses globally, persists the preference, and offers to show the regions", () => {
@@ -41,7 +41,7 @@ describe("createIgnoredPreviewController", () => {
         expect(action(controller).getAttribute("aria-label")).toBe(
             "Show all ignored content in Preview",
         );
-        expect(action(controller).querySelector(".codicon-eye")).not.toBeNull();
+        expect(action(controller).querySelector(".codicon-expand-all")).not.toBeNull();
         expect(storage.getItem("dd-ignored-preview-collapsed")).toBe("1");
         expect(
             preview.querySelector(".dd-preview-ignored-region")?.getAttribute("aria-label"),

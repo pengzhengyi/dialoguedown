@@ -25,7 +25,7 @@ spend most of its Preview space on content that never becomes dialogue.
 
 This component adds one global toggle for the current Preview. It defaults to expanded; when
 collapsed, every ignored block becomes a one-line semantic summary and every ignored inline
-becomes a closed-eye chip at its original sentence position.
+becomes a circle-slash chip at its original sentence position.
 
 **In scope:** the fixed Preview footer, global expanded/collapsed state, compact block and inline
 representations, persistence across file switches in one served report, hot-reload behavior, and
@@ -42,7 +42,7 @@ per-region expansion, or storing a different state per script.
 - [x] Disable the action when the count is zero.
 - [x] Default to expanded, preserving current behavior.
 - [x] Collapse every ignored block to `Kind · N lines` at its original position.
-- [x] Collapse every ignored inline to one closed-eye chip with a source tooltip.
+- [x] Collapse every ignored inline to one circle-slash chip with a source tooltip.
 - [x] Keep Source editor content visible and dimmed in either state.
 - [x] Persist one view preference across file switches and hot reloads.
 - [x] Reapply the state when a recompile changes the ignored regions.
@@ -54,18 +54,18 @@ The two panes end with matching compiler-owned footers:
 
 | Source footer | Preview footer |
 | --- | --- |
-| `∞  End  #END` | `closed-eye  3 ignored  shown in Preview  [hide]` |
+| `∞  End  #END` | `circle-slash  3 ignored  shown in Preview  [collapse-all]` |
 
-When collapsed, the footer reads `3 ignored · hidden in Preview` and the action changes to an open
-eye. The document retains compact anchors:
+When collapsed, the footer reads `3 ignored · hidden in Preview` and the action changes to
+`expand-all`. The document retains compact anchors:
 
 ```text
-closed-eye  Table · 4 lines
+circle-slash  Table · 4 lines
 
-Alice: Visit [closed-eye] before sundown.
+Alice: Visit [circle-slash] before sundown.
 
-closed-eye  Code block · 5 lines
-closed-eye  Divider
+circle-slash  Code block · 5 lines
+circle-slash  Divider
 ```
 
 The inline chip's tooltip names the kind and source, for example
@@ -78,10 +78,10 @@ flowchart LR
     T["IgnoredMarkdown tokens"] --> R["renderDocument:<br/>regions + metadata"]
     R --> P["Scrollable Preview document"]
     P --> C["IgnoredPreviewController"]
-    C --> F["Fixed Preview footer:<br/>count + global eye"]
+    C --> F["Fixed Preview footer:<br/>count + global action"]
     C --> S["Expanded/collapsed class"]
     S --> B["Block summaries"]
-    S --> I["Inline eye chips"]
+    S --> I["Inline status chips"]
     L["localStorage preference"] <--> C
 ```
 
@@ -102,7 +102,7 @@ The Source editor already owns a fixed 37.8-pixel `#END` footer. A same-height P
 the split read as two coordinated compiler views. A top toolbar created asymmetric chrome, while
 a floating glyph had ambiguous scope.
 
-The footer is always present. At zero it says `0 ignored` and disables the eye, preserving pane
+The footer is always present. At zero it says `0 ignored` and disables the action, preserving pane
 alignment and making "nothing omitted" an explicit status.
 
 The static browser test compares both footer rows' rendered position and height, pinning the
@@ -119,7 +119,7 @@ Fully removing ignored content would make the remaining Preview close up around 
 omission. Blocks therefore retain one line naming their Marked kind and exact source-line count.
 The count is mechanical—not a guessed row count—and remains meaningful for any ignored kind.
 
-Inline content cannot become a row without breaking its sentence. It becomes one closed-eye chip
+Inline content cannot become a row without breaking its sentence. It becomes one circle-slash chip
 in place, with a tooltip containing the kind and exact source text.
 
 Ignored HTML is shown as escaped source rather than executed markup. Markdig exposes inline
@@ -143,11 +143,22 @@ them on continuation lines. Matching strips only the common container depth; a l
 ignored code remains content. Adding the ignored CSS class also recognizes only a real
 whitespace-delimited HTML `class` attribute, not `class=` inside an autolink query string.
 
+### D6 — Status glyphs never act; action glyphs never describe status
+
+Each ignored region and the footer's category marker use a static `circle-slash`: it means
+excluded from dialogue and is never clickable. Conditional dialogue keeps its static question
+marker. The only interactive glyph is the footer button, which uses `collapse-all` while content
+is shown and `expand-all` while it is hidden. Footer prose reports current state.
+
+Per-region toggles are deferred. They would introduce mixed state (`3 of 4 shown`), make one
+global button's action ambiguous, and require stable region identities across edits, recompiles,
+and file switches. This component deliberately keeps one binary Preview preference.
+
 ## Boundary cases
 
 | Case | Behavior |
 | --- | --- |
-| No ignored regions | Footer remains; `0 ignored`; eye disabled. |
+| No ignored regions | Footer remains; `0 ignored`; action disabled. |
 | Ignored content changes after save | Count and summaries refresh; current state remains. |
 | File switch | New document receives the persisted view state. |
 | Ignored inline among words | One inline chip preserves surrounding spaces and flow. |

@@ -24,7 +24,7 @@ export function createIgnoredPreviewController(
     footer.setAttribute("role", "region");
     footer.setAttribute("aria-label", "Ignored Preview content");
 
-    const marker = codicon("eye-closed", "dd-ignored-preview-footer-marker");
+    const marker = codicon("circle-slash", "dd-ignored-preview-footer-marker");
     const count = document.createElement("strong");
     count.className = "dd-ignored-preview-count";
     const state = document.createElement("span");
@@ -70,7 +70,7 @@ export function createIgnoredPreviewController(
         );
         toggle.title = toggle.getAttribute("aria-label")!;
         toggle.replaceChildren(
-            codicon(collapsed ? "eye" : "eye-closed", "dd-ignored-preview-toggle-icon"),
+            codicon(collapsed ? "expand-all" : "collapse-all", "dd-ignored-preview-toggle-icon"),
         );
     };
 
