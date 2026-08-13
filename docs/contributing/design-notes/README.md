@@ -48,7 +48,7 @@ flowchart LR
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
 | 1 | [Markdown Front-End](./Markdown%20Front-End.md) | Source text → Markdown AST (Markdig adapter) | Implemented |
-| 1a | [Unmodeled Markdown Handling](./Unmodeled%20Markdown%20Handling.md) | A front-end detail: which Markdown is ignored vs kept as raw text | Implemented |
+| 1a | [Unmodeled Markdown Handling](./Unmodeled%20Markdown%20Handling.md) | A front-end detail: which unmodeled Markdown is ignored or kept as dialogue text | Implemented |
 | 2 | [Markdown to Dialogue AST Transpiler](./Markdown%20to%20Dialogue%20AST%20Transpiler.md) | Markdown AST → Dialogue AST | Implemented |
 | 3 | [Desugar](./Desugar.md) | Dialogue AST → normalized Dialogue AST (jump assembly, default speaker) | Implemented |
 | 4 | [Semantic Analyzer](./Semantic%20Analyzer.md) | Desugared AST → semantic model (speakers, scenes, resolved jumps) | Implemented |

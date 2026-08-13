@@ -18,6 +18,7 @@ defaults, in code or from a project's `dialogue.toml`.
 - [The policy seam](#the-policy-seam)
 - [Custom policy](#custom-policy)
 - [Recognizing tables](#recognizing-tables)
+- [Visualization provenance](#visualization-provenance)
 - [Configuration format](#configuration-format)
 
 ## Background
@@ -109,6 +110,27 @@ To *ignore* a table, Markdig must first recognize it as one, which needs the
 **pipe-table** extension. The front-end enables it, so a valid table becomes a
 `Table` block (ignored by default); stray pipes that do not form a table stay
 literal text. No other GitHub-flavored extensions are enabled.
+
+## Visualization provenance
+
+The report shows the policy's effect without reimplementing it in TypeScript:
+
+- an **ignored** occurrence produces `DLG1114`; the semantic-token projection
+  turns that diagnostic range into `IgnoredMarkdown`, and Source and Preview
+  render it as present in the file but absent from the dialogue;
+- a **kept** occurrence becomes ordinary dialogue text, so it keeps the normal
+  Markdown and dialogue presentation rather than receiving an "unmodeled"
+  style;
+- a project override changes whether `DLG1114` exists, so highlighting follows
+  the configured policy automatically.
+
+This is sufficient to show each construct's fate: ignored or dialogue. The
+report still does not retain a distinct "kept because it was unmodeled"
+provenance after flattening, nor does the Config tab project the resolved
+handling for every kind. A future UI that needs either distinction should
+capture `kind`, `handling`, and `span` at `MarkdigUnmodeledNodeHandler`, the one
+site that knows all three, instead of re-parsing the source client-side. The
+public vocabulary and the single handler leave that extension local.
 
 ## Configuration format
 

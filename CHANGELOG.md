@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Configure unmodeled Markdown per project** — `dialogue.toml` can now choose
+  `keep` or `ignore` for code blocks, thematic breaks, tables, raw HTML,
+  autolinks, and other unmodeled constructs. Omitted kinds retain their built-in
+  defaults, and invalid names or values report a located configuration error.
+  See the [project configuration guide](docs/guide/configuration.md#unmodeled-markdown).
 - **Dialogue Graph tab** — the report now shows the compiled flow as a fifth stage: every block
   as a node, joined by the edges that lead between them, so you can see where a choice goes,
   which scene a jump enters, and — because the tab shows every node rather than only the ones a

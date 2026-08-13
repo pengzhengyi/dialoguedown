@@ -53,7 +53,7 @@ internal sealed class SemanticTokenProjection
     {
         foreach (var diagnostic in diagnostics)
         {
-            if (diagnostic.Code == DiagnosticCatalog.DroppedUnmodeledMarkdown.Code)
+            if (diagnostic.Code == DiagnosticCatalog.IgnoredUnmodeledMarkdown.Code)
             {
                 yield return new SemanticToken(
                     map.Range(diagnostic.StartOffset, diagnostic.EndOffset), TokenKind.IgnoredMarkdown);

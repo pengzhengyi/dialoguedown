@@ -90,9 +90,8 @@ Descriptor:
 The message is advisory rather than absolute. A writer may deliberately keep the
 nesting, but the warning makes the readability tradeoff visible.
 
-`DLG3001` remains reserved for the planned **dropped unmodeled Markdown**
-diagnostic recorded in the parent
-[Diagnostics and Validation](./Diagnostics%20and%20Validation.md) design.
+`DLG3001` remains unused. Ignored unmodeled Markdown is a syntax-stage
+`Info` (`DLG1114`), not a style warning.
 
 ## Prior art
 
@@ -131,8 +130,8 @@ it follows the PMD/Sonar shape:
   branches separately.
 - include both the actual depth and recommended maximum in the message, as
   ESLint and Checkstyle do.
-- use `DLG3002`, because the parent diagnostics design already reserves
-  `DLG3001` for dropped unmodeled Markdown.
+- use `DLG3002`, keeping the choice-nesting warning in the style range without
+  reassigning the unused `DLG3001`.
 
 Verified sources:
 

@@ -425,8 +425,8 @@ it so the code span is no longer the option's weight prefix.
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
 game-call diagnostics. `DLG2010` is the next free semantic code; a zero total is
 a meaning-level fault, not a token-level one. `DLG3003` and `DLG3004` are the
-next free style codes after `DLG3002` (`DLG3001` remains reserved for the
-planned dropped-unmodeled-Markdown warning).
+next free style codes after `DLG3002` (`DLG3001` remains unused; ignored
+unmodeled Markdown is the syntax-stage `DLG1114`).
 
 ## Error and boundary cases
 

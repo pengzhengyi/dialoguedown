@@ -35,11 +35,12 @@ than replacing it.
 absent; removing the blockquote muting; and styling Markdown comments, which the editor's own
 parser already recognizes.
 
-**Out of scope:** changing what is kept or ignored — the policy is unchanged and this component
-only *shows* it. Reading the policy from `dialogue.toml`
-([#47](https://github.com/pengzhengyi/dialoguedown/issues/47)) stays separate, and this design
-needs no change when it lands. Front-matter rendering is a pre-existing gap, tracked as
-[#264](https://github.com/pengzhengyi/dialoguedown/issues/264).
+**Out of scope:** changing what is kept or ignored — the policy is unchanged and
+this component only *shows* it. `dialogue.toml` handling overrides are loaded by
+[#47](https://github.com/pengzhengyi/dialoguedown/issues/47); because the
+projection follows `DLG1114`, an override changes the highlighting without a
+second client-side policy. Front-matter rendering is a pre-existing gap, tracked
+as [#264](https://github.com/pengzhengyi/dialoguedown/issues/264).
 
 ## Functionality checklist
 
@@ -173,9 +174,9 @@ it cannot happen unnoticed.
 that only wants dialogue tokens — the projection's existing tests among them — is unchanged, and
 a caller that has diagnostics passes them. The compile that renders a report always has them.
 
-The coupling to `DLG1114` is made in code rather than by a literal: the projection compares
-against `DiagnosticCatalog.DroppedUnmodeledMarkdown.Code`, so the code cannot drift from the
-catalog silently.
+The coupling to `DLG1114` is made in code rather than by a literal: the
+projection compares against `DiagnosticCatalog.IgnoredUnmodeledMarkdown.Code`,
+so the code cannot drift from the catalog silently.
 
 ### DD3 — Kept material is styled as dialogue, because that is what it becomes
 

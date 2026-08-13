@@ -57,7 +57,7 @@ arrow, which shipped as
 - [x] Do **not** report a construct the policy keeps as raw text.
 - [x] Do **not** report front matter or an HTML comment, which never reach the
       policy.
-- [x] Keep the dropping behavior itself unchanged.
+- [x] Keep the ignore behavior itself unchanged.
 - [x] Widen the `Syntax` category summary to cover Markdown that never
       becomes dialogue.
 - [x] Add the generated error-code reference entry.
@@ -67,8 +67,8 @@ arrow, which shipped as
 | Term | Meaning |
 | --- | --- |
 | **Unmodeled construct** | Markdown DialogueDown does not model as dialogue, classified as an `UnmodeledNodeKind`. |
-| **Handling** | What the policy decides for a kind: `AsRawText` or `Ignore`. |
-| **Degrade** | Carrying out `AsRawText` — the construct survives as its exact source text. |
+| **Handling** | What the policy decides for a kind: `Keep` or `Ignore`. |
+| **Keep** | The construct's source text becomes dialogue text; its structure is not modeled. |
 | **Front end** | The Markdown stage: `IMarkdownParser`, and the converter and unmodeled-node handler behind it. |
 
 ## Writer-facing behavior
@@ -95,7 +95,7 @@ dialogue if it should be spoken.
 ```
 
 `Info` is deliberate. Unlike a dangling arrow, ignoring is usually exactly what
-the writer wanted — a code block can never be speech, so dropping it is the
+the writer wanted — a code block can never be dialogue, so ignoring it is the
 whole point. The compiler cannot read intent, so it states the fact without
 implying a mistake. This is the catalog's first `Info`, which is what the
 severity was defined for: "a neutral note".
@@ -103,7 +103,7 @@ severity was defined for: "a neutral note".
 ## Where the knowledge lives
 
 `MarkdigUnmodeledNodeHandler` is the one place that decides the fate of a
-construct DialogueDown does not model: it asks the policy, then either degrades
+construct DialogueDown does not model: it asks the policy, then either keeps
 the construct as dialogue text or ignores it — and ignoring is where the note is
 written.
 
@@ -118,7 +118,7 @@ public MarkdownBlock? Handle(MarkdigBlock block)
 
     if (_policy.ShouldKeep(block))
     {
-        return Degrade(block);
+        return Keep(block);
     }
 
     throw UnknownHandling(block);
@@ -217,7 +217,7 @@ documentation and the section header rendered onto the error-code page.
 
 ### DD6 — One handler owns the whole unmodeled decision
 
-Classifying a construct, asking the policy, degrading it, and dropping it were
+Classifying a construct, asking the policy, keeping it, and ignoring it were
 spread through the converter, which made the class half about converting
 dialogue and half about disposing of everything else.
 `MarkdigUnmodeledNodeHandler` now owns all four, and the converter is handed
@@ -240,10 +240,10 @@ The reference page carries two fixes for `DLG1114`, each labelled with the case
 it applies to: write the construct in DialogueDown's terms, or remove it if it
 arrived by accident. Both are compiled and must stop reporting the code.
 
-A single unlabelled fix would have implied the construct was unwelcome, when
+A single unlabeled fix would have implied the construct was unwelcome, when
 keeping it is usually correct. Keeping it is stated in the explanation rather
 than shown, since it is the triggering example unchanged. The docs model grew an
-optional second fix for this, and a test forbids an unlabelled first fix
+optional second fix for this, and a test forbids an unlabeled first fix
 whenever a second exists.
 
 ## Error and boundary cases
@@ -275,7 +275,7 @@ whenever a second exists.
 ## Testability
 
 - **Unit — handler:** each ignored kind is noted once, named in a writer's words
-  and pointing at the construct; a kept construct is degraded and not noted; a
+  and pointing at the construct; a kept construct is preserved and not noted; a
   handling the code does not know is rejected. Kinds only a configured policy
   ignored constructs are covered here, without parsing.
 - **Unit — policy extensions:** `ShouldIgnore` and `ShouldKeep` follow the
