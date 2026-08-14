@@ -161,6 +161,7 @@ flowchart TB
     UMH --> FMH["33. Front Matter Source Highlighting"]
     FMH --> MAD["34. Mermaid Authoring Diagrams"]
     MAD --> IMT["35. Ignored Markdown Preview Toggle"]
+    IMT --> CDP["36. Co-located Diagnostics Presentation"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -200,6 +201,7 @@ flowchart TB
 | 33 | [Front Matter Source Highlighting](./Front%20Matter%20Source%20Highlighting.md) | Parse canonical leading front matter as YAML in the Source editor instead of ordinary Markdown | Implemented |
 | 34 | [Mermaid Authoring Diagrams](./Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
 | 35 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | A fixed Preview footer globally expands or collapses ignored blocks and inline spans without hiding them from Source | Implemented |
+| 36 | [Co-located Diagnostics Presentation](./Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
 
 ### Other notes
 

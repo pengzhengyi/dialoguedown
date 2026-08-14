@@ -182,6 +182,10 @@ changes easy to categorize.
   being misread as ordinary Markdown; the dialogue body keeps its existing Markdown and
   compiler-projected highlighting. See
   [Front Matter Source Highlighting](docs/contributing/design-notes/Front%20Matter%20Source%20Highlighting.md).
+- **Co-located diagnostics now present deterministically** — overlapping editor
+  marks use the severest active level while hover and the Problems panel retain
+  every message; diagnostics at one position list errors before warnings and
+  infos regardless of compiler/LSP array order.
 - **Jump indicators stay with their targets in previews** — at narrow widths, `=>` now wraps with
   the linked target instead of being left alone on the previous line.
 
