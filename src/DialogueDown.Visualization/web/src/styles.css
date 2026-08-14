@@ -16,6 +16,7 @@
     --md-link: #0969da;
     --md-code: #0550ae;
     --md-muted: #6e7781;
+    --dd-chrome-muted: #57606a;
     --cm-selection: rgb(20 100 210 / 22%);
     --problem-text: #24292f;
     --problem-muted: #57606a;
@@ -96,6 +97,7 @@
         --md-link: #79c0ff;
         --md-code: #a5d6ff;
         --md-muted: #8b949e;
+        --dd-chrome-muted: #8b949e;
         --cm-selection: rgb(100 165 255 / 35%);
         --problem-text: #c9d1d9;
         --problem-muted: #8b949e;
@@ -132,6 +134,7 @@
     --md-link: #79c0ff;
     --md-code: #a5d6ff;
     --md-muted: #8b949e;
+    --dd-chrome-muted: #8b949e;
     --cm-selection: rgb(100 165 255 / 35%);
     --problem-text: #c9d1d9;
     --problem-muted: #8b949e;
@@ -2234,6 +2237,12 @@ g.node.entity-highlight text.label {
    the static conditional-dialogue marker is that it is a real button — focusable, named, and
    reporting its pressed state — so pointer and keyboard users meet one control per region. */
 .source-preview .dd-preview-ignored-region > .dd-ignored-region-toggle {
+    /* Pico redefines --pico-background-color to its primary accent on every button, which would
+       tint the marker's surface. Inheriting it again keeps the control mixed against the page. */
+    --pico-background-color: inherit;
+
+    z-index: 1;
+    margin: 0;
     padding: 0;
     border: 0;
     cursor: pointer;
@@ -2250,6 +2259,14 @@ g.node.entity-highlight text.label {
 
 .source-preview .dd-preview-ignored {
     opacity: 0.72;
+}
+
+/* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather
+   than the link accent. Dimming an accent colour as well pushes it under the contrast floor,
+   which matters now that a writer can leave one region shown while the rest stay hidden. */
+.source-preview a.dd-preview-ignored {
+    opacity: 1;
+    color: var(--md-muted);
 }
 
 .source-preview .dd-preview-ignored-region-inline {
@@ -2325,7 +2342,7 @@ g.node.entity-highlight text.label {
 .dd-ignored-preview-state {
     overflow: hidden;
     margin-right: auto;
-    color: var(--pico-muted-color);
+    color: var(--dd-chrome-muted);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -2336,6 +2353,7 @@ g.node.entity-highlight text.label {
     place-items: center;
     width: 1.65rem;
     height: 1.65rem;
+    margin: 0;
     padding: 0;
     border: 0;
     border-radius: 4px;
