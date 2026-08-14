@@ -7,8 +7,12 @@
 # these are terms that appear as ordinary prose in the design notes.
 
 # DialogueDown's own vocabulary.
+autolink
 desugarer
 subgraph
+
+# Generic technical prose LanguageTool's dictionary lacks.
+hardcodes
 
 # Prior art named in the design notes.
 Inkle
