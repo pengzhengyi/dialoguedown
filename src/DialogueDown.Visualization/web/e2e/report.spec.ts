@@ -23,6 +23,18 @@ async function scaleOf(viewport: Locator): Promise<number> {
     return match ? Number(match[1]) : Number.NaN;
 }
 
+/** Resolve a theme CSS variable to the browser's computed color representation. */
+async function themeColor(page: Page, variable: string): Promise<string> {
+    return page.evaluate((name) => {
+        const probe = document.createElement("span");
+        probe.style.color = `var(${name})`;
+        document.body.appendChild(probe);
+        const color = getComputedStyle(probe).color;
+        probe.remove();
+        return color;
+    }, variable);
+}
+
 /**
  * Click a node by label. Overlays (legend, zoom controls, detail panel) sit above the
  * SVG and can cover a node, so disable their pointer-events first — the same approach
@@ -47,6 +59,35 @@ test("the Source tab is first and active, showing the document beside a preview"
     await expect(active.locator(".source-preview")).toBeVisible();
     // The node-detail panel is only for graph tabs; it is hidden here.
     await expect(page.locator("#detail")).toBeHidden();
+});
+
+test("the Source editor renders leading front matter as YAML metadata", async ({ page }) => {
+    const lines = page.locator(".source-pane .cm-line");
+    await expect(lines.nth(0)).toHaveText("---");
+    await expect(lines.nth(1)).toHaveText("title: Demo");
+    await expect(lines.nth(2)).toHaveText("---");
+    await expect(lines.nth(4)).toHaveText("# Scene");
+
+    const fence = lines.nth(0).locator("span").first();
+    await expect(fence).toBeVisible();
+    expect(await fence.evaluate((element) => getComputedStyle(element).color)).toBe(
+        await themeColor(page, "--md-muted"),
+    );
+
+    // YAML styles the property name and plain scalar independently. Markdown would leave the
+    // whole line unclassified.
+    const yamlSpans = lines.nth(1).locator("span");
+    await expect(yamlSpans).toHaveCount(2);
+    const yamlColors = await yamlSpans.evaluateAll((elements) => [
+        ...new Set(elements.map((element) => getComputedStyle(element).color)),
+    ]);
+    expect(yamlColors.length).toBeGreaterThan(1);
+
+    // The YAML `content` rule is language-scoped: ordinary Markdown prose in the body stays
+    // unwrapped and keeps the editor's default text color.
+    const bodyParagraph = lines.filter({ hasText: "Paragraph 1:" }).first();
+    await expect(bodyParagraph).toBeVisible();
+    await expect(bodyParagraph.locator("span")).toHaveCount(0);
 });
 
 test("the header brand shows the logo and reveals the name on hover", async ({ page }) => {
