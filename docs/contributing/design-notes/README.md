@@ -198,7 +198,7 @@ flowchart TB
 | 31 | [Dialogue Graph Visualization Tab](./Dialogue%20Graph%20Visualization%20Tab.md) | The compiled dialogue graph as a fifth stage tab: every node in graph order, typed edges, and orphans made visible | Implemented |
 | 32 | [Unmodeled Markdown Highlighting](./Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores, stops muting the blockquotes that carry control blocks, and styles comments as writer-only notes | Implemented |
 | 33 | [Mermaid Authoring Diagrams](./Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
-| 34 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | A fixed Preview footer globally expands or collapses ignored blocks and inline spans without hiding them from Source | Implemented |
+| 34 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, under two footer commands that override every region at once | Implemented |
 | 35 | [Co-located Diagnostics Presentation](./Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
 
 ### Other notes

@@ -1,9 +1,8 @@
 # Ignored Markdown Preview Toggle
 
-> [!IMPORTANT]
-> Status: **approved, in progress**. The shipped global toggle gains per-region visibility: each
-> ignored region can be shown or hidden on its own, while the footer keeps two commands that
-> override every region at once.
+> [!NOTE]
+> Status: **implemented**. Each ignored region can be shown or hidden on its own, while the footer
+> keeps two commands that override every region at once.
 
 ## Table of contents
 
@@ -50,18 +49,18 @@ compiler has already classified as ignored.
 
 ## Functionality checklist
 
-- [ ] Keep the Preview footer aligned with the Source editor's `#END` footer.
-- [ ] Offer `Expand all` and `Collapse all` as two always-available commands.
-- [ ] Report the count and the current view, including mixed state.
-- [ ] Disable both commands when the document has no ignored regions.
-- [ ] Let each ignored block and inline region toggle itself by pointer and keyboard.
-- [ ] Make a global command override every individual choice.
-- [ ] Keep a region's choice across the re-render that follows every keystroke.
-- [ ] Keep a region's choice across a hot reload that leaves that region unchanged.
-- [ ] Return an edited, split, or newly added region to the baseline.
-- [ ] Persist the baseline — not the overrides — across reloads.
-- [ ] Keep Source editor content visible and dimmed in every state.
-- [ ] Keep static status glyphs distinguishable from the region controls.
+- [x] Keep the Preview footer aligned with the Source editor's `#END` footer.
+- [x] Offer `Expand all` and `Collapse all` as two always-available commands.
+- [x] Report the count and the current view, including mixed state.
+- [x] Disable both commands when the document has no ignored regions.
+- [x] Let each ignored block and inline region toggle itself by pointer and keyboard.
+- [x] Make a global command override every individual choice.
+- [x] Keep a region's choice across the re-render that follows every keystroke.
+- [x] Keep a region's choice across a hot reload that leaves that region unchanged.
+- [x] Return an edited, split, or newly added region to the baseline.
+- [x] Persist the baseline — not the overrides — across reloads.
+- [x] Keep Source editor content visible and dimmed in every state.
+- [x] Keep static status glyphs distinguishable from the region controls.
 
 ## Writer-facing behavior
 
@@ -173,7 +172,28 @@ Static status glyphs remain distinguishable at both layers. The conditional-dial
 marker and the footer's category marker stay non-focusable CSS pseudo-elements, so assistive
 technology and pointer users meet exactly one control per region.
 
-### D6 — A persisted baseline and session-only overrides
+Turning a sticker into a control exposes two things a pseudo-element never had to survive. The
+marker needs its own stacking level, because a region's own content — a table's cells, for example —
+otherwise paints over it and swallows the click. It also has to opt out of the button styling Pico
+applies to every `button`: Pico redefines `--pico-background-color` to its accent and adds a bottom
+margin, which would tint the marker and grow the footer past the height it shares with the Source
+editor's `#END` footer.
+
+### D6 — Ignored content is dimmed, but never below legibility
+
+Ignored content renders at reduced opacity so it reads as set aside. Dimming an accent color that
+way pushes it under the contrast floor, so an ignored link takes the muted ink instead: it is not a
+destination the dialogue can reach, so the link accent was never carrying useful meaning.
+
+The footer states its view in a muted ink chosen for tinted panel chrome rather than the general
+muted color, which holds only against the plain document background.
+
+This matters more than it did for a single global toggle. Previously the only way to read ignored
+content was to show all of it at once; now a writer can leave one region shown indefinitely while
+the rest stay hidden, so "shown ignored content" is a state the report sits in rather than passes
+through.
+
+### D7 — A persisted baseline and session-only overrides
 
 The baseline is how the writer wants to read the served project, so one guarded local-storage key
 applies across file switches and survives hot reloads on the same report origin. A fresh origin
@@ -187,7 +207,7 @@ page navigation, so a file switch clears overrides without the controller needin
 Overrides deliberately survive the two events that happen constantly while writing: the Preview
 re-render after every keystroke, and a hot reload that leaves the region's own text alone.
 
-### D7 — A region is identified by its content, not its position
+### D8 — A region is identified by its content, not its position
 
 An override outlives a full DOM replacement, so each region needs a name. `renderDocument` derives
 one from the data it already holds: the region's kind, a hash of its exact source text, and an
@@ -204,7 +224,7 @@ key and its override. A region whose own text is edited becomes a different regi
 the baseline, which is what a writer expects after rewriting it. A split region yields new keys, and
 a deleted region simply leaves an unused entry behind until the next global command.
 
-### D8 — Metadata comes from the rendered compiler spans
+### D9 — Metadata comes from the rendered compiler spans
 
 `renderDocument` already matches `IgnoredMarkdown` spans to Marked tokens, so it adds kind, line,
 tooltip, and key metadata at the point where both the compiler decision and the Markdown token are
@@ -233,6 +253,8 @@ whitespace-delimited HTML `class` attribute, not `class=` inside an autolink que
 | Autolink URL containing `class=` | Link still receives the ignored class and collapses. |
 | Ignored Mermaid code block | A shown region renders the authoring diagram; hiding it replaces the whole diagram with its code-block summary. |
 | Many ignored regions | Each control is one natural tab stop, in document order. |
+| Control under a region's own content | The control keeps its own stacking level, so a table's cells cannot swallow the click. |
+| A shown ignored link | It renders in muted ink rather than a dimmed accent, holding contrast in both themes. |
 | Preview pane hidden | Footer hides with its Preview shell. |
 | Storage unavailable | Every command still works for the current view; only the baseline fails to persist. |
 
@@ -242,16 +264,18 @@ whitespace-delimited HTML `class` attribute, not `class=` inside an autolink que
   changes, and separates identical siblings; each region emits one control carrying its metadata;
   existing kind, line-count, escaped-tooltip, balanced-HTML, blockquote, and class-like autolink
   coverage still holds.
+- **Sanitizer unit test:** the mount boundary keeps the compiler-owned control, its key, and its
+  pressed state, since the Preview is written through DOMPurify.
 - **Controller unit tests:** zero state; baseline persistence; each global command clearing
   overrides; a per-region toggle producing mixed state and mixed prose; overrides surviving a
   re-render and a changed document; accessible names and `aria-expanded` in both states; storage
   failure.
-- **Source-view integration:** the fixed footer always exists, the baseline applies to newly
-  rendered regions, and Source stays unchanged.
+- **Source-view integration:** the fixed footer always exists, a global command and a single
+  region control each change only the Preview, and Source stays unchanged.
 - **Static browser integration:** the Preview footer matches the `#END` footer's position and
-  height, a region control toggles by pointer and by keyboard, a global command overrides an
-  individual choice, Zen hides the whole Preview shell, and axe reports no accessibility violations
-  in mixed state.
+  height, a region control responds to pointer and keyboard, a global command overrides an
+  individual choice, a hidden inline region stays a chip inside its sentence, Zen hides the whole
+  Preview shell, and axe reports no accessibility violations in a mixed view in either theme.
 - **Live integration:** a real `dialogue.toml` sets `autolink = "ignore"`; the configured inline
-  link and a default-ignored table toggle individually, a global command overrides both, and the
-  baseline survives a reload.
+  link and a default-ignored table are driven individually, a global command overrides both, and
+  the baseline survives a reload while individual choices do not.

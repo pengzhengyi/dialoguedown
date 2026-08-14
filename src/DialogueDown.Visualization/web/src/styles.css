@@ -2262,7 +2262,7 @@ g.node.entity-highlight text.label {
 }
 
 /* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather
-   than the link accent. Dimming an accent colour as well pushes it under the contrast floor,
+   than the link accent. Dimming an accent color as well pushes it under the contrast floor,
    which matters now that a writer can leave one region shown while the rest stay hidden. */
 .source-preview a.dd-preview-ignored {
     opacity: 1;
@@ -4162,7 +4162,7 @@ body.zen .config-view > .config-source {
 }
 
 .drawer-tab:not(.active) {
-    /* Explicit, and with no transition: the framework animates border colours on buttons, so
+    /* Explicit, and with no transition: the framework animates border colors on buttons, so
        the tab just left kept a fading underline that read as a second selected tab. */
     border-bottom-color: transparent;
     transition: none;
