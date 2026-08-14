@@ -1,5 +1,6 @@
 import { codicon } from "./codicon";
 import { errorCodeUrl } from "./diagnostics-overlay";
+import { orderDiagnostics } from "./diagnostic-order";
 import type { LspDiagnostic, LspSeverity } from "./model";
 
 /**
@@ -48,13 +49,6 @@ export interface ProblemsPanel {
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** The current per-severity totals, for the status-line summary. */
     counts(): DiagnosticCounts;
-}
-
-/** Order by position: the order the writer reads in, so the list walks forward through the text. */
-function byPosition(a: LspDiagnostic, b: LspDiagnostic): number {
-    return (
-        a.range.start.line - b.range.start.line || a.range.start.character - b.range.start.character
-    );
 }
 
 /** Render a zero-based LSP position the way an editor reports it, one-based. */
@@ -126,7 +120,7 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
 
     function setDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
         list.replaceChildren(
-            ...[...diagnostics].sort(byPosition).map((d) => buildRow(d, () => options.goTo(d))),
+            ...orderDiagnostics(diagnostics).map((d) => buildRow(d, () => options.goTo(d))),
         );
 
         const tally = { error: 0, warning: 0, info: 0 };

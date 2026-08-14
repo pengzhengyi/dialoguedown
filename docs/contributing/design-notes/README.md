@@ -160,6 +160,7 @@ flowchart TB
     RJ --> UMH["32. Unmodeled Markdown Highlighting"]
     UMH --> MAD["33. Mermaid Authoring Diagrams"]
     MAD --> IMT["34. Ignored Markdown Preview Toggle"]
+    IMT --> CDP["35. Co-located Diagnostics Presentation"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -198,6 +199,7 @@ flowchart TB
 | 32 | [Unmodeled Markdown Highlighting](./Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores, stops muting the blockquotes that carry control blocks, and styles comments as writer-only notes | Implemented |
 | 33 | [Mermaid Authoring Diagrams](./Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
 | 34 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | A fixed Preview footer globally expands or collapses ignored blocks and inline spans without hiding them from Source | Implemented |
+| 35 | [Co-located Diagnostics Presentation](./Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
 
 ### Other notes
 
