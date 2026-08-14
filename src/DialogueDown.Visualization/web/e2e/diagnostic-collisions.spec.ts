@@ -103,6 +103,33 @@ test("keeps every Problems row in position order with severity breaking exact ti
     );
 });
 
+test("keeps the same presentation when payload order reverses", async ({ page }) => {
+    const expected = [
+        "Exact Error.",
+        "Exact Warning.",
+        "Exact Info.",
+        "Outer Info.",
+        "Nested Warning.",
+        "Deep Error.",
+    ];
+    await page.locator(".diagnostic-summary").click();
+    expect(await page.locator(".problem-message").allTextContents()).toEqual(expected);
+
+    await page.goto(
+        writeReport({
+            ...report,
+            diagnostics: [...(report.diagnostics ?? [])].reverse(),
+        }),
+    );
+    await page.locator(".diagnostic-summary").click();
+    expect(await page.locator(".problem-message").allTextContents()).toEqual(expected);
+
+    await page.locator(".source-pane .cm-line").nth(2).locator(".cm-lintRange-error").hover();
+    await expect
+        .poll(() => tooltipMessages(page))
+        .toEqual(["Exact Error.", "Exact Warning.", "Exact Info."]);
+});
+
 test("passes accessibility checks in light and dark themes", async ({ page }) => {
     await page.locator(".diagnostic-summary").click();
     const analyzeDiagnostics = () =>
