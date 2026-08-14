@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorState } from "@codemirror/state";
 import {
     createFakeDebugController,
@@ -57,6 +57,17 @@ async function flushDebugUpdate(): Promise<void> {
 
 describe("createSourceView ignored Markdown preview", () => {
     const table = "| A | B |\n| - | - |\n| x | y |";
+
+    // The Preview view baseline is persisted, so a test that runs a global command would otherwise
+    // decide what the next test's region control does.
+    beforeEach(() => {
+        try {
+            globalThis.localStorage?.removeItem("dd-ignored-preview-collapsed");
+        } catch {
+            // A test environment without storage already starts from the default baseline.
+        }
+    });
+
     const ignoredTable: SemanticToken = {
         kind: "IgnoredMarkdown",
         range: {
