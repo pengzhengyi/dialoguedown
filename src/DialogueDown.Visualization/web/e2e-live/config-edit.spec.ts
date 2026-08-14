@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import {
     CONFIG_EDIT_PORT,
@@ -60,6 +61,50 @@ test("editing the config marks it dirty and stale; Save recompiles the speakers"
     await expect(page.locator(".tab.dirty")).toHaveCount(0);
     await expect(page.locator(".config-stale-hint")).toBeHidden();
     expect(readFileSync(CONFIG_EDIT_TOML, "utf8")).toContain("Bob");
+});
+
+test("globally collapses configured ignored block and inline Preview regions", async ({ page }) => {
+    await page.goto(base);
+    await page.evaluate(() => localStorage.removeItem("dd-ignored-preview-collapsed"));
+    await page.reload();
+
+    const preview = page.locator(".source-preview");
+    const footer = page.locator(".dd-ignored-preview-footer");
+    const inline = preview.locator(".dd-preview-ignored-region-inline");
+    const block = preview.locator(
+        ".dd-preview-ignored-region:not(.dd-preview-ignored-region-inline)",
+    );
+
+    await expect(footer).toContainText("2 ignored");
+    await expect(footer).toContainText("shown in Preview");
+    await expect(block).toHaveAttribute("data-ignored-summary", "Table · 3 lines");
+    await expect(inline).toHaveAttribute("title", "Ignored autolink: <https://example.com/road>");
+
+    await footer.getByRole("button", { name: "Hide all ignored content in Preview" }).click();
+
+    await expect(preview).toHaveClass(/ignored-preview-collapsed/);
+    await expect(footer).toContainText("hidden in Preview");
+    await expect(block.locator(".dd-preview-ignored")).toBeHidden();
+    await expect(inline.locator(".dd-preview-ignored")).toBeHidden();
+    await expect(page.locator(".source-pane .dd-tok-ignored-markdown")).not.toHaveCount(0);
+    expect(
+        (await new AxeBuilder({ page }).include(".source-preview-shell").analyze()).violations,
+    ).toEqual([]);
+
+    // The preference is report-wide, not tied to one DOM instance.
+    await page.reload();
+    await expect(page.locator(".source-preview")).toHaveClass(/ignored-preview-collapsed/);
+    await expect(page.locator(".dd-ignored-preview-footer")).toContainText("hidden in Preview");
+
+    await page
+        .locator(".dd-ignored-preview-footer")
+        .getByRole("button", { name: "Show all ignored content in Preview" })
+        .click();
+    await expect(page.locator(".source-preview")).not.toHaveClass(/ignored-preview-collapsed/);
+    const restored = page.locator(".source-preview .dd-preview-ignored");
+    await expect(restored).toHaveCount(2);
+    await expect(restored.first()).toBeVisible();
+    await expect(restored.last()).toBeVisible();
 });
 
 test("navigation locks while the config is unsaved", async ({ page }) => {
