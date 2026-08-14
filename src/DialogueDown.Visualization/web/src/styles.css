@@ -4209,7 +4209,7 @@ body.zen .config-view > .config-source {
 }
 
 .problem-code {
-    color: var(--md-link);
+    color: var(--pico-primary);
     text-decoration: underline dotted;
 }
 
