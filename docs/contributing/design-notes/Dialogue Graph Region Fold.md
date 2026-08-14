@@ -49,6 +49,16 @@ its own: a small chevron in the band's top-left corner, beside the scene's name.
 | --- | --- |
 | Click the band (or its name) | Select the scene; the inspector shows its border |
 | Click the chevron | Collapse or expand the scene; selection is left alone |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | Fold or open the scene the reader is **on as a thing** — the box under the pointer, or the scene they chose |
+
+The chevron sits in the band's padded corner *above* the first node's dot rather than
+beside it, because a folded band closes to one node's width: a control on the node's
+own row would sit on top of it.
+
+The keyboard rule is deliberately narrow. Hovering a *line* and pressing
+<kbd>Space</kbd> does not fold the scene around it — a reader resting on a line must
+not lose the scene they are reading. Folding an open scene from the keyboard is a
+two-step act: choose the band, then press the key.
 
 This also matches the visual language the report settled on for ignored Markdown:
 a **static mark states a status, a chevron performs an action**.
@@ -149,7 +159,9 @@ Fold state is remembered per graph alongside the camera and the node fold, and
   and a scene whose nodes are not adjacent.
 - **View tests** cover the chevron's presence and `aria-expanded`, that folding
   does not change the selection, that hiding the selection moves it to the
-  region, and that revealing a hidden node expands its scene.
+  region, that revealing a hidden node expands its scene, that the chevron's
+  target clears the node beneath it, and that the fold key opens a hovered box
+  but never a scene the reader is merely resting on a line of.
 - **A browser test** folds a scene in a real report and asserts the interior is
   gone, the box is drawn, and the flow through it still connects.
 

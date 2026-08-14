@@ -80,12 +80,17 @@ const PORT_STEP = 9;
 /**
  * A region band's header row: where its fold chevron and its name sit inside the room
  * `region-bands.ts` leaves above the nodes.
+ *
+ * The chevron is tucked into the padded corner *above* the first node's dot rather than beside
+ * it: a folded band closes to one node's width, so a control on the node's own row would sit on
+ * top of it.
  */
-const FOLD_CONTROL_INSET = 14;
-const REGION_NAME_INSET = 26;
+const FOLD_CONTROL_X = 9;
+const FOLD_CONTROL_Y = 10;
+const REGION_NAME_INSET = 24;
 const REGION_HEADER_BASELINE = 17;
-/** The chevron's pointer target — small, but never smaller than a pointer can find. */
-const FOLD_HIT_SIZE = 16;
+/** The chevron's pointer target — small enough to clear the first node, large enough to hit. */
+const FOLD_HIT_SIZE = 14;
 /** The chevron pointing down over an open scene, and right over a shut one. */
 const CHEVRON_OPEN = "M-3.5,-1.75 L0,1.75 L3.5,-1.75";
 const CHEVRON_SHUT = "M-1.75,-3.5 L1.75,0 L-1.75,3.5";
@@ -546,6 +551,7 @@ export function createTreeView(
         const entering = band.enter().append("g").attr("class", "region");
         entering
             .append("rect")
+            .attr("class", "region-band")
             // A region is a thing a reader can ask about, so the band it is drawn as answers.
             .on("click", (_event, datum) => selectRegion(datum.region));
         entering.append("text").attr("class", "region-name");
@@ -554,7 +560,7 @@ export function createTreeView(
         const all = gRegions.selectAll<SVGGElement, ReturnType<typeof bandsOf>[number]>("g.region");
         all.attr("data-tint", (datum) => datum.tint);
         all.classed("folded", (datum) => collapsedRegions.has(datum.region));
-        all.select("rect")
+        all.select("rect.region-band")
             .attr("x", (datum) => datum.x)
             .attr("y", (datum) => datum.y)
             .attr("width", (datum) => datum.width)
@@ -606,8 +612,7 @@ export function createTreeView(
         control
             .attr(
                 "transform",
-                (datum) =>
-                    `translate(${datum.x + FOLD_CONTROL_INSET},${datum.y + REGION_HEADER_BASELINE - 5})`,
+                (datum) => `translate(${datum.x + FOLD_CONTROL_X},${datum.y + FOLD_CONTROL_Y})`,
             )
             .attr("aria-expanded", (datum) => String(!folded(datum)))
             .attr("aria-label", label);
@@ -742,6 +747,10 @@ export function createTreeView(
         const nodeFold = collapsedIds();
         rebuildGraph();
         setFold(nodeFold);
+        // The pointer's node may have gone with the fold — the box that was under it, or the
+        // interior that closed. Left pointing at a node the drawing no longer holds, the lineage
+        // spotlight would fade everything and light nothing.
+        focused = focused === null ? null : findNodeById(focused.data.id);
         update();
     }
 
@@ -1122,6 +1131,16 @@ export function createTreeView(
         if (!NAVIGATION_KEYS.includes(event.key)) return;
         event.preventDefault();
 
+        if (event.key === "Enter" || event.key === " ") {
+            // A scene is the graph's foldable thing, so the fold key acts on the scene the reader
+            // is on — the one under the pointer, else the one chosen. Reaching a folded scene's
+            // box and pressing Enter should open it, which is the whole point of the box.
+            const region = regionUnderKey();
+            if (region !== null) {
+                toggleRegion(region);
+                return;
+            }
+        }
         if (!selected) {
             select(root);
             scheduleDefaultView(++viewToken);
@@ -1136,6 +1155,12 @@ export function createTreeView(
         if (next) {
             guardSelect(next, { center: true });
         }
+    }
+
+    /** The scene a fold key acts on: the box under the pointer, else the chosen scene. */
+    function regionUnderKey(): string | null {
+        if (focused !== null && isRegionBox(focused.data)) return focused.data.region!;
+        return selectedRegion;
     }
 
     function nextNode(key: string, node: TreeNode): TreeNode | null {

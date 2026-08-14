@@ -2517,8 +2517,11 @@ svg.tree {
 
 /* A region — a scene — drawn as the ground its nodes stand on, named once at its top-left
    instead of repeated under every node inside it. The tints are faint on purpose: this is the
-   backdrop, and the flow drawn over it has to stay the thing the eye follows. */
-.region rect {
+   backdrop, and the flow drawn over it has to stay the thing the eye follows.
+
+   Every rule here names the band's own rect. A bare `.region rect` would also claim the fold
+   control's hit rect inside it, dressing an invisible target in the band's stroke. */
+.region-band {
     fill: var(--dd-region-tint);
     stroke: var(--dd-region-tint-edge);
     stroke-width: 1px;
@@ -2527,8 +2530,8 @@ svg.tree {
 
 /* A region answers the pointer the way its nodes do: a firmer edge while it is hovered or while
    a row elsewhere names it. */
-.region rect:hover,
-.region.highlight rect {
+.region-band:hover,
+.region.highlight .region-band {
     stroke-width: 2px;
 }
 
@@ -2547,13 +2550,14 @@ svg.tree {
 
 /* The band's own fold control. Folding is a different act from selecting the scene — it changes
    what is drawn, not what the reader is looking at — so it is a control of its own rather than a
-   second meaning for the band's click. The chevron is quiet until the band is touched, so a
-   drawing full of scenes is not also full of buttons. */
+   second meaning for the band's click. It sits in the padded corner above the first node's dot,
+   because a folded band closes to one node's width. The chevron is quiet until the band is
+   touched, so a drawing full of scenes is not also full of buttons. */
 .region-fold {
     cursor: pointer;
 }
 
-.region-fold rect {
+.region-fold-hit {
     fill: transparent;
     stroke: none;
     cursor: pointer;
@@ -2576,14 +2580,18 @@ svg.tree {
     opacity: 1;
 }
 
-.region-fold:focus-visible rect {
+.region-fold:focus-visible {
+    outline: none;
+}
+
+.region-fold:focus-visible .region-fold-hit {
     stroke: var(--pico-primary);
     stroke-width: 1.5px;
 }
 
 /* A folded scene keeps its tint but states its edge, so the box reads as a scene shut rather
    than as a scene that happens to hold one node. */
-.region.folded rect {
+.region.folded .region-band {
     stroke: var(--dd-region-mark);
     stroke-width: 1.5px;
     stroke-dasharray: 5 3;
@@ -2687,7 +2695,7 @@ svg.tree {
     stroke-width: 3px;
 }
 
-.region.selected rect {
+.region.selected .region-band {
     stroke-width: 2.5px;
     stroke-dasharray: 6 3;
 }
