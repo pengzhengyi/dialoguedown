@@ -17,6 +17,9 @@
     --md-code: #0550ae;
     --md-muted: #6e7781;
     --cm-selection: rgb(20 100 210 / 22%);
+    --problem-text: #24292f;
+    --problem-muted: #57606a;
+    --problem-link: #0969da;
 
     /* Dialogue token highlighting: compiler-projected semantic tokens layered over Markdown.
        Existing dialogue tokens use GitHub Primer-inspired hues. Code-span semantics follow
@@ -94,6 +97,9 @@
         --md-code: #a5d6ff;
         --md-muted: #8b949e;
         --cm-selection: rgb(100 165 255 / 35%);
+        --problem-text: #c9d1d9;
+        --problem-muted: #8b949e;
+        --problem-link: #79c0ff;
         --dd-bubble: #e2e8f0;
         --dd-ink: #0f172a;
         --entity-highlight: rgb(250 204 21 / 30%);
@@ -127,6 +133,9 @@
     --md-code: #a5d6ff;
     --md-muted: #8b949e;
     --cm-selection: rgb(100 165 255 / 35%);
+    --problem-text: #c9d1d9;
+    --problem-muted: #8b949e;
+    --problem-link: #79c0ff;
     --dd-bubble: #e2e8f0;
     --dd-ink: #0f172a;
     --entity-highlight: rgb(250 204 21 / 30%);
@@ -4177,7 +4186,7 @@ body.zen .config-view > .config-source {
     border: none;
     border-radius: var(--pico-border-radius);
     background: transparent;
-    color: var(--pico-color);
+    color: var(--problem-text);
     font-size: inherit;
     text-align: left;
     cursor: pointer;
@@ -4219,19 +4228,19 @@ body.zen .config-view > .config-source {
 .problem-location {
     flex: 0 0 auto;
     align-self: center;
-    color: var(--pico-muted-color);
+    color: var(--problem-muted);
     font-family: var(--pico-font-family-monospace);
     font-size: 13px;
     white-space: nowrap;
 }
 
 .problem-code {
-    color: var(--pico-primary);
+    color: var(--problem-link);
     text-decoration: underline dotted;
 }
 
 .problem-code:hover {
-    color: var(--pico-primary);
+    color: var(--problem-link);
 }
 
 .problem-empty {
