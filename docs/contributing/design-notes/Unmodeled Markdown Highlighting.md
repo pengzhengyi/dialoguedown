@@ -39,8 +39,8 @@ parser already recognizes.
 this component only *shows* it. `dialogue.toml` handling overrides are loaded by
 [#47](https://github.com/pengzhengyi/dialoguedown/issues/47); because the
 projection follows `DLG1114`, an override changes the highlighting without a
-second client-side policy. Front-matter rendering is a pre-existing gap, tracked
-as [#264](https://github.com/pengzhengyi/dialoguedown/issues/264).
+second client-side policy. Front matter is a separate invariant metadata region,
+designed in [Front Matter Source Highlighting](./Front%20Matter%20Source%20Highlighting.md).
 
 ## Functionality checklist
 

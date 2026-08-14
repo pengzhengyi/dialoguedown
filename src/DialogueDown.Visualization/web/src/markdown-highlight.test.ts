@@ -1,6 +1,6 @@
 import { type Tag, tags } from "@lezer/highlight";
 import { describe, expect, it } from "vitest";
-import { markdownHighlightStyle } from "./source-view";
+import { markdownHighlightStyle, yamlHighlightStyle } from "./source-view";
 
 /**
  * The Markdown layer under the compiler's tokens. These assertions pin two decisions that are
@@ -25,5 +25,22 @@ describe("markdownHighlightStyle", () => {
     it("still styles the Markdown a script is made of", () => {
         expect(styled(tags.heading)).not.toBeNull();
         expect(styled(tags.monospace)).not.toBeNull();
+    });
+
+    it("styles the front-matter delimiter as metadata", () => {
+        expect(styled(tags.meta)).not.toBeNull();
+    });
+});
+
+describe("yamlHighlightStyle", () => {
+    const styled = (tag: Tag) => yamlHighlightStyle.style([tag]);
+
+    it("uses the Config editor's metadata palette", () => {
+        expect(styled(tags.definition(tags.propertyName))).not.toBeNull();
+        expect(styled(tags.string)).not.toBeNull();
+        expect(styled(tags.content)).not.toBeNull();
+        expect(styled(tags.lineComment)).not.toBeNull();
+        expect(styled(tags.bracket)).not.toBeNull();
+        expect(styled(tags.squareBracket)).not.toBeNull();
     });
 });

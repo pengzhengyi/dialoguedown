@@ -88,6 +88,8 @@
     href: Dialogue Graph Visualization Tab.md
   - name: Unmodeled Markdown Highlighting
     href: Unmodeled Markdown Highlighting.md
+  - name: Front Matter Source Highlighting
+    href: Front Matter Source Highlighting.md
   - name: Mermaid Authoring Diagrams
     href: Mermaid Authoring Diagrams.md
   - name: Ignored Markdown Preview Toggle
