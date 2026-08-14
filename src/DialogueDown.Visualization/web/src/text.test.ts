@@ -165,7 +165,9 @@ describe("renderNodePreview", () => {
     it("wraps only the marker in an assembled downstream jump", () => {
         const html = renderNodePreview("=> [Go](#go)", "Jump", true);
 
-        expect(html).toContain('<span class="jump-ligature">=&gt;</span> <a href="#go">Go</a>');
+        expect(html).toContain(
+            '<span class="jump-target"><span class="jump-ligature">=&gt;</span><a class="dd-markdown-link" href="#go">Go</a></span>',
+        );
     });
 
     it("decorates recognized jump syntax in a parent node's preview", () => {
@@ -210,7 +212,9 @@ describe("renderDocument", () => {
     it("wraps a jump indicator before a rendered link for preview ligatures", () => {
         const html = renderDocument("=> [Go](#go)");
 
-        expect(html).toContain('<span class="jump-ligature">=&gt;</span> <a href="#go">Go</a>');
+        expect(html).toContain(
+            '<span class="jump-target"><span class="jump-ligature">=&gt;</span><a class="dd-markdown-link" href="#go">Go</a></span>',
+        );
     });
 
     it("does not wrap arrows in prose, inline code, or snippet previews", () => {
@@ -218,6 +222,17 @@ describe("renderDocument", () => {
         expect(renderDocument("Alice: `=> [Go](#go)`")).not.toContain("jump-ligature");
         expect(renderDocument("=>\n[Go](#go)")).not.toContain("jump-ligature");
         expect(renderMarkdown("=> [Go](#go)")).not.toContain("jump-ligature");
+    });
+
+    it.each([
+        ["angle autolink", "=> <https://example.com>"],
+        ["bare autolink", "=> https://example.com"],
+        ["raw HTML anchor", '=> <a href="#go">Go</a>'],
+    ])("does not promote an adjacent %s to a jump", (_kind, source) => {
+        const html = renderDocument(source);
+
+        expect(html).not.toContain("jump-target");
+        expect(html).not.toContain("jump-ligature");
     });
 
     it.each([

@@ -95,6 +95,32 @@ test("uses a real preview-only Fira Code ligature for jump indicators", async ({
     await expect(indicator).toHaveCSS("font-feature-settings", '"calt"');
 });
 
+test("keeps the indicator on the first line of its target at a narrow wrap point", async ({
+    page,
+}) => {
+    await page.goto(url);
+    const target = page.locator(".source-preview .jump-target");
+    await expect(target).toHaveCount(1);
+
+    // Reproduce a dragged-narrow Preview where the breakable space used to leave `=>` alone.
+    await target.locator("..").evaluate((parent) => {
+        (parent as HTMLElement).style.width = "30px";
+    });
+
+    const [indicatorBox, linkBox, targetBox, parentBox] = await Promise.all([
+        target.locator(".jump-ligature").boundingBox(),
+        target.locator("a").boundingBox(),
+        target.boundingBox(),
+        target.locator("..").boundingBox(),
+    ]);
+    if (!indicatorBox || !linkBox || !targetBox || !parentBox) {
+        throw new Error("Could not measure the narrow jump target.");
+    }
+
+    expect(Math.abs(indicatorBox.y - linkBox.y)).toBeLessThan(2);
+    expect(targetBox.width).toBeLessThanOrEqual(parentBox.width + 1);
+});
+
 test("uses the jump ligature in every semantic-stage node preview", async ({ page }) => {
     await page.goto(graphUrl);
     await page.evaluate(() => document.fonts.ready);

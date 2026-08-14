@@ -2348,6 +2348,23 @@ g.node.entity-highlight text.label {
     font-variant-ligatures: contextual;
 }
 
+/* A jump is one semantic unit. Keep its indicator on the first line of its target rather than
+   leaving `=>` behind at a narrow wrap point; the link itself may still wrap inside the group. */
+.source-preview .jump-target,
+.preview .jump-target {
+    display: inline-flex;
+    gap: 0.25em;
+    align-items: baseline;
+    max-width: 100%;
+    vertical-align: baseline;
+}
+
+.source-preview .jump-target > a,
+.preview .jump-target > a {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .mermaid-diagram {
     margin: 0.75rem 0;
     overflow-x: auto;
