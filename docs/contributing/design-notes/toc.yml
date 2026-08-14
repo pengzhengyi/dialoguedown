@@ -90,6 +90,8 @@
     href: Unmodeled Markdown Highlighting.md
   - name: Mermaid Authoring Diagrams
     href: Mermaid Authoring Diagrams.md
+  - name: Co-located Diagnostics Presentation
+    href: Co-located Diagnostics Presentation.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion
