@@ -64,9 +64,25 @@ const mermaidCodeBlocks: MarkedExtension = {
     },
 };
 
+// A DialogueDown jump target is a bracketed Markdown link. Mark it while the Markdown token still
+// distinguishes `[label](target)` from angle/bare autolinks and raw HTML anchors; the rendered
+// HTML alone reduces all of them to `<a>`.
+const markdownLinks: MarkedExtension = {
+    extensions: [
+        {
+            name: "link",
+            renderer(token) {
+                const link = token as Tokens.Link;
+                if (!link.raw.startsWith("[")) return false;
+                return addClassToFirstElement(this.parser.renderer.link(link), "dd-markdown-link");
+            },
+        },
+    ],
+};
+
 /** A snippet parser with Mermaid placeholders but no document-level heading ids. */
 const fragmentMarked = new Marked();
-fragmentMarked.use(mermaidCodeBlocks);
+fragmentMarked.use(mermaidCodeBlocks, markdownLinks);
 
 /**
  * A dedicated marked instance that adds GitHub-style heading ids, so anchor
@@ -75,7 +91,7 @@ fragmentMarked.use(mermaidCodeBlocks);
  * stay id-free and cannot collide with the document's ids.
  */
 const documentMarked = new Marked();
-documentMarked.use(gfmHeadingId(), mermaidCodeBlocks);
+documentMarked.use(gfmHeadingId(), mermaidCodeBlocks, markdownLinks);
 
 /**
  * Render Markdown to HTML, handling a leading YAML front matter block.
@@ -154,7 +170,7 @@ function documentParser(source: string, semantics: PreviewSemantics): Marked {
             .map((span) => normalizeMarkdown(source.slice(span.start, span.end))),
     );
     const parser = new Marked();
-    parser.use(gfmHeadingId(), mermaidCodeBlocks, {
+    parser.use(gfmHeadingId(), mermaidCodeBlocks, markdownLinks, {
         extensions: [
             decoratedToken("table", ignoredSource, (token, render) =>
                 ignoredRegion(token, render.table(token as Tokens.Table)),
@@ -294,12 +310,17 @@ function addClassToFirstElement(html: string, className: string): string {
 }
 
 // The Source preview is presentation, not another parser: marked has already proved the
-// following HTML is a link. Wrap only an escaped `=>` immediately before that rendered link,
+// following HTML is a link. Group only an escaped `=>` immediately before that rendered link,
 // leaving prose arrows, code spans, and the Source editor's underlying characters untouched.
+// The group is an atomic inline box: it moves to the next line together, while a long anchor may
+// still wrap inside it.
 const jumpLigatureHtml = '<span class="jump-ligature">=&gt;</span>';
 
 function decorateJumpIndicators(html: string): string {
-    return html.replace(/=&gt;(?=[ \t]*<a\b)/g, jumpLigatureHtml);
+    return html.replace(
+        /=&gt;[ \t]*(<a\b(?=[^>]*\bclass="[^"]*\bdd-markdown-link\b)[^>]*>[\s\S]*?<\/a>)/g,
+        `<span class="jump-target">${jumpLigatureHtml}$1</span>`,
+    );
 }
 
 function renderFrontMatterAnd(source: string, parseBody: (body: string) => string): string {

@@ -177,6 +177,9 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Jump indicators stay with their targets in previews** — at narrow widths, `=>` now wraps with
+  the linked target instead of being left alone on the previous line.
+
 - **The editor shows what becomes of a script's Markdown** — the constructs the handling policy
   leaves out are dimmed and enclosed in eye-marked Preview regions instead of reading like
   dialogue, the blockquotes that carry control blocks are no longer muted and carry a question
