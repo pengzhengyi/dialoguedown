@@ -90,6 +90,8 @@
     href: Unmodeled Markdown Highlighting.md
   - name: Mermaid Authoring Diagrams
     href: Mermaid Authoring Diagrams.md
+  - name: Ignored Markdown Preview Toggle
+    href: Ignored Markdown Preview Toggle.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion

@@ -208,30 +208,87 @@ function decoratedToken(
 }
 
 function ignoredRegion(token: Token, html: string): string {
-    const content = addClassToFirstElement(html, "dd-preview-ignored");
+    // Ignored HTML must be shown as source, not executed as markup. Markdig reports opening and
+    // closing inline tags separately; wrapping their rendered HTML would create unbalanced DOM.
+    const content =
+        token.type === "html"
+            ? `<code class="dd-preview-ignored dd-preview-ignored-source">${escapeHtml(token.raw)}</code>`
+            : addClassToFirstElement(html, "dd-preview-ignored");
     const inline =
         token.type === "link" || (token.type === "html" && !(token as Tokens.HTML).block);
     const tag = inline ? "span" : "div";
     const inlineClass = inline ? " dd-preview-ignored-region-inline" : "";
+    const kind = ignoredKind(token);
+    const lineCount = sourceLineCount(token.raw);
+    const summary = `${kind} · ${lineCount} ${lineCount === 1 ? "line" : "lines"}`;
+    const source = token.raw.trim();
+    const title = inline
+        ? `Ignored ${kind.toLowerCase()}: ${source}`
+        : "Ignored — not included in dialogue";
     const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" title="Ignored — not included in dialogue"${sourceBlock}>${content}</${tag}>`;
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" title="${escapeHtml(title)}"${sourceBlock}>${content}</${tag}>`;
+}
+
+function ignoredKind(token: Token): string {
+    switch (token.type) {
+        case "table":
+            return "Table";
+        case "code":
+            return "Code block";
+        case "hr":
+            return "Divider";
+        case "html":
+            return "Raw HTML";
+        case "link":
+            return "Autolink";
+        default:
+            return "Markdown";
+    }
+}
+
+function sourceLineCount(raw: string): number {
+    return raw.replace(/\r?\n$/, "").split(/\r?\n/).length;
 }
 
 // Marked removes list/blockquote indentation before handing a nested token to a renderer, while
 // the compiler's span slices the original source. Ignoring leading indentation per line makes
 // those two views of the same construct compare equal without re-implementing Markdown parsing.
 function normalizeMarkdown(value: string): string {
-    return value
-        .trim()
-        .split(/\r?\n/)
-        .map((line) => line.trimStart())
+    const lines = value.trim().split(/\r?\n/);
+    const continuationDepths = lines
+        .slice(1)
+        .filter((line) => line.trim().length > 0)
+        .map(leadingQuoteDepth);
+    const quoteDepth = continuationDepths.length === 0 ? 0 : Math.min(...continuationDepths);
+    return lines
+        .map((line, index) => stripQuoteDepth(line, index === 0 ? 0 : quoteDepth))
         .join("\n");
+}
+
+function leadingQuoteDepth(line: string): number {
+    let rest = line.trimStart();
+    let depth = 0;
+    while (rest.startsWith(">")) {
+        depth += 1;
+        rest = rest.slice(1);
+        if (rest.startsWith(" ")) rest = rest.slice(1);
+    }
+    return depth;
+}
+
+function stripQuoteDepth(line: string, depth: number): string {
+    let rest = line.trimStart();
+    for (let level = 0; level < depth && rest.startsWith(">"); level += 1) {
+        rest = rest.slice(1);
+        if (rest.startsWith(" ")) rest = rest.slice(1);
+    }
+    return rest.trimStart();
 }
 
 function addClassToFirstElement(html: string, className: string): string {
     return html.replace(/^<([a-z][\w:-]*)([^>]*)>/i, (_whole, tag: string, attributes: string) =>
-        attributes.includes("class=")
-            ? `<${tag}${attributes.replace(/class="([^"]*)"/, `class="$1 ${className}"`)}>`
+        /(?:^|\s)class="/.test(attributes)
+            ? `<${tag}${attributes.replace(/(\sclass=")([^"]*)"/, `$1$2 ${className}"`)}>`
             : `<${tag} class="${className}"${attributes}>`,
     );
 }

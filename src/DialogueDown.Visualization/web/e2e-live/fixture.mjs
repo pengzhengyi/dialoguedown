@@ -40,8 +40,11 @@ export const CONFIG_EDIT_PORT = 5181;
 export const CONFIG_EDIT_TREE = join(here, ".config-edit-tree");
 export const CONFIG_EDIT_DOC = join(CONFIG_EDIT_TREE, "scene.dialogue.md");
 export const CONFIG_EDIT_TOML = join(CONFIG_EDIT_TREE, "dialogue.toml");
-export const CONFIG_EDIT_SOURCE = "# Scene\n\nAlice: Hello.\n";
-export const CONFIG_EDIT_CONFIG = '[[speakers]]\nname = "Alice"\nid = "A"\n';
+export const CONFIG_EDIT_SOURCE =
+    "# Scene\n\nAlice: Read <https://example.com/road> before leaving.\n\n" +
+    "| Rumor | Source |\n| --- | --- |\n| The bridge is out | The miller |\n";
+export const CONFIG_EDIT_CONFIG =
+    '[[speakers]]\nname = "Alice"\nid = "A"\n\n' + '[markdown.unmodeled]\nautolink = "ignore"\n';
 
 // A config-create server: a script with NO `dialogue.toml`, served in --edit, so the Config
 // tab shows the no-config state with the "Create dialogue.toml" call to action. The tree is

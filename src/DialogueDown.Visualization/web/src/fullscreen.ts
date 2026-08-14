@@ -20,7 +20,7 @@ const CHROME_REGIONS = [".app-header", ".app-footer", "#live-banner"].join(", ")
  * panel the reader can still see and use.
  */
 const ZEN_PANEL_REGIONS = [
-    ".source-preview",
+    ".source-preview-shell",
     ".source-divider",
     ".config-side",
     ".config-divider",

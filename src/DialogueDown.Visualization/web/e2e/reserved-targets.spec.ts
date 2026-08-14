@@ -21,6 +21,20 @@ test.beforeEach(async ({ page }) => {
     await page.goto(url);
 });
 
+test("mirrors the End sentinel with an always-present Preview footer", async ({ page }) => {
+    const end = page.locator(".dd-reserved-target-row");
+    const ignored = page.locator(".dd-ignored-preview-footer");
+
+    await expect(ignored).toContainText("0 ignored");
+    await expect(ignored).toContainText("nothing omitted");
+    await expect(ignored.getByRole("button")).toBeDisabled();
+
+    const [endBox, ignoredBox] = await Promise.all([end.boundingBox(), ignored.boundingBox()]);
+    if (!endBox || !ignoredBox) throw new Error("Could not measure the Source/Preview footers.");
+    expect(ignoredBox.height).toBeCloseTo(endBox.height, 1);
+    expect(ignoredBox.y).toBeCloseTo(endBox.y, 1);
+});
+
 test("shows a fixed, copyable End sentinel without changing source lines", async ({ page }) => {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 

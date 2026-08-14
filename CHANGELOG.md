@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **Ignored-content Preview footer** — a fixed footer matching Source's `#END` row reports how
+  much Markdown the compiler left out and globally shows or collapses it. Blocks retain kind and
+  source-line count; configured ignored inline content becomes a circle-slash status chip in
+  place; Source stays visible and editable. See the
+  [Ignored Markdown Preview Toggle](docs/contributing/design-notes/Ignored%20Markdown%20Preview%20Toggle.md)
+  note.
+
 - **Mermaid authoring diagrams** — fenced `mermaid` blocks render as
   theme-aware SVG diagrams in every Markdown preview while remaining outside the
   compiled dialogue. Invalid diagrams keep their source visible, and the
