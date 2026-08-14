@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { EditorState } from "@codemirror/state";
-import { toEditorDiagnostic, renderDiagnosticTooltip, errorCodeUrl } from "./diagnostics-overlay";
+import {
+    toEditorDiagnostic,
+    toEditorDiagnostics,
+    renderDiagnosticTooltip,
+    errorCodeUrl,
+} from "./diagnostics-overlay";
 import type { LspDiagnostic } from "./model";
 
 const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
@@ -30,6 +35,20 @@ describe("toEditorDiagnostic", () => {
 
         expect(converted.from).toBe(9);
         expect(converted.to).toBe(13);
+    });
+
+    describe("toEditorDiagnostics", () => {
+        it("orders exact-range diagnostics by severity before converting them", () => {
+            const state = EditorState.create({ doc: "hello" });
+
+            const converted = toEditorDiagnostics(state, [
+                diagnostic({ severity: 3, code: "DLG3001", message: "Info" }),
+                diagnostic({ severity: 2, code: "DLG2001", message: "Warning" }),
+                diagnostic({ severity: 1, code: "DLG1001", message: "Error" }),
+            ]);
+
+            expect(converted.map((item) => item.severity)).toEqual(["error", "warning", "info"]);
+        });
     });
 
     it.each([

@@ -50,6 +50,20 @@ describe("createProblemsPanel", () => {
         expect(lines).toEqual(["Ln 1, Col 9", "Ln 5, Col 3", "Ln 10, Col 1"]);
     });
 
+    it("orders diagnostics at one position by severity", () => {
+        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const info = diagnostic(4, 2, 3, "DLG3001", "Info");
+        const warning = diagnostic(4, 2, 2, "DLG2001", "Warning");
+        const error = diagnostic(4, 2, 1, "DLG1001", "Error");
+
+        panel.setDiagnostics([info, warning, error]);
+
+        const severities = [...panel.element.querySelectorAll(".problem-row")].map((row) =>
+            row.getAttribute("data-severity"),
+        );
+        expect(severities).toEqual(["error", "warning", "info"]);
+    });
+
     it("marks each row with its severity so one error among many infos still stands out", () => {
         const panel = createProblemsPanel({ goTo: vi.fn() });
 
