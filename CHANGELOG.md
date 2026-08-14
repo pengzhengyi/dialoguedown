@@ -177,6 +177,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Front matter now reads as YAML metadata in the Source editor** — a canonical leading
+  `--- … ---` block receives YAML keys, values, comments, indentation, and folding instead of
+  being misread as ordinary Markdown; the dialogue body keeps its existing Markdown and
+  compiler-projected highlighting. See
+  [Front Matter Source Highlighting](docs/contributing/design-notes/Front%20Matter%20Source%20Highlighting.md).
 - **The editor shows what becomes of a script's Markdown** — the constructs the handling policy
   leaves out are dimmed and enclosed in eye-marked Preview regions instead of reading like
   dialogue, the blockquotes that carry control blocks are no longer muted and carry a question

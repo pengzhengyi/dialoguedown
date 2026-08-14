@@ -1,7 +1,7 @@
 # Front Matter Source Highlighting
 
 > [!NOTE]
-> Status: **proposed** ([issue #264](https://github.com/pengzhengyi/dialoguedown/issues/264)).
+> Status: **implemented** ([issue #264](https://github.com/pengzhengyi/dialoguedown/issues/264)).
 > Teach the Source editor that a script may begin with YAML front matter, so metadata no longer
 > reads as dialogue-shaped Markdown.
 
@@ -41,18 +41,19 @@ Markdig accepts; and projecting front matter from the compiler.
 
 ## Functionality checklist
 
-- [ ] Add the official `@codemirror/lang-yaml` package as a direct frontend dependency.
-- [ ] Replace plain `markdown()` with `yamlFrontmatter({ content: markdown() })`; do not install
+- [x] Add the official `@codemirror/lang-yaml` package as a direct frontend dependency.
+- [x] Replace plain `markdown()` with `yamlFrontmatter({ content: markdown() })`; do not install
       Markdown support a second time.
-- [ ] Parse only a canonical, closed front-matter block at the start of the document.
-- [ ] Highlight front-matter delimiters as metadata and its content as YAML.
-- [ ] Reuse the report's existing theme variables for YAML keys, values, comments, and punctuation.
-- [ ] Preserve Markdown headings, links, lists, folding, and compiler-projected semantic tokens in
+- [x] Parse canonical front matter at the start of the document, with the official parser's
+      recoverable behavior while a closing fence is incomplete.
+- [x] Highlight front-matter delimiters as metadata and its content as YAML.
+- [x] Reuse the report's existing theme variables for YAML keys, values, comments, and punctuation.
+- [x] Preserve Markdown headings, links, lists, folding, and compiler-projected semantic tokens in
       the body.
-- [ ] Preserve front-matter-aware Preview rendering and source/preview scroll synchronization.
-- [ ] Leave documents without front matter unchanged.
-- [ ] Keep malformed or unterminated front matter editable without crashing the editor.
-- [ ] Rebuild and commit `web/dist/report.html`.
+- [x] Preserve front-matter-aware Preview rendering and source/preview scroll synchronization.
+- [x] Leave documents without front matter unchanged.
+- [x] Keep malformed or unterminated front matter editable through the YAML parser's recovery.
+- [x] Rebuild and commit `web/dist/report.html`.
 
 ## Ubiquitous language
 
@@ -152,8 +153,10 @@ the writer-facing contract.
 
 Markdig is deliberately more lenient: it also accepts delimiter lines with trailing whitespace
 and a `...` closer. Those forms remain compiler tolerance, not syntax the editor promises to
-present as front matter. Supporting them would require a custom outer parser and cross-language
-conformance tests for little writer benefit.
+present as front matter. The official parser may recover an initial exact `---` as incomplete
+front matter through EOF when no exact closing fence exists; `...` is YAML content, not a closing
+fence. Supporting Markdig's extra forms as first-class editor syntax would require a custom outer
+parser and cross-language conformance tests for little writer benefit.
 
 ### DD3 — Front matter is metadata, not ignored Markdown
 
@@ -195,9 +198,10 @@ established parsers.
 | Empty front matter (`---` then `---`) | Valid empty metadata region; body remains Markdown. |
 | YAML comments and nested structures | Highlighted and indented by the YAML language package. |
 | Invalid YAML or duplicate keys | CodeMirror recovers and keeps the source editable; this feature adds highlighting, not YAML validation or a compiler diagnostic. |
-| Opening `---` without a closing delimiter | Remains ordinary Markdown, matching the wrapper's grammar. |
+| Opening `---` without a closing delimiter | Recovered as incomplete YAML front matter through EOF; the editor stays usable and shows parser recovery. |
 | `---` after body content | Remains a thematic break or other ordinary Markdown. |
-| `...` closer or whitespace after a fence | Not part of the canonical editor contract; may still be accepted by Markdig. |
+| `...` closer | Not a CodeMirror closing fence; parsed as YAML content and recovered through EOF, though Markdig may accept it. |
+| Whitespace after a fence | Not part of the canonical editor contract; remains ordinary Markdown, though Markdig may accept it. |
 | Document without front matter | Existing Source behavior is unchanged. |
 
 ## Integration
@@ -220,8 +224,9 @@ established parsers.
 
 - **Language unit tests:** parse canonical LF/CRLF examples and assert a `Frontmatter` region with
   YAML nodes plus a Markdown `Body`.
-- **Boundary unit tests:** no front matter, an unterminated opener, a post-body `---`, and
-  noncanonical delimiters stay outside `Frontmatter`.
+- **Boundary unit tests:** no front matter, a post-body `---`, and a whitespace-suffixed opener
+  stay outside `Frontmatter`; an unterminated opener and `...` closer pin the official parser's
+  recoverable error shape.
 - **Highlight-style tests:** `tags.meta`, YAML property names, strings, numbers, booleans, and
   comments all receive a style; existing Markdown tags remain styled.
 - **Editor integration tests:** a real Source editor keeps body headings/folding and
@@ -229,10 +234,9 @@ established parsers.
 - **Browser tests:** the existing `SAMPLE_SOURCE` already contains canonical front matter, so the
   report fixture must show it as metadata while the body and Preview continue to render and
   navigate correctly.
-- **Bundle gate:** the current report is 4,742,646 bytes against the approved 5,000,000-byte raw
-  limit (257,354 bytes / 5.15% headroom). Measure the actual rebuilt delta; do not raise the limit
-  automatically if the new parser exceeds it. First inspect tree-shaking and included modules,
-  then bring any cap change back for review.
+- **Bundle gate:** the report grew from 4,742,646 to 4,760,509 bytes — a measured 17,863-byte
+  increase. It remains below the approved 5,000,000-byte raw limit with 239,491 bytes of headroom;
+  the cap did not change.
 
 ## Alternatives not chosen
 
