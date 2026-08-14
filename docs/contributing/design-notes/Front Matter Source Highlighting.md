@@ -169,13 +169,15 @@ The delimiters use `tags.meta`; YAML syntax reuses the Config editor's CSS-varia
 
 | YAML syntax | Highlight tags | Theme |
 | --- | --- | --- |
-| property names | `tags.keyword`, `tags.definition(tags.propertyName)` | `--md-heading` |
+| property names | `tags.definition(tags.propertyName)` | `--md-heading` |
 | strings | `tags.string` | `--md-code` |
-| numbers, booleans, atoms | `tags.number`, `tags.bool`, `tags.atom` | `--md-link` |
+| plain scalars (including numbers and booleans) | `tags.content` | `--md-link` |
 | comments | `tags.comment`, `tags.lineComment` | `--md-muted`, italic |
 | brackets | `tags.bracket`, `tags.squareBracket` | `--md-muted` |
 
-No new theme colors are needed.
+The YAML style is scoped to `yamlLanguage`, so generic tags such as `string` and `content` cannot
+recolor Markdown link titles or prose. The outer delimiter's `tags.meta` style remains in the
+Markdown-level style. No new theme colors are needed.
 
 ### DD4 — Parse locally rather than project an invariant
 
@@ -234,8 +236,8 @@ established parsers.
 - **Browser tests:** the existing `SAMPLE_SOURCE` already contains canonical front matter, so the
   report fixture must show it as metadata while the body and Preview continue to render and
   navigate correctly.
-- **Bundle gate:** the report grew from 4,742,646 to 4,760,509 bytes — a measured 17,863-byte
-  increase. It remains below the approved 5,000,000-byte raw limit with 239,491 bytes of headroom;
+- **Bundle gate:** the report grew from 4,742,646 to 4,760,581 bytes — a measured 17,935-byte
+  increase. It remains below the approved 5,000,000-byte raw limit with 239,419 bytes of headroom;
   the cap did not change.
 
 ## Alternatives not chosen

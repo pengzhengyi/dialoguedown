@@ -74,9 +74,14 @@ test("the Source editor renders leading front matter as YAML metadata", async ({
         await themeColor(page, "--md-muted"),
     );
 
-    // YAML styles the property name independently; the plain scalar remains an unwrapped text
-    // node. Markdown would leave the whole line unclassified.
-    expect(await lines.nth(1).innerHTML()).toMatch(/<span[^>]*>title<\/span>: Demo/);
+    // YAML styles the property name and plain scalar independently. Markdown would leave the
+    // whole line unclassified.
+    const yamlSpans = lines.nth(1).locator("span");
+    await expect(yamlSpans).toHaveCount(2);
+    const yamlColors = await yamlSpans.evaluateAll((elements) => [
+        ...new Set(elements.map((element) => getComputedStyle(element).color)),
+    ]);
+    expect(yamlColors.length).toBeGreaterThan(1);
 });
 
 test("the header brand shows the logo and reveals the name on hover", async ({ page }) => {

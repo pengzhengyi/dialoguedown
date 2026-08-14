@@ -1,6 +1,6 @@
 import { type Tag, tags } from "@lezer/highlight";
 import { describe, expect, it } from "vitest";
-import { markdownHighlightStyle } from "./source-view";
+import { markdownHighlightStyle, yamlHighlightStyle } from "./source-view";
 
 /**
  * The Markdown layer under the compiler's tokens. These assertions pin two decisions that are
@@ -27,12 +27,22 @@ describe("markdownHighlightStyle", () => {
         expect(styled(tags.monospace)).not.toBeNull();
     });
 
-    it("styles front matter with the Config editor's metadata palette", () => {
+    it("styles the front-matter delimiter as metadata", () => {
         expect(styled(tags.meta)).not.toBeNull();
+    });
+
+    it("does not let YAML scalar styles recolor a Markdown link title", () => {
+        expect(markdownHighlightStyle.style([tags.link, tags.string])).toBe(styled(tags.link));
+    });
+});
+
+describe("yamlHighlightStyle", () => {
+    const styled = (tag: Tag) => yamlHighlightStyle.style([tag]);
+
+    it("uses the Config editor's metadata palette", () => {
         expect(styled(tags.definition(tags.propertyName))).not.toBeNull();
         expect(styled(tags.string)).not.toBeNull();
-        expect(styled(tags.number)).not.toBeNull();
-        expect(styled(tags.bool)).not.toBeNull();
+        expect(styled(tags.content)).not.toBeNull();
         expect(styled(tags.lineComment)).not.toBeNull();
         expect(styled(tags.bracket)).not.toBeNull();
     });
