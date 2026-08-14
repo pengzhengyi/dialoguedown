@@ -92,6 +92,8 @@
     href: Mermaid Authoring Diagrams.md
   - name: Ignored Markdown Preview Toggle
     href: Ignored Markdown Preview Toggle.md
+  - name: Dialogue Graph — Region Fold
+    href: Dialogue Graph Region Fold.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion

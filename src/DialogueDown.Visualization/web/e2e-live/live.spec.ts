@@ -1071,3 +1071,48 @@ test("shows each route in the legend as the line it actually is", async ({ page 
     const width = (await legend.locator(".edge-swatch").first().boundingBox())!.width;
     expect(width).toBeGreaterThanOrEqual(48);
 });
+
+test("folds a scene in the graph to a single box the flow still passes through", async ({
+    page,
+}) => {
+    // A scene is the one grouping a reader may collapse without the drawing lying about itself.
+    // Folded, its lines go with it and everything downstream stays exactly where it was.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Market",
+            "",
+            "Trader: Fresh apples, two for a coin.",
+            "",
+            "Alice: How much for the lot?",
+            "",
+            "=> [The Forest](#the-forest)",
+            "",
+            "# The Forest",
+            "",
+            "Alice: The branches close in overhead.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+    await expect(stage.locator("g.node")).not.toHaveCount(0);
+    await expect(stage.locator('g.node:has-text("Fresh apples")')).toHaveCount(1);
+
+    const market = stage.locator('g.region:has(g.region-fold[aria-label*="The Market"])');
+    await market.locator("g.region-fold").click();
+
+    // The scene's own lines are gone, replaced by one box naming it and counting what it holds.
+    await expect(stage.locator('g.node:has-text("Fresh apples")')).toHaveCount(0);
+    await expect(stage.locator("g.node.region-box")).toHaveCount(1);
+    await expect(stage.locator("g.node.region-box")).toContainText("The Market");
+    await expect(market.locator("g.region-fold")).toHaveAttribute("aria-expanded", "false");
+    // The flow passes through it: the scene it jumped to is still drawn, where it was.
+    await expect(stage.locator('g.node:has-text("branches close in")')).toHaveCount(1);
+
+    await market.locator("g.region-fold").click();
+
+    await expect(stage.locator('g.node:has-text("Fresh apples")')).toHaveCount(1);
+    await expect(stage.locator("g.node.region-box")).toHaveCount(0);
+});
