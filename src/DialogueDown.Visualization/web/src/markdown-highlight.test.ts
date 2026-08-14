@@ -26,4 +26,14 @@ describe("markdownHighlightStyle", () => {
         expect(styled(tags.heading)).not.toBeNull();
         expect(styled(tags.monospace)).not.toBeNull();
     });
+
+    it("styles front matter with the Config editor's metadata palette", () => {
+        expect(styled(tags.meta)).not.toBeNull();
+        expect(styled(tags.definition(tags.propertyName))).not.toBeNull();
+        expect(styled(tags.string)).not.toBeNull();
+        expect(styled(tags.number)).not.toBeNull();
+        expect(styled(tags.bool)).not.toBeNull();
+        expect(styled(tags.lineComment)).not.toBeNull();
+        expect(styled(tags.bracket)).not.toBeNull();
+    });
 });

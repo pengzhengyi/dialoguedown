@@ -28,7 +28,6 @@ import {
     indentMore,
     indentLess,
 } from "@codemirror/commands";
-import { markdown } from "@codemirror/lang-markdown";
 import {
     syntaxHighlighting,
     HighlightStyle,
@@ -79,6 +78,7 @@ import type { DebugController } from "./debug-controller";
 import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
 import { reservedTargetsPanel, setEditorReservedTargets } from "./reserved-targets-panel";
+import { sourceLanguage } from "./source-language";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -92,10 +92,20 @@ export const markdownHighlightStyle = HighlightStyle.define([
     { tag: tags.emphasis, fontStyle: "italic" },
     { tag: [tags.link, tags.url], color: "var(--md-link)", textDecoration: "underline" },
     { tag: tags.monospace, color: "var(--md-code)" },
+    { tag: tags.meta, color: "var(--md-muted)" },
+    { tag: [tags.keyword, tags.definition(tags.propertyName)], color: "var(--md-heading)" },
+    { tag: tags.string, color: "var(--md-code)" },
+    { tag: [tags.number, tags.bool, tags.atom], color: "var(--md-link)" },
+    { tag: [tags.bracket, tags.squareBracket], color: "var(--md-muted)" },
     // A blockquote is never decoration here: a marker-headed quote is a control block, and any
     // other quote is a transparent wrapper whose contents are dialogue. Muting it would gray out
     // live dialogue, and the compiler's own tokens already color what is inside.
-    { tag: tags.comment, color: "var(--md-muted)", fontStyle: "italic", opacity: "0.45" },
+    {
+        tag: [tags.comment, tags.lineComment],
+        color: "var(--md-muted)",
+        fontStyle: "italic",
+        opacity: "0.45",
+    },
     // Mute the list MARKER (`-`, `1.`) and separators, but NOT list content: @lezer/markdown
     // tags a list's whole content `tags.list` (not just its marker, which is a
     // processingInstruction), so muting `tags.list` here would gray out every token nested in
@@ -557,7 +567,7 @@ export function createSourceView(
                 bracketMatching(),
                 compactSearch(),
                 history(),
-                markdown(),
+                sourceLanguage,
                 syntaxHighlighting(markdownHighlightStyle),
                 EditorView.lineWrapping,
                 // Indent with two spaces (Tab / Shift-Tab and the smart-Tab insert all use this).
