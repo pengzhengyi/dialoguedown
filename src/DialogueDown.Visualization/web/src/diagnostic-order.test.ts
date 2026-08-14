@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Diagnostic as EditorDiagnostic } from "@codemirror/lint";
 import type { LspDiagnostic } from "./model";
-import { orderDiagnostics, orderEditorDiagnostics } from "./diagnostic-order";
+import { orderDiagnostics, orderGutterDiagnostics } from "./diagnostic-order";
 
 function diagnostic(
     severity: LspDiagnostic["severity"],
@@ -89,7 +89,7 @@ describe("orderDiagnostics", () => {
     });
 });
 
-describe("orderEditorDiagnostics", () => {
+describe("orderGutterDiagnostics", () => {
     it("keeps position first and severity first at the same position", () => {
         const editor = (
             from: number,
@@ -98,7 +98,7 @@ describe("orderEditorDiagnostics", () => {
             message: string,
         ): EditorDiagnostic => ({ from, to, severity, message });
 
-        const ordered = orderEditorDiagnostics([
+        const ordered = orderGutterDiagnostics([
             editor(5, 20, "info", "outer info"),
             editor(5, 10, "warning", "warning"),
             editor(5, 30, "error", "error"),

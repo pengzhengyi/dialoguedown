@@ -31,6 +31,8 @@ const report: Report = {
         "",
         "Bob: partially overlapping target",
         "",
+        "Cara: zero-width hint",
+        "",
     ].join("\n"),
     stages: [],
     diagnostics: [
@@ -42,6 +44,7 @@ const report: Report = {
         diagnostic(4, 5, 33, 3, "DLG3005", "Outer Info."),
         diagnostic(4, 12, 29, 2, "DLG2004", "Nested Warning."),
         diagnostic(4, 22, 28, 1, "DLG1002", "Deep Error."),
+        diagnostic(6, 6, 6, 4, "DLG4001", "Zero-width Hint."),
     ],
 };
 
@@ -60,7 +63,7 @@ test("shows exact collisions severity first under one dominant marker", async ({
     await expect(exactRange).toHaveCount(1);
 
     const markers = page.locator(".cm-gutter-lint .cm-lint-marker");
-    await expect(markers).toHaveCount(2);
+    await expect(markers).toHaveCount(3);
     await expect(markers.first()).toHaveClass(/cm-lint-marker-error/);
 
     await exactRange.hover();
@@ -88,7 +91,7 @@ test("keeps every Problems row in position order with severity breaking exact ti
 }) => {
     await page.locator(".diagnostic-summary").click();
     const rows = page.locator(".problem-row");
-    await expect(rows).toHaveCount(6);
+    await expect(rows).toHaveCount(7);
     expect(await rows.locator(".problem-message").allTextContents()).toEqual([
         "Exact Error.",
         "Exact Warning.",
@@ -96,10 +99,11 @@ test("keeps every Problems row in position order with severity breaking exact ti
         "Outer Info.",
         "Nested Warning.",
         "Deep Error.",
+        "Zero-width Hint.",
     ]);
     await expect(page.locator(".diagnostic-summary")).toHaveAttribute(
         "aria-label",
-        "2 errors, 2 warnings, 2 infos — open the Problems panel",
+        "2 errors, 2 warnings, 3 infos — open the Problems panel",
     );
 });
 
@@ -111,6 +115,7 @@ test("keeps the same presentation when payload order reverses", async ({ page })
         "Outer Info.",
         "Nested Warning.",
         "Deep Error.",
+        "Zero-width Hint.",
     ];
     await page.locator(".diagnostic-summary").click();
     expect(await page.locator(".problem-message").allTextContents()).toEqual(expected);

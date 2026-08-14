@@ -33,8 +33,8 @@ export function orderDiagnostics(diagnostics: readonly LspDiagnostic[]): LspDiag
     return [...diagnostics].sort(compareDiagnostics);
 }
 
-/** Order CodeMirror tooltip items by offset, then severity, then range end. */
-export function orderEditorDiagnostics(
+/** Order gutter-tooltip items by offset, then severity, then range end. */
+export function orderGutterDiagnostics(
     diagnostics: readonly EditorDiagnostic[],
 ): EditorDiagnostic[] {
     return [...diagnostics].sort(

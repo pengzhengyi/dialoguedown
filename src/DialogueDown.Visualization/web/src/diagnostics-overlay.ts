@@ -3,7 +3,7 @@ import type { EditorState, Extension } from "@codemirror/state";
 import { tooltips, type EditorView } from "@codemirror/view";
 import { positionToOffset } from "./lsp-position";
 import type { LspDiagnostic, LspSeverity } from "./model";
-import { orderDiagnostics, orderEditorDiagnostics } from "./diagnostic-order";
+import { orderDiagnostics, orderGutterDiagnostics } from "./diagnostic-order";
 
 /** The docs page whose per-code anchors the tooltip links to (mirrors the CLI's doc links). */
 const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
@@ -24,7 +24,7 @@ const SEVERITY_KIND: Record<LspSeverity, EditorDiagnostic["severity"]> = {
  */
 export function diagnosticsOverlay(): Extension {
     return [
-        lintGutter({ tooltipFilter: (diagnostics) => orderEditorDiagnostics(diagnostics) }),
+        lintGutter({ tooltipFilter: (diagnostics) => orderGutterDiagnostics(diagnostics) }),
         // The Source pane clips its editor to preserve the split layout. Portal fixed-position
         // tooltips to the viewport so diagnostic popovers can cross that boundary.
         tooltips({ parent: document.body, position: "fixed" }),
