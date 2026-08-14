@@ -2212,7 +2212,7 @@ g.node.entity-highlight text.label {
     box-shadow: 0 1px 12px color-mix(in srgb, var(--i) 22%, transparent);
 }
 
-.source-preview .dd-preview-ignored-region::after,
+.source-preview .dd-preview-ignored-region > .dd-ignored-region-toggle,
 .source-preview .dd-preview-control-region::after {
     position: absolute;
     top: 0.3rem;
@@ -2229,8 +2229,19 @@ g.node.entity-highlight text.label {
         sans-serif;
 }
 
-.source-preview .dd-preview-ignored-region::after {
-    content: "\eabd"; /* codicon-circle-slash */
+/* The marker is the region's own control rather than a sticker beside one: a second glyph would
+   double the width of an inline chip and break the sentence it sits in. What separates it from
+   the static conditional-dialogue marker is that it is a real button — focusable, named, and
+   reporting its pressed state — so pointer and keyboard users meet one control per region. */
+.source-preview .dd-preview-ignored-region > .dd-ignored-region-toggle {
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+}
+
+.source-preview .dd-ignored-region-toggle:hover,
+.source-preview .dd-ignored-region-toggle:focus-visible {
+    background: color-mix(in srgb, var(--i) 26%, var(--pico-background-color));
 }
 
 .source-preview .dd-preview-ignored-region > .dd-preview-ignored {
@@ -2247,30 +2258,32 @@ g.node.entity-highlight text.label {
     padding: 0 1.55rem 0 0.2rem;
 }
 
-.source-preview.ignored-preview-collapsed
-    .dd-preview-ignored-region:not(.dd-preview-ignored-region-inline) {
+.source-preview
+    .dd-preview-ignored-region.dd-ignored-region-hidden:not(.dd-preview-ignored-region-inline) {
     min-height: 1.8rem;
     padding: 0.25rem 0.55rem 0.25rem 2rem;
 }
 
-.source-preview.ignored-preview-collapsed
-    .dd-preview-ignored-region:not(.dd-preview-ignored-region-inline)::before {
+.source-preview
+    .dd-preview-ignored-region.dd-ignored-region-hidden:not(
+        .dd-preview-ignored-region-inline
+    )::before {
     content: attr(data-ignored-summary);
     color: var(--md-muted);
     font-size: 0.78rem;
 }
 
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region::after {
+.source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-ignored-region-toggle {
     top: 0.37rem;
     right: auto;
     left: 0.45rem;
 }
 
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region > .dd-preview-ignored {
+.source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-preview-ignored {
     display: none;
 }
 
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region-inline {
+.source-preview .dd-preview-ignored-region-inline.dd-ignored-region-hidden {
     display: inline-grid;
     place-items: center;
     width: 1.2rem;
@@ -2281,7 +2294,9 @@ g.node.entity-highlight text.label {
     vertical-align: -0.15em;
 }
 
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region-inline::after {
+.source-preview
+    .dd-preview-ignored-region-inline.dd-ignored-region-hidden
+    > .dd-ignored-region-toggle {
     position: static;
 }
 
@@ -2309,18 +2324,18 @@ g.node.entity-highlight text.label {
 
 .dd-ignored-preview-state {
     overflow: hidden;
+    margin-right: auto;
     color: var(--pico-muted-color);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.dd-ignored-preview-toggle {
+.dd-ignored-preview-command {
     display: grid;
     flex: 0 0 1.65rem;
     place-items: center;
     width: 1.65rem;
     height: 1.65rem;
-    margin: 0 0 0 auto;
     padding: 0;
     border: 0;
     border-radius: 4px;
@@ -2328,12 +2343,12 @@ g.node.entity-highlight text.label {
     color: var(--md-muted);
 }
 
-.dd-ignored-preview-toggle:hover:not(:disabled),
-.dd-ignored-preview-toggle:focus-visible {
+.dd-ignored-preview-command:hover:not(:disabled),
+.dd-ignored-preview-command:focus-visible {
     background: color-mix(in srgb, var(--md-muted) 10%, transparent);
 }
 
-.dd-ignored-preview-toggle:disabled {
+.dd-ignored-preview-command:disabled {
     cursor: default;
     opacity: 0.35;
 }

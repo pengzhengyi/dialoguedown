@@ -123,16 +123,34 @@ describe("createSourceView ignored Markdown preview", () => {
         expect(region?.getAttribute("title")).toBe("Conditional dialogue");
     });
 
-    it("globally collapses ignored Preview regions without changing Source content", () => {
+    it("globally hides ignored Preview regions without changing Source content", () => {
         const source = mountSource(table);
         source.setSemanticTokens([ignoredTable]);
 
-        source.element.querySelector<HTMLButtonElement>(".dd-ignored-preview-toggle")?.click();
+        source.element
+            .querySelector<HTMLButtonElement>(
+                '.dd-ignored-preview-command[data-command="collapse"]',
+            )
+            ?.click();
 
         expect(
             source.element
-                .querySelector(".source-preview")
-                ?.classList.contains("ignored-preview-collapsed"),
+                .querySelector(".dd-preview-ignored-region")
+                ?.classList.contains("dd-ignored-region-hidden"),
+        ).toBe(true);
+        expect(source.getContent()).toBe(table);
+    });
+
+    it("hides one ignored region on its own control, leaving Source content alone", () => {
+        const source = mountSource(table);
+        source.setSemanticTokens([ignoredTable]);
+
+        source.element.querySelector<HTMLButtonElement>(".dd-ignored-region-toggle")?.click();
+
+        expect(
+            source.element
+                .querySelector(".dd-preview-ignored-region")
+                ?.classList.contains("dd-ignored-region-hidden"),
         ).toBe(true);
         expect(source.getContent()).toBe(table);
     });
