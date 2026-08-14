@@ -297,8 +297,9 @@ because it would disagree with DOM, keyboard, and screen-reader order.
 A static report carries:
 
 - three exact-range diagnostics supplied Info, Warning, Error;
-- three diagnostics on another line: an outer Error, an inner Warning, and a
-  zero-width Info.
+- three diagnostics on another line: an outer Info, an inner Warning, and a
+  deep Error; and
+- one zero-width Hint on a third line.
 
 The test asserts:
 
@@ -306,7 +307,7 @@ The test asserts:
 - tooltip text order Error, Warning, Info;
 - Problems rows at the exact position use the same order;
 - nested ranges retain all active messages;
-- status counts remain two errors, two warnings, two infos; and
+- status counts remain two errors, two warnings, three infos; and
 - the display passes axe in light and dark themes.
 
 Comparator permutation tests and a second browser payload apply the same set in
