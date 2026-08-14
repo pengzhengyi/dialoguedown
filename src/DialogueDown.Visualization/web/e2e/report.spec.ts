@@ -82,6 +82,12 @@ test("the Source editor renders leading front matter as YAML metadata", async ({
         ...new Set(elements.map((element) => getComputedStyle(element).color)),
     ]);
     expect(yamlColors.length).toBeGreaterThan(1);
+
+    // The YAML `content` rule is language-scoped: ordinary Markdown prose in the body stays
+    // unwrapped and keeps the editor's default text color.
+    const bodyParagraph = lines.filter({ hasText: "Paragraph 1:" }).first();
+    await expect(bodyParagraph).toBeVisible();
+    await expect(bodyParagraph.locator("span")).toHaveCount(0);
 });
 
 test("the header brand shows the logo and reveals the name on hover", async ({ page }) => {

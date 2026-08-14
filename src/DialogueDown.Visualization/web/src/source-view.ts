@@ -122,7 +122,7 @@ export const yamlHighlightStyle = HighlightStyle.define(
             fontStyle: "italic",
             opacity: "0.45",
         },
-        { tag: [tags.bracket, tags.squareBracket], color: "var(--md-muted)" },
+        { tag: tags.bracket, color: "var(--md-muted)" },
     ],
     { scope: yamlLanguage },
 );

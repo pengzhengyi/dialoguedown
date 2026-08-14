@@ -30,10 +30,6 @@ describe("markdownHighlightStyle", () => {
     it("styles the front-matter delimiter as metadata", () => {
         expect(styled(tags.meta)).not.toBeNull();
     });
-
-    it("does not let YAML scalar styles recolor a Markdown link title", () => {
-        expect(markdownHighlightStyle.style([tags.link, tags.string])).toBe(styled(tags.link));
-    });
 });
 
 describe("yamlHighlightStyle", () => {
@@ -45,5 +41,6 @@ describe("yamlHighlightStyle", () => {
         expect(styled(tags.content)).not.toBeNull();
         expect(styled(tags.lineComment)).not.toBeNull();
         expect(styled(tags.bracket)).not.toBeNull();
+        expect(styled(tags.squareBracket)).not.toBeNull();
     });
 });

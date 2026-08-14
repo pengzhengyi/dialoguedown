@@ -236,8 +236,8 @@ established parsers.
 - **Browser tests:** the existing `SAMPLE_SOURCE` already contains canonical front matter, so the
   report fixture must show it as metadata while the body and Preview continue to render and
   navigate correctly.
-- **Bundle gate:** the report grew from 4,742,646 to 4,760,581 bytes — a measured 17,935-byte
-  increase. It remains below the approved 5,000,000-byte raw limit with 239,419 bytes of headroom;
+- **Bundle gate:** the report grew from 4,742,646 to 4,760,563 bytes — a measured 17,917-byte
+  increase. It remains below the approved 5,000,000-byte raw limit with 239,437 bytes of headroom;
   the cap did not change.
 
 ## Alternatives not chosen
