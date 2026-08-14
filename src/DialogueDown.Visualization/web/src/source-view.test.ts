@@ -65,6 +65,17 @@ describe("createSourceView ignored Markdown preview", () => {
         },
     };
 
+    it("always mounts a Preview footer mirroring the fixed Source footer", () => {
+        const source = mountSource("Alice: Hi.");
+
+        const shell = source.element.querySelector(".source-preview-shell");
+        const footer = source.element.querySelector(".dd-ignored-preview-footer");
+
+        expect(shell?.contains(source.element.querySelector(".source-preview"))).toBe(true);
+        expect(shell?.contains(footer)).toBe(true);
+        expect(footer?.textContent).toContain("0 ignored");
+    });
+
     it("mirrors the compiler's ignored cue in the rendered preview", () => {
         const source = mountSource(table);
 
@@ -76,6 +87,9 @@ describe("createSourceView ignored Markdown preview", () => {
                 ?.classList.contains("dd-preview-ignored"),
         ).toBe(true);
         expect(source.element.querySelector(".dd-preview-ignored-region")).not.toBeNull();
+        expect(source.element.querySelector(".dd-ignored-preview-footer")?.textContent).toContain(
+            "1 ignored",
+        );
     });
 
     it("restores full-strength preview rendering when the compiler keeps the construct", () => {
@@ -107,6 +121,20 @@ describe("createSourceView ignored Markdown preview", () => {
         const region = source.element.querySelector(".source-preview blockquote");
         expect(region?.classList.contains("dd-preview-control-region")).toBe(true);
         expect(region?.getAttribute("title")).toBe("Conditional dialogue");
+    });
+
+    it("globally collapses ignored Preview regions without changing Source content", () => {
+        const source = mountSource(table);
+        source.setSemanticTokens([ignoredTable]);
+
+        source.element.querySelector<HTMLButtonElement>(".dd-ignored-preview-toggle")?.click();
+
+        expect(
+            source.element
+                .querySelector(".source-preview")
+                ?.classList.contains("ignored-preview-collapsed"),
+        ).toBe(true);
+        expect(source.getContent()).toBe(table);
     });
 });
 

@@ -237,6 +237,25 @@ describe("initFullscreen — Zen mode", () => {
         }
     });
 
+    it("blurs the ignored-content toggle with the Preview shell Zen hides", () => {
+        const fs = initFullscreen(document.body, document);
+        const shell = document.createElement("div");
+        shell.className = "source-preview-shell";
+        const toggle = document.createElement("button");
+        toggle.className = "dd-ignored-preview-toggle";
+        shell.appendChild(toggle);
+        document.body.appendChild(shell);
+        toggle.focus();
+
+        try {
+            fs.toggleZen();
+            expect(document.activeElement).not.toBe(toggle);
+        } finally {
+            fs.exit();
+            shell.remove();
+        }
+    });
+
     it("reflects Zen on the Zen button, and only for Zen", () => {
         const { doc } = scratch();
         const fs = initFullscreen(doc.body, doc);

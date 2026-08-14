@@ -221,16 +221,27 @@ describe("renderDocument", () => {
     });
 
     it.each([
-        ["table", "| A | B |\n| - | - |\n| x | y |", '<table class="dd-preview-ignored"'],
-        ["code block", "```mermaid\ngraph TD\n```", 'class="mermaid-diagram dd-preview-ignored"'],
-        ["divider", "---", '<hr class="dd-preview-ignored"'],
-    ])("marks an ignored %s in the rendered preview", (_kind, source, ignoredElement) => {
+        [
+            "table",
+            "| A | B |\n| - | - |\n| x | y |",
+            '<table class="dd-preview-ignored"',
+            "Table · 3 lines",
+        ],
+        [
+            "code block",
+            "```mermaid\ngraph TD\n```",
+            'class="mermaid-diagram dd-preview-ignored"',
+            "Code block · 3 lines",
+        ],
+        ["divider", "---", '<hr class="dd-preview-ignored"', "Divider · 1 line"],
+    ])("marks an ignored %s in the rendered preview", (_kind, source, ignoredElement, summary) => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
         });
 
         expect(html).toContain('class="dd-preview-ignored-region"');
+        expect(html).toContain(`data-ignored-summary="${summary}"`);
         expect(html).toContain(ignoredElement);
     });
 
@@ -242,10 +253,10 @@ describe("renderDocument", () => {
             controlKeywords: [],
         });
 
-        expect(html).toContain(
-            '<div class="dd-preview-ignored-region" title="Ignored — not included in dialogue" data-preview-block="pre">' +
-                '<div class="mermaid-diagram dd-preview-ignored"',
-        );
+        expect(html).toContain('class="dd-preview-ignored-region"');
+        expect(html).toContain('data-ignored-summary="Code block · 4 lines"');
+        expect(html).toContain('data-preview-block="pre"');
+        expect(html).toContain('class="mermaid-diagram dd-preview-ignored"');
     });
 
     it("leaves the same Markdown at full strength when the policy keeps it", () => {
@@ -254,16 +265,46 @@ describe("renderDocument", () => {
         expect(renderDocument(source)).not.toContain("dd-preview-ignored");
     });
 
-    it.each([
-        ["raw HTML", "<div>hi</div>", '<div class="dd-preview-ignored"'],
-        ["an autolink", "<https://example.com>", '<a class="dd-preview-ignored"'],
-    ])("marks %s when a configured policy ignores it", (_kind, source, element) => {
+    it("marks an autolink when a configured policy ignores it", () => {
+        const source = "<https://example.com>";
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
         });
 
-        expect(html).toContain(element);
+        expect(html).toContain('<a class="dd-preview-ignored"');
+        expect(html).toContain('title="Ignored autolink: &lt;https://example.com&gt;"');
+    });
+
+    it("does not mistake class= inside an autolink URL for an HTML class attribute", () => {
+        const source = "<https://example.com/?class=route>";
+
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('<a class="dd-preview-ignored"');
+        expect(html).toContain('href="https://example.com/?class=route"');
+    });
+
+    it("shows ignored inline HTML as escaped source without unbalancing the Preview DOM", () => {
+        const source = "Before <span>inside</span> after";
+        const opening = source.indexOf("<span>");
+        const closing = source.indexOf("</span>");
+
+        const html = renderDocument(source, {
+            ignored: [
+                { start: opening, end: opening + "<span>".length },
+                { start: closing, end: closing + "</span>".length },
+            ],
+            controlKeywords: [],
+        });
+
+        expect(html.match(/data-ignored-kind="Raw HTML"/g)).toHaveLength(2);
+        expect(html).toContain("&lt;span&gt;");
+        expect(html).toContain("&lt;/span&gt;");
+        expect(html).not.toContain("<span>inside</span>");
     });
 
     it("marks a compiler-projected control keyword for region annotation", () => {
@@ -276,5 +317,30 @@ describe("renderDocument", () => {
         });
 
         expect(html).toContain('<code class="dd-preview-control-keyword">if</code>');
+    });
+
+    it("matches an ignored table nested inside a blockquote", () => {
+        const source = "> | A | B |\n> | - | - |\n> | x | y |";
+        const start = source.indexOf("|");
+
+        const html = renderDocument(source, {
+            ignored: [{ start, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('data-ignored-summary="Table · 3 lines"');
+    });
+
+    it("preserves a literal quote marker inside an ignored blockquoted code block", () => {
+        const source = "> ```text\n> > literal quote\n> ```";
+        const start = source.indexOf("```");
+
+        const html = renderDocument(source, {
+            ignored: [{ start, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('data-ignored-kind="Code block"');
+        expect(html).toContain("&gt; literal quote");
     });
 });
