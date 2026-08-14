@@ -88,10 +88,14 @@
     href: Dialogue Graph Visualization Tab.md
   - name: Unmodeled Markdown Highlighting
     href: Unmodeled Markdown Highlighting.md
+  - name: Front Matter Source Highlighting
+    href: Front Matter Source Highlighting.md
   - name: Mermaid Authoring Diagrams
     href: Mermaid Authoring Diagrams.md
   - name: Ignored Markdown Preview Toggle
     href: Ignored Markdown Preview Toggle.md
+  - name: Co-located Diagnostics Presentation
+    href: Co-located Diagnostics Presentation.md
   - name: Dialogue Graph — Region Fold
     href: Dialogue Graph Region Fold.md
   - name: Graph Position Preservation

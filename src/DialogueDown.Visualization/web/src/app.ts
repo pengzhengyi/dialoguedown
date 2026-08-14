@@ -51,6 +51,7 @@ const recognizesJumps = (title: string): boolean => JUMP_AWARE_STAGE_TITLES.has(
 import { setHelp, helpBody } from "./help";
 import { createProblemsPanel } from "./problems-panel";
 import { createDiagnosticSummary } from "./diagnostic-summary";
+import { orderDiagnostics } from "./diagnostic-order";
 import { createFooterDrawer } from "./footer-drawer";
 import type { DebugController } from "./debug-controller";
 
@@ -275,8 +276,9 @@ export function runApp(
      * the summary still says three.
      */
     function applyDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
-        sourceHandle?.setDiagnostics(diagnostics);
-        problems.setDiagnostics(diagnostics);
+        const ordered = orderDiagnostics(diagnostics);
+        sourceHandle?.setDiagnostics(ordered);
+        problems.setDiagnostics(ordered);
         summary.setCounts(problems.counts());
     }
 
