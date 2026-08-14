@@ -13,7 +13,7 @@ way to *see* one was a squiggle in the Source editor.
 That has two costs. A reader hunting for problems has to **scroll the document
 looking for underlines** — there is no count, no list, and no way to step through
 them. And on the five graph tabs the diagnostics are **invisible entirely**,
-because the editor is not on screen.
+because the editor is not visible.
 
 This note adds a **Problems panel**: a list of every diagnostic in the document,
 each row navigating to the text it describes.
@@ -71,6 +71,12 @@ reads in, so stepping down the list walks forward through the document.
 Severity is carried by a per-row icon rather than by grouping, so a single
 error among forty infos is still easy to pick out without collapsing anything.
 
+Position remains primary: stepping down the list walks forward through the
+script. Diagnostics with the same start position use the shared
+[co-located presentation](./Co-located%20Diagnostics%20Presentation.md) order:
+Error, Warning, Info, Hint, then range end, code, and message. The client owns
+this deterministic tie-break because LSP does not define array order.
+
 ### D5 — One fan-out point, so the three surfaces cannot disagree
 
 Diagnostics arrive twice: once when the report is first built, and again whenever
@@ -79,7 +85,7 @@ internal apply step that updates the editor overlay, the list, and the status
 counts together.
 
 Updating them at separate call sites is how a stale count survives a fix — the
-squiggle clears but the badge still says `3`.
+squiggle clears, but the badge still says `3`.
 
 ## Layout
 
@@ -103,6 +109,7 @@ flowchart TB
 | --- | --- |
 | Counts | The summary totals each severity and survives a refresh |
 | Rendering | One row per diagnostic, ordered by position, with code and location |
+| Co-located ordering | Same-position rows are severity first; input permutations render identically |
 | Empty state | A clean compile says so rather than showing an empty box |
 | Activation | A row calls the jump with the offsets its range resolves to |
 | Drawer | The tabs switch panels, and each entry point opens its own tab |

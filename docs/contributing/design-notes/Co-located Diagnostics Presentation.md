@@ -1,7 +1,7 @@
 # Co-located diagnostics presentation
 
 > [!NOTE]
-> Status: **approved**. Implementation has not started.
+> Status: **implemented**.
 
 ## Table of contents
 
@@ -48,22 +48,23 @@ Out of scope:
 
 ## Functionality checklist
 
-- [ ] An overlapping editor segment uses the most severe active diagnostic's
+- [x] An overlapping editor segment uses the most severe active diagnostic's
       squiggle class.
-- [ ] A line with several diagnostics shows one gutter marker at the line's most
+- [x] A line with several diagnostics shows one gutter marker at the line's most
       severe level.
-- [ ] An exact-range hover stack lists Error, Warning, Info, then Hint,
+- [x] An exact-range hover stack lists Error, Warning, Info, then Hint,
       independent of compiler/LSP array order.
-- [ ] A gutter hover keeps every diagnostic on the line and lists
+- [x] A gutter hover keeps every diagnostic on the line and lists
       same-position diagnostics severity first.
-- [ ] The Problems panel remains document ordered; diagnostics at the same start
+- [x] The Problems panel remains document ordered; diagnostics at the same start
       position list severity first.
-- [ ] Equal-severity ties are deterministic by range end, code, then message.
-- [ ] Status-line counts include every diagnostic, including co-located ones.
-- [ ] Reapplying the same diagnostics in a different input order produces the
+- [x] Equal-severity ties are deterministic by range end, code, then message.
+- [x] Status-line counts include every diagnostic, including co-located ones.
+- [x] Reapplying the same diagnostics in a different input order produces the
       same overlay, tooltip, Problems list, and counts.
-- [ ] Tooltip and Problems controls retain their existing navigation,
+- [x] Tooltip and Problems controls retain their existing navigation,
       documentation links, keyboard access, and accessible labels.
+- [x] Problems code links meet WCAG AA contrast in light and dark themes.
 
 ## Ubiquitous language
 
@@ -183,6 +184,10 @@ The dominant marker is a summary, not a filter. Hovering it shows every active
 diagnostic, and the Problems panel keeps one navigable row per diagnostic. A
 warning may explain how to repair the error; an info may explain an intentional
 omission. Dropping either would trade a clean marker for lost information.
+
+The diagnostic code remains its own documentation link and uses the report's
+established link color, rather than muted metadata color, so it remains legible
+in dark mode.
 
 ### D3 — Keep document order; severity breaks position ties
 
@@ -304,8 +309,9 @@ The test asserts:
 - status counts remain two errors, two warnings, two infos; and
 - the display passes axe in light and dark themes.
 
-A live update reapplies the same set in reverse input order and asserts that the
-surfaces do not reorder or duplicate diagnostics.
+Comparator permutation tests and a second browser payload apply the same set in
+reverse input order and assert that the surfaces do not reorder or duplicate
+diagnostics.
 
 ## Open questions
 

@@ -170,6 +170,10 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Co-located diagnostics now present deterministically** — overlapping editor
+  marks use the severest active level while hover and the Problems panel retain
+  every message; diagnostics at one position list errors before warnings and
+  infos regardless of compiler/LSP array order.
 - **The editor shows what becomes of a script's Markdown** — the constructs the handling policy
   leaves out are dimmed and enclosed in eye-marked Preview regions instead of reading like
   dialogue, the blockquotes that carry control blocks are no longer muted and carry a question

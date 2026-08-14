@@ -69,6 +69,8 @@ Code extension.
 - [x] The tooltip behaves as a viewport-level **popover**, crossing the Source pane boundary
       without being clipped while CodeMirror keeps it inside the browser viewport.
 - [x] Severity maps correctly: error, warning, and info are visually distinct.
+- [x] Co-located diagnostics use one dominant-severity squiggle/gutter marker
+      while hover retains every message in deterministic order.
 - [x] The overlay **refreshes on recompile** — save and hot-reload — without rebuilding
       the editor, and clears on a clean compile.
 - [x] Out-of-range or zero-width ranges are handled without throwing.
@@ -157,6 +159,12 @@ preview while its link remains interactive. Its message wraps at a compact chara
 maximum width rather than being truncated, keeping the full diagnostic readable without a long
 horizontal eye movement.
 
+Co-located diagnostics follow the
+[Co-located diagnostics presentation](./Co-located%20Diagnostics%20Presentation.md)
+policy: CodeMirror's `maxSeverity` controls each collision segment and line
+marker, while exact-range details list Error, Warning, Info, then Hint. Partial
+overlaps keep CodeMirror's geometry order.
+
 ### D3 — Diagnostics ride the existing payload and live channel
 
 No new transport. The static export and the live server's `/api/save` response and
@@ -220,6 +228,7 @@ tabs and belongs with user-selectable mode
 | Clean compile | No diagnostics; the overlay and gutter clear. |
 | Halted compile | The produced stages' diagnostics render; later tabs stay disabled. |
 | Info-severity diagnostic | Rendered as info (LSP severity 3), visually distinct from warnings and errors. |
+| Several diagnostics on one range | One dominant-severity squiggle and gutter marker; the range and gutter tooltips retain every diagnostic with exact collisions severity first. |
 | Diagnostic near a pane or viewport edge | The body-mounted tooltip may overlap report content, but CodeMirror flips or constrains it to remain inside the browser viewport. Long messages wrap at a compact readable width without truncation. |
 
 ## Integration
