@@ -172,12 +172,17 @@ Static status glyphs remain distinguishable at both layers. The conditional-dial
 marker and the footer's category marker stay non-focusable CSS pseudo-elements, so assistive
 technology and pointer users meet exactly one control per region.
 
-Turning a sticker into a control exposes two things a pseudo-element never had to survive. The
-marker needs its own stacking level, because a region's own content — a table's cells, for example —
-otherwise paints over it and swallows the click. It also has to opt out of the button styling Pico
-applies to every `button`: Pico redefines `--pico-background-color` to its accent and adds a bottom
-margin, which would tint the marker and grow the footer past the height it shares with the Source
-editor's `#END` footer.
+Turning a sticker into a control exposes three things a pseudo-element never had to survive. The
+marker must **lead its region and stay put**: it sits in a gutter at the region's start in both
+states, because a control that moves when clicked forces a reader to chase it across the pane to
+undo what they just did. Hiding an inline region therefore collapses the span onto that same
+gutter, and the span holds one line box so the marker cannot drop onto the text baseline.
+
+The marker also needs its own stacking level, because a region's own content — a table's cells, for
+example — otherwise paints over it and swallows the click. And it has to opt out of the button
+styling Pico applies to every `button`: Pico redefines `--pico-background-color` to its accent and
+adds a bottom margin, which would tint the marker and grow the footer past the height it shares
+with the Source editor's `#END` footer.
 
 ### D6 — Ignored content is dimmed, but never below legibility
 
@@ -254,6 +259,7 @@ whitespace-delimited HTML `class` attribute, not `class=` inside an autolink que
 | Ignored Mermaid code block | A shown region renders the authoring diagram; hiding it replaces the whole diagram with its code-block summary. |
 | Many ignored regions | Each control is one natural tab stop, in document order. |
 | Control under a region's own content | The control keeps its own stacking level, so a table's cells cannot swallow the click. |
+| Toggling the same region twice | The control does not move between states, so the pointer can stay still. |
 | A shown ignored link | It renders in muted ink rather than a dimmed accent, holding contrast in both themes. |
 | Preview pane hidden | Footer hides with its Preview shell. |
 | Storage unavailable | Every command still works for the current view; only the baseline fails to persist. |
@@ -273,7 +279,8 @@ whitespace-delimited HTML `class` attribute, not `class=` inside an autolink que
 - **Source-view integration:** the fixed footer always exists, a global command and a single
   region control each change only the Preview, and Source stays unchanged.
 - **Static browser integration:** the Preview footer matches the `#END` footer's position and
-  height, a region control responds to pointer and keyboard, a global command overrides an
+  height, a region control responds to pointer and keyboard and keeps the same box across a
+  toggle, a global command overrides an
   individual choice, a hidden inline region stays a chip inside its sentence, Zen hides the whole
   Preview shell, and axe reports no accessibility violations in a mixed view in either theme.
 - **Live integration:** a real `dialogue.toml` sets `autolink = "ignore"`; the configured inline

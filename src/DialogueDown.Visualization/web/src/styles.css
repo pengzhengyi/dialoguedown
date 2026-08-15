@@ -2192,15 +2192,15 @@ g.node.entity-highlight text.label {
 
 /* Mirror the Source editor's semantic cue in the rendered Markdown. These regions come from
    compiler-projected IgnoredMarkdown spans, not HTML element types, so a future project policy
-   that keeps tables or code blocks automatically leaves them at full strength here too. The eye
-   sticker is persistent; the tint and glow appear on hover, matching the blockquote region
-   language without boxing authoring aids into permanent cards. */
+   that keeps tables or code blocks automatically leaves them at full strength here too. The
+   marker leads the region as a control; the tint and glow appear on hover, matching the
+   blockquote region language without boxing authoring aids into permanent cards. */
 .source-preview .dd-preview-ignored-region {
     --i: var(--md-muted);
 
     position: relative;
     margin: 0.55rem 0;
-    padding: 0.4rem 0.45rem 0.3rem 0.75rem;
+    padding: 0.4rem 0.45rem 0.3rem 2rem;
     border-left: 3px solid color-mix(in srgb, var(--i) 68%, transparent);
     border-radius: 3px;
     transition:
@@ -2219,7 +2219,7 @@ g.node.entity-highlight text.label {
 .source-preview .dd-preview-control-region::after {
     position: absolute;
     top: 0.3rem;
-    right: 0.35rem;
+    left: 0.45rem;
     display: grid;
     place-items: center;
     width: 1.15rem;
@@ -2271,8 +2271,19 @@ g.node.entity-highlight text.label {
 
 .source-preview .dd-preview-ignored-region-inline {
     display: inline-block;
+
+    /* Hold one line box even with the content hidden, so collapsing does not drop the marker onto
+       the text baseline and move it away from the pointer. */
+    min-height: 1lh;
     margin: 0;
-    padding: 0 1.55rem 0 0.2rem;
+    padding: 0 0.2rem 0 1.55rem;
+    vertical-align: middle;
+}
+
+.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-toggle {
+    top: 50%;
+    left: 0.2rem;
+    transform: translateY(-50%);
 }
 
 .source-preview
@@ -2290,31 +2301,14 @@ g.node.entity-highlight text.label {
     font-size: 0.78rem;
 }
 
-.source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-ignored-region-toggle {
-    top: 0.37rem;
-    right: auto;
-    left: 0.45rem;
-}
-
 .source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-preview-ignored {
     display: none;
 }
 
+/* Hiding an inline region collapses it onto the marker's own gutter, so the chip appears exactly
+   where the marker already was and the control does not move out from under the pointer. */
 .source-preview .dd-preview-ignored-region-inline.dd-ignored-region-hidden {
-    display: inline-grid;
-    place-items: center;
-    width: 1.2rem;
-    height: 1.2rem;
-    margin: 0 0.08rem;
-    padding: 0;
-    border-left: 0;
-    vertical-align: -0.15em;
-}
-
-.source-preview
-    .dd-preview-ignored-region-inline.dd-ignored-region-hidden
-    > .dd-ignored-region-toggle {
-    position: static;
+    padding-right: 0;
 }
 
 .dd-ignored-preview-footer {
@@ -2380,6 +2374,7 @@ g.node.entity-highlight text.label {
 
     top: 0.2rem;
     right: 0.3rem;
+    left: auto;
     content: "\eb32"; /* codicon-question */
 }
 

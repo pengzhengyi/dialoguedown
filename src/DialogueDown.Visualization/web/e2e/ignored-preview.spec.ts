@@ -75,6 +75,24 @@ test("hides one region from its own marker, leaving the others shown", async ({ 
     );
 });
 
+test("keeps a region's control in one place across a toggle", async ({ page }) => {
+    // Repeated show/hide must not require chasing the control: a reader toggling the same region
+    // twice should be able to leave the pointer still.
+    const block = regions(page).first().locator(".dd-ignored-region-toggle");
+    const inline = page.locator(".dd-preview-ignored-region-inline .dd-ignored-region-toggle");
+
+    for (const control of [block, inline]) {
+        const shown = await control.boundingBox();
+        await control.click();
+        const hidden = await control.boundingBox();
+        await control.click();
+        const restored = await control.boundingBox();
+
+        expect(hidden).toEqual(shown);
+        expect(restored).toEqual(shown);
+    }
+});
+
 test("reaches a region's control from the keyboard", async ({ page }) => {
     const control = regions(page).nth(2).locator(".dd-ignored-region-toggle");
 
