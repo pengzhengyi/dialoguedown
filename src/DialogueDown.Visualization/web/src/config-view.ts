@@ -23,6 +23,7 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { toml } from "@codemirror/legacy-modes/mode/toml";
 import { tags } from "@lezer/highlight";
 import { delegate } from "tippy.js";
+import { foldGutterMarker } from "./fold-glyph";
 import type { ConfigReport, ConfiguredSpeakerView } from "./model";
 import { isConfiguredFromFile } from "./model";
 import { initSplitDivider } from "./source-view";
@@ -237,7 +238,7 @@ function mountEditor(
             extensions: [
                 lineNumbers(),
                 highlightActiveLineGutter(),
-                foldGutter(),
+                foldGutter({ markerDOM: foldGutterMarker }),
                 foldTomlSections,
                 codeFolding(),
                 history(),
