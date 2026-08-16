@@ -30,6 +30,21 @@ describe("sanitizePreviewHtml", () => {
         expect(sanitized).toContain('href="#scene"');
         expect(sanitized).toContain('src="assets/portrait.png"');
     });
+    it("preserves the compiler-owned region control the Preview mounts", () => {
+        const html =
+            '<div class="dd-preview-ignored-region" data-ignored-key="Table:abc:0">' +
+            '<button type="button" class="dd-ignored-region-toggle" aria-expanded="true">' +
+            '<span class="codicon codicon-circle-slash" aria-hidden="true"></span>' +
+            "</button>" +
+            "</div>";
+
+        const sanitized = sanitizePreviewHtml(html);
+
+        expect(sanitized).toContain('class="dd-ignored-region-toggle"');
+        expect(sanitized).toContain('data-ignored-key="Table:abc:0"');
+        expect(sanitized).toContain('aria-expanded="true"');
+        expect(sanitized).toContain("codicon-circle-slash");
+    });
 });
 
 describe("mountPreviewHtml", () => {

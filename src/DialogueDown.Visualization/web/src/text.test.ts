@@ -14,6 +14,10 @@ import {
 } from "./text";
 import type { DisplayNode } from "./model";
 
+function ignoredKeys(html: string): string[] {
+    return [...html.matchAll(/data-ignored-key="([^"]+)"/g)].map(([, key]) => key);
+}
+
 describe("escapeHtml", () => {
     it("escapes the five HTML-significant characters", () => {
         expect(escapeHtml(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&#39;");
@@ -278,6 +282,78 @@ describe("renderDocument", () => {
         const source = "| A | B |\n| - | - |\n| x | y |";
 
         expect(renderDocument(source)).not.toContain("dd-preview-ignored");
+    });
+
+    it("keeps an ignored region's key when unrelated text moves it down the document", () => {
+        const table = "| A | B |\n| - | - |\n| x | y |";
+        const moved = `Alice: a line that was not there before.\n\n${table}`;
+        const start = moved.indexOf(table);
+
+        const before = ignoredKeys(
+            renderDocument(table, {
+                ignored: [{ start: 0, end: table.length }],
+                controlKeywords: [],
+            }),
+        );
+        const after = ignoredKeys(
+            renderDocument(moved, {
+                ignored: [{ start, end: start + table.length }],
+                controlKeywords: [],
+            }),
+        );
+
+        expect(before).toHaveLength(1);
+        expect(after).toEqual(before);
+    });
+
+    it("changes an ignored region's key when its own source is edited", () => {
+        const before = "| A | B |\n| - | - |\n| x | y |";
+        const after = "| A | B |\n| - | - |\n| x | z |";
+
+        const keyOf = (source: string): string =>
+            ignoredKeys(
+                renderDocument(source, {
+                    ignored: [{ start: 0, end: source.length }],
+                    controlKeywords: [],
+                }),
+            )[0];
+
+        expect(keyOf(after)).not.toBe(keyOf(before));
+    });
+
+    it("separates two identical ignored regions", () => {
+        const source = "Alice: between the rules.\n\n---\n\n---";
+        const first = source.indexOf("---");
+        const second = source.indexOf("---", first + 3);
+
+        const keys = ignoredKeys(
+            renderDocument(source, {
+                ignored: [
+                    { start: first, end: first + 3 },
+                    { start: second, end: second + 3 },
+                ],
+                controlKeywords: [],
+            }),
+        );
+
+        expect(keys).toHaveLength(2);
+        expect(keys[0]).not.toBe(keys[1]);
+    });
+
+    it("gives every ignored region its own control", () => {
+        const source = "---\n\n<https://example.com>";
+        const autolink = source.indexOf("<https");
+
+        const html = renderDocument(source, {
+            ignored: [
+                { start: 0, end: 3 },
+                { start: autolink, end: source.length },
+            ],
+            controlKeywords: [],
+        });
+
+        expect(html.match(/class="dd-ignored-region-toggle"/g)).toHaveLength(2);
+        expect(html).toContain("codicon-circle-slash");
     });
 
     it("marks an autolink when a configured policy ignores it", () => {

@@ -27,7 +27,9 @@ test("mirrors the End sentinel with an always-present Preview footer", async ({ 
 
     await expect(ignored).toContainText("0 ignored");
     await expect(ignored).toContainText("nothing omitted");
-    await expect(ignored.getByRole("button")).toBeDisabled();
+    const commands = ignored.getByRole("button");
+    await expect(commands).toHaveCount(2);
+    for (const command of await commands.all()) await expect(command).toBeDisabled();
 
     const [endBox, ignoredBox] = await Promise.all([end.boundingBox(), ignored.boundingBox()]);
     if (!endBox || !ignoredBox) throw new Error("Could not measure the Source/Preview footers.");

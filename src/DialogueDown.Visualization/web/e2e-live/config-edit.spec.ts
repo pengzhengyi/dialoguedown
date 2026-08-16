@@ -63,7 +63,7 @@ test("editing the config marks it dirty and stale; Save recompiles the speakers"
     expect(readFileSync(CONFIG_EDIT_TOML, "utf8")).toContain("Bob");
 });
 
-test("globally collapses configured ignored block and inline Preview regions", async ({ page }) => {
+test("shows and hides configured ignored block and inline Preview regions", async ({ page }) => {
     await page.goto(base);
     await page.evaluate(() => localStorage.removeItem("dd-ignored-preview-collapsed"));
     await page.reload();
@@ -74,16 +74,23 @@ test("globally collapses configured ignored block and inline Preview regions", a
     const block = preview.locator(
         ".dd-preview-ignored-region:not(.dd-preview-ignored-region-inline)",
     );
+    const hidden = preview.locator(".dd-preview-ignored-region.dd-ignored-region-hidden");
 
     await expect(footer).toContainText("2 ignored");
-    await expect(footer).toContainText("shown in Preview");
+    await expect(footer).toContainText("all shown in Preview");
     await expect(block).toHaveAttribute("data-ignored-summary", "Table · 3 lines");
     await expect(inline).toHaveAttribute("title", "Ignored autolink: <https://example.com/road>");
 
+    // The configured inline link hides on its own control, leaving the default-ignored table shown.
+    await inline.locator(".dd-ignored-region-toggle").click();
+    await expect(footer).toContainText("1 of 2 shown in Preview");
+    await expect(inline.locator(".dd-preview-ignored")).toBeHidden();
+    await expect(block.locator(".dd-preview-ignored")).toBeVisible();
+
     await footer.getByRole("button", { name: "Hide all ignored content in Preview" }).click();
 
-    await expect(preview).toHaveClass(/ignored-preview-collapsed/);
-    await expect(footer).toContainText("hidden in Preview");
+    await expect(hidden).toHaveCount(2);
+    await expect(footer).toContainText("all hidden in Preview");
     await expect(block.locator(".dd-preview-ignored")).toBeHidden();
     await expect(inline.locator(".dd-preview-ignored")).toBeHidden();
     await expect(page.locator(".source-pane .dd-tok-ignored-markdown")).not.toHaveCount(0);
@@ -91,16 +98,25 @@ test("globally collapses configured ignored block and inline Preview regions", a
         (await new AxeBuilder({ page }).include(".source-preview-shell").analyze()).violations,
     ).toEqual([]);
 
-    // The preference is report-wide, not tied to one DOM instance.
+    // The baseline is report-wide, not tied to one DOM instance; per-region choices are not.
     await page.reload();
-    await expect(page.locator(".source-preview")).toHaveClass(/ignored-preview-collapsed/);
-    await expect(page.locator(".dd-ignored-preview-footer")).toContainText("hidden in Preview");
+    await expect(page.locator(".dd-preview-ignored-region.dd-ignored-region-hidden")).toHaveCount(
+        2,
+    );
+    await expect(page.locator(".dd-ignored-preview-footer")).toContainText("all hidden in Preview");
 
+    // A region shown against the hidden baseline is discarded by the next global command.
+    await page.locator(".dd-preview-ignored-region-inline .dd-ignored-region-toggle").click();
+    await expect(page.locator(".dd-ignored-preview-footer")).toContainText(
+        "1 of 2 shown in Preview",
+    );
     await page
         .locator(".dd-ignored-preview-footer")
         .getByRole("button", { name: "Show all ignored content in Preview" })
         .click();
-    await expect(page.locator(".source-preview")).not.toHaveClass(/ignored-preview-collapsed/);
+    await expect(page.locator(".dd-preview-ignored-region.dd-ignored-region-hidden")).toHaveCount(
+        0,
+    );
     const restored = page.locator(".source-preview .dd-preview-ignored");
     await expect(restored).toHaveCount(2);
     await expect(restored.first()).toBeVisible();

@@ -17,10 +17,11 @@ changes easy to categorize.
   [Dialogue Graph — Region Fold](docs/contributing/design-notes/Dialogue%20Graph%20Region%20Fold.md)
   note.
 
-- **Ignored-content Preview footer** — a fixed footer matching Source's `#END` row reports how
-  much Markdown the compiler left out and globally shows or collapses it. Blocks retain kind and
-  source-line count; configured ignored inline content becomes a circle-slash status chip in
-  place; Source stays visible and editable. See the
+- **Ignored-content Preview visibility** — a fixed footer matching Source's `#END` row reports how
+  much Markdown the compiler left out, and `Expand all` / `Collapse all` set the view for the whole
+  Preview. Each region also shows or hides on its own from its marker, and the footer states a
+  mixed view exactly. Hidden blocks retain kind and source-line count, ignored inline content
+  becomes a circle-slash chip in place, and Source stays visible and editable. See the
   [Ignored Markdown Preview Toggle](docs/contributing/design-notes/Ignored%20Markdown%20Preview%20Toggle.md)
   note.
 
