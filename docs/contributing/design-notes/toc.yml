@@ -96,6 +96,8 @@
     href: Ignored Markdown Preview Toggle.md
   - name: Co-located Diagnostics Presentation
     href: Co-located Diagnostics Presentation.md
+  - name: Dialogue Graph — Region Fold
+    href: Dialogue Graph Region Fold.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion

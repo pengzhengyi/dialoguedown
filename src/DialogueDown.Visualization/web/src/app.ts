@@ -13,6 +13,7 @@ import type {
 import { createDetailPanel } from "./detail-panel";
 import { neighborsOf } from "./neighbors";
 import { regionDetailOf } from "./region-detail";
+import { regionOfBoxId } from "./region-fold";
 import { tintsOf } from "./region-bands";
 import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
@@ -209,7 +210,9 @@ export function runApp(
         const byId = new Map(stage.nodes.map((node) => [node.id, node]));
         const end = (id: string) => {
             const node = byId.get(id);
-            return { id, label: node?.label ?? id, category: node?.category };
+            // An end the drawing folded into a scene is named by that scene: the document has no
+            // node under that id, and "region:The Market" is not what a reader wrote.
+            return { id, label: node?.label ?? regionOfBoxId(id) ?? id, category: node?.category };
         };
         selectedNodeId = null;
         shownStage = stage;
@@ -558,11 +561,14 @@ export function runApp(
                 initialCamera: cameras.cameraFor(stage.title),
                 initialZoom: cameras.inheritedZoom(stage.title),
                 initialFold: cameras.foldFor(stage.title),
+                initialRegionFold: cameras.regionFoldFor(stage.title),
                 onCameraChange: (transform: CameraTransform, byUser: boolean) =>
                     byUser
                         ? cameras.adjustCamera(stage.title, transform)
                         : cameras.noteCamera(transform),
                 onFoldChange: (collapsed: string[]) => cameras.setFold(stage.title, collapsed),
+                onRegionFoldChange: (collapsed: string[]) =>
+                    cameras.setRegionFold(stage.title, collapsed),
                 onRevert: () => cameras.reset(stage.title),
             };
             if (isSemantic) {
@@ -699,6 +705,11 @@ export function runApp(
         const view = views[index];
         const key = keys[index];
         if (!view || !key) return;
-        view.applyView(cameras.cameraFor(key), cameras.foldFor(key), cameras.inheritedZoom(key));
+        view.applyView(
+            cameras.cameraFor(key),
+            cameras.foldFor(key),
+            cameras.inheritedZoom(key),
+            cameras.regionFoldFor(key),
+        );
     }
 }
