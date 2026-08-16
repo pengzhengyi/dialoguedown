@@ -2266,16 +2266,15 @@ g.node.entity-highlight text.label {
    status glyph, which is why this sits only on block regions. */
 .source-preview .dd-preview-ignored-region > .dd-ignored-region-status {
     position: absolute;
-    top: 0.42rem;
+    top: 0.3rem;
     left: 1.85rem;
+    display: grid;
+    place-items: center;
+    width: 1.15rem;
+    height: 1.15rem;
     color: var(--i);
     font-size: 0.72rem;
-    line-height: 1;
     pointer-events: none;
-}
-
-.source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-ignored-region-status {
-    top: 0.5rem;
 }
 
 /* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather
@@ -2305,8 +2304,8 @@ g.node.entity-highlight text.label {
 
 .source-preview
     .dd-preview-ignored-region.dd-ignored-region-hidden:not(.dd-preview-ignored-region-inline) {
-    min-height: 1.8rem;
-    padding: 0.25rem 0.55rem 0.25rem 3.1rem;
+    min-height: 1.75rem;
+    padding: 0.3rem 0.55rem 0.3rem 3.1rem;
 }
 
 .source-preview
@@ -2316,6 +2315,7 @@ g.node.entity-highlight text.label {
     content: attr(data-ignored-summary);
     color: var(--md-muted);
     font-size: 0.78rem;
+    line-height: 1.15rem;
 }
 
 .source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-preview-ignored {

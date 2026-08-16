@@ -96,7 +96,9 @@ Every surface that folds anything offers all four of these.
    whole surface **and discards every override**. A single toggle cannot name its action from a
    mixed state, which is exactly when a reader needs it most.
 3. **The state is stated exactly**, including mixed — `5 of 7 shown`, not a word that implies all
-   or nothing.
+   or nothing. Each surface counts in its own terms: the Preview says how much is *shown*, because
+   that is what a reader of the compiled result cares about, while the graph says how many scenes
+   are *folded*, which is what its commands act on.
 4. **Folding is not selecting.** A fold changes what is drawn, never what the reader has chosen,
    unless the fold hid the chosen thing.
 
@@ -165,7 +167,7 @@ Checklist:
 - [x] `Expand all` / `Collapse all` beside the legend's region group, both enabled when the stage
       has at least one region.
 - [x] Each command replaces the collapsed set outright.
-- [x] The legend states the current view, including mixed.
+- [x] The legend states the current view, including mixed, beside the group's own name.
 - [x] An all-command re-fits the camera; a single chevron does not.
 - [x] Selection survives, moving to the collapsed scene only when the fold hid it.
 

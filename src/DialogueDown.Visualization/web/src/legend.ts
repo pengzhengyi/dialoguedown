@@ -85,7 +85,7 @@ export function setRegionFoldState(legend: HTMLElement, folded: number, total: n
             ? "all open"
             : folded === total
               ? "all folded"
-              : `${total - folded} of ${total} open`;
+              : `${folded} of ${total} folded`;
 }
 
 /**
@@ -177,7 +177,9 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         toggle.type = "button";
         toggle.className = "legend-kind-toggle";
         toggle.setAttribute("aria-expanded", "true");
-        toggle.textContent = `${kind} ${rows.length === 1 ? "region" : "regions"}`;
+        // The "Regions" heading above already says what these are, so the group names only its
+        // kind. That keeps the row narrow enough for the state and both commands beside it.
+        toggle.textContent = kind;
 
         const body = document.createElement("div");
         body.className = "legend-kind-body";

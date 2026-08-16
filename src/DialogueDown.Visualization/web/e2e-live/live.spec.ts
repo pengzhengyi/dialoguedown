@@ -1169,7 +1169,7 @@ test("folds and opens every scene at once from the legend", async ({ page }) => 
     await stage
         .locator('g.region:has(g.region-fold[aria-label*="The Market"]) g.region-fold')
         .click();
-    await expect(state).toHaveText("1 of 2 open");
+    await expect(state).toHaveText("1 of 2 folded");
 
     await command("collapse").click();
     await expect(boxes).toHaveCount(2);
@@ -1180,7 +1180,7 @@ test("folds and opens every scene at once from the legend", async ({ page }) => 
     await stage
         .locator('g.region:has(g.region-fold[aria-label*="The Forest"]) g.region-fold')
         .click();
-    await expect(state).toHaveText("1 of 2 open");
+    await expect(state).toHaveText("1 of 2 folded");
 
     await command("expand").click();
     await expect(boxes).toHaveCount(0);
