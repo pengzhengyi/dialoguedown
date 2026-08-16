@@ -1,7 +1,9 @@
 # Collapsing Across the Report
 
 > [!IMPORTANT]
-> Status: **approved, in progress**. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
+> Status: **partly implemented**. Component 1 has shipped: every surface now folds with the same
+> glyph, and the Dialogue Graph can fold or open every scene at once. Component 2 is designed and
+> not yet built. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
 > (fold every scene at once) and [#286](https://github.com/pengzhengyi/dialoguedown/issues/286)
 > (teach the Source editor about ignored regions) into one model, then sequences them as two
 > components.
@@ -127,6 +129,11 @@ The Dialogue Graph draws SVG rather than HTML, so its chevron becomes an SVG `<t
 codicon font instead of a path — the font is declared for the whole document, so this is the same
 glyph, not a lookalike.
 
+Two surfaces beyond the three named here turned out to fold something too, and both joined the
+language: the legend's own group disclosure, and the file Explorer's folders. A submenu marker
+keeps its own chevron, because it points at a menu opening beside it rather than at content that
+folds away.
+
 **One exception, deliberately.** A collapsed inline ignored region is a chip barely wider than one
 glyph, and there is room for a status mark or an action mark, not both. It keeps `circle-slash`,
 because inline the reader's first question is *what is missing here*, and a bare chevron in the
@@ -152,19 +159,22 @@ The contract answers the issue's three open questions:
 
 Checklist:
 
-- [ ] Every per-item control across the report uses the shared chevron pair.
-- [ ] The Source gutter renders the shared chevrons rather than CodeMirror's defaults.
-- [ ] The scene band's chevron is the codicon glyph, drawn as SVG text.
-- [ ] `Expand all` / `Collapse all` beside the legend's region group, both enabled when the stage
+- [x] Every per-item control across the report uses the shared chevron pair.
+- [x] The Source gutter renders the shared chevrons rather than CodeMirror's defaults.
+- [x] The scene band's chevron is the codicon glyph, drawn as SVG text.
+- [x] `Expand all` / `Collapse all` beside the legend's region group, both enabled when the stage
       has at least one region.
-- [ ] Each command replaces the collapsed set outright.
-- [ ] The legend states the current view, including mixed.
-- [ ] An all-command re-fits the camera; a single chevron does not.
-- [ ] Selection survives, moving to the collapsed scene only when the fold hid it.
+- [x] Each command replaces the collapsed set outright.
+- [x] The legend states the current view, including mixed.
+- [x] An all-command re-fits the camera; a single chevron does not.
+- [x] Selection survives, moving to the collapsed scene only when the fold hid it.
 
 ## Component 2 — Ignored regions in Source
 
-Closes [#286](https://github.com/pengzhengyi/dialoguedown/issues/286). The larger piece: Source
+> [!NOTE]
+> Not yet implemented. Tracked by [#286](https://github.com/pengzhengyi/dialoguedown/issues/286).
+
+The larger piece: Source
 gains the **ignored region** as a unit it can fold, so both panes finally fold the same thing.
 
 Block regions can use CodeMirror's fold machinery. Inline regions cannot — a span inside a line is
@@ -271,8 +281,10 @@ there, not the mechanism that put it away.
 - **Browser tests** per surface: the per-item control keeps its box across a toggle, an
   all-command overrides individual choices, the stated view matches reality, and axe passes in a
   mixed view.
-- **A design-language test** asserts every per-item control resolves to the shared chevron pair,
-  so a new surface cannot quietly introduce a fifth rendering.
+- **A design-language test** reads the sources and fails if any module outside the shared one
+  names a chevron itself, so a new surface cannot quietly introduce another rendering. It covers
+  behavior rather than stylesheets: a CSS `::before` cannot call a helper, so the legend group's
+  disclosure names the codepoint directly.
 - **A cross-surface state test** is deliberately *absent*: the language is a shape each surface
   honors, and the panes are meant to differ.
 
