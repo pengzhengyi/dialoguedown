@@ -34,7 +34,7 @@
     <PackageReference Include="Generator.Equals" Version="4.0.2" PrivateAssets="all" />
     <PackageReference Include="Generator.Equals.Runtime" Version="4.0.2" />
     <PackageReference Include="Markdig" Version="1.3.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
     <PackageReference Include="Pidgin" Version="3.5.1" />
     <PackageReference Include="Superpower" Version="3.2.1" />
   </ItemGroup>
@@ -48,7 +48,7 @@
        parameters only from that AdditionalFile, not .editorconfig); .editorconfig
        sets the severities and scopes the rules to this project. -->
   <ItemGroup>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.31.0.145097" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.32.0.713" PrivateAssets="all" />
     <AdditionalFiles Include="SonarLint.xml" />
   </ItemGroup>
 
