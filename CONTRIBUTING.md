@@ -78,6 +78,35 @@ not warnings). The CLI and visualization projects are intentionally exempt.
 Use the `build: fast` task (analyzers off) for the inner loop, but run the
 normal analyzer-enabled `build`/`test` before pushing.
 
+### Adding or updating a NuGet package
+
+Package **versions are managed centrally**: every version for the whole solution
+is declared once in [`Directory.Packages.props`](Directory.Packages.props), and a
+project references a package by name only.
+
+```xml
+<!-- Directory.Packages.props — the version, once -->
+<PackageVersion Include="Markdig" Version="1.3.2" />
+
+<!-- any .csproj — the reference, no version -->
+<PackageReference Include="Markdig" />
+```
+
+A version in a `.csproj` is an error under central management, which is the
+point: two projects cannot drift onto different versions of the same package.
+Dependabot updates `Directory.Packages.props` directly, so a bump lands in one
+place for every project that uses it.
+
+A project that genuinely needs a different version says so out loud, with
+`VersionOverride` on its own `PackageReference`. Divergence stays possible; it
+just stops being something that can happen by accident.
+
+> [!IMPORTANT]
+> Do not enable `CentralPackageTransitivePinningEnabled`. It promotes pinned
+> transitive dependencies into the generated `.nuspec`, so the published
+> `DialogueDown` and `DialogueDown.Cli` packages would declare dependencies
+> nobody chose. A test guards this.
+
 ### Visualization frontend (`web/`)
 
 The compilation report's client is a self-contained TypeScript + Vite project in

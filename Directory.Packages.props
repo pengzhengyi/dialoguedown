@@ -1,0 +1,62 @@
+<!--
+  Central Package Management: every package version for the whole solution is declared once, here.
+
+  A project references a package by name only; its version comes from this file. That makes a version
+  drifting between projects impossible to express, rather than merely unlikely — which is how one test
+  project ended up on a different test runner than the other five (see #287).
+
+  A project that genuinely needs a different version says so out loud, with VersionOverride on its own
+  PackageReference. Divergence stays possible; it just stops being something that can happen by accident.
+
+  Do NOT set CentralPackageTransitivePinningEnabled here. It promotes pinned transitive dependencies
+  into the generated nuspec, so DialogueDown and DialogueDown.Cli would ship dependencies nobody
+  chose to declare — a change to the published package that no test or review would show. A test
+  guards this (see dev-dotnet-tasks.test.mjs).
+-->
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- Compiler and runtime libraries -->
+  <ItemGroup>
+    <PackageVersion Include="Markdig"                                               Version="1.3.2" />
+    <PackageVersion Include="Pidgin"                                                Version="3.5.1" />
+    <PackageVersion Include="Superpower"                                            Version="3.2.1" />
+    <PackageVersion Include="Tomlyn"                                                Version="2.10.1" />
+    <PackageVersion Include="Generator.Equals"                                      Version="4.0.2" />
+    <PackageVersion Include="Generator.Equals.Runtime"                              Version="4.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection"              Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
+  </ItemGroup>
+
+  <!-- Command-line interface -->
+  <ItemGroup>
+    <PackageVersion Include="Errata"              Version="0.16.0" />
+    <PackageVersion Include="Spectre.Console"     Version="0.57.2" />
+    <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
+  </ItemGroup>
+
+  <!-- Analyzers and build-time tooling -->
+  <ItemGroup>
+    <PackageVersion Include="SonarAnalyzer.CSharp"        Version="10.32.0.713" />
+    <PackageVersion Include="StyleCop.Analyzers"          Version="1.2.0-beta.556" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
+  </ItemGroup>
+
+  <!-- Testing -->
+  <ItemGroup>
+    <PackageVersion Include="xunit"                                     Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio"                 Version="4.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk"                    Version="18.9.0" />
+    <PackageVersion Include="coverlet.collector"                        Version="10.0.1" />
+    <PackageVersion Include="NSubstitute"                               Version="6.2.0" />
+    <PackageVersion Include="Bogus"                                     Version="35.6.5" />
+    <PackageVersion Include="NetArchTest.eNhancedEdition"               Version="1.4.5" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.9.0" />
+    <PackageVersion Include="Spectre.Console.Testing"                   Version="0.57.2" />
+    <PackageVersion Include="Spectre.Console.Cli.Testing"               Version="0.55.0" />
+  </ItemGroup>
+
+</Project>
