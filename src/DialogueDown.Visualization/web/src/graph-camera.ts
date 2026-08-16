@@ -21,6 +21,7 @@ export interface CameraTransform {
 export class GraphCameraStore {
     private readonly overrides = new Map<string, CameraTransform>();
     private readonly folds = new Map<string, string[]>();
+    private readonly regionFolds = new Map<string, string[]>();
     private current: CameraTransform | null = null;
 
     /**
@@ -46,6 +47,11 @@ export class GraphCameraStore {
         return this.folds.get(title) ?? [];
     }
 
+    /** The folded scene names remembered for a graph (empty when untouched). */
+    regionFoldFor(title: string): string[] {
+        return this.regionFolds.get(title) ?? [];
+    }
+
     /**
      * Record a reader-driven camera change: pin the graph's override and make it the
      * shared current camera that other untouched graphs inherit.
@@ -69,9 +75,15 @@ export class GraphCameraStore {
         this.folds.set(title, collapsed);
     }
 
+    /** Remember which scenes a reader has folded away in a graph. */
+    setRegionFold(title: string, collapsed: string[]): void {
+        this.regionFolds.set(title, collapsed);
+    }
+
     /** Revert a graph to defaults: drop its camera override and its fold memory. */
     reset(title: string): void {
         this.overrides.delete(title);
         this.folds.delete(title);
+        this.regionFolds.delete(title);
     }
 }

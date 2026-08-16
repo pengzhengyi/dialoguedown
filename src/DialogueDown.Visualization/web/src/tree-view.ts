@@ -25,6 +25,7 @@ import {
     type Point,
 } from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
+import { foldRegions, regionNodeIdFor, type FoldedGraph } from "./region-fold";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
 import { tooltipHtml } from "./text";
@@ -75,6 +76,24 @@ const LANE_STEP = 26;
 
 /** How far apart the approach rows of routes ending at one node sit. */
 const PORT_STEP = 9;
+
+/**
+ * A region band's header row: where its fold chevron and its name sit inside the room
+ * `region-bands.ts` leaves above the nodes.
+ *
+ * The chevron is tucked into the padded corner *above* the first node's dot rather than beside
+ * it: a folded band closes to one node's width, so a control on the node's own row would sit on
+ * top of it.
+ */
+const FOLD_CONTROL_X = 9;
+const FOLD_CONTROL_Y = 10;
+const REGION_NAME_INSET = 24;
+const REGION_HEADER_BASELINE = 17;
+/** The chevron's pointer target — small enough to clear the first node, large enough to hit. */
+const FOLD_HIT_SIZE = 14;
+/** The chevron pointing down over an open scene, and right over a shut one. */
+const CHEVRON_OPEN = "M-3.5,-1.75 L0,1.75 L3.5,-1.75";
+const CHEVRON_SHUT = "M-1.75,-3.5 L1.75,0 L-1.75,3.5";
 
 /** How finely a route is walked when deciding which one the pointer is nearest. */
 const PICK_SAMPLE_SPACING = 12;
@@ -136,7 +155,12 @@ export interface TreeView {
      * Show the given camera and fold. A `null` camera uses the default (root-centered)
      * framing. Call after the tab becomes visible so the framing uses real dimensions.
      */
-    applyView(camera: CameraTransform | null, fold: string[], zoom?: number | null): void;
+    applyView(
+        camera: CameraTransform | null,
+        fold: string[],
+        zoom?: number | null,
+        regionFold?: string[],
+    ): void;
 }
 
 /** Hooks that let the app remember and restore a graph's position across tabs. */
@@ -148,6 +172,8 @@ export interface TreeViewOptions {
     initialCamera?: CameraTransform | null;
     /** The collapsed node ids to restore on creation. */
     initialFold?: string[];
+    /** The folded region names to restore on creation. */
+    initialRegionFold?: string[];
     /** The scale to open at when there is no pinned camera — inherited, not the default. */
     initialZoom?: number | null;
     /**
@@ -167,6 +193,8 @@ export interface TreeViewOptions {
     onCameraChange?(transform: CameraTransform, byUser: boolean): void;
     /** Fired when the reader collapses or expands a node. */
     onFoldChange?(collapsed: string[]): void;
+    /** Fired when the reader folds or unfolds a scene, so the caller can remember it. */
+    onRegionFoldChange?(collapsed: string[]): void;
     /** Fired when the reader clicks an edge, so the caller can show the route it is. */
     onSelectEdge?(edge: DisplayEdge): void;
     /** Fired when the reader clicks a region band, so the caller can show the region it is. */
@@ -224,30 +252,40 @@ export function createTreeView(
     const {
         initialCamera = null,
         initialFold = [],
+        initialRegionFold = [],
         initialZoom = null,
         foldable = true,
         onCameraChange,
         onFoldChange,
+        onRegionFoldChange,
         onSelectEdge,
         onSelectRegion,
         onRevert,
     } = options;
-    const referenceEdges = stage.edges.filter((edge) => edge.kind === "Reference");
+    // Which scenes are folded away. A scene is the one grouping a reader may collapse without the
+    // drawing lying about itself: its membership comes from the document, not from which route
+    // happened to reach a node first. See `region-fold.ts`.
+    const collapsedRegions = new Set<string>(initialRegionFold);
 
-    // A stage whose edges mean different things colors them; the lookup is by the pair they join,
-    // which is unique because a node is reached from a given node at most once.
-    const edgeCategories = new Map(
-        stage.edges
-            .filter((edge) => edge.category)
-            .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.category!]),
-    );
+    // Every meaning the stage's edges can ever carry. Read from the stage rather than the folded
+    // graph, because a fold only ever merges edges: the markers defined once here therefore
+    // always cover what is drawn.
+    const edgeCategoriesPresent = [
+        ...new Set(stage.edges.flatMap((edge) => (edge.category ? [edge.category] : []))),
+    ];
+
+    // The graph as it is currently drawn — the stage's own when nothing is folded, and its
+    // quotient when a scene is. Everything downstream reads these rather than the stage.
+    let graph: FoldedGraph = { nodes: stage.nodes, edges: stage.edges };
+    let referenceEdges: DisplayEdge[] = [];
+    // The lookup is by the pair an edge joins, which is unique because a node is reached from a
+    // given node at most once — and the fold merges any pair a contraction would have doubled.
+    let edgeCategories = new Map<string, string>();
+    let root: TreeNode;
+    rebuildGraph();
+
     const categoryOfLink = (fromId: string, toId: string): string | undefined =>
         edgeCategories.get(`${fromId}->${toId}`);
-    const edgeCategoriesPresent = [...new Set(edgeCategories.values())];
-    const root = buildHierarchy(stage);
-    root.each((node) => {
-        (node as TreeNode)._children = (node as TreeNode).children;
-    });
 
     let selected: TreeNode | null = null;
     const dimmed = new Set<string>();
@@ -390,7 +428,9 @@ export function createTreeView(
         },
         selectById,
         selectEdgeBetween: (fromId, toId) => {
-            const edge = edgeBetween(fromId, toId);
+            // A row elsewhere names the document's own nodes; a folded scene draws them as its
+            // box, so the pair is read through the fold before the line is looked for.
+            const edge = edgeBetween(drawnId(fromId), drawnId(toId));
             if (edge) selectEdge(edge);
             return Boolean(edge);
         },
@@ -488,6 +528,10 @@ export function createTreeView(
      *
      * A scene names an area of the document, so it is written once around that area rather than
      * repeated under every line inside it — which is both quieter and one line shorter per node.
+     *
+     * The band answers a click by *selecting* the scene; folding it away is a different kind of
+     * act — it changes what is drawn, not what the reader is looking at — so it gets a control of
+     * its own, the chevron in the band's corner.
      */
     function drawRegions(
         nodes: readonly TreeNode[],
@@ -507,22 +551,82 @@ export function createTreeView(
         const entering = band.enter().append("g").attr("class", "region");
         entering
             .append("rect")
+            .attr("class", "region-band")
             // A region is a thing a reader can ask about, so the band it is drawn as answers.
             .on("click", (_event, datum) => selectRegion(datum.region));
         entering.append("text").attr("class", "region-name");
+        appendFoldControl(entering);
 
         const all = gRegions.selectAll<SVGGElement, ReturnType<typeof bandsOf>[number]>("g.region");
         all.attr("data-tint", (datum) => datum.tint);
-        all.select("rect")
+        all.classed("folded", (datum) => collapsedRegions.has(datum.region));
+        all.select("rect.region-band")
             .attr("x", (datum) => datum.x)
             .attr("y", (datum) => datum.y)
             .attr("width", (datum) => datum.width)
             .attr("height", (datum) => datum.height)
             .attr("rx", 10);
         all.select("text")
-            .attr("x", (datum) => datum.x + 12)
-            .attr("y", (datum) => datum.y + 17)
-            .text((datum) => datum.region);
+            .attr("x", (datum) => datum.x + REGION_NAME_INSET)
+            .attr("y", (datum) => datum.y + REGION_HEADER_BASELINE)
+            // A folded scene is named by the box it became, so the band does not say it twice.
+            .text((datum) => (collapsedRegions.has(datum.region) ? "" : datum.region));
+        positionFoldControls(all);
+    }
+
+    /**
+     * The band's own fold control: a chevron that shuts the scene away and opens it again,
+     * separate from the band's click so an inspection gesture never rearranges the drawing.
+     */
+    function appendFoldControl(
+        entering: Selection<SVGGElement, ReturnType<typeof bandsOf>[number], SVGGElement, unknown>,
+    ): void {
+        const control = entering
+            .append("g")
+            .attr("class", "region-fold")
+            .attr("role", "button")
+            .attr("tabindex", 0)
+            .on("click", (event: MouseEvent, datum) => {
+                event.stopPropagation();
+                toggleRegion(datum.region);
+            })
+            .on("keydown", (event: KeyboardEvent, datum) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                event.stopPropagation();
+                toggleRegion(datum.region);
+            });
+        control.append("rect").attr("class", "region-fold-hit");
+        control.append("path").attr("class", "region-chevron");
+        control.append("title");
+    }
+
+    /** Move each fold control to its band's corner and say which way it now points. */
+    function positionFoldControls(
+        bands: Selection<SVGGElement, ReturnType<typeof bandsOf>[number], SVGGElement, unknown>,
+    ): void {
+        const folded = (datum: { region: string }): boolean => collapsedRegions.has(datum.region);
+        const label = (datum: { region: string }): string =>
+            `${folded(datum) ? "Expand" : "Collapse"} scene ${datum.region}`;
+        const control = bands.select<SVGGElement>("g.region-fold");
+        control
+            .attr(
+                "transform",
+                (datum) => `translate(${datum.x + FOLD_CONTROL_X},${datum.y + FOLD_CONTROL_Y})`,
+            )
+            .attr("aria-expanded", (datum) => String(!folded(datum)))
+            .attr("aria-label", label);
+        control.select("title").text(label);
+        control
+            .select("rect")
+            .attr("x", -FOLD_HIT_SIZE / 2)
+            .attr("y", -FOLD_HIT_SIZE / 2)
+            .attr("width", FOLD_HIT_SIZE)
+            .attr("height", FOLD_HIT_SIZE)
+            .attr("rx", 3);
+        // Drawn rather than rotated: a rotation about a bounding box is reported inconsistently
+        // across engines, and two short paths say the same thing without asking the engine.
+        control.select("path").attr("d", (datum) => (folded(datum) ? CHEVRON_SHUT : CHEVRON_OPEN));
     }
 
     /**
@@ -590,7 +694,98 @@ export function createTreeView(
     }
 
     function edgeBetween(fromId?: string, toId?: string): DisplayEdge | undefined {
-        return stage.edges.find((edge) => edge.fromId === fromId && edge.toId === toId);
+        return graph.edges.find((edge) => edge.fromId === fromId && edge.toId === toId);
+    }
+
+    /* --- region fold --- */
+
+    /** The folded scene currently hiding this node, or `null` when it is drawn in its own right. */
+    function foldedOver(id: string): string | null {
+        const region = stage.nodes.find((node) => node.id === id)?.region;
+        return region !== undefined && collapsedRegions.has(region) ? region : null;
+    }
+
+    /** The id a node is drawn under: its own, or the box of the folded scene holding it. */
+    function drawnId(id: string): string {
+        const region = foldedOver(id);
+        return region === null ? id : regionNodeIdFor(region);
+    }
+
+    /** Whether this drawn node is the box a folded scene was contracted to. */
+    function isRegionBox(node: DisplayNode): boolean {
+        return node.region !== undefined && collapsedRegions.has(node.region);
+    }
+
+    /** Whether these are exactly the scenes already folded, so a view can be shown as it is. */
+    function sameRegions(regions: readonly string[]): boolean {
+        return (
+            regions.length === collapsedRegions.size &&
+            regions.every((region) => collapsedRegions.has(region))
+        );
+    }
+
+    /**
+     * Fold a scene away, or open it again.
+     *
+     * Folding is not a selection gesture, so the reader's current object survives it — unless the
+     * fold hid it, in which case the collapsed scene is where that node now is, and the selection
+     * moves there.
+     */
+    function toggleRegion(region: string): void {
+        if (collapsedRegions.has(region)) collapsedRegions.delete(region);
+        else collapsedRegions.add(region);
+
+        const keptNode = selected?.data.id ?? null;
+        const keptEdge = selectedEdge;
+        refold();
+        restoreSelection(keptNode, keptEdge);
+        onRegionFoldChange?.([...collapsedRegions]);
+    }
+
+    /** Rebuild and redraw for the scenes now folded, keeping whatever node folds still apply. */
+    function refold(): void {
+        const nodeFold = collapsedIds();
+        rebuildGraph();
+        setFold(nodeFold);
+        // The pointer's node may have gone with the fold — the box that was under it, or the
+        // interior that closed. Left pointing at a node the drawing no longer holds, the lineage
+        // spotlight would fade everything and light nothing.
+        focused = focused === null ? null : findNodeById(focused.data.id);
+        update();
+    }
+
+    /** Put the reader's current object back where the new drawing keeps it. */
+    function restoreSelection(
+        nodeId: string | null,
+        edge: { fromId: string; toId: string } | null,
+    ): void {
+        if (nodeId !== null) {
+            if (!selectById(nodeId)) selectRegionOf(nodeId);
+            return;
+        }
+        if (edge !== null) {
+            const drawn = edgeBetween(drawnId(edge.fromId), drawnId(edge.toId));
+            if (drawn) selectEdge(drawn);
+            else if (!selectRegionOf(edge.fromId)) selectRegionOf(edge.toId);
+            return;
+        }
+        applySelection();
+    }
+
+    /** Choose the folded scene now standing in for this node, and report whether one does. */
+    function selectRegionOf(id: string): boolean {
+        const region = foldedOver(id);
+        if (region !== null) selectRegion(region);
+        return region !== null;
+    }
+
+    /** Open a folded scene so a node deliberately navigated to is actually on screen. */
+    function unfoldRegionOver(id: string): void {
+        const region = foldedOver(id);
+        if (region === null) return;
+        collapsedRegions.delete(region);
+        refold();
+        onRegionFoldChange?.([...collapsedRegions]);
     }
 
     function clearHovered(): void {
@@ -668,14 +863,40 @@ export function createTreeView(
         );
     }
 
-    function buildHierarchy(stage: Stage): TreeNode {
+    function buildHierarchy(
+        nodes: readonly DisplayNode[],
+        edges: readonly DisplayEdge[],
+    ): TreeNode {
         const parentOf = new Map<string, string>();
-        for (const edge of stage.edges) {
+        for (const edge of edges) {
             if (edge.kind !== "Reference") parentOf.set(edge.toId, edge.fromId);
         }
         return stratify<DisplayNode>()
             .id((node) => node.id)
-            .parentId((node) => parentOf.get(node.id) ?? null)(stage.nodes) as unknown as TreeNode;
+            .parentId((node) => parentOf.get(node.id) ?? null)(
+            nodes as DisplayNode[],
+        ) as unknown as TreeNode;
+    }
+
+    /**
+     * Re-derives everything the drawing is built from, for the scenes currently folded.
+     *
+     * The fold is a change of graph, not a hiding of drawn elements: the hierarchy, the
+     * cross-links, and the edge meanings all belong to the graph the reader is looking at, so
+     * they are rebuilt together rather than patched apart.
+     */
+    function rebuildGraph(): void {
+        graph = foldRegions(stage.nodes, stage.edges, collapsedRegions);
+        referenceEdges = graph.edges.filter((edge) => edge.kind === "Reference");
+        edgeCategories = new Map(
+            graph.edges
+                .filter((edge) => edge.category)
+                .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.category!]),
+        );
+        root = buildHierarchy(graph.nodes, graph.edges);
+        root.each((node) => {
+            (node as TreeNode)._children = (node as TreeNode).children;
+        });
     }
 
     /* --- selection, filter, highlight --- */
@@ -703,6 +924,7 @@ export function createTreeView(
     // installed node — with its current source spans — rather than the stale node the click
     // captured.
     function selectById(id: string, options: NodeSelectOptions = {}): boolean {
+        if (options.reveal) unfoldRegionOver(id);
         const node = findNodeById(id);
         if (node === null) return false;
         if (options.reveal) unfoldOver(node);
@@ -742,6 +964,34 @@ export function createTreeView(
     // can never leave unsaved work behind.
     function guardSelect(node: TreeNode, options: NodeSelectOptions): void {
         applyNodeSelection(node, options);
+    }
+
+    /**
+     * Open the node an element stands for, resolved against the drawing as it is now.
+     *
+     * A drawn element keeps the node it was bound to when it entered, and folding a scene rebuilds
+     * the hierarchy under the same elements. Resolving by the node's own stable id means a click
+     * always acts on what the drawing holds today, not on what it held when the element appeared.
+     */
+    function openNodeById(id: string, options: NodeSelectOptions): void {
+        const node = findNodeById(id);
+        if (node !== null) openNode(node, options);
+    }
+
+    /** Spotlight the lineage of the node an element stands for, resolved as it is drawn now. */
+    function focusById(id: string | null): void {
+        setFocus(id === null ? null : findNodeById(id));
+    }
+
+    /**
+     * Open whatever the reader clicked on the drawing.
+     *
+     * The box a folded scene contracted to *is* that scene, so choosing it shows the scene — its
+     * border, its size, the text it covers — rather than a node standing in for one.
+     */
+    function openNode(node: TreeNode, options: NodeSelectOptions): void {
+        if (isRegionBox(node.data)) selectRegion(node.data.region!);
+        else guardSelect(node, options);
     }
 
     function applySelection(): void {
@@ -881,6 +1131,16 @@ export function createTreeView(
         if (!NAVIGATION_KEYS.includes(event.key)) return;
         event.preventDefault();
 
+        if (event.key === "Enter" || event.key === " ") {
+            // A scene is the graph's foldable thing, so the fold key acts on the scene the reader
+            // is on — the one under the pointer, else the one chosen. Reaching a folded scene's
+            // box and pressing Enter should open it, which is the whole point of the box.
+            const region = regionUnderKey();
+            if (region !== null) {
+                toggleRegion(region);
+                return;
+            }
+        }
         if (!selected) {
             select(root);
             scheduleDefaultView(++viewToken);
@@ -895,6 +1155,12 @@ export function createTreeView(
         if (next) {
             guardSelect(next, { center: true });
         }
+    }
+
+    /** The scene a fold key acts on: the box under the pointer, else the chosen scene. */
+    function regionUnderKey(): string | null {
+        if (focused !== null && isRegionBox(focused.data)) return focused.data.region!;
+        return selectedRegion;
     }
 
     function nextNode(key: string, node: TreeNode): TreeNode | null {
@@ -1057,6 +1323,8 @@ export function createTreeView(
             .attr("class", "node")
             // A scene or the document root gets the emphasized scene-backbone styling.
             .classed("scene", (d) => isSceneNode(d.data))
+            // The box a folded scene contracted to is that scene, not a node of it.
+            .classed("region-box", (d) => isRegionBox(d.data))
             .attr("data-tip", (d) => tooltipHtml(d.data))
             // A cross-linked node carries a scene/speaker key so the entity highlighter can
             // light it up with the matching table rows: a scene node *is* the entity
@@ -1065,15 +1333,15 @@ export function createTreeView(
             .attr("data-ref-key", (d) => d.data.refKey ?? null)
             // Spotlight this node's lineage while the pointer is over it. mouseenter/leave
             // (not over/out) fire once per node, so moving within the node does not re-trigger.
-            .on("mouseenter", (_event, d) => setFocus(d))
-            .on("mouseleave", () => setFocus(null));
+            .on("mouseenter", (_event, d) => focusById(d.data.id))
+            .on("mouseleave", () => focusById(null));
 
         group
             .append("circle")
             .attr("r", (d) => (isSceneNode(d.data) ? SCENE_NODE_RADIUS : CONTENT_NODE_RADIUS))
             .style("fill", (d) => colorOf(d.data.category))
             .on("click", (_event, d) => {
-                guardSelect(d, { toggle: foldable });
+                openNodeById(d.data.id, { toggle: foldable });
             });
 
         group
@@ -1106,7 +1374,7 @@ export function createTreeView(
             rect.setAttribute("y", "-12");
             rect.setAttribute("height", String(20 + d.data.attributes.length * 12));
             rect.addEventListener("click", () => {
-                guardSelect(d, {});
+                openNodeById(d.data.id, {});
             });
             this.insertBefore(rect, this.firstChild);
         });
@@ -1125,9 +1393,22 @@ export function createTreeView(
     }
 
     /** Show a camera and fold; a `null` camera uses the default (root-centered) framing. */
-    function applyView(camera: CameraTransform | null, fold: string[], zoom?: number | null): void {
+    function applyView(
+        camera: CameraTransform | null,
+        fold: string[],
+        zoom?: number | null,
+        regionFold?: string[],
+    ): void {
         inheritedZoom = zoom ?? null;
         const token = ++viewToken;
+        if (regionFold && !sameRegions(regionFold)) {
+            collapsedRegions.clear();
+            for (const region of regionFold) collapsedRegions.add(region);
+            rebuildGraph();
+            // The hierarchy is new, so the reader's node is looked up again in it rather than
+            // left pointing at the one the previous drawing held.
+            selected = selected === null ? null : findNodeById(selected.data.id);
+        }
         setFold(fold);
         update();
         if (camera) applyTransform(camera);
@@ -1137,7 +1418,7 @@ export function createTreeView(
     /** Revert this graph to defaults: drop remembered state, expand all, re-frame. */
     function revert(): void {
         onRevert?.();
-        applyView(null, []);
+        applyView(null, [], null, []);
     }
 
     /**

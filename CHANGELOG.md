@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **Fold a scene in the Dialogue Graph** — a chevron on each scene band shuts the scene away to a
+  single box that names it and counts what it holds, with the flow still passing through: routes
+  crossing its border re-point at the box and everything downstream stays where it was. The band's
+  own click still selects the scene, so inspecting one never rearranges the drawing. See the
+  [Dialogue Graph — Region Fold](docs/contributing/design-notes/Dialogue%20Graph%20Region%20Fold.md)
+  note.
+
 - **Ignored-content Preview visibility** — a fixed footer matching Source's `#END` row reports how
   much Markdown the compiler left out, and `Expand all` / `Collapse all` set the view for the whole
   Preview. Each region also shows or hides on its own from its marker, and the footer states a

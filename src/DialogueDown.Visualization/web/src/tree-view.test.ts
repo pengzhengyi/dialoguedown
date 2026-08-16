@@ -122,3 +122,324 @@ describe("createTreeView — selection by stable id", () => {
         expect(view.svg.querySelector("g.node.selected")).not.toBeNull();
     });
 });
+
+/**
+ * A graph with two scenes and a line through both, like the Dialogue Graph tab draws:
+ *
+ * `root → market.1 → market.2 → forest.1 → tail`
+ */
+function scenedStage(): Stage {
+    return {
+        title: "Dialogue Graph",
+        description: "",
+        nodes: [
+            { id: "root", label: "Document", attributes: [] },
+            { id: "m1", label: "Fresh apples!", attributes: [], region: "The Market" },
+            { id: "m2", label: "How much?", attributes: [], region: "The Market" },
+            { id: "f1", label: "Branches close in", attributes: [], region: "The Forest" },
+            { id: "tail", label: "End", attributes: [] },
+        ],
+        edges: [
+            { fromId: "root", toId: "m1", kind: "Child", category: "structure" },
+            { fromId: "m1", toId: "m2", kind: "Child", category: "succession" },
+            { fromId: "m2", toId: "f1", kind: "Child", category: "jump" },
+            { fromId: "f1", toId: "tail", kind: "Child", category: "succession" },
+        ],
+        regions: [
+            { name: "The Market", kind: "Scene" },
+            { name: "The Forest", kind: "Scene" },
+        ],
+    };
+}
+
+/** The band drawn for a named scene. */
+function bandOf(view: { svg: SVGSVGElement }, region: string): SVGGElement {
+    return [...view.svg.querySelectorAll<SVGGElement>("g.region")].find((band) =>
+        band.querySelector("g.region-fold")?.getAttribute("aria-label")?.includes(region),
+    )!;
+}
+
+/** Press a scene band's fold chevron, as a reader does. */
+function foldScene(view: { svg: SVGSVGElement }, region: string): void {
+    bandOf(view, region)
+        .querySelector("g.region-fold")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+}
+
+const drawnLabels = (view: { svg: SVGSVGElement }): string[] =>
+    [...view.svg.querySelectorAll("g.node text.label")].map((text) => text.textContent ?? "");
+
+describe("createTreeView — folding a scene", () => {
+    it("offers a fold control on every scene band, open to begin with", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        const controls = [...view.svg.querySelectorAll("g.region g.region-fold")];
+
+        expect(controls).toHaveLength(2);
+        expect(controls.map((control) => control.getAttribute("aria-expanded"))).toEqual([
+            "true",
+            "true",
+        ]);
+    });
+
+    it("replaces the scene's nodes with one box named for it", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        foldScene(view, "The Market");
+
+        expect(drawnLabels(view)).toEqual(["Document", "The Market", "Branches close in", "End"]);
+    });
+
+    it("keeps the flow through the folded scene, so what follows still stands where it did", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        foldScene(view, "The Market");
+
+        // root → box → forest → tail: one line fewer, and nothing downstream lost.
+        expect(view.svg.querySelectorAll("path.link").length).toBe(3);
+        expect(drawnLabels(view)).toContain("End");
+    });
+
+    it("says the scene is shut, on the band and on its control", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        foldScene(view, "The Market");
+
+        const band = bandOf(view, "The Market");
+        expect(band.classList.contains("folded")).toBe(true);
+        expect(band.querySelector("g.region-fold")!.getAttribute("aria-expanded")).toBe("false");
+        // The box carries the name now, so the band does not write it twice.
+        expect(band.querySelector("text.region-name")!.textContent).toBe("");
+    });
+
+    it("opens the scene again when the control is pressed a second time", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        foldScene(view, "The Market");
+        foldScene(view, "The Market");
+
+        expect(drawnLabels(view)).toEqual([
+            "Document",
+            "Fresh apples!",
+            "How much?",
+            "Branches close in",
+            "End",
+        ]);
+    });
+
+    it("folds each scene independently", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        foldScene(view, "The Market");
+        foldScene(view, "The Forest");
+
+        expect(drawnLabels(view)).toEqual(["Document", "The Market", "The Forest", "End"]);
+    });
+
+    it("tells the caller which scenes are folded, so a tab switch can restore them", () => {
+        const folds: string[][] = [];
+        const view = createTreeView(scenedStage(), () => {}, {
+            onRegionFoldChange: (collapsed) => folds.push(collapsed),
+        });
+
+        foldScene(view, "The Market");
+
+        expect(folds).toEqual([["The Market"]]);
+    });
+
+    it("opens with the scenes it was told were folded", () => {
+        const view = createTreeView(scenedStage(), () => {}, {
+            initialRegionFold: ["The Forest"],
+        });
+
+        expect(drawnLabels(view)).toEqual([
+            "Document",
+            "Fresh apples!",
+            "How much?",
+            "The Forest",
+            "End",
+        ]);
+    });
+
+    it("leaves the reader's chosen node alone when the fold did not hide it", () => {
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(scenedStage(), (node) => chosen.push(node));
+        view.selectById("tail");
+
+        foldScene(view, "The Market");
+
+        expect(chosen.at(-1)!.id).toBe("tail");
+        expect(view.svg.querySelector("g.node.selected")).not.toBeNull();
+    });
+
+    it("moves the selection to the scene that swallowed the chosen node", () => {
+        const regions: string[] = [];
+        const view = createTreeView(scenedStage(), () => {}, {
+            onSelectRegion: (region) => regions.push(region),
+        });
+        view.selectById("m2");
+
+        foldScene(view, "The Market");
+
+        expect(regions).toEqual(["The Market"]);
+        expect(bandOf(view, "The Market").classList.contains("selected")).toBe(true);
+    });
+
+    it("shows the scene, not a node, when its box is clicked", () => {
+        const regions: string[] = [];
+        const view = createTreeView(scenedStage(), () => {}, {
+            onSelectRegion: (region) => regions.push(region),
+        });
+        foldScene(view, "The Market");
+
+        view.svg
+            .querySelector("g.node.region-box circle")!
+            .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+        expect(regions.at(-1)).toBe("The Market");
+    });
+
+    it("opens a folded scene to show a node deliberately navigated to", () => {
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+        expect(drawnLabels(view)).not.toContain("How much?");
+
+        expect(view.selectById("m2", { reveal: true })).toBe(true);
+
+        expect(drawnLabels(view)).toContain("How much?");
+        expect(view.svg.querySelector("g.node.selected")).not.toBeNull();
+    });
+
+    it("leaves a folded scene shut when a selection is merely restored", () => {
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+
+        expect(view.selectById("m2")).toBe(false);
+
+        expect(drawnLabels(view)).not.toContain("How much?");
+    });
+
+    it("finds the route into a folded scene by the nodes the document named", () => {
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+
+        expect(view.selectEdgeBetween("root", "m1")).toBe(true);
+    });
+
+    it("restores the folds an applyView asks for", () => {
+        const view = createTreeView(scenedStage(), () => {});
+
+        view.applyView(null, [], null, ["The Forest"]);
+
+        expect(drawnLabels(view)).toContain("The Forest");
+        expect(drawnLabels(view)).not.toContain("Branches close in");
+    });
+});
+
+describe("createTreeView — the fold control keeps to its own corner", () => {
+    it("dresses the band and the control in classes of their own", () => {
+        // The stylesheet paints a folded band with a broken edge. A rule reaching every rect
+        // inside the band would dress the control's invisible target in it too, drawing a box
+        // around the chevron that reads as a stray outline.
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+        const band = bandOf(view, "The Market");
+
+        expect(band.querySelector("rect.region-band")).not.toBeNull();
+        expect(band.querySelector("g.region-fold rect.region-fold-hit")).not.toBeNull();
+        expect(band.querySelectorAll("rect.region-band")).toHaveLength(1);
+    });
+
+    it("keeps the control clear of the node beneath it, even folded to one box", () => {
+        // A folded band closes to a single node's width, so a control on the node's row would
+        // sit on top of its dot and its count.
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+
+        expect(controlBottomOf(view, "The Market")).toBeLessThan(boxTopOf(view));
+    });
+});
+
+/** How far down the fold control's pointer target reaches, in drawing coordinates. */
+function controlBottomOf(view: { svg: SVGSVGElement }, region: string): number {
+    const control = bandOf(view, region).querySelector("g.region-fold")!;
+    const [, y] = /translate\(([-\d.]+),([-\d.]+)\)/
+        .exec(control.getAttribute("transform")!)!
+        .slice(1);
+    const hit = control.querySelector("rect.region-fold-hit")!;
+    return Number(y) + Number(hit.getAttribute("y")) + Number(hit.getAttribute("height"));
+}
+
+/** The top of the folded box's own dot, in the same coordinates. */
+function boxTopOf(view: { svg: SVGSVGElement }): number {
+    const box = view.svg.querySelector("g.node.region-box")!;
+    const [, y] = /translate\(([-\d.]+),([-\d.]+)\)/.exec(box.getAttribute("transform")!)!.slice(1);
+    return Number(y) - Number(box.querySelector("circle")!.getAttribute("r"));
+}
+
+describe("createTreeView — folding a scene from the keyboard", () => {
+    const press = (key: string) => new KeyboardEvent("keydown", { key });
+
+    /** Put the pointer on a drawn node, as moving over it does. */
+    function hover(view: { svg: SVGSVGElement }, label: string): void {
+        [...view.svg.querySelectorAll("g.node")]
+            .find((node) => node.textContent?.includes(label))!
+            .dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+    }
+
+    it("opens the folded box the pointer rests on", () => {
+        // Reaching a shut scene and pressing Enter should open it — that is what the box is for.
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+        hover(view, "The Market");
+
+        view.handleKey(press("Enter"));
+
+        expect(drawnLabels(view)).toContain("Fresh apples!");
+    });
+
+    it("opens the folded box on Space too, not only Enter", () => {
+        const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
+        hover(view, "The Market");
+
+        view.handleKey(press(" "));
+
+        expect(drawnLabels(view)).toContain("Fresh apples!");
+    });
+
+    it("does not shut a scene under a reader resting on one of its lines", () => {
+        // The fold key acts on a scene the reader is *on as a thing* — its box, or the scene they
+        // chose. Hovering a line and pressing Space must not take the whole scene away with it.
+        const view = createTreeView(scenedStage(), () => {});
+        hover(view, "Fresh apples!");
+
+        view.handleKey(press(" "));
+
+        expect(drawnLabels(view)).toContain("Fresh apples!");
+    });
+
+    it("folds the scene the reader chose, when the pointer is over nothing", () => {
+        const view = createTreeView(scenedStage(), () => {});
+        view.selectRegion("The Market");
+
+        view.handleKey(press("Enter"));
+
+        expect(drawnLabels(view)).toContain("The Market");
+        expect(drawnLabels(view)).not.toContain("Fresh apples!");
+    });
+
+    it("stops fading the drawing once the node the pointer was on has gone", () => {
+        // The spotlight follows the pointer's node. Folded away, a stale one would dim every
+        // other node while lighting none of them.
+        const view = createTreeView(scenedStage(), () => {});
+        hover(view, "Fresh apples!");
+        expect(view.svg.classList.contains("has-focus")).toBe(true);
+
+        foldScene(view, "The Market");
+
+        expect(view.svg.classList.contains("has-focus")).toBe(false);
+    });
+
+    it("leaves a stage with no scenes to its own keys", () => {
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {});
+        view.selectById("root");
+
+        view.handleKey(press("Enter"));
+
+        expect(view.svg.querySelectorAll("g.node")).toHaveLength(1); // the root, folded as before
+    });
+});
