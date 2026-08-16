@@ -2601,14 +2601,13 @@ svg.tree {
 }
 
 .region-chevron {
-    fill: none;
-    stroke: var(--pico-muted-color);
-    stroke-width: 1.6px;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: var(--pico-muted-color);
+    font-family: codicon, sans-serif;
+    font-size: 11px;
     opacity: 0.55;
     pointer-events: none;
     transition: opacity 0.12s ease;
+    user-select: none;
 }
 
 .region:hover .region-chevron,
