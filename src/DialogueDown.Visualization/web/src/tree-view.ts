@@ -31,7 +31,7 @@ import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
 import { tooltipHtml } from "./text";
 import { clipToWidth } from "./clip-text";
-import { createLegend } from "./legend";
+import { createLegend, regionCounts, setRegionFoldState } from "./legend";
 import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
 
 /** A laid-out hierarchy node augmented with collapse state (`_children`). */
@@ -395,6 +395,7 @@ export function createTreeView(
         onRevert: () => revert(),
     });
 
+    const foldableRegions = [...regionCounts(stage.nodes).keys()];
     const legend = createLegend(stage, {
         onToggle: (category, isDimmed) => {
             if (isDimmed) dimmed.add(category);
@@ -403,6 +404,13 @@ export function createTreeView(
         },
         onHover: (category) => highlightCategory(category),
         onLeave: () => clearHighlight(),
+        regionFold:
+            foldableRegions.length > 0
+                ? {
+                      onExpandAll: () => foldEveryRegion([]),
+                      onCollapseAll: () => foldEveryRegion(foldableRegions),
+                  }
+                : undefined,
     });
 
     // The column step is wide enough for a full-width label plus the lead-out its outgoing line
@@ -412,6 +420,7 @@ export function createTreeView(
     const at = (node: { x: number; y: number }): Point => ({ x: node.y, y: node.x });
 
     applyView(initialCamera, initialFold, initialZoom);
+    reportRegionFold();
 
     return {
         svg: svg.node()!,
@@ -744,6 +753,27 @@ export function createTreeView(
         refold();
         restoreSelection(keptNode, keptEdge);
         onRegionFoldChange?.([...collapsedRegions]);
+        reportRegionFold();
+    }
+
+    /**
+     * A command over every region, rather than a fold of one. It replaces the whole set outright,
+     * so no scene keeps an exception, and it re-frames: folding everything shrinks the drawing far
+     * enough that leaving the camera put would leave the reader looking at empty canvas. A single
+     * fold deliberately does neither.
+     */
+    function foldEveryRegion(regions: readonly string[]): void {
+        const keptNode = selected?.data.id ?? null;
+        const keptEdge = selectedEdge;
+        applyView(null, collapsedIds(), null, [...regions]);
+        restoreSelection(keptNode, keptEdge);
+        onRegionFoldChange?.([...collapsedRegions]);
+        reportRegionFold();
+    }
+
+    /** Tell the legend how the regions stand, so a mixed view is stated rather than implied. */
+    function reportRegionFold(): void {
+        setRegionFoldState(legend, collapsedRegions.size, foldableRegions.length);
     }
 
     /** Rebuild and redraw for the scenes now folded, keeping whatever node folds still apply. */

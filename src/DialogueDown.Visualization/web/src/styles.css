@@ -3001,15 +3001,60 @@ svg.tree.has-focus .link:not(.related) {
     cursor: pointer;
 }
 
+/* The legend group's own disclosure speaks the report's one fold language: the same chevron the
+   editors, the Preview, and the scene bands use, rather than a text arrow of its own. */
 .legend-kind-toggle::before {
-    content: "▾";
-    font-size: 0.6rem;
+    content: "\eab4"; /* codicon-chevron-down */
+    font-family: codicon, sans-serif;
+    font-size: 0.62rem;
     line-height: 1;
-    transition: transform 0.1s ease;
 }
 
 .legend-kind-toggle[aria-expanded="false"]::before {
-    transform: rotate(-90deg);
+    content: "\eab6"; /* codicon-chevron-right */
+}
+
+/* The heading names what the commands act on, so the two sit on its row with the current view
+   stated between them. */
+.legend-kind-header {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.legend-kind-header .legend-kind-toggle {
+    width: auto;
+}
+
+.legend-kind-state {
+    margin-right: auto;
+    color: var(--dd-chrome-muted);
+    font-size: 0.68rem;
+    white-space: nowrap;
+}
+
+.legend-fold-command {
+    --pico-background-color: inherit;
+
+    display: grid;
+    flex: 0 0 1.25rem;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pico-muted-color);
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.legend-fold-command:hover,
+.legend-fold-command:focus-visible {
+    background: color-mix(in srgb, var(--pico-muted-color) 16%, transparent);
+    color: var(--pico-color);
 }
 
 .legend-kind-body {
