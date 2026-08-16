@@ -97,6 +97,16 @@ point: two projects cannot drift onto different versions of the same package.
 Dependabot updates `Directory.Packages.props` directly, so a bump lands in one
 place for every project that uses it.
 
+A project that genuinely needs a different version says so out loud, with
+`VersionOverride` on its own `PackageReference`. Divergence stays possible; it
+just stops being something that can happen by accident.
+
+> [!IMPORTANT]
+> Do not enable `CentralPackageTransitivePinningEnabled`. It promotes pinned
+> transitive dependencies into the generated `.nuspec`, so the published
+> `DialogueDown` and `DialogueDown.Cli` packages would declare dependencies
+> nobody chose. A test guards this.
+
 ### Visualization frontend (`web/`)
 
 The compilation report's client is a self-contained TypeScript + Vite project in

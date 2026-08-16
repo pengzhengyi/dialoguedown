@@ -67,3 +67,27 @@ test("local .NET test guidance parallelizes projects while CI and coverage stay 
         assert.doesNotMatch(workflow, /dotnet test DialogueDown\.sln[^\n]*-m:3/);
     }
 });
+
+test("package versions are managed centrally, without pinning transitives into the published packages", () => {
+    // Two projects cannot drift onto different versions of one package if only one file states
+    // versions — the failure that left a test project on its own test runner (#287).
+    const central = readFileSync(resolve(repositoryRoot, "Directory.Packages.props"), "utf8");
+    assert.match(central, /<ManagePackageVersionsCentrally>true<\/ManagePackageVersionsCentrally>/);
+
+    // Transitive pinning promotes pinned transitives into the generated nuspec, so enabling it
+    // would widen what DialogueDown and DialogueDown.Cli declare to their consumers — a change to
+    // the published packages that nothing else here would surface.
+    for (const [path, text] of [
+        ["Directory.Packages.props", central],
+        [
+            "Directory.Build.props",
+            readFileSync(resolve(repositoryRoot, "Directory.Build.props"), "utf8"),
+        ],
+    ]) {
+        assert.doesNotMatch(
+            text,
+            /<CentralPackageTransitivePinningEnabled>\s*true/i,
+            `${path} must not pin transitive dependencies: both shipped packages would declare them`,
+        );
+    }
+});
