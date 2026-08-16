@@ -16,6 +16,7 @@
     --md-link: #0969da;
     --md-code: #0550ae;
     --md-muted: #6e7781;
+    --dd-chrome-muted: #57606a;
     --cm-selection: rgb(20 100 210 / 22%);
     --problem-text: #24292f;
     --problem-muted: #57606a;
@@ -96,6 +97,7 @@
         --md-link: #79c0ff;
         --md-code: #a5d6ff;
         --md-muted: #8b949e;
+        --dd-chrome-muted: #8b949e;
         --cm-selection: rgb(100 165 255 / 35%);
         --problem-text: #c9d1d9;
         --problem-muted: #8b949e;
@@ -132,6 +134,7 @@
     --md-link: #79c0ff;
     --md-code: #a5d6ff;
     --md-muted: #8b949e;
+    --dd-chrome-muted: #8b949e;
     --cm-selection: rgb(100 165 255 / 35%);
     --problem-text: #c9d1d9;
     --problem-muted: #8b949e;
@@ -2189,15 +2192,15 @@ g.node.entity-highlight text.label {
 
 /* Mirror the Source editor's semantic cue in the rendered Markdown. These regions come from
    compiler-projected IgnoredMarkdown spans, not HTML element types, so a future project policy
-   that keeps tables or code blocks automatically leaves them at full strength here too. The eye
-   sticker is persistent; the tint and glow appear on hover, matching the blockquote region
-   language without boxing authoring aids into permanent cards. */
+   that keeps tables or code blocks automatically leaves them at full strength here too. The
+   marker leads the region as a control; the tint and glow appear on hover, matching the
+   blockquote region language without boxing authoring aids into permanent cards. */
 .source-preview .dd-preview-ignored-region {
     --i: var(--md-muted);
 
     position: relative;
     margin: 0.55rem 0;
-    padding: 0.4rem 0.45rem 0.3rem 0.75rem;
+    padding: 0.4rem 0.45rem 0.3rem 2rem;
     border-left: 3px solid color-mix(in srgb, var(--i) 68%, transparent);
     border-radius: 3px;
     transition:
@@ -2212,11 +2215,11 @@ g.node.entity-highlight text.label {
     box-shadow: 0 1px 12px color-mix(in srgb, var(--i) 22%, transparent);
 }
 
-.source-preview .dd-preview-ignored-region::after,
+.source-preview .dd-preview-ignored-region > .dd-ignored-region-toggle,
 .source-preview .dd-preview-control-region::after {
     position: absolute;
     top: 0.3rem;
-    right: 0.35rem;
+    left: 0.45rem;
     display: grid;
     place-items: center;
     width: 1.15rem;
@@ -2229,8 +2232,25 @@ g.node.entity-highlight text.label {
         sans-serif;
 }
 
-.source-preview .dd-preview-ignored-region::after {
-    content: "\eabd"; /* codicon-circle-slash */
+/* The marker is the region's own control rather than a sticker beside one: a second glyph would
+   double the width of an inline chip and break the sentence it sits in. What separates it from
+   the static conditional-dialogue marker is that it is a real button — focusable, named, and
+   reporting its pressed state — so pointer and keyboard users meet one control per region. */
+.source-preview .dd-preview-ignored-region > .dd-ignored-region-toggle {
+    /* Pico redefines --pico-background-color to its primary accent on every button, which would
+       tint the marker's surface. Inheriting it again keeps the control mixed against the page. */
+    --pico-background-color: inherit;
+
+    z-index: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+}
+
+.source-preview .dd-ignored-region-toggle:hover,
+.source-preview .dd-ignored-region-toggle:focus-visible {
+    background: color-mix(in srgb, var(--i) 26%, var(--pico-background-color));
 }
 
 .source-preview .dd-preview-ignored-region > .dd-preview-ignored {
@@ -2241,48 +2261,54 @@ g.node.entity-highlight text.label {
     opacity: 0.72;
 }
 
-.source-preview .dd-preview-ignored-region-inline {
-    display: inline-block;
-    margin: 0;
-    padding: 0 1.55rem 0 0.2rem;
+/* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather
+   than the link accent. Dimming an accent color as well pushes it under the contrast floor,
+   which matters now that a writer can leave one region shown while the rest stay hidden. */
+.source-preview a.dd-preview-ignored {
+    opacity: 1;
+    color: var(--md-muted);
 }
 
-.source-preview.ignored-preview-collapsed
-    .dd-preview-ignored-region:not(.dd-preview-ignored-region-inline) {
+.source-preview .dd-preview-ignored-region-inline {
+    display: inline-block;
+
+    /* Hold one line box even with the content hidden, so collapsing does not drop the marker onto
+       the text baseline and move it away from the pointer. */
+    min-height: 1lh;
+    margin: 0;
+    padding: 0 0.2rem 0 1.55rem;
+    vertical-align: middle;
+}
+
+.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-toggle {
+    top: 50%;
+    left: 0.2rem;
+    transform: translateY(-50%);
+}
+
+.source-preview
+    .dd-preview-ignored-region.dd-ignored-region-hidden:not(.dd-preview-ignored-region-inline) {
     min-height: 1.8rem;
     padding: 0.25rem 0.55rem 0.25rem 2rem;
 }
 
-.source-preview.ignored-preview-collapsed
-    .dd-preview-ignored-region:not(.dd-preview-ignored-region-inline)::before {
+.source-preview
+    .dd-preview-ignored-region.dd-ignored-region-hidden:not(
+        .dd-preview-ignored-region-inline
+    )::before {
     content: attr(data-ignored-summary);
     color: var(--md-muted);
     font-size: 0.78rem;
 }
 
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region::after {
-    top: 0.37rem;
-    right: auto;
-    left: 0.45rem;
-}
-
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region > .dd-preview-ignored {
+.source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-preview-ignored {
     display: none;
 }
 
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region-inline {
-    display: inline-grid;
-    place-items: center;
-    width: 1.2rem;
-    height: 1.2rem;
-    margin: 0 0.08rem;
-    padding: 0;
-    border-left: 0;
-    vertical-align: -0.15em;
-}
-
-.source-preview.ignored-preview-collapsed .dd-preview-ignored-region-inline::after {
-    position: static;
+/* Hiding an inline region collapses it onto the marker's own gutter, so the chip appears exactly
+   where the marker already was and the control does not move out from under the pointer. */
+.source-preview .dd-preview-ignored-region-inline.dd-ignored-region-hidden {
+    padding-right: 0;
 }
 
 .dd-ignored-preview-footer {
@@ -2309,18 +2335,19 @@ g.node.entity-highlight text.label {
 
 .dd-ignored-preview-state {
     overflow: hidden;
-    color: var(--pico-muted-color);
+    margin-right: auto;
+    color: var(--dd-chrome-muted);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.dd-ignored-preview-toggle {
+.dd-ignored-preview-command {
     display: grid;
     flex: 0 0 1.65rem;
     place-items: center;
     width: 1.65rem;
     height: 1.65rem;
-    margin: 0 0 0 auto;
+    margin: 0;
     padding: 0;
     border: 0;
     border-radius: 4px;
@@ -2328,12 +2355,12 @@ g.node.entity-highlight text.label {
     color: var(--md-muted);
 }
 
-.dd-ignored-preview-toggle:hover:not(:disabled),
-.dd-ignored-preview-toggle:focus-visible {
+.dd-ignored-preview-command:hover:not(:disabled),
+.dd-ignored-preview-command:focus-visible {
     background: color-mix(in srgb, var(--md-muted) 10%, transparent);
 }
 
-.dd-ignored-preview-toggle:disabled {
+.dd-ignored-preview-command:disabled {
     cursor: default;
     opacity: 0.35;
 }
@@ -2347,6 +2374,7 @@ g.node.entity-highlight text.label {
 
     top: 0.2rem;
     right: 0.3rem;
+    left: auto;
     content: "\eb32"; /* codicon-question */
 }
 
@@ -2526,8 +2554,11 @@ svg.tree {
 
 /* A region — a scene — drawn as the ground its nodes stand on, named once at its top-left
    instead of repeated under every node inside it. The tints are faint on purpose: this is the
-   backdrop, and the flow drawn over it has to stay the thing the eye follows. */
-.region rect {
+   backdrop, and the flow drawn over it has to stay the thing the eye follows.
+
+   Every rule here names the band's own rect. A bare `.region rect` would also claim the fold
+   control's hit rect inside it, dressing an invisible target in the band's stroke. */
+.region-band {
     fill: var(--dd-region-tint);
     stroke: var(--dd-region-tint-edge);
     stroke-width: 1px;
@@ -2536,8 +2567,8 @@ svg.tree {
 
 /* A region answers the pointer the way its nodes do: a firmer edge while it is hovered or while
    a row elsewhere names it. */
-.region rect:hover,
-.region.highlight rect {
+.region-band:hover,
+.region.highlight .region-band {
     stroke-width: 2px;
 }
 
@@ -2552,6 +2583,55 @@ svg.tree {
     text-transform: uppercase;
     fill: var(--pico-muted-color);
     pointer-events: none;
+}
+
+/* The band's own fold control. Folding is a different act from selecting the scene — it changes
+   what is drawn, not what the reader is looking at — so it is a control of its own rather than a
+   second meaning for the band's click. It sits in the padded corner above the first node's dot,
+   because a folded band closes to one node's width. The chevron is quiet until the band is
+   touched, so a drawing full of scenes is not also full of buttons. */
+.region-fold {
+    cursor: pointer;
+}
+
+.region-fold-hit {
+    fill: transparent;
+    stroke: none;
+    cursor: pointer;
+}
+
+.region-chevron {
+    fill: none;
+    stroke: var(--pico-muted-color);
+    stroke-width: 1.6px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.55;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+
+.region:hover .region-chevron,
+.region-fold:focus-visible .region-chevron,
+.region.folded .region-chevron {
+    opacity: 1;
+}
+
+.region-fold:focus-visible {
+    outline: none;
+}
+
+.region-fold:focus-visible .region-fold-hit {
+    stroke: var(--pico-primary);
+    stroke-width: 1.5px;
+}
+
+/* A folded scene keeps its tint but states its edge, so the box reads as a scene shut rather
+   than as a scene that happens to hold one node. */
+.region.folded .region-band {
+    stroke: var(--dd-region-mark);
+    stroke-width: 1.5px;
+    stroke-dasharray: 5 3;
 }
 
 [data-tint="0"] {
@@ -2652,7 +2732,7 @@ svg.tree {
     stroke-width: 3px;
 }
 
-.region.selected rect {
+.region.selected .region-band {
     stroke-width: 2.5px;
     stroke-dasharray: 6 3;
 }
@@ -2669,6 +2749,20 @@ svg.tree {
    block. Placed before the collapsed/selected rules so those states still win when active. */
 .node.scene circle {
     stroke-width: 2px;
+}
+
+/* The box a folded scene was contracted to. It keeps the scene circle's structural weight and
+   states, with a broken ring, that what it stands for is shut — the same "this is folded away"
+   language the dashed band around it speaks. Placed before the collapsed/selected rules so those
+   states still win when active. */
+.node.region-box circle {
+    stroke: var(--pico-muted-color);
+    stroke-width: 2px;
+    stroke-dasharray: 3 2;
+}
+
+.node.region-box text.label {
+    font-weight: 600;
 }
 
 .node.collapsed circle {
@@ -4129,7 +4223,7 @@ body.zen .config-view > .config-source {
 }
 
 .drawer-tab:not(.active) {
-    /* Explicit, and with no transition: the framework animates border colours on buttons, so
+    /* Explicit, and with no transition: the framework animates border colors on buttons, so
        the tab just left kept a fading underline that read as a second selected tab. */
     border-bottom-color: transparent;
     transition: none;

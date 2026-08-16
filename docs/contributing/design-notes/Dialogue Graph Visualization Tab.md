@@ -227,6 +227,7 @@ document. The tab now rests on client work of its own:
 | A scene is an area | `region-bands.ts` draws it as a tinted band named once, replacing a `scene:` line under every node |
 | Reading the flow as text | `neighbors.ts` and `region-detail.ts` answer what leads here, what it leads to, and what crosses a region's border |
 | Choosing a thing | A node, a route, or a region is the reader's current object — and only one at a time |
+| Shutting a scene away | `region-fold.ts` contracts a region to one box the flow still passes through — see [Dialogue Graph — Region Fold](./Dialogue%20Graph%20Region%20Fold.md) |
 
 ### Reviewing a visual change
 

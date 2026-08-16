@@ -1071,3 +1071,76 @@ test("shows each route in the legend as the line it actually is", async ({ page 
     const width = (await legend.locator(".edge-swatch").first().boundingBox())!.width;
     expect(width).toBeGreaterThanOrEqual(48);
 });
+
+test("folds a scene in the graph to a single box the flow still passes through", async ({
+    page,
+}) => {
+    // A scene is the one grouping a reader may collapse without the drawing lying about itself.
+    // Folded, its lines go with it and everything downstream stays exactly where it was.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Market",
+            "",
+            "Trader: Apples here.",
+            "",
+            "Alice: How much?",
+            "",
+            "=> [The Forest](#the-forest)",
+            "",
+            "# The Forest",
+            "",
+            "Alice: Dark trees.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    // The panels floating over the canvas must not intercept a press aimed at a band's corner.
+    await page.addStyleTag({
+        content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
+    });
+    const stage = page.locator("section.stage.active");
+
+    // A node's drawn label is clipped to a *measured* budget, so what is rendered depends on the
+    // runner's fonts. `data-label` keeps the label as written, so what follows asserts the fold
+    // rather than a font.
+    const named = (text: string) => stage.locator(`g.node:has(text.label[data-label*="${text}"])`);
+    const nodes = stage.locator("g.node");
+    const box = stage.locator("g.node.region-box");
+
+    await expect(named("Apples here")).toHaveCount(1);
+    await expect(named("Dark trees")).toHaveCount(1);
+    const drawnBefore = await nodes.count();
+
+    const market = stage.locator('g.region:has(g.region-fold[aria-label*="The Market"])');
+    await market.locator("g.region-fold").click();
+
+    // The scene's own lines are gone, replaced by one box naming it and counting what it holds.
+    await expect(named("Apples here")).toHaveCount(0);
+    await expect(named("How much")).toHaveCount(0);
+    await expect(box).toHaveCount(1);
+    await expect(box.locator('text.label[data-label="The Market"]')).toHaveCount(1);
+    await expect(market.locator("g.region-fold")).toHaveAttribute("aria-expanded", "false");
+
+    // The box replaced exactly the nodes it says it holds — no more, and none left behind.
+    const held = digitsOf(await box.locator("text.attr").getAttribute("data-label"));
+    await expect(nodes).toHaveCount(drawnBefore - Number(held) + 1);
+
+    // The flow passes through it: the scene it led to is still drawn, and the route out of the
+    // folded scene now leaves the box.
+    await expect(named("Dark trees")).toHaveCount(1);
+    await expect(stage.locator('path.link[data-from-id^="region:"]')).toHaveCount(1);
+
+    await market.locator("g.region-fold").click();
+
+    await expect(named("Apples here")).toHaveCount(1);
+    await expect(box).toHaveCount(0);
+    await expect(nodes).toHaveCount(drawnBefore);
+    await expect(market.locator("g.region-fold")).toHaveAttribute("aria-expanded", "true");
+});
+
+/** The number written in an attribute line such as `nodes: 8`. */
+function digitsOf(text: string | null): string {
+    return (text ?? "").replace(/\D/g, "");
+}

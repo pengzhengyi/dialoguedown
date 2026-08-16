@@ -170,22 +170,23 @@ function documentParser(source: string, semantics: PreviewSemantics): Marked {
             .map((span) => normalizeMarkdown(source.slice(span.start, span.end))),
     );
     const parser = new Marked();
+    const regionKey = createRegionKeys();
     parser.use(gfmHeadingId(), mermaidCodeBlocks, markdownLinks, {
         extensions: [
             decoratedToken("table", ignoredSource, (token, render) =>
-                ignoredRegion(token, render.table(token as Tokens.Table)),
+                ignoredRegion(token, render.table(token as Tokens.Table), regionKey),
             ),
             decoratedToken("code", ignoredSource, (token, render) =>
-                ignoredRegion(token, render.code(token as Tokens.Code)),
+                ignoredRegion(token, render.code(token as Tokens.Code), regionKey),
             ),
             decoratedToken("hr", ignoredSource, (token, render) =>
-                ignoredRegion(token, render.hr(token as Tokens.Hr)),
+                ignoredRegion(token, render.hr(token as Tokens.Hr), regionKey),
             ),
             decoratedToken("html", ignoredSource, (token, render) =>
-                ignoredRegion(token, render.html(token as Tokens.HTML)),
+                ignoredRegion(token, render.html(token as Tokens.HTML), regionKey),
             ),
             decoratedToken("link", ignoredSource, (token, render) =>
-                ignoredRegion(token, render.link(token as Tokens.Link)),
+                ignoredRegion(token, render.link(token as Tokens.Link), regionKey),
             ),
             decoratedToken("codespan", controlKeywordSource, (token, render) =>
                 addClassToFirstElement(
@@ -223,7 +224,7 @@ function decoratedToken(
     };
 }
 
-function ignoredRegion(token: Token, html: string): string {
+function ignoredRegion(token: Token, html: string, regionKey: RegionKey): string {
     // Ignored HTML must be shown as source, not executed as markup. Markdig reports opening and
     // closing inline tags separately; wrapping their rendered HTML would create unbalanced DOM.
     const content =
@@ -242,7 +243,41 @@ function ignoredRegion(token: Token, html: string): string {
         ? `Ignored ${kind.toLowerCase()}: ${source}`
         : "Ignored — not included in dialogue";
     const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" title="${escapeHtml(title)}"${sourceBlock}>${content}</${tag}>`;
+    // The marker is the region's own control. Its accessible name and pressed state depend on the
+    // current view, so the Preview controller owns them; the renderer only emits the structure.
+    const toggle =
+        `<button type="button" class="dd-ignored-region-toggle">` +
+        `<span class="codicon codicon-circle-slash" aria-hidden="true"></span></button>`;
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(kind, source))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${content}</${tag}>`;
+}
+
+/** Names one ignored region, keeping identical siblings apart by their order in the document. */
+type RegionKey = (kind: string, source: string) => string;
+
+/**
+ * Name each ignored region by what it contains, so a writer's per-region view choice follows the
+ * region through the full Preview re-render that every keystroke triggers. Position cannot serve
+ * as the name: inserting a line above a region would hand its choice to an unrelated neighbor.
+ */
+function createRegionKeys(): RegionKey {
+    const seen = new Map<string, number>();
+    return (kind, source) => {
+        const content = `${kind}:${hashSource(source)}`;
+        const occurrence = seen.get(content) ?? 0;
+        seen.set(content, occurrence + 1);
+        return `${content}:${occurrence}`;
+    };
+}
+
+// FNV-1a. A collision would only let one region inherit another's view choice until the next
+// global command, so a short non-cryptographic digest is enough to keep the attribute small.
+function hashSource(source: string): string {
+    let hash = 0x811c9dc5;
+    for (let index = 0; index < source.length; index += 1) {
+        hash ^= source.charCodeAt(index);
+        hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(36);
 }
 
 function ignoredKind(token: Token): string {

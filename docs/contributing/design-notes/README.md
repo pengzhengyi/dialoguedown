@@ -162,6 +162,7 @@ flowchart TB
     FMH --> MAD["34. Mermaid Authoring Diagrams"]
     MAD --> IMT["35. Ignored Markdown Preview Toggle"]
     IMT --> CDP["36. Co-located Diagnostics Presentation"]
+    CDP --> DGRF["37. Dialogue Graph — Region Fold"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -200,8 +201,9 @@ flowchart TB
 | 32 | [Unmodeled Markdown Highlighting](./Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores, stops muting the blockquotes that carry control blocks, and styles comments as writer-only notes | Implemented |
 | 33 | [Front Matter Source Highlighting](./Front%20Matter%20Source%20Highlighting.md) | Parse canonical leading front matter as YAML in the Source editor instead of ordinary Markdown | Implemented |
 | 34 | [Mermaid Authoring Diagrams](./Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
-| 35 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | A fixed Preview footer globally expands or collapses ignored blocks and inline spans without hiding them from Source | Implemented |
+| 35 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, under two footer commands that override every region at once | Implemented |
 | 36 | [Co-located Diagnostics Presentation](./Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
+| 37 | [Dialogue Graph — Region Fold](./Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through, from a chevron separate from the band's own click | Implemented |
 
 ### Other notes
 

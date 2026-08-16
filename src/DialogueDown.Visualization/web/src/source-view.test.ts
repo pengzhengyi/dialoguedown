@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorState } from "@codemirror/state";
 import {
     createFakeDebugController,
@@ -57,6 +57,17 @@ async function flushDebugUpdate(): Promise<void> {
 
 describe("createSourceView ignored Markdown preview", () => {
     const table = "| A | B |\n| - | - |\n| x | y |";
+
+    // The Preview view baseline is persisted, so a test that runs a global command would otherwise
+    // decide what the next test's region control does.
+    beforeEach(() => {
+        try {
+            globalThis.localStorage?.removeItem("dd-ignored-preview-collapsed");
+        } catch {
+            // A test environment without storage already starts from the default baseline.
+        }
+    });
+
     const ignoredTable: SemanticToken = {
         kind: "IgnoredMarkdown",
         range: {
@@ -123,16 +134,34 @@ describe("createSourceView ignored Markdown preview", () => {
         expect(region?.getAttribute("title")).toBe("Conditional dialogue");
     });
 
-    it("globally collapses ignored Preview regions without changing Source content", () => {
+    it("globally hides ignored Preview regions without changing Source content", () => {
         const source = mountSource(table);
         source.setSemanticTokens([ignoredTable]);
 
-        source.element.querySelector<HTMLButtonElement>(".dd-ignored-preview-toggle")?.click();
+        source.element
+            .querySelector<HTMLButtonElement>(
+                '.dd-ignored-preview-command[data-command="collapse"]',
+            )
+            ?.click();
 
         expect(
             source.element
-                .querySelector(".source-preview")
-                ?.classList.contains("ignored-preview-collapsed"),
+                .querySelector(".dd-preview-ignored-region")
+                ?.classList.contains("dd-ignored-region-hidden"),
+        ).toBe(true);
+        expect(source.getContent()).toBe(table);
+    });
+
+    it("hides one ignored region on its own control, leaving Source content alone", () => {
+        const source = mountSource(table);
+        source.setSemanticTokens([ignoredTable]);
+
+        source.element.querySelector<HTMLButtonElement>(".dd-ignored-region-toggle")?.click();
+
+        expect(
+            source.element
+                .querySelector(".dd-preview-ignored-region")
+                ?.classList.contains("dd-ignored-region-hidden"),
         ).toBe(true);
         expect(source.getContent()).toBe(table);
     });
