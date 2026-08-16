@@ -78,6 +78,25 @@ not warnings). The CLI and visualization projects are intentionally exempt.
 Use the `build: fast` task (analyzers off) for the inner loop, but run the
 normal analyzer-enabled `build`/`test` before pushing.
 
+### Adding or updating a NuGet package
+
+Package **versions are managed centrally**: every version for the whole solution
+is declared once in [`Directory.Packages.props`](Directory.Packages.props), and a
+project references a package by name only.
+
+```xml
+<!-- Directory.Packages.props — the version, once -->
+<PackageVersion Include="Markdig" Version="1.3.2" />
+
+<!-- any .csproj — the reference, no version -->
+<PackageReference Include="Markdig" />
+```
+
+A version in a `.csproj` is an error under central management, which is the
+point: two projects cannot drift onto different versions of the same package.
+Dependabot updates `Directory.Packages.props` directly, so a bump lands in one
+place for every project that uses it.
+
 ### Visualization frontend (`web/`)
 
 The compilation report's client is a self-contained TypeScript + Vite project in
