@@ -1,5 +1,6 @@
 import { Marked, type MarkedExtension, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
+import { createRegionKeys, type RegionKey } from "./region-key";
 import { foldGlyphName } from "./fold-glyph";
 import type { DisplayNode, Span } from "./model";
 import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
@@ -256,36 +257,7 @@ function ignoredRegion(token: Token, html: string, regionKey: RegionKey): string
         : `<button type="button" class="dd-ignored-region-toggle">` +
           `<span class="codicon codicon-${foldGlyphName(true)} dd-ignored-region-toggle-icon" aria-hidden="true"></span></button>` +
           `<span class="dd-ignored-region-status codicon codicon-circle-slash" aria-hidden="true"></span>`;
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(kind, source))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${content}</${tag}>`;
-}
-
-/** Names one ignored region, keeping identical siblings apart by their order in the document. */
-type RegionKey = (kind: string, source: string) => string;
-
-/**
- * Name each ignored region by what it contains, so a writer's per-region view choice follows the
- * region through the full Preview re-render that every keystroke triggers. Position cannot serve
- * as the name: inserting a line above a region would hand its choice to an unrelated neighbor.
- */
-function createRegionKeys(): RegionKey {
-    const seen = new Map<string, number>();
-    return (kind, source) => {
-        const content = `${kind}:${hashSource(source)}`;
-        const occurrence = seen.get(content) ?? 0;
-        seen.set(content, occurrence + 1);
-        return `${content}:${occurrence}`;
-    };
-}
-
-// FNV-1a. A collision would only let one region inherit another's view choice until the next
-// global command, so a short non-cryptographic digest is enough to keep the attribute small.
-function hashSource(source: string): string {
-    let hash = 0x811c9dc5;
-    for (let index = 0; index < source.length; index += 1) {
-        hash ^= source.charCodeAt(index);
-        hash = Math.imul(hash, 0x01000193);
-    }
-    return (hash >>> 0).toString(36);
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(`${kind}:${source}`))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${content}</${tag}>`;
 }
 
 function ignoredKind(token: Token): string {
