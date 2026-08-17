@@ -2263,6 +2263,22 @@ g.node.entity-highlight text.label {
     margin: 0;
 }
 
+/* A thematic break is the one ignored region with no text to align against, so its rule would
+   otherwise sit at the top of the box while the marks center themselves in it. Giving the rule the
+   marks' own inset and height puts the three on one optical line by construction rather than by a
+   tuned offset, and it draws its own line so the muted ink is not dimmed a second time into
+   invisibility -- the rule is the entire content of this region. */
+.source-preview .dd-preview-ignored-region > hr.dd-preview-ignored {
+    position: absolute;
+    top: 0.3rem;
+    right: 1.9rem;
+    left: 1.9rem;
+    height: 1.15rem;
+    border: 0;
+    opacity: 1;
+    background: linear-gradient(var(--i), var(--i)) center / 100% 2px no-repeat;
+}
+
 .source-preview .dd-preview-ignored {
     opacity: 0.72;
 }

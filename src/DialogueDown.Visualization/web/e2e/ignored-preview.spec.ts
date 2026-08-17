@@ -120,6 +120,99 @@ test("a global command overrides every individual choice", async ({ page }) => {
     await expect(footer(page)).toContainText("all shown in Preview");
 });
 
+type Rgba = readonly [number, number, number, number];
+
+/** Read a CSS color in either notation Chrome may compute: `rgb()/rgba()` or `color(srgb ...)`. */
+function parseColor(value: string): Rgba | null {
+    const srgb = /color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/.exec(value);
+    if (srgb) {
+        const [r, g, b] = [srgb[1], srgb[2], srgb[3]].map((c) => Number(c) * 255);
+        return [r, g, b, srgb[4] === undefined ? 1 : Number(srgb[4])];
+    }
+
+    const rgb = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(value);
+    if (!rgb) return null;
+    return [
+        Number(rgb[1]),
+        Number(rgb[2]),
+        Number(rgb[3]),
+        rgb[4] === undefined ? 1 : Number(rgb[4]),
+    ];
+}
+
+function over(ink: Rgba, backdrop: Rgba): Rgba {
+    const blend = (i: number, b: number) => i * ink[3] + b * (1 - ink[3]);
+    return [blend(ink[0], backdrop[0]), blend(ink[1], backdrop[1]), blend(ink[2], backdrop[2]), 1];
+}
+
+function relativeLuminance([r, g, b]: Rgba): number {
+    const channel = (value: number) => {
+        const v = value / 255;
+        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    };
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+function contrastRatio(a: Rgba, b: Rgba): number {
+    const [high, low] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x);
+    return (high + 0.05) / (low + 0.05);
+}
+
+/** The color a rule paints, and the color it paints onto. */
+async function ruleAgainstBackdrop(
+    rule: import("@playwright/test").Locator,
+): Promise<{ ink: string; backdrop: string }> {
+    return rule.evaluate((node) => {
+        const style = getComputedStyle(node);
+        const ink = [style.backgroundImage, style.backgroundColor, style.borderTopColor]
+            .filter((value) => value && value !== "none")
+            .join(" ");
+
+        let behind: Element | null = node.parentElement;
+        let backdrop = "rgb(255, 255, 255)";
+        while (behind) {
+            const color = getComputedStyle(behind).backgroundColor;
+            if (color && !/rgba\(0,\s*0,\s*0,\s*0\)|transparent/.test(color)) {
+                backdrop = color;
+                break;
+            }
+            behind = behind.parentElement;
+        }
+        return { ink, backdrop };
+    });
+}
+
+test("puts a shown thematic break on its marks' own line", async ({ page }) => {
+    // A rule has no text to align against, so nothing anchors it to the marks unless we say so.
+    const divider = regions(page).nth(2);
+    const center = async (locator: import("@playwright/test").Locator) => {
+        const box = await locator.boundingBox();
+        if (!box) throw new Error("Nothing to measure.");
+        return box.y + box.height / 2;
+    };
+
+    const [rule, toggle, status] = await Promise.all([
+        center(divider.locator("hr")),
+        center(divider.locator(".dd-ignored-region-toggle")),
+        center(divider.locator(".dd-ignored-region-status")),
+    ]);
+
+    expect(Math.abs(rule - toggle)).toBeLessThanOrEqual(1);
+    expect(Math.abs(status - toggle)).toBeLessThanOrEqual(1);
+});
+
+test("draws a shown thematic break dark enough to see", async ({ page }) => {
+    // Muted ink dimmed a second time left the rule all but white, and the rule is the whole
+    // content of its region. WCAG asks 3:1 of a graphical object that carries meaning.
+    const { ink, backdrop } = await ruleAgainstBackdrop(regions(page).nth(2).locator("hr"));
+    const painted = parseColor(ink);
+    const behind = parseColor(backdrop);
+    expect(painted, `no color found on the rule: ${ink}`).not.toBeNull();
+    expect(behind, `no color found behind the rule: ${backdrop}`).not.toBeNull();
+
+    expect(contrastRatio(over(painted!, behind!), behind!)).toBeGreaterThanOrEqual(3);
+});
+
 test("keeps a hidden inline region as a chip inside its sentence", async ({ page }) => {
     const inline = page.locator(".source-preview .dd-preview-ignored-region-inline");
 

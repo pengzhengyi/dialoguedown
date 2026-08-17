@@ -310,6 +310,7 @@ there, not the mechanism that put it away.
 | Source: an ignored run of one line (a `---` divider) | Carries the cue, offers no chevron — there is nothing beneath to hide. |
 | Source: an ignored span inside a line | Keeps its dimmed ink and neither mark; only the Preview collapses inline regions. |
 | Source folded, Preview not (or the reverse) | Expected: the two panes hold separate state by design. |
+| Preview: a shown thematic break | The rule takes the marks' own line and full-strength muted ink — it is the region's whole content, and it has no text to align against. |
 | Preview: collapsed inline ignored chip | Shows `circle-slash`, not a chevron — the one documented exception. |
 | Codicon font unavailable | Controls keep their accessible names and hit targets; only the glyph degrades. |
 
