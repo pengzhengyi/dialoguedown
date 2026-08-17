@@ -625,7 +625,9 @@ section.stage.empty-shell {
     flex-direction: column;
     gap: 0.25rem;
     min-width: 0;
-    padding-right: 0.4rem;
+
+    /* The main area is full-bleed, so the file list would otherwise start against the glass. */
+    padding: 0 0.4rem;
     overflow-y: auto;
 }
 
@@ -634,7 +636,10 @@ section.stage.empty-shell {
     display: block;
     flex: 0 0 auto;
     width: 1px;
-    margin: 0 0.5rem;
+
+    /* No margin: the seam is the boundary, so the stage begins at it and the Source tab's footer
+       bar runs all the way to the line. Each side keeps its own padding for breathing room. */
+    margin: 0;
     background: var(--pico-muted-border-color);
 }
 
@@ -651,7 +656,6 @@ section.stage.empty-shell {
    the gap the stage appeared to leave. It closes, and its toggle stops centering on the seam so
    the button stays on screen rather than half beyond it: the toggle is the only way back. */
 #app.explorer-collapsed #explorer-resizer {
-    margin: 0;
     background: transparent;
 }
 
@@ -954,7 +958,7 @@ section.stage.empty-shell {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    padding: 0 0.15rem 0 0.7rem;
+    padding: 0.55rem 0.6rem 0.55rem 0.7rem;
 }
 
 /* A draggable rail between the graph and the tables: it resizes the column and hosts the
@@ -3023,6 +3027,13 @@ svg.tree.has-focus .link:not(.related) {
 
 .legend-heading:first-child {
     margin-top: 0;
+}
+
+/* The fold control floats in the legend's top-right corner, so whatever opens the legend has to
+   keep out from under it. A legend that starts with a group heading has short text there and never
+   noticed; one that opens straight into its rows ran the first row's count beneath the glyph. */
+.legend-fold + * {
+    padding-right: 1.35rem;
 }
 
 /* Folding the legend away gives the canvas back: the button stays, everything else goes.

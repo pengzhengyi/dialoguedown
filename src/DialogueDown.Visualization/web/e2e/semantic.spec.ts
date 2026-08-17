@@ -178,6 +178,34 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     await expect(page.locator("#detail")).toBeHidden();
 });
 
+test("keeps the legend's fold control clear of the first row's count", async ({ page }) => {
+    // The control floats in the legend's top-right corner. Where a legend opens straight into its
+    // rows rather than a heading, the first row ran under it and its count read as a glyph.
+    const legend = page.locator(".stage.active .legend");
+    const fold = legend.locator(".legend-fold");
+    const firstCount = legend.locator(".legend-item .count").first();
+
+    const [foldBox, countBox] = await Promise.all([fold.boundingBox(), firstCount.boundingBox()]);
+    if (!foldBox || !countBox) throw new Error("Could not measure the legend.");
+
+    expect(countBox.x + countBox.width).toBeLessThanOrEqual(foldBox.x);
+});
+
+test("keeps the tables clear of the window's top and right edges", async ({ page }) => {
+    // The cards used to borrow their breathing room from an inset on the main area; without it
+    // they sat against the glass.
+    const card = page.locator(".semantic-tables .table-panel").first();
+    const [box, width] = await Promise.all([
+        card.boundingBox(),
+        page.evaluate(() => window.innerWidth),
+    ]);
+    const stage = await page.locator(".stage.active").boundingBox();
+    if (!box || !stage) throw new Error("Could not measure the Semantic tables.");
+
+    expect(box.y - stage.y).toBeGreaterThanOrEqual(4);
+    expect(width - (box.x + box.width)).toBeGreaterThanOrEqual(4);
+});
+
 test("filters and sorts a table while keeping its cross-links", async ({ page }) => {
     const anchors = page.locator('.table-panel:has(.table-panel-title:text-is("Anchors"))');
 
