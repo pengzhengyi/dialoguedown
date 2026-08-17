@@ -1,12 +1,12 @@
 import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { codeFolding, foldable, foldedRanges } from "@codemirror/language";
 import { describe, expect, it } from "vitest";
 import {
+    foldEveryIgnoredRegion,
+    hasFoldableIgnoredRegions,
     ignoredRegionsOf,
-    type IgnoredRegion,
     setIgnoredSpans,
-    toggleIgnoredRegion,
-    setEveryIgnoredRegionFolded,
-    foldedIgnoredRegions,
     sourceIgnoredFold,
 } from "./source-ignored-fold";
 
@@ -23,125 +23,115 @@ const DOC = [
     "",
 ].join("\n");
 
-/** The offsets of a line's text, so a fixture reads as lines rather than as arithmetic. */
-function lineSpan(doc: string, first: number, last = first) {
-    const state = EditorState.create({ doc });
+function lineSpan(first: number, last = first) {
+    const state = EditorState.create({ doc: DOC });
     return { start: state.doc.line(first + 1).from, end: state.doc.line(last + 1).to };
 }
 
-function inlineSpan(doc: string, needle: string) {
-    const start = doc.indexOf(needle);
-    return { start, end: start + needle.length };
-}
-
-const TABLE = lineSpan(DOC, 2, 4);
-const AUTOLINK = inlineSpan(DOC, "<https://example.com>");
-const RULE = lineSpan(DOC, 8);
+const TABLE = lineSpan(2, 4);
+const AUTOLINK = (() => {
+    const start = DOC.indexOf("<https://example.com>");
+    return { start, end: start + "<https://example.com>".length };
+})();
+const RULE = lineSpan(8);
 
 function stateWith(spans = [TABLE, AUTOLINK, RULE]): EditorState {
-    const state = EditorState.create({ doc: DOC, extensions: [sourceIgnoredFold()] });
+    const state = EditorState.create({
+        doc: DOC,
+        extensions: [codeFolding(), sourceIgnoredFold()],
+    });
     return state.update({ effects: setIgnoredSpans.of(spans) }).state;
 }
 
-function keysOf(regions: readonly IgnoredRegion[]): string[] {
-    return regions.map((region) => region.key);
+function viewWith(spans?: readonly { start: number; end: number }[]): EditorView {
+    return new EditorView({ state: stateWith(spans as never) });
+}
+
+function foldedCount(state: EditorState): number {
+    let count = 0;
+    foldedRanges(state).between(0, state.doc.length, () => {
+        count += 1;
+    });
+    return count;
 }
 
 describe("ignoredRegionsOf", () => {
-    it("tells a block region from one inside a line", () => {
-        const regions = ignoredRegionsOf(stateWith());
-
-        expect(regions.map((region) => region.inline)).toEqual([false, true, false]);
+    it("can fold a run of whole lines, but not a span inside one", () => {
+        expect(ignoredRegionsOf(stateWith()).map((region) => region.foldable)).toEqual([
+            true,
+            false,
+            false,
+        ]);
     });
 
-    it("counts the lines a block region covers", () => {
-        const regions = ignoredRegionsOf(stateWith());
-
-        expect(regions[0].summary).toBe("Ignored · 3 lines");
-        expect(regions[2].summary).toBe("Ignored · 1 line");
+    it("does not offer to fold a single line, which has nothing to hide", () => {
+        expect(ignoredRegionsOf(stateWith([RULE]))[0].foldable).toBe(false);
     });
 
-    it("names a region by its content, so a region that only moves keeps its name", () => {
-        const before = ignoredRegionsOf(stateWith());
+    it("follows its region as the document above it grows", () => {
+        const state = stateWith();
+        const typed = state.update({ changes: { from: 0, insert: "Bob: hello.\n" } }).state;
 
-        // Type a line above everything: every region shifts down, none of them changes.
-        const moved = EditorState.create({
-            doc: `Bob: a new line.\n${DOC}`,
-            extensions: [sourceIgnoredFold()],
-        }).update({
-            effects: setIgnoredSpans.of([
-                lineSpan(`Bob: a new line.\n${DOC}`, 3, 5),
-                inlineSpan(`Bob: a new line.\n${DOC}`, "<https://example.com>"),
-                lineSpan(`Bob: a new line.\n${DOC}`, 9),
-            ]),
-        }).state;
+        const [table] = ignoredRegionsOf(typed);
+        expect(typed.doc.sliceString(table.from, table.to)).toBe(DOC.slice(TABLE.start, TABLE.end));
+    });
 
-        expect(keysOf(ignoredRegionsOf(moved))).toEqual(keysOf(before));
+    it("marks every run that owns its lines, whether or not it can fold", () => {
+        expect(ignoredRegionsOf(stateWith()).map((region) => region.ownsItsLines)).toEqual([
+            true,
+            false,
+            true,
+        ]);
     });
 
     it("drops a span the document no longer contains", () => {
-        const state = stateWith([{ start: 9999, end: 10_005 }]);
-
-        expect(ignoredRegionsOf(state)).toEqual([]);
+        expect(ignoredRegionsOf(stateWith([{ start: 9999, end: 10_005 }]))).toEqual([]);
     });
 });
 
-describe("folding one region", () => {
-    it("starts with every region open", () => {
-        expect(foldedIgnoredRegions(stateWith()).size).toBe(0);
+describe("the editor's own gutter", () => {
+    it("offers to fold the line an ignored run starts on", () => {
+        const state = stateWith();
+
+        expect(foldable(state, state.doc.line(3).from, state.doc.line(3).to)).toEqual({
+            from: state.doc.line(3).to,
+            to: TABLE.end,
+        });
     });
 
-    it("folds and opens the region a reader names", () => {
+    it("offers nothing on a line no ignored run starts on", () => {
         const state = stateWith();
-        const [table] = ignoredRegionsOf(state);
 
-        const folded = state.update({ effects: toggleIgnoredRegion.of(table.key) }).state;
-        expect([...foldedIgnoredRegions(folded)]).toEqual([table.key]);
-
-        const opened = folded.update({ effects: toggleIgnoredRegion.of(table.key) }).state;
-        expect(foldedIgnoredRegions(opened).size).toBe(0);
-    });
-
-    it("keeps a region's choice while the writer types elsewhere", () => {
-        const state = stateWith();
-        const [table] = ignoredRegionsOf(state);
-        const folded = state.update({ effects: toggleIgnoredRegion.of(table.key) }).state;
-
-        const typed = folded.update({ changes: { from: 0, insert: "x" } }).state;
-
-        expect([...foldedIgnoredRegions(typed)]).toEqual([table.key]);
-    });
-
-    it("opens a folded region rather than letting an edit reach its hidden text", () => {
-        const state = stateWith();
-        const [table] = ignoredRegionsOf(state);
-        const folded = state.update({ effects: toggleIgnoredRegion.of(table.key) }).state;
-
-        const edited = folded.update({ changes: { from: TABLE.start + 2, insert: "!" } }).state;
-
-        expect(foldedIgnoredRegions(edited).size).toBe(0);
+        expect(foldable(state, state.doc.line(1).from, state.doc.line(1).to)).toBeNull();
     });
 });
 
-describe("folding every region", () => {
-    it("folds them all, and opens them all", () => {
-        const state = stateWith();
-        const every = keysOf(ignoredRegionsOf(state));
+describe("folding every ignored region", () => {
+    it("folds them through the editor's own folding, and opens them again", () => {
+        const view = viewWith();
 
-        const shut = state.update({ effects: setEveryIgnoredRegionFolded.of(true) }).state;
-        expect([...foldedIgnoredRegions(shut)].sort()).toEqual([...every].sort());
+        expect(foldEveryIgnoredRegion(view, true)).toBe(true);
+        expect(foldedCount(view.state)).toBe(1);
 
-        const open = shut.update({ effects: setEveryIgnoredRegionFolded.of(false) }).state;
-        expect(foldedIgnoredRegions(open).size).toBe(0);
+        expect(foldEveryIgnoredRegion(view, false)).toBe(true);
+        expect(foldedCount(view.state)).toBe(0);
+        view.destroy();
     });
 
-    it("discards one region's choice rather than merging with it", () => {
-        const state = stateWith();
-        const [table] = ignoredRegionsOf(state);
-        const mixed = state.update({ effects: toggleIgnoredRegion.of(table.key) }).state;
+    it("reports nothing to do when no run can fold", () => {
+        const view = viewWith([AUTOLINK, RULE]);
 
-        const open = mixed.update({ effects: setEveryIgnoredRegionFolded.of(false) }).state;
+        expect(hasFoldableIgnoredRegions(view.state)).toBe(false);
+        expect(foldEveryIgnoredRegion(view, true)).toBe(false);
+        view.destroy();
+    });
 
-        expect(foldedIgnoredRegions(open).size).toBe(0);
+    it("leaves an already folded run alone rather than folding it twice", () => {
+        const view = viewWith();
+        foldEveryIgnoredRegion(view, true);
+
+        expect(foldEveryIgnoredRegion(view, true)).toBe(false);
+        expect(foldedCount(view.state)).toBe(1);
+        view.destroy();
     });
 });

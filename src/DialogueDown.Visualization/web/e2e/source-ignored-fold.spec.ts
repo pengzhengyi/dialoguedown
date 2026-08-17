@@ -54,50 +54,80 @@ test.beforeEach(async ({ page }) => {
     await expect(page.locator(".source-pane .cm-content")).toBeVisible();
 });
 
-function controls(page: import("@playwright/test").Page) {
-    return page.locator(".source-pane .dd-source-ignored-toggle");
-}
-
 function editorLines(page: import("@playwright/test").Page) {
     return page.locator(".source-pane .cm-line");
 }
 
-test("offers a control on every ignored region the compiler reported", async ({ page }) => {
-    await expect(controls(page)).toHaveCount(3);
-    await expect(controls(page).first()).toHaveAttribute("aria-expanded", "true");
+/** Press the gutter chevron beside the line an ignored run starts on. */
+async function foldFromGutter(page: import("@playwright/test").Page, text: string): Promise<void> {
+    const line = await page
+        .locator(".source-pane .cm-line", { hasText: text })
+        .first()
+        .boundingBox();
+    if (!line) throw new Error(`Could not find the line starting "${text}".`);
+
+    const markers = page.locator('.source-pane .cm-fold-marker[title="Fold line"]');
+    for (const marker of await markers.all()) {
+        const box = await marker.boundingBox();
+        if (box && Math.abs(box.y - line.y) < line.height) {
+            await marker.click();
+            return;
+        }
+    }
+    throw new Error(`No fold chevron sits beside "${text}".`);
+}
+
+test("marks ignored content without giving it a second way to close", async ({ page }) => {
+    // The cue says "ignored", so it marks the table and the lone divider alike -- but not the
+    // autolink inside a sentence, where it would read as a stray character.
+    await expect(page.locator(".dd-source-ignored-cue")).toHaveCount(2);
+    await expect(
+        editorLines(page).filter({ hasText: "see" }).locator(".dd-source-ignored-cue"),
+    ).toHaveCount(0);
+
+    // Folding stays the editor's own gesture, so no region grows a control of its own.
+    await expect(page.locator(".dd-source-ignored-toggle")).toHaveCount(0);
 });
 
-test("folds one ignored block to a summary the writer can still see", async ({ page }) => {
+test("marks the divider it cannot fold, because dim ink alone barely shows on three dashes", async ({
+    page,
+}) => {
+    const divider = editorLines(page).filter({ hasText: "---" }).last();
+
+    await expect(divider.locator(".dd-source-ignored-cue")).toHaveCount(1);
+    await expect(async () => {
+        await foldFromGutter(page, "---");
+    }).rejects.toThrow();
+});
+
+test("folds an ignored run from the editor's own gutter", async ({ page }) => {
     const before = await editorLines(page).count();
     await expect(page.locator(".source-pane .cm-content")).toContainText("| Rope | 5 |");
 
-    await controls(page).first().click();
+    await foldFromGutter(page, "| Item");
 
-    // The table's own lines are gone, replaced by one row naming what was put away.
     await expect(page.locator(".source-pane .cm-content")).not.toContainText("| Rope | 5 |");
     expect(await editorLines(page).count()).toBeLessThan(before);
-    await expect(page.locator(".dd-source-ignored-summary")).toHaveText("Ignored · 3 lines");
-    await expect(controls(page).first()).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(1);
 });
 
 test("leaves the Preview alone, because the two panes fold their own state", async ({ page }) => {
-    await controls(page).first().click();
+    await foldFromGutter(page, "| Item");
 
-    // The Preview still shows the table it renders; only the editor put its lines away.
     await expect(page.locator(".source-preview table")).toBeVisible();
     await expect(page.locator(".dd-ignored-preview-footer")).toContainText("all shown in Preview");
 });
 
-test("folds and opens every ignored region from the keyboard", async ({ page }) => {
+test("folds and opens every ignored run from the keyboard", async ({ page }) => {
     const before = await editorLines(page).count();
     await page.locator(".source-pane .cm-content").click();
 
     await page.keyboard.press("Alt+i");
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(3);
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(1);
     expect(await editorLines(page).count()).toBeLessThan(before);
 
     await page.keyboard.press("Alt+o");
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(0);
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(0);
     await expect(editorLines(page)).toHaveCount(before);
 });
 
@@ -105,28 +135,28 @@ test("offers the same pair in the editor's own menu", async ({ page }) => {
     await editorLines(page).first().click({ button: "right" });
     await page.locator(".context-menu-item", { hasText: "Fold all ignored Markdown" }).click();
 
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(3);
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(1);
 
     await editorLines(page).first().click({ button: "right" });
     await page.locator(".context-menu-item", { hasText: "Open all ignored Markdown" }).click();
 
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(0);
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(0);
 });
 
-test("a command discards the choices made region by region", async ({ page }) => {
-    await controls(page).first().click();
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(1);
+test("opens a run the command folded, however it was folded", async ({ page }) => {
+    await foldFromGutter(page, "| Item");
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(1);
 
     await page.locator(".source-pane .cm-content").click();
     await page.keyboard.press("Alt+o");
 
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(0);
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(0);
 });
 
-test("has no accessibility violations with regions folded", async ({ page }) => {
+test("has no accessibility violations with ignored runs folded", async ({ page }) => {
     await page.locator(".source-pane .cm-content").click();
     await page.keyboard.press("Alt+i");
-    await expect(page.locator(".dd-source-ignored-folded")).toHaveCount(3);
+    await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(1);
 
     const analyze = () => new AxeBuilder({ page }).include(".source-pane").analyze();
     expect((await analyze()).violations).toEqual([]);

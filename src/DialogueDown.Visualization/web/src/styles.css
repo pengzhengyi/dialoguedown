@@ -1816,11 +1816,11 @@ g.node.entity-highlight text.label {
 /* Markdown the handling policy leaves out of the dialogue: dark gray, so it is visibly inert
    without the visual noise of a strikethrough. Comments are lighter (45% opacity) because they
    are expected writer-only notes; ignored Markdown stays more legible because it may be an
-   accidental omission the writer needs to inspect. */
+   accidental omission the writer needs to inspect -- so it carries muted ink at full strength,
+   which keeps it above the contrast floor. */
 .source-pane .cm-content .dd-tok-ignored-markdown,
 .source-pane .cm-content .dd-tok-ignored-markdown * {
     color: var(--md-muted);
-    opacity: 0.72;
 }
 
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
@@ -2339,54 +2339,16 @@ g.node.entity-highlight text.label {
     padding-right: 0;
 }
 
-/* The compiler's ignored Markdown, folded in the Source editor. The control trails the region's
-   first line rather than leading it: a mark before a table's first row would push that row out of
-   line with the rows beneath it, and the editor's columns are part of what a writer is reading.
-   The status mark trails the control, as it does in the Preview. */
-.dd-source-ignored {
-    display: inline-flex;
-    gap: 0.25rem;
-    align-items: center;
+/* A quiet mark on the compiler's ignored Markdown: it says this run never becomes dialogue, and
+   nothing more. Folding it is the editor's own gutter chevron, as it is for any other run of
+   lines, so a region never grows a second way to close. */
+.dd-source-ignored-cue {
     margin-left: 0.5rem;
-    vertical-align: baseline;
-}
-
-.dd-source-ignored-folded {
-    margin-left: 0;
-}
-
-.dd-source-ignored-toggle {
-    --pico-background-color: inherit;
-
-    display: grid;
-    place-items: center;
-    width: 1.15rem;
-    height: 1.15rem;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--md-muted) 12%, var(--pico-background-color));
-    color: var(--md-muted);
-    font-size: 0.72rem;
-    cursor: pointer;
-}
-
-.dd-source-ignored-toggle:hover,
-.dd-source-ignored-toggle:focus-visible {
-    background: color-mix(in srgb, var(--md-muted) 26%, var(--pico-background-color));
-}
-
-.dd-source-ignored-summary {
-    color: var(--md-muted);
-    font-family: var(--pico-font-family-sans-serif);
-    font-size: 0.78rem;
-}
-
-.dd-source-ignored-status {
-    color: var(--md-muted);
+    color: var(--dd-chrome-muted);
     font-size: 0.72rem;
     line-height: 1;
+    vertical-align: baseline;
+    opacity: 0.75;
 }
 
 .dd-ignored-preview-footer {

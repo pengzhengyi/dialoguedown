@@ -10,11 +10,12 @@ changes easy to categorize.
 
 ### Added
 
-- **Fold ignored Markdown in the Source editor** — the editor now folds the same regions the
-  Preview does, alongside its own line-range folding, from a control on each region plus a pair of
-  commands in its menu and keys. A folded region is atomic to the cursor, and an edit that reaches
-  one opens it first, so hidden text is never silently changed. Source and Preview keep separate
-  state: a reading choice must not hide the text a writer needs to edit. See the
+- **Fold ignored Markdown in the Source editor** — the editor's gutter now folds the same regions
+  the Preview does, beside its own line-range folding, plus a pair of commands in its menu and keys
+  (`Alt-i` / `Alt-o`). A `circle-slash` cue marks each ignored run without adding a second control
+  to click. Folding is the editor's own, so the cursor cannot enter a folded range and hidden text
+  is never silently changed. Source and Preview keep separate state: a reading choice must not hide
+  the text a writer needs to edit. See the
   [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
   note.
 

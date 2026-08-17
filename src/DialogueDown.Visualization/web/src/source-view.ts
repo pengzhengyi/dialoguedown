@@ -42,7 +42,7 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { foldGutterMarker } from "./fold-glyph";
 import {
     foldEveryIgnoredRegion,
-    hasIgnoredRegions,
+    hasFoldableIgnoredRegions,
     setIgnoredSpans,
     sourceIgnoredFold,
 } from "./source-ignored-fold";
@@ -532,9 +532,9 @@ export function createSourceView(
                     submenu: jumpMenuItems(view, jumpTargets),
                 });
             }
-            // The editor keeps its own pair of commands over the regions it folds: the Preview's
-            // pair acts on the Preview, and the two panes deliberately hold separate state.
-            if (hasIgnoredRegions(view.state)) {
+            // The commands drive the editor's own folding, so pressing them is the same act as
+            // pressing each gutter chevron in turn.
+            if (hasFoldableIgnoredRegions(view.state)) {
                 items.push(
                     {
                         icon: "collapse-all",
