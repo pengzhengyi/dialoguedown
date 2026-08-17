@@ -299,8 +299,9 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     expect(metrics.files.top).toBeGreaterThanOrEqual(metrics.configTab.top - 0.5);
     // Its glyph clears the brand mark directly above it.
     expect(metrics.filesGlyph.top).toBeGreaterThan(metrics.brand.bottom);
-    // Its glyph — not its invisible box — lines up with the header gutter.
-    expect(metrics.filesGlyph.left).toBeCloseTo(metrics.brand.left, 0);
+    // Its leading edge — where the rail stands while the panel is open — lines up with the
+    // header gutter, so the mark sits under the brand rather than inside the control.
+    expect(metrics.files.left).toBeCloseTo(metrics.brand.left, 0);
     // And it leads the row rather than sitting inside the scrolling tabs.
     expect(metrics.filesGlyph.left).toBeLessThan(metrics.configGlyph.left);
 });
@@ -374,6 +375,34 @@ test.describe("on a phone-sized window", () => {
         expect(stacked.explorerHeight).toBeLessThanOrEqual(stacked.windowHeight * 0.25 + 1);
         // Which leaves the stage the bulk of the column instead of a quarter of it.
         expect(stacked.stageHeight).toBeGreaterThan(stacked.explorerHeight);
+    });
+
+    test("sizes the Explorer control like the row's other icon buttons", async ({ page }) => {
+        // Reduced to a glyph it is an icon button, not a tab, so it takes the icon buttons'
+        // size. Left at the tab's smaller glyph it read as an afterthought beside them — and
+        // was a smaller target exactly where fingers, not pointers, are doing the aiming.
+        const metrics = await page.evaluate(() => {
+            const box = (selector: string) => {
+                const rect = document.querySelector(selector)!.getBoundingClientRect();
+                return {
+                    width: rect.width,
+                    height: rect.height,
+                    centre: (rect.top + rect.bottom) / 2,
+                };
+            };
+            return {
+                files: box(".tabbar-explorer"),
+                zen: box(".tabbar-zen"),
+                filesGlyph: box(".tabbar-explorer .tab-icon"),
+                zenGlyph: box(".zen-icon"),
+            };
+        });
+
+        expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
+        expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
+        expect(metrics.files.width).toBeCloseTo(metrics.zen.width, 0);
+        expect(metrics.files.height).toBeCloseTo(metrics.zen.height, 0);
+        expect(metrics.files.centre).toBeCloseTo(metrics.zen.centre, 0);
     });
 
     test("keeps the Explorer control in reach while the stage row scrolls", async ({ page }) => {

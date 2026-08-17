@@ -39,9 +39,7 @@ export function createExplorerToggle(toggle: () => void): HTMLButtonElement {
     button.type = "button";
     button.className = "tabbar-explorer";
     button.setAttribute("aria-controls", EXPLORER_REGION_ID);
-    button.innerHTML =
-        `${FILES_ICON}<span class="tabbar-explorer-label" data-label="${EXPLORER_PANEL_NAME}">` +
-        `${EXPLORER_PANEL_NAME}</span>`;
+    button.innerHTML = `${FILES_ICON}<span class="tabbar-explorer-label">${EXPLORER_PANEL_NAME}</span>`;
     button.addEventListener("click", toggle);
     return button;
 }

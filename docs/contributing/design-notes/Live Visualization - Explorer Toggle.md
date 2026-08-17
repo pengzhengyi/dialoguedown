@@ -70,24 +70,27 @@ The control takes the **tab row's own shape** — a glyph beside a word, in the 
 Feather family, size, and stroke weight the Config tab's gear uses — because it sits
 among tabs and should read as one of the row's controls rather than as a chip parked
 beside them. It reserves the same two pixels a tab keeps for its underline, so the two
-share a box and a baseline, and it is pulled left by its own padding so the *glyph*,
-not the button's invisible box, lines up with the header gutter.
+share a box and a baseline.
 
-Open, it takes the mode accent. It never takes the **underline**: in this row that
-mark answers "which stage am I on", and the Explorer is not a stage — a second
-underlined item would leave that question ambiguous. A tinted pill was tried too and
-read as a different species from the row.
+Open, it wears the two marks an editor's activity bar uses for the panel you are in:
+a **leading accent rail** and a **tinted bed**. The bed is squared where the rail
+stands and rounded away from it, so the pair reads as one mark rather than a bar
+parked beside a pill. Its leading edge sits at the header gutter, which puts the rail
+under the brand mark rather than inside the control.
 
-Two details the shape forces:
+It never takes the **underline**: in this row that mark answers "which stage am I on",
+and the Explorer is not a stage — a second underlined item would leave that question
+ambiguous.
 
-- **The word is echoed in a data attribute**, so the space its bold form needs is
-  reserved in both states. Without that the row shifts sideways on every toggle.
-- **The visible word and the accessible name come from one constant.** A control whose
-  visible label is absent from its accessible name is a WCAG 2.5.3 failure, so
-  "Files" is both what the button shows and what the panel is announced by.
+**The visible word and the accessible name come from one constant.** A control whose
+visible label is absent from its accessible name is a WCAG 2.5.3 failure, so "Files"
+is both what the button shows and what the panel is announced by.
 
-Below the stacking width the control keeps only its glyph. The word survives in the
-accessible name, so nothing is lost to a screen reader.
+Below the stacking width the control drops its word and becomes an icon button, so it
+takes the **size of the icon buttons at the row's other end** rather than the tab's
+smaller glyph. A control that shrinks below its neighbours reads as an afterthought,
+and offers a smaller target exactly where fingers rather than pointers are aiming. The
+word survives in the accessible name, so nothing is lost to a screen reader.
 
 ### One styling, stated once
 
@@ -179,7 +182,8 @@ the divider handle and their current default, unchanged.
   the stage row scrolls on a narrow window; it is gone in Zen; and the exported
   report carries no control, with its slot taking no room.
 - **Alignment** — the control keeps the tabs' height and baseline, starts no higher
-  than they do, aligns its glyph to the header gutter, and clears the brand mark.
+  than they do, sets its leading edge at the header gutter, and clears the brand mark.
+  Below the stacking width it matches the icon buttons' box, glyph, and centre line.
 - **Accessibility** — the report's existing pass is scoped to the source preview, so
   it never sees the tab bar. The control brings its own: an accessibility scan of the
   row in **both** of its states, shut and showing.

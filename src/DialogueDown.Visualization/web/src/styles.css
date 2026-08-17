@@ -3288,31 +3288,32 @@ body.maximized .maximize-button .icon-compress {
    in the same Feather family and size the Config tab's gear uses. It sits among tabs, so it
    should read as one of the row's controls rather than as a chip parked beside them.
 
-   Open, it takes the mode accent. It never takes the underline: in this row that mark means
-   "the stage you are on", and the Explorer is not a stage — two underlines would leave the
-   reader guessing which one answers that question. */
+   Open, it takes the two marks an editor's activity bar uses for the panel you are in: a
+   leading accent rail and a tinted bed. It never takes the underline — in this row that mark
+   answers "which stage am I on", and the Explorer is not a stage, so a second underlined item
+   would leave that question ambiguous. */
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     width: auto;
-
-    /* Pulled left by its own padding, so the *glyph* lines up with the header gutter above it
-       rather than the button's invisible box doing so. */
-    margin: 0 0 0.2rem -0.75rem;
-    padding: 0.3rem 0.75rem 0.15rem;
+    margin: 0 0 0.2rem;
+    padding: 0.3rem 0.6rem 0.15rem;
     color: var(--pico-muted-color);
     background: transparent;
     border: none;
 
     /* The same 2px a tab reserves for its underline, so the two share a box and a baseline.
-       It is never given a color: that mark answers "which stage am I on", and this is not a
-       stage. */
+       It is never given a color: that mark belongs to the stage tabs. */
     border-bottom: 2px solid transparent;
-    border-radius: 0;
+
+    /* Square where the rail stands and rounded away from it, so bed and rail read as one mark
+       rather than a bar parked beside a pill. */
+    border-radius: 0 var(--pico-border-radius) var(--pico-border-radius) 0;
     white-space: nowrap;
     cursor: pointer;
 }
@@ -3321,33 +3322,30 @@ body.maximized .maximize-button .icon-compress {
     --pico-color: inherit;
 
     color: var(--mode-accent, var(--pico-primary));
-    background: transparent;
+    background: var(--pico-muted-border-color);
 }
 
 .tabbar-explorer[aria-expanded="true"] {
     color: var(--mode-accent, var(--pico-primary));
-    font-weight: 600;
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+}
+
+/* The leading rail, drawn only while the panel is open. It stops above the reserved underline
+   strip so it reads as the bed's own edge rather than as a mark on the row's baseline. */
+.tabbar-explorer[aria-expanded="true"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 2px 0;
+    width: 2px;
+    background: var(--mode-accent, var(--pico-primary));
 }
 
 /* A generous, soft ring rather than a tight outline: the control sits hard against the window's
    leading edge, where a hairline is easy to lose. */
 .tabbar-explorer:focus-visible {
     outline: none;
-    border-radius: var(--pico-border-radius);
     box-shadow: 0 0 0 3px
         color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
-}
-
-/* Bold on open would widen the word and nudge the whole row sideways on every toggle, so the
-   space the bold form needs is reserved in both states. */
-.tabbar-explorer-label::after {
-    content: attr(data-label);
-    display: block;
-    height: 0;
-    overflow: hidden;
-    font-weight: 600;
-    visibility: hidden;
-    pointer-events: none;
 }
 
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
@@ -4607,7 +4605,7 @@ body.zen .config-view > .config-source {
 @media (width <= 800px) {
     /* The row is tightest here, and the glyph already carries the meaning, so the control keeps
        only its icon. The word survives in the accessible name, so nothing is lost to a screen
-       reader — and the reserved bold width goes with the word it was reserving for. */
+       reader. */
     .tabbar-explorer-label {
         position: absolute;
         width: 1px;
@@ -4617,10 +4615,23 @@ body.zen .config-view > .config-source {
         clip-path: inset(50%);
     }
 
+    /* Reduced to a glyph, it is an icon button rather than a tab, so it takes the size and
+       padding of the icon buttons at the row's other end. A control that shrinks below its
+       neighbours reads as an afterthought — and is a smaller target exactly where fingers,
+       not pointers, are doing the aiming. */
     .tabbar-explorer {
-        margin-left: -0.5rem;
-        padding-right: 0.5rem;
-        padding-left: 0.5rem;
+        margin-bottom: 0.35rem;
+        padding: 0.3rem 0.5rem;
+        border-bottom: none;
+    }
+
+    .tabbar-explorer .tab-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .tabbar-explorer[aria-expanded="true"]::before {
+        inset: 0 auto 0 0;
     }
 
     #app {

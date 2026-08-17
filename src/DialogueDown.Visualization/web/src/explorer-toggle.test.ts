@@ -17,13 +17,6 @@ describe("createExplorerToggle", () => {
         );
     });
 
-    it("echoes the word so the bold form reserves its width", () => {
-        // Without this the word widens on open and nudges the whole row sideways each toggle.
-        const label = createExplorerToggle(vi.fn()).querySelector(".tabbar-explorer-label");
-
-        expect(label?.getAttribute("data-label")).toBe(EXPLORER_PANEL_NAME);
-    });
-
     it("runs the toggle handler on click", () => {
         const onToggle = vi.fn();
 
