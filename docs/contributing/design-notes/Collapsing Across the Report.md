@@ -125,7 +125,10 @@ The report settles on one set of glyphs, all from the codicon font it already lo
 | **Status — conditional dialogue** | `question` | Conditional blockquotes |
 
 A status glyph is a static mark and never focusable; an action glyph is always a real control with
-`aria-expanded`. Where an item has both a status and an action, they are two marks side by side.
+`aria-expanded`. Where an item has both, the **action leads the region and the status trails it**:
+the chevron sits in the leading gutter, and the status mark at the trailing edge, where a
+conditional blockquote's own marker already sits. Status therefore means the same place whatever
+kind of region a reader is looking at, and the two marks frame the content between them.
 
 A status mark may also carry an item's own fold state where a list already shows one mark per item.
 The legend's scene rows do this: a filled swatch still holds its nodes, a hollow one has put them

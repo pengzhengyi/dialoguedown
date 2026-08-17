@@ -2199,8 +2199,12 @@ g.node.entity-highlight text.label {
     --i: var(--md-muted);
 
     position: relative;
+
+    /* Tall enough for the marks the gutter holds: a thematic break is barely taller than its own
+       rule, and without this floor the marks would spill out of the region they belong to. */
+    min-height: 1.75rem;
     margin: 0.55rem 0;
-    padding: 0.4rem 0.45rem 0.3rem 3.1rem;
+    padding: 0.4rem 1.9rem 0.3rem;
     border-left: 3px solid color-mix(in srgb, var(--i) 68%, transparent);
     border-radius: 3px;
     transition:
@@ -2261,13 +2265,16 @@ g.node.entity-highlight text.label {
     opacity: 0.72;
 }
 
-/* The status mark states what the region is and never acts, so it carries no button surface —
-   the boxed mark beside it is the control. An inline chip has room for one mark and keeps the
-   status glyph, which is why this sits only on block regions. */
+/* The status mark states what the region is and never acts, so it carries no button surface.
+   It trails the region, where a conditional blockquote's own marker already sits, so status means
+   the same place whatever kind of region a reader is looking at — and the leading edge is left to
+   the control. An inline chip has room for one mark and keeps the status glyph, which is why this
+   sits only on block regions. */
 .source-preview .dd-preview-ignored-region > .dd-ignored-region-status {
     position: absolute;
     top: 0.3rem;
-    left: 1.85rem;
+    right: 0.45rem;
+    left: auto;
     display: grid;
     place-items: center;
     width: 1.15rem;
@@ -2304,8 +2311,10 @@ g.node.entity-highlight text.label {
 
 .source-preview
     .dd-preview-ignored-region.dd-ignored-region-hidden:not(.dd-preview-ignored-region-inline) {
+    display: flex;
+    align-items: center;
     min-height: 1.75rem;
-    padding: 0.3rem 0.55rem 0.3rem 3.1rem;
+    padding: 0 1.9rem;
 }
 
 .source-preview
@@ -2315,7 +2324,7 @@ g.node.entity-highlight text.label {
     content: attr(data-ignored-summary);
     color: var(--md-muted);
     font-size: 0.78rem;
-    line-height: 1.15rem;
+    line-height: 1;
 }
 
 .source-preview .dd-preview-ignored-region.dd-ignored-region-hidden > .dd-preview-ignored {
