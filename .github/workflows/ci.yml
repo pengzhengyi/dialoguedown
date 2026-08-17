@@ -24,7 +24,11 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "8.0.x"
+          # Both: the SDK builds every target, but running the net8.0 test targets
+          # needs the .NET 8 runtime, and that floor is what keeps Godot working.
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore DialogueDown.sln
@@ -164,7 +168,11 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "8.0.x"
+          # Both: the SDK builds every target, but running the net8.0 test targets
+          # needs the .NET 8 runtime, and that floor is what keeps Godot working.
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Prepare live E2E
         shell: bash
