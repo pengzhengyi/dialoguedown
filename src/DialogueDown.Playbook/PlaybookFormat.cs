@@ -25,8 +25,8 @@ public sealed record PlaybookFormat
         ArgumentOutOfRangeException.ThrowIfNegative(version);
 
         Version = version;
-        Requires = Materialize(requires);
-        Uses = Materialize(uses);
+        Requires = requires.OrEmpty();
+        Uses = uses.OrEmpty();
     }
 
     /// <summary>
@@ -48,8 +48,4 @@ public sealed record PlaybookFormat
     /// </summary>
     [JsonPropertyName("uses")]
     public ImmutableArray<string> Uses { get; }
-
-    // An omitted JSON array arrives as a default ImmutableArray, which throws on use.
-    private static ImmutableArray<string> Materialize(ImmutableArray<string> capabilities) =>
-        capabilities.IsDefault ? [] : capabilities;
 }
