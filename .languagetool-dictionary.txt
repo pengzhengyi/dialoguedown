@@ -8,6 +8,7 @@
 
 # DialogueDown's own vocabulary.
 autolink
+codicon
 desugarer
 subgraph
 

@@ -39,6 +39,7 @@ import {
     indentUnit,
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { foldGutterMarker } from "./fold-glyph";
 import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { yamlLanguage } from "@codemirror/lang-yaml";
@@ -560,7 +561,7 @@ export function createSourceView(
                 ...(debug ? [debugEditor(debug)] : []),
                 lineNumbers(),
                 highlightActiveLineGutter(),
-                foldGutter(),
+                foldGutter({ markerDOM: foldGutterMarker }),
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
                 reservedTargetsPanel(),

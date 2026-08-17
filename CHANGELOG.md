@@ -10,6 +10,15 @@ changes easy to categorize.
 
 ### Added
 
+- **One way to fold** — the Source editor, the Preview, the Dialogue Graph, the legend, and the
+  file Explorer now offer folding with the same chevron and the same two commands, instead of five
+  renderings of the same idea. The Dialogue Graph also gains `Expand all` / `Collapse all` for
+  scenes beside the legend group that lists them, stating the current view — including a mixed one
+  — and re-framing the drawing. Each scene row shows its own state as a filled or hollow mark and
+  says how many nodes it holds. See the
+  [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
+  note.
+
 - **Fold a scene in the Dialogue Graph** — a chevron on each scene band shuts the scene away to a
   single box that names it and counts what it holds, with the flow still passing through: routes
   crossing its border re-point at the box and everything downstream stays where it was. The band's

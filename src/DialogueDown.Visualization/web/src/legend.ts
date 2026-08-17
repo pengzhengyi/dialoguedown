@@ -4,6 +4,7 @@ import { edgeStyle } from "./edge-style";
 import { edgeSwatch } from "./edge-swatch";
 import { tintsOf } from "./region-bands";
 import { codicon } from "./codicon";
+import { FOLD_COMMAND_GLYPHS } from "./fold-glyph";
 
 function nameFold(button: HTMLButtonElement, open: boolean): void {
     const label = open ? "Hide the legend" : "Show the legend";
@@ -56,6 +57,49 @@ export interface LegendHandlers {
     onToggle(category: string, dimmed: boolean): void;
     onHover(category: string): void;
     onLeave(): void;
+    /**
+     * The two commands that fold or open every region the stage has. Absent on a stage with no
+     * regions to fold — the Markdown and Dialogue ASTs draw no bands.
+     */
+    regionFold?: RegionFoldCommands;
+}
+
+/**
+ * Folding every region at once, as the report's shared contract describes it: two commands rather
+ * than one toggle, because from a mixed view a single control cannot name what it would do.
+ */
+export interface RegionFoldCommands {
+    onExpandAll(): void;
+    onCollapseAll(): void;
+}
+
+/**
+ * Say how the stage's regions currently stand, so a mixed view never reads as all-or-nothing.
+ * The drawing owns the fold, so it tells the legend rather than the legend asking.
+ */
+export function setRegionFoldState(
+    legend: HTMLElement,
+    folded: ReadonlySet<string>,
+    total: number,
+): void {
+    // Each row shows its own scene's state in its swatch: a filled mark holds its nodes, a hollow
+    // one has put them away. That is a status, so it stays a mark rather than borrowing the
+    // chevron the report uses for the action.
+    for (const row of legend.querySelectorAll<HTMLElement>(".legend-region")) {
+        const region = row.dataset.region ?? "";
+        const shut = folded.has(region);
+        row.dataset.folded = String(shut);
+        row.title = shut ? `${region} — folded` : region;
+    }
+
+    const state = legend.querySelector<HTMLElement>(".legend-kind-state");
+    if (!state) return;
+    state.textContent =
+        folded.size === 0
+            ? "all open"
+            : folded.size === total
+              ? "all folded"
+              : `${folded.size} of ${total} folded`;
 }
 
 /**
@@ -64,6 +108,7 @@ export interface LegendHandlers {
  * toggles it (dimming); hovering highlights it.
  */
 export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElement {
+    const { regionFold } = handlers;
     const stats = categoryStats(stage.nodes);
     const dimmed = new Set<string>();
     // Every stage's legend lives in the one document, so an arrowhead's `id` has to say which
@@ -146,7 +191,9 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         toggle.type = "button";
         toggle.className = "legend-kind-toggle";
         toggle.setAttribute("aria-expanded", "true");
-        toggle.textContent = `${kind} ${rows.length === 1 ? "region" : "regions"}`;
+        // The "Regions" heading above already says what these are, so the group names only its
+        // kind. That keeps the row narrow enough for the state and both commands beside it.
+        toggle.textContent = kind;
 
         const body = document.createElement("div");
         body.className = "legend-kind-body";
@@ -158,8 +205,50 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
             body.hidden = open;
         });
 
-        group.append(toggle, body);
+        // The commands sit beside the heading that names exactly what they act on, and the state
+        // between them says what the reader is looking at — including a mixed view.
+        const header = document.createElement("div");
+        header.className = "legend-kind-header";
+        header.append(toggle);
+        if (regionFold) {
+            const state = document.createElement("span");
+            state.className = "legend-kind-state";
+            header.append(
+                state,
+                foldCommand(
+                    "expand",
+                    FOLD_COMMAND_GLYPHS.expandAll,
+                    `Open all ${kind.toLowerCase()} regions`,
+                    regionFold.onExpandAll,
+                ),
+                foldCommand(
+                    "collapse",
+                    FOLD_COMMAND_GLYPHS.collapseAll,
+                    `Fold all ${kind.toLowerCase()} regions`,
+                    regionFold.onCollapseAll,
+                ),
+            );
+        }
+
+        group.append(header, body);
         return group;
+    }
+
+    function foldCommand(
+        name: string,
+        glyph: string,
+        label: string,
+        run: () => void,
+    ): HTMLButtonElement {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "legend-fold-command";
+        button.dataset.command = name;
+        button.setAttribute("aria-label", label);
+        button.title = label;
+        button.append(codicon(glyph, "legend-fold-command-icon"));
+        button.addEventListener("click", run);
+        return button;
     }
 
     function regionItem(name: string, tint: number, count: number): HTMLButtonElement {
@@ -167,6 +256,10 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         // string, and a region name cannot collide with a palette category.
         const item = interactiveItem(name, name, count);
         item.classList.add("legend-region");
+        // "Nodes" is what a region's number counts, and the "Regions" heading above cannot say so
+        // the way the "Nodes" and "Edges" headings do for their own rows.
+        item.querySelector<HTMLElement>(".count")!.textContent =
+            `${count} ${count === 1 ? "node" : "nodes"}`;
         item.dataset.region = name;
         const swatch = item.querySelector<HTMLElement>(".swatch")!;
         swatch.className = "swatch region-swatch";

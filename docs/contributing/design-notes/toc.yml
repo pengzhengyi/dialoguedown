@@ -98,6 +98,8 @@
     href: Co-located Diagnostics Presentation.md
   - name: Dialogue Graph — Region Fold
     href: Dialogue Graph Region Fold.md
+  - name: Collapsing Across the Report
+    href: Collapsing Across the Report.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion
