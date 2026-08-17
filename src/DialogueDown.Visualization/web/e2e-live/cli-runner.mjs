@@ -1,10 +1,27 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const CLI_DLL = resolve(here, "../../../DialogueDown.Cli/bin/Release/net8.0/DialogueDown.Cli.dll");
+const CLI_PROJECT = resolve(here, "../../../DialogueDown.Cli/DialogueDown.Cli.csproj");
+
+/**
+ * The framework the CLI is actually built for, read from its project rather than repeated here.
+ * A copy would go stale the next time the CLI's target framework moves, and the failure would
+ * arrive as a missing file rather than as the version mismatch it really is.
+ */
+function cliTargetFramework() {
+    const csproj = readFileSync(CLI_PROJECT, "utf8");
+    const target = /<TargetFramework>([^<]+)<\/TargetFramework>/.exec(csproj);
+    if (!target) throw new Error(`No <TargetFramework> in ${CLI_PROJECT}`);
+    return target[1].trim();
+}
+
+const CLI_DLL = resolve(
+    here,
+    `../../../DialogueDown.Cli/bin/Release/${cliTargetFramework()}/DialogueDown.Cli.dll`,
+);
 
 export function cliInvocation(args) {
     return {
