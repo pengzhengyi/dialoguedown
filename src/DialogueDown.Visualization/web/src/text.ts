@@ -1,5 +1,6 @@
 import { Marked, type MarkedExtension, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
+import { createRegionKeys, type RegionKey } from "./region-key";
 import { foldGlyphName } from "./fold-glyph";
 import type { DisplayNode, Span } from "./model";
 import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
@@ -245,47 +246,44 @@ function ignoredRegion(token: Token, html: string, regionKey: RegionKey): string
         : "Ignored — not included in dialogue";
     const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
     // A chevron performs the action and a static mark states what the region is, which is the
-    // rule the whole report follows. An inline region is the one place with room for a single
-    // mark, so there it keeps the status glyph and that glyph is the control.
+    // rule the whole report follows -- inline as well, so a reader never meets the same glyph
+    // meaning two different things depending on where it sits.
     //
     // The accessible name and pressed state depend on the current view, so the Preview controller
     // owns them; the renderer only emits the structure.
-    const toggle = inline
-        ? `<button type="button" class="dd-ignored-region-toggle">` +
-          `<span class="codicon codicon-circle-slash" aria-hidden="true"></span></button>`
-        : `<button type="button" class="dd-ignored-region-toggle">` +
-          `<span class="codicon codicon-${foldGlyphName(true)} dd-ignored-region-toggle-icon" aria-hidden="true"></span></button>` +
-          `<span class="dd-ignored-region-status codicon codicon-circle-slash" aria-hidden="true"></span>`;
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(kind, source))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${content}</${tag}>`;
+    const brief = inline ? briefContent(token) : "";
+    const toggle =
+        `<button type="button" class="dd-ignored-region-toggle">` +
+        `<span class="codicon codicon-${foldGlyphName(true)} dd-ignored-region-toggle-icon" aria-hidden="true"></span></button>` +
+        `<span class="dd-ignored-region-status codicon codicon-circle-slash" aria-hidden="true"></span>`;
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(`${kind}:${source}`))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${brief}${content}</${tag}>`;
 }
 
-/** Names one ignored region, keeping identical siblings apart by their order in the document. */
-type RegionKey = (kind: string, source: string) => string;
+/** The brief stand-in itself: a real link when the region is one, so it still leads somewhere. */
+function briefContent(token: Token): string {
+    const label = escapeHtml(briefLabel(token));
+    if (token.type !== "link") return `<span class="dd-ignored-region-brief">${label}</span>`;
+
+    const href = escapeHtml((token as Tokens.Link).href);
+    return `<a class="dd-ignored-region-brief" href="${href}" title="${href}">${label}</a>`;
+}
 
 /**
- * Name each ignored region by what it contains, so a writer's per-region view choice follows the
- * region through the full Preview re-render that every keystroke triggers. Position cannot serve
- * as the name: inserting a line above a region would hand its choice to an unrelated neighbor.
+ * The shortest honest stand-in for an inline region's content, shown once it collapses.
+ *
+ * A collapsed block region states its kind and how many lines went away. An inline region has no
+ * room for that, but it should say at least as much as it took up: a link keeps being a link,
+ * named by its host and still leading where it led.
  */
-function createRegionKeys(): RegionKey {
-    const seen = new Map<string, number>();
-    return (kind, source) => {
-        const content = `${kind}:${hashSource(source)}`;
-        const occurrence = seen.get(content) ?? 0;
-        seen.set(content, occurrence + 1);
-        return `${content}:${occurrence}`;
-    };
-}
+function briefLabel(token: Token): string {
+    if (token.type !== "link") return ignoredKind(token);
 
-// FNV-1a. A collision would only let one region inherit another's view choice until the next
-// global command, so a short non-cryptographic digest is enough to keep the attribute small.
-function hashSource(source: string): string {
-    let hash = 0x811c9dc5;
-    for (let index = 0; index < source.length; index += 1) {
-        hash ^= source.charCodeAt(index);
-        hash = Math.imul(hash, 0x01000193);
+    const href = (token as Tokens.Link).href;
+    try {
+        return new URL(href).host || href;
+    } catch {
+        return href;
     }
-    return (hash >>> 0).toString(36);
 }
 
 function ignoredKind(token: Token): string {

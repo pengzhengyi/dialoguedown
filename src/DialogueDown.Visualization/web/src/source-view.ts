@@ -40,6 +40,12 @@ import {
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { foldGutterMarker } from "./fold-glyph";
+import {
+    foldEveryIgnoredRegion,
+    hasFoldableIgnoredRegions,
+    setIgnoredSpans,
+    sourceIgnoredFold,
+} from "./source-ignored-fold";
 import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { yamlLanguage } from "@codemirror/lang-yaml";
@@ -526,6 +532,22 @@ export function createSourceView(
                     submenu: jumpMenuItems(view, jumpTargets),
                 });
             }
+            // The commands drive the editor's own folding, so pressing them is the same act as
+            // pressing each gutter chevron in turn.
+            if (hasFoldableIgnoredRegions(view.state)) {
+                items.push(
+                    {
+                        icon: "collapse-all",
+                        label: "Fold all ignored Markdown",
+                        run: () => foldEveryIgnoredRegion(view, true),
+                    },
+                    {
+                        icon: "expand-all",
+                        label: "Open all ignored Markdown",
+                        run: () => foldEveryIgnoredRegion(view, false),
+                    },
+                );
+            }
             if (!view.state.readOnly) {
                 items.push(
                     { icon: "bold", label: "Bold", run: () => runInEditor(view, toggleWrap("**")) },
@@ -562,6 +584,7 @@ export function createSourceView(
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),
+                sourceIgnoredFold(),
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
                 reservedTargetsPanel(),
@@ -569,6 +592,10 @@ export function createSourceView(
                 contextMenu,
                 keymap.of([
                     { key: "Alt-j", run: (view) => openJumpMenuAtCaret(view, jumpTargets) },
+                    // The same Alt-letter shape the jump menu uses. A shifted letter is not
+                    // usable here: the browser reports the shifted character, not "Shift-<key>".
+                    { key: "Alt-i", run: (view) => foldEveryIgnoredRegion(view, true) },
+                    { key: "Alt-o", run: (view) => foldEveryIgnoredRegion(view, false) },
                 ]),
                 headingSlugHints(),
                 foldHeadings,
@@ -668,10 +695,13 @@ export function createSourceView(
                         start: positionToOffset(view.state, token.range.start),
                         end: positionToOffset(view.state, token.range.end),
                     }));
+            const ignored = spansOf("IgnoredMarkdown");
             previewSemantics = {
-                ignored: spansOf("IgnoredMarkdown"),
+                ignored,
                 controlKeywords: spansOf("ControlKeyword"),
             };
+            // The editor folds the same regions the Preview does, from its own state.
+            view.dispatch({ effects: setIgnoredSpans.of(ignored) });
             renderPreview(view.state.doc.toString());
         },
         setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
