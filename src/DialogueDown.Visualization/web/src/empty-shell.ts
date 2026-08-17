@@ -1,6 +1,7 @@
 import { runApp } from "./app";
 import { initExplorer } from "./explorer";
 import { initCollapsiblePanel } from "./collapse-toggle";
+import { createExplorerToggle } from "./explorer-toggle";
 import { setHelp } from "./help";
 import type { Report } from "./model";
 import type { BrowseListing, CreateOutcome } from "./project-fs";
@@ -94,14 +95,16 @@ export function initEmptyShell(report: Report): void {
         confirm: (message) => window.confirm(message),
     });
 
+    // Open on arrival here, unlike a session with a document: nothing is showing, so the tree is
+    // not a detour but the only thing to do — the call to action below points straight at it.
     const explorerPanel = initCollapsiblePanel({
         container: appEl,
         collapsedClass: "explorer-collapsed",
         storageKey: "dd-explorer-collapsed",
         name: "explorer",
-        side: "left",
+        createButton: createExplorerToggle,
     });
-    document.getElementById("explorer-resizer")?.appendChild(explorerPanel.button);
+    document.getElementById("tabbar-leading")?.appendChild(explorerPanel.button);
 
     // The call to action in the main pane. "New dialogue file" runs the Explorer's own create flow
     // (its header New File action), so naming and creation happen in the tree as everywhere else.

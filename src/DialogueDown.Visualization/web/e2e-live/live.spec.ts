@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { LIVE_DOC, INITIAL_SOURCE } from "./fixture.mjs";
@@ -253,6 +254,7 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
 
 test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) => {
     await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+    await page.locator(".tabbar-explorer").click();
     await expect(page.locator("#explorer")).toBeVisible();
 
     await page.keyboard.press("z");
@@ -261,9 +263,49 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
     // follow it in source order.
     await expect(page.locator("#explorer")).toBeHidden();
     await expect(page.locator("#explorer-resizer")).toBeHidden();
+    // Its control goes too: left in the row it would be a button whose panel Zen suppresses.
+    await expect(page.locator(".tabbar-explorer")).toBeHidden();
 
     await page.keyboard.press("Escape");
     await expect(page.locator("#explorer")).toBeVisible();
+    await expect(page.locator(".tabbar-explorer")).toBeVisible();
+});
+
+test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {
+    // The reader asked for this script, so the tree starts out of the way. One obvious click
+    // brings it back, and the control says which state it is in.
+    const toggle = page.locator(".tabbar-explorer");
+    await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+    await expect(page.locator("#explorer")).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    // Shut, the divider has nothing to sit between.
+    await expect(page.locator("#explorer-resizer")).toBeHidden();
+    expect((await new AxeBuilder({ page }).include(".tabbar").analyze()).violations).toEqual([]);
+
+    await toggle.click();
+
+    await expect(page.locator("#explorer")).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#explorer-resizer")).toBeVisible();
+    // A new interactive control belongs in the accessibility pass in both of its states.
+    expect((await new AxeBuilder({ page }).include(".tabbar").analyze()).violations).toEqual([]);
+
+    await toggle.click();
+
+    await expect(page.locator("#explorer")).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+});
+
+test("remembers that the Explorer was opened, across a reload", async ({ page }) => {
+    await page.locator(".tabbar-explorer").click();
+    await expect(page.locator("#explorer")).toBeVisible();
+
+    await page.reload();
+
+    // A deliberate "show it" outranks the shut default — which a marker whose absence meant
+    // "shown" could not express.
+    await expect(page.locator("#explorer")).toBeVisible();
+    await expect(page.locator(".tabbar-explorer")).toHaveAttribute("aria-expanded", "true");
 });
 
 test.describe("on a phone-sized window", () => {
@@ -271,6 +313,8 @@ test.describe("on a phone-sized window", () => {
 
     test("turns the Explorer seam with the stacked layout", async ({ page }) => {
         await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+        await page.locator(".tabbar-explorer").click();
+        await expect(page.locator("#explorer")).toBeVisible();
 
         const stacked = await page.evaluate(() => {
             const app = getComputedStyle(document.querySelector("#app")!).flexDirection;
@@ -288,8 +332,8 @@ test.describe("on a phone-sized window", () => {
         });
 
         expect(stacked.app).toBe("column");
-        // The seam kept `width: 1px` in a column and measured 1x0px, so its collapse toggle
-        // could not be reached at all.
+        // The seam kept `width: 1px` in a column and measured 1x0px, so it could not be dragged
+        // at all.
         expect(stacked.seamHeight).toBeGreaterThan(0);
         expect(stacked.seamSpansWidth).toBe(true);
         // Content-sized rather than a rigid 15rem: this project holds a handful of files.
@@ -298,12 +342,32 @@ test.describe("on a phone-sized window", () => {
         expect(stacked.stageHeight).toBeGreaterThan(stacked.explorerHeight);
     });
 
-    test("hides and restores the Explorer from the turned seam", async ({ page }) => {
-        const toggle = page.locator("#explorer-resizer .collapse-toggle");
-        await expect(page.locator("#explorer")).toBeVisible();
+    test("keeps the Explorer control in reach while the stage row scrolls", async ({ page }) => {
+        // The control is pinned beside the stage nav, not inside it. Placed within, it would
+        // scroll away with the tabs and could hide behind an arrow — unreachable exactly on the
+        // window where space is tightest.
+        const toggle = page.locator(".tabbar-explorer");
+        await expect(toggle).toBeVisible();
+        await expect(page.locator("#tabs .tabbar-explorer")).toHaveCount(0);
 
-        await toggle.click();
-        await expect(page.locator("#explorer")).toBeHidden();
+        const before = await toggle.boundingBox();
+        // The premise: at this width the stage row really does overflow.
+        const scrollable = await page
+            .locator("#tabs")
+            .evaluate((tabs) => tabs.scrollWidth > tabs.clientWidth);
+        expect(scrollable).toBe(true);
+
+        // Drive the row to its far end, as the arrows do.
+        await page.locator("#tabs").evaluate((tabs) => {
+            tabs.scrollLeft = tabs.scrollWidth;
+        });
+        await expect
+            .poll(async () => page.locator("#tabs").evaluate((tabs) => tabs.scrollLeft))
+            .toBeGreaterThan(0);
+
+        await expect(toggle).toBeVisible();
+        const after = await toggle.boundingBox();
+        expect(Math.abs((after?.x ?? 0) - (before?.x ?? 0))).toBeLessThan(1);
 
         await toggle.click();
         await expect(page.locator("#explorer")).toBeVisible();

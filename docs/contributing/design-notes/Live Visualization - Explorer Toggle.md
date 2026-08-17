@@ -1,8 +1,7 @@
 # Live Visualization — Explorer Toggle
 
 > [!NOTE]
-> Status: **proposed**. Tracked by
-> [#292](https://github.com/pengzhengyi/dialoguedown/issues/292).
+> Status: **implemented**.
 
 The Explorer opens expanded on every launch, holding `15rem` of the window whether
 or not the reader is navigating files. The cost is paid at every launch; the benefit
@@ -33,15 +32,15 @@ opening, creating, renaming — is untouched. See
 
 ## What it delivers
 
-- [ ] A pinned **Files** control in the tab bar that shows and hides the Explorer.
-- [ ] The control states whether the Explorer is showing, rather than only offering
+- [x] A pinned **Files** control in the tab bar that shows and hides the Explorer.
+- [x] The control states whether the Explorer is showing, rather than only offering
       an action.
-- [ ] The Explorer is **shut by default** when a document is open.
-- [ ] The Explorer is **open by default** in the empty shell.
-- [ ] An explicit choice is remembered across reloads, in both shells.
-- [ ] The control is unaffected by the stage row scrolling on a narrow window.
-- [ ] The control is absent in Zen, which already hides the Explorer.
-- [ ] The divider keeps resizing and gives back its space while the panel is shut.
+- [x] The Explorer is **shut by default** when a document is open.
+- [x] The Explorer is **open by default** in the empty shell.
+- [x] An explicit choice is remembered across reloads, in both shells.
+- [x] The control is unaffected by the stage row scrolling on a narrow window.
+- [x] The control is absent in Zen, which already hides the Explorer.
+- [x] The divider keeps resizing and gives back its space while the panel is shut.
 
 ## Where the toggle lives
 
@@ -137,8 +136,11 @@ the divider handle and their current default, unchanged.
   older remembered value; the control's engaged state tracking the panel.
 - **Browser** — the Explorer is shut on arrival with a document open and open in the
   empty shell; the toggle summons and dismisses it; the control keeps its place when
-  the stage row scrolls on a narrow window; it is gone in Zen.
-- **Accessibility** — the existing axe pass covers the new control's labelling.
+  the stage row scrolls on a narrow window; it is gone in Zen; and the exported
+  report carries no control, with its slot taking no room.
+- **Accessibility** — the report's existing pass is scoped to the source preview, so
+  it never sees the tab bar. The control brings its own: an accessibility scan of the
+  row in **both** of its states, shut and showing.
 
 ## Tradeoffs
 

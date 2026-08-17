@@ -16,6 +16,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("lists the root's scripts and folders in the Explorer", async ({ page }) => {
+    // Open on arrival here, unlike a session with a document: nothing is showing, so the tree is
+    // not a detour but the only thing to do — the card beside it points straight at it.
+    await expect(page.locator("#explorer")).toBeVisible();
+    await expect(page.locator(".tabbar-explorer")).toHaveAttribute("aria-expanded", "true");
     await expect(
         page.locator(".explorer-script-row", { hasText: "top.dialogue.md" }),
     ).toBeVisible();

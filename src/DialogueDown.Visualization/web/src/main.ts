@@ -21,6 +21,7 @@ import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
 import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
 import { initEmptyShell } from "./empty-shell";
 import { initCollapsiblePanel } from "./collapse-toggle";
+import { createExplorerToggle } from "./explorer-toggle";
 import {
     type ConfigReport,
     type DialogueSymbols,
@@ -328,14 +329,17 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                 },
                 configExplorerEntry(report.configuration),
             );
+            // Shut on arrival: the reader asked for this script, so the tree is a detour. The
+            // Files control in the tab bar summons it, and an explicit choice outranks this.
             const explorerPanel = initCollapsiblePanel({
                 container: appEl,
                 collapsedClass: "explorer-collapsed",
                 storageKey: "dd-explorer-collapsed",
                 name: "explorer",
-                side: "left",
+                startCollapsed: true,
+                createButton: createExplorerToggle,
             });
-            document.getElementById("explorer-resizer")?.appendChild(explorerPanel.button);
+            document.getElementById("tabbar-leading")?.appendChild(explorerPanel.button);
 
             // A cross-file link in the Source preview opens the target script like a hyperlink;
             // same-file #anchors keep their native scroll, and the anchor part is dropped (the

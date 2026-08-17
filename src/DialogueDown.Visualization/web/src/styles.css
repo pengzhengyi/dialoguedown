@@ -380,6 +380,21 @@ body {
     padding-bottom: 0.35rem;
 }
 
+/* The Explorer's control, pinned at the row's leading edge so it sits over the panel it
+   summons. Being a sibling of the stage nav rather than a member of it is the point: the nav
+   scrolls on a narrow window, and a control that scrolls out of reach is worse than none.
+   Empty — a static export has no Explorer — it takes no room, gap included. */
+.tabbar-leading {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    padding-bottom: 0.35rem;
+}
+
+.tabbar-leading:empty {
+    display: none;
+}
+
 .tab-arrow {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -637,21 +652,12 @@ section.stage.empty-shell {
     background: var(--pico-muted-border-color);
 }
 
-#app.explorer-collapsed #explorer {
-    display: none;
-}
-
+/* Shut, the divider has nothing to sit between, so it goes entirely and gives back its
+   margins too — its show/hide handle now lives in the tab bar. It keeps its resize role
+   whenever the panel is showing. */
+#app.explorer-collapsed #explorer,
 #app.explorer-collapsed #explorer-resizer {
-    background: transparent;
-}
-
-/* The show/hide toggle sits on the divider, like the inspector's re-open handle. It carries the
-   left-hand `panel-left-*` glyphs (via side: "left"), so the chevrons already point the right way. */
-#explorer-resizer .collapse-toggle {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    display: none;
 }
 
 .explorer-header {
@@ -3213,6 +3219,41 @@ body.maximized .maximize-button .icon-compress {
     color: inherit;
 }
 
+/* The Explorer's control, at the row's other end. It borrows the Zen button's quiet tab-row
+   styling so the row reads as one family, but keys its engaged look off `aria-expanded`: it
+   discloses a region rather than staying pushed like a mode. */
+.tabbar-explorer {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    cursor: pointer;
+}
+
+.tabbar-explorer:hover {
+    --pico-color: inherit;
+
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
+.tabbar-explorer[aria-expanded="true"] {
+    color: var(--mode-accent, var(--pico-primary));
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
+}
+
+.explorer-toggle-icon {
+    display: block;
+    font-size: 15px;
+    color: inherit;
+}
+
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
    sits at the viewport's top-right corner (the conventional close-fullscreen spot, clear of
    the graph legend and zoom cluster). Revealed only while maximized. */
@@ -3287,6 +3328,12 @@ body.zen #app #explorer-resizer {
     display: none;
 }
 
+/* Its control goes with it. Left in the row it would be a button whose panel is suppressed
+   for as long as Zen lasts — an invitation to press something that cannot answer. */
+body.zen .tabbar-explorer {
+    display: none;
+}
+
 /* With its neighbour gone the primary pane takes the whole row, overriding the drag-set
    split variable the same way each panel's collapsed class does. */
 body.zen .source-view > .source-pane,
@@ -3358,8 +3405,7 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle,
 .preview-collapsed .collapse-toggle,
 .config-collapsed .collapse-toggle,
-.tables-collapsed .collapse-toggle,
-.explorer-collapsed .collapse-toggle {
+.tables-collapsed .collapse-toggle {
     --pico-color: inherit;
 
     opacity: 1;
@@ -3383,16 +3429,14 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle .icon-collapse,
 .preview-collapsed .collapse-toggle .icon-collapse,
 .config-collapsed .collapse-toggle .icon-collapse,
-.tables-collapsed .collapse-toggle .icon-collapse,
-.explorer-collapsed .collapse-toggle .icon-collapse {
+.tables-collapsed .collapse-toggle .icon-collapse {
     display: none;
 }
 
 .detail-collapsed .collapse-toggle .icon-expand,
 .preview-collapsed .collapse-toggle .icon-expand,
 .config-collapsed .collapse-toggle .icon-expand,
-.tables-collapsed .collapse-toggle .icon-expand,
-.explorer-collapsed .collapse-toggle .icon-expand {
+.tables-collapsed .collapse-toggle .icon-expand {
     display: block;
 }
 
@@ -4494,18 +4538,6 @@ body.zen .config-view > .config-source {
         width: auto;
         height: 1px;
         margin: 0.35rem 0;
-    }
-
-    /* Centered on a horizontal seam rather than hung from the top of a vertical one. */
-    #explorer-resizer .collapse-toggle {
-        top: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    /* A bottom-panel orientation now that the Explorer sits above the stage: down hides it,
-       up brings it back — the same rotation the Source and inspector dividers get. */
-    #explorer-resizer .collapse-icon {
-        transform: rotate(90deg);
     }
 
     /* Stacked: the graph and the node inspector share the column with a fixed 60/40 split.
