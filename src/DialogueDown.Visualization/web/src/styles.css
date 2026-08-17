@@ -527,10 +527,11 @@ button.tab.dirty::after {
     display: flex;
     min-height: 0;
 
-    /* Full-bleed main: no vertical inset, so the editor and graphs use the whole height between
-       the header rule and the footer; a slim horizontal inset keeps the editor's line gutter (and
-       its debug lane) and the graph controls off the window edge without boxing the content in. */
-    padding: 0 0.4rem;
+    /* Full-bleed main: the editor, graphs, and the Source tab's footer bar use the whole window
+       between the header rule and the footer. The bar states where the document ends and what the
+       Preview left out, which is a statement about the whole window rather than about an inset
+       column, so an inset here read as a gap the content had failed to fill. */
+    padding: 0;
 }
 
 #stages {
@@ -637,11 +638,20 @@ section.stage.empty-shell {
     background: var(--pico-muted-border-color);
 }
 
+#app.explorer-collapsed #explorer-resizer .collapse-toggle {
+    left: 0;
+    transform: none;
+}
+
 #app.explorer-collapsed #explorer {
     display: none;
 }
 
+/* Collapsed, the seam separates nothing, so its margins are dead space at the window's edge --
+   the gap the stage appeared to leave. It closes, and its toggle stops centering on the seam so
+   the button stays on screen rather than half beyond it: the toggle is the only way back. */
 #app.explorer-collapsed #explorer-resizer {
+    margin: 0;
     background: transparent;
 }
 

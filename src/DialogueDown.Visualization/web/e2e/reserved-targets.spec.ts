@@ -48,6 +48,22 @@ test("joins the two footers into one band across the split divider", async ({ pa
     expect(ignoredBox.x).toBeCloseTo(endBox.x + endBox.width, 1);
 });
 
+test("runs the footer band the full width of the window", async ({ page }) => {
+    // The bar states the document's end and what the Preview left out, so it belongs to the whole
+    // window rather than to an inset column: nothing should sit beside it at either edge.
+    const end = page.locator(".dd-reserved-target-row");
+    const ignored = page.locator(".dd-ignored-preview-footer");
+    const [endBox, ignoredBox, width] = await Promise.all([
+        end.boundingBox(),
+        ignored.boundingBox(),
+        page.evaluate(() => window.innerWidth),
+    ]);
+    if (!endBox || !ignoredBox) throw new Error("Could not measure the Source/Preview footers.");
+
+    expect(endBox.x).toBeCloseTo(0, 1);
+    expect(ignoredBox.x + ignoredBox.width).toBeCloseTo(width, 1);
+});
+
 test("keeps the joined footer clear of the divider that separates the panes above it", async ({
     page,
 }) => {

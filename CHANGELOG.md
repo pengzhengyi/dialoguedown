@@ -211,8 +211,9 @@ changes easy to categorize.
 
 ### Fixed
 
-- **The Source tab's bottom row reads as one bar** — the split divider no longer shows through
-  as a white notch between the `#END` footer and the ignored-content footer.
+- **The Source tab's bottom row reads as one bar, edge to edge** — the split divider no longer
+  shows through as a white notch between the `#END` footer and the ignored-content footer, and the
+  main area is full-bleed, so nothing insets the bar from either window edge.
 
 - **Front matter now reads as YAML metadata in the Source editor** — a canonical leading
   `--- … ---` block receives YAML keys, values, comments, indentation, and folding instead of

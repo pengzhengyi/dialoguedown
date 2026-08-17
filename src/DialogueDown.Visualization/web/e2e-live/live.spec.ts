@@ -308,6 +308,21 @@ test.describe("on a phone-sized window", () => {
         await toggle.click();
         await expect(page.locator("#explorer")).toBeVisible();
     });
+
+    test("keeps the seam's toggle reachable once the Explorer is hidden", async ({ page }) => {
+        // The toggle is the only way back, and it is centered on a one-pixel seam: if the seam
+        // sits at the window's edge, half the button hangs off it and the Explorer cannot return.
+        const toggle = page.locator("#explorer-resizer .collapse-toggle");
+        await toggle.click();
+        await expect(page.locator("#explorer")).toBeHidden();
+
+        const box = await toggle.boundingBox();
+        if (!box) throw new Error("Could not measure the Explorer toggle.");
+        expect(box.x).toBeGreaterThanOrEqual(0);
+
+        await toggle.click();
+        await expect(page.locator("#explorer")).toBeVisible();
+    });
 });
 
 test("renders the dialogue graph, including a cycle and unreachable content", async ({ page }) => {
