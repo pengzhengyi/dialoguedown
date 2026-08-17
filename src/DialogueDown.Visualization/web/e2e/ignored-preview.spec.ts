@@ -182,6 +182,67 @@ async function ruleAgainstBackdrop(
     });
 }
 
+const PAGE: Rgba = [255, 255, 255, 1];
+
+/** The color an element's text actually reaches the page as, once its own dimming is applied. */
+async function inkOf(locator: import("@playwright/test").Locator): Promise<Rgba> {
+    const { color, opacity } = await locator.evaluate((node) => {
+        const style = getComputedStyle(node);
+        return { color: style.color, opacity: style.opacity };
+    });
+    const parsed = parseColor(color);
+    if (!parsed) throw new Error(`No color found: ${color}`);
+    return over([parsed[0], parsed[1], parsed[2], parsed[3] * Number(opacity)], PAGE);
+}
+
+async function surfaceOf(locator: import("@playwright/test").Locator): Promise<string> {
+    return locator.evaluate((node) => getComputedStyle(node).backgroundColor);
+}
+
+function isTransparent(color: string): boolean {
+    const parsed = parseColor(color);
+    return color === "transparent" || (parsed !== null && parsed[3] === 0);
+}
+
+test("sets its content back from normal prose rather than fading it out", async ({ page }) => {
+    // Ignored Markdown is usually an authoring aid the writer still reads, so it must stay firmly
+    // legible -- clearly secondary to dialogue, not washed toward the page.
+    const region = regions(page).first();
+    const ignored = contrastRatio(await inkOf(region.locator(".dd-preview-ignored")), PAGE);
+    const prose = contrastRatio(await inkOf(page.locator(".source-preview p").first()), PAGE);
+
+    expect(ignored).toBeLessThan(prose);
+    expect(ignored / prose).toBeGreaterThanOrEqual(0.55);
+});
+
+test("never lets a region's chrome out-contrast the content it frames", async ({ page }) => {
+    const region = regions(page).first();
+    const content = contrastRatio(await inkOf(region.locator(".dd-preview-ignored")), PAGE);
+
+    const rail = await region.evaluate((node) => getComputedStyle(node).borderLeftColor);
+    const parsedRail = parseColor(rail);
+    expect(parsedRail, `no color found on the rail: ${rail}`).not.toBeNull();
+
+    expect(content).toBeGreaterThan(contrastRatio(over(parsedRail!, PAGE), PAGE));
+});
+
+test("keeps a region's control quiet until the region is wanted", async ({ page }) => {
+    const region = regions(page).first();
+    const toggle = region.locator(".dd-ignored-region-toggle");
+
+    expect(isTransparent(await surfaceOf(toggle))).toBe(true);
+
+    await region.hover();
+    await expect.poll(async () => isTransparent(await surfaceOf(toggle))).toBe(false);
+});
+
+test("keeps a quiet control legible enough to find", async ({ page }) => {
+    // Quieting the chrome must not push the control under the floor a UI component has to meet.
+    const glyph = await inkOf(regions(page).first().locator(".dd-ignored-region-toggle"));
+
+    expect(contrastRatio(glyph, PAGE)).toBeGreaterThanOrEqual(3);
+});
+
 test("puts a shown thematic break on its marks' own line", async ({ page }) => {
     // A rule has no text to align against, so nothing anchors it to the marks unless we say so.
     const divider = regions(page).nth(2);

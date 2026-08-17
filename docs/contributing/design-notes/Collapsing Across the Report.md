@@ -296,6 +296,21 @@ The report keeps one word for the act. The Preview's prose still reports *visibi
 shown in Preview`), because in that pane the outcome a reader cares about is whether the content is
 there, not the mechanism that put it away.
 
+### D6 — Content first, chrome second
+
+An ignored region is usually an authoring aid the writer still reads — a table of prices, a block
+of notes — so the region's own furniture must not out-shout what it frames. The first build had it
+backwards: a solid rail and a filled chip surface at full strength around content dimmed to 0.72.
+
+So the chrome now **recedes while the content shows** and comes forward on hover or focus, and the
+content is *set back* from dialogue rather than faded toward the page. Two floors keep the quieting
+honest, and both are tested: the control's glyph stays above the 3:1 a UI component owes even at
+rest, and the content keeps at least 55% of normal prose's contrast.
+
+The one exception is a **collapsed** region, where the control keeps its surface unconditionally.
+There is no content left for it to defer to — the control is standing in for what it hid, so it
+should read as the thing to press.
+
 ## Boundary cases
 
 | Case | Behavior |
@@ -305,11 +320,12 @@ there, not the mechanism that put it away.
 | An all-command when the view already matches | Still valid — it clears overrides. |
 | Graph: collapse all with a selection inside a scene | Selection moves to that scene's box, per the existing rule. |
 | Graph: collapse all, then navigate to a hidden node | The scene expands first, per the existing rule. |
-| Source: edit inside a collapsed ignored region | Expands first; hidden text is never silently edited. |
+| Source: edit inside a folded ignored run | The cursor cannot enter a folded range, so hidden text is never silently edited. |
 | Source: an ignored run inside a folded heading section | One fold state holds both, so the outer fold simply wins. |
 | Source: an ignored run of one line (a `---` divider) | Carries the cue, offers no chevron — there is nothing beneath to hide. |
 | Source: an ignored span inside a line | Keeps its dimmed ink and neither mark; only the Preview collapses inline regions. |
 | Source folded, Preview not (or the reverse) | Expected: the two panes hold separate state by design. |
+| Preview: a collapsed region | The control keeps its surface — with the content gone, it is what the reader must find. |
 | Preview: a shown thematic break | The rule takes the marks' own line and full-strength muted ink — it is the region's whole content, and it has no text to align against. |
 | Preview: collapsed inline ignored chip | Shows `circle-slash`, not a chevron — the one documented exception. |
 | Codicon font unavailable | Controls keep their accessible names and hit targets; only the glyph degrades. |
