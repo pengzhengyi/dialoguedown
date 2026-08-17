@@ -3288,23 +3288,29 @@ body.maximized .maximize-button .icon-compress {
    in the same Feather family and size the Config tab's gear uses. It sits among tabs, so it
    should read as one of the row's controls rather than as a chip parked beside them.
 
-   Open, it takes the two marks an editor's activity bar uses for the panel you are in: a
-   leading accent rail and a tinted bed. It never takes the underline — in this row that mark
-   answers "which stage am I on", and the Explorer is not a stage, so a second underlined item
-   would leave that question ambiguous. */
+   Open, it takes the marks this report already uses for a chosen file in the tree itself: a
+   tinted bed with an inset accent rail down its leading edge. It never takes the underline — in
+   this row that mark answers "which stage am I on", and the Explorer is not a stage, so a
+   second underlined item would leave that question ambiguous. */
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
-    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     width: auto;
     margin: 0 0 0.2rem;
-    padding: 0.3rem 0.6rem 0.15rem;
+
+    /* Roomier on the leading edge than the trailing one: the rail lands there when the panel
+       opens, and needs air between itself and the glyph rather than crowding it. */
+    padding: 0.3rem 0.6rem 0.15rem 0.9rem;
     color: var(--pico-muted-color);
     background: transparent;
+
+    /* The bed stops at the padding edge instead of bleeding into the strip below, so it ends
+       exactly where the rail does. */
+    background-clip: padding-box;
     border: none;
 
     /* The same 2px a tab reserves for its underline, so the two share a box and a baseline.
@@ -3325,19 +3331,13 @@ body.maximized .maximize-button .icon-compress {
     background: var(--pico-muted-border-color);
 }
 
+/* An inset rail rather than a drawn bar: it takes the bed's full height and its rounding on its
+   own, which a positioned bar has to be told — and was told wrongly, leaving bed showing below
+   it. The same shape the Explorer's own selected row uses. */
 .tabbar-explorer[aria-expanded="true"] {
     color: var(--mode-accent, var(--pico-primary));
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
-}
-
-/* The leading rail, drawn only while the panel is open. It stops above the reserved underline
-   strip so it reads as the bed's own edge rather than as a mark on the row's baseline. */
-.tabbar-explorer[aria-expanded="true"]::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 2px 0;
-    width: 2px;
-    background: var(--mode-accent, var(--pico-primary));
+    box-shadow: inset 2px 0 0 var(--mode-accent, var(--pico-primary));
 }
 
 /* A generous, soft ring rather than a tight outline: the control sits hard against the window's
@@ -3346,6 +3346,14 @@ body.maximized .maximize-button .icon-compress {
     outline: none;
     box-shadow: 0 0 0 3px
         color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
+}
+
+/* Focused while open, it wears both: the ring says where the keyboard is, the rail says the
+   panel is showing. One box-shadow property carries the two. */
+.tabbar-explorer[aria-expanded="true"]:focus-visible {
+    box-shadow:
+        inset 2px 0 0 var(--mode-accent, var(--pico-primary)),
+        0 0 0 3px color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
 }
 
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
@@ -4621,6 +4629,9 @@ body.zen .config-view > .config-source {
        not pointers, are doing the aiming. */
     .tabbar-explorer {
         margin-bottom: 0.35rem;
+
+        /* Even padding again: with no word beside it the glyph should sit centered in its bed,
+           as the icon buttons at the row's other end do. */
         padding: 0.3rem 0.5rem;
         border-bottom: none;
     }
@@ -4628,10 +4639,6 @@ body.zen .config-view > .config-source {
     .tabbar-explorer .tab-icon {
         width: 16px;
         height: 16px;
-    }
-
-    .tabbar-explorer[aria-expanded="true"]::before {
-        inset: 0 auto 0 0;
     }
 
     #app {
