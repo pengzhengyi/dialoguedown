@@ -328,14 +328,14 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     // that closes the row below. The button's box may run flush to either — it paints nothing.
     expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
     expect(metrics.bedBottom).toBeLessThan(metrics.tabbar.bottom);
-    // Squared off, so the accent rail down its leading edge reads as a straight bar rather than
-    // a sliver bent around a corner. Uniform, so no corner disagrees with another.
+    // Squared off, so the accent outline that marks it open reads as a crisp rectangle rather
+    // than a rounded chip. Uniform, so no corner disagrees with another.
     expect(new Set(metrics.bedCorners).size).toBe(1);
     expect(Number.parseFloat(metrics.bedCorners[0])).toBeLessThanOrEqual(2);
     // Even padding either side of the glyph, so it sits centered in its bed.
     expect(metrics.leftPadding).toBeCloseTo(metrics.rightPadding, 0);
-    // Its leading edge — where the rail stands while the panel is open — lines up with the
-    // header gutter, so the mark sits under the brand rather than inside the control.
+    // Its leading edge lines up with the header gutter, so the mark sits under the brand rather
+    // than inset from it.
     expect(metrics.files.left).toBeCloseTo(metrics.brand.left, 0);
     // And it leads the row rather than sitting inside the scrolling tabs.
     expect(metrics.filesGlyph.left).toBeLessThan(metrics.configGlyph.left);
@@ -370,6 +370,38 @@ test("rings the focused Files control once, on its bed", async ({ page }) => {
     // The one ring that is drawn hugs the bed, and is square-cut as the bed is.
     expect(rings.onBed).toContain("3px");
     expect(Number.parseFloat(rings.bedRadius)).toBeLessThanOrEqual(2);
+});
+
+test("marks the open Files control with an outline on every side", async ({ page }) => {
+    // The control sits in a row above the report rather than beside it, so no single edge is
+    // "the panel's". A one-sided rail — the activity-bar idiom — would point at an edge the
+    // panel does not open from; the mark runs the bed's whole outline instead.
+    const toggle = page.locator(".tabbar-explorer");
+    const edges = () =>
+        page.evaluate(() => {
+            const shadow = getComputedStyle(
+                document.querySelector(".tabbar-explorer")!,
+                "::before",
+            ).boxShadow;
+            const inset = shadow.split(/,(?![^(]*\))/).find((layer) => layer.includes("inset"));
+            if (!inset) return null;
+            // "<color> Xpx Ypx blur spread inset" — an outline on every side offsets nothing
+            // and spreads instead; a one-sided rail offsets along one axis.
+            const [x, y, blur, spread] = (
+                inset.replace(/(rgba?|color)\([^)]*\)/g, "").match(/-?[\d.]+px/g) ?? []
+            ).map(Number.parseFloat);
+            return { x, y, blur, spread };
+        });
+
+    expect(await edges()).toBeNull();
+
+    await toggle.click();
+
+    const mark = await edges();
+    expect(mark).not.toBeNull();
+    expect(mark!.x).toBe(0);
+    expect(mark!.y).toBe(0);
+    expect(mark!.spread).toBeGreaterThan(0);
 });
 
 test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {

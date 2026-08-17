@@ -93,14 +93,18 @@ separation is what keeps the mark clear of the brand above and the divider below
 row aligns to its bottom edge, so a control sized to its own chip would grow *upward*
 into the logo. The inset leaves air at both ends without shrinking the target.
 
-Open, it wears the two marks an editor's activity bar uses for the panel you are in:
-a **leading accent rail** and a **tinted bed**. The rail is drawn as the bed's own
-leading edge — an inset shadow rather than a separate positioned bar, so it takes the
-bed's height automatically instead of being told it and getting it wrong. The bed is
-**square-cut**, which is what lets the rail read as a straight bar: rounding the bed
-bends the rail around its corners, and at the 2px a rail is wide even a small radius
-turns it into a parenthesis rather than a mark. Its leading edge sits at the header
-gutter, which puts the rail under the brand mark rather than inside the control.
+Open, it wears a **tinted bed** under an **accent outline**. The outline runs the bed's
+whole perimeter rather than one edge: an editor's activity bar marks the panel you are in
+with a rail on the side that panel opens from, but this control sits in a row *above* the
+report rather than beside it, so no single edge is the panel's — a leading rail would
+point at an edge nothing opens from. It is drawn as an inset shadow rather than a border,
+so it takes the bed's box on its own and costs no layout. A **hairline** carries it: four
+edges say together what one edge needed weight to say alone.
+
+The bed is **square-cut**, which is what keeps the outline crisp: rounding it would bend
+each corner, and at hairline width a radius reads as a blur rather than a mark. Its
+leading edge sits at the header gutter, so the mark sits under the brand rather than
+inset from it.
 
 It never takes the **underline**: in this row that mark answers "which stage am I on",
 and the Explorer is not a stage — a second underlined item would leave that question

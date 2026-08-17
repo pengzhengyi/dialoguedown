@@ -3425,16 +3425,18 @@ body.maximized .maximize-button .icon-compress {
 }
 
 /* Open, it takes the marks this report already uses for a chosen file in the tree itself: a
-   tinted bed with an inset accent rail down its leading edge. The rail is a shadow rather than
-   a drawn bar, so it takes the bed's height on its own — and because the bed is squared, it
-   reads as a straight bar the full height of the mark. */
+   tinted bed, and an accent line. The line runs the bed's whole outline rather than only its
+   leading edge — an editor's activity bar puts its bar on the side the panel opens from, and
+   this control sits in a row above the report rather than beside it, so no one edge is the
+   panel's. Drawn as an inset shadow rather than a border, it takes the bed's box on its own and
+   costs no layout. A hairline is enough: four edges carry the tint the one edge had to. */
 .tabbar-explorer[aria-expanded="true"] {
     color: var(--mode-accent, var(--pico-primary));
 }
 
 .tabbar-explorer[aria-expanded="true"]::before {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
-    box-shadow: inset 2px 0 0 var(--mode-accent, var(--pico-primary));
+    box-shadow: inset 0 0 0 1px var(--mode-accent, var(--pico-primary));
 }
 
 /* The ring is drawn on the bed rather than the button, so it hugs what is visible instead of
@@ -3456,11 +3458,11 @@ body.maximized .maximize-button .icon-compress {
         color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
 }
 
-/* Focused while open, the bed wears both: the ring says where the keyboard is, the rail says
+/* Focused while open, the bed wears both: the ring says where the keyboard is, the outline says
    the panel is showing. */
 .tabbar-explorer[aria-expanded="true"]:focus-visible::before {
     box-shadow:
-        inset 2px 0 0 var(--mode-accent, var(--pico-primary)),
+        inset 0 0 0 1px var(--mode-accent, var(--pico-primary)),
         0 0 0 3px color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
 }
 
