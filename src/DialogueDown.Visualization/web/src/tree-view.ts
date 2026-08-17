@@ -773,7 +773,7 @@ export function createTreeView(
 
     /** Tell the legend how the regions stand, so a mixed view is stated rather than implied. */
     function reportRegionFold(): void {
-        setRegionFoldState(legend, collapsedRegions.size, foldableRegions.length);
+        setRegionFoldState(legend, collapsedRegions, foldableRegions.length);
     }
 
     /** Rebuild and redraw for the scenes now folded, keeping whatever node folds still apply. */

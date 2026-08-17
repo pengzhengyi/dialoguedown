@@ -3089,6 +3089,12 @@ svg.tree.has-focus .link:not(.related) {
     flex: none;
 }
 
+/* A folded scene empties its mark: the border still names the region, and the missing fill says
+   its nodes have been put away. Status, not a control — the band's chevron does the folding. */
+.legend .legend-region[data-folded="true"] .region-swatch {
+    background: transparent;
+}
+
 /* The route itself, drawn small: long enough for a pattern to repeat and to end in an arrowhead,
    so an edge never reads as a node's dot and a reader can tell one route from another. */
 .legend .edge-swatch {

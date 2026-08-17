@@ -77,15 +77,29 @@ export interface RegionFoldCommands {
  * Say how the stage's regions currently stand, so a mixed view never reads as all-or-nothing.
  * The drawing owns the fold, so it tells the legend rather than the legend asking.
  */
-export function setRegionFoldState(legend: HTMLElement, folded: number, total: number): void {
+export function setRegionFoldState(
+    legend: HTMLElement,
+    folded: ReadonlySet<string>,
+    total: number,
+): void {
+    // Each row shows its own scene's state in its swatch: a filled mark holds its nodes, a hollow
+    // one has put them away. That is a status, so it stays a mark rather than borrowing the
+    // chevron the report uses for the action.
+    for (const row of legend.querySelectorAll<HTMLElement>(".legend-region")) {
+        const region = row.dataset.region ?? "";
+        const shut = folded.has(region);
+        row.dataset.folded = String(shut);
+        row.title = shut ? `${region} — folded` : region;
+    }
+
     const state = legend.querySelector<HTMLElement>(".legend-kind-state");
     if (!state) return;
     state.textContent =
-        folded === 0
+        folded.size === 0
             ? "all open"
-            : folded === total
+            : folded.size === total
               ? "all folded"
-              : `${folded} of ${total} folded`;
+              : `${folded.size} of ${total} folded`;
 }
 
 /**
@@ -242,6 +256,10 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         // string, and a region name cannot collide with a palette category.
         const item = interactiveItem(name, name, count);
         item.classList.add("legend-region");
+        // "Nodes" is what a region's number counts, and the "Regions" heading above cannot say so
+        // the way the "Nodes" and "Edges" headings do for their own rows.
+        item.querySelector<HTMLElement>(".count")!.textContent =
+            `${count} ${count === 1 ? "node" : "nodes"}`;
         item.dataset.region = name;
         const swatch = item.querySelector<HTMLElement>(".swatch")!;
         swatch.className = "swatch region-swatch";

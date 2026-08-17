@@ -127,6 +127,11 @@ The report settles on one set of glyphs, all from the codicon font it already lo
 A status glyph is a static mark and never focusable; an action glyph is always a real control with
 `aria-expanded`. Where an item has both a status and an action, they are two marks side by side.
 
+A status mark may also carry an item's own fold state where a list already shows one mark per item.
+The legend's scene rows do this: a filled swatch still holds its nodes, a hollow one has put them
+away. It stays a mark rather than borrowing the chevron, because the row's click already means
+something else — dim this region — and folding has its own control on the band.
+
 The Dialogue Graph draws SVG rather than HTML, so its chevron becomes an SVG `<text>` node in the
 codicon font instead of a path — the font is declared for the whole document, so this is the same
 glyph, not a lookalike.
