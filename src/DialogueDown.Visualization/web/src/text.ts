@@ -246,17 +246,15 @@ function ignoredRegion(token: Token, html: string, regionKey: RegionKey): string
         : "Ignored — not included in dialogue";
     const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
     // A chevron performs the action and a static mark states what the region is, which is the
-    // rule the whole report follows. An inline region is the one place with room for a single
-    // mark, so there it keeps the status glyph and that glyph is the control.
+    // rule the whole report follows -- inline as well, so a reader never meets the same glyph
+    // meaning two different things depending on where it sits.
     //
     // The accessible name and pressed state depend on the current view, so the Preview controller
     // owns them; the renderer only emits the structure.
-    const toggle = inline
-        ? `<button type="button" class="dd-ignored-region-toggle">` +
-          `<span class="codicon codicon-circle-slash" aria-hidden="true"></span></button>`
-        : `<button type="button" class="dd-ignored-region-toggle">` +
-          `<span class="codicon codicon-${foldGlyphName(true)} dd-ignored-region-toggle-icon" aria-hidden="true"></span></button>` +
-          `<span class="dd-ignored-region-status codicon codicon-circle-slash" aria-hidden="true"></span>`;
+    const toggle =
+        `<button type="button" class="dd-ignored-region-toggle">` +
+        `<span class="codicon codicon-${foldGlyphName(true)} dd-ignored-region-toggle-icon" aria-hidden="true"></span></button>` +
+        `<span class="dd-ignored-region-status codicon codicon-circle-slash" aria-hidden="true"></span>`;
     return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(`${kind}:${source}`))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${content}</${tag}>`;
 }
 

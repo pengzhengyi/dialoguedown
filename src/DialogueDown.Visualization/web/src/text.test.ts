@@ -356,6 +356,22 @@ describe("renderDocument", () => {
         expect(html).toContain("codicon-circle-slash");
     });
 
+    it("gives an inline region the same chevron and trailing status as a block one", () => {
+        // One glyph, one meaning, wherever a reader meets it: the chevron always acts and the
+        // circle-slash always states. An inline region is no longer an exception to that.
+        const source = "<https://example.com>";
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        const control = html.indexOf("dd-ignored-region-toggle-icon");
+        const status = html.indexOf("dd-ignored-region-status");
+        expect(control).toBeGreaterThan(-1);
+        expect(status).toBeGreaterThan(control);
+        expect(html.match(/codicon-circle-slash/g)).toHaveLength(1);
+    });
+
     it("marks an autolink when a configured policy ignores it", () => {
         const source = "<https://example.com>";
         const html = renderDocument(source, {

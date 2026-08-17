@@ -144,11 +144,12 @@ language: the legend's own group disclosure, and the file Explorer's folders. A 
 keeps its own chevron, because it points at a menu opening beside it rather than at content that
 folds away.
 
-**One exception, deliberately.** A collapsed inline ignored region is a chip barely wider than one
-glyph, and there is room for a status mark or an action mark, not both. It keeps `circle-slash`,
-because inline the reader's first question is *what is missing here*, and a bare chevron in the
-middle of a sentence reads as a stray character. The action stays reachable — the chip is still the
-button, with its name and state on the control.
+**No exceptions.** An inline ignored region was briefly one: too narrow, it was argued, for both a
+status mark and an action mark, so its single glyph was `circle-slash` doing both jobs. In practice
+that made the same glyph mean *press me* inline and *this is ignored* everywhere else, and put it
+on the leading edge inline and the trailing edge on a block. An inline region now takes the same
+chevron on the left and the same `circle-slash` on the right as any block region — one glyph, one
+meaning, one place.
 
 ## Component 1 — One language, and all-commands for scenes
 
@@ -327,7 +328,7 @@ should read as the thing to press.
 | Source folded, Preview not (or the reverse) | Expected: the two panes hold separate state by design. |
 | Preview: a collapsed region | The control keeps its surface — with the content gone, it is what the reader must find. |
 | Preview: a shown thematic break | The rule takes the marks' own line and full-strength muted ink — it is the region's whole content, and it has no text to align against. |
-| Preview: collapsed inline ignored chip | Shows `circle-slash`, not a chevron — the one documented exception. |
+| Preview: collapsed inline ignored chip | Keeps both marks and its place in the sentence; only the content between them goes. |
 | Codicon font unavailable | Controls keep their accessible names and hit targets; only the glyph degrades. |
 
 ## Testability

@@ -1,8 +1,17 @@
 # Ignored Markdown Preview Toggle
 
 > [!NOTE]
-> Status: **implemented**. Each ignored region can be shown or hidden on its own, while the footer
-> keeps two commands that override every region at once.
+> Status: **implemented**, with the glyphs later revised. Each ignored region can be shown or
+> hidden on its own, while the footer keeps two commands that override every region at once.
+
+The glyphs have since changed.
+
+> [!IMPORTANT]
+> [Collapsing Across the Report](Collapsing%20Across%20the%20Report.md) supersedes this note
+> wherever the two disagree about glyphs. A region's control is now a **chevron on the leading
+> edge** and `circle-slash` is a **status mark on the trailing edge**, on inline and block regions
+> alike — see [D5](#d5--the-ignored-marker-is-the-regions-own-control) below, which records the
+> reasoning that was replaced.
 
 ## Table of contents
 
@@ -158,6 +167,11 @@ and closing tags as separate tokens; rendering them as HTML after the compiler i
 unbalance Preview DOM. Escaped source also better communicates what was left out.
 
 ### D5 — The ignored marker is the region's own control
+
+> [!IMPORTANT]
+> **Superseded.** Reusing the status glyph as the control made `circle-slash` mean *press me* here
+> and *this is ignored* everywhere else. The control is now a chevron and the status mark is a
+> separate `circle-slash` that trails the region. The button semantics below still hold.
 
 Each ignored region already displays a `circle-slash` marker meaning *excluded from dialogue*. That
 marker becomes the region's button rather than growing a second glyph beside it, which would double

@@ -274,6 +274,26 @@ test("draws a shown thematic break dark enough to see", async ({ page }) => {
     expect(contrastRatio(over(painted!, behind!), behind!)).toBeGreaterThanOrEqual(3);
 });
 
+test("orders an inline region as control, content, status -- like every block one", async ({
+    page,
+}) => {
+    const inline = page.locator(".dd-preview-ignored-region-inline");
+    const left = async (locator: import("@playwright/test").Locator) => {
+        const box = await locator.boundingBox();
+        if (!box) throw new Error("Nothing to measure.");
+        return box.x;
+    };
+
+    const [control, link, status] = await Promise.all([
+        left(inline.locator(".dd-ignored-region-toggle")),
+        left(inline.locator("a")),
+        left(inline.locator(".dd-ignored-region-status")),
+    ]);
+
+    expect(control).toBeLessThan(link);
+    expect(status).toBeGreaterThan(link);
+});
+
 test("keeps a hidden inline region as a chip inside its sentence", async ({ page }) => {
     const inline = page.locator(".source-preview .dd-preview-ignored-region-inline");
 
