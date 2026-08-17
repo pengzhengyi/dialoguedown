@@ -1217,6 +1217,72 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
     expect(Math.min(...widths.filter((width) => width > 50))).toBeGreaterThan(budget * 0.9);
 });
 
+test("stops a route on its target's edge, not inside it", async ({ page }) => {
+    // A line that ran to the target's *center* had to be hidden by the dot, and its arrowhead
+    // pushed back to compensate. The head is pushed back along the line's final **direction**,
+    // though, which on a curved approach points somewhere other than the center — so the head
+    // landed beside the line, stroke showed past it, and the last stretch of curve bent inside
+    // the circle. Ending the line where the dot begins leaves nothing to hide.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "- Alice: Right.",
+            "",
+            "=> [The Gate](#the-gate)",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const routes = page.locator("section.stage.active svg.tree path[marker-end]");
+    await expect(routes).not.toHaveCount(0);
+
+    const arrivals = await page
+        .locator("section.stage.active svg.tree")
+        .first()
+        .evaluate((svg: SVGSVGElement) => {
+            const centers = [...svg.querySelectorAll("g")]
+                .map((group) => {
+                    const dot = group.querySelector(":scope > circle");
+                    const move = /translate\(([-\d.]+)[ ,]([-\d.]+)\)/.exec(
+                        group.getAttribute("transform") ?? "",
+                    );
+                    return dot && move
+                        ? {
+                              x: Number(move[1]),
+                              y: Number(move[2]),
+                              r: Number(dot.getAttribute("r")),
+                          }
+                        : null;
+                })
+                .filter((node): node is { x: number; y: number; r: number } => node !== null);
+
+            return [...svg.querySelectorAll<SVGPathElement>("path[marker-end]")].map((route) => {
+                const end = route.getPointAtLength(route.getTotalLength());
+                let nearest = { gap: Infinity, r: 0 };
+                for (const node of centers) {
+                    const gap = Math.hypot(node.x - end.x, node.y - end.y);
+                    if (gap < nearest.gap) nearest = { gap, r: node.r };
+                }
+                return nearest;
+            });
+        });
+
+    expect(arrivals.length).toBeGreaterThan(0);
+    for (const { gap, r } of arrivals) {
+        // It stops on the painted edge — clear of the dot, and not short of it either, which
+        // would leave the head floating away from the node it points at.
+        expect(gap).toBeGreaterThan(r);
+        expect(gap).toBeLessThan(r + 2);
+    }
+});
+
 test("names each kind of route with its own pointer", async ({ page }) => {
     writeFileSync(
         LIVE_DOC,

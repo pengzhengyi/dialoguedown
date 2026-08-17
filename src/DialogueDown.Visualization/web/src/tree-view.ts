@@ -53,11 +53,22 @@ export function lineageIds<T extends { id: string }>(node: HierarchyNode<T>): Se
 const SCENE_NODE_RADIUS = 7;
 const CONTENT_NODE_RADIUS = 5;
 
-// The arrowhead's drawn size in user units, and how far its tip sits back from the node center so
-// it stops exactly on the circle's edge: the node's radius plus the half of its stroke that sits
-// outside the circle.
+// Half the stroke each dot is drawn with, which sits outside its radius: the painted edge a line
+// should stop on is the radius plus this.
+const CONTENT_NODE_HALO = 0.75;
+const SCENE_NODE_HALO = 1;
+
+// The arrowhead's drawn size in user units. Its tip sits at the line's own end, because the line
+// now stops on the dot's edge rather than running to the center — so there is nothing to push the
+// head back over, and nothing left for the dot to hide.
 const ARROW_SIZE = 9;
-const ARROW_STANDOFF = CONTENT_NODE_RADIUS + 0.75;
+
+/** How far short of a node's center a line aimed at it should stop: its painted edge. */
+function nodeStandoff(node: DisplayNode): number {
+    return isSceneNode(node)
+        ? SCENE_NODE_RADIUS + SCENE_NODE_HALO
+        : CONTENT_NODE_RADIUS + CONTENT_NODE_HALO;
+}
 
 /**
  * The drawn size of a repeated glyph, and how far apart the line stamps them. The spacing is a
@@ -339,10 +350,11 @@ export function createTreeView(
             defs.append("marker")
                 .attr("id", `arrow-${markerScope}-${category}`)
                 .attr("viewBox", "0 0 10 10")
-                // A link ends at its target's center, so the head is pushed back to the circle's
-                // edge — otherwise the arrow is drawn underneath the dot and never seen. refX is
-                // in viewBox units, which the marker scales to ARROW_SIZE across.
-                .attr("refX", 10 + (ARROW_STANDOFF * 10) / ARROW_SIZE)
+                // The tip sits on the line's own end, which stops at the dot's edge. Pushing the
+                // head back instead — the older arrangement — offsets it along the line's final
+                // *direction*, which on a curved approach points somewhere other than the center:
+                // the head lands beside the line, and stroke shows past it.
+                .attr("refX", 10)
                 .attr("refY", 5)
                 .attr("markerWidth", ARROW_SIZE)
                 .attr("markerHeight", ARROW_SIZE)
@@ -1272,6 +1284,7 @@ export function createTreeView(
             .attr("d", (link) =>
                 edgePath(at(link.source), at(link.target), {
                     clearance: clearanceOf((link.source as TreeNode).data.id),
+                    standoff: nodeStandoff((link.target as TreeNode).data),
                 }),
             )
             .each(function (link) {
@@ -1306,6 +1319,7 @@ export function createTreeView(
             .attr("d", (edge) =>
                 edgePath(at(positionById.get(edge.fromId)!), at(positionById.get(edge.toId)!), {
                     clearance: clearanceOf(edge.fromId),
+                    standoff: nodeStandoff(positionById.get(edge.toId)!.data),
                     ...(laneOf.get(edgeKey(edge)) ?? {}),
                 }),
             )

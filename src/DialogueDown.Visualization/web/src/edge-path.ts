@@ -56,6 +56,17 @@ export interface RouteOptions {
      * of two routes to the same node arrives at a different angle.
      */
     readonly port?: number;
+    /**
+     * How far short of the target the line stops, so it ends on the dot's edge rather than at its
+     * center.
+     *
+     * A line that runs to the center has to be hidden by the dot, and its arrowhead pushed back
+     * to compensate. The head is pushed back along the line's *final direction*, though, which on
+     * a curved approach is not the direction of the center — so the head lands beside the line
+     * and stroke shows past it. Stopping the line where the dot begins leaves nothing to hide and
+     * nothing to compensate for.
+     */
+    readonly standoff?: number;
 }
 
 /** Where a node's text block starts, relative to its dot. Negative: it reaches back a little. */
@@ -140,13 +151,17 @@ export function laneRoute(from: Point, to: Point, lane: number, corridor = 0): L
 
 /** The line as an SVG path, rounded so the markup stays readable and diffable. */
 export function edgePath(from: Point, to: Point, options: RouteOptions = {}): string {
-    const { clearance = 0, lane } = options;
+    const { clearance = 0, lane, standoff = 0 } = options;
     if (lane === undefined) {
         const { start, control1, control2, end } = routeCurve(from, to, clearance);
-        return `M${at(start)}C${at(control1)},${at(control2)},${at(end)}`;
+        const tip = pullBack(end, control2, standoff, start);
+        return `M${at(start)}C${at(control1)},${at(control2)},${at(tip)}`;
     }
     const { start, drop, rise, end } = laneRoute(from, to, lane, options.corridor ?? 0);
     const corner = (turn: Point, into: Point): string => `C${at(turn)},${at(turn)},${at(into)}`;
+    // The lean-in row is the route's own port, and also the direction its head must point.
+    const lean = { x: rise.x, y: end.y + (options.port ?? 0) };
+    const tip = pullBack(end, lean, standoff, rise);
     return [
         `M${at(start)}`,
         corner({ x: start.x, y: lane }, drop),
@@ -154,8 +169,27 @@ export function edgePath(from: Point, to: Point, options: RouteOptions = {}): st
         // Climb the corridor, then lean in to the dot. The lean-in row is the route's port, so
         // two lines ending at one node arrive at different angles instead of one on top of the
         // other — and their arrowheads fan rather than stack.
-        `C${at({ x: rise.x, y: lane })},${at({ x: rise.x, y: end.y + (options.port ?? 0) })},${at(end)}`,
+        `C${at({ x: rise.x, y: lane })},${at(lean)},${at(tip)}`,
     ].join("");
+}
+
+/**
+ * Step back from the line's end along the direction it arrives from, so it stops on the dot's
+ * edge while keeping the heading it would have had.
+ *
+ * Backing along the final control point is what preserves that heading: a cubic leaves its last
+ * control point pointing at its end, so the trimmed end sits on the line's own tangent rather
+ * than off to one side. The standoff yields ground when the whole approach is shorter than it,
+ * which would otherwise turn a short step into a line running backwards.
+ */
+function pullBack(end: Point, from: Point, standoff: number, floor: Point): Point {
+    if (standoff <= 0) return end;
+    const dx = end.x - from.x;
+    const dy = end.y - from.y;
+    const length = Math.hypot(dx, dy);
+    if (length === 0) return end;
+    const reach = Math.min(standoff, Math.hypot(end.x - floor.x, end.y - floor.y));
+    return { x: end.x - (dx / length) * reach, y: end.y - (dy / length) * reach };
 }
 
 function at(point: Point): string {
