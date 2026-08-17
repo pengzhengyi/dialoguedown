@@ -42,7 +42,7 @@ name, and runtime requirements in this skill, that doc, and the CLI code in sync
 
 ## Prerequisites
 
-- The **.NET 8 SDK** (`global.json` pins the floor). `dotnet pack` and
+- The **.NET 10 SDK** (`global.json` pins the floor). `dotnet pack` and
   `dotnet tool` are part of the SDK.
 - For a release push: a **NuGet.org account** and an **API key** (NuGet.org →
   *Account* → *API Keys*), provided as the `NUGET_API_KEY` environment variable or

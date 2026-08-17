@@ -38,7 +38,10 @@ engine presentation adapters — is **planned**, not yet built.
 ## Status
 
 - **Maturity:** early development.
-- **Target framework:** .NET 8 (`net8.0`).
+- **Target frameworks:** the libraries a game references ship for both `net8.0` and `net10.0`,
+  so a Godot project keeps Godot's bundled runtime while the toolchain moves to .NET 10 LTS.
+  The `ddown` CLI targets `net10.0`. See the
+  [Target Frameworks](docs/contributing/design-notes/Target%20Frameworks.md) note.
 - **Engine dependency:** none in the core library.
 - **Primary consumer:** Godot/C# game projects through `ProjectReference`.
 - **Built today:** the compiler pipeline (Markdown → semantic model), collected
@@ -87,7 +90,7 @@ dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
 
 | Path | Purpose |
 | --- | --- |
-| `src/DialogueDown/` | the reusable class library (net8.0, no engine refs) |
+| `src/DialogueDown/` | the reusable class library (net8.0 + net10.0, no engine refs) |
 | `src/DialogueDown.Visualization/` | diagnostics-only visualizer of compiler stages (not shipped in the core package) |
 | `src/DialogueDown.Visualization.Live/` | loopback server that serves the report shell (with the Explorer), hot-reloads it on edit, and browses the project |
 | `src/DialogueDown.Cli/` | the `ddown` command-line interface (`compile`, `visualize`) |
