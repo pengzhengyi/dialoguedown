@@ -10,6 +10,15 @@ changes easy to categorize.
 
 ### Added
 
+- **Fold ignored Markdown in the Source editor** — the editor's gutter now folds the same regions
+  the Preview does, beside its own line-range folding, plus a pair of commands in its menu and keys
+  (`Alt-i` / `Alt-o`). A `circle-slash` cue marks each ignored run without adding a second control
+  to click. Folding is the editor's own, so the cursor cannot enter a folded range and hidden text
+  is never silently changed. Source and Preview keep separate state: a reading choice must not hide
+  the text a writer needs to edit. See the
+  [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
+  note.
+
 - **One way to fold** — the Source editor, the Preview, the Dialogue Graph, the legend, and the
   file Explorer now offer folding with the same chevron and the same two commands, instead of five
   renderings of the same idea. The Dialogue Graph also gains `Expand all` / `Collapse all` for
@@ -35,9 +44,9 @@ changes easy to categorize.
 
 - **Ignored-content Preview visibility** — a fixed footer matching Source's `#END` row reports how
   much Markdown the compiler left out, and `Expand all` / `Collapse all` set the view for the whole
-  Preview. Each region also shows or hides on its own from its marker, and the footer states a
-  mixed view exactly. Hidden blocks retain kind and source-line count, ignored inline content
-  becomes a circle-slash chip in place, and Source stays visible and editable. See the
+  Preview. Each region also shows or hides on its own from its chevron, and the footer states a
+  mixed view exactly. A hidden block keeps its kind and source-line count, a hidden inline link
+  collapses to its host and still leads there, and Source stays visible and editable. See the
   [Ignored Markdown Preview Toggle](docs/contributing/design-notes/Ignored%20Markdown%20Preview%20Toggle.md)
   note.
 

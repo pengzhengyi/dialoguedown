@@ -18,6 +18,8 @@
     href: Compilation Outcome.md
   - name: Dialogue Graph
     href: Dialogue Graph.md
+  - name: Dialogue Runtime Architecture
+    href: Dialogue Runtime Architecture.md
 - name: Language constructs
   items:
   - name: Progression Order

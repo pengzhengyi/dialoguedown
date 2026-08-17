@@ -1,9 +1,9 @@
 # Collapsing Across the Report
 
 > [!IMPORTANT]
-> Status: **partly implemented**. Component 1 has shipped: every surface now folds with the same
-> glyph, and the Dialogue Graph can fold or open every scene at once. Component 2 is designed and
-> not yet built. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
+> Status: **implemented**. Every surface folds with the same glyph, the Dialogue Graph can fold or
+> open every scene at once, and the Source editor now folds the ignored region — the same unit the
+> Preview folds — from its own state. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
 > (fold every scene at once) and [#286](https://github.com/pengzhengyi/dialoguedown/issues/286)
 > (teach the Source editor about ignored regions) into one model, then sequences them as two
 > components.
@@ -144,11 +144,16 @@ language: the legend's own group disclosure, and the file Explorer's folders. A 
 keeps its own chevron, because it points at a menu opening beside it rather than at content that
 folds away.
 
-**One exception, deliberately.** A collapsed inline ignored region is a chip barely wider than one
-glyph, and there is room for a status mark or an action mark, not both. It keeps `circle-slash`,
-because inline the reader's first question is *what is missing here*, and a bare chevron in the
-middle of a sentence reads as a stray character. The action stays reachable — the chip is still the
-button, with its name and state on the control.
+**No exceptions.** An inline ignored region was briefly one: too narrow, it was argued, for both a
+status mark and an action mark, so its single glyph was `circle-slash` doing both jobs. In practice
+that made the same glyph mean *press me* inline and *this is ignored* everywhere else, and put it
+on the leading edge inline and the trailing edge on a block. An inline region now takes the same
+chevron on the left and the same `circle-slash` on the right as any block region — one glyph, one
+meaning, one place.
+
+Between those two marks it also keeps a **brief**: a block region collapses to `Table · 4 lines`,
+so an inline one must not collapse to nothing. A link collapses to its host, still a link, with the
+whole address in its tooltip — the reader can see what was set aside, and still follow it.
 
 ## Component 1 — One language, and all-commands for scenes
 
@@ -181,27 +186,53 @@ Checklist:
 
 ## Component 2 — Ignored regions in Source
 
-> [!NOTE]
-> Not yet implemented. Tracked by [#286](https://github.com/pengzhengyi/dialoguedown/issues/286).
-
 The larger piece: Source
 gains the **ignored region** as a unit it can fold, so both panes finally fold the same thing.
 
-Block regions can use CodeMirror's fold machinery. Inline regions cannot — a span inside a line is
-not a foldable range — so each needs a decoration that **replaces** the span with the same
-`circle-slash` chip the Preview already shows. That asymmetry is inherent to the unit, not a
-shortcut.
+Source already folds ranges of lines from its gutter, and an ignored block region *is* a range of
+lines. So it folds **from the same place, through the same mechanism**: the compiler's ignored spans
+are published to CodeMirror as another source of foldable ranges, and the gutter chevron the writer
+already knows appears beside them.
+
+A separate control on the region itself was built first and then removed. It put two chevrons on one
+line, each folding a different thing, and asked the reader to choose between mechanisms where one
+would do. Multi-line content is what a writer wants out of the way, and folding it is what a code
+editor is already for.
+
+What sits on the region is therefore a **cue, not a control**: a `circle-slash` trailing the
+region's first line that says *the compiler left this out*, in the manner of an editor's inline
+annotations. It states a status and takes no click — exactly what the shared rule asks of a static
+mark. It trails the first line rather than leading it because a mark before a table's first row
+would push that row out of line with the rows beneath it, and an editor's columns are part of what a
+writer is reading.
+
+The cue marks every region that **owns its lines**, including a one-line `---` divider that cannot
+fold — dimmed ink alone is nearly invisible on three dashes. An inline span inside a sentence gets
+no cue: mid-sentence it would read as a stray character, and the dimmed ink there sits against
+words that make the omission legible. So the two marks answer two questions independently —
+`circle-slash` says *this is ignored*, the gutter chevron says *this can fold*.
+
+The all-commands live in the editor's **context menu and keymap** (`Alt-i` folds every ignored
+region, `Alt-o` opens them) rather than in a footer of their own, and they drive the editor's own
+fold state, so a region folded by hand and a region folded by the command are the same thing
+afterwards. Source is an editor, where commands conventionally live in menus and keys; a second
+footer row would also have broken the `#END` row's deliberate alignment with the Preview footer.
+
+Because the folding is CodeMirror's, its guarantees come along unearned: the cursor cannot be
+placed inside a folded range, the editor's own placeholder opens it on click, and a fold survives
+edits elsewhere in the document by mapping through them.
 
 Checklist:
 
-- [ ] Ignored block spans fold in Source from a per-item control, independent of line-range folding.
-- [ ] Ignored inline spans collapse to a chip through a replacing decoration.
-- [ ] Source offers its own pair of all-commands over its ignored regions.
-- [ ] Folding survives the re-render that follows every keystroke, keyed as the Preview already
-      keys regions.
-- [ ] Editing inside a collapsed region is impossible or expands it first — never silently edits
-      hidden text.
-- [ ] Source and Preview fold independently; neither drives the other.
+- [x] Ignored block spans fold in Source from the editor's own gutter, beside line-range folding.
+- [x] An ignored region that owns its lines carries a `circle-slash` cue, which states a status and
+      takes no click.
+- [x] Source offers its own pair of all-commands over its ignored regions, from the editor's own
+      menu and keys rather than new chrome.
+- [x] The ignored spans survive the re-render that follows every keystroke, keyed as the Preview
+      already keys regions.
+- [x] Hidden text is never silently edited — a folded range refuses the cursor.
+- [x] Source and Preview fold independently; neither drives the other.
 
 ## Key design decisions
 
@@ -232,11 +263,15 @@ real convenience there and stay. Preview shows the compiled result, so only excl
 hidden. The graph draws flow, so only a compiler-owned grouping may be contracted without lying.
 
 Component 2 does not *replace* Source's line-range folding; it **adds** the ignored-region unit
-alongside it. Source is therefore the one surface with two units, and they are told apart by
-**where the control sits**: line ranges fold from the **gutter**, which is CodeMirror's own
-affordance for a range of lines, while an ignored region folds from a control **on the region
-itself**. Different place, different unit — no ambiguity, and neither mechanism has to explain the
-other.
+alongside it. Source is therefore the one surface with two units — but deliberately with only one
+**gesture**: both fold from the gutter, because both are ranges of lines, and CodeMirror's gutter is
+already the affordance for exactly that.
+
+An earlier draft gave the ignored region its own control on the region itself, reasoning that a
+different place would keep a different unit unambiguous. Built, it read as clutter rather than
+clarity: two chevrons on one line, and a reader forced to learn which folded which before folding
+anything. The distinction the reader actually needs is *what is ignored*, and that is a question a
+static cue answers better than a second control does.
 
 Dropping line-range folding to leave one unit was rejected: folding a scene's prose while writing
 is genuinely useful and has nothing to do with what the compiler ignores.
@@ -266,6 +301,21 @@ The report keeps one word for the act. The Preview's prose still reports *visibi
 shown in Preview`), because in that pane the outcome a reader cares about is whether the content is
 there, not the mechanism that put it away.
 
+### D6 — Content first, chrome second
+
+An ignored region is usually an authoring aid the writer still reads — a table of prices, a block
+of notes — so the region's own furniture must not out-shout what it frames. The first build had it
+backwards: a solid rail and a filled chip surface at full strength around content dimmed to 0.72.
+
+So the chrome now **recedes while the content shows** and comes forward on hover or focus, and the
+content is *set back* from dialogue rather than faded toward the page. Two floors keep the quieting
+honest, and both are tested: the control's glyph stays above the 3:1 a UI component owes even at
+rest, and the content keeps at least 55% of normal prose's contrast.
+
+The one exception is a **collapsed** region, where the control keeps its surface unconditionally.
+There is no content left for it to defer to — the control is standing in for what it hid, so it
+should read as the thing to press.
+
 ## Boundary cases
 
 | Case | Behavior |
@@ -275,19 +325,24 @@ there, not the mechanism that put it away.
 | An all-command when the view already matches | Still valid — it clears overrides. |
 | Graph: collapse all with a selection inside a scene | Selection moves to that scene's box, per the existing rule. |
 | Graph: collapse all, then navigate to a hidden node | The scene expands first, per the existing rule. |
-| Source: edit inside a collapsed ignored region | Expands first; hidden text is never silently edited. |
-| Source: an ignored span inside a folded heading section | The outer line-range fold wins; the region's own state is restored when it reappears. |
-| Source: region edited so its key changes | Returns to the baseline, as the Preview already does. |
+| Source: edit inside a folded ignored run | The cursor cannot enter a folded range, so hidden text is never silently edited. |
+| Source: an ignored run inside a folded heading section | One fold state holds both, so the outer fold simply wins. |
+| Source: an ignored run of one line (a `---` divider) | Carries the cue, offers no chevron — there is nothing beneath to hide. |
+| Source: an ignored span inside a line | Keeps its dimmed ink and neither mark; only the Preview collapses inline regions. |
 | Source folded, Preview not (or the reverse) | Expected: the two panes hold separate state by design. |
-| Collapsed inline ignored chip | Shows `circle-slash`, not a chevron — the one documented exception. |
+| Preview: a collapsed region | The control keeps its surface — with the content gone, it is what the reader must find. |
+| Preview: a shown thematic break | The rule takes the marks' own line and full-strength muted ink — it is the region's whole content, and it has no text to align against. |
+| Preview: collapsed inline ignored chip | Keeps both marks and its place in the sentence; the content between them shrinks to a brief. |
+| Preview: collapsed inline autolink | Shows its host, keeps its `href`, and carries the full address as its tooltip. |
 | Codicon font unavailable | Controls keep their accessible names and hit targets; only the glyph degrades. |
 
 ## Testability
 
 - **Projection/unit tests** for the graph's collapse-all: filling and emptying the set, mixed
   state, and that the projection is unchanged for a set it already held.
-- **Unit tests** for Source's ignored-region fold: block spans fold, inline spans decorate, state
-  survives a document re-render, an edited region resets.
+- **Unit tests** for Source's ignored-region fold: which runs own their lines and which can fold,
+  what the gutter offers on a given line, and that the all-commands drive the editor's fold state
+  without folding a run twice.
 - **Browser tests** per surface: the per-item control keeps its box across a toggle, an
   all-command overrides individual choices, the stated view matches reality, and axe passes in a
   mixed view.

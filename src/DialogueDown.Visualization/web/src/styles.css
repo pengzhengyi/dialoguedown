@@ -1617,10 +1617,12 @@ g.node.entity-highlight text.label {
     font-family: var(--pico-font-family-monospace);
 }
 
+/* The gutter's ink is chosen for tinted chrome, not the plain page: the active line tints the
+   gutter behind its own number, and the general muted color does not hold contrast against it. */
 .source-pane .cm-gutters {
     background: transparent;
     border-right: 1px solid var(--pico-muted-border-color);
-    color: var(--pico-muted-color);
+    color: var(--dd-chrome-muted);
 }
 
 /* Two independent debug lanes precede the line numbers: breakpoints stay visible when the
@@ -1822,11 +1824,11 @@ g.node.entity-highlight text.label {
 /* Markdown the handling policy leaves out of the dialogue: dark gray, so it is visibly inert
    without the visual noise of a strikethrough. Comments are lighter (45% opacity) because they
    are expected writer-only notes; ignored Markdown stays more legible because it may be an
-   accidental omission the writer needs to inspect. */
+   accidental omission the writer needs to inspect -- so it carries muted ink at full strength,
+   which keeps it above the contrast floor. */
 .source-pane .cm-content .dd-tok-ignored-markdown,
 .source-pane .cm-content .dd-tok-ignored-markdown * {
     color: var(--md-muted);
-    opacity: 0.72;
 }
 
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
@@ -2202,7 +2204,11 @@ g.node.entity-highlight text.label {
    compiler-projected IgnoredMarkdown spans, not HTML element types, so a future project policy
    that keeps tables or code blocks automatically leaves them at full strength here too. The
    marker leads the region as a control; the tint and glow appear on hover, matching the
-   blockquote region language without boxing authoring aids into permanent cards. */
+   blockquote region language without boxing authoring aids into permanent cards.
+
+   Content first, chrome second: ignored Markdown is usually an authoring aid the writer still
+   reads, so the region's rail and control stay quiet while the content is showing and come
+   forward only when the region is pointed at or focused. */
 .source-preview .dd-preview-ignored-region {
     --i: var(--md-muted);
 
@@ -2213,7 +2219,7 @@ g.node.entity-highlight text.label {
     min-height: 1.75rem;
     margin: 0.55rem 0;
     padding: 0.4rem 1.9rem 0.3rem;
-    border-left: 3px solid color-mix(in srgb, var(--i) 68%, transparent);
+    border-left: 3px solid color-mix(in srgb, var(--i) 34%, transparent);
     border-radius: 3px;
     transition:
         border-color 0.12s ease,
@@ -2221,7 +2227,8 @@ g.node.entity-highlight text.label {
         box-shadow 0.12s ease;
 }
 
-.source-preview .dd-preview-ignored-region:hover {
+.source-preview .dd-preview-ignored-region:hover,
+.source-preview .dd-preview-ignored-region:focus-within {
     border-left-color: var(--i);
     background: color-mix(in srgb, var(--i) 8%, transparent);
     box-shadow: 0 1px 12px color-mix(in srgb, var(--i) 22%, transparent);
@@ -2237,7 +2244,6 @@ g.node.entity-highlight text.label {
     width: 1.15rem;
     height: 1.15rem;
     border-radius: 4px;
-    background: color-mix(in srgb, var(--i) 12%, var(--pico-background-color));
     color: var(--i);
     font:
         normal normal normal 0.72rem/1 codicon,
@@ -2257,7 +2263,16 @@ g.node.entity-highlight text.label {
     margin: 0;
     padding: 0;
     border: 0;
+    background: transparent;
     cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+/* A collapsed region has no content left to defer to -- the control is standing in for what it
+   hid, so it keeps a surface and reads as the thing to press. */
+.source-preview .dd-preview-ignored-region:hover > .dd-ignored-region-toggle,
+.source-preview .dd-ignored-region-hidden > .dd-ignored-region-toggle {
+    background: color-mix(in srgb, var(--i) 12%, var(--pico-background-color));
 }
 
 .source-preview .dd-ignored-region-toggle:hover,
@@ -2269,15 +2284,30 @@ g.node.entity-highlight text.label {
     margin: 0;
 }
 
+/* A thematic break is the one ignored region with no text to align against, so its rule would
+   otherwise sit at the top of the box while the marks center themselves in it. Giving the rule the
+   marks' own inset and height puts the three on one optical line by construction rather than by a
+   tuned offset, and it draws its own line so the muted ink is not dimmed a second time into
+   invisibility -- the rule is the entire content of this region. */
+.source-preview .dd-preview-ignored-region > hr.dd-preview-ignored {
+    position: absolute;
+    top: 0.3rem;
+    right: 1.9rem;
+    left: 1.9rem;
+    height: 1.15rem;
+    border: 0;
+    opacity: 1;
+    background: linear-gradient(var(--i), var(--i)) center / 100% 2px no-repeat;
+}
+
 .source-preview .dd-preview-ignored {
-    opacity: 0.72;
+    opacity: 0.88;
 }
 
 /* The status mark states what the region is and never acts, so it carries no button surface.
    It trails the region, where a conditional blockquote's own marker already sits, so status means
    the same place whatever kind of region a reader is looking at — and the leading edge is left to
-   the control. An inline chip has room for one mark and keeps the status glyph, which is why this
-   sits only on block regions. */
+   the control. */
 .source-preview .dd-preview-ignored-region > .dd-ignored-region-status {
     position: absolute;
     top: 0.3rem;
@@ -2307,14 +2337,24 @@ g.node.entity-highlight text.label {
        the text baseline and move it away from the pointer. */
     min-height: 1lh;
     margin: 0;
-    padding: 0 0.2rem 0 1.55rem;
+
+    /* A slot at each edge: the control leads, the status trails, exactly as on a block region. */
+    padding: 0 1.5rem 0 1.55rem;
     vertical-align: middle;
 }
 
-.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-toggle {
+.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-toggle,
+.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-status {
     top: 50%;
-    left: 0.2rem;
     transform: translateY(-50%);
+}
+
+.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-toggle {
+    left: 0.2rem;
+}
+
+.source-preview .dd-preview-ignored-region-inline > .dd-ignored-region-status {
+    right: 0.15rem;
 }
 
 .source-preview
@@ -2339,10 +2379,39 @@ g.node.entity-highlight text.label {
     display: none;
 }
 
-/* Hiding an inline region collapses it onto the marker's own gutter, so the chip appears exactly
-   where the marker already was and the control does not move out from under the pointer. */
-.source-preview .dd-preview-ignored-region-inline.dd-ignored-region-hidden {
-    padding-right: 0;
+/* Hiding an inline region collapses it onto the marks' own gutters, so the chip appears exactly
+   where the control already was and does not move out from under the pointer. Both slots stay:
+   a collapsed region is when a reader most needs to be told what it is.
+
+   Between them stands the brief: a block region collapses to "Table · 4 lines", so an inline one
+   should not collapse to nothing. A link stays a link, named by its host, carrying the whole
+   address in its tooltip and still leading where it led. */
+.source-preview .dd-ignored-region-brief {
+    display: none;
+    color: var(--md-muted);
+    font-size: 0.86em;
+}
+
+a.dd-ignored-region-brief {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+
+.source-preview .dd-ignored-region-hidden > .dd-ignored-region-brief {
+    display: inline;
+}
+
+/* A quiet mark on the compiler's ignored Markdown: it says this run never becomes dialogue, and
+   nothing more. Folding it is the editor's own gutter chevron, as it is for any other run of
+   lines, so a region never grows a second way to close. */
+.dd-source-ignored-cue {
+    margin-left: 0.5rem;
+    color: var(--dd-chrome-muted);
+    font-size: 0.72rem;
+    line-height: 1;
+    vertical-align: baseline;
+    opacity: 0.75;
 }
 
 .dd-ignored-preview-footer {
@@ -2403,12 +2472,16 @@ g.node.entity-highlight text.label {
     position: relative;
 }
 
+/* The conditional-dialogue marker states a permanent fact about its blockquote rather than
+   offering an action, so it keeps its surface at all times -- unlike the ignored region's
+   control, which defers to the content while that content is showing. */
 .source-preview .dd-preview-control-region::after {
     --i: var(--q);
 
     top: 0.2rem;
     right: 0.3rem;
     left: auto;
+    background: color-mix(in srgb, var(--i) 12%, var(--pico-background-color));
     content: "\eb32"; /* codicon-question */
 }
 

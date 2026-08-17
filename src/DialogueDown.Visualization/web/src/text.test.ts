@@ -356,6 +356,51 @@ describe("renderDocument", () => {
         expect(html).toContain("codicon-circle-slash");
     });
 
+    it("gives an inline region the same chevron and trailing status as a block one", () => {
+        // One glyph, one meaning, wherever a reader meets it: the chevron always acts and the
+        // circle-slash always states. An inline region is no longer an exception to that.
+        const source = "<https://example.com>";
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        const control = html.indexOf("dd-ignored-region-toggle-icon");
+        const status = html.indexOf("dd-ignored-region-status");
+        expect(control).toBeGreaterThan(-1);
+        expect(status).toBeGreaterThan(control);
+        expect(html.match(/codicon-circle-slash/g)).toHaveLength(1);
+    });
+
+    it("leaves a collapsed autolink still saying it is a link", () => {
+        // A collapsed block region states its kind and size. An inline link should say as much:
+        // its host, still a link, with the whole address a hover away.
+        const source = "<https://example.com/market/stalls>";
+        const html = renderDocument(source, {
+            ignored: [{ start: 0, end: source.length }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('class="dd-ignored-region-brief"');
+        expect(html).toMatch(
+            /<a class="dd-ignored-region-brief" href="https:\/\/example\.com\/market\/stalls"/,
+        );
+        expect(html).toContain(">example.com</a>");
+        expect(html).toContain('title="https://example.com/market/stalls"');
+    });
+
+    it("names an inline region that is not a link by its kind", () => {
+        const source = "Alice: text <b>bold</b> here.";
+        const start = source.indexOf("<b>");
+        const html = renderDocument(source, {
+            ignored: [{ start, end: start + 3 }],
+            controlKeywords: [],
+        });
+
+        expect(html).toContain('class="dd-ignored-region-brief"');
+        expect(html).toContain(">Raw HTML<");
+    });
+
     it("marks an autolink when a configured policy ignores it", () => {
         const source = "<https://example.com>";
         const html = renderDocument(source, {
