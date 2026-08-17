@@ -97,10 +97,10 @@ runtime — see [Target Frameworks](./Target%20Frameworks.md).
 
 Two architecture tests guard the shape:
 
-| Test | Asserts |
-| --- | --- |
-| `Playbook_DependsOnNothing` | `DialogueDown.Playbook` references no other project and no third-party package |
-| `Runtime_DoesNotDependOn_Core` | reserved for C2; stated here because this layout is what makes it possible |
+| Test                           | Asserts                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| `Playbook_DependsOnNothing`    | `DialogueDown.Playbook` references no other project and no third-party package |
+| `Runtime_DoesNotDependOn_Core` | reserved for C2; stated here because this layout is what makes it possible     |
 
 ## The document
 
@@ -168,10 +168,10 @@ without an equivalent, a Godot integration has no way in.
 
 The two tables answer different questions:
 
-| Table | Contains | Means |
-| --- | --- | --- |
-| `anchors` | **every** scene slug | valid jump targets — a host *may* start at any of them |
-| `entries` | designated starts | the writer's intended way in, and the only home for the document top, which has no heading and therefore no anchor |
+| Table     | Contains             | Means                                                                                                              |
+| --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `anchors` | **every** scene slug | valid jump targets — a host *may* start at any of them                                                             |
+| `entries` | designated starts    | the writer's intended way in, and the only home for the document top, which has no heading and therefore no anchor |
 
 `entries` is a table rather than a single field because a reserved `#START` and
 cross-file entry are both deferred but coming, and a table absorbs them additively.
@@ -198,41 +198,41 @@ The writer's whole job is this mapping. Every row is one test.
 
 ### Nodes
 
-| Graph | `kind` | Carries |
-| --- | --- | --- |
-| `LineNode` | `line` | `speaker`, `speech`, `queries`, `condition?` |
-| `ChoiceNode` | `choice` | `ordered` |
-| `RandomChoiceNode` | `random-choice` | — |
-| `BranchNode` | `branch` | — |
-| `ControlNode` | `control` | `effects`, `condition?` |
-| `EndNode` | `end` | — (no outgoing edges) |
+| Graph              | `kind`          | Carries                                      |
+| ------------------ | --------------- | -------------------------------------------- |
+| `LineNode`         | `line`          | `speaker`, `speech`, `queries`, `condition?` |
+| `ChoiceNode`       | `choice`        | `ordered`                                    |
+| `RandomChoiceNode` | `random-choice` | —                                            |
+| `BranchNode`       | `branch`        | —                                            |
+| `ControlNode`      | `control`       | `effects`, `condition?`                      |
+| `EndNode`          | `end`           | — (no outgoing edges)                        |
 
 ### Edges
 
-| Graph | `kind` | Carries |
-| --- | --- | --- |
-| `SuccessionEdge` | `succession` | `target` |
-| `OptionEdge` | `option` | `target`, `label`, `condition?` |
+| Graph              | `kind`          | Carries                          |
+| ------------------ | --------------- | -------------------------------- |
+| `SuccessionEdge`   | `succession`    | `target`                         |
+| `OptionEdge`       | `option`        | `target`, `label`, `condition?`  |
 | `RandomOptionEdge` | `random-option` | `target`, `weight`, `condition?` |
-| `BranchEdge` | `branch` | `target`, `order`, `condition?` |
-| `DivertEdge` | `divert` | `target`, `condition?` |
+| `BranchEdge`       | `branch`        | `target`, `order`, `condition?`  |
+| `DivertEdge`       | `divert`        | `target`, `condition?`           |
 
 `order` on a branch edge preserves `if`/`elseif`/`else` evaluation order, which is
 otherwise lost in a JSON array a reader may not be required to keep ordered.
 
 ### Speech fragments
 
-| AST | `kind` | Carries |
-| --- | --- | --- |
-| `Text` | `text` | `text` |
-| `StyledText` | `styled` | `style` (`italic`, `bold`, `strikethrough`), `children` |
-| `Link` | `link` | `target`, `label` |
-| `Image` | `image` | `source`, `alt` |
-| `LineBreak` | `break` | — |
-| `Query` | `query` | `key` |
-| `DefaultCommand` | `command` | `action` |
-| `CustomCommand` | `call` | `name`, `args` |
-| `ReservedTag`, `CustomTag` | `tag` | `name`, `value?`, `reserved` |
+| AST                        | `kind`    | Carries                                                 |
+| -------------------------- | --------- | ------------------------------------------------------- |
+| `Text`                     | `text`    | `text`                                                  |
+| `StyledText`               | `styled`  | `style` (`italic`, `bold`, `strikethrough`), `children` |
+| `Link`                     | `link`    | `target`, `label`                                       |
+| `Image`                    | `image`   | `source`, `alt`                                         |
+| `LineBreak`                | `break`   | —                                                       |
+| `Query`                    | `query`   | `key`                                                   |
+| `DefaultCommand`           | `command` | `action`                                                |
+| `CustomCommand`            | `call`    | `name`, `args`                                          |
+| `ReservedTag`, `CustomTag` | `tag`     | `name`, `value?`, `reserved`                            |
 
 Fragments nest — `StyledText.Children` and a link or image label are themselves
 fragment lists — so the encoding is recursive. Nothing is flattened to a string,
@@ -292,10 +292,10 @@ refusal.
 
 Version 0 defines exactly two capability names:
 
-| Capability | Meaning |
-| --- | --- |
-| `core` | Everything the compiler emits today. Always present in `requires` |
-| `cross-file-jump` | A node reference to another script. **Never emitted yet** — the name and the reader path are defined now so [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) is purely additive |
+| Capability        | Meaning                                                                                                                                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core`            | Everything the compiler emits today. Always present in `requires`                                                                                                                                                                                                                                              |
+| `cross-file-jump` | **Reserved, and neither emitted nor read in version 0.** A node reference is a plain index; a reference into another script waits for [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) to settle what a script identity is. Naming it now keeps it unclaimed and makes the later widening additive |
 
 ## Key design decisions
 
@@ -317,9 +317,9 @@ is spelled `kind` rather than the library default `$type` because the format is 
 public contract, not a .NET serialization detail; a TypeScript reader switches on
 the same word.
 
-A hand-written converter is still needed for one thing: a **node reference**, which
-is a `number | string` union with no wrapper object. Reading it is a single check
-on the token type.
+No hand-written converter is needed. A node reference is a plain integer index, so
+every value in the format is either a primitive or a tagged object — see
+[P10](#p10--cross-file-references-wait-for-the-linker).
 
 ### P3 — The playbook speaks the project's own words
 
@@ -407,48 +407,63 @@ kilobytes. A compact mode — and, if it ever proves its value, compression or a
 binary encoding — stays available behind a CLI flag, because
 [the writer is a seam](./Dialogue%20Runtime%20Architecture.md#d2--json-with-a-formal-schema).
 
+### P10 — Cross-file references wait for the linker
+
+A node reference is an **integer index and nothing else**. A reference into another
+script would have to spell out what a script identity is, whether a bare script
+means its root scene, and how an anchor is written — three answers owned by the
+[linker](./Cross-File%20Jump%20Resolution.md), which is explored rather than
+implemented. Encoding guesses about them into a public contract would make the
+linker inherit them.
+
+Deferring costs nothing, because the widening is already additive: a playbook that
+uses cross-file references will declare the `cross-file-jump` capability, and a
+version-0 runner refuses the whole document before parsing a single node. It cannot
+misread a reference shape it never reaches. **The capability manifest is what makes
+cross-file additive — not the shape of the reference field.**
+
 ## Error and boundary cases
 
-| Case | Behavior |
-| --- | --- |
-| `format.version` newer than the reader | Refuse, naming both versions |
-| `format.version` older than the reader's floor | Refuse |
-| Unknown name in `requires` | Refuse, naming the capability |
-| Unknown name in `uses` | **Accept** — advisory by definition |
-| Unknown object property | **Ignore** — forward compatibility |
-| `nodes[i].id != i` | Refuse |
-| Node reference out of range | Refuse |
-| External node reference without `cross-file-jump` in `requires` | Refuse |
-| `entries` empty, or an entry pointing nowhere | Refuse — a playbook nothing can start is not playable |
-| Duplicate speaker id | Refuse; the writer asserts uniqueness before emitting |
-| Duplicate anchor | Cannot occur; the compiler already rejects it (`DLG2001`) |
-| A script that compiles with **errors** | No playbook is written; `--output` is untouched |
-| A script that compiles with **warnings** | A playbook **is** written. Warnings are a smell a compiler tolerates; anything intolerable belongs in the error tier |
-| A script with no dialogue | A valid playbook with an entry that reaches `end` |
-| Empty `speech` on a line | Cannot occur; the AST rejects empty styled content |
+| Case                                           | Behavior                                                                                                             |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `format.version` newer than the reader         | Refuse, naming both versions                                                                                         |
+| `format.version` older than the reader's floor | Refuse                                                                                                               |
+| Unknown name in `requires`                     | Refuse, naming the capability                                                                                        |
+| Unknown name in `uses`                         | **Accept** — advisory by definition                                                                                  |
+| Unknown object property                        | **Ignore** — forward compatibility                                                                                   |
+| `nodes[i].id != i`                             | Refuse                                                                                                               |
+| Node reference out of range                    | Refuse                                                                                                               |
+| A node reference that is not a number          | Refuse — a string reference needs `cross-file-jump`, which no version-0 runner offers                                |
+| `entries` empty, or an entry pointing nowhere  | Refuse — a playbook nothing can start is not playable                                                                |
+| Duplicate speaker id                           | Refuse; the writer asserts uniqueness before emitting                                                                |
+| Duplicate anchor                               | Cannot occur; the compiler already rejects it (`DLG2001`)                                                            |
+| A script that compiles with **errors**         | No playbook is written; `--output` is untouched                                                                      |
+| A script that compiles with **warnings**       | A playbook **is** written. Warnings are a smell a compiler tolerates; anything intolerable belongs in the error tier |
+| A script with no dialogue                      | A valid playbook with an entry that reaches `end`                                                                    |
+| Empty `speech` on a line                       | Cannot occur; the AST rejects empty styled content                                                                   |
 
 ## Integration
 
-| Seam | Change |
-| --- | --- |
-| `CompilationSuccess` | Unchanged. The writer consumes its `internal` graph inside the same assembly |
-| `IPlaybookWriter` | New public seam in `DialogueDown`, registered in `AddDialogueDown` and the CLI composition root, following the `IDialogueGraphBuilder` pattern |
-| `CompileCommand` | Writes `<script>.playbook.json` to `--output`, replacing today's no-op and closing [#46](https://github.com/pengzhengyi/dialoguedown/issues/46) |
-| CLI presentation | An `InvalidPlaybookException` carries structured detail that the CLI renders in the style of [CLI Diagnostic Rendering](./CLI%20Diagnostic%20Rendering.md). These are load-time failures rather than source diagnostics, so they stay out of the `DLG` code space |
-| `DialogueDown.csproj` | References `DialogueDown.Playbook`; the package ships both |
-| Central package management | A new project inherits `Directory.Packages.props`; `DialogueDown.Playbook` needs no package at all |
-| CI | A `check-jsonschema` step validates every golden playbook against the **local** schema file, so validation never depends on the network |
-| Editors | Emitted playbooks carry a versioned `$schema` URL published with the existing GitHub Pages site, so VS Code validates a playbook wherever it lands. See [open questions](#open-questions-and-deferred-work) for zero-config registration |
+| Seam                       | Change                                                                                                                                                                                                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CompilationSuccess`       | Unchanged. The writer consumes its `internal` graph inside the same assembly                                                                                                                                                                                      |
+| `IPlaybookWriter`          | New public seam in `DialogueDown`, registered in `AddDialogueDown` and the CLI composition root, following the `IDialogueGraphBuilder` pattern                                                                                                                    |
+| `CompileCommand`           | Writes `<script>.playbook.json` to `--output`, replacing today's no-op and closing [#46](https://github.com/pengzhengyi/dialoguedown/issues/46)                                                                                                                   |
+| CLI presentation           | An `InvalidPlaybookException` carries structured detail that the CLI renders in the style of [CLI Diagnostic Rendering](./CLI%20Diagnostic%20Rendering.md). These are load-time failures rather than source diagnostics, so they stay out of the `DLG` code space |
+| `DialogueDown.csproj`      | References `DialogueDown.Playbook`; the package ships both                                                                                                                                                                                                        |
+| Central package management | A new project inherits `Directory.Packages.props`; `DialogueDown.Playbook` needs no package at all                                                                                                                                                                |
+| CI                         | A `check-jsonschema` step validates every golden playbook against the **local** schema file, so validation never depends on the network                                                                                                                           |
+| Editors                    | Emitted playbooks carry a versioned `$schema` URL published with the existing GitHub Pages site, so VS Code validates a playbook wherever it lands. See [open questions](#open-questions-and-deferred-work) for zero-config registration                          |
 
 ## Testability
 
-| Level | What it covers |
-| --- | --- |
-| Unit — writer | One test per row of [Mapping the graph](#mapping-the-graph): each node, edge, fragment, condition, and weight kind |
-| Unit — reader | Every refusal in [Error and boundary cases](#error-and-boundary-cases), each asserting the message names the offending value |
-| Round-trip | Compile, write, read, and assert the playbook equals the original — the primary safety net, and cheap because both directions land in this component |
-| Golden | A committed playbook per `examples/*.dialogue.md`, so a format change is a reviewable diff |
-| Schema | Every golden playbook validates against the schema in CI |
+| Level         | What it covers                                                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit — writer | One test per row of [Mapping the graph](#mapping-the-graph): each node, edge, fragment, condition, and weight kind                                   |
+| Unit — reader | Every refusal in [Error and boundary cases](#error-and-boundary-cases), each asserting the message names the offending value                         |
+| Round-trip    | Compile, write, read, and assert the playbook equals the original — the primary safety net, and cheap because both directions land in this component |
+| Golden        | A committed playbook per `examples/*.dialogue.md`, so a format change is a reviewable diff                                                           |
+| Schema        | Every golden playbook validates against the schema in CI                                                                                             |
 
 Round-trip tests live in `DialogueDown.Tests`, which already sees internals and can
 reference both assemblies. Playbook fixtures are built through a shared factory so a
