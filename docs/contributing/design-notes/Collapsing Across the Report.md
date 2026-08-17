@@ -151,6 +151,10 @@ on the leading edge inline and the trailing edge on a block. An inline region no
 chevron on the left and the same `circle-slash` on the right as any block region — one glyph, one
 meaning, one place.
 
+Between those two marks it also keeps a **brief**: a block region collapses to `Table · 4 lines`,
+so an inline one must not collapse to nothing. A link collapses to its host, still a link, with the
+whole address in its tooltip — the reader can see what was set aside, and still follow it.
+
 ## Component 1 — One language, and all-commands for scenes
 
 Closes [#285](https://github.com/pengzhengyi/dialoguedown/issues/285) and lands the design language
@@ -328,7 +332,8 @@ should read as the thing to press.
 | Source folded, Preview not (or the reverse) | Expected: the two panes hold separate state by design. |
 | Preview: a collapsed region | The control keeps its surface — with the content gone, it is what the reader must find. |
 | Preview: a shown thematic break | The rule takes the marks' own line and full-strength muted ink — it is the region's whole content, and it has no text to align against. |
-| Preview: collapsed inline ignored chip | Keeps both marks and its place in the sentence; only the content between them goes. |
+| Preview: collapsed inline ignored chip | Keeps both marks and its place in the sentence; the content between them shrinks to a brief. |
+| Preview: collapsed inline autolink | Shows its host, keeps its `href`, and carries the full address as its tooltip. |
 | Codicon font unavailable | Controls keep their accessible names and hit targets; only the glyph degrades. |
 
 ## Testability

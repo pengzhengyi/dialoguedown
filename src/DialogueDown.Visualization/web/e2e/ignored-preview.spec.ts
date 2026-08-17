@@ -286,12 +286,30 @@ test("orders an inline region as control, content, status -- like every block on
 
     const [control, link, status] = await Promise.all([
         left(inline.locator(".dd-ignored-region-toggle")),
-        left(inline.locator("a")),
+        left(inline.locator("a.dd-preview-ignored")),
         left(inline.locator(".dd-ignored-region-status")),
     ]);
 
     expect(control).toBeLessThan(link);
     expect(status).toBeGreaterThan(link);
+});
+
+test("collapses an inline link to its host, still a link to the same place", async ({ page }) => {
+    const inline = page.locator(".dd-preview-ignored-region-inline");
+    const brief = inline.locator(".dd-ignored-region-brief");
+    const full = inline.locator("a.dd-preview-ignored");
+
+    await expect(brief).toBeHidden();
+    await expect(full).toBeVisible();
+
+    await inline.locator(".dd-ignored-region-toggle").click();
+
+    await expect(full).toBeHidden();
+    await expect(brief).toBeVisible();
+    await expect(brief).toHaveText("example.com");
+    // The whole address stays a hover away, and the brief still leads where the link led.
+    await expect(brief).toHaveAttribute("title", "https://example.com/road");
+    await expect(brief).toHaveAttribute("href", "https://example.com/road");
 });
 
 test("keeps a hidden inline region as a chip inside its sentence", async ({ page }) => {

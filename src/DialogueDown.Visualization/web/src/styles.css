@@ -2373,7 +2373,26 @@ g.node.entity-highlight text.label {
 
 /* Hiding an inline region collapses it onto the marks' own gutters, so the chip appears exactly
    where the control already was and does not move out from under the pointer. Both slots stay:
-   a collapsed region is when a reader most needs to be told what it is. */
+   a collapsed region is when a reader most needs to be told what it is.
+
+   Between them stands the brief: a block region collapses to "Table · 4 lines", so an inline one
+   should not collapse to nothing. A link stays a link, named by its host, carrying the whole
+   address in its tooltip and still leading where it led. */
+.source-preview .dd-ignored-region-brief {
+    display: none;
+    color: var(--md-muted);
+    font-size: 0.86em;
+}
+
+a.dd-ignored-region-brief {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+
+.source-preview .dd-ignored-region-hidden > .dd-ignored-region-brief {
+    display: inline;
+}
 
 /* A quiet mark on the compiler's ignored Markdown: it says this run never becomes dialogue, and
    nothing more. Folding it is the editor's own gutter chevron, as it is for any other run of

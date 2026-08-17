@@ -251,11 +251,39 @@ function ignoredRegion(token: Token, html: string, regionKey: RegionKey): string
     //
     // The accessible name and pressed state depend on the current view, so the Preview controller
     // owns them; the renderer only emits the structure.
+    const brief = inline ? briefContent(token) : "";
     const toggle =
         `<button type="button" class="dd-ignored-region-toggle">` +
         `<span class="codicon codicon-${foldGlyphName(true)} dd-ignored-region-toggle-icon" aria-hidden="true"></span></button>` +
         `<span class="dd-ignored-region-status codicon codicon-circle-slash" aria-hidden="true"></span>`;
-    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(`${kind}:${source}`))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${content}</${tag}>`;
+    return `<${tag} class="dd-preview-ignored-region${inlineClass}" data-ignored-kind="${escapeHtml(kind)}" data-ignored-summary="${escapeHtml(summary)}" data-ignored-key="${escapeHtml(regionKey(`${kind}:${source}`))}" title="${escapeHtml(title)}"${sourceBlock}>${toggle}${brief}${content}</${tag}>`;
+}
+
+/** The brief stand-in itself: a real link when the region is one, so it still leads somewhere. */
+function briefContent(token: Token): string {
+    const label = escapeHtml(briefLabel(token));
+    if (token.type !== "link") return `<span class="dd-ignored-region-brief">${label}</span>`;
+
+    const href = escapeHtml((token as Tokens.Link).href);
+    return `<a class="dd-ignored-region-brief" href="${href}" title="${href}">${label}</a>`;
+}
+
+/**
+ * The shortest honest stand-in for an inline region's content, shown once it collapses.
+ *
+ * A collapsed block region states its kind and how many lines went away. An inline region has no
+ * room for that, but it should say at least as much as it took up: a link keeps being a link,
+ * named by its host and still leading where it led.
+ */
+function briefLabel(token: Token): string {
+    if (token.type !== "link") return ignoredKind(token);
+
+    const href = (token as Tokens.Link).href;
+    try {
+        return new URL(href).host || href;
+    } catch {
+        return href;
+    }
 }
 
 function ignoredKind(token: Token): string {
