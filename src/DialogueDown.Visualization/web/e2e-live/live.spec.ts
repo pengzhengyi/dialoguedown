@@ -271,6 +271,32 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
     await expect(page.locator(".tabbar-explorer")).toBeVisible();
 });
 
+test("keeps the tab row's controls in one family, clear of the brand mark", async ({ page }) => {
+    // The row aligns to its bottom edge, so a control that is taller than its siblings grows
+    // *upward* into the brand mark above. That is what a copied style block that missed one
+    // property did: the Explorer toggle stood half a row taller and touched the logo.
+    const metrics = await page.evaluate(() => {
+        const box = (selector: string) => {
+            const rect = document.querySelector(selector)!.getBoundingClientRect();
+            return { top: rect.top, height: rect.height, centre: (rect.top + rect.bottom) / 2 };
+        };
+        const brand = document.querySelector("hgroup")!.getBoundingClientRect();
+        return {
+            files: box(".tabbar-explorer"),
+            zen: box(".tabbar-zen"),
+            maximize: box(".tabbar-maximize"),
+            brandBottom: brand.bottom,
+        };
+    });
+
+    // One height, one centre line: the row's controls read as a set however far apart they sit.
+    expect(metrics.files.height).toBeCloseTo(metrics.zen.height, 0);
+    expect(metrics.files.centre).toBeCloseTo(metrics.zen.centre, 0);
+    expect(metrics.maximize.centre).toBeCloseTo(metrics.zen.centre, 0);
+    // And the leading control keeps clear of the brand mark directly above it.
+    expect(metrics.files.top).toBeGreaterThan(metrics.brandBottom);
+});
+
 test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {
     // The reader asked for this script, so the tree starts out of the way. One obvious click
     // brings it back, and the control says which state it is in.

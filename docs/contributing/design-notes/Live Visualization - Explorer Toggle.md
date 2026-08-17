@@ -14,6 +14,7 @@ than finding a chevron on a hairline divider.
 - [Goal and scope](#goal-and-scope)
 - [What it delivers](#what-it-delivers)
 - [Where the toggle lives](#where-the-toggle-lives)
+  - [One styling, stated once](#one-styling-stated-once)
 - [Why not an activity bar](#why-not-an-activity-bar)
 - [What the default should be](#what-the-default-should-be)
 - [Independence from the stage scroller](#independence-from-the-stage-scroller)
@@ -61,6 +62,22 @@ It is a **disclosure**, not a mode: a button that shows and hides a named region
 So it carries `aria-expanded` and points at the region with `aria-controls`, and the
 engaged styling keys off that state rather than off `aria-pressed`, which would
 describe a button that stays pushed rather than a region that is open.
+
+### One styling, stated once
+
+The row's three controls — Files at one end, Zen and maximize at the other — share a
+single style rule rather than a copy each. Held apart they drift, and drift here is
+not cosmetic: the row aligns to its **bottom** edge, so a control that ends up taller
+than its siblings grows *upward*, into the brand mark above it.
+
+Centering the glyph with flex is what makes that class of fault impossible. The glyph
+becomes a flex item, so the inherited line box cannot size the button, and no
+counteracting reset is needed to hold it back. A test asserts the three keep one
+height and one centre line, and stay clear of the brand mark.
+
+The Files control takes a little more width than its siblings — it is the row's one
+navigation affordance, where the others only reframe the current view. Its height
+stays shared, so the row still lines up.
 
 ## Why not an activity bar
 
@@ -138,6 +155,8 @@ the divider handle and their current default, unchanged.
   empty shell; the toggle summons and dismisses it; the control keeps its place when
   the stage row scrolls on a narrow window; it is gone in Zen; and the exported
   report carries no control, with its slot taking no room.
+- **Alignment** — the row's three controls hold one height and one centre line, and
+  the leading one stays clear of the brand mark above it.
 - **Accessibility** — the report's existing pass is scoped to the source preview, so
   it never sees the tab bar. The control brings its own: an accessibility scan of the
   row in **both** of its states, shut and showing.

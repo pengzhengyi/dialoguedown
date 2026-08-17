@@ -3158,74 +3158,27 @@ body.maximized .maximize-button .icon-compress {
     display: block;
 }
 
-/* The maximize control is app-level, not per-tab: one button at the right end of the
-   tab-nav row. (Pico inverts --pico-color on buttons; reset it so the glyph uses the
-   normal foreground rather than white-on-white, as the zoom buttons do.) */
-.tabbar-maximize {
-    --pico-color: inherit;
-    --pico-background-color: transparent;
+/* The tab row's own controls: the Explorer toggle at the leading edge, and the Zen and
+   maximize pair at the trailing one. They are app-level rather than per-tab, so they share one
+   quiet styling and read as a family regardless of which end they sit at.
 
-    width: auto;
-    margin: 0;
-    padding: 0.3rem 0.5rem;
-    color: var(--pico-muted-color);
-    background: transparent;
-    border: none;
-    border-radius: var(--pico-border-radius);
-    cursor: pointer;
-}
+   Stated once rather than per button on purpose. Held apart, they drift — a copy that missed
+   the line-height reset grew half a row taller than its siblings and pushed up into the brand
+   mark above, because the row aligns to its bottom edge.
 
-.tabbar-maximize:hover {
-    --pico-color: inherit;
-
-    color: var(--pico-color);
-    background: var(--pico-muted-border-color);
-}
-
-/* The Zen toggle sits immediately left of the maximize button, sharing its quiet tab-row
-   styling so the pair reads as one focus-mode cluster. Both are laid out by the
-   `.tabbar-actions` flex row, so neither needs a hand-tuned offset. */
-.tabbar-zen {
-    --pico-color: inherit;
-    --pico-background-color: transparent;
-
-    width: auto;
-    margin: 0;
-    padding: 0.3rem 0.5rem;
-    color: var(--pico-muted-color);
-    background: transparent;
-    border: none;
-    border-radius: var(--pico-border-radius);
-    line-height: 0;
-    cursor: pointer;
-}
-
-.tabbar-zen:hover {
-    --pico-color: inherit;
-
-    color: var(--pico-color);
-    background: var(--pico-muted-border-color);
-}
-
-/* Zen is a sticky mode, not a one-shot action, so the button shows it is engaged — in the
-   mode accent, matching how the other pressed toggles in the report read. */
-.tabbar-zen[aria-pressed="true"] {
-    color: var(--mode-accent, var(--pico-primary));
-    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
-}
-
-.zen-icon {
-    font-size: 15px;
-    color: inherit;
-}
-
-/* The Explorer's control, at the row's other end. It borrows the Zen button's quiet tab-row
-   styling so the row reads as one family, but keys its engaged look off `aria-expanded`: it
-   discloses a region rather than staying pushed like a mode. */
+   Centering with flex is what makes that class of bug impossible: the glyph is a flex item, so
+   the inherited line box cannot size the button and no reset is needed to hold it back.
+   (Pico inverts --pico-color on buttons; reset it so the glyph uses the normal foreground
+   rather than white-on-white, as the zoom buttons do.) */
+.tabbar-maximize,
+.tabbar-zen,
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: auto;
     margin: 0;
     padding: 0.3rem 0.5rem;
@@ -3236,6 +3189,8 @@ body.maximized .maximize-button .icon-compress {
     cursor: pointer;
 }
 
+.tabbar-maximize:hover,
+.tabbar-zen:hover,
 .tabbar-explorer:hover {
     --pico-color: inherit;
 
@@ -3243,15 +3198,26 @@ body.maximized .maximize-button .icon-compress {
     background: var(--pico-muted-border-color);
 }
 
+/* Both toggles are sticky rather than one-shot, so each shows that it is engaged in the mode
+   accent — Zen because its mode is on, the Explorer because the region it discloses is open. */
+.tabbar-zen[aria-pressed="true"],
 .tabbar-explorer[aria-expanded="true"] {
     color: var(--mode-accent, var(--pico-primary));
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
 }
 
+.zen-icon,
 .explorer-toggle-icon {
-    display: block;
     font-size: 15px;
     color: inherit;
+}
+
+/* The Explorer's control is the row's one navigation affordance — it summons a panel, where its
+   siblings only change how the current view is framed — so it is given a little more width to
+   sit in. Height stays shared, so the row's controls still line up. */
+.tabbar-explorer {
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
 }
 
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
