@@ -101,10 +101,10 @@ point at an edge nothing opens from. It is drawn as an inset shadow rather than 
 so it takes the bed's box on its own and costs no layout. A **hairline** carries it: four
 edges say together what one edge needed weight to say alone.
 
-The bed is **square-cut**, which is what keeps the outline crisp: rounding it would bend
-each corner, and at hairline width a radius reads as a blur rather than a mark. Its
-leading edge sits at the header gutter, so the mark sits under the brand rather than
-inset from it.
+The bed is **barely rounded** — enough to soften the outline's corners, not so much that the
+mark reads as a pill. That restraint is what a hairline needs: at a larger radius each
+corner turns to blur rather than line. Its leading edge sits at the header gutter, so the
+mark sits under the brand rather than inset from it.
 
 It never takes the **underline**: in this row that mark answers "which stage am I on",
 and the Explorer is not a stage — a second underlined item would leave that question
@@ -126,7 +126,7 @@ Centering their glyph with flex is what makes that class of fault impossible. Th
 becomes a flex item, so the inherited line box cannot size the button, and no
 counteracting reset is needed to hold it back. A test asserts the Files control carries
 those buttons' glyph **on their line**, takes the row's height, clears the brand mark
-above and the divider below, keeps its bed square-cut and centered on the glyph, and
+above and the divider below, keeps its bed gently rounded and centered on the glyph, and
 stays evenly padded around it.
 
 **One ring, not two.** Pico rings a focused button with a `box-shadow` rather than an

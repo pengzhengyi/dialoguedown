@@ -3395,15 +3395,15 @@ body.maximized .maximize-button .icon-compress {
 
 /* The painted bed: a chip inset inside the button's taller box, centered on the glyph rather
    than on the box, and leaving air under the brand mark above and short of the divider below.
-   Squared off, so the rail down its leading edge reads as a straight bar rather than a sliver
-   bent around a corner. Transparent until the control is touched, so one element carries the
-   resting, hovered, and open looks without three boxes to keep in step. */
+   Barely rounded — enough to soften the corners of the outline it wears when open, not so much
+   that the mark reads as a pill. Transparent until the control is touched, so one element
+   carries the resting, hovered, and open looks without three boxes to keep in step. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
     inset: 0.4rem 0 0;
     background: transparent;
-    border-radius: 0;
+    border-radius: 3px;
     transition: background 0.12s ease;
 }
 
@@ -3440,8 +3440,8 @@ body.maximized .maximize-button .icon-compress {
 }
 
 /* The ring is drawn on the bed rather than the button, so it hugs what is visible instead of
-   ballooning around the taller box behind it — and so it is square-cut like the bed rather than
-   rounded like a button.
+   ballooning around the taller box behind it — and so it takes the bed's own gentle rounding
+   rather than a button's larger one.
 
    Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
    alone leaves that ring in place and the control wears two: a rounded one around the whole box

@@ -328,10 +328,10 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     // that closes the row below. The button's box may run flush to either — it paints nothing.
     expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
     expect(metrics.bedBottom).toBeLessThan(metrics.tabbar.bottom);
-    // Squared off, so the accent outline that marks it open reads as a crisp rectangle rather
-    // than a rounded chip. Uniform, so no corner disagrees with another.
+    // Softened only slightly, and uniformly: a small radius rounds the outline's corners without
+    // letting the mark read as a pill, and no corner disagrees with another.
     expect(new Set(metrics.bedCorners).size).toBe(1);
-    expect(Number.parseFloat(metrics.bedCorners[0])).toBeLessThanOrEqual(2);
+    expect(Number.parseFloat(metrics.bedCorners[0])).toBeLessThanOrEqual(4);
     // Even padding either side of the glyph, so it sits centered in its bed.
     expect(metrics.leftPadding).toBeCloseTo(metrics.rightPadding, 0);
     // Its leading edge lines up with the header gutter, so the mark sits under the brand rather
@@ -367,9 +367,9 @@ test("rings the focused Files control once, on its bed", async ({ page }) => {
     });
 
     expect(Math.max(0, ...rings.buttonRingLengths)).toBe(0);
-    // The one ring that is drawn hugs the bed, and is square-cut as the bed is.
+    // The one ring that is drawn hugs the bed, and takes the bed's own gentle rounding.
     expect(rings.onBed).toContain("3px");
-    expect(Number.parseFloat(rings.bedRadius)).toBeLessThanOrEqual(2);
+    expect(Number.parseFloat(rings.bedRadius)).toBeLessThanOrEqual(4);
 });
 
 test("marks the open Files control with an outline on every side", async ({ page }) => {
