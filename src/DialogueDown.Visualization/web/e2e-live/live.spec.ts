@@ -276,8 +276,8 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     // *upward* into the brand mark above. That is what a copied style block that missed one
     // property did: the control stood half a row taller and touched the logo.
     //
-    // It wears the tab shape now, so the tabs — not the trailing icon buttons — are what it has
-    // to line up with.
+    // It is a glyph alone, so the row's *other icon buttons* — not the tabs — are what it has to
+    // line up with.
     const metrics = await page.evaluate(() => {
         const box = (selector: string) => {
             const rect = document.querySelector(selector)!.getBoundingClientRect();
@@ -287,10 +287,12 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
         const bed = getComputedStyle(control, "::before");
         const controlBox = control.getBoundingClientRect();
         const glyphBox = control.querySelector(".tab-icon")!.getBoundingClientRect();
+        const zenGlyph = document.querySelector(".zen-icon")!.getBoundingClientRect();
         return {
             files: box(".tabbar-explorer"),
-            configTab: box("button.tab.tab-with-icon"),
-            filesGlyph: box(".tabbar-explorer .tab-icon"),
+            zen: box(".tabbar-zen"),
+            filesGlyph: { width: glyphBox.width, height: glyphBox.height, left: glyphBox.left },
+            zenGlyph: { width: zenGlyph.width, height: zenGlyph.height },
             configGlyph: box("button.tab.tab-with-icon .tab-icon"),
             brand: box("hgroup"),
             bedTop: controlBox.top + Number.parseFloat(bed.top),
@@ -301,23 +303,23 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
                 bed.borderBottomLeftRadius,
             ],
             leftPadding: glyphBox.left - controlBox.left,
-            rightPadding:
-                controlBox.right -
-                control.querySelector(".tabbar-explorer-label")!.getBoundingClientRect().right,
+            rightPadding: controlBox.right - glyphBox.right,
         };
     });
 
-    // One shape as the tabs it sits among: same height, sharing their baseline, and starting no
-    // higher than they do — rising above them is exactly how it reached the brand mark before.
-    expect(metrics.files.height).toBeCloseTo(metrics.configTab.height, 0);
-    expect(metrics.files.bottom).toBeCloseTo(metrics.configTab.bottom, 0);
-    expect(metrics.files.top).toBeGreaterThanOrEqual(metrics.configTab.top - 0.5);
-    // Its painted bed clears the brand mark directly above it. The button itself reaches the
-    // tabs' full height, so it is the bed — inset inside that box — that has to keep the air.
+    // One size as the icon buttons at the row's other end, at every width — a control that
+    // shrinks below its neighbours reads as an afterthought and is a smaller target besides.
+    expect(metrics.files.height).toBeCloseTo(metrics.zen.height, 0);
+    expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
+    expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
+    // Its painted bed clears the brand mark directly above it. The button's box is taller than
+    // the bed, so it is the bed — inset inside that box — that has to keep the air.
     expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
-    // Evenly rounded, as the Explorer's own rows are, rather than squared on one side.
+    // Squared off, so the accent rail down its leading edge reads as a straight bar rather than
+    // a sliver bent around a corner. Uniform, so no corner disagrees with another.
     expect(new Set(metrics.bedCorners).size).toBe(1);
-    // Even padding either side of the glyph, so the bed is not lopsided around it.
+    expect(Number.parseFloat(metrics.bedCorners[0])).toBeLessThanOrEqual(2);
+    // Even padding either side of the glyph, so it sits centered in its bed.
     expect(metrics.leftPadding).toBeCloseTo(metrics.rightPadding, 0);
     // Its leading edge — where the rail stands while the panel is open — lines up with the
     // header gutter, so the mark sits under the brand rather than inside the control.

@@ -66,40 +66,39 @@ describe a button that stays pushed rather than a region that is open.
 
 ### The shape it wears
 
-The control takes the **tab row's own shape** — a glyph beside a word, in the same
-Feather family, size, and stroke weight the Config tab's gear uses — because it sits
-among tabs and should read as one of the row's controls rather than as a chip parked
-beside them. It reserves the same two pixels a tab keeps for its underline, so the two
-share a box and a baseline.
+The control is a **glyph alone** — the file mark an editor puts on its own file panel,
+in the same Feather family, size, and stroke weight the Config tab's gear uses. It shows
+no word, because the tab row's width belongs to the **stages**: a word here would spend
+that width on a control that is not one, and would crowd the very stage tabs the reader
+came for. Wordless, it is sized and spaced like the **icon buttons at the row's other
+end** — the Zen and maximize pair — which is what it now is.
 
-The button keeps the tabs' **full height**, so its word sits on their baseline — but
-what is *painted* is **inset** inside that box. Separating the two is what lets the
-control satisfy both constraints at once: the row aligns to its bottom edge, so a
-control sized to its own chip would either break the baseline or, growing upward, butt
-against the brand mark above it. An inset bed leaves air under the brand and stops
-clear of the underline strip below without moving the box that holds the type.
+One styling serves **every width**. The narrow layout used to reduce a worded control to
+a glyph and restate its size; with no word to drop there is nothing to restate, and the
+two widths cannot disagree.
+
+The button's box is taller than what it paints: the **bed is inset** inside it. That
+separation is what keeps the mark clear of the brand above — the row aligns to its
+bottom edge, so a control sized to its own chip would grow *upward* into the logo. The
+inset leaves air under the brand without moving the box the row lays out.
 
 Open, it wears the two marks an editor's activity bar uses for the panel you are in:
-a **leading accent rail** and a **tinted bed**. The bed is rounded **evenly on all four
-corners**, as the Explorer's own selected rows are, and the rail is drawn as that bed's
-own leading edge — an inset shadow rather than a separate positioned bar, so it takes
-the bed's height and rounding automatically instead of being told them and getting them
-wrong. Its leading edge sits at the header gutter, which puts the rail under the brand
-mark rather than inside the control.
+a **leading accent rail** and a **tinted bed**. The rail is drawn as the bed's own
+leading edge — an inset shadow rather than a separate positioned bar, so it takes the
+bed's height automatically instead of being told it and getting it wrong. The bed is
+**square-cut**, which is what lets the rail read as a straight bar: rounding the bed
+bends the rail around its corners, and at the 2px a rail is wide even a small radius
+turns it into a parenthesis rather than a mark. Its leading edge sits at the header
+gutter, which puts the rail under the brand mark rather than inside the control.
 
 It never takes the **underline**: in this row that mark answers "which stage am I on",
 and the Explorer is not a stage — a second underlined item would leave that question
 ambiguous.
 
-**The visible word and the accessible name come from one constant.** A control whose
-visible label is absent from its accessible name is a WCAG 2.5.3 failure, so "Files"
-is both what the button shows and what the panel is announced by.
-
-Below the stacking width the control drops its word and becomes an icon button, so it
-takes the **size of the icon buttons at the row's other end** rather than the tab's
-smaller glyph. A control that shrinks below its neighbours reads as an afterthought,
-and offers a smaller target exactly where fingers rather than pointers are aiming. The
-word survives in the accessible name, so nothing is lost to a screen reader.
+**Showing no word, its name is carried entirely by its tooltip and accessible name**,
+and both are built from one constant. That is the tradeoff a glyph makes: the meaning
+has to be recoverable by hovering and by a screen reader, because it can no longer be
+read off the control.
 
 ### One styling, stated once
 
@@ -110,9 +109,9 @@ its **bottom** edge, so a control that ends up taller than its neighbours grows
 
 Centering their glyph with flex is what makes that class of fault impossible. The glyph
 becomes a flex item, so the inherited line box cannot size the button, and no
-counteracting reset is needed to hold it back. A test asserts the Files control keeps
-the tabs' height and baseline, starts no higher than they do, and clears the brand
-mark.
+counteracting reset is needed to hold it back. A test asserts the Files control matches
+those buttons in box and glyph size, clears the brand mark, keeps its bed square-cut,
+and stays evenly padded around its glyph.
 
 ## Why not an activity bar
 

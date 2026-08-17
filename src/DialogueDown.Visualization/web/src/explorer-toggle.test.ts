@@ -3,7 +3,7 @@ import { createExplorerToggle, EXPLORER_PANEL_NAME } from "./explorer-toggle";
 import { initCollapsiblePanel } from "./collapse-toggle";
 
 describe("createExplorerToggle", () => {
-    it("wears the tab row's shape: a glyph beside the word it is named for", () => {
+    it("is a glyph alone, in the row's own icon family", () => {
         const button = createExplorerToggle(vi.fn());
 
         expect(button.tagName).toBe("BUTTON");
@@ -12,9 +12,8 @@ describe("createExplorerToggle", () => {
         expect(button.getAttribute("aria-controls")).toBe("explorer");
         // The row's own icon family, at the size and weight the Config tab's gear uses.
         expect(button.querySelector("svg.tab-icon")?.getAttribute("stroke-width")).toBe("2");
-        expect(button.querySelector(".tabbar-explorer-label")?.textContent).toBe(
-            EXPLORER_PANEL_NAME,
-        );
+        // No word: the tab row's width belongs to the stages, and the glyph carries the meaning.
+        expect(button.textContent?.trim()).toBe("");
     });
 
     it("runs the toggle handler on click", () => {
@@ -25,9 +24,9 @@ describe("createExplorerToggle", () => {
         expect(onToggle).toHaveBeenCalledOnce();
     });
 
-    it("says whether the Explorer is showing, and is named by the word it shows", () => {
-        // A control whose visible word is missing from its accessible name is a WCAG failure,
-        // so the two are built from one constant rather than written twice.
+    it("says whether the Explorer is showing, and names itself for pointer and screen reader", () => {
+        // Showing no word, the tooltip and the accessible name are the only way to learn what
+        // this glyph opens — so both are load-bearing, and both come from one constant.
         const container = document.createElement("div");
         const panel = initCollapsiblePanel({
             container,
@@ -40,11 +39,13 @@ describe("createExplorerToggle", () => {
 
         expect(panel.button.getAttribute("aria-expanded")).toBe("true");
         expect(panel.button.getAttribute("aria-label")).toContain(EXPLORER_PANEL_NAME);
+        expect(panel.button.title).toContain(EXPLORER_PANEL_NAME);
 
         panel.button.click();
 
         expect(panel.button.getAttribute("aria-expanded")).toBe("false");
         expect(panel.button.getAttribute("aria-label")).toContain(EXPLORER_PANEL_NAME);
+        expect(panel.button.title).toContain(EXPLORER_PANEL_NAME);
         expect(container.classList.contains("explorer-collapsed")).toBe(true);
     });
 });

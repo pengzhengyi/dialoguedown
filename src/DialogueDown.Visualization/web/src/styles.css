@@ -3284,15 +3284,13 @@ body.maximized .maximize-button .icon-compress {
     color: inherit;
 }
 
-/* The Explorer's control leads the row, and wears the row's own shape — a glyph beside a word,
-   in the same Feather family and size the Config tab's gear uses. It sits among tabs, so it
-   should read as one of the row's controls rather than as a chip parked beside them.
+/* The Explorer's control leads the row as a glyph alone, sized and spaced like the Zen and
+   maximize buttons at the row's other end. The row's width belongs to the stages, so the control
+   spends none of it on a word; the file glyph carries the meaning by itself, as it does on an
+   editor's own file panel.
 
-   The button keeps the tabs' full height, so its word sits on their baseline. What is *painted*
-   is inset from that box: a bed shorter than the row, which leaves air under the brand mark
-   above rather than butting against it, and stops clear of the strip a tab reserves for its
-   underline below. It never takes that underline — in this row the mark answers "which stage am
-   I on", and the Explorer is not a stage. */
+   One styling at every width. It never takes a tab's underline — in this row that mark answers
+   "which stage am I on", and the Explorer is not a stage. */
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -3300,37 +3298,36 @@ body.maximized .maximize-button .icon-compress {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    justify-content: center;
     width: auto;
-    margin: 0 0 0.2rem;
-    padding: 0.3rem 0.6rem 0.15rem;
+    margin: 0 0 0.35rem;
+    padding: 0.3rem 0.5rem;
     color: var(--pico-muted-color);
     background: transparent;
     border: none;
-
-    /* The same 2px a tab reserves for its underline, so the two share a box and a baseline. */
-    border-bottom: 2px solid transparent;
     white-space: nowrap;
     cursor: pointer;
 }
 
-/* The painted bed: a chip inset inside the button's taller box, rounded evenly on all four
-   corners the way the Explorer's own rows are. Transparent until the control is touched, so one
-   element carries the resting, hovered, and open looks without three boxes to keep in step. */
+/* The painted bed: a chip inset inside the button's taller box, which leaves air under the brand
+   mark above rather than butting against it. Squared off, so the rail down its leading edge
+   reads as a straight bar rather than a sliver bent around a corner. Transparent until the
+   control is touched, so one element carries the resting, hovered, and open looks without three
+   boxes to keep in step. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
-    inset: 0.35rem 0 0.4rem;
+    inset: 0.2rem 0;
     background: transparent;
-    border-radius: var(--pico-border-radius);
+    border-radius: 0;
     transition: background 0.12s ease;
 }
 
-/* The glyph and the word stand above the bed: the bed is positioned and would otherwise paint
-   over them. */
-.tabbar-explorer .tab-icon,
-.tabbar-explorer-label {
+/* The glyph stands above the bed: the bed is positioned and would otherwise paint over it. */
+.tabbar-explorer .tab-icon {
     position: relative;
+    width: 16px;
+    height: 16px;
 }
 
 .tabbar-explorer:hover {
@@ -3345,7 +3342,8 @@ body.maximized .maximize-button .icon-compress {
 
 /* Open, it takes the marks this report already uses for a chosen file in the tree itself: a
    tinted bed with an inset accent rail down its leading edge. The rail is a shadow rather than
-   a drawn bar, so it takes the bed's height and rounding on its own. */
+   a drawn bar, so it takes the bed's height on its own — and because the bed is squared, it
+   reads as a straight bar the full height of the mark. */
 .tabbar-explorer[aria-expanded="true"] {
     color: var(--mode-accent, var(--pico-primary));
 }
@@ -4629,42 +4627,6 @@ body.zen .config-view > .config-source {
 }
 
 @media (width <= 800px) {
-    /* The row is tightest here, and the glyph already carries the meaning, so the control keeps
-       only its icon. The word survives in the accessible name, so nothing is lost to a screen
-       reader. */
-    .tabbar-explorer-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        white-space: nowrap;
-        clip-path: inset(50%);
-    }
-
-    /* Reduced to a glyph, it is an icon button rather than a tab, so it takes the size and
-       padding of the icon buttons at the row's other end. A control that shrinks below its
-       neighbours reads as an afterthought — and is a smaller target exactly where fingers,
-       not pointers, are doing the aiming. */
-    .tabbar-explorer {
-        margin-bottom: 0.35rem;
-
-        /* With no word beside it the glyph sits centered in its bed, as the icon buttons at the
-           row's other end do. */
-        padding: 0.3rem 0.5rem;
-        border-bottom: none;
-    }
-
-    /* Compact already, and with no brand mark directly over it at this width, the bed fills the
-       button rather than being inset inside it. */
-    .tabbar-explorer::before {
-        inset: 0;
-    }
-
-    .tabbar-explorer .tab-icon {
-        width: 16px;
-        height: 16px;
-    }
-
     #app {
         flex-direction: column;
 
