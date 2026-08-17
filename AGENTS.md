@@ -15,7 +15,9 @@ report.
 
 ## Build and test
 
-Uses the .NET 8 SDK (`global.json` pins 8.0.0 with `rollForward: latestMajor`).
+Uses the .NET 10 SDK (`global.json` pins 10.0.0 with `rollForward: latestMajor`). The
+shipped libraries still multi-target `net8.0` and `net10.0` for Godot consumers, so CI
+installs both runtimes; the SDK floor is not the consumer floor.
 A plain `dotnet build` needs no Node — the built web report is committed.
 
 ```bash
