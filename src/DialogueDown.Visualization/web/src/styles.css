@@ -2337,6 +2337,56 @@ g.node.entity-highlight text.label {
     padding-right: 0;
 }
 
+/* The compiler's ignored Markdown, folded in the Source editor. The control trails the region's
+   first line rather than leading it: a mark before a table's first row would push that row out of
+   line with the rows beneath it, and the editor's columns are part of what a writer is reading.
+   The status mark trails the control, as it does in the Preview. */
+.dd-source-ignored {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    margin-left: 0.5rem;
+    vertical-align: baseline;
+}
+
+.dd-source-ignored-folded {
+    margin-left: 0;
+}
+
+.dd-source-ignored-toggle {
+    --pico-background-color: inherit;
+
+    display: grid;
+    place-items: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--md-muted) 12%, var(--pico-background-color));
+    color: var(--md-muted);
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.dd-source-ignored-toggle:hover,
+.dd-source-ignored-toggle:focus-visible {
+    background: color-mix(in srgb, var(--md-muted) 26%, var(--pico-background-color));
+}
+
+.dd-source-ignored-summary {
+    color: var(--md-muted);
+    font-family: var(--pico-font-family-sans-serif);
+    font-size: 0.78rem;
+}
+
+.dd-source-ignored-status {
+    color: var(--md-muted);
+    font-size: 0.72rem;
+    line-height: 1;
+}
+
 .dd-ignored-preview-footer {
     flex: 0 0 var(--dd-source-footer-height);
     display: flex;

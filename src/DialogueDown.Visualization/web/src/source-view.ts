@@ -40,6 +40,7 @@ import {
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { foldGutterMarker } from "./fold-glyph";
+import { setIgnoredSpans, sourceIgnoredFold } from "./source-ignored-fold";
 import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { yamlLanguage } from "@codemirror/lang-yaml";
@@ -562,6 +563,7 @@ export function createSourceView(
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),
+                sourceIgnoredFold(),
                 diagnosticsOverlay(),
                 semanticTokensExtension(),
                 reservedTargetsPanel(),
@@ -668,10 +670,13 @@ export function createSourceView(
                         start: positionToOffset(view.state, token.range.start),
                         end: positionToOffset(view.state, token.range.end),
                     }));
+            const ignored = spansOf("IgnoredMarkdown");
             previewSemantics = {
-                ignored: spansOf("IgnoredMarkdown"),
+                ignored,
                 controlKeywords: spansOf("ControlKeyword"),
             };
+            // The editor folds the same regions the Preview does, from its own state.
+            view.dispatch({ effects: setIgnoredSpans.of(ignored) });
             renderPreview(view.state.doc.toString());
         },
         setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
