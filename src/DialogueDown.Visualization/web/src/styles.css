@@ -394,7 +394,7 @@ body {
     flex: 0 0 auto;
     align-self: stretch;
     align-items: stretch;
-    padding-bottom: 0.35rem;
+    padding-bottom: 0.25rem;
 }
 
 .tabbar-leading:empty {
@@ -3368,19 +3368,24 @@ body.maximized .maximize-button .icon-compress {
 
    Its *height*, though, is the row's rather than the glyph's — it stretches to fill the slot,
    because a target the size of its icon is a small one to hit and a cramped one to ring with a
-   focus outline. One styling at every width. It never takes a tab's underline — in this row
-   that mark answers "which stage am I on", and the Explorer is not a stage. */
+   focus outline. The glyph does not ride up with it: the box grows *upward*, while the glyph
+   stays seated on the line the row's other icon buttons share. One styling at every width. It
+   never takes a tab's underline — in this row that mark answers "which stage am I on", and the
+   Explorer is not a stage. */
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
     position: relative;
     display: inline-flex;
-    align-items: center;
+
+    /* Seated, not centered: the box is taller than the row's other icon buttons, so centering
+       the glyph inside it would float the glyph above their line. */
+    align-items: flex-end;
     justify-content: center;
     width: auto;
     margin: 0;
-    padding: 0 0.5rem;
+    padding: 0 0.5rem 0.4rem;
     color: var(--pico-muted-color);
     background: transparent;
     border: none;
@@ -3388,15 +3393,15 @@ body.maximized .maximize-button .icon-compress {
     cursor: pointer;
 }
 
-/* The painted bed: a chip inset inside the button's taller box, which leaves air under the brand
-   mark above rather than butting against it, and stops short of the divider below. Squared off,
-   so the rail down its leading edge reads as a straight bar rather than a sliver bent around a
-   corner. Transparent until the control is touched, so one element carries the resting, hovered,
-   and open looks without three boxes to keep in step. */
+/* The painted bed: a chip inset inside the button's taller box, centered on the glyph rather
+   than on the box, and leaving air under the brand mark above and short of the divider below.
+   Squared off, so the rail down its leading edge reads as a straight bar rather than a sliver
+   bent around a corner. Transparent until the control is touched, so one element carries the
+   resting, hovered, and open looks without three boxes to keep in step. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
-    inset: 0.4rem 0 0.15rem;
+    inset: 0.4rem 0 0;
     background: transparent;
     border-radius: 0;
     transition: background 0.12s ease;

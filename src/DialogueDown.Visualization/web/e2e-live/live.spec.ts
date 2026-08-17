@@ -293,7 +293,9 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
             zen: box(".tabbar-zen"),
             tabbar: box(".tabbar"),
             filesGlyph: { width: glyphBox.width, height: glyphBox.height, left: glyphBox.left },
+            filesGlyphCentre: (glyphBox.top + glyphBox.bottom) / 2,
             zenGlyph: { width: zenGlyph.width, height: zenGlyph.height },
+            zenGlyphCentre: (zenGlyph.top + zenGlyph.bottom) / 2,
             configGlyph: box("button.tab.tab-with-icon .tab-icon"),
             brand: box("hgroup"),
             bedTop: controlBox.top + Number.parseFloat(bed.top),
@@ -315,12 +317,17 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
     expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
     expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);
+    // The box grows upward, so the glyph must not ride up with it: it sits on the same line the
+    // row's other icon buttons sit on. Centered in the taller box, it floated above them.
+    expect(metrics.filesGlyphCentre).toBeCloseTo(metrics.zenGlyphCentre, 0);
+    // The bed is centered on the glyph, not on the box behind it.
+    expect((metrics.bedTop + metrics.bedBottom) / 2).toBeCloseTo(metrics.filesGlyphCentre, 0);
     // Grown to the row's height, it still stops short of the divider that closes the row.
     expect(metrics.files.bottom).toBeLessThan(metrics.tabbar.bottom);
-    // Its painted bed clears the brand mark directly above it. The button's box is taller than
-    // the bed, so it is the bed — inset inside that box — that has to keep the air.
+    // Its painted bed clears the brand mark directly above it and stops short of the divider
+    // that closes the row below. The button's box may run flush to either — it paints nothing.
     expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
-    expect(metrics.bedBottom).toBeLessThan(metrics.files.bottom);
+    expect(metrics.bedBottom).toBeLessThan(metrics.tabbar.bottom);
     // Squared off, so the accent rail down its leading edge reads as a straight bar rather than
     // a sliver bent around a corner. Uniform, so no corner disagrees with another.
     expect(new Set(metrics.bedCorners).size).toBe(1);
@@ -450,17 +457,24 @@ test.describe("on a phone-sized window", () => {
                     bottom: rect.bottom,
                 };
             };
+            const centre = (selector: string) => {
+                const rect = document.querySelector(selector)!.getBoundingClientRect();
+                return (rect.top + rect.bottom) / 2;
+            };
             return {
                 files: box(".tabbar-explorer"),
                 zen: box(".tabbar-zen"),
                 tabbar: box(".tabbar"),
                 filesGlyph: box(".tabbar-explorer .tab-icon"),
                 zenGlyph: box(".zen-icon"),
+                filesGlyphCentre: centre(".tabbar-explorer .tab-icon"),
+                zenGlyphCentre: centre(".zen-icon"),
             };
         });
 
         expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
         expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
+        expect(metrics.filesGlyphCentre).toBeCloseTo(metrics.zenGlyphCentre, 0);
         expect(metrics.files.width).toBeCloseTo(metrics.zen.width, 0);
         expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
         expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);

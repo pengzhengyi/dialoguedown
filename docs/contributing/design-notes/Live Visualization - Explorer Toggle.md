@@ -76,12 +76,17 @@ other end** — the Zen and maximize pair.
 Its *height*, though, is the **row's rather than its glyph's**: the control stretches to
 fill the pinned slot, which fills the row. A button sized to its icon is a small thing to
 hit and a cramped thing to ring with a focus outline, and this one is the doorway to a
-whole panel. It stops short of the divider that closes the row, keeping the same footing
-the arrow slots beside it keep.
+whole panel. It stops short of the divider that closes the row.
+
+The box grows **upward**, and the glyph does not travel with it. Centered in the taller
+box, the glyph floated above the line the Zen and maximize buttons sit on; it is seated
+against the box's bottom instead, so all three icons share one line. The bed is likewise
+centered on the **glyph** rather than on the box behind it.
 
 One styling serves **every width**. The narrow layout used to reduce a worded control to
 a glyph and restate its size; with no word to drop there is nothing to restate, and the
-two widths cannot disagree.
+two widths cannot disagree — the same seating puts the glyph on the row's icon line at
+both.
 
 The button's box is taller than what it paints: the **bed is inset** inside it. That
 separation is what keeps the mark clear of the brand above and the divider below — the
@@ -116,8 +121,9 @@ its **bottom** edge, so a control that ends up taller than its neighbours grows
 Centering their glyph with flex is what makes that class of fault impossible. The glyph
 becomes a flex item, so the inherited line box cannot size the button, and no
 counteracting reset is needed to hold it back. A test asserts the Files control carries
-those buttons' glyph, takes the row's height, clears the brand mark above and the divider
-below, keeps its bed square-cut, and stays evenly padded around its glyph.
+those buttons' glyph **on their line**, takes the row's height, clears the brand mark
+above and the divider below, keeps its bed square-cut and centered on the glyph, and
+stays evenly padded around it.
 
 **One ring, not two.** Pico rings a focused button with a `box-shadow` rather than an
 `outline`, so clearing the outline alone leaves that ring in place beneath the square one
