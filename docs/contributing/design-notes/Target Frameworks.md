@@ -49,6 +49,7 @@ Neither, then. The libraries a game references **multi-target**, and everything 
 | --- | --- | --- |
 | `DialogueDown` | `net8.0;net10.0` | Referenced by a game; must load on Godot's bundled runtime. |
 | `DialogueDown.ConfigurationLoader` | `net8.0;net10.0` | Same — a game reads its own `dialogue.toml`. |
+| `DialogueDown.Playbook` | `net8.0;net10.0` | Same — a game embeds the playbook types to read a compiled script. |
 | `DialogueDown.Cli` | `net10.0` | A developer tool. It never enters a game export, so nothing about Godot constrains it. |
 | `DialogueDown.Visualization`, `.Live` | `net10.0` | Diagnostics only, not shipped in the core package. |
 
@@ -94,7 +95,7 @@ including `net8.0`. Conflating the two is the mistake this note exists to preven
 
 Dropping `net8.0` from a shipped library is the dangerous edit, because **nothing else would
 notice**: the solution still builds, every test still passes, and only a consumer's Godot export
-fails — somewhere else, later, for someone else. A guardrail test therefore reads the two shipped
+fails — somewhere else, later, for someone else. A guardrail test therefore reads the shipped
 project files directly and fails if either stops offering `net8.0` or `net10.0`, naming the
 consequence in its message. It lives beside the other repository-manifest guards in
 `dev-dotnet-tasks.test.mjs`.

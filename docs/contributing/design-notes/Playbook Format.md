@@ -90,6 +90,11 @@ The writer still emits only **public** playbook types, so the mapping from
 internal graph to public contract stays explicit and reviewable — the property
 [#269](https://github.com/pengzhengyi/dialoguedown/issues/269) asked for.
 
+`DialogueDown.Playbook` is an assembly a **game** ends up referencing, through the
+runner that reads its playbooks. It therefore multi-targets `net8.0;net10.0` like
+the other shipped libraries, so a Godot export keeps loading on Godot's bundled
+runtime — see [Target Frameworks](./Target%20Frameworks.md).
+
 Two architecture tests guard the shape:
 
 | Test | Asserts |

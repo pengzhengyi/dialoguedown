@@ -32,6 +32,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown\DialogueDown.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.ConfigurationLoader\DialogueDown.ConfigurationLoader.csproj" />
+    <ProjectReference Include="..\..\src\DialogueDown.Playbook\DialogueDown.Playbook.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.Visualization\DialogueDown.Visualization.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.Visualization.Live\DialogueDown.Visualization.Live.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.Cli\DialogueDown.Cli.csproj" />

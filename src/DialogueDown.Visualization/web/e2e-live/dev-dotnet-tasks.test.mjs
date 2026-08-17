@@ -129,7 +129,11 @@ test("the libraries a game references keep the target framework Godot can load",
     // Godot bundles the .NET runtime an exported game runs on, so the floor is Godot's, not ours.
     // Dropping net8.0 from a shipped library would break every Godot project silently — the build
     // stays green and only a consumer's export fails. See the Target Frameworks note.
-    for (const project of ["DialogueDown", "DialogueDown.ConfigurationLoader"]) {
+    for (const project of [
+        "DialogueDown",
+        "DialogueDown.ConfigurationLoader",
+        "DialogueDown.Playbook",
+    ]) {
         const csproj = readFileSync(
             resolve(repositoryRoot, `src/${project}/${project}.csproj`),
             "utf8",
