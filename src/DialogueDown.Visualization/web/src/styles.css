@@ -2974,7 +2974,12 @@ svg.tree.has-focus .link:not(.related) {
     max-width: calc(100% - 1.5rem);
     max-height: 90%;
     overflow: auto;
-    padding: 0.4rem 0.5rem;
+
+    /* The fold control floats in the top-right corner, so the legend opens below it rather than
+       beside it: sharing that line pushed the first row's count to the control's left, which reads
+       as the wrong order. The control gets the line; the legend starts under it. Folded, the box
+       collapses to the control alone and drops this padding with the rest. */
+    padding: 1.75rem 0.5rem 0.4rem;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -3031,13 +3036,6 @@ svg.tree.has-focus .link:not(.related) {
 
 .legend-heading:first-child {
     margin-top: 0;
-}
-
-/* The fold control floats in the legend's top-right corner, so whatever opens the legend has to
-   keep out from under it. A legend that starts with a group heading has short text there and never
-   noticed; one that opens straight into its rows ran the first row's count beneath the glyph. */
-.legend-fold + * {
-    padding-right: 1.35rem;
 }
 
 /* Folding the legend away gives the canvas back: the button stays, everything else goes.

@@ -178,17 +178,32 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     await expect(page.locator("#detail")).toBeHidden();
 });
 
-test("keeps the legend's fold control clear of the first row's count", async ({ page }) => {
-    // The control floats in the legend's top-right corner. Where a legend opens straight into its
-    // rows rather than a heading, the first row ran under it and its count read as a glyph.
+test("opens the legend below its fold control, not beside it", async ({ page }) => {
+    // The control floats in the legend's top-right corner. Sharing that line with the first row
+    // put the row's count to the control's left, which reads as the wrong order; the control now
+    // gets the line to itself.
     const legend = page.locator(".stage.active .legend");
     const fold = legend.locator(".legend-fold");
-    const firstCount = legend.locator(".legend-item .count").first();
+    const firstRow = legend.locator(".legend-item").first();
 
-    const [foldBox, countBox] = await Promise.all([fold.boundingBox(), firstCount.boundingBox()]);
-    if (!foldBox || !countBox) throw new Error("Could not measure the legend.");
+    const [foldBox, rowBox] = await Promise.all([fold.boundingBox(), firstRow.boundingBox()]);
+    if (!foldBox || !rowBox) throw new Error("Could not measure the legend.");
 
-    expect(countBox.x + countBox.width).toBeLessThanOrEqual(foldBox.x);
+    expect(rowBox.y).toBeGreaterThanOrEqual(foldBox.y + foldBox.height);
+});
+
+test("collapses the legend to the control alone, on the same pixels", async ({ page }) => {
+    // Folding drops the reserved line with the rest of the card, so the glyph must not drift.
+    const fold = page.locator(".stage.active .legend .legend-fold");
+    const open = await fold.boundingBox();
+
+    await fold.click();
+    await expect(page.locator(".stage.active .legend")).toHaveClass(/folded/);
+    const folded = await fold.boundingBox();
+
+    if (!open || !folded) throw new Error("Could not measure the legend control.");
+    expect(folded.x).toBeCloseTo(open.x, 0);
+    expect(folded.y).toBeCloseTo(open.y, 0);
 });
 
 test("keeps the tables clear of the window's top and right edges", async ({ page }) => {
