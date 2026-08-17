@@ -383,12 +383,14 @@ body {
 /* The Explorer's control, pinned at the row's leading edge so it sits over the panel it
    summons. Being a sibling of the stage nav rather than a member of it is the point: the nav
    scrolls on a narrow window, and a control that scrolls out of reach is worse than none.
-   Empty — a static export has no Explorer — it takes no room, gap included. */
+   Empty — a static export has no Explorer — it takes no room, gap included.
+
+   No bottom padding, unlike the arrow slots beside it: the control inside is tab-shaped and
+   carries the tabs' own bottom margin, so padding here would lift it off their baseline. */
 .tabbar-leading {
     display: flex;
     flex: 0 0 auto;
-    align-items: center;
-    padding-bottom: 0.35rem;
+    align-items: flex-end;
 }
 
 .tabbar-leading:empty {
@@ -3234,21 +3236,19 @@ body.maximized .maximize-button .icon-compress {
     display: block;
 }
 
-/* The tab row's own controls: the Explorer toggle at the leading edge, and the Zen and
-   maximize pair at the trailing one. They are app-level rather than per-tab, so they share one
-   quiet styling and read as a family regardless of which end they sit at.
+/* The tab row's trailing controls: the Zen and maximize pair. They are app-level rather than
+   per-tab, so they share one quiet styling and read as a set.
 
-   Stated once rather than per button on purpose. Held apart, they drift — a copy that missed
-   the line-height reset grew half a row taller than its siblings and pushed up into the brand
-   mark above, because the row aligns to its bottom edge.
+   Stated once rather than per button on purpose. Held apart, they drift — a copy that missed the
+   line-height reset grew half a row taller than its sibling and pushed up into the brand mark
+   above, because the row aligns to its bottom edge.
 
    Centering with flex is what makes that class of bug impossible: the glyph is a flex item, so
    the inherited line box cannot size the button and no reset is needed to hold it back.
    (Pico inverts --pico-color on buttons; reset it so the glyph uses the normal foreground
    rather than white-on-white, as the zoom buttons do.) */
 .tabbar-maximize,
-.tabbar-zen,
-.tabbar-explorer {
+.tabbar-zen {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
@@ -3266,34 +3266,88 @@ body.maximized .maximize-button .icon-compress {
 }
 
 .tabbar-maximize:hover,
-.tabbar-zen:hover,
-.tabbar-explorer:hover {
+.tabbar-zen:hover {
     --pico-color: inherit;
 
     color: var(--pico-color);
     background: var(--pico-muted-border-color);
 }
 
-/* Both toggles are sticky rather than one-shot, so each shows that it is engaged in the mode
-   accent — Zen because its mode is on, the Explorer because the region it discloses is open. */
-.tabbar-zen[aria-pressed="true"],
-.tabbar-explorer[aria-expanded="true"] {
+/* Zen is a sticky mode rather than a one-shot action, so it shows that it is engaged. */
+.tabbar-zen[aria-pressed="true"] {
     color: var(--mode-accent, var(--pico-primary));
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
 }
 
-.zen-icon,
-.explorer-toggle-icon {
+.zen-icon {
     font-size: 15px;
     color: inherit;
 }
 
-/* The Explorer's control is the row's one navigation affordance — it summons a panel, where its
-   siblings only change how the current view is framed — so it is given a little more width to
-   sit in. Height stays shared, so the row's controls still line up. */
+/* The Explorer's control leads the row, and wears the row's own shape — a glyph beside a word,
+   in the same Feather family and size the Config tab's gear uses. It sits among tabs, so it
+   should read as one of the row's controls rather than as a chip parked beside them.
+
+   Open, it takes the mode accent. It never takes the underline: in this row that mark means
+   "the stage you are on", and the Explorer is not a stage — two underlines would leave the
+   reader guessing which one answers that question. */
 .tabbar-explorer {
-    padding-right: 0.6rem;
-    padding-left: 0.6rem;
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: auto;
+
+    /* Pulled left by its own padding, so the *glyph* lines up with the header gutter above it
+       rather than the button's invisible box doing so. */
+    margin: 0 0 0.2rem -0.75rem;
+    padding: 0.3rem 0.75rem 0.15rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+
+    /* The same 2px a tab reserves for its underline, so the two share a box and a baseline.
+       It is never given a color: that mark answers "which stage am I on", and this is not a
+       stage. */
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tabbar-explorer:hover {
+    --pico-color: inherit;
+
+    color: var(--mode-accent, var(--pico-primary));
+    background: transparent;
+}
+
+.tabbar-explorer[aria-expanded="true"] {
+    color: var(--mode-accent, var(--pico-primary));
+    font-weight: 600;
+}
+
+/* A generous, soft ring rather than a tight outline: the control sits hard against the window's
+   leading edge, where a hairline is easy to lose. */
+.tabbar-explorer:focus-visible {
+    outline: none;
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
+}
+
+/* Bold on open would widen the word and nudge the whole row sideways on every toggle, so the
+   space the bold form needs is reserved in both states. */
+.tabbar-explorer-label::after {
+    content: attr(data-label);
+    display: block;
+    height: 0;
+    overflow: hidden;
+    font-weight: 600;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
@@ -4551,6 +4605,24 @@ body.zen .config-view > .config-source {
 }
 
 @media (width <= 800px) {
+    /* The row is tightest here, and the glyph already carries the meaning, so the control keeps
+       only its icon. The word survives in the accessible name, so nothing is lost to a screen
+       reader — and the reserved bold width goes with the word it was reserving for. */
+    .tabbar-explorer-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        white-space: nowrap;
+        clip-path: inset(50%);
+    }
+
+    .tabbar-explorer {
+        margin-left: -0.5rem;
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
     #app {
         flex-direction: column;
 

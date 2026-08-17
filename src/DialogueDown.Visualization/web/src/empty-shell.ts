@@ -1,7 +1,7 @@
 import { runApp } from "./app";
 import { initExplorer } from "./explorer";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { createExplorerToggle } from "./explorer-toggle";
+import { createExplorerToggle, EXPLORER_PANEL_NAME } from "./explorer-toggle";
 import { setHelp } from "./help";
 import type { Report } from "./model";
 import type { BrowseListing, CreateOutcome } from "./project-fs";
@@ -101,7 +101,7 @@ export function initEmptyShell(report: Report): void {
         container: appEl,
         collapsedClass: "explorer-collapsed",
         storageKey: "dd-explorer-collapsed",
-        name: "explorer",
+        name: EXPLORER_PANEL_NAME,
         createButton: createExplorerToggle,
     });
     document.getElementById("tabbar-leading")?.appendChild(explorerPanel.button);

@@ -14,6 +14,7 @@ than finding a chevron on a hairline divider.
 - [Goal and scope](#goal-and-scope)
 - [What it delivers](#what-it-delivers)
 - [Where the toggle lives](#where-the-toggle-lives)
+  - [The shape it wears](#the-shape-it-wears)
   - [One styling, stated once](#one-styling-stated-once)
 - [Why not an activity bar](#why-not-an-activity-bar)
 - [What the default should be](#what-the-default-should-be)
@@ -63,21 +64,43 @@ So it carries `aria-expanded` and points at the region with `aria-controls`, and
 engaged styling keys off that state rather than off `aria-pressed`, which would
 describe a button that stays pushed rather than a region that is open.
 
+### The shape it wears
+
+The control takes the **tab row's own shape** — a glyph beside a word, in the same
+Feather family, size, and stroke weight the Config tab's gear uses — because it sits
+among tabs and should read as one of the row's controls rather than as a chip parked
+beside them. It reserves the same two pixels a tab keeps for its underline, so the two
+share a box and a baseline, and it is pulled left by its own padding so the *glyph*,
+not the button's invisible box, lines up with the header gutter.
+
+Open, it takes the mode accent. It never takes the **underline**: in this row that
+mark answers "which stage am I on", and the Explorer is not a stage — a second
+underlined item would leave that question ambiguous. A tinted pill was tried too and
+read as a different species from the row.
+
+Two details the shape forces:
+
+- **The word is echoed in a data attribute**, so the space its bold form needs is
+  reserved in both states. Without that the row shifts sideways on every toggle.
+- **The visible word and the accessible name come from one constant.** A control whose
+  visible label is absent from its accessible name is a WCAG 2.5.3 failure, so
+  "Files" is both what the button shows and what the panel is announced by.
+
+Below the stacking width the control keeps only its glyph. The word survives in the
+accessible name, so nothing is lost to a screen reader.
+
 ### One styling, stated once
 
-The row's three controls — Files at one end, Zen and maximize at the other — share a
-single style rule rather than a copy each. Held apart they drift, and drift here is
-not cosmetic: the row aligns to its **bottom** edge, so a control that ends up taller
-than its siblings grows *upward*, into the brand mark above it.
+The row's trailing controls — Zen and maximize — share a single style rule rather than
+a copy each. Held apart they drift, and drift here is not cosmetic: the row aligns to
+its **bottom** edge, so a control that ends up taller than its neighbours grows
+*upward*, into the brand mark above it.
 
-Centering the glyph with flex is what makes that class of fault impossible. The glyph
+Centering their glyph with flex is what makes that class of fault impossible. The glyph
 becomes a flex item, so the inherited line box cannot size the button, and no
-counteracting reset is needed to hold it back. A test asserts the three keep one
-height and one centre line, and stay clear of the brand mark.
-
-The Files control takes a little more width than its siblings — it is the row's one
-navigation affordance, where the others only reframe the current view. Its height
-stays shared, so the row still lines up.
+counteracting reset is needed to hold it back. A test asserts the Files control keeps
+the tabs' height and baseline, starts no higher than they do, and clears the brand
+mark.
 
 ## Why not an activity bar
 
@@ -155,8 +178,8 @@ the divider handle and their current default, unchanged.
   empty shell; the toggle summons and dismisses it; the control keeps its place when
   the stage row scrolls on a narrow window; it is gone in Zen; and the exported
   report carries no control, with its slot taking no room.
-- **Alignment** — the row's three controls hold one height and one centre line, and
-  the leading one stays clear of the brand mark above it.
+- **Alignment** — the control keeps the tabs' height and baseline, starts no higher
+  than they do, aligns its glyph to the header gutter, and clears the brand mark.
 - **Accessibility** — the report's existing pass is scoped to the source preview, so
   it never sees the tab bar. The control brings its own: an accessibility scan of the
   row in **both** of its states, shut and showing.

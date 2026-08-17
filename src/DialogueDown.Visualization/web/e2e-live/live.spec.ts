@@ -271,30 +271,38 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
     await expect(page.locator(".tabbar-explorer")).toBeVisible();
 });
 
-test("keeps the tab row's controls in one family, clear of the brand mark", async ({ page }) => {
-    // The row aligns to its bottom edge, so a control that is taller than its siblings grows
+test("seats the Files control in the tab row, clear of the brand mark", async ({ page }) => {
+    // The row aligns to its bottom edge, so a control that is taller than its neighbours grows
     // *upward* into the brand mark above. That is what a copied style block that missed one
-    // property did: the Explorer toggle stood half a row taller and touched the logo.
+    // property did: the control stood half a row taller and touched the logo.
+    //
+    // It wears the tab shape now, so the tabs — not the trailing icon buttons — are what it has
+    // to line up with.
     const metrics = await page.evaluate(() => {
         const box = (selector: string) => {
             const rect = document.querySelector(selector)!.getBoundingClientRect();
-            return { top: rect.top, height: rect.height, centre: (rect.top + rect.bottom) / 2 };
+            return { top: rect.top, left: rect.left, bottom: rect.bottom, height: rect.height };
         };
-        const brand = document.querySelector("hgroup")!.getBoundingClientRect();
         return {
             files: box(".tabbar-explorer"),
-            zen: box(".tabbar-zen"),
-            maximize: box(".tabbar-maximize"),
-            brandBottom: brand.bottom,
+            configTab: box("button.tab.tab-with-icon"),
+            filesGlyph: box(".tabbar-explorer .tab-icon"),
+            configGlyph: box("button.tab.tab-with-icon .tab-icon"),
+            brand: box("hgroup"),
         };
     });
 
-    // One height, one centre line: the row's controls read as a set however far apart they sit.
-    expect(metrics.files.height).toBeCloseTo(metrics.zen.height, 0);
-    expect(metrics.files.centre).toBeCloseTo(metrics.zen.centre, 0);
-    expect(metrics.maximize.centre).toBeCloseTo(metrics.zen.centre, 0);
-    // And the leading control keeps clear of the brand mark directly above it.
-    expect(metrics.files.top).toBeGreaterThan(metrics.brandBottom);
+    // One shape as the tabs it sits among: same height, sharing their baseline, and starting no
+    // higher than they do — rising above them is exactly how it reached the brand mark before.
+    expect(metrics.files.height).toBeCloseTo(metrics.configTab.height, 0);
+    expect(metrics.files.bottom).toBeCloseTo(metrics.configTab.bottom, 0);
+    expect(metrics.files.top).toBeGreaterThanOrEqual(metrics.configTab.top - 0.5);
+    // Its glyph clears the brand mark directly above it.
+    expect(metrics.filesGlyph.top).toBeGreaterThan(metrics.brand.bottom);
+    // Its glyph — not its invisible box — lines up with the header gutter.
+    expect(metrics.filesGlyph.left).toBeCloseTo(metrics.brand.left, 0);
+    // And it leads the row rather than sitting inside the scrolling tabs.
+    expect(metrics.filesGlyph.left).toBeLessThan(metrics.configGlyph.left);
 });
 
 test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {

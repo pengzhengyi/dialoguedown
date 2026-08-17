@@ -21,7 +21,7 @@ import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
 import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
 import { initEmptyShell } from "./empty-shell";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { createExplorerToggle } from "./explorer-toggle";
+import { createExplorerToggle, EXPLORER_PANEL_NAME } from "./explorer-toggle";
 import {
     type ConfigReport,
     type DialogueSymbols,
@@ -335,7 +335,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                 container: appEl,
                 collapsedClass: "explorer-collapsed",
                 storageKey: "dd-explorer-collapsed",
-                name: "explorer",
+                name: EXPLORER_PANEL_NAME,
                 startCollapsed: true,
                 createButton: createExplorerToggle,
             });
