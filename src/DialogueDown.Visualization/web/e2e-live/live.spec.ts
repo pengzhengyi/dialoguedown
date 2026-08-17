@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { LIVE_DOC, INITIAL_SOURCE } from "./fixture.mjs";
@@ -253,6 +254,7 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
 
 test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) => {
     await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+    await page.locator(".tabbar-explorer").click();
     await expect(page.locator("#explorer")).toBeVisible();
 
     await page.keyboard.press("z");
@@ -261,9 +263,182 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
     // follow it in source order.
     await expect(page.locator("#explorer")).toBeHidden();
     await expect(page.locator("#explorer-resizer")).toBeHidden();
+    // Its control goes too: left in the row it would be a button whose panel Zen suppresses.
+    await expect(page.locator(".tabbar-explorer")).toBeHidden();
 
     await page.keyboard.press("Escape");
     await expect(page.locator("#explorer")).toBeVisible();
+    await expect(page.locator(".tabbar-explorer")).toBeVisible();
+});
+
+test("seats the Files control in the tab row, clear of the brand mark", async ({ page }) => {
+    // The row aligns to its bottom edge, so a control that is taller than its neighbours grows
+    // *upward* into the brand mark above. That is what a copied style block that missed one
+    // property did: the control stood half a row taller and touched the logo.
+    //
+    // It is a glyph alone, so the row's *other icon buttons* — not the tabs — are what it has to
+    // line up with.
+    const metrics = await page.evaluate(() => {
+        const box = (selector: string) => {
+            const rect = document.querySelector(selector)!.getBoundingClientRect();
+            return { top: rect.top, left: rect.left, bottom: rect.bottom, height: rect.height };
+        };
+        const control = document.querySelector(".tabbar-explorer")!;
+        const bed = getComputedStyle(control, "::before");
+        const controlBox = control.getBoundingClientRect();
+        const glyphBox = control.querySelector(".tab-icon")!.getBoundingClientRect();
+        const zenGlyph = document.querySelector(".zen-icon")!.getBoundingClientRect();
+        return {
+            files: box(".tabbar-explorer"),
+            zen: box(".tabbar-zen"),
+            tabbar: box(".tabbar"),
+            filesGlyph: { width: glyphBox.width, height: glyphBox.height, left: glyphBox.left },
+            filesGlyphCentre: (glyphBox.top + glyphBox.bottom) / 2,
+            zenGlyph: { width: zenGlyph.width, height: zenGlyph.height },
+            zenGlyphCentre: (zenGlyph.top + zenGlyph.bottom) / 2,
+            configGlyph: box("button.tab.tab-with-icon .tab-icon"),
+            brand: box("hgroup"),
+            bedTop: controlBox.top + Number.parseFloat(bed.top),
+            bedBottom: controlBox.bottom - Number.parseFloat(bed.bottom),
+            bedCorners: [
+                bed.borderTopLeftRadius,
+                bed.borderTopRightRadius,
+                bed.borderBottomRightRadius,
+                bed.borderBottomLeftRadius,
+            ],
+            leftPadding: glyphBox.left - controlBox.left,
+            rightPadding: controlBox.right - glyphBox.right,
+        };
+    });
+
+    // The glyph stays the icon buttons' glyph, but the *target* takes the row's height rather
+    // than the glyph's: an icon-sized button is a small thing to hit and a cramped thing to ring.
+    expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
+    expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
+    expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
+    expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);
+    // The box grows upward, so the glyph must not ride up with it: it sits on the same line the
+    // row's other icon buttons sit on. Centered in the taller box, it floated above them.
+    expect(metrics.filesGlyphCentre).toBeCloseTo(metrics.zenGlyphCentre, 0);
+    // The bed is centered on the glyph, not on the box behind it.
+    expect((metrics.bedTop + metrics.bedBottom) / 2).toBeCloseTo(metrics.filesGlyphCentre, 0);
+    // Grown to the row's height, it still stops short of the divider that closes the row.
+    expect(metrics.files.bottom).toBeLessThan(metrics.tabbar.bottom);
+    // Its painted bed clears the brand mark directly above it and stops short of the divider
+    // that closes the row below. The button's box may run flush to either — it paints nothing.
+    expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
+    expect(metrics.bedBottom).toBeLessThan(metrics.tabbar.bottom);
+    // Softened only slightly, and uniformly: a small radius rounds the outline's corners without
+    // letting the mark read as a pill, and no corner disagrees with another.
+    expect(new Set(metrics.bedCorners).size).toBe(1);
+    expect(Number.parseFloat(metrics.bedCorners[0])).toBeLessThanOrEqual(4);
+    // Even padding either side of the glyph, so it sits centered in its bed.
+    expect(metrics.leftPadding).toBeCloseTo(metrics.rightPadding, 0);
+    // Its leading edge lines up with the header gutter, so the mark sits under the brand rather
+    // than inset from it.
+    expect(metrics.files.left).toBeCloseTo(metrics.brand.left, 0);
+    // And it leads the row rather than sitting inside the scrolling tabs.
+    expect(metrics.filesGlyph.left).toBeLessThan(metrics.configGlyph.left);
+});
+
+test("rings the focused Files control once, on its bed", async ({ page }) => {
+    // Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
+    // alone leaves the control wearing two rings: a rounded one around the whole box and the
+    // square one this report draws on the bed. While the box was barely taller than the bed the
+    // two overlapped and the fault was invisible; grown to the row's height they separate, and
+    // the outer ring reaches the brand mark above.
+    const toggle = page.locator(".tabbar-explorer");
+    await toggle.focus();
+
+    const rings = await page.evaluate(() => {
+        const control = document.querySelector(".tabbar-explorer")!;
+        const bed = getComputedStyle(control, "::before");
+        // A shadow with no non-zero length paints nothing, whether it reads "none" or survives
+        // as a transparent zero-size layer.
+        const lengths = (shadow: string) =>
+            (shadow.replace(/(rgba?|color)\([^)]*\)/g, "").match(/-?[\d.]+px/g) ?? []).map(
+                Number.parseFloat,
+            );
+        return {
+            buttonRingLengths: lengths(getComputedStyle(control).boxShadow),
+            onBed: bed.boxShadow,
+            bedRadius: bed.borderRadius,
+        };
+    });
+
+    expect(Math.max(0, ...rings.buttonRingLengths)).toBe(0);
+    // The one ring that is drawn hugs the bed, and takes the bed's own gentle rounding.
+    expect(rings.onBed).toContain("3px");
+    expect(Number.parseFloat(rings.bedRadius)).toBeLessThanOrEqual(4);
+});
+
+test("marks the open Files control with an outline on every side", async ({ page }) => {
+    // The control sits in a row above the report rather than beside it, so no single edge is
+    // "the panel's". A one-sided rail — the activity-bar idiom — would point at an edge the
+    // panel does not open from; the mark runs the bed's whole outline instead.
+    const toggle = page.locator(".tabbar-explorer");
+    const edges = () =>
+        page.evaluate(() => {
+            const shadow = getComputedStyle(
+                document.querySelector(".tabbar-explorer")!,
+                "::before",
+            ).boxShadow;
+            const inset = shadow.split(/,(?![^(]*\))/).find((layer) => layer.includes("inset"));
+            if (!inset) return null;
+            // "<color> Xpx Ypx blur spread inset" — an outline on every side offsets nothing
+            // and spreads instead; a one-sided rail offsets along one axis.
+            const [x, y, blur, spread] = (
+                inset.replace(/(rgba?|color)\([^)]*\)/g, "").match(/-?[\d.]+px/g) ?? []
+            ).map(Number.parseFloat);
+            return { x, y, blur, spread };
+        });
+
+    expect(await edges()).toBeNull();
+
+    await toggle.click();
+
+    const mark = await edges();
+    expect(mark).not.toBeNull();
+    expect(mark!.x).toBe(0);
+    expect(mark!.y).toBe(0);
+    expect(mark!.spread).toBeGreaterThan(0);
+});
+
+test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {
+    // The reader asked for this script, so the tree starts out of the way. One obvious click
+    // brings it back, and the control says which state it is in.
+    const toggle = page.locator(".tabbar-explorer");
+    await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+    await expect(page.locator("#explorer")).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    // Shut, the divider has nothing to sit between.
+    await expect(page.locator("#explorer-resizer")).toBeHidden();
+    expect((await new AxeBuilder({ page }).include(".tabbar").analyze()).violations).toEqual([]);
+
+    await toggle.click();
+
+    await expect(page.locator("#explorer")).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#explorer-resizer")).toBeVisible();
+    // A new interactive control belongs in the accessibility pass in both of its states.
+    expect((await new AxeBuilder({ page }).include(".tabbar").analyze()).violations).toEqual([]);
+
+    await toggle.click();
+
+    await expect(page.locator("#explorer")).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+});
+
+test("remembers that the Explorer was opened, across a reload", async ({ page }) => {
+    await page.locator(".tabbar-explorer").click();
+    await expect(page.locator("#explorer")).toBeVisible();
+
+    await page.reload();
+
+    // A deliberate "show it" outranks the shut default — which a marker whose absence meant
+    // "shown" could not express.
+    await expect(page.locator("#explorer")).toBeVisible();
+    await expect(page.locator(".tabbar-explorer")).toHaveAttribute("aria-expanded", "true");
 });
 
 test.describe("on a phone-sized window", () => {
@@ -271,6 +446,8 @@ test.describe("on a phone-sized window", () => {
 
     test("turns the Explorer seam with the stacked layout", async ({ page }) => {
         await expect(page.locator("#app")).toHaveClass(/has-explorer/);
+        await page.locator(".tabbar-explorer").click();
+        await expect(page.locator("#explorer")).toBeVisible();
 
         const stacked = await page.evaluate(() => {
             const app = getComputedStyle(document.querySelector("#app")!).flexDirection;
@@ -288,8 +465,8 @@ test.describe("on a phone-sized window", () => {
         });
 
         expect(stacked.app).toBe("column");
-        // The seam kept `width: 1px` in a column and measured 1x0px, so its collapse toggle
-        // could not be reached at all.
+        // The seam kept `width: 1px` in a column and measured 1x0px, so it could not be dragged
+        // at all.
         expect(stacked.seamHeight).toBeGreaterThan(0);
         expect(stacked.seamSpansWidth).toBe(true);
         // Content-sized rather than a rigid 15rem: this project holds a handful of files.
@@ -298,27 +475,70 @@ test.describe("on a phone-sized window", () => {
         expect(stacked.stageHeight).toBeGreaterThan(stacked.explorerHeight);
     });
 
-    test("hides and restores the Explorer from the turned seam", async ({ page }) => {
-        const toggle = page.locator("#explorer-resizer .collapse-toggle");
-        await expect(page.locator("#explorer")).toBeVisible();
+    test("keeps the Explorer control a full-height target on a phone", async ({ page }) => {
+        // Its glyph is the icon buttons' glyph — left at the tab's smaller one it read as an
+        // afterthought beside them. Its target, though, takes the row's height, which matters
+        // most here: this is where fingers rather than pointers are doing the aiming.
+        const metrics = await page.evaluate(() => {
+            const box = (selector: string) => {
+                const rect = document.querySelector(selector)!.getBoundingClientRect();
+                return {
+                    width: rect.width,
+                    height: rect.height,
+                    top: rect.top,
+                    bottom: rect.bottom,
+                };
+            };
+            const centre = (selector: string) => {
+                const rect = document.querySelector(selector)!.getBoundingClientRect();
+                return (rect.top + rect.bottom) / 2;
+            };
+            return {
+                files: box(".tabbar-explorer"),
+                zen: box(".tabbar-zen"),
+                tabbar: box(".tabbar"),
+                filesGlyph: box(".tabbar-explorer .tab-icon"),
+                zenGlyph: box(".zen-icon"),
+                filesGlyphCentre: centre(".tabbar-explorer .tab-icon"),
+                zenGlyphCentre: centre(".zen-icon"),
+            };
+        });
 
-        await toggle.click();
-        await expect(page.locator("#explorer")).toBeHidden();
-
-        await toggle.click();
-        await expect(page.locator("#explorer")).toBeVisible();
+        expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
+        expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
+        expect(metrics.filesGlyphCentre).toBeCloseTo(metrics.zenGlyphCentre, 0);
+        expect(metrics.files.width).toBeCloseTo(metrics.zen.width, 0);
+        expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
+        expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);
+        expect(metrics.files.bottom).toBeLessThan(metrics.tabbar.bottom);
     });
 
-    test("keeps the seam's toggle reachable once the Explorer is hidden", async ({ page }) => {
-        // The toggle is the only way back, and it is centered on a one-pixel seam: if the seam
-        // sits at the window's edge, half the button hangs off it and the Explorer cannot return.
-        const toggle = page.locator("#explorer-resizer .collapse-toggle");
-        await toggle.click();
-        await expect(page.locator("#explorer")).toBeHidden();
+    test("keeps the Explorer control in reach while the stage row scrolls", async ({ page }) => {
+        // The control is pinned beside the stage nav, not inside it. Placed within, it would
+        // scroll away with the tabs and could hide behind an arrow — unreachable exactly on the
+        // window where space is tightest.
+        const toggle = page.locator(".tabbar-explorer");
+        await expect(toggle).toBeVisible();
+        await expect(page.locator("#tabs .tabbar-explorer")).toHaveCount(0);
 
-        const box = await toggle.boundingBox();
-        if (!box) throw new Error("Could not measure the Explorer toggle.");
-        expect(box.x).toBeGreaterThanOrEqual(0);
+        const before = await toggle.boundingBox();
+        // The premise: at this width the stage row really does overflow.
+        const scrollable = await page
+            .locator("#tabs")
+            .evaluate((tabs) => tabs.scrollWidth > tabs.clientWidth);
+        expect(scrollable).toBe(true);
+
+        // Drive the row to its far end, as the arrows do.
+        await page.locator("#tabs").evaluate((tabs) => {
+            tabs.scrollLeft = tabs.scrollWidth;
+        });
+        await expect
+            .poll(async () => page.locator("#tabs").evaluate((tabs) => tabs.scrollLeft))
+            .toBeGreaterThan(0);
+
+        await expect(toggle).toBeVisible();
+        const after = await toggle.boundingBox();
+        expect(Math.abs((after?.x ?? 0) - (before?.x ?? 0))).toBeLessThan(1);
 
         await toggle.click();
         await expect(page.locator("#explorer")).toBeVisible();

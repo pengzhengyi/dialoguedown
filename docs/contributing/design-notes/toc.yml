@@ -102,6 +102,8 @@
     href: Dialogue Graph Region Fold.md
   - name: Collapsing Across the Report
     href: Collapsing Across the Report.md
+  - name: Live Visualization — Explorer Toggle
+    href: Live Visualization - Explorer Toggle.md
   - name: Graph Position Preservation
     href: Graph Position Preservation.md
   - name: Source Editor Autocompletion

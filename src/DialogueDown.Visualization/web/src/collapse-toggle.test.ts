@@ -89,12 +89,76 @@ describe("initCollapsiblePanel", () => {
         expect(panel.button.getAttribute("aria-label")).toBe("Show inspector");
     });
 
-    it("persists the collapsed state and clears it when re-expanded", () => {
+    it("persists the choice either way, so a default can mean hidden", () => {
+        // A marker whose absence meant "shown" cannot express "shown on purpose", which a panel
+        // that starts hidden needs: the two have to be told apart.
         const { panel, storage } = setup();
         panel.toggle();
         expect(storage.getItem("dd-test")).toBe("1");
         panel.toggle();
-        expect(storage.getItem("dd-test")).toBeNull();
+        expect(storage.getItem("dd-test")).toBe("0");
+    });
+
+    it("starts hidden when asked to and nothing was ever chosen", () => {
+        const panel = initCollapsiblePanel({
+            container,
+            collapsedClass: "is-collapsed",
+            storageKey: "dd-test",
+            name: "explorer",
+            storage: memoryStorage(),
+            startCollapsed: true,
+        });
+
+        expect(panel.isCollapsed()).toBe(true);
+        expect(container.classList.contains("is-collapsed")).toBe(true);
+    });
+
+    it("lets a deliberate show outrank a hidden default", () => {
+        const storage = memoryStorage();
+        storage.setItem("dd-test", "0");
+
+        const panel = initCollapsiblePanel({
+            container,
+            collapsedClass: "is-collapsed",
+            storageKey: "dd-test",
+            name: "explorer",
+            storage,
+            startCollapsed: true,
+        });
+
+        expect(panel.isCollapsed()).toBe(false);
+    });
+
+    it("honors a choice remembered before the state was written both ways", () => {
+        const storage = memoryStorage();
+        storage.setItem("dd-test", "1");
+
+        const { panel } = setup(storage);
+
+        expect(panel.isCollapsed()).toBe(true);
+    });
+
+    it("drives a control the caller supplies, instead of the divider handle", () => {
+        const own = document.createElement("button");
+        const panel = initCollapsiblePanel({
+            container,
+            collapsedClass: "is-collapsed",
+            storageKey: "dd-test",
+            name: "explorer",
+            storage: memoryStorage(),
+            createButton: (toggle) => {
+                own.addEventListener("click", toggle);
+                return own;
+            },
+        });
+
+        expect(panel.button).toBe(own);
+        expect(own.getAttribute("aria-expanded")).toBe("true");
+
+        own.click();
+
+        expect(panel.isCollapsed()).toBe(true);
+        expect(own.getAttribute("aria-expanded")).toBe("false");
     });
 
     it("restores a remembered collapsed state on init", () => {

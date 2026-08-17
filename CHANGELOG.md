@@ -28,6 +28,13 @@ changes easy to categorize.
   [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
   note.
 
+- **Explorer on demand** — the project tree now starts out of the way when a script is
+  open, and a Files control pinned at the tab bar's leading edge summons it and says whether
+  it is showing. The empty shell still opens with the tree, where it is the only way forward,
+  and an explicit choice is remembered. See the
+  [Explorer Toggle](docs/contributing/design-notes/Live%20Visualization%20-%20Explorer%20Toggle.md)
+  note.
+
 - **Fold a scene in the Dialogue Graph** — a chevron on each scene band shuts the scene away to a
   single box that names it and counts what it holds, with the flow still passing through: routes
   crossing its border re-point at the box and everything downstream stays where it was. The band's

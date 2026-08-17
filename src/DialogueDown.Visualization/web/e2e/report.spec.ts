@@ -90,6 +90,19 @@ test("the Source editor renders leading front matter as YAML metadata", async ({
     await expect(bodyParagraph.locator("span")).toHaveCount(0);
 });
 
+test("a static export carries no Explorer control, and its slot takes no room", async ({
+    page,
+}) => {
+    // The exported report has no project to browse, so the tab bar's leading slot stays empty —
+    // and an empty slot must not leave a gap where a control would have been.
+    await expect(page.locator(".tabbar-explorer")).toHaveCount(0);
+
+    const slot = page.locator("#tabbar-leading");
+    await expect(slot).toBeAttached();
+    await expect(slot).toBeHidden();
+    expect(await slot.evaluate((node) => node.getBoundingClientRect().width)).toBe(0);
+});
+
 test("the header brand shows the logo and reveals the name on hover", async ({ page }) => {
     const name = page.locator(".brand-name");
     // The wordmark stays in the DOM (so the <h1> keeps accessible text) but is clipped by default.

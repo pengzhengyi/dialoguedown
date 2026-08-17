@@ -68,17 +68,35 @@ export interface CollapsiblePanelOptions {
     side?: PanelSide;
     /** Storage for the remembered state; defaults to `localStorage`. */
     storage?: Storage;
+    /**
+     * Whether the panel starts hidden when the reader has never chosen. Defaults to shown.
+     *
+     * A panel that begins hidden needs the remembered value to say *which* state was chosen, so
+     * "shown on purpose" is not mistaken for "never said" — see {@link initCollapsiblePanel}.
+     */
+    startCollapsed?: boolean;
+    /**
+     * Builds the control that drives the panel, given the toggle to call. Defaults to the
+     * divider's chevron handle. Lets a panel be summoned from somewhere else entirely — the
+     * Explorer is opened from a pinned control in the tab bar rather than from its divider.
+     */
+    createButton?(toggle: () => void): HTMLButtonElement;
 }
 
 /**
- * Wire a right-side panel so a reader can hide it and bring it back. `container` carries
+ * Wire a panel so a reader can hide it and bring it back. `container` carries
  * `collapsedClass` while hidden (CSS then hides the panel and lets the main pane fill),
  * and the choice is remembered in `localStorage` under `storageKey` — guarded, so a
  * `file://` report still works for the session. Returns a controller whose `button`
- * belongs on the panel's divider, where it doubles as the always-present re-open handle.
+ * belongs wherever the panel is summoned from; for a divider handle that is the divider,
+ * where it doubles as the always-present re-open handle.
+ *
+ * The remembered value records the state the reader chose (`"1"` hidden, `"0"` shown) rather
+ * than only marking the hidden one, so a panel whose default is hidden can still tell a
+ * deliberate "show it" from silence.
  */
 export function initCollapsiblePanel(options: CollapsiblePanelOptions): CollapsiblePanel {
-    const { container, collapsedClass, storageKey, name } = options;
+    const { container, collapsedClass, storageKey, name, startCollapsed = false } = options;
     const storage = options.storage ?? defaultStorage();
 
     const isCollapsed = (): boolean => container.classList.contains(collapsedClass);
@@ -95,22 +113,23 @@ export function initCollapsiblePanel(options: CollapsiblePanelOptions): Collapsi
         const collapsed = !isCollapsed();
         reflect(collapsed);
         try {
-            if (collapsed) storage?.setItem(storageKey, "1");
-            else storage?.removeItem(storageKey);
+            storage?.setItem(storageKey, collapsed ? "1" : "0");
         } catch {
             // storage unavailable (private mode / file://) — the applied state still holds
         }
     };
 
-    const button = createCollapseToggle(toggle, options.side);
+    const button = options.createButton
+        ? options.createButton(toggle)
+        : createCollapseToggle(toggle, options.side);
 
-    let remembered = false;
+    let remembered: string | null = null;
     try {
-        remembered = storage?.getItem(storageKey) === "1";
+        remembered = storage?.getItem(storageKey) ?? null;
     } catch {
-        // storage unavailable (private mode / file://) — default to expanded
+        // storage unavailable (private mode / file://) — fall back to the panel's own default
     }
-    reflect(remembered);
+    reflect(remembered === null ? startCollapsed : remembered === "1");
 
     return { button, toggle, isCollapsed };
 }
