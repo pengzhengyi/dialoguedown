@@ -11,9 +11,10 @@ test("the CLI invocation runs the built Release DLL directly", () => {
     const invocation = cliInvocation(["visualize", "scene.dialogue.md"]);
 
     assert.equal(invocation.command, "dotnet");
+    // The framework is read from the CLI project, so this follows it instead of pinning a copy.
     assert.match(
         invocation.args[0],
-        /DialogueDown\.Cli\/bin\/Release\/net8\.0\/DialogueDown\.Cli\.dll$/,
+        /DialogueDown\.Cli\/bin\/Release\/net\d+\.\d+\/DialogueDown\.Cli\.dll$/,
     );
     assert.deepEqual(invocation.args.slice(1), ["visualize", "scene.dialogue.md"]);
 });

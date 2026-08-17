@@ -137,6 +137,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **.NET 10 LTS, without moving Godot projects with it** — the libraries a game references
+  (`DialogueDown`, `DialogueDown.ConfigurationLoader`) now ship for both `net8.0` and
+  `net10.0`, so a Godot project keeps the runtime Godot bundles while the toolchain moves to
+  LTS ahead of .NET 8's end of support on November 10, 2026. The `ddown` CLI now targets
+  `net10.0` and requires the .NET 10 runtime; building the repository now needs the .NET 10
+  SDK. See the
+  [Target Frameworks](docs/contributing/design-notes/Target%20Frameworks.md) note.
+
 - **Breaking (pre-1.0): configuration values are deeply immutable and compare by
   content.** `CompilerOptions.Speakers` and configured-speaker tag lists are now
   `ImmutableArray<T>`; `CompilerOptions.UnmodeledMarkdown` is now an
