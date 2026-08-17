@@ -187,7 +187,7 @@ test("the editor supports search and code folding (read-only)", async ({ page })
     await expect(page.locator(".dd-search")).toHaveCount(0);
 
     // Folding a section from the gutter chevron collapses it to a placeholder.
-    await page.locator(".cm-foldGutter .cm-gutterElement", { hasText: "⌄" }).first().click();
+    await page.locator('.cm-foldGutter .cm-fold-marker[title="Fold line"]').first().click();
     await expect(page.locator(".cm-foldPlaceholder")).toBeVisible();
 });
 

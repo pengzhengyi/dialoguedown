@@ -10,6 +10,15 @@ changes easy to categorize.
 
 ### Added
 
+- **One way to fold** — the Source editor, the Preview, the Dialogue Graph, the legend, and the
+  file Explorer now offer folding with the same chevron and the same two commands, instead of five
+  renderings of the same idea. The Dialogue Graph also gains `Expand all` / `Collapse all` for
+  scenes beside the legend group that lists them, stating the current view — including a mixed one
+  — and re-framing the drawing. Each scene row shows its own state as a filled or hollow mark and
+  says how many nodes it holds. See the
+  [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
+  note.
+
 - **Explorer on demand** — the project tree now starts out of the way when a script is
   open, and a Files control pinned at the tab bar's leading edge summons it and says whether
   it is showing. The empty shell still opens with the tree, where it is the only way forward,

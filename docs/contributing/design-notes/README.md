@@ -163,7 +163,8 @@ flowchart TB
     MAD --> IMT["35. Ignored Markdown Preview Toggle"]
     IMT --> CDP["36. Co-located Diagnostics Presentation"]
     CDP --> DGRF["37. Dialogue Graph — Region Fold"]
-    DGRF --> EXT["38. Live Visualization — Explorer Toggle"]
+    DGRF --> CAR["38. Collapsing Across the Report"]
+    CAR --> EXT["39. Live Visualization — Explorer Toggle"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -205,7 +206,8 @@ flowchart TB
 | 35 | [Ignored Markdown Preview Toggle](./Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, under two footer commands that override every region at once | Implemented |
 | 36 | [Co-located Diagnostics Presentation](./Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
 | 37 | [Dialogue Graph — Region Fold](./Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through, from a chevron separate from the band's own click | Implemented |
-| 38 | [Live Visualization — Explorer Toggle](./Live%20Visualization%20-%20Explorer%20Toggle.md) | Summon the Explorer from a pinned Files toggle in the tab bar, shut by default when a document is open | Implemented |
+| 38 | [Collapsing Across the Report](./Collapsing%20Across%20the%20Report.md) | One contract and one glyph for folding on every surface, with each surface keeping its own unit and its own state | Partly implemented |
+| 39 | [Live Visualization — Explorer Toggle](./Live%20Visualization%20-%20Explorer%20Toggle.md) | Summon the Explorer from a pinned Files toggle in the tab bar, shut by default when a document is open | Implemented |
 
 ### Other notes
 

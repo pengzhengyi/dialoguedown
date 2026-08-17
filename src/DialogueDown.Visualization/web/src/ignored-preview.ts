@@ -1,4 +1,5 @@
 import { codicon } from "./codicon";
+import { FOLD_COMMAND_GLYPHS, foldControlIcon } from "./fold-glyph";
 
 const STORAGE_KEY = "dd-ignored-preview-collapsed";
 const HIDDEN_CLASS = "dd-ignored-region-hidden";
@@ -36,10 +37,14 @@ export function createIgnoredPreviewController(
     count.className = "dd-ignored-preview-count";
     const state = document.createElement("span");
     state.className = "dd-ignored-preview-state";
-    const expandAll = commandButton("expand", "expand-all", "Show all ignored content in Preview");
+    const expandAll = commandButton(
+        "expand",
+        FOLD_COMMAND_GLYPHS.expandAll,
+        "Show all ignored content in Preview",
+    );
     const collapseAll = commandButton(
         "collapse",
-        "collapse-all",
+        FOLD_COMMAND_GLYPHS.collapseAll,
         "Hide all ignored content in Preview",
     );
     footer.append(marker, count, state, expandAll, collapseAll);
@@ -69,6 +74,12 @@ export function createIgnoredPreviewController(
             control.setAttribute("aria-expanded", String(shown));
             control.setAttribute("aria-label", label);
             control.title = label;
+            // A block shows the report's shared chevron for the action, with a separate static
+            // mark stating what the region is. An inline chip has room for one mark only, so its
+            // status glyph stays and doubles as the control.
+            if (!region.classList.contains("dd-preview-ignored-region-inline")) {
+                control.replaceChildren(foldControlIcon(shown, "dd-ignored-region-toggle-icon"));
+            }
         }
 
         count.textContent = `${all.length} ignored`;

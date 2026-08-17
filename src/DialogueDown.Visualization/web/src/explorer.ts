@@ -6,6 +6,7 @@
  * is injected through {@link ExplorerPorts}, mirroring the launcher.
  */
 
+import { foldGlyphName } from "./fold-glyph";
 import { leafName, SCRIPT_EXTENSION, type BrowseListing, type CreateOutcome } from "./project-fs";
 import { codicon } from "./codicon";
 import { openContextMenu } from "./context-menu";
@@ -458,7 +459,7 @@ function treeRow(
     const row = element("button", `explorer-row ${rowClass}`) as HTMLButtonElement;
     row.type = "button";
     row.append(
-        codicon(isFolder ? "chevron-right" : "", "explorer-chevron"),
+        codicon(isFolder ? foldGlyphName(false) : "", "explorer-chevron"),
         codicon(iconName, "explorer-icon"),
         withText("span", "explorer-label", label),
     );

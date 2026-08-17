@@ -1230,6 +1230,53 @@ test("folds a scene in the graph to a single box the flow still passes through",
     await expect(market.locator("g.region-fold")).toHaveAttribute("aria-expanded", "true");
 });
 
+test("folds and opens every scene at once from the legend", async ({ page }) => {
+    // A long script's interesting view is often every scene shut at once, which the per-scene
+    // chevron alone makes a chore. The commands act on the whole set and discard exceptions.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Market",
+            "",
+            "Trader: Apples here.",
+            "",
+            "# The Forest",
+            "",
+            "Alice: Dark trees.",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+    const boxes = stage.locator("g.node.region-box");
+    const state = page.locator(".legend-kind-state");
+    const command = (name: string) => page.locator(`.legend-fold-command[data-command="${name}"]`);
+
+    await expect(state).toHaveText("all open");
+
+    // One scene folded on its own leaves the view mixed, and the legend says so exactly.
+    await stage
+        .locator('g.region:has(g.region-fold[aria-label*="The Market"]) g.region-fold')
+        .click();
+    await expect(state).toHaveText("1 of 2 folded");
+
+    await command("collapse").click();
+    await expect(boxes).toHaveCount(2);
+    await expect(state).toHaveText("all folded");
+
+    // A command overrides every individual choice rather than merging with it: the scene opened
+    // against a folded view is discarded by the next command.
+    await stage
+        .locator('g.region:has(g.region-fold[aria-label*="The Forest"]) g.region-fold')
+        .click();
+    await expect(state).toHaveText("1 of 2 folded");
+
+    await command("expand").click();
+    await expect(boxes).toHaveCount(0);
+    await expect(state).toHaveText("all open");
+});
+
 /** The number written in an attribute line such as `nodes: 8`. */
 function digitsOf(text: string | null): string {
     return (text ?? "").replace(/\D/g, "");

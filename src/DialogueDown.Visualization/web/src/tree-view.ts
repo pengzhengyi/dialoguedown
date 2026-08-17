@@ -12,6 +12,7 @@ import {
     type HierarchyPointNode,
     type Selection,
 } from "d3";
+import { foldGlyphCharacter } from "./fold-glyph";
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import type { CameraTransform } from "./graph-camera";
 import { ARROWHEAD_PATH, CROSS_PATH, edgeStyle } from "./edge-style";
@@ -30,7 +31,7 @@ import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
 import { tooltipHtml } from "./text";
 import { clipToWidth } from "./clip-text";
-import { createLegend } from "./legend";
+import { createLegend, regionCounts, setRegionFoldState } from "./legend";
 import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
 
 /** A laid-out hierarchy node augmented with collapse state (`_children`). */
@@ -91,9 +92,6 @@ const REGION_NAME_INSET = 24;
 const REGION_HEADER_BASELINE = 17;
 /** The chevron's pointer target — small enough to clear the first node, large enough to hit. */
 const FOLD_HIT_SIZE = 14;
-/** The chevron pointing down over an open scene, and right over a shut one. */
-const CHEVRON_OPEN = "M-3.5,-1.75 L0,1.75 L3.5,-1.75";
-const CHEVRON_SHUT = "M-1.75,-3.5 L1.75,0 L-1.75,3.5";
 
 /** How finely a route is walked when deciding which one the pointer is nearest. */
 const PICK_SAMPLE_SPACING = 12;
@@ -397,6 +395,7 @@ export function createTreeView(
         onRevert: () => revert(),
     });
 
+    const foldableRegions = [...regionCounts(stage.nodes).keys()];
     const legend = createLegend(stage, {
         onToggle: (category, isDimmed) => {
             if (isDimmed) dimmed.add(category);
@@ -405,6 +404,13 @@ export function createTreeView(
         },
         onHover: (category) => highlightCategory(category),
         onLeave: () => clearHighlight(),
+        regionFold:
+            foldableRegions.length > 0
+                ? {
+                      onExpandAll: () => foldEveryRegion([]),
+                      onCollapseAll: () => foldEveryRegion(foldableRegions),
+                  }
+                : undefined,
     });
 
     // The column step is wide enough for a full-width label plus the lead-out its outgoing line
@@ -414,6 +420,7 @@ export function createTreeView(
     const at = (node: { x: number; y: number }): Point => ({ x: node.y, y: node.x });
 
     applyView(initialCamera, initialFold, initialZoom);
+    reportRegionFold();
 
     return {
         svg: svg.node()!,
@@ -597,7 +604,13 @@ export function createTreeView(
                 toggleRegion(datum.region);
             });
         control.append("rect").attr("class", "region-fold-hit");
-        control.append("path").attr("class", "region-chevron");
+        // The report's shared fold chevron, drawn as text in the codicon font the whole
+        // document already loads, so the graph shows the same glyph as the panes do.
+        control
+            .append("text")
+            .attr("class", "region-chevron")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central");
         control.append("title");
     }
 
@@ -626,7 +639,7 @@ export function createTreeView(
             .attr("rx", 3);
         // Drawn rather than rotated: a rotation about a bounding box is reported inconsistently
         // across engines, and two short paths say the same thing without asking the engine.
-        control.select("path").attr("d", (datum) => (folded(datum) ? CHEVRON_SHUT : CHEVRON_OPEN));
+        control.select("text").text((datum) => foldGlyphCharacter(!folded(datum)));
     }
 
     /**
@@ -740,6 +753,27 @@ export function createTreeView(
         refold();
         restoreSelection(keptNode, keptEdge);
         onRegionFoldChange?.([...collapsedRegions]);
+        reportRegionFold();
+    }
+
+    /**
+     * A command over every region, rather than a fold of one. It replaces the whole set outright,
+     * so no scene keeps an exception, and it re-frames: folding everything shrinks the drawing far
+     * enough that leaving the camera put would leave the reader looking at empty canvas. A single
+     * fold deliberately does neither.
+     */
+    function foldEveryRegion(regions: readonly string[]): void {
+        const keptNode = selected?.data.id ?? null;
+        const keptEdge = selectedEdge;
+        applyView(null, collapsedIds(), null, [...regions]);
+        restoreSelection(keptNode, keptEdge);
+        onRegionFoldChange?.([...collapsedRegions]);
+        reportRegionFold();
+    }
+
+    /** Tell the legend how the regions stand, so a mixed view is stated rather than implied. */
+    function reportRegionFold(): void {
+        setRegionFoldState(legend, collapsedRegions, foldableRegions.length);
     }
 
     /** Rebuild and redraw for the scenes now folded, keeping whatever node folds still apply. */

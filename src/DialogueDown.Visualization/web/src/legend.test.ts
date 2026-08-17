@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { categoryStats, createLegend, edgeCategoryCounts, type LegendHandlers } from "./legend";
+import {
+    categoryStats,
+    createLegend,
+    edgeCategoryCounts,
+    setRegionFoldState,
+    type LegendHandlers,
+} from "./legend";
 import { CATEGORY_COLORS } from "./palette";
 import type { DisplayNode, Stage } from "./model";
 import { ARROWHEAD_PATH, CROSS_PATH, edgeStyle } from "./edge-style";
@@ -294,5 +300,64 @@ describe("periodsShown", () => {
 
     it("treats a solid line as its own pattern at any length", () => {
         expect(periodsShown(edgeStyle("break"))).toBe(Infinity);
+    });
+});
+
+describe("region rows", () => {
+    const scenes: Stage = {
+        title: "Dialogue Graph",
+        description: "The compiled flow.",
+        edges: [],
+        regions: [{ name: "The Market", kind: "Scene" }],
+        nodes: [
+            { ...node("n1", "Line", "speech"), region: "The Market" },
+            { ...node("n2", "Line", "speech"), region: "The Market" },
+            { ...node("n3", "Line", "speech"), region: "The Forest" },
+        ],
+    };
+    // A stage that draws regions always offers the two commands, and the state line comes with
+    // them, so the fixture supplies them too.
+    const handlers: LegendHandlers = {
+        onToggle: vi.fn(),
+        onHover: vi.fn(),
+        onLeave: vi.fn(),
+        regionFold: { onExpandAll: vi.fn(), onCollapseAll: vi.fn() },
+    };
+
+    it("says what a region's number counts, which its heading cannot", () => {
+        const legend = createLegend(scenes, handlers);
+
+        const counts = [...legend.querySelectorAll(".legend-region .count")].map(
+            (el) => el.textContent,
+        );
+        expect(counts).toEqual(["2 nodes", "1 node"]);
+    });
+
+    it("names the kind alone, because the heading above already says Regions", () => {
+        const legend = createLegend(scenes, handlers);
+
+        expect(legend.querySelector(".legend-kind-toggle")?.textContent).toBe("Scene");
+    });
+
+    it("empties a folded scene's mark and states the mixed view", () => {
+        const legend = createLegend(scenes, handlers);
+
+        setRegionFoldState(legend, new Set(["The Market"]), 2);
+
+        const rows = [...legend.querySelectorAll<HTMLElement>(".legend-region")];
+        expect(rows.map((row) => row.dataset.folded)).toEqual(["true", "false"]);
+        expect(rows[0].title).toBe("The Market — folded");
+        expect(legend.querySelector(".legend-kind-state")?.textContent).toBe("1 of 2 folded");
+    });
+
+    it("fills every mark again once nothing is folded", () => {
+        const legend = createLegend(scenes, handlers);
+
+        setRegionFoldState(legend, new Set(["The Market"]), 2);
+        setRegionFoldState(legend, new Set(), 2);
+
+        const rows = [...legend.querySelectorAll<HTMLElement>(".legend-region")];
+        expect(rows.every((row) => row.dataset.folded === "false")).toBe(true);
+        expect(legend.querySelector(".legend-kind-state")?.textContent).toBe("all open");
     });
 });
