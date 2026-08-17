@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
 import type { Report } from "../src/model";
 import { writeReport } from "./report";
+import { selectTheme } from "./theme";
 
 const source = [
     "# Ignored regions",
@@ -338,6 +339,6 @@ test("has no accessibility violations in a mixed view", async ({ page }) => {
     const analyze = () => new AxeBuilder({ page }).include(".source-preview-shell").analyze();
     expect((await analyze()).violations).toEqual([]);
 
-    await page.locator(".theme-select").selectOption("dark");
+    await selectTheme(page, "dark");
     expect((await analyze()).violations).toEqual([]);
 });

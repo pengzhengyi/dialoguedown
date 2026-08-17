@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type { Report, Stage } from "../src/model";
 import { writeReport } from "./report";
+import { selectTheme } from "./theme";
 
 const DIAGRAM_SOURCE = "```mermaid\nflowchart LR\nA --> B\n```";
 
@@ -72,7 +73,7 @@ test("re-renders diagrams when the effective theme changes", async ({ page }) =>
     await expect(svg).toBeVisible();
     const firstId = await svg.getAttribute("id");
 
-    await page.locator(".theme-select").selectOption("dark");
+    await selectTheme(page, "dark");
 
     await expect.poll(() => svg.getAttribute("id")).not.toBe(firstId);
     const accessibility = await new AxeBuilder({ page }).include(".source-preview").analyze();
