@@ -72,11 +72,20 @@ among tabs and should read as one of the row's controls rather than as a chip pa
 beside them. It reserves the same two pixels a tab keeps for its underline, so the two
 share a box and a baseline.
 
+The button keeps the tabs' **full height**, so its word sits on their baseline — but
+what is *painted* is **inset** inside that box. Separating the two is what lets the
+control satisfy both constraints at once: the row aligns to its bottom edge, so a
+control sized to its own chip would either break the baseline or, growing upward, butt
+against the brand mark above it. An inset bed leaves air under the brand and stops
+clear of the underline strip below without moving the box that holds the type.
+
 Open, it wears the two marks an editor's activity bar uses for the panel you are in:
-a **leading accent rail** and a **tinted bed**. The bed is squared where the rail
-stands and rounded away from it, so the pair reads as one mark rather than a bar
-parked beside a pill. Its leading edge sits at the header gutter, which puts the rail
-under the brand mark rather than inside the control.
+a **leading accent rail** and a **tinted bed**. The bed is rounded **evenly on all four
+corners**, as the Explorer's own selected rows are, and the rail is drawn as that bed's
+own leading edge — an inset shadow rather than a separate positioned bar, so it takes
+the bed's height and rounding automatically instead of being told them and getting them
+wrong. Its leading edge sits at the header gutter, which puts the rail under the brand
+mark rather than inside the control.
 
 It never takes the **underline**: in this row that mark answers "which stage am I on",
 and the Explorer is not a stage — a second underlined item would leave that question

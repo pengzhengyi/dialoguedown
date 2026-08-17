@@ -283,12 +283,27 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
             const rect = document.querySelector(selector)!.getBoundingClientRect();
             return { top: rect.top, left: rect.left, bottom: rect.bottom, height: rect.height };
         };
+        const control = document.querySelector(".tabbar-explorer")!;
+        const bed = getComputedStyle(control, "::before");
+        const controlBox = control.getBoundingClientRect();
+        const glyphBox = control.querySelector(".tab-icon")!.getBoundingClientRect();
         return {
             files: box(".tabbar-explorer"),
             configTab: box("button.tab.tab-with-icon"),
             filesGlyph: box(".tabbar-explorer .tab-icon"),
             configGlyph: box("button.tab.tab-with-icon .tab-icon"),
             brand: box("hgroup"),
+            bedTop: controlBox.top + Number.parseFloat(bed.top),
+            bedCorners: [
+                bed.borderTopLeftRadius,
+                bed.borderTopRightRadius,
+                bed.borderBottomRightRadius,
+                bed.borderBottomLeftRadius,
+            ],
+            leftPadding: glyphBox.left - controlBox.left,
+            rightPadding:
+                controlBox.right -
+                control.querySelector(".tabbar-explorer-label")!.getBoundingClientRect().right,
         };
     });
 
@@ -297,8 +312,13 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     expect(metrics.files.height).toBeCloseTo(metrics.configTab.height, 0);
     expect(metrics.files.bottom).toBeCloseTo(metrics.configTab.bottom, 0);
     expect(metrics.files.top).toBeGreaterThanOrEqual(metrics.configTab.top - 0.5);
-    // Its glyph clears the brand mark directly above it.
-    expect(metrics.filesGlyph.top).toBeGreaterThan(metrics.brand.bottom);
+    // Its painted bed clears the brand mark directly above it. The button itself reaches the
+    // tabs' full height, so it is the bed — inset inside that box — that has to keep the air.
+    expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
+    // Evenly rounded, as the Explorer's own rows are, rather than squared on one side.
+    expect(new Set(metrics.bedCorners).size).toBe(1);
+    // Even padding either side of the glyph, so the bed is not lopsided around it.
+    expect(metrics.leftPadding).toBeCloseTo(metrics.rightPadding, 0);
     // Its leading edge — where the rail stands while the panel is open — lines up with the
     // header gutter, so the mark sits under the brand rather than inside the control.
     expect(metrics.files.left).toBeCloseTo(metrics.brand.left, 0);
