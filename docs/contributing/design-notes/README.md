@@ -43,7 +43,7 @@ flowchart LR
     FE["1. Markdown Front-End"] --> TR["2. Transpiler"]
     TR --> DS["3. Desugar"] --> SA["4. Semantic Analyzer"]
     SA --> SF["5. Script Compiler Facade"] --> GR["6. Dialogue Graph"]
-    GR --> RT["7. Dialogue Runtime Architecture"]
+    GR --> RT(["Runtime →"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -56,12 +56,28 @@ flowchart LR
 | 5 | [Script Compiler Facade](./Script%20Compiler%20Facade.md) | One `IScriptCompiler` seam over the stages + `AddDialogueDown` DI | Implemented |
 | 5a | [Compilation Outcome](./Compilation%20Outcome.md) | A facade detail: what one compile produces — a success carrying every artifact, or a failure carrying how far it got | Implemented |
 | 6 | [Dialogue Graph](./Dialogue%20Graph.md) | Semantic model → the immutable flow graph a runtime walks | Implemented |
-| 7 | [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md) | Graph → the portable playbook, the runner that plays it, and the protocol and seams a host implements | Proposed |
 
 | 6 | [Error model](./Error%20Model.md) | The cross-cutting convention: collect a diagnostic, throw only when a stage cannot continue | Implemented |
 
 The Error model is a convention every stage adopts rather than a stage itself —
 read it alongside the five above.
+
+### Runtime: playing a compiled script
+
+**Read when you work on anything after the graph.** The architecture note fixes
+the cross-cutting decisions — the artifact, the execution model, the protocol —
+and each component note applies them to one piece.
+
+```mermaid
+flowchart LR
+    RA["1. Runtime Architecture"] --> PF["2. Playbook Format"]
+    PF --> RUN(["runner, corpus,<br/>players, adapters"])
+```
+
+| Order | Note | What it covers | Status |
+| --- | --- | --- | --- |
+| 1 | [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Proposed |
+| 2 | [Playbook Format](./Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Proposed |
 
 ### Language constructs
 
