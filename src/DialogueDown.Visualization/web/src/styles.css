@@ -380,6 +380,27 @@ body {
     padding-bottom: 0.35rem;
 }
 
+/* The Explorer's control, pinned at the row's leading edge so it sits over the panel it
+   summons. Being a sibling of the stage nav rather than a member of it is the point: the nav
+   scrolls on a narrow window, and a control that scrolls out of reach is worse than none.
+   Empty — a static export has no Explorer — it takes no room, gap included.
+
+   The slot takes the row's full height and the control stretches to fill it, so the target is
+   as tall as the row can offer rather than as tall as its glyph happens to be. It keeps the
+   same bottom padding as the arrow slots beside it, which is what holds the control off the
+   divider under the row. */
+.tabbar-leading {
+    display: flex;
+    flex: 0 0 auto;
+    align-self: stretch;
+    align-items: stretch;
+    padding-bottom: 0.25rem;
+}
+
+.tabbar-leading:empty {
+    display: none;
+}
+
 .tab-arrow {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -637,21 +658,12 @@ section.stage.empty-shell {
     background: var(--pico-muted-border-color);
 }
 
-#app.explorer-collapsed #explorer {
-    display: none;
-}
-
+/* Shut, the divider has nothing to sit between, so it goes entirely and gives back its
+   margins too — its show/hide handle now lives in the tab bar. It keeps its resize role
+   whenever the panel is showing. */
+#app.explorer-collapsed #explorer,
 #app.explorer-collapsed #explorer-resizer {
-    background: transparent;
-}
-
-/* The show/hide toggle sits on the divider, like the inspector's re-open handle. It carries the
-   left-hand `panel-left-*` glyphs (via side: "left"), so the chevrons already point the right way. */
-#explorer-resizer .collapse-toggle {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    display: none;
 }
 
 .explorer-header {
@@ -3301,37 +3313,25 @@ body.maximized .maximize-button .icon-compress {
     display: block;
 }
 
-/* The maximize control is app-level, not per-tab: one button at the right end of the
-   tab-nav row. (Pico inverts --pico-color on buttons; reset it so the glyph uses the
-   normal foreground rather than white-on-white, as the zoom buttons do.) */
-.tabbar-maximize {
-    --pico-color: inherit;
-    --pico-background-color: transparent;
+/* The tab row's trailing controls: the Zen and maximize pair. They are app-level rather than
+   per-tab, so they share one quiet styling and read as a set.
 
-    width: auto;
-    margin: 0;
-    padding: 0.3rem 0.5rem;
-    color: var(--pico-muted-color);
-    background: transparent;
-    border: none;
-    border-radius: var(--pico-border-radius);
-    cursor: pointer;
-}
+   Stated once rather than per button on purpose. Held apart, they drift — a copy that missed the
+   line-height reset grew half a row taller than its sibling and pushed up into the brand mark
+   above, because the row aligns to its bottom edge.
 
-.tabbar-maximize:hover {
-    --pico-color: inherit;
-
-    color: var(--pico-color);
-    background: var(--pico-muted-border-color);
-}
-
-/* The Zen toggle sits immediately left of the maximize button, sharing its quiet tab-row
-   styling so the pair reads as one focus-mode cluster. Both are laid out by the
-   `.tabbar-actions` flex row, so neither needs a hand-tuned offset. */
+   Centering with flex is what makes that class of bug impossible: the glyph is a flex item, so
+   the inherited line box cannot size the button and no reset is needed to hold it back.
+   (Pico inverts --pico-color on buttons; reset it so the glyph uses the normal foreground
+   rather than white-on-white, as the zoom buttons do.) */
+.tabbar-maximize,
 .tabbar-zen {
     --pico-color: inherit;
     --pico-background-color: transparent;
 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: auto;
     margin: 0;
     padding: 0.3rem 0.5rem;
@@ -3339,10 +3339,10 @@ body.maximized .maximize-button .icon-compress {
     background: transparent;
     border: none;
     border-radius: var(--pico-border-radius);
-    line-height: 0;
     cursor: pointer;
 }
 
+.tabbar-maximize:hover,
 .tabbar-zen:hover {
     --pico-color: inherit;
 
@@ -3350,8 +3350,7 @@ body.maximized .maximize-button .icon-compress {
     background: var(--pico-muted-border-color);
 }
 
-/* Zen is a sticky mode, not a one-shot action, so the button shows it is engaged — in the
-   mode accent, matching how the other pressed toggles in the report read. */
+/* Zen is a sticky mode rather than a one-shot action, so it shows that it is engaged. */
 .tabbar-zen[aria-pressed="true"] {
     color: var(--mode-accent, var(--pico-primary));
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 16%, transparent);
@@ -3360,6 +3359,111 @@ body.maximized .maximize-button .icon-compress {
 .zen-icon {
     font-size: 15px;
     color: inherit;
+}
+
+/* The Explorer's control leads the row as a glyph alone, carrying the same 16px mark the Zen
+   and maximize buttons at the row's other end carry. The row's width belongs to the stages, so
+   the control spends none of it on a word; the file glyph carries the meaning by itself, as it
+   does on an editor's own file panel.
+
+   Its *height*, though, is the row's rather than the glyph's — it stretches to fill the slot,
+   because a target the size of its icon is a small one to hit and a cramped one to ring with a
+   focus outline. The glyph does not ride up with it: the box grows *upward*, while the glyph
+   stays seated on the line the row's other icon buttons share. One styling at every width. It
+   never takes a tab's underline — in this row that mark answers "which stage am I on", and the
+   Explorer is not a stage. */
+.tabbar-explorer {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    position: relative;
+    display: inline-flex;
+
+    /* Seated, not centered: the box is taller than the row's other icon buttons, so centering
+       the glyph inside it would float the glyph above their line. */
+    align-items: flex-end;
+    justify-content: center;
+    width: auto;
+    margin: 0;
+    padding: 0 0.5rem 0.4rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* The painted bed: a chip inset inside the button's taller box, centered on the glyph rather
+   than on the box, and leaving air under the brand mark above and short of the divider below.
+   Barely rounded — enough to soften the corners of the outline it wears when open, not so much
+   that the mark reads as a pill. Transparent until the control is touched, so one element
+   carries the resting, hovered, and open looks without three boxes to keep in step. */
+.tabbar-explorer::before {
+    content: "";
+    position: absolute;
+    inset: 0.4rem 0 0;
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.12s ease;
+}
+
+/* The glyph stands above the bed: the bed is positioned and would otherwise paint over it. */
+.tabbar-explorer .tab-icon {
+    position: relative;
+    width: 16px;
+    height: 16px;
+}
+
+.tabbar-explorer:hover {
+    --pico-color: inherit;
+
+    color: var(--mode-accent, var(--pico-primary));
+}
+
+.tabbar-explorer:hover::before {
+    background: var(--pico-muted-border-color);
+}
+
+/* Open, it takes the marks this report already uses for a chosen file in the tree itself: a
+   tinted bed, and an accent line. The line runs the bed's whole outline rather than only its
+   leading edge — an editor's activity bar puts its bar on the side the panel opens from, and
+   this control sits in a row above the report rather than beside it, so no one edge is the
+   panel's. Drawn as an inset shadow rather than a border, it takes the bed's box on its own and
+   costs no layout. A hairline is enough: four edges carry the tint the one edge had to. */
+.tabbar-explorer[aria-expanded="true"] {
+    color: var(--mode-accent, var(--pico-primary));
+}
+
+.tabbar-explorer[aria-expanded="true"]::before {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+    box-shadow: inset 0 0 0 1px var(--mode-accent, var(--pico-primary));
+}
+
+/* The ring is drawn on the bed rather than the button, so it hugs what is visible instead of
+   ballooning around the taller box behind it — and so it takes the bed's own gentle rounding
+   rather than a button's larger one.
+
+   Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
+   alone leaves that ring in place and the control wears two: a rounded one around the whole box
+   and a square one around the bed. They overlapped while the box was barely taller than the bed
+   and hid the fault; once the box grew to the row's height they separated, and the outer ring
+   reached the brand mark. Clear both. */
+.tabbar-explorer:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.tabbar-explorer:focus-visible::before {
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
+}
+
+/* Focused while open, the bed wears both: the ring says where the keyboard is, the outline says
+   the panel is showing. */
+.tabbar-explorer[aria-expanded="true"]:focus-visible::before {
+    box-shadow:
+        inset 0 0 0 1px var(--mode-accent, var(--pico-primary)),
+        0 0 0 3px color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 35%, transparent);
 }
 
 /* When maximized the header — and its tab-bar button — is hidden, so a matching "exit" chip
@@ -3436,6 +3540,12 @@ body.zen #app #explorer-resizer {
     display: none;
 }
 
+/* Its control goes with it. Left in the row it would be a button whose panel is suppressed
+   for as long as Zen lasts — an invitation to press something that cannot answer. */
+body.zen .tabbar-explorer {
+    display: none;
+}
+
 /* With its neighbour gone the primary pane takes the whole row, overriding the drag-set
    split variable the same way each panel's collapsed class does. */
 body.zen .source-view > .source-pane,
@@ -3507,8 +3617,7 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle,
 .preview-collapsed .collapse-toggle,
 .config-collapsed .collapse-toggle,
-.tables-collapsed .collapse-toggle,
-.explorer-collapsed .collapse-toggle {
+.tables-collapsed .collapse-toggle {
     --pico-color: inherit;
 
     opacity: 1;
@@ -3532,16 +3641,14 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle .icon-collapse,
 .preview-collapsed .collapse-toggle .icon-collapse,
 .config-collapsed .collapse-toggle .icon-collapse,
-.tables-collapsed .collapse-toggle .icon-collapse,
-.explorer-collapsed .collapse-toggle .icon-collapse {
+.tables-collapsed .collapse-toggle .icon-collapse {
     display: none;
 }
 
 .detail-collapsed .collapse-toggle .icon-expand,
 .preview-collapsed .collapse-toggle .icon-expand,
 .config-collapsed .collapse-toggle .icon-expand,
-.tables-collapsed .collapse-toggle .icon-expand,
-.explorer-collapsed .collapse-toggle .icon-expand {
+.tables-collapsed .collapse-toggle .icon-expand {
     display: block;
 }
 
@@ -4643,18 +4750,6 @@ body.zen .config-view > .config-source {
         width: auto;
         height: 1px;
         margin: 0.35rem 0;
-    }
-
-    /* Centered on a horizontal seam rather than hung from the top of a vertical one. */
-    #explorer-resizer .collapse-toggle {
-        top: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    /* A bottom-panel orientation now that the Explorer sits above the stage: down hides it,
-       up brings it back — the same rotation the Source and inspector dividers get. */
-    #explorer-resizer .collapse-icon {
-        transform: rotate(90deg);
     }
 
     /* Stacked: the graph and the node inspector share the column with a fixed 60/40 split.
