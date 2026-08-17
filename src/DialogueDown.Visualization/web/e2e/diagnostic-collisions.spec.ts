@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
 import type { LspDiagnostic, Report } from "../src/model";
 import { writeReport } from "./report";
+import { selectTheme } from "./theme";
 
 function diagnostic(
     line: number,
@@ -141,6 +142,6 @@ test("passes accessibility checks in light and dark themes", async ({ page }) =>
         new AxeBuilder({ page }).include(".diagnostic-summary").include("#footer-drawer").analyze();
     expect((await analyzeDiagnostics()).violations).toEqual([]);
 
-    await page.locator(".theme-select").selectOption("dark");
+    await selectTheme(page, "dark");
     expect((await analyzeDiagnostics()).violations).toEqual([]);
 });
