@@ -211,6 +211,9 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The Source tab's bottom row reads as one bar** — the split divider no longer shows through
+  as a white notch between the `#END` footer and the ignored-content footer.
+
 - **Front matter now reads as YAML metadata in the Source editor** — a canonical leading
   `--- … ---` block receives YAML keys, values, comments, indentation, and folding instead of
   being misread as ordinary Markdown; the dialogue body keeps its existing Markdown and

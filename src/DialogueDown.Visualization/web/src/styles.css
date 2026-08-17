@@ -319,7 +319,7 @@ body {
 
 .brand-name {
     max-width: 0;
-    margin-left: 0;
+    margin-left: calc(-1 * var(--dd-source-divider-width));
     overflow: hidden;
     opacity: 0;
     white-space: nowrap;
@@ -1427,6 +1427,7 @@ g.node.entity-highlight text.label {
 /* Source tab: raw document (left) beside a live preview (right). */
 .source-view {
     --dd-source-footer-height: 2.36rem;
+    --dd-source-divider-width: 7px;
 
     position: relative;
     display: flex;
@@ -2160,7 +2161,7 @@ g.node.entity-highlight text.label {
 
 .source-divider {
     position: relative;
-    flex: 0 0 7px;
+    flex: 0 0 var(--dd-source-divider-width);
     cursor: col-resize;
     border-left: 1px solid var(--pico-muted-border-color);
     transition: border-color 0.15s ease;
@@ -2406,13 +2407,20 @@ a.dd-ignored-region-brief {
     opacity: 0.75;
 }
 
+/* The footer reaches back across the split divider so it meets the Source footer edge to edge:
+   the bottom row reads as one bar, while both footers stay inside their own pane -- which is what
+   keeps #END's marker aligned with the editor's gutter. It sits above the divider so the divider's
+   line stops at the band rather than notching it. */
 .dd-ignored-preview-footer {
+    position: relative;
+    z-index: 1;
     flex: 0 0 var(--dd-source-footer-height);
     display: flex;
     gap: 0.45rem;
     align-items: center;
     min-width: 0;
-    padding: 0.25rem 0.65rem;
+    margin-left: calc(-1 * var(--dd-source-divider-width));
+    padding: 0.25rem 0.65rem 0.25rem calc(0.65rem + var(--dd-source-divider-width));
     border-top: 1px solid var(--pico-muted-border-color);
     background: color-mix(in srgb, var(--pico-background-color) 94%, var(--md-muted));
     color: var(--pico-color);
@@ -5240,6 +5248,6 @@ button.tab.tab-with-icon {
     }
 
     .app-footer .help-toggle {
-        margin-left: 0;
+        margin-left: calc(-1 * var(--dd-source-divider-width));
     }
 }
