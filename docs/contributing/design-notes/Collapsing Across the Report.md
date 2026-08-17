@@ -1,9 +1,9 @@
 # Collapsing Across the Report
 
 > [!IMPORTANT]
-> Status: **partly implemented**. Component 1 has shipped: every surface now folds with the same
-> glyph, and the Dialogue Graph can fold or open every scene at once. Component 2 is designed and
-> not yet built. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
+> Status: **implemented**. Every surface folds with the same glyph, the Dialogue Graph can fold or
+> open every scene at once, and the Source editor now folds the ignored region — the same unit the
+> Preview folds — from its own state. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
 > (fold every scene at once) and [#286](https://github.com/pengzhengyi/dialoguedown/issues/286)
 > (teach the Source editor about ignored regions) into one model, then sequences them as two
 > components.
@@ -181,27 +181,36 @@ Checklist:
 
 ## Component 2 — Ignored regions in Source
 
-> [!NOTE]
-> Not yet implemented. Tracked by [#286](https://github.com/pengzhengyi/dialoguedown/issues/286).
-
 The larger piece: Source
 gains the **ignored region** as a unit it can fold, so both panes finally fold the same thing.
 
-Block regions can use CodeMirror's fold machinery. Inline regions cannot — a span inside a line is
-not a foldable range — so each needs a decoration that **replaces** the span with the same
-`circle-slash` chip the Preview already shows. That asymmetry is inherent to the unit, not a
-shortcut.
+Block regions fold to a summary row; an inline region cannot, because a span inside a line is not a
+foldable range, so it collapses in place instead. Both are replacing decorations over the compiler's
+own spans rather than CodeMirror's line-range folding, which keeps the two units independent.
+
+The control **trails the region's first line** rather than leading it: a mark before a table's first
+row would push that row out of line with the rows beneath it, and an editor's columns are part of
+what a writer is reading.
+
+The all-commands live in the editor's **context menu and keymap** (`Alt-i` folds every ignored
+region, `Alt-o` opens them) rather than in a footer of their own. Source is an editor, where
+commands conventionally live in menus and keys; a second footer row would also have broken the
+`#END` row's deliberate alignment with the Preview footer.
+
+A folded region is **atomic** to the cursor, so arrow keys step over it, and an edit that reaches
+one **opens it first** — the change still lands, and it lands somewhere the writer can see.
 
 Checklist:
 
-- [ ] Ignored block spans fold in Source from a per-item control, independent of line-range folding.
-- [ ] Ignored inline spans collapse to a chip through a replacing decoration.
-- [ ] Source offers its own pair of all-commands over its ignored regions.
-- [ ] Folding survives the re-render that follows every keystroke, keyed as the Preview already
+- [x] Ignored block spans fold in Source from a per-item control, independent of line-range folding.
+- [x] Ignored inline spans collapse to a chip through a replacing decoration.
+- [x] Source offers its own pair of all-commands over its ignored regions, from the editor's own
+      menu and keys rather than new chrome.
+- [x] Folding survives the re-render that follows every keystroke, keyed as the Preview already
       keys regions.
-- [ ] Editing inside a collapsed region is impossible or expands it first — never silently edits
+- [x] Editing inside a collapsed region is impossible or expands it first — never silently edits
       hidden text.
-- [ ] Source and Preview fold independently; neither drives the other.
+- [x] Source and Preview fold independently; neither drives the other.
 
 ## Key design decisions
 

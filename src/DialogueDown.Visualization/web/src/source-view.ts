@@ -40,7 +40,12 @@ import {
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { foldGutterMarker } from "./fold-glyph";
-import { setIgnoredSpans, sourceIgnoredFold } from "./source-ignored-fold";
+import {
+    foldEveryIgnoredRegion,
+    hasIgnoredRegions,
+    setIgnoredSpans,
+    sourceIgnoredFold,
+} from "./source-ignored-fold";
 import { compactSearch } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { yamlLanguage } from "@codemirror/lang-yaml";
@@ -527,6 +532,22 @@ export function createSourceView(
                     submenu: jumpMenuItems(view, jumpTargets),
                 });
             }
+            // The editor keeps its own pair of commands over the regions it folds: the Preview's
+            // pair acts on the Preview, and the two panes deliberately hold separate state.
+            if (hasIgnoredRegions(view.state)) {
+                items.push(
+                    {
+                        icon: "collapse-all",
+                        label: "Fold all ignored Markdown",
+                        run: () => foldEveryIgnoredRegion(view, true),
+                    },
+                    {
+                        icon: "expand-all",
+                        label: "Open all ignored Markdown",
+                        run: () => foldEveryIgnoredRegion(view, false),
+                    },
+                );
+            }
             if (!view.state.readOnly) {
                 items.push(
                     { icon: "bold", label: "Bold", run: () => runInEditor(view, toggleWrap("**")) },
@@ -571,6 +592,10 @@ export function createSourceView(
                 contextMenu,
                 keymap.of([
                     { key: "Alt-j", run: (view) => openJumpMenuAtCaret(view, jumpTargets) },
+                    // The same Alt-letter shape the jump menu uses. A shifted letter is not
+                    // usable here: the browser reports the shifted character, not "Shift-<key>".
+                    { key: "Alt-i", run: (view) => foldEveryIgnoredRegion(view, true) },
+                    { key: "Alt-o", run: (view) => foldEveryIgnoredRegion(view, false) },
                 ]),
                 headingSlugHints(),
                 foldHeadings,

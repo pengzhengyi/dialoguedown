@@ -1609,10 +1609,12 @@ g.node.entity-highlight text.label {
     font-family: var(--pico-font-family-monospace);
 }
 
+/* The gutter's ink is chosen for tinted chrome, not the plain page: the active line tints the
+   gutter behind its own number, and the general muted color does not hold contrast against it. */
 .source-pane .cm-gutters {
     background: transparent;
     border-right: 1px solid var(--pico-muted-border-color);
-    color: var(--pico-muted-color);
+    color: var(--dd-chrome-muted);
 }
 
 /* Two independent debug lanes precede the line numbers: breakpoints stay visible when the

@@ -243,6 +243,21 @@ const ignoredDecorations = StateField.define<DecorationSet>({
     provide: (field) => EditorView.decorations.from(field),
 });
 
+/** Whether the document has any ignored region for a command to act on. */
+export function hasIgnoredRegions(state: EditorState): boolean {
+    return state.field(ignoredFoldState).spans.length > 0;
+}
+
+/**
+ * Fold every ignored region, or open every one — a command over the whole editor, so it discards
+ * the choices made region by region rather than merging with them.
+ */
+export function foldEveryIgnoredRegion(view: EditorView, folded: boolean): boolean {
+    if (!hasIgnoredRegions(view.state)) return false;
+    view.dispatch({ effects: setEveryIgnoredRegionFolded.of(folded) });
+    return true;
+}
+
 /**
  * Fold the compiler's ignored Markdown in the Source editor, alongside the editor's own
  * line-range folding.
