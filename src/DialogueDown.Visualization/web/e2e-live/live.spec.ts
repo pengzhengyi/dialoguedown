@@ -291,11 +291,13 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
         return {
             files: box(".tabbar-explorer"),
             zen: box(".tabbar-zen"),
+            tabbar: box(".tabbar"),
             filesGlyph: { width: glyphBox.width, height: glyphBox.height, left: glyphBox.left },
             zenGlyph: { width: zenGlyph.width, height: zenGlyph.height },
             configGlyph: box("button.tab.tab-with-icon .tab-icon"),
             brand: box("hgroup"),
             bedTop: controlBox.top + Number.parseFloat(bed.top),
+            bedBottom: controlBox.bottom - Number.parseFloat(bed.bottom),
             bedCorners: [
                 bed.borderTopLeftRadius,
                 bed.borderTopRightRadius,
@@ -307,14 +309,18 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
         };
     });
 
-    // One size as the icon buttons at the row's other end, at every width — a control that
-    // shrinks below its neighbours reads as an afterthought and is a smaller target besides.
-    expect(metrics.files.height).toBeCloseTo(metrics.zen.height, 0);
+    // The glyph stays the icon buttons' glyph, but the *target* takes the row's height rather
+    // than the glyph's: an icon-sized button is a small thing to hit and a cramped thing to ring.
     expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
     expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
+    expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
+    expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);
+    // Grown to the row's height, it still stops short of the divider that closes the row.
+    expect(metrics.files.bottom).toBeLessThan(metrics.tabbar.bottom);
     // Its painted bed clears the brand mark directly above it. The button's box is taller than
     // the bed, so it is the bed — inset inside that box — that has to keep the air.
     expect(metrics.bedTop).toBeGreaterThan(metrics.brand.bottom);
+    expect(metrics.bedBottom).toBeLessThan(metrics.files.bottom);
     // Squared off, so the accent rail down its leading edge reads as a straight bar rather than
     // a sliver bent around a corner. Uniform, so no corner disagrees with another.
     expect(new Set(metrics.bedCorners).size).toBe(1);
@@ -326,6 +332,37 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     expect(metrics.files.left).toBeCloseTo(metrics.brand.left, 0);
     // And it leads the row rather than sitting inside the scrolling tabs.
     expect(metrics.filesGlyph.left).toBeLessThan(metrics.configGlyph.left);
+});
+
+test("rings the focused Files control once, on its bed", async ({ page }) => {
+    // Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
+    // alone leaves the control wearing two rings: a rounded one around the whole box and the
+    // square one this report draws on the bed. While the box was barely taller than the bed the
+    // two overlapped and the fault was invisible; grown to the row's height they separate, and
+    // the outer ring reaches the brand mark above.
+    const toggle = page.locator(".tabbar-explorer");
+    await toggle.focus();
+
+    const rings = await page.evaluate(() => {
+        const control = document.querySelector(".tabbar-explorer")!;
+        const bed = getComputedStyle(control, "::before");
+        // A shadow with no non-zero length paints nothing, whether it reads "none" or survives
+        // as a transparent zero-size layer.
+        const lengths = (shadow: string) =>
+            (shadow.replace(/(rgba?|color)\([^)]*\)/g, "").match(/-?[\d.]+px/g) ?? []).map(
+                Number.parseFloat,
+            );
+        return {
+            buttonRingLengths: lengths(getComputedStyle(control).boxShadow),
+            onBed: bed.boxShadow,
+            bedRadius: bed.borderRadius,
+        };
+    });
+
+    expect(Math.max(0, ...rings.buttonRingLengths)).toBe(0);
+    // The one ring that is drawn hugs the bed, and is square-cut as the bed is.
+    expect(rings.onBed).toContain("3px");
+    expect(Number.parseFloat(rings.bedRadius)).toBeLessThanOrEqual(2);
 });
 
 test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {
@@ -399,22 +436,24 @@ test.describe("on a phone-sized window", () => {
         expect(stacked.stageHeight).toBeGreaterThan(stacked.explorerHeight);
     });
 
-    test("sizes the Explorer control like the row's other icon buttons", async ({ page }) => {
-        // Reduced to a glyph it is an icon button, not a tab, so it takes the icon buttons'
-        // size. Left at the tab's smaller glyph it read as an afterthought beside them — and
-        // was a smaller target exactly where fingers, not pointers, are doing the aiming.
+    test("keeps the Explorer control a full-height target on a phone", async ({ page }) => {
+        // Its glyph is the icon buttons' glyph — left at the tab's smaller one it read as an
+        // afterthought beside them. Its target, though, takes the row's height, which matters
+        // most here: this is where fingers rather than pointers are doing the aiming.
         const metrics = await page.evaluate(() => {
             const box = (selector: string) => {
                 const rect = document.querySelector(selector)!.getBoundingClientRect();
                 return {
                     width: rect.width,
                     height: rect.height,
-                    centre: (rect.top + rect.bottom) / 2,
+                    top: rect.top,
+                    bottom: rect.bottom,
                 };
             };
             return {
                 files: box(".tabbar-explorer"),
                 zen: box(".tabbar-zen"),
+                tabbar: box(".tabbar"),
                 filesGlyph: box(".tabbar-explorer .tab-icon"),
                 zenGlyph: box(".zen-icon"),
             };
@@ -423,8 +462,9 @@ test.describe("on a phone-sized window", () => {
         expect(metrics.filesGlyph.width).toBeCloseTo(metrics.zenGlyph.width, 0);
         expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
         expect(metrics.files.width).toBeCloseTo(metrics.zen.width, 0);
-        expect(metrics.files.height).toBeCloseTo(metrics.zen.height, 0);
-        expect(metrics.files.centre).toBeCloseTo(metrics.zen.centre, 0);
+        expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
+        expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);
+        expect(metrics.files.bottom).toBeLessThan(metrics.tabbar.bottom);
     });
 
     test("keeps the Explorer control in reach while the stage row scrolls", async ({ page }) => {

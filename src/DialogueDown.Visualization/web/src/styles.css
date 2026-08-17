@@ -385,12 +385,16 @@ body {
    scrolls on a narrow window, and a control that scrolls out of reach is worse than none.
    Empty — a static export has no Explorer — it takes no room, gap included.
 
-   No bottom padding, unlike the arrow slots beside it: the control inside is tab-shaped and
-   carries the tabs' own bottom margin, so padding here would lift it off their baseline. */
+   The slot takes the row's full height and the control stretches to fill it, so the target is
+   as tall as the row can offer rather than as tall as its glyph happens to be. It keeps the
+   same bottom padding as the arrow slots beside it, which is what holds the control off the
+   divider under the row. */
 .tabbar-leading {
     display: flex;
     flex: 0 0 auto;
-    align-items: flex-end;
+    align-self: stretch;
+    align-items: stretch;
+    padding-bottom: 0.35rem;
 }
 
 .tabbar-leading:empty {
@@ -3357,13 +3361,15 @@ body.maximized .maximize-button .icon-compress {
     color: inherit;
 }
 
-/* The Explorer's control leads the row as a glyph alone, sized and spaced like the Zen and
-   maximize buttons at the row's other end. The row's width belongs to the stages, so the control
-   spends none of it on a word; the file glyph carries the meaning by itself, as it does on an
-   editor's own file panel.
+/* The Explorer's control leads the row as a glyph alone, carrying the same 16px mark the Zen
+   and maximize buttons at the row's other end carry. The row's width belongs to the stages, so
+   the control spends none of it on a word; the file glyph carries the meaning by itself, as it
+   does on an editor's own file panel.
 
-   One styling at every width. It never takes a tab's underline — in this row that mark answers
-   "which stage am I on", and the Explorer is not a stage. */
+   Its *height*, though, is the row's rather than the glyph's — it stretches to fill the slot,
+   because a target the size of its icon is a small one to hit and a cramped one to ring with a
+   focus outline. One styling at every width. It never takes a tab's underline — in this row
+   that mark answers "which stage am I on", and the Explorer is not a stage. */
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -3373,8 +3379,8 @@ body.maximized .maximize-button .icon-compress {
     align-items: center;
     justify-content: center;
     width: auto;
-    margin: 0 0 0.35rem;
-    padding: 0.3rem 0.5rem;
+    margin: 0;
+    padding: 0 0.5rem;
     color: var(--pico-muted-color);
     background: transparent;
     border: none;
@@ -3383,14 +3389,14 @@ body.maximized .maximize-button .icon-compress {
 }
 
 /* The painted bed: a chip inset inside the button's taller box, which leaves air under the brand
-   mark above rather than butting against it. Squared off, so the rail down its leading edge
-   reads as a straight bar rather than a sliver bent around a corner. Transparent until the
-   control is touched, so one element carries the resting, hovered, and open looks without three
-   boxes to keep in step. */
+   mark above rather than butting against it, and stops short of the divider below. Squared off,
+   so the rail down its leading edge reads as a straight bar rather than a sliver bent around a
+   corner. Transparent until the control is touched, so one element carries the resting, hovered,
+   and open looks without three boxes to keep in step. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
-    inset: 0.2rem 0;
+    inset: 0.4rem 0 0.15rem;
     background: transparent;
     border-radius: 0;
     transition: background 0.12s ease;
@@ -3427,9 +3433,17 @@ body.maximized .maximize-button .icon-compress {
 }
 
 /* The ring is drawn on the bed rather than the button, so it hugs what is visible instead of
-   ballooning around the taller box behind it. */
+   ballooning around the taller box behind it — and so it is square-cut like the bed rather than
+   rounded like a button.
+
+   Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
+   alone leaves that ring in place and the control wears two: a rounded one around the whole box
+   and a square one around the bed. They overlapped while the box was barely taller than the bed
+   and hid the fault; once the box grew to the row's height they separated, and the outer ring
+   reached the brand mark. Clear both. */
 .tabbar-explorer:focus-visible {
     outline: none;
+    box-shadow: none;
 }
 
 .tabbar-explorer:focus-visible::before {

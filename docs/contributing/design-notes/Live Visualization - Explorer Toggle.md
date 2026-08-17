@@ -70,17 +70,23 @@ The control is a **glyph alone** — the file mark an editor puts on its own fil
 in the same Feather family, size, and stroke weight the Config tab's gear uses. It shows
 no word, because the tab row's width belongs to the **stages**: a word here would spend
 that width on a control that is not one, and would crowd the very stage tabs the reader
-came for. Wordless, it is sized and spaced like the **icon buttons at the row's other
-end** — the Zen and maximize pair — which is what it now is.
+came for. Wordless, it carries the same 16px glyph as the **icon buttons at the row's
+other end** — the Zen and maximize pair.
+
+Its *height*, though, is the **row's rather than its glyph's**: the control stretches to
+fill the pinned slot, which fills the row. A button sized to its icon is a small thing to
+hit and a cramped thing to ring with a focus outline, and this one is the doorway to a
+whole panel. It stops short of the divider that closes the row, keeping the same footing
+the arrow slots beside it keep.
 
 One styling serves **every width**. The narrow layout used to reduce a worded control to
 a glyph and restate its size; with no word to drop there is nothing to restate, and the
 two widths cannot disagree.
 
 The button's box is taller than what it paints: the **bed is inset** inside it. That
-separation is what keeps the mark clear of the brand above — the row aligns to its
-bottom edge, so a control sized to its own chip would grow *upward* into the logo. The
-inset leaves air under the brand without moving the box the row lays out.
+separation is what keeps the mark clear of the brand above and the divider below — the
+row aligns to its bottom edge, so a control sized to its own chip would grow *upward*
+into the logo. The inset leaves air at both ends without shrinking the target.
 
 Open, it wears the two marks an editor's activity bar uses for the panel you are in:
 a **leading accent rail** and a **tinted bed**. The rail is drawn as the bed's own
@@ -109,9 +115,16 @@ its **bottom** edge, so a control that ends up taller than its neighbours grows
 
 Centering their glyph with flex is what makes that class of fault impossible. The glyph
 becomes a flex item, so the inherited line box cannot size the button, and no
-counteracting reset is needed to hold it back. A test asserts the Files control matches
-those buttons in box and glyph size, clears the brand mark, keeps its bed square-cut,
-and stays evenly padded around its glyph.
+counteracting reset is needed to hold it back. A test asserts the Files control carries
+those buttons' glyph, takes the row's height, clears the brand mark above and the divider
+below, keeps its bed square-cut, and stays evenly padded around its glyph.
+
+**One ring, not two.** Pico rings a focused button with a `box-shadow` rather than an
+`outline`, so clearing the outline alone leaves that ring in place beneath the square one
+this report draws on the bed. The two overlapped while the button was barely taller than
+its bed, which hid the fault; once the button grew to the row's height they separated and
+the outer, rounded ring reached the brand mark. Both are cleared now, and a test asserts
+the button paints no ring of its own.
 
 ## Why not an activity bar
 
