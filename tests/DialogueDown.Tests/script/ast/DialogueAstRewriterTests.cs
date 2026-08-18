@@ -106,7 +106,7 @@ public sealed class DialogueAstRewriterTests
         AssertSpeechText(AssertLine(control.Branches[1].Body[0]), "BROKE");
     }
 
-    // A control block with a guarded `if` branch and a bare `else`, so both a branch's guard and
+    // A control block with a conditional `if` branch and a bare `else`, so both a branch's condition and
     // its body survive a rewrite. Shape:
     //
     //   > if `Rich?`

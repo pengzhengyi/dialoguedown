@@ -188,7 +188,7 @@ public sealed class DialogueAstProjectionTests
     }
 
     [Fact]
-    public void Describe_Branch_LabelsAGuardedBranchWithTheControlCategory()
+    public void Describe_Branch_LabelsAConditionalBranchWithTheControlCategory()
     {
         var span = new SourceSpan(0, 5);
         var branch = new Branch(new Condition("Rich", span), [], span);

@@ -8,30 +8,30 @@ namespace DialogueDown.Graph.Builder;
 /// An effect-only control block under construction: the ordered game calls it runs, combined with
 /// the edges graph passes accumulate on it.
 /// </summary>
-internal sealed class ControlNodeDraft : NodeDraft, IGuardedNode
+internal sealed class ControlNodeDraft : NodeDraft, IConditionalNode
 {
     private readonly IReadOnlyList<GameCall> _effects;
 
     public ControlNodeDraft(
-        NodeId id, SourceSpan span, IReadOnlyList<GameCall> effects, Condition? guard = null)
+        NodeId id, SourceSpan span, IReadOnlyList<GameCall> effects, Condition? condition = null)
         : base(id, span)
     {
         ArgumentNullException.ThrowIfNull(effects);
         _effects = effects;
-        Guard = guard;
+        Condition = condition;
     }
 
     /// <inheritdoc/>
-    public Condition? Guard { get; }
+    public Condition? Condition { get; }
 
     /// <inheritdoc/>
     /// <remarks>
-    /// A guard may skip the node whole, taking any divert it holds with it, so the fall-through is
-    /// the route left when the guard reads false.
+    /// A condition may skip the node whole, taking any divert it holds with it, so the fall-through is
+    /// the route left when the condition reads false.
     /// </remarks>
     public override bool LeavesUnconditionally() =>
-        Guard is null && base.LeavesUnconditionally();
+        Condition is null && base.LeavesUnconditionally();
 
     protected override DialogueNode CreateNode() =>
-        new ControlNode(Id, Span, _effects, Out.ToArray(), Guard);
+        new ControlNode(Id, Span, _effects, Out.ToArray(), Condition);
 }

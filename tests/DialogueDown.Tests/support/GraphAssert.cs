@@ -56,32 +56,32 @@ internal static class GraphAssert
         return AssertDivert(Assert.Single(node.Out), target);
     }
 
-    /// <summary>Asserts the edge is guarded by <paramref name="key"/>.</summary>
-    public static void AssertGuarded(Edge edge, string key) =>
-        Assert.Equal(key, Assert.IsAssignableFrom<IGuardedEdge>(edge).Guard?.Key);
+    /// <summary>Asserts the edge is conditional by <paramref name="key"/>.</summary>
+    public static void AssertConditional(Edge edge, string key) =>
+        Assert.Equal(key, Assert.IsAssignableFrom<IConditionalEdge>(edge).Condition?.Key);
 
     /// <summary>
-    /// Asserts the edge is the branch arm tried at <paramref name="order"/>, guarded by
-    /// <paramref name="guard"/> — null for the <c>else</c> arm, which is always taken when reached.
+    /// Asserts the edge is the branch arm tried at <paramref name="order"/>, conditional by
+    /// <paramref name="condition"/> — null for the <c>else</c> arm, which is always taken when reached.
     /// </summary>
-    public static void AssertBranch(Edge edge, int order, string? guard)
+    public static void AssertBranch(Edge edge, int order, string? condition)
     {
         var branch = Assert.IsType<BranchEdge>(edge);
         Assert.Equal(order, branch.Order);
-        Assert.Equal(guard, branch.Guard?.Key);
+        Assert.Equal(condition, branch.Condition?.Key);
     }
 
     /// <summary>Asserts the node's content plays only under <paramref name="key"/>.</summary>
-    public static void AssertGuarded(DialogueNode node, string key) =>
-        Assert.Equal(key, Assert.IsAssignableFrom<IGuardedNode>(node).Guard?.Key);
+    public static void AssertConditional(DialogueNode node, string key) =>
+        Assert.Equal(key, Assert.IsAssignableFrom<IConditionalNode>(node).Condition?.Key);
 
     /// <summary>Asserts the node's content always plays.</summary>
-    public static void AssertUnguarded(DialogueNode node) =>
-        Assert.Null(Assert.IsAssignableFrom<IGuardedNode>(node).Guard);
+    public static void AssertUnconditional(DialogueNode node) =>
+        Assert.Null(Assert.IsAssignableFrom<IConditionalNode>(node).Condition);
 
     /// <summary>Asserts the edge is one control may always take.</summary>
-    public static void AssertUnguarded(Edge edge) =>
-        Assert.Null(Assert.IsAssignableFrom<IGuardedEdge>(edge).Guard);
+    public static void AssertUnconditional(Edge edge) =>
+        Assert.Null(Assert.IsAssignableFrom<IConditionalEdge>(edge).Condition);
 
     /// <summary>Asserts the edge is a random arm weighted at <paramref name="percentage"/>.</summary>
     public static void AssertNumberWeight(Edge edge, double percentage) =>

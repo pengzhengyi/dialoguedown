@@ -175,7 +175,7 @@ internal static class DiagnosticDocs
         new(
             DiagnosticCatalog.MalformedControlBranchOrder,
             "A block conditional has one `if`, then any `elseif` branches, then at most one `else`. "
-            + "Move a guarded branch before the fallback instead of adding another `else` afterward.",
+            + "Move a conditional branch before the fallback instead of adding another `else` afterward.",
             new(
                 """
                 > `if` `Rich?`
@@ -223,8 +223,8 @@ internal static class DiagnosticDocs
                 ["`Rich?`\n>\n> Alice"])),
         new(
             DiagnosticCatalog.MissingControlBranchCondition,
-            "An `if` or `elseif` marker needs its guard in a second code span. Add a condition such "
-            + "as `Rich?`; only `else` is unguarded.",
+            "An `if` or `elseif` marker needs its condition in a second code span. Add a condition such "
+            + "as `Rich?`; only `else` is unconditional.",
             new(
                 """
                 > `if`
@@ -240,7 +240,7 @@ internal static class DiagnosticDocs
                 ["> `if` `Rich?`"])),
         new(
             DiagnosticCatalog.UnexpectedElseCondition,
-            "An `else` is the unguarded fallback, so it cannot carry a condition. Remove the guard, "
+            "An `else` is the unconditional fallback, so it cannot carry a condition. Remove the condition, "
             + "or write `elseif` when the branch should be conditional.",
             new(
                 """

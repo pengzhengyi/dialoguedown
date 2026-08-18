@@ -203,9 +203,9 @@ public sealed class JumpAssemblerTests
     }
 
     [Fact]
-    public void DanglingArrowAfterACondition_ReportsAtTheArrowNotTheGuard()
+    public void DanglingArrowAfterACondition_ReportsAtTheArrowNotTheCondition()
     {
-        // The guard is valid; the arrow is what failed to become a jump, so that is where the
+        // The condition is valid; the arrow is what failed to become a jump, so that is where the
         // writer must act.
         var indicator = new JumpIndicator(new SourceSpan(10, 2));
 

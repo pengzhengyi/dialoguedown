@@ -67,7 +67,7 @@ internal abstract class DialogueAstRewriter
     protected virtual ControlBlock RewriteControlBlock(ControlBlock control) =>
         control with { Branches = control.Branches.Select(RewriteBranch).ToList() };
 
-    // A branch's guard is a leaf here (like a choice's), so only its body recurses.
+    // A branch's condition is a leaf here (like a choice's), so only its body recurses.
     protected virtual Branch RewriteBranch(Branch branch) =>
         branch with { Body = branch.Body.Select(RewriteBlock).ToList() };
 

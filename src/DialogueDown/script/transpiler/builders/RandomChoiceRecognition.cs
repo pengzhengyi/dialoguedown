@@ -22,7 +22,7 @@ internal static class RandomChoiceRecognition
             return false;
         }
 
-        // A condition may guard a random option, so a weight can sit just past a leading
+        // A condition may condition a random option, so a weight can sit just past a leading
         // condition; peek past it to classify the option as weighted.
         var inlines = ConditionReader.TryPeel(paragraph.Inlines, out _, out var afterCondition)
             ? afterCondition

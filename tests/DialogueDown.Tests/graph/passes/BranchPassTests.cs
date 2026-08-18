@@ -28,9 +28,9 @@ public sealed class BranchPassTests
 
         Assert.Collection(
             graph.Nodes[0].Out,
-            edge => AssertBranch(edge, order: 0, guard: "Rich"),
-            edge => AssertBranch(edge, order: 1, guard: "Poor"),
-            edge => AssertBranch(edge, order: 2, guard: null));
+            edge => AssertBranch(edge, order: 0, condition: "Rich"),
+            edge => AssertBranch(edge, order: 1, condition: "Poor"),
+            edge => AssertBranch(edge, order: 2, condition: null));
     }
 
     [Fact]

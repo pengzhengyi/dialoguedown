@@ -9,7 +9,7 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// <summary>
 /// Builds one <see cref="Line"/> from a group of Markdown inlines — a paragraph, or one
 /// slice of it between hard breaks. The work is done by a single-use <see cref="Assembler"/>
-/// that peels an optional leading <see cref="Condition"/> guard, then an optional speaker, off
+/// that peels an optional leading <see cref="Condition"/> condition, then an optional speaker, off
 /// the front, and builds the remaining speech through the <see cref="InlineBuilder"/>. The
 /// line's span covers the whole group, the condition and speaker prefix included. The group
 /// must be non-empty; an empty line is dropped upstream.
@@ -29,7 +29,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
 
     /// <summary>
     /// A single-use assembler for one line. It holds the not-yet-consumed inlines in
-    /// <see cref="_remaining"/> and peels the guard, then the speaker, off the front in order —
+    /// <see cref="_remaining"/> and peels the condition, then the speaker, off the front in order —
     /// each step reads and reassigns the shared remainder as it consumes the front. It is created
     /// fresh per line, so <see cref="LineBuilder"/> stays stateless.
     /// </summary>
@@ -59,7 +59,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
             content is [TextInline head, ..]
             && head.Text.StartsWith("=>", StringComparison.Ordinal);
 
-        // A leading `"key"?` condition code span is the line's guard — but only when non-jump
+        // A leading `"key"?` condition code span is the line's condition — but only when non-jump
         // content follows it to guard. A condition that directly precedes a jump guards the jump
         // (bound later in desugar), and a lone condition guards nothing; both are left in place.
         private Condition? PeelCondition()

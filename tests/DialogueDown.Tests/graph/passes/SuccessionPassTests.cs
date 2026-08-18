@@ -61,10 +61,10 @@ public sealed class SuccessionPassTests
         var graph = Build("""
             Alice: maybe bye `"Done"?` => [end](#END)
 
-            Bob: reached when the guard reads false
+            Bob: reached when the condition reads false
             """);
 
-        // The guard may not hold, so the fall-through is the sibling edge that skips the divert.
+        // The condition may not hold, so the fall-through is the sibling edge that skips the divert.
         Assert.Collection(
             graph.Nodes[0].Out,
             edge => AssertDivert(edge, graph.End),
@@ -123,7 +123,7 @@ public sealed class SuccessionPassTests
     }
 
     [Fact]
-    public void Apply_AChoiceWhoseArmsAreAllGuarded_AlsoFallsThrough()
+    public void Apply_AChoiceWhoseArmsAreAllConditional_AlsoFallsThrough()
     {
         var graph = Build("""
             - `"HasKey"?` Alice: Use the key.
@@ -133,7 +133,7 @@ public sealed class SuccessionPassTests
             Guide: After.
             """);
 
-        // Neither guard need hold, so the fall-through is the path left when nothing is offered.
+        // Neither condition need hold, so the fall-through is the path left when nothing is offered.
         AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[3].Id);
     }
 
@@ -189,7 +189,7 @@ public sealed class SuccessionPassTests
     }
 
     [Fact]
-    public void Apply_AGuardedBlockThatDivertsUnconditionally_StillFallsThrough()
+    public void Apply_AConditionalBlockThatDivertsUnconditionally_StillFallsThrough()
     {
         var graph = Build("""
             `"Brave"?` Alice: farewell => [on](#on)
@@ -201,12 +201,12 @@ public sealed class SuccessionPassTests
             Alice: there
             """);
 
-        // The guard may skip the whole line, its jump included, so control needs somewhere to go.
+        // The condition may skip the whole line, its jump included, so control needs somewhere to go.
         AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
     }
 
     [Fact]
-    public void Apply_ABlockGuardedBesideItsJumpsOwnGuard_FallsThroughOnce()
+    public void Apply_ABlockConditionalBesideItsJumpsOwnCondition_FallsThroughOnce()
     {
         var graph = Build("""
             `"Brave"?` Alice: farewell `"Rich"?` => [on](#on)
@@ -218,7 +218,7 @@ public sealed class SuccessionPassTests
             Alice: there
             """);
 
-        // Either guard failing lands on the same fall-through, so one is enough.
+        // Either condition failing lands on the same fall-through, so one is enough.
         AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
     }
 
