@@ -319,7 +319,7 @@ body {
 
 .brand-name {
     max-width: 0;
-    margin-left: 0;
+    margin-left: calc(-1 * var(--dd-source-divider-width));
     overflow: hidden;
     opacity: 0;
     white-space: nowrap;
@@ -548,10 +548,11 @@ button.tab.dirty::after {
     display: flex;
     min-height: 0;
 
-    /* Full-bleed main: no vertical inset, so the editor and graphs use the whole height between
-       the header rule and the footer; a slim horizontal inset keeps the editor's line gutter (and
-       its debug lane) and the graph controls off the window edge without boxing the content in. */
-    padding: 0 0.4rem;
+    /* Full-bleed main: the editor, graphs, and the Source tab's footer bar use the whole window
+       between the header rule and the footer. The bar states where the document ends and what the
+       Preview left out, which is a statement about the whole window rather than about an inset
+       column, so an inset here read as a gap the content had failed to fill. */
+    padding: 0;
 }
 
 #stages {
@@ -645,7 +646,9 @@ section.stage.empty-shell {
     flex-direction: column;
     gap: 0.25rem;
     min-width: 0;
-    padding-right: 0.4rem;
+
+    /* The main area is full-bleed, so the file list would otherwise start against the glass. */
+    padding: 0 0.4rem;
     overflow-y: auto;
 }
 
@@ -654,7 +657,10 @@ section.stage.empty-shell {
     display: block;
     flex: 0 0 auto;
     width: 1px;
-    margin: 0 0.5rem;
+
+    /* No margin: the seam is the boundary, so the stage begins at it and the Source tab's footer
+       bar runs all the way to the line. Each side keeps its own padding for breathing room. */
+    margin: 0;
     background: var(--pico-muted-border-color);
 }
 
@@ -956,7 +962,7 @@ section.stage.empty-shell {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    padding: 0 0.15rem 0 0.7rem;
+    padding: 0.55rem 0.6rem 0.55rem 0.7rem;
 }
 
 /* A draggable rail between the graph and the tables: it resizes the column and hosts the
@@ -1439,6 +1445,7 @@ g.node.entity-highlight text.label {
 /* Source tab: raw document (left) beside a live preview (right). */
 .source-view {
     --dd-source-footer-height: 2.36rem;
+    --dd-source-divider-width: 7px;
 
     position: relative;
     display: flex;
@@ -2172,7 +2179,7 @@ g.node.entity-highlight text.label {
 
 .source-divider {
     position: relative;
-    flex: 0 0 7px;
+    flex: 0 0 var(--dd-source-divider-width);
     cursor: col-resize;
     border-left: 1px solid var(--pico-muted-border-color);
     transition: border-color 0.15s ease;
@@ -2418,13 +2425,20 @@ a.dd-ignored-region-brief {
     opacity: 0.75;
 }
 
+/* The footer reaches back across the split divider so it meets the Source footer edge to edge:
+   the bottom row reads as one bar, while both footers stay inside their own pane -- which is what
+   keeps #END's marker aligned with the editor's gutter. It sits above the divider so the divider's
+   line stops at the band rather than notching it. */
 .dd-ignored-preview-footer {
+    position: relative;
+    z-index: 1;
     flex: 0 0 var(--dd-source-footer-height);
     display: flex;
     gap: 0.45rem;
     align-items: center;
     min-width: 0;
-    padding: 0.25rem 0.65rem;
+    margin-left: calc(-1 * var(--dd-source-divider-width));
+    padding: 0.25rem 0.65rem 0.25rem calc(0.65rem + var(--dd-source-divider-width));
     border-top: 1px solid var(--pico-muted-border-color);
     background: color-mix(in srgb, var(--pico-background-color) 94%, var(--md-muted));
     color: var(--pico-color);
@@ -2954,12 +2968,18 @@ svg.tree.has-focus .link:not(.related) {
     gap: 0.1rem;
     min-width: 11rem;
 
+    /* As wide as its rows, no wider. A positioned box sizes itself to its content only while its
+       insets say so; with the rows a level deeper under a body, `auto` resolved to stretch instead
+       and the card spread across the canvas -- which the drawing then kept clear of, pushing the
+       diagram aside. Saying the width outright removes the ambiguity. */
+    width: fit-content;
+
     /* The legend floats over the canvas, so it must never be the thing that makes the page wider
        than the window — on a phone a long type name would otherwise push the whole document into
        a horizontal scroll. It gives way instead, and its labels trail off. */
     max-width: calc(100% - 1.5rem);
     max-height: 90%;
-    overflow: auto;
+    overflow: hidden;
     padding: 0.4rem 0.5rem;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
@@ -3019,13 +3039,39 @@ svg.tree.has-focus .link:not(.related) {
     margin-top: 0;
 }
 
+/* The control shares a row with the legend's name instead of floating over the card's corner. In
+   the flow it cannot overlap a row, needs no padding reserved around it, and cannot be shifted by a
+   scrollbar -- three hazards the corner had. */
+.legend-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+
+    /* At least as tall as the control, whose glyph is taller than the name's line. */
+    min-height: 1.3rem;
+}
+
+.legend-title {
+    color: var(--pico-color);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.legend-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-height: 0;
+    overflow: auto;
+}
+
 /* Folding the legend away gives the canvas back: the button stays, everything else goes.
    It keeps one position and one hit area in both states, so the glyph never jumps — the reader
    folds and unfolds without moving the pointer. */
 .legend-fold {
-    position: absolute;
-    top: 0.3rem;
-    right: 0.35rem;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3060,8 +3106,17 @@ svg.tree.has-focus .link:not(.related) {
     display: inline-block;
 }
 
-.legend.folded > *:not(.legend-fold) {
+/* Folded, the rows and the name go; the header stays, because the control lives in it. */
+.legend.folded .legend-body,
+.legend.folded .legend-title {
     display: none;
+}
+
+/* With the name gone the control is the row's only child, so it is held to the trailing edge it
+   already occupied. That, and the card keeping its padding, is what puts the glyph on the same
+   pixels folded as open -- the reader folds and unfolds without moving the pointer. */
+.legend.folded .legend-header {
+    justify-content: flex-end;
 }
 
 /* Folded, the button *is* the legend: the card's own frame drops away so nothing is left around
@@ -3070,9 +3125,8 @@ svg.tree.has-focus .link:not(.related) {
    so the glyph lands on the same pixels folded as open. */
 .legend.folded {
     min-width: 0;
-    width: 2rem;
-    height: 1.9rem;
-    padding: 0;
+    width: fit-content;
+    height: fit-content;
     background: none;
     border-color: transparent;
     overflow: hidden;
@@ -3080,7 +3134,10 @@ svg.tree.has-focus .link:not(.related) {
 
 .legend.folded .legend-fold {
     background: var(--pico-card-background-color);
-    border: 1px solid var(--pico-muted-border-color);
+
+    /* Drawn, not laid out: a real border would grow the button's box by its own width and move the
+       glyph the reader is about to click again. */
+    box-shadow: 0 0 0 1px var(--pico-muted-border-color);
 }
 
 .legend.folded .legend-fold:hover {
@@ -5335,6 +5392,6 @@ button.tab.tab-with-icon {
     }
 
     .app-footer .help-toggle {
-        margin-left: 0;
+        margin-left: calc(-1 * var(--dd-source-divider-width));
     }
 }

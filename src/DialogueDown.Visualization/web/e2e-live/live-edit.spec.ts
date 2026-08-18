@@ -243,6 +243,32 @@ const SCROLL_DOC =
     }).join("\n");
 
 /** The labeled top-level block nearest the top of each pane. */
+/**
+ * Nudge a pane so the block nearest its top sits exactly at the top.
+ *
+ * `blocksAtTop` reports the *nearest* block to each pane's top, so a scroll that happens to stop
+ * between two blocks lets the panes round to different neighbours -- a one-block disagreement that
+ * says nothing about whether they are in sync. Landing squarely on a block removes that luck, and
+ * the assertion then means what it says.
+ */
+async function alignToNearestBlock(page: Page, selector: string) {
+    await page.evaluate((sel) => {
+        const pane = document.querySelector<HTMLElement>(sel)!;
+        const top = pane.getBoundingClientRect().top;
+        const rows = sel.includes("cm-scroller")
+            ? [...pane.querySelectorAll<HTMLElement>(".cm-line")]
+            : [...pane.children].map((c) => c as HTMLElement);
+        const nearest = rows
+            .filter((row) =>
+                /(?:Prologue|Scene \d+|Line \d+ of scene \d+)/.test(row.textContent ?? ""),
+            )
+            .map((row) => row.getBoundingClientRect().top - top)
+            .sort((a, b) => Math.abs(a) - Math.abs(b))[0];
+        if (nearest !== undefined) pane.scrollTop += nearest;
+    }, selector);
+    await page.waitForTimeout(400);
+}
+
 async function blocksAtTop(page: Page) {
     return page.evaluate(() => {
         const identity = (label: string | null) =>
@@ -308,6 +334,7 @@ test("the editor and preview scroll in sync, anchored on Markdown blocks", async
     await load();
     await scrollBy(page, ".source-pane .cm-scroller", 1600, 150);
     await page.waitForTimeout(300);
+    await alignToNearestBlock(page, ".source-pane .cm-scroller");
     const byEditor = await blocksAtTop(page);
     expect(await scrollTopOf(".source-preview")).toBeGreaterThan(100); // the preview followed
     expect(byEditor.editorBlock).toBe(byEditor.previewBlock);
@@ -317,6 +344,7 @@ test("the editor and preview scroll in sync, anchored on Markdown blocks", async
     await load();
     await scrollBy(page, ".source-preview", 1600, 150);
     await page.waitForTimeout(300);
+    await alignToNearestBlock(page, ".source-preview");
     const byPreview = await blocksAtTop(page);
     expect(await scrollTopOf(".source-pane .cm-scroller")).toBeGreaterThan(100); // the editor followed
     expect(byPreview.editorBlock).toBe(byPreview.previewBlock);

@@ -178,6 +178,70 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     await expect(page.locator("#detail")).toBeHidden();
 });
 
+test("heads the legend with its name beside the fold control", async ({ page }) => {
+    // A button alone on a row reads as stray, and the panel had no accessible name; the header
+    // carries both.
+    const legend = page.locator(".stage.active .legend");
+    const title = legend.locator(".legend-title");
+    const fold = legend.locator(".legend-fold");
+
+    await expect(title).toHaveText("Legend");
+    await expect(legend).toHaveAttribute("aria-labelledby", (await title.getAttribute("id")) ?? "");
+
+    const [titleBox, foldBox, firstRow] = await Promise.all([
+        title.boundingBox(),
+        fold.boundingBox(),
+        legend.locator(".legend-item").first().boundingBox(),
+    ]);
+    if (!titleBox || !foldBox || !firstRow) throw new Error("Could not measure the legend.");
+
+    // The name leads the row, the control trails it, and the rows begin below both.
+    expect(titleBox.x).toBeLessThan(foldBox.x);
+    expect(firstRow.y).toBeGreaterThanOrEqual(foldBox.y + foldBox.height);
+});
+
+test("keeps the legend no wider than its rows", async ({ page }) => {
+    // The card is positioned, so its width is implicit; with the rows nested under a body it
+    // resolved to stretch and spread over the drawing, which then kept clear of the whole span.
+    const legend = page.locator(".stage.active .legend");
+    const [box, canvas] = await Promise.all([
+        legend.boundingBox(),
+        legend.evaluate((el) => el.parentElement!.getBoundingClientRect().width),
+    ]);
+    if (!box) throw new Error("Could not measure the legend.");
+
+    expect(box.width).toBeLessThan(canvas * 0.6);
+});
+
+test("collapses the legend to the control alone, on the same pixels", async ({ page }) => {
+    // Folding drops the reserved line with the rest of the card, so the glyph must not drift.
+    const fold = page.locator(".stage.active .legend .legend-fold");
+    const open = await fold.boundingBox();
+
+    await fold.click();
+    await expect(page.locator(".stage.active .legend")).toHaveClass(/folded/);
+    const folded = await fold.boundingBox();
+
+    if (!open || !folded) throw new Error("Could not measure the legend control.");
+    expect(folded.x).toBeCloseTo(open.x, 0);
+    expect(folded.y).toBeCloseTo(open.y, 0);
+});
+
+test("keeps the tables clear of the window's top and right edges", async ({ page }) => {
+    // The cards used to borrow their breathing room from an inset on the main area; without it
+    // they sat against the glass.
+    const card = page.locator(".semantic-tables .table-panel").first();
+    const [box, width] = await Promise.all([
+        card.boundingBox(),
+        page.evaluate(() => window.innerWidth),
+    ]);
+    const stage = await page.locator(".stage.active").boundingBox();
+    if (!box || !stage) throw new Error("Could not measure the Semantic tables.");
+
+    expect(box.y - stage.y).toBeGreaterThanOrEqual(4);
+    expect(width - (box.x + box.width)).toBeGreaterThanOrEqual(4);
+});
+
 test("filters and sorts a table while keeping its cross-links", async ({ page }) => {
     const anchors = page.locator('.table-panel:has(.table-panel-title:text-is("Anchors"))');
 
