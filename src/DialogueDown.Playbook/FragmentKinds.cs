@@ -15,4 +15,13 @@ public static class FragmentKinds
 
     /// <summary>Emphasis wrapping more speech.</summary>
     public const string Styled = "styled";
+
+    /// <summary>A link, carrying the speech that stands in for it.</summary>
+    public const string Link = "link";
+
+    /// <summary>An image, carrying the speech that describes it.</summary>
+    public const string Image = "image";
+
+    /// <summary>A hard wrap the writer asked for.</summary>
+    public const string Break = "break";
 }

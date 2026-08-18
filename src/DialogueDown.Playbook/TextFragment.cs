@@ -12,11 +12,5 @@ public sealed record TextFragment(string Text) : SpeechFragment
     /// Gets the words to say.
     /// </summary>
     [JsonPropertyName("text")]
-    public string Text { get; } = AssertHasContent(Text);
-
-    private static string AssertHasContent(string text)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(text);
-        return text;
-    }
+    public string Text { get; } = Text.AssertNotEmpty(nameof(Text));
 }

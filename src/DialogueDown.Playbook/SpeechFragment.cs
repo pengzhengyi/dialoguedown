@@ -13,6 +13,9 @@ namespace DialogueDown.Playbook;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = PlaybookJson.Discriminator)]
 [JsonDerivedType(typeof(TextFragment), FragmentKinds.Text)]
 [JsonDerivedType(typeof(StyledTextFragment), FragmentKinds.Styled)]
+[JsonDerivedType(typeof(LinkFragment), FragmentKinds.Link)]
+[JsonDerivedType(typeof(ImageFragment), FragmentKinds.Image)]
+[JsonDerivedType(typeof(LineBreakFragment), FragmentKinds.Break)]
 public abstract record SpeechFragment
 {
     private protected SpeechFragment()
