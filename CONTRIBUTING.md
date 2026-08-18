@@ -30,7 +30,7 @@ Clone the repository and run:
 dotnet restore DialogueDown.sln
 dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build -m:3
+dotnet test DialogueDown.sln --configuration Release --no-build
 ```
 
 The `format` step is the code-style gate, and CI runs it first. Run it locally
@@ -45,17 +45,20 @@ To collect coverage focused on production source code:
 ```bash
 dotnet tool restore
 dotnet test DialogueDown.sln \
-  --settings coverage.runsettings \
-  --collect:"XPlat Code Coverage"
+  --coverlet \
+  --coverlet-output-format cobertura \
+  --coverlet-include "[DialogueDown*]*"
 dotnet reportgenerator \
-  "-reports:tests/DialogueDown.Tests/TestResults/**/coverage.cobertura.xml" \
+  "-reports:TestResults/coverage.cobertura.*.xml" \
   "-targetdir:coverage-report" \
   "-reporttypes:Html;MarkdownSummary;Cobertura"
 ```
 
-Coverage is verified against the `DialogueDown` source assembly and excludes
-test files. Cobertura output is written under `TestResults/`, and the interactive
-report is written to `coverage-report/index.html`.
+The include filter is what keeps the number meaningful: the runner instruments
+every assembly it loads, so without it a dependency's untested code counts
+against the project and the figure drops to a quarter of the real one. Cobertura
+output is written under `TestResults/`, and the interactive report to
+`coverage-report/index.html`.
 
 CI fails below 90% line coverage and warns below 100%.
 
@@ -180,7 +183,7 @@ Before opening a pull request:
 - [ ] Add or update tests for behavior changes.
 - [ ] Update documentation for public API or script-language changes.
 - [ ] Run `dotnet format DialogueDown.sln --verify-no-changes` — the same code-style gate CI runs.
-- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build -m:3`.
+- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build`.
 - [ ] Run source-focused coverage when changing tested behavior.
 - [ ] If you changed the visualization frontend (`web/`), rebuild and commit `web/dist/report.html` (CI auto-commits it if you forget).
 - [ ] Keep the pull request focused on one topic.

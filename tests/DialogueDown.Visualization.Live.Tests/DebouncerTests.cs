@@ -224,11 +224,13 @@ public sealed class DebouncerTests
                     debouncer.Trigger();
                 }
             })).ToArray();
-            var disposal = Task.Run(() =>
-            {
-                start.Wait();
-                debouncer.Dispose();
-            });
+            var disposal = Task.Run(
+                () =>
+                {
+                    start.Wait();
+                    debouncer.Dispose();
+                },
+                TestContext.Current.CancellationToken);
 
             start.Set();
             await Task.WhenAll(triggers.Append(disposal)); // no ObjectDisposedException escapes
