@@ -4,6 +4,7 @@ import { SAMPLE_REPORT, writeReport } from "./report";
 
 const url = writeReport(SAMPLE_REPORT);
 const nodeCount = SAMPLE_REPORT.stages[0].nodes.length;
+const stageDescription = SAMPLE_REPORT.stages[0].description;
 
 test.beforeEach(async ({ page }) => {
     await page.goto(url);
@@ -347,7 +348,7 @@ test("hovering a stage tab shows a Tippy tooltip describing the stage", async ({
     await page.locator(".tab", { hasText: "Markdown AST" }).hover();
     const tooltip = page.locator(".tippy-box");
     await expect(tooltip).toBeVisible();
-    await expect(tooltip).toContainText("syntax tree");
+    await expect(tooltip).toContainText(stageDescription);
 });
 
 test("hovering the Source tab shows a tip describing the source view", async ({ page }) => {

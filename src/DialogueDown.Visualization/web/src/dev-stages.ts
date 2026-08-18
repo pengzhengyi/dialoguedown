@@ -14,7 +14,7 @@ Bob: Welcome to my shop. \`OpenShop("Bob")\`
 export const DEV_STAGES: Stage[] = [
     {
         title: "Markdown AST",
-        description: "The Markdown syntax tree parsed from the source.",
+        description: "The Markdown tree the front end parses from the source.",
         nodes: [
             {
                 id: "n0",

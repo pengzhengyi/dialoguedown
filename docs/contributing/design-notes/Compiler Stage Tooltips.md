@@ -29,9 +29,9 @@ tab" — tries to explain all of them at once, and says nothing about what any
 
 Move that explanation onto the tabs: hovering a stage tab shows a tip describing
 what that stage's graph is (for example, hovering **Markdown AST** explains it is
-the syntax tree parsed from the source). The subtitle shrinks to a short hint that
-invites the hover. Each tip is a property of the stage, so the set of tips stays
-correct as stages are added.
+the Markdown tree the front end parses from the source). The subtitle shrinks to a
+short hint that invites the hover. Each tip is a property of the stage, so the set
+of tips stays correct as stages are added.
 
 In scope:
 
