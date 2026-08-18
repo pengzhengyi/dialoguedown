@@ -138,9 +138,9 @@ internal sealed class GraphProjection
     private static IReadOnlyList<DisplayAttribute> Attributes(DialogueNode node)
     {
         var attributes = new List<DisplayAttribute>();
-        if (node is IGuardedNode { Guard: { } guard })
+        if (node is IConditionalNode { Condition: { } condition })
         {
-            attributes.Add(new DisplayAttribute("guard", $"{guard.Key}?"));
+            attributes.Add(new DisplayAttribute("condition", $"{condition.Key}?"));
         }
 
         return attributes;

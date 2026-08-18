@@ -25,7 +25,7 @@
   - [Architecture](#architecture)
   - [Interfaces and responsibilities](#interfaces-and-responsibilities)
   - [Key design decisions](#key-design-decisions)
-    - [D1 — A distinct sibling type, guarded through `IConditional`](#d1--a-distinct-sibling-type-guarded-through-iconditional)
+    - [D1 — A distinct sibling type, conditional through `IConditional`](#d1--a-distinct-sibling-type-conditional-through-iconditional)
     - [D2 — The boundary is speaker-less and effect-only](#d2--the-boundary-is-speaker-less-and-effect-only)
     - [D3 — Recognize as a rule in the desugar pipeline](#d3--recognize-as-a-rule-in-the-desugar-pipeline)
     - [D4 — The default-speaker fill no longer covers effects](#d4--the-default-speaker-fill-no-longer-covers-effects)
@@ -65,7 +65,7 @@ its markers.
 Scope:
 
 - The **control line** node: an effect-only block holding jump and command
-  fragments, with an optional guarding condition, and no speaker.
+  fragments, with an optional condition, and no speaker.
 - Compile-time recognition, preservation, spans, and the traversal, validation, and
   report seams a new block kind touches.
 
@@ -172,21 +172,21 @@ completeness the compiler enforces.
 
 ## Interfaces and responsibilities
 
-| Component                      | Responsibility                                                                              |
-| ------------------------------ | ------------------------------------------------------------------------------------------- |
-| `ControlLine` (new AST block)  | Hold the effect fragments, the span, and an optional `Condition`; expose no speaker.        |
-| `IConditional` (new interface) | Expose a `Condition?` across guarded nodes; `IsConditional` is an extension method over it. |
-| `ControlLineRecognitionRule`   | Recognize a speaker-less, effect-only line as a `ControlLine`, after jump assembly.         |
-| `DefaultSpeakerFiller`         | Fill the default speaker on spoken lines only; never see a control line.                    |
-| `DialogueAstRewriter`          | Rewrite a `ControlLine` (its effects and condition) with a new block hook.                  |
-| `ScriptNodeExtensions`         | Enumerate a `ControlLine`'s children (its effects) for traversal.                           |
-| `DialogueAstProjection`        | Project a `ControlLine` to a report node with a control category.                           |
-| `OrphanConditionRule`          | Treat a `ControlLine`'s condition as a bound guard, not an orphan.                          |
-| `UnreachableAfterJumpRule`     | Apply the after-a-jump reachability check to a jump on a control line.                      |
+| Component                      | Responsibility                                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `ControlLine` (new AST block)  | Hold the effect fragments, the span, and an optional `Condition`; expose no speaker.            |
+| `IConditional` (new interface) | Expose a `Condition?` across conditional nodes; `IsConditional` is an extension method over it. |
+| `ControlLineRecognitionRule`   | Recognize a speaker-less, effect-only line as a `ControlLine`, after jump assembly.             |
+| `DefaultSpeakerFiller`         | Fill the default speaker on spoken lines only; never see a control line.                        |
+| `DialogueAstRewriter`          | Rewrite a `ControlLine` (its effects and condition) with a new block hook.                      |
+| `ScriptNodeExtensions`         | Enumerate a `ControlLine`'s children (its effects) for traversal.                               |
+| `DialogueAstProjection`        | Project a `ControlLine` to a report node with a control category.                               |
+| `OrphanConditionRule`          | Treat a `ControlLine`'s condition as a bound guard, not an orphan.                              |
+| `UnreachableAfterJumpRule`     | Apply the after-a-jump reachability check to a jump on a control line.                          |
 
 ## Key design decisions
 
-### D1 — A distinct sibling type, guarded through `IConditional`
+### D1 — A distinct sibling type, conditional through `IConditional`
 
 The root smell is that `Line.Speaker` is nullable and **overloaded**: `null` means
 both *"spoken, default speaker"* and *"not spoken."* A boolean such as
@@ -199,7 +199,7 @@ unrepresentable otherwise — the SOLID, domain-driven choice.
 under a new shared line base. The two share almost no *behavior* to hoist — every
 block consumer switches and diverges per concrete type — and the one field they do
 share, an optional `Condition`, is **not** line-specific: it already recurs on
-`Choice`, `RandomOption`, and `Jump`. So the guard is modeled as a small capability
+`Choice`, `RandomOption`, and `Jump`. So the condition is modeled as a small capability
 interface, `IConditional` (a `Condition?`), implemented by all of them, with
 `IsConditional` extracted as an **extension method** over the interface — which
 also removes today's duplicated predicate. A shared abstract line base, by
@@ -246,7 +246,7 @@ to match.
 A `ControlLine` holds an ordered `IReadOnlyList<InlineFragment>` of effects, reusing
 the existing `Jump` and command nodes rather than inventing effect types, and keeps
 their spans. It carries an optional `Condition`, so a conditional bare jump or a
-conditional silent command is a guarded control line; the guard follows the same
+conditional silent command is a conditional control line; the condition follows the same
 rule as a [conditional jump](./Conditional%20Jump.md).
 
 ### D6 — Every block switch handles the new kind
@@ -296,10 +296,10 @@ No new diagnostic is introduced. Two existing rules generalize to the new kind:
 
 ## Alternatives not chosen
 
-- **A flag on `Line`** (`IsControl`) — rejected in [D1](#d1--a-distinct-sibling-type-guarded-through-iconditional):
+- **A flag on `Line`** (`IsControl`) — rejected in [D1](#d1--a-distinct-sibling-type-conditional-through-iconditional):
   it keeps the overloaded speaker and scatters branches across consumers.
 - **A shared abstract line base** (`SpokenLine`/`ControlLine` under a new base) —
-  rejected in [D1](#d1--a-distinct-sibling-type-guarded-through-iconditional): the
+  rejected in [D1](#d1--a-distinct-sibling-type-conditional-through-iconditional): the
   two share little behavior to hoist, it renames the most common domain word, its
   base has no natural name, and it still misses the cross-cutting guard that the
   `IConditional` interface captures.

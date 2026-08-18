@@ -9,7 +9,7 @@ namespace DialogueDown.Graph.Builder;
 /// A spoken line under construction: its resolved speaker and displayable speech, combined with
 /// the edges accumulated by graph passes when frozen.
 /// </summary>
-internal sealed class LineNodeDraft : NodeDraft, IGuardedNode
+internal sealed class LineNodeDraft : NodeDraft, IConditionalNode
 {
     private readonly SpeakerSymbol _speaker;
     private readonly IReadOnlyList<InlineFragment> _speech;
@@ -19,27 +19,27 @@ internal sealed class LineNodeDraft : NodeDraft, IGuardedNode
         SourceSpan span,
         SpeakerSymbol speaker,
         IReadOnlyList<InlineFragment> speech,
-        Condition? guard = null)
+        Condition? condition = null)
         : base(id, span)
     {
         ArgumentNullException.ThrowIfNull(speaker);
         ArgumentNullException.ThrowIfNull(speech);
         _speaker = speaker;
         _speech = speech;
-        Guard = guard;
+        Condition = condition;
     }
 
     /// <inheritdoc/>
-    public Condition? Guard { get; }
+    public Condition? Condition { get; }
 
     /// <inheritdoc/>
     /// <remarks>
-    /// A guard may skip the node whole, taking any divert it holds with it, so the fall-through is
-    /// the route left when the guard reads false.
+    /// A condition may skip the node whole, taking any divert it holds with it, so the fall-through is
+    /// the route left when the condition reads false.
     /// </remarks>
     public override bool LeavesUnconditionally() =>
-        Guard is null && base.LeavesUnconditionally();
+        Condition is null && base.LeavesUnconditionally();
 
     protected override DialogueNode CreateNode() =>
-        new LineNode(Id, Span, _speaker, _speech, Out.ToArray(), Guard);
+        new LineNode(Id, Span, _speaker, _speech, Out.ToArray(), Condition);
 }

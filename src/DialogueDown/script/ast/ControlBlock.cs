@@ -5,7 +5,7 @@ namespace DialogueDown.Script.Ast;
 /// <summary>
 /// A block conditional: an ordered list of mutually-exclusive <see cref="Branches"/> — the
 /// <c>if</c>, its <c>elseif</c>s, and an optional <c>else</c>. At play time the first branch whose
-/// guard holds is taken; otherwise the optional <c>else</c> is taken. Without a matching guard or
+/// condition holds is taken; otherwise the optional <c>else</c> is taken. Without a matching condition or
 /// <c>else</c>, no branch is taken. It mirrors <see cref="Choices"/> — a group that holds arms,
 /// each owning a body.
 /// </summary>

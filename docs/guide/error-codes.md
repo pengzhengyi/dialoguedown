@@ -190,7 +190,7 @@ Every branch of a block conditional belongs to one connected blockquote. An `els
 
 `{0}` cannot appear here. A control block must contain one `if`, followed by zero or more `elseif` branches, then at most one `else`.
 
-A block conditional has one `if`, then any `elseif` branches, then at most one `else`. Move a guarded branch before the fallback instead of adding another `else` afterward.
+A block conditional has one `if`, then any `elseif` branches, then at most one `else`. Move a conditional branch before the fallback instead of adding another `else` afterward.
 
 <span class="dd-eg-bad">Triggering example</span>
 
@@ -245,7 +245,7 @@ A branch marker is its own paragraph. Keep the blockquote connected, but add a q
 
 A `{0}` marker requires a condition in a separate code span, such as `{0}` `Rich?`.
 
-An `if` or `elseif` marker needs its guard in a second code span. Add a condition such as `Rich?`; only `else` is unguarded.
+An `if` or `elseif` marker needs its condition in a second code span. Add a condition such as `Rich?`; only `else` is unconditional.
 
 <span class="dd-eg-bad">Triggering example</span>
 
@@ -265,7 +265,7 @@ An `if` or `elseif` marker needs its guard in a second code span. Add a conditio
 
 An `else` marker cannot have the condition `{0}?`. Remove the condition for a fallback branch, or change `else` to `elseif`.
 
-An `else` is the unguarded fallback, so it cannot carry a condition. Remove the guard, or write `elseif` when the branch should be conditional.
+An `else` is the unconditional fallback, so it cannot carry a condition. Remove the condition, or write `elseif` when the branch should be conditional.
 
 <span class="dd-eg-bad">Triggering example</span>
 

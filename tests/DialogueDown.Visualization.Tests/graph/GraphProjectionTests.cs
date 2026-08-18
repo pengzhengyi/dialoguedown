@@ -199,13 +199,13 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_AGuardedLine_CarriesItsGuardAsAnAttribute()
+    public void Project_AConditionalLine_CarriesItsConditionAsAnAttribute()
     {
         var graph = Project("""`"Brave"?` Alice: you enter""");
 
         Assert.Contains(
             graph.Nodes[0].Attributes,
-            attribute => attribute.Name == "guard" && attribute.Value == "Brave?");
+            attribute => attribute.Name == "condition" && attribute.Value == "Brave?");
     }
 
     [Fact]

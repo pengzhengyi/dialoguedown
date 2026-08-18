@@ -160,7 +160,7 @@ flowchart TB
     subgraph narrow["Narrow — a bounded column"]
         direction TB
         N1["#explorer<br/>content-sized, max 25dvh"]
-        N2["#stages<br/>flexible, min-height guarded"]
+        N2["#stages<br/>flexible, min-height conditional"]
         N3["#detail<br/>60/40 with the stage"]
         N1 --- N2 --- N3
     end

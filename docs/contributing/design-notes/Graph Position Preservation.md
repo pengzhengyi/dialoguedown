@@ -137,7 +137,7 @@ The default framing anchors the root near the left edge and vertically centered 
 a readable 100%, so the reader starts at the root with its subtree filling the
 viewport rightward — rather than a whole-graph fit that shrinks large trees. It is
 applied once the tab's container has a real size (a just-shown tab reads zero until
-it lays out), retried per frame and capped, and guarded by a generation token so a
+it lays out), retried per frame and capped, and conditional by a generation token so a
 stale retry cannot clobber a camera a later reveal has applied.
 
 The zoom toolbar's ratio becomes a number input the reader types a percentage into
@@ -198,7 +198,7 @@ that restores the default framing and clears the graph's remembered position.
 - [x] `TreeView.applyView`, the `onCameraChange` / `onFoldChange` / `onRevert`
       hooks and initial camera/fold on `createTreeView`, with reader-gesture
       detection.
-- [x] Root-centered default framing (real-size retry, generation-token guarded).
+- [x] Root-centered default framing (real-size retry, generation-token conditional).
 - [x] Zoom toolbar: editable percentage input and a Revert button.
 - [x] `runApp` records adjustments live and applies the store on reveal / rebuild.
 - [x] Vitest coverage for the store and the zoom controls.

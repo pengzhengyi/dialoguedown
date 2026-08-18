@@ -10,7 +10,7 @@
 > [compilation outcome](./Compilation%20Outcome.md).
 >
 > This note covers **building** the graph, and stops there. Walking it — evaluating a
-> guard, picking an edge, keeping a detour's call stack — belongs to the
+> condition, picking an edge, keeping a detour's call stack — belongs to the
 > [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which owns those
 > shapes so the code that needs them can settle them.
 
@@ -79,24 +79,24 @@ flow is one document-order chain that reads straight through the nesting — the
 runtime walks.
 
 The graph is **directed** and supports every branching shape the language needs:
-**cycles** (a divert back to an earlier scene), **conditional edges** (a `key?` guard),
+**cycles** (a divert back to an earlier scene), **conditional edges** (a `key?` condition),
 **dynamic edges** (a `key%`/weighted random pick), and **grouping** (a scene, and later
 an `if`/`else` branch or a whole file, as a named region).
 
 **In scope:** the immutable dialogue-graph IR, and the **builder** (the graph
 compiler) that lowers a `SemanticModel` into it for the constructs that ship today —
 reading-order succession, the non-returning divert, choices and random choices, control
-lines, `#END`, and the `key?` guard on a conditional line, jump, or choice. The builder
+lines, `#END`, and the `key?` condition on a conditional line, jump, or choice. The builder
 plugs into the compiler facade as the stage after semantic analysis.
 
 **Out of scope:**
 
-- **Everything at play time** — walking the graph, evaluating a guard or a weight,
+- **Everything at play time** — walking the graph, evaluating a condition or a weight,
   running effects, picking an edge, and the returning detour's call stack. That is the
   [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which shapes its own
   hooks and edge kinds against a consumer rather than inheriting a guess from here.
 - **Block controls** (`if`/`elseif`/`else`) — lowered here to a **Branch** node whose
-  guarded, ordered **Branch** edges the first satisfied one wins among; the construct
+  conditional, ordered **Branch** edges the first satisfied one wins among; the construct
   itself is the [Block Controls](./Block%20Controls.md) note.
 - **Cross-file links** — reserved by letting a `NodeId` widen to a project-qualified id;
   a file grouping arrives with it. Resolution is the [Cross-File Jump Resolution](./Cross-File%20Jump%20Resolution.md) note.
@@ -109,9 +109,9 @@ plugs into the compiler facade as the stage after semantic analysis.
 | **Node** | A unit of flow — one script block (a line, a control line, a choice), plus the terminal **End** node. Carries content and its outgoing edges. |
 | **Edge** | A directed connection from one node to a target, of a specific **kind**. |
 | **Succession** | The default edge: fall-through to the next block in document order (see [Progression Order](./Progression%20Order.md)). |
-| **Divert** | A non-returning `=>` edge. A **guarded** divert (a `key?` condition) fires only when its guard reads true. |
-| **Option** | One arm of a choice: a target with a label, an optional guard, and an optional weight. |
-| **Guard** | An opaque `key?` condition — the AST `Condition` — carried on an edge; the host decides its truth at play time. |
+| **Divert** | A non-returning `=>` edge. A **conditional** divert (a `key?` condition) fires only when its condition reads true. |
+| **Option** | One arm of a choice: a target with a label, an optional condition, and an optional weight. |
+| **Condition** | An opaque `key?` test — the AST `Condition` — carried on an edge or a node; the host decides its truth at play time. An edge's condition withholds a **route**; a node's withholds its **content**. |
 | **Weight** | An opaque option weight — the AST `ChoiceWeight` (`key%`, numeric, or auto); the host resolves the random pick. |
 | **Effect** | A game-system call — the AST `GameCall` (`GiveGold("5")`) — a node runs when it plays. |
 | **Region** | A named grouping of nodes overlaid on the flat graph — a scene now; a branch or a file later. Metadata, not flow. Its **own nodes** are the ones it holds directly, and its **subregions** are the groupings nested in it. |
@@ -150,7 +150,7 @@ core dependency.
 - [x] Emit one **node per block**: `LineNode`, `ControlNode`, `ChoiceNode`, `RandomChoiceNode`, `BranchNode`, and the single `EndNode`. A `SceneHeading` names a scene rather than playing, so it is no node.
 - [x] Wire a **Succession** edge from each block to the next block in document order (fall-through).
 - [x] Lower a jump to a **Divert**: `SceneJump` → the target scene's entry node; `TerminalJump` → `EndNode`.
-- [x] Carry a `key?` condition as a **Guard**: on an edge when it withholds a route (a divert, a choice arm, a branch), on the **node** when it withholds a block's content. Either way a fall-through sibling is the path left.
+- [x] Carry a `key?` **Condition**: on an edge when it withholds a route (a divert, a choice arm, a branch), on the **node** when it withholds a block's content. Either way a fall-through sibling is the path left.
 - [x] Lower `Choices`/`RandomChoices` to a **Choice** or **Random choice** node fanning out **Option** edges; a random option carries its **Weight**; both arms weave back through the walk's continuations, not through a region.
 - [x] Carry a block's inline game calls as ordered **Effects** on its node.
 - [x] Build the **region overlay** from the scene tree: one **Scene** region per scene, nested, each exposing its **entry** and **exit** node. Only an *addressable* grouping earns a region, so a block control's branch does not.
@@ -210,13 +210,13 @@ sealed record ControlNode(NodeId Id, IReadOnlyList<GameCall> Effects,
 sealed record ChoiceNode (NodeId Id, IReadOnlyList<Edge> Out) : DialogueNode;  // fan-out via Option edges
 sealed record EndNode    (NodeId Id) : DialogueNode;                            // the #END sentinel
 
-// ── Edges ── sealed kinds; each names its target by id. A guard reuses the AST Condition
+// ── Edges ── sealed kinds; each names its target by id. An edge reuses the AST Condition
 //    and a weight the AST ChoiceWeight — both opaque, the host decides them at play time.
 abstract record Edge(NodeId Target);
 sealed record Succession(NodeId Target)                          : Edge(Target);  // fall-through
-sealed record Divert    (NodeId Target, Condition? Guard = null) : Edge(Target);  // => (conditional if guarded)
+sealed record Divert    (NodeId Target, Condition? Condition = null) : Edge(Target);  // => (conditional when set)
 sealed record Option    (NodeId Target, IReadOnlyList<InlineFragment> Label,
-                         Condition? Guard, ChoiceWeight? Weight)  : Edge(Target);
+                         Condition? Condition, ChoiceWeight? Weight)  : Edge(Target);
 
 // ── Grouping overlay ── metadata over the flat graph, not part of its topology. The kind is
 //    the type, so each grouping carries only the metadata it owns.
@@ -247,9 +247,9 @@ flowchart LR
 
 **Diverts run before succession.** A node that leaves unconditionally must not also fall
 through, and it is simpler to *withhold* an edge than to add one and remove it later — so
-succession skips any node that already carries an unguarded divert. A **guarded** divert
+succession skips any node that already carries an unconditional divert. A **conditional** divert
 leaves the fall-through in place, and that sibling edge *is* the "skip" path taken when the
-guard reads false.
+condition reads false.
 
 The context computes the two reading-order views once per build — the document-order blocks
 and each scene's **entry block** — so no pass recomputes them.
@@ -320,22 +320,33 @@ flowchart LR
   when it owns no content — at the next block in reading order, and a scene with nothing
   after it ends the run. The graph layer only maps those blocks to nodes, and the rule
   stays testable without building a graph at all.
-- **Conditions and dynamics ride edges, not synthetic nodes.** A `key?` guard sits on
-  the edge it guards (`Divert(target, Guard)` with a fall-through sibling); a random pick
+- **Conditions and dynamics ride edges, not synthetic nodes.** A `key?` condition sits on
+  the edge it withholds (`Divert(target, Condition)` with a fall-through sibling); a random pick
   is a `ChoiceNode` whose `Option` edges carry a `Weight`. This keeps the IR compact and
   every stop **source-mapped** to a block the writer wrote — decisive for a step-through
   debugger, where "force this path" and "override this condition" become one uniform
   action over a node's `Out` list, at real nodes rather than synthetic decision diamonds.
-  The graph tab can still *render* a guarded edge as a decision glyph — a projection
+  The graph tab can still *render* a conditional edge as a decision glyph — a projection
   concern, not the IR's.
-- **A guard binds at the level it is written.** A guard on a **jump** rides that jump's
-  divert, so the node keeps its fall-through as the path taken when the guard reads false.
-  A guard on the **block** itself guards the block's whole content, so it needs an edge
-  that skips the block — a different lowering, and the builder rejects a guarded block
-  rather than silently dropping the guard until that lands.
+- **One word for one concept: `condition`.** The writer reads *condition*, the guide says
+  *condition*, the AST type is `Condition`, and the playbook publishes `condition` — so the
+  graph says `Condition` too, rather than keeping a second name for the same idea at one
+  layer's boundary. A synonym that appears only inside the graph is a term every reader has
+  to learn and translate, and it earns nothing: the two words never distinguished two
+  things. Where the distinction that *does* matter needs saying, say it directly — an edge's
+  condition withholds a **route**, a node's withholds its **content**. The old word reached
+  further than the graph's types: the node inspector labelled the attribute `guard`, and the
+  diagnostics called an `else` the *unguarded* fallback, so the projection and the
+  error-code reference moved with it. Only the **verb** stays English — a condition still
+  guards the jump it precedes — because that sense names no concept.
+- **A condition binds at the level it is written.** A condition on a **jump** rides that jump's
+  divert, so the node keeps its fall-through as the path taken when the condition reads false.
+  A condition on the **block** itself withholds the block's whole content, so it needs an edge
+  that skips the block — a different lowering, and the builder rejects a conditional block
+  rather than silently dropping the condition until that lands.
 - **Block-level nodes.** One node per block. An inline jump ending a line adds a `Divert`
   to that `LineNode` and withholds its `Succession`; inline game calls become the node's
-  `Effects`. A conditional block is reached through a **guarded entry edge** with a
+  `Effects`. A conditional block is reached through a **conditional entry edge** with a
   fall-through sibling that skips it — the predecessor chooses to enter or skip, exactly
   Roslyn's conditional-versus-fall-through shape.
 - **The node payload reuses the semantic model and AST (bind, don't copy).** A `Line`'s
@@ -347,7 +358,7 @@ flowchart LR
   | --- | --- | --- |
   | `Text`, `StyledText`, `Image`, `Link`, `LineBreak` | the node's **speech** | the AST `InlineFragment`s |
   | `GameCall` | an **Effect** on the node | the AST `GameCall` |
-  | `Jump` → a `Divert` edge; `Condition` → an edge **Guard** | control, lifted out of the payload | the AST `Condition` / `JumpResolution` |
+  | `Jump` → a `Divert` edge; `Condition` → an edge **Condition** | control, lifted out of the payload | the AST `Condition` / `JumpResolution` |
 
   The speaker is the resolved `SpeakerSymbol` from the `SpeakerTable`, and a weight is the
   AST `ChoiceWeight`. The tradeoff: the graph references AST types rather than standing
@@ -364,7 +375,7 @@ flowchart LR
   UUID is deliberately *not* used: it adds uniqueness without the reuse-matching stability
   incrementality needs, and it would make structural tests non-deterministic. Cross-file
   ids widen to `(ScriptId, local)` rather than a global id, keeping *which script* explicit.
-- **Conditions and weights stay opaque.** A `Guard` (the AST `Condition`) carries a key
+- **Conditions and weights stay opaque.** A `Condition` (reused from the AST) carries a key
   and a `Weight` (the AST `ChoiceWeight`) a number or a key — the core never evaluates
   them; the host does at play time. This keeps the engine-agnostic core free of an
   expression language it does not yet need, mirroring the DSL's single-key `?`/`%`.
@@ -380,7 +391,7 @@ flowchart LR
 | Empty document (root scene, no blocks) | A graph whose `Entry` is the `EndNode`; no error. |
 | Heading-only scene (no blocks) | It bounds no region, since it owns no nodes. A divert to it lands on its fall-through target — the next block in document order, or the `EndNode` when nothing follows. |
 | Leading content before the first heading | Ordinary nodes that belong to no region; the root scene has no heading, so it is not itself a region. |
-| Content after a divert | An unguarded divert is the node's only outgoing edge; the unreachable content already drew `DLG1003` at analysis, so the builder simply does not wire it. |
+| Content after a divert | An unconditional divert is the node's only outgoing edge; the unreachable content already drew `DLG1003` at analysis, so the builder simply does not wire it. |
 | `UnresolvedJump` (empty target, or a missing scene) | The semantic analyzer already reported it; the builder emits no divert (a dead end), never throwing on a resolution the analyzer admitted. |
 | `FileScopedJump` (another file, or a URL) | Analysis reports `DLG2016` and the builder wires no divert, so the line reads on. Cross-file resolution is [#59](https://github.com/pengzhengyi/dialoguedown/issues/59). |
 | A `SceneHeading` nested in a branch or an option body | Already reported (`DLG2015`) and left among the blocks, so the builder passes over it rather than failing on a script analysis admitted. |
@@ -420,7 +431,7 @@ part of this component.
   document — are asserted directly, with no draft or pass involved.
 - **Shape assertions.** Cover each lowering rule: succession chains a line to the next
   block; a divert points at the target scene's entry; a `#END` divert reaches the End node;
-  a guarded jump keeps its fall-through sibling; a choice fans out and weaves back; a cycle
+  a conditional jump keeps its fall-through sibling; a choice fans out and weaves back; a cycle
   is an edge to an earlier id; effects ride their node.
 - **Boundary tests.** The empty document, a heading-only scene, content after a divert, an
   unresolved jump, and a file-scoped jump each assert the table above.
@@ -431,8 +442,8 @@ part of this component.
 
 | Outcome | Result |
 | --- | --- |
-| **Achieved** | Every construct the language has lowers to nodes and typed edges: lines, control lines, player and random choices, block conditionals, jumps, and the End sentinel. Guards, weights, effects, source spans, and the scene overlay all ride along, and the stage runs inside the compiler so a clean compile carries its graph. |
-| **Changed** | Three shapes moved once the code pushed back. A guard on a **block** belongs on the node, not on an edge — an edge withholds a route, a node withholds content — which needed `IGuardedNode` beside the planned `IGuardedEdge`. Choice arms weave back through the **block walk's continuations**, not through a region's `Exit`, which made nesting fall out for free and left regions purely descriptive. And a `BranchRegion` was designed but never built: a region groups what can be **addressed**, and nothing can name a branch. |
+| **Achieved** | Every construct the language has lowers to nodes and typed edges: lines, control lines, player and random choices, block conditionals, jumps, and the End sentinel. Conditions, weights, effects, source spans, and the scene overlay all ride along, and the stage runs inside the compiler so a clean compile carries its graph. |
+| **Changed** | Three shapes moved once the code pushed back. A condition on a **block** belongs on the node, not on an edge — an edge withholds a route, a node withholds content — which needed `IConditionalNode` beside the planned `IConditionalEdge`. Choice arms weave back through the **block walk's continuations**, not through a region's `Exit`, which made nesting fall out for free and left regions purely descriptive. And a `BranchRegion` was designed but never built: a region groups what can be **addressed**, and nothing can name a branch. |
 | **Also built** | Two things the design did not anticipate. Every node carries its **source span**, since the graph was otherwise a closed artifact a debugger could not map back to the script. And `DLG2016` warns that a jump outside the script leads nowhere — without it, wiring the stage in would have turned a documented cross-file jump into a compiler crash. |
 | **Scope returned** | An earlier draft reserved runtime shapes here — an edge-selector hook and `Detour`/`Return` edge kinds. None were built, because none had a producer or a consumer; this component deleted an unused `BranchRegion` for the same reason. They now belong to the [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which will shape them against real use. |
 
@@ -450,12 +461,12 @@ part of this component.
 
 ## Implementation checklist
 
-- [x] IR records: `DialogueGraph`, the node union, the edge union (guards/weights reuse the AST `Condition`/`ChoiceWeight`), `Region`/`RegionTree`, `NodeId`/`RegionId`.
+- [x] IR records: `DialogueGraph`, the node union, the edge union (conditions/weights reuse the AST `Condition`/`ChoiceWeight`), `Region`/`RegionTree`, `NodeId`/`RegionId`.
 - [x] `IDialogueGraphBuilder` + `DialogueGraphBuilder`: the draft, the pass abstraction, and the orchestrator that runs a pass list and freezes.
 - [x] Node creation and succession wiring, including the fall-through to the End node.
-- [x] Jump-to-divert lowering: `#END`, scene jumps with their reading-order entry, and a jump's guard.
+- [x] Jump-to-divert lowering: `#END`, scene jumps with their reading-order entry, and a jump's condition.
 - [x] The Scene region overlay from the scene tree.
 - [x] Retire the primitive `DialogueDown.Graph` `INode`/`IEdge` sketch it supersedes, and reframe the `Graph` layering architecture test from a foundation leaf to a stage above the semantic analyzer.
-- [x] Choice, random-choice, and branch fan-out with weave-back, and a guard on a block itself.
+- [x] Choice, random-choice, and branch fan-out with weave-back, and a condition on a block itself.
 - [x] Wire into `ScriptCompiler` and both composition roots; expose the graph on a `CompilationSuccess`.
 - [x] Unit tests per lowering rule and boundary case; reading-guide and `CHANGELOG` entries.

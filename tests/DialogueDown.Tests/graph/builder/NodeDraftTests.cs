@@ -26,7 +26,7 @@ public sealed class NodeDraftTests
     }
 
     [Fact]
-    public void LeavesUnconditionally_UnguardedRoute_IsTrue()
+    public void LeavesUnconditionally_UnconditionalRoute_IsTrue()
     {
         var draft = new TestNodeDraft(NodeId(0));
         draft.AddEdge(new DivertEdge(NodeId(1)));
@@ -39,9 +39,9 @@ public sealed class NodeDraftTests
         Assert.False(new TestNodeDraft(NodeId(0)).LeavesUnconditionally());
 
     [Fact]
-    public void LeavesUnconditionally_GuardedNodeWithAnUnguardedRoute_IsFalse()
+    public void LeavesUnconditionally_ConditionalNodeWithAnUnconditionalRoute_IsFalse()
     {
-        // The guard may skip the node whole, so its divert is not a route control always takes.
+        // The condition may skip the node whole, so its divert is not a route control always takes.
         var draft = new LineNodeDraft(
             NodeId(0),
             SourceSpanFactory.Span(),

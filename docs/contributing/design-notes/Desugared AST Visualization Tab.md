@@ -172,7 +172,7 @@ The mode toggle governs the whole session, so it is **interactive on every tab**
 confined to the Source tab. Switching to Edit while looking at a graph is a real action
 rather than a misleading no-op: it puts the session in Edit — the accent, the save
 controls, and the Source editor a
-[Jump to source](./Live%20Visualization%20-%20Node%20Inspector.md) is about to land in. Navigation is instead guarded by the **one dirty document** rule
+[Jump to source](./Live%20Visualization%20-%20Node%20Inspector.md) is about to land in. Navigation is instead conditional by the **one dirty document** rule
 — switching tabs while there are unsaved edits prompts to Save or Discard first —
 so a stale graph is never shown beside unsaved edits.
 

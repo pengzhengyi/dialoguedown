@@ -292,7 +292,7 @@ diagnostic), and the project's aggregated `LocatedDiagnostic`s.
 **Architecture boundary:** `IProject` is the seam that keeps the core
 engine-agnostic. The core must never call `File.ReadAllText`; it depends only on
 `IProject`. This is the same discipline the compiler already applies
-to configuration, and it should be guarded by the project's architecture tests.
+to configuration, and it should be conditional by the project's architecture tests.
 
 ## Script identity and path semantics
 

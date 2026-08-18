@@ -62,7 +62,7 @@ only place that knows which runtime it will run on.**
 ### D1 — Multi-target the consumer surface, not everything
 
 Multi-targeting is not free: every target is another build and another set of test runs, and any
-API a target lacks has to be `#if`-guarded. So it is spent only where it buys something — the two
+API a target lacks has to be `#if`-conditional. So it is spent only where it buys something — the two
 libraries a game actually references. Applying it to the CLI or the visualizer would double their
 build for a compatibility nobody consumes.
 

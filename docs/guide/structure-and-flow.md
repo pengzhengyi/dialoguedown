@@ -90,7 +90,7 @@ options should appear in a random order.
 
 ## Random choices
 
-Sometimes you want the *engine* to pick, not the player — a guard who greets you
+Sometimes you want the *engine* to pick, not the player — a condition who greets you
 one of several ways, a coin that lands heads or tails. Give an option a **weight**
 — a code span ending in `%` — and the whole list becomes a **random choice**: at
 runtime the engine selects exactly one option by weight and runs its body. No
@@ -311,7 +311,7 @@ The guard says nothing and waves you through.
 
 If `Angry` is true, that line plays; if it is false, the line is skipped and
 reading continues with the next line. The condition is not spoken — it sits
-before the speaker, and `Guard` is still recognized as the speaker.
+before the speaker, and `Condition` is still recognized as the speaker.
 
 A line with no speaker can be conditional too:
 

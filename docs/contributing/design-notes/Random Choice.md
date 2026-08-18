@@ -30,7 +30,7 @@
 
 ## Goal and scope
 
-A writer often wants *variety* rather than a *decision*: a guard who greets you
+A writer often wants *variety* rather than a *decision*: a condition who greets you
 one of several ways, a crowd that reacts unpredictably, a coin that lands one of
 two ways. Today the only branch in DialogueDown is a **player choice** — a list
 whose options are offered to the player. There is no way to say "let the engine

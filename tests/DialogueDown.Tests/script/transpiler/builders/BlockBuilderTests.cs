@@ -177,10 +177,10 @@ public sealed class BlockBuilderTests
         ]);
 
         var choices = AssertChoices(Assert.Single(body), isOrdered: false);
-        var guarded = choices.Options[0];
-        AssertCondition(guarded.Condition!, "HasKey");
-        Assert.True(guarded.IsConditional());
-        AssertSpeechText(AssertChoiceLine(guarded), "Use the key.");
+        var conditional = choices.Options[0];
+        AssertCondition(conditional.Condition!, "HasKey");
+        Assert.True(conditional.IsConditional());
+        AssertSpeechText(AssertChoiceLine(conditional), "Use the key.");
 
         Assert.Null(choices.Options[1].Condition);
         AssertSpeechText(AssertChoiceLine(choices.Options[1]), "Search for another way.");
@@ -189,7 +189,7 @@ public sealed class BlockBuilderTests
     [Fact]
     public void ChoiceItem_ConditionBindsTheOption_NotItsInnerLine()
     {
-        // The guard sits on the option, so its first line stays an ordinary line with its speaker.
+        // The condition sits on the option, so its first line stays an ordinary line with its speaker.
         var body = Build(
         [
             ListBlock(
@@ -218,11 +218,11 @@ public sealed class BlockBuilderTests
         ]);
 
         var random = AssertRandomChoices(Assert.Single(body));
-        var guarded = random.Options[0];
-        AssertCondition(guarded.Condition!, "IsAngry");
-        Assert.True(guarded.IsConditional());
-        AssertNumberWeight(guarded, 50);
-        AssertSpeechText(AssertRandomOptionLine(guarded), "The guard glares.");
+        var conditional = random.Options[0];
+        AssertCondition(conditional.Condition!, "IsAngry");
+        Assert.True(conditional.IsConditional());
+        AssertNumberWeight(conditional, 50);
+        AssertSpeechText(AssertRandomOptionLine(conditional), "The guard glares.");
         Assert.Null(random.Options[1].Condition);
     }
 
