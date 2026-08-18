@@ -2333,28 +2333,14 @@ g.node.entity-highlight text.label {
     pointer-events: none;
 }
 
-/* Said when the reader arrives somewhere they did not quite ask for: a jump from ignored Markdown
-   settles on the node around it, because no stage holds a node for text the compiler left out. It
-   reads as information, not a fault -- nothing went wrong, the answer is simply "nowhere". */
-.dd-detail-note {
-    display: flex;
-    gap: 0.4rem;
-    align-items: flex-start;
-    margin: 0 0 0.6rem;
-    padding: 0.45rem 0.55rem;
-    border-left: 3px solid color-mix(in srgb, var(--md-muted) 55%, transparent);
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--pico-background-color) 94%, var(--md-muted));
-    color: var(--pico-color);
+/* Said beside the node a jump landed on, when that node is not what the reader asked for: no stage
+   holds a node for text the compiler left out, so the jump settles on what encloses it. It reads as
+   information, not a fault -- nothing went wrong; the answer is simply "nowhere". */
+.dd-arrival-note {
+    max-width: 20rem;
     font-size: 0.78rem;
-    line-height: 1.4;
-}
-
-.dd-detail-note-icon {
-    flex: 0 0 auto;
-    margin-top: 0.1rem;
-    color: var(--md-muted);
-    font-size: 0.85rem;
+    line-height: 1.45;
+    text-align: left;
 }
 
 /* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather

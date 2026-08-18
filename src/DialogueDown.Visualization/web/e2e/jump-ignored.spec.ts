@@ -75,8 +75,15 @@ test.beforeEach(async ({ page }) => {
 test("says a jump from ignored Markdown settled for the node around it", async ({ page }) => {
     await jumpFrom(page, "| Rope | 5 |", "Dialogue AST");
 
-    const note = page.locator(".dd-detail-note");
+    const note = page.locator(".dd-arrival-note");
     await expect(note).toBeVisible();
+    // Beside the drawing the reader arrived in, not inside the panel they are not looking at.
+    const [noteBox, graph] = await Promise.all([
+        note.boundingBox(),
+        page.locator(".stage.active svg").first().boundingBox(),
+    ]);
+    if (!noteBox || !graph) throw new Error("Could not measure the arrival note.");
+    expect(noteBox.x).toBeLessThan(graph.x + graph.width);
     // What was looked for, and what is being shown instead.
     await expect(note).toContainText("ignored");
     await expect(note).toContainText("Dialogue AST");
@@ -90,14 +97,14 @@ test("says nothing when the selection has a node of its own", async ({ page }) =
     await jumpFrom(page, "Trader: Apples.", "Dialogue AST");
 
     await expect(page.locator("#detail-title")).toContainText("Trader: Apples.");
-    await expect(page.locator(".dd-detail-note")).toHaveCount(0);
+    await expect(page.locator(".dd-arrival-note")).toHaveCount(0);
 });
 
-test("clears the note once the reader selects a node on its own terms", async ({ page }) => {
+test("puts the note away once the reader gets on with the reading", async ({ page }) => {
     await jumpFrom(page, "| Rope | 5 |", "Dialogue AST");
-    await expect(page.locator(".dd-detail-note")).toBeVisible();
+    await expect(page.locator(".dd-arrival-note")).toBeVisible();
 
     await page.locator("g.node", { hasText: "Trader" }).first().locator("circle").click();
 
-    await expect(page.locator(".dd-detail-note")).toHaveCount(0);
+    await expect(page.locator(".dd-arrival-note")).toBeHidden();
 });

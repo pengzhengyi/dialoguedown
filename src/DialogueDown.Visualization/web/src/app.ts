@@ -37,6 +37,7 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
 import { ellipsize, escapeHtml } from "./text";
+import { hideArrivalNote, showArrivalNote } from "./arrival-note";
 
 /**
  * The stages that have read Dialogue meaning into the document, and so render `=>` as the jump
@@ -305,14 +306,19 @@ export function runApp(
         const land = (): void => {
             activate(index);
             views[index]?.selectById(match.node.id, { center: true, reveal: true });
-            // Said after the selection, which renders the panel afresh and clears any prior note.
             // Ignored Markdown becomes no node in any stage, so the jump lands on the node that
-            // encloses it; without a word, that reads as what the text turned into.
-            panel.note(
-                context.ignored
-                    ? `That text is ignored, so no ${title} node was made from it. ` +
-                          `Showing ${ellipsize(match.node.label || (match.node.typeName ?? "the node"), 40)}, the closest node around it.`
-                    : null,
+            // encloses it. Said beside that node rather than inside the inspector: after a jump the
+            // reader is watching the drawing they arrived in, not the panel beside it.
+            if (!context.ignored) {
+                hideArrivalNote();
+                return;
+            }
+            const landed = document.querySelector(".stage.active g.node.selected");
+            if (landed == null) return;
+            showArrivalNote(
+                landed,
+                `That text is ignored, so no ${title} node was made from it. ` +
+                    `The closest node around it is \u201C${ellipsize(match.node.label || (match.node.typeName ?? "the node"), 40)}\u201D.`,
             );
         };
         if (source?.beginNavigation) source.beginNavigation(land);

@@ -20,35 +20,6 @@ describe("createDetailPanel", () => {
         expect(body.textContent).toContain("Jump to source");
     });
 
-    describe("a note about how the reader arrived", () => {
-        const node: DisplayNode = { id: "n1", label: "The Market", attributes: [] };
-
-        it("states what the jump could not find, above the node it settled on", () => {
-            panel.show(node);
-            panel.note("This text is ignored, so it has no node here.");
-
-            const note = body.querySelector(".dd-detail-note");
-            expect(note?.textContent).toContain("ignored");
-            // Above the node's own detail, since it explains what the reader is looking at.
-            expect(body.firstElementChild).toBe(note);
-        });
-
-        it("clears the note on the next selection, which arrived another way", () => {
-            panel.show(node);
-            panel.note("This text is ignored, so it has no node here.");
-            panel.show(node);
-
-            expect(body.querySelector(".dd-detail-note")).toBeNull();
-        });
-
-        it("takes null to say nothing", () => {
-            panel.show(node);
-            panel.note(null);
-
-            expect(body.querySelector(".dd-detail-note")).toBeNull();
-        });
-    });
-
     it("shows a category color dot and the escaped label", () => {
         const node: DisplayNode = {
             id: "n1",

@@ -22,7 +22,6 @@ function cellText(label: string): string {
     return `<span class="cell-text">${escapeHtml(ellipsize(label, MAX_CELL_TEXT))}</span>`;
 }
 import { createJumpButton, type JumpButton } from "./jump-button";
-import { codicon } from "./codicon";
 import { edgeStyle } from "./edge-style";
 import type { Neighbor, Neighbors } from "./neighbors";
 import type { BorderCrossing, CrossingEnd, RegionDetail } from "./region-detail";
@@ -65,15 +64,6 @@ export interface DetailPanelOptions {
 
 export interface DetailPanel {
     show(node: DisplayNode, preview?: NodePreviewOptions): void;
-    /**
-     * Say how the reader arrived, when the answer is not the thing they asked about.
-     *
-     * A reverse jump resolves a source selection to the node that encloses it, which for text the
-     * compiler left out is a node the text never became. Silently showing that node reads as "this
-     * is what it turned into" -- the opposite of the truth -- so the panel says otherwise. Cleared
-     * by the next selection, which arrived on its own terms.
-     */
-    note(message: string | null): void;
     /** Show a route rather than a node: what it means, and the two nodes it joins. */
     showEdge(edge: EdgeDetail): void;
     /** Show a region: how much it holds, its border, and the text it was written as. */
@@ -165,15 +155,6 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
 
     bodyEl.innerHTML = NODE_DETAIL_PLACEHOLDER;
 
-    function note(message: string | null): void {
-        bodyEl.querySelector(".dd-detail-note")?.remove();
-        if (message == null) return;
-        const callout = document.createElement("p");
-        callout.className = "dd-detail-note";
-        callout.append(codicon("info", "dd-detail-note-icon"), document.createTextNode(message));
-        bodyEl.prepend(callout);
-    }
-
     // One delegated listener rather than one per row: the body is rewritten on every selection,
     // and a listener bound to a row would go with it.
     bodyEl.addEventListener("click", (event) => {
@@ -218,7 +199,6 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
     }
 
     return {
-        note,
         show(node, preview = {}) {
             renderTitle(nodeDetailTitle(node), node);
             mountPreviewHtml(bodyEl, nodeDetailBody(node, preview));
