@@ -220,7 +220,9 @@ changes easy to categorize.
 
 - **A jump from ignored Markdown says where it landed** — the compiler makes no node from text
   it leaves out, so **Jump to** settles on the node around it. A note now appears beside that node
-  on arrival, rather than presenting it as what the text became.
+  on arrival, rather than presenting it as what the text became. The **Markdown AST** tab's
+  description no longer reads as a complete parse of the file, so a construct missing from that
+  tree is expected rather than surprising.
 
 - **The Source tab's bottom row reads as one bar, edge to edge** — the split divider no longer
   shows through as a white notch between the `#END` footer and the ignored-content footer, and the
