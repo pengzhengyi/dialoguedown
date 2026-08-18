@@ -58,16 +58,22 @@ const CONTENT_NODE_RADIUS = 5;
 const CONTENT_NODE_HALO = 0.75;
 const SCENE_NODE_HALO = 1;
 
-// The arrowhead's drawn size in user units. Its tip sits at the line's own end, because the line
-// now stops on the dot's edge rather than running to the center — so there is nothing to push the
-// head back over, and nothing left for the dot to hide.
+// The arrowhead's drawn length in user units. A route stops where the head *begins* and the head
+// draws the rest, so the line is never underneath the taper: a triangle narrows to nothing at its
+// tip, and a line 1.5 wide left under it shows through as a blunt stub past the point.
 const ARROW_SIZE = 9;
 
-/** How far short of a node's center a line aimed at it should stop: its painted edge. */
+/**
+ * How far short of a node's center a line aimed at it should stop.
+ *
+ * Far enough for the head that follows it to reach the dot's painted edge and no further: the
+ * head is drawn forward from the line's end, so the line yields it the whole of its own length.
+ */
 function nodeStandoff(node: DisplayNode): number {
-    return isSceneNode(node)
+    const painted = isSceneNode(node)
         ? SCENE_NODE_RADIUS + SCENE_NODE_HALO
         : CONTENT_NODE_RADIUS + CONTENT_NODE_HALO;
+    return painted + ARROW_SIZE;
 }
 
 /**
@@ -350,11 +356,12 @@ export function createTreeView(
             defs.append("marker")
                 .attr("id", `arrow-${markerScope}-${category}`)
                 .attr("viewBox", "0 0 10 10")
-                // The tip sits on the line's own end, which stops at the dot's edge. Pushing the
-                // head back instead — the older arrangement — offsets it along the line's final
-                // *direction*, which on a curved approach points somewhere other than the center:
-                // the head lands beside the line, and stroke shows past it.
-                .attr("refX", 10)
+                // The head is drawn *forward* from the line's end rather than back over it, so
+                // the reference point is its base. Sitting the head on top of the line instead
+                // leaves the line showing past the taper — a triangle narrows to nothing at its
+                // tip, and the 1.5-wide line beneath it reads as a blunt stub through the point.
+                // Forward, the base is wider than the line it continues, and covers it.
+                .attr("refX", 0)
                 .attr("refY", 5)
                 .attr("markerWidth", ARROW_SIZE)
                 .attr("markerHeight", ARROW_SIZE)
