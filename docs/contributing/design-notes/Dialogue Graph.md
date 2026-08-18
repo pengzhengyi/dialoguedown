@@ -334,7 +334,11 @@ flowchart LR
   layer's boundary. A synonym that appears only inside the graph is a term every reader has
   to learn and translate, and it earns nothing: the two words never distinguished two
   things. Where the distinction that *does* matter needs saying, say it directly — an edge's
-  condition withholds a **route**, a node's withholds its **content**.
+  condition withholds a **route**, a node's withholds its **content**. The old word reached
+  further than the graph's types: the node inspector labelled the attribute `guard`, and the
+  diagnostics called an `else` the *unguarded* fallback, so the projection and the
+  error-code reference moved with it. Only the **verb** stays English — a condition still
+  guards the jump it precedes — because that sense names no concept.
 - **A condition binds at the level it is written.** A condition on a **jump** rides that jump's
   divert, so the node keeps its fall-through as the path taken when the condition reads false.
   A condition on the **block** itself withholds the block's whole content, so it needs an edge
