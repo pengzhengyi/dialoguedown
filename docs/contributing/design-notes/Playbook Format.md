@@ -261,7 +261,7 @@ stay additive:
 ```json
 "condition": { "kind": "key", "key": "IsCurious" }
 "weight":    { "kind": "auto" }
-"weight":    { "kind": "number", "percent": 25.0 }
+"weight":    { "kind": "number", "percentage": 25.0 }
 "weight":    { "kind": "query",  "key": "Bob.Affection" }
 ```
 
