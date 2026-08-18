@@ -1,15 +1,15 @@
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// A directory subtree the launcher may browse and serve, and the boundary that confines
+/// A directory subtree the served shell may browse, and the boundary that confines
 /// every path to it. A candidate path is normalized (resolving <c>..</c>) and
 /// canonicalized (following a terminal symlink); anything whose real location is not
 /// inside the root — an absolute path, a <c>..</c> escape, or a symlink pointing out — is
-/// rejected. This is the launcher's central security guard.
+/// rejected. This is the served shell's central security guard.
 /// </summary>
-internal sealed class LaunchRoot
+internal sealed class BrowseRoot
 {
-    private LaunchRoot(string rootDirectory) => RootDirectory = rootDirectory;
+    private BrowseRoot(string rootDirectory) => RootDirectory = rootDirectory;
 
     /// <summary>The canonical absolute path of the root directory.</summary>
     public string RootDirectory { get; }
@@ -18,7 +18,7 @@ internal sealed class LaunchRoot
     /// Creates a root at an existing directory, canonicalizing it. Throws
     /// <see cref="DirectoryNotFoundException"/> when the path is missing or not a directory.
     /// </summary>
-    public static LaunchRoot At(string directory)
+    public static BrowseRoot At(string directory)
     {
         ArgumentException.ThrowIfNullOrEmpty(directory);
         var full = Path.GetFullPath(directory);
@@ -27,7 +27,7 @@ internal sealed class LaunchRoot
             throw new DirectoryNotFoundException($"Launch root is not a directory: {directory}");
         }
 
-        return new LaunchRoot(Canonicalize(full));
+        return new BrowseRoot(Canonicalize(full));
     }
 
     /// <summary>

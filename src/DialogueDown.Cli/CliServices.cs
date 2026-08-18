@@ -20,7 +20,7 @@ internal static class CliServices
         services.AddSingleton<IErrataRenderer, ErrataRenderer>();
         services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
         services.AddSingleton<IVisualizeRunner, VisualizeRunner>();
-        services.AddSingleton<ILauncherRunner, LauncherRunner>();
+        services.AddSingleton<IServedShellRunner, ServedShellRunner>();
         return services;
     }
 }

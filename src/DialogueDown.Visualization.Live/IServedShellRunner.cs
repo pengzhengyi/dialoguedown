@@ -10,7 +10,7 @@ namespace DialogueDown.Visualization.Live;
 /// be browsed or created in the tree. Runs until canceled. Injected so the command is testable with
 /// a substitute.
 /// </summary>
-public interface ILauncherRunner
+public interface IServedShellRunner
 {
     /// <summary>
     /// Serves the report shell on a loopback port, opening the browser unless
@@ -25,7 +25,7 @@ public interface ILauncherRunner
     Task<int> RunAsync(
         string? script,
         string? root,
-        LaunchMode mode,
+        ReportMode mode,
         int? port,
         bool noOpen,
         AppliedConfiguration configuration,

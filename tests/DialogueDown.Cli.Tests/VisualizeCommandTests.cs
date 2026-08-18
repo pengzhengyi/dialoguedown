@@ -18,14 +18,14 @@ public sealed class VisualizeCommandTests
     [Fact]
     public void Visualize_NoArguments_OpensTheEmptyShellAtCurrentDirectoryInView()
     {
-        var launcher = Launcher();
-        var tester = CliTester.Create(launcher: launcher);
+        var shell = ShellRunner();
+        var tester = CliTester.Create(shell: shell);
 
         var result = tester.Run("visualize");
 
         Assert.Equal(0, result.ExitCode);
-        launcher.Received(1).RunAsync(
-            null, Directory.GetCurrentDirectory(), LaunchMode.View,
+        shell.Received(1).RunAsync(
+            null, Directory.GetCurrentDirectory(), ReportMode.View,
             null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -33,14 +33,14 @@ public sealed class VisualizeCommandTests
     public void Visualize_ScriptOnly_OpensTheServedReportInView()
     {
         using var script = new TempScript("# Scene");
-        var launcher = Launcher();
-        var tester = CliTester.Create(launcher: launcher);
+        var shell = ShellRunner();
+        var tester = CliTester.Create(shell: shell);
 
         var result = tester.Run("visualize", script.Path);
 
         Assert.Equal(0, result.ExitCode);
-        launcher.Received(1).RunAsync(
-            script.Path, null, LaunchMode.View,
+        shell.Received(1).RunAsync(
+            script.Path, null, ReportMode.View,
             null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -50,13 +50,13 @@ public sealed class VisualizeCommandTests
         using var dir = new TempDir();
         var scriptPath = dir.Write("scene.dialogue.md", "# Scene");
         dir.Write("dialogue.toml", NarratorConfig);
-        var launcher = Launcher();
-        var tester = CliTester.Create(launcher: launcher);
+        var shell = ShellRunner();
+        var tester = CliTester.Create(shell: shell);
 
         tester.Run("visualize", scriptPath);
 
-        launcher.Received(1).RunAsync(
-            scriptPath, null, LaunchMode.View, null, false,
+        shell.Received(1).RunAsync(
+            scriptPath, null, ReportMode.View, null, false,
             Arg.Is<AppliedConfiguration>(c => c!.Options.Speakers.Any(s => s.Name == "Narrator")),
             Arg.Any<CancellationToken>());
     }
@@ -66,14 +66,14 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var root = Path.GetDirectoryName(script.Path)!;
-        var launcher = Launcher();
-        var tester = CliTester.Create(launcher: launcher);
+        var shell = ShellRunner();
+        var tester = CliTester.Create(shell: shell);
 
         var result = tester.Run("visualize", script.Path, "--edit", "--root", root, "--port", "5199");
 
         Assert.Equal(0, result.ExitCode);
-        launcher.Received(1).RunAsync(
-            script.Path, root, LaunchMode.Edit, 5199, false,
+        shell.Received(1).RunAsync(
+            script.Path, root, ReportMode.Edit, 5199, false,
             Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -81,13 +81,13 @@ public sealed class VisualizeCommandTests
     public void Visualize_EditWithoutRoot_StillOpensTheServedReportInEdit()
     {
         using var script = new TempScript("# Scene");
-        var launcher = Launcher();
-        var tester = CliTester.Create(launcher: launcher);
+        var shell = ShellRunner();
+        var tester = CliTester.Create(shell: shell);
 
         tester.Run("visualize", script.Path, "--edit");
 
-        launcher.Received(1).RunAsync(
-            script.Path, null, LaunchMode.Edit, null, false,
+        shell.Received(1).RunAsync(
+            script.Path, null, ReportMode.Edit, null, false,
             Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -96,14 +96,14 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var launcher = Launcher();
-        var tester = CliTester.Create(runner: runner, launcher: launcher);
+        var shell = ShellRunner();
+        var tester = CliTester.Create(runner: runner, shell: shell);
 
         tester.Run("visualize", script.Path, "-o", "out.html", "--no-open");
 
         runner.Received(1).RunStatic(script.Path, "out.html", true, Arg.Any<AppliedConfiguration>());
-        launcher.DidNotReceive().RunAsync(
-            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
+        shell.DidNotReceive().RunAsync(
+            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<ReportMode>(), Arg.Any<int?>(),
             Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
     }
 
@@ -112,7 +112,7 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var tester = CliTester.Create(runner: runner, shell: ShellRunner());
 
         var result = tester.Run("visualize", script.Path, "--emit", "mermaid");
 
@@ -129,7 +129,7 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var tester = CliTester.Create(runner: runner, shell: ShellRunner());
 
         tester.Run("visualize", script.Path, "--emit", "dot", "-o", "scene.dot");
 
@@ -143,7 +143,7 @@ public sealed class VisualizeCommandTests
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var tester = CliTester.Create(runner: runner, shell: ShellRunner());
 
         var result = tester.Run("visualize", script.Path, "--emit", "yaml");
 
@@ -156,7 +156,7 @@ public sealed class VisualizeCommandTests
     public void Visualize_EmitWithoutScript_FailsValidation()
     {
         var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, launcher: Launcher());
+        var tester = CliTester.Create(runner: runner, shell: ShellRunner());
 
         var result = tester.Run("visualize", "--emit", "mermaid");
 
@@ -169,7 +169,7 @@ public sealed class VisualizeCommandTests
     public void Visualize_MissingConfig_FailsWithUsageError()
     {
         using var script = new TempScript("# Scene");
-        var tester = CliTester.Create(launcher: Launcher());
+        var tester = CliTester.Create(shell: ShellRunner());
 
         var result = tester.Run("visualize", script.Path, "--config", "no-such.toml");
 
@@ -179,7 +179,7 @@ public sealed class VisualizeCommandTests
     [Fact]
     public void Visualize_MissingFile_FailsWithUsageError()
     {
-        var tester = CliTester.Create(launcher: Launcher());
+        var tester = CliTester.Create(shell: ShellRunner());
 
         var result = tester.Run("visualize", "does-not-exist.dialogue.md");
 
@@ -189,21 +189,21 @@ public sealed class VisualizeCommandTests
     [Fact]
     public void Visualize_OutputWithoutScript_FailsWithUsageError()
     {
-        var tester = CliTester.Create(launcher: Launcher());
+        var tester = CliTester.Create(shell: ShellRunner());
 
         var result = tester.Run("visualize", "-o", "out.html");
 
         Assert.Equal(ExitCodes.UsageError, result.ExitCode);
     }
 
-    private static ILauncherRunner Launcher()
+    private static IServedShellRunner ShellRunner()
     {
-        var launcher = Substitute.For<ILauncherRunner>();
-        launcher
+        var shell = Substitute.For<IServedShellRunner>();
+        shell
             .RunAsync(
-                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<LaunchMode>(), Arg.Any<int?>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<ReportMode>(), Arg.Any<int?>(),
                 Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(0));
-        return launcher;
+        return shell;
     }
 }

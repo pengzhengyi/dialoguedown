@@ -4,7 +4,7 @@ using DialogueDown.Visualization.Live.Tests.Support;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
-public sealed class LauncherServerTests
+public sealed class ServedShellServerTests
 {
     private const string LandingHtml = "<!doctype html><title>Shell</title>";
 
@@ -79,7 +79,7 @@ public sealed class LauncherServerTests
         await client.PostAsJsonAsync(
             "/api/open", new { source = "proj/scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
 
-        // The launcher always serves within a root, so the report carries the project context the
+        // The shell always serves within a root, so the report carries the project context the
         // Explorer sidebar renders: the active script's root-relative path (and the root itself).
         var html = await client.GetStringAsync("/r/proj/", TestContext.Current.CancellationToken);
         Assert.Contains("\"project\":{", html);
@@ -371,7 +371,7 @@ public sealed class LauncherServerTests
     }
 
     [Fact]
-    public async Task CreateConfig_AfterOpeningEdit_WritesADialogueTomlAtTheLaunchRoot()
+    public async Task CreateConfig_AfterOpeningEdit_WritesADialogueTomlAtTheBrowseRoot()
     {
         using var tree = new TempTree();
         var root = tree.Dir("root");
@@ -456,14 +456,14 @@ public sealed class LauncherServerTests
         await Assert.ThrowsAnyAsync<Exception>(() => client.GetAsync("/", TestContext.Current.CancellationToken));
     }
 
-    private static async Task<LauncherServer> Started(TempTree tree)
+    private static async Task<ServedShellServer> Started(TempTree tree)
     {
-        var server = new LauncherServer(LaunchRoot.At(tree.Dir("root")), LandingHtml);
+        var server = new ServedShellServer(BrowseRoot.At(tree.Dir("root")), LandingHtml);
         await server.StartAsync();
         return server;
     }
 
-    private static HttpClient Client(LauncherServer server, bool followRedirects = true)
+    private static HttpClient Client(ServedShellServer server, bool followRedirects = true)
     {
         var handler = new HttpClientHandler { AllowAutoRedirect = followRedirects };
         return new HttpClient(handler) { BaseAddress = new Uri(server.BaseUrl) };
