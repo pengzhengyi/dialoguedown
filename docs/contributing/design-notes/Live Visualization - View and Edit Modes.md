@@ -163,7 +163,7 @@ one thing; `view`/`edit` only choose the **initial** side of the toggle.
   the default; export is `-o`.)
 - **Launcher:** the Static/Watch/Live radios become **View / Edit** (default View);
   opening always starts a served session. (Exporting stays a CLI concern.)
-- Internally `LaunchMode` becomes `{ View, Edit }`; the served runner is one method
+- Internally `ReportMode` becomes `{ View, Edit }`; the served runner is one method
   with a starting mode; the export keeps the existing `RunStatic` path.
 
 ## Key design decisions

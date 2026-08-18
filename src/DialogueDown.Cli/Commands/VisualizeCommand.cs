@@ -12,22 +12,22 @@ namespace DialogueDown.Cli.Commands;
 /// that shell's empty state to browse or create one. <c>-o</c> is a non-interactive static export.
 /// Every report is compiled with the project's resolved
 /// <see cref="CompilerOptions"/>. Static and text exports are delegated to
-/// <see cref="IVisualizeRunner"/>; the served shell is driven through <see cref="ILauncherRunner"/>.
+/// <see cref="IVisualizeRunner"/>; the served shell is driven through <see cref="IServedShellRunner"/>.
 /// </summary>
 internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
 {
     private readonly IVisualizeRunner _runner;
-    private readonly ILauncherRunner _launcher;
+    private readonly IServedShellRunner _shell;
     private readonly ProjectConfiguration _configuration;
 
     public VisualizeCommand(
-        IVisualizeRunner runner, ILauncherRunner launcher, ProjectConfiguration configuration)
+        IVisualizeRunner runner, IServedShellRunner shell, ProjectConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(runner);
-        ArgumentNullException.ThrowIfNull(launcher);
+        ArgumentNullException.ThrowIfNull(shell);
         ArgumentNullException.ThrowIfNull(configuration);
         _runner = runner;
-        _launcher = launcher;
+        _shell = shell;
         _configuration = configuration;
     }
 
@@ -50,7 +50,7 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
                     settings.Script, format, settings.Output, ConfigurationForScript(settings).Options));
         }
 
-        // A non-interactive HTML export never opens a server or the launcher.
+        // A non-interactive HTML export never opens a server or the shell.
         if (settings.Output is not null)
         {
             return Task.FromResult(
@@ -58,20 +58,20 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
                     settings.Script, settings.Output, settings.NoOpen, ConfigurationForScript(settings)));
         }
 
-        var mode = settings.Edit ? LaunchMode.Edit : LaunchMode.View;
+        var mode = settings.Edit ? ReportMode.Edit : ReportMode.View;
 
         // A script opens directly on its report, with the Explorer sidebar alongside it; no script
         // lands on the empty shell to browse or create one. One unified server serves both.
         if (hasScript)
         {
-            return _launcher.RunAsync(
+            return _shell.RunAsync(
                 settings.Script, settings.Root, mode, settings.Port, settings.NoOpen,
                 ConfigurationForScript(settings), cancellationToken);
         }
 
         var root = settings.Root ?? Directory.GetCurrentDirectory();
         var configuration = _configuration.ResolveApplied(settings.Config, root, root);
-        return _launcher.RunAsync(
+        return _shell.RunAsync(
             null, root, mode, settings.Port, settings.NoOpen, configuration, cancellationToken);
     }
 

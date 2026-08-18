@@ -6,7 +6,7 @@ namespace DialogueDown.Visualization.Live;
 /// <summary>
 /// Drives the non-interactive visualization outputs for the <c>dialoguedown visualize</c>
 /// command: a one-shot static HTML export, or a text emit of each stage's graph. The served
-/// View/Edit shell is driven separately through <see cref="ILauncherRunner"/>. Injected so the
+/// View/Edit shell is driven separately through <see cref="IServedShellRunner"/>. Injected so the
 /// command is testable with a substitute.
 /// </summary>
 public interface IVisualizeRunner

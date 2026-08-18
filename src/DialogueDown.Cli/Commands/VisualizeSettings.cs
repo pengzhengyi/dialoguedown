@@ -9,11 +9,11 @@ namespace DialogueDown.Cli.Commands;
 internal sealed class VisualizeSettings : CommandSettings
 {
     [CommandArgument(0, "[script]")]
-    [Description("The .dialogue.md script to visualize. Omit it to browse for one in the launcher.")]
+    [Description("The .dialogue.md script to visualize. Omit it to browse for one in the report's Explorer.")]
     public string Script { get; init; } = string.Empty;
 
     [CommandOption("--root <dir>")]
-    [Description("The folder the launcher browses and serves (the security boundary). Default: the current directory.")]
+    [Description("The folder the report's Explorer browses and serves (the security boundary). Default: the current directory.")]
     public string? Root { get; init; }
 
     [CommandOption("--edit")]
@@ -37,7 +37,7 @@ internal sealed class VisualizeSettings : CommandSettings
     public int? Port { get; init; }
 
     [CommandOption("--no-open")]
-    [Description("Do not open the report or launcher in the browser.")]
+    [Description("Do not open the report in the browser.")]
     public bool NoOpen { get; init; }
 
     /// <summary>

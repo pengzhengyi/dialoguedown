@@ -6,19 +6,19 @@ using Microsoft.Extensions.FileProviders;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// A loopback launcher server. It serves the launcher page at <c>/</c>, browses the
+/// The loopback server behind the served shell. It serves the empty shell at <c>/</c>, browses the
 /// launch root for <c>.dialogue.md</c> sources, and on open swaps in a live session for
 /// the chosen source — served once (static) or watched — under <c>/r/</c>. Browsing and
-/// serving stay confined to the launch root (see <see cref="LaunchRoot"/>); the report is
-/// mounted under <c>/r/</c> so it never collides with the launcher at <c>/</c>.
+/// serving stay confined to the launch root (see <see cref="BrowseRoot"/>); the report is
+/// mounted under <c>/r/</c> so it never collides with the empty shell at <c>/</c>.
 /// </summary>
-internal sealed class LauncherServer : IAsyncDisposable
+internal sealed class ServedShellServer : IAsyncDisposable
 {
     private const string ReportMount = "/r";
 
     private readonly WebApplication _app;
-    private readonly LaunchRoot _root;
-    private readonly string _launcherHtml;
+    private readonly BrowseRoot _root;
+    private readonly string _emptyShellHtml;
     private readonly Func<string, string, string?, LiveSession> _sessionFactory;
     private readonly object _gate = new();
     private ActiveDocument? _active;
@@ -29,17 +29,17 @@ internal sealed class LauncherServer : IAsyncDisposable
     private bool _landingRedirectsToReport;
 
     /// <summary>
-    /// Builds a launcher server for <paramref name="root"/> on the given loopback port
-    /// (0 = ephemeral), serving <paramref name="launcherHtml"/> at <c>/</c>.
+    /// Builds the served-shell server for <paramref name="root"/> on the given loopback port
+    /// (0 = ephemeral), serving <paramref name="emptyShellHtml"/> at <c>/</c>.
     /// </summary>
-    public LauncherServer(
-        LaunchRoot root,
-        string launcherHtml,
+    public ServedShellServer(
+        BrowseRoot root,
+        string emptyShellHtml,
         int port = 0,
         Func<string, string, string?, LiveSession>? sessionFactory = null)
     {
         _root = root;
-        _launcherHtml = launcherHtml;
+        _emptyShellHtml = emptyShellHtml;
         _sessionFactory = sessionFactory ?? ((path, mode, displayPath) => new LiveSession(path, mode, displayPath: displayPath));
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
@@ -104,7 +104,7 @@ internal sealed class LauncherServer : IAsyncDisposable
 
     // Served HTML is per-session and rebuilt on every launch, so it must never be cached: a stale
     // report.html would render an old bundle against the live filesystem (wrong toggles, missing
-    // features). The launcher page follows the same rule.
+    // features). The empty shell follows the same rule.
     private static IResult NoStoreHtml(HttpContext context, string html)
     {
         context.Response.Headers.CacheControl = "no-store";
@@ -159,7 +159,7 @@ internal sealed class LauncherServer : IAsyncDisposable
             return Results.StatusCode(StatusCodes.Status303SeeOther);
         }
 
-        return NoStoreHtml(context, _launcherHtml);
+        return NoStoreHtml(context, _emptyShellHtml);
     }
 
     private IResult Open(OpenRequest request, HttpContext context)
@@ -253,8 +253,8 @@ internal sealed class LauncherServer : IAsyncDisposable
         var sourceDirectory = Path.GetDirectoryName(documentPath)!;
         var reportPath = ServeRoot.For(_root.RootDirectory, sourceDirectory).ReportPath;
         var session = _sessionFactory(documentPath, mode, displayPath);
-        // The Explorer sidebar needs the project root and this script's place in it; the launcher
-        // always serves within a root, so every launcher-served report is project-aware.
+        // The Explorer sidebar needs the project root and this script's place in it; the shell
+        // always serves within a root, so every served report is project-aware.
         session.Project = new ReportProject(_root.RootDirectory, _root.Relativize(documentPath));
         // A served session always watches the file: View hot-reloads the report, Edit
         // surfaces a passive "changed on disk" chip.

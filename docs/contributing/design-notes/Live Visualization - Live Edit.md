@@ -143,7 +143,7 @@ flowchart TB
   overwrite), **records the exact bytes written**, recompiles, and returns the
   document payload (`{ mode, path, source, stages }`). It already compiles from a
   provided string via `SerializeDocument`.
-- **The server** (both `LiveVisualizationServer` for `--live` and `LauncherServer`
+- **The server** (both `LiveVisualizationServer` for `--live` and `ServedShellServer`
   for the launcher) maps `POST /api/save` to it.
 - **The watcher** still calls `Refresh` on a disk change; `Refresh` **suppresses**
   the event when disk == last-saved (the browser's own write) and otherwise pushes
@@ -258,7 +258,7 @@ Adds **one** write route to the existing live surface (loopback-only):
   `--mode`/`--live` help text drops "not yet available".
 - **Launcher.** The **Live Edit** mode option is enabled (no longer `disabled`), so a
   script opened from the launcher with Live Edit serves an editable report; the
-  `LauncherServer` maps the same save route to its active session.
+  `ServedShellServer` maps the same save route to its active session.
 
 ## Key design decisions
 
@@ -297,7 +297,7 @@ pushed (a hot-reload for Watch, the chip for Live).
 ### D5 — One write route on the shared session
 
 Editing is one `LiveSession` method (`Save`) plus one route (`POST /api/save`),
-shared by the direct (`LiveVisualizationServer`) and launcher (`LauncherServer`)
+shared by the direct (`LiveVisualizationServer`) and launcher (`ServedShellServer`)
 paths. No new server, no new session type, and the graphs come back in the save
 response — no extra endpoint.
 
@@ -347,7 +347,7 @@ Same posture as Hot Reload and the Launcher, plus the first **write** route:
   `DocumentPath` — the file already being visualized — never a path from the request
   body. The body carries only the new *content*, so editing cannot write anywhere the
   session was not already pointed. Creating a *new* file is the launcher's job, confined
-  to the launch root by its `LaunchRoot` guard — there is no separate Save As route.
+  to the launch root by its `BrowseRoot` guard — there is no separate Save As route.
 
 ## Testability
 

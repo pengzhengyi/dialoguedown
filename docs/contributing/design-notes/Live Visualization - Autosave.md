@@ -556,7 +556,7 @@ Follow-up fixes hardened the shipped state machine against races and reload:
   file's changes rather than a link name that never fires. The launched path is kept as the
   session's display path so the report still shows what the reader opened, while a broken or
   cyclic link is refused with an explanation rather than served. (The file launcher already
-  resolves through `LaunchRoot`, which also confines a link to the launch root.)
+  resolves through `BrowseRoot`, which also confines a link to the launch root.)
 - **Serialized, coalesced watcher refresh.** The watcher `Debouncer` never runs its
   refresh concurrently with itself; a change arriving during a slow recompile is
   coalesced into exactly one follow-up run, so an older compile or config refresh can

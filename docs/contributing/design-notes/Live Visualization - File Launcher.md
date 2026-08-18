@@ -1,12 +1,19 @@
 # Live Visualization — File Launcher
 
 > [!NOTE]
-> Status: **superseded as a page** (was Component 3 of live visualization). The
-> launcher *page* is retired by the
+> Status: **superseded** (was Component 3 of live visualization). The launcher is
+> retired — the page by the
 > [Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md):
 > its browse/open/create behavior lives on as the report's **Explorer** sidebar, and
 > its "pick a file first" landing is now an empty state inside the report shell. The
-> rest of this note records the original design for context. Component 1 (Hot Reload)
+> rest of this note records the original design for context.
+>
+> The **name** is retired as well: the types that outlived the page now say what
+> they do — `IServedShellRunner`/`ServedShellRunner` run the shell,
+> `ServedShellServer` is the one server behind it, `BrowseRoot` is the browsable
+> root and security boundary, and `ReportMode` is view-versus-edit. Only
+> `BrowserLauncher` keeps the word, because launching a browser is still exactly
+> what it does. Component 1 (Hot Reload)
 > shipped a `visualize` command that serves one document from a loopback server and
 > hot-reloads it. This component made a **launcher** the uniform interactive entry
 > point: `visualize` opened a browser modal — like VS Code's Open File — to browse the
@@ -181,18 +188,18 @@ directly.
 
 ## Interfaces and abstractions
 
-- **`ILauncherRunner` / `LauncherRunner`** (new, `DialogueDown.Visualization.Live`):
-  `Task<int> RunAsync(string root, string? source, LaunchMode mode, int? port, bool noOpen, CancellationToken)`
+- **`IServedShellRunner` / `ServedShellRunner`** (new, `DialogueDown.Visualization.Live`):
+  `Task<int> RunAsync(string root, string? source, ReportMode mode, int? port, bool noOpen, CancellationToken)`
   — resolves the launch root, serves the launcher page, and stays up until canceled.
   Started by the CLI whenever the report is not opened directly. Parallels `WatchMode`.
-- **`LaunchRoot`** (new): a validated root plus path helpers (`Resolve`, `ResolveSource`,
+- **`BrowseRoot`** (new): a validated root plus path helpers (`Resolve`, `ResolveSource`,
   `Browse`) that confine every path to the root (normalizing `..`, rejecting absolute
-  paths, following a terminal symlink). **`LauncherServer`** serves the page, `browse`,
+  paths, following a terminal symlink). **`ServedShellServer`** serves the page, `browse`,
   and `open`, swapping one active `LiveSession` per open and serving its report under
   `/r/`.
 - The report/session path reuses `LiveSession`, `ServeRoot`, and `DocumentWatcher`; the
   CLI keeps using `IVisualizeRunner` for the direct (bypass) path and adds
-  `ILauncherRunner` for the launcher path.
+  `IServedShellRunner` for the launcher path.
 - **Frontend**: a `launcher.html` Vite entry with `launcher.ts` (the tested UI —
   browse tree, source/mode selection, open) and `launcher-main.ts` (browser wiring),
   built as a second self-contained bundle and styled with Pico to match the report.
@@ -327,8 +334,8 @@ is the central concern.
   `VisualizeCommand` applies the bypass rule — direct render when source, mode, and root
   are all set and `--pick` is absent, otherwise the launcher. `CliServices` registers the
   launcher runner.
-- **Live** (`DialogueDown.Visualization.Live`): adds `LauncherMode`/`LauncherRunner`,
-  `LaunchRoot`, and the `browse`/`open` endpoints on `LiveVisualizationServer`; reuses
+- **Live** (`DialogueDown.Visualization.Live`): adds `LauncherMode`/`ServedShellRunner`,
+  `BrowseRoot`, and the `browse`/`open` endpoints on `LiveVisualizationServer`; reuses
   `LiveSession`, `ServeRoot`, `DocumentWatcher`, and the SSE broadcaster.
 - **Frontend** (`web/`): adds the `launcher.html` entry and `launcher.ts`; the build
   emits a second inlined bundle; the report gains an optional **Back to launcher**
@@ -336,13 +343,13 @@ is the central concern.
 
 ## Testability
 
-- **Path confinement** (unit): `LaunchRoot` rejects `..`, absolute paths, and symlink
+- **Path confinement** (unit): `BrowseRoot` rejects `..`, absolute paths, and symlink
   escapes; accepts sources inside the root. Highest-value security tests.
-- **Browse/open API** (integration): `LauncherServer` over a temp tree asserts `browse`
+- **Browse/open API** (integration): `ServedShellServer` over a temp tree asserts `browse`
   lists only sub-directories and `.dialogue.md` sources, `open` returns `303` to the
   report under `/r/` and swaps the active session and serves its relative assets, and
   out-of-root or wrong-extension requests are refused.
-- **Runner** (integration): `LauncherRunner` serves the launcher page and opens its URL.
+- **Runner** (integration): `ServedShellRunner` serves the launcher page and opens its URL.
 - **CLI** (unit): the bypass rule — a complete `source + --mode + --root` (without
   `--pick`) invokes the direct runner, while any missing piece or `--pick` invokes the
   launcher runner (both substituted); the argument-to-selection mapping and validation.

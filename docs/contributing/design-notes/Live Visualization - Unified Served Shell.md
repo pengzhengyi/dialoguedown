@@ -63,7 +63,7 @@ navigate-per-file); and any new Explorer capability.
 | **Empty state** | The served shell with **no active document**: the Explorer on the left and a centered "open or create a script" call to action in the main pane. |
 | **Active document** | The script the shell currently reports on, or *none* (the empty state). |
 | **Project** | The root the Explorer browses plus the active document's place in it (`ReportProject`). `ActivePath` is **optional** — absent (omitted from the payload) is the empty state. |
-| **Unified server** | The one live server (`LauncherServer`): it serves the shell, browses/opens/creates/renames, **and** starts directly on a given script. |
+| **Unified server** | The one live server (`ServedShellServer`): it serves the shell, browses/opens/creates/renames, **and** starts directly on a given script. |
 | **Pinned document** | The script a served `visualize <script>` starts on. A pinned run redirects `/` to that report; a browse-only run keeps `/` on the empty state. |
 | **Served root** | The folder the server hosts as static assets, resolved from the document (its own folder, an ancestor pinned by `--root`, or the smallest covering folder with consent). The report sits at the document's sub-path under it. |
 
@@ -96,12 +96,12 @@ flowchart LR
     subgraph Before
         direction TB
         CLI1["visualize &lt;script&gt;"] --> DS["LiveVisualizationServer<br/>(ServeMode) — no Explorer"]
-        CLI2["visualize"] --> L["LauncherServer<br/>serves launcher.html at /"]
+        CLI2["visualize"] --> L["ServedShellServer<br/>serves launcher.html at /"]
         L -- "open" --> R1["report.html (/r/...)<br/>+ Explorer"]
     end
     subgraph After
         direction TB
-        CLI3["visualize &lt;script&gt;"] --> U["Unified server<br/>(LauncherServer)"]
+        CLI3["visualize &lt;script&gt;"] --> U["Unified server<br/>(ServedShellServer)"]
         CLI4["visualize"] --> U
         U -- "no active doc" --> E["report shell at /<br/>Explorer + empty state"]
         U -- "a document" --> R2["report shell (/r/...)<br/>Explorer + tabs"]
@@ -117,7 +117,7 @@ unified runner.
 
 ## Component A — one served shell
 
-**Server.** `LauncherServer`'s `/` route serves the **report shell** instead of the
+**Server.** `ServedShellServer`'s `/` route serves the **report shell** instead of the
 launcher page. With no active document it renders an *empty* report whose payload
 carries the **project** (so the Explorer can browse the root) but no source, stages,
 or config, and an absent `ActivePath`. Opening or creating a script through the
@@ -174,10 +174,10 @@ are untouched.
 
 | Type | Change | Responsibility after |
 | --- | --- | --- |
-| `LauncherServer` | `/` serves the shell (redirecting to the pinned report when one is set); `StartInitialDocument` starts the run's initial script | The single live server: shell, browse/open/create/rename, and direct start |
+| `ServedShellServer` | `/` serves the shell (redirecting to the pinned report when one is set); `StartInitialDocument` starts the run's initial script | The single live server: shell, browse/open/create/rename, and direct start |
 | `CompilationVisualizer` | `RenderEmptyShell(root, mode)` added | Render the project-only empty shell for a served run |
 | `ReportProject` | `ActivePath` → optional | Carry the root and the active document *or its absence* |
-| `LauncherRunner` (`ILauncherRunner`) | `RunAsync(script?, root?, mode, …)` — one method, two branches | Serve the empty shell (no script) or open a document (resolve served root, start it, open `/r/…`) |
+| `ServedShellRunner` (`IServedShellRunner`) | `RunAsync(script?, root?, mode, …)` — one method, two branches | Serve the empty shell (no script) or open a document (resolve served root, start it, open `/r/…`) |
 | `VisualizeCommand` | Route `visualize <script>` to the unified runner | One serve path; no-script opens the empty shell |
 | `ServeRootResolver`, `SymlinkResolver`, `ServeRoot`, `IHostConsent` | Reused by the unified runner | Resolve the served root and the document's real path, with consent |
 | `LiveVisualizationServer`, `ServeMode`, `IVisualizeRunner.RunServedAsync` | **Deleted** | — |
@@ -257,11 +257,11 @@ are untouched.
   unchanged.
 - **Deleted suites**: `ServeModeTests`, `LiveVisualizationServerTests`, and the
   `RunServedAsync` runner test went with their subjects.
-- **Server** (`LauncherServerTests`): the landing test asserts the server serves
+- **Server** (`ServedShellServerTests`): the landing test asserts the server serves
   whatever shell HTML it is handed; `StartInitialDocument_RootRedirectsToTheReport`
   covers the pinned `visualize <script>` path (the `/` redirect and the report under
   `/r`).
-- **Runner** (`LauncherRunnerTests`): an invalid root, the no-script empty shell
+- **Runner** (`ServedShellRunnerTests`): an invalid root, the no-script empty shell
   (the landing carries a project payload), and a script opening its report under the
   `/r` mount.
 - **Client** (`explorer.test.ts`, `empty-shell.test.ts`): the Explorer tolerates an

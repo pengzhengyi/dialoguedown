@@ -87,14 +87,14 @@ assemblies never take a TOML dependency.
 
 ## Interfaces and abstractions
 
-| Type                                     | Visibility        | Responsibility                                                                               | Collaborators                                |
-| ---------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `ProjectConfiguration`                   | internal (CLI)    | Resolve `CompilerOptions` from `--config` or a discovered `dialogue.toml`                    | `TomlConfigurationLoader`, `CompilerOptions` |
-| `Func<CompilerOptions, IScriptCompiler>` | internal (CLI)    | The compile command's compiler factory seam (default: `ScriptCompilerFactory.CreateDefault`) | `CompileCommand`                             |
-| `CompilationVisualizer(CompilerOptions)` | public (new ctor) | Build a visualizer over a configured compiler                                                | `ScriptCompilerFactory`                      |
-| `IVisualizeRunner` / `ILauncherRunner`   | public (extended) | Carry `CompilerOptions` into each run mode and the launcher                                  | `CompilationVisualizer`, `LiveSession`       |
-| `SpeakerTable.Symbols`                   | internal (core)   | Expose every bound speaker so configured ones complete unused                                | `SymbolProjection`                           |
-| `CompileSettings` / `VisualizeSettings`  | internal (CLI)    | Add the `--config` option and validate its path                                              | Spectre.Console.Cli                          |
+| Type                                      | Visibility        | Responsibility                                                                               | Collaborators                                |
+| ----------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `ProjectConfiguration`                    | internal (CLI)    | Resolve `CompilerOptions` from `--config` or a discovered `dialogue.toml`                    | `TomlConfigurationLoader`, `CompilerOptions` |
+| `Func<CompilerOptions, IScriptCompiler>`  | internal (CLI)    | The compile command's compiler factory seam (default: `ScriptCompilerFactory.CreateDefault`) | `CompileCommand`                             |
+| `CompilationVisualizer(CompilerOptions)`  | public (new ctor) | Build a visualizer over a configured compiler                                                | `ScriptCompilerFactory`                      |
+| `IVisualizeRunner` / `IServedShellRunner` | public (extended) | Carry `CompilerOptions` into each run mode and the launcher                                  | `CompilationVisualizer`, `LiveSession`       |
+| `SpeakerTable.Symbols`                    | internal (core)   | Expose every bound speaker so configured ones complete unused                                | `SymbolProjection`                           |
+| `CompileSettings` / `VisualizeSettings`   | internal (CLI)    | Add the `--config` option and validate its path                                              | Spectre.Console.Cli                          |
 
 A malformed `dialogue.toml` surfaces at compile time; the CLI's exception handler renders the
 loader's located `DialogueConfigurationException` as a clean, located message.
@@ -179,7 +179,7 @@ the core (`SpeakerTable`), kept additive: a read-only view that leaves `Resolve`
 - **Visualization** (`DialogueDown.Visualization`): adds the public
   `CompilationVisualizer(CompilerOptions)` ctor; `SymbolProjection` unions in
   `SpeakerTable.Symbols`.
-- **Live** (`DialogueDown.Visualization.Live`): `IVisualizeRunner`, `ILauncherRunner`, and
+- **Live** (`DialogueDown.Visualization.Live`): `IVisualizeRunner`, `IServedShellRunner`, and
   their modes take a `CompilerOptions`; the served session and each launcher-opened report
   build a configured `LiveSession`.
 - **Docs**: a new `docs/guide/configuration.md` page (registered in the guide `toc.yml` and

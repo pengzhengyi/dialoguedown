@@ -133,11 +133,11 @@ the report renders exactly as it does today.
 
 The pieces are mostly built — as a *separate page*:
 
-- **`LaunchRoot`** (`src/DialogueDown.Visualization.Live/LaunchRoot.cs`) is the
+- **`BrowseRoot`** (`src/DialogueDown.Visualization.Live/BrowseRoot.cs`) is the
   root-confinement seam: `Resolve` (reject `..`/absolute/symlink escape),
   `ResolveSource` (a confined existing `.dialogue.md`), and `Browse` (one
   directory's folders + scripts as a `BrowseListing`).
-- **`LauncherServer`** already exposes `GET /api/browse`, `POST /api/open`,
+- **`ServedShellServer`** already exposes `GET /api/browse`, `POST /api/open`,
   `POST /api/create`, and serves the opened report under `/r` — but the launcher
   is its **own page**; opening a script `303`-redirects away to the report.
 - **`LiveVisualizationServer`** serves a directly-opened report (`visualize
@@ -168,7 +168,7 @@ flowchart LR
     end
     subgraph server["Project server (one, launcher model)"]
         API["/api/browse · /api/open · /api/create"]
-        ROOT["LaunchRoot<br/>(confine + browse)"]
+        ROOT["BrowseRoot<br/>(confine + browse)"]
     end
     FS["Project root<br/>(filesystem)"]
 
@@ -179,7 +179,7 @@ flowchart LR
     RPT -. "cross-file link" .-> EXP
 ```
 
-Two server entry points serve a report today — the launcher (`LauncherServer`,
+Two server entry points serve a report today — the launcher (`ServedShellServer`,
 report mounted at `/r`) and a direct session (`LiveVisualizationServer`). Only the
 launcher browses, opens, creates, and **switches** the active session — and
 opening another script is exactly that switch. So the served report **converges on
@@ -200,8 +200,8 @@ first expanded. This reuses the existing endpoint unchanged — the launcher's
 
 | Type | Side | Responsibility | Collaborators |
 | --- | --- | --- | --- |
-| `LaunchRoot` | server | Existing root confinement + `Browse`; unchanged, now reused by the served report. | filesystem |
-| Project server | server | The one server behind every served report (the launcher's model): `browse` the root, serve the active report, and on `open`/`create` start/switch the session and `303` to it. `visualize <script>` enters it pre-opened. | `LaunchRoot`, session factory |
+| `BrowseRoot` | server | Existing root confinement + `Browse`; unchanged, now reused by the served report. | filesystem |
+| Project server | server | The one server behind every served report (the launcher's model): `browse` the root, serve the active report, and on `open`/`create` start/switch the session and `303` to it. `visualize <script>` enters it pre-opened. | `BrowseRoot`, session factory |
 | `Report.project` (new) | model | The injected served-mode Explorer context: the root's display path and the active script's root-relative path. Absent in the static export, which gates the sidebar. | `Report` |
 | `ExplorerPorts` | client | The injected side effects — `browse(path)`, `open(script, mode)`, `create(path)`, `navigate(url)` — reused from the launcher so the tree is unit-testable without a server. | `fetch`, navigation |
 | Explorer view | client | Build the collapsible sidebar, render the lazy tree, highlight/reveal the active script, and wire click-to-open and New file. | `ExplorerPorts`, `initCollapsiblePanel` |
@@ -213,7 +213,7 @@ the only new model field is the served-mode `Report.project` context that says
 
 ## Key design decisions
 
-- **Server-backed, reusing `LaunchRoot`.** The one filesystem seam already
+- **Server-backed, reusing `BrowseRoot`.** The one filesystem seam already
   confines paths and lists directories; the Explorer reuses it rather than a
   second browsing path. This is the same seam the cross-file `FileSystemProject`
   will use, so view and compiler share one confinement story.
@@ -248,7 +248,7 @@ the only new model field is the served-mode `Report.project` context that says
 
 | Case | Result |
 | --- | --- |
-| Path escapes the root (`..`, absolute, symlink) | Rejected by `LaunchRoot` — the endpoint returns not-found; the tree cannot request it. |
+| Path escapes the root (`..`, absolute, symlink) | Rejected by `BrowseRoot` — the endpoint returns not-found; the tree cannot request it. |
 | **New file** name already exists | `409`; the file is left untouched and the writer is offered to open it instead (existing launcher behavior). |
 | New file name missing the extension | `.dialogue.md` is auto-appended (existing behavior). |
 | Open a script that vanished from disk | `open` resolves nothing → not-found; the tree surfaces it and refreshes the listing. |
@@ -259,7 +259,7 @@ the only new model field is the served-mode `Report.project` context that says
 
 ## Integration
 
-- **Server.** Promote `browse`/`open`/`create` (backed by `LaunchRoot` and the
+- **Server.** Promote `browse`/`open`/`create` (backed by `BrowseRoot` and the
   session-start-and-redirect logic) to a shared capability both the launcher and
   the direct served report expose.
 - **Model.** Add the served-mode `Report.project` context (root display path +
@@ -295,7 +295,7 @@ The pyramid stays bottom-heavy, matching the launcher's existing tests.
 - **Browser File System Access API** (`showDirectoryPicker`). Lets the browser
   read a local directory with no server, even offline — but it is Chromium-only,
   needs a permission gesture, and stands up a *second* filesystem story beside
-  `LaunchRoot`/`FileSystemProject`. Rejected: it duplicates the confinement model
+  `BrowseRoot`/`FileSystemProject`. Rejected: it duplicates the confinement model
   the compiler already needs and abandons Firefox/Safari.
 - **Embed a project snapshot in the static export.** Ship the whole tree and every
   source inside `__DD_REPORT__` so the offline `report.html` browses too.
