@@ -25,11 +25,11 @@ A plain `dotnet build` needs no Node — the built web report is committed.
 dotnet restore DialogueDown.sln
 dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build -m:3
+dotnet test DialogueDown.sln --configuration Release --no-build
 
 # Source-focused coverage (CI fails below 90% line coverage, warns below 100%)
 dotnet tool restore
-dotnet test DialogueDown.sln --settings coverage.runsettings --collect:"XPlat Code Coverage"
+dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include "[DialogueDown*]*"
 
 # Visualization client — only needed when changing web/ sources
 cd src/DialogueDown.Visualization/web && npm ci && npm run check && npm run build

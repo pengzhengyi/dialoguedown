@@ -320,8 +320,9 @@ dotnet test DialogueDown.sln \
   --configuration Release \
   --no-build \
   --no-restore \
-  --settings coverage.runsettings \
-  --collect:"XPlat Code Coverage"
+  --coverlet \
+  --coverlet-output-format cobertura \
+  --coverlet-include "[DialogueDown*]*"
 ```
 
 **Result:** Release/no-build coverage was faster, but it changed valid
@@ -614,6 +615,17 @@ seconds individually even though the core project's 1,053 test bodies total only
 and the default VS Code test task. Keep targeted one-project tests unchanged.
 Keep CI, release validation, and build commands unchanged because those
 environments or phases did not reproduce a gain.
+
+> [!IMPORTANT]
+> **Superseded by the move to Microsoft Testing Platform.** `-m:3` asked MSBuild to
+> build and run the test *projects* three at a time. MTP runs each test project as
+> its own executable and schedules them itself, and it forwards an argument it does
+> not recognize to the test app — where `-m:3` is not an option. The flag therefore
+> stopped being a speed-up and became a silent failure: every assembly errors and
+> the run reports **"Zero tests ran"** while looking like a normal command. It is
+> removed from every documented command, and a test asserts it does not come back.
+> The measurements below are kept because they explain why project-level
+> parallelism was wanted at all — MTP now provides it without a flag.
 
 Do **not** parallelize the coverage pass. The instrumented solution run regressed
 from 53.37 seconds to 78.23 seconds with `-m:3`, likely from instrumentation and

@@ -1,5 +1,8 @@
 {
   "$comment": "Baseline .NET SDK for reproducible builds. rollForward=latestMajor accepts this or any newer installed SDK, so it won't block contributors. Bump 'version' when you intentionally raise the floor. The SDK builds every target framework the solution uses; it is not the floor consumers must meet. The shipped libraries multi-target net8.0 and net10.0 so a Godot project on Godot's bundled .NET 8 runtime keeps working — see docs/contributing/design-notes/Target Frameworks.md.",
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  },
   "sdk": {
     "version": "10.0.0",
     "rollForward": "latestMajor",
