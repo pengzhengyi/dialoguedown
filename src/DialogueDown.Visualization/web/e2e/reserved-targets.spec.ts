@@ -37,6 +37,49 @@ test("mirrors the End sentinel with an always-present Preview footer", async ({ 
     expect(ignoredBox.y).toBeCloseTo(endBox.y, 1);
 });
 
+test("joins the two footers into one band across the split divider", async ({ page }) => {
+    // The panes are separated by a draggable divider, and its column showed through as a white
+    // notch in the one row where the two footers should read as a single bar.
+    const end = page.locator(".dd-reserved-target-row");
+    const ignored = page.locator(".dd-ignored-preview-footer");
+    const [endBox, ignoredBox] = await Promise.all([end.boundingBox(), ignored.boundingBox()]);
+    if (!endBox || !ignoredBox) throw new Error("Could not measure the Source/Preview footers.");
+
+    expect(ignoredBox.x).toBeCloseTo(endBox.x + endBox.width, 1);
+});
+
+test("runs the footer band the full width of the window", async ({ page }) => {
+    // The bar states the document's end and what the Preview left out, so it belongs to the whole
+    // window rather than to an inset column: nothing should sit beside it at either edge.
+    const end = page.locator(".dd-reserved-target-row");
+    const ignored = page.locator(".dd-ignored-preview-footer");
+    const [endBox, ignoredBox, width] = await Promise.all([
+        end.boundingBox(),
+        ignored.boundingBox(),
+        page.evaluate(() => window.innerWidth),
+    ]);
+    if (!endBox || !ignoredBox) throw new Error("Could not measure the Source/Preview footers.");
+
+    expect(endBox.x).toBeCloseTo(0, 1);
+    expect(ignoredBox.x + ignoredBox.width).toBeCloseTo(width, 1);
+});
+
+test("keeps the joined footer clear of the divider that separates the panes above it", async ({
+    page,
+}) => {
+    // Reaching across the divider must not drag the footer's own content left with it, or the
+    // Preview footer's marker would stop lining up with the pane it belongs to.
+    const marker = page.locator(".dd-ignored-preview-footer-marker");
+    const preview = page.locator(".source-preview");
+    const [markerBox, previewBox] = await Promise.all([
+        marker.boundingBox(),
+        preview.boundingBox(),
+    ]);
+    if (!markerBox || !previewBox) throw new Error("Could not measure the Preview footer.");
+
+    expect(markerBox.x).toBeGreaterThanOrEqual(previewBox.x);
+});
+
 test("shows a fixed, copyable End sentinel without changing source lines", async ({ page }) => {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 

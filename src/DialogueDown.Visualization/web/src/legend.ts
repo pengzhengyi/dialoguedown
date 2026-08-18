@@ -139,7 +139,23 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         nameFold(fold, !open);
         legend.classList.toggle("folded", open);
     });
-    legend.append(fold);
+    // A header row rather than a button alone in the corner: the control sits beside the panel's
+    // name, so the name says what the control closes, and the control cannot land on a row or need
+    // padding reserved around it. The name also labels the panel for a screen reader.
+    const title = document.createElement("span");
+    title.className = "legend-title";
+    title.id = `legend-title-${scope}`;
+    title.textContent = "Legend";
+    const header = document.createElement("div");
+    header.className = "legend-header";
+    header.append(title, fold);
+    legend.setAttribute("role", "group");
+    legend.setAttribute("aria-labelledby", title.id);
+
+    // The rows scroll, the header does not, so the control stays in reach however long the legend.
+    const body = document.createElement("div");
+    body.className = "legend-body";
+    legend.append(header, body);
 
     const nodeItems: HTMLElement[] = [];
     for (const category of Object.keys(CATEGORY_COLORS)) {
@@ -171,14 +187,14 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     }
 
     if (edgeItems.length > 0 || byKind.size > 0) {
-        legend.append(groupHeading("Nodes"), ...nodeItems);
-        if (edgeItems.length > 0) legend.append(groupHeading("Edges"), ...edgeItems);
+        body.append(groupHeading("Nodes"), ...nodeItems);
+        if (edgeItems.length > 0) body.append(groupHeading("Edges"), ...edgeItems);
         if (byKind.size > 0) {
-            legend.append(groupHeading("Regions"));
-            for (const [kind, rows] of byKind) legend.append(kindGroup(kind, rows));
+            body.append(groupHeading("Regions"));
+            for (const [kind, rows] of byKind) body.append(kindGroup(kind, rows));
         }
     } else {
-        legend.append(...nodeItems);
+        body.append(...nodeItems);
     }
     return legend;
 
