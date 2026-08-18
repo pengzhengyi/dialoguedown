@@ -138,7 +138,6 @@ A playbook holds what *playing* needs and nothing else.
       "id": 0,
       "kind": "line",
       "speaker": { "name": "Alice" },
-      "needs": ["Alice.FavoriteColor"],
       "speech": [
         { "kind": "text", "text": "My favorite color is " },
         { "kind": "query", "key": "Alice.FavoriteColor" },
@@ -150,7 +149,6 @@ A playbook holds what *playing* needs and nothing else.
       "id": 1,
       "kind": "choice",
       "ordered": false,
-      "needs": ["IsCurious"],
       "out": [
         {
           "kind": "option",
@@ -171,9 +169,9 @@ A playbook holds what *playing* needs and nothing else.
 
 Three fields carry more weight than they look:
 
-- **`needs`** lists every query key required to leave a node. Because guards and
-  interpolations are known at compile time, a runner asks **once per node, in one
-  batch** — and a node with no queries costs no round trip at all.
+- A runner asks **once per node, in one batch**, because it gathers the keys a node
+  needs by walking the node it just arrived at. The artifact does not repeat them:
+  a derivable fact stored twice is a fact that can disagree with itself.
 - **`label`** is the option's menu text, compiled rather than discovered. See
   [D7](#d7--options-carry-a-compiled-label).
 - **`to`** is a node reference: a **number** for a local node, or a **string** in

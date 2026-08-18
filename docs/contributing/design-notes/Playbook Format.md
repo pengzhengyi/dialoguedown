@@ -55,7 +55,6 @@ This note assumes the vocabulary and decisions of the
 - [ ] A writer that lowers a `DialogueGraph` into a playbook.
 - [ ] A speaker table addressed by stable id.
 - [ ] An `entries` table and an `anchors` table.
-- [ ] Per-node `queries`: every query key required to leave the node.
 - [ ] Compiled option labels, so a menu never peeks at a target node.
 - [ ] A reader that round-trips every construct.
 - [ ] Refusal on an unsupported version, an unknown required capability, a
@@ -120,7 +119,6 @@ Two architecture tests guard the shape:
       "id": 0,
       "kind": "line",
       "speaker": "alice",
-      "queries": ["Alice.FavoriteColor"],
       "speech": [
         { "kind": "text", "text": "My favorite color is " },
         { "kind": "query", "key": "Alice.FavoriteColor" },
@@ -132,7 +130,6 @@ Two architecture tests guard the shape:
       "id": 1,
       "kind": "choice",
       "ordered": false,
-      "queries": ["IsCurious"],
       "out": [
         {
           "kind": "option",
@@ -198,14 +195,14 @@ The writer's whole job is this mapping. Every row is one test.
 
 ### Nodes
 
-| Graph              | `kind`          | Carries                                      |
-| ------------------ | --------------- | -------------------------------------------- |
-| `LineNode`         | `line`          | `speaker`, `speech`, `queries`, `condition?` |
-| `ChoiceNode`       | `choice`        | `ordered`                                    |
-| `RandomChoiceNode` | `random-choice` | —                                            |
-| `BranchNode`       | `branch`        | —                                            |
-| `ControlNode`      | `control`       | `effects`, `condition?`                      |
-| `EndNode`          | `end`           | — (no outgoing edges)                        |
+| Graph              | `kind`          | Carries                           |
+| ------------------ | --------------- | --------------------------------- |
+| `LineNode`         | `line`          | `speaker`, `speech`, `condition?` |
+| `ChoiceNode`       | `choice`        | `ordered`                         |
+| `RandomChoiceNode` | `random-choice` | —                                 |
+| `BranchNode`       | `branch`        | —                                 |
+| `ControlNode`      | `control`       | `effects`, `condition?`           |
+| `EndNode`          | `end`           | — (no outgoing edges)             |
 
 ### Edges
 
@@ -330,20 +327,26 @@ every value in the format is either a primitive or a tagged object — see
 Every wire name is the word the project already uses: `target` for an edge's
 destination (`Edge(NodeId Target)`, `Link.Target`, `Jump.Target`), `condition` for
 a guard (the `Condition` type, and three notes titled *Conditional …*), and
-`queries` for the keys a node needs answered (*query* is the architecture note's
-term for a pure read of the world).
+and *query* for a pure read of the world.
 
 Inventing wire names is how a format drifts from the language its users speak.
-`queries` also avoids a collision that `requires` would have caused with the
-capability list in the header.
 
-### P4 — `queries` is derived, not authored
+### P4 — What a runner can derive is not stored
 
-A node's `queries` is the union of every query key its conditions and speech
-fragments require. The writer computes it; the reader **validates** it rather than
-trusting it, because a wrong list would make a runtime evaluate a condition against
-a missing answer. Deriving it at compile time is what lets a runtime resolve a whole
-node in one round trip — the property that makes a remote world affordable.
+A node does **not** carry the query keys needed to leave it. They are derivable by
+walking the node — its condition, its speech, its effects, and every out-edge's
+condition and weight — so storing them would put one fact in two places, where the
+two can disagree.
+
+Storing them buys nothing measurable either. A runner walks each node once at load
+and caches the result, so there is no play-time difference. Resolving a node's
+reads in **one** round trip comes from the protocol's `Resolve`/`Supply` pair, not
+from a field in the artifact.
+
+The walk is subtler than it looks — a query can hide inside an option's label — and
+that is exactly what the
+[conformance corpus](https://github.com/pengzhengyi/dialoguedown/issues/298)
+exists to keep honest across runtimes.
 
 ### P5 — Node ids are dense indices
 
