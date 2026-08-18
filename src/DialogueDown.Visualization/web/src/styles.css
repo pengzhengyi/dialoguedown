@@ -2333,6 +2333,16 @@ g.node.entity-highlight text.label {
     pointer-events: none;
 }
 
+/* Said beside the node a jump landed on, when that node is not what the reader asked for: no stage
+   holds a node for text the compiler left out, so the jump settles on what encloses it. It reads as
+   information, not a fault -- nothing went wrong; the answer is simply "nowhere". */
+.dd-arrival-note {
+    max-width: 20rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    text-align: left;
+}
+
 /* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather
    than the link accent. Dimming an accent color as well pushes it under the contrast floor,
    which matters now that a writer can leave one region shown while the rest stay hidden. */
