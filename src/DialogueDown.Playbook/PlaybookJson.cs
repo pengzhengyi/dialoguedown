@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DialogueDown.Playbook;
 
@@ -24,5 +25,6 @@ public static class PlaybookJson
     public static JsonSerializerOptions Options { get; } = new()
     {
         WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 }

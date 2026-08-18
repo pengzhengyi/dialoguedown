@@ -24,4 +24,16 @@ public static class FragmentKinds
 
     /// <summary>A hard wrap the writer asked for.</summary>
     public const string Break = "break";
+
+    /// <summary>A read of game state spliced into speech.</summary>
+    public const string Query = "query";
+
+    /// <summary>A command written as a plain phrase.</summary>
+    public const string DefaultCommand = "default-command";
+
+    /// <summary>A named command with arguments.</summary>
+    public const string CustomCommand = "custom-command";
+
+    /// <summary>An annotation attached at a point in a line.</summary>
+    public const string Tag = "tag";
 }

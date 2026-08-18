@@ -16,6 +16,10 @@ namespace DialogueDown.Playbook;
 [JsonDerivedType(typeof(LinkFragment), FragmentKinds.Link)]
 [JsonDerivedType(typeof(ImageFragment), FragmentKinds.Image)]
 [JsonDerivedType(typeof(LineBreakFragment), FragmentKinds.Break)]
+[JsonDerivedType(typeof(QueryFragment), FragmentKinds.Query)]
+[JsonDerivedType(typeof(DefaultCommandFragment), FragmentKinds.DefaultCommand)]
+[JsonDerivedType(typeof(CustomCommandFragment), FragmentKinds.CustomCommand)]
+[JsonDerivedType(typeof(TagFragment), FragmentKinds.Tag)]
 public abstract record SpeechFragment
 {
     private protected SpeechFragment()

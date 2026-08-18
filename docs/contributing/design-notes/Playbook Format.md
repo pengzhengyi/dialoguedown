@@ -234,6 +234,10 @@ otherwise lost in a JSON array a reader may not be required to keep ordered.
 | `CustomCommand`            | `call`    | `name`, `args`                                          |
 | `ReservedTag`, `CustomTag` | `tag`     | `name`, `value?`, `reserved`                            |
 
+The two command kinds are spelled the way [the guide](../../guide/game-state.md)
+names them, rather than shortening a custom command to a *call* — a word the
+project does not use with writers.
+
 Fragments nest — `StyledText.Children` and a link or image label are themselves
 fragment lists — so the encoding is recursive. Nothing is flattened to a string,
 because a host re-renders it: Godot as BBCode, the report as HTML, the CLI as
@@ -421,6 +425,15 @@ uses cross-file references will declare the `cross-file-jump` capability, and a
 version-0 runner refuses the whole document before parsing a single node. It cannot
 misread a reference shape it never reaches. **The capability manifest is what makes
 cross-file additive — not the shape of the reference field.**
+
+### P11 — Absent is absent; the format never writes null
+
+An optional field that has no value is **omitted**, not written as `null`. A tag
+without a value is `{ "name": "aside", "reserved": false }`, and a reader treats a
+missing field exactly as it treats a missing `requires` — as the empty case.
+
+Writing both spellings would let two documents mean the same thing, which doubles
+what a schema, a reader, and a golden file each have to say.
 
 ## Error and boundary cases
 
