@@ -222,7 +222,8 @@ changes easy to categorize.
   shows through as a white notch between the `#END` footer and the ignored-content footer, and the
   main area is full-bleed, so nothing insets the bar from either window edge. The Explorer, the
   Semantic Model's cards now carry their own spacing rather than borrowing it from that inset, and
-  a legend opens below its fold control instead of sharing that line with it.
+  a legend is headed by its name beside the control that folds it, instead of opening under a
+  button sitting alone in the corner.
 
 - **Front matter now reads as YAML metadata in the Source editor** — a canonical leading
   `--- … ---` block receives YAML keys, values, comments, indentation, and folding instead of

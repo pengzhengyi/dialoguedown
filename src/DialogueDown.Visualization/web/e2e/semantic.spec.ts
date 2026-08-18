@@ -178,18 +178,39 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     await expect(page.locator("#detail")).toBeHidden();
 });
 
-test("opens the legend below its fold control, not beside it", async ({ page }) => {
-    // The control floats in the legend's top-right corner. Sharing that line with the first row
-    // put the row's count to the control's left, which reads as the wrong order; the control now
-    // gets the line to itself.
+test("heads the legend with its name beside the fold control", async ({ page }) => {
+    // A button alone on a row reads as stray, and the panel had no accessible name; the header
+    // carries both.
     const legend = page.locator(".stage.active .legend");
+    const title = legend.locator(".legend-title");
     const fold = legend.locator(".legend-fold");
-    const firstRow = legend.locator(".legend-item").first();
 
-    const [foldBox, rowBox] = await Promise.all([fold.boundingBox(), firstRow.boundingBox()]);
-    if (!foldBox || !rowBox) throw new Error("Could not measure the legend.");
+    await expect(title).toHaveText("Legend");
+    await expect(legend).toHaveAttribute("aria-labelledby", (await title.getAttribute("id")) ?? "");
 
-    expect(rowBox.y).toBeGreaterThanOrEqual(foldBox.y + foldBox.height);
+    const [titleBox, foldBox, firstRow] = await Promise.all([
+        title.boundingBox(),
+        fold.boundingBox(),
+        legend.locator(".legend-item").first().boundingBox(),
+    ]);
+    if (!titleBox || !foldBox || !firstRow) throw new Error("Could not measure the legend.");
+
+    // The name leads the row, the control trails it, and the rows begin below both.
+    expect(titleBox.x).toBeLessThan(foldBox.x);
+    expect(firstRow.y).toBeGreaterThanOrEqual(foldBox.y + foldBox.height);
+});
+
+test("keeps the legend no wider than its rows", async ({ page }) => {
+    // The card is positioned, so its width is implicit; with the rows nested under a body it
+    // resolved to stretch and spread over the drawing, which then kept clear of the whole span.
+    const legend = page.locator(".stage.active .legend");
+    const [box, canvas] = await Promise.all([
+        legend.boundingBox(),
+        legend.evaluate((el) => el.parentElement!.getBoundingClientRect().width),
+    ]);
+    if (!box) throw new Error("Could not measure the legend.");
+
+    expect(box.width).toBeLessThan(canvas * 0.6);
 });
 
 test("collapses the legend to the control alone, on the same pixels", async ({ page }) => {

@@ -2968,18 +2968,19 @@ svg.tree.has-focus .link:not(.related) {
     gap: 0.1rem;
     min-width: 11rem;
 
+    /* As wide as its rows, no wider. A positioned box sizes itself to its content only while its
+       insets say so; with the rows a level deeper under a body, `auto` resolved to stretch instead
+       and the card spread across the canvas -- which the drawing then kept clear of, pushing the
+       diagram aside. Saying the width outright removes the ambiguity. */
+    width: fit-content;
+
     /* The legend floats over the canvas, so it must never be the thing that makes the page wider
        than the window — on a phone a long type name would otherwise push the whole document into
        a horizontal scroll. It gives way instead, and its labels trail off. */
     max-width: calc(100% - 1.5rem);
     max-height: 90%;
-    overflow: auto;
-
-    /* The fold control floats in the top-right corner, so the legend opens below it rather than
-       beside it: sharing that line pushed the first row's count to the control's left, which reads
-       as the wrong order. The control gets the line; the legend starts under it. Folded, the box
-       collapses to the control alone and drops this padding with the rest. */
-    padding: 1.75rem 0.5rem 0.4rem;
+    overflow: hidden;
+    padding: 0.4rem 0.5rem;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -3038,13 +3039,39 @@ svg.tree.has-focus .link:not(.related) {
     margin-top: 0;
 }
 
+/* The control shares a row with the legend's name instead of floating over the card's corner. In
+   the flow it cannot overlap a row, needs no padding reserved around it, and cannot be shifted by a
+   scrollbar -- three hazards the corner had. */
+.legend-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+
+    /* At least as tall as the control, whose glyph is taller than the name's line. */
+    min-height: 1.3rem;
+}
+
+.legend-title {
+    color: var(--pico-color);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.legend-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-height: 0;
+    overflow: auto;
+}
+
 /* Folding the legend away gives the canvas back: the button stays, everything else goes.
    It keeps one position and one hit area in both states, so the glyph never jumps — the reader
    folds and unfolds without moving the pointer. */
 .legend-fold {
-    position: absolute;
-    top: 0.3rem;
-    right: 0.35rem;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3079,8 +3106,17 @@ svg.tree.has-focus .link:not(.related) {
     display: inline-block;
 }
 
-.legend.folded > *:not(.legend-fold) {
+/* Folded, the rows and the name go; the header stays, because the control lives in it. */
+.legend.folded .legend-body,
+.legend.folded .legend-title {
     display: none;
+}
+
+/* With the name gone the control is the row's only child, so it is held to the trailing edge it
+   already occupied. That, and the card keeping its padding, is what puts the glyph on the same
+   pixels folded as open -- the reader folds and unfolds without moving the pointer. */
+.legend.folded .legend-header {
+    justify-content: flex-end;
 }
 
 /* Folded, the button *is* the legend: the card's own frame drops away so nothing is left around
@@ -3089,9 +3125,8 @@ svg.tree.has-focus .link:not(.related) {
    so the glyph lands on the same pixels folded as open. */
 .legend.folded {
     min-width: 0;
-    width: 2rem;
-    height: 1.9rem;
-    padding: 0;
+    width: fit-content;
+    height: fit-content;
     background: none;
     border-color: transparent;
     overflow: hidden;
@@ -3099,7 +3134,10 @@ svg.tree.has-focus .link:not(.related) {
 
 .legend.folded .legend-fold {
     background: var(--pico-card-background-color);
-    border: 1px solid var(--pico-muted-border-color);
+
+    /* Drawn, not laid out: a real border would grow the button's box by its own width and move the
+       glyph the reader is about to click again. */
+    box-shadow: 0 0 0 1px var(--pico-muted-border-color);
 }
 
 .legend.folded .legend-fold:hover {
