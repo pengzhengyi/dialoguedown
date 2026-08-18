@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using System.Text.Json;
+using DialogueDown.Playbook.Tests.Support;
 
 namespace DialogueDown.Playbook.Tests;
 
@@ -20,9 +20,7 @@ public sealed class PlaybookFormatTests
             }
             """;
 
-        var restored = JsonSerializer.Deserialize<PlaybookFormat>(Json, PlaybookJson.Options);
-
-        Assert.Equal(Json, JsonSerializer.Serialize(restored, PlaybookJson.Options));
+        PlaybookJsonAssert.AssertRoundTrip<PlaybookFormat>(Json);
     }
 
     [Fact]
@@ -30,9 +28,9 @@ public sealed class PlaybookFormatTests
     {
         const string Json = """{ "version": 0 }""";
 
-        var format = JsonSerializer.Deserialize<PlaybookFormat>(Json, PlaybookJson.Options);
+        var format = PlaybookJsonAssert.AssertDeserialize<PlaybookFormat>(Json);
 
-        Assert.Equal(0, format!.Version);
+        Assert.Equal(0, format.Version);
         Assert.Empty(format.Requires);
         Assert.Empty(format.Uses);
     }

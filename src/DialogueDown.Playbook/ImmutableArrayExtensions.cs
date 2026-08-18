@@ -22,4 +22,19 @@ internal static class ImmutableArrayExtensions
     /// <returns>An array that is always safe to enumerate.</returns>
     public static ImmutableArray<T> OrEmpty<T>(this ImmutableArray<T> values) =>
         values.IsDefault ? [] : values;
+
+    /// <summary>
+    /// The array itself, or an <see cref="ArgumentException"/> when it holds nothing — for the
+    /// places where an empty list is not a valid document, such as styling that wraps no words.
+    /// </summary>
+    /// <typeparam name="T">The element type.</typeparam>
+    /// <param name="values">The array to check.</param>
+    /// <param name="paramName">The name reported on the exception.</param>
+    /// <returns>The same array, so a caller can assign in one expression.</returns>
+    public static ImmutableArray<T> AssertNotEmpty<T>(
+        this ImmutableArray<T> values, string paramName) =>
+        values.IsDefaultOrEmpty
+            ? throw new ArgumentException(
+                $"The immutable {typeof(T).Name} array must hold at least one element.", paramName)
+            : values;
 }

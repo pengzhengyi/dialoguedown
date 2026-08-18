@@ -10,6 +10,11 @@ namespace DialogueDown.Playbook;
 public static class PlaybookJson
 {
     /// <summary>
+    /// The property that tags which member of a union a JSON object is.
+    /// </summary>
+    public const string Discriminator = "kind";
+
+    /// <summary>
     /// Gets the settings a playbook is written with and read back by.
     /// </summary>
     /// <remarks>

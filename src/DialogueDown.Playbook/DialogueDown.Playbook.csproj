@@ -17,4 +17,11 @@
     <InternalsVisibleTo Include="DialogueDown.Playbook.Tests" />
   </ItemGroup>
 
+  <!-- JsonStringEnumMemberName pins an enum's wire name against a C# rename. It is in-box from
+       .NET 9, so only the net8.0 build needs the out-of-band package; the reference goes away with
+       that target. See https://github.com/pengzhengyi/dialoguedown/issues/314. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
 </Project>
