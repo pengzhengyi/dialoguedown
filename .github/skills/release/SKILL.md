@@ -37,7 +37,8 @@ name, and runtime requirements in this skill, that doc, and the CLI code in sync
 | --- | --- | --- |
 | **First time** — the CLI is not yet packable | Add the tool packaging + metadata, then verify locally | [Package](#1-package-the-cli-as-a-net-tool), [Test locally](#2-test-the-tool-locally) |
 | **After a PR merges to main** | Refresh the maintainer's locally installed `ddown` so it reflects merged changes (no publishing) | [Refresh the local tool](#refresh-the-local-tool-after-a-merge) |
-| **On a changelog release** (a new SemVer section) | Resync the docs, then set the version, pack, and push to NuGet | [Resync the docs](#3-resync-the-documentation-release-gate), [Release push](#4-release-push-approval-gated) |
+| **On a changelog release** (a new SemVer section) | Resync the docs **and the demo**, then set the version, pack, and push to NuGet | [Resync the docs](#3-resync-the-documentation-release-gate), [Release push](#4-release-push-approval-gated) |
+| **A compiler stage or report feature just landed** | Nothing here — do the doc, note, and demo work in that stage's own PR. The release gate is the net, not the plan | [Resync the docs](#3-resync-the-documentation-release-gate) |
 | **Reaching more users later** | Add self-contained binaries + a Homebrew tap | [Planned second channel](#planned-second-channel-self-contained-binaries) |
 
 ## Prerequisites
@@ -161,6 +162,16 @@ Delegate the writing to `polish-tech-doc` (internal developer-facing for design
 notes, user-facing for the guide) and the tracker work to `maintain-oss`. This
 section only says *what must be true* by the time the package is pushed.
 
+> [!NOTE]
+> This gate replaces standing "keep the docs current as later stages land" and
+> "refresh the demo when later stages land" tracking issues (#66 and #63). Those
+> asked a maintainer to remember, indefinitely, to do something no test enforces —
+> so they aged without ever being actionable. Tying the same obligation to the
+> release makes it a **checklist with a deadline** instead: nothing is published
+> against docs or a demo that describe a different version. When a stage lands
+> between releases the work still happens in its own PR; this is the net that
+> catches what slipped.
+
 ### A. Every status callout matches the code
 
 For each design note whose status is not **Implemented**, re-verify it against
@@ -235,6 +246,13 @@ grep -oE '\]\(\./[^)]+\.md\)' README.md | sed 's/](\.\///; s/\.md)//' \
   | sort -u > /tmp/index.txt
 diff /tmp/files.txt /tmp/toc.txt && diff /tmp/files.txt /tmp/index.txt && echo "no drift"
 ```
+
+A **fourth** place drifts independently and cannot be diffed: the Mermaid
+reading-order chart in each area of `README.md`. Its nodes are numbered labels
+("4. Semantic Analyzer"), not filenames, so a note can sit correctly in the table
+and in `toc.yml` while never appearing in the reading order — the one place that
+tells a newcomer where it belongs. Read each chart against its area's table and
+confirm every note appears once, in the position the table implies.
 
 ### D. The guide matches what the compiler accepts
 
@@ -364,6 +382,39 @@ example (through `add-dialogue-construct`), not a syntax dump, and re-run. The
 parenthetical on a label (`Command (PlayBgm)`, `Speaker (by id)`) is detail, not a
 separate construct — judge coverage on the base kind.
 
+### I. The API reference covers the surface that ships
+
+DocFX generates the API site from an explicit list of projects, so a project added
+after the site was set up is simply absent — silently, and with no broken link to
+reveal it. Compare what the repository ships against what the site documents:
+
+```sh
+# Projects in the repository vs projects DocFX generates API pages for.
+git ls-files 'src/*/*.csproj' | xargs -n1 dirname | sed 's|^src/||' | sort > /tmp/projects.txt
+python3 -c "
+import json
+for entry in json.load(open('docs/docfx.json'))['metadata']:
+    for source in entry['src']:
+        print(source['src'].replace('../src/', ''))
+" | sort -u > /tmp/documented.txt
+comm -23 /tmp/projects.txt /tmp/documented.txt   # undocumented projects
+```
+
+Every line it prints needs a **decision**, not automatic inclusion — the answer
+depends on who calls the project:
+
+- **A library others compile against** — document it. Widen the `metadata.src`
+  globs in `docs/docfx.json`.
+- **A host, tool, or edge others only run** — leave it out deliberately. The CLI is
+  documented as a *contract* in [`docs/guide/cli.md`](../../../docs/guide/cli.md),
+  which is the right form for something invoked rather than referenced.
+
+Record the decision so the next release re-reads it rather than re-litigating it.
+At the time of writing, only `DialogueDown` is generated; the visualization
+projects and the CLI are deliberately excluded, and `DialogueDown.ConfigurationLoader`
+is worth revisiting once its configuration types are something consumers construct
+directly rather than a file the CLI loads.
+
 ## 4. Release push (approval-gated)
 
 Run only when `maintain-oss` has cut a changelog release, the
@@ -431,6 +482,10 @@ only if a headless `ddown compile` CI use case emerges.
   ([subsection H](#h-the-demo-gallery-reflects-current-features-and-constructs)) is
   part of the same gate: a push freezes whatever the demo shows and whichever
   constructs it fails to demonstrate.
+- **Never release against an incomplete API reference** — a project added since the
+  site was set up generates no pages and breaks no link
+  ([subsection I](#i-the-api-reference-covers-the-surface-that-ships)). Excluding
+  one is a decision to record, not an omission to discover.
 - **Verify before publish** — always install and run the packed tool against the
   release build first.
 - **Keep the contract in sync** — the package id, `ddown` command name, and
