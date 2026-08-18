@@ -233,8 +233,8 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
     private static IEnumerable<DisplayAttribute> Optional(string name, string? value) =>
         value is null ? [] : [new DisplayAttribute(name, value)];
 
-    // A line's children are its optional condition guard, then its optional speaker, followed by
-    // its speech fragments — guard-first, matching the traversal and how the line reads.
+    // A line's children are its optional condition condition, then its optional speaker, followed by
+    // its speech fragments — condition-first, matching the traversal and how the line reads.
     private static IEnumerable<object> LineChildren(
         Condition? condition, Speaker? speaker, IReadOnlyList<InlineFragment> speech)
     {

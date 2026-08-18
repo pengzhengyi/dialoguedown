@@ -30,9 +30,9 @@ internal abstract class NodeDraft
 
     /// <summary>
     /// Whether control always leaves this node, so it needs no fall-through to the block after it.
-    /// A kind that can be guarded narrows this, since a guard may skip the node whole.
+    /// A kind that can be conditional narrows this, since a condition may skip the node whole.
     /// </summary>
-    public virtual bool LeavesUnconditionally() => Out.HasUnguardedRoute();
+    public virtual bool LeavesUnconditionally() => Out.HasUnconditionalRoute();
 
     public void AddEdge(Edge edge)
     {

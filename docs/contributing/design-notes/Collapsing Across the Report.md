@@ -291,7 +291,7 @@ accumulate entries for items that no longer exist and would restore a scattered 
 with no visible cause.
 
 The contract states that principle and lets each surface apply it. The Preview persists its
-baseline in one guarded storage key. The Dialogue Graph persists nothing, because its fold rides
+baseline in one conditional storage key. The Dialogue Graph persists nothing, because its fold rides
 with a camera the report deliberately does not serialize so the offline file stays self-contained.
 The two therefore differ across a reload, which is honest: their state means different things.
 

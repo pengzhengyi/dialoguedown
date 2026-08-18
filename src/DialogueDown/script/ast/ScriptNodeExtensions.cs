@@ -117,8 +117,8 @@ internal static class ScriptNodeExtensions
         Condition? condition, IReadOnlyList<ScriptBlock> body) =>
         condition is not null ? [condition, .. body] : body;
 
-    // A line's condition guard (when present) comes before its speaker and speech, so traversal
-    // keeps document order and matches the guard-first reading.
+    // A line's condition condition (when present) comes before its speaker and speech, so traversal
+    // keeps document order and matches the condition-first reading.
     private static IEnumerable<ScriptNode> LineChildren(Line line)
     {
         if (line.Condition is not null)
@@ -137,7 +137,7 @@ internal static class ScriptNodeExtensions
         }
     }
 
-    // A control line's guard (when present) comes before its effects, matching guard-first
+    // A control line's condition (when present) comes before its effects, matching condition-first
     // reading; it has no speaker.
     private static IEnumerable<ScriptNode> ControlLineChildren(ControlLine control)
     {

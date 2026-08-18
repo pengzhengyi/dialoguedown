@@ -7,7 +7,7 @@ namespace DialogueDown.Script.Ast;
 /// commands, on their own line. Unlike a <see cref="Line"/>, it is not spoken, so no speaker —
 /// named or default — is ever attached to it. Its <see cref="Effects"/> are the jump and command
 /// fragments in source order, and an optional <see cref="Condition"/> guards them, exactly as a
-/// conditional jump is guarded.
+/// conditional jump is conditional.
 /// </summary>
 internal sealed record ControlLine(
     IReadOnlyList<InlineFragment> Effects, SourceSpan Span, Condition? Condition = null)

@@ -31,7 +31,7 @@ together before making a change.
 
 ## Enforced architecture boundaries
 
-The pipeline's shape is not just convention — it is guarded by architecture tests
+The pipeline's shape is not just convention — it is conditional by architecture tests
 in
 [`tests/DialogueDown.Architecture.Tests`](https://github.com/pengzhengyi/dialoguedown/tree/main/tests/DialogueDown.Architecture.Tests)
 (built on NetArchTest.eNhancedEdition). They fail the build if a change breaks the

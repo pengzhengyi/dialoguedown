@@ -23,13 +23,13 @@ internal sealed class JumpAssembler
     private static readonly Parser<InlineFragment, InlineFragment> _blank =
         Token(fragment => fragment.IsBlank());
 
-    // [Condition] blank* — an optional guard that also absorbs the whitespace after it.
-    private static readonly Parser<InlineFragment, Maybe<Condition>> _guard =
+    // [Condition] blank* — an optional condition that also absorbs the whitespace after it.
+    private static readonly Parser<InlineFragment, Maybe<Condition>> _condition =
         OfType<Condition>().Before(_blank.Many()).Optional();
 
     // [Condition] blank* => blank* Link  →  Jump
     private static readonly Parser<InlineFragment, InlineFragment> _conditionalJump =
-        Parser.Map(FoldJump, _guard, OfType<JumpIndicator>().Before(_blank.Many()), OfType<Link>());
+        Parser.Map(FoldJump, _condition, OfType<JumpIndicator>().Before(_blank.Many()), OfType<Link>());
 
     private readonly IDiagnosticSink _diagnostics;
     private readonly Parser<InlineFragment, IEnumerable<InlineFragment>> _grammar;
@@ -39,7 +39,7 @@ internal sealed class JumpAssembler
         ArgumentNullException.ThrowIfNull(diagnostics);
         _diagnostics = diagnostics;
 
-        // Try the whole jump first (Try backtracks a guard consumed before a missing link);
+        // Try the whole jump first (Try backtracks a condition consumed before a missing link);
         // otherwise degrade a lone arrow, otherwise pass the fragment through untouched.
         _grammar = Parser.OneOf(
             Parser.Try(_conditionalJump),
@@ -50,9 +50,9 @@ internal sealed class JumpAssembler
     public IReadOnlyList<InlineFragment> Assemble(IReadOnlyList<InlineFragment> fragments) =>
         _grammar.ParseOrThrow(fragments).ToList();
 
-    private static InlineFragment FoldJump(Maybe<Condition> guard, JumpIndicator arrow, Link link)
+    private static InlineFragment FoldJump(Maybe<Condition> maybeCondition, JumpIndicator arrow, Link link)
     {
-        var condition = guard.GetValueOrDefault();
+        var condition = maybeCondition.GetValueOrDefault();
         var from = condition?.Span ?? arrow.Span;
         return new Jump(link.Target, link.Label, SourceSpan.Covering(from, link.Span), condition);
     }

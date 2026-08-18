@@ -40,7 +40,7 @@ public sealed class OrphanConditionRuleTests
     }
 
     [Fact]
-    public void Check_ALineGuardBesideAStrayCondition_ReportsOnlyTheStrayOne()
+    public void Check_ALineConditionBesideAStrayCondition_ReportsOnlyTheStrayOne()
     {
         var stray = new Condition("Sunny", SourceSpanFactory.Span(20));
         var line = ConditionalLine(Condition("Rainy"), Text("It is "), stray);

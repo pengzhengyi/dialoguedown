@@ -501,7 +501,7 @@ async navigation, browser coverage and docs, and this crosscheck).
   and a failed create that leaves the no-config state for a retry), and a config watcher
   (alongside the dialogue watcher) that routes external `dialogue.toml` edits to a
   `reload-config` event with self-write suppression.
-- Conflict Reload from disk (single-flight and generation-guarded, so a delayed reload never
+- Conflict Reload from disk (single-flight and generation-conditional, so a delayed reload never
   overwrites a newer edit); Discard unavailable in Conflict/Uncertain and disabled while
   saving; Discard from Waiting/Error restores the baseline and its state.
 - Async navigation for tabs, tree-node selection, and Edit→View: Auto flushes and awaits the
@@ -611,7 +611,7 @@ A final review pass closed the remaining races and dead ends before publication:
   `UnauthorizedAccessException` alongside `IOException`, so an unreadable file (permission
   denied, or a path that became a directory) broadcasts a targeted problem instead of
   escaping the debounced timer callback.
-- **Debouncer disposal is race-safe.** A `_disposed` flag guarded by the gate — with the
+- **Debouncer disposal is race-safe.** A `_disposed` flag conditional by the gate — with the
   timer armed only while holding it — keeps a watcher event, a coalesced follow-up rearm, or
   a late callback from ever calling `Change` on a disposed timer.
 - **Edit→View transition is cancellable.** The View⇄Edit controller carries a transition

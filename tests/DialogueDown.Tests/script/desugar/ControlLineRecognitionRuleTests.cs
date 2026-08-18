@@ -61,7 +61,7 @@ public sealed class ControlLineRecognitionRuleTests
     }
 
     [Fact]
-    public void Apply_CarriesTheGuardOntoAConditionalControlLine()
+    public void Apply_CarriesTheConditionOntoAConditionalControlLine()
     {
         var span = SourceSpanFactory.Span();
         var document = Document(

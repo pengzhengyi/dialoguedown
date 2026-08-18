@@ -176,27 +176,27 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
-    public void Apply_AGuardedLine_CarriesItsConditionAsTheNodesGuard()
+    public void Apply_AConditionalLine_CarriesItsConditionAsTheNodesCondition()
     {
         var graph = Build("""`"Brave"?` Alice: you enter""");
 
-        AssertGuarded(graph.Node(graph.Entry), "Brave");
+        AssertConditional(graph.Node(graph.Entry), "Brave");
     }
 
     [Fact]
-    public void Apply_AGuardedControlLine_CarriesItsConditionToo()
+    public void Apply_AConditionalControlLine_CarriesItsConditionToo()
     {
         var graph = Build("""`"Brave"?` `("open the gate")`""");
 
-        AssertGuarded(graph.Node(graph.Entry), "Brave");
+        AssertConditional(graph.Node(graph.Entry), "Brave");
     }
 
     [Fact]
-    public void Apply_AnUnguardedLine_HasNoGuard()
+    public void Apply_AnUnconditionalLine_HasNoCondition()
     {
         var graph = Build("Alice: you enter");
 
-        AssertUnguarded(graph.Node(graph.Entry));
+        AssertUnconditional(graph.Node(graph.Entry));
     }
 
     private static string Slice(string source, SourceSpan span) =>

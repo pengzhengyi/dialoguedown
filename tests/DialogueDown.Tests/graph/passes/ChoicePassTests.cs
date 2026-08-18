@@ -74,7 +74,7 @@ public sealed class ChoicePassTests
     }
 
     [Fact]
-    public void Apply_AGuardedOption_CarriesItsGuardOnTheArm()
+    public void Apply_AConditionalOption_CarriesItsConditionOnTheArm()
     {
         var graph = Build("""
             - `"HasKey"?` Alice: Use the key.
@@ -84,12 +84,12 @@ public sealed class ChoicePassTests
 
         Assert.Collection(
             graph.Nodes[0].Out,
-            edge => AssertGuarded(edge, "HasKey"),
-            AssertUnguarded);
+            edge => AssertConditional(edge, "HasKey"),
+            AssertUnconditional);
     }
 
     [Fact]
-    public void Apply_AGuardedRandomOption_CarriesItsGuardBesideItsWeight()
+    public void Apply_AConditionalRandomOption_CarriesItsConditionBesideItsWeight()
     {
         var graph = Build("""
             - `"IsAngry"?` `50%` Alice: Blocked.
@@ -98,7 +98,7 @@ public sealed class ChoicePassTests
             """);
 
         var arm = graph.Nodes[0].Out[0];
-        AssertGuarded(arm, "IsAngry");
+        AssertConditional(arm, "IsAngry");
         AssertNumberWeight(arm, 50);
     }
 

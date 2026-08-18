@@ -10,7 +10,7 @@ namespace DialogueDown.Script.Validation;
 /// that guards none — left over in speech, or with no content after it — cannot do anything, so
 /// it is an error. The condition keeps its span, so the diagnostic points at the code span itself.
 /// A condition is <em>bound</em> when it is exactly the <see cref="Condition"/> its parent jump,
-/// line, option, or branch references, so a stray condition sharing a line with a real guard is
+/// line, option, or branch references, so a stray condition sharing a line with a real condition is
 /// still caught by identity rather than by its parent's type alone.
 /// </summary>
 internal sealed class OrphanConditionRule : DiagnosticRule
@@ -29,7 +29,7 @@ internal sealed class OrphanConditionRule : DiagnosticRule
         }
     }
 
-    // A condition is bound when it is the very guard its parent references — not merely when its
+    // A condition is bound when it is the very condition its parent references — not merely when its
     // parent is a guarding kind, since a line or option owns both its guard and its content.
     private static bool IsBound(Condition condition, ScriptNode? parent) => parent switch
     {

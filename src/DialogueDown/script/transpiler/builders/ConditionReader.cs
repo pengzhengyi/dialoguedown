@@ -11,7 +11,7 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// dynamic weight's key is. Any other code span (a value read, a command, or text with no
 /// trailing <c>?</c>) is not a condition and yields null, so the caller falls back to game-call
 /// building. <see cref="TryPeel"/> lifts this recognition to a Markdown inline sequence, the
-/// shared move a conditional line and a conditional choice both make on a leading guard.
+/// shared move a conditional line and a conditional choice both make on a leading condition.
 /// </summary>
 internal static class ConditionReader
 {
@@ -34,7 +34,7 @@ internal static class ConditionReader
     /// <paramref name="condition"/> and the <paramref name="remainder"/> (its leading whitespace
     /// trimmed) when the first inline is a <c>`"key"?`</c> code span; <c>false</c> with the
     /// sequence returned unchanged otherwise. Each caller applies its own binding policy — the
-    /// conditional line declines a guard a jump should claim, while a conditional choice always
+    /// conditional line declines a condition a jump should claim, while a conditional choice always
     /// takes it.
     /// </summary>
     public static bool TryPeel(

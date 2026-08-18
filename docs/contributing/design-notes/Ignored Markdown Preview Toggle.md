@@ -214,7 +214,7 @@ through.
 
 ### D7 — A persisted baseline and session-only overrides
 
-The baseline is how the writer wants to read the served project, so one guarded local-storage key
+The baseline is how the writer wants to read the served project, so one conditional local-storage key
 applies across file switches and survives hot reloads on the same report origin. A fresh origin
 starts from the `shown` baseline.
 

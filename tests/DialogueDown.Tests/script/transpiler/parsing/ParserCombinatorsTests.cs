@@ -154,7 +154,7 @@ public sealed class ParserCombinatorsTests
     public void Repeated_StopsOnANonConsumingMatch_RatherThanLooping()
     {
         // The inner parser always succeeds (Optional), matching nothing once the
-        // 'a's run out; the empty-match guard stops the loop instead of spinning.
+        // 'a's run out; the empty-match condition stops the loop instead of spinning.
         var parser = TestParsers.Symbol('a').Optional().Repeated();
 
         var result = parser.Consume(ParseInputFactory.Input("aab"));

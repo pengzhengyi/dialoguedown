@@ -15,7 +15,7 @@ public sealed class DivertPassTests
         var graph = Build("Guard: You collapse. => [the end](#END)");
 
         var divert = AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
-        Assert.Null(divert.Guard);
+        Assert.Null(divert.Condition);
     }
 
     [Fact]
@@ -62,12 +62,12 @@ public sealed class DivertPassTests
     }
 
     [Fact]
-    public void Apply_GuardedJump_CarriesTheJumpsConditionAsTheDivertsGuard()
+    public void Apply_ConditionalJump_CarriesTheJumpsConditionAsTheDivertsCondition()
     {
         var graph = Build("""Alice: farewell `"Done"?` => [the end](#END)""");
 
         var divert = AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
-        Assert.Equal("Done", divert.Guard?.Key);
+        Assert.Equal("Done", divert.Condition?.Key);
     }
 
     [Fact]

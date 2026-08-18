@@ -6,10 +6,10 @@ namespace DialogueDown.Graph.Passes;
 
 /// <summary>
 /// Fans a choice group out into its arms: one edge per arm, leading to the first node of that arm's
-/// body and carrying the guard that decides whether the arm is offered. A player choice emits plain
+/// body and carrying the condition that decides whether the arm is offered. A player choice emits plain
 /// option edges; a random choice emits weighted ones, since the engine resolves the pick from the
 /// weight. Runs after node creation, and before succession — which then gives the choice a
-/// fall-through only when every arm is guarded, since then none may be available.
+/// fall-through only when every arm is conditional, since then none may be available.
 /// </summary>
 internal sealed class ChoicePass : GraphBuildPass
 {

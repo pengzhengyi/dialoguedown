@@ -15,7 +15,7 @@ internal static class ChoiceConditionRecognition
 {
     /// <summary>
     /// The list item's blocks with a leading condition peeled off its first paragraph;
-    /// <paramref name="condition"/> is the guard, or <c>null</c> when the option is unconditional
+    /// <paramref name="condition"/> is the condition, or <c>null</c> when the option is unconditional
     /// and the blocks are returned unchanged.
     /// </summary>
     public static IReadOnlyList<MarkdownBlock> Peel(ListItem item, out Condition? condition)
