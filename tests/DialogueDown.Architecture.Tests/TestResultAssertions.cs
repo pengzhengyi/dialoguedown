@@ -1,4 +1,6 @@
-using NetArchTest.Rules;
+// xunit v3 introduces its own `TestResult`, so the architecture rule's result is named
+// explicitly rather than left to an ambiguous import.
+using TestResult = NetArchTest.Rules.TestResult;
 
 namespace DialogueDown.Architecture.Tests;
 

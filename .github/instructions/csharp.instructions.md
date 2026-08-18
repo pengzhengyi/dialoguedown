@@ -78,7 +78,8 @@ license does not affect the library's MIT license or reach consumers.
 
 - **Test-driven:** a failing test first, then the minimum code, then refactor. A
   bug fix starts with a test that reproduces it.
-- **xUnit** with **NSubstitute** for mocks and **coverlet** for coverage.
+- **xUnit v3** on the **Microsoft Testing Platform** (each test project is its own
+  executable), with **NSubstitute** for mocks and **coverlet** for coverage.
 - **One test file per source file**, mirroring the folder layout and named for the
   type under test (`Foo.cs` → `FooTests.cs`).
 - Name tests `Method_Scenario_ExpectedResult`; cover edge and error cases, not just
@@ -117,7 +118,7 @@ measured slower than a direct project run on the development machine, so it is
 not part of the recommended loop.
 
 ```bash
-dotnet test DialogueDown.sln --configuration Release --no-build -m:3
+dotnet test DialogueDown.sln --configuration Release --no-build
 ```
 
 Run source-focused coverage when you change tested behavior (see

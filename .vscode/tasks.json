@@ -41,7 +41,7 @@
       "label": "test",
       "detail": ".NET: run the test projects with three MSBuild workers.",
       "type": "shell",
-      "command": "dotnet test DialogueDown.sln --configuration Release --no-build -m:3",
+      "command": "dotnet test DialogueDown.sln --configuration Release --no-build",
       "group": {
         "kind": "test",
         "isDefault": true
@@ -69,7 +69,7 @@
       "label": "coverage",
       "detail": ".NET: run tests with coverage and generate a report.",
       "type": "shell",
-      "command": "dotnet tool restore && dotnet test DialogueDown.sln --settings coverage.runsettings --collect:\"XPlat Code Coverage\" && dotnet reportgenerator \"-reports:tests/DialogueDown.Tests/TestResults/**/coverage.cobertura.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"",
+      "command": "dotnet tool restore && dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include \"[DialogueDown*]*\" && dotnet reportgenerator \"-reports:TestResults/coverage.cobertura.*.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"",
       "group": "test",
       "problemMatcher": "$msCompile"
     },

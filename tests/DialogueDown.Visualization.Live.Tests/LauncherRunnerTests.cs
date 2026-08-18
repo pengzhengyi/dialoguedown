@@ -49,7 +49,7 @@ public sealed class LauncherRunnerTests
         // The landing is the report shell's empty state (the Explorer over the project), not a
         // separate picker page: it carries the project payload and no active document.
         using var client = new HttpClient { BaseAddress = new Uri(url) };
-        var landing = await client.GetStringAsync("/");
+        var landing = await client.GetStringAsync("/", TestContext.Current.CancellationToken);
         Assert.StartsWith("<!doctype html", landing, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"project\":", landing);
 
@@ -77,7 +77,7 @@ public sealed class LauncherRunnerTests
         var url = Assert.Single(browser.Opened);
         Assert.Contains("/r/", url);
         using var client = new HttpClient { BaseAddress = new Uri(url) };
-        Assert.Contains("scene.dialogue.md", await client.GetStringAsync(url));
+        Assert.Contains("scene.dialogue.md", await client.GetStringAsync(url, TestContext.Current.CancellationToken));
 
         stop.Cancel();
         Assert.Equal(0, await task);
@@ -93,7 +93,7 @@ public sealed class LauncherRunnerTests
                 throw new TimeoutException("Condition was not met in time.");
             }
 
-            await Task.Delay(25);
+            await Task.Delay(25, TestContext.Current.CancellationToken);
         }
     }
 }

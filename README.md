@@ -106,7 +106,7 @@ Restore, build, and test the solution:
 ```bash
 dotnet restore DialogueDown.sln
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build -m:3
+dotnet test DialogueDown.sln --configuration Release --no-build
 ```
 
 To collect source-focused coverage for the core library:
@@ -114,10 +114,11 @@ To collect source-focused coverage for the core library:
 ```bash
 dotnet tool restore
 dotnet test DialogueDown.sln \
-  --settings coverage.runsettings \
-  --collect:"XPlat Code Coverage"
+  --coverlet \
+  --coverlet-output-format cobertura \
+  --coverlet-include "[DialogueDown*]*"
 dotnet reportgenerator \
-  "-reports:tests/**/TestResults/**/coverage.cobertura.xml" \
+  "-reports:TestResults/coverage.cobertura.*.xml" \
   "-targetdir:coverage-report" \
   "-reporttypes:Html;MarkdownSummary;Cobertura"
 ```
