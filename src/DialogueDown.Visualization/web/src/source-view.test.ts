@@ -281,6 +281,35 @@ describe("createSourceView jump-to menu", () => {
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
 
+    it("tells the jump when the selection is Markdown the compiler left out", () => {
+        // The stage tabs cannot work this out for themselves: the text they would look for is
+        // exactly what is missing from them, so the editor -- which was told the ignored spans --
+        // says so instead.
+        const run = vi.fn();
+        const source = sourceView({
+            jumpTargets: [{ title: "Dialogue AST", run, preview: () => null }],
+        });
+        source.setSemanticTokens([
+            {
+                kind: "IgnoredMarkdown",
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            },
+        ]);
+        source.selectRange(1, 4);
+
+        source.element
+            .querySelector(".cm-content")!
+            .dispatchEvent(
+                new MouseEvent("contextmenu", { bubbles: true, clientX: 5, clientY: 5 }),
+            );
+        [...document.querySelectorAll<HTMLElement>(".context-menu-item")]
+            .find((el) => el.textContent?.includes("Jump to"))!
+            .click();
+        document.querySelector<HTMLButtonElement>(".context-submenu .context-menu-item")!.click();
+
+        expect(run).toHaveBeenCalledWith(1, 4, { ignored: true });
+    });
+
     it("offers a Jump to submenu whose stage runs with the current selection", () => {
         const run = vi.fn();
         const source = sourceView({
@@ -306,7 +335,9 @@ describe("createSourceView jump-to menu", () => {
         expect(stageItem?.textContent).toContain("Dialogue AST");
         stageItem!.click();
 
-        expect(run).toHaveBeenCalledWith(0, 5);
+        // The selection, and what the editor knows about it: this one is ordinary dialogue, so
+        // the stage will hold a node for it and the jump needs no explaining.
+        expect(run).toHaveBeenCalledWith(0, 5, { ignored: false });
     });
 
     it("opens the Jump-to picker at the caret on Alt-J", () => {
