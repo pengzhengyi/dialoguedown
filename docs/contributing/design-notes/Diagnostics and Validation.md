@@ -190,7 +190,7 @@ access (tests, the visualization project) uses it directly.
 | --- | --- |
 | `DiagnosticSeverity` | `Info < Warning < Error` (Error is the worst) |
 | `DiagnosticCategory` | `Syntax` / `Semantic` / `Style`, naming the `DLG####` code ranges |
-| `DiagnosticDescriptor` | the stable kind: `Code`, `Title`, `MessageFormat`, `Category`, `DefaultSeverity`; a guard rejects a malformed code (anchored `^DLG[0-9]{4}$`) or a code whose leading digit does not match its category |
+| `DiagnosticDescriptor` | the stable kind: `Code`, `Title`, `MessageFormat`, `Category`, `DefaultSeverity`; a condition rejects a malformed code (anchored `^DLG[0-9]{4}$`) or a code whose leading digit does not match its category |
 | `Diagnostic` | one located report: `Descriptor` + `SourceSpan` + `MessageArguments` + a `Severity` that defaults from the descriptor; value equality compares the arguments element-wise |
 | `IDiagnosticSink` | the report seam a producer writes to |
 | `DiagnosticBag` | the per-compilation collector: an immutable snapshot in report order + a `HasErrors` convenience; a null report throws |

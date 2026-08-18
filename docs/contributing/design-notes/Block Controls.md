@@ -397,7 +397,7 @@ checks recurse into branch bodies.
 | a nested `> >` quote led by `` `if` `` | a nested `ControlBlock` | Markdig nests it; `Build` recurses |
 | `` `elseif` ``/`` `else` `` opening its own blockquote | severed-chain error | not connected to an `if` |
 | a second `` `else` ``, or `` `elseif` `` after `` `else` `` | marker-order error | branches must be `if` , `elseif`* , `else`? |
-| `` `if` `` / `` `elseif` `` without a condition | missing-condition error (`DLG1111`) | guarded branches require the second code span |
+| `` `if` `` / `` `elseif` `` without a condition | missing-condition error (`DLG1111`) | conditional branches require the second code span |
 | `` `else` `` followed by a condition | unexpected-condition error (`DLG1112`) | the fallback is unconditional |
 | a scene heading inside a branch | scene-placement error (`DLG2015`) | a scene is a top-level unit |
 | a marker fused into a paragraph (no quoted blank line) | marker-standalone error (`DLG1110`) | a marker must be alone on its line |

@@ -53,7 +53,7 @@ and the prerequisite for [#47](https://github.com/pengzhengyi/dialoguedown/issue
 - [x] Report it from **desugar**, at the point the arrow is degraded to text.
 - [x] Point the diagnostic at the arrow's own span (the `=>` characters).
 - [x] Report a **conditional** dangling arrow too (`` `Ready?` => `` with no link),
-      pointing at the arrow rather than the guard.
+      pointing at the arrow rather than the condition.
 - [x] Report **every** dangling arrow in a document, not just the first.
 - [x] Do **not** report when the arrow is part of a well-formed jump.
 - [x] Report a literal `=>` typed in prose too: it cannot be told apart from a lost
@@ -199,10 +199,10 @@ jump is missing. A `Warning` tells the writer without failing a build that works
 today, matching the severity of the other "silently degraded" diagnostics
 (`DLG1003` unreachable content, `DLG1107` styled speaker prefix).
 
-### DD4 — Point at the arrow, not the guard
+### DD4 — Point at the arrow, not the condition
 
 A conditional dangling arrow (`` `Ready?` => ``) reports at the **arrow's** span.
-The guard is valid; the arrow is what failed to become a jump, so that is where
+The condition is valid; the arrow is what failed to become a jump, so that is where
 the writer must act.
 
 ## Error and boundary cases
@@ -236,7 +236,7 @@ the writer must act.
 
 - **Unit — assembler:** a dangling arrow reports once and still degrades to
   `Text("=>")`; a well-formed jump reports nothing; two arrows report twice.
-- **Unit — conditional:** the reported span is the arrow's, not the guard's.
+- **Unit — conditional:** the reported span is the arrow's, not the condition's.
 - **Integration — pipeline:** compiling a document with a dangling arrow surfaces
   exactly one `DLG1113`, located at the arrow, and the compile still succeeds.
 - **Docs test:** the diagnostic-catalog Markdown test regenerates the reference

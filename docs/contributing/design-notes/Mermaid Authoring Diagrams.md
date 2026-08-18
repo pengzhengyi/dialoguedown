@@ -82,7 +82,7 @@ flowchart LR
     source["DialogueDown source"] --> marked["Marked + compiler preview semantics"]
     marked --> html["sanitized preview HTML"]
     html --> placeholder["Mermaid placeholder<br/>keeps source-block identity"]
-    placeholder --> queue["serialized render queue<br/>revision guarded"]
+    placeholder --> queue["serialized render queue<br/>revision conditional"]
     queue --> mermaid["official Mermaid<br/>strict security"]
     mermaid --> svg["sanitized accessible SVG"]
 

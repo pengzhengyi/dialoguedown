@@ -361,7 +361,7 @@ classDiagram
   data; it marks "the default speaker" for semantic analysis to resolve.
 - **`ControlLine(IReadOnlyList<InlineFragment> Effects, SourceSpan Span, Condition? Condition)`**
   — a `ScriptBlock`. An effect-only line with no speaker; its `Effects` are the jump
-  and command fragments, guarded by an optional `Condition`. See the
+  and command fragments, conditional by an optional `Condition`. See the
   [Control Line](./Control%20Line.md) note.
 
 ## Error and boundary cases

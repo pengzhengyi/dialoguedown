@@ -87,7 +87,7 @@ So the work is one projection class and one wiring line.
 
 The other stage tabs walk a **tree** from its root. The dialogue graph is a flat
 list where `Nodes[0]` is the entry, and a node can be **unreachable** — content
-after an unguarded divert, which the compiler already warns about as `DLG1003`.
+after an unconditional divert, which the compiler already warns about as `DLG1003`.
 
 Walking from the entry would silently drop those nodes. The graph tab is exactly
 where a writer should *see* unreachable content, so the projection emits **every
@@ -123,7 +123,7 @@ Each node kind maps to a label that leads with what a reader recognizes:
 | `EndNode` | `End` | `terminal` |
 
 Categories reuse the names other stages already use, so a line is the same color
-on every tab. Attributes carry the node's **scene** and, when guarded, its
+on every tab. Attributes carry the node's **scene** and, when conditional, its
 **guard**.
 
 ### Edge projection

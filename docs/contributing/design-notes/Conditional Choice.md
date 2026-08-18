@@ -77,7 +77,7 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 - [x] Recognize a leading `` `"key"?` `` condition on a list item — *before* its
       weight and body — and peel it off as the option's guard.
-- [x] Model the guard as an optional `Condition` on `Choice` and on
+- [x] Model the condition as an optional `Condition` on `Choice` and on
       `RandomOption`, each with an `IsConditional` predicate.
 - [x] Keep classifying a list as a random choice when an option leads with a
       condition *then* a weight, by peeking past the condition for the weight.
@@ -253,10 +253,10 @@ the **list item**, before the option's body is built — and attached to the
 *whole option*, and it deliberately **takes precedence** over the inner line and
 jump handling:
 
-| Option written           | Peeled at the list item (this design)             | If left to the inner line or jump handling                                             |
-| ------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| ``- `"c"?` Bob: Attack`` | conditional **option** (removes the whole option) | conditional **line** inside the option (only its first line hidden)                    |
-| ``- `"c"?` => [x]``      | conditional **option** whose body is a plain jump | option holding a **conditional jump** (the line builder leaves the guard for the jump) |
+| Option written           | Peeled at the list item (this design)             | If left to the inner line or jump handling                                                 |
+| ------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| ``- `"c"?` Bob: Attack`` | conditional **option** (removes the whole option) | conditional **line** inside the option (only its first line hidden)                        |
+| ``- `"c"?` => [x]``      | conditional **option** whose body is a plain jump | option holding a **conditional jump** (the line builder leaves the condition for the jump) |
 
 Guard-first at the outermost level wins: the option is what a condition on a menu
 item should remove, so the list-item peel runs first and the inner builders never
@@ -264,7 +264,7 @@ re-bind the condition.
 
 The line and the option **share the peel itself** — a common
 `bool TryPeel(inlines, out condition, out remainder)` that recognizes and removes a
-leading condition — and each applies its own policy: the line declines a guard that
+leading condition — and each applies its own policy: the line declines a condition that
 a jump should claim, while the option always takes it. The jump does not peel at
 all; its condition can sit mid-line, so it stays an inline fragment bound in
 desugar. Recognition of the `` `"key"?` `` code span is the `ConditionReader`, shared
@@ -294,7 +294,7 @@ remain, so a static total is neither required nor meaningful.
 
 ### D4 — A false option is removed; an independent guard
 
-A false condition removes its one option — the same "false skips the guarded
+A false condition removes its one option — the same "false skips the conditional
 element" rule the conditional jump and line establish (a jump is skipped, a line
 falls through, an option is removed). Each option's condition is **independent**:
 ``- `"c1"?` A`` and ``- `"c2"?` B`` are two separate guards, not an
@@ -306,7 +306,7 @@ the runtime; the compiler only attaches the condition.
 A conditional option introduces no new primitive. It reuses the `Condition` node,
 the `` `"key"?` `` shape, and the query-and-sigil family, and it extends the same
 orphan-condition rule (`DLG1106`) that guards a jump and a line. The domain keeps
-a single word — **condition** — for the guard on every construct.
+a single word — **condition** — for the condition on every construct.
 
 ## Relation to a future block `if`/`elseif`/`else`
 
@@ -354,7 +354,7 @@ any option is conditional (see [D3](#d3--a-conditional-random-option-defers-the-
 
 | Case                                                    | Behavior                                                                                                                                                             |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Condition before a player option (``- `"K"?` Use it.``) | Conditional player option; the whole option is guarded.                                                                                                              |
+| Condition before a player option (``- `"K"?` Use it.``) | Conditional player option; the whole option is conditional.                                                                                                          |
 | Condition then weight (``- `"K"?` `50%` …``)            | Conditional random option; the option carries both the condition and the weight.                                                                                     |
 | Weight then condition (``- `50%` `"K"?` …``)            | The weight is peeled (random); the `` `"K"?` `` sits at the body start and guards the body's first line, not the option.                                             |
 | Plain option, no condition                              | Unchanged option.                                                                                                                                                    |
@@ -386,11 +386,11 @@ condition, and its weight are visible.
 
 The construct shipped as designed; the runtime resolution remains deferred.
 
-| Bucket       | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Achieved** | `Choice` and `RandomOption` gained an optional `Condition` and an `IsConditional` predicate; `ChoiceConditionRecognition.Peel` binds the guard at the list-item level before the body — and, for a random option, its weight — via the shared `ConditionReader.TryPeel`; `HasLeadingWeight` peeks past a leading condition; the weight total defers when any option is conditional; the orphan-condition rule and the tree traversal extend to a choice guard (guard-first, condition before weight); and the report projection, writer spec, and gallery match the design (D1–D5). |
-| **Changed**  | The shared leading-condition peel was extracted to `ConditionReader.TryPeel(inlines, out condition, out remainder)` and the conditional line's `LineBuilder` was refactored to call it, unifying the two block-start guards. A generic `ReadOnlyListExtensions.ReplaceOrRemoveAt` now backs both the condition peel and the random weight's block rebuild. The weight recognizer kept its `Resolve` name: it validates and recovers a required weight, so it is a resolution, not the pure structural peel a condition uses.                                                        |
-| **Deferred** | Offering or hiding a player option and excluding then re-normalizing a random pool are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). A block `if`/`elseif`/`else` remains a separate future construct that reuses this primitive; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                                                                                                          |
+| Bucket       | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Achieved** | `Choice` and `RandomOption` gained an optional `Condition` and an `IsConditional` predicate; `ChoiceConditionRecognition.Peel` binds the condition at the list-item level before the body — and, for a random option, its weight — via the shared `ConditionReader.TryPeel`; `HasLeadingWeight` peeks past a leading condition; the weight total defers when any option is conditional; the orphan-condition rule and the tree traversal extend to a choice guard (guard-first, condition before weight); and the report projection, writer spec, and gallery match the design (D1–D5). |
+| **Changed**  | The shared leading-condition peel was extracted to `ConditionReader.TryPeel(inlines, out condition, out remainder)` and the conditional line's `LineBuilder` was refactored to call it, unifying the two block-start guards. A generic `ReadOnlyListExtensions.ReplaceOrRemoveAt` now backs both the condition peel and the random weight's block rebuild. The weight recognizer kept its `Resolve` name: it validates and recovers a required weight, so it is a resolution, not the pure structural peel a condition uses.                                                            |
+| **Deferred** | Offering or hiding a player option and excluding then re-normalizing a random pool are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). A block `if`/`elseif`/`else` remains a separate future construct that reuses this primitive; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                                                                                                              |
 
 ## Alternatives not chosen
 
@@ -405,7 +405,7 @@ The construct shipped as designed; the runtime resolution remains deferred.
 ## Open questions and deferred work
 
 - **Runtime resolution of a conditional option** — the compiler recognizes and
-  preserves the guard, but offering or hiding a player option and excluding then
+  preserves the condition, but offering or hiding a player option and excluding then
   re-normalizing a random pool need the runtime. Tracked with the
   [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
 - **Block `if`/`elseif`/`else`** — the grouped, mutually-exclusive sibling of the

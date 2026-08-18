@@ -39,7 +39,7 @@
 ## Goal and scope
 
 A writer often wants a single line to appear only under some game-state
-condition — a guard who mutters a threat only when angry, a narrator who adds a
+condition — a condition who mutters a threat only when angry, a narrator who adds a
 sentence only on a return visit, a companion whose aside depends on a flag.
 Today a [line](./Markdown%20to%20Dialogue%20AST%20Transpiler.md) is
 unconditional: it always plays.
@@ -73,14 +73,14 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 - [x] Recognize a leading `` `"key"?` `` condition code span on a line, *before*
       the speaker is parsed, and peel it off as the line's guard.
-- [x] Model the guard as an optional `Condition` on `Line`, with an
-      `IsConditional` predicate; an unguarded line leaves it absent.
+- [x] Model the condition as an optional `Condition` on `Line`, with an
+      `IsConditional` predicate; an unconditional line leaves it absent.
 - [x] Parse the speaker and speech from the content *after* the peeled condition,
       so `` `"Angry"?` Guard: Leave.`` still names the speaker `Guard`.
 - [x] Preserve the source span of the condition, its query key, the speaker, and
       the speech.
 - [x] Generalize `DLG1106` so a condition that guards neither a jump nor a line
-      is reported, and detect "guarded" by identity, not by parent type alone.
+      is reported, and detect "conditional" by identity, not by parent type alone.
 - [x] Leave an ordinary unconditional line unchanged when no condition precedes
       it.
 - [x] Add the construct to the writer-facing specification, the gallery, and the
@@ -92,10 +92,10 @@ The domain term is **condition** everywhere, exactly as in the
 [Conditional Jump](./Conditional%20Jump.md#ubiquitous-language) note. This note
 adds one term and reuses the rest.
 
-| Term                 | Meaning                                                                                                                                                                                               |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Conditional line** | A line preceded by a condition; it plays only when the condition is true, and is skipped whole when it is false.                                                                                      |
-| **Peel**             | Removing the leading guard code span from a block before the rest is parsed, so the guard becomes a property rather than content — the same move the random-choice weight already makes on an option. |
+| Term                 | Meaning                                                                                                                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Conditional line** | A line preceded by a condition; it plays only when the condition is true, and is skipped whole when it is false.                                                                                          |
+| **Peel**             | Removing the leading guard code span from a block before the rest is parsed, so the condition becomes a property rather than content — the same move the random-choice weight already makes on an option. |
 
 The **condition**, **check**, and **guard-first** terms carry over unchanged.
 
@@ -112,11 +112,11 @@ it at the *start of a line* and the whole line becomes conditional:
 The guard says nothing and waves you through.
 ```
 
-If `Angry` is true the guard's line plays; if it is false that line is skipped
+If `Angry` is true the condition's line plays; if it is false that line is skipped
 and reading continues with "The guard says nothing." The condition sits **before
-the speaker** — `Guard` is still recognized as the speaker of the guarded line.
+the speaker** — `Condition` is still recognized as the speaker of the conditional line.
 
-A conditional line needs no speaker; the guard fronts any line:
+A conditional line needs no speaker; the condition fronts any line:
 
 ```markdown
 `"Returned"?` Welcome back. It has been too long.
@@ -152,7 +152,7 @@ the same recognition rather than re-deriving it.
 
 Resolution runs at **runtime**, identical to the
 [conditional jump](./Conditional%20Jump.md#condition-resolution): the runtime
-reads the key through `IGameSystem.Check`; a `true` result plays the guarded
+reads the key through `IGameSystem.Check`; a `true` result plays the conditional
 line, a `false` result skips it and the dialogue continues with the next block.
 An unknown key defaults to `false`, so a flag that was never set simply hides the
 line. The compiler only recognizes and preserves the condition.
@@ -199,7 +199,7 @@ flowchart LR
   ordinary inline fragment, so validation reports it (see
   [D6](#d6--a-lone-condition-guards-nothing)).
 - **Validation.** The orphan-condition rule generalizes: a condition is *bound*
-  when it is the guard of the jump *or* line it precedes. One that guards neither
+  when it is the condition of the jump *or* line it precedes. One that guards neither
   is reported (`DLG1106`).
 - **Runtime.** Evaluating the condition and playing or skipping the line is
   deferred to the graph/runtime, alongside the conditional jump and dynamic-weight
@@ -213,7 +213,7 @@ flowchart LR
 | `Line`                           | Gains an optional `Condition` and an `IsConditional` predicate; an unconditional line leaves it absent.                                                   |
 | `LineBuilder`                    | Peels a leading condition off the inline group *before* speaker parsing, attaches it to the `Line`, and builds the speaker and speech from the remainder. |
 | `ConditionReader`                | Unchanged — recognizes a `` `"key"?` `` code span. Reused by `LineBuilder` for the peel.                                                                  |
-| `OrphanConditionRule`            | Renamed from `ConditionWithoutJumpRule`; reports `DLG1106` for a condition that guards neither a jump nor a line, detecting a guard by identity.          |
+| `OrphanConditionRule`            | Renamed from `ConditionWithoutJumpRule`; reports `DLG1106` for a condition that guards neither a jump nor a line, detecting a condition by identity.      |
 | `DiagnosticCatalog`              | `DLG1106` generalizes from "a condition does not precede a jump" to "a condition guards nothing."                                                         |
 | Report projection                | Shows a conditional line's condition (its key) as the line's first child, mirroring how a conditional jump shows its condition.                           |
 | `IGameSystem.Check` *(deferred)* | Unchanged — the `bool Check(string key)` the runtime will call to resolve a condition; lands with the runtime.                                            |
@@ -223,7 +223,7 @@ flowchart LR
 ### D1 — The line guard is a peeled property, not an inline fragment
 
 A jump's condition is modeled as an inline `Condition` fragment and bound to the
-jump during desugar, because a jump can appear *mid-line* and its guard travels
+jump during desugar, because a jump can appear *mid-line* and its condition travels
 with it through the inline stream. A line's condition is different: it always
 sits at the **start of the block**, before the speaker, which the transpiler
 parses at block level from the leading text. So the line guard is **peeled in the
@@ -242,7 +242,7 @@ inconsistent with the weight it sits beside.
 
 The condition is written *before* the whole line, speaker included:
 `` `"Angry"?` Guard: Leave.`` The guard reads "if … then …", it is scannable at
-the start of the line, and it matches the guard-first placement the conditional
+the start of the line, and it matches the condition-first placement the conditional
 jump established and the conditional choice will reuse. Placing it after the
 speaker (``Guard: `"Angry"?` Leave.``) was rejected: it buries the guard and
 breaks the one placement rule shared across jump, line, and choice.
@@ -253,7 +253,7 @@ A conditional line introduces no new syntax primitive. It reuses the `Condition`
 node, the `` `"key"?` `` shape, the `ConditionReader`, and the query-and-sigil
 family from the conditional jump. Only the *attachment point* is new (a line
 rather than a jump), so the writer who knows one knows the other, and the domain
-keeps a single word — **condition** — for the guard everywhere.
+keeps a single word — **condition** — for the condition everywhere.
 
 ### D4 — `DLG1106` generalizes from "without a jump" to "guards nothing"
 
@@ -263,7 +263,7 @@ test no longer suffices: a line's condition and a stray condition *in a line's
 speech* both have the `Line` as their parent. The rule instead decides a
 condition is **bound by identity** — it is bound when it is exactly the
 `Condition` its parent jump or line references, not merely when its parent is of
-a guarding type. Any condition that is not the guard of its parent is unbound and
+a guarding type. Any condition that is not the condition of its parent is unbound and
 reported.
 
 The diagnostic generalizes accordingly — from "a condition does not precede a
@@ -273,7 +273,7 @@ message to a third guard.
 
 ### D5 — A false line is skipped whole; no else
 
-A false condition skips its one guarded line and continues with the next block —
+A false condition skips its one conditional line and continues with the next block —
 the same fall-through as the conditional jump, and the same "no inline else." The
 writer places any alternative on the next line (often a second conditional line
 querying the inverse flag). This keeps the construct Markdown-native and avoids a
@@ -286,13 +286,13 @@ A condition with no speaker and no speech after it — a paragraph that is only
 accepted as an empty conditional line. Concretely, `LineBuilder` peels the
 condition onto the line **only when content follows it**; a lone condition is left
 as an ordinary inline fragment, which the generalized rule then reports. This
-catches the likely mistake — a writer who wrote the guard but forgot the line —
+catches the likely mistake — a writer who wrote the condition but forgot the line —
 rather than compiling a line that can only ever show nothing.
 
 ## Markdown interaction
 
 A condition is an inline code span, so Markdig parses `` `"Angry"?` Guard: …`` as
-inline code followed by text, and an ordinary Markdown preview shows the guard as
+inline code followed by text, and an ordinary Markdown preview shows the condition as
 code before the line — readable, and clearly not spoken. It does not collide with
 any existing Markdown or DialogueDown syntax, for the same reason the conditional
 jump does not: a quoted string followed by `?` inside a code span is not a valid
@@ -350,7 +350,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 | Bucket       | Result                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Achieved** | `Line` gained an optional `Condition` and an `IsConditional` predicate; `LineBuilder` peels a leading condition before the speaker, only when content follows it; the orphan-condition rule generalized to `OrphanConditionRule`, detecting a bound condition by identity across a jump or a line; a line's condition is traversed guard-first; and the report projection, writer spec, gallery, and `DLG1106` docs all match the design (D1–D6). |
-| **Changed**  | `LineBuilder` was restructured into a thin wrapper over a single-use `Assembler` that consumes the front of the line's inlines, and a shared `ISpanned` interface with a `SourceSpan.Covering` overload replaced the repeated first-and-last-span idiom — refinements beyond the note. The `DLG1106` fix example now moves the guard to the line's start rather than dropping the `?`, preserving the writer's intent.                            |
+| **Changed**  | `LineBuilder` was restructured into a thin wrapper over a single-use `Assembler` that consumes the front of the line's inlines, and a shared `ISpanned` interface with a `SourceSpan.Covering` overload replaced the repeated first-and-last-span idiom — refinements beyond the note. The `DLG1106` fix example now moves the condition to the line's start rather than dropping the `?`, preserving the writer's intent.                        |
 | **Deferred** | Reading the condition through `IGameSystem.Check` and playing or skipping the line are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). Conditions on choices are the next construct; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                       |
 
 ## Alternatives not chosen
@@ -365,7 +365,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 ## Open questions and deferred work
 
 - **Runtime gating of a conditional line** — the compiler recognizes and
-  preserves the guard, but reading the key through `Check` and playing or skipping
+  preserves the condition, but reading the key through `Check` and playing or skipping
   the line need the runtime. Tracked with the
   [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
 - **Conditions on choices** — the next construct. A condition guarding a player or

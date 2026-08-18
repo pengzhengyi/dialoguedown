@@ -229,7 +229,7 @@ are untouched.
   concept only.
 - **Inline create teardown.** Submitting the Explorer's inline create with Enter
   removes the focused field, which fires a blur in a real browser; the teardown is
-  guarded (a `settled` flag, like the rename field) so it runs once instead of
+  conditional (a `settled` flag, like the rename field) so it runs once instead of
   throwing and losing the submit. This surfaced through the empty-state call to
   action and is covered by the live e2e.
 - **Reopening after create.** Reuses the Explorer's save-safe navigation (Auto flush

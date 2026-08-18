@@ -104,7 +104,7 @@ node let you type depended on which tab you were on — a distinction a reader c
 by accident.
 
 Removing it also retired the machinery that existed only to keep two editors coherent: the
-offset splice, the editor lifecycle inside the panel (lazy creation, a guard so a programmatic
+offset splice, the editor lifecycle inside the panel (lazy creation, a condition so a programmatic
 load did not read as a user edit, the captured splice base), and routing **node selection**
 through the navigation guard. That last one collapses to nothing: a selection can no longer
 leave unsaved work behind, because a tab switch already resolves the document before it
