@@ -53,11 +53,28 @@ export function lineageIds<T extends { id: string }>(node: HierarchyNode<T>): Se
 const SCENE_NODE_RADIUS = 7;
 const CONTENT_NODE_RADIUS = 5;
 
-// The arrowhead's drawn size in user units, and how far its tip sits back from the node center so
-// it stops exactly on the circle's edge: the node's radius plus the half of its stroke that sits
-// outside the circle.
+// Half the stroke each dot is drawn with, which sits outside its radius: the painted edge a line
+// should stop on is the radius plus this.
+const CONTENT_NODE_HALO = 0.75;
+const SCENE_NODE_HALO = 1;
+
+// The arrowhead's drawn length in user units. A route stops where the head *begins* and the head
+// draws the rest, so the line is never underneath the taper: a triangle narrows to nothing at its
+// tip, and a line 1.5 wide left under it shows through as a blunt stub past the point.
 const ARROW_SIZE = 9;
-const ARROW_STANDOFF = CONTENT_NODE_RADIUS + 0.75;
+
+/**
+ * How far short of a node's center a line aimed at it should stop.
+ *
+ * Far enough for the head that follows it to reach the dot's painted edge and no further: the
+ * head is drawn forward from the line's end, so the line yields it the whole of its own length.
+ */
+function nodeStandoff(node: DisplayNode): number {
+    const painted = isSceneNode(node)
+        ? SCENE_NODE_RADIUS + SCENE_NODE_HALO
+        : CONTENT_NODE_RADIUS + CONTENT_NODE_HALO;
+    return painted + ARROW_SIZE;
+}
 
 /**
  * The drawn size of a repeated glyph, and how far apart the line stamps them. The spacing is a
@@ -339,10 +356,12 @@ export function createTreeView(
             defs.append("marker")
                 .attr("id", `arrow-${markerScope}-${category}`)
                 .attr("viewBox", "0 0 10 10")
-                // A link ends at its target's center, so the head is pushed back to the circle's
-                // edge — otherwise the arrow is drawn underneath the dot and never seen. refX is
-                // in viewBox units, which the marker scales to ARROW_SIZE across.
-                .attr("refX", 10 + (ARROW_STANDOFF * 10) / ARROW_SIZE)
+                // The head is drawn *forward* from the line's end rather than back over it, so
+                // the reference point is its base. Sitting the head on top of the line instead
+                // leaves the line showing past the taper — a triangle narrows to nothing at its
+                // tip, and the 1.5-wide line beneath it reads as a blunt stub through the point.
+                // Forward, the base is wider than the line it continues, and covers it.
+                .attr("refX", 0)
                 .attr("refY", 5)
                 .attr("markerWidth", ARROW_SIZE)
                 .attr("markerHeight", ARROW_SIZE)
@@ -1272,6 +1291,7 @@ export function createTreeView(
             .attr("d", (link) =>
                 edgePath(at(link.source), at(link.target), {
                     clearance: clearanceOf((link.source as TreeNode).data.id),
+                    standoff: nodeStandoff((link.target as TreeNode).data),
                 }),
             )
             .each(function (link) {
@@ -1306,6 +1326,7 @@ export function createTreeView(
             .attr("d", (edge) =>
                 edgePath(at(positionById.get(edge.fromId)!), at(positionById.get(edge.toId)!), {
                     clearance: clearanceOf(edge.fromId),
+                    standoff: nodeStandoff(positionById.get(edge.toId)!.data),
                     ...(laneOf.get(edgeKey(edge)) ?? {}),
                 }),
             )
