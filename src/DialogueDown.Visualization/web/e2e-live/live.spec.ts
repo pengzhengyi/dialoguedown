@@ -1217,6 +1217,98 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
     expect(Math.min(...widths.filter((width) => width > 50))).toBeGreaterThan(budget * 0.9);
 });
 
+test("lands a route's arrowhead on its target's edge, with no line showing past it", async ({
+    page,
+}) => {
+    // Two faults met here. A line that ran to the target's *center* had to be hidden by the dot,
+    // with its head pushed back to compensate — and the head is pushed back along the line's final
+    // **direction**, which on a curved approach points somewhere other than the center, so the head
+    // landed beside the line and the last of the curve bent inside the circle. Stopping the line at
+    // the dot's edge fixed that but left a second: a triangle narrows to nothing at its tip, so the
+    // 1.5-wide line beneath it showed through the point as a blunt stub.
+    //
+    // The line now stops where the head *begins*, and the head draws the rest. So the assertion is
+    // about the head's tip — what the reader actually sees — not the line's invisible end.
+    writeFileSync(
+        LIVE_DOC,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- Alice: Left.",
+            "",
+            "- Alice: Right.",
+            "",
+            "=> [The Gate](#the-gate)",
+            "",
+        ].join("\n"),
+    );
+    await page.goto("/");
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const routes = page.locator("section.stage.active svg.tree path[marker-end]");
+    await expect(routes).not.toHaveCount(0);
+
+    const arrivals = await page
+        .locator("section.stage.active svg.tree")
+        .first()
+        .evaluate((svg: SVGSVGElement) => {
+            const head = svg.querySelector("marker[id^='arrow']")!;
+            const arrowLength = Number(head.getAttribute("markerWidth"));
+            const centers = [...svg.querySelectorAll("g")]
+                .map((group) => {
+                    const dot = group.querySelector(":scope > circle");
+                    const move = /translate\(([-\d.]+)[ ,]([-\d.]+)\)/.exec(
+                        group.getAttribute("transform") ?? "",
+                    );
+                    return dot && move
+                        ? {
+                              x: Number(move[1]),
+                              y: Number(move[2]),
+                              r: Number(dot.getAttribute("r")),
+                          }
+                        : null;
+                })
+                .filter((node): node is { x: number; y: number; r: number } => node !== null);
+
+            return [...svg.querySelectorAll<SVGPathElement>("path[marker-end]")].map((route) => {
+                const length = route.getTotalLength();
+                const end = route.getPointAtLength(length);
+                // A short chord, because a lane route is still turning as it arrives: measured
+                // over a whole unit the estimated heading lags the real tangent the head is
+                // drawn along, and the tip it predicts misses by more than the dot is wide.
+                const before = route.getPointAtLength(length - 0.01);
+                // The head is drawn forward from the line's end, along its final direction.
+                const run = Math.hypot(end.x - before.x, end.y - before.y) || 1;
+                const tip = {
+                    x: end.x + ((end.x - before.x) / run) * arrowLength,
+                    y: end.y + ((end.y - before.y) / run) * arrowLength,
+                };
+                let nearest = { tipGap: Infinity, lineGap: Infinity, r: 0 };
+                for (const node of centers) {
+                    const tipGap = Math.hypot(node.x - tip.x, node.y - tip.y);
+                    if (tipGap < nearest.tipGap) {
+                        nearest = {
+                            tipGap,
+                            lineGap: Math.hypot(node.x - end.x, node.y - end.y),
+                            r: node.r,
+                        };
+                    }
+                }
+                return nearest;
+            });
+        });
+
+    expect(arrivals.length).toBeGreaterThan(0);
+    for (const { tipGap, lineGap, r } of arrivals) {
+        // The head reaches the painted edge — clear of the dot, and not floating away from it.
+        expect(tipGap).toBeGreaterThan(r);
+        expect(tipGap).toBeLessThan(r + 2);
+        // And the line itself stops a whole head short, so none of it lies under the taper.
+        expect(lineGap).toBeGreaterThan(tipGap + 6);
+    }
+});
+
 test("names each kind of route with its own pointer", async ({ page }) => {
     writeFileSync(
         LIVE_DOC,

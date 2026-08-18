@@ -146,3 +146,59 @@ describe("edgePath ports", () => {
         expect(leaning).not.toBe(level);
     });
 });
+
+describe("edgePath standoff", () => {
+    // The line used to run all the way to the target's center and rely on the dot to hide the
+    // overshoot, while the arrowhead was pushed back along the *tangent* to compensate. On a
+    // curved approach the two disagree: the head lands off the line, so stroke shows past it, and
+    // the last stretch of curve bends inside the circle. Stopping the line at the dot's edge
+    // leaves nothing to hide.
+    const endOf = (path: string): Point => {
+        const [x, y] = path
+            .split(/[MCL,]/)
+            .filter(Boolean)
+            .slice(-2)
+            .map(Number);
+        return { x, y };
+    };
+    const distance = (a: Point, b: Point): number => Math.hypot(a.x - b.x, a.y - b.y);
+
+    it("stops an ordinary step short of the target by the standoff", () => {
+        const target = { x: 260, y: 0 };
+        const end = endOf(edgePath(from, target, { clearance: 60, standoff: 8 }));
+
+        expect(distance(end, target)).toBeCloseTo(8, 2);
+    });
+
+    it("stops a cross-link short of the target by the standoff", () => {
+        const target = { x: 900, y: 62 };
+        const end = endOf(edgePath(from, target, { lane: 400, standoff: 8 }));
+
+        expect(distance(end, target)).toBeCloseTo(8, 2);
+    });
+
+    it("keeps the approach direction it would have had, so the head points where the line ran", () => {
+        const target = { x: 260, y: 62 };
+        const full = endOf(edgePath(from, target, { clearance: 60 }));
+        const trimmed = endOf(edgePath(from, target, { clearance: 60, standoff: 8 }));
+
+        // The trimmed end lies back along the line's own final direction, not off to one side.
+        expect(distance(trimmed, target)).toBeCloseTo(8, 2);
+        expect(distance(full, target)).toBeCloseTo(0, 2);
+    });
+
+    it("still ends on the dot when no standoff is asked for", () => {
+        const target = { x: 260, y: 62 };
+
+        expect(endOf(edgePath(from, target, { clearance: 60 }))).toEqual(target);
+    });
+
+    it("never doubles back past its own start when the target is closer than the standoff", () => {
+        const target = { x: 4, y: 0 };
+        const end = endOf(edgePath(from, target, { standoff: 40 }));
+
+        // A standoff wider than the whole step would otherwise send the line backwards.
+        expect(end.x).toBeGreaterThanOrEqual(from.x);
+        expect(end.x).toBeLessThanOrEqual(target.x);
+    });
+});
