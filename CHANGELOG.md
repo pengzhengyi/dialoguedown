@@ -218,6 +218,10 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A jump from ignored Markdown says where it landed** — the compiler makes no node from text
+  it leaves out, so **Jump to** settles on the node around it. The inspector now says so, rather
+  than presenting that node as what the text became.
+
 - **The Source tab's bottom row reads as one bar, edge to edge** — the split divider no longer
   shows through as a white notch between the `#END` footer and the ignored-content footer, and the
   main area is full-bleed, so nothing insets the bar from either window edge. The Explorer, the

@@ -18,7 +18,12 @@ import { tintsOf } from "./region-bands";
 import { createTreeView, type TreeView } from "./tree-view";
 import type { CameraTransform } from "./graph-camera";
 import { GraphCameraStore } from "./graph-camera";
-import { createSourceView, type SourceViewHandle, type SourceJumpTarget } from "./source-view";
+import {
+    createSourceView,
+    type SourceViewHandle,
+    type SourceJumpContext,
+    type SourceJumpTarget,
+} from "./source-view";
 import { findEnclosingNode } from "./enclosing-node";
 import { createConfigView, type ConfigViewHandle, type ConfigViewOptions } from "./config-view";
 import { consumeOpenConfigTab } from "./config-create";
@@ -31,7 +36,7 @@ import { installMaximizeControls } from "./maximize-controls";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
-import { escapeHtml } from "./text";
+import { ellipsize, escapeHtml } from "./text";
 
 /**
  * The stages that have read Dialogue meaning into the document, and so render `=>` as the jump
@@ -285,7 +290,12 @@ export function runApp(
     // Reverse of `jumpToSource`: from a Source selection, reveal the enclosing node in a stage.
     // Reads the *live* stage set (not a build-time snapshot) so it stays correct after a save
     // rebuilds the stages, then routes through the same save-safe navigation guard.
-    function jumpToStageByTitle(title: string, from: number, to: number): void {
+    function jumpToStageByTitle(
+        title: string,
+        from: number,
+        to: number,
+        context: SourceJumpContext = { ignored: false },
+    ): void {
         const stage = currentStages.find((candidate) => candidate.title === title);
         if (stage == null || stage.unavailable != null) return;
         const match = findEnclosingNode(stage.nodes, stage.edges, from, to);
@@ -295,6 +305,15 @@ export function runApp(
         const land = (): void => {
             activate(index);
             views[index]?.selectById(match.node.id, { center: true, reveal: true });
+            // Said after the selection, which renders the panel afresh and clears any prior note.
+            // Ignored Markdown becomes no node in any stage, so the jump lands on the node that
+            // encloses it; without a word, that reads as what the text turned into.
+            panel.note(
+                context.ignored
+                    ? `That text is ignored, so no ${title} node was made from it. ` +
+                          `Showing ${ellipsize(match.node.label || (match.node.typeName ?? "the node"), 40)}, the closest node around it.`
+                    : null,
+            );
         };
         if (source?.beginNavigation) source.beginNavigation(land);
         else land();
@@ -463,7 +482,7 @@ export function runApp(
                 .filter((stage) => stage.unavailable == null)
                 .map((stage) => ({
                     title: stage.title,
-                    run: (from, to) => jumpToStageByTitle(stage.title, from, to),
+                    run: (from, to, context) => jumpToStageByTitle(stage.title, from, to, context),
                     preview: (from, to) => enclosingSpanByTitle(stage.title, from, to),
                 }));
             sourceHandle = createSourceView(report.source, {

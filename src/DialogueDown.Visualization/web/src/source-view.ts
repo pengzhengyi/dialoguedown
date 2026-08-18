@@ -43,6 +43,7 @@ import { foldGutterMarker } from "./fold-glyph";
 import {
     foldEveryIgnoredRegion,
     hasFoldableIgnoredRegions,
+    ignoredRegionsOf,
     setIgnoredSpans,
     sourceIgnoredFold,
 } from "./source-ignored-fold";
@@ -292,9 +293,15 @@ function jumpMenuItems(
     jumpTargets: readonly SourceJumpTarget[],
 ): ContextMenuItem[] {
     const { from, to } = view.state.selection.main;
+    // Whether the selection sits in Markdown the compiler left out. The editor already knows,
+    // having been told the ignored spans to fold; the stage tabs cannot tell, because the text
+    // they would look for is precisely what is missing from them.
+    const ignored = ignoredRegionsOf(view.state).some(
+        (region) => region.from <= Math.min(from, to) && Math.max(from, to) <= region.to,
+    );
     return jumpTargets.map((target) => ({
         label: target.title,
-        run: () => target.run(from, to),
+        run: () => target.run(from, to, { ignored }),
         // On hover, preview the span this jump would land on — the enclosing node in that stage.
         onHover: () => {
             const span = target.preview(from, to);
@@ -357,12 +364,21 @@ export interface SourceViewOptions {
     debug?: DebugController;
 }
 
+/** What the editor knows about the selection a reverse jump starts from. */
+export interface SourceJumpContext {
+    /**
+     * The selection lies in Markdown the compiler left out, so no stage holds a node for it and
+     * every jump must settle for the node that encloses it.
+     */
+    readonly ignored: boolean;
+}
+
 /** One reverse-jump destination: a stage tab, and the action that reveals its enclosing node. */
 export interface SourceJumpTarget {
     /** The destination stage tab's title, shown in the Jump-to submenu. */
     title: string;
     /** Reveal, in this stage, the node whose span encloses the source selection `[from, to)`. */
-    run(from: number, to: number): void;
+    run(from: number, to: number, context: SourceJumpContext): void;
     /** The source span of that enclosing node, previewed on hover; `null` when none matches. */
     preview(from: number, to: number): Span | null;
 }
