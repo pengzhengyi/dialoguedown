@@ -25,7 +25,7 @@ export function writeReport(report: Report): string {
 export const SAMPLE_STAGES: Stage[] = [
     {
         title: "Markdown AST",
-        description: "The Markdown syntax tree parsed from the source.",
+        description: "The Markdown tree the front end parses from the source.",
         nodes: [
             {
                 id: "n0",

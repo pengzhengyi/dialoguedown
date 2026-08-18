@@ -38,8 +38,10 @@ internal sealed class MarkdownAstProjection : INodeProjection<object>
     public string Title => "Markdown AST";
 
     public string Description =>
-        "The Markdown syntax tree parsed from the source — its document, blocks " +
-        "(headings, paragraphs, lists, blockquotes), and inline spans, each tied to the text it came from.";
+        "The Markdown tree the front end parses from the source — its document, blocks " +
+        "(headings, paragraphs, lists, blockquotes), and inline spans, each tied to the text it " +
+        "came from. It holds only what DialogueDown models as dialogue: an unmodeled construct " +
+        "is kept as its text or left out.";
 
     public NodeDescription Describe(object node)
     {
