@@ -1,8 +1,9 @@
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Diagnostics;
+using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Editor;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// Assembles a self-contained HTML report from one or more display graphs and,

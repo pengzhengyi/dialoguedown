@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>
 /// A named area of the document a stage's nodes sit in — a scene today, a file later.

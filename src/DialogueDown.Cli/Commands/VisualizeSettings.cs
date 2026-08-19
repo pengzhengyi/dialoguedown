@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using DialogueDown.Visualization;
+using DialogueDown.Visualization.Render;
 using Spectre.Console;
 using Spectre.Console.Cli;
 

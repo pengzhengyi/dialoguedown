@@ -1,6 +1,7 @@
 using DialogueDown.Markdown;
+using DialogueDown.Visualization.Display;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Markdown;
 
 /// <summary>
 /// Ergonomic entry point for the Markdown stage: turns a parsed

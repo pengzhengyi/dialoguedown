@@ -1,3 +1,4 @@
+using DialogueDown.Visualization.Live.Serving;
 namespace DialogueDown.Visualization.Live.Tests.Support;
 
 /// <summary>A hosting-consent stub that returns a fixed answer and records the request.</summary>

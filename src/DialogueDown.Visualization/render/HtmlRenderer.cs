@@ -1,4 +1,5 @@
-namespace DialogueDown.Visualization;
+using DialogueDown.Visualization.Display;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// Renders a display graph as a self-contained, interactive HTML page built on

@@ -19,3 +19,7 @@ hardcodes
 Inkle
 Articy
 QuikGraph
+
+# .NET vocabulary and the architecture-test library.
+LINQ
+NetArchTest

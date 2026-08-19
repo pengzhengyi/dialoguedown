@@ -1,8 +1,9 @@
 using System.Globalization;
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
+using DialogueDown.Visualization.Display;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Script;
 
 /// <summary>
 /// Projects the Dialogue AST for display: it labels every node type, yields each node's

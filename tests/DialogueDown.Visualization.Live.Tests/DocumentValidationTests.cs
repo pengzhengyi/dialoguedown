@@ -1,3 +1,4 @@
+using DialogueDown.Visualization.Live.Files;
 namespace DialogueDown.Visualization.Live.Tests;
 
 public sealed class DocumentValidationTests

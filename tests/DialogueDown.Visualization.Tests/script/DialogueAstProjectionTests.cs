@@ -1,5 +1,7 @@
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
+using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Script;
 
 namespace DialogueDown.Visualization.Tests.Script;
 

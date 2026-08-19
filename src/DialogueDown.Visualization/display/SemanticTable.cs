@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>
 /// A named table of the semantic model shown beside the scene-tree graph in the Semantic tab —

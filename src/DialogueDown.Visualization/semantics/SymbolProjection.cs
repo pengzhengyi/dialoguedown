@@ -1,6 +1,7 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
+using DialogueDown.Visualization.Display;
 
 namespace DialogueDown.Visualization.Semantics;
 

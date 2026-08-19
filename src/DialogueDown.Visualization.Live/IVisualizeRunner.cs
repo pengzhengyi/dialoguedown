@@ -1,6 +1,8 @@
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Configuration;
 
+using DialogueDown.Visualization.Render;
+
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>

@@ -25,15 +25,16 @@
   </ItemGroup>
 
   <!--
-    References the four assemblies whose types this suite scans. The CLI assembly
-    is intentionally absent: it is only ever a forbidden dependency target (matched
-    by namespace string), never a scanned assembly, so no reference is needed.
+    References the five assemblies whose types this suite scans. The CLI is
+    referenced for its build output rather than its API: it exposes no public type
+    to anchor with typeof, so Architecture loads it by name.
   -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown\DialogueDown.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.ConfigurationLoader\DialogueDown.ConfigurationLoader.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.Visualization\DialogueDown.Visualization.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown.Visualization.Live\DialogueDown.Visualization.Live.csproj" />
+    <ProjectReference Include="..\..\src\DialogueDown.Cli\DialogueDown.Cli.csproj" />
   </ItemGroup>
 
 </Project>

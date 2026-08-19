@@ -1,6 +1,6 @@
 using System.Reflection;
 using DialogueDown.Cli.Commands;
-using DialogueDown.ConfigurationLoader;
+using DialogueDown.ConfigurationLoader.Errors;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
