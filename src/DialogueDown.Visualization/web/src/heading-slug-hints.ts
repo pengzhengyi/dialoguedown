@@ -1,4 +1,4 @@
-import { type EditorState, type Extension, StateField } from "@codemirror/state";
+import { type EditorState, type Extension, StateField, type Transaction } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import GithubSlugger from "github-slugger";
@@ -88,16 +88,31 @@ function buildHint(state: EditorState): DecorationSet {
 }
 
 /**
- * The active-line slug-hint field: it rebuilds on document *and* selection changes so the chip
- * follows the caret onto and off heading lines. It holds no source of its own — slugs are derived
- * from the buffer with `github-slugger`, the same algorithm the preview and compiler use.
+ * Whether `transaction` can change the hint. The caret and the text are the obvious triggers,
+ * but the syntax tree is a third: CodeMirror's first parse is bounded (3000 characters, 20ms),
+ * so a heading can still be missing from the tree when the editor opens, and the background
+ * parse worker publishes the finished tree with a transaction that changes neither the document
+ * nor the selection. Without that third trigger the hint would stay hidden until the next
+ * keystroke. Exported for testing.
+ */
+export function needsRebuild(transaction: Transaction): boolean {
+    return (
+        transaction.docChanged ||
+        transaction.selection !== undefined ||
+        syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
+    );
+}
+
+/**
+ * The active-line slug-hint field: it rebuilds on document, selection, *and* parse changes so the
+ * chip follows the caret onto and off heading lines and survives a late-arriving parse. It holds
+ * no source of its own — slugs are derived from the buffer with `github-slugger`, the same
+ * algorithm the preview and compiler use.
  */
 const slugHintField = StateField.define<DecorationSet>({
     create: (state) => buildHint(state),
-    update(decorations, transaction) {
-        if (transaction.docChanged || transaction.selection) return buildHint(transaction.state);
-        return decorations;
-    },
+    update: (decorations, transaction) =>
+        needsRebuild(transaction) ? buildHint(transaction.state) : decorations,
     provide: (field) => EditorView.decorations.from(field),
 });
 
