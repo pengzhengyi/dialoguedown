@@ -1,3 +1,4 @@
+using DialogueDown.Visualization.Render;
 using static DialogueDown.Visualization.Tests.Support.Display;
 
 namespace DialogueDown.Visualization.Tests.Render;

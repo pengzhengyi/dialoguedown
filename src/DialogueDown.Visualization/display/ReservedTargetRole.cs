@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>The structural role a reserved target plays in one dialogue run.</summary>
 internal enum ReservedTargetRole

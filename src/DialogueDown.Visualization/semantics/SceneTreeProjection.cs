@@ -1,6 +1,8 @@
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
+using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Script;
 
 namespace DialogueDown.Visualization.Semantics;
 

@@ -1,8 +1,8 @@
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Configuration;
-using DialogueDown.Visualization;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live;
+using DialogueDown.Visualization.Render;
 using NSubstitute;
 
 namespace DialogueDown.Cli.Tests;

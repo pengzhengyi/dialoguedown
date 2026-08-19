@@ -1,4 +1,5 @@
-namespace DialogueDown.Visualization;
+using DialogueDown.Visualization.Display;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// Turns a <see cref="DisplayGraph"/> into one output format. Each format is a

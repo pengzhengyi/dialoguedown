@@ -2,6 +2,7 @@ using System.Text.Json;
 using DialogueDown.ConfigurationLoader;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Tests.Support;
+using DialogueDown.Visualization.Render;
 
 namespace DialogueDown.Visualization.Live.Tests;
 

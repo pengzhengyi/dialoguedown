@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader;
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Render;
 
 namespace DialogueDown.Visualization.Live;
 
