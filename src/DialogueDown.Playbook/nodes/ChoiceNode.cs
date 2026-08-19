@@ -15,6 +15,7 @@ public sealed record ChoiceNode(int Id, bool Ordered, ImmutableArray<Edge> Out) 
     /// Gets whether the options are numbered rather than bulleted.
     /// </summary>
     [JsonPropertyOrder(2)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     [JsonPropertyName("ordered")]
     public bool Ordered { get; } = Ordered;
 }

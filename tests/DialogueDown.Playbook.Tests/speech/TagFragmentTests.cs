@@ -26,8 +26,7 @@ public sealed class TagFragmentTests
         const string Json = """
             {
               "kind": "tag",
-              "name": "aside",
-              "reserved": false
+              "name": "aside"
             }
             """;
 

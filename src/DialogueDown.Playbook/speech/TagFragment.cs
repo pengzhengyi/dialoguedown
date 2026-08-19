@@ -25,6 +25,7 @@ public sealed record TagFragment(string Name, string? Value, bool Reserved) : Sp
     /// <summary>
     /// Gets a value indicating whether the language reserves this name.
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     [JsonPropertyName("reserved")]
     public bool Reserved { get; } = Reserved;
 }

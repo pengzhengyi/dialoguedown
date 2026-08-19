@@ -13,7 +13,6 @@ public sealed class ChoiceNodeTests
             {
               "kind": "choice",
               "id": 1,
-              "ordered": false,
               "out": [
                 {
                   "kind": "option",
