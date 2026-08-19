@@ -1,11 +1,11 @@
 # Namespace Layout
 
 > [!NOTE]
-> Status: **proposed** — awaiting review.
+> Status: **implemented**.
 
 - [Goal and scope](#goal-and-scope)
 - [Ubiquitous language](#ubiquitous-language)
-- [What the code looks like today](#what-the-code-looks-like-today)
+- [What the rule found, and what it changed](#what-the-rule-found-and-what-it-changed)
 - [Functionality checklist](#functionality-checklist)
 - [Key design decisions](#key-design-decisions)
   - [D1 — Count types, not files](#d1--count-types-not-files)
@@ -17,7 +17,7 @@
 - [Interfaces and responsibilities](#interfaces-and-responsibilities)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
-- [Follow-on work](#follow-on-work)
+- [How each assembly was split](#how-each-assembly-was-split)
 
 ## Goal and scope
 
@@ -45,31 +45,31 @@ and coupling or cohesion metrics.
 | **Authored type** | A non-nested type the project wrote, as opposed to one the compiler generated. |
 | **Façade** | The small set of entry points a consumer of an assembly actually calls. |
 
-## What the code looks like today
+## What the rule found, and what it changed
 
 Measured by reflecting over the built assemblies, counting authored non-nested
-types per namespace:
+types per namespace. The core was already the model — one type at the root,
+everything else named by its stage — and three assemblies were not:
 
-| Assembly | Types in its root namespace | Sub-namespaces |
-| --- | ---: | ---: |
-| `DialogueDown` | **1** | 21 |
-| `DialogueDown.Cli` | **8** | 2 |
-| `DialogueDown.ConfigurationLoader` | **10** | 0 |
-| `DialogueDown.Visualization.Live` | **31** | 0 |
-| `DialogueDown.Visualization` | **35** | 6 |
+| Assembly | Root types before | After | Sub-namespaces added |
+| --- | ---: | ---: | --- |
+| `DialogueDown` | 1 | 1 | — |
+| `DialogueDown.Cli` | 8 | 8 | — |
+| `DialogueDown.ConfigurationLoader` | 11 | 2 | `Readers`, `Toml`, `Errors` |
+| `DialogueDown.Visualization.Live` | 31 | 4 | `Launching`, `Serving`, `Files`, `Configuration` |
+| `DialogueDown.Visualization` | 35 | 6 | `Display`, `Render`, `Markdown`, `Script` |
 
-The core is the model: one type at the root, everything else named by its stage.
-Three assemblies are not, and `DialogueDown.Visualization` is the furthest from
-it despite *looking* organized — see [D1](#d1--count-types-not-files).
+`DialogueDown.Visualization` was the furthest from the model despite *looking*
+organized — see [D1](#d1--count-types-not-files).
 
 ## Functionality checklist
 
-- [ ] A rule fails when a root namespace holds more than the cap.
-- [ ] The failure message names each offending namespace, its count, the cap,
+- [x] A rule fails when a root namespace holds more than the cap.
+- [x] The failure message names each offending namespace, its count, the cap,
       and example type names, so the fix is obvious without a debugger.
-- [ ] The rule covers all five shipped assemblies, including the CLI.
-- [ ] Compiler-generated and nested types never reach the count.
-- [ ] The three offending assemblies are refactored into sub-namespaces that
+- [x] The rule covers all five shipped assemblies, including the CLI.
+- [x] Compiler-generated and nested types never reach the count.
+- [x] The three offending assemblies are refactored into sub-namespaces that
       name their roles, and the rule passes.
 
 ## Key design decisions
@@ -190,24 +190,29 @@ namespace-population rule.
 ## Testability
 
 The rule is itself a test, so the question is whether it can fail for the right
-reason. It is verified by running it against the current tree, where it must
-name exactly the three assemblies in
-[What the code looks like today](#what-the-code-looks-like-today), and again
-after each refactoring step, where the fixed assembly must drop out of the
-message.
+reason. It was verified by running it against the tree before any refactoring,
+where it named exactly the three assemblies in
+[What the rule found](#what-the-rule-found-and-what-it-changed), and again after
+each refactoring step, where the fixed assembly dropped out of the message.
 
-## Follow-on work
+## How each assembly was split
 
-The rule fails on arrival, so three refactorings follow it, each on its own
-branch:
+Each root namespace kept its façade and gave the rest a name.
 
-1. **`DialogueDown.Visualization`** (35) — the largest, and the one whose
-   folders already suggest the namespaces: `Display` and `Render`.
-2. **`DialogueDown.Visualization.Live`** (31) — no folders yet, so this one
-   needs its roles named from scratch.
-3. **`DialogueDown.ConfigurationLoader`** (10) — the smallest, needing only a
-   little grouping.
+| Assembly | Root keeps | Sub-namespaces |
+| --- | --- | --- |
+| `DialogueDown.Visualization` | The façade (`CompilationVisualizer`, `ReportProject`, `ConfigStatusOverlay`) and the projection seam (`INodeProjection`, `GraphWalk`, `NodeProjectionExtensions`) | `Display`, `Render`, `Markdown`, `Script` — the folders that already existed, now carrying namespaces |
+| `DialogueDown.Visualization.Live` | The `visualize` command's entry points (`IVisualizeRunner`, `VisualizeRunner`, `StaticMode`, `EmitMode`) | `Launching` (choosing and opening a source), `Serving` (the loopback servers and live session), `Files` (atomic writes, symlinks, watching), `Configuration` (creating a `dialogue.toml`) |
+| `DialogueDown.ConfigurationLoader` | `TomlConfigurationLoader` and the `ConfigurationSourceLocation` a caller reads off an error | `Readers`, `Toml`, `Errors` |
+
+Two choices are worth naming. `DialogueDown.Visualization` needed four
+sub-namespaces rather than the two its folders suggested, because `markdown/`
+and `script/` were flat in the same way `display/` and `render/` were. And
+`DialogueConfigurationException` moved to `.Errors`, following the convention
+Group C already enforces on the core: the thrown hierarchy lives together, while
+data describing a failure — `ConfigurationSourceLocation` — does not have to.
 
 Namespace moves are source-compatible within the solution but change the public
-surface of the visualization assemblies, so they are a **breaking change** for
-any outside consumer and belong in the changelog as such.
+surface of the visualization assemblies and the configuration loader, so they
+are a **breaking change** for any outside consumer, recorded as such in the
+changelog.

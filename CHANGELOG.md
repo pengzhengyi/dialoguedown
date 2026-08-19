@@ -137,6 +137,19 @@ changes easy to categorize.
 
 ### Changed
 
+- **Every assembly's root namespace now names its parts** — an architecture rule caps how many
+  types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list.
+  Satisfying it moved the bulk of `DialogueDown.Visualization`,
+  `DialogueDown.Visualization.Live`, and `DialogueDown.ConfigurationLoader` into sub-namespaces
+  that name their roles. See the
+  [Namespace Layout](docs/contributing/design-notes/Namespace%20Layout.md) note.
+
+  **BREAKING CHANGE:** consumers of those three assemblies need a `using` directive for the new
+  sub-namespace. Nothing was renamed or removed, so each type is found under its role —
+  for example `DialogueDown.Visualization.Display` for `DisplayGraph`,
+  `DialogueDown.Visualization.Live.Serving` for `LiveSession`, and
+  `DialogueDown.ConfigurationLoader.Errors` for `DialogueConfigurationException`.
+
 - **.NET 10 LTS, without moving Godot projects with it** — the libraries a game references
   (`DialogueDown`, `DialogueDown.ConfigurationLoader`) now ship for both `net8.0` and
   `net10.0`, so a Godot project keeps the runtime Godot bundles while the toolchain moves to
