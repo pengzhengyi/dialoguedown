@@ -41,7 +41,7 @@
       "label": "test",
       "detail": ".NET: run the test projects with three MSBuild workers.",
       "type": "shell",
-      "command": "dotnet test DialogueDown.sln --configuration Release --no-build",
+      "command": "dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000",
       "group": {
         "kind": "test",
         "isDefault": true
@@ -51,9 +51,9 @@
     },
     {
       "label": "test: project",
-      "detail": ".NET inner loop: run one already-built test project.",
+      "detail": ".NET inner loop: run one already-built test project, stopping at the first failure.",
       "type": "shell",
-      "command": "dotnet test ${input:dotnetTestProject} --configuration Release --no-build --no-restore",
+      "command": "dotnet test ${input:dotnetTestProject} --configuration Release --no-build --no-restore --stop-on-fail on",
       "group": "test",
       "problemMatcher": "$msCompile"
     },
@@ -61,7 +61,15 @@
       "label": "test: filter",
       "detail": ".NET inner loop: run a dotnet test filter in one already-built project.",
       "type": "shell",
-      "command": "dotnet test ${input:dotnetTestProject} --configuration Release --no-build --no-restore --filter \"${input:dotnetTestFilter}\"",
+      "command": "dotnet test ${input:dotnetTestProject} --configuration Release --no-build --no-restore --stop-on-fail on --filter \"${input:dotnetTestFilter}\"",
+      "group": "test",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test: class",
+      "detail": ".NET inner loop: run one test class by name, xUnit's own filter rather than VSTest's.",
+      "type": "shell",
+      "command": "dotnet test ${input:dotnetTestProject} --configuration Release --no-build --no-restore --stop-on-fail on --filter-class \"${input:dotnetTestClass}\"",
       "group": "test",
       "problemMatcher": "$msCompile"
     },
@@ -69,7 +77,7 @@
       "label": "coverage",
       "detail": ".NET: run tests with coverage and generate a report.",
       "type": "shell",
-      "command": "dotnet tool restore && dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include \"[DialogueDown*]*\" && dotnet reportgenerator \"-reports:TestResults/coverage.cobertura.*.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"",
+      "command": "dotnet tool restore && dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include \"[DialogueDown*]*\" --minimum-expected-tests 3000 && dotnet reportgenerator \"-reports:TestResults/coverage.cobertura.*.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"",
       "group": "test",
       "problemMatcher": "$msCompile"
     },
@@ -221,6 +229,12 @@
       "type": "promptString",
       "description": "dotnet test filter (for example: FullyQualifiedName~TextTests)",
       "default": "FullyQualifiedName~"
+    },
+    {
+      "id": "dotnetTestClass",
+      "type": "promptString",
+      "description": "Test class name, '*' allowed at either end (for example: *ParserTests)",
+      "default": "*Tests"
     },
     {
       "id": "webVitestTarget",

@@ -25,11 +25,11 @@ A plain `dotnet build` needs no Node — the built web report is committed.
 dotnet restore DialogueDown.sln
 dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 
 # Source-focused coverage (CI fails below 90% line coverage, warns below 100%)
 dotnet tool restore
-dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include "[DialogueDown*]*"
+dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include "[DialogueDown*]*" --minimum-expected-tests 3000
 
 # Visualization client — only needed when changing web/ sources
 cd src/DialogueDown.Visualization/web && npm ci && npm run check && npm run build
@@ -45,12 +45,22 @@ recompiles — repeating `dotnet build` with no changes prints zero warnings eve
 when violations exist. `dotnet format` always analyzes; the `build: verify` task
 adds `--no-incremental` when a build's warning count has to be trusted.
 
+`--minimum-expected-tests 3000` is not decoration: the Microsoft Testing Platform
+forwards an argument it does not recognize to the test app, which then exits
+without running anything and reports **"Zero tests ran"** with exit code 5 — output
+that reads like a normal run. Keep the floor on any full-suite command you invent,
+and treat a shortfall (exit code 9) as a broken command rather than a broken
+suite. A framework-specific test-module glob fails the same way: two test projects
+multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
+`net10.0`-only glob silently runs 1,956 of 3,371 tests.
+
 ## Conventions
 
 For inner-loop compile feedback, the non-default VS Code task `build: fast`
 builds Release with `RunAnalyzers=false` after restore. It never replaces the
 normal analyzer-enabled `build` and `test` tasks before pushing. After a build,
-`test: project` and `test: filter` run only the affected test scope. Frontend
+`test: project`, `test: filter`, and `test: class` run only the affected test
+scope, stopping at the first failure. Frontend
 inner-loop tasks similarly select one Vitest or Playwright scope; full
 verification remains required before pushing.
 
