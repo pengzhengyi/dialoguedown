@@ -1,6 +1,6 @@
 using Tomlyn.Syntax;
 
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
 /// Resolves a TOML key's flat name, shared by the readers so they agree on what a key is called. A

@@ -1,7 +1,8 @@
 using DialogueDown.Configuration;
+using DialogueDown.ConfigurationLoader.Toml;
 using Tomlyn.Syntax;
 
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Readers;
 
 /// <summary>
 /// Reads the top-level <c>mode</c> key of a parsed <see cref="DocumentSyntax"/> into a

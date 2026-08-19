@@ -1,7 +1,8 @@
+using DialogueDown.ConfigurationLoader.Errors;
 using Tomlyn.Parsing;
 using Tomlyn.Syntax;
 
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
 /// Parses TOML text into Tomlyn's round-trippable syntax tree, bound to a source name so

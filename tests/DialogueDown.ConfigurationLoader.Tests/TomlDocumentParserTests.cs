@@ -1,3 +1,5 @@
+using DialogueDown.ConfigurationLoader.Errors;
+using DialogueDown.ConfigurationLoader.Toml;
 namespace DialogueDown.ConfigurationLoader.Tests;
 
 public sealed class TomlDocumentParserTests

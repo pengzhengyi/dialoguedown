@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader;
+using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Configuration;
 using DialogueDown.Visualization.Live.Files;

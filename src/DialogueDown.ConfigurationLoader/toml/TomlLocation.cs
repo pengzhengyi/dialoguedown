@@ -1,6 +1,6 @@
 using Tomlyn.Syntax;
 
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
 /// Maps a Tomlyn syntax span to a <see cref="ConfigurationSourceLocation"/>, converting Tomlyn's

@@ -1,6 +1,7 @@
+using DialogueDown.ConfigurationLoader.Errors;
 using Tomlyn.Syntax;
 
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
 /// Creates configuration errors at the TOML syntax node that violated the schema. Readers supply

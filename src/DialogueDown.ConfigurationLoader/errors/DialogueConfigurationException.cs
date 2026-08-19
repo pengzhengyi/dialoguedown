@@ -1,4 +1,4 @@
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Errors;
 
 /// <summary>
 /// A project's configuration is malformed. It carries the <see cref="Location"/> of the offending

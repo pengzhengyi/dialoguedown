@@ -1,6 +1,6 @@
 using Tomlyn.Syntax;
 
-namespace DialogueDown.ConfigurationLoader;
+namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
 /// Selects named TOML tables by their syntax shape. A reader states whether it accepts a regular
