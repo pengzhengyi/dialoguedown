@@ -3,9 +3,10 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Diagnostics;
+using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Editor;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// Serializes the report data to the JSON the client script consumes. The default

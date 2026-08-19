@@ -1,5 +1,7 @@
 using DialogueDown.Common;
 using DialogueDown.Markdown;
+using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Markdown;
 
 namespace DialogueDown.Visualization.Tests.Markdown;
 

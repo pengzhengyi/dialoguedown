@@ -1,3 +1,4 @@
+using DialogueDown.Visualization.Render;
 namespace DialogueDown.Visualization.Tests.Render;
 
 public sealed class CategoryPaletteTests

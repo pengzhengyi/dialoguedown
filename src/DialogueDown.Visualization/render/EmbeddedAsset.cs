@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// Reads a bundled client asset embedded in this assembly — the single

@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>
 /// A named extra shown alongside a display node's label — for example a source

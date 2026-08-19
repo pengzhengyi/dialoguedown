@@ -1,3 +1,4 @@
+using DialogueDown.ConfigurationLoader.Errors;
 namespace DialogueDown.ConfigurationLoader.Tests;
 
 public sealed class DialogueConfigurationExceptionTests

@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// The mode a report is shown in, injected into its payload so the client can

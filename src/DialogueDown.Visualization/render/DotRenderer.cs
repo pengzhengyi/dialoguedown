@@ -1,6 +1,7 @@
 using System.Text;
+using DialogueDown.Visualization.Display;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// Renders a display graph as <see href="https://graphviz.org/doc/info/lang.html">

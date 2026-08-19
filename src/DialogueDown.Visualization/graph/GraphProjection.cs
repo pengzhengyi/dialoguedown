@@ -3,6 +3,7 @@ using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Regions;
 using DialogueDown.Script.Ast;
+using DialogueDown.Visualization.Display;
 
 namespace DialogueDown.Visualization.Graph;
 

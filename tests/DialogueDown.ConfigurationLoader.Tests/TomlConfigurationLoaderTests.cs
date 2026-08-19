@@ -1,4 +1,5 @@
 using DialogueDown.Configuration;
+using DialogueDown.ConfigurationLoader.Errors;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 

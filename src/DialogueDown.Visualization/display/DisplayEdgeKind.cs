@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>
 /// How a display edge relates its two nodes.

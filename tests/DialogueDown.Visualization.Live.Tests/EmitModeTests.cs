@@ -1,5 +1,6 @@
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Live.Tests.Support;
+using DialogueDown.Visualization.Render;
 
 namespace DialogueDown.Visualization.Live.Tests;
 

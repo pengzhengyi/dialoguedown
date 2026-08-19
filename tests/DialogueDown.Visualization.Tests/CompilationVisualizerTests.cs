@@ -10,6 +10,8 @@ using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Render;
 using NSubstitute;
 
 namespace DialogueDown.Visualization.Tests;

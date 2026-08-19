@@ -1,6 +1,6 @@
 using DialogueDown.Script.Semantics;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>
 /// The editor's compiler-projected language metadata: completable names resolved by the semantic

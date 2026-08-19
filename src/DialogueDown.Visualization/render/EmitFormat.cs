@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Render;
 
 /// <summary>
 /// A text output format for emitting a compiler stage's graph for another tool.

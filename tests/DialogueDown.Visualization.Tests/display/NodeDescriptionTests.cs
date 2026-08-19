@@ -1,3 +1,4 @@
+using DialogueDown.Visualization.Display;
 namespace DialogueDown.Visualization.Tests.Display;
 
 public sealed class NodeDescriptionTests

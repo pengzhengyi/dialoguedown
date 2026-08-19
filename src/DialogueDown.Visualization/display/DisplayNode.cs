@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Display;
 
 /// <summary>
 /// One node prepared for display: a stable <see cref="Id"/> unique within its

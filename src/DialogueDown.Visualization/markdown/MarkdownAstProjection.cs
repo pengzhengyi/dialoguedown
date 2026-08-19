@@ -1,7 +1,8 @@
 using DialogueDown.Common;
 using DialogueDown.Markdown;
+using DialogueDown.Visualization.Display;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Markdown;
 
 /// <summary>
 /// Projects the Markdown AST for display: it labels every node type, yields each

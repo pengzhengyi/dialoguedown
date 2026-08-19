@@ -1,3 +1,5 @@
+using DialogueDown.ConfigurationLoader.Errors;
+using DialogueDown.ConfigurationLoader.Toml;
 using Tomlyn.Syntax;
 
 namespace DialogueDown.ConfigurationLoader.Tests;

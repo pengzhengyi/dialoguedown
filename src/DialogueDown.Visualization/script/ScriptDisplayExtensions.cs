@@ -1,7 +1,8 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
+using DialogueDown.Visualization.Display;
 
-namespace DialogueDown.Visualization;
+namespace DialogueDown.Visualization.Script;
 
 /// <summary>
 /// Ergonomic entry point for the dialogue stages: turns a transpiled
