@@ -25,8 +25,11 @@ internal static class PlaybookFactory
             [.. nodes ?? [new EndNode(0)]],
             schema);
 
-    public static PlaybookFormat Format(int version = 0, params string[] requires) =>
-        new(version, [.. requires.Length == 0 ? ["core"] : requires], []);
+    public static PlaybookFormat Format(
+        int version = 0,
+        IEnumerable<string>? requires = null,
+        IEnumerable<string>? uses = null) =>
+        new(version, [.. requires ?? [Capabilities.Core]], [.. uses ?? []]);
 
     public static PlaybookSpeaker Speaker(
         string? id = null, string? name = "Alice", bool @default = false) =>
