@@ -76,7 +76,7 @@ walls:
 
 So this note reads *"reuse the launcher's create-file flow"* at the level of its
 **mechanism**, not its UI: the launcher already knows how to **write a new file under
-a confined root, then serve and recompile it** (`LaunchRoot` confinement, a `create`
+a confined root, then serve and recompile it** (`BrowseRoot` confinement, a `create`
 route, `409` on conflict, a session started on the result). Stage 3 reuses that
 mechanism **in place** — a button in the Config tab posts to a create route, the
 server writes the file and recompiles, and the reader stays in the report. The
@@ -142,7 +142,7 @@ is server-side.
 - **Client no-config pane** (`config-view.ts`) — in Edit, `renderNoConfigExplanation`
   gains a create button wired to the route; on success the client reloads onto the
   Config tab.
-- **Confinement** reuses the launcher's `LaunchRoot`/serve-root machinery: the target
+- **Confinement** reuses the launcher's `BrowseRoot`/serve-root machinery: the target
   path is composed **server-side** from the known serve root, never from a
   request-supplied string, so the [path-injection](./Live%20Visualization%20-%20File%20Launcher.md)
   barrier holds.
@@ -236,7 +236,7 @@ edit it," never a silent overwrite. This mirrors the launcher's create route, wh
 ## Integration
 
 - **Served server** (`LiveVisualizationServer`) gains `POST /api/create-config`
-  alongside `/api/save`; **launcher server** (`LauncherServer`) gains the same beside
+  alongside `/api/save`; **launcher server** (`ServedShellServer`) gains the same beside
   its script `create` route.
 - **`LiveSession.CreateConfig()`** performs the adopt-and-recompile; it shares the
   visualizer-rebuild helper with `SaveConfig`.

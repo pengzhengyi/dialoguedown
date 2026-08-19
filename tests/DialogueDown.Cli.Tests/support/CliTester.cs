@@ -2,7 +2,7 @@ using DialogueDown.Cli.Infrastructure;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Live;
-using DialogueDown.Visualization.Live.Launching;
+using DialogueDown.Visualization.Live.Serving;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli.Testing;
 
@@ -20,13 +20,13 @@ internal static class CliTester
     /// Creates a tester. A given <paramref name="compiler"/> replaces the default compiler
     /// (wrapped as a factory that ignores the options); a <paramref name="compilerFactory"/>
     /// replaces the factory itself (to assert the resolved options); a
-    /// <paramref name="runner"/> or <paramref name="launcher"/> replaces its registration
+    /// <paramref name="runner"/> or <paramref name="shell"/> replaces its registration
     /// (last wins).
     /// </summary>
     public static CommandAppTester Create(
         IScriptCompiler? compiler = null,
         IVisualizeRunner? runner = null,
-        ILauncherRunner? launcher = null,
+        IServedShellRunner? shell = null,
         Func<CompilerOptions, IScriptCompiler>? compilerFactory = null)
     {
         var services = new ServiceCollection();
@@ -46,9 +46,9 @@ internal static class CliTester
             services.AddSingleton(runner);
         }
 
-        if (launcher is not null)
+        if (shell is not null)
         {
-            services.AddSingleton(launcher);
+            services.AddSingleton(shell);
         }
 
         var tester = new CommandAppTester(new TypeRegistrar(services));

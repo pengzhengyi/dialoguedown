@@ -1,9 +1,9 @@
-using DialogueDown.Visualization.Live.Launching;
+using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Tests.Support;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
-public sealed class LaunchRootTests
+public sealed class BrowseRootTests
 {
     [Fact]
     public void At_MissingDirectory_Throws()
@@ -11,7 +11,7 @@ public sealed class LaunchRootTests
         using var tree = new TempTree();
 
         Assert.Throws<DirectoryNotFoundException>(
-            () => LaunchRoot.At(Path.Combine(tree.Root, "does-not-exist")));
+            () => BrowseRoot.At(Path.Combine(tree.Root, "does-not-exist")));
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         var source = tree.File("root/proj/scene.dialogue.md");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         var resolved = root.Resolve("proj/scene.dialogue.md");
 
@@ -31,7 +31,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         tree.File("secret.dialogue.md");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         Assert.Null(root.Resolve("../secret.dialogue.md"));
     }
@@ -41,7 +41,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         var outside = tree.File("outside/x.dialogue.md");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         Assert.Null(root.Resolve(Path.GetFullPath(outside)));
     }
@@ -51,7 +51,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         var outsideDirectory = tree.Dir("outside");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
         var link = Path.Combine(root.RootDirectory, "link");
         Directory.CreateSymbolicLink(link, outsideDirectory);
 
@@ -63,7 +63,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         var source = tree.File("root/proj/scene.dialogue.md");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         Assert.Equal(Path.GetFullPath(source), root.ResolveSource("proj/scene.dialogue.md"));
     }
@@ -73,7 +73,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         tree.File("root/notes.md");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         Assert.Null(root.ResolveSource("notes.md"));
     }
@@ -82,7 +82,7 @@ public sealed class LaunchRootTests
     public void ResolveSource_Missing_ReturnsNull()
     {
         using var tree = new TempTree();
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         Assert.Null(root.ResolveSource("gone.dialogue.md"));
     }
@@ -94,7 +94,7 @@ public sealed class LaunchRootTests
         tree.File("root/a.dialogue.md");
         tree.File("root/notes.md");
         tree.Dir("root/sub");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         var listing = root.Browse(string.Empty);
 
@@ -110,7 +110,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         tree.File("root/proj/scene.dialogue.md");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         var listing = root.Browse("proj");
 
@@ -125,7 +125,7 @@ public sealed class LaunchRootTests
     {
         using var tree = new TempTree();
         tree.Dir("outside");
-        var root = LaunchRoot.At(tree.Dir("root"));
+        var root = BrowseRoot.At(tree.Dir("root"));
 
         Assert.Null(root.Browse("../outside"));
     }

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace DialogueDown.Visualization.Live.Launching;
+namespace DialogueDown.Visualization.Live;
 
 /// <summary>
 /// Opens targets with the operating system's default handler — <c>open</c> on

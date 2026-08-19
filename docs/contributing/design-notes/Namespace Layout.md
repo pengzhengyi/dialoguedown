@@ -56,7 +56,7 @@ everything else named by its stage — and three assemblies were not:
 | `DialogueDown` | 1 | 1 | — |
 | `DialogueDown.Cli` | 8 | 8 | — |
 | `DialogueDown.ConfigurationLoader` | 11 | 2 | `Readers`, `Toml`, `Errors` |
-| `DialogueDown.Visualization.Live` | 31 | 4 | `Launching`, `Serving`, `Files`, `Configuration` |
+| `DialogueDown.Visualization.Live` | 31 | 6 | `Browsing`, `Serving`, `Files`, `Configuration` |
 | `DialogueDown.Visualization` | 35 | 6 | `Display`, `Render`, `Markdown`, `Script` |
 
 `DialogueDown.Visualization` was the furthest from the model despite *looking*
@@ -202,8 +202,12 @@ Each root namespace kept its façade and gave the rest a name.
 | Assembly | Root keeps | Sub-namespaces |
 | --- | --- | --- |
 | `DialogueDown.Visualization` | The façade (`CompilationVisualizer`, `ReportProject`, `ConfigStatusOverlay`) and the projection seam (`INodeProjection`, `GraphWalk`, `NodeProjectionExtensions`) | `Display`, `Render`, `Markdown`, `Script` — the folders that already existed, now carrying namespaces |
-| `DialogueDown.Visualization.Live` | The `visualize` command's entry points (`IVisualizeRunner`, `VisualizeRunner`, `StaticMode`, `EmitMode`) | `Launching` (choosing and opening a source), `Serving` (the loopback servers and live session), `Files` (atomic writes, symlinks, watching), `Configuration` (creating a `dialogue.toml`) |
+| `DialogueDown.Visualization.Live` | The `visualize` command's entry points (`IVisualizeRunner`, `VisualizeRunner`, `StaticMode`, `EmitMode`) and the browser seam every mode uses (`IBrowserLauncher`, `BrowserLauncher`) | `Browsing` (the browsable root and its listings), `Serving` (the served shell, its server, and the live session), `Files` (atomic writes, symlinks, watching), `Configuration` (creating a `dialogue.toml`) |
 | `DialogueDown.ConfigurationLoader` | `TomlConfigurationLoader` and the `ConfigurationSourceLocation` a caller reads off an error | `Readers`, `Toml`, `Errors` |
+
+`Browsing` and `Serving` use the vocabulary the served shell settled on when the
+launcher page was retired: there is one server, `ServedShellServer`, and
+`BrowseRoot` is the boundary that confines every path to the browsable root.
 
 Two choices are worth naming. `DialogueDown.Visualization` needed four
 sub-namespaces rather than the two its folders suggested, because `markdown/`

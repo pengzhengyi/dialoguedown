@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live.Launching;
+namespace DialogueDown.Visualization.Live;
 
 /// <summary>Opens a URL or file with the user's default application (browser).</summary>
 public interface IBrowserLauncher

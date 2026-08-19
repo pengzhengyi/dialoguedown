@@ -1,6 +1,6 @@
 using DialogueDown.Visualization.Configuration;
 
-namespace DialogueDown.Visualization.Live.Launching;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// Drives the served <c>dialoguedown visualize</c> experience: one loopback server that hosts the
@@ -10,7 +10,7 @@ namespace DialogueDown.Visualization.Live.Launching;
 /// be browsed or created in the tree. Runs until canceled. Injected so the command is testable with
 /// a substitute.
 /// </summary>
-public interface ILauncherRunner
+public interface IServedShellRunner
 {
     /// <summary>
     /// Serves the report shell on a loopback port, opening the browser unless
@@ -25,7 +25,7 @@ public interface ILauncherRunner
     Task<int> RunAsync(
         string? script,
         string? root,
-        LaunchMode mode,
+        ReportMode mode,
         int? port,
         bool noOpen,
         AppliedConfiguration configuration,

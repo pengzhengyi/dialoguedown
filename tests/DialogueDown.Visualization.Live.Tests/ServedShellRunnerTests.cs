@@ -1,23 +1,23 @@
 using System.Diagnostics;
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Configuration;
-using DialogueDown.Visualization.Live.Launching;
+using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Live.Tests.Support;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
-public sealed class LauncherRunnerTests
+public sealed class ServedShellRunnerTests
 {
     [Fact]
     public async Task RunAsync_InvalidRoot_ReturnsOne()
     {
         var error = new StringWriter();
-        var runner = new LauncherRunner(new FakeBrowserLauncher());
+        var runner = new ServedShellRunner(new FakeBrowserLauncher());
 
         var code = await runner.RunAsync(
             script: null,
             root: Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}"),
-            LaunchMode.View,
+            ReportMode.View,
             port: null,
             noOpen: true,
             AppliedConfiguration.WithoutFile(CompilerOptions.Default),
@@ -35,11 +35,11 @@ public sealed class LauncherRunnerTests
         using var tree = new TempTree();
         tree.File("scene.dialogue.md", "# Scene");
         var browser = new FakeBrowserLauncher();
-        var runner = new LauncherRunner(browser);
+        var runner = new ServedShellRunner(browser);
         using var stop = new CancellationTokenSource();
 
         var task = runner.RunAsync(
-            script: null, root: tree.Root, LaunchMode.View, port: 0, noOpen: false,
+            script: null, root: tree.Root, ReportMode.View, port: 0, noOpen: false,
             AppliedConfiguration.WithoutFile(CompilerOptions.Default),
             new StringWriter(), new StringWriter(), stop.Token);
         await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
@@ -64,11 +64,11 @@ public sealed class LauncherRunnerTests
         using var tree = new TempTree();
         var scriptPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.\n");
         var browser = new FakeBrowserLauncher();
-        var runner = new LauncherRunner(browser);
+        var runner = new ServedShellRunner(browser);
         using var stop = new CancellationTokenSource();
 
         var task = runner.RunAsync(
-            scriptPath, tree.Root, LaunchMode.View, port: 0, noOpen: false,
+            scriptPath, tree.Root, ReportMode.View, port: 0, noOpen: false,
             AppliedConfiguration.WithoutFile(CompilerOptions.Default),
             new StringWriter(), new StringWriter(), stop.Token);
         await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));

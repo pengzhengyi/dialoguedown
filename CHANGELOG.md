@@ -231,6 +231,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The Source editor's `#slug` chip survives a late parse** — the chip on the active heading line
+  could stay hidden when a script opened on a busy machine, and only appear once the caret moved.
+  The editor's first syntax parse is time-bounded, and the hint ignored the update that publishes
+  the finished parse. It now refreshes on that update too, so the chip appears as soon as the
+  heading is recognized.
+
 - **A jump from ignored Markdown says where it landed** — the compiler makes no node from text
   it leaves out, so **Jump to** settles on the node around it. A note now appears beside that node
   on arrival, rather than presenting it as what the text became. The **Markdown AST** tab's

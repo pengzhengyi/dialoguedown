@@ -1,11 +1,11 @@
-namespace DialogueDown.Visualization.Live.Launching;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
-/// How the launcher opens a source into a served session: read-only and auto-updating
+/// How a source opens into a served session: read-only and auto-updating
 /// (<see cref="View"/>) or editable (<see cref="Edit"/>). The offline snapshot is an
 /// export (<c>-o</c>), not a launch mode.
 /// </summary>
-public enum LaunchMode
+public enum ReportMode
 {
     /// <summary>Serve read-only and hot-reload when the source changes on disk.</summary>
     View,

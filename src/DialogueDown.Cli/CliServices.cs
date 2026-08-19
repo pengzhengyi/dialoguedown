@@ -1,7 +1,7 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Live;
-using DialogueDown.Visualization.Live.Launching;
+using DialogueDown.Visualization.Live.Serving;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 
@@ -21,7 +21,7 @@ internal static class CliServices
         services.AddSingleton<IErrataRenderer, ErrataRenderer>();
         services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
         services.AddSingleton<IVisualizeRunner, VisualizeRunner>();
-        services.AddSingleton<ILauncherRunner, LauncherRunner>();
+        services.AddSingleton<IServedShellRunner, ServedShellRunner>();
         return services;
     }
 }

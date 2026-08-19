@@ -1,22 +1,23 @@
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Files;
-using DialogueDown.Visualization.Live.Serving;
+
 using DialogueDown.Visualization.Render;
 
-namespace DialogueDown.Visualization.Live.Launching;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
-/// The default <see cref="ILauncherRunner"/>: serves the report shell — the Explorer sidebar and
-/// all — from a single <see cref="LauncherServer"/> confined to a root, opens it with the injected
+/// The default <see cref="IServedShellRunner"/>: serves the report shell — the Explorer sidebar and
+/// all — from a single <see cref="ServedShellServer"/> confined to a root, opens it with the injected
 /// browser launcher, and stays up until canceled. With a script it hosts the served root resolved
 /// from that document and opens its report; with none it serves the empty shell to browse or create.
 /// </summary>
-public sealed class LauncherRunner : ILauncherRunner
+public sealed class ServedShellRunner : IServedShellRunner
 {
     private readonly IBrowserLauncher _browser;
 
     /// <summary>Creates a runner that opens results with <paramref name="browser"/>.</summary>
-    public LauncherRunner(IBrowserLauncher browser)
+    public ServedShellRunner(IBrowserLauncher browser)
     {
         ArgumentNullException.ThrowIfNull(browser);
         _browser = browser;
@@ -26,7 +27,7 @@ public sealed class LauncherRunner : ILauncherRunner
     public Task<int> RunAsync(
         string? script,
         string? root,
-        LaunchMode mode,
+        ReportMode mode,
         int? port,
         bool noOpen,
         AppliedConfiguration configuration,
@@ -37,7 +38,7 @@ public sealed class LauncherRunner : ILauncherRunner
     internal Task<int> RunAsync(
         string? script,
         string? root,
-        LaunchMode mode,
+        ReportMode mode,
         int? port,
         bool noOpen,
         AppliedConfiguration configuration,
@@ -48,24 +49,24 @@ public sealed class LauncherRunner : ILauncherRunner
             ? RunEmptyShellAsync(root, mode, port, noOpen, configuration, output, error, cancellationToken)
             : RunDocumentAsync(script, root, mode, port, noOpen, configuration, output, error, cancellationToken);
 
-    // Builds the server rooted at launchRoot. Its landing (the empty shell) is rendered from the
+    // Builds the server rooted at browseRoot. Its landing (the empty shell) is rendered from the
     // report bundle; every session it opens is compiled with the applied configuration and carries
     // the reader's launched path for a symlinked document.
-    private static LauncherServer CreateServer(
-        LaunchRoot launchRoot, LaunchMode mode, int? port, AppliedConfiguration configuration)
+    private static ServedShellServer CreateServer(
+        BrowseRoot browseRoot, ReportMode mode, int? port, AppliedConfiguration configuration)
     {
-        var html = new CompilationVisualizer().RenderEmptyShell(launchRoot.RootDirectory, ModeToString(mode));
-        return new LauncherServer(
-            launchRoot,
+        var html = new CompilationVisualizer().RenderEmptyShell(browseRoot.RootDirectory, ModeToString(mode));
+        return new ServedShellServer(
+            browseRoot,
             html,
             port ?? 0,
             (path, sessionMode, displayPath) => new LiveSession(
                 path, sessionMode, new CompilationVisualizer(configuration), configuration.File?.Path, displayPath));
     }
 
-    private static string ModeToString(LaunchMode mode) => mode switch
+    private static string ModeToString(ReportMode mode) => mode switch
     {
-        LaunchMode.Edit => VisualizationMode.Edit,
+        ReportMode.Edit => VisualizationMode.Edit,
         _ => VisualizationMode.View,
     };
 
@@ -73,7 +74,7 @@ public sealed class LauncherRunner : ILauncherRunner
     // action. Opening or creating a script from the tree starts its session and swaps in its report.
     private async Task<int> RunEmptyShellAsync(
         string? root,
-        LaunchMode mode,
+        ReportMode mode,
         int? port,
         bool noOpen,
         AppliedConfiguration configuration,
@@ -88,11 +89,11 @@ public sealed class LauncherRunner : ILauncherRunner
             return 1;
         }
 
-        var launchRoot = LaunchRoot.At(rootDirectory);
-        await using var server = CreateServer(launchRoot, mode, port, configuration);
+        var browseRoot = BrowseRoot.At(rootDirectory);
+        await using var server = CreateServer(browseRoot, mode, port, configuration);
         await server.StartAsync();
 
-        output.WriteLine($"Serving {launchRoot.RootDirectory}");
+        output.WriteLine($"Serving {browseRoot.RootDirectory}");
         return await ServeUntilShutdownAsync(server, server.BaseUrl, noOpen, output, cancellationToken);
     }
 
@@ -103,7 +104,7 @@ public sealed class LauncherRunner : ILauncherRunner
     private async Task<int> RunDocumentAsync(
         string script,
         string? renderRoot,
-        LaunchMode mode,
+        ReportMode mode,
         int? port,
         bool noOpen,
         AppliedConfiguration configuration,
@@ -133,13 +134,13 @@ public sealed class LauncherRunner : ILauncherRunner
             return 1;
         }
 
-        var launchRoot = LaunchRoot.At(serveRoot.Value.RootDirectory);
-        await using var server = CreateServer(launchRoot, mode, port, configuration);
+        var browseRoot = BrowseRoot.At(serveRoot.Value.RootDirectory);
+        await using var server = CreateServer(browseRoot, mode, port, configuration);
         await server.StartAsync();
 
         var reportPath = server.StartInitialDocument(documentPath, ModeToString(mode), displayPath);
         var url = server.BaseUrl.TrimEnd('/') + reportPath;
-        var verb = mode == LaunchMode.Edit ? "editing" : "visualization";
+        var verb = mode == ReportMode.Edit ? "editing" : "visualization";
         output.WriteLine($"Live {verb} of {displayPath}");
         return await ServeUntilShutdownAsync(server, url, noOpen, output, cancellationToken);
     }
@@ -148,7 +149,7 @@ public sealed class LauncherRunner : ILauncherRunner
     // termination signal the host handles) or the command's cancellation token; completing normally
     // rather than throwing so shutdown is not an exceptional path.
     private async Task<int> ServeUntilShutdownAsync(
-        LauncherServer server, string url, bool noOpen, TextWriter output, CancellationToken cancellationToken)
+        ServedShellServer server, string url, bool noOpen, TextWriter output, CancellationToken cancellationToken)
     {
         output.WriteLine($"  {url}  (press Ctrl+C to stop)");
         if (!noOpen)
