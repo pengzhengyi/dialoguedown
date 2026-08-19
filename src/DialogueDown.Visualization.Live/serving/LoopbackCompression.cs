@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.ResponseCompression;
 
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// Response compression for the loopback servers. The report page is a large

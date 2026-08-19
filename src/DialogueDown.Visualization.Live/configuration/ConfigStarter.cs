@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Configuration;
 
 /// <summary>
 /// The seed text a newly created <c>dialogue.toml</c> is written with. It is a friendly,

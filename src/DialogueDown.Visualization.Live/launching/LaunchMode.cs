@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Launching;
 
 /// <summary>
 /// How the launcher opens a source into a served session: read-only and auto-updating

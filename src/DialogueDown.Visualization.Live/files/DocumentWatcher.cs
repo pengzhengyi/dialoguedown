@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Files;
 
 /// <summary>
 /// Watches a single document for on-disk changes and invokes a callback, debounced

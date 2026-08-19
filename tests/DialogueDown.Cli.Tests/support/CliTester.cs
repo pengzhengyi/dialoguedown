@@ -2,6 +2,7 @@ using DialogueDown.Cli.Infrastructure;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Live;
+using DialogueDown.Visualization.Live.Launching;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli.Testing;
 

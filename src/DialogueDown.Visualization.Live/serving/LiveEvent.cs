@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// A server-sent event pushed to live clients: a named event and its JSON data.

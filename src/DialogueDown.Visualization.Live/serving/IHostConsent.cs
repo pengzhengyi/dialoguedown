@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// Asks the user whether the live server may host a folder above the document's own

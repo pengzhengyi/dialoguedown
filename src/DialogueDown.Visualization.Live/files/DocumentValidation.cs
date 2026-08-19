@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Files;
 
 /// <summary>Validates that a CLI file argument is an existing DialogueDown document.</summary>
 internal static class DocumentValidation

@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Launching;
 
 /// <summary>
 /// A directory listing under a <see cref="LaunchRoot"/>: the browsed directory and its

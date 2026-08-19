@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// The directory the live server hosts as static files, paired with the URL path

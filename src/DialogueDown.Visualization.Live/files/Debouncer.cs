@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Files;
 
 /// <summary>
 /// Coalesces a burst of rapid triggers into a single action, fired once the triggers go quiet for

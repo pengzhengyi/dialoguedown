@@ -1,6 +1,6 @@
 using DialogueDown.Visualization.Configuration;
 
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Launching;
 
 /// <summary>
 /// Drives the served <c>dialoguedown visualize</c> experience: one loopback server that hosts the

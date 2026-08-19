@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// Decides which folder the live server hosts for a document. It keeps hosting

@@ -1,7 +1,9 @@
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Live.Files;
+using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Render;
 
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Launching;
 
 /// <summary>
 /// The default <see cref="ILauncherRunner"/>: serves the report shell — the Explorer sidebar and

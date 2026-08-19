@@ -3,9 +3,11 @@ using System.Text.Json.Nodes;
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader;
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Live.Configuration;
+using DialogueDown.Visualization.Live.Files;
 using DialogueDown.Visualization.Render;
 
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// A live session bound to one document. It reads and compiles the current file on

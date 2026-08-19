@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// One save request from the client: the buffer <see cref="Source"/>, its <see cref="Target"/>

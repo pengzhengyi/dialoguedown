@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Files;
 
 /// <summary>How a staged write is published on commit.</summary>
 internal enum WriteMode

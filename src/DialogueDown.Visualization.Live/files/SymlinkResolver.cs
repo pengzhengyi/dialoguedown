@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Files;
 
 /// <summary>
 /// Resolves a path through any chain of symbolic links to its final, real file target, so a live

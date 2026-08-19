@@ -1,3 +1,4 @@
+using DialogueDown.Visualization.Live.Serving;
 namespace DialogueDown.Visualization.Live.Tests;
 
 public sealed class SseBroadcasterTests

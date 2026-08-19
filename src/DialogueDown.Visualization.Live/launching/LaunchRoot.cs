@@ -1,4 +1,5 @@
-namespace DialogueDown.Visualization.Live;
+using DialogueDown.Visualization.Live.Files;
+namespace DialogueDown.Visualization.Live.Launching;
 
 /// <summary>
 /// A directory subtree the launcher may browse and serve, and the boundary that confines

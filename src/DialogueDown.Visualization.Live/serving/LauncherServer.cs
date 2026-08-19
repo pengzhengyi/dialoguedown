@@ -1,10 +1,13 @@
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Live.Configuration;
+using DialogueDown.Visualization.Live.Files;
+using DialogueDown.Visualization.Live.Launching;
 using DialogueDown.Visualization.Render;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.FileProviders;
 
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// A loopback launcher server. It serves the launcher page at <c>/</c>, browses the

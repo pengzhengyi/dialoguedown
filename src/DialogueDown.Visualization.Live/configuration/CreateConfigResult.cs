@@ -1,4 +1,4 @@
-namespace DialogueDown.Visualization.Live;
+namespace DialogueDown.Visualization.Live.Configuration;
 
 /// <summary>
 /// How a <see cref="LiveSession.CreateConfig">create-config</see> request settled: the file was

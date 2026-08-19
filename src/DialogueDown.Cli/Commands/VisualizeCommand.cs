@@ -1,6 +1,7 @@
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live;
+using DialogueDown.Visualization.Live.Launching;
 using Spectre.Console.Cli;
 
 namespace DialogueDown.Cli.Commands;
