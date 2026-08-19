@@ -11,7 +11,7 @@
   - [D1 — Count types, not files](#d1--count-types-not-files)
   - [D2 — Count authored types regardless of visibility](#d2--count-authored-types-regardless-of-visibility)
   - [D3 — Cap root namespaces, not every namespace](#d3--cap-root-namespaces-not-every-namespace)
-  - [D4 — Set the cap at the ratchet, not at a round number](#d4--set-the-cap-at-the-ratchet-not-at-a-round-number)
+  - [D4 — Set the cap in the gap the measurements left](#d4--set-the-cap-in-the-gap-the-measurements-left)
   - [D5 — No exemption list](#d5--no-exemption-list)
   - [D6 — Anchor the CLI by name, not by a type](#d6--anchor-the-cli-by-name-not-by-a-type)
 - [Interfaces and responsibilities](#interfaces-and-responsibilities)
@@ -132,17 +132,26 @@ This also matches what an outside reader needs. The root namespace is the first
 thing `using DialogueDown.Visualization;` shows them, and thirty-five unrelated
 types is a poor first sentence.
 
-### D4 — Set the cap at the ratchet, not at a round number
+### D4 — Set the cap in the gap the measurements left
 
-The cap is **8**: the largest root namespace that is currently healthy
-(`DialogueDown.Cli`, which already keeps `Commands` and `Infrastructure`
-beneath it). Choosing the ratchet rather than a round number means the rule
-encodes a real example from this repository instead of an opinion, and no
-currently-good layout has to change to satisfy it.
+The cap is **10**, chosen from where the assemblies actually sit rather than
+from taste. The largest healthy root namespace held 8 types; the smallest
+crowded one held 11. A cap of 10 falls in that gap, so it separates the two
+groups with headroom on both sides: the healthy CLI keeps room to grow by two,
+and every assembly that needed splitting is still caught.
 
-The consequence is deliberate: `DialogueDown.Cli` sits exactly at the cap, so
-the next type added to its root must pick a sub-namespace. That is the rule
-working, not the rule misfiring.
+A tighter cap would have left `DialogueDown.Cli` no headroom, so the next type
+added to it would fail the build for no design reason. A looser one would have
+let the configuration loader's eleven types through and made the rule agree with
+the layout it exists to question.
+
+### D5 — No exemption list
+
+[D3](#d3--cap-root-namespaces-not-every-namespace) removes the need for one:
+the false positive a global cap would produce cannot occur for a root
+namespace. Adding an exemption hook now would invite the rule to be silenced
+rather than satisfied. If a genuine case ever appears, it is worth a design
+conversation and a note update — not a config entry added in passing.
 
 ### D6 — Anchor the CLI by name, not by a type
 
@@ -155,14 +164,6 @@ The rule therefore takes a project reference for the build output and loads the
 assembly by name. The alternative, widening `InternalsVisibleTo` to the
 architecture suite, would grant it every internal type of the CLI to obtain one
 piece of information the assembly's name already carries.
-
-### D5 — No exemption list
-
-[D3](#d3--cap-root-namespaces-not-every-namespace) removes the need for one:
-the false positive a global cap would produce cannot occur for a root
-namespace. Adding an exemption hook now would invite the rule to be silenced
-rather than satisfied. If a genuine case ever appears, it is worth a design
-conversation and a note update — not a config entry added in passing.
 
 ## Interfaces and responsibilities
 

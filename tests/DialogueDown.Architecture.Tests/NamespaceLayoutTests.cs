@@ -21,7 +21,7 @@ namespace DialogueDown.Architecture.Tests;
 public sealed class NamespaceLayoutTests
 {
     /// <summary>Maximum types an assembly's root namespace may hold directly.</summary>
-    private const int MaxTypesPerRootNamespace = 8;
+    private const int MaxTypesPerRootNamespace = 10;
 
     [Fact]
     public void RootNamespaces_DoNotHoldTooManyTypes()
