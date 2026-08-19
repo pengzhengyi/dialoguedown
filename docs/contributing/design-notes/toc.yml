@@ -162,6 +162,8 @@
     href: Development Cycle Optimization.md
   - name: Interactive Playthrough
     href: Interactive Playthrough.md
+  - name: Namespace Layout
+    href: Namespace Layout.md
   - name: README Shipping-Status Refresh
     href: README Shipping-Status Refresh.md
   - name: Target Frameworks
