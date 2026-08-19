@@ -131,7 +131,7 @@ A playbook holds what *playing* needs and nothing else.
   "requires": ["core"],
   "uses": [],
   "script": "chapter-01.dialogue.md",
-  "entries": { "start": 0 },
+  "entry": 0,
   "anchors": { "the-inn": 4 },
   "nodes": [
     {
@@ -722,7 +722,7 @@ version 0. The cost column is what a retrofit would break.
 | Cross-file jumps              | [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) | None — the widening is additive | A playbook using them declares `cross-file-jump`, so an older runner refuses it whole rather than misreading a reference |
 | Negation, expressions         | [Conditional Jump](./Conditional%20Jump.md) D5               | Every playbook                  | A guard is an object with a `kind`, never a bare string, so `not` and `and` are additive                                 |
 | Detour and return             | [Progression Order](./Progression%20Order.md)                | Every save file                 | `PlayState` carries a **call stack** from v0, though nothing pushes to it yet                                            |
-| `#START`, cross-file entry    | [Progression Order](./Progression%20Order.md)                | The runner API                  | `entries` is a **table**, not a single field                                                                             |
+| `#START`, cross-file entry    | [Progression Order](./Progression%20Order.md)                | None — a new field is additive  | `anchors` already names every scene a host may start at; `entry` states only the default                                 |
 | Hide versus disable an option | [Conditional Choice](./Conditional%20Choice.md)              | The host API                    | [D8](#d8--a-menu-shows-unavailable-options)                                                                              |
 | Weight re-rolls on replay     | [Random Choice](./Random%20Choice.md)                        | Saves and conformance           | Entropy is a seam; the draw cursor lives in `PlayState`                                                                  |
 | Localization                  | —                                                            | Every script                    | An optional `lineId` is reserved in the schema and left unpopulated; the identity scheme gets its own note               |

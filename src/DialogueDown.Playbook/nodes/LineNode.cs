@@ -7,23 +7,23 @@ namespace DialogueDown.Playbook;
 /// A line somebody says.
 /// </summary>
 /// <param name="Id">This node's position in the node list.</param>
-/// <param name="Speaker">Who says it, by speaker id.</param>
+/// <param name="Speaker">Who says it, by index into the playbook's speakers.</param>
 /// <param name="Speech">What is said.</param>
 /// <param name="Condition">What must hold for the line to play, or <c>null</c>.</param>
 /// <param name="Out">The ways out of this node.</param>
 public sealed record LineNode(
     int Id,
-    string Speaker,
+    int Speaker,
     ImmutableArray<SpeechFragment> Speech,
     Condition? Condition,
     ImmutableArray<Edge> Out) : Node(Id, Out)
 {
     /// <summary>
-    /// Gets who says the line, by speaker id.
+    /// Gets who says the line, by index into the playbook's speakers.
     /// </summary>
     [JsonPropertyOrder(2)]
     [JsonPropertyName("speaker")]
-    public string Speaker { get; } = Speaker.AssertNotNull(nameof(Speaker));
+    public int Speaker { get; } = Speaker.AssertNotNegative(nameof(Speaker));
 
     /// <summary>
     /// Gets what is said.

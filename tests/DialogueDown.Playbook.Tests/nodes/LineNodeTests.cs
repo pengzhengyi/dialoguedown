@@ -11,7 +11,7 @@ public sealed class LineNodeTests
             {
               "kind": "line",
               "id": 0,
-              "speaker": "alice",
+              "speaker": 0,
               "speech": [
                 {
                   "kind": "text",
@@ -35,8 +35,9 @@ public sealed class LineNodeTests
     }
 
     [Fact]
-    public void Construct_WithoutASpeaker_IsRejected()
+    public void Construct_WithAnImpossibleSpeaker_IsRejected()
     {
-        Assert.Throws<ArgumentNullException>(() => new LineNode(0, null!, [], Condition: null, []));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new LineNode(0, -1, [], Condition: null, []));
     }
 }

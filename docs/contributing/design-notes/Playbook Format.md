@@ -54,7 +54,7 @@ This note assumes the vocabulary and decisions of the
 - [ ] JSON encoding with a `kind` discriminator and stable property names.
 - [ ] A writer that lowers a `DialogueGraph` into a playbook.
 - [ ] A speaker table addressed by stable id.
-- [ ] An `entries` table and an `anchors` table.
+- [ ] A default `entry`, and an `anchors` table.
 - [ ] Compiled option labels, so a menu never peeks at a target node.
 - [ ] A reader that round-trips every construct.
 - [ ] Refusal on an unsupported version, an unknown required capability, a
@@ -108,17 +108,17 @@ Two architecture tests guard the shape:
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
   "format": { "version": 0, "requires": ["core"], "uses": [] },
   "script": "chapter-01.dialogue.md",
-  "entries": { "start": 0 },
+  "entry": 0,
   "anchors": { "the-inn": 4 },
   "speakers": [
-    { "id": "alice", "name": "Alice", "tags": [{ "name": "mood", "value": "warm" }] },
-    { "id": "speaker-1", "default": true }
+    { "name": "Alice", "tags": [{ "name": "mood", "value": "warm" }] },
+    { "default": true, "tags": [] }
   ],
   "nodes": [
     {
       "id": 0,
       "kind": "line",
-      "speaker": "alice",
+      "speaker": 0,
       "speech": [
         { "kind": "text", "text": "My favorite color is " },
         { "kind": "query", "key": "Alice.FavoriteColor" },
@@ -157,37 +157,39 @@ Following glTF, which groups version information under `asset` while leaving
 would add a level of nesting to every access and buy nothing. `script` stays at the
 root because provenance is not compatibility.
 
-### `entries` and `anchors`
+### `entry` and `anchors`
 
 A game does not play a file top to bottom — it starts **a specific conversation**.
-Ink exposes `ChoosePathString("knot.stitch")` and Yarn Spinner `SetNode("Start")`;
-without an equivalent, a Godot integration has no way in.
+Ink addresses one with `ChoosePathString("knot.stitch")` and Yarn Spinner with
+`SetNode("Start")`; both resolve a **name** against the table of named things they
+already keep. Here that table is `anchors`, which maps every scene's slug to its
+node, and it is what a host uses to begin at a named scene or to follow a jump.
 
-The two tables answer different questions:
+`entry` adds the one fact `anchors` cannot hold: where a playthrough begins when
+nothing says otherwise. That is the document's top, which has no heading and so has
+no slug.
 
-| Table     | Contains             | Means                                                                                                              |
-| --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `anchors` | **every** scene slug | valid jump targets — a host *may* start at any of them                                                             |
-| `entries` | designated starts    | the writer's intended way in, and the only home for the document top, which has no heading and therefore no anchor |
+It is a single field rather than a table of named ways in. A table would have
+exactly one member today, under a name the compiler never wrote, and would promise
+a multiplicity that does not exist — while buying nothing, since a field added
+later is additive anyway. Starting somewhere else is already expressible through
+`anchors`, and a debugger's "begin here" is an argument to the runner rather than a
+fact about the document.
 
-`entries` is a table rather than a single field because a reserved `#START` and
-cross-file entry are both deferred but coming, and a table absorbs them additively.
-Version 0 holds exactly one entry — the document top, named `start`.
+### Speakers are hoisted, and addressed by index
 
-### Speakers are addressed by id
+A speaker's name and tags are hoisted out of the lines that quote them, so a host
+has one place to bind a portrait, a voice, or a color, and a diff stays local when
+a speaker changes.
 
-Lines reference a speaker by a stable **string id**, not by array position. This is
-deliberately asymmetric with node references
-([P5](#p5--node-ids-are-dense-indices)), and the asymmetry is earned: nodes are
-numerous, nameless, and machine-referenced thousands of times, while speakers are
-few, named, and human-referenced. An id keeps a playbook readable under `jq`, keeps
-diffs local when a speaker is inserted, and gives a host the natural key it wants
-for binding a portrait, a voice, or a color.
+A line names its speaker by **index**, the way every other reference in a playbook
+works. The alternative — synthesizing a string key from the name — would invent an
+identifier nobody wrote, and would spend the word `id`, which the script language
+already uses for the writer's own `@id`. A host reading a speaker's `id` therefore
+always knows the writer typed it.
 
-The writer derives the id from the speaker's `@id` when present, otherwise its
-name, otherwise a generated `speaker-<n>` for the anonymous default. It asserts
-uniqueness and fails loudly on a collision, which the semantic analyzer's speaker
-table should already prevent.
+Both the `@id` and the name are optional, because the anonymous default speaker
+has neither and still says lines.
 
 ## Mapping the graph
 
@@ -429,14 +431,19 @@ version-0 runner refuses the whole document before parsing a single node. It can
 misread a reference shape it never reaches. **The capability manifest is what makes
 cross-file additive — not the shape of the reference field.**
 
-### P11 — Absent is absent; the format never writes null
+### P11 — Absent is absent; the writer emits the shortest true document
 
-An optional field that has no value is **omitted**, not written as `null`. A tag
-without a value is `{ "name": "aside", "reserved": false }`, and a reader treats a
-missing field exactly as it treats a missing `requires` — as the empty case.
+A field whose value is the default is **omitted**: no `null`, and no `false`. A
+tag without a value is `{ "name": "aside" }`, and a reader treats a missing field
+exactly as it treats a missing `requires` — as the default case.
 
 Writing both spellings would let two documents mean the same thing, which doubles
 what a schema, a reader, and a golden file each have to say.
+
+> [!WARNING]
+> Omitting defaults is applied **per flag**, never as a blanket serializer setting.
+> The blanket condition also drops value types equal to zero — which would silently
+> erase a node's `id`, an edge's `target`, and the first branch arm's `order`.
 
 ## Error and boundary cases
 
