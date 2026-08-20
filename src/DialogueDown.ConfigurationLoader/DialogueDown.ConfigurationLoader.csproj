@@ -25,4 +25,13 @@
     <ProjectReference Include="..\DialogueDown\DialogueDown.csproj" />
   </ItemGroup>
 
+  <!-- Public API surface tracking. This library ships to consumers, so a change to a
+       public type must show up as a diff in PublicAPI.Unshipped.txt for review rather
+       than in a consumer's build. RS0016/RS0017 fail the build when the files and the
+       surface disagree. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
 </Project>

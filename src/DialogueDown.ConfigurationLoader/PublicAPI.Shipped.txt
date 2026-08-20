@@ -1,0 +1,23 @@
+#nullable enable
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Column.get -> int
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Column.init -> void
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.ConfigurationSourceLocation() -> void
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.ConfigurationSourceLocation(string! Source, int Line, int Column) -> void
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Deconstruct(out string! Source, out int Line, out int Column) -> void
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Equals(DialogueDown.ConfigurationLoader.ConfigurationSourceLocation other) -> bool
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Line.get -> int
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Line.init -> void
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Source.get -> string!
+DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Source.init -> void
+DialogueDown.ConfigurationLoader.Errors.DialogueConfigurationException
+DialogueDown.ConfigurationLoader.Errors.DialogueConfigurationException.DialogueConfigurationException(string! message, DialogueDown.ConfigurationLoader.ConfigurationSourceLocation location) -> void
+DialogueDown.ConfigurationLoader.Errors.DialogueConfigurationException.Location.get -> DialogueDown.ConfigurationLoader.ConfigurationSourceLocation
+DialogueDown.ConfigurationLoader.TomlConfigurationLoader
+override DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.GetHashCode() -> int
+override DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.ToString() -> string!
+static DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.operator !=(DialogueDown.ConfigurationLoader.ConfigurationSourceLocation left, DialogueDown.ConfigurationLoader.ConfigurationSourceLocation right) -> bool
+static DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.operator ==(DialogueDown.ConfigurationLoader.ConfigurationSourceLocation left, DialogueDown.ConfigurationLoader.ConfigurationSourceLocation right) -> bool
+static DialogueDown.ConfigurationLoader.TomlConfigurationLoader.Load(string! path) -> DialogueDown.Configuration.CompilerOptions!
+static DialogueDown.ConfigurationLoader.TomlConfigurationLoader.Parse(string! toml, string! sourceName) -> DialogueDown.Configuration.CompilerOptions!
+~override DialogueDown.ConfigurationLoader.ConfigurationSourceLocation.Equals(object obj) -> bool

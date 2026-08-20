@@ -222,3 +222,16 @@ dotnet_diagnostic.S3871.severity = none   # exception should be public
 dotnet_diagnostic.S3903.severity = none   # type should be in a named namespace
 dotnet_diagnostic.S4136.severity = none   # method overloads should be adjacent
 dotnet_diagnostic.S6444.severity = none   # regex timeout (no backtracking risk in our patterns)
+
+# ---------------------------------------------------------------------------
+# Shipped libraries: the public surface is tracked in PublicAPI.Shipped.txt /
+# PublicAPI.Unshipped.txt. These are the two libraries a Godot game references,
+# so a change to a public type must arrive as a reviewable diff in those files
+# rather than as a break in a consumer's build. The repository does not treat
+# warnings as errors, so these are raised to error explicitly — a guardrail that
+# only warns is not a gate.
+# ---------------------------------------------------------------------------
+[src/{DialogueDown,DialogueDown.ConfigurationLoader}/**.cs]
+
+dotnet_diagnostic.RS0016.severity = error   # public symbol missing from the API files
+dotnet_diagnostic.RS0017.severity = error   # API file lists a symbol the code no longer has

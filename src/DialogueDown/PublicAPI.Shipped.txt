@@ -1,0 +1,179 @@
+#nullable enable
+DialogueDown.Compilation.CompilationFailure
+DialogueDown.Compilation.CompilationFailure.Equals(DialogueDown.Compilation.CompilationFailure? other) -> bool
+DialogueDown.Compilation.CompilationResult
+DialogueDown.Compilation.CompilationResult.CompilationResult(DialogueDown.Compilation.CompilationResult! original) -> void
+DialogueDown.Compilation.CompilationResult.HasErrors.get -> bool
+DialogueDown.Compilation.CompilationResult.LocatedDiagnostics.get -> System.Collections.Generic.IReadOnlyList<DialogueDown.Diagnostics.LocatedDiagnostic!>!
+DialogueDown.Compilation.CompilationResult.Source.get -> string!
+DialogueDown.Compilation.CompilationSuccess
+DialogueDown.Compilation.CompilationSuccess.Equals(DialogueDown.Compilation.CompilationSuccess? other) -> bool
+DialogueDown.Compilation.IScriptCompiler
+DialogueDown.Compilation.IScriptCompiler.Compile(string! source) -> DialogueDown.Compilation.CompilationResult!
+DialogueDown.Compilation.ScriptCompilerFactory
+DialogueDown.Configuration.CompilationMode
+DialogueDown.Configuration.CompilationMode.BestEffort = 2 -> DialogueDown.Configuration.CompilationMode
+DialogueDown.Configuration.CompilationMode.FailFast = 0 -> DialogueDown.Configuration.CompilationMode
+DialogueDown.Configuration.CompilationMode.StageBoundary = 1 -> DialogueDown.Configuration.CompilationMode
+DialogueDown.Configuration.CompilationModes
+DialogueDown.Configuration.CompilerOptions
+DialogueDown.Configuration.CompilerOptions.<Clone>$() -> DialogueDown.Configuration.CompilerOptions!
+DialogueDown.Configuration.CompilerOptions.CompilerOptions() -> void
+DialogueDown.Configuration.CompilerOptions.CompilerOptions(DialogueDown.Configuration.CompilationMode mode, System.Collections.Generic.IEnumerable<DialogueDown.Configuration.ConfiguredSpeaker!>! speakers, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<DialogueDown.Configuration.UnmodeledNodeKind, DialogueDown.Configuration.UnmodeledNodeHandling>>! unmodeledMarkdown) -> void
+DialogueDown.Configuration.CompilerOptions.EqualityComparer
+DialogueDown.Configuration.CompilerOptions.EqualityComparer.EqualityComparer() -> void
+DialogueDown.Configuration.CompilerOptions.EqualityComparer.Equals(DialogueDown.Configuration.CompilerOptions? x, DialogueDown.Configuration.CompilerOptions? y) -> bool
+DialogueDown.Configuration.CompilerOptions.EqualityComparer.GetHashCode(DialogueDown.Configuration.CompilerOptions! obj) -> int
+DialogueDown.Configuration.CompilerOptions.EqualityComparer.Inequalities(DialogueDown.Configuration.CompilerOptions? x, DialogueDown.Configuration.CompilerOptions? y, Generator.Equals.MemberPath path = default(Generator.Equals.MemberPath)) -> System.Collections.Generic.IEnumerable<Generator.Equals.Inequality>!
+DialogueDown.Configuration.CompilerOptions.Equals(DialogueDown.Configuration.CompilerOptions? other) -> bool
+DialogueDown.Configuration.CompilerOptions.Mode.get -> DialogueDown.Configuration.CompilationMode
+DialogueDown.Configuration.CompilerOptions.Mode.init -> void
+DialogueDown.Configuration.CompilerOptions.Speakers.get -> System.Collections.Immutable.ImmutableArray<DialogueDown.Configuration.ConfiguredSpeaker!>
+DialogueDown.Configuration.CompilerOptions.Speakers.init -> void
+DialogueDown.Configuration.CompilerOptions.UnmodeledMarkdown.get -> System.Collections.Immutable.ImmutableDictionary<DialogueDown.Configuration.UnmodeledNodeKind, DialogueDown.Configuration.UnmodeledNodeHandling>!
+DialogueDown.Configuration.CompilerOptions.UnmodeledMarkdown.init -> void
+DialogueDown.Configuration.ConfiguredSpeaker
+DialogueDown.Configuration.ConfiguredSpeaker.<Clone>$() -> DialogueDown.Configuration.ConfiguredSpeaker!
+DialogueDown.Configuration.ConfiguredSpeaker.ConfiguredSpeaker(string! name, string? id, System.Collections.Generic.IEnumerable<DialogueDown.Configuration.ConfiguredTag!>! customTags, System.Collections.Generic.IEnumerable<DialogueDown.Configuration.ConfiguredTag!>! reservedTags) -> void
+DialogueDown.Configuration.ConfiguredSpeaker.CustomTags.get -> System.Collections.Immutable.ImmutableArray<DialogueDown.Configuration.ConfiguredTag!>
+DialogueDown.Configuration.ConfiguredSpeaker.CustomTags.init -> void
+DialogueDown.Configuration.ConfiguredSpeaker.Deconstruct(out string! name, out string? id, out System.Collections.Immutable.ImmutableArray<DialogueDown.Configuration.ConfiguredTag!> customTags, out System.Collections.Immutable.ImmutableArray<DialogueDown.Configuration.ConfiguredTag!> reservedTags) -> void
+DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer
+DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer.EqualityComparer() -> void
+DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer.Equals(DialogueDown.Configuration.ConfiguredSpeaker? x, DialogueDown.Configuration.ConfiguredSpeaker? y) -> bool
+DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer.GetHashCode(DialogueDown.Configuration.ConfiguredSpeaker! obj) -> int
+DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer.Inequalities(DialogueDown.Configuration.ConfiguredSpeaker? x, DialogueDown.Configuration.ConfiguredSpeaker? y, Generator.Equals.MemberPath path = default(Generator.Equals.MemberPath)) -> System.Collections.Generic.IEnumerable<Generator.Equals.Inequality>!
+DialogueDown.Configuration.ConfiguredSpeaker.Equals(DialogueDown.Configuration.ConfiguredSpeaker? other) -> bool
+DialogueDown.Configuration.ConfiguredSpeaker.Id.get -> string?
+DialogueDown.Configuration.ConfiguredSpeaker.Id.init -> void
+DialogueDown.Configuration.ConfiguredSpeaker.Name.get -> string!
+DialogueDown.Configuration.ConfiguredSpeaker.Name.init -> void
+DialogueDown.Configuration.ConfiguredSpeaker.ReservedTags.get -> System.Collections.Immutable.ImmutableArray<DialogueDown.Configuration.ConfiguredTag!>
+DialogueDown.Configuration.ConfiguredSpeaker.ReservedTags.init -> void
+DialogueDown.Configuration.ConfiguredTag
+DialogueDown.Configuration.ConfiguredTag.<Clone>$() -> DialogueDown.Configuration.ConfiguredTag!
+DialogueDown.Configuration.ConfiguredTag.ConfiguredTag(string! Name, string? Value = null) -> void
+DialogueDown.Configuration.ConfiguredTag.Deconstruct(out string! Name, out string? Value) -> void
+DialogueDown.Configuration.ConfiguredTag.Equals(DialogueDown.Configuration.ConfiguredTag? other) -> bool
+DialogueDown.Configuration.ConfiguredTag.Name.get -> string!
+DialogueDown.Configuration.ConfiguredTag.Name.init -> void
+DialogueDown.Configuration.ConfiguredTag.Value.get -> string?
+DialogueDown.Configuration.ConfiguredTag.Value.init -> void
+DialogueDown.Configuration.ReservedTagNames
+DialogueDown.Configuration.UnmodeledMarkdownNames
+DialogueDown.Configuration.UnmodeledNodeHandling
+DialogueDown.Configuration.UnmodeledNodeHandling.Ignore = 1 -> DialogueDown.Configuration.UnmodeledNodeHandling
+DialogueDown.Configuration.UnmodeledNodeHandling.Keep = 0 -> DialogueDown.Configuration.UnmodeledNodeHandling
+DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Configuration.UnmodeledNodeKind.Autolink = 4 -> DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Configuration.UnmodeledNodeKind.CodeBlock = 0 -> DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Configuration.UnmodeledNodeKind.Other = 5 -> DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Configuration.UnmodeledNodeKind.RawHtml = 3 -> DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Configuration.UnmodeledNodeKind.Table = 2 -> DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Configuration.UnmodeledNodeKind.ThematicBreak = 1 -> DialogueDown.Configuration.UnmodeledNodeKind
+DialogueDown.Diagnostics.DiagnosticCategory
+DialogueDown.Diagnostics.DiagnosticCategory.Semantic = 1 -> DialogueDown.Diagnostics.DiagnosticCategory
+DialogueDown.Diagnostics.DiagnosticCategory.Style = 2 -> DialogueDown.Diagnostics.DiagnosticCategory
+DialogueDown.Diagnostics.DiagnosticCategory.Syntax = 0 -> DialogueDown.Diagnostics.DiagnosticCategory
+DialogueDown.Diagnostics.DiagnosticSeverity
+DialogueDown.Diagnostics.DiagnosticSeverity.Error = 2 -> DialogueDown.Diagnostics.DiagnosticSeverity
+DialogueDown.Diagnostics.DiagnosticSeverity.Info = 0 -> DialogueDown.Diagnostics.DiagnosticSeverity
+DialogueDown.Diagnostics.DiagnosticSeverity.Warning = 1 -> DialogueDown.Diagnostics.DiagnosticSeverity
+DialogueDown.Diagnostics.LinePosition
+DialogueDown.Diagnostics.LinePosition.Column.get -> int
+DialogueDown.Diagnostics.LinePosition.Column.init -> void
+DialogueDown.Diagnostics.LinePosition.Deconstruct(out int Line, out int Column) -> void
+DialogueDown.Diagnostics.LinePosition.Equals(DialogueDown.Diagnostics.LinePosition other) -> bool
+DialogueDown.Diagnostics.LinePosition.Line.get -> int
+DialogueDown.Diagnostics.LinePosition.Line.init -> void
+DialogueDown.Diagnostics.LinePosition.LinePosition() -> void
+DialogueDown.Diagnostics.LinePosition.LinePosition(int Line, int Column) -> void
+DialogueDown.Diagnostics.LocatedDiagnostic
+DialogueDown.Diagnostics.LocatedDiagnostic.<Clone>$() -> DialogueDown.Diagnostics.LocatedDiagnostic!
+DialogueDown.Diagnostics.LocatedDiagnostic.Category.get -> DialogueDown.Diagnostics.DiagnosticCategory
+DialogueDown.Diagnostics.LocatedDiagnostic.Category.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.Code.get -> string!
+DialogueDown.Diagnostics.LocatedDiagnostic.Code.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.Deconstruct(out string! Code, out DialogueDown.Diagnostics.DiagnosticSeverity Severity, out DialogueDown.Diagnostics.DiagnosticCategory Category, out string! Message, out DialogueDown.Diagnostics.LinePosition Start, out DialogueDown.Diagnostics.LinePosition End, out int StartOffset, out int EndOffset) -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.End.get -> DialogueDown.Diagnostics.LinePosition
+DialogueDown.Diagnostics.LocatedDiagnostic.End.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.EndOffset.get -> int
+DialogueDown.Diagnostics.LocatedDiagnostic.EndOffset.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.Equals(DialogueDown.Diagnostics.LocatedDiagnostic? other) -> bool
+DialogueDown.Diagnostics.LocatedDiagnostic.LocatedDiagnostic(string! Code, DialogueDown.Diagnostics.DiagnosticSeverity Severity, DialogueDown.Diagnostics.DiagnosticCategory Category, string! Message, DialogueDown.Diagnostics.LinePosition Start, DialogueDown.Diagnostics.LinePosition End, int StartOffset, int EndOffset) -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.Message.get -> string!
+DialogueDown.Diagnostics.LocatedDiagnostic.Message.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.Severity.get -> DialogueDown.Diagnostics.DiagnosticSeverity
+DialogueDown.Diagnostics.LocatedDiagnostic.Severity.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.Start.get -> DialogueDown.Diagnostics.LinePosition
+DialogueDown.Diagnostics.LocatedDiagnostic.Start.init -> void
+DialogueDown.Diagnostics.LocatedDiagnostic.StartOffset.get -> int
+DialogueDown.Diagnostics.LocatedDiagnostic.StartOffset.init -> void
+DialogueDown.IGameSystem
+DialogueDown.IGameSystem.Execute(string! command) -> void
+DialogueDown.IGameSystem.Query(string! query) -> string!
+Microsoft.Extensions.DependencyInjection.DialogueDownServiceCollectionExtensions
+abstract DialogueDown.Compilation.CompilationResult.<Clone>$() -> DialogueDown.Compilation.CompilationResult!
+const DialogueDown.Configuration.ReservedTagNames.Default = "default" -> string!
+override DialogueDown.Compilation.CompilationFailure.<Clone>$() -> DialogueDown.Compilation.CompilationFailure!
+override DialogueDown.Compilation.CompilationFailure.Equals(object? obj) -> bool
+override DialogueDown.Compilation.CompilationFailure.GetHashCode() -> int
+override DialogueDown.Compilation.CompilationFailure.ToString() -> string!
+override DialogueDown.Compilation.CompilationResult.Equals(object? obj) -> bool
+override DialogueDown.Compilation.CompilationResult.GetHashCode() -> int
+override DialogueDown.Compilation.CompilationResult.ToString() -> string!
+override DialogueDown.Compilation.CompilationSuccess.<Clone>$() -> DialogueDown.Compilation.CompilationSuccess!
+override DialogueDown.Compilation.CompilationSuccess.Equals(object? obj) -> bool
+override DialogueDown.Compilation.CompilationSuccess.GetHashCode() -> int
+override DialogueDown.Compilation.CompilationSuccess.ToString() -> string!
+override DialogueDown.Configuration.CompilerOptions.Equals(object? obj) -> bool
+override DialogueDown.Configuration.CompilerOptions.GetHashCode() -> int
+override DialogueDown.Configuration.CompilerOptions.ToString() -> string!
+override DialogueDown.Configuration.ConfiguredSpeaker.Equals(object? obj) -> bool
+override DialogueDown.Configuration.ConfiguredSpeaker.GetHashCode() -> int
+override DialogueDown.Configuration.ConfiguredSpeaker.ToString() -> string!
+override DialogueDown.Configuration.ConfiguredTag.Equals(object? obj) -> bool
+override DialogueDown.Configuration.ConfiguredTag.GetHashCode() -> int
+override DialogueDown.Configuration.ConfiguredTag.ToString() -> string!
+override DialogueDown.Diagnostics.LinePosition.GetHashCode() -> int
+override DialogueDown.Diagnostics.LinePosition.ToString() -> string!
+override DialogueDown.Diagnostics.LocatedDiagnostic.Equals(object? obj) -> bool
+override DialogueDown.Diagnostics.LocatedDiagnostic.GetHashCode() -> int
+override DialogueDown.Diagnostics.LocatedDiagnostic.ToString() -> string!
+override sealed DialogueDown.Compilation.CompilationFailure.Equals(DialogueDown.Compilation.CompilationResult? other) -> bool
+override sealed DialogueDown.Compilation.CompilationSuccess.Equals(DialogueDown.Compilation.CompilationResult? other) -> bool
+static DialogueDown.Compilation.CompilationFailure.operator !=(DialogueDown.Compilation.CompilationFailure? left, DialogueDown.Compilation.CompilationFailure? right) -> bool
+static DialogueDown.Compilation.CompilationFailure.operator ==(DialogueDown.Compilation.CompilationFailure? left, DialogueDown.Compilation.CompilationFailure? right) -> bool
+static DialogueDown.Compilation.CompilationResult.operator !=(DialogueDown.Compilation.CompilationResult? left, DialogueDown.Compilation.CompilationResult? right) -> bool
+static DialogueDown.Compilation.CompilationResult.operator ==(DialogueDown.Compilation.CompilationResult? left, DialogueDown.Compilation.CompilationResult? right) -> bool
+static DialogueDown.Compilation.CompilationSuccess.operator !=(DialogueDown.Compilation.CompilationSuccess? left, DialogueDown.Compilation.CompilationSuccess? right) -> bool
+static DialogueDown.Compilation.CompilationSuccess.operator ==(DialogueDown.Compilation.CompilationSuccess? left, DialogueDown.Compilation.CompilationSuccess? right) -> bool
+static DialogueDown.Compilation.ScriptCompilerFactory.CreateDefault(DialogueDown.Configuration.CompilerOptions? options = null) -> DialogueDown.Compilation.IScriptCompiler!
+static DialogueDown.Configuration.CompilationModes.NameOf(DialogueDown.Configuration.CompilationMode mode) -> string!
+static DialogueDown.Configuration.CompilationModes.SettableNamesDescription.get -> string!
+static DialogueDown.Configuration.CompilationModes.TryParse(string! name) -> DialogueDown.Configuration.CompilationMode?
+static DialogueDown.Configuration.CompilerOptions.Default.get -> DialogueDown.Configuration.CompilerOptions!
+static DialogueDown.Configuration.CompilerOptions.EqualityComparer.Default.get -> DialogueDown.Configuration.CompilerOptions.EqualityComparer!
+static DialogueDown.Configuration.CompilerOptions.operator !=(DialogueDown.Configuration.CompilerOptions? left, DialogueDown.Configuration.CompilerOptions? right) -> bool
+static DialogueDown.Configuration.CompilerOptions.operator ==(DialogueDown.Configuration.CompilerOptions? left, DialogueDown.Configuration.CompilerOptions? right) -> bool
+static DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer.Default.get -> DialogueDown.Configuration.ConfiguredSpeaker.EqualityComparer!
+static DialogueDown.Configuration.ConfiguredSpeaker.operator !=(DialogueDown.Configuration.ConfiguredSpeaker? left, DialogueDown.Configuration.ConfiguredSpeaker? right) -> bool
+static DialogueDown.Configuration.ConfiguredSpeaker.operator ==(DialogueDown.Configuration.ConfiguredSpeaker? left, DialogueDown.Configuration.ConfiguredSpeaker? right) -> bool
+static DialogueDown.Configuration.ConfiguredTag.operator !=(DialogueDown.Configuration.ConfiguredTag? left, DialogueDown.Configuration.ConfiguredTag? right) -> bool
+static DialogueDown.Configuration.ConfiguredTag.operator ==(DialogueDown.Configuration.ConfiguredTag? left, DialogueDown.Configuration.ConfiguredTag? right) -> bool
+static DialogueDown.Configuration.UnmodeledMarkdownNames.HandlingNamesDescription.get -> string!
+static DialogueDown.Configuration.UnmodeledMarkdownNames.KindNamesDescription.get -> string!
+static DialogueDown.Configuration.UnmodeledMarkdownNames.NameOf(DialogueDown.Configuration.UnmodeledNodeHandling handling) -> string!
+static DialogueDown.Configuration.UnmodeledMarkdownNames.NameOf(DialogueDown.Configuration.UnmodeledNodeKind kind) -> string!
+static DialogueDown.Configuration.UnmodeledMarkdownNames.TryParseHandling(string! name) -> DialogueDown.Configuration.UnmodeledNodeHandling?
+static DialogueDown.Configuration.UnmodeledMarkdownNames.TryParseKind(string! name) -> DialogueDown.Configuration.UnmodeledNodeKind?
+static DialogueDown.Diagnostics.LinePosition.operator !=(DialogueDown.Diagnostics.LinePosition left, DialogueDown.Diagnostics.LinePosition right) -> bool
+static DialogueDown.Diagnostics.LinePosition.operator ==(DialogueDown.Diagnostics.LinePosition left, DialogueDown.Diagnostics.LinePosition right) -> bool
+static DialogueDown.Diagnostics.LocatedDiagnostic.operator !=(DialogueDown.Diagnostics.LocatedDiagnostic? left, DialogueDown.Diagnostics.LocatedDiagnostic? right) -> bool
+static DialogueDown.Diagnostics.LocatedDiagnostic.operator ==(DialogueDown.Diagnostics.LocatedDiagnostic? left, DialogueDown.Diagnostics.LocatedDiagnostic? right) -> bool
+static Microsoft.Extensions.DependencyInjection.DialogueDownServiceCollectionExtensions.AddDialogueDown(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, DialogueDown.Configuration.CompilerOptions? options = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static readonly DialogueDown.Configuration.ReservedTagNames.Known -> System.Collections.Frozen.FrozenSet<string!>!
+virtual DialogueDown.Compilation.CompilationResult.EqualityContract.get -> System.Type!
+virtual DialogueDown.Compilation.CompilationResult.Equals(DialogueDown.Compilation.CompilationResult? other) -> bool
+virtual DialogueDown.Compilation.CompilationResult.PrintMembers(System.Text.StringBuilder! builder) -> bool
+~override DialogueDown.Diagnostics.LinePosition.Equals(object obj) -> bool
