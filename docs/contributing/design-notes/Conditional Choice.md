@@ -1,40 +1,41 @@
 # Conditional choice
 
 > [!NOTE]
-> Status: **implemented**. The compiler recognizes a **conditional choice option** —
-> a player choice or a random option offered only when the condition is true —
-> reusing the condition from the [Conditional Jump](./Conditional%20Jump.md) and
-> [Conditional Line](./Conditional%20Line.md) notes; read those first. Offering,
-> hiding, and re-normalizing options at play time is part of the planned
+> Status: **implemented**. A **conditional choice option** — a player choice or a
+> random option — is offered only when its condition is true. Offering, hiding,
+> and re-normalizing options at play time is part of the planned
 > [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+
+This note assumes the [Conditions](./Conditions.md) note and does not repeat it:
+the condition primitive, its grammar, how it resolves, and the decisions behind it
+live there. Read it first. This note covers only what is specific to guarding a
+**choice option**.
 
 ## Table of contents
 
-- [Conditional choice](#conditional-choice)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Grammar](#grammar)
-  - [Condition resolution](#condition-resolution)
-  - [Prior art](#prior-art)
-  - [Architecture](#architecture)
-  - [Interfaces and responsibilities](#interfaces-and-responsibilities)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — The option guard is a list-item peel, and it takes precedence](#d1--the-option-guard-is-a-list-item-peel-and-it-takes-precedence)
-    - [D2 — Condition first, then weight](#d2--condition-first-then-weight)
-    - [D3 — A conditional random option defers the weight total](#d3--a-conditional-random-option-defers-the-weight-total)
-    - [D4 — A false option is removed; an independent guard](#d4--a-false-option-is-removed-an-independent-guard)
-    - [D5 — Reuse the condition primitive and its rule](#d5--reuse-the-condition-primitive-and-its-rule)
-  - [Relation to a future block `if`/`elseif`/`else`](#relation-to-a-future-block-ifelseifelse)
-  - [Markdown interaction](#markdown-interaction)
-  - [Diagnostics](#diagnostics)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Testability](#testability)
-  - [Implementation crosscheck](#implementation-crosscheck)
-  - [Alternatives not chosen](#alternatives-not-chosen)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Functionality checklist](#functionality-checklist)
+- [Ubiquitous language](#ubiquitous-language)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Grammar](#grammar)
+- [Condition resolution](#condition-resolution)
+- [Prior art](#prior-art)
+- [Architecture](#architecture)
+- [Interfaces and responsibilities](#interfaces-and-responsibilities)
+- [Key design decisions](#key-design-decisions)
+  - [D1 — The option guard is a list-item peel, and it takes precedence](#d1--the-option-guard-is-a-list-item-peel-and-it-takes-precedence)
+  - [D2 — Condition first, then weight](#d2--condition-first-then-weight)
+  - [D3 — A conditional random option defers the weight total](#d3--a-conditional-random-option-defers-the-weight-total)
+  - [D4 — A false option is removed; an independent guard](#d4--a-false-option-is-removed-an-independent-guard)
+  - [D5 — Reuse the condition primitive and its rule](#d5--reuse-the-condition-primitive-and-its-rule)
+- [Relation to a future block `if`/`elseif`/`else`](#relation-to-a-future-block-ifelseifelse)
+- [Markdown interaction](#markdown-interaction)
+- [Diagnostics](#diagnostics)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
+- [Implementation crosscheck](#implementation-crosscheck)
+- [Alternatives not chosen](#alternatives-not-chosen)
+- [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
 
@@ -109,7 +110,7 @@ over unchanged.
 ## Writer-facing behavior
 
 A condition is the game-state [query](../../guide/game-state.md#queries) with
-a `?`, from the [query-and-sigil family](./Conditional%20Jump.md#writer-facing-behavior).
+a `?`, from the [query-and-sigil family](./Conditions.md#writer-facing-behavior).
 Place it at the *start of an option* and the whole option becomes conditional.
 
 **A player option** appears only when its condition is true:
@@ -165,34 +166,22 @@ guard.
 
 ## Condition resolution
 
-Resolution runs at **runtime**, not compile time — the game state a condition
-reads is unknown until the game runs. The compiler only recognizes and preserves
-the condition; the contract below is what the runtime will honor.
+Resolution runs at runtime, through the shared contract in
+[Conditions](./Conditions.md#condition-resolution). An option's false behavior
+depends on the kind of choice:
 
-- **Player option.** The runtime reads the key through `IGameSystem.Check`. A
-  `true` result offers the option; a `false` result removes it. Whether a removed
-  option is hidden or shown disabled is a runtime/presentation choice.
+- **Player option.** A `false` result removes it. Whether a removed option is
+  hidden or shown disabled is a runtime/presentation choice.
 - **Random option.** The runtime excludes every option whose condition is false,
   then re-normalizes the remaining weights so they sum to one
   ([exclude then normalize](#ubiquitous-language)). If every option is excluded,
   no option can be selected — the same error shape as a zero weight total.
 
-An unknown key is the game's default `false`. Because the game answers with a real
-boolean, there is no string parsing and no invalid-value case to report.
-
 ## Prior art
 
-Per-option conditions are standard in dialogue engines:
-
-- **Ink** — `* {has_key} [Use the key]` gates a choice on a condition, hiding it
-  when false. This is the model here: compact, inline, guard-first.
-- **Ren'Py** — `"Use the key" if has_key:` attaches a condition to a menu choice.
-- **Yarn Spinner** — wraps options in `<<if>> … <<endif>>`; powerful but a block
-  statement, which DialogueDown reserves for a future block `if`.
-
-The lasting lessons are unchanged: a condition **reads, it does not act**;
-**removal is the natural false behavior** (a false option simply is not offered);
-and **expressions belong to the host, not the script**.
+See [Conditions](./Conditions.md#prior-art). Ink's `* {has_key} [Use the key]`
+and Ren'Py's `"Use the key" if has_key:` are the closest models for an option:
+the condition gates the menu entry itself.
 
 ## Architecture
 

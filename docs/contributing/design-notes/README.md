@@ -74,9 +74,10 @@ first, since a construct threads through them.
 | --- | --- | --- |
 | [Progression Order](./Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert vs. detour jump roles, and the `#END` terminator | Partially implemented |
 | [Random Choice](./Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
-| [Conditional Jump](./Conditional%20Jump.md) | A condition (`` `"key"?` ``) that makes a jump fire only when a game-state query is true | Implemented |
-| [Conditional Line](./Conditional%20Line.md) | The same condition (`` `"key"?` ``) fronting a line, so the line plays only when the query is true | Implemented |
-| [Conditional Choice](./Conditional%20Choice.md) | The same condition guarding a choice option, so a player or random option is offered only when the query is true | Implemented |
+| [Conditions](./Conditions.md) | The condition primitive (`` `"key"?` ``) every guard shares — its grammar, how it resolves, and the decisions behind it | Implemented |
+| [Conditional Jump](./Conditional%20Jump.md) | A condition guarding a jump, so the jump fires only when the query is true | Implemented |
+| [Conditional Line](./Conditional%20Line.md) | A condition fronting a line, so the line plays only when the query is true | Implemented |
+| [Conditional Choice](./Conditional%20Choice.md) | A condition guarding a choice option, so a player or random option is offered only when the query is true | Implemented |
 | [Unquoted Keys](./Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
 | [Block Controls](./Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |

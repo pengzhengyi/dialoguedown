@@ -1,42 +1,35 @@
 # Conditional jump
 
 > [!NOTE]
-> Status: **implemented**. The compiler recognizes and preserves a **condition**
-> primitive (`` `"key"?` ``) and its first application, the **conditional jump** —
-> a jump that fires only when the condition is true. Gating the edge at play time
-> (and the `IGameSystem.Check` read it will use) is part of the planned
+> Status: **implemented**. A **conditional jump** fires only when its condition is
+> true. Gating the edge at play time is part of the planned
 > [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+
+This note assumes the [Conditions](./Conditions.md) note and does not repeat it:
+the condition primitive, its grammar, how it resolves, and the decisions behind it
+live there. Read it first. This note covers only what is specific to guarding a
+**jump**.
 
 ## Table of contents
 
-- [Conditional jump](#conditional-jump)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Grammar](#grammar)
-  - [Condition resolution](#condition-resolution)
-  - [Prior art](#prior-art)
-  - [Architecture](#architecture)
-  - [Interfaces and responsibilities](#interfaces-and-responsibilities)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — A condition is a query read, not a command](#d1--a-condition-is-a-query-read-not-a-command)
-    - [D2 — The `?` sigil joins the query-and-sigil family](#d2--the--sigil-joins-the-query-and-sigil-family)
-    - [D3 — Guard-first placement](#d3--guard-first-placement)
-    - [D4 — A dedicated boolean read on `IGameSystem`](#d4--a-dedicated-boolean-read-on-igamesystem)
-    - [D5 — Negation is deferred](#d5--negation-is-deferred)
-    - [D6 — False falls through; no inline else](#d6--false-falls-through-no-inline-else)
-    - [D7 — Recognize in the transpiler, bind in desugar](#d7--recognize-in-the-transpiler-bind-in-desugar)
-    - [D8 — A condition is a spanned, reusable node](#d8--a-condition-is-a-spanned-reusable-node)
-    - [D9 — No in-script expression language](#d9--no-in-script-expression-language)
-  - [Markdown interaction](#markdown-interaction)
-  - [Diagnostics](#diagnostics)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Testability](#testability)
-  - [Implementation crosscheck](#implementation-crosscheck)
-  - [Alternatives not chosen](#alternatives-not-chosen)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Functionality checklist](#functionality-checklist)
+- [Ubiquitous language](#ubiquitous-language)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Grammar](#grammar)
+- [Condition resolution](#condition-resolution)
+- [Prior art](#prior-art)
+- [Architecture](#architecture)
+- [Interfaces and responsibilities](#interfaces-and-responsibilities)
+- [Key design decisions](#key-design-decisions)
+  - [D1 — False falls through; no inline else](#d1--false-falls-through-no-inline-else)
+  - [D2 — Recognize in the transpiler, bind in desugar](#d2--recognize-in-the-transpiler-bind-in-desugar)
+- [Diagnostics](#diagnostics)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
+- [Implementation crosscheck](#implementation-crosscheck)
+- [Alternatives not chosen](#alternatives-not-chosen)
+- [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
 
@@ -45,28 +38,16 @@ a shortcut once a key is found, greet a returning player differently, skip a
 scene already visited. Today a jump is unconditional: `=> [Label](#anchor)`
 always fires.
 
-This note adds a **condition** — a game-state query read as a boolean, written
-`` `"key"?` `` — and applies it to a jump: a condition placed *before* a jump
-makes that jump **optional**. When the condition is true the jump fires; when it
-is false the jump is skipped and the dialogue continues with the next block.
+This note applies the [condition](./Conditions.md) to a jump: a condition placed
+*before* a jump makes that jump **optional**. When the condition is true the jump
+fires; when it is false the jump is skipped and the dialogue continues with the
+next block.
 
-Scope:
+In scope: where a jump's guard attaches, how it is bound, and its diagnostics.
 
-- The **condition** primitive: a query plus a `?`, the boolean the game answers
-  for it, and its source span.
-- The **conditional jump**: a condition that guards a single jump.
-- Compile-time recognition, preservation, and diagnostics.
-
-Out of scope for this version (see [deferred work](#open-questions-and-deferred-work)):
-
-- **Runtime gating** — actually evaluating the condition and taking or skipping
-  the edge belongs to the graph/runtime.
-- **Negation** — "jump unless X." A writer expresses it now through a
-  game-defined inverse flag (`` `"NotRainy"?` ``).
-- **Conditions on lines and choices** — the same guard-first prefix is designed
-  to front them later, but only the jump is wired now.
-- **In-script expressions** — no `&&`, `||`, or comparisons; the game computes
-  the boolean behind the key.
+Out of scope: **runtime gating** — evaluating the condition and taking or skipping
+the edge belongs to the graph/runtime — and everything the
+[Conditions](./Conditions.md) note owns, including negation and expressions.
 
 ## Functionality checklist
 
@@ -84,23 +65,17 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 ## Ubiquitous language
 
-| Term                 | Meaning                                                                                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Condition**        | A game-state query read as a boolean: `` `"key"?` `` — the query key, delimited by quotes, followed by a `?`.                                       |
-| **Conditional jump** | A jump preceded by a condition; it fires only when the condition is true.                                                                           |
-| **Optional jump**    | The same jump described by its false behavior: when the condition is false, the jump is skipped and the dialogue falls through to the next block.   |
-| **Guard-first**      | The condition is written *before* the element it guards, so it reads "if … then …" and one placement rule serves future line and choice guards too. |
-| **Check**            | The boolean the game answers for a condition's key, through `IGameSystem.Check`; an unknown key is `false`.                                         |
+**Condition**, **guard-first**, and **check** carry over unchanged from
+[Conditions](./Conditions.md#ubiquitous-language). This note adds two terms.
 
-The domain term is **condition** everywhere: the AST node, the diagnostics, the
-specification, commits, and the changelog. The conditional jump is a **conditional
-jump**.
+| Term                 | Meaning                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Conditional jump** | A jump preceded by a condition; it fires only when the condition is true.                                                                         |
+| **Optional jump**    | The same jump described by its false behavior: when the condition is false, the jump is skipped and the dialogue falls through to the next block. |
 
 ## Writer-facing behavior
 
-A condition is the game-state [query](../../guide/game-state.md#queries) you
-already write, with a `?` added inside the code span. Place it before a jump and
-the jump becomes optional:
+Place a condition before a jump and the jump becomes optional:
 
 ```markdown
 `"FoundKey"?` => [Open the vault](#the-vault)
@@ -111,33 +86,8 @@ The door stays shut. You look for another way.
 If `FoundKey` is true the reader jumps to *The Vault*; if it is false the jump is
 skipped and reading continues with "The door stays shut."
 
-The condition is the third member of the **query-and-sigil** family, so a writer
-who knows queries and weights already knows its shape:
-
-| Syntax         | Meaning                                     |
-| -------------- | ------------------------------------------- |
-| `` `"key"` ``  | Insert the query's value into speech.       |
-| `` `"key"%` `` | Weight a random-choice option by the value. |
-| `` `"key"?` `` | Read the value as a boolean condition.      |
-
-Because the key is quoted, a key that itself contains a `?` is unambiguous — the
-operator is the `?` after the closing quote:
-
-```markdown
-`"Rainy?"?` => [Wait out the storm](#the-inn)
-```
-
-Here the query key is `Rainy?` and the condition tests it.
-
-**Negation.** There is no `not` operator yet. To branch when a flag is *false*,
-query a game-defined inverse:
-
-```markdown
-`"NotRainy"?` => [Set off across the moor](#the-moor)
-```
-
-**No else.** A condition guards exactly one jump. For an alternative, write the
-next line — a plain jump, another conditional jump, or ordinary dialogue:
+For an alternative, write the next line — a plain jump, another conditional jump,
+or ordinary dialogue:
 
 ```markdown
 `"FoundKey"?` => [Open the vault](#the-vault)
@@ -154,56 +104,26 @@ heading.
 
 ## Grammar
 
-A condition is a code span whose content is a quoted query key followed by `?`. A
-conditional jump is a condition immediately preceding a jump on the same line.
+A conditional jump is a [condition](./Conditions.md#grammar) immediately preceding
+a jump on the same line:
 
 ```ebnf
-Condition       = "`" , '"' , QueryKey , '"' , "?" , "`" ;
 ConditionalJump = Condition , { Whitespace } , JumpIndicator , { Whitespace } , Link ;
 JumpIndicator   = "=>" ;
 ```
 
-`QueryKey` is the same key a [query](../../guide/game-state.md#queries) uses,
-recognized by the same grammar; a condition reuses that recognition rather than
-re-deriving that a query is quoted.
-
 ## Condition resolution
 
-Resolution runs at **runtime**, not compile time — the game state a condition
-reads is unknown until the game runs. The compiler only recognizes and preserves
-the condition; the contract below is what the runtime will honor.
-
-1. The runtime reads the key through `IGameSystem.Check`, which returns a boolean.
-2. A `true` result fires the conditional jump; a `false` result skips it and the
-   dialogue continues with the next block.
-
-An unknown key is the game's default `false`, so a flag that was never set simply
-does not fire the jump. Because the game answers with a real boolean, there is no
-string parsing and no invalid-value case to report.
+Resolution runs at runtime, through `IGameSystem.Check` — see
+[Conditions](./Conditions.md#condition-resolution). For a jump, a `true` result
+fires it; a `false` result skips it and the dialogue continues with the next
+block.
 
 ## Prior art
 
-Two models dominate conditional flow in dialogue languages:
-
-- **Inline conditional divert** — Ink writes `{has_key: -> unlocked}`: a
-  condition immediately in front of a divert, falling through when false. This is
-  the model here: compact, inline, and guard-first.
-- **Block `if` wrapping a jump** — Yarn Spinner writes
-  `<<if $c>> <<jump Node>> <<endif>>`; Ren'Py writes `if c: jump label`. Powerful
-  (`elseif`/`else`, multiple statements) but a block statement, not a
-  Markdown-native inline.
-
-The lasting lessons:
-
-- **A condition reads; it does not act.** Ink, Yarn, and Ren'Py all keep a
-  condition (a read) distinct from a command (a side effect). A DialogueDown
-  condition is a read (`Check`), never a command.
-- **Fall-through is the natural false behavior.** Ink's inline divert simply
-  continues when the condition is false; a conditional jump does the same, which
-  is why it reads as an *optional* jump.
-- **Expressions belong to the host, not the script.** Ren'Py leans on Python and
-  Yarn/Ink on their own expression languages. DialogueDown deliberately delegates
-  the logic to `IGameSystem`: the script names a boolean, the game computes it.
+See [Conditions](./Conditions.md#prior-art). Ink's `{has_key: -> unlocked}` is
+the closest model: a condition immediately in front of a divert, falling through
+when false.
 
 ## Architecture
 
@@ -246,95 +166,37 @@ flowchart LR
 
 ## Key design decisions
 
-### D1 — A condition is a query read, not a command
+The decisions behind the condition itself — that it is a read rather than a
+command, the `?` sigil, guard-first placement, the `Check` contract, the spanned
+reusable node, and deferred negation and expressions — live in
+[Conditions](./Conditions.md#key-design-decisions). Two are specific to the jump.
 
-A condition reads game state, so it belongs on the **read side** of `IGameSystem`
-(resolved by `Check` — see D4), not the command lane (`Execute`, which performs
-side effects). Syntactically it still reuses the quoted-query *form* the writer
-already knows.
+### D1 — False falls through; no inline else
 
-### D2 — The `?` sigil joins the query-and-sigil family
+A false condition skips its one conditional jump and continues with the next
+block. There is no inline else-target; the writer places the alternative on the
+next line — a plain jump, another conditional jump, or ordinary dialogue. This
+keeps the construct Markdown-native and avoids a branching syntax. A writer who wants
+branches that are grouped and mutually exclusive reaches for a
+[block control](./Block%20Controls.md) instead.
 
-DialogueDown already reads a query and applies a sigil: `` `"key"` `` inserts the
-value and `` `"key"%` `` weights an option. `` `"key"?` `` reads the value as a
-boolean — a consistent third member, with the family's escaping already solved
-(the quotes delimit the key; the sigil follows the closing quote).
+### D2 — Recognize in the transpiler, bind in desugar
 
-### D3 — Guard-first placement
-
-The condition is written *before* the jump it guards. It reads "if … then …", it
-is scannable at the start of the construct, and one placement rule will front a
-future conditional line or choice too — matching Ink's `{cond} …` and
-`{cond: -> target}`.
-
-### D4 — A dedicated boolean read on `IGameSystem`
-
-A condition resolves through a new `bool Check(string key)` on `IGameSystem`,
-beside `Query` (a value) and `Execute` (an effect). The game returns a real
-boolean, so the runtime never parses a string into a truth value and there is no
-truthiness ladder — an unknown key is simply the game's default `false`. Forcing
-a boolean through the string `Query` (returning `"true"`/`"false"`) was rejected
-as an inelegant second indirection. Dynamic weights still reuse `Query`, since a
-number in a string is natural where a boolean in a string is not.
-
-### D5 — Negation is deferred
-
-"Jump unless X" is expressed today through a game-defined inverse flag
-(`` `"NotRainy"?` ``). A prefix `!` was considered and rejected for now as
-cryptic for non-technical writers; it can be added later without changing the
-positive `?`.
-
-### D6 — False falls through; no inline else
-
-A false condition skips its one conditional jump and continues with the next block.
-There is no inline else-target; the writer places the alternative on the next
-line. This keeps the construct Markdown-native and avoids a branching syntax.
-
-### D7 — Recognize in the transpiler, bind in desugar
-
-The condition is recognized as an inline fragment in the transpiler, then bound
+A jump's condition is an inline fragment, recognized in the transpiler and bound
 to its jump during desugar's jump assembly — the same stage that already pairs a
-`=>` with its link. Recognition and binding stay where their neighbors already
-live.
+`=>` with its link. Recognition and binding stay where their neighbors live.
 
-### D8 — A condition is a spanned, reusable node
-
-`Condition` is its own spanned `ScriptNode`, not a flag on `Jump`, so tooling can
-point at the exact condition and the same node fronts a future line or choice
-guard. `Jump` references it through an optional property.
-
-### D9 — No in-script expression language
-
-A condition is exactly one boolean query. There are no operators or comparisons
-in the script; the game computes the meaning behind the key. This matches
-DialogueDown's delegation of logic to `IGameSystem`.
-
-## Markdown interaction
-
-A condition is an inline code span, so Markdig parses it as inline code and an
-ordinary Markdown preview shows `"FoundKey"?` as code before the link — readable,
-and clearly not spoken text. It does not collide with any existing Markdown or
-DialogueDown syntax: a quoted string followed by `?` inside a code span is not a
-valid game call today (it is reported as `DLG1102` and kept as literal text), so
-the condition claims an otherwise-unused shape and removes no valid expressibility.
+This is the guard-attachment choice that distinguishes a jump from its siblings:
+a jump can appear *mid-line*, so its condition travels with it through the inline
+stream. A [line](./Conditional%20Line.md) guard and a
+[choice option](./Conditional%20Choice.md) guard always sit at the start of their
+block, so both are peeled at block level instead.
 
 ## Diagnostics
 
-| Code      | Meaning                             | Kind   | Severity | When                                                                                                      |
-| --------- | ----------------------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------- |
-| `DLG1106` | A condition does not precede a jump | Syntax | Error    | A `` `"key"?` `` condition is not immediately followed by a jump (its line and choice uses are deferred). |
-
-`DLG1106` sits in the `DLG11xx` inline-surface band beside the other
-inline-syntax diagnostics (`DLG1102` not-a-game-call, `DLG1104`/`DLG1105` choice
-weights).
-
-A malformed condition — a code span that is not a clean quoted query followed by
-`?` — is not a condition at all; it falls back to game-call recognition and, if
-that also fails, is reported as `DLG1102` and kept as literal text.
-
-There is no invalid-value diagnostic: `Check` returns a boolean, so a condition
-always resolves to true or false at runtime, and an unknown key defaults to
-false.
+A condition that guards nothing reports `DLG1106` — see
+[Conditions](./Conditions.md#diagnostics) for the code and its band. For a jump,
+that means a condition not immediately followed by `=>`.
 
 ## Error and boundary cases
 
@@ -375,31 +237,21 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 
 ## Alternatives not chosen
 
-| Alternative                                                 | Why not                                                                                                                                                                                                                         |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A reserved command form, `` `If("Rainy")` ``                | Borrows the command grammar (`Name(args)`) for a *read*; it would have to reserve `If`/`Unless` out of the game's command names, and it tempts an in-script expression language DialogueDown avoids (D1).                       |
-| A block `if` wrapping a jump (Yarn/Ren'Py)                  | Powerful but not Markdown-native; a block statement is at odds with DialogueDown's inline, sigil-based style.                                                                                                                   |
-| Condition *after* the jump (`=> [L](#a)` then `` `"K"?` ``) | Reads naturally in English but hides the condition at the line's end and does not generalize to a future line or choice guard (D3).                                                                                             |
-| Prefix `!` negation now (`` `!"Rainy"?` ``)                 | Cryptic for non-technical writers; deferred in favor of a game-defined inverse flag, and addable later without changing `?` (D5).                                                                                               |
-| Reuse `Query` for the condition (string `"true"`/`"false"`) | Keeps the surface at two methods and matches the dynamic weight, but forces a boolean through a string — a truthiness ladder, an invalid-value error, and an awkward read for the game author; a typed `Check` is cleaner (D4). |
-| An inline else-target (a second divert on the same line)    | Denser and less Markdown-native than writing the alternative on the next line as its own paragraph (D6).                                                                                                                        |
+The alternatives weighed for the condition itself — a reserved `` `If(…)` ``
+command form, condition-after placement, prefix `!` negation, and reusing `Query`
+for a boolean — are recorded in
+[Conditions](./Conditions.md#key-design-decisions). Two were weighed for the jump.
+
+| Alternative                                              | Why not                                                                                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| A block `if` wrapping a jump (Yarn/Ren'Py)               | Powerful but not Markdown-native. DialogueDown offers that shape separately as a [block control](./Block%20Controls.md). |
+| An inline else-target (a second divert on the same line) | Denser and less Markdown-native than writing the alternative on the next line as its own paragraph (D1).                 |
 
 ## Open questions and deferred work
 
-- **Runtime gating of a condition** — the compiler recognizes and preserves a
-  condition, but reading the key through `Check` and taking or skipping the edge
-  need the runtime. Tracked with the
-  [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
-- **Conditions on lines and choices** — the condition-first prefix is designed to
-  front a line or a choice, but only the jump is wired now. Its **interaction with
-  random choices** — a condition on or inside a random option, and how a skipped
-  option affects the weights — is deferred follow-up that needs its own design.
-- **`IGameSystem.Check` as a public-API change** — adding `Check` breaks existing
-  implementers, so whether to ship it as a required method (a clean break,
-  acceptable before the runtime exists) or a default interface method
-  (backward-compatible, falling back to parsing `Query`) is an implementation
-  choice.
-- **Negation** — a `not` form (`` `!"key"?` `` or another shape) may follow once
-  writer feedback shows the inverse-flag workaround is insufficient.
-- **Expressions** — combining conditions (`and`/`or`) is intentionally excluded;
-  the game composes them behind a single key for now.
+Deferred work on the condition itself — runtime evaluation, the
+`IGameSystem.Check` public-API question, negation, and expressions — is tracked in
+[Conditions](./Conditions.md#deferred-work). Nothing further is outstanding for
+the jump: its guard is bound, diagnosed, and projected, and gating the edge at
+play time arrives with the
+[runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
