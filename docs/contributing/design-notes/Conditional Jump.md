@@ -5,10 +5,7 @@
 > true. Gating the edge at play time is part of the planned
 > [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
-This note assumes the [Conditions](./Conditions.md) note and does not repeat it:
-the condition primitive, its grammar, how it resolves, and the decisions behind it
-live there. Read it first. This note covers only what is specific to guarding a
-**jump**.
+Assumes [Conditions](./Conditions.md) — the primitive, its grammar, resolution, and decisions — and covers only what is specific to guarding a **jump**.
 
 ## Table of contents
 
@@ -33,10 +30,9 @@ live there. Read it first. This note covers only what is specific to guarding a
 
 ## Goal and scope
 
-A writer often wants a jump to happen only under some game-state condition — take
-a shortcut once a key is found, greet a returning player differently, skip a
-scene already visited. Today a jump is unconditional: `=> [Label](#anchor)`
-always fires.
+An unconditional jump — `=> [Label](#anchor)` — always fires. A writer often wants
+one that does not: take a shortcut once a key is found, skip a scene already
+visited.
 
 This note applies the [condition](./Conditions.md) to a jump: a condition placed
 *before* a jump makes that jump **optional**. When the condition is true the jump

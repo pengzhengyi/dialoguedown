@@ -137,6 +137,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **One home per concept in the documentation** — a committed duplication scan
+  (`.github/scripts/find-doc-duplication.py`) compares word shingles across the docs
+  tree, so a concept paraphrased in two places is caught rather than left to drift.
+  Thirteen duplicated passages became two intended ones; `AGENTS.md` now carries only
+  what an agent needs before it can act and links to
+  `.github/copilot-instructions.md` for the rest. The scan is a release gate.
+
 - **Guardrails against the mistakes a compiler cannot afford** — the core may no longer read the
   clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph, and the
   Dialogue AST is held immutable so no later stage can change what an earlier one produced.
