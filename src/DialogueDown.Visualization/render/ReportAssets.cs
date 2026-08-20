@@ -1,9 +1,10 @@
 namespace DialogueDown.Visualization.Render;
 
 /// <summary>
-/// The report client's constant assets — the built script and stylesheet — for a server that
-/// hosts linked report pages. An exported report inlines the same content instead, so this is
-/// only of interest to something that serves.
+/// The report client's constant assets — the built script, its stylesheet, and Mermaid's own
+/// build — for a server that hosts linked report pages. Mermaid is offered like the others but
+/// asked for only by a page that shows a diagram. An exported report inlines this content
+/// instead, so this is only of interest to something that serves.
 /// </summary>
 public static class ReportAssets
 {
@@ -12,6 +13,7 @@ public static class ReportAssets
     [
         new ReportAsset(ReportBundle.Default.ScriptPath, ReportBundle.Default.Script, "text/javascript"),
         new ReportAsset(ReportBundle.Default.StylePath, ReportBundle.Default.Style, "text/css"),
+        new ReportAsset(ReportBundle.Default.MermaidPath, ReportBundle.Default.Mermaid, "text/javascript"),
     ];
 
     /// <summary>

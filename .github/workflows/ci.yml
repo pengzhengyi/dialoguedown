@@ -114,11 +114,11 @@ jobs:
       - name: Check (typecheck, lint, style, format, unit tests)
         run: npm run check
 
-      - name: Build single-file report
+      - name: Build the report
         run: npm run build
 
-      - name: Verify the committed report and launcher are in sync with web/ sources
-        run: git diff --exit-code -- dist/report.html dist/launcher.html
+      - name: Verify the committed report assets are in sync with web/ sources
+        run: git diff --exit-code -- dist/report.html dist/report.js dist/report.css dist/mermaid.js
 
   frontend_static:
     name: Frontend static E2E

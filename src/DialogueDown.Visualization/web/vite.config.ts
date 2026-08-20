@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from "vitest/config";
-import { existsSync, renameSync } from "node:fs";
+import { copyFileSync, existsSync, renameSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
-import { viteSingleFile } from "vite-plugin-singlefile";
 
 // Rename the report build artifact to report.html — a clearer name than Vite's
 // default index.html for the file the .NET library embeds. Done in a plugin (not
@@ -16,18 +16,42 @@ function renameToReport(): Plugin {
     };
 }
 
-// The report is shipped as ONE self-contained HTML file that the .NET library embeds.
-// vite-plugin-singlefile inlines all JS and CSS; the .NET side injects per-page data
-// into the page's slot (the report stages, or an empty project shell).
+// Mermaid ships a self-contained build that assigns `globalThis.mermaid`, which is exactly what a
+// report needs: one file to fetch when a script shows its first diagram, or to inline when such a
+// script is exported. Copying that build verbatim keeps it out of the client bundle — importing it
+// would pull its diagram types, cytoscape, and katex into the page every reader loads.
+function copyMermaidBuild(): Plugin {
+    return {
+        name: "copy-mermaid-build",
+        closeBundle() {
+            const require = createRequire(import.meta.url);
+            copyFileSync(
+                require.resolve("mermaid/dist/mermaid.min.js"),
+                resolve("dist", "mermaid.js"),
+            );
+        },
+    };
+}
+
+// The report ships as a small page plus two constant assets the .NET library embeds: the client
+// script and its stylesheet. Serving links them so a browser downloads and compiles them once for
+// every script it opens; exporting inlines them so the file works offline. Fonts and icons are
+// inlined into the stylesheet rather than emitted beside it, so both shapes need only these three.
 export default defineConfig({
     root: ".",
-    plugins: [viteSingleFile(), renameToReport()],
+    plugins: [renameToReport(), copyMermaidBuild()],
     build: {
         target: "es2022",
         outDir: "dist",
         emptyOutDir: true,
+        // Above the largest icon font, so no asset is emitted as a separate file.
+        assetsInlineLimit: 262_144,
         rollupOptions: {
             input: resolve("index.html"),
+            output: {
+                entryFileNames: "report.js",
+                assetFileNames: "report.[ext]",
+            },
         },
     },
     test: {

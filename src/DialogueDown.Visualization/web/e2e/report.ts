@@ -5,17 +5,41 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import type { Report, Stage } from "../src/model";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const distHtml = path.join(here, "..", "dist", "report.html");
+const dist = path.join(here, "..", "dist");
+const read = (name: string): string => fs.readFileSync(path.join(dist, name), "utf8");
+
+/** The fence rule the preview and the .NET exporter both use: the info string's first word. */
+function drawsADiagram(source: string | undefined): boolean {
+    if (!source) return false;
+    return source
+        .split(/\r?\n/)
+        .some((line) => /^ {0,3}(?:`{3,}|~{3,})\s*mermaid(?:\s|$)/i.test(line));
+}
 
 /**
- * Assemble the actual built report (dist/report.html) with sample report data
- * injected into the __REPORT__ slot exactly as the .NET library does, write it to
- * a temp file, and return a file:// URL Playwright can navigate to.
+ * Assemble the built report exactly as the .NET library does when it exports a self-contained
+ * file: inline the client and its stylesheet, inject the sample data into the __REPORT__ slot,
+ * and carry Mermaid only for a script that draws a diagram. Written to a temp file and returned
+ * as a file:// URL, so the suite exercises the shape a reader actually opens from disk.
  */
 export function writeReport(report: Report): string {
-    const template = fs.readFileSync(distHtml, "utf8");
-    // Function replacement avoids `$` being treated specially in the JSON.
-    const html = template.replace('"__REPORT__"', () => JSON.stringify(report));
+    let html = read("report.html")
+        .replace('"__MERMAID__"', () => '""')
+        .replace(
+            '<link rel="stylesheet" crossorigin href="/report.css">',
+            () => `<style>${read("report.css")}</style>`,
+        );
+    if (drawsADiagram(report.source)) {
+        html = html.replace("</head>", () => `<script>${read("mermaid.js")}</script></head>`);
+    }
+
+    html = html
+        .replace(
+            '<script type="module" crossorigin src="/report.js"></script>',
+            () => `<script type="module">${read("report.js")}</script>`,
+        )
+        // Function replacement avoids `$` being treated specially in the JSON.
+        .replace('"__REPORT__"', () => JSON.stringify(report));
     const out = path.join(os.tmpdir(), `dd-report-${process.pid}-${Date.now()}.html`);
     fs.writeFileSync(out, html);
     return pathToFileURL(out).href;
