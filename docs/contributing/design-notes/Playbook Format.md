@@ -512,13 +512,19 @@ what a schema, a reader, and a golden file each have to say.
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit — writer | One test per row of [Mapping the graph](#mapping-the-graph): each node, edge, fragment, condition, and weight kind                                   |
 | Unit — reader | Every refusal in [Error and boundary cases](#error-and-boundary-cases), each asserting the message names the offending value                         |
-| Round-trip    | Compile, write, read, and assert the playbook equals the original — the primary safety net, and cheap because both directions land in this component |
+| Round-trip    | Compile, write, read, and assert the JSON comes back identical — the primary safety net, and cheap because both directions land here                 |
 | Golden        | A committed playbook per `examples/*.dialogue.md`, so a format change is a reviewable diff                                                           |
 | Schema        | Every golden playbook validates against the schema in CI                                                                                             |
 
 Round-trip tests live in `DialogueDown.Tests`, which already sees internals and can
 reference both assemblies. Playbook fixtures are built through a shared factory so a
 shape change touches one file.
+
+A round trip is asserted **as text, not as objects**. The playbook types are records
+holding `ImmutableArray`, which compares by reference, so two structurally identical
+playbooks are unequal. Comparing the serialized JSON is also the truer assertion:
+the format is the bytes, and giving the types value equality would cost the
+dependency-free property that keeps the assembly shippable.
 
 Golden playbooks churn when node ids shift, which is expected: they are a build
 artifact nobody hand-edits. The **semantic** regression asset is the transcript
