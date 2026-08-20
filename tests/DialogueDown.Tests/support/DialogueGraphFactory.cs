@@ -12,6 +12,9 @@ internal static class DialogueGraphFactory
 {
     public static NodeId NodeId(int value) => new(value);
 
+    /// <summary>An End node with the given id, spanning nothing in particular.</summary>
+    public static EndNode EndNode(int id) => new(NodeId(id), new SourceSpan(0, 0));
+
     /// <summary>The smallest valid graph: an End node a run starts and finishes on.</summary>
     public static DialogueGraph EmptyGraph()
     {
