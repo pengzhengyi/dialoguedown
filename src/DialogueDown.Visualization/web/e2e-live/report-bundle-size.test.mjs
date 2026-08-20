@@ -22,13 +22,20 @@ function assertSize(what, bytes, maximum) {
 }
 
 test("the client every reader loads stays under its approved limit", () => {
-    assertSize("the report client", shipped.reduce((total, name) => total + sizeOf(name), 0), MAX_CLIENT_BYTES);
+    assertSize(
+        "the report client",
+        shipped.reduce((total, name) => total + sizeOf(name), 0),
+        MAX_CLIENT_BYTES,
+    );
 });
 
 test("Mermaid stays under its approved limit, and out of the client", () => {
     assertSize("dist/mermaid.js", sizeOf("mermaid.js"), MAX_MERMAID_BYTES);
     // Keeping it a separate file is the point: bundled, it would land in every page.
-    assert.ok(sizeOf("mermaid.js") > sizeOf("report.js"), "Mermaid is the larger half; keep it apart");
+    assert.ok(
+        sizeOf("mermaid.js") > sizeOf("report.js"),
+        "Mermaid is the larger half; keep it apart",
+    );
 });
 
 test("the bundle guard reports both the measured size and the limit", () => {
