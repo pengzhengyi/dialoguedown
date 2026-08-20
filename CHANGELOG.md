@@ -138,12 +138,8 @@ changes easy to categorize.
 ### Changed
 
 - **Guardrails against the mistakes a compiler cannot afford** — the core may no longer read the
-  clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph; the
-  public surface of `DialogueDown` and `DialogueDown.ConfigurationLoader` is recorded in
-  `PublicAPI.Shipped.txt`, so a change to it arrives as a reviewable diff instead of a break in a
-  consumer's build; and the Dialogue AST is held immutable. Contributors changing a public member
-  now update that project's `PublicAPI.Unshipped.txt` — see
-  [CONTRIBUTING](CONTRIBUTING.md#changing-a-shipped-librarys-public-api).
+  clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph, and the
+  Dialogue AST is held immutable so no later stage can change what an earlier one produced.
 
 - **Every assembly's root namespace now names its parts** — an architecture rule caps how many
   types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list.

@@ -84,21 +84,8 @@ not warnings). The CLI and visualization projects are intentionally exempt.
   minting a `Guid`, or drawing randomness, so the same script always lowers to
   the same graph. `src/DialogueDown/BannedSymbols.txt` names each banned API and
   why. (Random *choice* is unaffected — the player resolves it at runtime.)
-- **A public surface that cannot change by accident** — see below.
-
-### Changing a shipped library's public API
-
-`DialogueDown` and `DialogueDown.ConfigurationLoader` are the libraries a game
-references, so their public surface is tracked in each project's
-`PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`. Adding, changing, or
-removing a public member fails the build (`RS0016` / `RS0017`) until the files
-agree with the code — which makes every surface change a reviewable diff instead
-of a break in a consumer's build.
-
-When you change the surface deliberately, add the new entries to
-`PublicAPI.Unshipped.txt` (the build error names the exact line to add, and the
-IDE offers a code fix). Entries move to `PublicAPI.Shipped.txt` when a version is
-released.
+- **An immutable Dialogue AST** — an architecture test holds every AST node
+  immutable, so no later stage can change what an earlier one produced.
 
 Use the `build: fast` task (analyzers off) for the inner loop, but run the
 normal analyzer-enabled `build`/`test` before pushing.
