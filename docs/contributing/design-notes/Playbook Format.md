@@ -352,10 +352,38 @@ exists to keep honest across runtimes.
 
 ### P5 — Node ids are dense indices
 
-`nodes[i].id == i` is validated on load, so resolving a local reference is an array
-index rather than a dictionary lookup. Keeping the explicit `id` costs a few bytes
-and makes the document readable and `jq`-friendly; validating the invariant means a
-reordered file is refused rather than silently misplayed.
+A playbook node's `id` is its position in the `nodes` array, and the reader refuses
+a document where it is not.
+
+This is a **renumbering**, not a passthrough. The compiler's `NodeId` is by contract
+an opaque handle — `DialogueGraph` resolves it through an id-keyed dictionary and
+its documentation says outright not to treat the value as a list index — and ids
+are minted in the order blocks are *encountered*, which is not the document order
+the node list is in. So the writer must translate either way; the only question is
+what it translates into.
+
+A dense index is chosen because it makes the document **verifiable**. One
+comparison per node proves the ids are unique, gapless, and correctly ordered at
+once:
+
+| Failure | Carrying the opaque ids | Dense indices |
+| --- | --- | --- |
+| Duplicate id | Needs a separate uniqueness pass | Caught by `nodes[i].id == i` |
+| Gap in the numbering | Legal, and undetectable | Caught by `nodes[i].id == i` |
+| Node list silently reordered | **Undetectable** | Caught by `nodes[i].id == i` |
+
+That last row is the one that matters: a reordered array is a *valid playbook that
+tells a different story*, exactly the failure this format exists to prevent. The
+explicit `id` costs a few bytes and buys a checksum — as well as a document that
+reads well and answers `jq '.nodes[] | select(.id == 42)'`.
+
+Resolving a reference then costs an array index rather than a dictionary lookup,
+but that is a bonus, not the reason. A dialogue graph is hundreds of nodes; the
+lookup was never the problem.
+
+The usual argument for preserving original ids — correlating a runtime error with a
+compiler diagnostic — does not apply, because `NodeId` is `internal` and never
+surfaces. DialogueDown's diagnostics address source positions, not nodes.
 
 ### P6 — Anchors now, the region tree later
 
