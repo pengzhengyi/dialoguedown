@@ -23,3 +23,8 @@ QuikGraph
 # .NET vocabulary and the architecture-test library.
 LINQ
 NetArchTest
+
+# Dialogue engines named in the prior-art sections.
+Ren
+Py
+expressibility

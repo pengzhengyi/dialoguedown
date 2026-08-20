@@ -1,40 +1,40 @@
 # Conditional line
 
 > [!NOTE]
-> Status: **implemented**. The compiler recognizes a **conditional line** — a line
-> fronted by the **condition** primitive (`` `"key"?` ``) that plays only when the
-> condition is true — reusing the condition designed in the
-> [Conditional Jump](./Conditional%20Jump.md) note; read that first. Gating the
-> line at play time (and the `IGameSystem.Check` read it will use) is part of the
-> planned [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+> Status: **implemented**. A **conditional line** plays only when its condition is
+> true. Gating the line at play time is part of the planned
+> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+
+This note assumes the [Conditions](./Conditions.md) note and does not repeat it:
+the condition primitive, its grammar, how it resolves, and the decisions behind it
+live there. Read it first. This note covers only what is specific to guarding a
+**line**.
 
 ## Table of contents
 
-- [Conditional line](#conditional-line)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Grammar](#grammar)
-  - [Condition resolution](#condition-resolution)
-  - [Prior art](#prior-art)
-  - [Architecture](#architecture)
-  - [Interfaces and responsibilities](#interfaces-and-responsibilities)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — The line guard is a peeled property, not an inline fragment](#d1--the-line-guard-is-a-peeled-property-not-an-inline-fragment)
-    - [D2 — Guard-first, before the speaker](#d2--guard-first-before-the-speaker)
-    - [D3 — Reuse the condition primitive and its reader](#d3--reuse-the-condition-primitive-and-its-reader)
-    - [D4 — `DLG1106` generalizes from "without a jump" to "guards nothing"](#d4--dlg1106-generalizes-from-without-a-jump-to-guards-nothing)
-    - [D5 — A false line is skipped whole; no else](#d5--a-false-line-is-skipped-whole-no-else)
-    - [D6 — A lone condition guards nothing](#d6--a-lone-condition-guards-nothing)
-  - [Markdown interaction](#markdown-interaction)
-  - [Diagnostics](#diagnostics)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Testability](#testability)
-  - [Implementation crosscheck](#implementation-crosscheck)
-  - [Alternatives not chosen](#alternatives-not-chosen)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Functionality checklist](#functionality-checklist)
+- [Ubiquitous language](#ubiquitous-language)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Grammar](#grammar)
+- [Condition resolution](#condition-resolution)
+- [Prior art](#prior-art)
+- [Architecture](#architecture)
+- [Interfaces and responsibilities](#interfaces-and-responsibilities)
+- [Key design decisions](#key-design-decisions)
+  - [D1 — The line guard is a peeled property, not an inline fragment](#d1--the-line-guard-is-a-peeled-property-not-an-inline-fragment)
+  - [D2 — Guard-first, before the speaker](#d2--guard-first-before-the-speaker)
+  - [D3 — Reuse the condition primitive and its reader](#d3--reuse-the-condition-primitive-and-its-reader)
+  - [D4 — `DLG1106` generalizes from "without a jump" to "guards nothing"](#d4--dlg1106-generalizes-from-without-a-jump-to-guards-nothing)
+  - [D5 — A false line is skipped whole; no else](#d5--a-false-line-is-skipped-whole-no-else)
+  - [D6 — A lone condition guards nothing](#d6--a-lone-condition-guards-nothing)
+- [Markdown interaction](#markdown-interaction)
+- [Diagnostics](#diagnostics)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
+- [Implementation crosscheck](#implementation-crosscheck)
+- [Alternatives not chosen](#alternatives-not-chosen)
+- [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
 
@@ -88,9 +88,9 @@ Out of scope for this version (see [deferred work](#open-questions-and-deferred-
 
 ## Ubiquitous language
 
-The domain term is **condition** everywhere, exactly as in the
-[Conditional Jump](./Conditional%20Jump.md#ubiquitous-language) note. This note
-adds one term and reuses the rest.
+The domain term is **condition** everywhere, as in the
+[Conditions](./Conditions.md#ubiquitous-language) note. This note adds one term
+and reuses the rest.
 
 | Term                 | Meaning                                                                                                                                                                                                   |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -103,7 +103,7 @@ The **condition**, **check**, and **guard-first** terms carry over unchanged.
 
 A condition is the game-state [query](../../guide/game-state.md#queries) you
 already write, with a `?` added inside the code span (see the
-[query-and-sigil family](./Conditional%20Jump.md#writer-facing-behavior)). Place
+[query-and-sigil family](./Conditions.md#writer-facing-behavior)). Place
 it at the *start of a line* and the whole line becomes conditional:
 
 ```markdown
@@ -122,9 +122,9 @@ A conditional line needs no speaker; the condition fronts any line:
 `"Returned"?` Welcome back. It has been too long.
 ```
 
-**Negation** and **no else** work exactly as for a
-[conditional jump](./Conditional%20Jump.md#writer-facing-behavior): query a
-game-defined inverse for "unless," and write the alternative as its own line.
+**Negation** and **no else** work as they do for every guard
+([Conditions](./Conditions.md#writer-facing-behavior)): query a game-defined
+inverse for "unless," and write the alternative as its own line.
 
 ```markdown
 `"Angry"?` Guard: You again? Get out.
@@ -145,34 +145,23 @@ Condition       = "`" , '"' , QueryKey , '"' , "?" , "`" ;
 ```
 
 `Condition` and `QueryKey` are unchanged from the
-[conditional jump grammar](./Conditional%20Jump.md#grammar); the condition reuses
-the same recognition rather than re-deriving it.
+[condition grammar](./Conditions.md#grammar); the line reuses the same
+recognition rather than re-deriving it.
 
 ## Condition resolution
 
-Resolution runs at **runtime**, identical to the
-[conditional jump](./Conditional%20Jump.md#condition-resolution): the runtime
-reads the key through `IGameSystem.Check`; a `true` result plays the conditional
-line, a `false` result skips it and the dialogue continues with the next block.
+Resolution runs at **runtime**, through the shared contract in
+[Conditions](./Conditions.md#condition-resolution). For a line, a `true` result
+plays it; a `false` result skips it and the dialogue continues with the next
+block.
 An unknown key defaults to `false`, so a flag that was never set simply hides the
 line. The compiler only recognizes and preserves the condition.
 
 ## Prior art
 
-The same models that shaped the
-[conditional jump](./Conditional%20Jump.md#prior-art) shape the conditional line,
-now applied to a *line* rather than a *divert*:
-
-- **Inline conditional text** — Ink writes `{angry: You again?}`: a condition
-  immediately in front of the text it gates, showing nothing when false. This is
-  the model here: compact, inline, guard-first.
-- **Block `if` wrapping a line** — Yarn Spinner writes
-  `<<if $angry>> Guard: You again? <<endif>>`; Ren'Py writes `if angry: "…"`.
-  Powerful but a block statement, not a Markdown-native inline.
-
-The lasting lessons are unchanged: a condition **reads, it does not act**;
-**fall-through is the natural false behavior** (a false line simply does not
-appear); and **expressions belong to the host, not the script**.
+See [Conditions](./Conditions.md#prior-art). Ink's `{angry: You again?}` is the
+closest model for a line: a condition immediately in front of the text it gates,
+showing nothing when false.
 
 ## Architecture
 
@@ -375,7 +364,6 @@ The construct shipped as designed; the runtime read and gating remain deferred.
   guard sharing one primitive, the three notes may be worth folding into a single
   "Conditions" note (primitive plus per-construct application). Revisit once the
   choice guard lands.
-- **Negation** and **expressions** — unchanged and still deferred from the
-  [conditional jump](./Conditional%20Jump.md#open-questions-and-deferred-work): a
-  game-defined inverse flag covers "unless," and the game composes logic behind a
-  single key.
+- **Negation** and **expressions** — deferred for every guard
+  ([Conditions](./Conditions.md#deferred-work)): a game-defined inverse flag
+  covers "unless," and the game composes logic behind a single key.

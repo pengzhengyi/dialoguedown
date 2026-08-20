@@ -39,7 +39,7 @@
 
 A writer often wants a **group** of dialogue — several lines, a choice, a jump — to
 play only under some game-state condition, and to fall back otherwise. The inline
-**condition** (`` `key?` ``) already guards a single
+[**condition**](./Conditions.md) (`` `key?` ``) already guards a single
 [jump](./Conditional%20Jump.md), [line](./Conditional%20Line.md), or
 [choice option](./Conditional%20Choice.md), each **independently** and with **no
 `else`**. This construct is the complementary one: a **block `if`/`elseif`/`else`** —
@@ -54,9 +54,10 @@ graph/runtime ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)) —
 **negation / in-script expressions**, unchanged from the condition primitive (a
 writer composes logic behind a single game-defined key).
 
-This note assumes the shipped [Unquoted Keys](./Unquoted%20Keys.md) and
-[Control Line](./Control%20Line.md) notes and does not repeat them: a **condition** is
-unquoted by default, and a branch **marker** is a *control line* (an effect-only,
+This note assumes the shipped [Conditions](./Conditions.md),
+[Unquoted Keys](./Unquoted%20Keys.md), and [Control Line](./Control%20Line.md) notes
+and does not repeat them: a branch marker takes the condition primitive, which is
+unquoted by default, and the **marker** is a *control line* (an effect-only,
 speaker-less block). Read those, plus [Progression Order](./Progression%20Order.md),
 first.
 
