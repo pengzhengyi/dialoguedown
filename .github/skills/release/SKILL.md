@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut and publish a DialogueDown release. Package, locally test, and publish the `ddown` CLI as a cross-platform .NET global tool on NuGet; refresh the locally installed tool after a merge to main; and on a changelog release resync the documentation against the code as a release gate, then set the semantic version, pack, and push the package. Composes with maintain-oss and polish-tech-doc, and keeps docs/guide/cli.md as the user-facing source of truth. Self-contained binaries and a Homebrew tap are a planned second channel.
+description: Cut and publish a DialogueDown release. Package, locally test, and publish the `ddown` CLI as a cross-platform .NET global tool on NuGet; refresh the locally installed tool after a merge to main; and on a changelog release resync the documentation against the code as a release gate, then set the semantic version, pack, and push the package. Composes with maintain-oss, curate-docs, and polish-tech-doc, and keeps docs/guide/cli.md as the user-facing source of truth. Self-contained binaries and a Homebrew tap are a planned second channel.
 ---
 
 # Release DialogueDown
@@ -158,9 +158,13 @@ package freezes whatever the docs claim — and whatever the live demo shows.
 Run this **before** setting the version. Anything it finds is fixed in its own
 PR, not folded into the release commit.
 
-Delegate the writing to `polish-tech-doc` (internal developer-facing for design
-notes, user-facing for the guide) and the tracker work to `maintain-oss`. This
-section only says *what must be true* by the time the package is pushed.
+Delegate the corpus-level checks to `curate-docs` — duplication, vocabulary,
+crosschecking claims against the code, and index/filesystem agreement are its
+subject, and subsections A–D and J below are this project's concrete instances of
+them. Delegate the writing to `polish-tech-doc` (internal developer-facing for
+design notes, user-facing for the guide) and the tracker work to `maintain-oss`.
+This section only says *what must be true* by the time the package is pushed, in
+the form this repository can check mechanically.
 
 Start with [subsection J](#j-no-concept-is-explained-in-two-places): duplication
 is what *causes* the staleness the other checks hunt one claim at a time. When a
@@ -443,6 +447,8 @@ python3 .github/scripts/find-doc-duplication.py
 
 It compares word shingles rather than exact text, so it catches **paraphrase** —
 the form duplication actually takes, and the form a substring search misses.
+`curate-docs` explains the technique and how to choose which document owns a
+concept; this gate is the committed instance of it.
 
 For each pair it reports, decide which document **owns** the concept:
 
@@ -544,5 +550,6 @@ only if a headless `ddown compile` CI use case emerges.
   CLI code.
 - **Compose, do not duplicate** — defer the changelog, version, and tag to
   `maintain-oss`; the example-and-demo work for a new construct to
-  `add-dialogue-construct`; and run `polish-tech-doc` for the doc rewrites the
-  resync turns up, and when editing `docs/guide/cli.md` or this skill.
+  `add-dialogue-construct`; the corpus-level documentation checks to
+  `curate-docs`; and run `polish-tech-doc` for the doc rewrites the resync turns
+  up, and when editing `docs/guide/cli.md` or this skill.
