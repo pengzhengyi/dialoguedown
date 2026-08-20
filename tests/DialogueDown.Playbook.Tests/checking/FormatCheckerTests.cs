@@ -51,14 +51,4 @@ public sealed class FormatCheckerTests
     {
         Assert.Throws<ArgumentNullException>(() => new FormatChecker(_version, null!));
     }
-
-    [Fact]
-    public void Default_AcceptsWhatThisBuildWrites()
-    {
-        var playbook = PlaybookFactory.Document(format: PlaybookFactory.Format(
-            PlaybookSupport.NewestReadableVersion,
-            requires: [.. PlaybookSupport.Capabilities]));
-
-        FormatChecker.Default.Check(playbook);
-    }
 }

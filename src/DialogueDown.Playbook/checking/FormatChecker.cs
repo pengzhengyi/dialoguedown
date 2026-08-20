@@ -27,10 +27,6 @@ public sealed class FormatChecker : IPlaybookChecker
         _capabilities = capabilities;
     }
 
-    /// <summary>Gets the checker for the format this build reads.</summary>
-    public static FormatChecker Default { get; } =
-        new(VersionChecker.Default, CapabilityChecker.Default);
-
     /// <inheritdoc/>
     public void Check(PlaybookDocument playbook)
     {

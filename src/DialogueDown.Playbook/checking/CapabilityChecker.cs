@@ -24,9 +24,6 @@ public sealed class CapabilityChecker : IPlaybookChecker
         _understood = [.. understood];
     }
 
-    /// <summary>Gets the checker for the capabilities this build understands.</summary>
-    public static CapabilityChecker Default { get; } = new(PlaybookSupport.Capabilities);
-
     /// <inheritdoc/>
     public void Check(PlaybookDocument playbook)
     {

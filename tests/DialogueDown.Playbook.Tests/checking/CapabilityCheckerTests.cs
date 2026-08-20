@@ -63,13 +63,4 @@ public sealed class CapabilityCheckerTests
     {
         Assert.Throws<ArgumentNullException>(() => new CapabilityChecker(null!));
     }
-
-    [Fact]
-    public void Default_UnderstandsWhatThisBuildWrites()
-    {
-        var playbook = PlaybookFactory.Document(
-            format: PlaybookFactory.Format(requires: [.. PlaybookSupport.Capabilities]));
-
-        CapabilityChecker.Default.Check(playbook);
-    }
 }

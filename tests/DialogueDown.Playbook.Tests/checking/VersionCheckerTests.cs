@@ -59,13 +59,4 @@ public sealed class VersionCheckerTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new VersionChecker(oldest: -1, newest: 2));
     }
-
-    [Fact]
-    public void Default_AcceptsTheVersionThisBuildWrites()
-    {
-        var playbook = PlaybookFactory.Document(
-            format: PlaybookFactory.Format(PlaybookSupport.NewestReadableVersion));
-
-        VersionChecker.Default.Check(playbook);
-    }
 }

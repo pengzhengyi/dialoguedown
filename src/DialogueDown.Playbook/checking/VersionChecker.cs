@@ -28,11 +28,6 @@ public sealed class VersionChecker : IPlaybookChecker
         _newest = newest;
     }
 
-    /// <summary>Gets the checker for the versions this build reads.</summary>
-    public static VersionChecker Default { get; } = new(
-        PlaybookSupport.OldestReadableVersion,
-        PlaybookSupport.NewestReadableVersion);
-
     /// <inheritdoc/>
     public void Check(PlaybookDocument playbook)
     {
