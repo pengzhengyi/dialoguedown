@@ -162,6 +162,11 @@ Delegate the writing to `polish-tech-doc` (internal developer-facing for design
 notes, user-facing for the guide) and the tracker work to `maintain-oss`. This
 section only says *what must be true* by the time the package is pushed.
 
+Start with [subsection J](#j-no-concept-is-explained-in-two-places): duplication
+is what *causes* the staleness the other checks hunt one claim at a time. When a
+concept is explained in two documents, only one of them gets updated, and the
+other is the stale claim subsection A goes looking for.
+
 > [!NOTE]
 > This gate replaces standing "keep the docs current as later stages land" and
 > "refresh the demo when later stages land" tracking issues (#66 and #63). Those
@@ -415,6 +420,47 @@ projects and the CLI are deliberately excluded, and `DialogueDown.ConfigurationL
 is worth revisiting once its configuration types are something consumers construct
 directly rather than a file the CLI loads.
 
+### J. No concept is explained in two places
+
+A concept explained in two documents will be updated in one of them. The copies
+are rarely identical, so no diff catches the divergence, and the document nobody
+touched keeps asserting something that stopped being true.
+
+This is not hypothetical here. The condition primitive once lived inside the
+*Conditional Jump* note, which was doing double duty as both the primitive's
+definition and one construct's design record. The line and choice guards each
+restated it rather than extracting it — and the note they copied from went on
+claiming, in three places, that conditions on lines and choices were deferred,
+long after both had shipped. The same pattern had `AGENTS.md` and
+`.github/copilot-instructions.md` describing the same build commands with
+different wording.
+
+Run the scan; it exits non-zero when it finds an unexpected pair:
+
+```sh
+python3 .github/scripts/find-doc-duplication.py
+```
+
+It compares word shingles rather than exact text, so it catches **paraphrase** —
+the form duplication actually takes, and the form a substring search misses.
+
+For each pair it reports, decide which document **owns** the concept:
+
+| Shape | Fix |
+| --- | --- |
+| A primitive defined inside one construct's note | Extract it into its own note; each construct assumes that note and covers only its own specifics. |
+| A procedure repeated in two instruction files | Keep it in the canonical one; the other links. |
+| The same explanation in a guide and a design note | Usually **allowed** — they serve different readers. Add the pair to `ALLOWED_PAIRS` with a reason. |
+
+A document that assumes another should say so in its opening lines, the way
+`Block Controls` and the conditional-construct notes do, so a reader knows what
+to read first, and an author knows not to restate it.
+
+> [!TIP]
+> The threshold is deliberately low (28%). Near-identical wording scores far
+> higher; a pair in the 30s is usually two authors explaining one idea in their
+> own words, which is exactly the case worth catching early.
+
 ## 4. Release push (approval-gated)
 
 Run only when `maintain-oss` has cut a changelog release, the
@@ -478,6 +524,11 @@ only if a headless `ddown compile` CI use case emerges.
 - **Never publish against stale documentation** — the
   [documentation resync](#3-resync-the-documentation-release-gate) is a release
   gate, not a nicety. A push freezes whatever the docs claim about that version.
+- **Never publish against duplicated documentation** —
+  `.github/scripts/find-doc-duplication.py` must exit clean
+  ([subsection J](#j-no-concept-is-explained-in-two-places)). Duplication is what
+  makes documentation go stale between releases, so catching it is upstream of
+  every other doc check.
 - **Never release against a stale demo** — the live gallery
   ([subsection H](#h-the-demo-gallery-reflects-current-features-and-constructs)) is
   part of the same gate: a push freezes whatever the demo shows and whichever

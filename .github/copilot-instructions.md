@@ -68,6 +68,7 @@ multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
 - **Commits:** [Conventional Commits](https://www.conventionalcommits.org/); one
   logical change each; mark breaking changes with `BREAKING CHANGE:` in the footer.
 - **Tests:** test-driven — write a failing test first, then the code, then refactor.
+  C# uses xUnit + NSubstitute; the web client uses Vitest + Playwright.
 - **Design first for non-trivial work:** design notes live in
   [`docs/contributing/design-notes/`](../docs/contributing/design-notes/); read
   them in pipeline order to understand the compiler.
@@ -77,6 +78,7 @@ multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
   *what* tangled code does is a signal to refactor it.
 - **Keep the core engine-agnostic:** no Godot or rendering dependency in
   `DialogueDown`.
+- When you change `web/src`, rebuild and commit `web/dist/report.html`.
 
 ## Engineering principles
 
@@ -123,4 +125,7 @@ docs:
   compiler pipeline, and design notes.
 - **[`README.md`](../README.md)** — project overview and repository layout.
 
-`AGENTS.md` at the repository root mirrors this file for other agent tools.
+[`AGENTS.md`](../AGENTS.md) at the repository root is the entry point for other
+agent tools. It carries only what an agent needs before it can act — what the
+project is and how to build and test it — and points here for the rest, so the
+two files cannot drift apart.
