@@ -30,7 +30,7 @@ Clone the repository and run:
 dotnet restore DialogueDown.sln
 dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 ```
 
 The `format` step is the code-style gate, and CI runs it first. Run it locally
@@ -47,7 +47,8 @@ dotnet tool restore
 dotnet test DialogueDown.sln \
   --coverlet \
   --coverlet-output-format cobertura \
-  --coverlet-include "[DialogueDown*]*"
+  --coverlet-include "[DialogueDown*]*" \
+  --minimum-expected-tests 3000
 dotnet reportgenerator \
   "-reports:TestResults/coverage.cobertura.*.xml" \
   "-targetdir:coverage-report" \
@@ -177,7 +178,7 @@ without repeating project builds.
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so
 you can build, test, and clean without memorising commands: `build` / `test`
 (.NET), `build: fast` (inner-loop compile without analyzers), `test: project` /
-`test: filter` (one already-built .NET test scope), `web: build` / `web: check` /
+`test: filter` / `test: class` (one already-built .NET test scope), `web: build` / `web: check` /
 `web: e2e` (frontend), targeted `web: test file` / `web: test watch` /
 `web: e2e file` / `web: e2e grep` / `web: e2e live file`, `build: all` and
 `verify: all` (both stacks), and `clean` (remove build/test artifacts). Always
@@ -204,7 +205,7 @@ Before opening a pull request:
 - [ ] Add or update tests for behavior changes.
 - [ ] Update documentation for public API or script-language changes.
 - [ ] Run `dotnet format DialogueDown.sln --verify-no-changes` — the same code-style gate CI runs.
-- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build`.
+- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000`.
 - [ ] Run source-focused coverage when changing tested behavior.
 - [ ] If you changed the visualization frontend (`web/`), rebuild and commit `web/dist/report.html` (CI auto-commits it if you forget).
 - [ ] Keep the pull request focused on one topic.

@@ -106,7 +106,7 @@ Restore, build, and test the solution:
 ```bash
 dotnet restore DialogueDown.sln
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 ```
 
 To collect source-focused coverage for the core library:
@@ -116,7 +116,8 @@ dotnet tool restore
 dotnet test DialogueDown.sln \
   --coverlet \
   --coverlet-output-format cobertura \
-  --coverlet-include "[DialogueDown*]*"
+  --coverlet-include "[DialogueDown*]*" \
+  --minimum-expected-tests 3000
 dotnet reportgenerator \
   "-reports:TestResults/coverage.cobertura.*.xml" \
   "-targetdir:coverage-report" \

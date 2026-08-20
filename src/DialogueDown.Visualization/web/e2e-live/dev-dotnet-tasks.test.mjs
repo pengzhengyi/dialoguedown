@@ -10,6 +10,7 @@ const tasks = JSON.parse(
 ).tasks;
 const repositoryRoot = resolve(here, "../../../..");
 const normalTestCommand = /dotnet test DialogueDown\.sln --configuration Release --no-build/;
+const expectedTestFloor = /--minimum-expected-tests \d+/;
 const guidance = [
     "README.md",
     "CONTRIBUTING.md",
@@ -33,9 +34,10 @@ test("the fast .NET build skips analyzers without replacing the full build", () 
     assert.deepEqual(full.group, { kind: "build", isDefault: true });
 });
 
-test("targeted .NET tasks select a project and optional filter", () => {
+test("targeted .NET tasks select a project and optional filter, and stop at the first failure", () => {
     const project = tasks.find((task) => task.label === "test: project");
     const filtered = tasks.find((task) => task.label === "test: filter");
+    const byClass = tasks.find((task) => task.label === "test: class");
 
     assert.ok(project);
     assert.match(project.command, /\$\{input:dotnetTestProject\}/);
@@ -46,31 +48,56 @@ test("targeted .NET tasks select a project and optional filter", () => {
     assert.match(filtered.command, /\$\{input:dotnetTestProject\}/);
     assert.match(filtered.command, /\$\{input:dotnetTestFilter\}/);
     assert.match(filtered.command, /--filter/);
+
+    assert.ok(byClass);
+    assert.match(byClass.command, /\$\{input:dotnetTestClass\}/);
+    assert.match(byClass.command, /--filter-class/);
+
+    // Fail-fast is the point of an inner-loop run: the first failure is the one being worked on.
+    // `--stop-on-fail` takes an explicit `on`/`off`; passing it bare is itself a "Zero tests ran".
+    for (const task of [project, filtered, byClass]) {
+        assert.match(task.command, /--stop-on-fail on\b/, task.label);
+    }
 });
 
-test("the documented .NET test command carries no MSBuild-only switches", () => {
-    // `-m:3` used to parallelize the test *projects* MSBuild built and ran. The Microsoft
-    // Testing Platform runs each test project as its own executable and schedules them itself,
-    // and it forwards an argument it does not know to the test app — where `-m:3` is not an
-    // option, so every assembly errors and zero tests run. A flag that silently turns a green
-    // suite into "Zero tests ran" is worth a test of its own.
+test("the documented .NET test commands guard against a silent zero-test run", () => {
+    // Microsoft Testing Platform forwards an argument it does not recognize to the test app, and
+    // an app that rejects one exits without running anything. The run then reports "Zero tests
+    // ran" and looks like an ordinary command — `-m:3` (an MSBuild-only switch), a bare
+    // `--stop-on-fail` (it needs `on`/`off`), and `--maximum-failed-tests` (not offered here) all
+    // land the same way. Banning flags one at a time cannot catch the next one, so every
+    // documented full command states how many tests it expects: too few is then a loud failure
+    // (exit code 9) rather than a green-looking no-op. Raise or lower the floor deliberately.
     const full = tasks.find((task) => task.label === "test");
     const coverage = tasks.find((task) => task.label === "coverage");
 
     assert.ok(full);
-    assert.doesNotMatch(full.command, /-m:3/);
+    assert.match(full.command, expectedTestFloor);
     assert.ok(coverage);
-    assert.doesNotMatch(coverage.command, /-m:3/);
+    assert.match(coverage.command, expectedTestFloor);
 
     for (const [path, content] of guidance) {
         assert.match(content, normalTestCommand, path);
-        assert.doesNotMatch(content, /-m:3/, path);
+        assert.match(content, expectedTestFloor, path);
     }
 
     for (const path of [".github/workflows/ci.yml", ".github/workflows/release.yml"]) {
         const workflow = readFileSync(resolve(repositoryRoot, path), "utf8");
         assert.match(workflow, /dotnet test DialogueDown\.sln --configuration Release --no-build/);
-        assert.doesNotMatch(workflow, /-m:3/);
+        assert.match(workflow, expectedTestFloor, path);
+    }
+
+    // MSBuild-only switches never reach the test app as options; keep them out by name too.
+    const everywhere = [
+        ...guidance,
+        ["tasks.json", JSON.stringify(tasks)],
+        ...[".github/workflows/ci.yml", ".github/workflows/release.yml"].map((path) => [
+            path,
+            readFileSync(resolve(repositoryRoot, path), "utf8"),
+        ]),
+    ];
+    for (const [path, content] of everywhere) {
+        assert.doesNotMatch(content, /-m:3|--maxcpucount/, path);
     }
 });
 

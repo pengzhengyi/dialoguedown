@@ -25,11 +25,11 @@ A plain `dotnet build` needs no Node — the built web report is committed.
 dotnet restore DialogueDown.sln
 dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
-dotnet test DialogueDown.sln --configuration Release --no-build
+dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 
 # Source-focused coverage (CI fails below 90% line coverage, warns below 100%)
 dotnet tool restore
-dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include "[DialogueDown*]*"
+dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include "[DialogueDown*]*" --minimum-expected-tests 3000
 
 # Visualization client — only needed when changing web/ sources
 cd src/DialogueDown.Visualization/web && npm ci && npm run check && npm run build
@@ -41,8 +41,8 @@ VS Code tasks (**Terminal → Run Task**) mirror these: `build`, `test`,
 `web: check`, `verify: all`, and more.
 
 Use `build: fast` only for inner-loop compile feedback after restore; it skips
-analyzers. Use `test: project` or `test: filter` after a build for targeted
-feedback. Frontend inner-loop tasks select one Vitest file or Playwright
+analyzers. Use `test: project`, `test: filter`, or `test: class` after a build for
+targeted feedback. Frontend inner-loop tasks select one Vitest file or Playwright
 file/title. The normal `build`/`test` and full frontend tasks remain the required
 gate.
 
@@ -53,6 +53,15 @@ CI. Note also that analyzer warnings are emitted only when a project actually
 recompiles — repeating `dotnet build` with no changes prints zero warnings even
 when violations exist. `dotnet format` always analyzes; the `build: verify` task
 adds `--no-incremental` when a build's warning count has to be trusted.
+
+`--minimum-expected-tests 3000` is not decoration: the Microsoft Testing Platform
+forwards an argument it does not recognize to the test app, which then exits
+without running anything and reports **"Zero tests ran"** with exit code 5 — output
+that reads like a normal run. Keep the floor on any full-suite command you invent,
+and treat a shortfall (exit code 9) as a broken command rather than a broken
+suite. A framework-specific test-module glob fails the same way: two test projects
+multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
+`net10.0`-only glob silently runs 1,956 of 3,371 tests.
 
 ## Conventions
 
