@@ -26,11 +26,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The report frontend, built by the web/ Vite project into ONE self-contained
-         HTML file (all JS/CSS inlined). The .NET side only injects the per-report
-         stage data into its data slot. Built and committed; CI verifies it stays in
-         sync with web/ sources. See web/NOTICE.md for bundled third-party licenses. -->
+    <!-- The report frontend, built by the web/ Vite project: a small page plus the client
+         script, its stylesheet, and Mermaid's self-contained build. Serving links them;
+         exporting inlines them, and inlines Mermaid only for a script that draws a diagram.
+         Built and committed; CI verifies it stays in sync with web/ sources. See
+         web/NOTICE.md for bundled third-party licenses. -->
     <EmbeddedResource Include="web\dist\report.html" />
+    <EmbeddedResource Include="web\dist\report.js" />
+    <EmbeddedResource Include="web\dist\report.css" />
+    <EmbeddedResource Include="web\dist\mermaid.js" />
   </ItemGroup>
 
 </Project>

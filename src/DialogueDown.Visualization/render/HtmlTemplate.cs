@@ -20,6 +20,9 @@ namespace DialogueDown.Visualization.Render;
 internal static class HtmlTemplate
 {
     private const string ReportSlot = "\"__REPORT__\"";
+    private const string MermaidSlot = "\"__MERMAID__\"";
+    private const string ScriptTag = """<script type="module" crossorigin src="/report.js"></script>""";
+    private const string StyleTag = """<link rel="stylesheet" crossorigin href="/report.css">""";
 
     public static string RenderPage(
         IReadOnlyList<DisplayGraph> stages,
@@ -34,7 +37,7 @@ internal static class HtmlTemplate
         ReportProject? project = null)
     {
         return Fill(
-            EmbeddedAsset.ReadText("report.html"), stages, source, mode, path, symbols,
+            SelfContained(source), stages, source, mode, path, symbols,
             configuration, diagnostics, semanticTokens, configOverlay, project);
     }
 
@@ -57,8 +60,51 @@ internal static class HtmlTemplate
         ReportProject? project = null)
     {
         return Fill(
-            ReportBundle.Default.LinkedHtml, stages, source, mode, path, symbols,
+            Linked(), stages, source, mode, path, symbols,
             configuration, diagnostics, semanticTokens, configOverlay, project);
+    }
+
+    // Everything inlined, so the file opens from disk with no server and no network. Mermaid is
+    // the one asset that comes and goes: it is larger than the rest of the report together, so it
+    // rides along only for a script that actually draws a diagram.
+    private static string SelfContained(string? source)
+    {
+        var bundle = ReportBundle.Default;
+        // Substitute into the small page first and grow it last, so every anchor is matched
+        // against markup rather than against a megabyte of inlined script.
+        var page = ReplaceOnce(bundle.Page, MermaidSlot, "\"\"");
+        if (MermaidFence.AppearsIn(source))
+        {
+            page = ReplaceOnce(page, "</head>", $"<script>{bundle.Mermaid}</script></head>");
+        }
+
+        page = ReplaceOnce(page, StyleTag, $"<style>{bundle.Style}</style>");
+        return ReplaceOnce(page, ScriptTag, $"<script type=\"module\">{bundle.Script}</script>");
+    }
+
+    // Assets referred to by content-addressed paths the server hosts, so one download and one
+    // compile of the client serve every script a reader opens.
+    private static string Linked()
+    {
+        var bundle = ReportBundle.Default;
+        var page = ReplaceOnce(bundle.Page, MermaidSlot, $"\"{bundle.MermaidPath}\"");
+        page = ReplaceOnce(page, StyleTag, $"<link rel=\"stylesheet\" crossorigin href=\"{bundle.StylePath}\">");
+        return ReplaceOnce(
+            page, ScriptTag, $"<script type=\"module\" crossorigin src=\"{bundle.ScriptPath}\"></script>");
+    }
+
+    // A built page that no longer holds an anchor exactly once has changed shape underneath us;
+    // failing here is far better than emitting a report that is quietly missing its client.
+    private static string ReplaceOnce(string page, string anchor, string value)
+    {
+        var at = page.IndexOf(anchor, StringComparison.Ordinal);
+        if (at < 0 || page.IndexOf(anchor, at + anchor.Length, StringComparison.Ordinal) >= 0)
+        {
+            throw new InvalidOperationException(
+                $"The built report should hold '{anchor}' exactly once.");
+        }
+
+        return string.Concat(page.AsSpan(0, at), value, page.AsSpan(at + anchor.Length));
     }
 
     private static string Fill(

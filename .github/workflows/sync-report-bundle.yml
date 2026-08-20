@@ -1,6 +1,6 @@
 name: Sync report bundle
 
-# The built single-file report (src/DialogueDown.Visualization/web/dist/report.html)
+# The built report assets (src/DialogueDown.Visualization/web/dist/report.{html,js,css} and mermaid.js)
 # is committed so the .NET build can embed it without needing Node. When a pull
 # request changes the web sources or the build tooling (for example a Dependabot bump
 # of vite/esbuild), the committed bundle drifts from a fresh build and the CI check
@@ -60,4 +60,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "build: rebuild the committed report bundle"
-          file_pattern: src/DialogueDown.Visualization/web/dist/report.html
+          file_pattern: src/DialogueDown.Visualization/web/dist/report.html src/DialogueDown.Visualization/web/dist/report.js src/DialogueDown.Visualization/web/dist/report.css src/DialogueDown.Visualization/web/dist/mermaid.js

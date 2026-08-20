@@ -534,6 +534,40 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("__DD_REPORT__", html, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void RenderHtmlReport_LeavesMermaidOutOfAScriptThatDrawsNoDiagram()
+    {
+        // Mermaid's build is larger than the rest of the report together, and almost no script
+        // needs it, so an export only carries it when the script actually asks for a diagram.
+        var html = new CompilationVisualizer().RenderHtmlReport("The room is quiet.");
+
+        Assert.DoesNotContain("__esbuild_esm_mermaid_nm", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RenderHtmlReport_CarriesMermaidForAScriptThatDrawsOne()
+    {
+        var source = "The room is quiet.\n\n```mermaid\nflowchart LR\n  a --> b\n```\n";
+
+        var html = new CompilationVisualizer().RenderHtmlReport(source);
+
+        // Its own build assigns the global the report reads, so the diagram draws with no network.
+        Assert.Contains("__esbuild_esm_mermaid_nm", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("src=\"/assets/", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ServedPages_NameWhereMermaidLivesRatherThanCarryingIt()
+    {
+        var visualizer = new CompilationVisualizer();
+
+        var html = visualizer.RenderLiveReport(
+            "scene.dialogue.md", "The room is quiet.", VisualizationMode.View);
+
+        Assert.DoesNotContain("__esbuild_esm_mermaid_nm", html, StringComparison.Ordinal);
+        Assert.Contains("__DD_MERMAID__ = \"/assets/", html, StringComparison.Ordinal);
+    }
+
     private static DialogueGraph EmptyGraph()
     {
         var end = new NodeId(0);

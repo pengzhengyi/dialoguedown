@@ -5,13 +5,13 @@ namespace DialogueDown.Visualization.Tests.Render;
 public sealed class ReportAssetsTests
 {
     [Fact]
-    public void All_OffersTheClientScriptAndStylesheet()
+    public void All_OffersTheClientScriptItsStylesheetAndMermaid()
     {
         var paths = ReportAssets.All.Select(asset => asset.Path).ToArray();
 
-        Assert.Equal(2, paths.Length);
-        Assert.Contains(paths, path => path.EndsWith(".js", StringComparison.Ordinal));
-        Assert.Contains(paths, path => path.EndsWith(".css", StringComparison.Ordinal));
+        Assert.Equal(3, paths.Length);
+        Assert.Equal(2, paths.Count(path => path.EndsWith(".js", StringComparison.Ordinal)));
+        Assert.Single(paths, path => path.EndsWith(".css", StringComparison.Ordinal));
     }
 
     [Fact]

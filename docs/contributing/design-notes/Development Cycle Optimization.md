@@ -9,7 +9,8 @@
 > isolation. Increment 14 re-measured the suite on the Microsoft Testing Platform:
 > its speed options were rejected as unmeasurable, and its safety options adopted.
 > Increment 15 made opening a served script about four times faster by linking the
-> client instead of inlining it into every page.
+> client instead of inlining it into every page, and increment 16 cut the first load by
+> 70% by fetching Mermaid only when a script draws a diagram.
 
 DialogueDown's verification remains comprehensive, but avoidable orchestration
 work delays feedback: repeated project evaluation, duplicate test execution,
@@ -44,6 +45,7 @@ bundle verification, or end-to-end behavior.
   - [13. Evaluate one VM-backed Vitest fork](#13-evaluate-one-vm-backed-vitest-fork)
   - [14. Revisit the platform after the Microsoft Testing Platform move](#14-revisit-the-platform-after-the-microsoft-testing-platform-move)
   - [15. Link the served client instead of carrying it in every page](#15-link-the-served-client-instead-of-carrying-it-in-every-page)
+  - [16. Fetch Mermaid on demand instead of bundling it](#16-fetch-mermaid-on-demand-instead-of-bundling-it)
 - [Approval-gated follow-ups](#approval-gated-follow-ups)
 - [Boundary cases and rollback](#boundary-cases-and-rollback)
 - [Testability and measurement](#testability-and-measurement)
@@ -814,6 +816,56 @@ effect rather than a goal.
 starting a new one (152–622 ms), which only [#327](https://github.com/pengzhengyi/dialoguedown/issues/327)
 (open a script in place) can remove. [#326](https://github.com/pengzhengyi/dialoguedown/issues/326)
 can now shrink the first load, because a lazy chunk is finally possible.
+
+### 16. Fetch Mermaid on demand instead of bundling it
+
+**Problem:** [increment 15](#15-link-the-served-client-instead-of-carrying-it-in-every-page)
+made repeat opens cheap but left the first load carrying the whole client. Measured
+by building with Mermaid stubbed out, **Mermaid was 70% of it** — 4,778 kB against
+1,444 kB without — because it brings cytoscape, katex, and every diagram type. The
+client already deferred it (`await import("mermaid")`), but `vite-plugin-singlefile`
+inlines dynamic imports, so the split was defeated by packaging rather than by code.
+
+**Rejected: a CDN.** Loading Mermaid from a third party would make a localhost tool
+phone out, break air-gapped use, invite version drift, and contradict the "no CDN"
+invariant two tests already assert. It would also be slower, not faster, from behind
+a restrictive network.
+
+**Design:** Mermaid ships a self-contained build that ends by assigning
+`globalThis.mermaid`, so it needs no module graph at all. The client no longer
+imports Mermaid; `mermaid-loader.ts` returns the global when a page already carries
+one and otherwise fetches the URL the page names. That leaves three shapes:
+
+| Shape | Client | Mermaid |
+| --- | --- | --- |
+| Served | linked, immutably cached | fetched on first diagram, immutably cached |
+| Exported, no diagram | inlined | absent |
+| Exported, with a diagram | inlined | inlined |
+
+`MermaidFence` decides the export case from the script's fences, reading the info
+string the way the preview does. It deliberately errs toward yes: a false positive
+only makes a file bigger, while a false negative would export a diagram that cannot
+draw.
+
+**Result:**
+
+| Measure | Before | After |
+| --- | --- | --- |
+| Served first load (gzip) | 1,949 kB | **676 kB** |
+| Export, no diagram | 4,778 kB | **1,417 kB** |
+| Export, with a diagram | 4,778 kB | 4,898 kB |
+| `DialogueDown.Visualization.dll` | 4.68 MB | 4.90 MB |
+| Static E2E suite | 1.4 min | 1.2 min |
+| Live E2E suite | 1.7 min | 1.4 min |
+
+Verified in a browser: a cold shell fetches only the client and its stylesheet, a
+script with a fence additionally fetches Mermaid and draws, and an exported report
+with a diagram renders **offline with zero network requests**.
+
+The cost is deliberate and falls on the rare case: a script that draws a diagram
+fetches Mermaid's whole build rather than the diagram type it uses, and an export
+carrying it grows 2.5%. Both buy a 70% smaller first load for every script that
+draws nothing, which is nearly all of them.
 
 ## Approval-gated follow-ups
 

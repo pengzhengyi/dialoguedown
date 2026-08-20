@@ -1,7 +1,11 @@
 # Mermaid authoring diagrams
 
 > [!NOTE]
-> Status: **implemented**.
+> Status: **implemented**. How Mermaid *reaches* the page has since changed: it is no
+> longer bundled into the client, but fetched on demand when serving and inlined only
+> for a script that draws a diagram when exporting. Sizes quoted below describe the
+> bundle as this note shipped it. See increment 16 of the
+> [Development Cycle Optimization](Development%20Cycle%20Optimization.md) note.
 
 ## Table of contents
 
@@ -57,8 +61,9 @@ Out of scope:
 - [x] Diagram output has an accessible name and description where the source
       supplies `accTitle` / `accDescr`, with a useful fallback otherwise.
 - [x] Markdown HTML and Mermaid SVG cross explicit sanitization boundaries.
-- [x] The report remains one self-contained, offline HTML file.
-- [x] CI rejects a generated `report.html` larger than 5 MB raw.
+- [x] The report remains one self-contained, offline HTML file when exported, and carries
+      Mermaid only for a script that draws a diagram.
+- [x] CI holds the client every reader loads, and Mermaid separately, under approved raw limits.
 - [x] `--emit dot` behaves unchanged.
 - [x] `--emit mermaid` fails with a migration message for one release.
 - [x] The C# Mermaid output surface is removed.

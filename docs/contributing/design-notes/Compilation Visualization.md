@@ -271,12 +271,16 @@ gives each node a rich hover tooltip. This is what makes the view legible to
 non-developers: you can see exactly which text became which node.
 
 The client is a small **TypeScript** application (in `web/`) that **Vite** builds
-and inlines into **one self-contained HTML file** — every script and stylesheet
-embedded, no CDN, no external requests — so the report opens with no server and
-works fully offline, even air-gapped. The npm dependencies are pinned by
+into a page, a script, and a stylesheet — no CDN, no external requests. Exporting
+inlines them into **one self-contained HTML file**, so the report opens with no
+server and works fully offline, even air-gapped; serving links them instead, so a
+browser downloads and compiles the client once for every script a reader opens.
+Mermaid is kept out of the client in both shapes — it is larger than the rest of
+the report together, and an export carries it only for a script that draws a
+diagram. The npm dependencies are pinned by
 `package-lock.json`; `web/NOTICE.md` is the versioned source of truth for their
 licenses. Preview surfaces also embed the Fira Code Latin 400 WOFF2 (OFL-1.1)
-for jump-indicator ligatures. The .NET side embeds the built file and injects
+for jump-indicator ligatures. The .NET side embeds the built files and injects
 only the per-report data — the source and each stage — into its data slot.
 
 The tradeoff is deliberate: the bundle pins specific, reviewed library versions

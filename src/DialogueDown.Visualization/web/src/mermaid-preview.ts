@@ -1,5 +1,6 @@
-import type { Mermaid, MermaidConfig, ParseOptions, ParseResult, RenderResult } from "mermaid";
+import type { MermaidConfig, ParseOptions, ParseResult, RenderResult } from "mermaid";
 import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
+import { loadMermaidFrom, mermaidSource } from "./mermaid-loader";
 
 const MAX_TEXT_SIZE = 50_000;
 const SOURCE_SELECTOR = ".mermaid-source code";
@@ -195,7 +196,7 @@ function isCurrent(host: HTMLElement, state: HostState, revision: number): boole
 }
 
 async function loadMermaid(): Promise<MermaidApi> {
-    return (await import("mermaid")).default as Mermaid;
+    return loadMermaidFrom(mermaidSource());
 }
 
 function effectiveTheme(): MermaidTheme {

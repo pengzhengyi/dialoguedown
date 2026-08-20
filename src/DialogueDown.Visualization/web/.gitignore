@@ -5,11 +5,13 @@ test-results/
 .vite/
 .cache/
 
-# The single-file build outputs are committed for the .NET embed (freshness is
-# verified in CI); ignore everything else Vite may emit under dist/.
+# The build outputs the .NET library embeds are committed (freshness is verified in
+# CI); ignore everything else Vite may emit under dist/.
 dist/*
 !dist/report.html
-!dist/launcher.html
+!dist/report.js
+!dist/report.css
+!dist/mermaid.js
 
 # Live e2e temp document
 e2e-live/.live-doc.dialogue.md

@@ -144,6 +144,14 @@ changes easy to categorize.
   what an agent needs before it can act and links to
   `.github/copilot-instructions.md` for the rest. The scan is a release gate.
 
+- **The report loads about three times less to open a script** — Mermaid is no longer part of the
+  client every reader downloads. A served report fetches it the first time a script shows a
+  diagram, and an exported report carries it only when that script draws one, so a typical export
+  falls from 4.8 MB to 1.4 MB. Diagrams render exactly as before, still with no CDN and still
+  offline. See the
+  [Development Cycle Optimization](docs/contributing/design-notes/Development%20Cycle%20Optimization.md)
+  note.
+
 - **Guardrails against the mistakes a compiler cannot afford** — the core may no longer read the
   clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph, and the
   Dialogue AST is held immutable so no later stage can change what an earlier one produced.
