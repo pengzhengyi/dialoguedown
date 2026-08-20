@@ -152,7 +152,7 @@ public sealed class CompilationVisualizer
         ArgumentNullException.ThrowIfNull(documentPath);
         ArgumentNullException.ThrowIfNull(mode);
         var content = BuildContent(source);
-        return HtmlTemplate.RenderPage(
+        return HtmlTemplate.RenderLinkedPage(
             content.Stages, source, mode, documentPath, content.Symbols, content.Configuration,
             content.Diagnostics, content.SemanticTokens, configOverlay, project);
     }
@@ -166,7 +166,7 @@ public sealed class CompilationVisualizer
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(mode);
-        return HtmlTemplate.RenderPage(
+        return HtmlTemplate.RenderLinkedPage(
             Array.Empty<DisplayGraph>(), mode: mode, project: new ReportProject(root, null));
     }
 
