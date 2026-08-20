@@ -60,9 +60,9 @@ source already handles.
 
 ## Ubiquitous language
 
-The DSL already names these concepts (see the
-[script-language spec](../../guide/script-language.md)); the editor reuses them so
-one concept keeps one name across the spec, the code, and the completions.
+One concept keeps one name across the spec, the code, and the completions, as in
+[Source Editor Autocompletion](./Source%20Editor%20Autocompletion.md#ubiquitous-language).
+This note adds the jump-specific terms.
 
 | Term | Meaning |
 | --- | --- |

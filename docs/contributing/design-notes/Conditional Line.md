@@ -5,10 +5,7 @@
 > true. Gating the line at play time is part of the planned
 > [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
 
-This note assumes the [Conditions](./Conditions.md) note and does not repeat it:
-the condition primitive, its grammar, how it resolves, and the decisions behind it
-live there. Read it first. This note covers only what is specific to guarding a
-**line**.
+Assumes [Conditions](./Conditions.md) — the primitive, its grammar, resolution, and decisions — and covers only what is specific to guarding a **line**.
 
 ## Table of contents
 
@@ -295,13 +292,10 @@ becomes part of a speaker name or speech text.
 | --------- | -------------------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DLG1106` | A condition guards nothing | Syntax | Error    | A `` `"key"?` `` condition guards neither a jump nor a line — it is not immediately before a `=>` jump, and not at the start of a line with content. |
 
-`DLG1106` keeps its code and its place in the `DLG11xx` inline-surface band; only
-its title and message generalize (its choice use will follow). A malformed
-condition — a code span that is not a clean quoted query followed by `?` — is not
-a condition at all; it falls back to game-call recognition and, failing that, is
-reported as `DLG1102` and kept as literal text. There is no invalid-value
-diagnostic: `Check` returns a boolean, so a condition always resolves at runtime,
-and an unknown key defaults to false.
+The code, its band, and the malformed-condition fallback are described in
+[Conditions](./Conditions.md#diagnostics). For a line, `DLG1106` means a condition
+that is neither immediately before a `=>` jump nor at the start of a line with
+content.
 
 ## Error and boundary cases
 

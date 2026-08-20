@@ -137,6 +137,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **One home per concept in the documentation** — a committed duplication scan
+  (`.github/scripts/find-doc-duplication.py`) compares word shingles across the docs
+  tree, so a concept paraphrased in two places is caught rather than left to drift.
+  Thirteen duplicated passages became two intended ones; `AGENTS.md` now carries only
+  what an agent needs before it can act and links to
+  `.github/copilot-instructions.md` for the rest. The scan is a release gate.
+
 - **The report loads about three times less to open a script** — Mermaid is no longer part of the
   client every reader downloads. A served report fetches it the first time a script shows a
   diagram, and an exported report carries it only when that script draws one, so a typical export
