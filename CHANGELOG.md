@@ -137,6 +137,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Guardrails against the mistakes a compiler cannot afford** — the core may no longer read the
+  clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph, and the
+  Dialogue AST is held immutable so no later stage can change what an earlier one produced.
+
 - **Every assembly's root namespace now names its parts** — an architecture rule caps how many
   types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list.
   Satisfying it moved the bulk of `DialogueDown.Visualization`,
