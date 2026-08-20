@@ -19,6 +19,7 @@ namespace DialogueDown.Visualization.Live.Serving;
 internal sealed class ServedShellServer : IAsyncDisposable
 {
     private const string ReportMount = "/r";
+    private const string AssetMount = "/assets";
 
     private readonly WebApplication _app;
     private readonly BrowseRoot _root;
@@ -115,6 +116,21 @@ internal sealed class ServedShellServer : IAsyncDisposable
         return Results.Content(html, "text/html; charset=utf-8");
     }
 
+    // The client itself is the same for every document and every session, so a page links it
+    // instead of carrying it. Each asset is named after a hash of its own content, which is what
+    // makes "never revalidate" safe: a rebuilt client is a different name, so this body cannot go
+    // stale. That is the opposite trade from the page above, which is why they are served apart.
+    private static IResult Asset(HttpContext context, string name)
+    {
+        if (ReportAssets.Find(AssetMount + "/" + name) is not { } asset)
+        {
+            return Results.NotFound();
+        }
+
+        context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        return Results.Content(asset.Content, asset.ContentType);
+    }
+
     private void Configure(WebApplication app)
     {
         // Compress the large report pages; text/event-stream is not compressible, so the
@@ -132,6 +148,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
         app.UseRouting();
 
         app.MapGet("/", Root);
+        app.MapGet(AssetMount + "/{name}", (HttpContext context, string name) => Asset(context, name));
         app.MapGet("/api/browse", (string? path) => Browse(path ?? string.Empty));
         app.MapPost("/api/open", (OpenRequest request, HttpContext context) => Open(request, context));
         app.MapPost("/api/create", (CreateRequest request, HttpContext context) => Create(request, context));

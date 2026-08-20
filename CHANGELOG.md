@@ -141,6 +141,15 @@ changes easy to categorize.
   clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph, and the
   Dialogue AST is held immutable so no later stage can change what an earlier one produced.
 
+- **Opening a script in the served report is about four times faster** — the served page now links
+  the client from a content-addressed URL instead of carrying a copy of it, so a browser downloads
+  and compiles the client once and reuses it for every script it opens. Measured click-to-report on
+  an unchanged script: about 1.3 s down to about 0.3 s, and 1.86 MB down to 4.7 kB per navigation.
+  An exported report is unaffected — it still inlines everything, because a file that leaves the
+  server has to work offline. See the
+  [Development Cycle Optimization](docs/contributing/design-notes/Development%20Cycle%20Optimization.md)
+  note.
+
 - **Every assembly's root namespace now names its parts** — an architecture rule caps how many
   types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list.
   Satisfying it moved the bulk of `DialogueDown.Visualization`,
