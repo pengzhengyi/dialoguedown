@@ -52,6 +52,14 @@
     <AdditionalFiles Include="SonarLint.xml" />
   </ItemGroup>
 
+  <!-- Determinism guardrail. A script must lower to the same graph on every machine and
+       every run, so the core may not read the clock, mint identity, or draw randomness.
+       BannedSymbols.txt names those APIs and why; RS0030 makes reaching for one an error. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>

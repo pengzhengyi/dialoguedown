@@ -78,6 +78,14 @@ not warnings). The CLI and visualization projects are intentionally exempt.
 - **No God classes** — an architecture test caps public methods per core type
   (≤ 20); private helpers are not counted, so decomposing into small methods is
   encouraged.
+- **Named namespaces** — an architecture test caps an assembly's root namespace
+  at 10 types, so a layer cannot flatten into an unnamed list.
+- **A reproducible compile** — `RS0030` forbids the core from reading the clock,
+  minting a `Guid`, or drawing randomness, so the same script always lowers to
+  the same graph. `src/DialogueDown/BannedSymbols.txt` names each banned API and
+  why. (Random *choice* is unaffected — the player resolves it at runtime.)
+- **An immutable Dialogue AST** — an architecture test holds every AST node
+  immutable, so no later stage can change what an earlier one produced.
 
 Use the `build: fast` task (analyzers off) for the inner loop, but run the
 normal analyzer-enabled `build`/`test` before pushing.

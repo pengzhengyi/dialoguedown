@@ -137,6 +137,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **Guardrails against the mistakes a compiler cannot afford** — the core may no longer read the
+  clock, mint a `Guid`, or draw randomness, so a script always lowers to the same graph, and the
+  Dialogue AST is held immutable so no later stage can change what an earlier one produced.
+
 - **Opening a script in the served report is about four times faster** — the served page now links
   the client from a content-addressed URL instead of carrying a copy of it, so a browser downloads
   and compiles the client once and reuses it for every script it opens. Measured click-to-report on

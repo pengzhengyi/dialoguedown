@@ -200,6 +200,11 @@ dotnet_diagnostic.S3776.severity = error
 # that discipline for the core only.
 dotnet_diagnostic.CA2211.severity = error
 
+# Determinism: the same script must lower to the same graph on every run. RS0030
+# fails the build when the core reaches for the clock, a new Guid, or randomness.
+# BannedSymbols.txt in this project names each banned API and why.
+dotnet_diagnostic.RS0030.severity = error
+
 # Focused config: this project adopts SonarAnalyzer ONLY for the size/complexity
 # guardrails above. Referencing the package also activates Sonar's broader default
 # ruleset, so the other defaults that currently surface are silenced here to keep

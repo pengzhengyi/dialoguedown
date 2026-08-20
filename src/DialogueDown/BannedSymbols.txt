@@ -1,0 +1,16 @@
+// A compiler must be reproducible: the same script has to lower to the same graph on
+// every machine and every run. These APIs would make it depend on the clock, the
+// process, or a random seed, which turns a miscompile into something a report cannot
+// reproduce and a test cannot pin.
+//
+// Random *choice* is a runtime concern, not a compile-time one — the compiler lowers
+// `RandomChoices` into a node that a player resolves later, so nothing here needs a
+// source of randomness.
+P:System.DateTime.Now;A compiler must not depend on the clock.
+P:System.DateTime.UtcNow;A compiler must not depend on the clock.
+P:System.DateTimeOffset.Now;A compiler must not depend on the clock.
+P:System.DateTimeOffset.UtcNow;A compiler must not depend on the clock.
+M:System.Guid.NewGuid;Identity must be derived from the source, not generated, so a compile is reproducible.
+T:System.Random;Random choice is resolved at runtime by the player, not while compiling.
+M:System.Threading.Thread.Sleep(System.Int32);A compile must not wait on wall-clock time.
+M:System.Environment.get_TickCount;A compiler must not depend on the clock.
