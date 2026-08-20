@@ -150,6 +150,14 @@ changes easy to categorize.
   `DialogueDown.Visualization.Live.Serving` for `LiveSession`, and
   `DialogueDown.ConfigurationLoader.Errors` for `DialogueConfigurationException`.
 
+- **Full-suite test commands state how many tests they expect** — every documented
+  `dotnet test` command now passes `--minimum-expected-tests`, so a run that executes far
+  fewer tests than the suite holds fails loudly instead of reporting a green
+  "Zero tests ran". Inner-loop runs stop at the first failure, and a new `test: class`
+  VS Code task selects one class through xUnit's own class filter. See the
+  [Development Cycle Optimization](docs/contributing/design-notes/Development%20Cycle%20Optimization.md)
+  note for the measurements behind rejecting the platform's speed options.
+
 - **.NET 10 LTS, without moving Godot projects with it** — the libraries a game references
   (`DialogueDown`, `DialogueDown.ConfigurationLoader`) now ship for both `net8.0` and
   `net10.0`, so a Godot project keeps the runtime Godot bundles while the toolchain moves to

@@ -6,7 +6,8 @@
 > measured. Increment 2 was
 > deliberately skipped because Release coverage changed the sequence-point
 > denominator; Increment 13 was measured and rejected because it broke file
-> isolation.
+> isolation. Increment 14 re-measured the suite on the Microsoft Testing Platform:
+> its speed options were rejected as unmeasurable, and its safety options adopted.
 
 DialogueDown's verification remains comprehensive, but avoidable orchestration
 work delays feedback: repeated project evaluation, duplicate test execution,
@@ -39,6 +40,7 @@ bundle verification, or end-to-end behavior.
   - [11. Run DOM-independent Vitest files in Node](#11-run-dom-independent-vitest-files-in-node)
   - [12. Parallelize .NET test projects](#12-parallelize-net-test-projects)
   - [13. Evaluate one VM-backed Vitest fork](#13-evaluate-one-vm-backed-vitest-fork)
+  - [14. Revisit the platform after the Microsoft Testing Platform move](#14-revisit-the-platform-after-the-microsoft-testing-platform-move)
 - [Approval-gated follow-ups](#approval-gated-follow-ups)
 - [Boundary cases and rollback](#boundary-cases-and-rollback)
 - [Testability and measurement](#testability-and-measurement)
@@ -626,6 +628,9 @@ environments or phases did not reproduce a gain.
 > removed from every documented command, and a test asserts it does not come back.
 > The measurements below are kept because they explain why project-level
 > parallelism was wanted at all — MTP now provides it without a flag.
+> [Increment 14](#14-revisit-the-platform-after-the-microsoft-testing-platform-move)
+> revisits that claim with measurements, and generalizes this one banned flag into
+> a guard against the whole silent-failure class it belongs to.
 
 Do **not** parallelize the coverage pass. The instrumented solution run regressed
 from 53.37 seconds to 78.23 seconds with `-m:3`, likely from instrumentation and
@@ -672,6 +677,80 @@ from 31.87 to 21.80 seconds (31.6%; 1.46×). However, a two-file probe deliberat
 leaked a `globalThis` value from one file; the second file observed it under
 `vmForks`/one worker. This contradicts the project's test-isolation invariant.
 The pool change is therefore reverted despite its speed.
+
+### 14. Revisit the platform after the Microsoft Testing Platform move
+
+**Problem:** increment 12's `-m:3` was removed when the suite moved to the
+Microsoft Testing Platform (MTP), and that increment's speed-up went with it. MTP
+and xUnit v3 offer their own options, so the platform was re-examined for both
+speed and safety.
+
+**Speed: measured, and rejected.** Every timing below is a four-round
+*interleaved* comparison — one run of each configuration per round, in shuffled
+order — because a straight A-then-B sequence on a busy machine attributes the
+machine's own drift to whichever configuration ran first. An earlier
+sequential pass appeared to show a 19-second setting and a 34-second default;
+interleaving dissolved the difference.
+
+| Lever | Median | Range | Verdict |
+| --- | --- | --- | --- |
+| `--max-parallel-test-modules` default (= `ProcessorCount`) | 24.8 s | 20.0–29.5 | no reliable gain |
+| `--max-parallel-test-modules 3` | 27.5 s | 15.9–38.5 | no reliable gain |
+| `--max-parallel-test-modules 4` | 21.1 s | 17.2–30.6 | no reliable gain |
+| `--max-parallel-test-modules 6` | 23.6 s | 17.6–35.5 | no reliable gain |
+| `--pre-enumerate-theories off` | 24.5 s | 23.4–36.5 | no reliable gain (baseline 26.2 s) |
+| `dotnet test --test-modules <glob>` | 16.1 s | 14.7–18.4 | no reliable gain (solution 17.0 s) |
+
+Every range overlaps every other. **No MTP option measurably speeds this suite
+up**, and none is adopted for speed. The reason is structural rather than
+configurable: the eight test modules run concurrently already, and wall time is
+floored by the slowest one. Run individually, `DialogueDown.Visualization.Live.Tests`
+takes 11.3 seconds and `DialogueDown.Visualization.Tests` 8.9 seconds, against a
+32.2-second serial sum — so no scheduling flag can bring a ~17-second solution run
+much below ~11 seconds. Making that one module faster is the only lever left, and
+it is a separate piece of work.
+
+> [!WARNING]
+> **A test-module glob silently ran 58% of the suite.** `--test-modules
+> "tests/*/bin/Release/net10.0/*.Tests.dll"` looked like a clean way to skip
+> MSBuild, and reported a healthy green run — of **1,956 tests instead of 3,371**.
+> `DialogueDown.Tests` and `DialogueDown.ConfigurationLoader.Tests` multi-target
+> `net8.0;net10.0`, so six projects produce **eight** test modules and a
+> framework-specific glob drops the `net8.0` halves. A glob must span the
+> framework segment (`bin/Release/*/`), which is also what made the measured
+> "speed-up" disappear.
+
+**Safety: adopted.** The `-m:3` incident was read too narrowly at first. MTP
+forwards any argument it does not recognize to the test app, and an app that
+rejects one exits **without running anything**, reporting `Zero tests ran` with
+exit code 5 — output that scans like an ordinary command. `-m:3` is not a special
+case; the same failure was reproduced with `--maximum-failed-tests` (not offered
+by this runner at all) and with a bare `--stop-on-fail`, which needs an explicit
+`on`/`off`. Banning flags one at a time cannot catch the next one.
+
+Every documented full command therefore states the size of the suite it expects:
+
+```bash
+dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
+```
+
+A run that falls short now fails loudly with exit code 9 (`Minimum expected tests
+policy violation, tests ran 3371, minimum expected 5000` when probed against a
+deliberately impossible floor). The floor is a tripwire, not a target: it sits
+below the current 3,371 so that ordinary test authoring never trips it, while
+still catching both a zero-test run and the 1,956-test partial glob above. Move
+it deliberately when the suite's size genuinely changes.
+
+**Precision: adopted.** Inner-loop runs stop at the first failure with
+`--stop-on-fail on`, which is the failure being worked on, and a `test: class`
+task selects one class through xUnit's own `--filter-class` rather than the VSTest
+filter syntax `--filter` translates. `test: filter` keeps VSTest syntax for the
+broader selections it expresses.
+
+**Not adopted.** `Microsoft.Testing.Extensions.Retry` would paper over flaky tests
+rather than explain them, and ships under a restricted license; Microsoft's
+`Microsoft.Testing.Extensions.CodeCoverage` is closed-source, so coverage stays on
+MIT-licensed coverlet.
 
 ## Approval-gated follow-ups
 

@@ -49,7 +49,7 @@ jobs:
         run: dotnet build DialogueDown.sln --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }}
 
       - name: Test
-        run: dotnet test DialogueDown.sln --configuration Release --no-build
+        run: dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 
       - name: Pack the ddown CLI
         run: dotnet pack src/DialogueDown.Cli/DialogueDown.Cli.csproj --configuration Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
