@@ -33,11 +33,52 @@ internal static class HtmlTemplate
         ConfigStatusOverlay? configOverlay = null,
         ReportProject? project = null)
     {
-        return EmbeddedAsset.ReadText("report.html")
-            .Replace(
-                ReportSlot,
-                DisplayGraphJson.SerializeReport(
-                    mode, path, source, stages, symbols, configuration, diagnostics,
-                    semanticTokens, configOverlay, project));
+        return Fill(
+            EmbeddedAsset.ReadText("report.html"), stages, source, mode, path, symbols,
+            configuration, diagnostics, semanticTokens, configOverlay, project);
+    }
+
+    /// <summary>
+    /// Renders the same report as <see cref="RenderPage"/>, but linking the client rather than
+    /// inlining it, for a server that can also serve <see cref="ReportBundle"/>'s assets. Every
+    /// document then shares one download and one compile of the client, and the page carries only
+    /// its own payload. Never use this for a file that leaves the server: nothing would resolve.
+    /// </summary>
+    public static string RenderLinkedPage(
+        IReadOnlyList<DisplayGraph> stages,
+        string? source = null,
+        string mode = VisualizationMode.Static,
+        string? path = null,
+        SymbolSet? symbols = null,
+        ConfigurationReport? configuration = null,
+        IReadOnlyList<LspDiagnostic>? diagnostics = null,
+        IReadOnlyList<SemanticToken>? semanticTokens = null,
+        ConfigStatusOverlay? configOverlay = null,
+        ReportProject? project = null)
+    {
+        return Fill(
+            ReportBundle.Default.LinkedHtml, stages, source, mode, path, symbols,
+            configuration, diagnostics, semanticTokens, configOverlay, project);
+    }
+
+    private static string Fill(
+        string template,
+        IReadOnlyList<DisplayGraph> stages,
+        string? source,
+        string mode,
+        string? path,
+        SymbolSet? symbols,
+        ConfigurationReport? configuration,
+        IReadOnlyList<LspDiagnostic>? diagnostics,
+        IReadOnlyList<SemanticToken>? semanticTokens,
+        ConfigStatusOverlay? configOverlay,
+        ReportProject? project)
+    {
+        return template.Replace(
+            ReportSlot,
+            DisplayGraphJson.SerializeReport(
+                mode, path, source, stages, symbols, configuration, diagnostics,
+                semanticTokens, configOverlay, project),
+            StringComparison.Ordinal);
     }
 }

@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Live.Tests.Support;
+using DialogueDown.Visualization.Render;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -129,6 +130,57 @@ public sealed class ServedShellServerTests
         // Per-session HTML is rebuilt each launch, so it must not be cached (no stale reports).
         Assert.Equal(HttpStatusCode.OK, report.StatusCode);
         Assert.True(report.Headers.CacheControl!.NoStore);
+    }
+
+    [Fact]
+    public async Task ClientAssets_AreServedImmutablySoEveryDocumentReusesOneDownload()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        foreach (var asset in ReportAssets.All)
+        {
+            var response = await client.GetAsync(asset.Path, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(asset.ContentType, response.Content.Headers.ContentType!.MediaType);
+            // The name carries a hash of the content, so this body can never go stale.
+            Assert.True(response.Headers.CacheControl!.Public);
+            Assert.Equal(TimeSpan.FromDays(365), response.Headers.CacheControl.MaxAge);
+        }
+    }
+
+    [Fact]
+    public async Task ClientAssets_AreNotServedForANameTheClientWasNotBuiltUnder()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.GetAsync("/assets/report.deadbeef.js", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Report_LinksTheClientRatherThanCarryingItInEveryPage()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server, followRedirects: false);
+
+        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        var report = await client.GetAsync("/r/", TestContext.Current.CancellationToken);
+        var html = await report.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        foreach (var asset in ReportAssets.All)
+        {
+            Assert.Contains(asset.Path, html, StringComparison.Ordinal);
+        }
     }
 
     [Fact]

@@ -504,6 +504,36 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("digraph", text);
     }
 
+    [Fact]
+    public void RenderHtmlReport_InlinesTheClientSoAnExportedFileWorksOffline()
+    {
+        // An exported report is one file a reader can open or mail around; it must carry the
+        // client with it. Serving is the only place that may link the client instead.
+        var html = new CompilationVisualizer().RenderHtmlReport("The room is quiet.");
+
+        Assert.Contains("--pico-", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("src=\"/assets/", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("href=\"/assets/", html, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ServedPages_LinkTheClientSoABrowserReusesItAcrossDocuments(bool emptyShell)
+    {
+        var visualizer = new CompilationVisualizer();
+
+        var html = emptyShell
+            ? visualizer.RenderEmptyShell("/project", VisualizationMode.View)
+            : visualizer.RenderLiveReport("scene.dialogue.md", "The room is quiet.", VisualizationMode.View);
+
+        Assert.Contains("src=\"/assets/", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/assets/", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("--pico-", html, StringComparison.Ordinal);
+        // The payload still travels with the page: only the constant half was lifted out.
+        Assert.Contains("__DD_REPORT__", html, StringComparison.Ordinal);
+    }
+
     private static DialogueGraph EmptyGraph()
     {
         var end = new NodeId(0);

@@ -8,6 +8,8 @@
 > denominator; Increment 13 was measured and rejected because it broke file
 > isolation. Increment 14 re-measured the suite on the Microsoft Testing Platform:
 > its speed options were rejected as unmeasurable, and its safety options adopted.
+> Increment 15 made opening a served script about four times faster by linking the
+> client instead of inlining it into every page.
 
 DialogueDown's verification remains comprehensive, but avoidable orchestration
 work delays feedback: repeated project evaluation, duplicate test execution,
@@ -41,6 +43,7 @@ bundle verification, or end-to-end behavior.
   - [12. Parallelize .NET test projects](#12-parallelize-net-test-projects)
   - [13. Evaluate one VM-backed Vitest fork](#13-evaluate-one-vm-backed-vitest-fork)
   - [14. Revisit the platform after the Microsoft Testing Platform move](#14-revisit-the-platform-after-the-microsoft-testing-platform-move)
+  - [15. Link the served client instead of carrying it in every page](#15-link-the-served-client-instead-of-carrying-it-in-every-page)
 - [Approval-gated follow-ups](#approval-gated-follow-ups)
 - [Boundary cases and rollback](#boundary-cases-and-rollback)
 - [Testability and measurement](#testability-and-measurement)
@@ -751,6 +754,66 @@ broader selections it expresses.
 rather than explain them, and ships under a restricted license; Microsoft's
 `Microsoft.Testing.Extensions.CodeCoverage` is closed-source, so coverage stays on
 MIT-licensed coverlet.
+
+### 15. Link the served client instead of carrying it in every page
+
+**Problem:** opening a script in the served report cost **1.0–2.0 seconds**,
+almost none of it compilation. Profiled against a **44-character** document, so
+the compiler was not a factor:
+
+| Phase | run 1 | run 2 | run 3 |
+| --- | --- | --- | --- |
+| Old-page teardown + navigation start | 459 ms | 300 ms | 537 ms |
+| Server | 92 ms | 76 ms | 164 ms |
+| Download | 86 ms | 192 ms | 113 ms |
+| Parse | 507 ms | 183 ms | 158 ms |
+| Execute | 771 ms | 117 ms | 227 ms |
+| **click → 7 tabs** | **1990 ms** | **990 ms** | **1278 ms** |
+
+The server accounted for 4–13%. The cost was the browser performing a full page
+load of a 4.78 MB single-file page **on every script open** — `transferSize` was
+1.86 MB every time, because nothing could be reused.
+
+**Why a cache header could not fix it.** `Cache-Control: no-store` on the served
+HTML is correct and load-bearing: that HTML is per-session and per-document. The
+reason it *had* to be `no-store` was packaging. Every page was built as the
+constant 4.78 MB `report.html` with one `"__REPORT__"` slot replaced, so the
+constant client and the variable payload were one inseparable body.
+
+**Design:** split them. `ReportBundle` lifts the built script and stylesheet out
+of the embedded page once, names each after a hash of its own content, and leaves
+a page that links them. Serving renders that linked page and hosts the two assets
+under `/assets/`; the page stays `no-store` while the assets are `public,
+max-age=31536000, immutable`. Content-addressed names are what make that promise
+safe — a rebuilt client is a different URL, so a stale asset cannot be served.
+
+Exporting is deliberately unchanged. `RenderHtmlReport` still inlines everything,
+because a file that leaves the server has to work offline; a test asserts an
+exported report links nothing.
+
+**Result:** the steady-state open fell from about 1278 ms to about 296 ms
+(**4.3×**), and the per-navigation transfer from 1.86 MB to 4.7 kB (**410×**).
+
+| Phase | before (median) | after (median) |
+| --- | --- | --- |
+| Server | 92–164 ms | 4–10 ms |
+| Download | 86–192 ms | 0–1 ms |
+| Parse | 158–507 ms | 15–20 ms |
+| Execute | 117–771 ms | 56–151 ms |
+| **click → 7 tabs** | **990–1990 ms** | **270–320 ms** |
+
+Parse fell furthest because a stable URL lets the browser reuse its compiled code
+cache, not merely the bytes. The server dropped too: it no longer reads and
+rewrites a 4.78 MB string per request. First load still transfers the same
+~1.95 MB — the same content, merely addressed separately.
+
+The live E2E suite also fell from about 2.5 to about 1.7 minutes, as a side
+effect rather than a goal.
+
+**Still open:** the remaining cost is dominated by tearing down the old page and
+starting a new one (152–622 ms), which only [#327](https://github.com/pengzhengyi/dialoguedown/issues/327)
+(open a script in place) can remove. [#326](https://github.com/pengzhengyi/dialoguedown/issues/326)
+can now shrink the first load, because a lazy chunk is finally possible.
 
 ## Approval-gated follow-ups
 
