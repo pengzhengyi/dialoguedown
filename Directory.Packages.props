@@ -41,7 +41,7 @@
   <!-- Analyzers and build-time tooling -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
-    <PackageVersion Include="SonarAnalyzer.CSharp"        Version="10.32.0.713" />
+    <PackageVersion Include="SonarAnalyzer.CSharp"        Version="10.33.0.1635" />
     <PackageVersion Include="StyleCop.Analyzers"          Version="1.2.0-beta.556" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
   </ItemGroup>
