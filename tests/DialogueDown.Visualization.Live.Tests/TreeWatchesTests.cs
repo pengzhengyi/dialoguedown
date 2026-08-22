@@ -6,7 +6,6 @@ namespace DialogueDown.Visualization.Live.Tests;
 public sealed class TreeWatchesTests
 {
     private static readonly TimeSpan _debounce = TimeSpan.FromMilliseconds(100);
-    private static readonly TimeSpan _settle = TimeSpan.FromMilliseconds(200);
     private static readonly TimeSpan _patience = TimeSpan.FromSeconds(10);
 
     [Fact]
@@ -17,7 +16,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(document, () => fired.Release(), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         File.WriteAllText(document, "# Second");
 
@@ -31,15 +30,17 @@ public sealed class TreeWatchesTests
         var document = tree.File("scene.dialogue.md", "# First");
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
-        using var watch = watches.Watch(document, () => Interlocked.Increment(ref count), TimeSpan.FromMilliseconds(250));
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        using var watch = watches.Watch(document, () => Interlocked.Increment(ref count), _debounce);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         for (var i = 0; i < 5; i++)
         {
             File.WriteAllText(document, $"# Write {i}");
         }
 
-        await Task.Delay(1500, TestContext.Current.CancellationToken);
+        // The writes are one save, so wait for the report they coalesce into rather than for a
+        // span long enough to be convincing, then drain to prove no second report follows.
+        await WatchSync.DrainAsync(watches, Path.GetDirectoryName(document)!, _debounce);
 
         // An editor saves by writing several times; that is one reload, not five.
         Assert.InRange(count, 1, 2);
@@ -54,10 +55,10 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
         using var watch = watches.Watch(watched, () => Interlocked.Increment(ref count), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(watched)!);
 
         File.WriteAllText(other, "# Changed");
-        await Task.Delay(800, TestContext.Current.CancellationToken);
+        await WatchSync.DrainAsync(watches, Path.GetDirectoryName(other)!, _debounce);
 
         Assert.Equal(0, count);
     }
@@ -70,12 +71,12 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
         var watch = watches.Watch(document, () => Interlocked.Increment(ref count), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         watch.Dispose();
         watch.Dispose(); // releasing twice is not an error
         File.WriteAllText(document, "# Second");
-        await Task.Delay(800, TestContext.Current.CancellationToken);
+        await WatchSync.DrainAsync(watches, Path.GetDirectoryName(document)!, _debounce);
 
         Assert.Equal(0, count);
     }
@@ -90,7 +91,7 @@ public sealed class TreeWatchesTests
         using var second = new SemaphoreSlim(0);
         using var watchOne = watches.Watch(document, () => first.Release(), _debounce);
         using var watchTwo = watches.Watch(document, () => second.Release(), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         File.WriteAllText(document, "# Second");
 
@@ -109,7 +110,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(document, () => fired.Release(), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         File.WriteAllText(document, "# Second");
 
@@ -128,7 +129,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(SymlinkResolver.Resolve(link), () => fired.Release(), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, tree.Root);
 
         File.WriteAllText(real, "# Second");
 
@@ -145,7 +146,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(document, () => fired.Release(), _debounce);
-        await Task.Delay(_settle, TestContext.Current.CancellationToken);
+        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         File.WriteAllText(document, "# Second");
 
