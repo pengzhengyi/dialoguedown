@@ -42,6 +42,7 @@ function harness(documentType: DocumentType = "source", initial = "# Saved") {
         loadFromDisk: () => Promise.resolve(diskLoad),
         applyReport: (report) => calls.applied.push(report),
         setContent: (source) => calls.content.push(source),
+        setDocument: (source) => calls.content.push(source),
         setDirty: (dirty) => calls.dirty.push(dirty),
         setStatus: (status, message) => calls.status.push({ status, message }),
         setUnloadGuard: (active) => calls.unload.push(active),
@@ -914,7 +915,7 @@ describe("createLiveEdit — adoptSwitch (opening another script)", () => {
         expect(h.saves).toHaveLength(1);
 
         live.adoptSwitch("# Another", reportFor("# Another"));
-        h.saves[0].resolve({ kind: "saved", report: reportFor("# Mine") });
+        h.saves[0].resolve({ kind: "saved", report: reportFor("# Mine"), source: "# Mine" });
 
         // The server now points at another document, so the reply belongs to a file the report is
         // no longer showing: it must not install "# Mine" as the new script's baseline.
@@ -925,7 +926,8 @@ describe("createLiveEdit — adoptSwitch (opening another script)", () => {
     });
 });
 
-describe("createLiveEdit — reload single-flight and staleness", () => {    it("a stale reload response does not overwrite a buffer edited during the reload", async () => {
+describe("createLiveEdit — reload single-flight and staleness", () => {
+    it("a stale reload response does not overwrite a buffer edited during the reload", async () => {
         const h = harness();
         const live = h.make("auto");
         live.onEdit("# New");

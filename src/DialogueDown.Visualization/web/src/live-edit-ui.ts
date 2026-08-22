@@ -38,6 +38,8 @@ export interface DocumentBinding {
     markDirty(dirty: boolean): void;
     /** Replace this document's editor content — restoring a saved baseline or external text. */
     setContent(source: string): void;
+    /** Show a different document in this editor, dropping the previous one's undo history. */
+    setDocument(source: string): void;
     /** Apply an accepted report beyond the graphs (config speakers, symbols, diagnostics). */
     applyReport(report: Report): void;
     /** Extract this document's on-disk editor source from a reload payload. */
@@ -150,6 +152,7 @@ export function initLiveEditUi(app: AppController, actions: LiveEditActions): Li
             loadFromDisk: () => loadFromDisk(binding),
             applyReport: (report) => binding.applyReport(report),
             setContent: (source) => binding.setContent(source),
+            setDocument: (source) => binding.setDocument(source),
             setDirty: (dirty) => {
                 binding.markDirty(dirty);
                 reflectActiveDocument();

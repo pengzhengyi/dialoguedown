@@ -84,6 +84,11 @@ export interface LiveEditPorts {
     applyReport(report: Report): void;
     /** Replace the editor's content — restoring a saved baseline (discard) or external text (reload). */
     setContent(source: string): void;
+    /**
+     * Show a **different** document in the editor. Unlike {@link setContent} it drops the undo
+     * history, which belonged to the document being left behind.
+     */
+    setDocument(source: string): void;
     /** Show or hide this document's unsaved (dirty) marker. */
     setDirty(dirty: boolean): void;
     /** Publish the accessible save status (and an optional detail message). */
@@ -677,7 +682,7 @@ export function createLiveEdit(
             clearQueue();
             diskEpoch += 1;
             restoring = true;
-            ports.setContent(source);
+            ports.setDocument(source);
             restoring = false;
             buffer = source;
             savedBaseline = source;
