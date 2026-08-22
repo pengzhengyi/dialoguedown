@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Serving;
@@ -8,6 +7,10 @@ namespace DialogueDown.Visualization.Live.Tests;
 
 public sealed class ServedShellRunnerTests
 {
+    // A deadline, not a wait: reached only when the runner never opens anything, which turns a
+    // hang into a failure that says so.
+    private static readonly TimeSpan _patience = TimeSpan.FromSeconds(10);
+
     [Fact]
     public async Task RunAsync_InvalidRoot_ReturnsOne()
     {
@@ -42,7 +45,7 @@ public sealed class ServedShellRunnerTests
             script: null, root: tree.Root, ReportMode.View, port: 0, noOpen: false,
             AppliedConfiguration.WithoutFile(CompilerOptions.Default),
             new StringWriter(), new StringWriter(), stop.Token);
-        await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
+        await browser.FirstOpened.WaitAsync(_patience, TestContext.Current.CancellationToken);
 
         var url = Assert.Single(browser.Opened);
         Assert.StartsWith("http://127.0.0.1:", url);
@@ -71,7 +74,7 @@ public sealed class ServedShellRunnerTests
             scriptPath, tree.Root, ReportMode.View, port: 0, noOpen: false,
             AppliedConfiguration.WithoutFile(CompilerOptions.Default),
             new StringWriter(), new StringWriter(), stop.Token);
-        await WaitUntilAsync(() => browser.Opened.Count > 0, TimeSpan.FromSeconds(10));
+        await browser.FirstOpened.WaitAsync(_patience, TestContext.Current.CancellationToken);
 
         // A script opens directly on its report under the /r mount, and that report carries the
         // active document (its project payload names the script).
@@ -84,17 +87,4 @@ public sealed class ServedShellRunnerTests
         Assert.Equal(0, await task);
     }
 
-    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        while (!condition())
-        {
-            if (stopwatch.Elapsed > timeout)
-            {
-                throw new TimeoutException("Condition was not met in time.");
-            }
-
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-        }
-    }
 }
