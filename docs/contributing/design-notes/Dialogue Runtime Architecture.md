@@ -131,14 +131,13 @@ A playbook holds what *playing* needs and nothing else.
   "requires": ["core"],
   "uses": [],
   "script": "chapter-01.dialogue.md",
-  "entries": { "start": 0 },
+  "entry": 0,
   "anchors": { "the-inn": 4 },
   "nodes": [
     {
       "id": 0,
       "kind": "line",
       "speaker": { "name": "Alice" },
-      "needs": ["Alice.FavoriteColor"],
       "speech": [
         { "kind": "text", "text": "My favorite color is " },
         { "kind": "query", "key": "Alice.FavoriteColor" },
@@ -150,7 +149,6 @@ A playbook holds what *playing* needs and nothing else.
       "id": 1,
       "kind": "choice",
       "ordered": false,
-      "needs": ["IsCurious"],
       "out": [
         {
           "kind": "option",
@@ -171,9 +169,9 @@ A playbook holds what *playing* needs and nothing else.
 
 Three fields carry more weight than they look:
 
-- **`needs`** lists every query key required to leave a node. Because guards and
-  interpolations are known at compile time, a runner asks **once per node, in one
-  batch** — and a node with no queries costs no round trip at all.
+- A runner asks **once per node, in one batch**, because it gathers the keys a node
+  needs by walking the node it just arrived at. The artifact does not repeat them:
+  a derivable fact stored twice is a fact that can disagree with itself.
 - **`label`** is the option's menu text, compiled rather than discovered. See
   [D7](#d7--options-carry-a-compiled-label).
 - **`to`** is a node reference: a **number** for a local node, or a **string** in
@@ -719,16 +717,16 @@ while a standard `Transcript` shape still lets conformance fixtures assert it.
 Everything the notes and issues already promise, and the insurance each needs in
 version 0. The cost column is what a retrofit would break.
 
-| Expansion                     | Source                                                       | Retrofit cost                     | Insurance in v0                                                                                            |
-| ----------------------------- | ------------------------------------------------------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Cross-file jumps              | [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) | Every playbook **and** every save | A node reference is a `number \| string` union from day one, in both the playbook and `PlayState`          |
-| Negation, expressions         | [Conditional Jump](./Conditional%20Jump.md) D5               | Every playbook                    | A guard is an object with a `kind`, never a bare string, so `not` and `and` are additive                   |
-| Detour and return             | [Progression Order](./Progression%20Order.md)                | Every save file                   | `PlayState` carries a **call stack** from v0, though nothing pushes to it yet                              |
-| `#START`, cross-file entry    | [Progression Order](./Progression%20Order.md)                | The runner API                    | `entries` is a **table**, not a single field                                                               |
-| Hide versus disable an option | [Conditional Choice](./Conditional%20Choice.md)              | The host API                      | [D8](#d8--a-menu-shows-unavailable-options)                                                                |
-| Weight re-rolls on replay     | [Random Choice](./Random%20Choice.md)                        | Saves and conformance             | Entropy is a seam; the draw cursor lives in `PlayState`                                                    |
-| Localization                  | —                                                            | Every script                      | An optional `lineId` is reserved in the schema and left unpopulated; the identity scheme gets its own note |
-| Binary encoding               | —                                                            | Nothing                           | The writer is a seam; text and binary differ only in encoding                                              |
+| Expansion                     | Source                                                       | Retrofit cost                   | Insurance in v0                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Cross-file jumps              | [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) | None — the widening is additive | A playbook using them declares `cross-file-jump`, so an older runner refuses it whole rather than misreading a reference |
+| Negation, expressions         | [Conditional Jump](./Conditional%20Jump.md) D5               | Every playbook                  | A guard is an object with a `kind`, never a bare string, so `not` and `and` are additive                                 |
+| Detour and return             | [Progression Order](./Progression%20Order.md)                | Every save file                 | `PlayState` carries a **call stack** from v0, though nothing pushes to it yet                                            |
+| `#START`, cross-file entry    | [Progression Order](./Progression%20Order.md)                | None — a new field is additive  | `anchors` already names every scene a host may start at; `entry` states only the default                                 |
+| Hide versus disable an option | [Conditional Choice](./Conditional%20Choice.md)              | The host API                    | [D8](#d8--a-menu-shows-unavailable-options)                                                                              |
+| Weight re-rolls on replay     | [Random Choice](./Random%20Choice.md)                        | Saves and conformance           | Entropy is a seam; the draw cursor lives in `PlayState`                                                                  |
+| Localization                  | —                                                            | Every script                    | An optional `lineId` is reserved in the schema and left unpopulated; the identity scheme gets its own note               |
+| Binary encoding               | —                                                            | Nothing                         | The writer is a seam; text and binary differ only in encoding                                                            |
 
 Anything this table misses is still recoverable through
 [capabilities](#compatibility) — an old runner refuses rather than misplays. That

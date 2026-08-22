@@ -15,4 +15,12 @@ internal sealed record RegionTree(IReadOnlyList<Region> Roots)
         var materialized = roots.ToArray();
         return materialized.Length == 0 ? Empty : new RegionTree(materialized);
     }
+
+    /// <summary>
+    /// Every region in the overlay, depth-first in document order — a region before those nested
+    /// within it. A nested region is addressable in its own right, so a caller that means "every
+    /// scene" means this rather than only the roots.
+    /// </summary>
+    /// <returns>The roots and everything under them.</returns>
+    public IEnumerable<Region> All() => Roots.SelectMany(root => root.DescendantsAndSelf());
 }

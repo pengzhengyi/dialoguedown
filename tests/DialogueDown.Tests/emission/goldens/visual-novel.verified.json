@@ -1,0 +1,1419 @@
+﻿{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "visual-novel.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "the-confession": 33,
+    "the-platform": 0,
+    "under-one-umbrella": 13
+  },
+  "speakers": [
+    {
+      "default": true,
+      "tags": []
+    },
+    {
+      "name": "Yuki",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "control",
+      "id": 0,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowBackground",
+          "args": [
+            "train platform",
+            "rainy evening"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlayBgm",
+          "args": [
+            "wistful_piano"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The "
+        },
+        {
+          "kind": "query",
+          "key": "Time"
+        },
+        {
+          "kind": "text",
+          "text": " train is late, and the platform is empty except for the two of you."
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "You are "
+        },
+        {
+          "kind": "query",
+          "key": "PlayerName"
+        },
+        {
+          "kind": "text",
+          "text": ", and you have rehearsed this a dozen times without ever"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "saying it."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 2
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "shy"
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Yuki @yuki "
+        },
+        {
+          "kind": "tag",
+          "name": "heroine"
+        },
+        {
+          "kind": "text",
+          "text": ": You did not have to wait with me,"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "you know. It is "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "pouring"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "I know"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": ", you think. "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "That was rather the point."
+            }
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 4,
+      "out": [
+        {
+          "kind": "option",
+          "target": 5,
+          "label": [
+            {
+              "kind": "text",
+              "text": "I like the rain. And the company."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 9,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Just making sure you get home safe."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 5,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "I like the rain. And the company."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 6
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 6,
+      "out": [
+        {
+          "kind": "option",
+          "target": 7,
+          "label": [
+            {
+              "kind": "custom-command",
+              "name": "ShowSprite",
+              "args": [
+                "yuki",
+                "warm"
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " Yuki: "
+            },
+            {
+              "kind": "default-command",
+              "action": "Yuki hides a smile behind her sleeve"
+            },
+            {
+              "kind": "break"
+            },
+            {
+              "kind": "text",
+              "text": "...Then I will not argue."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 8,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 7,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "warm"
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Yuki: "
+        },
+        {
+          "kind": "default-command",
+          "action": "Yuki hides a smile behind her sleeve"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "...Then I will not argue."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 13
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 8,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 13,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Under One Umbrella"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 9,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Just making sure you get home safe."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 10
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 10,
+      "out": [
+        {
+          "kind": "option",
+          "target": 11,
+          "label": [
+            {
+              "kind": "custom-command",
+              "name": "ShowSprite",
+              "args": [
+                "yuki",
+                "soft"
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " Yuki: That is very like you. Careful, and kind"
+            },
+            {
+              "kind": "break"
+            },
+            {
+              "kind": "text",
+              "text": "about it."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 12,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 11,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "soft"
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Yuki: That is very like you. Careful, and kind"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "about it."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 13
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 12,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 13,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Under One Umbrella"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 13,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "close"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlayBgm",
+          "args": [
+            "closer"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 14
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 14,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Her umbrella is small, so you both lean toward its center, shoulders nearly"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "touching. The rain writes soft static over everything else."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 15
+        }
+      ]
+    },
+    {
+      "kind": "random-choice",
+      "id": 15,
+      "out": [
+        {
+          "kind": "random-option",
+          "target": 16,
+          "weight": {
+            "kind": "query",
+            "key": "Yuki.Warmth"
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 17,
+          "weight": {
+            "kind": "query",
+            "key": "Yuki.Reserve"
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 18,
+          "weight": {
+            "kind": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 16,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "...Is this all right?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 19
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 17,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "There \u2014 that keeps us both dry."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 19
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 18,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The rain does not seem to be stopping."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 19
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 19,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Can I ask you something "
+        },
+        {
+          "kind": "styled",
+          "style": "strikethrough",
+          "children": [
+            {
+              "kind": "text",
+              "text": "silly"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " real? If the train never came \u2014 if it just"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "stayed"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " late forever \u2014 would that be so bad?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 20
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 20,
+      "out": [
+        {
+          "kind": "option",
+          "target": 21,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Not if you were the one stranded with me."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 25,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The train always comes eventually. That is the sad part."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 29,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Say nothing, and just listen to the rain with her."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 21,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Not if you were the one stranded with me."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 22
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 22,
+      "out": [
+        {
+          "kind": "option",
+          "target": 23,
+          "label": [
+            {
+              "kind": "custom-command",
+              "name": "ShowSprite",
+              "args": [
+                "yuki",
+                "blushing"
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " Yuki: You\u2014 you cannot just "
+            },
+            {
+              "kind": "styled",
+              "style": "italic",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "say"
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " things like"
+            },
+            {
+              "kind": "break"
+            },
+            {
+              "kind": "text",
+              "text": "that."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 24,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 23,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "blushing"
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Yuki: You\u2014 you cannot just "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "say"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " things like"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "that."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 33
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 24,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 33,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Confession"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 25,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The train always comes eventually. That is the sad part."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 26
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 26,
+      "out": [
+        {
+          "kind": "option",
+          "target": 27,
+          "label": [
+            {
+              "kind": "custom-command",
+              "name": "ShowSprite",
+              "args": [
+                "yuki",
+                "wistful"
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " Yuki: Mm. Eventually."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 28,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 27,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "wistful"
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Yuki: Mm. Eventually."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 33
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 28,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 33,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Confession"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 29,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Say nothing, and just listen to the rain with her."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 30
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 30,
+      "out": [
+        {
+          "kind": "option",
+          "target": 31,
+          "label": [
+            {
+              "kind": "styled",
+              "style": "italic",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "Some silences are answers too"
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": ", you think."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 32,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 31,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "Some silences are answers too"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": ", you think."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 33
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 32,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 33,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Confession"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 33,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowBackground",
+          "args": [
+            "platform",
+            "headlights approaching"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlayBgm",
+          "args": [
+            "crescendo"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 34
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 34,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Far down the line, a single headlight swells out of the dark. The last train,"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "finally, is coming."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 35
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 35,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "urgent"
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Yuki: Before it gets here \u2014 "
+        },
+        {
+          "kind": "query",
+          "key": "PlayerName"
+        },
+        {
+          "kind": "text",
+          "text": ", I have"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "to\u2014"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 36
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 36,
+      "out": [
+        {
+          "kind": "option",
+          "target": 37,
+          "label": [
+            {
+              "kind": "styled",
+              "style": "bold",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "Say it first."
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " Tell her the thing you rehearsed."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 40,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Wait, and let her finish."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 37,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "styled",
+          "style": "bold",
+          "children": [
+            {
+              "kind": "text",
+              "text": "Say it first."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " Tell her the thing you rehearsed."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 38
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 38,
+      "out": [
+        {
+          "kind": "option",
+          "target": 39,
+          "label": [
+            {
+              "kind": "styled",
+              "style": "italic",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "No more waiting."
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " You say her name, and then the truth of it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 39,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "No more waiting."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " You say her name, and then the truth of it."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 43
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 40,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Wait, and let her finish."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 41
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 41,
+      "out": [
+        {
+          "kind": "option",
+          "target": 42,
+          "label": [
+            {
+              "kind": "text",
+              "text": "You hold still, and let her keep the words she came all this way with."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 42,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You hold still, and let her keep the words she came all this way with."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 43
+        }
+      ]
+    },
+    {
+      "kind": "branch",
+      "id": 43,
+      "out": [
+        {
+          "kind": "branch",
+          "target": 44,
+          "order": 0,
+          "condition": {
+            "kind": "key",
+            "key": "Yuki.LovesPlayer"
+          }
+        },
+        {
+          "kind": "branch",
+          "target": 48,
+          "order": 1
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 44,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "radiant"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlayBgm",
+          "args": [
+            "theme_together"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 45
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 45,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "Oh."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " You too? All this time, you too? "
+        },
+        {
+          "kind": "image",
+          "source": "assets/umbrella-rain.jpg",
+          "alt": [
+            {
+              "kind": "text",
+              "text": "the rain over your one umbrella "
+            },
+            {
+              "kind": "tag",
+              "name": "size",
+              "value": "large"
+            },
+            {
+              "kind": "text",
+              "text": " "
+            },
+            {
+              "kind": "tag",
+              "name": "align",
+              "value": "center"
+            }
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 46
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 46,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The train sighs to a stop, doors open \u2014 and neither of you moves to board it."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 47
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 47,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 51,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 48,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowSprite",
+          "args": [
+            "yuki",
+            "gentle"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlayBgm",
+          "args": [
+            "bittersweet"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 49
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 49,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "I am glad you told me. I truly am. Let us start as friends \u2014 the real"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "kind \u2014 and see where the next train takes us."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 50
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 50,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 51,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 51,
+      "out": []
+    }
+  ]
+}

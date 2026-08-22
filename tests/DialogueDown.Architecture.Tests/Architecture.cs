@@ -1,6 +1,7 @@
 using System.Reflection;
 using DialogueDown.Compilation;
 using DialogueDown.ConfigurationLoader;
+using DialogueDown.Playbook;
 using DialogueDown.Visualization;
 using DialogueDown.Visualization.Live;
 
@@ -19,6 +20,7 @@ internal static class Architecture
     public const string Visualization = "DialogueDown.Visualization";
     public const string VisualizationLive = "DialogueDown.Visualization.Live";
     public const string ConfigurationLoader = "DialogueDown.ConfigurationLoader";
+    public const string Playbook = "DialogueDown.Playbook";
 
     // Core internal layers, in pipeline order.
     public const string Common = "DialogueDown.Common";
@@ -53,6 +55,9 @@ internal static class Architecture
     public static readonly Assembly ConfigurationLoaderAssembly =
         typeof(TomlConfigurationLoader).Assembly;
 
+    /// <summary>The portable playbook format: the types a runtime loads, and its reader.</summary>
+    public static readonly Assembly PlaybookAssembly = typeof(PlaybookFormat).Assembly;
+
     /// <summary>
     /// The command-line front-end. Loaded by name because the CLI exposes no public
     /// type to anchor with <c>typeof</c> — even its entry point is the internal
@@ -65,6 +70,7 @@ internal static class Architecture
     public static readonly IReadOnlyList<Assembly> AllAssemblies =
     [
         CoreAssembly,
+        PlaybookAssembly,
         ConfigurationLoaderAssembly,
         VisualizationAssembly,
         VisualizationLiveAssembly,

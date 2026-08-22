@@ -25,6 +25,19 @@ public sealed class NodeCreationPassTests
     }
 
     [Fact]
+    public void Apply_LineEndingInAJump_KeepsOnlyWhatIsSpoken()
+    {
+        // In the graph the jump is the divert edge. Leaving it in the speech as well would say
+        // one thing twice, and would read the target's name out to the player.
+        var graph = Build("Guide: Which way? => [the end](#END)");
+
+        var line = Assert.IsType<LineNode>(graph.Node(graph.Entry));
+
+        Assert.Equal("Which way? ", InlineText.Of(line.Speech));
+        Assert.DoesNotContain(line.Speech, fragment => fragment is Jump);
+    }
+
+    [Fact]
     public void Apply_EmptyDocument_CreatesOnlyTheEndNode()
     {
         var graph = Build("");

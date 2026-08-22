@@ -29,7 +29,7 @@ internal sealed class NodeCreationPass : GraphBuildPass
                 draft.AddBlock(
                     line,
                     id => new LineNodeDraft(
-                        id, line.Span, speaker, line.Speech, line.Condition));
+                        id, line.Span, speaker, line.Spoken(), line.Condition));
                 break;
             case Choices choices:
                 draft.AddBlock(

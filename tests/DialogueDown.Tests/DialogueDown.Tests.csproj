@@ -16,6 +16,7 @@
     <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Verify.XunitV3" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
@@ -25,6 +26,15 @@
 
   <ItemGroup>
     <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The shipped examples, so tests read them from the output rather than hunting for the
+         checkout they were built from. -->
+    <!-- The published schema, so a test can check the URL playbooks advertise is the one here. -->
+    <None Include="..\..\schema\*.schema.json"
+          Link="schema\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\examples\*.dialogue.md"
+          Link="examples\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

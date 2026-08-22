@@ -1,0 +1,1248 @@
+﻿{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "highrise-fire.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "outside": 45,
+    "rescued": 50,
+    "shelter-in-place": 32,
+    "the-alarm": 0,
+    "the-door": 10,
+    "the-elevator": 27,
+    "the-stairwell": 17
+  },
+  "speakers": [
+    {
+      "id": "narrator",
+      "name": "Narrator",
+      "default": true,
+      "tags": []
+    },
+    {
+      "id": "marshal",
+      "name": "Marshal",
+      "tags": [
+        {
+          "name": "calm"
+        }
+      ]
+    },
+    {
+      "name": "You",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "control",
+      "id": 0,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowBackground",
+          "args": [
+            "apartment",
+            "night"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlaySound",
+          "args": [
+            "fire_alarm"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The smoke detector shrieks. You are on floor"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "query",
+          "key": "Floor"
+        },
+        {
+          "kind": "text",
+          "text": ", and the hallway already smells of smoke."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 2
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Breathe \u2014 you have practiced this. First move: what do you"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "do?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 3,
+      "ordered": true,
+      "out": [
+        {
+          "kind": "option",
+          "target": 4,
+          "label": []
+        },
+        {
+          "kind": "option",
+          "target": 5,
+          "label": []
+        },
+        {
+          "kind": "option",
+          "target": 6,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Grab the laptop and the photos first "
+            },
+            {
+              "kind": "tag",
+              "name": "panic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 4,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 10,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Feel the hallway door before you open it"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 5,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 27,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Call the elevator and hurry down"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 6,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Grab the laptop and the photos first "
+        },
+        {
+          "kind": "tag",
+          "name": "panic"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 7
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 7,
+      "out": [
+        {
+          "kind": "option",
+          "target": 8,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Things can be replaced. "
+            },
+            {
+              "kind": "styled",
+              "style": "bold",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "You"
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " cannot. Leave them and move."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 9,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 8,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Things can be replaced. "
+        },
+        {
+          "kind": "styled",
+          "style": "bold",
+          "children": [
+            {
+              "kind": "text",
+              "text": "You"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " cannot. Leave them and move."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 10
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 9,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 10,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Feel the hallway door before you open it"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 10,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You reach for the handle. "
+        },
+        {
+          "kind": "default-command",
+          "action": "the resident feels the door with the back of a hand"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 11
+        }
+      ]
+    },
+    {
+      "kind": "branch",
+      "id": 11,
+      "out": [
+        {
+          "kind": "branch",
+          "target": 12,
+          "order": 0,
+          "condition": {
+            "kind": "key",
+            "key": "DoorIsHot"
+          }
+        },
+        {
+          "kind": "branch",
+          "target": 15,
+          "order": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 12,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The metal is "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "hot"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": ". Fire is close on the other side."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 13
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 13,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Do not open it. Keep it shut \u2014 this room is your refuge now."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 14
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 14,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 32,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Shelter in place"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 15,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The door is cool, and no smoke seeps beneath it. It is safe to open, slowly."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 16
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 16,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 17,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Head for the stairwell"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 17,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowBackground",
+          "args": [
+            "stairwell",
+            "hazy"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 18
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 18,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Smoke drifts along the ceiling in a slow grey river. The stairwell door waits just"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "ahead."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 19
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 19,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Never the elevator in a fire \u2014 always the stairs. Pull each door shut"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "behind you; every one buys time."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 20
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 20,
+      "out": [
+        {
+          "kind": "option",
+          "target": 21,
+          "label": []
+        },
+        {
+          "kind": "option",
+          "target": 22,
+          "label": [],
+          "condition": {
+            "kind": "key",
+            "key": "Resident.KnowsExits"
+          }
+        },
+        {
+          "kind": "option",
+          "target": 23,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Stand tall and run through the smoke "
+            },
+            {
+              "kind": "tag",
+              "name": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 21,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 45,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Crawl low and take the stairs down"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 22,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 45,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Use the second exit you scouted last week"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 23,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Stand tall and run through the smoke "
+        },
+        {
+          "kind": "tag",
+          "name": "danger"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 24
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 24,
+      "out": [
+        {
+          "kind": "option",
+          "target": 25,
+          "label": [
+            {
+              "kind": "text",
+              "text": "No \u2014 the breathable air is "
+            },
+            {
+              "kind": "styled",
+              "style": "bold",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "low"
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": ". Get down and crawl."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 26,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 25,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "No \u2014 the breathable air is "
+        },
+        {
+          "kind": "styled",
+          "style": "bold",
+          "children": [
+            {
+              "kind": "text",
+              "text": "low"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": ". Get down and crawl."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 27
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 26,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 45,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Crawl low and take the stairs down"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 27,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "PlaySound",
+          "args": [
+            "elevator_button"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 28
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 28,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You press the call button. The panel light stutters once \u2014 and goes dark."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 29
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 29,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "In a fire, an elevator can stall on the burning floor or fill with smoke."
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "This is the one door you must never choose."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 30
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 30,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Back to your own door. Let us do this right."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 31
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 31,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 10,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Feel the hallway door before you open it"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 32,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowBackground",
+          "args": [
+            "apartment",
+            "sealed"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 33
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 33,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You keep the hot door shut and back away. Help will come to you here."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 34
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 34,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Seal the gaps. Wet towels along the bottom of the door hold the smoke"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "back."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 35
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 35,
+      "out": [
+        {
+          "kind": "option",
+          "target": 36,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Pack wet towels into the door gap and over the vents."
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 37,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Throw the windows wide open "
+            },
+            {
+              "kind": "tag",
+              "name": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 36,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Pack wet towels into the door gap and over the vents."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 40
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 37,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Throw the windows wide open "
+        },
+        {
+          "kind": "tag",
+          "name": "danger"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 38
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 38,
+      "out": [
+        {
+          "kind": "option",
+          "target": 39,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Not wide \u2014 a hard draft pulls smoke in. A hand\u0027s width at the top"
+            },
+            {
+              "kind": "break"
+            },
+            {
+              "kind": "text",
+              "text": "is enough."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 39,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Not wide \u2014 a hard draft pulls smoke in. A hand\u0027s width at the top"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "is enough."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 40
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 40,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Now call emergency services and give them your exact location: floor "
+        },
+        {
+          "kind": "query",
+          "key": "Floor"
+        },
+        {
+          "kind": "text",
+          "text": ","
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "the door that faces the street."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 41
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 41,
+      "out": [
+        {
+          "kind": "option",
+          "target": 42,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Signal at the glass with your flashlight."
+            }
+          ],
+          "condition": {
+            "kind": "key",
+            "key": "Resident.HasLight"
+          }
+        },
+        {
+          "kind": "option",
+          "target": 43,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Wave a bright cloth from the window so the crews can find you."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 42,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Signal at the glass with your flashlight."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 44
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 43,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Wave a bright cloth from the window so the crews can find you."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 44
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 44,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 50,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Rescued"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 45,
+      "effects": [
+        {
+          "kind": "custom-command",
+          "name": "ShowBackground",
+          "args": [
+            "street",
+            "flashing lights"
+          ]
+        },
+        {
+          "kind": "custom-command",
+          "name": "PlaySound",
+          "args": [
+            "sirens"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 46
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 46,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Cold night air. You are out, and the muster point is across the road."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 47
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 47,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The hardest rule of all now \u2014 "
+        },
+        {
+          "kind": "styled",
+          "style": "bold",
+          "children": [
+            {
+              "kind": "text",
+              "text": "never go back inside"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": ". Account for your"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "neighbors from here, and let the firefighters do the rest."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 48
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 48,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "I made it. And next time, I will know exactly what to do."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 49
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 49,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 53,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 50,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "A ladder rises to the window, and a gloved hand reaches through the smoke."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 51
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 51,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "A closed door, a sealed room, and a signal they could see \u2014 you did every"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "part of it right. "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "That"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " is how people come home."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 52
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 52,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 53,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 53,
+      "out": []
+    }
+  ]
+}

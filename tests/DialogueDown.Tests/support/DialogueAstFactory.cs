@@ -20,6 +20,20 @@ internal static class DialogueAstFactory
 
     public static Text Text(string content) => new(content, SourceSpanFactory.Span());
 
+    public static StyledText StyledText(SpeechStyle style, params InlineFragment[] children) =>
+        new(style, children.Length == 0 ? [Text("styled")] : children, SourceSpanFactory.Span());
+
+    public static Image Image(string source, params InlineFragment[] alt) =>
+        new(source, alt.Length == 0 ? [Text("alt")] : alt, SourceSpanFactory.Span());
+
+    public static Query Query(string key) => new(key, SourceSpanFactory.Span());
+
+    public static DefaultCommand DefaultCommand(string action) =>
+        new(action, SourceSpanFactory.Span());
+
+    public static CustomCommand CustomCommand(string name, params string[] args) =>
+        new(name, args, SourceSpanFactory.Span());
+
     public static Jump Jump(string target, params InlineFragment[] label) =>
         new(target, label, SourceSpanFactory.Span());
 

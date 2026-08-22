@@ -42,6 +42,16 @@ jobs:
       - name: Test
         run: dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 
+      # Against the schema committed here, never the published URL, so a validation never
+      # depends on the network or on Pages having caught up with the branch.
+      - name: Validate the playbook schema and every golden against it
+        run: |
+          pipx run check-jsonschema --check-metaschema schema/*.schema.json
+          for schema in schema/*.schema.json; do
+            pipx run check-jsonschema --schemafile "$schema" \
+              tests/DialogueDown.Tests/emission/goldens/*.verified.json
+          done
+
       - name: Restore local tools
         run: dotnet tool restore
 
