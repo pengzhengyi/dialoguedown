@@ -1,4 +1,3 @@
-using System.Text.Json;
 using DialogueDown.Compilation;
 using DialogueDown.Emission;
 using DialogueDown.Graph;
@@ -65,11 +64,11 @@ public sealed class PlaybookWriterTests
     {
         // Compared as text, because the format is the bytes: a document that reads back to the
         // same JSON lost nothing on the way through.
-        var written = Serialize(_writer.Write(Graph([EndNode(12), EndNode(3)], entry: 3), Script));
+        var written = Playbooks.Serialize(_writer.Write(Graph([EndNode(12), EndNode(3)], entry: 3), Script));
 
         var read = PlaybookReader.Default.Read(written);
 
-        Assert.Equal(written, Serialize(read));
+        Assert.Equal(written, Playbooks.Serialize(read));
     }
 
     [Fact]
@@ -91,9 +90,9 @@ public sealed class PlaybookWriterTests
                 Innkeeper: Welcome.
                 """);
 
-        var written = Serialize(_writer.Write(compilation, Script));
+        var written = Playbooks.Serialize(_writer.Write(compilation, Script));
 
-        Assert.Equal(written, Serialize(PlaybookReader.Default.Read(written)));
+        Assert.Equal(written, Playbooks.Serialize(PlaybookReader.Default.Read(written)));
     }
 
     [Fact]
@@ -133,9 +132,6 @@ public sealed class PlaybookWriterTests
     {
         Assert.Throws<ArgumentNullException>(() => _writer.Write(OneEndNode(), null!));
     }
-
-    private static string Serialize(PlaybookDocument playbook) =>
-        JsonSerializer.Serialize(playbook, PlaybookJson.Options);
 
     private static DialogueGraph OneEndNode() => Graph([EndNode(0)], entry: 0);
 

@@ -22,9 +22,12 @@ internal static class Pipeline
     private static readonly ISemanticAnalyzer _analyzer = new SemanticAnalyzer(new SemanticAnalyzerOptions([]));
     private static readonly IScriptCompiler _compiler = ScriptCompilerFactory.CreateDefault();
 
+    /// <summary>Compiles <paramref name="source"/>, however it turns out.</summary>
+    public static CompilationResult Compile(string source) => _compiler.Compile(source);
+
     /// <summary>Compiles <paramref name="source"/> all the way, asserting it got there.</summary>
     public static CompilationSuccess Compiled(string source) =>
-        CompilationAssert.AssertSuccess(_compiler.Compile(source));
+        CompilationAssert.AssertSuccess(Compile(source));
 
     /// <summary>The graph <paramref name="source"/> compiles to.</summary>
     public static DialogueGraph Graph(string source) => Compiled(source).Graph;

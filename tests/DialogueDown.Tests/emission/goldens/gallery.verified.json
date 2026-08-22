@@ -1,0 +1,797 @@
+﻿{
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "gallery.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "the-crossroads": 0,
+    "the-dark-forest": 20,
+    "the-market": 11,
+    "the-quiet-lake": 33
+  },
+  "speakers": [
+    {
+      "default": true,
+      "tags": []
+    },
+    {
+      "id": "guide",
+      "name": "Guide",
+      "tags": [
+        {
+          "name": "wise"
+        }
+      ]
+    },
+    {
+      "name": "Alice",
+      "tags": []
+    },
+    {
+      "id": "merchant",
+      "name": "Merchant",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "control",
+      "id": 0,
+      "effects": [
+        {
+          "kind": "default-command",
+          "action": "fade in"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "A weathered signpost marks where three roads meet."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 2
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Welcome, traveler. The road behind you is closed \u2014 you must"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "choose where to go next."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "I have walked for days. Which way leads to the "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "market"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The market lies east, past the old mill. But beware \u2014 the west road turns"
+        },
+        {
+          "kind": "break"
+        },
+        {
+          "kind": "styled",
+          "style": "bold",
+          "children": [
+            {
+              "kind": "text",
+              "text": "dangerous"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": " after dark. "
+        },
+        {
+          "kind": "custom-command",
+          "name": "playSound",
+          "args": [
+            "wind_howl"
+          ]
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 5,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "What will you do, "
+        },
+        {
+          "kind": "query",
+          "key": "playerName"
+        },
+        {
+          "kind": "text",
+          "text": "?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 6
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 6,
+      "out": [
+        {
+          "kind": "option",
+          "target": 7,
+          "label": []
+        },
+        {
+          "kind": "option",
+          "target": 8,
+          "label": []
+        },
+        {
+          "kind": "option",
+          "target": 9,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Slip onto the hidden trail through the hills."
+            }
+          ],
+          "condition": {
+            "kind": "key",
+            "key": "Alice.HasMap"
+          }
+        },
+        {
+          "kind": "option",
+          "target": 10,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Ask the guide for advice first "
+            },
+            {
+              "kind": "tag",
+              "name": "cautious"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 7,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 11,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Take the east road to the market"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 8,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 20,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Brave the west road"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 9,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Slip onto the hidden trail through the hills."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 11
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 10,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Ask the guide for advice first "
+        },
+        {
+          "kind": "tag",
+          "name": "cautious"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 11
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 11,
+      "effects": [
+        {
+          "kind": "default-command",
+          "action": "crossfade"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 12
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 12,
+      "speaker": 3,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Fresh apples! Warm bread! Come, see my wares."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 13
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 13,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "This place is "
+        },
+        {
+          "kind": "styled",
+          "style": "italic",
+          "children": [
+            {
+              "kind": "text",
+              "text": "wonderful"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 14
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 14,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "And I still have the old map \u2014 good."
+        }
+      ],
+      "condition": {
+        "kind": "key",
+        "key": "Alice.HasMap"
+      },
+      "out": [
+        {
+          "kind": "succession",
+          "target": 15
+        }
+      ]
+    },
+    {
+      "kind": "branch",
+      "id": 15,
+      "out": [
+        {
+          "kind": "branch",
+          "target": 16,
+          "order": 0,
+          "condition": {
+            "kind": "key",
+            "key": "Alice.HasMap"
+          }
+        },
+        {
+          "kind": "branch",
+          "target": 18,
+          "order": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 16,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The old map marks a hidden trail back through the hills."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 17
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 17,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 20,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Follow the hidden trail"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 18,
+      "speaker": 3,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Without a map, the crossroads are the safer way out."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 19
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 19,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 0,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Leave town"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 20,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The trees close in overhead, and something rustles in the shadows. "
+        },
+        {
+          "kind": "tag",
+          "name": "mysterious"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 21
+        }
+      ]
+    },
+    {
+      "kind": "random-choice",
+      "id": 21,
+      "out": [
+        {
+          "kind": "random-option",
+          "target": 22,
+          "weight": {
+            "kind": "number",
+            "percentage": 60
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 23,
+          "weight": {
+            "kind": "number",
+            "percentage": 40
+          }
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 22,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "A fox darts across the path and vanishes."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 24
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 23,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "An owl watches you from a low branch."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 24
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 24,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Deeper in, the forest seems to weigh what it senses in you."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 25
+        }
+      ]
+    },
+    {
+      "kind": "random-choice",
+      "id": 25,
+      "out": [
+        {
+          "kind": "random-option",
+          "target": 26,
+          "weight": {
+            "kind": "query",
+            "key": "Alice.Courage"
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 27,
+          "weight": {
+            "kind": "query",
+            "key": "Alice.Fear"
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 28,
+          "weight": {
+            "kind": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 26,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Alice stands tall and presses on."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 29
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 27,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Alice startles at every shifting shadow."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 29
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 28,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Alice walks on, uncertain."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 29
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 29,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Maybe this was a "
+        },
+        {
+          "kind": "styled",
+          "style": "bold",
+          "children": [
+            {
+              "kind": "text",
+              "text": "mistake"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 30
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 30,
+      "out": [
+        {
+          "kind": "option",
+          "target": 31,
+          "label": []
+        },
+        {
+          "kind": "option",
+          "target": 32,
+          "label": []
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 31,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 0,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Turn back to the crossroads"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 32,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 33,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Follow the moonlight ahead"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 33,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The trees give way to a still lake, silver under the moon. The long road is over."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 34
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 34,
+      "speaker": 2,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "I found my own way, in the end."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 35
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 35,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 36,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 36,
+      "out": []
+    }
+  ]
+}
