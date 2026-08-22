@@ -181,7 +181,7 @@ internal sealed class GraphProjection
     /// declares it — a scene's heading — so a reader can be taken to where the region begins.
     /// </summary>
     private static IReadOnlyList<DisplayRegion> RegionsOf(RegionTree regions) =>
-        Descendants(regions.Roots)
+        regions.All()
             .OfType<SceneRegion>()
             .Select(scene => new DisplayRegion(
                 InlineText.Of(scene.Label).Trim(), "Scene", scene.Anchor)
@@ -219,7 +219,7 @@ internal sealed class GraphProjection
         RegionTree regions, IReadOnlyList<DialogueNode> nodes)
     {
         var owned = new Dictionary<NodeId, string>();
-        foreach (var region in Descendants(regions.Roots))
+        foreach (var region in regions.All())
         {
             if (region is not SceneRegion scene)
             {
@@ -248,18 +248,6 @@ internal sealed class GraphProjection
         }
 
         return sceneByNode;
-    }
-
-    private static IEnumerable<Region> Descendants(IReadOnlyList<Region> regions)
-    {
-        foreach (var region in regions)
-        {
-            yield return region;
-            foreach (var nested in Descendants(region.Subregions))
-            {
-                yield return nested;
-            }
-        }
     }
 
     private static string DisplayId(NodeId id) => $"n{id.Value}";

@@ -43,6 +43,17 @@ internal static class DialogueGraphFactory
     public static ControlNode ControlNode(int id, params GameCall[] effects) =>
         new(NodeId(id), new SourceSpan(0, 0), effects, []);
 
+    /// <summary>A scene named <paramref name="anchor"/>, nesting <paramref name="subregions"/>.</summary>
+    public static SceneRegion SceneRegion(string anchor, params Region[] subregions) =>
+        new(
+            new RegionId(0),
+            NodeId(0),
+            NodeId(0),
+            new HashSet<NodeId>(),
+            subregions,
+            [DialogueAstFactory.Text(anchor)],
+            anchor);
+
     /// <summary>The smallest valid graph: an End node a run starts and finishes on.</summary>
     public static DialogueGraph EmptyGraph()
     {
