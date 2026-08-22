@@ -1,3 +1,4 @@
+using DialogueDown.Common;
 using DialogueDown.Graph;
 using DialogueDown.Graph.Nodes;
 
@@ -13,10 +14,9 @@ namespace DialogueDown.Emission;
 /// </remarks>
 internal sealed class NodeNumbering
 {
-    private readonly IReadOnlyDictionary<NodeId, int> _positionById;
+    private readonly Numbering<NodeId> _numbering;
 
-    private NodeNumbering(IReadOnlyDictionary<NodeId, int> positionById) =>
-        _positionById = positionById;
+    private NodeNumbering(Numbering<NodeId> numbering) => _numbering = numbering;
 
     /// <summary>Numbers nodes by where they sit in the list.</summary>
     /// <param name="nodes">The graph's nodes, in the order they will be written.</param>
@@ -25,16 +25,14 @@ internal sealed class NodeNumbering
     {
         ArgumentNullException.ThrowIfNull(nodes);
 
-        return new NodeNumbering(nodes
-            .Select((node, position) => (node.Id, Position: position))
-            .ToDictionary(entry => entry.Id, entry => entry.Position));
+        return new NodeNumbering(Numbering<NodeId>.Of(nodes.Select(node => node.Id)));
     }
 
     /// <summary>Where the node with the given id will sit.</summary>
     /// <param name="id">The node to locate.</param>
     /// <returns>Its position in the playbook.</returns>
     public int Position(NodeId id) =>
-        _positionById.TryGetValue(id, out var position)
+        _numbering.TryPosition(id, out var position)
             ? position
             : throw new ArgumentException(
                 $"No node in this graph has id {id.Value}, so nothing can point at it.",
