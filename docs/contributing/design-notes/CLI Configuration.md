@@ -38,7 +38,8 @@ and in the report editor's **autocompletion**.
 
 **In scope:** a `--config` option on both commands, automatic discovery of a
 `dialogue.toml`, threading the resolved `CompilerOptions` into the `compile` compiler and
-the `visualize` report (static export, `--emit`, and the served/live session), and a
+the `visualize` report (static export and the served/live session), the `compile`
+stage emit, and a
 user-guide page documenting it. **Out of scope:** other config knobs (deferred in the
 Configuration note), and any change to the `dialogue.toml` schema or the loader.
 
@@ -79,7 +80,7 @@ assemblies never take a TOML dependency.
 - [x] An explicit `--config` path that is missing fails with a clear usage error; a
       malformed file surfaces the loader's located error.
 - [x] `compile` builds its compiler from the resolved options.
-- [x] `visualize` — static export, `--emit`, the served/live session, and the launcher —
+- [x] `visualize` — static export, the served/live session, and the shell —
       builds its report from the resolved options.
 - [x] Configured speakers appear in the report's completion symbols — including ones a
       line never uses — so the editor's speaker autocompletion offers them.

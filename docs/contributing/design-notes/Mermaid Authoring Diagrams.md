@@ -262,7 +262,7 @@ existing axe-based browser checks.
 
 ### D7 — Keep DOT emission; retire compiler-stage Mermaid emission
 
-`ddown visualize --emit dot` remains the current portable stage-graph output.
+`ddown compile --emit dot` remains the current portable stage-graph output.
 The Mermaid enum arm, renderer, tests, README example, and CLI documentation are
 removed. For one release, `--emit mermaid` receives a specific validation
 message directing writers to preview fenced Mermaid diagrams and graph-tool

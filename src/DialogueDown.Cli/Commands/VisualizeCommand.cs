@@ -12,7 +12,7 @@ namespace DialogueDown.Cli.Commands;
 /// toggled in the browser — with the Explorer sidebar alongside it. With no script it lands on
 /// that shell's empty state to browse or create one. <c>-o</c> is a non-interactive static export.
 /// Every report is compiled with the project's resolved
-/// <see cref="CompilerOptions"/>. Static and text exports are delegated to
+/// <see cref="CompilerOptions"/>. The static export is delegated to
 /// <see cref="IVisualizeRunner"/>; the served shell is driven through <see cref="IServedShellRunner"/>.
 /// </summary>
 internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
@@ -38,18 +38,6 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
     {
         ArgumentNullException.ThrowIfNull(settings);
         var hasScript = !string.IsNullOrWhiteSpace(settings.Script);
-
-        // A non-interactive emit writes DOT stage text to --output or stdout,
-        // never a server. Checked before the HTML export so `--emit dot -o x.dot` emits
-        // text rather than an HTML report. The format is validated in settings, so
-        // parsing here always succeeds.
-        if (settings.Emit is not null
-            && VisualizeSettings.TryParseEmitFormat(settings.Emit, out var format))
-        {
-            return Task.FromResult(
-                _runner.RunEmit(
-                    settings.Script, format, settings.Output, ConfigurationForScript(settings).Options));
-        }
 
         // A non-interactive HTML export never opens a server or the shell.
         if (settings.Output is not null)

@@ -1,8 +1,9 @@
-# Visualize CLI — emit DOT
+# Compile CLI — emit DOT
 
 > [!NOTE]
-> Status: **implemented**. `ddown visualize --emit dot` writes every compiler
-> stage as Graphviz DOT text.
+> Status: **implemented**. `ddown compile --emit dot` writes every compiler
+> stage as Graphviz DOT text. It began on `compile` and moved to `compile`,
+> where the other non-interactive exports live.
 
 ## Table of contents
 
@@ -27,7 +28,7 @@ Mermaid belong after a stable serialized dialogue/runtime IR exists.
 
 In scope:
 
-- `--emit dot` on `visualize`.
+- `--emit dot` on `compile`.
 - Standard-output and `--output` file destinations.
 - A `RenderText` seam that renders every current stage through `DotRenderer`.
 - Helpful validation for missing scripts, unknown formats, and the retired
@@ -44,7 +45,7 @@ Out of scope:
 
 ## Functionality checklist
 
-- [x] `visualize <script> --emit dot` writes every stage as DOT to standard
+- [x] `compile <script> --emit dot` writes every stage as DOT to standard
       output.
 - [x] `--emit dot -o <file>` writes the same text to a file.
 - [x] Each stage begins with a `// <stage title>` comment.
@@ -56,7 +57,7 @@ Out of scope:
 
 ```mermaid
 flowchart LR
-    cli["visualize --emit dot"] --> runner["IVisualizeRunner.RunEmit"]
+    cli["compile --emit dot"] --> runner["IVisualizeRunner.RunEmit"]
     runner --> viz["CompilationVisualizer.RenderText"]
     viz --> stages["BuildStages"]
     stages --> dot["DotRenderer"]
@@ -75,10 +76,10 @@ writes anything, then selects standard output or the requested file.
 
 ```bash
 # Emit every stage to standard output
-ddown visualize scene.dialogue.md --emit dot
+ddown compile scene.dialogue.md --emit dot
 
 # Write the same multi-stage text to a file
-ddown visualize scene.dialogue.md --emit dot -o scene.dot
+ddown compile scene.dialogue.md --emit dot -o scene.dot
 ```
 
 The output is one stream containing several `digraph` definitions. A consumer

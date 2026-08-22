@@ -349,8 +349,8 @@ Graph** tab — appears in every export automatically, but the `<ul class="stage
 on the landing page is written by hand. Diff the two:
 
 ```sh
-# Stage titles the visualizer emits, vs the stages the landing page advertises.
-ddown visualize examples/gallery.dialogue.md --emit dot \
+# Stage titles the compiler emits, vs the stages the landing page advertises.
+ddown compile examples/gallery.dialogue.md --emit dot \
   | sed -n 's|^// ||p' | sort > /tmp/report-stages.txt
 grep -oE '<strong>[^<]+</strong>' docs/demo/index.html \
   | sed 's/<[^>]*>//g' | grep -v '^Source$' | sort > /tmp/page-stages.txt
@@ -375,7 +375,7 @@ each construct the language accepts is among them:
 ```sh
 # Base construct kinds demonstrated across all examples (subtypes in () ignored).
 for f in examples/*.dialogue.md; do
-  ddown visualize "$f" --emit dot \
+  ddown compile "$f" --emit dot \
     | awk '/^\/\/ Dialogue AST/{on=1;next} /^\/\//{on=0}
            on && match($0,/label="[^"(\\]+/){print substr($0,RSTART+7,RLENGTH-7)}'
 done | sed 's/ *$//' | sort -u

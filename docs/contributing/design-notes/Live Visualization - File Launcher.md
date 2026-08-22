@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **superseded** (was Component 3 of live visualization). The launcher is
-> retired — the page by the
+> retired — the page replaced by the
 > [Unified Served Shell](./Live%20Visualization%20-%20Unified%20Served%20Shell.md):
 > its browse/open/create behavior lives on as the report's **Explorer** sidebar, and
 > its "pick a file first" landing is now an empty state inside the report shell. The
