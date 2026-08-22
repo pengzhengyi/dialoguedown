@@ -207,6 +207,31 @@ public sealed class MarkdownAstProjectionTests
         Assert.Equal("Go", Attribute(description, "label"));
     }
 
+    // A label is rarely plain text: it can hold a code span, styling, a nested link or image, and
+    // a line break. Each contributes its own reading, so the flattened label stays legible rather
+    // than dropping the styled or linked parts of what the writer wrote.
+    [Fact]
+    public void Describe_LinkLabel_FlattensEveryKindOfInlineItHolds()
+    {
+        var span = new SourceSpan(0, 4);
+        var description = _projection.Describe(
+            new LinkInline(
+                "#scene",
+                [
+                    new TextInline("go ", span),
+                    new CodeSpanInline("now", span),
+                    new EmphasisInline(EmphasisKind.Bold, [new TextInline(" fast", span)], span),
+                    new LineBreak(false, span),
+                    new LinkInline("#inner", [new TextInline("there", span)], span),
+                    new ImageInline("map.png", [new TextInline("map", span)], span),
+                ],
+                new SourceSpan(0, 48)));
+
+        // Text, then the code span's content, the emphasized run, the break as a space, and the
+        // nested link's and image's own text.
+        Assert.Equal("go now fast theremap", Attribute(description, "label"));
+    }
+
     [Fact]
     public void Describe_Image_IncludesSourceAndAlt()
     {

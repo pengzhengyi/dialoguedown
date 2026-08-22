@@ -137,6 +137,11 @@ changes easy to categorize.
 
 ### Changed
 
+- **CI gates branch coverage too** — a decision point can be fully line-covered with only one of
+  its paths ever taken, so the build now fails below **85% branch** as well as 90% line. The check
+  reads ReportGenerator's own summary rather than raw Cobertura, so line, branch, and method rates
+  come from one already-merged source.
+
 - **One home per concept in the documentation** — a committed duplication scan
   (`.github/scripts/find-doc-duplication.py`) compares word shingles across the docs
   tree, so a concept paraphrased in two places is caught rather than left to drift.

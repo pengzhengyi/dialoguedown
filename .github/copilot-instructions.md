@@ -27,7 +27,7 @@ dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
 dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 
-# Source-focused coverage (CI fails below 90% line coverage, warns below 100%)
+# Source-focused coverage (CI fails below 90% line or 85% branch, warns below 100% line)
 dotnet tool restore
 dotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include "[DialogueDown*]*" --minimum-expected-tests 3000
 

@@ -61,7 +61,10 @@ against the project and the figure drops to a quarter of the real one. Cobertura
 output is written under `TestResults/`, and the interactive report to
 `coverage-report/index.html`.
 
-CI fails below 90% line coverage and warns below 100%.
+CI fails below **90% line** or **85% branch** coverage, and warns below 100%
+line. Branch coverage is gated too because a decision point can be fully
+line-covered with only one of its paths ever taken — a gap a line-only gate
+cannot see.
 
 ### Core quality guardrails
 
