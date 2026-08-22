@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using DialogueDown.Compilation;
 using DialogueDown.Graph;
 using DialogueDown.Playbook;
@@ -43,7 +42,7 @@ internal sealed class PlaybookWriter : IPlaybookWriter
             Format(),
             script,
             nodes.Position(graph.Entry),
-            ImmutableSortedDictionary<string, int>.Empty,
+            AnchorMapping.Write(graph.Regions, nodes),
             speakers.Speakers,
             [.. graph.Nodes.Select(node => NodeMapping.Write(node, nodes, speakers))]);
     }
