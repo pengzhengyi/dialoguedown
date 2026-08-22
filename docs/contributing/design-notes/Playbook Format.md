@@ -1,9 +1,9 @@
 # Playbook format
 
 > [!NOTE]
-> Status: **proposed** — not yet implemented. This note designs the first runtime
-> component: the **playbook** a compile emits, and the reader that loads one back.
-> It implements the artifact half of the
+> Status: **implemented**. This note records the first runtime component: the
+> **playbook** a compile emits, and the reader that loads one back. It implements
+> the artifact half of the
 > [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
 > owns the cross-cutting decisions this note applies.
 
@@ -49,25 +49,29 @@ This note assumes the vocabulary and decisions of the
 
 ## Functionality checklist
 
-- [ ] Playbook types covering every graph node, edge, and speech fragment.
-- [ ] A `format` header carrying `version`, `requires`, and `uses`.
-- [ ] JSON encoding with a `kind` discriminator and stable property names.
-- [ ] A writer that lowers a `DialogueGraph` into a playbook.
-- [ ] A speaker table addressed by stable id.
-- [ ] A default `entry`, and an `anchors` table.
-- [ ] Compiled option labels, so a menu never peeks at a target node.
-- [ ] A reader that round-trips every construct.
-- [ ] Refusal on an unsupported version, an unknown required capability, a
+- [x] Playbook types covering every graph node, edge, and speech fragment.
+- [x] A `format` header carrying `version`, `requires`, and `uses`.
+- [x] JSON encoding with a `kind` discriminator and stable property names.
+- [x] A writer that lowers a `DialogueGraph` into a playbook.
+- [x] A speaker table addressed by position, carrying the writer's own `@id`
+      unchanged.
+- [x] A default `entry`, and an `anchors` table.
+- [x] Compiled option labels, so a menu never peeks at a target node — carried on
+      the graph's own option edge, since only the pass that fans a choice out
+      knows which nodes belong to which arm.
+- [x] A reader that round-trips every construct.
+- [x] Refusal on an unsupported version, an unknown required capability, a
       malformed document, or a broken node reference.
-- [ ] A hand-written JSON Schema 2020-12 that documents the format and validates
+- [x] A hand-written JSON Schema 2020-12 that documents the format and validates
       every golden playbook in CI.
-- [ ] `ddown compile --output` writing `<script>.playbook.json`.
-- [ ] Golden playbooks for every script in `examples/`.
+- [x] `ddown compile --output`, which names the file to write.
+- [x] Golden playbooks for every script in `examples/` that compiles. The
+      `diagnostics` example does not, by design, and a test says so.
 
 ## Where the types live
 
 The playbook is the contract between a compiler and a runtime, so it belongs to
-neither. It gets its own dependency-free assembly:
+neither. It gets its own assembly, which references no other project:
 
 ```mermaid
 flowchart BT
@@ -92,14 +96,26 @@ internal graph to public contract stays explicit and reviewable — the property
 `DialogueDown.Playbook` is an assembly a **game** ends up referencing, through the
 runner that reads its playbooks. It therefore multi-targets `net8.0;net10.0` like
 the other shipped libraries, so a Godot export keeps loading on Godot's bundled
-runtime — see [Target Frameworks](./Target%20Frameworks.md).
+runtime — see [Target Frameworks](./Target%20Frameworks.md). That is also its one
+package: `System.Text.Json`, scoped to `net8.0`, for an attribute the framework
+gained in .NET 9. On `net10.0`, it costs nothing, and
+[#314](https://github.com/pengzhengyi/dialoguedown/issues/314) drops it when
+`net8.0` goes.
+
+The writer sits in **`DialogueDown.Emission`**, which names the stage between the
+graph and a runtime that the pipeline previously had no word for. Keeping it out
+of `DialogueDown.Playbook` keeps the boundary legible: one namespace writes the
+exchange format, the other reads it. Within the format assembly the types are
+grouped by role — `Speech`, `Edges`, `Nodes`, `Conditions`, `Weights`, `Speakers`,
+`Checking` — matching how the compiler already lays out its script and graph
+layers, and leaving the document, its header, and the reader at the root.
 
 Two architecture tests guard the shape:
 
-| Test                           | Asserts                                                                        |
-| ------------------------------ | ------------------------------------------------------------------------------ |
-| `Playbook_DependsOnNothing`    | `DialogueDown.Playbook` references no other project and no third-party package |
-| `Runtime_DoesNotDependOn_Core` | reserved for C2; stated here because this layout is what makes it possible     |
+| Test                           | Asserts                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `Playbook_DependsOnNothing`    | `DialogueDown.Playbook` references no other project and nothing outside `System` |
+| `Runtime_DoesNotDependOn_Core` | reserved for C2; stated here because this layout is what makes it possible       |
 
 ## The document
 
@@ -214,28 +230,36 @@ The writer's whole job is this mapping. Every row is one test.
 | `OptionEdge`       | `option`        | `target`, `label`, `condition?`  |
 | `RandomOptionEdge` | `random-option` | `target`, `weight`, `condition?` |
 | `BranchEdge`       | `branch`        | `target`, `order`, `condition?`  |
-| `DivertEdge`       | `divert`        | `target`, `condition?`           |
+| `DivertEdge`       | `divert`        | `target`, `label`, `condition?`  |
 
 `order` on a branch edge preserves `if`/`elseif`/`else` evaluation order, which is
 otherwise lost in a JSON array a reader may not be required to keep ordered.
 
+**Both label-bearing edges carry their own text**, rather than deriving it from the
+node they lead to. For an option that is a correctness matter as much as a
+convenience: an arm with an empty body leads straight past the choice, so a label
+read back off the target would be another line's words. Only `ChoicePass`, which
+still holds the arm's body, can know. `DivertPass` carries a jump's label for a
+different reason — nothing else keeps it, since a jump is written inside a line but
+is no part of what that line says.
+
 ### Speech fragments
 
-| AST                        | `kind`    | Carries                                                 |
-| -------------------------- | --------- | ------------------------------------------------------- |
-| `Text`                     | `text`    | `text`                                                  |
-| `StyledText`               | `styled`  | `style` (`italic`, `bold`, `strikethrough`), `children` |
-| `Link`                     | `link`    | `target`, `label`                                       |
-| `Image`                    | `image`   | `source`, `alt`                                         |
-| `LineBreak`                | `break`   | —                                                       |
-| `Query`                    | `query`   | `key`                                                   |
-| `DefaultCommand`           | `command` | `action`                                                |
-| `CustomCommand`            | `call`    | `name`, `args`                                          |
-| `ReservedTag`, `CustomTag` | `tag`     | `name`, `value?`, `reserved`                            |
+| AST                        | `kind`            | Carries                                                 |
+| -------------------------- | ----------------- | ------------------------------------------------------- |
+| `Text`                     | `text`            | `text`                                                  |
+| `StyledText`               | `styled`          | `style` (`italic`, `bold`, `strikethrough`), `children` |
+| `Link`                     | `link`            | `target`, `label`                                       |
+| `Image`                    | `image`           | `source`, `alt`                                         |
+| `LineBreak`                | `break`           | —                                                       |
+| `Query`                    | `query`           | `key`                                                   |
+| `DefaultCommand`           | `default-command` | `action`                                                |
+| `CustomCommand`            | `custom-command`  | `name`, `args`                                          |
+| `ReservedTag`, `CustomTag` | `tag`             | `name`, `value?`, `reserved`                            |
 
 The two command kinds are spelled the way [the guide](../../guide/game-state.md)
-names them, rather than shortening a custom command to a *call* — a word the
-project does not use with writers.
+names them, rather than shortened to *command* and *call* — the second is a word
+the project does not use with writers, and the pair reads better matched.
 
 Fragments nest — `StyledText.Children` and a link or image label are themselves
 fragment lists — so the encoding is recursive. Nothing is flattened to a string,
@@ -272,19 +296,33 @@ than part of this component.
 
 ## Reading a playbook
 
-The reader is a gatekeeper before it is a parser. In order:
+The reader is a gatekeeper before it is a parser. It parses, then hands the result
+to a **checker** — one rule, one class — and returns only what passes:
 
 ```mermaid
 flowchart LR
-    J["JSON"] --> V["version in range?"] --> C["requires ⊆ supported?"]
-    C --> S["schema shape valid?"] --> I["ids and references sound?"] --> P["Playbook"]
-    V -.->|no| X(["refuse"])
-    C -.->|no| X
-    S -.->|no| X
-    I -.->|no| X
+    J["JSON"] --> D["deserialize"] --> F["FormatChecker"]
+    F --> N["NodePositionChecker"] --> R["ReferenceChecker"] --> P["Playbook"]
+    D -.->|no| X(["refuse"])
+    F -.->|no| X
+    N -.->|no| X
+    R -.->|no| X
 ```
 
-Every failure is an exception naming the offending value and the expectation.
+`FormatChecker` composes the version and capability rules, in that order: a
+document of an unknown shape may describe its capabilities in terms an older
+build would misread, so the version settles first.
+
+The rules are **injected, not inherited**. `PlaybookReader` takes an
+`IPlaybookChecker`; `PlaybookCheckerFactory.CreateDefault()` wires the standard
+set, and a runtime that reads fewer constructs than this build supplies its own.
+Each rule takes the policy it applies — a version range, a capability set —
+rather than reading a constant, so nothing has to be subclassed to be narrowed.
+
+A checker refuses at the first thing it finds wrong rather than gathering a list.
+The compiler reports every diagnostic because a writer wants the whole set; a
+malformed playbook is compiler output, so there is nothing for a reader to work
+through and fix. Every failure names the offending value and the expectation.
 Nothing degrades, because a skipped condition does not error — it silently tells
 the wrong story.
 
@@ -328,8 +366,8 @@ every value in the format is either a primitive or a tagged object — see
 
 Every wire name is the word the project already uses: `target` for an edge's
 destination (`Edge(NodeId Target)`, `Link.Target`, `Jump.Target`), `condition` for
-a guard (the `Condition` type, and three notes titled *Conditional …*), and
-and *query* for a pure read of the world.
+what must hold (the `Condition` type, and three notes titled *Conditional …*), and
+`query` for a pure read of the world.
 
 Inventing wire names is how a format drifts from the language its users speak.
 
@@ -424,12 +462,13 @@ comparable format does — glTF ships a **separate** validator tool and its load
 (Three.js, Babylon, Unity, Godot) never schema-validate; Yarn Spinner's schemas
 serve its VS Code extension and CI, not its runtime.
 
-It is also what a schema *cannot* do that decides it. Structure it handles well:
-`kind` enums, per-kind required fields, recursive fragments, the `number | string`
-union. Relational integrity it cannot express at all — `nodes[i].id == i`,
-references landing in range, or "an unknown `requires` refuses while an unknown
-`uses` does not". Those need code regardless, so a validator dependency would add
-weight without removing work.
+It is also what a schema *cannot* do that decides it. Structure it handles well,
+and the shipped schema proves it: `kind` enums, per-kind required fields,
+recursion through nested speech, and even "an end leads nowhere" as a `maxItems`.
+Relational integrity it cannot express at all — `nodes[i].id == i`, references
+landing in range, or "an unknown `requires` refuses while an unknown `uses` does
+not". Those need code regardless, so a validator dependency would add weight
+without removing work.
 
 Keeping it out also sidesteps a licensing trap worth recording: `JsonSchema.Net`
 attaches a EULA to its binaries from v9.0.0 that asks revenue-generating users to
@@ -484,8 +523,8 @@ what a schema, a reader, and a golden file each have to say.
 | Unknown object property                        | **Ignore** — forward compatibility                                                                                   |
 | `nodes[i].id != i`                             | Refuse                                                                                                               |
 | Node reference out of range                    | Refuse                                                                                                               |
-| A node reference that is not a number          | Refuse — a string reference needs `cross-file-jump`, which no version-0 runner offers                                |
-| `entries` empty, or an entry pointing nowhere  | Refuse — a playbook nothing can start is not playable                                                                |
+| A node reference that is not a number          | Refuse — the deserializer types it as an integer, so a string is not a reference at all                              |
+| An `entry` pointing nowhere                    | Refuse — a playbook nothing can start is not playable                                                                |
 | Duplicate speaker id                           | Refuse; the writer asserts uniqueness before emitting                                                                |
 | Duplicate anchor                               | Cannot occur; the compiler already rejects it (`DLG2001`)                                                            |
 | A script that compiles with **errors**         | No playbook is written; `--output` is untouched                                                                      |
@@ -495,16 +534,16 @@ what a schema, a reader, and a golden file each have to say.
 
 ## Integration
 
-| Seam                       | Change                                                                                                                                                                                                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CompilationSuccess`       | Unchanged. The writer consumes its `internal` graph inside the same assembly                                                                                                                                                                                      |
-| `IPlaybookWriter`          | New public seam in `DialogueDown`, registered in `AddDialogueDown` and the CLI composition root, following the `IDialogueGraphBuilder` pattern                                                                                                                    |
-| `CompileCommand`           | Writes `<script>.playbook.json` to `--output`, replacing today's no-op and closing [#46](https://github.com/pengzhengyi/dialoguedown/issues/46)                                                                                                                   |
-| CLI presentation           | An `InvalidPlaybookException` carries structured detail that the CLI renders in the style of [CLI Diagnostic Rendering](./CLI%20Diagnostic%20Rendering.md). These are load-time failures rather than source diagnostics, so they stay out of the `DLG` code space |
-| `DialogueDown.csproj`      | References `DialogueDown.Playbook`; the package ships both                                                                                                                                                                                                        |
-| Central package management | A new project inherits `Directory.Packages.props`; `DialogueDown.Playbook` needs no package at all                                                                                                                                                                |
-| CI                         | A `check-jsonschema` step validates every golden playbook against the **local** schema file, so validation never depends on the network                                                                                                                           |
-| Editors                    | Emitted playbooks carry a versioned `$schema` URL published with the existing GitHub Pages site, so VS Code validates a playbook wherever it lands. See [open questions](#open-questions-and-deferred-work) for zero-config registration                          |
+| Seam                       | Change                                                                                                                                                                                                                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CompilationSuccess`       | Unchanged. The writer consumes its `internal` graph inside the same assembly                                                                                                                                                                                                      |
+| `IPlaybookWriter`          | New public seam in `DialogueDown`, registered in `AddDialogueDown` and the CLI composition root, following the `IDialogueGraphBuilder` pattern                                                                                                                                    |
+| `CompileCommand`           | `--output` names the file to write, replacing today's no-op and closing [#46](https://github.com/pengzhengyi/dialoguedown/issues/46). The `<script>.playbook.json` convention lives in the option's help text rather than being imposed                                           |
+| CLI presentation           | **Deferred.** Nothing in the CLI reads a playbook yet, so there is no load-time failure to render. It arrives with whichever command plays one, and stays out of the `DLG` code space when it does, in the style of [CLI Diagnostic Rendering](./CLI%20Diagnostic%20Rendering.md) |
+| `DialogueDown.csproj`      | References `DialogueDown.Playbook`; the package ships both                                                                                                                                                                                                                        |
+| Central package management | `DialogueDown.Playbook` inherits `Directory.Packages.props` and takes one package: `System.Text.Json`, scoped to `net8.0`, for an attribute the framework only gained in .NET 9                                                                                                   |
+| CI                         | A `check-jsonschema` step validates every golden playbook against the **local** schema file, so validation never depends on the network                                                                                                                                           |
+| Editors                    | Emitted playbooks carry a versioned `$schema` URL published with the existing GitHub Pages site, so VS Code validates a playbook wherever it lands. See [open questions](#open-questions-and-deferred-work) for zero-config registration                                          |
 
 ## Testability
 
@@ -513,7 +552,8 @@ what a schema, a reader, and a golden file each have to say.
 | Unit — writer | One test per row of [Mapping the graph](#mapping-the-graph): each node, edge, fragment, condition, and weight kind                                   |
 | Unit — reader | Every refusal in [Error and boundary cases](#error-and-boundary-cases), each asserting the message names the offending value                         |
 | Round-trip    | Compile, write, read, and assert the JSON comes back identical — the primary safety net, and cheap because both directions land here                 |
-| Golden        | A committed playbook per `examples/*.dialogue.md`, so a format change is a reviewable diff                                                           |
+| Exhaustive    | Reflection over each closed union, so a construct added to the AST fails here rather than at whatever runtime reaches it first                       |
+| Golden        | A committed playbook per compiling `examples/*.dialogue.md`, so a format change is a reviewable diff                                                 |
 | Schema        | Every golden playbook validates against the schema in CI                                                                                             |
 
 Round-trip tests live in `DialogueDown.Tests`, which already sees internals and can
@@ -526,10 +566,21 @@ playbooks are unequal. Comparing the serialized JSON is also the truer assertion
 the format is the bytes, and giving the types value equality would cost the
 dependency-free property that keeps the assembly shippable.
 
-Golden playbooks churn when node ids shift, which is expected: they are a build
-artifact nobody hand-edits. The **semantic** regression asset is the transcript
-golden that arrives with
+Goldens use [Verify](https://github.com/VerifyTests/Verify), which supplies the
+matching and the accept workflow. It was measured against this suite before being
+taken: it compares text rather than reparsing the JSON — which is what makes a
+formatting change visible at all — and one golden serves both target frameworks.
+
+Golden playbooks churn when node positions shift, which is expected: they are a
+build artifact nobody hand-edits. The **semantic** regression asset is the
+transcript golden that arrives with
 [C3](https://github.com/pengzhengyi/dialoguedown/issues/298).
+
+The exhaustive tests are the ones that repaid the most. Asking reflection for every
+member of `InlineFragment` turned up three the mapping table never listed — a jump,
+a condition, and a jump indicator — and so caught, before any of it shipped, that a
+jump survives into a line's speech and would have thrown on every script containing
+one.
 
 ## Open questions and deferred work
 
@@ -540,12 +591,19 @@ golden that arrives with
   non-developer. Tracked in
   [#308](https://github.com/pengzhengyi/dialoguedown/issues/308); it needs the URL
   to be stable first.
-- **Unifying `Guard` and `Condition` internally.** The wire format says
-  `condition`; the graph still calls the property `Guard`. One concept with two
-  names is worth tidying, but it touches the graph and its notes, so it is a
-  follow-up ([#309](https://github.com/pengzhengyi/dialoguedown/issues/309)) rather
-  than part of this component.
 - **Line identity** stays deferred to
-  [#305](https://github.com/pengzhengyi/dialoguedown/issues/305). The schema
-  reserves an optional `lineId` and version 0 emits nothing, so adding it later is
-  a field to populate rather than a shape to change.
+  [#305](https://github.com/pengzhengyi/dialoguedown/issues/305). Nothing needs
+  reserving: the schema allows properties it does not name, and a reader ignores
+  them, so adding `lineId` later is a field to populate rather than a shape to
+  change.
+- **The schema has no negative tests.** Seven malformed playbooks were checked by
+  hand and each was refused, but nothing stops a later edit turning the schema into
+  a rubber stamp. CI runs `--check-metaschema`, which catches structural breakage
+  and not a weakened rule. Committed counter-examples would close that.
+- **A divert's label is not drawn** on the graph stage of the report. The words
+  survive on the edge and in the Dialogue AST stage, but the graph view would read
+  better with them ([#338](https://github.com/pengzhengyi/dialoguedown/issues/338)).
+
+Two questions this note once carried are settled. `Guard` and `Condition` became
+one name on main ([#316](https://github.com/pengzhengyi/dialoguedown/pull/316)),
+and the writer no longer has to translate between them.

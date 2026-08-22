@@ -77,7 +77,7 @@ flowchart LR
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
 | 1 | [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Proposed |
-| 2 | [Playbook Format](./Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Proposed |
+| 2 | [Playbook Format](./Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
 
 ### Language constructs
 
