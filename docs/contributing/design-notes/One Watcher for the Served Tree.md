@@ -1,8 +1,8 @@
 # One Watcher for the Served Tree
 
-> [!IMPORTANT]
-> Status: **approved; in progress**. Measured on macOS; the fix is expected to
-> help every platform, but the sizes quoted here are macOS numbers.
+> [!NOTE]
+> Status: **implemented**. Measured on macOS; the fix helps every platform, but
+> the sizes quoted here are macOS numbers.
 
 Opening a script in the served report takes about 330 ms, and roughly **half of
 it is spent building a file-system watcher** rather than doing anything the
@@ -16,13 +16,13 @@ served tree through the file provider the server already has.
 - [Functionality checklist](#functionality-checklist)
 - [Ubiquitous language](#ubiquitous-language)
 - [Design](#design)
-  - [Use the framework's watcher, not our own](#use-the-frameworks-watcher-not-our-own)
+  - [Own the watcher, having tried not to](#own-the-watcher-having-tried-not-to)
   - [Interfaces](#interfaces)
   - [Call sites](#call-sites)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 - [What this does not do](#what-this-does-not-do)
-- [Open questions](#open-questions)
+- [Questions the build settled](#questions-the-build-settled)
 
 ## Goal and scope
 
@@ -64,21 +64,29 @@ is what an open pays for. Retargeting one watcher is only free while the next
 script sits in the **same folder**; a project tree has folders, so that is not a
 fix.
 
-**Expected result:** an open falls from ~330 ms to **~180 ms**, and the session
-switch itself from ~150 ms to about 2 ms.
+**Result:** the session switch falls to **1.1–5.9 ms** and a whole open from
+329 ms to **146 ms** — a little better than the ~180 ms the phase table predicted,
+because the switch is now nearly free rather than merely cheap.
+
+| | Before | After |
+| --- | --- | --- |
+| `POST /api/open` | 127–178 ms | **1.1–5.9 ms** |
+| Click to report | 329 ms | **146 ms** |
+
+The first open still pays the one registration, and nothing after it does.
 
 ## Functionality checklist
 
-- [ ] The served run registers its operating-system watch **once**, not per open.
-- [ ] Switching the active document does not create, move, or rebuild a watcher.
-- [ ] A change to the active document still hot-reloads the report, debounced as
+- [x] The served run registers its operating-system watch **once**, not per open.
+- [x] Switching the active document does not create, move, or rebuild a watcher.
+- [x] A change to the active document still hot-reloads the report, debounced as
       today, so one editor save produces one reload.
-- [ ] A change to the active document's `dialogue.toml` still reloads its
+- [x] A change to the active document's `dialogue.toml` still reloads its
       configuration.
-- [ ] A change to a file that is not being watched raises nothing.
-- [ ] Creating, deleting, and renaming the watched file are all still noticed.
-- [ ] Renaming a folder that contains the active document keeps it watched.
-- [ ] Watches are released when the server shuts down.
+- [x] A change to a file that is not being watched raises nothing.
+- [x] Creating, deleting, and renaming the watched file are all still noticed.
+- [x] Renaming a folder that contains the active document keeps it watched.
+- [x] Watches are released when the server shuts down.
 
 ## Ubiquitous language
 
@@ -90,55 +98,52 @@ switch itself from ~150 ms to about 2 ms.
 
 ## Design
 
-### Use the framework's watcher, not our own
+### Own the watcher, having tried not to
 
-The obvious design — one recursive watcher over the tree, with our own routing of
-events to interested paths — is already written, shipped, and battle-tested:
-`PhysicalFileProvider` (MIT, part of the .NET runtime, the engine behind
-ASP.NET Core static files, configuration reload, and `dotnet watch`). It keeps
-**one** `FileSystemWatcher` for its root and hands out an `IChangeToken` per
-watched path.
-
-**The server already constructs one** — `ServedShellServer.Configure` gives the
-static-file middleware a `PhysicalFileProvider` over the same root. So this costs
-no new dependency; it reuses one already on the shelf.
-
-Measured against that provider:
-
-| Operation | Cost |
-| --- | --- |
-| `new PhysicalFileProvider(root)` | 0.1 ms (the watcher is created lazily) |
-| First `Watch(...)` — registers with the OS | 103 ms, **once** |
-| Every later `Watch(...)`, including another folder | **0.00–0.06 ms** |
-
-That is exactly the property this note needs, without writing a watcher.
-
-**What it does not give us is debouncing.** Measured: one editor save that writes
-the file several times produces **four** callbacks through
-`ChangeToken.OnChange`. The framework's own answer is a fixed delay
-(`FileConfigurationProvider.ReloadDelay`, 250 ms), which is cruder than the
-sliding-window `Debouncer` this repository already has. So the existing
-`Debouncer` stays, and keeps doing the job it already does.
+One recursive watcher covers the tree, and each event is routed to the watches
+registered on that path. Registering a watch is a dictionary write, so switching
+documents costs nothing wherever they live.
 
 ```mermaid
 flowchart LR
-    FS[["Served tree"]] --> PFP["PhysicalFileProvider<br/>(one FileSystemWatcher, created once)"]
-    PFP -->|"IChangeToken"| W1["Watch: active document"]
-    PFP -->|"IChangeToken"| W2["Watch: dialogue.toml"]
+    FS[["Served tree<br/>(one recursive FileSystemWatcher)"]] -->|"change event"| TW[TreeWatches]
+    TW -->|"path matches?"| W1["Watch: active document"]
+    TW -->|"path matches?"| W2["Watch: dialogue.toml"]
     W1 --> DB1["Debouncer (150 ms)"] --> R1["session.Refresh()"]
     W2 --> DB2["Debouncer (150 ms)"] --> R2["session.RefreshConfig()"]
 ```
 
-Because an `IChangeToken` fires **once** and is then spent, each watch must
-re-register after every notification — which is exactly what
-`ChangeToken.OnChange` does, so we use it rather than hand-rolling the loop.
+**The framework's own watcher was tried first and rejected on evidence.**
+`PhysicalFileProvider` — which the server already constructs for static files —
+keeps one `FileSystemWatcher` per root and hands out a token per path, and it is
+every bit as cheap as hoped: the first `Watch` costs 103 ms and every later one
+0.00–0.06 ms. It was implemented, and the live end-to-end suite failed.
+
+Two things broke, and both are worth recording because neither is obvious:
+
+1. **It hides sensitive files.** `ExclusionFilters.Sensitive` is the default, so a
+   dotfile yields a token that never fires. A dialogue script may perfectly well
+   be a dotfile — the test fixtures are — and the report silently stopped
+   reloading.
+2. **Its notifications do not arrive together.** One save reached the callback as
+   two or three notifications up to **786 ms** apart, where the raw watcher's
+   arrive 0–1 ms apart. `LiveSession` suppresses its own writes with a *one-shot*
+   token, so the first notification consumed the suppression and the rest
+   broadcast reloads that discarded the reader's edits.
+
+The first is a flag; the second is a mismatch of meaning. A debounce window wide
+enough to gather notifications 786 ms apart would make hot reload feel broken, so
+owning the watcher — and with it the exact event stream the session already
+relies on — is the honest choice. Static files keeps its own `PhysicalFileProvider`,
+which should go on hiding sensitive files and never watches anything.
 
 ### Interfaces
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `TreeWatches` | Owns the served tree's `PhysicalFileProvider` and hands out watches on paths under it. One per served run. | `PhysicalFileProvider`, `BrowseRoot` |
-| `TreeWatches.Watch(path, onChanged)` | Registers one path, debounced, and returns an `IDisposable` that releases it. Replaces `new DocumentWatcher(path, onChanged)` at every call site. | `Debouncer`, `ChangeToken` |
+| `TreeWatches` | Keeps one recursive watcher per root and routes each event to the watches on that path. One per served run. | `FileSystemWatcher`, `Debouncer`, `PathComparison` |
+| `TreeWatches.Watch(path, onChanged)` | Registers one path, debounced, and returns an `IDisposable` that releases it. Replaces `new DocumentWatcher(path, onChanged)` at every call site. | `Debouncer` |
+| `PathComparison` | Compares and normalizes paths the way this machine does — Linux tells case apart, Windows and macOS do not. | — |
 
 `DocumentWatcher` is removed: its debounce moves into the watch, and the
 `FileSystemWatcher` it owned is what this note deletes.
@@ -167,10 +172,9 @@ a watch is free, so it can simply keep working.
 | One save writes the file several times | One reload — the `Debouncer` coalesces the four callbacks the provider delivers. |
 | A watch is disposed twice | Second disposal does nothing. |
 | The document is deleted, then recreated | Both are reported — a watch is on a path, not a handle. |
-| A change arrives while the watch is re-registering | `ChangeToken.OnChange` re-registers as it fires, and the debounce window is far longer than that gap, so a burst still collapses to one reload. |
-| The OS event buffer overflows | `PhysicalFilesWatcher` cancels every token, so watches fire and the report reloads rather than going stale. Handled by the framework. |
-| The served root is a network share or a bind mount | `FileSystemWatcher` can miss events there. The provider supports polling (`UsePollingFileWatcher`, or `DOTNET_USE_POLLING_FILE_WATCHER`), so the escape hatch exists without new code. Left off by default: it polls every 4 seconds. |
-| Recursion toggles as documents at different depths are watched | The provider raises and lowers `IncludeSubdirectories` from a count of watches needing it, and on macOS a change re-registers. Measured here at **≤0.59 ms**, so it is not the 150 ms problem — but one permanent recursive watch held for the run removes the question entirely, and costs one watch. |
+| The document is reached through a symlink out of the tree | `visualize <script>` resolves symlinks, so the real file can be anywhere. It gets a watcher for its own folder, kept and reused like the tree's own. |
+| The OS event buffer overflows | Every watch is told. Reloading something that may not have changed is cheaper than a report that never updates again. |
+| Two spellings of one path, or one path in two cases | `PathComparison` normalizes and compares as this machine does, so a case difference does not silently stop reloads on macOS or Windows while still telling files apart on Linux. |
 
 ## Testability
 
@@ -183,10 +187,12 @@ the thing under test, so faking it would test nothing.
 - Integration: the existing served-shell tests already assert that editing the
   active document hot-reloads and that a config edit reloads configuration. They
   should pass unchanged, which is the real regression guard.
-- A guard test asserts the served run holds **one** `PhysicalFileProvider` and
-  that opening many documents registers no further operating-system watcher —
-  the property this note exists to establish, and the one a future refactor is
-  most likely to break.
+- A guard test asserts that watching documents at several depths leaves the run
+  with **one** watcher — the property this note exists to establish, and the one
+  a future refactor is most likely to break. A second asserts that documents
+  outside the tree share one watcher per folder rather than one each.
+- A regression test watches a **dotfile** script, because the first
+  implementation hid those and stopped reloading them.
 
 The debounce window stays injectable, as `DocumentWatcher` already allows, so
 tests need not sleep for the real 150 ms.
@@ -199,13 +205,13 @@ all of it the browser loading the report again. Removing that is
 suggest the two together would bring an open to about 30 ms, but they are
 independent and are kept apart deliberately.
 
-## Open questions
+## Questions the build settled
 
-1. **Name.** `TreeWatches` reads as "the watches over the served tree" and avoids
-   claiming to be a watcher now that the framework owns that role. `TreeWatcher`
-   or `RootWatcher` are alternatives; `ProjectWatcher` risks colliding with
-   `ReportProject`, which already means something narrower.
-2. **Share the provider with static files, or keep two?** One instance is tidier
-   and guarantees a single watcher. Two would be simpler to wire, at the cost of
-   a second registration (~100 ms, once) and a second watcher over the same tree.
-   The recommendation is to share one.
+Both questions the note opened are settled.
+
+1. **Name** — `TreeWatches`, as proposed and approved.
+2. **Share one provider with static files** — no, and for a better reason than
+   the note anticipated: watching and serving want *opposite* answers about
+   sensitive files. Serving must keep hiding them; watching must not. They are
+   separate objects now, and the static-file provider never watches, so the split
+   costs nothing.
