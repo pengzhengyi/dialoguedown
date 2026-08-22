@@ -156,6 +156,8 @@
     href: Live Visualization - Problems Panel.md
   - name: Live Visualization — Reverse Jump
     href: Live Visualization - Reverse Jump.md
+  - name: Opening a Script Without Reloading the Page
+    href: Opening a Script Without Reloading the Page.md
 - name: Other notes
   items:
   - name: BBCode Rendering
