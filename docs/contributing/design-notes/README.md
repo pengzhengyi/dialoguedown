@@ -223,5 +223,6 @@ passes that sit outside the pipeline and its tools.
 | [Development Cycle Optimization](./Development%20Cycle%20Optimization.md) | Implemented: reduce local and CI feedback time through measured, behavior-preserving increments | Implemented |
 | [Interactive Playthrough](./Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
 | [Namespace Layout](./Namespace%20Layout.md) | Implemented: an architecture rule capping how many types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list | Implemented |
+| [One Watcher for the Served Tree](./One%20Watcher%20for%20the%20Served%20Tree.md) | Watch the served tree through the file provider the server already has, so switching scripts stops paying for a fresh operating-system registration | Proposed |
 | [Target Frameworks](./Target%20Frameworks.md) | Implemented: multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 LTS | Implemented |
 | [README Shipping-Status Refresh](./README%20Shipping-Status%20Refresh.md) | A docs-only pass reconciling the README's visualization section with what actually ships | Implemented |
