@@ -10,14 +10,7 @@ internal static class PathComparison
     public static StringComparer Comparer { get; } =
         OperatingSystem.IsLinux() ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
 
-    private static StringComparison Comparison =>
-        OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-
     /// <summary>An absolute path without a trailing separator, so two spellings of one folder match.</summary>
     public static string Normalize(string path) =>
         Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
-
-    /// <summary>Whether <paramref name="path"/> sits inside <paramref name="root"/>.</summary>
-    public static bool IsUnder(string root, string path) =>
-        path.StartsWith(root + Path.DirectorySeparatorChar, Comparison);
 }

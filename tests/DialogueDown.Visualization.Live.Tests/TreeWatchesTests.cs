@@ -153,20 +153,42 @@ public sealed class TreeWatchesTests
     }
 
     [Fact]
-    public void Watch_RegistersNoFurtherWatcherForDocumentsInTheTree()
+    public void Watch_RegistersNoFurtherWatcherForDocumentsSharingAFolder()
     {
         // The point of the whole exercise: opening script after script must not keep paying the
-        // operating system to start watching. One provider covers the tree, however deep.
+        // operating system to start watching. One registration covers a folder.
         using var tree = new TempTree();
         using var watches = new TreeWatches(tree.Root);
         var opened = new List<IDisposable>();
 
-        foreach (var relative in new[] { "a.dialogue.md", "act-1/b.dialogue.md", "act-2/deep/c.dialogue.md" })
+        foreach (var relative in new[] { "a.dialogue.md", "b.dialogue.md", "c.dialogue.md" })
         {
             opened.Add(watches.Watch(tree.File(relative, "# Scene"), () => { }, _debounce));
         }
 
         Assert.Equal(1, watches.WatchersInUse);
+        foreach (var watch in opened)
+        {
+            watch.Dispose();
+        }
+    }
+
+    [Fact]
+    public void Watch_RegistersOneWatcherPerFolder()
+    {
+        // A folder costs one registration, not one per document — and never one per open, which is
+        // what made switching scripts slow.
+        using var tree = new TempTree();
+        using var watches = new TreeWatches(tree.Root);
+        var opened = new List<IDisposable>();
+
+        foreach (var relative in new[] { "act-1/a.dialogue.md", "act-1/b.dialogue.md", "act-2/c.dialogue.md" })
+        {
+            opened.Add(watches.Watch(tree.File(relative, "# Scene"), () => { }, _debounce));
+        }
+
+        // The tree's own folder, plus act-1 and act-2.
+        Assert.Equal(3, watches.WatchersInUse);
         foreach (var watch in opened)
         {
             watch.Dispose();
@@ -183,7 +205,7 @@ public sealed class TreeWatchesTests
         using var one = watches.Watch(outside.File("one.dialogue.md", "# One"), () => { }, _debounce);
         using var two = watches.Watch(outside.File("two.dialogue.md", "# Two"), () => { }, _debounce);
 
-        // The served tree's own provider, plus one for that outside folder — not one per document.
+        // The served tree's own folder, plus one for that outside folder — not one per document.
         Assert.Equal(2, watches.WatchersInUse);
     }
 }

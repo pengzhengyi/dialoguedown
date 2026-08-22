@@ -64,21 +64,22 @@ is what an open pays for. Retargeting one watcher is only free while the next
 script sits in the **same folder**; a project tree has folders, so that is not a
 fix.
 
-**Result:** the session switch falls to **1.1–5.9 ms** and a whole open from
-329 ms to **146 ms** — a little better than the ~180 ms the phase table predicted,
-because the switch is now nearly free rather than merely cheap.
+**Result:** a folder is registered once and every open in it afterwards is free.
 
 | | Before | After |
 | --- | --- | --- |
-| `POST /api/open` | 127–178 ms | **1.1–5.9 ms** |
-| Click to report | 329 ms | **146 ms** |
+| `POST /api/open`, folder already known | 127–178 ms | **0.8–4 ms** |
+| `POST /api/open`, first script in a folder | 127–178 ms | ~100–125 ms, once per folder |
+| Click to report | 329 ms | **135 ms** |
 
-The first open still pays the one registration, and nothing after it does.
+A reader pays about a tenth of a second the first time they open something in a
+folder, and nothing on any later open there — so moving between scripts, which is
+what made this slow, costs nothing.
 
 ## Functionality checklist
 
-- [x] The served run registers its operating-system watch **once**, not per open.
-- [x] Switching the active document does not create, move, or rebuild a watcher.
+- [x] The served run registers an operating-system watch **once per folder**, not per open.
+- [x] Returning to a folder already watched creates, moves, or rebuilds nothing.
 - [x] A change to the active document still hot-reloads the report, debounced as
       today, so one editor save produces one reload.
 - [x] A change to the active document's `dialogue.toml` still reloads its
@@ -100,13 +101,21 @@ The first open still pays the one registration, and nothing after it does.
 
 ### Own the watcher, having tried not to
 
-One recursive watcher covers the tree, and each event is routed to the watches
-registered on that path. Registering a watch is a dictionary write, so switching
-documents costs nothing wherever they live.
+A folder is watched once, and each event is routed to the watches registered on
+that path. Registering a second watch in a known folder is a dictionary write, so
+returning to a script costs nothing.
+
+Watching the whole tree recursively was tried, and would make *every* open free —
+but it reports every change beneath the root. On Linux a busy subfolder (a test
+run writing results, a build writing output) overflows the kernel's event buffer,
+and the only honest answer to a lost event is to reload everything, which resets
+what the reader was looking at. Registering one folder at a time keeps the reports
+to files that might matter and bounds the cost by the folders visited, not the
+size of the tree.
 
 ```mermaid
 flowchart LR
-    FS[["Served tree<br/>(one recursive FileSystemWatcher)"]] -->|"change event"| TW[TreeWatches]
+    FS[["A folder<br/>(one FileSystemWatcher, registered once)"]] -->|"change event"| TW[TreeWatches]
     TW -->|"path matches?"| W1["Watch: active document"]
     TW -->|"path matches?"| W2["Watch: dialogue.toml"]
     W1 --> DB1["Debouncer (150 ms)"] --> R1["session.Refresh()"]
@@ -141,7 +150,7 @@ which should go on hiding sensitive files and never watches anything.
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `TreeWatches` | Keeps one recursive watcher per root and routes each event to the watches on that path. One per served run. | `FileSystemWatcher`, `Debouncer`, `PathComparison` |
+| `TreeWatches` | Keeps one watcher per folder a watched document lives in, and routes each event to the watches on that path. One per served run. | `FileSystemWatcher`, `Debouncer`, `PathComparison` |
 | `TreeWatches.Watch(path, onChanged)` | Registers one path, debounced, and returns an `IDisposable` that releases it. Replaces `new DocumentWatcher(path, onChanged)` at every call site. | `Debouncer` |
 | `PathComparison` | Compares and normalizes paths the way this machine does — Linux tells case apart, Windows and macOS do not. | — |
 
@@ -172,7 +181,7 @@ a watch is free, so it can simply keep working.
 | One save writes the file several times | One reload — the `Debouncer` coalesces the four callbacks the provider delivers. |
 | A watch is disposed twice | Second disposal does nothing. |
 | The document is deleted, then recreated | Both are reported — a watch is on a path, not a handle. |
-| The document is reached through a symlink out of the tree | `visualize <script>` resolves symlinks, so the real file can be anywhere. It gets a watcher for its own folder, kept and reused like the tree's own. |
+| The document is reached through a symlink out of the tree | `visualize <script>` resolves symlinks, so the real file can be anywhere. Its folder is registered like any other. |
 | The OS event buffer overflows | Every watch is told. Reloading something that may not have changed is cheaper than a report that never updates again. |
 | Two spellings of one path, or one path in two cases | `PathComparison` normalizes and compares as this machine does, so a case difference does not silently stop reloads on macOS or Windows while still telling files apart on Linux. |
 
@@ -187,10 +196,10 @@ the thing under test, so faking it would test nothing.
 - Integration: the existing served-shell tests already assert that editing the
   active document hot-reloads and that a config edit reloads configuration. They
   should pass unchanged, which is the real regression guard.
-- A guard test asserts that watching documents at several depths leaves the run
-  with **one** watcher — the property this note exists to establish, and the one
-  a future refactor is most likely to break. A second asserts that documents
-  outside the tree share one watcher per folder rather than one each.
+- A guard test asserts that several documents in one folder leave the run with
+  **one** watcher, and another that a folder costs one watcher rather than one per
+  document — the property this note exists to establish, and the one a future
+  refactor is most likely to break.
 - A regression test watches a **dotfile** script, because the first
   implementation hid those and stopped reloading them.
 

@@ -3,16 +3,21 @@ using System.Collections.Concurrent;
 namespace DialogueDown.Visualization.Live.Files;
 
 /// <summary>
-/// The watches a served run holds over its tree. Registering with the operating system is the
-/// expensive part of watching a file — on macOS it costs over a tenth of a second — so this does it
-/// once for the whole tree and hands out a watch per path for nothing, however deep the path or
-/// however often the active document changes.
+/// The watches a served run holds. Registering with the operating system is the expensive part of
+/// watching a file — on macOS it costs over a tenth of a second — so a folder is registered once
+/// and every document in it afterwards is free, however often the active document changes.
 /// </summary>
 /// <remarks>
 /// <para>
+/// A folder is watched shallowly rather than the whole tree recursively. Watching the tree would
+/// make every open free, but it also reports every change beneath it: on Linux a busy subfolder can
+/// overflow the kernel's event buffer, and the only honest response to a lost event is to reload
+/// everything. Registering one folder at a time keeps the reports to files that might matter, and
+/// a reader revisiting a folder still pays nothing.
+/// </para>
+/// <para>
 /// A launched script is resolved through its symlinks, so the file being watched can be a real file
-/// anywhere on disk while the served tree is elsewhere. Such a document gets a watcher for its own
-/// folder, kept and reused like the tree's own.
+/// anywhere on disk while the served tree is elsewhere. Its folder is registered like any other.
 /// </para>
 /// <para>
 /// <c>PhysicalFileProvider</c> offers the same cheap registration and was tried first. Its change
@@ -25,19 +30,17 @@ internal sealed class TreeWatches : IDisposable
 {
     private static readonly TimeSpan _defaultDebounce = TimeSpan.FromMilliseconds(150);
 
-    private readonly string _root;
     private readonly ConcurrentDictionary<string, FileSystemWatcher> _watchers = new(PathComparison.Comparer);
     private readonly ConcurrentDictionary<string, WatchList> _byPath = new(PathComparison.Comparer);
 
-    /// <summary>Starts watching the tree rooted at <paramref name="root"/>.</summary>
+    /// <summary>Starts watching for the tree rooted at <paramref name="root"/>.</summary>
     public TreeWatches(string root)
     {
         ArgumentNullException.ThrowIfNull(root);
-        _root = PathComparison.Normalize(root);
-        WatcherFor(_root);
+        WatcherFor(PathComparison.Normalize(root));
     }
 
-    /// <summary>How many watchers are open. One means every watch is covered by the tree's own.</summary>
+    /// <summary>How many watchers are open — one per folder a watched document has lived in.</summary>
     public int WatchersInUse => _watchers.Count;
 
     /// <summary>
@@ -50,7 +53,7 @@ internal sealed class TreeWatches : IDisposable
         ArgumentNullException.ThrowIfNull(onChanged);
 
         var full = PathComparison.Normalize(Path.GetFullPath(path));
-        WatcherFor(RootFor(full));
+        WatcherFor(PathComparison.Normalize(Path.GetDirectoryName(full)!));
         return new PathWatch(this, full, onChanged, debounce ?? _defaultDebounce);
     }
 
@@ -66,11 +69,6 @@ internal sealed class TreeWatches : IDisposable
         _byPath.Clear();
     }
 
-    // Files under the tree share its watcher; a document reached through a symlink out of the tree
-    // gets one for its own folder, so its neighbours there are free too.
-    private string RootFor(string fullPath) =>
-        PathComparison.IsUnder(_root, fullPath) ? _root : PathComparison.Normalize(Path.GetDirectoryName(fullPath)!);
-
     private void WatcherFor(string root) =>
         _watchers.GetOrAdd(root, key =>
         {
@@ -78,7 +76,6 @@ internal sealed class TreeWatches : IDisposable
             {
                 // The filter the per-document watcher used, so one save still reports once.
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
-                IncludeSubdirectories = true,
             };
             watcher.Changed += OnEntryChanged;
             watcher.Created += OnEntryChanged;

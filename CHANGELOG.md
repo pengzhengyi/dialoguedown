@@ -147,10 +147,10 @@ changes easy to categorize.
   reads ReportGenerator's own summary rather than raw Cobertura, so line, branch, and method rates
   come from one already-merged source.
 
-- **Switching scripts in the served report is more than twice as fast** — the server now watches
-  the folder it serves once, instead of starting a fresh file-system watch for every script opened.
-  Opening a script falls from about 330 ms to about 145 ms, and the switch behind it from about
-  150 ms to a few milliseconds. Hot reload is unchanged. See the
+- **Switching scripts in the served report is more than twice as fast** — the server now watches a
+  folder once, instead of starting a fresh file-system watch for every script opened. Opening a
+  script falls from about 330 ms to about 135 ms, and the switch behind it from about 150 ms to
+  around a millisecond once its folder is known. Hot reload is unchanged. See the
   [One Watcher for the Served Tree](docs/contributing/design-notes/One%20Watcher%20for%20the%20Served%20Tree.md)
   note.
 
