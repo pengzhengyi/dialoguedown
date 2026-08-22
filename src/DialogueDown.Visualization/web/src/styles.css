@@ -250,21 +250,6 @@ body {
     height: auto;
 }
 
-/* "Back to launcher" — a back arrow to the left of the brand, shown only on a
-   launcher-served report (see back-link.ts). Inline on the brand's row so the header
-   matches a directly-served report. */
-.back-to-launcher {
-    display: inline-flex;
-    align-items: center;
-    line-height: 0;
-    color: var(--pico-muted-color);
-    text-decoration: none;
-}
-
-.back-to-launcher:hover {
-    color: var(--pico-color);
-}
-
 .app-header hgroup {
     display: flex;
     align-items: center;

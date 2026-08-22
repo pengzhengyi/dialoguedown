@@ -301,6 +301,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The report no longer shows a "Back to the launcher" arrow that goes nowhere** — every served
+  report now lives under the `/r/` mount, so the check that once meant "opened through the
+  launcher" had come to match every report, while the destination redirected straight back to the
+  report you were on. The launcher it named is gone: the Explorer sidebar and its **Files** control
+  reach the project's scripts without leaving the page, and offer everything that landing did.
+
 - **Transitive NuGet packages now reach the dependency graph** — `global.json` pinned the SDK
   without its feature band (`10.0.0`), and `actions/setup-dotnet` rejects a short version whenever
   `rollForward` is set. GitHub's automatic dependency submission reads that file, so every run
