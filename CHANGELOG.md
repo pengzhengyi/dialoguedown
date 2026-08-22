@@ -147,6 +147,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **`--emit` moved from `visualize` to `compile`** — writing the compiler's stage graphs as
+  Graphviz DOT never opened a browser, so it belonged with the command that checks and exports a
+  script rather than the one that previews it. Use `ddown compile <script> --emit dot -o
+  stages.dot`; `compile` gains `-o`/`--output` to receive it. The old form fails with a message
+  pointing at the new one rather than being ignored, so a script that used
+  `visualize --emit dot -o out.dot` cannot silently receive an HTML report instead.
+
 - **Property tests guard the invariants examples cannot reach** — generated scripts now assert
   that every AST node's span addresses text that exists, that a child's span sits within its
   parent's, and that compiling never throws. See

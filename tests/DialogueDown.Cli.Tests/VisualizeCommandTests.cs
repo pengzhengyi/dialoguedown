@@ -109,61 +109,35 @@ public sealed class VisualizeCommandTests
     }
 
     [Fact]
-    public void Visualize_EmitMermaid_FailsWithMigrationGuidance()
+    public void Visualize_Emit_FailsAndPointsAtCompile()
     {
+        // Emitting stage graphs is a compile-and-export step, so it lives on `compile`. Failing
+        // loudly matters here: an ignored option would let `-o stages.dot` quietly receive an
+        // HTML report instead of the DOT text the caller asked for.
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
         var tester = CliTester.Create(runner: runner, shell: ShellRunner());
 
-        var result = tester.Run("visualize", script.Path, "--emit", "mermaid");
+        var result = tester.Run("visualize", script.Path, "--emit", "dot");
 
         Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("Mermaid stage emission was removed", result.Output, StringComparison.Ordinal);
-        Assert.Contains("--emit dot", result.Output, StringComparison.Ordinal);
-        Assert.Contains("fenced `mermaid` blocks", result.Output, StringComparison.Ordinal);
+        Assert.Contains("ddown compile", result.Output, StringComparison.Ordinal);
         runner.DidNotReceive().RunEmit(
             Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
     }
 
     [Fact]
-    public void Visualize_EmitDotWithOutput_RoutesToRunEmitWithTheFile()
+    public void Visualize_EmitWithOutput_FailsRatherThanWritingAnHtmlReport()
     {
         using var script = new TempScript("# Scene");
         var runner = Substitute.For<IVisualizeRunner>();
         var tester = CliTester.Create(runner: runner, shell: ShellRunner());
 
-        tester.Run("visualize", script.Path, "--emit", "dot", "-o", "scene.dot");
+        var result = tester.Run("visualize", script.Path, "--emit", "dot", "-o", "stages.dot");
 
-        runner.Received(1).RunEmit(script.Path, EmitFormat.Dot, "scene.dot", Arg.Any<CompilerOptions>());
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
         runner.DidNotReceive().RunStatic(
             Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<AppliedConfiguration>());
-    }
-
-    [Fact]
-    public void Visualize_EmitUnknownFormat_FailsValidationWithoutRunning()
-    {
-        using var script = new TempScript("# Scene");
-        var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, shell: ShellRunner());
-
-        var result = tester.Run("visualize", script.Path, "--emit", "yaml");
-
-        Assert.NotEqual(0, result.ExitCode);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
-    }
-
-    [Fact]
-    public void Visualize_EmitWithoutScript_FailsValidation()
-    {
-        var runner = Substitute.For<IVisualizeRunner>();
-        var tester = CliTester.Create(runner: runner, shell: ShellRunner());
-
-        var result = tester.Run("visualize", "--emit", "mermaid");
-
-        Assert.NotEqual(0, result.ExitCode);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
     }
 
     [Fact]

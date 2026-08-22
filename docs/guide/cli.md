@@ -72,17 +72,108 @@ ddown visualize my-scene.dialogue.md
 ```
 
 `visualize` opens the report in your browser and refreshes it as you edit the
-script. Press **Ctrl + C** in the terminal to stop it. Add `--help` to any command
-to see its options (for example, `ddown visualize --help`).
+script. Press **Ctrl + C** in the terminal to stop it.
 
-Export every compiler-stage graph as Graphviz DOT text:
+That is the whole of everyday use. The rest of this page covers the options, which
+you can also list at any time with `--help`:
 
 ```sh
-ddown visualize my-scene.dialogue.md --emit dot -o stages.dot
+ddown visualize --help
 ```
 
-Fenced `mermaid` blocks are authoring aids, not compiler-stage output. The HTML
-report renders them directly in its Markdown previews.
+## Two commands
+
+`ddown` has two commands, and the difference is what you get back:
+
+| Command | What it gives you |
+| --- | --- |
+| `compile` | An answer in the terminal: is this script correct? |
+| `visualize` | A report in your browser that updates while you write. |
+
+## visualize — preview while you write
+
+```sh
+ddown visualize [script] [options]
+```
+
+**Open a script.** The report opens in your browser, read-only, and refreshes
+whenever you save the file:
+
+```sh
+ddown visualize my-scene.dialogue.md
+```
+
+**Start writing straight away.** `--edit` opens the report ready to edit, so you
+can type in the browser and save back to the file. You can also flip between
+reading and writing with the View/Edit toggle at any time — `--edit` just saves you
+that click each time you start:
+
+```sh
+ddown visualize my-scene.dialogue.md --edit
+```
+
+**Browse a folder instead of naming a file.** Leave the script out and `ddown` opens
+a file explorer over the folder, so you can pick or create a script from the
+browser:
+
+```sh
+ddown visualize --root my-scripts
+```
+
+`--root` is also a boundary: the report can only browse and open files inside that
+folder. It defaults to the folder you ran the command in.
+
+**Save a report to send to someone.** `--output` writes one self-contained HTML
+file — no server, nothing to install at the other end:
+
+```sh
+ddown visualize my-scene.dialogue.md --output report.html
+```
+
+### Options
+
+| Option | What it does |
+| --- | --- |
+| `--edit` | Open ready to edit, instead of read-only. |
+| `--root <dir>` | The folder the report may browse. Default: the current folder. |
+| `-o`, `--output <path>` | Write a self-contained HTML report and exit. |
+| `--config <path>` | Use a specific `dialogue.toml`. Default: the nearest one above the script. |
+| `--port <port>` | Serve on a fixed port, instead of any free one. |
+| `--no-open` | Don't open a browser (useful in scripts). |
+
+## compile — check a script
+
+```sh
+ddown compile <script> [options]
+```
+
+**Check for mistakes.** Any problems are printed with the line they came from; the
+command exits non-zero when the script has errors, so it fits in a build script:
+
+```sh
+ddown compile my-scene.dialogue.md
+```
+
+**Keep going after an error.** By default `ddown` stops at the end of the stage
+where the first error appeared. `--mode best-effort` pushes on, which surfaces more
+problems in one run:
+
+```sh
+ddown compile my-scene.dialogue.md --mode best-effort
+```
+
+### Options
+
+| Option | What it does |
+| --- | --- |
+| `--mode <mode>` | How far to compile after an error: `stage-boundary` (default) or `best-effort`. |
+| `--config <path>` | Use a specific `dialogue.toml`. Default: the nearest one above the script. |
+
+`compile` can also write the compiler's internal stage graphs as text, for feeding
+into other tools. That's for building tooling rather than writing dialogue, so it
+lives in the
+[developer docs](https://github.com/pengzhengyi/dialoguedown/blob/main/docs/contributing/design-notes/Compile%20CLI%20-%20Emit%20DOT.md);
+`ddown compile --help` lists it too.
 
 ## Keep ddown up to date
 

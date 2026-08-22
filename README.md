@@ -190,7 +190,7 @@ ddown visualize scene.dialogue.md --edit --root .
 ddown visualize scene.dialogue.md -o report.html
 
 # Emit each stage's graph as Graphviz DOT text (to stdout or -o)
-ddown visualize scene.dialogue.md --emit dot -o scene.dot
+ddown compile scene.dialogue.md --emit dot -o scene.dot
 ```
 
 > [!NOTE]

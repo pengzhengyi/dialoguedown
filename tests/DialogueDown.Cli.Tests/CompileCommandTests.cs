@@ -1,6 +1,8 @@
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Visualization.Live;
+using DialogueDown.Visualization.Render;
 using NSubstitute;
 
 namespace DialogueDown.Cli.Tests;
@@ -185,5 +187,87 @@ public sealed class CompileCommandTests
         var result = tester.Run("compile", script.Path, "--mode", "fail-fast");
 
         Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+    }
+
+    [Fact]
+    public void Compile_EmitDotWithOutput_WritesTheStageGraphsToTheFile()
+    {
+        using var script = new TempScript("# Scene");
+        var runner = Substitute.For<IVisualizeRunner>();
+        var tester = CliTester.Create(runner: runner);
+
+        tester.Run("compile", script.Path, "--emit", "dot", "-o", "scene.dot");
+
+        runner.Received(1).RunEmit(script.Path, EmitFormat.Dot, "scene.dot", Arg.Any<CompilerOptions>());
+    }
+
+    [Fact]
+    public void Compile_EmitDotWithoutOutput_WritesToStandardOutput()
+    {
+        using var script = new TempScript("# Scene");
+        var runner = Substitute.For<IVisualizeRunner>();
+        var tester = CliTester.Create(runner: runner);
+
+        tester.Run("compile", script.Path, "--emit", "dot");
+
+        runner.Received(1).RunEmit(script.Path, EmitFormat.Dot, null, Arg.Any<CompilerOptions>());
+    }
+
+    [Fact]
+    public void Compile_WithoutEmit_DoesNotRenderStageGraphs()
+    {
+        using var script = new TempScript("# Scene");
+        var runner = Substitute.For<IVisualizeRunner>();
+        var tester = CliTester.Create(runner: runner);
+
+        var result = tester.Run("compile", script.Path);
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        runner.DidNotReceive().RunEmit(
+            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+    }
+
+    [Fact]
+    public void Compile_EmitMermaid_FailsWithMigrationGuidance()
+    {
+        using var script = new TempScript("# Scene");
+        var runner = Substitute.For<IVisualizeRunner>();
+        var tester = CliTester.Create(runner: runner);
+
+        var result = tester.Run("compile", script.Path, "--emit", "mermaid");
+
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        Assert.Contains("Mermaid stage emission was removed", result.Output, StringComparison.Ordinal);
+        Assert.Contains("--emit dot", result.Output, StringComparison.Ordinal);
+        Assert.Contains("fenced `mermaid` blocks", result.Output, StringComparison.Ordinal);
+        runner.DidNotReceive().RunEmit(
+            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+    }
+
+    [Fact]
+    public void Compile_EmitUnknownFormat_FailsValidationWithoutRunning()
+    {
+        using var script = new TempScript("# Scene");
+        var runner = Substitute.For<IVisualizeRunner>();
+        var tester = CliTester.Create(runner: runner);
+
+        var result = tester.Run("compile", script.Path, "--emit", "yaml");
+
+        Assert.NotEqual(0, result.ExitCode);
+        runner.DidNotReceive().RunEmit(
+            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+    }
+
+    [Fact]
+    public void Compile_OutputWithoutEmit_FailsValidation()
+    {
+        // `--output` names where an emitted artifact goes, so it means nothing on its own —
+        // failing is kinder than silently writing nothing.
+        using var script = new TempScript("# Scene");
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "-o", "scene.dot");
+
+        Assert.NotEqual(0, result.ExitCode);
     }
 }
