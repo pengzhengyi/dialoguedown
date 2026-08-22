@@ -191,6 +191,14 @@ internal static class DialogueAstAssert
     public static Text AssertSpeechText(Line line, string content) =>
         AssertText(Assert.Single(line.Speech), content);
 
+    /// <summary>
+    /// Asserts the two documents have the same shape: the same nodes, in the same places, carrying
+    /// the same content. This stands in for structural equality, which the AST's records do not
+    /// offer because they hold their children in lists that compare by reference.
+    /// </summary>
+    public static void AssertSameShape(ScriptDocument expected, ScriptDocument actual) =>
+        Assert.Equal(ScriptShape.Of(expected), ScriptShape.Of(actual));
+
     private static void AssertTags(IReadOnlyList<Tag> actual, Tag[] expected)
     {
         if (expected.Length == 0)
