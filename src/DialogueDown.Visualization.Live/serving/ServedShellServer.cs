@@ -25,7 +25,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
     private readonly BrowseRoot _root;
     private readonly string _emptyShellHtml;
     private readonly Func<string, string, string?, LiveSession> _sessionFactory;
-    private readonly TreeWatches _watches;
+    private readonly Lazy<TreeWatches> _watches;
     private readonly object _gate = new();
     private ActiveDocument? _active;
 
@@ -47,9 +47,11 @@ internal sealed class ServedShellServer : IAsyncDisposable
         _root = root;
         _emptyShellHtml = emptyShellHtml;
         _sessionFactory = sessionFactory ?? ((path, mode, displayPath) => new LiveSession(path, mode, displayPath: displayPath));
-        // One watcher covers the served tree for the run's lifetime. Static files keep their own
+        // One watcher covers the served tree for the run's lifetime, but only from the first
+        // document opened: registering with the operating system costs over a tenth of a second on
+        // macOS, and a run that only ever browses never needs it. Static files keep their own
         // provider: that one must go on hiding sensitive files, and it never watches anything.
-        _watches = new TreeWatches(root.RootDirectory);
+        _watches = new Lazy<TreeWatches>(() => new TreeWatches(root.RootDirectory));
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         builder.Logging.ClearProviders();
@@ -97,7 +99,11 @@ internal sealed class ServedShellServer : IAsyncDisposable
             _active?.ConfigWatcher?.Dispose();
         }
 
-        _watches.Dispose();
+        if (_watches.IsValueCreated)
+        {
+            _watches.Value.Dispose();
+        }
+
         await _app.DisposeAsync();
     }
 
@@ -284,10 +290,10 @@ internal sealed class ServedShellServer : IAsyncDisposable
         session.Project = new ReportProject(_root.RootDirectory, _root.Relativize(documentPath));
         // A served session always watches the file: View hot-reloads the report, Edit
         // surfaces a passive "changed on disk" chip.
-        var watcher = _watches.Watch(documentPath, session.Refresh);
+        var watcher = _watches.Value.Watch(documentPath, session.Refresh);
         // A session that already applies a config watches it too, so external config edits reload.
         var configWatcher = session.ConfigPath is { } configPath
-            ? _watches.Watch(configPath, session.RefreshConfig)
+            ? _watches.Value.Watch(configPath, session.RefreshConfig)
             : null;
 
         lock (_gate)
@@ -492,7 +498,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
             }
 
             active.ConfigWatcher?.Dispose();
-            active.ConfigWatcher = _watches.Watch(configPath, active.Session.RefreshConfig);
+            active.ConfigWatcher = _watches.Value.Watch(configPath, active.Session.RefreshConfig);
         }
     }
 
