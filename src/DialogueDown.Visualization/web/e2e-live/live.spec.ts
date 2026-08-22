@@ -578,7 +578,6 @@ test("renders the dialogue graph, including a cycle and unreachable content", as
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
 
     // The stage renders rather than reporting a layout failure.
@@ -593,8 +592,8 @@ test("keeps every edge clear of the words it runs past", async ({ page }) => {
     // A node writes its label to the right of its dot, so a line leaving from the dot would strike
     // through the very text it belongs to, and a long cross-link would lie across every row it
     // passes. Both make a busy graph unreadable, so neither is allowed.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -624,7 +623,6 @@ test("keeps every edge clear of the words it runs past", async ({ page }) => {
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active g.node")).not.toHaveCount(0);
 
@@ -660,8 +658,8 @@ test("keeps every edge clear of the words it runs past", async ({ page }) => {
 test("gives each cross-link a lane of its own, so two never share a line", async ({ page }) => {
     // Two routes drawn along the same y would read as one line with mysterious branches. Each
     // takes its own lane instead, the shorter hop nearer the drawing.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -681,7 +679,6 @@ test("gives each cross-link a lane of its own, so two never share a line", async
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active path.reference")).not.toHaveCount(0);
 
@@ -698,8 +695,8 @@ test("gives each cross-link a lane of its own, so two never share a line", async
 test("draws a succession solidly even where it is routed as a cross-link", async ({ page }) => {
     // Where a node is reached twice, the second arrival is drawn as a cross-link. It is still an
     // ordinary succession, so it must look like one rather than borrowing the reference dash.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -713,7 +710,6 @@ test("draws a succession solidly even where it is routed as a cross-link", async
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
 
     const succession = page
@@ -729,8 +725,8 @@ test("draws a succession solidly even where it is routed as a cross-link", async
 test("lists a node's routes in and out, and walks them", async ({ page }) => {
     // The drawing shows every edge but cannot name them all at once. The inspector names the ones
     // that touch the node the reader asked about, and each row is a way to go there.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -744,7 +740,6 @@ test("lists a node's routes in and out, and walks them", async ({ page }) => {
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
     await stage
@@ -767,7 +762,7 @@ test("lists a node's routes in and out, and walks them", async ({ page }) => {
 });
 
 test("leaves the neighbor lists out of a stage that is a tree, not a flow", async ({ page }) => {
-    writeFileSync(LIVE_DOC, ["# The Gate", "", "Guide: Hello.", ""].join("\n"));
+    await openDocument(page, ["# The Gate", "", "Guide: Hello.", ""].join("\n"));
     await page.goto("/");
     await page.locator(".tab", { hasText: "Desugared AST" }).click();
     await page
@@ -795,7 +790,6 @@ test("stamps the not-reached line with crosses rather than a fourth dash pattern
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
 
     const barred = page
@@ -832,8 +826,8 @@ test("opens a route from the drawing, and walks off it to either end", async ({ 
 });
 
 test("draws a scene as a band around its nodes rather than a line under each", async ({ page }) => {
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -847,7 +841,6 @@ test("draws a scene as a band around its nodes rather than a line under each", a
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
 
@@ -890,11 +883,10 @@ test("opens a region from its band, and names its border", async ({ page }) => {
 });
 
 test("renders a list in the preview as a list, markers and all", async ({ page }) => {
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "- Alice: Left.", "", "- Alice: Right.", ""].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await page
         .locator("section.stage.active g.node")
@@ -1025,8 +1017,8 @@ test("reads a jump as a jump in every stage that has interpreted one", async ({ 
 test("gives routes ending at one node a corridor each, and picks the nearest", async ({ page }) => {
     // Every jump into a scene lands on its entry. Climbing in that node's own column would stack
     // them into one line to the eye and a coin toss to the pointer.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -1042,7 +1034,6 @@ test("gives routes ending at one node a corridor each, and picks the nearest", a
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
     await expect(stage.locator("path.reference")).not.toHaveCount(0);
@@ -1091,11 +1082,10 @@ test("frames a graph from its own root rather than inheriting where you were loo
 }) => {
     // The dialogue graph runs far wider than the trees beside it, so carrying a pan into it
     // scrolls its nodes off-screen and leaves the reader looking at nothing.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "Guide: Which way?", "", "Guide: You are inside.", ""].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Markdown AST" }).click();
     const canvas = page.locator("section.stage.active svg.tree");
     const box = (await canvas.boundingBox())!;
@@ -1126,11 +1116,10 @@ test("opens a stage showing the whole of it, clear of the legend", async ({ page
     // Short enough to fit the canvas the test leaves once both panels have their room. A script
     // too wide to fit at a legible scale opens at its start instead, and then some of it is
     // behind the legend by necessity — that is the fold's job, not the framing's.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "Guide: Which way?", "", "Guide: Inside.", ""].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active g.node")).not.toHaveCount(0);
 
@@ -1192,8 +1181,8 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
 }) => {
     // A character count cannot say how wide a label will be — thirty `W`s are more than twice
     // thirty `i`s — so the gap the corridors climb in was unknown. Measuring makes it a number.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -1203,7 +1192,6 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const labels = page.locator("section.stage.active g.node text.label");
     await expect(labels).not.toHaveCount(0);
@@ -1239,8 +1227,8 @@ test("lands a route's arrowhead on its target's edge, with no line showing past 
     //
     // The line now stops where the head *begins*, and the head draws the rest. So the assertion is
     // about the head's tip — what the reader actually sees — not the line's invisible end.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -1254,7 +1242,6 @@ test("lands a route's arrowhead on its target's edge, with no line showing past 
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const routes = page.locator("section.stage.active svg.tree path[marker-end]");
     await expect(routes).not.toHaveCount(0);
@@ -1320,8 +1307,8 @@ test("lands a route's arrowhead on its target's edge, with no line showing past 
 });
 
 test("names each kind of route with its own pointer", async ({ page }) => {
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -1343,7 +1330,6 @@ test("names each kind of route with its own pointer", async ({ page }) => {
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active path.edge-hit")).not.toHaveCount(0);
 
@@ -1370,13 +1356,12 @@ test("shows each route in the legend as the line it actually is", async ({ page 
     // The legend used to approximate each route with a CSS gradient: a second drawing of the same
     // vocabulary, free to drift, and with no way to show that a route points somewhere. It now
     // draws the route itself, so the reader learns exactly what they will find on the canvas.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "Guide: Farewell => [the end](#END)", "", "Guide: Unheard.", ""].join(
             "\n",
         ),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const legend = page.locator("section.stage.active .legend");
     await expect(legend.locator(".legend-edge")).not.toHaveCount(0);
@@ -1414,8 +1399,8 @@ test("folds a scene in the graph to a single box the flow still passes through",
 }) => {
     // A scene is the one grouping a reader may collapse without the drawing lying about itself.
     // Folded, its lines go with it and everything downstream stays exactly where it was.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Market",
             "",
@@ -1431,7 +1416,6 @@ test("folds a scene in the graph to a single box the flow still passes through",
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     // The panels floating over the canvas must not intercept a press aimed at a band's corner.
     await page.addStyleTag({
@@ -1480,8 +1464,8 @@ test("folds a scene in the graph to a single box the flow still passes through",
 test("folds and opens every scene at once from the legend", async ({ page }) => {
     // A long script's interesting view is often every scene shut at once, which the per-scene
     // chevron alone makes a chore. The commands act on the whole set and discard exceptions.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Market",
             "",
@@ -1493,7 +1477,6 @@ test("folds and opens every scene at once from the legend", async ({ page }) => 
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
     const boxes = stage.locator("g.node.region-box");
