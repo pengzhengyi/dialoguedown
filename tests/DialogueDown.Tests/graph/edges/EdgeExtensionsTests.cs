@@ -13,7 +13,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void HasUnconditionalRoute_UnconditionalDivert_IsTrue()
     {
-        IReadOnlyList<Edge> edges = [new DivertEdge(_target)];
+        IReadOnlyList<Edge> edges = [DivertEdge(_target)];
 
         Assert.True(edges.HasUnconditionalRoute());
     }
@@ -21,7 +21,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void HasUnconditionalRoute_ConditionalDivert_IsFalse()
     {
-        IReadOnlyList<Edge> edges = [new DivertEdge(_target, Condition("Brave"))];
+        IReadOnlyList<Edge> edges = [DivertEdge(_target, Condition("Brave"))];
 
         Assert.False(edges.HasUnconditionalRoute());
     }

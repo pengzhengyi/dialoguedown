@@ -4,6 +4,7 @@ using DialogueDown.Graph.Builder;
 using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Regions;
+using DialogueDown.Script.Ast;
 
 namespace DialogueDown.Tests.Support;
 
@@ -24,6 +25,10 @@ internal static class DialogueGraphFactory
     }
 
     public static SuccessionEdge SuccessionEdge(int target) => new(NodeId(target));
+
+    /// <summary>A divert to <paramref name="target"/>, labelled as a writer would have.</summary>
+    public static DivertEdge DivertEdge(NodeId target, Condition? condition = null) =>
+        new(target, [DialogueAstFactory.Text("there")], condition);
 
     public static void AddSuccessionEdge(this NodeDraft draft, int target)
     {
