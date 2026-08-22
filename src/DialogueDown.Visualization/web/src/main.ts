@@ -14,7 +14,6 @@ import { createConfig, browserConfigCreatePorts } from "./config-create";
 import { resolveDocumentForNavigation } from "./navigation";
 import { initModeBadge } from "./mode-badge";
 import { initPathDisplay, initConfigPath, type PathDisplay } from "./path-display";
-import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
 import { mermaidPreviews } from "./mermaid-preview";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
@@ -450,13 +449,10 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         const body = (await response.json().catch(() => ({}))) as { message?: string };
         return { kind: "error", message: body.message ?? "Could not create the file." };
     }
-
-    if (header) initBackToLauncher(header, window.location.pathname);
 } else {
     // Static export: read-only, no server, no toggle.
     runApp(report);
     initModeBadge("static");
-    if (header) initBackToLauncher(header, window.location.pathname);
 }
 
 docPath = initPathDisplay(report.path);
