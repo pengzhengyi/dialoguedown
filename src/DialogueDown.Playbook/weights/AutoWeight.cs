@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Weights;
 
 /// <summary>
 /// An unweighted option, sharing evenly in whatever the weighted options leave.

@@ -1,7 +1,10 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
+using DialogueDown.Playbook.Conditions;
+using DialogueDown.Playbook.Speech;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
 /// One arm of a player's choice, carrying the text the menu shows.

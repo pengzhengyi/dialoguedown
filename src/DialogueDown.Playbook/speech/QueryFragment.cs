@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// A read of game state spliced into speech — the runner resolves it before the line is said.

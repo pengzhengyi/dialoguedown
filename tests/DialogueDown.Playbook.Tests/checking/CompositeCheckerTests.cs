@@ -1,6 +1,6 @@
+using DialogueDown.Playbook.Checking;
 using DialogueDown.Playbook.Tests.Support;
 using NSubstitute;
-
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class CompositeCheckerTests

@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// A break within a line — a hard wrap the writer asked for.

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Refuses a playbook that needs a construct this build does not understand.

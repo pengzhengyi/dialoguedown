@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Refuses a playbook this build cannot read at all.

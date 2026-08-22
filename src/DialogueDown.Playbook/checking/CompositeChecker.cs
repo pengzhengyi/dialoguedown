@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 
-namespace DialogueDown.Playbook;
+using DialogueDown.Playbook.Common;
+
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Runs several checks as one, in the order they were given.

@@ -1,6 +1,8 @@
 using System.Globalization;
 
-namespace DialogueDown.Playbook;
+using DialogueDown.Playbook.Common;
+
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Refuses a playbook written in a format version this reader does not read.

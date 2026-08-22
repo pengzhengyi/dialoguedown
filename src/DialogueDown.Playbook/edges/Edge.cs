@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
 /// A way out of a node, and the node it leads to.

@@ -1,5 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
+using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speakers;
 
 namespace DialogueDown.Playbook;
 

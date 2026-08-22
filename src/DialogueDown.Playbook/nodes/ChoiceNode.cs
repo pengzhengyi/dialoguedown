@@ -1,7 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Edges;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// A menu the player picks from; its options are the ways out.

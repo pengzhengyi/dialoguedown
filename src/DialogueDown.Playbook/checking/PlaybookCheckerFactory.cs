@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Creates the checks a playbook must satisfy to be played by this build.

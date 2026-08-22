@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// Where a run stops. It leads nowhere, so it has no ways out.

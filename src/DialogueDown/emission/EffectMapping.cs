@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using DialogueDown.Playbook;
+using DialogueDown.Playbook.Speech;
 using Ast = DialogueDown.Script.Ast;
 
 namespace DialogueDown.Emission;

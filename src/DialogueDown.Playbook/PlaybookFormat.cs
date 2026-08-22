@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
 namespace DialogueDown.Playbook;
 

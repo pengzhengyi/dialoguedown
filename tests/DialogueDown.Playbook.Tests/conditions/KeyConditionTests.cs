@@ -1,6 +1,6 @@
+using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Tests.Support;
-
-namespace DialogueDown.Playbook.Tests;
+namespace DialogueDown.Playbook.Tests.Conditions;
 
 public sealed class KeyConditionTests
 {

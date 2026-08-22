@@ -1,7 +1,11 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
+using DialogueDown.Playbook.Conditions;
+using DialogueDown.Playbook.Edges;
+using DialogueDown.Playbook.Speech;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// An effect-only line: something the host performs, attributed to nobody.

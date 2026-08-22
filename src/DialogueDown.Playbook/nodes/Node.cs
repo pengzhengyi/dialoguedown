@@ -1,7 +1,9 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
+using DialogueDown.Playbook.Edges;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// One step of a playthrough: something happens here, then an edge leads on.

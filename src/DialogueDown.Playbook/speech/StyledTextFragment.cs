@@ -1,7 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// Emphasis wrapping more speech — the recursive case of the fragment union.

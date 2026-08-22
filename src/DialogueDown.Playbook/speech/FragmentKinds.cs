@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// The <c>kind</c> values that tag a speech fragment on the wire.

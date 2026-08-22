@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Common;
 
 /// <summary>
 /// Guards for the whole numbers a playbook carries — node indices and the order branch arms are

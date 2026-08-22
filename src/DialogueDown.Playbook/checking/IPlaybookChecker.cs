@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// One rule a playbook must satisfy before a runtime will play it.

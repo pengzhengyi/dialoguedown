@@ -1,7 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speakers;
 
 /// <summary>
 /// Somebody who says lines, hoisted out of the lines that quote them.

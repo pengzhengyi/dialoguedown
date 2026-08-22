@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Common;
 
 /// <summary>
 /// Guards for <see cref="ImmutableArray{T}"/>, whose <c>default</c> value wraps no array at

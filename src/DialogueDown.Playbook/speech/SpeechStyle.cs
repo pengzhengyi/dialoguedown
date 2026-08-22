@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// How a run of speech is emphasized.

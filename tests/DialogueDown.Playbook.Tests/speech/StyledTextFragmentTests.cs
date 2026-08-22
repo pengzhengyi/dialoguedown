@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
-
-namespace DialogueDown.Playbook.Tests;
+namespace DialogueDown.Playbook.Tests.Speech;
 
 public sealed class StyledTextFragmentTests
 {

@@ -1,6 +1,6 @@
 using DialogueDown.Playbook.Tests.Support;
-
-namespace DialogueDown.Playbook.Tests;
+using DialogueDown.Playbook.Weights;
+namespace DialogueDown.Playbook.Tests.Weights;
 
 public sealed class QueryWeightTests
 {

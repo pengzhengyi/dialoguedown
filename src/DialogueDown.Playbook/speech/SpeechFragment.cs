@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// One piece of what a line says. Speech is a list of these rather than a string, because a

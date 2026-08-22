@@ -1,6 +1,6 @@
+using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Tests.Support;
-
-namespace DialogueDown.Playbook.Tests;
+namespace DialogueDown.Playbook.Tests.Speakers;
 
 public sealed class PlaybookSpeakerTests
 {

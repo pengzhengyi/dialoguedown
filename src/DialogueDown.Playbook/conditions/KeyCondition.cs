@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Conditions;
 
 /// <summary>
 /// A condition the world answers by key — the only shape a condition takes today.

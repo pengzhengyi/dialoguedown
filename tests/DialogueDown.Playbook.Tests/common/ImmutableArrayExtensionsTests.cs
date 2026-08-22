@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-
-namespace DialogueDown.Playbook.Tests;
+using DialogueDown.Playbook.Common;
+namespace DialogueDown.Playbook.Tests.Common;
 
 public sealed class ImmutableArrayExtensionsTests
 {

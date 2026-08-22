@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
-using DialogueDown.Playbook;
-
+using DialogueDown.Playbook.Speech;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>

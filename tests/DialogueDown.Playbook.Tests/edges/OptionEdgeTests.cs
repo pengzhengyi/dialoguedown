@@ -1,6 +1,6 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Tests.Support;
-
-namespace DialogueDown.Playbook.Tests;
+namespace DialogueDown.Playbook.Tests.Edges;
 
 public sealed class OptionEdgeTests
 {

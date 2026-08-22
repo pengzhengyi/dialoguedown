@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Common;
 
 /// <summary>
 /// Guards for the arrays a caller composes by hand, where a gap is a wiring mistake rather than

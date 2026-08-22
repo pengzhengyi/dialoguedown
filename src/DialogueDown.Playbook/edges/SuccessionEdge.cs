@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
 /// Reading order: what plays next when nothing branches.

@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
+using DialogueDown.Playbook.Conditions;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
 /// One arm of a block condition, carrying its place in the order the arms are tried.

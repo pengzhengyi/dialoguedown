@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// The built-in string enum converter, configured to accept a name and nothing else.

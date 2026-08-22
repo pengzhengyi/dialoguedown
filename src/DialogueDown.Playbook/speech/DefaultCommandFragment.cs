@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
 /// A command written as a plain phrase, which the host performs however it chooses.

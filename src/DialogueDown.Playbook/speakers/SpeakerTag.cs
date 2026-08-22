@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Speakers;
 
 /// <summary>
 /// An annotation on a speaker, such as a portrait or a voice a host binds.

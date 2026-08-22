@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
+using DialogueDown.Playbook.Edges;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// A choice the engine draws instead of showing, weighted by its arms.

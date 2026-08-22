@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Conditions;
 
 /// <summary>
 /// A question that decides whether a line plays, an option is offered, or a jump fires.

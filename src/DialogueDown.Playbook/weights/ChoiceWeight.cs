@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Weights;
 
 /// <summary>
 /// How likely a random option is to be drawn.

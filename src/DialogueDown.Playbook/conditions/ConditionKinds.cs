@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Conditions;
 
 /// <summary>
 /// The <c>kind</c> values that tag a condition on the wire.

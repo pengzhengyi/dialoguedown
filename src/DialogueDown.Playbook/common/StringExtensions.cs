@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Common;
 
 /// <summary>
 /// Guards for the strings a playbook carries, so a null or blank one is refused where it enters

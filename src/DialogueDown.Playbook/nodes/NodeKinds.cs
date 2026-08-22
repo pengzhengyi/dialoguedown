@@ -1,4 +1,6 @@
-namespace DialogueDown.Playbook;
+using DialogueDown.Playbook.Edges;
+
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// The <c>kind</c> values that tag a node on the wire.

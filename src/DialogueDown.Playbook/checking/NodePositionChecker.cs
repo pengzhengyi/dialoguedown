@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Refuses a playbook whose nodes are not where they say they are.

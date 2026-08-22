@@ -1,5 +1,5 @@
+using DialogueDown.Playbook.Checking;
 using DialogueDown.Playbook.Tests.Support;
-
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class VersionCheckerTests

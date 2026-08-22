@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Conditions;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
 /// A jump that does not return: control transfers to the target and reading order does not resume.

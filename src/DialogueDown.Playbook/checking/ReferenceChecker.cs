@@ -1,6 +1,7 @@
 using System.Globalization;
+using DialogueDown.Playbook.Nodes;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
 /// Refuses a playbook that points somewhere it does not have.

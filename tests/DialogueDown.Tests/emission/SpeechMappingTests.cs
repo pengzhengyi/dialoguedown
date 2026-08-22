@@ -1,5 +1,5 @@
 using DialogueDown.Emission;
-using DialogueDown.Playbook;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.SpeechAssert;

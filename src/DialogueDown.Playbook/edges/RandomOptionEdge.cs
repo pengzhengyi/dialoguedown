@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Conditions;
+using DialogueDown.Playbook.Weights;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
 /// One arm of a random choice, carrying the odds the engine draws against.

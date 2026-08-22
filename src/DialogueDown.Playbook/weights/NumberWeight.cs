@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Weights;
 
 /// <summary>
 /// A percentage the writer fixed in the script.

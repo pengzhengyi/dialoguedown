@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Weights;
 
 /// <summary>
 /// The <c>kind</c> values that tag a random option's weight on the wire.

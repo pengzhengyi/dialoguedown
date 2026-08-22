@@ -1,4 +1,5 @@
-namespace DialogueDown.Playbook.Tests;
+using DialogueDown.Playbook.Common;
+namespace DialogueDown.Playbook.Tests.Common;
 
 public sealed class Int32ExtensionsTests
 {

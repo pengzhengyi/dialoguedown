@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
+using DialogueDown.Playbook.Edges;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Nodes;
 
 /// <summary>
 /// A block condition fanning out to its arms; the arms carry the conditions and their order.

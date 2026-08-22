@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using DialogueDown.Playbook.Common;
 
-namespace DialogueDown.Playbook;
+namespace DialogueDown.Playbook.Weights;
 
 /// <summary>
 /// A percentage the world supplies at play time, so odds can follow game state.
