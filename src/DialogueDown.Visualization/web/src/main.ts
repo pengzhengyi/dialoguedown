@@ -13,12 +13,18 @@ import { createModeController } from "./view-edit";
 import { createConfig, browserConfigCreatePorts } from "./config-create";
 import { resolveDocumentForNavigation } from "./navigation";
 import { initModeBadge } from "./mode-badge";
-import { initPathDisplay, initConfigPath } from "./path-display";
+import { initPathDisplay, initConfigPath, type PathDisplay } from "./path-display";
 import { initBackToLauncher } from "./back-link";
 import { initTheme } from "./theme";
 import { mermaidPreviews } from "./mermaid-preview";
 import { DEV_SOURCE, DEV_STAGES } from "./dev-stages";
-import { initExplorer, resolveProjectPath, type ExplorerConfig } from "./explorer";
+import {
+    initExplorer,
+    resolveProjectPath,
+    type ExplorerConfig,
+    type ExplorerHandle,
+} from "./explorer";
+import { createScriptSwitch } from "./script-switch";
 import { initEmptyShell } from "./empty-shell";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { createExplorerToggle, EXPLORER_PANEL_NAME } from "./explorer-toggle";
@@ -58,6 +64,9 @@ function resolveReport(): Report {
 
 const report = resolveReport();
 const header = document.querySelector<HTMLElement>(".app-header");
+// The status-bar path chip, mounted at the end of this module. A switch re-points it, so it is
+// held rather than discarded.
+let docPath: PathDisplay | null = null;
 
 // Apply the saved color theme and mount the System/Light/Dark toggle (every mode).
 initTheme(header?.querySelector(".header-controls") ?? null, () => {
@@ -112,20 +121,25 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         );
     }
 
-    // The async navigation boundary for tabs and node selection: resolve the active document,
-    // then run `proceed` — but only when a newer navigation has not superseded this one. A Config
-    // tab with no controller has nothing to resolve, so navigation proceeds.
-    function beginNavigation(proceed: () => void): void {
+    // The async navigation boundary: settle the active document, and report whether it is safe to
+    // leave it — false when a paused conflict or a declined Manual prompt keeps the reader in
+    // place, or when a newer navigation superseded this one. A Config tab with no controller has
+    // nothing to settle.
+    function resolveForNavigation(): Promise<boolean> {
         const token = ++navToken;
         const live = activeLive();
-        if (live === null) {
-            proceed();
-            return;
-        }
+        if (live === null) return Promise.resolve(true);
         // A newer navigation (or a mode change) bumps navToken; pass that as the cancellation
         // signal so the Auto flush loop stops rather than saving on behalf of a superseded intent.
-        void resolveDocument(live, () => token !== navToken).then((ok) => {
-            if (ok && token === navToken) proceed();
+        return resolveDocument(live, () => token !== navToken).then(
+            (ok) => ok && token === navToken,
+        );
+    }
+
+    // The callback-shaped boundary tabs and node selection use: settle, then proceed.
+    function beginNavigation(proceed: () => void): void {
+        void resolveForNavigation().then((ok) => {
+            if (ok) proceed();
         });
     }
 
@@ -147,6 +161,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         type: "source",
         markDirty: app.markSourceDirty,
         setContent: app.setContent,
+        setDocument: app.setDocument,
         applyReport: (applied) => {
             app.updateStages(applied.stages);
             // A save recompiles, so the analyzer's symbols change — refresh the completion
@@ -176,6 +191,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         target: "config",
         markDirty: app.markConfigDirty,
         setContent: (source) => app.setConfigContent(source),
+        // The config is the same file across a switch (a different one needs a fresh page), so
+        // its history stays meaningful.
+        setDocument: (source) => app.setConfigContent(source),
         applyReport: (applied) => {
             if (applied.configuration) app.updateConfig(applied.configuration);
             // A config recompile changes the graph too, so refresh the stages exactly once, like
@@ -229,7 +247,12 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         resolveDocument,
     });
     document.getElementById("mode-badge")?.replaceWith(toggle.element);
-    watchServerEvents({
+    // The Explorer's handle, so opening a script can move the tree's highlight. Assigned when the
+    // sidebar mounts (a served, browsable report); absent otherwise.
+    let explorer: ExplorerHandle | null = null;
+    // The server binds an event stream to the document that was active when it opened, so the
+    // watch is held: a switch has to reconnect it or hot reload keeps reporting on the old script.
+    const serverEvents = watchServerEvents({
         onReload: (next) => {
             currentSymbols = next.symbols ?? EMPTY_SYMBOLS;
             controller.onReload(next);
@@ -240,6 +263,52 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         },
         onProblem: (message, target) => controller.onProblem(message, target),
     });
+    // Opening a script replaces the report's contents rather than the page, so the reader keeps
+    // the window they were working in. Anything the page cannot absorb falls back to a full load.
+    const scripts = createScriptSwitch(
+        {
+            resolve: resolveForNavigation,
+            currentMode: () =>
+                (document.documentElement.dataset.servedMode as ServedMode | undefined) ??
+                initialMode,
+            open: async (source, mode) => {
+                const response = await fetch("/api/open", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ source, mode }),
+                });
+                return response.redirected ? response.url : null;
+            },
+            document: async () => {
+                const response = await fetch("/api/document");
+                return response.ok ? ((await response.json()) as Report) : null;
+            },
+            // The page wired its editors, panes, and controllers from the config the compile
+            // applied, so a script under a different `dialogue.toml` needs a fresh page.
+            fitsPage: (next) => next.configuration?.file?.path === report.configuration?.file?.path,
+            apply: (path, next, mode) => {
+                // The analyzer's symbols come from this script's compile, so the editor's
+                // completions must follow it rather than keep offering the previous one's.
+                currentSymbols = next.symbols ?? EMPTY_SYMBOLS;
+                controller.switchDocument(next, mode);
+                if (report.project) report.project.activePath = path;
+                explorer?.setActiveScript(path);
+                docPath?.setPath(next.path);
+                serverEvents.resubscribe();
+            },
+            pushHistory: (path, url) => window.history.pushState({ script: path }, "", url),
+            setHistory: (path, url) => window.history.replaceState({ script: path }, "", url),
+            load: (url) => window.location.assign(url),
+            showProblem: (message) => app.showBanner(message),
+        },
+        { path: report.project?.activePath ?? "", url: window.location.href },
+    );
+    // Back and Forward carry the script in the history entry, so they open it the same way a
+    // click does — no page load, and no round trip through the address bar.
+    window.addEventListener("popstate", (event) => {
+        const script = (event.state as { script?: string } | null)?.script;
+        if (typeof script === "string") void scripts.restore(script);
+    });
     // The Explorer sidebar: present only for a served, browsable report (report.project is set by
     // the project server). It reuses the launcher's browse/open endpoints and routes a file open
     // through beginNavigation, so switching scripts respects the save mode (Auto flushes, Manual
@@ -249,7 +318,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         const appEl = document.getElementById("app");
         if (explorerEl && appEl) {
             appEl.classList.add("has-explorer");
-            initExplorer(
+            explorer = initExplorer(
                 explorerEl,
                 report.project,
                 {
@@ -259,10 +328,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                         );
                         return response.ok ? ((await response.json()) as BrowseListing) : null;
                     },
-                    openScript: (path) =>
-                        beginNavigation(() => {
-                            void openScriptSession(path);
-                        }),
+                    openScript: (path) => {
+                        void scripts.open(path);
+                    },
                     create: async (path) => {
                         // Resolve the current document save-safely first; a cancelled Manual save
                         // aborts the create (empty message → the Explorer shows nothing).
@@ -312,7 +380,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                                 activePath?: string;
                             };
                             const path = body.path ?? to;
-                            if (body.active) void openScriptSession(body.activePath ?? path);
+                            if (body.active) void scripts.open(body.activePath ?? path);
                             return { kind: "renamed", path };
                         }
                         if (response.status === 409) return { kind: "exists" };
@@ -344,7 +412,6 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             // A cross-file link in the Source preview opens the target script like a hyperlink;
             // same-file #anchors keep their native scroll, and the anchor part is dropped (the
             // linker resolves anchors, deferred).
-            const activeFolder = parentPath(report.project.activePath ?? "");
             for (const preview of document.querySelectorAll(".source-preview")) {
                 preview.addEventListener("click", (event) => {
                     const anchor = (event.target as Element | null)?.closest("a");
@@ -353,31 +420,19 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                         return;
                     }
                     event.preventDefault();
+                    // Links are written relative to the script that contains them, which moves as
+                    // the reader opens another one.
+                    const activeFolder = parentPath(report.project?.activePath ?? "");
                     const target = resolveProjectPath(activeFolder, href);
-                    if (target !== null) {
-                        beginNavigation(() => {
-                            void openScriptSession(target);
-                        });
-                    }
+                    if (target !== null) void scripts.open(target);
                 });
             }
         }
     }
 
-    // Open another script: preserve the current View/Edit mode (read from the live accent the
-    // toggle sets), start its session, and follow the 303 to its report.
-    async function openScriptSession(source: string): Promise<void> {
-        const mode = document.documentElement.dataset.servedMode ?? initialMode;
-        const response = await fetch("/api/open", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ source, mode }),
-        });
-        if (response.redirected) window.location.assign(response.url);
-    }
-
     // Create a new script (POST /api/create) and follow the 303 to its report; a name clash is a
-    // 409 the Explorer turns into "open the existing one instead".
+    // 409 the Explorer turns into "open the existing one instead". A brand-new file starts on a
+    // fresh page, because its compile may pick up a different configuration context.
     async function createScriptSession(path: string): Promise<CreateOutcome> {
         const response = await fetch("/api/create", {
             method: "POST",
@@ -404,5 +459,5 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     if (header) initBackToLauncher(header, window.location.pathname);
 }
 
-initPathDisplay(report.path);
+docPath = initPathDisplay(report.path);
 initConfigPath(report.configuration);

@@ -118,6 +118,8 @@ export interface AppController {
     setEditable(editable: boolean): void;
     /** Replace the Source buffer (a View-mode hot-reload), keeping the one editor instance. */
     setContent(source: string): void;
+    /** Show a different script in the Source editor, dropping the previous one's undo history. */
+    setDocument(source: string): void;
     /** Replace the Source editor's diagnostics overlay after a recompile (hot-reload or save). */
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** Replace the Source editor's semantic-token highlighting after a recompile. */
@@ -429,6 +431,7 @@ export function runApp(
             sourceHandle?.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
+        setDocument: (next) => sourceHandle?.setDocument(next),
         setDiagnostics: (diagnostics) => applyDiagnostics(diagnostics),
         setSemanticTokens: (tokens) => sourceHandle?.setSemanticTokens(tokens),
         setReservedTargets: (targets) => sourceHandle?.setReservedTargets(targets),

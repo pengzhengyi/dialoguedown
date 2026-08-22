@@ -21,13 +21,8 @@ import {
     type Extension,
     type StateCommand,
 } from "@codemirror/state";
-import {
-    defaultKeymap,
-    history,
-    historyKeymap,
-    indentMore,
-    indentLess,
-} from "@codemirror/commands";
+import { defaultKeymap, historyKeymap, indentMore, indentLess } from "@codemirror/commands";
+import { documentHistory, openDocument, setDocumentContent } from "./editor-history";
 import {
     syntaxHighlighting,
     HighlightStyle,
@@ -393,6 +388,11 @@ export interface SourceViewHandle {
     setEditable(editable: boolean): void;
     /** Replace the buffer (a View-mode hot-reload), keeping the one editor instance. */
     setContent(source: string): void;
+    /**
+     * Show a **different** document. Unlike {@link setContent} this drops the undo history, which
+     * belonged to the file being left behind.
+     */
+    setDocument(source: string): void;
     /** The editor's current text. */
     getContent(): string;
     /**
@@ -624,7 +624,7 @@ export function createSourceView(
                 highlightSelectionMatches(),
                 bracketMatching(),
                 compactSearch(),
-                history(),
+                documentHistory(),
                 sourceLanguage,
                 syntaxHighlighting(markdownHighlightStyle),
                 syntaxHighlighting(yamlHighlightStyle),
@@ -698,8 +698,8 @@ export function createSourceView(
         },
         setEditable: (next) =>
             view.dispatch({ effects: editability.reconfigure(editableConfig(next, [completion])) }),
-        setContent: (next) =>
-            view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: next } }),
+        setContent: (next) => setDocumentContent(view, next),
+        setDocument: (next) => openDocument(view, next),
         getContent: () => view.state.doc.toString(),
         setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
         setSemanticTokens: (tokens) => {

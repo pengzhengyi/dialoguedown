@@ -140,6 +140,36 @@ describe("initExplorer", () => {
         expect(active?.textContent).toBe("prologue.dialogue.md");
     });
 
+    it("re-marks the active script when the reader switches to a visible one", async () => {
+        const container = document.createElement("aside");
+        const explorerPorts = ports();
+        const explorer = initExplorer(container, revealing, explorerPorts);
+        await settle();
+        (explorerPorts.browse as ReturnType<typeof vi.fn>).mockClear();
+
+        explorer.setActiveScript("intro.dialogue.md");
+
+        const active = container.querySelector(".explorer-script.active .explorer-script-row");
+        expect(active?.textContent).toBe("intro.dialogue.md");
+        expect(container.querySelectorAll(".explorer-script.active")).toHaveLength(1);
+        expect(container.querySelectorAll("[aria-current]")).toHaveLength(1);
+        // Already on screen, so re-marking is a DOM change and never re-reads the tree.
+        expect(explorerPorts.browse).not.toHaveBeenCalled();
+    });
+
+    it("reveals a newly active script hidden inside a collapsed folder", async () => {
+        const container = document.createElement("aside");
+        const explorer = initExplorer(container, atRoot, ports()); // act-1 starts collapsed
+        await settle();
+        expect(rowTexts(container, ".explorer-script-row")).not.toContain("prologue.dialogue.md");
+
+        explorer.setActiveScript("act-1/prologue.dialogue.md");
+        await settle();
+
+        const active = container.querySelector(".explorer-script.active .explorer-script-row");
+        expect(active?.textContent).toBe("prologue.dialogue.md");
+    });
+
     it("loads a folder's children lazily on expand", async () => {
         const container = document.createElement("aside");
         const explorerPorts = ports();

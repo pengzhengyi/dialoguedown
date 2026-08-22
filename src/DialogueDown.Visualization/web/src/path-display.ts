@@ -25,6 +25,14 @@ export async function copyToClipboard(text: string): Promise<void> {
     area.remove();
 }
 
+/** A mounted path chip, re-pointable as the reader opens another script. */
+export interface PathDisplay {
+    /** The chip element (hidden when there is no path to show). */
+    readonly element: HTMLElement;
+    /** Show another path, or hide the chip when there is none. */
+    setPath(path: string | undefined): void;
+}
+
 /**
  * Show the document path in the status bar: the filename always shows while the
  * middle of the directory is ellipsised (CSS), the full path is a hover tooltip,
@@ -35,27 +43,41 @@ export async function copyToClipboard(text: string): Promise<void> {
 export function initPathDisplay(
     path: string | undefined,
     elementId = "doc-path",
-): HTMLElement | null {
+): PathDisplay | null {
     const button = document.getElementById(elementId) as HTMLButtonElement | null;
     if (!button) return null;
-    if (!path) {
-        button.hidden = true;
-        return button;
-    }
 
-    const { head, tail } = splitPath(path);
-    button.querySelector(".path-head")!.textContent = head;
-    button.querySelector(".path-tail")!.textContent = tail;
-    button.hidden = false;
-    button.disabled = false;
-
-    // The hover tooltip shows the full path (the button ellipsises the directory); a click
-    // copies it and confirms through the shared toast, the same cue the config table uses.
-    tippy(button, { content: `${path}\n(click to copy)`, maxWidth: 480 });
+    // The chip outlives any one document, so the tooltip and the copy handler are wired once and
+    // read whichever path the chip currently shows. Re-wiring them per document would stack a
+    // second tooltip and a second handler on every switch.
+    let current: string | undefined;
+    const tooltip = tippy(button, { maxWidth: 480 });
     button.addEventListener("click", () => {
-        void copyToClipboard(path).then(() => showToast(`Copied ${path}`));
+        const copied = current;
+        if (copied === undefined) return;
+        void copyToClipboard(copied).then(() => showToast(`Copied ${copied}`));
     });
-    return button;
+
+    const display: PathDisplay = {
+        element: button,
+        setPath(next) {
+            current = next;
+            if (!next) {
+                button.hidden = true;
+                tooltip.disable();
+                return;
+            }
+            const { head, tail } = splitPath(next);
+            button.querySelector(".path-head")!.textContent = head;
+            button.querySelector(".path-tail")!.textContent = tail;
+            button.hidden = false;
+            button.disabled = false;
+            tooltip.enable();
+            tooltip.setContent(`${next}\n(click to copy)`);
+        },
+    };
+    display.setPath(path);
+    return display;
 }
 
 /**
@@ -63,15 +85,15 @@ export function initPathDisplay(
  * found no `dialogue.toml` it shows a plain "No config file" label (not a broken path);
  * hidden entirely when the report has no configuration context.
  */
-export function initConfigPath(config: ConfigReport | undefined): HTMLElement | null {
+export function initConfigPath(config: ConfigReport | undefined): PathDisplay | null {
     const button = document.getElementById("config-path") as HTMLButtonElement | null;
     if (!button) return null;
+    if (config?.file) return initPathDisplay(config.file.path, "config-path");
+
+    const fixed: PathDisplay = { element: button, setPath: () => {} };
     if (!config) {
         button.hidden = true;
-        return button;
-    }
-    if (config.file) {
-        return initPathDisplay(config.file.path, "config-path");
+        return fixed;
     }
 
     // The no-config state: a plain label, nothing to copy.
@@ -81,5 +103,5 @@ export function initConfigPath(config: ConfigReport | undefined): HTMLElement | 
     button.hidden = false;
     button.disabled = true;
     tippy(button, { content: "No dialogue.toml — using the built-in defaults.", maxWidth: 320 });
-    return button;
+    return fixed;
 }

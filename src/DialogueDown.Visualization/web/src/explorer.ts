@@ -50,6 +50,15 @@ interface FolderHandle {
     expand(expanded: boolean): Promise<Map<string, FolderHandle>>;
 }
 
+/** A live handle to the mounted tree, so the host can re-point it as the reader opens scripts. */
+export interface ExplorerHandle {
+    /**
+     * Mark {@link path} as the active script. A script already on screen is re-marked in place;
+     * one inside a collapsed folder is revealed first.
+     */
+    setActiveScript(path: string): void;
+}
+
 /**
  * Build the Explorer tree of {@link project} into {@link container} and wire it to {@link ports}.
  * The root loads immediately; each folder loads on first expand. The active script is highlighted
@@ -60,8 +69,12 @@ export function initExplorer(
     project: ReportProject,
     ports: ExplorerPorts,
     config?: ExplorerConfig,
-): void {
+): ExplorerHandle {
     container.replaceChildren();
+
+    // The script the report is showing. It moves as the reader opens another one, so the tree is
+    // built against this rather than the project's load-time value.
+    let activePath = project.activePath;
 
     const tree = element("ul", "explorer-tree");
     tree.setAttribute("role", "tree");
@@ -131,8 +144,9 @@ export function initExplorer(
     const scriptNode = (path: string): HTMLLIElement => {
         const item = element("li", "explorer-script") as HTMLLIElement;
         item.setAttribute("role", "treeitem");
+        item.dataset.path = path;
         const row = treeRow("explorer-script-row", "markdown", leafName(path), false);
-        if (path === project.activePath) {
+        if (path === activePath) {
             item.classList.add("active");
             row.setAttribute("aria-current", "true");
         }
@@ -177,7 +191,24 @@ export function initExplorer(
 
     // The initial view: open the ancestors of the active script so it is visible and highlighted.
     const reveal = (): void => {
-        void rebuild(new Set(ancestorFolders(project.activePath)));
+        void rebuild(new Set(ancestorFolders(activePath)));
+    };
+
+    // Move the highlight to the active script, returning whether a row for it was on screen.
+    const markActive = (): boolean => {
+        let marked = false;
+        for (const item of tree.querySelectorAll<HTMLLIElement>(".explorer-script")) {
+            const isActive = item.dataset.path === activePath;
+            item.classList.toggle("active", isActive);
+            const row = item.querySelector(".explorer-script-row");
+            if (isActive) {
+                row?.setAttribute("aria-current", "true");
+                marked = true;
+            } else {
+                row?.removeAttribute("aria-current");
+            }
+        }
+        return marked;
     };
 
     // Re-read the tree from disk, keeping the folders the reader had open (new files appear).
@@ -400,6 +431,18 @@ export function initExplorer(
     container.append(heading, root, ...(configRow ? [configRow] : []), tree, createError);
 
     reveal();
+
+    return {
+        setActiveScript(path) {
+            activePath = path;
+            // A script the reader clicked is already on screen, so moving the highlight is enough.
+            // One reached another way — a cross-file link, or Back — may sit in a folder that was
+            // never opened, and has to be revealed before it can be marked.
+            if (!markActive()) {
+                void rebuild(new Set([...openFolders(), ...ancestorFolders(path)]));
+            }
+        },
+    };
 }
 
 /**

@@ -55,14 +55,14 @@ describe("initPathDisplay", () => {
     });
 
     it("fills the head and tail and reveals the button", () => {
-        const button = initPathDisplay("/home/alice/scene.dialogue.md")!;
+        const button = initPathDisplay("/home/alice/scene.dialogue.md")!.element;
         expect(button.hidden).toBe(false);
         expect(button.querySelector(".path-head")!.textContent).toBe("/home/alice");
         expect(button.querySelector(".path-tail")!.textContent).toBe("/scene.dialogue.md");
     });
 
     it("stays hidden when there is no path", () => {
-        const button = initPathDisplay(undefined)!;
+        const button = initPathDisplay(undefined)!.element;
         expect(button.hidden).toBe(true);
     });
 
@@ -75,7 +75,7 @@ describe("initPathDisplay", () => {
         const writeText = vi.fn().mockResolvedValue(undefined);
         vi.stubGlobal("navigator", { clipboard: { writeText } });
 
-        const button = initPathDisplay("/home/alice/scene.dialogue.md")!;
+        const button = initPathDisplay("/home/alice/scene.dialogue.md")!.element;
         button.click();
         await new Promise((resolve) => setTimeout(resolve));
 
@@ -84,6 +84,33 @@ describe("initPathDisplay", () => {
             "Copied /home/alice/scene.dialogue.md",
         );
         vi.restoreAllMocks();
+    });
+
+    it("re-points at another path, copying the new one", async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal("navigator", { clipboard: { writeText } });
+        const display = initPathDisplay("/home/alice/scene.dialogue.md")!;
+
+        display.setPath("/home/alice/act-1/finale.dialogue.md");
+
+        expect(display.element.querySelector(".path-head")!.textContent).toBe("/home/alice/act-1");
+        expect(display.element.querySelector(".path-tail")!.textContent).toBe(
+            "/finale.dialogue.md",
+        );
+        display.element.click();
+        await new Promise((resolve) => setTimeout(resolve));
+        // Re-pointing replaces the copy target rather than stacking a second handler on the old one.
+        expect(writeText).toHaveBeenCalledTimes(1);
+        expect(writeText).toHaveBeenCalledWith("/home/alice/act-1/finale.dialogue.md");
+        vi.restoreAllMocks();
+    });
+
+    it("hides the chip when re-pointed at no path", () => {
+        const display = initPathDisplay("/home/alice/scene.dialogue.md")!;
+
+        display.setPath(undefined);
+
+        expect(display.element.hidden).toBe(true);
     });
 });
 
@@ -99,21 +126,21 @@ describe("initConfigPath", () => {
         const button = initConfigPath({
             file: { path: "/proj/dialogue.toml", source: "" },
             speakers: [],
-        }) as HTMLButtonElement;
+        })!.element as HTMLButtonElement;
         expect(button.hidden).toBe(false);
         expect(button.disabled).toBe(false);
         expect(button.querySelector(".path-tail")!.textContent).toBe("/dialogue.toml");
     });
 
     it("shows a plain no-config label when there is no file", () => {
-        const button = initConfigPath({ speakers: [] }) as HTMLButtonElement;
+        const button = initConfigPath({ speakers: [] })!.element as HTMLButtonElement;
         expect(button.hidden).toBe(false);
         expect(button.disabled).toBe(true);
         expect(button.querySelector(".path-tail")!.textContent).toBe("No config file");
     });
 
     it("stays hidden when there is no configuration context", () => {
-        const button = initConfigPath(undefined)!;
+        const button = initConfigPath(undefined)!.element;
         expect(button.hidden).toBe(true);
     });
 });
