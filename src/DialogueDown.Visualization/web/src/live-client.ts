@@ -20,6 +20,20 @@ export interface ServerEventHandlers {
 }
 
 /**
+ * A live subscription to the served session's event stream, which belongs to **one** document:
+ * the server binds a stream to whichever script was active when it opened.
+ */
+export interface ServerEventWatch {
+    /** The stream currently connected. */
+    readonly source: EventSource;
+    /**
+     * Reconnect, so events follow the script the reader has just opened. A stream opened against
+     * the previous document keeps reporting on a session nobody is looking at any more.
+     */
+    resubscribe(): void;
+}
+
+/**
  * Subscribe to the served session's event stream. On each push it routes a `reload`
  * (a recompiled report from a document change), a `reload-config` (a recompiled report from an
  * external configuration change), or a `problem` (a message) to the handlers; the mode controller
@@ -29,24 +43,38 @@ export interface ServerEventHandlers {
 export function watchServerEvents(
     handlers: ServerEventHandlers,
     createSource: () => EventSource = () => new EventSource(EVENTS_URL),
-): EventSource {
-    const events = createSource();
+): ServerEventWatch {
+    let events = connect();
 
-    events.addEventListener("reload", (event) => {
-        handlers.onReload(JSON.parse((event as MessageEvent).data) as Report);
-    });
+    function connect(): EventSource {
+        const source = createSource();
 
-    events.addEventListener("reload-config", (event) => {
-        handlers.onReloadConfig(JSON.parse((event as MessageEvent).data) as Report);
-    });
+        source.addEventListener("reload", (event) => {
+            handlers.onReload(JSON.parse((event as MessageEvent).data) as Report);
+        });
 
-    events.addEventListener("problem", (event) => {
-        const { message, target } = JSON.parse((event as MessageEvent).data) as {
-            message: string;
-            target?: ProblemTarget;
-        };
-        handlers.onProblem(message, target);
-    });
+        source.addEventListener("reload-config", (event) => {
+            handlers.onReloadConfig(JSON.parse((event as MessageEvent).data) as Report);
+        });
 
-    return events;
+        source.addEventListener("problem", (event) => {
+            const { message, target } = JSON.parse((event as MessageEvent).data) as {
+                message: string;
+                target?: ProblemTarget;
+            };
+            handlers.onProblem(message, target);
+        });
+
+        return source;
+    }
+
+    return {
+        get source() {
+            return events;
+        },
+        resubscribe() {
+            events.close();
+            events = connect();
+        },
+    };
 }

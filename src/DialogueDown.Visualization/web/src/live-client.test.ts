@@ -4,10 +4,16 @@ import { watchServerEvents } from "./live-client";
 /** A stand-in for the browser's EventSource (jsdom has none). */
 class FakeEventSource {
     private readonly handlers: Record<string, (event: MessageEvent) => void> = {};
+    closed = false;
     addEventListener(type: string, handler: (event: MessageEvent) => void): void {
         this.handlers[type] = handler;
     }
+    close(): void {
+        this.closed = true;
+    }
     emit(type: string, data: string): void {
+        // A closed EventSource delivers nothing, so neither does the fake.
+        if (this.closed) return;
         this.handlers[type]?.(new MessageEvent(type, { data }));
     }
 }
@@ -63,9 +69,9 @@ describe("watchServerEvents", () => {
         );
     });
 
-    it("returns the event source it connected to", () => {
+    it("exposes the event source it connected to", () => {
         const { source, returned } = setup();
-        expect(returned).toBe(source);
+        expect(returned.source).toBe(source);
     });
 
     it("opens a real EventSource at /api/events by default", () => {
@@ -84,5 +90,57 @@ describe("watchServerEvents", () => {
         } finally {
             globalThis.EventSource = RealEventSource;
         }
+    });
+});
+
+describe("watchServerEvents — following the active document", () => {
+    /** Watch through a factory that records every stream it hands out. */
+    function watchRecording(onReload: (source: string) => void = () => {}) {
+        const sources: FakeEventSource[] = [];
+        const watch = watchServerEvents(
+            {
+                onReload: (report) => onReload(report.source ?? ""),
+                onReloadConfig: vi.fn(),
+                onProblem: vi.fn(),
+            },
+            () => {
+                const source = new FakeEventSource();
+                sources.push(source);
+                return source as unknown as EventSource;
+            },
+        );
+        return { sources, watch };
+    }
+
+    it("resubscribes on demand, so the stream follows the script now open", () => {
+        // The server binds a stream to whichever document was active when it opened, so after a
+        // switch the old stream is listening to a session nobody is looking at any more.
+        const { sources, watch } = watchRecording();
+
+        watch.resubscribe();
+
+        expect(sources).toHaveLength(2);
+        expect(sources[0].closed).toBe(true);
+        expect(sources[1].closed).toBe(false);
+    });
+
+    it("routes events from the stream it resubscribed to", () => {
+        const seen: string[] = [];
+        const { sources, watch } = watchRecording((source) => seen.push(source));
+
+        watch.resubscribe();
+        sources[1].emit("reload", JSON.stringify({ source: "# Opened", stages: [] }));
+
+        expect(seen).toEqual(["# Opened"]);
+    });
+
+    it("ignores a late event from the stream it left behind", () => {
+        const seen: string[] = [];
+        const { sources, watch } = watchRecording((source) => seen.push(source));
+
+        watch.resubscribe();
+        sources[0].emit("reload", JSON.stringify({ source: "# Stale", stages: [] }));
+
+        expect(seen).toEqual([]);
     });
 });

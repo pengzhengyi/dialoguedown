@@ -10,6 +10,16 @@ changes easy to categorize.
 
 ### Added
 
+- **Open a script without reloading the page** — clicking a script in the Explorer now replaces the
+  report's contents instead of the page, so the reader keeps the window they were working in and
+  the tab they had open; someone comparing two dialogue graphs is no longer sent back to Source on
+  every click. Back and Forward move between scripts the same way, landing in View because Back is
+  a navigation and not an intent to edit. Warm, a script opens in about 77 ms rather than 160 ms.
+  Unsaved work is still settled first, and a script that compiles under a different `dialogue.toml`
+  still loads a whole page. See the
+  [Opening a Script Without Reloading the Page](docs/contributing/design-notes/Opening%20a%20Script%20Without%20Reloading%20the%20Page.md)
+  note.
+
 - **Fold ignored Markdown in the Source editor** — the editor's gutter now folds the same regions
   the Preview does, beside its own line-range folding, plus a pair of commands in its menu and keys
   (`Alt-i` / `Alt-o`). A `circle-slash` cue marks each ignored run without adding a second control
@@ -290,6 +300,11 @@ changes easy to categorize.
   failed and the graph held only the directly declared packages; an indirect dependency missing
   from the graph raises no Dependabot alert. The pin is now a full SDK version (`10.0.100`), which
   resolves to the same SDK as before.
+
+- **Undo no longer reaches into a script you left** — replacing the editor's buffer kept the
+  previous document undoable, so one undo after opening another file could pull that file's text
+  into this buffer, and the next save would have written it to the wrong path. Opening a document
+  now clears the history; a reload or a discard, which revert the same file, still keep it.
 
 - **The Source editor's `#slug` chip survives a late parse** — the chip on the active heading line
   could stay hidden when a script opened on a busy machine, and only appear once the caret moved.

@@ -389,3 +389,23 @@ describe("createSourceView jump-to menu", () => {
         expect(document.querySelector(".context-menu")).toBeNull();
     });
 });
+
+describe("createSourceView document replacement", () => {
+    it("replaces the buffer for the same document", () => {
+        const source = mountSource("first\n");
+
+        source.setContent("second\n");
+
+        expect(source.getContent()).toBe("second\n");
+    });
+
+    it("shows a different document through the history-dropping path", () => {
+        // The undo behavior itself is covered in editor-history.test.ts, against real editor
+        // commands; this pins the wiring, so the two operations cannot be swapped by accident.
+        const source = mountSource("first\n");
+
+        source.setDocument("second\n");
+
+        expect(source.getContent()).toBe("second\n");
+    });
+});

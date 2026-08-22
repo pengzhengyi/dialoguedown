@@ -42,6 +42,7 @@ function harness(documentType: DocumentType = "source", initial = "# Saved") {
         loadFromDisk: () => Promise.resolve(diskLoad),
         applyReport: (report) => calls.applied.push(report),
         setContent: (source) => calls.content.push(source),
+        setDocument: (source) => calls.content.push(source),
         setDirty: (dirty) => calls.dirty.push(dirty),
         setStatus: (status, message) => calls.status.push({ status, message }),
         setUnloadGuard: (active) => calls.unload.push(active),
@@ -875,6 +876,53 @@ describe("createLiveEdit — adoptDisk (View hot reload)", () => {
 
         expect(h.calls.content.at(-1)).toBe("# External");
         expect(h.calls.applied.at(-1)).toEqual(reportFor("# External"));
+    });
+});
+
+describe("createLiveEdit — adoptSwitch (opening another script)", () => {
+    it("adopts the newly opened script as the clean baseline", () => {
+        const h = harness();
+        const live = h.make("manual");
+
+        live.adoptSwitch("# Another", reportFor("# Another"));
+
+        expect(live.dirty).toBe(false);
+        expect(live.status).toBe("saved");
+        expect(h.calls.content.at(-1)).toBe("# Another");
+        // The adopted script, not the previous one, is what a later edit is measured against.
+        live.onEdit("# Another");
+        expect(live.dirty).toBe(false);
+    });
+
+    it("clears a conflict, because the reader asked for this document change", () => {
+        const h = harness();
+        const live = h.make("manual");
+        live.onEdit("# Mine");
+        live.onDiskChange("changed on disk");
+        expect(live.status).toBe("conflict");
+
+        live.adoptSwitch("# Another", reportFor("# Another"));
+
+        expect(live.status).toBe("saved");
+        expect(live.dirty).toBe(false);
+    });
+
+    it("a save that was in flight during the switch cannot write onto the new script", async () => {
+        const h = harness();
+        const live = h.make("manual");
+        live.onEdit("# Mine");
+        const saving = live.save();
+        expect(h.saves).toHaveLength(1);
+
+        live.adoptSwitch("# Another", reportFor("# Another"));
+        h.saves[0].resolve({ kind: "saved", report: reportFor("# Mine"), source: "# Mine" });
+
+        // The server now points at another document, so the reply belongs to a file the report is
+        // no longer showing: it must not install "# Mine" as the new script's baseline.
+        await expect(saving).resolves.toBe("superseded");
+        expect(live.status).toBe("saved");
+        live.onEdit("# Another");
+        expect(live.dirty).toBe(false);
     });
 });
 
