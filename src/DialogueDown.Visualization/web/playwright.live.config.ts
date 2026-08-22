@@ -29,7 +29,7 @@ export default defineConfig({
     // again" without reproducing the run.
     use: {
         baseURL,
-        trace: "retain-on-failure",
+        trace: "on-first-retry",
         screenshot: "only-on-failure",
     },
     projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
