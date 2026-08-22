@@ -24,11 +24,13 @@ internal static class CliConfigurator
         config.AddCommand<CompileCommand>("compile")
             .WithDescription("Compile a DialogueDown script.")
             .WithExample("compile", "scene.dialogue.md")
-            .WithExample("compile", "scene.dialogue.md", "--mode", "best-effort");
+            .WithExample("compile", "scene.dialogue.md", "--mode", "best-effort")
+            .WithExample("compile", "scene.dialogue.md", "--emit", "dot", "-o", "stages.dot");
         config.AddCommand<VisualizeCommand>("visualize")
             .WithDescription("Visualize a DialogueDown script's compilation.")
             .WithExample("visualize", "scene.dialogue.md")
             .WithExample("visualize", "scene.dialogue.md", "--edit")
+            .WithExample("visualize", "--root", "scripts")
             .WithExample("visualize", "scene.dialogue.md", "-o", "report.html", "--no-open");
     }
 

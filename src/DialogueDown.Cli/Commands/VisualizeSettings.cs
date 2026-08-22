@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using DialogueDown.Visualization.Render;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -24,10 +23,6 @@ internal sealed class VisualizeSettings : CommandSettings
     [Description("Write a self-contained report to this path (a non-interactive export; requires a script).")]
     public string? Output { get; init; }
 
-    [CommandOption("--emit <format>")]
-    [Description("Emit each stage's graph as Graphviz DOT text instead of a report (requires a script; writes to --output or stdout).")]
-    public string? Emit { get; init; }
-
     [CommandOption("--config <path>")]
     [Description("The dialogue.toml to configure the report. Default: the nearest one found from the script's folder upward, within --root.")]
     public string? Config { get; init; }
@@ -40,26 +35,22 @@ internal sealed class VisualizeSettings : CommandSettings
     [Description("Do not open the report in the browser.")]
     public bool NoOpen { get; init; }
 
-    /// <summary>
-    /// Parses an <c>--emit</c> value (case-insensitively) into an <see cref="EmitFormat"/>.
-    /// Returns false for an unknown format.
-    /// </summary>
-    public static bool TryParseEmitFormat(string value, out EmitFormat format)
-    {
-        switch (value.Trim().ToLowerInvariant())
-        {
-            case "dot":
-                format = EmitFormat.Dot;
-                return true;
-            default:
-                format = default;
-                return false;
-        }
-    }
+    // Kept only to fail loudly: `--emit` moved to `compile`. Without it Spectre silently ignores
+    // the option, so `visualize x --emit dot -o stages.dot` would quietly write an HTML report
+    // into stages.dot instead of the DOT text the caller asked for.
+    [CommandOption("--emit <format>", IsHidden = true)]
+    [Description("Moved to 'ddown compile --emit'.")]
+    public string? Emit { get; init; }
 
     /// <inheritdoc />
     public override ValidationResult Validate()
     {
+        if (Emit is not null)
+        {
+            return ValidationResult.Error(
+                "--emit moved to 'compile'. Use: ddown compile <script> --emit dot -o <path>.");
+        }
+
         var config = ConfigArgument.Validate(Config);
         if (!config.Successful)
         {
@@ -69,26 +60,6 @@ internal sealed class VisualizeSettings : CommandSettings
         if (Output is not null && string.IsNullOrWhiteSpace(Script))
         {
             return ValidationResult.Error("--output requires a <script> to export.");
-        }
-
-        if (Emit is not null)
-        {
-            if (string.IsNullOrWhiteSpace(Script))
-            {
-                return ValidationResult.Error("--emit requires a <script>.");
-            }
-
-            if (string.Equals(Emit.Trim(), "mermaid", StringComparison.OrdinalIgnoreCase))
-            {
-                return ValidationResult.Error(
-                    "Mermaid stage emission was removed. Use '--emit dot' for compiler graphs; " +
-                    "fenced `mermaid` blocks render in the HTML report.");
-            }
-
-            if (!TryParseEmitFormat(Emit, out _))
-            {
-                return ValidationResult.Error($"Unknown --emit format '{Emit}'. Use 'dot'.");
-            }
         }
 
         if (Root is not null && !Directory.Exists(Root))

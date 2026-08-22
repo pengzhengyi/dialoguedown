@@ -74,8 +74,8 @@
     href: Command-Line Interface.md
   - name: Visualize on the CLI
     href: Visualize on the CLI.md
-  - name: Visualize CLI — Emit DOT
-    href: Visualize CLI - Emit DOT.md
+  - name: Compile CLI — Emit DOT
+    href: Compile CLI - Emit DOT.md
 - name: Visualization
   items:
   - name: Compilation Visualization
