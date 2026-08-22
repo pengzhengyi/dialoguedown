@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DialogueDown.Compilation;
 using DialogueDown.Emission;
 using DialogueDown.Graph;
@@ -31,6 +32,19 @@ public sealed class PlaybookWriterTests
 
         Assert.Equal(PlaybookWriter.FormatVersion, playbook.Format.Version);
         Assert.Contains(Capabilities.Core, playbook.Format.Requires);
+    }
+
+    [Fact]
+    public void Write_APlaybook_PointsAtTheSchemaThisRepositoryShips()
+    {
+        // Bumping the format version renames the schema this looks for, so raising it without
+        // writing the new schema fails here rather than shipping playbooks that point at a 404.
+        var shipped = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(AppContext.BaseDirectory, "schema", PlaybookWriter.SchemaFileName)));
+
+        Assert.Equal(
+            shipped.RootElement.GetProperty("$id").GetString(),
+            _writer.Write(OneEndNode(), Script).Schema);
     }
 
     [Fact]

@@ -1,0 +1,662 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "title": "DialogueDown playbook",
+  "description": "One compiled script: everything a runtime needs to play it, and nothing else. A field whose value is its default is left out, so absent and default mean the same thing everywhere. Unknown properties are allowed, so a newer compiler can add optional detail without breaking a reader that predates it.",
+  "type": "object",
+  "required": [
+    "format",
+    "script",
+    "entry",
+    "anchors",
+    "speakers",
+    "nodes"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Where an editor can find this schema."
+    },
+    "format": {
+      "$ref": "#/$defs/format"
+    },
+    "script": {
+      "type": "string",
+      "description": "The script this was compiled from, as a runtime should report it."
+    },
+    "entry": {
+      "$ref": "#/$defs/nodeReference",
+      "description": "Where a playthrough begins when nothing says otherwise."
+    },
+    "anchors": {
+      "type": "object",
+      "description": "Every scene's slug, by node position: the targets a jump may name, and the conversations a game may start at instead of the top.",
+      "additionalProperties": {
+        "$ref": "#/$defs/nodeReference"
+      }
+    },
+    "speakers": {
+      "type": "array",
+      "description": "Everybody who speaks here, hoisted out of the lines that quote them.",
+      "items": {
+        "$ref": "#/$defs/speaker"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "The steps of a playthrough, each at its own position.",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    }
+  },
+  "$defs": {
+    "nodeReference": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "A node's position in the node list. Whether it lands is checked on load: a schema cannot relate a value to the rest of the document."
+    },
+    "speakerReference": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "A speaker's position in the speaker list."
+    },
+    "format": {
+      "type": "object",
+      "description": "Whether a runtime can play this at all.",
+      "required": [
+        "version",
+        "requires",
+        "uses"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The playbook format version that wrote the document."
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Capabilities a runtime must understand. An unknown entry is a refusal, never a skipped construct."
+        },
+        "uses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Capabilities present but safe to ignore."
+        }
+      }
+    },
+    "speaker": {
+      "type": "object",
+      "description": "Somebody who says lines. Addressed by position; the id is the writer's own, carried through unchanged.",
+      "required": [
+        "tags"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The @id the writer gave them."
+        },
+        "name": {
+          "type": "string",
+          "description": "What the writer calls them."
+        },
+        "default": {
+          "const": true,
+          "description": "Present only on the speaker unattributed lines belong to."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/speakerTag"
+          }
+        }
+      }
+    },
+    "speakerTag": {
+      "type": "object",
+      "description": "An annotation a host may bind.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "description": "What the tag was given, when it was given anything."
+        },
+        "reserved": {
+          "const": true,
+          "description": "Present only when the name is one the language reserves."
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "required": [
+        "kind",
+        "key"
+      ],
+      "properties": {
+        "kind": {
+          "const": "key"
+        },
+        "key": {
+          "type": "string",
+          "description": "The game-state key a runtime reads as a boolean."
+        }
+      },
+      "description": "What must hold. An object rather than a bare key, so negation and expressions stay additive."
+    },
+    "weight": {
+      "description": "How often a random arm is taken. An object rather than a number, because two of the three kinds have no number to write.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "auto"
+            }
+          },
+          "description": "An equal share of whatever the numbered arms leave."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "percentage"
+          ],
+          "properties": {
+            "kind": {
+              "const": "number"
+            },
+            "percentage": {
+              "type": "number"
+            }
+          },
+          "description": "A share the writer stated, relative to the others."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "key"
+          ],
+          "properties": {
+            "kind": {
+              "const": "query"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "description": "A share the game decides when asked."
+        }
+      ]
+    },
+    "speech": {
+      "type": "array",
+      "description": "What is said, in order. Nothing is flattened to a string, because a host re-renders it.",
+      "items": {
+        "$ref": "#/$defs/fragment"
+      }
+    },
+    "fragment": {
+      "description": "One piece of what a line says, or one effect it runs.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "text"
+          ],
+          "properties": {
+            "kind": {
+              "const": "text"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "description": "Plain words, as written."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "style",
+            "children"
+          ],
+          "properties": {
+            "kind": {
+              "const": "styled"
+            },
+            "style": {
+              "enum": [
+                "italic",
+                "bold",
+                "strikethrough"
+              ]
+            },
+            "children": {
+              "$ref": "#/$defs/speech"
+            }
+          },
+          "description": "Words under a style. Styles nest, so the children are speech in their own right."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "target",
+            "label"
+          ],
+          "properties": {
+            "kind": {
+              "const": "link"
+            },
+            "target": {
+              "type": "string"
+            },
+            "label": {
+              "$ref": "#/$defs/speech"
+            }
+          },
+          "description": "A link the writer wrote. It shows text; it does not move control, which is what a divert edge is for."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "source",
+            "alt"
+          ],
+          "properties": {
+            "kind": {
+              "const": "image"
+            },
+            "source": {
+              "type": "string"
+            },
+            "alt": {
+              "$ref": "#/$defs/speech"
+            }
+          },
+          "description": "An image, with its alt text as speech."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "break"
+            }
+          },
+          "description": "A line break within one speech."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "key"
+          ],
+          "properties": {
+            "kind": {
+              "const": "query"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "description": "A value read from the game and shown in place."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "action"
+          ],
+          "properties": {
+            "kind": {
+              "const": "default-command"
+            },
+            "action": {
+              "type": "string"
+            }
+          },
+          "description": "A built-in action the language names."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "name",
+            "args"
+          ],
+          "properties": {
+            "kind": {
+              "const": "custom-command"
+            },
+            "name": {
+              "type": "string"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "A call into the game by name."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "name"
+          ],
+          "properties": {
+            "kind": {
+              "const": "tag"
+            },
+            "name": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "reserved": {
+              "const": true
+            }
+          },
+          "description": "An annotation, kept where in the line it attached so a host knows what it applied to."
+        }
+      ]
+    },
+    "edge": {
+      "description": "A way out of a node.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "target"
+          ],
+          "properties": {
+            "kind": {
+              "const": "succession"
+            },
+            "target": {
+              "$ref": "#/$defs/nodeReference"
+            }
+          },
+          "description": "Reading order: what follows when nothing says otherwise."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "target",
+            "label"
+          ],
+          "properties": {
+            "kind": {
+              "const": "option"
+            },
+            "target": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "label": {
+              "$ref": "#/$defs/speech"
+            },
+            "condition": {
+              "$ref": "#/$defs/condition"
+            }
+          },
+          "description": "One arm a player may pick. The label is compiled in, so a menu never reads the node it leads to."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "target",
+            "weight"
+          ],
+          "properties": {
+            "kind": {
+              "const": "random-option"
+            },
+            "target": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "weight": {
+              "$ref": "#/$defs/weight"
+            },
+            "condition": {
+              "$ref": "#/$defs/condition"
+            }
+          },
+          "description": "One arm the engine may pick. No label: nothing is shown."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "target",
+            "order"
+          ],
+          "properties": {
+            "kind": {
+              "const": "branch"
+            },
+            "target": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "order": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Where this arm sits in the order they are tried. Written because a reader is not obliged to keep a JSON array in the order it was given."
+            },
+            "condition": {
+              "$ref": "#/$defs/condition"
+            }
+          },
+          "description": "One arm of a conditional block."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "target",
+            "label"
+          ],
+          "properties": {
+            "kind": {
+              "const": "divert"
+            },
+            "target": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "label": {
+              "$ref": "#/$defs/speech",
+              "description": "What the writer called the jump. Carried because it exists nowhere else: a jump is written inside a line but is no part of what that line says."
+            },
+            "condition": {
+              "$ref": "#/$defs/condition"
+            }
+          },
+          "description": "A jump that does not return."
+        }
+      ]
+    },
+    "out": {
+      "type": "array",
+      "description": "The ways out of a node, in the order they were written.",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "node": {
+      "description": "One step of a playthrough.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "speaker",
+            "speech",
+            "out"
+          ],
+          "properties": {
+            "kind": {
+              "const": "line"
+            },
+            "id": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "speaker": {
+              "$ref": "#/$defs/speakerReference"
+            },
+            "speech": {
+              "$ref": "#/$defs/speech"
+            },
+            "condition": {
+              "$ref": "#/$defs/condition"
+            },
+            "out": {
+              "$ref": "#/$defs/out"
+            }
+          },
+          "description": "A line somebody says."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "out"
+          ],
+          "properties": {
+            "kind": {
+              "const": "choice"
+            },
+            "id": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "ordered": {
+              "const": true,
+              "description": "Present only when the options must be offered in the order given."
+            },
+            "out": {
+              "$ref": "#/$defs/out"
+            }
+          },
+          "description": "A choice the player makes. It holds no content: an option's text is on the edge that offers it."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "out"
+          ],
+          "properties": {
+            "kind": {
+              "const": "random-choice"
+            },
+            "id": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "out": {
+              "$ref": "#/$defs/out"
+            }
+          },
+          "description": "A choice the engine makes, by weight."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "out"
+          ],
+          "properties": {
+            "kind": {
+              "const": "branch"
+            },
+            "id": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "out": {
+              "$ref": "#/$defs/out"
+            }
+          },
+          "description": "A conditional block: its arms are tried in order."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "effects",
+            "out"
+          ],
+          "properties": {
+            "kind": {
+              "const": "control"
+            },
+            "id": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "effects": {
+              "$ref": "#/$defs/speech",
+              "description": "What the host performs here. No speaker and no speech: nothing is said."
+            },
+            "condition": {
+              "$ref": "#/$defs/condition"
+            },
+            "out": {
+              "$ref": "#/$defs/out"
+            }
+          },
+          "description": "Effects and nothing else."
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "out"
+          ],
+          "properties": {
+            "kind": {
+              "const": "end"
+            },
+            "id": {
+              "$ref": "#/$defs/nodeReference"
+            },
+            "out": {
+              "type": "array",
+              "maxItems": 0,
+              "description": "An end leads nowhere."
+            }
+          },
+          "description": "Where a run stops."
+        }
+      ]
+    }
+  }
+}
