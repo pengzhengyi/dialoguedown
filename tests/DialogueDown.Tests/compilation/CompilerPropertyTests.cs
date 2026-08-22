@@ -37,7 +37,7 @@ public sealed class CompilerPropertyTests
     /// </remarks>
     [Fact]
     public void EverySpanAddressesTextThatExists() =>
-        ScriptGen.Script.Sample(
+        ScriptGen.Script().Sample(
             source =>
             {
                 foreach (var node in NodesOf(source))
@@ -63,7 +63,7 @@ public sealed class CompilerPropertyTests
     /// </remarks>
     [Fact]
     public void AChildsSpanIsContainedInItsParents() =>
-        ScriptGen.Script.Sample(
+        ScriptGen.Script().Sample(
             source =>
             {
                 foreach (var parent in NodesOf(source))
@@ -92,7 +92,7 @@ public sealed class CompilerPropertyTests
     /// </remarks>
     [Fact]
     public void EveryMarkdownSpanAddressesTextThatExists() =>
-        ScriptGen.Script.Sample(
+        ScriptGen.Script().Sample(
             source =>
             {
                 var markdown = ScriptCompilerFactory.CreateDefault().Compile(source).Markdown;
@@ -117,7 +117,7 @@ public sealed class CompilerPropertyTests
     /// </remarks>
     [Fact]
     public void CompilingNeverThrows() =>
-        ScriptGen.Script.Sample(
+        ScriptGen.Script().Sample(
             source => ScriptCompilerFactory.CreateDefault().Compile(source),
             iter: Samples);
 

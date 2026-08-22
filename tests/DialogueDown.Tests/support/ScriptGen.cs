@@ -99,8 +99,7 @@ internal static class ScriptGen
             _utterance.List[1, 4],
             (heading, body) => $"# The {heading}\n\n" + string.Join("\n\n", body));
 
-    /// <summary>A whole script: one or more scenes, optionally preceded by front matter.</summary>
-    public static readonly Gen<string> Script =
+    private static readonly Gen<string> _script =
         Gen.Select(
             Gen.Bool,
             _scene.List[1, 3],
@@ -108,4 +107,7 @@ internal static class ScriptGen
                 (frontMatter ? "---\ntitle: A Script\n---\n\n" : string.Empty)
                 + string.Join("\n\n", scenes)
                 + "\n");
+
+    /// <summary>A whole script: one or more scenes, optionally preceded by front matter.</summary>
+    public static Gen<string> Script() => _script;
 }
