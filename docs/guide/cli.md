@@ -87,7 +87,7 @@ ddown visualize --help
 
 | Command | What it gives you |
 | --- | --- |
-| `compile` | An answer in the terminal: is this script correct? Optionally, files. |
+| `compile` | An answer in the terminal: is this script correct? |
 | `visualize` | A report in your browser that updates while you write. |
 
 ## visualize — preview while you write
@@ -141,7 +141,7 @@ ddown visualize my-scene.dialogue.md --output report.html
 | `--port <port>` | Serve on a fixed port, instead of any free one. |
 | `--no-open` | Don't open a browser (useful in scripts). |
 
-## compile — check a script, and export from it
+## compile — check a script
 
 ```sh
 ddown compile <script> [options]
@@ -162,25 +162,18 @@ problems in one run:
 ddown compile my-scene.dialogue.md --mode best-effort
 ```
 
-**Export the compiler's stage graphs.** `--emit dot` writes every stage as
-[Graphviz](https://graphviz.org/) DOT text, for rendering elsewhere or embedding in
-your own docs. It writes to the terminal unless you give it a file:
-
-```sh
-ddown compile my-scene.dialogue.md --emit dot -o stages.dot
-```
-
-Fenced `mermaid` blocks in your script are authoring aids, not compiler output —
-the HTML report renders those directly in its Markdown previews.
-
 ### Options
 
 | Option | What it does |
 | --- | --- |
 | `--mode <mode>` | How far to compile after an error: `stage-boundary` (default) or `best-effort`. |
-| `--emit <format>` | Also write the stage graphs as text. Currently `dot`. |
-| `-o`, `--output <path>` | Where `--emit` writes. Default: the terminal. |
 | `--config <path>` | Use a specific `dialogue.toml`. Default: the nearest one above the script. |
+
+`compile` can also write the compiler's internal stage graphs as text, for feeding
+into other tools. That's for building tooling rather than writing dialogue, so it
+lives in the
+[developer docs](https://github.com/pengzhengyi/dialoguedown/blob/main/docs/contributing/design-notes/Compile%20CLI%20-%20Emit%20DOT.md);
+`ddown compile --help` lists it too.
 
 ## Keep ddown up to date
 
