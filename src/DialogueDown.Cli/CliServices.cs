@@ -1,5 +1,6 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Emission;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Live.Serving;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ internal static class CliServices
         services.AddSingleton<ProjectConfiguration>();
         services.AddSingleton<Func<CompilerOptions, IScriptCompiler>>(
             _ => options => ScriptCompilerFactory.CreateDefault(options));
+        services.AddSingleton<IPlaybookWriter>(_ => PlaybookWriterFactory.CreateDefault());
         services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
         services.AddSingleton<IErrataRenderer, ErrataRenderer>();
         services.AddSingleton<IBrowserLauncher, BrowserLauncher>();

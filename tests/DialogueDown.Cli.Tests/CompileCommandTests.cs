@@ -1,6 +1,7 @@
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Playbook;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
@@ -228,6 +229,69 @@ public sealed class CompileCommandTests
     }
 
     [Fact]
+    public void Compile_AnOutputWithNoFormat_WritesAPlaybookAReaderTakesBack()
+    {
+        // A playbook is the compiler's own artifact, so naming a destination is enough to ask
+        // for one. The stage graphs are the export that has to say so.
+        using var dir = new TempDir();
+        using var script = new TempScript("Alice: Hello.");
+        var destination = Path.Combine(dir.Path, "chapter-01.playbook.json");
+
+        var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        PlaybookReader.Default.Read(File.ReadAllText(destination));
+    }
+
+    [Fact]
+    public void Compile_EmitPlaybook_SaysWhichScriptItCameFrom()
+    {
+        using var dir = new TempDir();
+        using var script = new TempScript("Alice: Hello.");
+        var destination = Path.Combine(dir.Path, "out.playbook.json");
+
+        CliTester.Create().Run("compile", script.Path, "--emit", "playbook", "-o", destination);
+
+        var playbook = PlaybookReader.Default.Read(File.ReadAllText(destination));
+
+        Assert.Equal(Path.GetFileName(script.Path), playbook.Script);
+    }
+
+    [Fact]
+    public void Compile_EmitPlaybookWithoutOutput_GoesToStandardOutput()
+    {
+        // Standard output, like the stage graphs beside it, so a playbook can be piped.
+        using var dir = new TempDir();
+        using var script = new TempScript("Alice: Hello.");
+
+        var result = CliTester.Create().Run("compile", script.Path, "--emit", "playbook");
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        Assert.Empty(Directory.EnumerateFiles(dir.Path));
+    }
+
+    [Fact]
+    public void Compile_AScriptWithErrors_LeavesTheOutputAlone()
+    {
+        using var dir = new TempDir();
+        using var script = new TempScript("""
+            # Gate
+
+            Alice: One.
+
+            # Gate
+
+            Bob: Two.
+            """);
+        var destination = Path.Combine(dir.Path, "untouched.playbook.json");
+
+        var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
+
+        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        Assert.False(File.Exists(destination));
+    }
+
+    [Fact]
     public void Compile_EmitMermaid_FailsWithMigrationGuidance()
     {
         using var script = new TempScript("# Scene");
@@ -259,15 +323,17 @@ public sealed class CompileCommandTests
     }
 
     [Fact]
-    public void Compile_OutputWithoutEmit_FailsValidation()
+    public void Compile_OutputWithoutEmit_AsksForTheDefaultFormat()
     {
-        // `--output` names where an emitted artifact goes, so it means nothing on its own —
-        // failing is kinder than silently writing nothing.
+        // `--output` alone used to be an error, when the only thing to emit was the stage graphs.
+        // A playbook is the compiler's own artifact, so naming a destination now asks for one.
+        using var dir = new TempDir();
         using var script = new TempScript("# Scene");
-        var tester = CliTester.Create();
+        var destination = Path.Combine(dir.Path, "scene.playbook.json");
 
-        var result = tester.Run("compile", script.Path, "-o", "scene.dot");
+        var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
-        Assert.NotEqual(0, result.ExitCode);
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        Assert.True(File.Exists(destination));
     }
 }
