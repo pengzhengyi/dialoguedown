@@ -1,6 +1,4 @@
-using DialogueDown.Compilation;
 using DialogueDown.Emission;
-using DialogueDown.Graph;
 using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Emission;
@@ -10,7 +8,7 @@ public sealed class AnchorMappingTests
     [Fact]
     public void Write_EachScene_PointsAtTheNodeThatOpensIt()
     {
-        var graph = Build("""
+        var graph = Pipeline.Graph("""
             # Gate
 
             Alice: Who goes there?
@@ -30,7 +28,7 @@ public sealed class AnchorMappingTests
     public void Write_ASceneWithinAScene_IsAddressableToo()
     {
         // A jump names any heading, however deeply it sits.
-        var graph = Build("""
+        var graph = Pipeline.Graph("""
             # Chapter
 
             Alice: One.
@@ -48,7 +46,7 @@ public sealed class AnchorMappingTests
     [Fact]
     public void Write_AScriptWithNoScenes_NamesNothing()
     {
-        var graph = Build("Alice: Just a line.");
+        var graph = Pipeline.Graph("Alice: Just a line.");
 
         Assert.Empty(AnchorMapping.Write(graph.Regions, NodeNumbering.Of(graph.Nodes)));
     }
@@ -56,13 +54,11 @@ public sealed class AnchorMappingTests
     [Fact]
     public void Write_NothingAtAll_IsRejected()
     {
-        var graph = Build("Alice: Just a line.");
+        var graph = Pipeline.Graph("Alice: Just a line.");
         var nodes = NodeNumbering.Of(graph.Nodes);
 
         Assert.Throws<ArgumentNullException>(() => AnchorMapping.Write(null!, nodes));
         Assert.Throws<ArgumentNullException>(() => AnchorMapping.Write(graph.Regions, null!));
     }
 
-    private static DialogueGraph Build(string source) =>
-        CompilationAssert.AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source)).Graph;
 }

@@ -77,8 +77,7 @@ public sealed class PlaybookWriterTests
     {
         // The whole point of the format in one test: whatever the compiler can produce, a reader
         // takes back unchanged.
-        var compilation = CompilationAssert.AssertSuccess(
-            ScriptCompilerFactory.CreateDefault().Compile("""
+        var compilation = Pipeline.Compiled("""
                 # Gate
 
                 Alice @A #main: Who goes there? `Fanfare()`
@@ -90,7 +89,7 @@ public sealed class PlaybookWriterTests
                 # The Inn
 
                 Innkeeper: Welcome.
-                """));
+                """);
 
         var written = Serialize(_writer.Write(compilation, Script));
 
@@ -100,14 +99,13 @@ public sealed class PlaybookWriterTests
     [Fact]
     public void Write_AScriptWithSpeakers_ListsThemOnceEach()
     {
-        var compilation = CompilationAssert.AssertSuccess(
-            ScriptCompilerFactory.CreateDefault().Compile("""
+        var compilation = Pipeline.Compiled("""
                 Alice: Hello.
 
                 Bob: Hello yourself.
 
                 Alice: Goodbye.
-                """));
+                """);
 
         var playbook = _writer.Write(compilation, Script);
 
@@ -117,8 +115,7 @@ public sealed class PlaybookWriterTests
     [Fact]
     public void Write_AScriptWithNoDialogue_WritesAPlaybookThatEndsAtOnce()
     {
-        var compilation = CompilationAssert.AssertSuccess(
-            ScriptCompilerFactory.CreateDefault().Compile(string.Empty));
+        var compilation = Pipeline.Compiled(string.Empty);
 
         var playbook = _writer.Write(compilation, Script);
 

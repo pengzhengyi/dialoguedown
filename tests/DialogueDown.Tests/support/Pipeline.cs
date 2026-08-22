@@ -1,4 +1,6 @@
+using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Graph;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
@@ -18,6 +20,14 @@ internal static class Pipeline
     private static readonly IScriptTranspiler _transpiler = TranspilerBuilderFactory.ScriptTranspiler();
     private static readonly IScriptDesugarer _desugarer = DesugarerFactory.ScriptDesugarer();
     private static readonly ISemanticAnalyzer _analyzer = new SemanticAnalyzer(new SemanticAnalyzerOptions([]));
+    private static readonly IScriptCompiler _compiler = ScriptCompilerFactory.CreateDefault();
+
+    /// <summary>Compiles <paramref name="source"/> all the way, asserting it got there.</summary>
+    public static CompilationSuccess Compiled(string source) =>
+        CompilationAssert.AssertSuccess(_compiler.Compile(source));
+
+    /// <summary>The graph <paramref name="source"/> compiles to.</summary>
+    public static DialogueGraph Graph(string source) => Compiled(source).Graph;
 
     public static DesugaredScriptDocument UntilDesugared(string source)
     {
