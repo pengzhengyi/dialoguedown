@@ -20,6 +20,17 @@ public sealed class InlineTextTests
         Assert.Equal("boldhere", InlineText.Of([styled, link]));
     }
 
+    // A jump's label and an image's alt are the words a reader sees, so a flattened run keeps
+    // them rather than dropping to an empty string where they appear.
+    [Fact]
+    public void Of_ReadsAJumpsLabelAndAnImagesAlt()
+    {
+        var jump = new Jump("#scene", [new Text("go there", Span())], Span());
+        var image = new Image("map.png", [new Text("a map", Span())], Span());
+
+        Assert.Equal("go therea map", InlineText.Of([jump, image]));
+    }
+
     [Fact]
     public void Of_RendersALineBreakAsASpace()
     {

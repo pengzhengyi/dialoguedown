@@ -250,6 +250,32 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
+    public void Project_ASilentCommand_LabelsTheControlNodeWithTheActionItRuns()
+    {
+        var graph = Project("`(\"open the gate\")`");
+
+        Assert.Equal("(open the gate)", graph.Nodes[0].Label);
+    }
+
+    [Fact]
+    public void Project_ACustomCommand_NamesTheCommandAndElidesItsArguments()
+    {
+        // The label names what the line does; the arguments are in the node's source, so the
+        // graph stays readable when a command takes several of them.
+        var graph = Project("""`GiveGold("5")`""");
+
+        Assert.Equal("GiveGold(…)", graph.Nodes[0].Label);
+    }
+
+    [Fact]
+    public void Project_SeveralEffectsOnOneLine_ListsThemInOrder()
+    {
+        var graph = Project("""`("open the gate")` `GiveGold("5")`""");
+
+        Assert.Equal("(open the gate), GiveGold(…)", graph.Nodes[0].Label);
+    }
+
+    [Fact]
     public void Project_TheEndSentinel_HasNoSourceOfItsOwn()
     {
         var graph = Project("Alice: Hi.");
