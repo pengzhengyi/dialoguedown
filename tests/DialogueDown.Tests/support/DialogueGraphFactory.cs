@@ -6,6 +6,7 @@ using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Regions;
 using DialogueDown.Script.Ast;
 
+using DialogueDown.Script.Semantics;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>Object Mother and small construction helpers for dialogue-graph tests.</summary>
@@ -15,6 +16,11 @@ internal static class DialogueGraphFactory
 
     /// <summary>An End node with the given id, spanning nothing in particular.</summary>
     public static EndNode EndNode(int id) => new(NodeId(id), new SourceSpan(0, 0));
+
+    /// <summary>A line node with the given id, said by <paramref name="speaker"/>.</summary>
+    public static LineNode LineNode(
+        int id, SpeakerSymbol speaker, params InlineFragment[] speech) =>
+        new(NodeId(id), new SourceSpan(0, 0), speaker, speech, []);
 
     /// <summary>The smallest valid graph: an End node a run starts and finishes on.</summary>
     public static DialogueGraph EmptyGraph()
