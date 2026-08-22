@@ -159,6 +159,17 @@ jobs:
       - name: End-to-end tests (Playwright, static)
         run: npm run e2e
 
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-static
+          # Relative to the workspace, not this job's working-directory, which
+          # applies only to `run` steps.
+          path: src/DialogueDown.Visualization/web/playwright-report
+          retention-days: 14
+          if-no-files-found: ignore
+
   frontend_live:
     name: Frontend live E2E
     runs-on: ubuntu-latest
@@ -221,6 +232,17 @@ jobs:
 
       - name: End-to-end tests (Playwright, live server)
         run: npx playwright test --config playwright.live.config.ts
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-live
+          # Relative to the workspace, not this job's working-directory, which
+          # applies only to `run` steps.
+          path: src/DialogueDown.Visualization/web/playwright-report
+          retention-days: 14
+          if-no-files-found: ignore
 
   frontend:
     name: Frontend
