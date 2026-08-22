@@ -108,6 +108,12 @@ export interface LiveEditController {
     reload(): Promise<SaveResolution>;
     /** Adopt a clean external reload (View hot reload): set the baseline/buffer without marking dirty. */
     adoptDisk(source: string, valid?: boolean, message?: string, report?: Report): void;
+    /**
+     * Adopt a **different** script as the clean baseline after the reader opened it. Unlike
+     * {@link adoptDisk} this answers a change the reader asked for, so it clears any conflict and
+     * invalidates a save still in flight — that save belongs to the document just left behind.
+     */
+    adoptSwitch(source: string, report?: Report): void;
     /** Resolve once no save is in flight or queued, so a caller can act on a settled state. */
     whenIdle(): Promise<void>;
     /** Leaving Edit — drop any unsaved-dirty and paused state without saving. */
@@ -659,6 +665,27 @@ export function createLiveEdit(
             baselineValid = valid;
             baselineMessage = valid ? undefined : message;
             setStatus(valid ? "saved" : "saved-invalid", valid ? undefined : message);
+            refreshChrome();
+        },
+        adoptSwitch(source, report) {
+            // The reader opened another script, so nothing about the document just left behind
+            // still applies: drop its pending work, invalidate a save still in flight (the epoch
+            // bump makes its reply stale), and install the new script as a clean baseline. This
+            // clears Conflict on purpose — a conflict warns that a file changed underneath the
+            // reader, which is not what an open they asked for means.
+            clearIdle();
+            clearQueue();
+            diskEpoch += 1;
+            restoring = true;
+            ports.setContent(source);
+            restoring = false;
+            buffer = source;
+            savedBaseline = source;
+            if (report !== undefined) baselineReport = report;
+            generation += 1;
+            baselineValid = true;
+            baselineMessage = undefined;
+            setStatus("saved");
             refreshChrome();
         },
         whenIdle() {

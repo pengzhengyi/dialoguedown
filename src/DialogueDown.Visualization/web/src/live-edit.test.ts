@@ -878,8 +878,54 @@ describe("createLiveEdit — adoptDisk (View hot reload)", () => {
     });
 });
 
-describe("createLiveEdit — reload single-flight and staleness", () => {
-    it("a stale reload response does not overwrite a buffer edited during the reload", async () => {
+describe("createLiveEdit — adoptSwitch (opening another script)", () => {
+    it("adopts the newly opened script as the clean baseline", () => {
+        const h = harness();
+        const live = h.make("manual");
+
+        live.adoptSwitch("# Another", reportFor("# Another"));
+
+        expect(live.dirty).toBe(false);
+        expect(live.status).toBe("saved");
+        expect(h.calls.content.at(-1)).toBe("# Another");
+        // The adopted script, not the previous one, is what a later edit is measured against.
+        live.onEdit("# Another");
+        expect(live.dirty).toBe(false);
+    });
+
+    it("clears a conflict, because the reader asked for this document change", () => {
+        const h = harness();
+        const live = h.make("manual");
+        live.onEdit("# Mine");
+        live.onDiskChange("changed on disk");
+        expect(live.status).toBe("conflict");
+
+        live.adoptSwitch("# Another", reportFor("# Another"));
+
+        expect(live.status).toBe("saved");
+        expect(live.dirty).toBe(false);
+    });
+
+    it("a save that was in flight during the switch cannot write onto the new script", async () => {
+        const h = harness();
+        const live = h.make("manual");
+        live.onEdit("# Mine");
+        const saving = live.save();
+        expect(h.saves).toHaveLength(1);
+
+        live.adoptSwitch("# Another", reportFor("# Another"));
+        h.saves[0].resolve({ kind: "saved", report: reportFor("# Mine") });
+
+        // The server now points at another document, so the reply belongs to a file the report is
+        // no longer showing: it must not install "# Mine" as the new script's baseline.
+        await expect(saving).resolves.toBe("superseded");
+        expect(live.status).toBe("saved");
+        live.onEdit("# Another");
+        expect(live.dirty).toBe(false);
+    });
+});
+
+describe("createLiveEdit — reload single-flight and staleness", () => {    it("a stale reload response does not overwrite a buffer edited during the reload", async () => {
         const h = harness();
         const live = h.make("auto");
         live.onEdit("# New");
