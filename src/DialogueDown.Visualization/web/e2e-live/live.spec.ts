@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -9,6 +9,22 @@ const PNG_1x1 = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     "base64",
 );
+
+// Writes the document and waits for the recompile it triggers to *land* before the test drives the
+// page. The write arms a debounced rebuild (150 ms) that broadcasts to every open page; navigating
+// straight away wins the race for content but not for that broadcast, which then arrives mid-test,
+// re-renders the report, and drops whatever was chosen — emptying the detail panel that a retrying
+// assertion is waiting on. `beforeEach` leaves a page open showing the previous document, so the
+// broadcast is observable here: once the editor shows this document, the rebuild has been consumed
+// and nothing is left in flight to undo the test's own clicks.
+async function openDocument(page: Page, source: string): Promise<void> {
+    writeFileSync(LIVE_DOC, source);
+    // Match the heading line whole, `#` included: `# Scene` is not part of the initial
+    // `# Original Scene`, while `Scene` alone matches it and would wait for nothing.
+    const heading = /^#[^\n]*/.exec(source)?.[0] ?? source.split("\n", 1)[0];
+    await expect(page.locator(".source-pane .cm-content")).toContainText(heading);
+    await page.goto("/");
+}
 
 // These tests share one server and document (the config runs them serially).
 // Each test restores the document to its initial content first and waits for the
@@ -795,11 +811,10 @@ test("stamps the not-reached line with crosses rather than a fourth dash pattern
 });
 
 test("opens a route from the drawing, and walks off it to either end", async ({ page }) => {
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "Guide: Which way?", "", "Guide: You are inside.", ""].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
 
@@ -843,8 +858,8 @@ test("draws a scene as a band around its nodes rather than a line under each", a
 });
 
 test("opens a region from its band, and names its border", async ({ page }) => {
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# The Gate",
             "",
@@ -858,7 +873,6 @@ test("opens a region from its band, and names its border", async ({ page }) => {
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
 
@@ -897,11 +911,10 @@ test("renders a list in the preview as a list, markers and all", async ({ page }
 
 test("holds one chosen thing at a time — a node, a route, or a region", async ({ page }) => {
     // Choosing is choosing, whatever the thing is: picking a new one plainly lets the last go.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "Guide: Which way?", "", "Guide: You are inside.", ""].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
 
@@ -926,8 +939,8 @@ test("holds one chosen thing at a time — a node, a route, or a region", async 
 test("keeps a placement link out of the flow it is not part of", async ({ page }) => {
     // The line after an unconditional divert is unreachable. It gets a line so it is not adrift,
     // but control never travels it — so it is neither a destination nor a route to open.
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         [
             "# Loop",
             "",
@@ -939,7 +952,6 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
             "",
         ].join("\n"),
     );
-    await page.goto("/");
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     const stage = page.locator("section.stage.active");
 
@@ -979,8 +991,7 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
 test("names a region's kind and takes the reader to the heading that declares it", async ({
     page,
 }) => {
-    writeFileSync(LIVE_DOC, ["# The Gate", "", "Guide: Which way?", ""].join("\n"));
-    await page.goto("/");
+    await openDocument(page, ["# The Gate", "", "Guide: Which way?", ""].join("\n"));
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
 
     await page.locator("section.stage.active g.region rect").first().dispatchEvent("click");
@@ -993,11 +1004,10 @@ test("names a region's kind and takes the reader to the heading that declares it
 });
 
 test("reads a jump as a jump in every stage that has interpreted one", async ({ page }) => {
-    writeFileSync(
-        LIVE_DOC,
+    await openDocument(
+        page,
         ["# The Gate", "", "Guide: Which way?", "", "=> [The Gate](#the-gate)", ""].join("\n"),
     );
-    await page.goto("/");
 
     for (const tab of ["Dialogue Graph", "Semantic Model", "Desugared AST", "Dialogue AST"]) {
         await page.locator(".tab", { hasText: tab }).click();
