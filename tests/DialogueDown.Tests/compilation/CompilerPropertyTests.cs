@@ -1,6 +1,7 @@
 using CsCheck;
 using DialogueDown.Common;
 using DialogueDown.Compilation;
+using DialogueDown.Graph;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
@@ -120,6 +121,140 @@ public sealed class CompilerPropertyTests
         ScriptGen.Script().Sample(
             source => ScriptCompilerFactory.CreateDefault().Compile(source),
             iter: Samples);
+
+    /// <summary>
+    /// The same holds for the graph's nodes, which carry spans of their own.
+    /// </summary>
+    /// <remarks>
+    /// This is the span the report slices unclamped to show a node's own text, and the one a
+    /// debugger highlights to say where a run has paused. It is a different span from the Dialogue
+    /// AST's — a lowering pass decides it — so the tree being sound says nothing about it. A
+    /// synthetic node owns no source text and carries a zero-width span, which is in range like
+    /// any other.
+    /// </remarks>
+    [Fact]
+    public void EveryGraphNodeSpanAddressesTextThatExists() =>
+        ScriptGen.Script().Sample(
+            source =>
+            {
+                if (GraphOf(source) is not { } graph)
+                {
+                    return;
+                }
+
+                foreach (var node in graph.Nodes)
+                {
+                    Assert.True(
+                        node.Span.Start >= 0
+                            && node.Span.End >= node.Span.Start
+                            && node.Span.End <= source.Length,
+                        $"{node.GetType().Name} claims [{node.Span.Start}, {node.Span.End}) "
+                            + $"of a {source.Length}-character source.");
+                }
+            },
+            iter: Samples);
+
+    /// <summary>
+    /// Every edge lands on a node the graph holds, as do its entry and end.
+    /// </summary>
+    /// <remarks>
+    /// An edge names its destination by id rather than by reference, so nothing in the type system
+    /// stops it naming one that was never emitted. The graph resolves an id by lookup, which means
+    /// a dangling edge is not a malformed drawing but an exception thrown at whichever runtime is
+    /// walking the flow — arbitrarily far from the pass that dropped the node.
+    /// </remarks>
+    [Fact]
+    public void EveryEdgeLandsOnANodeTheGraphHolds() =>
+        ScriptGen.Script().Sample(
+            source =>
+            {
+                if (GraphOf(source) is not { } graph)
+                {
+                    return;
+                }
+
+                var present = graph.Nodes.Select(node => node.Id).ToHashSet();
+                Assert.Contains(graph.Entry, present);
+                Assert.Contains(graph.End, present);
+
+                foreach (var node in graph.Nodes)
+                {
+                    foreach (var edge in node.Out)
+                    {
+                        Assert.True(
+                            present.Contains(edge.Target),
+                            $"{edge.GetType().Name} leaving {node.GetType().Name} "
+                                + $"{node.Id} points at {edge.Target}, which the graph does "
+                                + "not hold.");
+                    }
+                }
+            },
+            iter: Samples);
+
+    /// <summary>
+    /// No two nodes share an id.
+    /// </summary>
+    /// <remarks>
+    /// The id is how everything downstream names a node — an edge's destination, a debugger's
+    /// breakpoint, the report's selection. Two nodes answering to one id make every one of those
+    /// ambiguous, and the lookup that resolves it silently prefers whichever was indexed last.
+    /// </remarks>
+    [Fact]
+    public void NoTwoNodesShareAnId() =>
+        ScriptGen.Script().Sample(
+            source =>
+            {
+                if (GraphOf(source) is not { } graph)
+                {
+                    return;
+                }
+
+                var distinct = graph.Nodes.Select(node => node.Id).Distinct().Count();
+                Assert.True(
+                    distinct == graph.Nodes.Count,
+                    $"{graph.Nodes.Count} nodes carry only {distinct} distinct ids.");
+            },
+            iter: Samples);
+
+    /// <summary>
+    /// Desugaring an already-desugared script changes nothing.
+    /// </summary>
+    /// <remarks>
+    /// Desugar's rules are normalizations — assemble a jump, fill in the speaker a line left
+    /// implicit — and a normalization that is not idempotent is one that has not finished: running
+    /// it again would keep changing the tree, so its output depends on how many times it ran. That
+    /// makes the stage unsafe to re-run, which a cache, an incremental recompile, or a later pass
+    /// reusing the stage would all quietly rely on.
+    /// </remarks>
+    [Fact]
+    public void DesugaringAnAlreadyDesugaredScriptChangesNothing() =>
+        ScriptGen.Script().Sample(
+            source =>
+            {
+                var once = Pipeline.UntilDesugared(source);
+                var twice = Pipeline.Desugar(once.Document, source);
+                Assert.Equal(Shape(once.Document), Shape(twice.Document));
+            },
+            iter: Samples);
+
+    // The graph, when the compile reached it. A script the front end rejects has no graph, and
+    // says nothing either way about the invariants below.
+    private static DialogueGraph? GraphOf(string source) =>
+        ScriptCompilerFactory.CreateDefault().Compile(source) is CompilationSuccess success
+            ? success.Graph
+            : null;
+
+    // The AST records hold their children in lists, which compare by reference, so two separately
+    // built trees are never equal however alike they are. Comparing a rendering instead: the walk
+    // reaches every node, including those inside those lists, and each node prints its own kind,
+    // position, and scalar members — so a speaker filled in or a jump indicator consumed shows up
+    // as a difference.
+    private static string Shape(ScriptDocument document) =>
+        string.Join(
+            "\n",
+            document.Body
+                .SelectMany(block => block.DescendantsAndSelf())
+                .Select(node => $"{node.GetType().Name} [{node.Span.Start},{node.Span.End}) {node}"));
 
     // The Markdown AST has no shared walker, because nothing in the compiler needs one: each
     // stage knows the shapes it handles. A property does need one, so it lives here rather than
