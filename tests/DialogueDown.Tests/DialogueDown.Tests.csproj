@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
+    <PackageReference Include="CsCheck" />
     <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="NSubstitute" />

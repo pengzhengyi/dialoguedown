@@ -58,24 +58,35 @@ jobs:
           dotnet reportgenerator
           "-reports:TestResults/coverage.cobertura.*.xml"
           "-targetdir:coverage-report"
-          "-reporttypes:Html;MarkdownSummaryGithub;Cobertura"
+          "-reporttypes:Html;MarkdownSummaryGithub;Cobertura;JsonSummary"
 
-      - name: Check coverage threshold
+      - name: Check coverage thresholds
         run: |
           python3 - <<'PY'
-          import sys
-          import xml.etree.ElementTree as ET
+          import json
 
-          root = ET.parse("coverage-report/Cobertura.xml").getroot()
-          line_rate = float(root.attrib["line-rate"]) * 100
-          print(f"Line coverage: {line_rate:.2f}%")
+          # ReportGenerator's own summary, rather than the raw Cobertura: it reports line,
+          # branch, and method rates already merged across every target framework.
+          summary = json.loads(open("coverage-report/Summary.json").read())["summary"]
+          line = float(summary["linecoverage"])
+          branch = float(summary["branchcoverage"])
+          print(f"Line coverage: {line:.2f}%  Branch coverage: {branch:.2f}%")
 
-          if line_rate < 90:
-              raise SystemExit("Line coverage is below the 90% required floor.")
+          failures = []
+          if line < 90:
+              failures.append(f"Line coverage {line:.2f}% is below the 90% required floor.")
 
-          if line_rate < 100:
+          # Branch coverage is the stronger signal: a decision point can be fully line-covered
+          # with only one of its paths ever taken, so a line-only gate cannot see it.
+          if branch < 85:
+              failures.append(f"Branch coverage {branch:.2f}% is below the 85% required floor.")
+
+          if failures:
+              raise SystemExit("\n".join(failures))
+
+          if line < 100:
               print(
-                  f"::warning::Line coverage is {line_rate:.2f}%; "
+                  f"::warning::Line coverage is {line:.2f}%; "
                   "100% is the aspirational target."
               )
           PY

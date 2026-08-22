@@ -137,6 +137,16 @@ changes easy to categorize.
 
 ### Changed
 
+- **Property tests guard the invariants examples cannot reach** — generated scripts now assert
+  that every AST node's span addresses text that exists, that a child's span sits within its
+  parent's, and that compiling never throws. See
+  [CONTRIBUTING](CONTRIBUTING.md#properties-beside-examples).
+
+- **CI gates branch coverage too** — a decision point can be fully line-covered with only one of
+  its paths ever taken, so the build now fails below **85% branch** as well as 90% line. The check
+  reads ReportGenerator's own summary rather than raw Cobertura, so line, branch, and method rates
+  come from one already-merged source.
+
 - **Switching scripts in the served report is more than twice as fast** — the server now watches
   the folder it serves once, instead of starting a fresh file-system watch for every script opened.
   Opening a script falls from about 330 ms to about 145 ms, and the switch behind it from about

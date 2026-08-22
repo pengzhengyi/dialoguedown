@@ -129,8 +129,8 @@ source assemblies and excludes test files. The collector writes Cobertura XML un
 `TestResults/`, and ReportGenerator writes an interactive HTML report to
 `coverage-report/index.html`. Both output folders are ignored by Git.
 
-CI fails if line coverage drops below 90% and emits a warning when it is below
-100%.
+CI fails if line coverage drops below 90% or branch coverage below 85%, and
+emits a warning when line coverage is below 100%.
 
 ## Documentation
 

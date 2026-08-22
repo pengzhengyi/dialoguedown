@@ -61,7 +61,10 @@ against the project and the figure drops to a quarter of the real one. Cobertura
 output is written under `TestResults/`, and the interactive report to
 `coverage-report/index.html`.
 
-CI fails below 90% line coverage and warns below 100%.
+CI fails below **90% line** or **85% branch** coverage, and warns below 100%
+line. Branch coverage is gated too because a decision point can be fully
+line-covered with only one of its paths ever taken — a gap a line-only gate
+cannot see.
 
 ### Core quality guardrails
 
@@ -89,6 +92,24 @@ not warnings). The CLI and visualization projects are intentionally exempt.
 
 Use the `build: fast` task (analyzers off) for the inner loop, but run the
 normal analyzer-enabled `build`/`test` before pushing.
+
+### Properties, beside examples
+
+Most tests here are **example-based**: one input, one expected output. That is
+the right way to specify behavior, and it cannot state a rule that must hold for
+*every* input — no list of examples covers the one nobody wrote.
+
+A few **property tests** cover those, in
+`tests/DialogueDown.Tests/compilation/CompilerPropertyTests.cs`. They generate
+scripts with [CsCheck](https://github.com/AnthonyLloyd/CsCheck) and assert
+invariants: every node's span addresses text that exists, a child's span sits
+within its parent's, and compiling never throws. CsCheck runs as a plain method
+call inside an ordinary `[Fact]`, so it needs nothing from the test runner.
+
+Add a property when a rule holds across all inputs and no single example can say
+so. Keep the generator producing scripts a writer could plausibly write — random
+characters only exercise the front end's rejection path — and keep the sample
+count modest so the suite stays fast.
 
 ### Adding or updating a NuGet package
 
