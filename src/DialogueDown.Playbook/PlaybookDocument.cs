@@ -41,7 +41,10 @@ public sealed record PlaybookDocument
         Format = format;
         Script = script.AssertNotNull(nameof(script));
         Entry = entry.AssertNotNegative(nameof(entry));
-        Anchors = anchors ?? ImmutableSortedDictionary<string, int>.Empty;
+        // Ordinal whoever built it: a playbook's order must not depend on the culture of the
+        // machine that wrote or read it, or a golden file stops being one.
+        Anchors = (anchors ?? ImmutableSortedDictionary<string, int>.Empty)
+            .WithComparers(StringComparer.Ordinal);
         Speakers = speakers.OrEmpty();
         Nodes = nodes.OrEmpty();
     }
@@ -77,7 +80,9 @@ public sealed record PlaybookDocument
     /// </summary>
     /// <remarks>
     /// Sorted, because a lookup table's order carries no meaning but a golden file needs one:
-    /// sorting makes a playbook byte-identical however the writer happened to build it.
+    /// sorting makes a playbook byte-identical however the writer happened to build it. Sorted
+    /// <em>ordinally</em>, so that holds on any machine — the default comparer follows the
+    /// current culture, which puts "a" before "B" in one place and after it in another.
     /// </remarks>
     [JsonPropertyOrder(4)]
     [JsonPropertyName("anchors")]

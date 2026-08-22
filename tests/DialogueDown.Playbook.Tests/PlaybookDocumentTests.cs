@@ -1,9 +1,25 @@
+using System.Collections.Immutable;
+using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Tests.Support;
 
 namespace DialogueDown.Playbook.Tests;
 
 public sealed class PlaybookDocumentTests
 {
+    [Fact]
+    public void Anchors_HoweverTheyWereSorted_ReadInOrdinalOrder()
+    {
+        // The default comparer follows the current culture, which puts "a" before "B" in one
+        // place and after it in another. A playbook's order must not depend on the machine.
+        var byCulture = new[] { "B", "a" }.ToImmutableSortedDictionary(slug => slug, _ => 0);
+
+        var playbook = new PlaybookDocument(
+            PlaybookFactory.Format(), "chapter-01.dialogue.md", 0, byCulture, [], [new EndNode(0)]);
+
+        Assert.Equal(["B", "a"], playbook.Anchors.Keys);
+    }
+
+
     [Fact]
     public void RoundTrip_AWholePlaybook_PreservesEveryTable()
     {
