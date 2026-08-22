@@ -87,7 +87,7 @@ ddown visualize --help
 
 | Command | What it gives you |
 | --- | --- |
-| `compile` | An answer in the terminal: is this script correct? |
+| `compile` | An answer in the terminal: is this script correct? — and the playbook a game plays |
 | `visualize` | A report in your browser that updates while you write. |
 
 ## visualize — preview while you write
@@ -162,16 +162,35 @@ problems in one run:
 ddown compile my-scene.dialogue.md --mode best-effort
 ```
 
+**Save the compiled script for a game to play.** `-o` writes a **playbook**: a JSON
+file holding everything a game needs to play the script, and nothing else. Name it
+after the script by convention:
+
+```sh
+ddown compile my-scene.dialogue.md -o my-scene.playbook.json
+```
+
+Leave `-o` off and the playbook goes to standard output, so it can be piped:
+
+```sh
+ddown compile my-scene.dialogue.md | jq .anchors
+```
+
+A script with errors writes nothing, so a broken compile never leaves a
+half-believable file behind.
+
 ### Options
 
 | Option | What it does |
 | --- | --- |
+| `-o`, `--output <path>` | Where to write. Default: standard output. |
+| `--emit <format>` | What to write: `playbook` (the default) or `dot` for the compiler's stage graphs. |
 | `--mode <mode>` | How far to compile after an error: `stage-boundary` (default) or `best-effort`. |
 | `--config <path>` | Use a specific `dialogue.toml`. Default: the nearest one above the script. |
 
-`compile` can also write the compiler's internal stage graphs as text, for feeding
-into other tools. That's for building tooling rather than writing dialogue, so it
-lives in the
+`--emit dot` writes the compiler's internal stage graphs instead, for feeding into
+other tools. That's for building tooling rather than writing dialogue, so it lives
+in the
 [developer docs](https://github.com/pengzhengyi/dialoguedown/blob/main/docs/contributing/design-notes/Compile%20CLI%20-%20Emit%20DOT.md);
 `ddown compile --help` lists it too.
 
