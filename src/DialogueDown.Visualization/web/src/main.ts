@@ -250,6 +250,19 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     // The Explorer's handle, so opening a script can move the tree's highlight. Assigned when the
     // sidebar mounts (a served, browsable report); absent otherwise.
     let explorer: ExplorerHandle | null = null;
+    // The server binds an event stream to the document that was active when it opened, so the
+    // watch is held: a switch has to reconnect it or hot reload keeps reporting on the old script.
+    const serverEvents = watchServerEvents({
+        onReload: (next) => {
+            currentSymbols = next.symbols ?? EMPTY_SYMBOLS;
+            controller.onReload(next);
+        },
+        onReloadConfig: (next) => {
+            currentSymbols = next.symbols ?? EMPTY_SYMBOLS;
+            controller.onReloadConfig(next);
+        },
+        onProblem: (message, target) => controller.onProblem(message, target),
+    });
     // Opening a script replaces the report's contents rather than the page, so the reader keeps
     // the window they were working in. Anything the page cannot absorb falls back to a full load.
     const scripts = createScriptSwitch(
@@ -281,6 +294,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                 if (report.project) report.project.activePath = path;
                 explorer?.setActiveScript(path);
                 docPath?.setPath(next.path);
+                serverEvents.resubscribe();
             },
             pushHistory: (path, url) => window.history.pushState({ script: path }, "", url),
             setHistory: (path, url) => window.history.replaceState({ script: path }, "", url),
@@ -294,17 +308,6 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     window.addEventListener("popstate", (event) => {
         const script = (event.state as { script?: string } | null)?.script;
         if (typeof script === "string") void scripts.restore(script);
-    });
-    watchServerEvents({
-        onReload: (next) => {
-            currentSymbols = next.symbols ?? EMPTY_SYMBOLS;
-            controller.onReload(next);
-        },
-        onReloadConfig: (next) => {
-            currentSymbols = next.symbols ?? EMPTY_SYMBOLS;
-            controller.onReloadConfig(next);
-        },
-        onProblem: (message, target) => controller.onProblem(message, target),
     });
     // The Explorer sidebar: present only for a served, browsable report (report.project is set by
     // the project server). It reuses the launcher's browse/open endpoints and routes a file open

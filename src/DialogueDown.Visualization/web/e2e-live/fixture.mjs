@@ -81,3 +81,14 @@ export const CONFIG_ADOPT_INVALID_CONFIG = "[[speakers]]\nbogus = true\n";
 export const SEMANTIC_AUTOCOMPLETE_PORT = 5183;
 export const SEMANTIC_AUTOCOMPLETE_DOC = join(here, ".semantic-autocomplete.dialogue.md");
 export const SEMANTIC_AUTOCOMPLETE_SOURCE = "# Scene\n\nAlice: The first line.\n";
+
+// A script-switch server: a tree with two scripts under one root, served in --edit with the
+// first already open. The spec opens the other one from the Explorer, which replaces the report's
+// contents instead of the page. It owns its server because a switch changes the server's active
+// document, which every other spec on a shared server would see.
+export const SWITCH_PORT = 5186;
+export const SWITCH_TREE = join(here, ".switch-tree");
+export const SWITCH_FIRST_DOC = join(SWITCH_TREE, "first.dialogue.md");
+export const SWITCH_SECOND_DOC = join(SWITCH_TREE, "act", "second.dialogue.md");
+export const SWITCH_FIRST_SOURCE = "# First Scene\n\nAlice: The script at the root.\n";
+export const SWITCH_SECOND_SOURCE = "# Second Scene\n\nBob: The script in a sub-folder.\n";
