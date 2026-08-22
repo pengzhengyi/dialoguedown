@@ -375,7 +375,7 @@ each construct the language accepts is among them:
 ```sh
 # Base construct kinds demonstrated across all examples (subtypes in () ignored).
 for f in examples/*.dialogue.md; do
-  ddown visualize "$f" --emit dot \
+  ddown compile "$f" --emit dot \
     | awk '/^\/\/ Dialogue AST/{on=1;next} /^\/\//{on=0}
            on && match($0,/label="[^"(\\]+/){print substr($0,RSTART+7,RLENGTH-7)}'
 done | sed 's/ *$//' | sort -u
