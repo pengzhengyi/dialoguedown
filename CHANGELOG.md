@@ -284,6 +284,13 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Transitive NuGet packages now reach the dependency graph** — `global.json` pinned the SDK
+  without its feature band (`10.0.0`), and `actions/setup-dotnet` rejects a short version whenever
+  `rollForward` is set. GitHub's automatic dependency submission reads that file, so every run
+  failed and the graph held only the directly declared packages; an indirect dependency missing
+  from the graph raises no Dependabot alert. The pin is now a full SDK version (`10.0.100`), which
+  resolves to the same SDK as before.
+
 - **The Source editor's `#slug` chip survives a late parse** — the chip on the active heading line
   could stay hidden when a script opened on a busy machine, and only appear once the caret moved.
   The editor's first syntax parse is time-bounded, and the hint ignored the update that publishes
