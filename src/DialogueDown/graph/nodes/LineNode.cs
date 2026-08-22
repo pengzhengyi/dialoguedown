@@ -11,6 +11,11 @@ namespace DialogueDown.Graph.Nodes;
 /// in order — the calls the line runs when it plays. A <see cref="Condition"/> decides whether it
 /// is spoken at all; control continues past it either way.
 /// </summary>
+/// <remarks>
+/// A jump the line ended in is not part of its speech. By the time a node exists the jump is the
+/// divert leaving it, carrying the label the writer gave it, so keeping it here as well would
+/// say one thing twice.
+/// </remarks>
 internal sealed record LineNode(
     NodeId Id,
     SourceSpan Span,
