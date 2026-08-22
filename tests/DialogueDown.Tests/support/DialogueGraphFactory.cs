@@ -22,6 +22,27 @@ internal static class DialogueGraphFactory
         int id, SpeakerSymbol speaker, params InlineFragment[] speech) =>
         new(NodeId(id), new SourceSpan(0, 0), speaker, speech, []);
 
+    /// <summary>A line node said only when <paramref name="condition"/> holds.</summary>
+    public static LineNode ConditionalLineNode(
+        int id, SpeakerSymbol speaker, Condition condition, params InlineFragment[] speech) =>
+        new(NodeId(id), new SourceSpan(0, 0), speaker, speech, [], condition);
+
+    /// <summary>A choice node offering <paramref name="options"/>.</summary>
+    public static ChoiceNode ChoiceNode(int id, bool ordered = false, params Edge[] options) =>
+        new(NodeId(id), new SourceSpan(0, 0), ordered, options);
+
+    /// <summary>A random choice node the engine picks from.</summary>
+    public static RandomChoiceNode RandomChoiceNode(int id, params Edge[] arms) =>
+        new(NodeId(id), new SourceSpan(0, 0), arms);
+
+    /// <summary>A conditional block, whose arms are tried in order.</summary>
+    public static BranchNode BranchNode(int id, params Edge[] arms) =>
+        new(NodeId(id), new SourceSpan(0, 0), arms);
+
+    /// <summary>A control node running <paramref name="effects"/> and nothing else.</summary>
+    public static ControlNode ControlNode(int id, params GameCall[] effects) =>
+        new(NodeId(id), new SourceSpan(0, 0), effects, []);
+
     /// <summary>The smallest valid graph: an End node a run starts and finishes on.</summary>
     public static DialogueGraph EmptyGraph()
     {
