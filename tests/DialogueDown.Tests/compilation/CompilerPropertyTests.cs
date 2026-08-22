@@ -1,7 +1,8 @@
 using CsCheck;
-using DialogueDown.Common;
 using DialogueDown.Compilation;
-using DialogueDown.Markdown;
+using DialogueDown.Graph;
+using DialogueDown.Graph.Edges;
+using DialogueDown.Graph.Nodes;
 using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 
@@ -26,7 +27,7 @@ public sealed class CompilerPropertyTests
     private const int Samples = 200;
 
     /// <summary>
-    /// Every span a compile produces addresses text that exists.
+    /// Every node in the Dialogue AST carries a span that addresses text the script contains.
     /// </summary>
     /// <remarks>
     /// A span is a promise that <c>source.Substring(Start, Length)</c> is the node's own text, and
@@ -36,24 +37,18 @@ public sealed class CompilerPropertyTests
     /// stage that produced it.
     /// </remarks>
     [Fact]
-    public void EverySpanAddressesTextThatExists() =>
-        ScriptGen.Script().Sample(
+    public void EveryDialogueAstNodeSpanAddressesTextThatExists() =>
+        ForEveryScript(
             source =>
             {
-                foreach (var node in NodesOf(source))
+                foreach (var node in DialogueAstNodesOf(source))
                 {
-                    Assert.True(
-                        node.Span.Start >= 0
-                            && node.Span.End >= node.Span.Start
-                            && node.Span.End <= source.Length,
-                        $"{node.GetType().Name} claims [{node.Span.Start}, {node.Span.End}) "
-                            + $"of a {source.Length}-character source.");
+                    SpanAssert.AssertAddressesTextThatExists(node.Span, source, Describe(node));
                 }
-            },
-            iter: Samples);
+            });
 
     /// <summary>
-    /// A child never claims text outside its parent.
+    /// Every node in the Dialogue AST claims text lying wholly within what its parent claims.
     /// </summary>
     /// <remarks>
     /// Containment is what makes the tree navigable by position: a tool finds the node under a
@@ -62,27 +57,22 @@ public sealed class CompilerPropertyTests
     /// position it belongs to, which is contained by definition.
     /// </remarks>
     [Fact]
-    public void AChildsSpanIsContainedInItsParents() =>
-        ScriptGen.Script().Sample(
+    public void EveryDialogueAstNodeSpanIsContainedInItsParents() =>
+        ForEveryScript(
             source =>
             {
-                foreach (var parent in NodesOf(source))
+                foreach (var parent in DialogueAstNodesOf(source))
                 {
                     foreach (var child in parent.Children())
                     {
-                        Assert.True(
-                            child.Span.Start >= parent.Span.Start
-                                && child.Span.End <= parent.Span.End,
-                            $"{child.GetType().Name} [{child.Span.Start}, {child.Span.End}) "
-                                + $"escapes its parent {parent.GetType().Name} "
-                                + $"[{parent.Span.Start}, {parent.Span.End}).");
+                        SpanAssert.AssertContainedIn(
+                            child.Span, parent.Span, Describe(child), Describe(parent));
                     }
                 }
-            },
-            iter: Samples);
+            });
 
     /// <summary>
-    /// The same holds one stage earlier, in the Markdown AST.
+    /// Every node in the Markdown AST carries a span that addresses text the script contains.
     /// </summary>
     /// <remarks>
     /// This is the stage where the spans originate. The front end adopts the locations Markdig
@@ -91,95 +81,146 @@ public sealed class CompilerPropertyTests
     /// worth settling by measurement rather than by reading the code.
     /// </remarks>
     [Fact]
-    public void EveryMarkdownSpanAddressesTextThatExists() =>
-        ScriptGen.Script().Sample(
+    public void EveryMarkdownAstNodeSpanAddressesTextThatExists() =>
+        ForEveryScript(
             source =>
             {
                 var markdown = ScriptCompilerFactory.CreateDefault().Compile(source).Markdown;
 
-                foreach (var (name, span) in MarkdownSpansOf(markdown))
+                foreach (var (subject, span) in MarkdownSpans.Of(markdown))
                 {
-                    Assert.True(
-                        span.Start >= 0 && span.End >= span.Start && span.End <= source.Length,
-                        $"{name} claims [{span.Start}, {span.End}) "
-                            + $"of a {source.Length}-character source.");
+                    SpanAssert.AssertAddressesTextThatExists(span, source, subject);
                 }
-            },
-            iter: Samples);
+            });
 
     /// <summary>
-    /// Compiling never throws: an invalid script is reported, not raised.
+    /// Every node in the dialogue graph carries a span that addresses text the script contains.
     /// </summary>
     /// <remarks>
-    /// The compiler's contract is that it turns text into a result — a success, or a failure
-    /// carrying diagnostics. An exception escaping it is a defect whatever the input, because the
-    /// caller cannot then tell "your script is wrong" from "the compiler broke."
+    /// This is the span the report slices unclamped to show a node's own text, and the one a
+    /// debugger highlights to say where a run has paused. It is a different span from the Dialogue
+    /// AST's — a lowering pass decides it — so the tree being sound says nothing about it. A
+    /// synthetic node owns no source text and carries a zero-width span, which is in range like
+    /// any other.
+    /// </remarks>
+    [Fact]
+    public void EveryGraphNodeSpanAddressesTextThatExists() =>
+        ForEveryGraph(
+            (graph, source) =>
+            {
+                foreach (var node in graph.Nodes)
+                {
+                    SpanAssert.AssertAddressesTextThatExists(node.Span, source, Describe(node));
+                }
+            });
+
+    /// <summary>
+    /// Every edge in the dialogue graph, and the graph's own entry and end, name a node the graph
+    /// holds.
+    /// </summary>
+    /// <remarks>
+    /// An edge names its destination by id rather than by reference, so nothing in the type system
+    /// stops it naming one that was never emitted. The graph resolves an id by lookup, which means
+    /// a dangling edge is not a malformed drawing but an exception thrown at whichever runtime is
+    /// walking the flow — arbitrarily far from the pass that dropped the node.
+    /// </remarks>
+    [Fact]
+    public void EveryEdgeLandsOnANodeTheGraphHolds() =>
+        ForEveryGraph(
+            (graph, _) =>
+            {
+                GraphAssert.AssertHoldsNode(graph, graph.Entry, "the graph's entry");
+                GraphAssert.AssertHoldsNode(graph, graph.End, "the graph's end");
+
+                foreach (var node in graph.Nodes)
+                {
+                    foreach (var edge in node.Out)
+                    {
+                        GraphAssert.AssertHoldsNode(graph, edge.Target, Describe(edge, node));
+                    }
+                }
+            });
+
+    /// <summary>
+    /// No two nodes in the dialogue graph answer to the same id.
+    /// </summary>
+    /// <remarks>
+    /// The id is how everything downstream names a node — an edge's destination, a debugger's
+    /// breakpoint, the report's selection. Two nodes answering to one id make every one of those
+    /// ambiguous, and the lookup that resolves it silently prefers whichever was indexed last.
+    /// </remarks>
+    [Fact]
+    public void NoTwoGraphNodesShareAnId() =>
+        ForEveryGraph((graph, _) => GraphAssert.AssertNodeIdsAreDistinct(graph));
+
+    /// <summary>
+    /// Desugaring a script that has already been desugared leaves it unchanged.
+    /// </summary>
+    /// <remarks>
+    /// Desugar's rules are normalizations — assemble a jump, fill in the speaker a line left
+    /// implicit — and a normalization that is not idempotent is one that has not finished: running
+    /// it again would keep changing the tree, so its output depends on how many times it ran. That
+    /// makes the stage unsafe to re-run, which a cache, an incremental recompile, or a later pass
+    /// reusing the stage would all quietly rely on.
+    /// </remarks>
+    [Fact]
+    public void DesugaringAnAlreadyDesugaredScriptChangesNothing() =>
+        ForEveryScript(
+            source =>
+            {
+                var once = Pipeline.UntilDesugared(source);
+                var twice = Pipeline.Desugar(once.Document, source);
+
+                DialogueAstAssert.AssertSameShape(once.Document, twice.Document);
+            });
+
+    /// <summary>
+    /// Compiling any script returns a result — a success, or a failure carrying diagnostics — and
+    /// never throws.
+    /// </summary>
+    /// <remarks>
+    /// The compiler's contract is that it turns text into a result. An exception escaping it is a
+    /// defect whatever the input, because the caller cannot then tell "your script is wrong" from
+    /// "the compiler broke."
     /// </remarks>
     [Fact]
     public void CompilingNeverThrows() =>
-        ScriptGen.Script().Sample(
-            source => ScriptCompilerFactory.CreateDefault().Compile(source),
-            iter: Samples);
+        ForEveryScript(source => ScriptCompilerFactory.CreateDefault().Compile(source));
 
-    // The Markdown AST has no shared walker, because nothing in the compiler needs one: each
-    // stage knows the shapes it handles. A property does need one, so it lives here rather than
-    // widening the library's surface for a test.
-    private static IEnumerable<(string Name, SourceSpan Span)> MarkdownSpansOf(
-        MarkdownDocument document) =>
-        document.Blocks.SelectMany(BlockSpans);
+    // Every property below is quantified the same way — over generated scripts — so the quantifier
+    // is named once here and each property is left stating only its invariant.
+    private static void ForEveryScript(Action<string> invariantHolds) =>
+        ScriptGen.Script().Sample(invariantHolds, iter: Samples);
 
-    private static IEnumerable<(string, SourceSpan)> BlockSpans(MarkdownBlock block)
-    {
-        yield return (block.GetType().Name, block.Span);
+    // Only a script the compiler accepts reaches the graph stage. One it rejects has no graph, and
+    // so says nothing either way about an invariant quantified over graphs.
+    private static void ForEveryGraph(Action<DialogueGraph, string> invariantHolds) =>
+        ForEveryScript(
+            source =>
+            {
+                if (GraphOf(source) is { } graph)
+                {
+                    invariantHolds(graph, source);
+                }
+            });
 
-        var children = block switch
-        {
-            Heading heading => heading.Inlines.SelectMany(InlineSpans),
-            Paragraph paragraph => paragraph.Inlines.SelectMany(InlineSpans),
-            QuoteBlock quote => quote.Blocks.SelectMany(BlockSpans),
-            ListBlock list => list.Items.SelectMany(ItemSpans),
-            _ => [],
-        };
-
-        foreach (var child in children)
-        {
-            yield return child;
-        }
-    }
-
-    private static IEnumerable<(string, SourceSpan)> ItemSpans(ListItem item)
-    {
-        yield return (nameof(ListItem), item.Span);
-
-        foreach (var child in item.Blocks.SelectMany(BlockSpans))
-        {
-            yield return child;
-        }
-    }
-
-    private static IEnumerable<(string, SourceSpan)> InlineSpans(MarkdownInline inline)
-    {
-        yield return (inline.GetType().Name, inline.Span);
-
-        var children = inline switch
-        {
-            EmphasisInline emphasis => emphasis.Children.SelectMany(InlineSpans),
-            LinkInline link => link.Label.SelectMany(InlineSpans),
-            ImageInline image => image.Alt.SelectMany(InlineSpans),
-            _ => Enumerable.Empty<(string, SourceSpan)>(),
-        };
-
-        foreach (var child in children)
-        {
-            yield return child;
-        }
-    }
+    private static DialogueGraph? GraphOf(string source) =>
+        ScriptCompilerFactory.CreateDefault().Compile(source) is CompilationSuccess success
+            ? success.Graph
+            : null;
 
     // The Dialogue AST reachable from a compile, root blocks included. ScriptDocument is a
     // container rather than a node, so the walk starts at its body.
-    private static IEnumerable<ScriptNode> NodesOf(string source) =>
+    private static IEnumerable<ScriptNode> DialogueAstNodesOf(string source) =>
         ScriptCompilerFactory.CreateDefault()
             .Compile(source)
             .Script.Body
             .SelectMany(block => block.DescendantsAndSelf());
+
+    private static string Describe(ScriptNode node) => node.GetType().Name;
+
+    private static string Describe(DialogueNode node) => $"{node.GetType().Name} {node.Id}";
+
+    private static string Describe(Edge edge, DialogueNode leaving) =>
+        $"the {edge.GetType().Name} leaving {Describe(leaving)}";
 }

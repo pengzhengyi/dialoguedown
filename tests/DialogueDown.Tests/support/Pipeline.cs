@@ -27,6 +27,13 @@ internal static class Pipeline
         return _desugarer.Desugar(script, context);
     }
 
+    /// <summary>
+    /// Desugars an already-transpiled document, so a test can run the stage a second time over
+    /// its own output.
+    /// </summary>
+    public static DesugaredScriptDocument Desugar(ScriptDocument document, string source) =>
+        _desugarer.Desugar(document, DiagnosticsContextFactory.Context(source));
+
     public static SemanticModel UntilAnalyzed(string source) =>
         _analyzer.Analyze(UntilDesugared(source), DiagnosticsContextFactory.Context(source));
 

@@ -95,4 +95,40 @@ internal static class GraphAssert
         ArgumentNullException.ThrowIfNull(node);
         Assert.Equal(targets, node.Out.Select(edge => edge.Target));
     }
+
+    /// <summary>
+    /// Asserts the graph holds a node answering to <paramref name="id"/>. The graph resolves an id
+    /// by lookup, so an id it does not hold is not a malformed drawing but an exception thrown at
+    /// whichever runtime is walking the flow. <paramref name="namedBy"/> says what pointed at the
+    /// id, so a failure names the edge or endpoint at fault rather than the id alone.
+    /// </summary>
+    public static void AssertHoldsNode(DialogueGraph graph, NodeId id, string namedBy)
+    {
+        ArgumentNullException.ThrowIfNull(graph);
+
+        Assert.True(
+            Record.Exception(() => graph.Node(id)) is null,
+            NamesANodeTheGraphDoesNotHold(namedBy, id));
+    }
+
+    /// <summary>
+    /// Asserts no two of the graph's nodes answer to the same id. The id is how everything
+    /// downstream names a node, and the lookup that resolves a shared one silently prefers
+    /// whichever was indexed last.
+    /// </summary>
+    public static void AssertNodeIdsAreDistinct(DialogueGraph graph)
+    {
+        ArgumentNullException.ThrowIfNull(graph);
+
+        var distinct = graph.Nodes.Select(node => node.Id).Distinct().Count();
+        Assert.True(
+            distinct == graph.Nodes.Count,
+            IdsAreShared(graph.Nodes.Count, distinct));
+    }
+
+    private static string NamesANodeTheGraphDoesNotHold(string namedBy, NodeId id) =>
+        $"{namedBy} points at {id}, which the graph does not hold.";
+
+    private static string IdsAreShared(int nodes, int distinct) =>
+        $"{nodes} nodes carry only {distinct} distinct ids, so at least two answer to one id.";
 }
