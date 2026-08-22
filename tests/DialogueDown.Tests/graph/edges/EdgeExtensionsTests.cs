@@ -30,7 +30,7 @@ public sealed class EdgeExtensionsTests
     public void HasUnconditionalRoute_UnconditionalOption_IsTrue()
     {
         // The arm is always offered, so the choice always leaves through one of them.
-        IReadOnlyList<Edge> edges = [new OptionEdge(_target)];
+        IReadOnlyList<Edge> edges = [OptionEdge(_target)];
 
         Assert.True(edges.HasUnconditionalRoute());
     }
@@ -41,8 +41,8 @@ public sealed class EdgeExtensionsTests
         // Each condition may read false, so the choice can end up offering nothing.
         IReadOnlyList<Edge> edges =
         [
-            new OptionEdge(_target, Condition("HasKey")),
-            new OptionEdge(NodeId(2), Condition("HasRope")),
+            OptionEdge(_target, Condition("HasKey")),
+            OptionEdge(NodeId(2), Condition("HasRope")),
         ];
 
         Assert.False(edges.HasUnconditionalRoute());
@@ -53,8 +53,8 @@ public sealed class EdgeExtensionsTests
     {
         IReadOnlyList<Edge> edges =
         [
-            new OptionEdge(_target, Condition("HasKey")),
-            new OptionEdge(NodeId(2)),
+            OptionEdge(_target, Condition("HasKey")),
+            OptionEdge(NodeId(2)),
         ];
 
         Assert.True(edges.HasUnconditionalRoute());

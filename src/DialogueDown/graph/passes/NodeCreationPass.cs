@@ -29,7 +29,7 @@ internal sealed class NodeCreationPass : GraphBuildPass
                 draft.AddBlock(
                     line,
                     id => new LineNodeDraft(
-                        id, line.Span, speaker, Spoken(line), line.Condition));
+                        id, line.Span, speaker, line.Spoken(), line.Condition));
                 break;
             case Choices choices:
                 draft.AddBlock(
@@ -55,12 +55,6 @@ internal sealed class NodeCreationPass : GraphBuildPass
                     $"The dialogue graph builder does not yet lower {block.GetType().Name} blocks.");
         }
     }
-
-    // A jump is the divert edge leaving this node, so keeping it in the speech as well would say
-    // one thing twice — and would read the target's name out to the player. Its label travels on
-    // the edge instead, the way a control line's non-effects are dropped above.
-    private static IReadOnlyList<InlineFragment> Spoken(Line line) =>
-        [.. line.Speech.Where(fragment => fragment is not Jump)];
 
     private static Speaker SpeakerOf(Line line) =>
         line.Speaker ?? throw new InvalidOperationException(

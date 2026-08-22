@@ -26,6 +26,10 @@ internal static class DialogueGraphFactory
 
     public static SuccessionEdge SuccessionEdge(int target) => new(NodeId(target));
 
+    /// <summary>An option leading to <paramref name="target"/>, labelled as a menu would show.</summary>
+    public static OptionEdge OptionEdge(NodeId target, Condition? condition = null) =>
+        new(target, [DialogueAstFactory.Text("that one")], condition);
+
     /// <summary>A divert to <paramref name="target"/>, labelled as a writer would have.</summary>
     public static DivertEdge DivertEdge(NodeId target, Condition? condition = null) =>
         new(target, [DialogueAstFactory.Text("there")], condition);

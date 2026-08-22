@@ -1,6 +1,5 @@
 using DialogueDown.Graph;
 using DialogueDown.Graph.Passes;
-using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.GraphAssert;
 
@@ -28,7 +27,7 @@ public sealed class DivertPassTests
 
         var divert = AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
 
-        Assert.Equal("the end", InlineText.Of(divert.Label));
+        AssertReads(divert.Label, "the end");
     }
 
     [Fact]

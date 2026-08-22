@@ -29,6 +29,36 @@ public sealed class ChoicePassTests
     }
 
     [Fact]
+    public void Apply_EachOption_CarriesTheMenuTextOnItsEdge()
+    {
+        // Compiled in rather than discovered, so presenting a menu never has to read the node an
+        // option leads to — which is what keeps a menu free of the effects a peek could fire.
+        var graph = Build("""
+            Guide: Which way?
+
+            - Alice: Left.
+
+            - Alice: Right.
+            """);
+
+        AssertOffers(Assert.IsType<ChoiceNode>(graph.Nodes[1]), "Left.", "Right.");
+    }
+
+    [Fact]
+    public void Apply_AnOptionEndingInAJump_ShowsOnlyWhatIsSpoken()
+    {
+        var graph = Build("""
+            Guide: Which way?
+
+            - Alice: Left. => [the end](#END)
+
+            - Alice: Right.
+            """);
+
+        AssertOffers(Assert.IsType<ChoiceNode>(graph.Nodes[1]), "Left. ", "Right.");
+    }
+
+    [Fact]
     public void Apply_AnOptionWithSeveralBlocks_LeadsToItsFirstOnly()
     {
         var graph = Build("""
