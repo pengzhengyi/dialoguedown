@@ -30,7 +30,15 @@ public sealed class TreeWatchesTests
         var document = tree.File("scene.dialogue.md", "# First");
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
-        using var watch = watches.Watch(document, () => Interlocked.Increment(ref count), _debounce);
+        using var reported = new SemaphoreSlim(0);
+        using var watch = watches.Watch(
+            document,
+            () =>
+            {
+                Interlocked.Increment(ref count);
+                reported.Release();
+            },
+            _debounce);
         await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         for (var i = 0; i < 5; i++)
@@ -38,8 +46,11 @@ public sealed class TreeWatchesTests
             File.WriteAllText(document, $"# Write {i}");
         }
 
-        // The writes are one save, so wait for the report they coalesce into rather than for a
-        // span long enough to be convincing, then drain to prove no second report follows.
+        // Wait for the report itself rather than for a barrier: which of two files the watcher
+        // reports first is the operating system's business — inotify makes no promise that events
+        // for one path are delivered before another's — so only this watch's own signal says its
+        // quiet period has elapsed. Draining afterwards then gives any second report time to land.
+        Assert.True(await reported.WaitAsync(_patience, TestContext.Current.CancellationToken));
         await WatchSync.DrainAsync(watches, Path.GetDirectoryName(document)!, _debounce);
 
         // An editor saves by writing several times; that is one reload, not five.

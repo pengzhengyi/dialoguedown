@@ -11,15 +11,15 @@ namespace DialogueDown.Visualization.Live.Tests.Support;
 /// <para>
 /// Registering a watch is not instant — on macOS it costs over a tenth of a second — so a test that
 /// writes immediately can miss its own change. A fixed settle covers that, but it is a guess in
-/// both directions: long enough to be wasted on every test that did not need it, and short enough
-/// to fail on a loaded machine. Poking a sentinel file until the watcher reports it turns the wait
-/// into an observation, which ends as soon as delivery starts and cannot be too short.
+/// both directions: long enough to be wasted on every test that did not need it, short enough to
+/// miss registration on a loaded machine. Poking a sentinel file until the watcher reports it turns
+/// the wait into an observation, which ends as soon as delivery starts and cannot be too short.
 /// </para>
 /// <para>
-/// The same observation proves a negative. A test asserting that nothing fired otherwise has to
-/// sleep long enough to be convincing, which is the same guess again. Writing a sentinel *after*
-/// the change under test and waiting for it to be reported is a barrier: the watcher has finished
-/// work queued after the change, so a change that was going to be reported already has been.
+/// A sentinel bounds waiting; it does not order it. Which of two paths the watcher reports first is
+/// the operating system's business, and inotify in particular promises nothing there. So a test
+/// waits for its own watch's report when it needs that report, and drains only to give a further
+/// one time to arrive.
 /// </para>
 /// </remarks>
 internal static class WatchSync
@@ -67,11 +67,17 @@ internal static class WatchSync
     }
 
     /// <summary>
-    /// Waits until a change made before this call would already have been reported, so a test can
-    /// assert what did or did not follow from it. <paramref name="debounce"/> must match the watch
-    /// under test: the sentinel is written later and waits out the same quiet period, so the
-    /// earlier change's own period has necessarily elapsed first.
+    /// Waits until the watcher has been seen delivering after a change, giving a report of that
+    /// change one full quiet period to arrive. <paramref name="debounce"/> must match the watch
+    /// under test, so the window waited is the one that watch would need.
     /// </summary>
+    /// <remarks>
+    /// This is a bound on waiting, not a proof of ordering: the operating system makes no promise
+    /// that events for one path are delivered before another's, so a test that needs its own
+    /// watch's report should wait for that report and use this only to let a further one arrive.
+    /// What it does give a negative assertion is better than a sleep — the sentinel confirms the
+    /// watcher is delivering during the window, where a fixed delay may pass while it is stalled.
+    /// </remarks>
     public static async Task DrainAsync(TreeWatches watches, string folder, TimeSpan debounce)
     {
         ArgumentNullException.ThrowIfNull(watches);
