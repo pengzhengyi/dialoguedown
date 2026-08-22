@@ -35,6 +35,12 @@ export interface ModeController {
     /** Route a pushed config report (external `dialogue.toml` change): View re-syncs, Edit chips. */
     onReloadConfig(report: Report): void;
     /**
+     * Apply a script the reader just opened, in **either** mode. Unlike {@link onReload} this is a
+     * change they asked for, so Edit adopts it as a clean baseline rather than raising a conflict;
+     * the caller has already resolved any unsaved work.
+     */
+    switchDocument(report: Report, mode: ServedMode): void;
+    /**
      * Route a pushed problem (a missing or unreadable document/config on disk). In Edit it enters
      * the target controller's Conflict/epoch path so an in-flight save cannot silently overwrite
      * the file; in View it surfaces the message as a banner.
@@ -129,6 +135,22 @@ export function createModeController(
                     report,
                 );
             }
+        },
+        switchDocument(report, next) {
+            // A newer intent than any leave-Edit transition still awaiting a flush.
+            transition += 1;
+            ports.app.showBanner(null);
+            ports.dialogueLive.adoptSwitch(report.source ?? "", report);
+            const configSource = report.configuration?.file?.source;
+            if (report.configuration != null) ports.app.updateConfig(report.configuration);
+            if (configSource != null) ports.configLive?.adoptSwitch(configSource, report);
+            ports.app.setDiagnostics(report.diagnostics ?? []);
+            ports.app.setSemanticTokens(report.semanticTokens ?? []);
+            ports.app.setReservedTargets(report.symbols?.reservedTargets ?? []);
+            ports.app.updateStages(report.stages);
+            // Both documents were adopted clean just above, so a mode change here has nothing left
+            // to flush or prompt about — unlike switchTo, which must resolve them first.
+            if (next !== mode) apply(next);
         },
         switchTo(next) {
             if (next === mode) {

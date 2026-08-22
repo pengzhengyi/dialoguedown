@@ -12,6 +12,7 @@ function fakeLive(dirty = false): LiveEditController {
         onDiskChange: vi.fn(),
         reload: vi.fn(async () => "saved" as const),
         adoptDisk: vi.fn(),
+        adoptSwitch: vi.fn(),
         whenIdle: vi.fn(async () => {}),
         discard: vi.fn(),
         discardChanges: vi.fn(),
@@ -403,5 +404,69 @@ describe("createModeController", () => {
         expect(resolveDocument).toHaveBeenCalledTimes(2);
         expect(c.mode).toBe("view");
         expect(ports.dialogueLive.discard).toHaveBeenCalledOnce();
+    });
+});
+
+describe("createModeController — switchDocument (opening another script)", () => {
+    const another = {
+        source: "# Another",
+        stages: [],
+        diagnostics: [],
+        semanticTokens: [],
+        symbols: { speakers: [], ids: [], tags: [], reservedTargets: [] },
+    } as unknown as Parameters<ReturnType<typeof createModeController>["switchDocument"]>[0];
+
+    it("adopts the opened script in View", () => {
+        const { ports, app } = fakePorts();
+        const c = createModeController("view", ports);
+
+        c.switchDocument(another, "view");
+
+        expect(ports.dialogueLive.adoptSwitch).toHaveBeenCalledWith("# Another", another);
+        expect(app.updateStages).toHaveBeenCalledWith([]);
+        expect(app.showBanner).toHaveBeenCalledWith(null);
+    });
+
+    it("adopts the opened script in Edit too, rather than raising a conflict", () => {
+        // The difference from onReload: an external change must never clobber an active buffer,
+        // but an open the reader asked for has already resolved that buffer and must land.
+        const { ports } = fakePorts();
+        const c = createModeController("edit", ports);
+
+        c.switchDocument(another, "edit");
+
+        expect(ports.dialogueLive.adoptSwitch).toHaveBeenCalledWith("# Another", another);
+        expect(ports.dialogueLive.onDiskChange).not.toHaveBeenCalled();
+        expect(c.mode).toBe("edit");
+    });
+
+    it("lands in View when the switch asks for it, without a second prompt", () => {
+        // Back is a navigation, not an intent to edit. The switch already resolved the buffer,
+        // so leaving Edit here has nothing left to flush or ask about.
+        const { ports, app } = fakePorts();
+        const c = createModeController("edit", ports);
+
+        c.switchDocument(another, "view");
+
+        expect(c.mode).toBe("view");
+        expect(app.setEditable).toHaveBeenLastCalledWith(false);
+        expect(ports.resolveDocument).not.toHaveBeenCalled();
+    });
+
+    it("adopts a switched config alongside the dialogue", () => {
+        const configLive = fakeLive();
+        const { ports, app } = fakePorts({ configLive });
+        const c = createModeController("edit", ports);
+        const withConfig = {
+            ...another,
+            configuration: { file: { path: "/p/dialogue.toml", source: "name = 'p'" } },
+        } as unknown as typeof another;
+
+        c.switchDocument(withConfig, "edit");
+
+        expect(app.updateConfig).toHaveBeenCalledWith({
+            file: { path: "/p/dialogue.toml", source: "name = 'p'" },
+        });
+        expect(configLive.adoptSwitch).toHaveBeenCalledWith("name = 'p'", withConfig);
     });
 });
