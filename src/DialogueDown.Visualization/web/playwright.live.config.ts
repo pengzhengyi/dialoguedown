@@ -23,8 +23,15 @@ export default defineConfig({
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
-    reporter: "list",
-    use: { baseURL },
+    reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+    // See playwright.config.ts: a failure here is usually a timing one, and the trace's per-action
+    // DOM snapshots are what distinguish "the page never rendered it" from "a rebuild took it away
+    // again" without reproducing the run.
+    use: {
+        baseURL,
+        trace: "retain-on-failure",
+        screenshot: "only-on-failure",
+    },
     projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
     webServer: [
         {

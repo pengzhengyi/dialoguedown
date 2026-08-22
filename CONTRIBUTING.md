@@ -181,6 +181,20 @@ The live end-to-end tests run with `npm run e2e:live` in `web/`. The command
 builds the CLI once, then launches each loopback server from that Release DLL
 without repeating project builds.
 
+When an end-to-end test fails, Playwright keeps a trace of the failing run — a
+DOM snapshot, console, and network activity for every action. Open it locally
+with:
+
+```bash
+npx playwright show-trace test-results/<test-name>/trace.zip
+```
+
+CI failures keep the same evidence. Each end-to-end lane uploads a
+`playwright-report-static` or `playwright-report-live` artifact on failure;
+download it, unzip it, and run `npx playwright show-report <folder>`. This
+matters most for a failure that will not reproduce locally, where the trace
+shows what the page actually did instead of costing a re-run to observe.
+
 ### Editor tasks (VS Code)
 
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so

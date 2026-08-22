@@ -8,6 +8,14 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
-    reporter: "list",
+    // A CI failure is only as diagnosable as what the run leaves behind. `list` alone prints an
+    // assertion and discards everything else, so a flake that will not reproduce locally costs a
+    // re-run to see at all. The trace carries a DOM snapshot, console, and network per action, and
+    // in CI the HTML report packages it for the upload step to keep.
+    reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+    use: {
+        trace: "retain-on-failure",
+        screenshot: "only-on-failure",
+    },
     projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });
