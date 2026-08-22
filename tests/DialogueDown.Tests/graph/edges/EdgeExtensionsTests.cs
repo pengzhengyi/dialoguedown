@@ -21,7 +21,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void HasUnconditionalRoute_ConditionalDivert_IsFalse()
     {
-        IReadOnlyList<Edge> edges = [DivertEdge(_target, Condition("Brave"))];
+        IReadOnlyList<Edge> edges = [DivertEdge(_target, condition: Condition("Brave"))];
 
         Assert.False(edges.HasUnconditionalRoute());
     }
@@ -41,8 +41,8 @@ public sealed class EdgeExtensionsTests
         // Each condition may read false, so the choice can end up offering nothing.
         IReadOnlyList<Edge> edges =
         [
-            OptionEdge(_target, Condition("HasKey")),
-            OptionEdge(NodeId(2), Condition("HasRope")),
+            OptionEdge(_target, condition: Condition("HasKey")),
+            OptionEdge(NodeId(2), condition: Condition("HasRope")),
         ];
 
         Assert.False(edges.HasUnconditionalRoute());
@@ -53,7 +53,7 @@ public sealed class EdgeExtensionsTests
     {
         IReadOnlyList<Edge> edges =
         [
-            OptionEdge(_target, Condition("HasKey")),
+            OptionEdge(_target, condition: Condition("HasKey")),
             OptionEdge(NodeId(2)),
         ];
 

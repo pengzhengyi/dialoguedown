@@ -26,13 +26,26 @@ internal static class DialogueGraphFactory
 
     public static SuccessionEdge SuccessionEdge(int target) => new(NodeId(target));
 
-    /// <summary>An option leading to <paramref name="target"/>, labelled as a menu would show.</summary>
-    public static OptionEdge OptionEdge(NodeId target, Condition? condition = null) =>
-        new(target, [DialogueAstFactory.Text("that one")], condition);
+    public static SuccessionEdge SuccessionEdge(NodeId target) => new(target);
+
+    /// <summary>An option leading to <paramref name="target"/>, labelled as it would be shown.</summary>
+    public static OptionEdge OptionEdge(
+        NodeId target, string label = "that one", Condition? condition = null) =>
+        new(target, [DialogueAstFactory.Text(label)], condition);
+
+    /// <summary>One arm of a random choice, weighted by an even share unless told otherwise.</summary>
+    public static RandomOptionEdge RandomOptionEdge(
+        NodeId target, ChoiceWeight? weight = null, Condition? condition = null) =>
+        new(target, weight ?? DialogueAstFactory.AutoWeight(), condition);
+
+    /// <summary>One arm of a conditional block, tried in <paramref name="order"/>.</summary>
+    public static BranchEdge BranchEdge(NodeId target, int order = 0, Condition? condition = null) =>
+        new(target, order, condition);
 
     /// <summary>A divert to <paramref name="target"/>, labelled as a writer would have.</summary>
-    public static DivertEdge DivertEdge(NodeId target, Condition? condition = null) =>
-        new(target, [DialogueAstFactory.Text("there")], condition);
+    public static DivertEdge DivertEdge(
+        NodeId target, string label = "there", Condition? condition = null) =>
+        new(target, [DialogueAstFactory.Text(label)], condition);
 
     public static void AddSuccessionEdge(this NodeDraft draft, int target)
     {
