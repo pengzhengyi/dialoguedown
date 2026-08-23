@@ -36,6 +36,8 @@ export interface EdgeEnd {
 /** An edge the reader has asked about: what kind of route it is, and the two nodes it joins. */
 export interface EdgeDetail {
     category?: string;
+    /** What the writer called this route, when it carries words of its own. */
+    label?: string;
     source: EdgeEnd;
     target: EdgeEnd;
 }
@@ -425,12 +427,17 @@ export function edgeDetailTitle(category: string | undefined): string {
  *
  * The ends are named Source and Destination — the same words the neighbor tables use — so a reader
  * moving between a node and an edge is never asked to translate.
+ *
+ * A route that carries its own words shows them: a jump is drawn as a line and kept nowhere else,
+ * so without this the graph stage cannot say what the writer called it.
  */
 export function edgeDetailBody(edge: EdgeDetail): string {
     const meaning = edgeStyle(edge.category)?.meaning;
     const explanation = meaning ? `<p class="route-meaning">${escapeHtml(meaning)}</p>` : "";
+    const written = edge.label ? `<p class="route-label">${escapeHtml(edge.label)}</p>` : "";
     return (
         explanation +
+        written +
         `<table class="neighbors"><tbody>` +
         endRow("Source", edge.source) +
         endRow("Destination", edge.target) +

@@ -287,6 +287,31 @@ describe("createDetailPanel", () => {
         ]);
     });
 
+    it("shows the words a jump was written with", () => {
+        // A jump becomes a line on the drawing and is kept nowhere else in this stage, so the
+        // panel is where what the writer called it survives.
+        panel.showEdge({
+            category: "jump",
+            label: "through the gate",
+            source: { id: "a", label: "Alice: Ready?", category: "speech" },
+            target: { id: "b", label: "The Gate", category: "scene" },
+        });
+
+        expect(body.querySelector(".route-label")?.textContent).toBe("through the gate");
+    });
+
+    it("says nothing for a route that carries no words of its own", () => {
+        // A fall-through was never written down; printing anything would be the report inventing
+        // words rather than reporting them.
+        panel.showEdge({
+            category: "break",
+            source: { id: "a", label: "Alice: First.", category: "speech" },
+            target: { id: "b", label: "Alice: Second.", category: "speech" },
+        });
+
+        expect(body.querySelector(".route-label")).toBeNull();
+    });
+
     it("lets a reader walk off an edge to either end of it", () => {
         document.body.innerHTML = `<h2 id="detail-title"></h2><div id="detail-body"></div>`;
         body = document.getElementById("detail-body")!;
