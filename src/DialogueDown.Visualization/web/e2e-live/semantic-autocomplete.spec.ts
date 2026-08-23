@@ -43,7 +43,8 @@ test("completes a jump target from the analyzer's resolved symbols", async ({ pa
 
     // Replace the buffer with a heading-less document: the current buffer no longer contains
     // the `scene` heading, so a completion offering it can only come from the payload symbols.
-    await page.locator(".cm-content").click();
+    // The Playbook tab mounts a second editor, so target the Source tab's explicitly.
+    await page.locator(".source-stage .cm-content").click();
     await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type("Alice: Go [x](#s");
 

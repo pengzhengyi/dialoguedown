@@ -131,6 +131,51 @@ export interface ReportProject {
     activePath?: string;
 }
 
+/** One entry in the playbook's metadata table — a label and the value the runtime will read. */
+export interface PlaybookMetadataView {
+    /** The script the playbook was compiled from. */
+    script: string;
+    /** The playbook format's version. Zero while the format is pre-1.0. */
+    formatVersion: number;
+    /** Capabilities a host must provide to run this playbook. */
+    requires: string[];
+    /** Optional capabilities the playbook takes advantage of when the host has them. */
+    uses: string[];
+    /** The index of the node the runtime starts at. */
+    entry: number;
+    /** How many nodes the playbook holds. */
+    nodeCount: number;
+    /** How many named anchors a jump can target. */
+    anchorCount: number;
+}
+
+/** One row of the playbook's speaker table. */
+export interface PlaybookSpeakerView {
+    /** The stable id a runtime looks this speaker up by. Absent when the speaker has none. */
+    id?: string;
+    /** The speaker's display name. Absent for the anonymous default speaker. */
+    name?: string;
+    /** Whether this is the speaker a line with no prefix belongs to. */
+    default: boolean;
+    /** The speaker's tags, each rendered as `name` or `name=value`. */
+    tags: string[];
+}
+
+/**
+ * The compiled playbook — the runtime's artifact — shown in the Playbook tab: the serialized
+ * JSON a host would load, beside the tables that summarize it.
+ */
+export interface PlaybookReport {
+    /** The serialized playbook, indented for reading. Absent when no playbook was produced. */
+    json?: string;
+    /** The playbook's header, shown as a table. Absent when no playbook was produced. */
+    metadata?: PlaybookMetadataView;
+    /** The playbook's speakers, shown as a table. */
+    speakers: PlaybookSpeakerView[];
+    /** Why no playbook exists, when the compile did not reach one. */
+    unavailable?: string;
+}
+
 export interface Report {
     /**
      * The original source document, shown in the Source tab. Absent when a single
@@ -159,6 +204,11 @@ export interface Report {
      * configuration context (a CLI or served report); absent for a bare library render.
      */
     configuration?: ConfigReport;
+    /**
+     * The compiled playbook, shown in the Playbook tab after the Dialogue Graph. Present when
+     * the report was built through the compiler; absent for a bare graph render.
+     */
+    playbook?: PlaybookReport;
     /**
      * The compiler's diagnostics in Language Server Protocol shape, rendered as the Source
      * editor's overlay (squiggles, gutter markers, tooltips). Present for a served or CLI

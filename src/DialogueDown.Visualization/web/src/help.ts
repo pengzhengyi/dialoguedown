@@ -1,6 +1,6 @@
 /** Which tab's help to show: the Source tab, a stage graph tab, the Semantic tab, or — on the
  *  empty state — the Explorer sidebar. */
-export type HelpContext = "source" | "graph" | "semantic" | "explorer";
+export type HelpContext = "source" | "graph" | "semantic" | "playbook" | "explorer";
 
 const SOURCE_HELP = `
   <p><strong>Source &amp; preview.</strong> The left pane is the document as written;
@@ -123,12 +123,25 @@ const EXPLORER_HELP = `
      pinned entry that opens in the <strong>Config</strong> tab once a script is open.</p>
 `;
 
+const PLAYBOOK_HELP = `
+  <p>The <strong>playbook</strong> is what your script compiles to: the JSON a game runtime
+     loads and plays. It is generated, so this editor is read-only — change the script, not
+     the playbook.</p>
+  <p><strong>Reading it.</strong> Fold a section with the arrow in the gutter, and search with
+     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>. The panel on the right summarizes the header — what a
+     host must provide to run it, where it starts, and how many nodes and anchors it holds —
+     and lists the speakers, whose names and tags are click-to-copy.</p>
+  <p><strong>Kept current.</strong> Saving recompiles the playbook, so it always matches the
+     script you last saved. A script with errors compiles no playbook, and the tab says so.</p>
+`;
+
 /** What the open panel covers. The button reads "Help"; this is its tooltip, so the context
  * is still available without spending status-line width on it. */
 const SUMMARY: Record<HelpContext, string> = {
     source: "Using the Source tab",
     graph: "Using the graph",
     semantic: "Using the Semantic tab",
+    playbook: "Using the Playbook tab",
     explorer: "Using the Explorer",
 };
 
@@ -136,6 +149,7 @@ const CONTENT: Record<HelpContext, string> = {
     source: SOURCE_HELP,
     graph: GRAPH_HELP,
     semantic: SEMANTIC_HELP,
+    playbook: PLAYBOOK_HELP,
     explorer: EXPLORER_HELP,
 };
 
