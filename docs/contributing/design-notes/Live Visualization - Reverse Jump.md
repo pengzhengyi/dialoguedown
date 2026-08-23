@@ -54,7 +54,7 @@ Jump-to menu at the caret is in scope.
 
 | Type / function | Responsibility | Collaborators |
 | --- | --- | --- |
-| `findEnclosingNode(nodes, edges, from, to)` (`enclosing-node.ts`) | Pure lookup: the node whose **subtree extent** (own span ∪ descendants', via `Child` edges) most tightly encloses `[from, to)`, capped at the scene containing the start. Returns the node and its extent. | `DisplayNode`, `DisplayEdge`, `Span` |
+| `findEnclosingNode(scope, from, to)` (`enclosing-node.ts`) | Pure lookup: the node whose range most tightly encloses `[from, to)`, capped at the scene containing the start. That range is the **subtree extent** (own span ∪ descendants', via `Child` edges) for a stage that nests, and the node's **own span** for one that does not (the Dialogue Graph, whose `Child` edges lay the drawing out rather than contain). Returns the node and its extent. | `DisplayNode`, `DisplayEdge`, `Span` |
 | `ContextMenuItem` (extended, `context-menu.ts`) | Union of an **action** item (`run`) and a **submenu** item (`submenu: ContextMenuItem[]`). | `openContextMenu` |
 | `SourceJumpTarget` (`source-view.ts`) | One reverse-jump destination: a stable stage `title`, `run(from, to)` that resolves against the *live* stage and reveals its node, and `preview(from, to)` returning that node's source span for the hover highlight. | `SourceViewOptions.jumpTargets` |
 | `jumpToStageByTitle(title, from, to)` (`app.ts`) | Find the enclosing node in the named stage (resolved against the *live* stage set), then `beginNavigation → activate(tab) → view.selectById(id, { center })`. | `findEnclosingNode`, `TreeView`, `activate` |
@@ -84,6 +84,17 @@ stage knowledge and revealing live in `app.ts`.
   coarser than one scene — a selection crossing scene boundaries resolves to the
   scene containing its start, and stages without scenes fall back to the common
   ancestor.
+- **Only where a `Child` edge means containment.** That reasoning holds for the
+  stages projected from a syntax tree, and only there. The Dialogue Graph's
+  `Child` edges mark each node's parent in the **spanning tree the drawing is
+  laid out with** — the flow — so unioning what they reach stretches a node's
+  range down the rest of the script, and out of its scene entirely, since a jump
+  is such an edge. A stage therefore declares whether it `nests`
+  (`DisplayGraph.Nests`, default true; `GraphProjection` sets it false), and a
+  stage that does not is ranked by its nodes' own spans. The graph needs no
+  union: its spans already cover everything a node holds, and none of them
+  crosses a scene heading, so the scene cap is unnecessary rather than merely
+  inapplicable there.
 - **Save-safe navigation.** Leaving the Source tab routes through
   `source.beginNavigation`, exactly like a normal tab switch, so an Auto-save
   flushes or a Manual prompt resolves before the jump.

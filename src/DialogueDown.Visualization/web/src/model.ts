@@ -110,6 +110,13 @@ export interface Stage {
     /** The named areas the nodes sit in. Absent for a stage with no grouping to show. */
     regions?: DisplayRegion[];
     /**
+     * Whether a `Child` edge nests the child's source inside the parent's — true for the syntax
+     * trees, where a container's span is only its header and its reach comes from its children.
+     * False for the Dialogue Graph, whose `Child` edges mark the spanning tree it is drawn with
+     * rather than containment. Absent means it nests.
+     */
+    nests?: boolean;
+    /**
      * Present when the stage's artifact was not produced (a halted compile). The stage
      * renders as a disabled tab; `nodes`/`edges` are empty.
      */

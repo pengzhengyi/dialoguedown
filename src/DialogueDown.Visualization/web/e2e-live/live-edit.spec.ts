@@ -689,3 +689,51 @@ test("Jump to Semantic Model resolves a multi-line selection to its scene", asyn
     await expect(page.locator("section.stage.active g.node.selected")).toHaveCount(1);
     await expect(page.locator(".node-detail-heading")).toContainText("Market");
 });
+
+// A jump from the Source into the Dialogue Graph must be ranked by what each node *contains*, not
+// by what its flow leads to. The graph's child edges are the spanning tree it is drawn with, so
+// following them would stretch the first option's reach down the rest of the script — through the
+// jump and into the next scene — and the jump would land on that option instead of the choice.
+const BRANCHING_DOC = [
+    "# Forest",
+    "",
+    "Alice: Ready?",
+    "",
+    "- `60%` A fox darts across.",
+    "- `40%` An owl watches.",
+    "",
+    "=> [onward](#lake)",
+    "",
+    "# Lake",
+    "",
+    "Alice: Done.",
+    "",
+].join("\n");
+
+test("Jump to Dialogue Graph resolves a selection to what contains it, not what it leads to", async ({
+    page,
+}) => {
+    writeFileSync(LIVE_EDIT_DOC, BRANCHING_DOC);
+    await page.goto(`${base}/`);
+
+    // Select from inside the first option into the second. Neither option's own span covers that,
+    // but the choice holding both does — while the first option's *flow* reaches the whole rest of
+    // the script, so ranking by flow would land there instead.
+    const content = page.locator(".source-pane .cm-content");
+    await content.getByText("A fox darts", { exact: false }).first().click();
+    await page.keyboard.press("Home");
+    for (let step = 0; step < 12; step += 1) await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Shift+ArrowDown");
+
+    await content.click({ button: "right" });
+    await page.locator(".context-menu-item", { hasText: "Jump to" }).hover();
+    await page
+        .locator(".context-submenu .context-menu-item", { hasText: "Dialogue Graph" })
+        .click();
+
+    await expect(page.locator(".tab.active")).toHaveText("Dialogue Graph");
+    const selected = page.locator("section.stage.active g.node.selected");
+    await expect(selected).toHaveCount(1);
+    // The choice that holds both options — not the first option, whose flow runs on into "Lake".
+    await expect(selected).toContainText("Random choice");
+});

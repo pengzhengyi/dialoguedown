@@ -313,6 +313,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Jumping from the Source into the Dialogue Graph lands on the right node** — a selection
+  resolved to whatever the flow led to rather than what held it, so the graph revealed the wrong
+  node and previewed a region that ran past the end of the scene. Choosing **Jump to ▸ Dialogue
+  Graph** now reveals the node the text belongs to, matching what the other stages resolve to.
+
 - **A second script no longer silences the first one's tab** — opening a script stopped the one
   already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept
   its connection and simply stopped being told anything. A tab now names the document it is

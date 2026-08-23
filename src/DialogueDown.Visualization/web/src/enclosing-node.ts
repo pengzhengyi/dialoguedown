@@ -7,15 +7,32 @@ export interface EnclosingMatch {
     readonly extent: Span;
 }
 
+/** The stage a reverse **Jump to** searches: its drawing, and what its `Child` edges mean. */
+export interface EnclosingScope {
+    readonly nodes: readonly DisplayNode[];
+    readonly edges: readonly DisplayEdge[];
+    /**
+     * Whether a `Child` edge nests the child's source inside the parent's. Absent means it does,
+     * which is the syntax-tree case.
+     */
+    readonly nests?: boolean;
+}
+
 /**
  * The node whose source range best encloses a selection — the target of a reverse **Jump to** from
  * the Source editor into a compiler-stage tab.
  *
  * A node's range is its **subtree extent** (its own span unioned with its descendants'), not its own
- * span alone, because a container's span is often just a header — a `Scene` node covers only its
+ * span alone, because a container's span is often just a header: a `Scene` node covers only its
  * heading line, while its lines and choices are children. Using the extent, the tightest node
  * enclosing the whole selection is the right target: a precise selection lands on a leaf, a
  * scene-wide selection on the scene.
+ *
+ * That holds only where a `Child` edge nests the child's source inside the parent's. The Dialogue
+ * Graph's do not — they mark a node's parent in the spanning tree the drawing is laid out with, so
+ * unioning what they reach would stretch a node's extent along the rest of the flow and, because a
+ * jump is such an edge, out of its scene entirely. A stage that says it does not nest is ranked by
+ * its nodes' own spans, which there already cover everything a node contains.
  *
  * The result is never coarser than a single scene: a selection that crosses scene boundaries (whose
  * only common ancestor is the document) resolves instead to the scene containing its start. Stages
@@ -24,14 +41,14 @@ export interface EnclosingMatch {
  * @returns the matching node and its extent, or `null` when no span-bearing node contains the offset.
  */
 export function findEnclosingNode(
-    nodes: readonly DisplayNode[],
-    edges: readonly DisplayEdge[],
+    scope: EnclosingScope,
     from: number,
     to: number,
 ): EnclosingMatch | null {
+    const nodes = scope.nodes;
     const low = Math.min(from, to);
     const high = Math.max(from, to);
-    const extents = subtreeExtents(nodes, edges);
+    const extents = scope.nests === false ? ownSpans(nodes) : subtreeExtents(nodes, scope.edges);
     const width = (node: DisplayNode): number => {
         const extent = extents.get(node.id)!;
         return extent.end - extent.start;
@@ -82,6 +99,16 @@ function tightest(
         }
     }
     return best;
+}
+
+/** Each node's own span, for a stage whose `Child` edges lay the drawing out rather than nest. */
+function ownSpans(nodes: readonly DisplayNode[]): ReadonlyMap<string, Span> {
+    const extents = new Map<string, Span>();
+    for (const node of nodes) {
+        const span = node.span;
+        if (span && span.end > span.start) extents.set(node.id, span);
+    }
+    return extents;
 }
 
 /** Each node's subtree extent — its own span unioned with all of its `Child` descendants'. */

@@ -73,6 +73,9 @@ internal sealed class GraphProjection
         return new DisplayGraph(StageTitle, StageDescription, nodes, edges)
         {
             Regions = RegionsOf(graph.Regions),
+            // A child edge here is the spanning tree the drawing is laid out with — the flow, not
+            // what contains what. Every node's span already covers its own text.
+            Nests = false,
         };
     }
 
