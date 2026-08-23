@@ -27,6 +27,7 @@ import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
 import { compactSearch } from "./search-panel";
+import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
 
 /**
@@ -100,6 +101,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 highlightSelectionMatches(),
                 bracketMatching(),
                 compactSearch(),
+                schemaHover(),
                 EditorState.readOnly.of(true),
                 EditorView.contentAttributes.of({
                     "aria-label": "Compiled playbook",
@@ -158,23 +160,21 @@ function renderMetadata(metadata: PlaybookMetadataView | undefined): HTMLElement
     }
 
     const rows: [string, string][] = [
-        ["Script", metadata.script],
-        ["Format version", String(metadata.formatVersion)],
-        ["Requires", listOrDash(metadata.requires)],
-        ["Uses", listOrDash(metadata.uses)],
-        ["Entry node", String(metadata.entry)],
-        ["Nodes", String(metadata.nodeCount)],
-        ["Anchors", String(metadata.anchorCount)],
+        ["Script", cell(metadata.script)],
+        ["Format version", cell(String(metadata.formatVersion))],
+        ["Schema", schemaCell(metadata.schemaUrl)],
+        ["Requires", cell(listOrDash(metadata.requires))],
+        ["Uses", cell(listOrDash(metadata.uses))],
+        ["Entry node", cell(String(metadata.entry))],
+        ["Nodes", cell(String(metadata.nodeCount))],
+        ["Anchors", cell(String(metadata.anchorCount))],
     ];
     const table = document.createElement("table");
     table.className = "semantic-table playbook-metadata-table";
     table.innerHTML =
         `<tbody>` +
         rows
-            .map(
-                ([label, value]) =>
-                    `<tr><th scope="row">${escapeHtml(label)}</th>${cell(value)}</tr>`,
-            )
+            .map(([label, value]) => `<tr><th scope="row">${escapeHtml(label)}</th>${value}</tr>`)
             .join("") +
         `</tbody>`;
     wrapper.appendChild(table);
@@ -241,6 +241,20 @@ function copyCell(text: string): string {
 
 function cell(text: string): string {
     return `<td>${escapeHtml(text)}</td>`;
+}
+
+/**
+ * The published schema, as a link out. The playbook names it in its own `$schema` field, but that
+ * is a URL in a document rather than something to click; this row is the way to the format's
+ * reference, and hovering a property in the editor shows what that reference says about it.
+ */
+function schemaCell(url: string): string {
+    const safe = escapeHtml(url);
+    const name = escapeHtml(url.slice(url.lastIndexOf("/") + 1));
+    return (
+        `<td><a class="playbook-schema-link" href="${safe}" target="_blank"` +
+        ` rel="noopener noreferrer" title="${safe}">${name}</a></td>`
+    );
 }
 
 function listOrDash(values: readonly string[]): string {

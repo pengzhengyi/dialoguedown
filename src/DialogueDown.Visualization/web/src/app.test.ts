@@ -135,6 +135,7 @@ describe("runApp Playbook tab", () => {
         metadata: {
             script: "s.dialogue.md",
             formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
             requires: ["core"],
             uses: [],
             entry: 0,

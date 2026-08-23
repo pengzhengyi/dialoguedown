@@ -17,6 +17,8 @@
   - [DD4 — JSON highlighting via the legacy-modes mode already on hand](#dd4--json-highlighting-via-the-legacy-modes-mode-already-on-hand)
   - [DD5 — The tab is rebuilt on a recompile, not patched](#dd5--the-tab-is-rebuilt-on-a-recompile-not-patched)
   - [DD6 — The visualization indents; the CLI does not](#dd6--the-visualization-indents-the-cli-does-not)
+  - [DD7 — The schema is a link out and a hover, not a URL to read](#dd7--the-schema-is-a-link-out-and-a-hover-not-a-url-to-read)
+  - [DD8 — The schema is bundled and resolved on demand, never flattened](#dd8--the-schema-is-bundled-and-resolved-on-demand-never-flattened)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 
@@ -121,6 +123,41 @@ never changing.
 serializes the same object with `WriteIndented`, because it exists to be read. Both
 go through `PlaybookJson.Options`, so only the whitespace differs.
 
+### DD7 — The schema is a link out and a hover, not a URL to read
+
+Every playbook names its schema in a `$schema` field, but a URL sitting in a document is
+something to read, not somewhere to go. The header table gains a **Schema** row linking to the
+published file, and the editor answers the same question in place: hovering a property shows
+what the format says it means, the way an editor does for any `$schema`-linked JSON.
+
+The descriptions are the schema's own, so the tab explains the format without a second copy of
+the explanation to keep true.
+
+### DD8 — The schema is bundled and resolved on demand, never flattened
+
+The schema describes the **format**, not this playbook, so it is bundled with the client rather
+than sent with each report — a per-report copy would be re-sent on every save to say the same
+thing. It is imported straight from `schema/playbook-0.schema.json`, not copied into the client,
+so a schema edit reaches the report with nothing to keep in sync. The cost is **17 KB of a
+~500 KB budget**.
+
+A path is resolved *through* the schema when the reader hovers, rather than flattened into a
+lookup table up front. That is not an optimization but a correctness requirement: the format is
+recursive — a fragment holds fragments — so a table of every path does not terminate. Measured
+at depth 16 it had already reached 1,470 entries and was still growing.
+
+Two details make the answer specific rather than vague:
+
+- **The document's own `kind` picks the variant.** The format models its variants as a `oneOf`
+  tagged by `kind`, and the schema documents each variant as a whole. Reading that tag out of the
+  document — from the property's *siblings*, not its children — turns "one piece of what a line
+  says" into "plain words, as written".
+- **An undocumented leaf reports its enclosing shape,** labelled with that shape's path so the
+  answer is never mistaken for the leaf's own. The schema deliberately documents variants rather
+  than their `kind`/`text` fields, so without this most hovers would be silent. Measured on a
+  52-node playbook, this takes the share of property lines that say something true from **44% to
+  100%** — and a path outside the format still describes nothing at all.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -136,7 +173,9 @@ go through `PlaybookJson.Options`, so only the whitespace differs.
 | Level | Covers |
 | --- | --- |
 | .NET unit | `PlaybookProjection` — metadata, speakers, tag flattening, and the unavailable case. |
+| Vitest | `schemaPathAt` — the path of a line, through nested arrays, objects, and a map's own keys. |
+| Vitest | `describeSchemaPath` — the format's own words, variant selection by `kind`, the enclosing-shape fallback, and silence outside the format. |
 | .NET unit | The payload wiring: `RenderHtmlReport` and `SerializeDocument` both embed the playbook. |
 | Vitest | `createPlaybookView` — the tables, the anonymous speaker, the em dash, and read-onlyness through the command an editing keystroke runs. |
 | Vitest | `runApp` — tab placement after Dialogue Graph, absence without a playbook, rebuild on save, and the help context. |
-| Playwright | The tab end to end: real typing is refused, both tables render, the panel collapses, and axe reports no violations. |
+| Playwright | The tab end to end: real typing is refused, both tables render, the panel collapses, the schema link is safe, a hover quotes the schema, and axe reports no violations. |

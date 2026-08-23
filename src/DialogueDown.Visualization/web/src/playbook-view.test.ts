@@ -11,6 +11,7 @@ function compiled(): PlaybookReport {
         metadata: {
             script: "scene.dialogue.md",
             formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
             requires: ["core"],
             uses: [],
             entry: 0,
@@ -55,6 +56,18 @@ describe("createPlaybookView", () => {
         expect(text).toContain("scene.dialogue.md");
         expect(text).toContain("core");
         expect(text).toContain("6");
+    });
+
+    it("links out to the published schema the playbook names", () => {
+        const view = createPlaybookView(compiled());
+
+        const link = view.querySelector<HTMLAnchorElement>(".playbook-schema-link");
+        expect(link?.href).toBe(
+            "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+        );
+        expect(link?.textContent).toBe("playbook-0.schema.json");
+        // It leaves the report, so it must not hand the opener a window handle.
+        expect(link?.rel).toBe("noopener noreferrer");
     });
 
     it("shows an em dash for a header list the playbook left empty", () => {

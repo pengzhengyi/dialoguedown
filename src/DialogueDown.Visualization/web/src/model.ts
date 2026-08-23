@@ -137,6 +137,8 @@ export interface PlaybookMetadataView {
     script: string;
     /** The playbook format's version. Zero while the format is pre-1.0. */
     formatVersion: number;
+    /** Where the format this playbook was written to is published. */
+    schemaUrl: string;
     /** Capabilities a host must provide to run this playbook. */
     requires: string[];
     /** Optional capabilities the playbook takes advantage of when the host has them. */

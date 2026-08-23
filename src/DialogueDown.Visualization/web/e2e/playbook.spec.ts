@@ -13,10 +13,13 @@ const compiled: Report = {
         { title: "Dialogue Graph", description: "The runtime graph.", nodes: [], edges: [] },
     ],
     playbook: {
-        json: '{\n  "format": {\n    "version": 0\n  },\n  "script": "scene.dialogue.md"\n}',
+        json:
+            '{\n  "format": {\n    "version": 0,\n    "requires": [\n      "core"\n    ]\n  },\n' +
+            '  "script": "scene.dialogue.md"\n}',
         metadata: {
             script: "scene.dialogue.md",
             formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
             requires: ["core"],
             uses: [],
             entry: 0,
@@ -92,6 +95,26 @@ test.describe("Playbook tab — a compiled script", () => {
 
         await toggle.click();
         await expect(page.locator(".playbook-side")).toBeVisible();
+    });
+
+    test("explains a property from the published schema on hover", async ({ page }) => {
+        await page.click(playbookTab);
+
+        // `requires` is described by the format itself, so the tooltip quotes the schema.
+        await page.locator(".playbook-source .cm-content").getByText('"requires"').hover();
+
+        const tip = page.locator(".playbook-hover");
+        await expect(tip).toBeVisible();
+        await expect(tip.locator(".playbook-hover-path")).toHaveText("format/requires");
+        await expect(tip.locator(".playbook-hover-text")).toContainText("Capabilities a runtime");
+    });
+
+    test("links out to the published schema", async ({ page }) => {
+        await page.click(playbookTab);
+
+        const link = page.locator(".playbook-schema-link");
+        await expect(link).toHaveText("playbook-0.schema.json");
+        await expect(link).toHaveAttribute("rel", "noopener noreferrer");
     });
 
     test("has no accessibility violations", async ({ page }) => {

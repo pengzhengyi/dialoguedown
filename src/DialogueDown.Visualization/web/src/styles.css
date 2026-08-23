@@ -5479,3 +5479,44 @@ button.tab.tab-with-icon {
     font-weight: 600;
     color: var(--mode-accent, var(--pico-primary));
 }
+
+/* The published schema, linked out of the header table. Underlined on hover only, so the row
+   reads as data until it is reached for. */
+.playbook-schema-link {
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.playbook-schema-link:hover {
+    text-decoration: underline;
+}
+
+/* Schema-driven hover over a playbook property: the path it resolved to, then what the format
+   says it means. Sized like a documentation popover rather than a bare title attribute. */
+.playbook-hover {
+    max-width: 34ch;
+    padding: 0.5rem 0.65rem;
+}
+
+.playbook-hover-path {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--pico-muted-color);
+}
+
+.playbook-hover-text {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--pico-color);
+}
+
+/* CodeMirror's default tooltip chrome is a bare bordered box; match the report's surfaces so a
+   playbook hover looks like the rest of the page in both themes. */
+.playbook-source .cm-tooltip {
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color, var(--pico-background-color));
+    box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
+}

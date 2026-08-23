@@ -23,6 +23,7 @@ internal sealed record PlaybookReport(
 /// <summary>The playbook's header facts, as the report's summary table shows them.</summary>
 /// <param name="Script">The script the playbook was compiled from.</param>
 /// <param name="FormatVersion">The playbook format's version.</param>
+/// <param name="SchemaUrl">Where the format this playbook was written to is published.</param>
 /// <param name="Requires">Capabilities a runtime must support to play this playbook.</param>
 /// <param name="Uses">Capabilities this playbook actually uses.</param>
 /// <param name="Entry">The node a playthrough starts at.</param>
@@ -31,6 +32,7 @@ internal sealed record PlaybookReport(
 internal sealed record PlaybookMetadataView(
     string Script,
     int FormatVersion,
+    string SchemaUrl,
     IReadOnlyList<string> Requires,
     IReadOnlyList<string> Uses,
     int Entry,

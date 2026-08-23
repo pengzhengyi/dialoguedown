@@ -55,6 +55,7 @@ internal static class PlaybookProjection
         new(
             script,
             playbook.Format.Version,
+            PlaybookWriter.SchemaUrl,
             [.. playbook.Format.Requires],
             [.. playbook.Format.Uses],
             playbook.Entry,
