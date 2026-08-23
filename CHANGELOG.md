@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **A Playbook tab in the report** — after Dialogue Graph, the report now shows the compiled
+  playbook itself: the JSON a game runtime loads, read-only and searchable, beside tables naming
+  what a host must provide to run it, where a playthrough starts, and who can speak. Checking what
+  a script actually ships as no longer means emitting a file and opening it elsewhere. A script
+  with errors compiles no playbook, and the tab says so. See the
+  [Playbook Tab](docs/contributing/design-notes/Playbook%20Tab.md) note.
+
 - **The playbook round-trip is asserted for generated scripts** — a playbook written by the
   compiler and read back by `PlaybookReader` now has to render identically, checked against
   hundreds of generated scripts rather than the four shipped examples the goldens pin. A playbook
