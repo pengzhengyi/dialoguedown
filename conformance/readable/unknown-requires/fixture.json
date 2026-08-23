@@ -1,0 +1,6 @@
+{
+  "name": "an unknown required capability is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "requires 'detour', and a runtime that cannot detour would tell a different story rather than fail"
+}
