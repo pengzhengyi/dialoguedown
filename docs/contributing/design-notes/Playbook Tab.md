@@ -14,14 +14,14 @@
   - [DD1 — The report carries the playbook as a document, not a graph](#dd1--the-report-carries-the-playbook-as-a-document-not-a-graph)
   - [DD2 — The tab comes last, after the graph it is compiled from](#dd2--the-tab-comes-last-after-the-graph-it-is-compiled-from)
   - [DD3 — Read-only, because the playbook is compiled rather than authored](#dd3--read-only-because-the-playbook-is-compiled-rather-than-authored)
-  - [DD4 — JSON highlighting via the legacy-modes mode already on hand](#dd4--json-highlighting-via-the-legacy-modes-mode-already-on-hand)
+  - [DD4 — The JSON grammar, which is what tells a key from a value](#dd4--the-json-grammar-which-is-what-tells-a-key-from-a-value)
   - [DD5 — The tab is rebuilt on a recompile, not patched](#dd5--the-tab-is-rebuilt-on-a-recompile-not-patched)
   - [DD6 — The visualization indents; the CLI does not](#dd6--the-visualization-indents-the-cli-does-not)
   - [DD7 — The schema is a link out and a hover, not a URL to read](#dd7--the-schema-is-a-link-out-and-a-hover-not-a-url-to-read)
   - [DD8 — The schema is bundled and resolved on demand, never flattened](#dd8--the-schema-is-bundled-and-resolved-on-demand-never-flattened)
   - [DD9 — A hover shows what a rule covers, in the report's existing wash](#dd9--a-hover-shows-what-a-rule-covers-in-the-reports-existing-wash)
   - [DD10 — The tables are the report's table panels, namespaced apart](#dd10--the-tables-are-the-reports-table-panels-namespaced-apart)
-  - [DD11 — One module reads the document's shape, for folding and for the wash](#dd11--one-module-reads-the-documents-shape-for-folding-and-for-the-wash)
+  - [DD11 — The grammar folds; the text answers](#dd11--the-grammar-folds-the-text-answers)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 
@@ -101,11 +101,21 @@ in the report whose mode never changes — and says so with `aria-readonly`.
 which is exactly the guarantee wanted: the reader cannot type into it, while the
 recompile can replace it.
 
-### DD4 — JSON highlighting via the legacy-modes mode already on hand
+### DD4 — The JSON grammar, which is what tells a key from a value
 
-`@codemirror/legacy-modes` is already a dependency for the Config tab's TOML mode,
-and the same package exports a `json` mode. Using it adds **no new dependency** —
-which matters, because a bundle-size test gates the client.
+The tab first used the `json` mode in `@codemirror/legacy-modes`, already a dependency for the
+Config tab's TOML. That mode is a **tokenizer, not a parser**, and it emits one token for a
+property name and a string value alike — measured on a rendered playbook, `"script"` and
+`"scene.dialogue.md"` carried the same class, so no style could tell them apart. In a document
+where every key and most values are quoted, that is the distinction a reader most needs.
+
+`@codemirror/lang-json` wraps the Lezer JSON grammar, which emits `PropertyName` separately and
+brings fold ranges with it. Adopting it **shrank the client by 15 KB**: the legacy JavaScript
+mode it replaced carries JS and TypeScript too, and dropping its last use let the bundler shake
+the whole module out. Better highlighting, free folding, and a smaller download.
+
+The one thing the grammar is *not* used for is reading a line's schema path — see
+[DD11](#dd11--the-grammar-folds-the-text-answers).
 
 ### DD5 — The tab is rebuilt on a recompile, not patched
 
@@ -188,24 +198,25 @@ scenes a jump can name is a list, and a list of five reads as five rows, not as 
 *Anchors*, and the remembered collapse key was derived from the title alone — so without the
 prefix, folding a panel here would silently fold that tab's too.
 
-### DD11 — One module reads the document's shape, for folding and for the wash
+### DD11 — The grammar folds; the text answers
 
 A long playbook is unreadable without folding, and a reader who folds headings in the Source
-editor and tables in the Config editor expects the same gutter here. The `json` mode in
-`@codemirror/legacy-modes` is a **tokenizer, not a parser**, so it exposes no syntax tree to fold
-from — the same gap the Config tab fills with its own TOML section-folding service. A block folds
-between its brackets, so a folded line still reads as `"nodes": [⋯]`.
+editor and tables in the Config editor expects the same gutter here. The Lezer grammar supplies
+the fold ranges, so a block folds between its brackets and a folded line still reads as
+`"nodes": [⋯]`.
 
-Folding and the applied-region wash are the same question asked twice — *where does this block
-end?* — so both read the document through one module, `playbook-json`. It holds the shape
-primitives (`depthOf`, `opensBlock`, `blockEnd`) and the fold service; `playbook-schema` imports
-them rather than re-deriving them, so the wash and the fold can never disagree about a block's
-extent.
+A line's **schema path** and the **stretch a rule covers** are read from the text instead, in
+`playbook-json` (`depthOf`, `opensBlock`, `blockEnd`). That looks like duplication of what a
+syntax tree already knows, and it is deliberate: **CodeMirror parses lazily**, so `syntaxTree`
+covers only what has been parsed, while the text has no such gap and answers the same way at any
+position, however far the reader has scrolled. Folding only ever asks about lines already drawn,
+so it can safely rely on the tree; a hover and a wash should not depend on how much of a
+1,000-line document the parser has reached.
 
-That module is honest about why it can work at all: the document is a **generated** artifact
-written by `JsonSerializer` with `WriteIndented`, whose output is exactly regular — two spaces per
-level, one property or bracket per line, and no literal newline inside a string. Reading a
-hand-written JSON file this way would not be safe.
+Reading structure off indentation is sound here for a reason worth stating, because it is
+invisible otherwise: the playbook is a **generated** artifact written by `JsonSerializer` with
+`WriteIndented`, whose output is exactly regular — two spaces per level, one property or bracket
+per line, and no literal newline inside a string. A hand-written JSON file would not be.
 
 ## Error and boundary cases
 
@@ -228,7 +239,7 @@ hand-written JSON file this way would not be safe.
 | Vitest | `schemaPathAt` — the path of a line, through nested arrays, objects, and a map's own keys. |
 | Vitest | `describeSchemaPath` — the format's own words, variant selection by `kind`, the enclosing-shape fallback, and silence outside the format. |
 | Vitest | `appliedRange` — an object, an array, a scalar line, and an array element from its bare opener. |
-| Vitest | `playbook-json` — the shape primitives, and folding an object, an array, a scalar line, and an empty block. |
+| Vitest | `playbook-json` — the shape primitives a path and a wash are read with. |
 | .NET unit | The payload wiring: `RenderHtmlReport` and `SerializeDocument` both embed the playbook. |
 | Vitest | `createPlaybookView` — the tables, the anonymous speaker, the em dash, and read-onlyness through the command an editing keystroke runs. |
 | Vitest | `runApp` — tab placement after Dialogue Graph, absence without a playbook, rebuild on save, and the help context. |
@@ -236,3 +247,4 @@ hand-written JSON file this way would not be safe.
 | Playwright | The wash: it covers the block, it lifts with the tooltip, and it **actually paints** — a decoration whose style is scoped to another pane is present and "visible" while washing nothing. |
 | Playwright | The panels' remembered state does not collide with the Semantic tab's same-named ones. |
 | Playwright | Folding from the gutter hides a block's members while the rest of the document stays, and the placeholder opens it again. |
+| Playwright | A key and a string value render in different colors — the assertion the previous tokenizer could not have passed. |

@@ -16,6 +16,11 @@
     --md-link: #0969da;
     --md-code: #0550ae;
     --md-muted: #6e7781;
+
+    /* A JSON string value. It needs its own hue because in this palette `--md-code` and
+       `--md-heading` are the same blue, which would render a playbook's keys and its string
+       values identically — the one distinction a reader of JSON most needs. */
+    --json-string: #0a3069;
     --dd-chrome-muted: #57606a;
     --cm-selection: rgb(20 100 210 / 22%);
     --problem-text: #24292f;
@@ -97,6 +102,7 @@
         --md-link: #79c0ff;
         --md-code: #a5d6ff;
         --md-muted: #8b949e;
+        --json-string: #a5d6ff;
         --dd-chrome-muted: #8b949e;
         --cm-selection: rgb(100 165 255 / 35%);
         --problem-text: #c9d1d9;
@@ -134,6 +140,7 @@
     --md-link: #79c0ff;
     --md-code: #a5d6ff;
     --md-muted: #8b949e;
+    --json-string: #a5d6ff;
     --dd-chrome-muted: #8b949e;
     --cm-selection: rgb(100 165 255 / 35%);
     --problem-text: #c9d1d9;

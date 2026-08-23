@@ -9,7 +9,6 @@ import {
 } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import {
-    StreamLanguage,
     syntaxHighlighting,
     HighlightStyle,
     foldGutter,
@@ -18,7 +17,7 @@ import {
     bracketMatching,
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { json } from "@codemirror/legacy-modes/mode/javascript";
+import { json } from "@codemirror/lang-json";
 import { tags } from "@lezer/highlight";
 import { foldGutterMarker } from "./fold-glyph";
 import type {
@@ -35,18 +34,22 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
 import { compactSearch } from "./search-panel";
 import { schemaHover } from "./playbook-schema";
-import { foldJsonBlocks } from "./playbook-json";
 import { escapeHtml } from "./text";
 
 /**
- * JSON highlighting driven by the same CSS variables the Markdown and TOML editors use, so the
- * playbook follows the page's light/dark theme live.
+ * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
+ * live like the Markdown and TOML editors.
+ *
+ * A key and a string value take different hues. The Lezer grammar is what makes that possible:
+ * the legacy tokenizer this replaced emitted one token for both, so no style could tell them
+ * apart — in a document where every key and most values are quoted, that is the distinction a
+ * reader most needs.
  */
 const jsonHighlightStyle = HighlightStyle.define([
     { tag: [tags.propertyName, tags.definition(tags.propertyName)], color: "var(--md-heading)" },
-    { tag: tags.string, color: "var(--md-code)" },
+    { tag: tags.string, color: "var(--json-string)" },
     { tag: [tags.number, tags.bool, tags.atom, tags.null], color: "var(--md-link)" },
-    { tag: [tags.bracket, tags.squareBracket, tags.brace], color: "var(--md-muted)" },
+    { tag: [tags.separator, tags.squareBracket, tags.brace], color: "var(--md-muted)" },
 ]);
 
 /**
@@ -103,7 +106,6 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),
-                foldJsonBlocks,
                 codeFolding(),
                 drawSelection(),
                 highlightActiveLine(),
@@ -117,7 +119,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                     "aria-readonly": "true",
                     tabindex: "0",
                 }),
-                StreamLanguage.define(json),
+                json(),
                 syntaxHighlighting(jsonHighlightStyle),
                 EditorView.lineWrapping,
                 keymap.of([...defaultKeymap, ...searchKeymap, ...foldKeymap]),

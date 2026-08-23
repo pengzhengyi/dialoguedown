@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { EditorState } from "@codemirror/state";
-import { foldable, codeFolding } from "@codemirror/language";
-import { blockEnd, depthOf, opensBlock, foldJsonBlocks } from "./playbook-json";
+import { blockEnd, depthOf, opensBlock } from "./playbook-json";
 
 /**
  * A playbook shaped exactly as `JsonSerializer` with `WriteIndented` writes one: two spaces per
@@ -23,7 +22,7 @@ const PLAYBOOK = `{
   ]
 }`;
 
-const state = EditorState.create({ doc: PLAYBOOK, extensions: [codeFolding(), foldJsonBlocks] });
+const state = EditorState.create({ doc: PLAYBOOK });
 const lineOf = (needle: string): number =>
     PLAYBOOK.split("\n").findIndex((line) => line.includes(needle)) + 1;
 
@@ -52,43 +51,5 @@ describe("blockEnd", () => {
 
     it("is null for a line that opens nothing", () => {
         expect(blockEnd(state, lineOf('"script"'))).toBeNull();
-    });
-});
-
-describe("foldJsonBlocks", () => {
-    const foldAt = (needle: string) => {
-        const line = state.doc.line(lineOf(needle));
-        return foldable(state, line.from, line.to);
-    };
-
-    it("folds an object between its braces, leaving both in view", () => {
-        const range = foldAt('"format"')!;
-
-        expect(range).not.toBeNull();
-        // Starts after the `{` it opens and stops before the matching `}`.
-        expect(state.sliceDoc(range.from, range.to)).toContain('"requires"');
-        expect(state.sliceDoc(range.from - 1, range.from)).toBe("{");
-        expect(state.sliceDoc(range.to, range.to + 1)).toBe("}");
-    });
-
-    it("folds an array the same way", () => {
-        const range = foldAt('"speakers"')!;
-
-        expect(state.sliceDoc(range.from, range.to)).toContain('"keeper"');
-        expect(state.sliceDoc(range.to, range.to + 1)).toBe("]");
-    });
-
-    it("offers no fold on a line holding a scalar", () => {
-        expect(foldAt('"script"')).toBeNull();
-    });
-
-    it("offers no fold on an empty block, which has nothing to hide", () => {
-        const empty = EditorState.create({
-            doc: '{\n  "uses": [\n  ]\n}',
-            extensions: [codeFolding(), foldJsonBlocks],
-        });
-        const line = empty.doc.line(2);
-
-        expect(foldable(empty, line.from, line.to)).toBeNull();
     });
 });

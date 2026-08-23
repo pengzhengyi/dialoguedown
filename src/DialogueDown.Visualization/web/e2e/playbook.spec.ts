@@ -66,6 +66,22 @@ test.describe("Playbook tab — a compiled script", () => {
         expect(titles.at(-2)).toBe("Dialogue Graph");
     });
 
+    test("tells a key from a string value, which one grammar-less token could not", async ({
+        page,
+    }) => {
+        await page.click(playbookTab);
+        const content = page.locator(".playbook-source .cm-content");
+
+        const colorOf = (text: string) =>
+            content
+                .getByText(text, { exact: false })
+                .first()
+                .evaluate((node) => getComputedStyle(node).color);
+
+        // Both are quoted, so only a real parser can say which is the name and which the value.
+        expect(await colorOf('"script"')).not.toBe(await colorOf('"scene.dialogue.md"'));
+    });
+
     test("shows the serialized playbook in an editor a reader cannot edit", async ({ page }) => {
         await page.click(playbookTab);
 
@@ -193,8 +209,8 @@ test.describe("Playbook tab — a compiled script", () => {
         const content = page.locator(".playbook-source .cm-content");
         await expect(content).toContainText('"requires"');
 
-        // The gutter markers, which the legacy JSON mode offers no syntax tree for. CodeMirror
-        // keeps a hidden measurement element in the gutter, so only the drawn ones are counted.
+        // The gutter markers the grammar's own fold ranges produce. CodeMirror keeps a hidden
+        // measurement element in the gutter, so only the drawn ones are counted.
         const markers = page.locator(".playbook-source .cm-fold-marker:visible");
         await expect(markers).not.toHaveCount(0);
 

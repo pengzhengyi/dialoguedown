@@ -1,4 +1,3 @@
-import { foldService } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
 
 /**
@@ -6,9 +5,14 @@ import type { EditorState } from "@codemirror/state";
  *
  * The document is written by `JsonSerializer` with `WriteIndented`, whose output is exactly
  * regular: two spaces per level, one property or one bracket per line, and no literal newline
- * inside a string. That regularity is what lets the report fold a block and mark the stretch a
- * schema rule covers without parsing the document a second time — the reader is looking at a
- * generated artifact, not at something hand-written that might not hold the shape.
+ * inside a string. That is what lets a line's schema path and the stretch a rule covers be read
+ * straight from the text — the reader is looking at a generated artifact, not at something
+ * hand-written that might not hold the shape.
+ *
+ * Reading the text rather than the syntax tree is deliberate. CodeMirror parses lazily, so
+ * `syntaxTree` covers only what has been parsed; text has no such gap and answers the same way
+ * at any position, however far the reader has scrolled. Folding, which only ever asks about
+ * drawn lines, is left to the grammar.
  */
 
 /** How deep a line sits, in the two-space levels the writer emits. */
@@ -35,20 +39,3 @@ export function blockEnd(state: EditorState, lineNumber: number): number | null 
     }
     return state.doc.lines;
 }
-
-/**
- * Folds an object or an array between its brackets, leaving both in view so a folded line still
- * reads as `"nodes": [⋯]`.
- *
- * The `json` mode in `@codemirror/legacy-modes` is a tokenizer, not a parser, so it exposes no
- * syntax tree to fold from — the same gap the Config tab's TOML editor fills with its own
- * section-folding service.
- */
-export const foldJsonBlocks = foldService.of((state, lineStart) => {
-    const line = state.doc.lineAt(lineStart);
-    const end = blockEnd(state, line.number);
-    if (end == null || end <= line.number + 1) return null;
-    const closing = state.doc.line(end);
-    const indent = /^\s*/.exec(closing.text)?.[0].length ?? 0;
-    return { from: line.to, to: closing.from + indent };
-});
