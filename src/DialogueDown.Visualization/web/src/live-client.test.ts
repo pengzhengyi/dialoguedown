@@ -19,9 +19,14 @@ class FakeEventSource {
 }
 
 function setup() {
-    const handlers = { onReload: vi.fn(), onReloadConfig: vi.fn(), onProblem: vi.fn() };
+    const handlers = {
+        onReload: vi.fn(),
+        onReloadConfig: vi.fn(),
+        onProblem: vi.fn(),
+        onDisplaced: vi.fn(),
+    };
     const source = new FakeEventSource();
-    const returned = watchServerEvents(handlers, () => source as unknown as EventSource);
+    const returned = watchServerEvents(handlers, null, () => source as unknown as EventSource);
     return { handlers, source, returned };
 }
 
@@ -85,7 +90,12 @@ describe("watchServerEvents", () => {
             addEventListener(): void {}
         };
         try {
-            watchServerEvents({ onReload: vi.fn(), onReloadConfig: vi.fn(), onProblem: vi.fn() });
+            watchServerEvents({
+                onReload: vi.fn(),
+                onReloadConfig: vi.fn(),
+                onProblem: vi.fn(),
+                onDisplaced: vi.fn(),
+            });
             expect(created).toEqual(["/api/events"]);
         } finally {
             globalThis.EventSource = RealEventSource;
@@ -97,19 +107,23 @@ describe("watchServerEvents — following the active document", () => {
     /** Watch through a factory that records every stream it hands out. */
     function watchRecording(onReload: (source: string) => void = () => {}) {
         const sources: FakeEventSource[] = [];
+        const urls: string[] = [];
         const watch = watchServerEvents(
             {
                 onReload: (report) => onReload(report.source ?? ""),
                 onReloadConfig: vi.fn(),
                 onProblem: vi.fn(),
+                onDisplaced: vi.fn(),
             },
-            () => {
+            "a.dialogue.md",
+            (url) => {
+                urls.push(url);
                 const source = new FakeEventSource();
                 sources.push(source);
                 return source as unknown as EventSource;
             },
         );
-        return { sources, watch };
+        return { sources, urls, watch };
     }
 
     it("resubscribes on demand, so the stream follows the script now open", () => {
@@ -117,7 +131,7 @@ describe("watchServerEvents — following the active document", () => {
         // switch the old stream is listening to a session nobody is looking at any more.
         const { sources, watch } = watchRecording();
 
-        watch.resubscribe();
+        watch.resubscribe("b.dialogue.md");
 
         expect(sources).toHaveLength(2);
         expect(sources[0].closed).toBe(true);
@@ -128,19 +142,65 @@ describe("watchServerEvents — following the active document", () => {
         const seen: string[] = [];
         const { sources, watch } = watchRecording((source) => seen.push(source));
 
-        watch.resubscribe();
+        watch.resubscribe("b.dialogue.md");
         sources[1].emit("reload", JSON.stringify({ source: "# Opened", stages: [] }));
 
         expect(seen).toEqual(["# Opened"]);
+    });
+
+    it("names the document it is showing, so the server binds the stream to that script", () => {
+        // Without a name the server can only bind to whatever is active, which after somebody
+        // else opens a script is a different document than this tab is displaying.
+        const { urls } = watchRecording();
+
+        expect(urls[0]).toBe("/api/events?doc=a.dialogue.md");
+    });
+
+    it("names the newly opened document when it resubscribes", () => {
+        const { urls, watch } = watchRecording();
+
+        watch.resubscribe("b.dialogue.md");
+
+        expect(urls[1]).toBe("/api/events?doc=b.dialogue.md");
     });
 
     it("ignores a late event from the stream it left behind", () => {
         const seen: string[] = [];
         const { sources, watch } = watchRecording((source) => seen.push(source));
 
-        watch.resubscribe();
+        watch.resubscribe("b.dialogue.md");
         sources[0].emit("reload", JSON.stringify({ source: "# Stale", stages: [] }));
 
         expect(seen).toEqual([]);
+    });
+});
+
+describe("watchServerEvents — displacement", () => {
+    it("reports which script stopped being served", () => {
+        const { handlers, source } = setup();
+
+        source.emit("displaced", JSON.stringify({ document: "a.dialogue.md" }));
+
+        expect(handlers.onDisplaced).toHaveBeenCalledWith("a.dialogue.md");
+    });
+
+    it("closes the stream, so the browser does not reconnect it to another document", () => {
+        // An EventSource reconnects a stream that merely ends. Reconnecting would bind this tab
+        // to whichever document is active now, and it would start applying that script's reloads
+        // to what it is showing — worse than the silence it replaced.
+        const { source } = setup();
+
+        source.emit("displaced", JSON.stringify({ document: "a.dialogue.md" }));
+
+        expect(source.closed).toBe(true);
+    });
+
+    it("delivers nothing more once displaced", () => {
+        const { handlers, source } = setup();
+
+        source.emit("displaced", JSON.stringify({ document: "a.dialogue.md" }));
+        source.emit("reload", JSON.stringify({ source: "# Another script", stages: [] }));
+
+        expect(handlers.onReload).not.toHaveBeenCalled();
     });
 });

@@ -17,6 +17,11 @@ export interface ServerEventHandlers {
      * problem carries {@link ProblemTarget} so it can be routed to the matching controller.
      */
     onProblem(message: string, target?: ProblemTarget): void;
+    /**
+     * This tab's document stopped being the one served, because another was opened. Nothing more
+     * will arrive on this stream, and the watch that fed it is gone.
+     */
+    onDisplaced(document: string): void;
 }
 
 /**
@@ -27,10 +32,11 @@ export interface ServerEventWatch {
     /** The stream currently connected. */
     readonly source: EventSource;
     /**
-     * Reconnect, so events follow the script the reader has just opened. A stream opened against
-     * the previous document keeps reporting on a session nobody is looking at any more.
+     * Reconnect against {@link document}, so events follow the script the reader has just opened.
+     * A stream opened against the previous document keeps reporting on a session nobody is looking
+     * at any more.
      */
-    resubscribe(): void;
+    resubscribe(document: string | null): void;
 }
 
 /**
@@ -42,12 +48,18 @@ export interface ServerEventWatch {
  */
 export function watchServerEvents(
     handlers: ServerEventHandlers,
-    createSource: () => EventSource = () => new EventSource(EVENTS_URL),
+    document: string | null = null,
+    createSource: (url: string) => EventSource = (url) => new EventSource(url),
 ): ServerEventWatch {
+    let showing = document;
     let events = connect();
 
     function connect(): EventSource {
-        const source = createSource();
+        // Naming the document binds the stream to the script this tab is showing. Without it the
+        // server can only bind to whatever is active, which after a switch is somebody else's.
+        const source = createSource(
+            showing === null ? EVENTS_URL : `${EVENTS_URL}?doc=${encodeURIComponent(showing)}`,
+        );
 
         source.addEventListener("reload", (event) => {
             handlers.onReload(JSON.parse((event as MessageEvent).data) as Report);
@@ -65,6 +77,17 @@ export function watchServerEvents(
             handlers.onProblem(message, target);
         });
 
+        source.addEventListener("displaced", (event) => {
+            // Closing matters: an `EventSource` reconnects a stream that merely ends, and the
+            // reconnection would bind to whichever document is active now — this tab would start
+            // applying another script's reloads to what it is showing.
+            source.close();
+            const { document: displaced } = JSON.parse((event as MessageEvent).data) as {
+                document: string;
+            };
+            handlers.onDisplaced(displaced);
+        });
+
         return source;
     }
 
@@ -72,7 +95,8 @@ export function watchServerEvents(
         get source() {
             return events;
         },
-        resubscribe() {
+        resubscribe(next: string | null) {
+            showing = next;
             events.close();
             events = connect();
         },
