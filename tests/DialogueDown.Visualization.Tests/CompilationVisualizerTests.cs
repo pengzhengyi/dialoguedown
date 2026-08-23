@@ -11,6 +11,7 @@ using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Playbook;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
 
@@ -60,6 +61,37 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("\"configuration\"", html, StringComparison.Ordinal);
         Assert.Contains("dialogue.toml", html, StringComparison.Ordinal);
         Assert.Contains("Narrator", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RenderHtmlReport_EmbedsThePlaybookTheCompileProduced()
+    {
+        var html = new CompilationVisualizer().RenderHtmlReport(
+            "# Scene\n\nNarrator: The room is quiet.\n", "/proj/quiet.dialogue.md");
+
+        Assert.Contains("\"playbook\"", html, StringComparison.Ordinal);
+        // The playbook names the script it was compiled from, not the path the report was written to.
+        Assert.Contains("quiet.dialogue.md", html, StringComparison.Ordinal);
+        Assert.Contains("Narrator", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RenderHtmlReport_HaltedCompile_EmbedsThePlaybooksUnavailableReason()
+    {
+        var html = new CompilationVisualizer().RenderHtmlReport("=> [Gone](#missing)\n");
+
+        // A stage carries an `unavailable` field too, so assert the playbook's own reason.
+        Assert.Contains(PlaybookProjection.UnavailableReason, html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SerializeDocument_EmbedsThePlaybookForTheLiveReport()
+    {
+        var json = new CompilationVisualizer().SerializeDocument(
+            "/proj/quiet.dialogue.md", "# Scene\n\nNarrator: Quiet.\n", "edit");
+
+        Assert.Contains("\"playbook\"", json, StringComparison.Ordinal);
+        Assert.Contains("quiet.dialogue.md", json, StringComparison.Ordinal);
     }
 
     [Fact]

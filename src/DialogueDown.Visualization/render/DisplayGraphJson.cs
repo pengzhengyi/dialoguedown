@@ -5,6 +5,7 @@ using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Diagnostics;
 using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Editor;
+using DialogueDown.Visualization.Playbook;
 
 namespace DialogueDown.Visualization.Render;
 
@@ -48,10 +49,23 @@ internal static class DisplayGraphJson
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
         ConfigStatusOverlay? configOverlay = null,
-        ReportProject? project = null)
+        ReportProject? project = null,
+        PlaybookReport? playbook = null)
     {
         var json = JsonSerializer.Serialize(
-            new { mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens, project },
+            new
+            {
+                mode,
+                path,
+                source,
+                stages,
+                symbols,
+                configuration,
+                diagnostics,
+                semanticTokens,
+                project,
+                playbook,
+            },
             _options);
         return configOverlay is null ? json : ApplyConfigOverlay(json, configOverlay);
     }
@@ -71,10 +85,23 @@ internal static class DisplayGraphJson
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
         ConfigStatusOverlay? configOverlay = null,
-        ReportProject? project = null)
+        ReportProject? project = null,
+        PlaybookReport? playbook = null)
     {
         var json = JsonSerializer.Serialize(
-            new { mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens, project },
+            new
+            {
+                mode,
+                path,
+                source,
+                stages,
+                symbols,
+                configuration,
+                diagnostics,
+                semanticTokens,
+                project,
+                playbook,
+            },
             _options);
         return configOverlay is null ? json : ApplyConfigOverlay(json, configOverlay);
     }
