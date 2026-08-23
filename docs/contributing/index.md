@@ -9,6 +9,8 @@ architecture, the reasoning behind each compiler stage, and how to get set up.
   — how to report issues, develop, test, and open pull requests.
 - **[Code of conduct](https://github.com/pengzhengyi/dialoguedown/blob/main/CODE_OF_CONDUCT.md)**
   and **[security policy](https://github.com/pengzhengyi/dialoguedown/blob/main/SECURITY.md)**.
+- **[How this project is tested](testing.md)** — the kinds of test here, what each
+  one is for, and which to write. Worth reading before your first test.
 
 ## Understand the design
 
