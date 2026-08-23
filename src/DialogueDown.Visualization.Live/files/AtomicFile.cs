@@ -41,6 +41,16 @@ internal static class AtomicFile
 {
     // A brief bounded spin lets a concurrent writer (another save, or a quick external editor)
     // release its handle so the atomic replace can complete instead of failing the save outright.
+    //
+    // The spin sleeps the thread rather than awaiting, and stays that way deliberately. Renaming
+    // has no asynchronous form to call: POSIX `rename`/`unlink` and Win32 `MoveFileEx`/`ReplaceFile`
+    // are blocking, unlike read and write, so the BCL offers `ReadAllTextAsync` but no `MoveAsync`.
+    // The libraries that appear to solve this elsewhere — `aiofiles`, `fs.promises` — do not make
+    // the call asynchronous either; they run the same blocking call on a thread pool, which is what
+    // `Task.Run` would do here and what .NET guidance tells a library not to hide behind an async
+    // signature. Awaiting only the delay is possible, but it would cost the monitor below — `await`
+    // cannot cross a `lock` — and the publish itself would block regardless. The retry is reached
+    // about never in practice, and this server has one user, so the thread it holds is not scarce.
     private const int MaxAttempts = 100;
 
     private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
