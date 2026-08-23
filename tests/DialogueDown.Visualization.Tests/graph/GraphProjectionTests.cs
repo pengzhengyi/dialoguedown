@@ -393,6 +393,39 @@ public sealed class GraphProjectionTests
         Assert.Empty(Project("Alice: Nowhere in particular.").Regions);
     }
 
+    [Fact]
+    public void Edges_ADivert_CarriesTheWordsTheWriterChose()
+    {
+        // A jump becomes an edge and is not kept in the line it left, so without this the graph
+        // stage cannot say what the writer called it.
+        var graph = Project("""
+            # The Gate
+
+            Alice: Ready?
+
+            => [through the gate](#the-gate)
+            """);
+
+        var divert = Assert.Single(graph.Edges, edge => edge.Category == "jump");
+        Assert.Equal("through the gate", divert.Label);
+    }
+
+    [Fact]
+    public void Edges_ARouteWithNoWordsOfItsOwn_HasNoLabel()
+    {
+        // A fall-through was never written down; showing anything for it would be the report
+        // inventing words rather than reporting them.
+        var graph = Project("""
+            Alice: First.
+
+            Alice: Second.
+            """);
+
+        Assert.All(
+            graph.Edges.Where(edge => edge.Category == "break"),
+            fallThrough => Assert.Null(fallThrough.Label));
+    }
+
     private static DisplayGraph Project(string source) =>
         new GraphProjection().Project(Pipeline.Graph(source), source);
 }

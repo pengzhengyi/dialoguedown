@@ -158,6 +158,7 @@ internal sealed class GraphProjection
             layout.IsParentOf(from.Id, edge.Target) ? DisplayEdgeKind.Child : DisplayEdgeKind.Reference)
         {
             Category = CategoryOf(edge),
+            Label = LabelOf(edge),
         };
 
     // Scaffolding, not flow: it says where an unreachable node sits, and nothing travels it.
@@ -166,6 +167,13 @@ internal sealed class GraphProjection
         {
             Category = PlacementCategory,
         };
+
+    // Only a jump carries words of its own. A fall-through was never written down, and an option
+    // reads as the speech it leads to, so neither has a label to show.
+    private static string? LabelOf(Edge edge) =>
+        edge is DivertEdge divert && InlineText.Of(divert.Label).Trim() is { Length: > 0 } label
+            ? label
+            : null;
 
     private static string CategoryOf(Edge edge) => edge switch
     {

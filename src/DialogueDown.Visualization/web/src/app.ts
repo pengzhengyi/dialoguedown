@@ -226,6 +226,7 @@ export function runApp(
         shownStage = stage;
         panel.showEdge({
             category: edge.category,
+            label: edge.label,
             source: end(edge.fromId),
             target: end(edge.toId),
         });
