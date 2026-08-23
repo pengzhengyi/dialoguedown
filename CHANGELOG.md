@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **The playbook round-trip is asserted for generated scripts** — a playbook written by the
+  compiler and read back by `PlaybookReader` now has to render identically, checked against
+  hundreds of generated scripts rather than the four shipped examples the goldens pin. A playbook
+  is the one way out of the compiler, so a field the reader silently dropped would reach a runtime
+  as missing dialogue. See
+  [How this project is tested](docs/contributing/testing.md#round-trip-tests).
+
 - **Open a script without reloading the page** — clicking a script in the Explorer now replaces the
   report's contents instead of the page, so the reader keeps the window they were working in and
   the tab they had open; someone comparing two dialogue graphs is no longer sent back to Source on
