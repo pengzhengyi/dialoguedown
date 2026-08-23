@@ -35,6 +35,7 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
 import { compactSearch } from "./search-panel";
 import { schemaHover } from "./playbook-schema";
+import { foldJsonBlocks } from "./playbook-json";
 import { escapeHtml } from "./text";
 
 /**
@@ -102,6 +103,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),
+                foldJsonBlocks,
                 codeFolding(),
                 drawSelection(),
                 highlightActiveLine(),

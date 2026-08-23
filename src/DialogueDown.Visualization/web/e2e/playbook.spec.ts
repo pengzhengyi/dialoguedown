@@ -188,6 +188,29 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(wash).toContainText("scene.dialogue.md");
     });
 
+    test("folds an object from the gutter, the way the other editors do", async ({ page }) => {
+        await page.click(playbookTab);
+        const content = page.locator(".playbook-source .cm-content");
+        await expect(content).toContainText('"requires"');
+
+        // The gutter markers, which the legacy JSON mode offers no syntax tree for. CodeMirror
+        // keeps a hidden measurement element in the gutter, so only the drawn ones are counted.
+        const markers = page.locator(".playbook-source .cm-fold-marker:visible");
+        await expect(markers).not.toHaveCount(0);
+
+        // Markers run in line order: the root object, then `"format": {`, then its array.
+        await markers.nth(1).click();
+
+        // The block's members are hidden while its own line, and the rest of the document, stay.
+        await expect(content).not.toContainText('"requires"');
+        await expect(content).toContainText('"format"');
+        await expect(content).toContainText('"script"');
+        await expect(page.locator(".playbook-source .cm-foldPlaceholder")).toBeVisible();
+
+        await page.locator(".playbook-source .cm-foldPlaceholder").click();
+        await expect(content).toContainText('"requires"');
+    });
+
     test("links out to the published schema", async ({ page }) => {
         await page.click(playbookTab);
 

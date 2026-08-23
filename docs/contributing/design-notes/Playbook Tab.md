@@ -21,6 +21,7 @@
   - [DD8 — The schema is bundled and resolved on demand, never flattened](#dd8--the-schema-is-bundled-and-resolved-on-demand-never-flattened)
   - [DD9 — A hover shows what a rule covers, in the report's existing wash](#dd9--a-hover-shows-what-a-rule-covers-in-the-reports-existing-wash)
   - [DD10 — The tables are the report's table panels, namespaced apart](#dd10--the-tables-are-the-reports-table-panels-namespaced-apart)
+  - [DD11 — One module reads the document's shape, for folding and for the wash](#dd11--one-module-reads-the-documents-shape-for-folding-and-for-the-wash)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 
@@ -187,6 +188,25 @@ scenes a jump can name is a list, and a list of five reads as five rows, not as 
 *Anchors*, and the remembered collapse key was derived from the title alone — so without the
 prefix, folding a panel here would silently fold that tab's too.
 
+### DD11 — One module reads the document's shape, for folding and for the wash
+
+A long playbook is unreadable without folding, and a reader who folds headings in the Source
+editor and tables in the Config editor expects the same gutter here. The `json` mode in
+`@codemirror/legacy-modes` is a **tokenizer, not a parser**, so it exposes no syntax tree to fold
+from — the same gap the Config tab fills with its own TOML section-folding service. A block folds
+between its brackets, so a folded line still reads as `"nodes": [⋯]`.
+
+Folding and the applied-region wash are the same question asked twice — *where does this block
+end?* — so both read the document through one module, `playbook-json`. It holds the shape
+primitives (`depthOf`, `opensBlock`, `blockEnd`) and the fold service; `playbook-schema` imports
+them rather than re-deriving them, so the wash and the fold can never disagree about a block's
+extent.
+
+That module is honest about why it can work at all: the document is a **generated** artifact
+written by `JsonSerializer` with `WriteIndented`, whose output is exactly regular — two spaces per
+level, one property or bracket per line, and no literal newline inside a string. Reading a
+hand-written JSON file this way would not be safe.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -198,6 +218,7 @@ prefix, folding a panel here would silently fold that tab's too.
 | Empty `uses` list | Rendered as an em dash, like the Config tab's empty values. |
 | A playbook no jump can target | The Anchors panel says so rather than showing an empty grid. |
 | A hovered property holding a scalar | The wash covers its line alone, not the block around it. |
+| An empty block (`"uses": []`) | Offers no fold: there is nothing between the brackets to hide. |
 
 ## Testability
 
@@ -207,9 +228,11 @@ prefix, folding a panel here would silently fold that tab's too.
 | Vitest | `schemaPathAt` — the path of a line, through nested arrays, objects, and a map's own keys. |
 | Vitest | `describeSchemaPath` — the format's own words, variant selection by `kind`, the enclosing-shape fallback, and silence outside the format. |
 | Vitest | `appliedRange` — an object, an array, a scalar line, and an array element from its bare opener. |
+| Vitest | `playbook-json` — the shape primitives, and folding an object, an array, a scalar line, and an empty block. |
 | .NET unit | The payload wiring: `RenderHtmlReport` and `SerializeDocument` both embed the playbook. |
 | Vitest | `createPlaybookView` — the tables, the anonymous speaker, the em dash, and read-onlyness through the command an editing keystroke runs. |
 | Vitest | `runApp` — tab placement after Dialogue Graph, absence without a playbook, rebuild on save, and the help context. |
 | Playwright | The tab end to end: real typing is refused, the three panels render and search and fold, the schema link is safe, a hover quotes the schema, and axe reports no violations. |
 | Playwright | The wash: it covers the block, it lifts with the tooltip, and it **actually paints** — a decoration whose style is scoped to another pane is present and "visible" while washing nothing. |
 | Playwright | The panels' remembered state does not collide with the Semantic tab's same-named ones. |
+| Playwright | Folding from the gutter hides a block's members while the rest of the document stays, and the placeholder opens it again. |

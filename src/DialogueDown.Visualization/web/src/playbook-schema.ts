@@ -4,6 +4,7 @@ import { StateEffect, StateField } from "@codemirror/state";
 import type { EditorState } from "@codemirror/state";
 import schema from "../../../../schema/playbook-0.schema.json";
 import { escapeHtml } from "./text";
+import { blockEnd, depthOf, opensBlock } from "./playbook-json";
 
 /**
  * Schema-driven hover for the playbook editor: hovering a property shows what the format says
@@ -138,10 +139,6 @@ const KIND = /^\s*"kind"\s*:\s*"((?:[^"\\]|\\.)*)"/;
 /** Any line's indentation, which the writer emits as two spaces per level. */
 const INDENT = /^\s*/;
 
-function depthOf(line: string): number {
-    return (INDENT.exec(line)?.[0].length ?? 0) / 2;
-}
-
 /**
  * The schema path of a line in the rendered playbook.
  *
@@ -215,13 +212,9 @@ function tokenRange(text: string, from: number): { start: number; end: number } 
  */
 export function appliedRange(state: EditorState, lineNumber: number): { from: number; to: number } {
     const line = state.doc.line(lineNumber);
-    if (!/[[{]\s*$/.test(line.text)) return { from: line.from, to: line.to };
-    const depth = depthOf(line.text);
-    for (let n = lineNumber + 1; n <= state.doc.lines; n++) {
-        const closing = state.doc.line(n);
-        if (depthOf(closing.text) <= depth) return { from: line.from, to: closing.to };
-    }
-    return { from: line.from, to: state.doc.length };
+    if (!opensBlock(line.text)) return { from: line.from, to: line.to };
+    const end = blockEnd(state, lineNumber);
+    return { from: line.from, to: end == null ? state.doc.length : state.doc.line(end).to };
 }
 
 /** Toggles the faint wash over the stretch a hovered description applies to. */
