@@ -248,7 +248,7 @@ public sealed class GraphProjectionTests
         // arrow leaving it already said. Naming it tells one jump from another.
         var graph = Project("=> [the end](#END)");
 
-        Assert.Equal("=> the end", graph.Nodes[0].Label);
+        Assert.Equal("\u21d2 the end", graph.Nodes[0].Label);
     }
 
     [Fact]

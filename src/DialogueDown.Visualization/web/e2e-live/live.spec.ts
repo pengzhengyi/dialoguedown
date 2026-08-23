@@ -975,11 +975,11 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
 
     await stage
         .locator("g.node")
-        .filter({ hasText: "=> Loop" })
+        .filter({ hasText: "⇒ Loop" })
         .first()
         .locator("rect.hit")
         .dispatchEvent("click");
-    await expect(page.locator("#detail-title")).toContainText("=> Loop");
+    await expect(page.locator("#detail-title")).toContainText("⇒ Loop");
     await expect(page.locator("#detail-body button.route")).not.toHaveText(["Not reached"]);
 
     // And clicking the line itself opens nothing: there is no route there to open. The click
@@ -1003,7 +1003,7 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
         );
     });
     await expect(stage.locator("path.link.selected")).toHaveCount(0);
-    await expect(page.locator("#detail-title")).toContainText("=> Loop");
+    await expect(page.locator("#detail-title")).toContainText("⇒ Loop");
 });
 
 test("names a region's kind and takes the reader to the heading that declares it", async ({
@@ -1031,7 +1031,10 @@ test("reads a jump as a jump in every stage that has interpreted one", async ({ 
         await page.locator(".tab", { hasText: tab }).click();
         await page
             .locator("section.stage.active g.node")
+            // Each stage names a jump in its own terms: the source stages keep the "=>" a writer
+            // typed, and the graph draws the rendered arrow.
             .filter({ hasText: "=>" })
+            .or(page.locator("section.stage.active g.node").filter({ hasText: "⇒" }))
             .or(page.locator("section.stage.active g.node").filter({ hasText: "jump" }))
             .first()
             .locator("rect.hit")

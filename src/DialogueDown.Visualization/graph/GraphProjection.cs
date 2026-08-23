@@ -123,15 +123,20 @@ internal sealed class GraphProjection
             : JumpLabel(control);
 
     // A bare jump's only out-edge is its divert, and the words the writer gave the jump travel
-    // there. The node says them too, in the notation the script is written in, because a drawing
-    // where every jump reads "(jump)" tells a reader only that each one is a jump — which the
-    // arrow leaving it already said. An unnamed jump keeps the plain word.
+    // there. The node says them too, because a drawing where every jump reads "(jump)" tells a
+    // reader only that each one is a jump — which the arrow leaving it already said. An unnamed
+    // jump keeps the plain word.
+    //
+    // The arrow is the rendered "⇒" rather than the "=>" a writer types: this is a drawing, and
+    // everywhere else the report *shows* a jump it shows the ligature, leaving the two characters
+    // to the source. One character rather than a styled span, because a label is clipped to a
+    // measured budget by rewriting its text, which would discard any structure inside it.
     private static string JumpLabel(ControlNode control) =>
         control.Out
             .OfType<DivertEdge>()
             .Select(divert => InlineText.Of(divert.Label).Trim())
             .FirstOrDefault(label => label.Length > 0) is { } named
-            ? $"=> {named}"
+            ? $"\u21d2 {named}"
             : "(jump)";
 
     private static string EffectText(GameCall call) => call switch
