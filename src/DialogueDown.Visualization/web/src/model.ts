@@ -61,6 +61,11 @@ export interface DisplayEdge {
     kind: DisplayEdgeKind;
     /** What the link means — a fall-through, a jump, a chosen arm — driving its color. */
     category?: string;
+    /**
+     * What the writer called this route, for a link that carries words of its own. A jump becomes
+     * an edge and is not kept in the line it left, so this is where those words survive.
+     */
+    label?: string;
 }
 
 /** One cell of a {@link SemanticTable}. */

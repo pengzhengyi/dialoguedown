@@ -804,6 +804,32 @@ test("stamps the not-reached line with crosses rather than a fourth dash pattern
     expect(vertices).toBeGreaterThan(2);
 });
 
+test("says what a jump was called, on the route it became", async ({ page }) => {
+    // The jump is drawn as a line and kept nowhere else in this stage, so choosing the line is
+    // the only way left to read the words the writer chose for it.
+    await openDocument(
+        page,
+        ["# The Gate", "", "Guide: Ready?", "", "=> [through the gate](#the-gate)", ""].join("\n"),
+    );
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    const stage = page.locator("section.stage.active");
+    await expect(stage.locator('path.link[data-category="jump"]')).toHaveCount(1);
+
+    // The drawn line carries the category; the click target is its invisible twin, matched by the
+    // path they share.
+    await page.evaluate(() => {
+        const active = document.querySelector("section.stage.active")!;
+        const jump = active.querySelector<SVGPathElement>('path.link[data-category="jump"]')!;
+        const twin = [...active.querySelectorAll<SVGPathElement>("path.edge-hit")].find(
+            (each) => each.getAttribute("d") === jump.getAttribute("d"),
+        )!;
+        twin.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await expect(page.locator("#detail-title")).toContainText("Jump");
+    await expect(page.locator("#detail-body .route-label")).toHaveText("through the gate");
+});
+
 test("opens a route from the drawing, and walks off it to either end", async ({ page }) => {
     await openDocument(
         page,
@@ -949,11 +975,11 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
 
     await stage
         .locator("g.node")
-        .filter({ hasText: "(jump)" })
+        .filter({ hasText: "⇒ Loop" })
         .first()
         .locator("rect.hit")
         .dispatchEvent("click");
-    await expect(page.locator("#detail-title")).toContainText("(jump)");
+    await expect(page.locator("#detail-title")).toContainText("⇒ Loop");
     await expect(page.locator("#detail-body button.route")).not.toHaveText(["Not reached"]);
 
     // And clicking the line itself opens nothing: there is no route there to open. The click
@@ -977,7 +1003,7 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
         );
     });
     await expect(stage.locator("path.link.selected")).toHaveCount(0);
-    await expect(page.locator("#detail-title")).toContainText("(jump)");
+    await expect(page.locator("#detail-title")).toContainText("⇒ Loop");
 });
 
 test("names a region's kind and takes the reader to the heading that declares it", async ({
@@ -1005,7 +1031,10 @@ test("reads a jump as a jump in every stage that has interpreted one", async ({ 
         await page.locator(".tab", { hasText: tab }).click();
         await page
             .locator("section.stage.active g.node")
+            // Each stage names a jump in its own terms: the source stages keep the "=>" a writer
+            // typed, and the graph draws the rendered arrow.
             .filter({ hasText: "=>" })
+            .or(page.locator("section.stage.active g.node").filter({ hasText: "⇒" }))
             .or(page.locator("section.stage.active g.node").filter({ hasText: "jump" }))
             .first()
             .locator("rect.hit")

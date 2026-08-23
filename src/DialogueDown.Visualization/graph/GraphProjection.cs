@@ -116,10 +116,27 @@ internal sealed class GraphProjection
     }
 
     // A control line runs effects, jumps, or both. Naming its effects tells a reader what it does;
-    // an effectless one only diverts, so it says so rather than reading as an empty node.
+    // an effectless one only diverts, so it is named by the jump it makes.
     private static string ControlLabel(ControlNode control) =>
         control.Effects.Count > 0
             ? string.Join(", ", control.Effects.Select(EffectText))
+            : JumpLabel(control);
+
+    // A bare jump's only out-edge is its divert, and the words the writer gave the jump travel
+    // there. The node says them too, because a drawing where every jump reads "(jump)" tells a
+    // reader only that each one is a jump — which the arrow leaving it already said. An unnamed
+    // jump keeps the plain word.
+    //
+    // The arrow is the rendered "⇒" rather than the "=>" a writer types: this is a drawing, and
+    // everywhere else the report *shows* a jump it shows the ligature, leaving the two characters
+    // to the source. One character rather than a styled span, because a label is clipped to a
+    // measured budget by rewriting its text, which would discard any structure inside it.
+    private static string JumpLabel(ControlNode control) =>
+        control.Out
+            .OfType<DivertEdge>()
+            .Select(divert => InlineText.Of(divert.Label).Trim())
+            .FirstOrDefault(label => label.Length > 0) is { } named
+            ? $"\u21d2 {named}"
             : "(jump)";
 
     private static string EffectText(GameCall call) => call switch
@@ -158,6 +175,7 @@ internal sealed class GraphProjection
             layout.IsParentOf(from.Id, edge.Target) ? DisplayEdgeKind.Child : DisplayEdgeKind.Reference)
         {
             Category = CategoryOf(edge),
+            Label = LabelOf(edge),
         };
 
     // Scaffolding, not flow: it says where an unreachable node sits, and nothing travels it.
@@ -166,6 +184,13 @@ internal sealed class GraphProjection
         {
             Category = PlacementCategory,
         };
+
+    // Only a jump carries words of its own. A fall-through was never written down, and an option
+    // reads as the speech it leads to, so neither has a label to show.
+    private static string? LabelOf(Edge edge) =>
+        edge is DivertEdge divert && InlineText.Of(divert.Label).Trim() is { Length: > 0 } label
+            ? label
+            : null;
 
     private static string CategoryOf(Edge edge) => edge switch
     {

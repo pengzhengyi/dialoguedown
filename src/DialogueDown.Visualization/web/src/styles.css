@@ -3866,6 +3866,24 @@ body.zen .config-view > .config-source {
     color: var(--pico-muted-color);
 }
 
+/* What the writer called a route, quoted so it reads as their words rather than the report's. A
+   jump is kept nowhere else in this stage, so these are the only place its wording survives. */
+#detail-body .route-label,
+.node-detail-body .route-label {
+    margin: 0 0 0.75rem;
+    font-style: italic;
+}
+
+#detail-body .route-label::before,
+.node-detail-body .route-label::before {
+    content: "\201C";
+}
+
+#detail-body .route-label::after,
+.node-detail-body .route-label::after {
+    content: "\201D";
+}
+
 /* The band's own mark, so the region reads the same in the panel as on the drawing. */
 #detail-title .region-swatch,
 #detail-body .region-swatch,

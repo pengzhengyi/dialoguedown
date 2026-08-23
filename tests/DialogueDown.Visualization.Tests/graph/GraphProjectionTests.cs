@@ -242,9 +242,20 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_ABareJump_ReadsAsAJumpRatherThanAnEmptyNode()
+    public void Project_ABareJump_ReadsAsTheJumpTheWriterWrote()
     {
+        // A drawing where every jump reads "(jump)" says only that each one is a jump, which the
+        // arrow leaving it already said. Naming it tells one jump from another.
         var graph = Project("=> [the end](#END)");
+
+        Assert.Equal("\u21d2 the end", graph.Nodes[0].Label);
+    }
+
+    [Fact]
+    public void Project_AJumpWithNothingWrittenOnIt_KeepsThePlainWord()
+    {
+        // Nothing to name it with, so it says what it is rather than reading as an empty node.
+        var graph = Project("=> [](#END)");
 
         Assert.Equal("(jump)", graph.Nodes[0].Label);
     }
@@ -391,6 +402,39 @@ public sealed class GraphProjectionTests
     public void Project_ADocumentWithNoHeading_DescribesNoRegion()
     {
         Assert.Empty(Project("Alice: Nowhere in particular.").Regions);
+    }
+
+    [Fact]
+    public void Edges_ADivert_CarriesTheWordsTheWriterChose()
+    {
+        // A jump becomes an edge and is not kept in the line it left, so without this the graph
+        // stage cannot say what the writer called it.
+        var graph = Project("""
+            # The Gate
+
+            Alice: Ready?
+
+            => [through the gate](#the-gate)
+            """);
+
+        var divert = Assert.Single(graph.Edges, edge => edge.Category == "jump");
+        Assert.Equal("through the gate", divert.Label);
+    }
+
+    [Fact]
+    public void Edges_ARouteWithNoWordsOfItsOwn_HasNoLabel()
+    {
+        // A fall-through was never written down; showing anything for it would be the report
+        // inventing words rather than reporting them.
+        var graph = Project("""
+            Alice: First.
+
+            Alice: Second.
+            """);
+
+        Assert.All(
+            graph.Edges.Where(edge => edge.Category == "break"),
+            fallThrough => Assert.Null(fallThrough.Label));
     }
 
     private static DisplayGraph Project(string source) =>
