@@ -17,6 +17,7 @@ This page covers *which* test to write; that one covers *how* to run it.
   - [Example-based tests](#example-based-tests)
   - [Property tests](#property-tests)
   - [Golden tests](#golden-tests)
+  - [Round-trip tests](#round-trip-tests)
   - [Architecture tests](#architecture-tests)
   - [Corpus gates](#corpus-gates)
   - [Browser tests](#browser-tests)
@@ -84,6 +85,26 @@ golden — and the pull request shows exactly what moved.
 
 A golden answers *"did this example's output change?"*. It cannot tell you
 whether the change was **right**, so read the diff.
+
+### Round-trip tests
+
+**Write it, read it back, and check nothing changed.**
+
+A playbook is a persisted artifact — the one way out of the compiler — so a
+writer's work survives only if what was written reads back as what it was. For
+every generated script that compiles, `PlaybookRoundTripTests` writes a playbook,
+reads it with `PlaybookReader`, and writes it again: the two renderings must
+match.
+
+Equality is taken over the serialized JSON, not over the document. A
+`PlaybookDocument` holds its nodes in `ImmutableArray`, whose record equality
+compares the underlying array **by reference**, so two structurally identical
+documents are never equal. Re-serializing compares what a file would actually
+hold.
+
+A round trip needs no oracle beyond the input itself, and a counterexample is
+directly a bug report: either the reader lost something the writer emitted, or
+the writer emitted something the reader cannot express.
 
 ### Architecture tests
 
@@ -154,6 +175,7 @@ Start from what would go wrong, not from the list:
 | stating a rule that holds for *all* inputs | a property test |
 | changing a large structured output | let the golden diff show it |
 | adding a language construct | an example that uses it, plus the usual unit tests |
+| changing what the playbook carries | check the round-trip property still holds |
 | moving code between projects | check the architecture tests still pass |
 | touching the report's UI | a unit test if possible, a browser test if not |
 
@@ -167,7 +189,6 @@ Tracked, not yet adopted, each with a reason it is waiting:
 | Kind | Would catch | Status |
 | --- | --- | --- |
 | **Mutation testing** | Tests that execute code without meaningfully asserting on it — coverage's blind spot. | Waiting on Stryker.NET support for xUnit v3 on the Microsoft Testing Platform ([#336](https://github.com/pengzhengyi/dialoguedown/issues/336)). |
-| **Round-trip testing** | A playbook that serializes and reads back as something different. | Proposed ([#337](https://github.com/pengzhengyi/dialoguedown/issues/337)). |
 | **A conformance corpus** | Two runtimes disagreeing about what a script means. | Proposed, and waits on the runtime ([#298](https://github.com/pengzhengyi/dialoguedown/issues/298)). |
 | **A Law of Demeter fitness test** | Code reaching through one object to talk to another. | Deferred until the runtime introduces stateful object graphs ([#217](https://github.com/pengzhengyi/dialoguedown/issues/217)). |
 
