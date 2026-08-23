@@ -242,9 +242,20 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_ABareJump_ReadsAsAJumpRatherThanAnEmptyNode()
+    public void Project_ABareJump_ReadsAsTheJumpTheWriterWrote()
     {
+        // A drawing where every jump reads "(jump)" says only that each one is a jump, which the
+        // arrow leaving it already said. Naming it tells one jump from another.
         var graph = Project("=> [the end](#END)");
+
+        Assert.Equal("=> the end", graph.Nodes[0].Label);
+    }
+
+    [Fact]
+    public void Project_AJumpWithNothingWrittenOnIt_KeepsThePlainWord()
+    {
+        // Nothing to name it with, so it says what it is rather than reading as an empty node.
+        var graph = Project("=> [](#END)");
 
         Assert.Equal("(jump)", graph.Nodes[0].Label);
     }

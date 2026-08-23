@@ -10,9 +10,10 @@ changes easy to categorize.
 
 ### Added
 
-- **The Dialogue Graph says what a jump was called** — choosing a jump's line now shows the words
-  the writer gave it, beside what the route means and the nodes it joins. A jump is drawn as a line
-  and kept nowhere else in that stage, so this is where its wording survives.
+- **The Dialogue Graph says what a jump was called** — a jump now reads as `=> through the gate`
+  rather than `(jump)`, so one jump is told from another at a glance, and choosing its line shows
+  the same words beside what the route means and the nodes it joins. A jump is kept nowhere else in
+  that stage, so this is where its wording survives.
 
 - **The playbook round-trip is asserted for generated scripts** — a playbook written by the
   compiler and read back by `PlaybookReader` now has to render identically, checked against

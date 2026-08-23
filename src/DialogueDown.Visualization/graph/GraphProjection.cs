@@ -116,10 +116,22 @@ internal sealed class GraphProjection
     }
 
     // A control line runs effects, jumps, or both. Naming its effects tells a reader what it does;
-    // an effectless one only diverts, so it says so rather than reading as an empty node.
+    // an effectless one only diverts, so it is named by the jump it makes.
     private static string ControlLabel(ControlNode control) =>
         control.Effects.Count > 0
             ? string.Join(", ", control.Effects.Select(EffectText))
+            : JumpLabel(control);
+
+    // A bare jump's only out-edge is its divert, and the words the writer gave the jump travel
+    // there. The node says them too, in the notation the script is written in, because a drawing
+    // where every jump reads "(jump)" tells a reader only that each one is a jump — which the
+    // arrow leaving it already said. An unnamed jump keeps the plain word.
+    private static string JumpLabel(ControlNode control) =>
+        control.Out
+            .OfType<DivertEdge>()
+            .Select(divert => InlineText.Of(divert.Label).Trim())
+            .FirstOrDefault(label => label.Length > 0) is { } named
+            ? $"=> {named}"
             : "(jump)";
 
     private static string EffectText(GameCall call) => call switch

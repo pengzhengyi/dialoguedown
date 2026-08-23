@@ -975,11 +975,11 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
 
     await stage
         .locator("g.node")
-        .filter({ hasText: "(jump)" })
+        .filter({ hasText: "=> Loop" })
         .first()
         .locator("rect.hit")
         .dispatchEvent("click");
-    await expect(page.locator("#detail-title")).toContainText("(jump)");
+    await expect(page.locator("#detail-title")).toContainText("=> Loop");
     await expect(page.locator("#detail-body button.route")).not.toHaveText(["Not reached"]);
 
     // And clicking the line itself opens nothing: there is no route there to open. The click
@@ -1003,7 +1003,7 @@ test("keeps a placement link out of the flow it is not part of", async ({ page }
         );
     });
     await expect(stage.locator("path.link.selected")).toHaveCount(0);
-    await expect(page.locator("#detail-title")).toContainText("(jump)");
+    await expect(page.locator("#detail-title")).toContainText("=> Loop");
 });
 
 test("names a region's kind and takes the reader to the heading that declares it", async ({
