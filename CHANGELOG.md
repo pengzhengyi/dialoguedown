@@ -308,6 +308,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A second script no longer silences the first one's tab** — opening a script stopped the one
+  already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept
+  its connection and simply stopped being told anything. A tab now names the document it is
+  showing when it subscribes, so it is told that its script stopped being served rather than
+  waiting on a stream that will never speak again.
+
 - **The demo page advertises the Dialogue Graph stage** — the report has rendered it since the
   graph stage landed, but the landing page's hand-written stage list never gained it. Two release
   checks that used to be shell scripts run over rendered Graphviz text are now tests, so the page

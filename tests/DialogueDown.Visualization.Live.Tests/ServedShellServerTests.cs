@@ -510,6 +510,98 @@ public sealed class ServedShellServerTests
         await Assert.ThrowsAnyAsync<Exception>(() => client.GetAsync("/", TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task Events_WhenAnotherDocumentIsOpened_TellsTheStreamItWasDisplaced()
+    {
+        // A tab showing one script keeps its stream when a second is opened elsewhere. Its watcher
+        // goes with the swap, so without being told it would sit silent forever.
+        using var tree = new TempTree();
+        tree.File("root/a.dialogue.md", "# A");
+        tree.File("root/b.dialogue.md", "# B");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+        await Open(client, "a.dialogue.md");
+
+        using var reader = await SubscribeAsync(client, "a.dialogue.md");
+        await Open(client, "b.dialogue.md");
+
+        Assert.Equal("event: displaced", await NextEventAsync(reader));
+    }
+
+    [Fact]
+    public async Task Events_ForADocumentThatIsNotServed_ReportsItDisplacedRatherThanBindingToAnother()
+    {
+        // A browser reconnects a dropped stream on its own, and the reconnection names the same
+        // document. Binding it to whatever is active would feed this tab another script's reloads.
+        using var tree = new TempTree();
+        tree.File("root/a.dialogue.md", "# A");
+        tree.File("root/b.dialogue.md", "# B");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+        await Open(client, "a.dialogue.md");
+        await Open(client, "b.dialogue.md");
+
+        using var reader = await SubscribeAsync(client, "a.dialogue.md");
+
+        Assert.Equal("event: displaced", await NextEventAsync(reader));
+    }
+
+    [Fact]
+    public async Task Events_ForTheServedDocument_StaysOpenForItsReloads()
+    {
+        // The naming must not cost the ordinary case: a tab that names the script being served
+        // gets the stream it came for.
+        using var tree = new TempTree();
+        var document = tree.File("root/a.dialogue.md", "# A");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+        await Open(client, "a.dialogue.md");
+
+        using var reader = await SubscribeAsync(client, "a.dialogue.md");
+        File.WriteAllText(document, "# A changed");
+
+        Assert.Equal("event: reload", await NextEventAsync(reader));
+    }
+
+    private static async Task Open(HttpClient client, string source) =>
+        await client.PostAsJsonAsync(
+            "/api/open",
+            new { source, mode = "view" },
+            TestContext.Current.CancellationToken);
+
+    private static async Task<StreamReader> SubscribeAsync(HttpClient client, string doc)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Get, $"/api/events?doc={Uri.EscapeDataString(doc)}");
+        var response = await client.SendAsync(
+            request, HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        return new StreamReader(
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+    }
+
+    // The next `event:` line, or a failure saying nothing arrived — a silent stream is the defect
+    // these tests exist for, so waiting forever would report it as a hang instead.
+    private static async Task<string> NextEventAsync(StreamReader reader)
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            while (await reader.ReadLineAsync(deadline.Token) is { } line)
+            {
+                if (line.StartsWith("event:", StringComparison.Ordinal))
+                {
+                    return line.Trim();
+                }
+            }
+
+            return "stream ended";
+        }
+        catch (OperationCanceledException)
+        {
+            return "nothing arrived";
+        }
+    }
+
     private static async Task<ServedShellServer> Started(TempTree tree)
     {
         var server = new ServedShellServer(BrowseRoot.At(tree.Dir("root")), LandingHtml);
