@@ -344,23 +344,15 @@ diff /tmp/examples.txt /tmp/cards.txt && echo "every example has a card, and eve
 ```
 
 **The landing page lists the stages the report renders.** The compiler-stage tabs
-come from the visualization's projections; a new one — say a future **Dialogue
-Graph** tab — appears in every export automatically, but the `<ul class="stages">`
-on the landing page is written by hand. Diff the two:
+come from the visualization's projections, so a new one appears in every export
+automatically, while the `<ul class="stages">` on the landing page is written by
+hand. `DemoPageStagesTests` compares the two on every run, reading the stage titles
+from the projections rather than from rendered text, and names whichever stage is
+missing or stale.
 
-```sh
-# Stage titles the compiler emits, vs the stages the landing page advertises.
-ddown compile examples/gallery.dialogue.md --emit dot \
-  | sed -n 's|^// ||p' | sort > /tmp/report-stages.txt
-grep -oE '<strong>[^<]+</strong>' docs/demo/index.html \
-  | sed 's/<[^>]*>//g' | grep -v '^Source$' | sort > /tmp/page-stages.txt
-diff /tmp/report-stages.txt /tmp/page-stages.txt && echo "the page lists exactly the rendered stages"
-```
-
-`Source` is the editor tab — always present, and not a `--emit` stage — so it is
-excluded. A non-empty diff means a stage shipped without a demo update (or the
-reverse): reconcile the stage list, and if the new stage needs a script that
-exercises it, an example, before releasing.
+Nothing to run here at release time: the suite already covers it. If it fails,
+reconcile the stage list — and if the new stage needs a script that exercises it,
+an example — before releasing.
 
 > [!IMPORTANT]
 > A new report **feature that is not a stage** — a panel, an interaction, a mode —
@@ -368,28 +360,16 @@ exercises it, an example, before releasing.
 > ("open the Diagnostics panel", "zoom, pan, and collapse …") against the live
 > report and reconcile whatever the release adds or removes.
 
-**Every construct is demonstrated.** List the construct kinds the whole example
-corpus exercises — the Dialogue AST stage is where constructs surface — and prove
-each construct the language accepts is among them:
+**Every construct is demonstrated.** `ExampleConstructCoverageTests` walks the AST
+each example compiles to — both what the author wrote and what desugaring made of
+it — and asserts that every construct the compiler models appears somewhere in the
+corpus. It reflects over the AST types, so adding a construct fails the test until
+an example uses it.
 
-```sh
-# Base construct kinds demonstrated across all examples (subtypes in () ignored).
-for f in examples/*.dialogue.md; do
-  ddown compile "$f" --emit dot \
-    | awk '/^\/\/ Dialogue AST/{on=1;next} /^\/\//{on=0}
-           on && match($0,/label="[^"(\\]+/){print substr($0,RSTART+7,RLENGTH-7)}'
-done | sed 's/ *$//' | sort -u
-```
-
-Compare that against the construct inventory the language advertises — the syntax
-summary in
-[`docs/guide/script-language.md`](../../../docs/guide/script-language.md), which
-`add-dialogue-construct` keeps current — cross-checked against the label vocabulary
-in `src/DialogueDown.Visualization/script/DialogueAstProjection.cs`. A construct the
-compiler accepts but no example produces is a coverage gap: add a natural use to an
-example (through `add-dialogue-construct`), not a syntax dump, and re-run. The
-parenthetical on a label (`Command (PlayBgm)`, `Speaker (by id)`) is detail, not a
-separate construct — judge coverage on the base kind.
+Nothing to run here either. When it fails, add a natural use to an example (through
+`add-dialogue-construct`), not a syntax dump. A construct the compiler produces but
+no author writes — the document root — is named in the test's own exclusion list, so
+adding to that list is a deliberate, reviewable act.
 
 ### I. The API reference covers the surface that ships
 

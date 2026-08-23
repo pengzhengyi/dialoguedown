@@ -23,6 +23,14 @@
 
   <ItemGroup>
     <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The shipped examples and the demo landing page, so the coverage gates read them from the
+         output rather than hunting for the checkout they were built from. -->
+    <None Include="..\..\examples\*.dialogue.md"
+          Link="examples\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\docs\demo\index.html"
+          Link="demo\index.html"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
