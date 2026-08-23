@@ -301,6 +301,13 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The demo page advertises the Dialogue Graph stage** — the report has rendered it since the
+  graph stage landed, but the landing page's hand-written stage list never gained it. Two release
+  checks that used to be shell scripts run over rendered Graphviz text are now tests, so the page
+  and the example corpus are checked on every run instead of once at release: one compares the
+  advertised stages against the ones the visualization projects, the other asserts every construct
+  the compiler models appears in a shipped example.
+
 - **The report no longer shows a "Back to the launcher" arrow that goes nowhere** — every served
   report now lives under the `/r/` mount, so the check that once meant "opened through the
   launcher" had come to match every report, while the destination redirected straight back to the
