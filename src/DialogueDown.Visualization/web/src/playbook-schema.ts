@@ -1,5 +1,6 @@
-import { hoverTooltip } from "@codemirror/view";
-import type { EditorView, Tooltip } from "@codemirror/view";
+import { hoverTooltip, Decoration, EditorView } from "@codemirror/view";
+import type { DecorationSet, Tooltip } from "@codemirror/view";
+import { StateEffect, StateField } from "@codemirror/state";
 import type { EditorState } from "@codemirror/state";
 import schema from "../../../../schema/playbook-0.schema.json";
 import { escapeHtml } from "./text";
@@ -205,25 +206,82 @@ function tokenRange(text: string, from: number): { start: number; end: number } 
 }
 
 /**
+ * The stretch of document a hovered description applies to: the whole object or array when the
+ * property opens one, and the property's own line when it holds a scalar.
+ *
+ * The reader is told what a rule covers, not merely that it exists — the same question the
+ * Source tab's Jump-to preview answers about a stage's enclosing node, answered with the same
+ * faint wash.
+ */
+export function appliedRange(state: EditorState, lineNumber: number): { from: number; to: number } {
+    const line = state.doc.line(lineNumber);
+    if (!/[[{]\s*$/.test(line.text)) return { from: line.from, to: line.to };
+    const depth = depthOf(line.text);
+    for (let n = lineNumber + 1; n <= state.doc.lines; n++) {
+        const closing = state.doc.line(n);
+        if (depthOf(closing.text) <= depth) return { from: line.from, to: closing.to };
+    }
+    return { from: line.from, to: state.doc.length };
+}
+
+/** Toggles the faint wash over the stretch a hovered description applies to. */
+const setAppliedEffect = StateEffect.define<{ from: number; to: number } | null>();
+
+// The Source tab's Jump-to preview marks an enclosing span the same way, so it wears the same
+// class: two surfaces answering "what does this cover?" should not answer it in two colors.
+const appliedMark = Decoration.mark({ class: "dd-jump-preview" });
+
+const appliedField = StateField.define<DecorationSet>({
+    create: () => Decoration.none,
+    update(applied, transaction) {
+        for (const effect of transaction.effects) {
+            if (effect.is(setAppliedEffect)) {
+                const span = effect.value;
+                return span && span.to > span.from
+                    ? Decoration.set([appliedMark.range(span.from, span.to)])
+                    : Decoration.none;
+            }
+        }
+        return applied.map(transaction.changes);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+});
+
+/**
  * The hover extension. A tooltip appears only over the property name (or an array element's
  * value) and only when the schema actually describes it, so hovering punctuation or a blank
- * stretch stays quiet.
+ * stretch stays quiet. While it is open, the stretch the description applies to is washed in,
+ * and the wash lifts with the tooltip.
  */
 export function schemaHover() {
-    return hoverTooltip((view: EditorView, position: number): Tooltip | null => {
-        const line = view.state.doc.lineAt(position);
-        const { start, end } = tokenRange(line.text, line.from);
-        if (position < start || position > end) return null;
-        const located = schemaPathAt(view.state, line.number);
-        const described = describeSchemaPath(located.path, located.kinds);
-        if (described == null) return null;
-        return {
-            pos: start,
-            end,
-            above: true,
-            create: () => ({ dom: tooltipDom(described) }),
-        };
-    });
+    return [
+        appliedField,
+        hoverTooltip((view: EditorView, position: number): Tooltip | null => {
+            const line = view.state.doc.lineAt(position);
+            const { start, end } = tokenRange(line.text, line.from);
+            if (position < start || position > end) return null;
+            const located = schemaPathAt(view.state, line.number);
+            const described = describeSchemaPath(located.path, located.kinds);
+            if (described == null) return null;
+            const applied = appliedRange(view.state, line.number);
+            return {
+                pos: start,
+                end,
+                above: true,
+                create: () => ({
+                    dom: tooltipDom(described),
+                    // Deferred: both hooks run inside CodeMirror's own update, and a dispatch
+                    // from there is refused. A task later the view is settled and accepts it.
+                    mount: () => wash(view, applied),
+                    destroy: () => wash(view, null),
+                }),
+            };
+        }),
+    ];
+}
+
+function wash(view: EditorView, span: { from: number; to: number } | null): void {
+    setTimeout(() => view.dispatch({ effects: setAppliedEffect.of(span) }), 0);
 }
 
 function tooltipDom(described: Described): HTMLElement {

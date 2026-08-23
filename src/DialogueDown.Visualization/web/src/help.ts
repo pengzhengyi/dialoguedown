@@ -128,9 +128,12 @@ const PLAYBOOK_HELP = `
      loads and plays. It is generated, so this editor is read-only — change the script, not
      the playbook.</p>
   <p><strong>Reading it.</strong> Fold a section with the arrow in the gutter, and search with
-     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>. The panel on the right summarizes the header — what a
-     host must provide to run it, where it starts, and how many nodes and anchors it holds —
-     and lists the speakers, whose names and tags are click-to-copy.</p>
+     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>. <strong>Hover a property</strong> to see what the format
+     says it means, taken from the published schema; the stretch that description covers is
+     washed in while the tip is open.</p>
+  <p><strong>Beside it</strong> are three panels — the playbook's header, its speakers, and the
+     anchors a jump may name. Each folds from its caret, counts its rows, and searches from the
+     magnifier, the same way the Semantic tab's tables do.</p>
   <p><strong>Kept current.</strong> Saving recompiles the playbook, so it always matches the
      script you last saved. A script with errors compiles no playbook, and the tab says so.</p>
 `;

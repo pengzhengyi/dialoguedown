@@ -13,12 +13,19 @@ namespace DialogueDown.Visualization.Playbook;
 /// <param name="Json">The playbook, formatted for reading. Null when the compile produced none.</param>
 /// <param name="Metadata">The document's header facts, for the summary table.</param>
 /// <param name="Speakers">Every speaker the playbook declares.</param>
+/// <param name="Anchors">Every anchor a jump may name, with the node it lands on.</param>
 /// <param name="Unavailable">Why there is no playbook, or null when there is one.</param>
 internal sealed record PlaybookReport(
     string? Json,
     PlaybookMetadataView? Metadata,
     IReadOnlyList<PlaybookSpeakerView> Speakers,
+    IReadOnlyList<PlaybookAnchorView> Anchors,
     string? Unavailable);
+
+/// <summary>One anchor a jump may name, and where it lands.</summary>
+/// <param name="Name">The anchor's slug, as a jump writes it.</param>
+/// <param name="Node">The node position the anchor resolves to.</param>
+internal sealed record PlaybookAnchorView(string Name, int Node);
 
 /// <summary>The playbook's header facts, as the report's summary table shows them.</summary>
 /// <param name="Script">The script the playbook was compiled from.</param>

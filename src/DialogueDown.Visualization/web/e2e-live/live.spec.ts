@@ -1516,9 +1516,12 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     page,
 }) => {
     const playbook = page.locator("#tabs .tab", { hasText: "Playbook" });
+    const speakers = page
+        .locator(".playbook-side .table-panel")
+        .filter({ has: page.locator(".table-panel-title", { hasText: /^Speakers$/ }) });
     await playbook.click();
-    await expect(page.locator(".playbook-speakers-table")).toContainText("Alice");
-    await expect(page.locator(".playbook-speakers-table")).not.toContainText("Bruno");
+    await expect(speakers).toContainText("Alice");
+    await expect(speakers).not.toContainText("Bruno");
 
     // Rename the speaker in Source and save; the playbook is regenerated from the saved script.
     await page.locator('.mode-toggle-option[data-mode="edit"]').click();
@@ -1529,6 +1532,6 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     await page.locator(".save-button").click();
 
     await playbook.click();
-    await expect(page.locator(".playbook-speakers-table")).toContainText("Bruno");
+    await expect(speakers).toContainText("Bruno");
     await expect(page.locator(".playbook-source .cm-content")).toContainText("Bruno");
 });

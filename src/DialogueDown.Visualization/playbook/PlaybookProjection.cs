@@ -40,7 +40,7 @@ internal static class PlaybookProjection
 
         if (result is not CompilationSuccess success)
         {
-            return new PlaybookReport(null, null, [], UnavailableReason);
+            return new PlaybookReport(null, null, [], [], UnavailableReason);
         }
 
         var playbook = writer.Write(success, script);
@@ -48,6 +48,7 @@ internal static class PlaybookProjection
             JsonSerializer.Serialize(playbook, _readable),
             MetadataOf(playbook, script),
             [.. playbook.Speakers.Select(ToView)],
+            [.. playbook.Anchors.Select(anchor => new PlaybookAnchorView(anchor.Key, anchor.Value))],
             null);
     }
 

@@ -19,6 +19,8 @@
   - [DD6 — The visualization indents; the CLI does not](#dd6--the-visualization-indents-the-cli-does-not)
   - [DD7 — The schema is a link out and a hover, not a URL to read](#dd7--the-schema-is-a-link-out-and-a-hover-not-a-url-to-read)
   - [DD8 — The schema is bundled and resolved on demand, never flattened](#dd8--the-schema-is-bundled-and-resolved-on-demand-never-flattened)
+  - [DD9 — A hover shows what a rule covers, in the report's existing wash](#dd9--a-hover-shows-what-a-rule-covers-in-the-reports-existing-wash)
+  - [DD10 — The tables are the report's table panels, namespaced apart](#dd10--the-tables-are-the-reports-table-panels-namespaced-apart)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 
@@ -158,6 +160,33 @@ Two details make the answer specific rather than vague:
   52-node playbook, this takes the share of property lines that say something true from **44% to
   100%** — and a path outside the format still describes nothing at all.
 
+### DD9 — A hover shows what a rule covers, in the report's existing wash
+
+A description answers *what this means*; the reader's next question is *how far does it reach* —
+does `format` describe the one line or the whole block? While a tooltip is open, the stretch it
+applies to is washed in: the enclosing object or array when the property opens one, and the
+property's own line when it holds a scalar.
+
+It wears the Source tab's `dd-jump-preview` class, the same faint wash that previews the
+enclosing node a Jump-to target lands in. Two surfaces answering "what does this cover?" should
+not answer it in two colors.
+
+The wash is raised on the tooltip's `mount` and lifted on its `destroy`, so the two can never
+disagree — but both hooks run inside CodeMirror's own update, which refuses a dispatch, so each
+is deferred by a task.
+
+### DD10 — The tables are the report's table panels, namespaced apart
+
+The right pane is three `createTablePanel` panels — the Semantic tab's own — so each folds from a
+caret, counts its rows, searches from a magnifier, and sorts on any column. They answer the same
+kind of question about a different artifact, and a reader who has learned one should not have to
+learn the other. **Anchors** is a table in its own right rather than a count in the header: which
+scenes a jump can name is a list, and a list of five reads as five rows, not as the number 5.
+
+`createTablePanel` gained a `storagePrefix`. Both tabs show tables called *Speakers* and
+*Anchors*, and the remembered collapse key was derived from the title alone — so without the
+prefix, folding a panel here would silently fold that tab's too.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -167,6 +196,8 @@ Two details make the answer specific rather than vague:
 | Recompile carries no playbook | The last one stays, rather than the tab vanishing under the reader. |
 | Anonymous default speaker | Named `(anonymous)` rather than shown as an empty cell. |
 | Empty `uses` list | Rendered as an em dash, like the Config tab's empty values. |
+| A playbook no jump can target | The Anchors panel says so rather than showing an empty grid. |
+| A hovered property holding a scalar | The wash covers its line alone, not the block around it. |
 
 ## Testability
 
@@ -175,7 +206,10 @@ Two details make the answer specific rather than vague:
 | .NET unit | `PlaybookProjection` — metadata, speakers, tag flattening, and the unavailable case. |
 | Vitest | `schemaPathAt` — the path of a line, through nested arrays, objects, and a map's own keys. |
 | Vitest | `describeSchemaPath` — the format's own words, variant selection by `kind`, the enclosing-shape fallback, and silence outside the format. |
+| Vitest | `appliedRange` — an object, an array, a scalar line, and an array element from its bare opener. |
 | .NET unit | The payload wiring: `RenderHtmlReport` and `SerializeDocument` both embed the playbook. |
 | Vitest | `createPlaybookView` — the tables, the anonymous speaker, the em dash, and read-onlyness through the command an editing keystroke runs. |
 | Vitest | `runApp` — tab placement after Dialogue Graph, absence without a playbook, rebuild on save, and the help context. |
-| Playwright | The tab end to end: real typing is refused, both tables render, the panel collapses, the schema link is safe, a hover quotes the schema, and axe reports no violations. |
+| Playwright | The tab end to end: real typing is refused, the three panels render and search and fold, the schema link is safe, a hover quotes the schema, and axe reports no violations. |
+| Playwright | The wash: it covers the block, it lifts with the tooltip, and it **actually paints** — a decoration whose style is scoped to another pane is present and "visible" while washing nothing. |
+| Playwright | The panels' remembered state does not collide with the Semantic tab's same-named ones. |

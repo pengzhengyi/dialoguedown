@@ -142,6 +142,7 @@ describe("runApp Playbook tab", () => {
             nodeCount: 2,
             anchorCount: 0,
         },
+        anchors: [{ name: "the-tavern", node: 0 }],
         speakers: [{ name: "Alice", default: false, tags: [] }],
     });
     const titles = () => [...document.querySelectorAll("#tabs .tab")].map((t) => t.textContent);
@@ -167,11 +168,12 @@ describe("runApp Playbook tab", () => {
 
         app.updateStages([stage()], {
             ...playbook(),
+            anchors: [{ name: "the-tavern", node: 0 }],
             speakers: [{ name: "Bob", default: false, tags: [] }],
         });
 
         expect(titles()).toEqual(["Source", "AST", "Playbook"]);
-        expect(document.querySelector(".playbook-speakers-table")?.textContent).toContain("Bob");
+        expect(document.querySelector(".playbook-side")?.textContent).toContain("Bob");
     });
 
     it("keeps the last playbook when a recompile does not carry one", () => {
@@ -180,7 +182,7 @@ describe("runApp Playbook tab", () => {
         app.updateStages([stage()]);
 
         expect(titles()).toContain("Playbook");
-        expect(document.querySelector(".playbook-speakers-table")?.textContent).toContain("Alice");
+        expect(document.querySelector(".playbook-side")?.textContent).toContain("Alice");
     });
 });
 
@@ -193,6 +195,7 @@ describe("runApp Playbook help", () => {
             stages: [graph],
             playbook: {
                 json: "{}",
+                anchors: [{ name: "the-tavern", node: 0 }],
                 speakers: [],
             },
         });

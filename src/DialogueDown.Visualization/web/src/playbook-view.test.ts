@@ -18,11 +18,24 @@ function compiled(): PlaybookReport {
             nodeCount: 6,
             anchorCount: 2,
         },
+        anchors: [{ name: "the-tavern", node: 0 }],
         speakers: [
             { id: "alice", name: "Alice", default: false, tags: ["role=guide"] },
             { default: true, tags: [] },
         ],
     };
+}
+
+/** One named table panel in the right pane. */
+function panel(view: HTMLElement, title: string): HTMLElement | undefined {
+    return [...view.querySelectorAll<HTMLElement>(".table-panel")].find(
+        (candidate) => candidate.querySelector(".table-panel-title")?.textContent === title,
+    );
+}
+
+/** The body rows of one named table panel. */
+function bodyRows(view: HTMLElement, title: string): HTMLTableRowElement[] {
+    return [...(panel(view, title)?.querySelectorAll<HTMLTableRowElement>("tbody tr") ?? [])];
 }
 
 describe("createPlaybookView", () => {
@@ -49,10 +62,10 @@ describe("createPlaybookView", () => {
         ).toBe("true");
     });
 
-    it("summarizes the playbook's header as a label/value table", () => {
+    it("summarizes the playbook's header as a field/value panel", () => {
         const view = createPlaybookView(compiled());
 
-        const text = view.querySelector(".playbook-metadata-table")?.textContent ?? "";
+        const text = panel(view, "Playbook")?.textContent ?? "";
         expect(text).toContain("scene.dialogue.md");
         expect(text).toContain("core");
         expect(text).toContain("6");
@@ -71,36 +84,47 @@ describe("createPlaybookView", () => {
     });
 
     it("shows an em dash for a header list the playbook left empty", () => {
-        const view = createPlaybookView(compiled());
+        const rows = bodyRows(createPlaybookView(compiled()), "Playbook");
+        const uses = rows.find((row) => row.cells[0]?.textContent === "Uses");
 
-        const rows = [...view.querySelectorAll(".playbook-metadata-table tbody tr")];
-        const uses = rows.find((row) => row.querySelector("th")?.textContent === "Uses");
-        expect(uses?.querySelector("td")?.textContent).toBe("—");
+        expect(uses?.cells[1]?.textContent).toBe("—");
     });
 
     it("names the anonymous default speaker rather than showing an empty cell", () => {
-        const view = createPlaybookView(compiled());
+        const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
-        const rows = view.querySelectorAll(".playbook-speakers-table tbody tr");
         expect(rows).toHaveLength(2);
         expect(rows[0].textContent).toContain("Alice");
-        expect(
-            rows[0].querySelector<HTMLElement>(".playbook-copy[data-copy='alice']"),
-        ).not.toBeNull();
-        expect(rows[1].querySelector(".playbook-anonymous")?.textContent).toBe("(anonymous)");
-        expect(rows[1].querySelector(".playbook-default")?.textContent).toBe("yes");
+        expect(rows[0].textContent).toContain("alice");
+        expect(rows[1].cells[0]?.textContent).toBe("(anonymous)");
+        expect(rows[1].cells[2]?.textContent).toBe("yes");
     });
 
-    it("renders each speaker tag as a copyable chip", () => {
+    it("lists every anchor a jump may name, with the node it lands on", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Anchors");
+
+        expect(rows).toHaveLength(1);
+        // Written with its `#`, exactly as a jump names it.
+        expect(rows[0].cells[0]?.textContent).toBe("#the-tavern");
+        expect(rows[0].cells[1]?.textContent).toBe("0");
+    });
+
+    it("gives each table the report's panel chrome — a count, a caret, and a search", () => {
         const view = createPlaybookView(compiled());
 
-        const chip = view.querySelector<HTMLElement>(".playbook-tag");
-        expect(chip?.textContent).toBe("role=guide");
-        expect(chip?.dataset.copy).toBe("role=guide");
+        expect([...view.querySelectorAll(".table-panel-title")].map((t) => t.textContent)).toEqual([
+            "Playbook",
+            "Speakers",
+            "Anchors",
+        ]);
+        expect(panel(view, "Speakers")?.querySelector(".table-panel-count")?.textContent).toBe("2");
+        expect(panel(view, "Speakers")?.querySelector(".table-panel-search")).not.toBeNull();
+        expect(panel(view, "Speakers")?.querySelector(".table-panel-toggle")).not.toBeNull();
     });
 
     it("explains why there is no playbook instead of showing an empty editor", () => {
         const view = createPlaybookView({
+            anchors: [],
             speakers: [],
             unavailable: "The compile did not reach a playbook.",
         });
@@ -109,7 +133,8 @@ describe("createPlaybookView", () => {
         expect(view.querySelector(".playbook-empty-state")?.textContent).toContain(
             "did not reach a playbook",
         );
-        expect(view.querySelector(".playbook-speakers")?.textContent).toContain("no speakers");
+        expect(panel(view, "Speakers")?.textContent).toContain("no speakers");
+        expect(panel(view, "Anchors")?.textContent).toContain("jumped to by name");
     });
 
     it("gives the tables panel its own collapse toggle and split", () => {

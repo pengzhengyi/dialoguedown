@@ -21,7 +21,14 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { json } from "@codemirror/legacy-modes/mode/javascript";
 import { tags } from "@lezer/highlight";
 import { foldGutterMarker } from "./fold-glyph";
-import type { PlaybookReport, PlaybookMetadataView, PlaybookSpeakerView } from "./model";
+import type {
+    PlaybookReport,
+    PlaybookMetadataView,
+    PlaybookSpeakerView,
+    PlaybookAnchorView,
+    SemanticTable,
+} from "./model";
+import { createTablePanel } from "./semantic-table";
 import { initSplitDivider } from "./source-view";
 import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
@@ -127,16 +134,36 @@ function renderUnavailable(reason: string | undefined): HTMLElement {
     return note;
 }
 
-/** The right pane: the playbook's header and its speakers, stacked. */
+/**
+ * The right pane: the playbook's header, speakers, and anchors, each its own collapsible panel.
+ *
+ * They are the Semantic tab's table panels — the same caret, search box, row count, and sortable
+ * headers — because they answer the same kind of question about a different artifact, and a
+ * reader who has learned one should not have to learn the other.
+ */
 function renderTables(playbook: PlaybookReport): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "playbook-tables";
-    wrapper.append(renderMetadata(playbook.metadata), renderSpeakers(playbook.speakers));
+    for (const table of tablesOf(playbook)) {
+        // Its own namespace: the Semantic tab has Speakers and Anchors panels too, and one
+        // remembered key would make collapsing a panel here collapse that tab's as well.
+        wrapper.appendChild(createTablePanel(table, "dd-playbook-panel-"));
+    }
+    wrapper.appendChild(schemaNote(playbook.metadata?.schemaUrl));
     wireClickToCopy(wrapper);
     return wrapper;
 }
 
-/** Copy the text of a clicked cell or tag chip (any element carrying `data-copy`), and confirm it. */
+/** The three tables, in the order the format itself reads: what it is, who speaks, where jumps land. */
+function tablesOf(playbook: PlaybookReport): SemanticTable[] {
+    return [
+        headerTable(playbook.metadata),
+        speakerTable(playbook.speakers),
+        anchorTable(playbook.anchors),
+    ];
+}
+
+/** Copy the text of a clicked cell (any element carrying `data-copy`), and confirm it. */
 function wireClickToCopy(root: HTMLElement): void {
     root.addEventListener("click", (event) => {
         const target = (event.target as Element | null)?.closest<HTMLElement>("[data-copy]");
@@ -147,123 +174,82 @@ function wireClickToCopy(root: HTMLElement): void {
 }
 
 /**
- * The playbook's header as a label/value table: what it was compiled from, what a host must
+ * The playbook's header as a field/value table: what it was compiled from, what a host must
  * provide to run it, where it starts, and how big it is.
  */
-function renderMetadata(metadata: PlaybookMetadataView | undefined): HTMLElement {
-    const wrapper = document.createElement("div");
-    wrapper.className = "playbook-metadata";
-    wrapper.innerHTML = `<h2 class="playbook-heading">Playbook</h2>`;
-    if (!metadata) {
-        wrapper.appendChild(renderEmptyNote("No playbook metadata yet."));
-        return wrapper;
-    }
-
-    const rows: [string, string][] = [
-        ["Script", cell(metadata.script)],
-        ["Format version", cell(String(metadata.formatVersion))],
-        ["Schema", schemaCell(metadata.schemaUrl)],
-        ["Requires", cell(listOrDash(metadata.requires))],
-        ["Uses", cell(listOrDash(metadata.uses))],
-        ["Entry node", cell(String(metadata.entry))],
-        ["Nodes", cell(String(metadata.nodeCount))],
-        ["Anchors", cell(String(metadata.anchorCount))],
-    ];
-    const table = document.createElement("table");
-    table.className = "semantic-table playbook-metadata-table";
-    table.innerHTML =
-        `<tbody>` +
-        rows
-            .map(([label, value]) => `<tr><th scope="row">${escapeHtml(label)}</th>${value}</tr>`)
-            .join("") +
-        `</tbody>`;
-    wrapper.appendChild(table);
-    return wrapper;
+function headerTable(metadata: PlaybookMetadataView | undefined): SemanticTable {
+    const fields: [string, string][] =
+        metadata == null
+            ? []
+            : [
+                  ["Script", metadata.script],
+                  ["Format version", String(metadata.formatVersion)],
+                  ["Requires", listOrDash(metadata.requires)],
+                  ["Uses", listOrDash(metadata.uses)],
+                  ["Entry node", String(metadata.entry)],
+                  ["Nodes", String(metadata.nodeCount)],
+                  ["Anchors", String(metadata.anchorCount)],
+              ];
+    return {
+        title: "Playbook",
+        columns: ["Field", "Value"],
+        rows: fields.map(([field, value]) => ({ cells: [{ text: field }, { text: value }] })),
+        emptyText: "No playbook metadata yet.",
+    };
 }
 
 /**
  * The playbook's speaker table: who can speak, the id a runtime looks them up by, which one owns
- * an unprefixed line, and the tags a host reads for portraits or voices. Every id, name, and tag
- * is click-to-copy, so a value can be lifted straight into host code.
+ * an unprefixed line, and the tags a host reads for portraits or voices.
  */
-function renderSpeakers(speakers: PlaybookSpeakerView[]): HTMLElement {
-    const wrapper = document.createElement("div");
-    wrapper.className = "playbook-speakers";
-    wrapper.innerHTML = `<h2 class="playbook-heading">Speakers</h2>`;
-    if (speakers.length === 0) {
-        wrapper.appendChild(renderEmptyNote("This playbook has no speakers."));
-        return wrapper;
-    }
-
-    const rows = speakers.map((speaker) => `<tr>${speakerCells(speaker)}</tr>`).join("");
-    const table = document.createElement("table");
-    table.className = "semantic-table playbook-speakers-table";
-    table.innerHTML =
-        `<thead><tr>` +
-        `<th scope="col">Name</th><th scope="col">Id</th>` +
-        `<th scope="col">Default</th><th scope="col">Tags</th>` +
-        `</tr></thead><tbody>${rows}</tbody>`;
-    wrapper.appendChild(table);
-    return wrapper;
+function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
+    return {
+        title: "Speakers",
+        columns: ["Name", "Id", "Default", "Tags"],
+        rows: speakers.map((speaker) => ({
+            cells: [
+                // The anonymous speaker is the one an unprefixed line belongs to; it has no name.
+                { text: speaker.name ?? "(anonymous)" },
+                { text: speaker.id ?? "—" },
+                { text: speaker.default ? "yes" : "—" },
+                { text: speaker.tags.length === 0 ? "—" : speaker.tags.join(", ") },
+            ],
+        })),
+        emptyText: "This playbook has no speakers.",
+        // Which speaker owns an unprefixed line is the question worth filtering on.
+        facetColumns: ["Default"],
+    };
 }
 
-function speakerCells(speaker: PlaybookSpeakerView): string {
-    // The anonymous default speaker has no name — it is the one a line with no prefix belongs to.
-    const name =
-        speaker.name == null
-            ? `<td><span class="playbook-anonymous">(anonymous)</span></td>`
-            : copyCell(speaker.name);
-    const id =
-        speaker.id == null
-            ? `<td><span class="playbook-empty">—</span></td>`
-            : copyCell(speaker.id);
-    const isDefault = speaker.default
-        ? `<td><span class="playbook-default">yes</span></td>`
-        : `<td><span class="playbook-empty">—</span></td>`;
-    const tags =
-        speaker.tags.length === 0
-            ? `<td><span class="playbook-empty">—</span></td>`
-            : `<td><div class="playbook-tags">${speaker.tags.map(tagChip).join(" ")}</div></td>`;
-    return name + id + isDefault + tags;
-}
-
-/** One tag chip, click-to-copy. */
-function tagChip(tag: string): string {
-    const safe = escapeHtml(tag);
-    return `<span class="playbook-tag" data-copy="${safe}" title="Click to copy">${safe}</span>`;
-}
-
-/** A value cell whose displayed text is exactly what a click copies. */
-function copyCell(text: string): string {
-    const safe = escapeHtml(text);
-    return `<td class="playbook-copy" data-copy="${safe}" title="Click to copy">${safe}</td>`;
-}
-
-function cell(text: string): string {
-    return `<td>${escapeHtml(text)}</td>`;
+/** The anchors a jump may name, and the node each lands on. */
+function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
+    return {
+        title: "Anchors",
+        columns: ["Anchor", "Node"],
+        rows: anchors.map((anchor) => ({
+            // An anchor is written with its `#`, exactly as a jump names it.
+            cells: [{ text: `#${anchor.name}` }, { text: String(anchor.node) }],
+        })),
+        emptyText: "No scene in this playbook can be jumped to by name.",
+    };
 }
 
 /**
- * The published schema, as a link out. The playbook names it in its own `$schema` field, but that
- * is a URL in a document rather than something to click; this row is the way to the format's
- * reference, and hovering a property in the editor shows what that reference says about it.
+ * The published schema, linked below the tables. The playbook names it in its own `$schema`
+ * field, but that is a URL in a document rather than something to click; this is the way to the
+ * format's reference, and hovering a property in the editor shows what that reference says.
  */
-function schemaCell(url: string): string {
-    const safe = escapeHtml(url);
+function schemaNote(url: string | undefined): HTMLElement {
+    const note = document.createElement("p");
+    note.className = "playbook-schema-note";
+    if (url == null) return note;
     const name = escapeHtml(url.slice(url.lastIndexOf("/") + 1));
-    return (
-        `<td><a class="playbook-schema-link" href="${safe}" target="_blank"` +
-        ` rel="noopener noreferrer" title="${safe}">${name}</a></td>`
-    );
+    note.innerHTML =
+        `Described by <a class="playbook-schema-link" href="${escapeHtml(url)}" target="_blank"` +
+        ` rel="noopener noreferrer" title="${escapeHtml(url)}">${name}</a>.`;
+    return note;
 }
 
 function listOrDash(values: readonly string[]): string {
     return values.length === 0 ? "—" : values.join(", ");
-}
-
-function renderEmptyNote(text: string): HTMLElement {
-    const note = document.createElement("p");
-    note.className = "playbook-empty";
-    note.textContent = text;
-    return note;
 }

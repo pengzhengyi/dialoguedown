@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { EditorState } from "@codemirror/state";
-import { schemaPathAt, describeSchemaPath } from "./playbook-schema";
+import { schemaPathAt, describeSchemaPath, appliedRange } from "./playbook-schema";
 
 /**
  * A playbook shaped exactly as `JsonSerializer` with `WriteIndented` writes one: two spaces per
@@ -124,5 +124,40 @@ describe("describeSchemaPath", () => {
 
     it("describes nothing outside the format", () => {
         expect(describeSchemaPath("nowhere/at/all")).toBeNull();
+    });
+});
+
+describe("appliedRange", () => {
+    const textOf = (needle: string): string => {
+        const { from, to } = appliedRange(state, lineOf(needle));
+        return state.sliceDoc(from, to);
+    };
+
+    it("covers the whole object a property opens", () => {
+        const covered = textOf('"format"');
+
+        expect(covered).toContain('"requires"');
+        // Through the block's own closing brace, comma and all.
+        expect(covered.trimEnd()).toMatch(/\},?$/);
+        // Not one line past it: the next property stays outside the wash.
+        expect(covered).not.toContain('"script"');
+    });
+
+    it("covers the whole array a property opens", () => {
+        expect(textOf('"speakers"')).toContain('"wary"');
+        expect(textOf('"speakers"')).not.toContain('"nodes"');
+    });
+
+    it("covers only the line when the property holds a scalar", () => {
+        expect(textOf('"script"').trim()).toBe('"script": "scene.dialogue.md",');
+    });
+
+    it("covers the element, not its siblings, from a bare opener", () => {
+        const covered = state.sliceDoc(
+            ...(({ from, to }) => [from, to] as const)(appliedRange(state, lineOf('"id"') - 1)),
+        );
+
+        expect(covered).toContain('"keeper"');
+        expect(covered).not.toContain('"nodes"');
     });
 });

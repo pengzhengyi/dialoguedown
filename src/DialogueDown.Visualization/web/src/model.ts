@@ -163,6 +163,14 @@ export interface PlaybookSpeakerView {
     tags: string[];
 }
 
+/** One row of the playbook's anchor table. */
+export interface PlaybookAnchorView {
+    /** The anchor's slug, as a jump writes it. */
+    name: string;
+    /** The node position the anchor resolves to. */
+    node: number;
+}
+
 /**
  * The compiled playbook — the runtime's artifact — shown in the Playbook tab: the serialized
  * JSON a host would load, beside the tables that summarize it.
@@ -174,6 +182,8 @@ export interface PlaybookReport {
     metadata?: PlaybookMetadataView;
     /** The playbook's speakers, shown as a table. */
     speakers: PlaybookSpeakerView[];
+    /** The playbook's anchors, shown as a table. */
+    anchors: PlaybookAnchorView[];
     /** Why no playbook exists, when the compile did not reach one. */
     unavailable?: string;
 }

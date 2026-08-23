@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { writeReport, SAMPLE_STAGES } from "./report";
 import type { Report } from "../src/model";
@@ -26,6 +26,7 @@ const compiled: Report = {
             nodeCount: 4,
             anchorCount: 1,
         },
+        anchors: [{ name: "the-tavern", node: 0 }],
         speakers: [
             { id: "guide", name: "Guide", default: false, tags: ["role=host"] },
             { default: true, tags: [] },
@@ -39,12 +40,19 @@ const halted: Report = {
     path: "/proj/scene.dialogue.md",
     stages: SAMPLE_STAGES,
     playbook: {
+        anchors: [],
         speakers: [],
         unavailable: "A playbook is written only for a script that compiles without errors.",
     },
 };
 
 const playbookTab = "#tabs .tab:last-child";
+
+/** One named table panel in the Playbook tab's right pane. */
+const panel = (page: Page, title: string) =>
+    page
+        .locator(".playbook-side .table-panel")
+        .filter({ has: page.locator(".table-panel-title", { hasText: new RegExp(`^${title}$`) }) });
 
 test.describe("Playbook tab — a compiled script", () => {
     test.beforeEach(async ({ page }) => {
@@ -72,16 +80,53 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(content).toHaveText(before ?? "");
     });
 
-    test("summarizes the header and the speakers beside the document", async ({ page }) => {
+    test("summarizes the playbook in the report's own table panels", async ({ page }) => {
         await page.click(playbookTab);
 
-        await expect(page.locator(".playbook-metadata-table")).toContainText("scene.dialogue.md");
-        await expect(page.locator(".playbook-metadata-table")).toContainText("core");
+        // Same chrome as the Semantic tab's tables: a caret, a search, and a live row count.
+        await expect(page.locator(".playbook-side .table-panel-title")).toHaveText([
+            "Playbook",
+            "Speakers",
+            "Anchors",
+        ]);
+        await expect(panel(page, "Playbook")).toContainText("scene.dialogue.md");
+        await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(2);
+        await expect(panel(page, "Anchors")).toContainText("#the-tavern");
+    });
 
-        const rows = page.locator(".playbook-speakers-table tbody tr");
-        await expect(rows).toHaveCount(2);
-        await expect(rows.first()).toContainText("Guide");
-        await expect(rows.nth(1).locator(".playbook-anonymous")).toHaveText("(anonymous)");
+    test("filters a table down through its search box", async ({ page }) => {
+        await page.click(playbookTab);
+        const speakers = panel(page, "Speakers");
+        await speakers.locator(".table-panel-search").click();
+
+        await speakers.getByRole("searchbox").fill("Guide");
+
+        await expect(speakers.locator("tbody tr")).toHaveCount(1);
+        await expect(speakers.locator(".table-panel-count")).toHaveText("1");
+    });
+
+    test("remembers its panels apart from the Semantic tab's same-named ones", async ({ page }) => {
+        // Both tabs show Speakers and Anchors; one storage key would collapse both at once.
+        await page.click(playbookTab);
+
+        await panel(page, "Speakers").locator(".table-panel-toggle").click();
+
+        const keys = await page.evaluate(() => Object.keys(window.localStorage));
+        expect(keys).toContain("dd-playbook-panel-speakers");
+        expect(keys).not.toContain("dd-sem-panel-speakers");
+    });
+
+    test("collapses a table panel to its title", async ({ page }) => {
+        await page.click(playbookTab);
+        const anchors = panel(page, "Anchors");
+
+        await anchors.locator(".table-panel-toggle").click();
+
+        await expect(anchors.locator(".table-panel-body")).toBeHidden();
+        await expect(anchors.locator(".table-panel-toggle")).toHaveAttribute(
+            "aria-expanded",
+            "false",
+        );
     });
 
     test("hides the tables to give the playbook the full width, and brings them back", async ({
@@ -107,6 +152,40 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(tip).toBeVisible();
         await expect(tip.locator(".playbook-hover-path")).toHaveText("format/requires");
         await expect(tip.locator(".playbook-hover-text")).toContainText("Capabilities a runtime");
+    });
+
+    test("washes in the stretch a hovered description applies to", async ({ page }) => {
+        await page.click(playbookTab);
+        const wash = page.locator(".playbook-source .dd-jump-preview");
+        await expect(wash).toHaveCount(0);
+
+        // `format` opens an object, so the rule covers the whole block, not just its name.
+        await page.locator(".playbook-source .cm-content").getByText('"format"').hover();
+
+        await expect(wash.first()).toBeVisible();
+        // A mark spanning lines is drawn one span per line, so the block is their union.
+        expect((await wash.allTextContents()).join("\n")).toContain('"requires"');
+        // It has to actually paint: a decoration whose style is scoped to another pane is
+        // present, sized, and "visible" to a selector while washing nothing at all.
+        const painted = await wash
+            .first()
+            .evaluate((node) => getComputedStyle(node).backgroundColor);
+        expect(painted).not.toBe("rgba(0, 0, 0, 0)");
+
+        // The wash lifts with the tooltip rather than lingering over the document.
+        await page.locator(".playbook-side").hover();
+        await expect(page.locator(".playbook-hover")).toHaveCount(0);
+        await expect(wash).toHaveCount(0);
+    });
+
+    test("marks only the line when the property holds a scalar", async ({ page }) => {
+        await page.click(playbookTab);
+
+        await page.locator(".playbook-source .cm-content").getByText('"script"').hover();
+
+        const wash = page.locator(".playbook-source .dd-jump-preview");
+        await expect(wash).toHaveCount(1);
+        await expect(wash).toContainText("scene.dialogue.md");
     });
 
     test("links out to the published schema", async ({ page }) => {

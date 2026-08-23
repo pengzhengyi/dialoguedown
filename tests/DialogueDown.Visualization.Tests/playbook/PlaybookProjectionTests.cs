@@ -71,6 +71,24 @@ public sealed class PlaybookProjectionTests
         Assert.Equal(PlaybookProjection.UnavailableReason, report.Unavailable);
     }
 
+    [Fact]
+    public void Project_ListsEveryAnchorWithTheNodeItLandsOn()
+    {
+        var report = Project("# The Tavern\n\nAlice: Hello.\n\n# The Road\n\nAlice: Onward.\n");
+
+        Assert.Collection(
+            report.Anchors.OrderBy(anchor => anchor.Name, StringComparer.Ordinal),
+            first => Assert.Equal("the-road", first.Name),
+            second => Assert.Equal("the-tavern", second.Name));
+        Assert.All(report.Anchors, anchor => Assert.True(anchor.Node >= 0));
+    }
+
+    [Fact]
+    public void Project_HaltedCompile_HasNoAnchors()
+    {
+        Assert.Empty(Project("=> [Gone](#missing)\n").Anchors);
+    }
+
     private static PlaybookReport Project(string source) =>
         PlaybookProjection.Project(
             Compile(source), Script, PlaybookWriterFactory.CreateDefault());

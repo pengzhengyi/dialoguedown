@@ -1692,10 +1692,12 @@ g.node.entity-highlight text.label {
     caret-color: var(--pico-color);
 }
 
-/* The faint highlight previewing the source span a hovered Jump-to target would reveal — the
-   enclosing node in that stage. Kept lighter than the real selection so both read at once: the
-   selection stays the strong mark, the preview a soft wash over the wider enclosing span. */
-.source-pane .cm-content .dd-jump-preview {
+/* The faint highlight previewing an enclosing span a hover would reveal — the node a Jump-to
+   target lands in, or the stretch a playbook property's schema rule covers. Kept lighter than the
+   real selection so both read at once: the selection stays the strong mark, the preview a soft
+   wash over the wider enclosing span. */
+.source-pane .cm-content .dd-jump-preview,
+.playbook-source .cm-content .dd-jump-preview {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 20%, transparent);
     border-radius: 2px;
 }
@@ -5145,8 +5147,7 @@ button.tab.tab-with-icon {
     background-color: var(--cm-selection);
 }
 
-.config-speakers-heading,
-.playbook-heading {
+.config-speakers-heading {
     margin: 0 0 0.6rem;
     font-size: 0.8rem;
     font-weight: 600;
@@ -5155,17 +5156,14 @@ button.tab.tab-with-icon {
     letter-spacing: 0.03em;
 }
 
-.config-speakers-table,
-.playbook-metadata-table,
-.playbook-speakers-table {
+.config-speakers-table {
     width: 100%;
 }
 
 /* Tags wrap inside an inner flex box, never on the `<td>` itself: a flex `<td>` drops out of
    table-cell layout, so a tall multi-tag cell would stop sharing the row height and its row
    border would desync from the sibling Name/Id cells. */
-.config-speakers-table .config-tags,
-.playbook-speakers-table .playbook-tags {
+.config-speakers-table .config-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
@@ -5173,8 +5171,7 @@ button.tab.tab-with-icon {
 
 /* Tag chips: reserved names (like `default`) take a distinct accent so they read apart
    from custom tags at a glance. */
-.config-tag,
-.playbook-tag {
+.config-tag {
     display: inline-block;
     padding: 0.05rem 0.45rem;
     border-radius: 999px;
@@ -5210,31 +5207,24 @@ button.tab.tab-with-icon {
 /* Click-to-copy affordance: value cells and tag chips copy their text on click and give a
    subtle hover cue, so a writer can lift a name, `@id`, or tag straight into a script. */
 .config-copy,
-.config-tag,
-.playbook-copy,
-.playbook-tag {
+.config-tag {
     cursor: pointer;
 }
 
-.config-copy,
-.playbook-copy {
+.config-copy {
     border-radius: var(--pico-border-radius);
     transition: background-color 0.12s ease;
 }
 
-.config-copy:hover,
-.playbook-copy:hover {
+.config-copy:hover {
     background: rgb(128 128 128 / 12%);
 }
 
-.config-tag:hover,
-.playbook-tag:hover {
+.config-tag:hover {
     box-shadow: 0 0 0 1px currentcolor inset;
 }
 
-.config-empty,
-.playbook-empty,
-.playbook-anonymous {
+.config-empty {
     color: var(--pico-muted-color);
     font-style: italic;
 }
@@ -5444,44 +5434,22 @@ button.tab.tab-with-icon {
     }
 }
 
-/* The Playbook tab's right pane stacks the header table above the speaker table; the gap is
-   what separates them, since each carries its own small heading. */
+/* The Playbook tab's right pane stacks its table panels, the same way the Semantic tab does. */
 .playbook-tables {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.75rem;
 }
 
-/* The header table is label/value, so its row headings read as quiet labels rather than as
-   the column headings the speaker table uses. */
-.playbook-metadata-table th[scope="row"] {
-    width: 40%;
-    font-weight: 500;
+/* The schema link closes the pane as a quiet footnote, not another panel. */
+.playbook-schema-note {
+    margin: 0.35rem 0 0;
+    font-size: 0.74rem;
     color: var(--pico-muted-color);
-    white-space: nowrap;
 }
 
-/* The playbook's tags carry no reserved/custom distinction — the compiler already resolved
-   that — so one neutral chip in the palette's canonical tag pink serves them all. */
-.playbook-tag {
-    background: rgb(236 72 153 / 12%);
-    border-color: rgb(236 72 153 / 32%);
-    color: #be185d;
-}
-
-[data-theme="dark"] .playbook-tag {
-    color: #f9a8d4;
-}
-
-/* The default speaker owns every unprefixed line, so its row is marked rather than left to
-   a bare "yes" that reads like data. */
-.playbook-default {
-    font-weight: 600;
-    color: var(--mode-accent, var(--pico-primary));
-}
-
-/* The published schema, linked out of the header table. Underlined on hover only, so the row
-   reads as data until it is reached for. */
+/* The published schema, linked from the pane's closing footnote. Underlined on hover only, so
+   the line reads as a note until it is reached for. */
 .playbook-schema-link {
     text-decoration: none;
     word-break: break-all;
