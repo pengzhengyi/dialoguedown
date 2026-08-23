@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using DialogueDown.Common;
 using Generator.Equals;
 
 namespace DialogueDown.Configuration;
@@ -46,7 +47,7 @@ public sealed partial record ConfiguredSpeaker
     public ImmutableArray<ConfiguredTag> CustomTags
     {
         get => _customTags;
-        init => _customTags = RequireInitialized(value, nameof(CustomTags));
+        init => _customTags = value.AssertInitialized(nameof(CustomTags));
     }
 
     /// <summary>The reserved tags in configured order.</summary>
@@ -54,7 +55,7 @@ public sealed partial record ConfiguredSpeaker
     public ImmutableArray<ConfiguredTag> ReservedTags
     {
         get => _reservedTags;
-        init => _reservedTags = RequireInitialized(value, nameof(ReservedTags));
+        init => _reservedTags = value.AssertInitialized(nameof(ReservedTags));
     }
 
     /// <summary>Deconstructs the speaker into the same four parts as the original positional record.</summary>
@@ -69,11 +70,5 @@ public sealed partial record ConfiguredSpeaker
         customTags = CustomTags;
         reservedTags = ReservedTags;
     }
-
-    private static ImmutableArray<ConfiguredTag> RequireInitialized(
-        ImmutableArray<ConfiguredTag> tags, string propertyName) =>
-        tags.IsDefault
-            ? throw new ArgumentException("The immutable tag array must be initialized.", propertyName)
-            : tags;
 
 }

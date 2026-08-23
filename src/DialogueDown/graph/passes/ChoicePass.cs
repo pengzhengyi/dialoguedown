@@ -34,13 +34,21 @@ internal sealed class ChoicePass : GraphBuildPass
         }
     }
 
+    // An arm is labelled by its own first line. It is read here, where the body is still in hand:
+    // an arm with no body leads straight to whatever follows the choice, so a label read back off
+    // the target would be somebody else's words.
+    private static IReadOnlyList<InlineFragment> LabelOf(Choice option) =>
+        option.Body.FirstOrDefault() is Line line ? line.Spoken() : [];
+
     // The two group kinds lead to their arms differently, so each builds the edge that carries what
     // its runtime needs.
     private static IEnumerable<Edge> ArmEdges(
         ChoiceGroup group, NodeId continuation, GraphDraft draft) => group switch
         {
             Choices choices => choices.Options.Select(option => (Edge)new OptionEdge(
-                BlockSequence.EntryOf(option.Body, continuation, draft), option.Condition)),
+                BlockSequence.EntryOf(option.Body, continuation, draft),
+                LabelOf(option),
+                option.Condition)),
             RandomChoices random => random.Options.Select(option => (Edge)new RandomOptionEdge(
                 BlockSequence.EntryOf(option.Body, continuation, draft),
                 option.Weight,

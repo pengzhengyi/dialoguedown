@@ -61,6 +61,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DialogueDown.Playbook\DialogueDown.Playbook.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 

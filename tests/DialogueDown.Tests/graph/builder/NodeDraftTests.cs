@@ -29,7 +29,7 @@ public sealed class NodeDraftTests
     public void LeavesUnconditionally_UnconditionalRoute_IsTrue()
     {
         var draft = new TestNodeDraft(NodeId(0));
-        draft.AddEdge(new DivertEdge(NodeId(1)));
+        draft.AddEdge(DivertEdge(NodeId(1)));
 
         Assert.True(draft.LeavesUnconditionally());
     }
@@ -48,7 +48,7 @@ public sealed class NodeDraftTests
             SpeakerSymbol.ForName("Alice"),
             [],
             DialogueAstFactory.Condition("Brave"));
-        draft.AddEdge(new DivertEdge(NodeId(1)));
+        draft.AddEdge(DivertEdge(NodeId(1)));
 
         Assert.False(draft.LeavesUnconditionally());
     }

@@ -52,6 +52,9 @@ jobs:
         run: |
           mkdir -p site
           cp -r docs/_site/. site/
+          # Publish the playbook schema at the URL every emitted playbook points at.
+          mkdir -p site/schema
+          cp schema/*.schema.json site/schema/
           mkdir -p site/demo
           cp docs/demo/index.html site/demo/index.html
           # Copy example image assets so the exported reports can resolve the

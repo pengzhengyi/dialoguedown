@@ -19,6 +19,18 @@ public sealed class DivertPassTests
     }
 
     [Fact]
+    public void Apply_AJump_CarriesItsLabelOnTheEdge()
+    {
+        // The label is the only thing the writer said about the jump, and once the divert exists
+        // the jump itself is gone. Carrying it here is what keeps it reachable at all.
+        var graph = Build("Guide: Which way? => [the end](#END)");
+
+        var divert = AssertOnlyDivert(graph.Node(graph.Entry), graph.End);
+
+        AssertReads(divert.Label, "the end");
+    }
+
+    [Fact]
     public void Apply_LineWithoutAJump_AddsNoEdge()
     {
         var graph = Build("Alice: just a line");

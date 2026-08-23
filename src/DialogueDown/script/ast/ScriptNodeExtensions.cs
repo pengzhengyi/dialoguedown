@@ -8,6 +8,21 @@ namespace DialogueDown.Script.Ast;
 internal static class ScriptNodeExtensions
 {
     /// <summary>
+    /// What a line says: its speech without the jump it may end in.
+    /// </summary>
+    /// <remarks>
+    /// A jump is written inside the line it leaves from, so the two arrive together. Everything
+    /// downstream wants one or the other — the words to show, or the route to take — and never
+    /// both at once.
+    /// </remarks>
+    internal static IReadOnlyList<InlineFragment> Spoken(this Line line)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+
+        return [.. line.Speech.Where(fragment => fragment is not Jump)];
+    }
+
+    /// <summary>
     /// Yields <paramref name="node"/> and then each descendant, depth-first in document
     /// order (a node before its children). Returning a sequence lets callers compose with
     /// LINQ; the script's nesting is shallow, so recursion is safe.

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using DialogueDown.Common;
 using Generator.Equals;
 
 namespace DialogueDown.Configuration;
@@ -47,7 +48,7 @@ public sealed partial record CompilerOptions
     public ImmutableArray<ConfiguredSpeaker> Speakers
     {
         get => _speakers;
-        init => _speakers = RequireInitialized(value, nameof(Speakers));
+        init => _speakers = value.AssertInitialized(nameof(Speakers));
     }
 
     /// <summary>How far a compile proceeds after an error; the default is
@@ -75,11 +76,4 @@ public sealed partial record CompilerOptions
 
     /// <summary>Separates out the options the semantic analysis stage reads from the umbrella.</summary>
     internal ISemanticAnalyzerOptions ForSemanticAnalyzer() => new SemanticAnalyzerOptions(Speakers);
-
-    private static ImmutableArray<ConfiguredSpeaker> RequireInitialized(
-        ImmutableArray<ConfiguredSpeaker> speakers, string propertyName) =>
-        speakers.IsDefault
-            ? throw new ArgumentException(
-                "The immutable speaker array must be initialized.", propertyName)
-            : speakers;
 }

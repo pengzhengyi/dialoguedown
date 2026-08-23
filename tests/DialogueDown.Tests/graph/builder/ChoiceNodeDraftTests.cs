@@ -1,5 +1,4 @@
 using DialogueDown.Graph.Builder;
-using DialogueDown.Graph.Edges;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
@@ -13,8 +12,8 @@ public sealed class ChoiceNodeDraftTests
     public void Freeze_CarriesTheOptionEdgesAddedToIt()
     {
         var draft = new ChoiceNodeDraft(NodeId(0), SourceSpanFactory.Span(), isOrdered: true);
-        draft.AddEdge(new OptionEdge(NodeId(1)));
-        draft.AddEdge(new OptionEdge(NodeId(2)));
+        draft.AddEdge(OptionEdge(NodeId(1)));
+        draft.AddEdge(OptionEdge(NodeId(2)));
 
         var node = Assert.IsType<ChoiceNode>(draft.Freeze());
 

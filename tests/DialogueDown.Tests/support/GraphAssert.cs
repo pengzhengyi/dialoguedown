@@ -24,6 +24,20 @@ internal static class GraphAssert
         return divert;
     }
 
+    /// <summary>Asserts a label reads as <paramref name="words"/>.</summary>
+    public static void AssertReads(IReadOnlyList<InlineFragment> label, string words) =>
+        Assert.Equal(words, InlineText.Of(label));
+
+    /// <summary>Asserts the edge is an option, and returns it.</summary>
+    public static OptionEdge AssertOption(Edge edge) => Assert.IsType<OptionEdge>(edge);
+
+    /// <summary>Asserts the node offers exactly these options, labelled in this order.</summary>
+    public static void AssertOffers(DialogueNode node, params string[] labels)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        Assert.Equal(labels, node.Out.Select(edge => InlineText.Of(AssertOption(edge).Label)));
+    }
+
     /// <summary>Asserts the node's only out-edge is a succession to <paramref name="target"/>.</summary>
     /// <summary>
     /// Asserts the node's one fall-through leads to <paramref name="target"/>, beside whatever

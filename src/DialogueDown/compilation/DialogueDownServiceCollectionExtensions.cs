@@ -1,5 +1,6 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Emission;
 using DialogueDown.Graph;
 using DialogueDown.Graph.Builder;
 using DialogueDown.Markdown;
@@ -47,6 +48,9 @@ public static class DialogueDownServiceCollectionExtensions
             provider.GetRequiredService<ISemanticAnalyzer>(),
             provider.GetRequiredService<IDialogueGraphBuilder>(),
             options.Mode));
+
+        // The way out of the process, and the only reason a compile leaves anything behind.
+        services.TryAddSingleton<IPlaybookWriter>(_ => PlaybookWriterFactory.CreateDefault());
 
         return services;
     }
