@@ -20,9 +20,11 @@ Inkle
 Articy
 QuikGraph
 
-# .NET vocabulary and the architecture-test library.
+# .NET vocabulary and the test libraries.
 LINQ
 NetArchTest
+CsCheck
+Stryker
 
 # Dialogue engines named in the prior-art sections.
 Ren

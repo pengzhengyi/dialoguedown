@@ -1,5 +1,7 @@
 - name: Overview
   href: index.md
+- name: How this project is tested
+  href: testing.md
 - name: Design notes
   href: design-notes/
 - name: API reference
