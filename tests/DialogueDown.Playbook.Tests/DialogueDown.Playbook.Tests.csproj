@@ -24,4 +24,13 @@
     <ProjectReference Include="..\..\src\DialogueDown.Playbook\DialogueDown.Playbook.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The conformance corpus, so the harness reads it from the output rather than hunting for
+         the checkout it was built from. The sources come too: they are a reading aid rather than
+         something the harness runs, and a case that lost one would be far harder to review. -->
+    <None Include="..\..\conformance\readable\**\*.json;..\..\conformance\readable\**\*.md"
+          Link="conformance\readable\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
