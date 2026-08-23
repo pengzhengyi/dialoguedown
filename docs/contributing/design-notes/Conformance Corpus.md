@@ -80,8 +80,10 @@ At the repository root, in `conformance/`, beside `schema/`:
 conformance/
   README.md                     what a port is expected to do with this
   readable/                     can a reader load this document at all
-    unknown-requires.json
-    unknown-uses.json
+    unknown-requires/
+      source.dialogue.md        what the document was compiled from
+      playbook.json             that compile, then broken in one deliberate way
+      fixture.json              the claim: which verdict, and why
     …
   playable/                     does a runner hold the same conversation
     a-player-choice/
@@ -90,6 +92,16 @@ conformance/
       fixture.json              the hand-authored session
     …
 ```
+
+Every case is a directory whose `fixture.json` is the entry point, in both halves,
+so a port writes one loader rather than two.
+
+Both halves ship the source their playbook came from. A `playable/` case's
+playbook is exactly what that source compiles to. A `readable/` case's is not:
+its playbook is that compile with one deliberate edit, because no script compiles
+to a broken playbook — a compiler will not emit an unknown capability or a
+dangling node reference. The source is there so a reviewer reads a dialogue
+rather than a hundred lines of JSON, and `because` names the edit.
 
 The two directories name the **dimension a fixture probes** — can it be read, and
 does it play the same way — so each holds both verdicts. `readable/` covers both
@@ -329,6 +341,13 @@ the two can never be supplied together, and keeps `label` named `label`.
 
 A runtime must refuse the same documents. It need not refuse them in English.
 
+That leaves a hole: a document refused for an *accidental* reason still passes.
+Wherever the field under test allows it, a refusal is therefore paired with an
+acceptance built from the same playbook, differing only in that field —
+`unknown-requires` beside `unknown-uses`. The acceptance proves the rest of the
+document is sound, so the refusal can only be about the field the pair isolates.
+The reason is pinned without a word of the message being asserted.
+
 ### F6 — Minimal fixtures over realistic ones
 
 One construct per fixture. Realistic scripts belong in `examples/`, and their
@@ -365,7 +384,7 @@ The corpus is itself test material, so the question is what tests *it*.
 | --- | --- |
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
 | Readable corpus | Every refusal in C1's boundary table has a fixture, and every acceptance does too |
-| Fixture integrity | Every `playbook.json` under `conformance/` loads, and matches what its `source.dialogue.md` compiles to |
+| Fixture integrity | Every case ships a fixture, a playbook, and a source. A `playable/` playbook is what its source compiles to; a `readable/` one deliberately is not, so only the former is regenerated and compared |
 
 That last one is the guard against a corpus rotting: a committed playbook that no
 longer matches its source is a fixture asserting yesterday's format.
