@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Configuration;
@@ -107,6 +108,19 @@ internal sealed class ServedShellServer : IAsyncDisposable
         await _app.DisposeAsync();
     }
 
+    // The document a tab named is no longer the one being served, so nothing will arrive on its
+    // stream. The payload names it so a reader is told which script went quiet.
+    private static LiveEvent DisplacedEvent(string document) =>
+        new("displaced", JsonSerializer.Serialize(new { document }));
+
+    private static async Task WriteEventAsync(
+        HttpContext context, LiveEvent liveEvent, CancellationToken cancellationToken)
+    {
+        await context.Response.WriteAsync($"event: {liveEvent.Event}\n", cancellationToken);
+        await context.Response.WriteAsync($"data: {liveEvent.Data}\n\n", cancellationToken);
+        await context.Response.Body.FlushAsync(cancellationToken);
+    }
+
     private static bool TryParseMode(string? mode, out string parsed)
     {
         parsed = mode?.ToLowerInvariant() switch
@@ -169,7 +183,10 @@ internal sealed class ServedShellServer : IAsyncDisposable
         app.MapGet("/api/document", Document);
         app.MapPost("/api/save", (SaveRequest request) => Save(request));
         app.MapPost("/api/reload", (ReloadRequest request) => Reload(request));
-        app.MapGet("/api/events", HandleEventsAsync);
+        app.MapGet(
+            "/api/events",
+            (HttpContext context, IHostApplicationLifetime lifetime, string? doc, CancellationToken token) =>
+                HandleEventsAsync(context, lifetime, doc, token));
         app.MapGet(ReportMount, (HttpContext context) => Report(context, string.Empty));
         app.MapGet(ReportMount + "/{**path}", (HttpContext context, string? path) => Report(context, path ?? string.Empty));
     }
@@ -298,8 +315,16 @@ internal sealed class ServedShellServer : IAsyncDisposable
 
         lock (_gate)
         {
-            _active?.Watcher?.Dispose();
-            _active?.ConfigWatcher?.Dispose();
+            if (_active is { } displaced)
+            {
+                // Whoever is still watching the old document is about to stop being told anything:
+                // its watcher goes with it, and its stream would otherwise stay open and silent.
+                displaced.Session.Broadcaster.Broadcast(
+                    DisplacedEvent(_root.Relativize(displaced.Session.DocumentPath)));
+                displaced.Watcher?.Dispose();
+                displaced.ConfigWatcher?.Dispose();
+            }
+
             _active = new ActiveDocument(session, reportPath, watcher)
             {
                 ConfigWatcher = configWatcher,
@@ -503,7 +528,10 @@ internal sealed class ServedShellServer : IAsyncDisposable
     }
 
     private async Task HandleEventsAsync(
-        HttpContext context, IHostApplicationLifetime lifetime, CancellationToken cancellationToken)
+        HttpContext context,
+        IHostApplicationLifetime lifetime,
+        string? doc,
+        CancellationToken cancellationToken)
     {
         var active = Active();
         if (active is null)
@@ -514,6 +542,17 @@ internal sealed class ServedShellServer : IAsyncDisposable
 
         context.Response.Headers.ContentType = "text/event-stream";
         context.Response.Headers.CacheControl = "no-cache";
+
+        // A tab says which document it is showing. Binding it to whatever happens to be active
+        // would feed it another script's reloads after a switch — a browser reconnects a dropped
+        // stream on its own, so this is reached without anyone navigating. Report the displacement
+        // instead and let the tab stop; it is the same news the swap broadcasts to a live stream.
+        if (doc is { Length: > 0 } named
+            && !PathComparison.Comparer.Equals(named, _root.Relativize(active.Session.DocumentPath)))
+        {
+            await WriteEventAsync(context, DisplacedEvent(named), cancellationToken);
+            return;
+        }
 
         using var subscription = active.Session.Broadcaster.Subscribe(out var reader);
         await context.Response.Body.FlushAsync(cancellationToken);
