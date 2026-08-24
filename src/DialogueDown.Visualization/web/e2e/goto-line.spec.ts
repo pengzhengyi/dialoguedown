@@ -34,8 +34,9 @@ test("says what Enter will do, and keeps saying it as the field is typed into", 
     await page.locator(".source-pane .cm-content").click();
     await page.keyboard.press("Control+g");
 
-    await page.locator(field).fill("12:5");
-    await expect(page.locator(guidance)).toHaveText("Press Enter to go to line 12 at column 5.");
+    // Line 7 is the Alice line, long enough for column 5 to be a real place.
+    await page.locator(field).fill("7:5");
+    await expect(page.locator(guidance)).toHaveText("Press Enter to go to line 7 at column 5.");
 
     await page.locator(field).fill("");
     // With nothing to go to, the sentence teaches the expression instead.
@@ -55,6 +56,32 @@ test("stays a slim two-row box rather than a form-sized one", async ({ page }) =
     expect(input.height).toBeLessThan(34);
     expect(box.height).toBeLessThan(80);
     expect(box.width).toBeGreaterThan(box.height * 4);
+});
+
+test("prompts for the column range the moment the colon is typed", async ({ page }) => {
+    await page.goto(url);
+    await page.locator(".source-pane .cm-content").click();
+    await page.keyboard.press("Control+g");
+
+    await page.locator(field).fill("3:");
+
+    // The range belongs to that line, so it has to name the line as well as the bound.
+    await expect(page.locator(guidance)).toContainText("Type a column between 1 and");
+    await expect(page.locator(guidance)).toContainText("on line 3");
+});
+
+test("counts columns from one, so :1 is the start of the line", async ({ page }) => {
+    await page.goto(url);
+    await page.locator(".source-pane .cm-content").click();
+    await page.keyboard.press("Control+g");
+
+    await page.locator(field).fill("7:1");
+    await page.keyboard.press("Enter");
+    // CodeMirror counts columns from zero, which would land `:1` one character in. Typing is the
+    // unambiguous check: at column 1 the character must land before everything already there.
+    await page.keyboard.type("X");
+
+    await expect(page.locator(".source-pane .cm-content")).toContainText("XAlice:");
 });
 
 test("offers the column once a line is entered", async ({ page }) => {

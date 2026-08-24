@@ -21,25 +21,32 @@ import { EditorView, showDialog, type Command, type KeyBinding } from "@codemirr
 interface GotoTarget {
     /** A line number, already clamped into the document. */
     readonly line: number;
-    /** A column within that line, clamped when the jump is made. */
-    readonly column: number;
     /** Whether the expression named a line outside the document and was pulled back inside. */
-    readonly clamped: boolean;
+    readonly clampedLine: boolean;
+    /** A one-based column, already clamped into the line. One when none was typed. */
+    readonly column: number;
+    /** The last column the line has — one past its final character, where a cursor may rest. */
+    readonly lastColumn: number;
+    /** Whether a column was asked for but not yet typed, as in `23:`. */
+    readonly awaitingColumn: boolean;
+    /** Whether a typed column ran past the end of the line and was pulled back. */
+    readonly clampedColumn: boolean;
 }
 
 /**
  * A line, optionally signed for a relative jump, optionally suffixed `%` for a position in the
  * document, and optionally followed by `:column`. Mirrors the expression CodeMirror's own
- * `gotoLine` accepts, so a reader who knows one knows the other.
+ * `gotoLine` accepts, with the colon allowed to stand alone — `23:` is a reader on their way to
+ * naming a column, and the dialog answers them rather than falling silent.
  */
-const EXPRESSION = /^\s*([+-])?(\d+)?(:\d+)?(%)?\s*$/;
+const EXPRESSION = /^\s*([+-])?(\d+)?(?::(\d*))?(%)?\s*$/;
 
 /** Resolves a typed expression, or null when it names nothing to go to. */
 export function resolve(state: EditorState, value: string): GotoTarget | null {
     const match = EXPRESSION.exec(value);
-    if (!match) return null;
-    const [, sign, digits, colon, percent] = match;
-    if (digits == null && colon == null) return null;
+    if (match == null) return null;
+    const [, sign, digits, columnDigits, percent] = match;
+    if (digits == null && columnDigits == null) return null;
 
     const start = state.doc.lineAt(state.selection.main.head);
     let line = digits == null ? start.number : Number(digits);
@@ -54,10 +61,17 @@ export function resolve(state: EditorState, value: string): GotoTarget | null {
     }
 
     const clamped = Math.max(1, Math.min(state.doc.lines, line));
+    // One past the final character, so the last column is a place a cursor can actually rest.
+    const lastColumn = state.doc.line(clamped).length + 1;
+    const typed = columnDigits == null || columnDigits === "" ? null : Number(columnDigits);
+    const column = typed == null ? 1 : Math.max(1, Math.min(lastColumn, typed));
     return {
         line: clamped,
-        column: colon == null ? 0 : Number(colon.slice(1)),
-        clamped: clamped !== line,
+        clampedLine: clamped !== line,
+        column,
+        lastColumn,
+        awaitingColumn: columnDigits === "",
+        clampedColumn: typed != null && column !== typed,
     };
 }
 
@@ -73,21 +87,33 @@ export function guidanceFor(state: EditorState, value: string): string {
     if (target == null) {
         return `Type a line between 1 and ${state.doc.lines} — or 12:5, +10, -10, 50%.`;
     }
-    if (target.column > 0) {
-        return `Press Enter to go to line ${target.line} at column ${target.column}.`;
+    if (target.awaitingColumn) {
+        // An empty line has one column and no range to speak of, so say what is there instead.
+        return target.lastColumn === 1
+            ? `Line ${target.line} is empty — Enter goes to its start.`
+            : `Type a column between 1 and ${target.lastColumn} on line ${target.line}.`;
     }
-    const where = target.clamped
+    if (target.column > 1 || target.clampedColumn) {
+        const where = `line ${target.line} at column ${target.column}`;
+        return target.clampedColumn
+            ? `Press Enter to go to ${where}, the end of the line.`
+            : `Press Enter to go to ${where}.`;
+    }
+    const where = target.clampedLine
         ? `line ${target.line}, the nearest in the document`
         : `line ${target.line}`;
     return `Press Enter to go to ${where} — add :5 for a column.`;
 }
 
-/** Moves the cursor to a resolved target and brings it into view. */
+/**
+ * Moves the cursor to a resolved target and brings it into view.
+ *
+ * Columns are one-based, as they are in VS Code and in the sentence above the cursor — CodeMirror
+ * counts them from zero, which would put `12:1` one character in from where a reader means.
+ */
 function goTo(view: EditorView, target: GotoTarget): void {
     const line = view.state.doc.line(target.line);
-    const selection = EditorSelection.cursor(
-        line.from + Math.max(0, Math.min(target.column, line.length)),
-    );
+    const selection = EditorSelection.cursor(line.from + (target.column - 1));
     view.dispatch({
         selection,
         effects: EditorView.scrollIntoView(selection.from, { y: "center" }),

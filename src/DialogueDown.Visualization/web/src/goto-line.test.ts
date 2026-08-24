@@ -14,7 +14,8 @@ const state = docAt();
 
 describe("resolve", () => {
     it("takes a plain line number", () => {
-        expect(resolve(state, "3")).toMatchObject({ line: 3, column: 0, clamped: false });
+        // A line with no column names its first character, not a zeroth one.
+        expect(resolve(state, "3")).toMatchObject({ line: 3, column: 1, clampedLine: false });
     });
 
     it("takes a line and a column", () => {
@@ -23,6 +24,20 @@ describe("resolve", () => {
 
     it("takes a column alone, keeping the line the cursor is on", () => {
         expect(resolve(state, ":7")).toMatchObject({ line: 10, column: 7 });
+    });
+
+    it("accepts a colon on its own as a column still being typed", () => {
+        // `line N text` is 11 characters, so a cursor can rest in columns 1 through 12.
+        expect(resolve(state, "3:")).toMatchObject({
+            line: 3,
+            column: 1,
+            lastColumn: 12,
+            awaitingColumn: true,
+        });
+    });
+
+    it("pulls a column past the end of the line back to it, and says it did", () => {
+        expect(resolve(state, "3:999")).toMatchObject({ column: 12, clampedColumn: true });
     });
 
     it("moves relative to the cursor on a sign", () => {
@@ -41,8 +56,8 @@ describe("resolve", () => {
     });
 
     it("pulls a line outside the document back to the nearest one, and says it did", () => {
-        expect(resolve(state, "999")).toMatchObject({ line: 20, clamped: true });
-        expect(resolve(state, "-999")).toMatchObject({ line: 1, clamped: true });
+        expect(resolve(state, "999")).toMatchObject({ line: 20, clampedLine: true });
+        expect(resolve(state, "-999")).toMatchObject({ line: 1, clampedLine: true });
     });
 
     it("resolves nothing from an empty or unreadable expression", () => {
@@ -61,6 +76,22 @@ describe("guidanceFor", () => {
     it("offers the column once a line is entered, and stops once one is given", () => {
         expect(guidanceFor(state, "3")).toContain("add :5 for a column");
         expect(guidanceFor(state, "3:8")).not.toContain("add :5");
+    });
+
+    it("names the column range as soon as the colon is typed", () => {
+        expect(guidanceFor(state, "3:")).toBe("Type a column between 1 and 12 on line 3.");
+    });
+
+    it("says what an empty line offers rather than a range of one", () => {
+        const blank = EditorState.create({ doc: "first\n\nthird" });
+
+        expect(guidanceFor(blank, "2:")).toBe("Line 2 is empty — Enter goes to its start.");
+    });
+
+    it("says when a column ran past the end of its line", () => {
+        expect(guidanceFor(state, "3:999")).toBe(
+            "Press Enter to go to line 3 at column 12, the end of the line.",
+        );
     });
 
     it("says when a line was pulled back inside the document", () => {

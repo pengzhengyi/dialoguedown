@@ -1960,7 +1960,10 @@ g.node.entity-highlight text.label {
     transform: translateX(-50%);
 }
 
-.dd-goto {
+/* Both classes, deliberately: CodeMirror's `.cm-panel` sets a lopsided `2px 19px 4px 6px` to
+   reserve room for the close button it draws, and would otherwise win on equal specificity —
+   leaving a visibly wider margin down the right of the box than the left. */
+.dd-goto.cm-dialog {
     /* Long and thin: wide enough for the sentence to sit on one line, no taller than the two
        rows need. An absolute width, because the panel row it sits in shrink-wraps its content,
        so a percentage here would resolve against the box's own width. */
@@ -1992,7 +1995,7 @@ g.node.entity-highlight text.label {
     width: 100%;
     height: auto !important;
     margin: 0 !important;
-    padding: 0.25rem 0.45rem !important;
+    padding: 0.2rem 0.45rem !important;
     border: 1px solid var(--pico-primary);
     border-radius: var(--pico-border-radius);
     background: var(--pico-form-element-background-color);
@@ -2011,7 +2014,7 @@ g.node.entity-highlight text.label {
 /* The sentence carries the accent so it reads as the dialog's answer rather than as fine print,
    the way VS Code highlights the row under its field. */
 .dd-goto-guidance {
-    padding: 0.24rem 0.45rem;
+    padding: 0.2rem 0.45rem;
     border-radius: var(--pico-border-radius);
     background: color-mix(in srgb, var(--pico-primary) 16%, transparent);
     color: var(--pico-color);
