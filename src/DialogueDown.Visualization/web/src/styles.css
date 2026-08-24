@@ -1940,6 +1940,83 @@ g.node.entity-highlight text.label {
     border: none;
 }
 
+/* CodeMirror's Go to line dialog (Mod-Alt-g) arrives with browser-default chrome: a stacked
+   label, a full-width field, and a full-width button filling the pane's foot. Only its layout is
+   ours — the command, its parsing (a line, a `+`/`-` offset, a `%` of the document, or
+   `line:column`), and its behavior stay CodeMirror's. Laid out as one compact row it reads like
+   the find panel above it instead of a form dropped into the editor. */
+:is(.source-pane, .config-source, .playbook-source) .cm-panel form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.76rem;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel form label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--pico-muted-color);
+    white-space: nowrap;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-textfield {
+    width: 7rem;
+    height: auto;
+    margin: 0;
+    padding: 0.22rem 0.4rem;
+    border: 1px solid var(--pico-form-element-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-form-element-background-color);
+    color: var(--pico-color);
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-textfield:focus {
+    border-color: var(--pico-primary);
+    outline: none;
+    box-shadow: none;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel :is(.cm-button, .cm-dialog-close) {
+    /* Pico redefines --pico-color to white on buttons, which hid "go" and the close cross on the
+       light panel; inherit the normal text color, as the table panels' buttons already do. */
+    --pico-color: inherit;
+
+    color: inherit;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-button {
+    width: auto;
+    margin: 0;
+    padding: 0.22rem 0.6rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    background-image: none;
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-button:hover {
+    border-color: var(--pico-primary);
+}
+
+/* The dialog's close cross ships unsized and unpositioned; give it the room a target needs. */
+:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-dialog-close {
+    width: auto;
+    margin: 0;
+    padding: 0 0.35rem;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    line-height: 1;
+}
+
 /* Compiler-projected reserved targets are editor panels, not synthetic document lines. The faux
    gutter aligns with CodeMirror's real gutters and uses a non-numeric sentinel marker, while the
    row remains fixed and read-only below the scrollable source. */

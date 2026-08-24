@@ -23,8 +23,9 @@ const SOURCE_HELP = `
   <p><strong>Drag the divider</strong> between the panes to re-proportion them, or use its
      <strong>hide handle</strong> to collapse the preview and give the editor the full
      width (click again to bring it back).</p>
-  <p><strong>Editor.</strong> Find with <kbd>⌘/Ctrl-F</kbd> and fold a section from the
-     gutter arrow. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
+  <p><strong>Editor.</strong> Find with <kbd>⌘/Ctrl-F</kbd>, <strong>go to a line</strong> with
+     <kbd>⌘/Ctrl-Alt-G</kbd>, and fold a section from the gutter arrow. In Live Edit, format
+     the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
      <kbd>⌘/Ctrl-I</kbd> (italic) and <kbd>⌘/Ctrl-K</kbd> (link), or type <kbd>*</kbd>
      around a selection to emphasize it. <strong>Quote a block</strong> with
      <kbd>⌘/Ctrl-.</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-Shift-.</kbd>: quoting
@@ -128,8 +129,9 @@ const PLAYBOOK_HELP = `
      loads and plays. It is generated, so this editor is read-only — change the script, not
      the playbook.</p>
   <p><strong>Reading it.</strong> Fold a section with the arrow in the gutter, and search with
-     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>. <strong>Hover a property</strong> to see what the format
-     says it means, taken from the published schema; the stretch that description covers is
+     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>, or jump straight to a line with
+     <kbd>Cmd/Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd>. <strong>Hover a property</strong> to see
+     what the format says it means, taken from the published schema; the stretch it covers is
      washed in while the tip is open.</p>
   <p><strong>Beside it</strong> are three panels — the playbook's header, its speakers, and the
      anchors a jump may name. Each folds from its caret, counts its rows, and searches from the
