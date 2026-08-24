@@ -17,10 +17,14 @@
     --md-code: #0550ae;
     --md-muted: #6e7781;
 
-    /* A JSON string value. It needs its own hue because in this palette `--md-code` and
-       `--md-heading` are the same blue, which would render a playbook's keys and its string
-       values identically — the one distinction a reader of JSON most needs. */
-    --json-string: #0a3069;
+    /* The Playbook editor's JSON, following the VS Code Light+ roles this file already uses for
+       code-span semantics (Dark+ counterparts below). JSON gets its own set rather than reusing
+       the Markdown hues, which are one blue family: a playbook is nearly all quoted strings, so
+       a key, a value, and a number have to part company on hue, not on shade. */
+    --json-key: #0451a5;
+    --json-string: #a31515;
+    --json-number: #098658;
+    --json-literal: #00f;
     --dd-chrome-muted: #57606a;
     --cm-selection: rgb(20 100 210 / 22%);
     --problem-text: #24292f;
@@ -102,7 +106,10 @@
         --md-link: #79c0ff;
         --md-code: #a5d6ff;
         --md-muted: #8b949e;
-        --json-string: #a5d6ff;
+        --json-key: #9cdcfe;
+        --json-string: #ce9178;
+        --json-number: #b5cea8;
+        --json-literal: #569cd6;
         --dd-chrome-muted: #8b949e;
         --cm-selection: rgb(100 165 255 / 35%);
         --problem-text: #c9d1d9;
@@ -140,7 +147,10 @@
     --md-link: #79c0ff;
     --md-code: #a5d6ff;
     --md-muted: #8b949e;
-    --json-string: #a5d6ff;
+    --json-key: #9cdcfe;
+    --json-string: #ce9178;
+    --json-number: #b5cea8;
+    --json-literal: #569cd6;
     --dd-chrome-muted: #8b949e;
     --cm-selection: rgb(100 165 255 / 35%);
     --problem-text: #c9d1d9;

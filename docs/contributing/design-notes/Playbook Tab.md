@@ -114,6 +114,15 @@ brings fold ranges with it. Adopting it **shrank the client by 15 KB**: the lega
 mode it replaced carries JS and TypeScript too, and dropping its last use let the bundler shake
 the whole module out. Better highlighting, free folding, and a smaller download.
 
+The colors follow **VS Code's JSON roles** — a key, a string, a number, and a literal each on
+their own hue — which is the convention this palette already states it uses for code-span
+semantics, and which already carries VS Code's string (`#a31515`/`#ce9178`) and number
+(`#098658`/`#b5cea8`) hues for dialogue tokens. The Markdown hues would not have served: they are
+one blue family, and a playbook is nearly all quoted strings, so its parts have to part company on
+hue rather than on shade. Punctuation is the one departure, muted instead of VS Code's plain
+black: this editor is read, not written, so the braces that give a block its shape recede behind
+the data.
+
 The one thing the grammar is *not* used for is reading a line's schema path — see
 [DD11](#dd11--the-grammar-folds-the-text-answers).
 
@@ -247,4 +256,4 @@ per line, and no literal newline inside a string. A hand-written JSON file would
 | Playwright | The wash: it covers the block, it lifts with the tooltip, and it **actually paints** — a decoration whose style is scoped to another pane is present and "visible" while washing nothing. |
 | Playwright | The panels' remembered state does not collide with the Semantic tab's same-named ones. |
 | Playwright | Folding from the gutter hides a block's members while the rest of the document stays, and the placeholder opens it again. |
-| Playwright | A key and a string value render in different colors — the assertion the previous tokenizer could not have passed. |
+| Playwright | A key, a string value, and a number render in three different colors — an assertion the previous tokenizer could not have passed. |

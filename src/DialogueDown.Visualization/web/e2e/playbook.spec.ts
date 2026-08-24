@@ -66,9 +66,7 @@ test.describe("Playbook tab — a compiled script", () => {
         expect(titles.at(-2)).toBe("Dialogue Graph");
     });
 
-    test("tells a key from a string value, which one grammar-less token could not", async ({
-        page,
-    }) => {
+    test("gives a key, a string, and a number each their own hue", async ({ page }) => {
         await page.click(playbookTab);
         const content = page.locator(".playbook-source .cm-content");
 
@@ -78,8 +76,15 @@ test.describe("Playbook tab — a compiled script", () => {
                 .first()
                 .evaluate((node) => getComputedStyle(node).color);
 
-        // Both are quoted, so only a real parser can say which is the name and which the value.
-        expect(await colorOf('"script"')).not.toBe(await colorOf('"scene.dialogue.md"'));
+        // A key and a string value are both quoted, so only a real parser can tell them apart —
+        // the previous tokenizer emitted one token for both and could not have passed this.
+        const [key, string, number] = [
+            await colorOf('"script"'),
+            await colorOf('"scene.dialogue.md"'),
+            await colorOf("0"),
+        ];
+
+        expect(new Set([key, string, number]).size).toBe(3);
     });
 
     test("shows the serialized playbook in an editor a reader cannot edit", async ({ page }) => {

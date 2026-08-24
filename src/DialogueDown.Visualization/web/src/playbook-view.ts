@@ -40,15 +40,19 @@ import { escapeHtml } from "./text";
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
  * live like the Markdown and TOML editors.
  *
- * A key and a string value take different hues. The Lezer grammar is what makes that possible:
- * the legacy tokenizer this replaced emitted one token for both, so no style could tell them
- * apart — in a document where every key and most values are quoted, that is the distinction a
- * reader most needs.
+ * The roles are VS Code's — a key, a string, a number, and a literal each on their own hue —
+ * because a playbook is nearly all quoted strings and shades of one blue would not separate
+ * them. The Lezer grammar is what makes it possible at all: the legacy tokenizer this replaced
+ * emitted a single token for a property name and a string value alike.
+ *
+ * Punctuation is the exception, muted rather than VS Code's plain black. This editor is read,
+ * not written, so the braces that give a block its shape should recede behind the data.
  */
 const jsonHighlightStyle = HighlightStyle.define([
-    { tag: [tags.propertyName, tags.definition(tags.propertyName)], color: "var(--md-heading)" },
+    { tag: [tags.propertyName, tags.definition(tags.propertyName)], color: "var(--json-key)" },
     { tag: tags.string, color: "var(--json-string)" },
-    { tag: [tags.number, tags.bool, tags.atom, tags.null], color: "var(--md-link)" },
+    { tag: tags.number, color: "var(--json-number)" },
+    { tag: [tags.bool, tags.null, tags.atom], color: "var(--json-literal)" },
     { tag: [tags.separator, tags.squareBracket, tags.brace], color: "var(--md-muted)" },
 ]);
 
