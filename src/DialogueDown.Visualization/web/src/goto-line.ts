@@ -61,19 +61,25 @@ export function resolve(state: EditorState, value: string): GotoTarget | null {
     };
 }
 
-/** The sentence under the field: what Enter will do, or what to type when it would do nothing. */
+/**
+ * The sentence under the field: what Enter will do, or what to type when it would do nothing.
+ *
+ * It teaches as it goes. With nothing typed it names the range and the forms; with a line but no
+ * column it offers the column, which is the part of the expression a reader is most likely to
+ * want next and least likely to guess.
+ */
 export function guidanceFor(state: EditorState, value: string): string {
     const target = resolve(state, value);
     if (target == null) {
-        return `Type a line between 1 and ${state.doc.lines} — also 12:5, +10, -10, or 50%.`;
+        return `Type a line between 1 and ${state.doc.lines} — or 12:5, +10, -10, 50%.`;
     }
-    const where =
-        target.column > 0
-            ? `line ${target.line} at column ${target.column}`
-            : `line ${target.line}`;
-    return target.clamped
-        ? `Press Enter to go to ${where}, the nearest line in the document.`
-        : `Press Enter to go to ${where}.`;
+    if (target.column > 0) {
+        return `Press Enter to go to line ${target.line} at column ${target.column}.`;
+    }
+    const where = target.clamped
+        ? `line ${target.line}, the nearest in the document`
+        : `line ${target.line}`;
+    return `Press Enter to go to ${where} — add :5 for a column.`;
 }
 
 /** Moves the cursor to a resolved target and brings it into view. */

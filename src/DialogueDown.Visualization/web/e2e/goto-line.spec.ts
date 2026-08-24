@@ -42,6 +42,34 @@ test("says what Enter will do, and keeps saying it as the field is typed into", 
     await expect(page.locator(guidance)).toContainText("50%");
 });
 
+test("stays a slim two-row box rather than a form-sized one", async ({ page }) => {
+    await page.goto(url);
+    await page.locator(".source-pane .cm-content").click();
+    await page.keyboard.press("Control+g");
+
+    // Pico sizes inputs for a form; unchecked, the field alone is taller than the whole box
+    // should be. Long and thin is the shape: wide enough to read, no taller than two rows.
+    const box = (await page.locator(dialog).boundingBox())!;
+    const input = (await page.locator(field).boundingBox())!;
+
+    expect(input.height).toBeLessThan(34);
+    expect(box.height).toBeLessThan(80);
+    expect(box.width).toBeGreaterThan(box.height * 4);
+});
+
+test("offers the column once a line is entered", async ({ page }) => {
+    await page.goto(url);
+    await page.locator(".source-pane .cm-content").click();
+    await page.keyboard.press("Control+g");
+
+    await page.locator(field).fill("9");
+    await expect(page.locator(guidance)).toContainText("add :5 for a column");
+
+    // Once a column is given the offer has served its purpose and goes away.
+    await page.locator(field).fill("9:5");
+    await expect(page.locator(guidance)).toHaveText("Press Enter to go to line 9 at column 5.");
+});
+
 test("offers no button — Enter goes, and there is nothing else to press", async ({ page }) => {
     await page.goto(url);
     await page.locator(".source-pane .cm-content").click();
@@ -60,7 +88,7 @@ test("takes a relative offset, which the sentence resolves before the jump", asy
 
     await page.keyboard.press("Control+g");
     await page.locator(field).fill("-2");
-    await expect(page.locator(guidance)).toHaveText("Press Enter to go to line 3.");
+    await expect(page.locator(guidance)).toContainText("Press Enter to go to line 3");
     await page.keyboard.press("Enter");
 
     await expect(page.locator(activeLine(".source-pane"))).toHaveText("3");

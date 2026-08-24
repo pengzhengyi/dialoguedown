@@ -338,8 +338,9 @@ changes easy to categorize.
   foot. It now opens on <kbd>Ctrl-G</kbd> as it does in VS Code, and floats over the text near the
   top — focused on arrival, dismissed by Escape or by clicking away, gone once the jump is made,
   nothing reflowing behind it. A line reading under the field says what Enter will do, and teaches
-  the expression while it is empty: a line number, `line:column`, a `+`/`-` offset, or a `%` of
-  the document all work, and none of them were discoverable before.
+  the expression as it goes: it names the range while the field is empty, and offers the column
+  once a line is entered. A line number, `line:column`, a `+`/`-` offset, or a `%` of the document
+  all work, and none of them were discoverable before.
 
 - **A second script no longer silences the first one's tab** — opening a script stopped the one
   already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept

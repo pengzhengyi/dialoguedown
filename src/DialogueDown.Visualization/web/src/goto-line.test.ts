@@ -54,12 +54,17 @@ describe("resolve", () => {
 
 describe("guidanceFor", () => {
     it("says what Enter will do", () => {
-        expect(guidanceFor(state, "3")).toBe("Press Enter to go to line 3.");
+        expect(guidanceFor(state, "3")).toContain("Press Enter to go to line 3");
         expect(guidanceFor(state, "12:5")).toBe("Press Enter to go to line 12 at column 5.");
     });
 
+    it("offers the column once a line is entered, and stops once one is given", () => {
+        expect(guidanceFor(state, "3")).toContain("add :5 for a column");
+        expect(guidanceFor(state, "3:8")).not.toContain("add :5");
+    });
+
     it("says when a line was pulled back inside the document", () => {
-        expect(guidanceFor(state, "999")).toContain("nearest line");
+        expect(guidanceFor(state, "999")).toContain("nearest in the document");
     });
 
     it("teaches the expression when nothing is typed yet", () => {

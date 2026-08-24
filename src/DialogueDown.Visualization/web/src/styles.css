@@ -1961,9 +1961,12 @@ g.node.entity-highlight text.label {
 }
 
 .dd-goto {
-    width: max-content;
-    max-width: min(26rem, 90vw);
-    padding: 0.4rem;
+    /* Long and thin: wide enough for the sentence to sit on one line, no taller than the two
+       rows need. An absolute width, because the panel row it sits in shrink-wraps its content,
+       so a percentage here would resolve against the box's own width. */
+    width: 30rem;
+    max-width: 80vw;
+    padding: 0.3rem;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -1979,33 +1982,36 @@ g.node.entity-highlight text.label {
 .dd-goto-form {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.3rem;
     margin: 0;
 }
 
+/* Pico sizes every input for a form, which here means a field five times taller than its text.
+   Overridden the same way the find panel's field already overrides it. */
 .dd-goto-input {
     width: 100%;
-    height: auto;
-    margin: 0;
-    padding: 0.3rem 0.5rem;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0.25rem 0.45rem !important;
     border: 1px solid var(--pico-primary);
     border-radius: var(--pico-border-radius);
     background: var(--pico-form-element-background-color);
     color: var(--pico-color);
     font-family: var(--pico-font-family-monospace);
-    font-size: 0.8rem;
-    line-height: 1.4;
+    font-size: 0.78rem !important;
+    line-height: 1.4 !important;
+    box-shadow: none !important;
 }
 
 .dd-goto-input:focus {
     outline: none;
-    box-shadow: none;
+    box-shadow: none !important;
 }
 
 /* The sentence carries the accent so it reads as the dialog's answer rather than as fine print,
    the way VS Code highlights the row under its field. */
 .dd-goto-guidance {
-    padding: 0.28rem 0.5rem;
+    padding: 0.24rem 0.45rem;
     border-radius: var(--pico-border-radius);
     background: color-mix(in srgb, var(--pico-primary) 16%, transparent);
     color: var(--pico-color);
