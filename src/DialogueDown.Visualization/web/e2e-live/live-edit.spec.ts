@@ -736,4 +736,7 @@ test("Jump to Dialogue Graph resolves a selection to what contains it, not what 
     await expect(selected).toHaveCount(1);
     // The choice that holds both options — not the first option, whose flow runs on into "Lake".
     await expect(selected).toContainText("Random choice");
+    // And revealed at a scale the reader can actually read, not a whole-script fit.
+    const drawn = await selected.boundingBox();
+    expect(drawn!.height).toBeGreaterThan(12);
 });

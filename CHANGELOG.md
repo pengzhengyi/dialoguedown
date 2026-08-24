@@ -316,7 +316,9 @@ changes easy to categorize.
 - **Jumping from the Source into the Dialogue Graph lands on the right node** — a selection
   resolved to whatever the flow led to rather than what held it, so the graph revealed the wrong
   node and previewed a region that ran past the end of the scene. Choosing **Jump to ▸ Dialogue
-  Graph** now reveals the node the text belongs to, matching what the other stages resolve to.
+  Graph** now reveals the node the text belongs to, matching what the other stages resolve to, and
+  every stage brings the revealed node up to a readable scale rather than centering it at a
+  whole-script fit where it is a few pixels tall.
 
 - **A second script no longer silences the first one's tab** — opening a script stopped the one
   already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept

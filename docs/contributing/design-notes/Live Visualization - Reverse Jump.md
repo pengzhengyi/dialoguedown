@@ -31,6 +31,9 @@ Jump-to menu at the caret is in scope.
 - [x] Choosing a stage switches to that tab (save-safe) and selects the node whose
       **subtree extent** most tightly encloses the current selection, **centered**
       in view — never coarser than the scene containing the selection start.
+- [x] The revealed node is brought up to a **readable scale** (never zoomed out
+      from one the reader chose), since a node centered at a whole-script fit is a
+      few pixels tall and no more visible than one left folded away.
 - [x] Matching uses the current selection `[from, to)`; with just a caret it uses
       the caret offset. A precise selection lands on a leaf; a scene-wide one on
       the scene; a cross-scene one is capped at the start's scene.
