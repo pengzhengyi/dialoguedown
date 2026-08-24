@@ -27,6 +27,9 @@ public sealed class CorpusFolder
         _folder = folder;
     }
 
+    /// <summary>Gets the folder's own name, which distinguishes one half of the corpus from the other.</summary>
+    public string Name => Path.GetFileName(_folder)!;
+
     /// <summary>Every case, by folder name, in a stable order.</summary>
     /// <returns>The case names.</returns>
     public IEnumerable<string> Cases() =>

@@ -66,25 +66,7 @@ public sealed class ReadableCorpusTests
         Assert.Contains("elsewhere.json", error.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void ShipsSource_ACaseWithoutOne_IsFalse()
-    {
-        using var corpus = Holding("no-source");
 
-        Assert.False(new ReadableCorpus(corpus.Folder).ShipsSource("no-source"));
-    }
-
-    [Fact]
-    public void ShipsSource_ACaseWithOne_IsTrue()
-    {
-        using var corpus = new TemporaryCorpus().With(
-            "with-source",
-            ("fixture.json", Fixture),
-            ("playbook.json", Playbook),
-            ("source.dialogue.md", "Alice: Hello."));
-
-        Assert.True(new ReadableCorpus(corpus.Folder).ShipsSource("with-source"));
-    }
 
     private static TemporaryCorpus Holding(string caseName) =>
         new TemporaryCorpus().With(caseName, ("fixture.json", Fixture), ("playbook.json", Playbook));

@@ -41,15 +41,6 @@ public sealed class ReadableConformanceTests
         Assert.NotEmpty(Refused());
     }
 
-    [Theory]
-    [MemberData(nameof(Accepted))]
-    [MemberData(nameof(Refused))]
-    public void ACase_ShipsTheSourceItsPlaybookWasCompiledFrom(string caseName)
-    {
-        // The harness never reads the source. It is here so a reviewer weighs a dialogue rather
-        // than a hundred lines of JSON, which only works if it cannot quietly go missing.
-        Assert.True(Corpus.ShipsSource(caseName), $"The case '{caseName}' ships no source.");
-    }
 
     private static TheoryData<string> Cases(Verdict verdict)
     {

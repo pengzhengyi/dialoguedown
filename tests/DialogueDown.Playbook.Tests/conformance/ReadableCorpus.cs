@@ -12,7 +12,6 @@ namespace DialogueDown.Playbook.Tests.Conformance;
 public sealed class ReadableCorpus
 {
     private const string FixtureFile = "fixture.json";
-    private const string SourceFile = "source.dialogue.md";
 
     private readonly CorpusFolder _folder;
 
@@ -31,10 +30,6 @@ public sealed class ReadableCorpus
     /// <returns>The case names.</returns>
     public IEnumerable<string> Cases() => _folder.Cases();
 
-    /// <summary>Whether a case ships the source its playbook was compiled from.</summary>
-    /// <param name="caseName">The case's folder name.</param>
-    /// <returns><see langword="true"/> when the reading aid is there.</returns>
-    public bool ShipsSource(string caseName) => _folder.Has(caseName, SourceFile);
 
     /// <summary>Reads one case.</summary>
     /// <param name="caseName">The case's folder name.</param>
