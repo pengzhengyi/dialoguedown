@@ -24,7 +24,14 @@ export default defineConfig({
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
+    // Refuse to run against a server this checkout did not start — see the guard for why.
+    globalSetup: "./e2e-live/guard-ports.mjs",
     reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+    // Assertions here wait on a real server doing real work, not on a DOM update: opening a
+    // script compiles it, answers a redirect, and loads the whole report. That round trip is
+    // under a second idle but climbs past three under a loaded machine, which leaves Playwright's
+    // 5s default barely any headroom. Only a failing assertion ever waits this long.
+    expect: { timeout: 15_000 },
     // See playwright.config.ts: a failure here is usually a timing one, and the trace's per-action
     // DOM snapshots are what distinguish "the page never rendered it" from "a rebuild took it away
     // again" without reproducing the run.

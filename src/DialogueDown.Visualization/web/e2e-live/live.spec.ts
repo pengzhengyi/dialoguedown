@@ -72,9 +72,12 @@ test("serves images alongside the document so relative links resolve", async ({ 
     await expect
         .poll(async () => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
         .toBeGreaterThan(0);
-
-    rmSync(assets, { recursive: true, force: true });
 });
+
+// Written beside the document rather than into a temp dir, so the relative link above is the one
+// a writer would type. Removed after the test rather than at the end of its body: a failure or an
+// interrupted run would otherwise leave the checkout dirty.
+test.afterEach(() => rmSync(join(dirname(LIVE_DOC), "assets"), { recursive: true, force: true }));
 
 test("hot-reloads the report when the document changes on disk", async ({ page }) => {
     writeFileSync(LIVE_DOC, "# Rewritten Scene\n\nBob: A brand new line.\n");
