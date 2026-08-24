@@ -181,6 +181,13 @@ The live end-to-end tests run with `npm run e2e:live` in `web/`. The command
 builds the CLI once, then launches each loopback server from that Release DLL
 without repeating project builds.
 
+Locally, Playwright reuses a server already listening on a fixture port rather
+than starting its own, which keeps the inner loop quick. A server left running by
+**another worktree** would therefore serve a different build, and the suite would
+test it in silence. A check before the run refuses that: each fixture server
+shows the document or tree it serves, so a server whose fixtures are not this
+checkout's stops the run by name. Stop the other server and run again.
+
 When an end-to-end test fails, Playwright can keep a trace of the failing run — a
 DOM snapshot, console, and network activity for every action. Tracing costs real
 time, so it is not on by default; ask for it while debugging, then open what it

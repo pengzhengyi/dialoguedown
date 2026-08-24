@@ -1,0 +1,45 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 1,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "the-inn": 0
+  },
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Hello."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 1,
+      "out": []
+    }
+  ]
+}

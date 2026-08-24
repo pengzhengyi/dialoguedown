@@ -1,0 +1,13 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "one line follows another, and the run ends",
+  "playbook": "playbook.json",
+  "because": "succession is the plainest thing a runner does, so a port that fails here fails everything",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Hello." } } },
+    { "send": "continue" },
+    { "expect": { "said": { "speaker": "Bob", "speech": "Goodbye." } } },
+    { "send": "continue" },
+    { "expect": { "ended": {} } }
+  ]
+}

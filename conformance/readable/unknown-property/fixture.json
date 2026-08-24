@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "unknown property is played as written",
+  "playbook": "playbook.json",
+  "verdict": "accept",
+  "because": "carries a property this version never defined, which a newer compiler may add without breaking an older reader"
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "styled speech keeps its fragments and its styles",
+  "playbook": "playbook.json",
+  "because": "this is the one fixture whose subject is structure, so it asserts the playbook's own fragments rather than the flattening that would hide them",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": [
+            {
+              "kind": "text",
+              "text": "My key is "
+            },
+            {
+              "kind": "styled",
+              "style": "bold",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "rusty"
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": " and "
+            },
+            {
+              "kind": "styled",
+              "style": "italic",
+              "children": [
+                {
+                  "kind": "text",
+                  "text": "old"
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": "."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

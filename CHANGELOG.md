@@ -325,6 +325,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The live end-to-end suite no longer flakes on a busy machine, or tests the wrong build** —
+  opening a script compiles it on the server, which outgrew the assertion's default timeout under
+  load. The suite now waits long enough for the work it drives, and refuses to start when a
+  fixture port is held by a server serving another checkout's fixtures instead of reusing it in
+  silence. See [the `visualize` CLI and live server](CONTRIBUTING.md#the-visualize-cli-and-live-server).
+
 - **Jumping from the Source into the Dialogue Graph lands on the right node** — a selection
   resolved to whatever the flow led to rather than what held it, so the graph revealed the wrong
   node and previewed a region that ran past the end of the scene. Choosing **Jump to ▸ Dialogue

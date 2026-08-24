@@ -1,0 +1,80 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "branch",
+      "id": 0,
+      "out": [
+        {
+          "kind": "branch",
+          "target": 1,
+          "order": 0,
+          "condition": {
+            "kind": "key",
+            "key": "Alice.HasKey"
+          }
+        },
+        {
+          "kind": "branch",
+          "target": 2,
+          "order": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The key turns."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The door is locked."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 3,
+      "out": []
+    }
+  ]
+}

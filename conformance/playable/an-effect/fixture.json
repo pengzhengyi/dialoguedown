@@ -1,0 +1,32 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "an effect is performed and reported before the line that follows it",
+  "playbook": "playbook.json",
+  "because": "two replies arrive with nothing sent between them, which a transcript of the story alone could not distinguish from one",
+  "session": [
+    {
+      "expect": {
+        "performed": {
+          "kind": "default-command",
+          "action": "fade in"
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Hello."
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

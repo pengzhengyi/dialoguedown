@@ -32,6 +32,11 @@
     <None Include="..\..\schema\*.schema.json"
           Link="schema\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
+    <!-- The playable conformance cases, so a test can recompile each source and check the
+         committed playbook still matches it. -->
+    <None Include="..\..\conformance\playable\**\*"
+          Link="conformance\playable\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\examples\*.dialogue.md"
           Link="examples\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />

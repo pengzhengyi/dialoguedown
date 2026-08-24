@@ -20,6 +20,7 @@ This page covers *which* test to write; that one covers *how* to run it.
   - [Round-trip tests](#round-trip-tests)
   - [Architecture tests](#architecture-tests)
   - [Corpus gates](#corpus-gates)
+  - [Conformance tests](#conformance-tests)
   - [Browser tests](#browser-tests)
   - [Repository infrastructure tests](#repository-infrastructure-tests)
 - [Which kind should I write?](#which-kind-should-i-write)
@@ -46,7 +47,7 @@ are the reason this page exists.
 | `DialogueDown.Visualization.Live.Tests` | The served report — the file watcher, the session, and saving back to disk. |
 | `DialogueDown.Cli.Tests` | The `ddown` commands, their options, and their exit codes. |
 | `DialogueDown.ConfigurationLoader.Tests` | Reading `dialogue.toml`. |
-| `DialogueDown.Playbook.Tests` | The published playbook format and its schema. |
+| `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the conformance harness that runs the corpus. |
 | `DialogueDown.Architecture.Tests` | The boundaries between all of the above. |
 | `src/DialogueDown.Visualization/web` | The report client: unit tests beside the source, browser tests under `e2e/` and `e2e-live/`. |
 
@@ -138,6 +139,42 @@ Add a construct to the language and the first test fails until an example uses
 it. That is deliberate: an undemonstrated construct is a documentation hole, not
 a compiler bug.
 
+### Conformance tests
+
+**Prove a runtime agrees with the specification, not with us.**
+
+The corpus under [`conformance/`](../../conformance/README.md) is language-neutral
+data: a runtime in any language runs it without building anything of ours. Each
+case is a folder whose `fixture.json` states what must happen, beside the playbook
+it happens to and the source that playbook was compiled from.
+
+| Half | Asks | Run by |
+| --- | --- | --- |
+| `readable/` | Can a reader load this document at all? | `ReadableConformanceTests`, today |
+| `playable/` | Does a runner hold the same conversation? | the runtime, when it lands |
+
+The fixtures are **hand-authored from the design**. That is the whole point: a
+corpus recorded from an implementation can only prove that implementation agrees
+with itself, which is the gap [inkjs](https://github.com/y-lohse/inkjs) lives
+with. Written first, the same file is a specification.
+
+Two properties are worth knowing before adding a case:
+
+- **One accepted `baseline`, and every refusal is that document with exactly one
+  field changed.** A diff between any case and the baseline is the single line the
+  case is about, and because the baseline passes, a refusal can only be caused by
+  the field its case touched.
+- **A refusal's message is never asserted.** Every runtime should explain itself in
+  its own language; `because` is for the human reading the file.
+
+This is not made redundant by the schema. Seven of the nine refusals shipped are
+**valid** by `schema/playbook-0.schema.json`: a schema constrains shape, so it
+cannot know there are only two nodes to point at, or which versions a build reads.
+
+`CorpusIntegrityTests` and `PlayableCaseTests` keep the corpus itself honest —
+every case ships its three files, and every playable playbook is recompiled from
+its source and compared.
+
 ### Browser tests
 
 **Prove the report works in a real browser.**
@@ -188,8 +225,7 @@ Tracked, not yet adopted, each with a reason it is waiting:
 
 | Kind | Would catch | Status |
 | --- | --- | --- |
-| **Mutation testing** | Tests that execute code without meaningfully asserting on it — coverage's blind spot. | Waiting on Stryker.NET support for xUnit v3 on the Microsoft Testing Platform ([#336](https://github.com/pengzhengyi/dialoguedown/issues/336)). |
-| **A conformance corpus** | Two runtimes disagreeing about what a script means. | Proposed, and waits on the runtime ([#298](https://github.com/pengzhengyi/dialoguedown/issues/298)). |
+| **Mutation testing** | Tests that execute code without meaningfully asserting on it — coverage's blind spot. | Waiting on Stryker.NET support for xUnit v3 on the Microsoft Testing Platform. Mutating the *format* rather than the code needs no such support, and the conformance corpus already does it by hand ([#336](https://github.com/pengzhengyi/dialoguedown/issues/336)). |
 | **A Law of Demeter fitness test** | Code reaching through one object to talk to another. | Deferred until the runtime introduces stateful object graphs ([#217](https://github.com/pengzhengyi/dialoguedown/issues/217)). |
 
 Two kinds are deliberately **absent** rather than pending. Benchmarks wait for a

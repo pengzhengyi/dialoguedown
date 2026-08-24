@@ -573,8 +573,8 @@ formatting change visible at all — and one golden serves both target framework
 
 Golden playbooks churn when node positions shift, which is expected: they are a
 build artifact nobody hand-edits. The **semantic** regression asset is the
-transcript golden that arrives with
-[C3](https://github.com/pengzhengyi/dialoguedown/issues/298).
+hand-authored [conformance corpus](./Conformance%20Corpus.md), which pins what a
+playbook *means* rather than what it serializes to.
 
 The exhaustive tests are the ones that repaid the most. Asking reflection for every
 member of `InlineFragment` turned up three the mapping table never listed — a jump,
