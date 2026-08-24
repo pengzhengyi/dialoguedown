@@ -66,7 +66,7 @@ playbook being a designed contract rather than a dump of the compiler's graph.
       compiled playbooks.
 - [x] Readable fixtures covering every refusal the reader makes, and the
       acceptances it must not refuse.
-- [ ] Playable fixtures covering speech, succession, choices, conditions,
+- [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
 - [x] A C# harness that runs the readable fixtures today.
 - [ ] A documented shape for the playable harness, so C2 has an acceptance suite
@@ -291,6 +291,9 @@ The unavailable-option fixture matters more than its size suggests: showing a
 failing option rather than hiding it is a deliberate decision, and a port is
 likelier to get it wrong than to get speech wrong.
 
+Every row above ships except the last, which is deferred: see
+[open questions](#open-questions-and-deferred-work).
+
 ## Key design decisions
 
 ### F1 — The corpus is data, not a test project
@@ -412,6 +415,13 @@ longer matches its source is a fixture asserting yesterday's format.
   as their own events is a runner decision. The rule here — reuse the vocabulary,
   and expect it to differ only where the runtime resolves something — holds
   either way, so fixtures that lean on those kinds wait for C2.
+- **Menu ordering has no fixture yet, and the reason is a real question.** An
+  ordered list states that the choices must be presented in that order; an
+  unordered one leaves later stages free to shuffle. A fixture can only assert
+  either if `asked` says *which* kind a menu is — and whether the shuffling
+  belongs to the runner or to the shell is C2's to settle. Under functional core
+  and imperative shell the answer is likely the shell, in which case `asked` is
+  always in document order and carries the menu's stated kind alongside it.
 - **A menu written as a divert has no fixture yet.** `- => [Label](#anchor)` is
   the ordinary way to write a branching menu, but its option edge currently
   compiles to an empty label
