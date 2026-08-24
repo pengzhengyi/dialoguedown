@@ -338,6 +338,17 @@ changes easy to categorize.
   every stage brings the revealed node up to a readable scale rather than centering it at a
   whole-script fit where it is a few pixels tall.
 
+- **Go to line is usable in every editor** — jumping to a line already worked in the Source,
+  Config, and Playbook editors, but only from a shortcut nothing mentioned, and its dialog arrived
+  in browser-default chrome with an unreadable button, pushing the document up from the editor's
+  foot. It now opens on <kbd>Ctrl-G</kbd> as it does in VS Code, and floats over the text near the
+  top — focused on arrival, dismissed by Escape or by clicking away, gone once the jump is made,
+  nothing reflowing behind it. A line reading under the field says what Enter will do, and teaches
+  the expression as it goes: it names the line range while the field is empty, offers the column
+  once a line is entered, and names that line's column range the moment a `:` is typed. A line
+  number, `line:column`, a `+`/`-` offset, or a `%` of the document all work, and none of them
+  were discoverable before. Columns count from one, as they do in an editor's status bar.
+
 - **A second script no longer silences the first one's tab** — opening a script stopped the one
   already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept
   its connection and simply stopped being told anything. A tab now names the document it is

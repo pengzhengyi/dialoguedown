@@ -32,6 +32,7 @@ import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
 import { configCompletions } from "./config-completions";
 import { compactSearch } from "./search-panel";
+import { gotoLineKeymap } from "./goto-line";
 import { escapeHtml } from "./text";
 
 /** Options for the Config tab. */
@@ -256,6 +257,7 @@ function mountEditor(
                     ...closeBracketsKeymap,
                     ...defaultKeymap,
                     ...historyKeymap,
+                    ...gotoLineKeymap,
                     ...searchKeymap,
                     ...foldKeymap,
                 ]),

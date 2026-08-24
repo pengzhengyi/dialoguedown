@@ -1940,6 +1940,88 @@ g.node.entity-highlight text.label {
     border: none;
 }
 
+/* CodeMirror's Go to line dialog arrives with browser-default chrome — a stacked label, a
+   full-width field, and a full-width button — mounted in the bottom panel row, where it pushes
+   the document up as it opens and back down as it closes.
+
+   Only its presentation is ours; the command, its parsing (a line, a `+`/`-` offset, a `%` of
+   the document, or `line:column`), and its behavior stay CodeMirror's. Lifting it out of flow
+   makes it behave like VS Code's Go to Line: a small box that floats over the text near the top,
+   already focused, gone the moment the jump is made. Nothing reflows behind it. */
+
+/* Go to line, shaped like VS Code's quick input: a small box floating over the text with the
+   field on one line and, under it, a sentence saying what Enter will do. It rides in the top
+   panel row, which the report already lifts out of flow, so nothing reflows as it opens — and it
+   is centred rather than pinned right, because it is a momentary prompt and not the find panel
+   the reader keeps open beside their work. */
+:is(.source-pane, .config-source, .playbook-source) .cm-panels-top:has(.dd-goto) {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Both classes, deliberately: CodeMirror's `.cm-panel` sets a lopsided `2px 19px 4px 6px` to
+   reserve room for the close button it draws, and would otherwise win on equal specificity —
+   leaving a visibly wider margin down the right of the box than the left. */
+.dd-goto.cm-dialog {
+    /* Long and thin: wide enough for the sentence to sit on one line, no taller than the two
+       rows need. An absolute width, because the panel row it sits in shrink-wraps its content,
+       so a percentage here would resolve against the box's own width. */
+    width: 30rem;
+    max-width: 80vw;
+    padding: 0.3rem;
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
+}
+
+/* Enter goes and Escape dismisses, so a close control would be a third way to do what two keys
+   and a click away already do — VS Code shows none either. */
+.dd-goto .cm-dialog-close {
+    display: none;
+}
+
+.dd-goto-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0;
+}
+
+/* Pico sizes every input for a form, which here means a field five times taller than its text.
+   Overridden the same way the find panel's field already overrides it. */
+.dd-goto-input {
+    width: 100%;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0.2rem 0.45rem !important;
+    border: 1px solid var(--pico-primary);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-form-element-background-color);
+    color: var(--pico-color);
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.78rem !important;
+    line-height: 1.4 !important;
+    box-shadow: none !important;
+}
+
+.dd-goto-input:focus {
+    outline: none;
+    box-shadow: none !important;
+}
+
+/* The sentence carries the accent so it reads as the dialog's answer rather than as fine print,
+   the way VS Code highlights the row under its field. */
+.dd-goto-guidance {
+    padding: 0.2rem 0.45rem;
+    border-radius: var(--pico-border-radius);
+    background: color-mix(in srgb, var(--pico-primary) 16%, transparent);
+    color: var(--pico-color);
+    font-size: 0.74rem;
+    line-height: 1.35;
+}
+
 /* Compiler-projected reserved targets are editor panels, not synthetic document lines. The faux
    gutter aligns with CodeMirror's real gutters and uses a non-numeric sentinel marker, while the
    row remains fixed and read-only below the scrollable source. */
