@@ -1,0 +1,67 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "an option whose condition fails is offered but unavailable",
+  "playbook": "playbook.json",
+  "because": "showing a failing option rather than hiding it is a deliberate decision, and a port is likelier to get this wrong than to get speech wrong",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Ready?"
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "Alice.HasKey"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Alice.HasKey": false
+        }
+      }
+    },
+    {
+      "expect": {
+        "asked": [
+          {
+            "label": "Open the door",
+            "available": false
+          },
+          {
+            "label": "Wait here",
+            "available": true
+          }
+        ]
+      }
+    },
+    {
+      "send": {
+        "choose": 1
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speech": "Wait here"
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

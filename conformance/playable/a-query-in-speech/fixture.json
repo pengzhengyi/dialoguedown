@@ -1,0 +1,38 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a query in speech is resolved and the answer is spoken",
+  "playbook": "playbook.json",
+  "because": "the supplied answer must appear in the flattened text, which is what makes the string form of speech a specified projection rather than a guess",
+  "session": [
+    {
+      "expect": {
+        "resolve": [
+          "playerName"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "playerName": "Robin"
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Hello, Robin."
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}
