@@ -1,0 +1,38 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a block conditional takes the first arm whose condition holds",
+  "playbook": "playbook.json",
+  "because": "the arms are tried in the order written, so a satisfied first arm must be taken and the else arm never reached",
+  "session": [
+    {
+      "expect": {
+        "resolve": [
+          "Alice.HasKey"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Alice.HasKey": true
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "The key turns."
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

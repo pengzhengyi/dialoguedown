@@ -1,0 +1,124 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    },
+    {
+      "default": true,
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Which way?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 1,
+      "out": [
+        {
+          "kind": "option",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Go east"
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 3,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Go west"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Go east"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Go west"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Onward."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 5,
+      "out": []
+    }
+  ]
+}

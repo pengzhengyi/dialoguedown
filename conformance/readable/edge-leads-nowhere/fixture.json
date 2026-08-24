@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "edge leads nowhere is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "an edge points past the last node, so following it would leave the graph"
+}

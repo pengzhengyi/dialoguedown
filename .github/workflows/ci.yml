@@ -44,13 +44,34 @@ jobs:
 
       # Against the schema committed here, never the published URL, so a validation never
       # depends on the network or on Pages having caught up with the branch.
-      - name: Validate the playbook schema and every golden against it
+      - name: Validate every schema, and every golden against the playbook schema
         run: |
           pipx run check-jsonschema --check-metaschema schema/*.schema.json
-          for schema in schema/*.schema.json; do
+          # Only the playbook schemas: schema/ also holds the conformance fixture schema,
+          # which describes a different document entirely.
+          for schema in schema/playbook-*.schema.json; do
             pipx run check-jsonschema --schemafile "$schema" \
               tests/DialogueDown.Tests/emission/goldens/*.verified.json
           done
+
+      # A document the corpus says a reader must accept has to be valid by the schema too,
+      # or the format's two specifications disagree. The refused cases are skipped: most of
+      # them are deliberately invalid, which is the whole point of the case.
+      - name: Validate every conformance fixture and every accepted case
+        run: |
+          pipx run check-jsonschema --schemafile schema/fixture-0.schema.json \
+            conformance/*/*/fixture.json
+          accepted=$(python3 - <<'PY'
+          import json, pathlib
+          for fixture in sorted(pathlib.Path("conformance/readable").glob("*/fixture.json")):
+              claim = json.loads(fixture.read_text(encoding="utf-8"))
+              if claim["verdict"] == "accept":
+                  print(fixture.parent / claim["playbook"])
+          PY
+          )
+          echo "$accepted"
+          test -n "$accepted"
+          pipx run check-jsonschema --schemafile schema/playbook-0.schema.json $accepted
 
       - name: Restore local tools
         run: dotnet tool restore

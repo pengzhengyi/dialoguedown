@@ -1,0 +1,38 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a line whose condition fails is skipped without ending the run",
+  "playbook": "playbook.json",
+  "because": "the run must step over the line rather than stop at it, so the following line is what proves it kept going",
+  "session": [
+    {
+      "expect": {
+        "resolve": [
+          "Alice.HasKey"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Alice.HasKey": false
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Onward."
+        }
+      }
+    },
+    {
+      "send": "continue"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

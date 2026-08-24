@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "anchor leads nowhere is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "an anchor points past the last node, so starting there would leave the graph"
+}

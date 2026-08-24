@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "title": "DialogueDown conformance fixture",
+  "description": "One case from the conformance corpus. A fixture states what a runtime must do with a playbook: either the verdict a reader must reach about the document, or the conversation a runner must be able to hold with it. Fixtures are hand-authored from the design rather than recorded from a run, so unknown properties are refused: a misspelled field here is a mistake to surface, not a newer writer talking to an older reader.",
+  "type": "object",
+  "required": [
+    "name",
+    "playbook",
+    "because"
+  ],
+  "oneOf": [
+    {
+      "title": "A readable fixture",
+      "description": "Asks whether a reader can load the document at all.",
+      "required": [
+        "verdict"
+      ],
+      "not": {
+        "required": [
+          "session"
+        ]
+      }
+    },
+    {
+      "title": "A playable fixture",
+      "description": "Asks whether a runner holds the same conversation.",
+      "required": [
+        "session"
+      ],
+      "not": {
+        "required": [
+          "verdict"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Where an editor can find this schema."
+    },
+    "name": {
+      "type": "string",
+      "description": "What this fixture asserts, as a sentence a failure can report."
+    },
+    "playbook": {
+      "type": "string",
+      "description": "The document this fixture is about, named relative to the fixture. Named rather than assumed, so a case may point at a document under any name."
+    },
+    "because": {
+      "type": "string",
+      "description": "Why the fixture claims what it claims, for a human reviewing the corpus. Required: a case nobody can weigh on sight is a case that silently rots."
+    },
+    "verdict": {
+      "enum": [
+        "accept",
+        "refuse"
+      ],
+      "description": "What a reader must do with the document. A refusal's message is never asserted, so that every runtime may explain itself in its own language."
+    },
+    "session": {
+      "$ref": "#/$defs/session"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "session": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One conversation: what a driver sends, interleaved with what the runtime must reply, in the order it happens.",
+      "items": {
+        "$ref": "#/$defs/turn"
+      }
+    },
+    "turn": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "send"
+          ],
+          "properties": {
+            "send": {
+              "$ref": "#/$defs/send"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "expect"
+          ],
+          "properties": {
+            "expect": {
+              "$ref": "#/$defs/expect"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "send": {
+      "description": "One message from the driver, in the protocol's own vocabulary.",
+      "oneOf": [
+        {
+          "enum": [
+            "continue",
+            "describe"
+          ],
+          "description": "Proceed past what was just said, or ask where the run stands."
+        },
+        {
+          "type": "object",
+          "required": [
+            "choose"
+          ],
+          "properties": {
+            "choose": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The zero-based position, among the options just offered, of the one taken."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "supply"
+          ],
+          "properties": {
+            "supply": {
+              "type": "object",
+              "description": "What the world says, by the key the runtime asked about."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "start"
+          ],
+          "properties": {
+            "start": {
+              "type": "string",
+              "description": "The anchor to begin at, instead of the playbook's entry."
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "expect": {
+      "description": "One message the runtime must produce next. No entry carries a node reference: a reference is a position, and an assertion that changed whenever the compiler renumbered would be a liability rather than a test.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "said": {
+          "type": "object",
+          "required": [
+            "speech"
+          ],
+          "properties": {
+            "speaker": {
+              "type": "string",
+              "description": "The speaker's name, never their index. Absent for the anonymous default speaker, who has no name."
+            },
+            "speech": {
+              "$ref": "#/$defs/speech"
+            }
+          },
+          "additionalProperties": false
+        },
+        "asked": {
+          "type": "array",
+          "description": "The options offered, in the order offered. What was taken is not recorded here: the next send says so.",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "available"
+            ],
+            "properties": {
+              "label": {
+                "$ref": "#/$defs/speech"
+              },
+              "available": {
+                "type": "boolean",
+                "description": "Whether the option may be taken. A failing option is shown unavailable rather than hidden."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "performed": {
+          "description": "The effect, as the playbook names it. Left loose until the runtime settles the shape."
+        },
+        "resolve": {
+          "type": "array",
+          "minItems": 1,
+          "description": "The keys the runtime asked the world about.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "invalidated": {
+          "description": "An offered option that stopped being available. Left loose until the runtime settles the shape."
+        },
+        "ended": {
+          "type": "object",
+          "description": "The run finished.",
+          "additionalProperties": false
+        },
+        "at": {
+          "description": "Where the run stands, in reply to describe. Left loose until the runtime settles the shape."
+        },
+        "out": {
+          "description": "What leads onward from there, in reply to describe. Left loose until the runtime settles the shape."
+        }
+      },
+      "additionalProperties": false
+    },
+    "speech": {
+      "description": "What was said, or an option's label. An array asserts the playbook's own fragments, exactly as it serializes them; a plain string asserts the flattening of those fragments -- a deliberately weaker claim, chosen so a fixture that is not about styling stays readable. See playbook-0.schema.json for what a fragment is.",
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Every fragment's plain text, concatenated, with style markers dropped and resolved queries substituted."
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

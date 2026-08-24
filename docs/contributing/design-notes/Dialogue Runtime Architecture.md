@@ -585,28 +585,19 @@ playable offline. Until then the exported report simply has no Play tab.
 
 ### Conformance
 
-The insurance against drift is the **conformance corpus** — a `PlayLog` plus the
-transcript it must produce:
+The insurance against drift is the **conformance corpus**: language-neutral
+fixtures, each pairing a playbook with a **session** — the messages a driver
+sends interleaved with the replies a runner must give, in order. A runtime is
+conformant when it can hold every session in the corpus.
 
-```json
-{
-  "name": "a false guard marks a player option unavailable",
-  "playbook": { "…": "…" },
-  "inputs": [ { "supply": { "IsCurious": false } }, "continue", { "choose": 1 } ],
-  "transcript": [
-    { "said": { "speaker": "Alice", "text": "My favorite color is red." } },
-    { "asked": [ { "label": "Ask about the inn", "available": false },
-                 { "label": "Say nothing", "available": true } ] }
-  ]
-}
-```
+The [Conformance corpus](./Conformance%20Corpus.md) note owns that format and its
+decisions; it is not restated here.
 
-A runtime is conformant when it reproduces every transcript. That turns a level-3
-port from an act of faith into a bounded, verifiable exercise — the gap CommonMark
-closed and ink never did. With one official runner the corpus is still worth its
-keep as a regression suite and as the format's executable specification; the day a
-community port appears, it becomes the only thing standing between that port and
-silent divergence.
+Conformance turns a level-3 port from an act of faith into a bounded, verifiable
+exercise — the gap CommonMark closed and ink never did. With one official runner
+the corpus is still worth its keep as a regression suite and as the format's
+executable specification; the day a community port appears, it becomes the only
+thing standing between that port and silent divergence.
 
 ## Key design decisions
 
