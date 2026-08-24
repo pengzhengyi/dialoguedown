@@ -1,4 +1,5 @@
 {
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
   "name": "unknown property is played as written",
   "playbook": "playbook.json",
   "verdict": "accept",

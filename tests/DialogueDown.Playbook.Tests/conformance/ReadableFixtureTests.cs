@@ -52,6 +52,21 @@ public sealed class ReadableFixtureTests
         Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdict", 1)));
     }
 
+    [Fact]
+    public void Read_AFixturePointingAtItsSchema_KeepsTheUrl()
+    {
+        var fixture = ReadableFixture.Read(
+            With("$schema", "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json"));
+
+        Assert.Equal("https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json", fixture.Schema);
+    }
+
+    [Fact]
+    public void Read_AFixtureWithoutASchema_IsStillRead()
+    {
+        Assert.Null(ReadableFixture.Read(Fixture().ToJsonString()).Schema);
+    }
+
     [Theory]
     [InlineData("name")]
     [InlineData("playbook")]

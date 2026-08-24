@@ -22,6 +22,17 @@ public sealed record ReadableFixture
         Converters = { new JsonStringEnumConverter<Verdict>(namingPolicy: null, allowIntegerValues: false) },
     };
 
+    /// <summary>
+    /// Gets where an editor can find the schema this fixture is written against.
+    /// </summary>
+    /// <remarks>
+    /// Known and optional rather than merely tolerated: unknown properties are refused here, so a
+    /// fixture could not carry it otherwise, and a hand-authored file is exactly the kind that
+    /// benefits from an editor checking it as it is written.
+    /// </remarks>
+    [JsonPropertyName("$schema")]
+    public string? Schema { get; init; }
+
     /// <summary>Gets what this fixture asserts, as a sentence a failure can report.</summary>
     public required string Name { get; init; }
 

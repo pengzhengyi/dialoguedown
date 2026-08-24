@@ -1,4 +1,5 @@
 {
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
   "name": "speaker leads nowhere is refused",
   "playbook": "playbook.json",
   "verdict": "refuse",
