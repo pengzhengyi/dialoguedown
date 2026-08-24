@@ -412,6 +412,13 @@ longer matches its source is a fixture asserting yesterday's format.
   as their own events is a runner decision. The rule here — reuse the vocabulary,
   and expect it to differ only where the runtime resolves something — holds
   either way, so fixtures that lean on those kinds wait for C2.
+- **A menu written as a divert has no fixture yet.** `- => [Label](#anchor)` is
+  the ordinary way to write a branching menu, but its option edge currently
+  compiles to an empty label
+  ([#369](https://github.com/pengzhengyi/dialoguedown/issues/369)) — found by
+  writing the first playable fixture, before any runner existed to trip over it.
+  A fixture written now would enshrine the bug in the specification, so it lands
+  with the fix.
 - **Random choice has no fixture yet.** Pinning a draw needs the entropy decision
   C2 owns — a specified generator, or values the host supplies. Deferred until
   that is settled, and called out here rather than quietly omitted.
