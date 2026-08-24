@@ -1,0 +1,6 @@
+{
+  "name": "newer version is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "was written by a newer format than this reader knows, so what it means is not yet decided"
+}

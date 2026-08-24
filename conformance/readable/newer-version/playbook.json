@@ -1,10 +1,9 @@
 {
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
   "format": {
-    "version": 0,
+    "version": 1,
     "requires": [
-      "core",
-      "detour"
+      "core"
     ],
     "uses": []
   },

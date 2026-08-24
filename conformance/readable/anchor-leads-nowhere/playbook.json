@@ -3,15 +3,14 @@
   "format": {
     "version": 0,
     "requires": [
-      "core",
-      "detour"
+      "core"
     ],
     "uses": []
   },
   "script": "source.dialogue.md",
   "entry": 0,
   "anchors": {
-    "the-inn": 0
+    "the-inn": 9
   },
   "speakers": [
     {

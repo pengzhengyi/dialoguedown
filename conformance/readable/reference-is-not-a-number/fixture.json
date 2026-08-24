@@ -1,0 +1,6 @@
+{
+  "name": "reference is not a number is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "an edge names its target as text, and a reference that is not a number is not a reference"
+}

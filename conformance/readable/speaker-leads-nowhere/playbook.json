@@ -3,8 +3,7 @@
   "format": {
     "version": 0,
     "requires": [
-      "core",
-      "detour"
+      "core"
     ],
     "uses": []
   },
@@ -23,7 +22,7 @@
     {
       "kind": "line",
       "id": 0,
-      "speaker": 0,
+      "speaker": 9,
       "speech": [
         {
           "kind": "text",

@@ -1,0 +1,6 @@
+{
+  "name": "truncated document is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "the file was cut short, so it is not JSON at all, let alone a playbook"
+}

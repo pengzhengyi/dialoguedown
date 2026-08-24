@@ -1,5 +1,5 @@
 {
-  "name": "an unknown optional capability is played anyway",
+  "name": "unknown uses is played as written",
   "playbook": "playbook.json",
   "verdict": "accept",
   "because": "uses 'glitter', which is advisory by definition, so ignoring it still tells the same story"

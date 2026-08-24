@@ -11,7 +11,9 @@
   },
   "script": "source.dialogue.md",
   "entry": 0,
-  "anchors": {},
+  "anchors": {
+    "the-inn": 0
+  },
   "speakers": [
     {
       "name": "Alice",

@@ -1,0 +1,6 @@
+{
+  "name": "node out of position is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "a node claims an id that is not its position, so every reference in the document is ambiguous"
+}

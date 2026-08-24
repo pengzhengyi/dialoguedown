@@ -3,8 +3,7 @@
   "format": {
     "version": 0,
     "requires": [
-      "core",
-      "detour"
+      "core"
     ],
     "uses": []
   },

@@ -1,0 +1,6 @@
+{
+  "name": "baseline is played as written",
+  "playbook": "playbook.json",
+  "verdict": "accept",
+  "because": "nothing is wrong with it; every refusal below is this document with one field changed"
+}

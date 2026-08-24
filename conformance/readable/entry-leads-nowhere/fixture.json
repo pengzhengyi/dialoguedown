@@ -1,0 +1,6 @@
+{
+  "name": "entry leads nowhere is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "the entry points past the last node, so there is nowhere to begin"
+}
