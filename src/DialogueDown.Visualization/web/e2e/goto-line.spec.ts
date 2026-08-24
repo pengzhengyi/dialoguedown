@@ -9,11 +9,12 @@ const dialog = ".source-pane .cm-panel form";
 // Several gutters carry `cm-activeLineGutter`; only the line-number one shows the line.
 const activeLine = (pane: string) => `${pane} .cm-lineNumbers .cm-activeLineGutter`;
 
-test("goes to a line on the shortcut, and leaves the cursor there", async ({ page }) => {
+test("goes to a line on VS Code's shortcut, and leaves the cursor there", async ({ page }) => {
     await page.goto(url);
     await page.locator(".source-pane .cm-content").click();
 
-    await page.keyboard.press("ControlOrMeta+Alt+g");
+    // Literal Control on every platform, exactly as VS Code binds Go to Line.
+    await page.keyboard.press("Control+g");
 
     const field = page.locator(`${dialog} input[name="line"]`);
     await expect(field).toBeVisible();
@@ -54,6 +55,25 @@ test("Escape dismisses it without moving the cursor", async ({ page }) => {
 
     await expect(page.locator(dialog)).toHaveCount(0);
     await expect(page.locator(activeLine(".source-pane"))).toHaveText(before ?? "");
+});
+
+test("floats over the document instead of pushing it up", async ({ page }) => {
+    await page.goto(url);
+    const editor = page.locator(".source-pane .cm-content");
+    await editor.click();
+    const before = await editor.boundingBox();
+
+    await page.keyboard.press("Control+g");
+    await expect(page.locator(dialog)).toBeVisible();
+
+    // Opening it must not reflow the text: same height, same top.
+    const during = await editor.boundingBox();
+    expect(during!.height).toBeCloseTo(before!.height, 0);
+    expect(during!.y).toBeCloseTo(before!.y, 0);
+
+    // And it sits near the top of the editor, not at its foot, the way VS Code's does.
+    const box = await page.locator(dialog).boundingBox();
+    expect(box!.y).toBeLessThan(before!.y + before!.height / 2);
 });
 
 test("wears the report's chrome rather than the browser's form defaults", async ({ page }) => {

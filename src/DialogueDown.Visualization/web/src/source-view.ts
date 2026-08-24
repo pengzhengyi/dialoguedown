@@ -42,7 +42,7 @@ import {
     setIgnoredSpans,
     sourceIgnoredFold,
 } from "./source-ignored-fold";
-import { compactSearch } from "./search-panel";
+import { compactSearch, gotoLineKeymap } from "./search-panel";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { yamlLanguage } from "@codemirror/lang-yaml";
 import { tags } from "@lezer/highlight";
@@ -636,6 +636,7 @@ export function createSourceView(
                     ...closeBracketsKeymap,
                     ...defaultKeymap,
                     ...historyKeymap,
+                    ...gotoLineKeymap,
                     ...searchKeymap,
                     ...foldKeymap,
                 ]),

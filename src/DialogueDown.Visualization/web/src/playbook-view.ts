@@ -32,7 +32,7 @@ import { initSplitDivider } from "./source-view";
 import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
-import { compactSearch } from "./search-panel";
+import { compactSearch, gotoLineKeymap } from "./search-panel";
 import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
 
@@ -126,7 +126,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 json(),
                 syntaxHighlighting(jsonHighlightStyle),
                 EditorView.lineWrapping,
-                keymap.of([...defaultKeymap, ...searchKeymap, ...foldKeymap]),
+                keymap.of([...defaultKeymap, ...gotoLineKeymap, ...searchKeymap, ...foldKeymap]),
             ],
         }),
     });

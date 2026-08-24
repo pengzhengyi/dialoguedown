@@ -325,11 +325,12 @@ changes easy to categorize.
 
 ### Fixed
 
-- **Go to line is usable in every editor** — the shortcut (<kbd>⌘/Ctrl-Alt-G</kbd>) already
-  worked in the Source, Config, and Playbook editors, but its dialog arrived in browser-default
-  chrome, with an unreadable button, and appeared in no help text. It now reads as one compact row
-  like the find panel above it, and the shortcut is named where a reader looks for editor keys. A
-  line number, a `+`/`-` offset, a `%` of the document, or `line:column` all work.
+- **Go to line is usable in every editor** — jumping to a line already worked in the Source,
+  Config, and Playbook editors, but only from a shortcut nothing mentioned, and its dialog arrived
+  in browser-default chrome with an unreadable button, pushing the document up from the editor's
+  foot. It now opens on <kbd>Ctrl-G</kbd> as it does in VS Code, and floats over the text near the
+  top — focused on arrival, gone once the jump is made, nothing reflowing behind it. A line
+  number, a `+`/`-` offset, a `%` of the document, or `line:column` all work.
 
 - **A second script no longer silences the first one's tab** — opening a script stopped the one
   already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept

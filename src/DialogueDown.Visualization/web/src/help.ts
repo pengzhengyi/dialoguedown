@@ -24,8 +24,8 @@ const SOURCE_HELP = `
      <strong>hide handle</strong> to collapse the preview and give the editor the full
      width (click again to bring it back).</p>
   <p><strong>Editor.</strong> Find with <kbd>⌘/Ctrl-F</kbd>, <strong>go to a line</strong> with
-     <kbd>⌘/Ctrl-Alt-G</kbd>, and fold a section from the gutter arrow. In Live Edit, format
-     the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
+     <kbd>Ctrl-G</kbd> (Control on every platform, as in VS Code), and fold a section from the
+     gutter arrow. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
      <kbd>⌘/Ctrl-I</kbd> (italic) and <kbd>⌘/Ctrl-K</kbd> (link), or type <kbd>*</kbd>
      around a selection to emphasize it. <strong>Quote a block</strong> with
      <kbd>⌘/Ctrl-.</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-Shift-.</kbd>: quoting
@@ -129,8 +129,8 @@ const PLAYBOOK_HELP = `
      loads and plays. It is generated, so this editor is read-only — change the script, not
      the playbook.</p>
   <p><strong>Reading it.</strong> Fold a section with the arrow in the gutter, and search with
-     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>, or jump straight to a line with
-     <kbd>Cmd/Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd>. <strong>Hover a property</strong> to see
+     <kbd>Cmd/Ctrl</kbd>+<kbd>F</kbd>, or jump straight to a line with <kbd>Ctrl</kbd>+<kbd>G</kbd>.
+     <strong>Hover a property</strong> to see
      what the format says it means, taken from the published schema; the stretch it covers is
      washed in while the tip is open.</p>
   <p><strong>Beside it</strong> are three panels — the playbook's header, its speakers, and the

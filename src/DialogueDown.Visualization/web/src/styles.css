@@ -1940,11 +1940,35 @@ g.node.entity-highlight text.label {
     border: none;
 }
 
-/* CodeMirror's Go to line dialog (Mod-Alt-g) arrives with browser-default chrome: a stacked
-   label, a full-width field, and a full-width button filling the pane's foot. Only its layout is
-   ours — the command, its parsing (a line, a `+`/`-` offset, a `%` of the document, or
-   `line:column`), and its behavior stay CodeMirror's. Laid out as one compact row it reads like
-   the find panel above it instead of a form dropped into the editor. */
+/* CodeMirror's Go to line dialog arrives with browser-default chrome — a stacked label, a
+   full-width field, and a full-width button — mounted in the bottom panel row, where it pushes
+   the document up as it opens and back down as it closes.
+
+   Only its presentation is ours; the command, its parsing (a line, a `+`/`-` offset, a `%` of
+   the document, or `line:column`), and its behavior stay CodeMirror's. Lifting it out of flow
+   makes it behave like VS Code's Go to Line: a small box that floats over the text near the top,
+   already focused, gone the moment the jump is made. Nothing reflows behind it. */
+
+/* CodeMirror makes the bottom panel row sticky, which would make it the dialog's containing
+   block and pin the dialog to the editor's foot. The row is the last child of the editor's flex
+   column, so it is already held at the bottom without it, and dropping the stickiness hands the
+   containing block back to the editor — where the dialog belongs. */
+:is(.source-pane, .config-source, .playbook-source) .cm-panels-bottom {
+    position: static;
+}
+
+:is(.source-pane, .config-source, .playbook-source) .cm-panel:has(> form) {
+    position: absolute;
+    top: 0.4rem;
+    left: 50%;
+    z-index: 21;
+    transform: translateX(-50%);
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+}
+
 :is(.source-pane, .config-source, .playbook-source) .cm-panel form {
     display: flex;
     flex-wrap: wrap;
