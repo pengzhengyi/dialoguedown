@@ -61,14 +61,14 @@ playbook being a designed contract rather than a dump of the compiler's graph.
 
 ## Functionality checklist
 
-- [ ] A fixture format that a runtime in any language can read without a compiler.
-- [ ] Purpose-built source scripts, one construct each, committed beside their
+- [x] A fixture format that a runtime in any language can read without a compiler.
+- [x] Purpose-built source scripts, one construct each, committed beside their
       compiled playbooks.
-- [ ] Readable fixtures covering every refusal the reader makes, and the
+- [x] Readable fixtures covering every refusal the reader makes, and the
       acceptances it must not refuse.
 - [ ] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
-- [ ] A C# harness that runs the readable fixtures today.
+- [x] A C# harness that runs the readable fixtures today.
 - [ ] A documented shape for the playable harness, so C2 has an acceptance suite
       waiting rather than a corpus to write afterward.
 
@@ -260,6 +260,14 @@ fixture states the document and the verdict:
 runtime should explain itself in its own language, and pinning English would make
 the corpus untranslatable. `because` documents the fixture for a human reading it.
 
+This half is not made redundant by `schema/playbook-0.schema.json`, and measuring
+that was worth the trouble: **seven of the nine refusals shipped are valid by the
+schema.** A schema constrains shape — `entry` is a non-negative integer — but not
+meaning, so it cannot know there are only two nodes to point at, which versions a
+build reads, or that a node's id must equal its position. Only the type error and
+the truncated file are its to catch. Conversely, every case the corpus *accepts*
+must also validate, or the format's two specifications disagree; CI checks that.
+
 ## What the corpus covers
 
 Fixtures are **purpose-built and minimal — one construct each**, so a failure
@@ -369,12 +377,12 @@ playbooks are already pinned by C1's goldens.
 
 | Seam | Change |
 | --- | --- |
-| `conformance/` | New root folder, alongside `schema/` |
+| `conformance/` | New root folder, alongside `schema/`, with a `README.md` a port starts from |
 | C# harness | A test project reads `conformance/readable/` and runs it through `PlaybookReader`; no new dependency |
 | C2 | Inherits the playable fixtures as its acceptance suite, and implements the harness that runs them |
 | C4 | The `ddown play` REPL sends and receives the same messages, so a session and a REPL transcript are one shape — `--replay <fixture>` makes the REPL a harness |
 | C5b | The TypeScript runner is held to the same corpus, which is the whole reason the fixtures are language-neutral |
-| CI | The readable harness runs with the existing suite; nothing new is scheduled |
+| CI | The readable harness runs with the existing suite; every case the corpus accepts is also validated against the schema, so the format's two specifications cannot drift apart |
 
 ## Testability
 
