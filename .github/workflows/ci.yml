@@ -44,10 +44,12 @@ jobs:
 
       # Against the schema committed here, never the published URL, so a validation never
       # depends on the network or on Pages having caught up with the branch.
-      - name: Validate the playbook schema and every golden against it
+      - name: Validate every schema, and every golden against the playbook schema
         run: |
           pipx run check-jsonschema --check-metaschema schema/*.schema.json
-          for schema in schema/*.schema.json; do
+          # Only the playbook schemas: schema/ also holds the conformance fixture schema,
+          # which describes a different document entirely.
+          for schema in schema/playbook-*.schema.json; do
             pipx run check-jsonschema --schemafile "$schema" \
               tests/DialogueDown.Tests/emission/goldens/*.verified.json
           done
