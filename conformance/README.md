@@ -100,6 +100,9 @@ send someone reading a script.
 
 - [Conformance corpus](../docs/contributing/design-notes/Conformance%20Corpus.md)
   — the format and the decisions behind it.
+- [`schema/fixture-0.schema.json`](../schema/fixture-0.schema.json) — the fixture
+  format itself. Every fixture carries a `$schema` pointing at it, so an editor
+  checks a case while you write it, and CI checks every case in the corpus.
 - [Playbook format](../docs/contributing/design-notes/Playbook%20Format.md) — the
   document these fixtures are about.
 - [`schema/playbook-0.schema.json`](../schema/playbook-0.schema.json) — the

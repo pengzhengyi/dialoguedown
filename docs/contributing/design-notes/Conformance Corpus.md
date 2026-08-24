@@ -378,6 +378,7 @@ playbooks are already pinned by C1's goldens.
 | Seam | Change |
 | --- | --- |
 | `conformance/` | New root folder, alongside `schema/`, with a `README.md` a port starts from |
+| `schema/fixture-0.schema.json` | The fixture format's own schema, published beside the playbook's, so a fixture is checked in an editor as it is hand-authored |
 | C# harness | A test project reads `conformance/readable/` and runs it through `PlaybookReader`; no new dependency |
 | C2 | Inherits the playable fixtures as its acceptance suite, and implements the harness that runs them |
 | C4 | The `ddown play` REPL sends and receives the same messages, so a session and a REPL transcript are one shape — `--replay <fixture>` makes the REPL a harness |
@@ -392,7 +393,7 @@ The corpus is itself test material, so the question is what tests *it*.
 | --- | --- |
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
 | Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
-| Fixture integrity | Every case ships a fixture, a playbook, and a source. A `playable/` playbook is what its source compiles to; a `readable/` one deliberately is not, so only the former is regenerated and compared |
+| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together until C2 can run it. Every case ships a fixture, a playbook, and a source. A `playable/` playbook is what its source compiles to; a `readable/` one deliberately is not, so only the former is regenerated and compared |
 
 That last one is the guard against a corpus rotting: a committed playbook that no
 longer matches its source is a fixture asserting yesterday's format.
