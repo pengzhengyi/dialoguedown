@@ -128,3 +128,83 @@ describe("runApp showConfigTab", () => {
         expect(tabs()[0].classList.contains("active")).toBe(true);
     });
 });
+
+describe("runApp Playbook tab", () => {
+    const playbook = () => ({
+        json: '{ "entry": 0 }',
+        metadata: {
+            script: "s.dialogue.md",
+            formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+            requires: ["core"],
+            uses: [],
+            entry: 0,
+            nodeCount: 2,
+            anchorCount: 0,
+        },
+        anchors: [{ name: "the-tavern", node: 0 }],
+        speakers: [{ name: "Alice", default: false, tags: [] }],
+    });
+    const titles = () => [...document.querySelectorAll("#tabs .tab")].map((t) => t.textContent);
+
+    beforeEach(mountDom);
+
+    it("comes last, after the graph the playbook is compiled from", () => {
+        const graph = { ...stage(), title: "Dialogue Graph" };
+
+        runApp({ source: "root", stages: [stage(), graph], playbook: playbook() });
+
+        expect(titles()).toEqual(["Source", "AST", "Dialogue Graph", "Playbook"]);
+    });
+
+    it("is absent from a report built without the compiler", () => {
+        runApp({ source: "root", stages: [stage()] });
+
+        expect(titles()).not.toContain("Playbook");
+    });
+
+    it("shows the recompiled playbook after a save replaces the stages", () => {
+        const app = runApp({ source: "root", stages: [stage()], playbook: playbook() });
+
+        app.updateStages([stage()], {
+            ...playbook(),
+            anchors: [{ name: "the-tavern", node: 0 }],
+            speakers: [{ name: "Bob", default: false, tags: [] }],
+        });
+
+        expect(titles()).toEqual(["Source", "AST", "Playbook"]);
+        expect(document.querySelector(".playbook-side")?.textContent).toContain("Bob");
+    });
+
+    it("keeps the last playbook when a recompile does not carry one", () => {
+        const app = runApp({ source: "root", stages: [stage()], playbook: playbook() });
+
+        app.updateStages([stage()]);
+
+        expect(titles()).toContain("Playbook");
+        expect(document.querySelector(".playbook-side")?.textContent).toContain("Alice");
+    });
+});
+
+describe("runApp Playbook help", () => {
+    it("explains the playbook rather than the Source editor", () => {
+        mountDom();
+        const graph = { ...stage(), title: "Dialogue Graph" };
+        const app = runApp({
+            source: "root",
+            stages: [graph],
+            playbook: {
+                json: "{}",
+                anchors: [{ name: "the-tavern", node: 0 }],
+                speakers: [],
+            },
+        });
+        app.updateStages([graph]);
+
+        const tabs = [...document.querySelectorAll<HTMLElement>("#tabs .tab")];
+        tabs.at(-1)!.click();
+
+        expect(document.getElementById("help-content")?.innerHTML).toContain("read-only");
+        expect(document.getElementById("help-content")?.innerHTML).toContain("playbook");
+    });
+});

@@ -1,6 +1,7 @@
 using System.Text;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Emission;
 using DialogueDown.Markdown;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Diagnostics;
@@ -8,6 +9,7 @@ using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Editor;
 using DialogueDown.Visualization.Graph;
 using DialogueDown.Visualization.Markdown;
+using DialogueDown.Visualization.Playbook;
 using DialogueDown.Visualization.Render;
 using DialogueDown.Visualization.Script;
 using DialogueDown.Visualization.Semantics;
@@ -133,10 +135,11 @@ public sealed class CompilationVisualizer
     /// </summary>
     public string RenderHtmlReport(string source, string? documentPath = null)
     {
-        var content = BuildContent(source);
+        var content = BuildContent(source, documentPath);
         return HtmlTemplate.RenderPage(
             content.Stages, source, VisualizationMode.Static, documentPath, content.Symbols,
-            content.Configuration, content.Diagnostics, content.SemanticTokens);
+            content.Configuration, content.Diagnostics, content.SemanticTokens,
+            playbook: content.Playbook);
     }
 
     /// <summary>
@@ -151,10 +154,10 @@ public sealed class CompilationVisualizer
     {
         ArgumentNullException.ThrowIfNull(documentPath);
         ArgumentNullException.ThrowIfNull(mode);
-        var content = BuildContent(source);
+        var content = BuildContent(source, documentPath);
         return HtmlTemplate.RenderLinkedPage(
             content.Stages, source, mode, documentPath, content.Symbols, content.Configuration,
-            content.Diagnostics, content.SemanticTokens, configOverlay, project);
+            content.Diagnostics, content.SemanticTokens, configOverlay, project, content.Playbook);
     }
 
     /// <summary>
@@ -181,10 +184,10 @@ public sealed class CompilationVisualizer
     {
         ArgumentNullException.ThrowIfNull(documentPath);
         ArgumentNullException.ThrowIfNull(mode);
-        var content = BuildContent(source);
+        var content = BuildContent(source, documentPath);
         return DisplayGraphJson.SerializeDocument(
             mode, documentPath, source, content.Stages, content.Symbols, content.Configuration,
-            content.Diagnostics, content.SemanticTokens, configOverlay, project);
+            content.Diagnostics, content.SemanticTokens, configOverlay, project, content.Playbook);
     }
 
     private static IDisplayRenderer RendererFor(EmitFormat format) => format switch
@@ -235,7 +238,12 @@ public sealed class CompilationVisualizer
 
     // Compiles the source once and projects both the stage graphs and the editor's resolved
     // symbols, so the report and the live document API share a single compilation.
-    private ReportContent BuildContent(string source)
+    // The playbook records the script it was compiled from, which a compile does not know: the
+    // caller opened the file, so the caller names it. A report with no path is a bare render.
+    private static string ScriptNameOf(string? documentPath) =>
+        documentPath is null ? "script.dialogue.md" : Path.GetFileName(documentPath);
+
+    private ReportContent BuildContent(string source, string? documentPath = null)
     {
         var result = _compiler.Compile(source);
 
@@ -270,7 +278,10 @@ public sealed class CompilationVisualizer
         IReadOnlyList<SemanticToken> semanticTokens =
             [.. new SemanticTokenProjection()
                 .Project(result.Markdown, result.Script, source, result.LocatedDiagnostics)];
-        return new ReportContent(stages, symbols, configuration, diagnostics, semanticTokens);
+        var playbook = PlaybookProjection.Project(
+            result, ScriptNameOf(documentPath), PlaybookWriterFactory.CreateDefault());
+        return new ReportContent(
+            stages, symbols, configuration, diagnostics, semanticTokens, playbook);
     }
 
     // The compiled report data shared by the HTML report and the live document payload.
@@ -279,5 +290,6 @@ public sealed class CompilationVisualizer
         SymbolSet Symbols,
         ConfigurationReport? Configuration,
         IReadOnlyList<LspDiagnostic> Diagnostics,
-        IReadOnlyList<SemanticToken> SemanticTokens);
+        IReadOnlyList<SemanticToken> SemanticTokens,
+        PlaybookReport Playbook);
 }

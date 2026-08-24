@@ -9,6 +9,7 @@ import type {
     DialogueSymbolProvider,
     DisplayNode,
     Span,
+    PlaybookReport,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
 import { neighborsOf } from "./neighbors";
@@ -26,6 +27,7 @@ import {
 } from "./source-view";
 import { findEnclosingNode } from "./enclosing-node";
 import { createConfigView, type ConfigViewHandle, type ConfigViewOptions } from "./config-view";
+import { createPlaybookView } from "./playbook-view";
 import { consumeOpenConfigTab } from "./config-create";
 import { rememberActiveTab, rememberedActiveTab, revealActiveTab } from "./active-tab";
 import { createTabScroller } from "./tab-scroller";
@@ -67,6 +69,9 @@ const SOURCE_TIP = "The document as written, beside a live Markdown preview.";
 
 // The Config tab shows the applied dialogue.toml, so its tip is a constant here too.
 const CONFIG_TIP = "The applied configuration — its dialogue.toml beside the configured speakers.";
+
+// The Playbook tab shows the runtime's artifact, so it names what a host would load.
+const PLAYBOOK_TIP = "The compiled playbook — the JSON a runtime loads, beside what it declares.";
 
 // Feather Icons (MIT) `settings` gear, marking the Config tab.
 const GEAR_ICON =
@@ -112,8 +117,11 @@ export interface SourceOptions {
 
 /** Controls a running report: swap in fresh data, reconfigure the editor, or show a banner. */
 export interface AppController {
-    /** Replace only the graph tabs with recompiled stages, leaving the Source tab (editor) intact. */
-    updateStages(stages: Stage[]): void;
+    /**
+     * Replace the tabs a recompile derives — the graph stages and the Playbook after them —
+     * leaving the Source tab (and its editor) intact.
+     */
+    updateStages(stages: Stage[], playbook?: PlaybookReport): void;
     /** Switch the Source editor between editable (Edit) and read-only (View) in place. */
     setEditable(editable: boolean): void;
     /** Replace the Source buffer (a View-mode hot-reload), keeping the one editor instance. */
@@ -169,6 +177,7 @@ export function runApp(
     let configHandle: ConfigViewHandle | null = null;
     let sourceTab: Element | null = null;
     let configTab: Element | null = null;
+    let currentPlaybook: PlaybookReport | null = null;
 
     // The node inspector is read-only: editing lives solely in the Source tab, and the panel's
     // "Jump to source" takes the reader there with the node's span selected.
@@ -511,6 +520,7 @@ export function runApp(
         for (const stage of report.stages) {
             addStageTab(stage);
         }
+        addPlaybookTab(report.playbook);
         // The focus-mode controls only make sense with a tab to focus; the empty state (no
         // config, source, or stages) has none, so hide them there.
         const nothingToFocus = views.length === 0;
@@ -542,7 +552,7 @@ export function runApp(
     // id and reselected against the freshly built view, so a successful autosave never closes
     // the open node inspector; if the node is gone from the recompiled graph, the selection
     // cancels safely and the inspector clears.
-    function updateStages(stages: Stage[]): void {
+    function updateStages(stages: Stage[], playbook?: PlaybookReport): void {
         const reselectId = selectedNodeId;
         currentStages = stages;
         const keep = (configPresent ? 1 : 0) + (sourcePresent ? 1 : 0);
@@ -556,6 +566,7 @@ export function runApp(
         for (const stage of stages) {
             addStageTab(stage);
         }
+        addPlaybookTab(playbook);
         if (views.length > 0) {
             activate(Math.min(activeIndex, views.length - 1));
             // `activate` clears every view's selection and the inspector; restore the remembered
@@ -563,6 +574,24 @@ export function runApp(
             // missing id resolves to `false` and leaves the inspector cleared.
             if (reselectId !== null) views[activeIndex]?.selectById(reselectId);
         }
+    }
+
+    /**
+     * The Playbook tab, appended after the graph stages because the playbook is what the last
+     * stage becomes: the artifact a runtime loads. It is not a stage — it has no graph — so it
+     * carries a `null` view and, like Config, refreshes through its own handle. A report built
+     * without the compiler (a bare graph render) has no playbook and gets no tab.
+     */
+    function addPlaybookTab(playbook: PlaybookReport | undefined): void {
+        // A recompile that did not carry a playbook keeps showing the last one rather than
+        // dropping the tab out from under the reader.
+        const next = playbook ?? currentPlaybook;
+        if (next == null) return;
+        currentPlaybook = next;
+        const section = document.createElement("section");
+        section.className = "stage playbook-stage";
+        section.appendChild(createPlaybookView(next));
+        addTab("Playbook", section, null, PLAYBOOK_TIP, null);
     }
 
     function addStageTab(stage: Stage): void {
@@ -714,8 +743,9 @@ export function runApp(
         const isSource = views[index] === null;
         const section = stagesEl.children[index] as HTMLElement | undefined;
         const isSemantic = section?.classList.contains("semantic-stage") ?? false;
+        const isPlaybook = section?.classList.contains("playbook-stage") ?? false;
         appEl.classList.toggle("no-detail", isSource || isSemantic);
-        setHelp(isSource ? "source" : isSemantic ? "semantic" : "graph");
+        setHelp(isPlaybook ? "playbook" : isSource ? "source" : isSemantic ? "semantic" : "graph");
         // Frame the tab now that it is visible (a tree built while hidden had a
         // zero-size container). Applying its remembered position — instead of always
         // re-framing — keeps a stage spatially stable as the reader moves between tabs.

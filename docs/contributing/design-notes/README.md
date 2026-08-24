@@ -185,6 +185,7 @@ flowchart TB
     DGRF --> CAR["38. Collapsing Across the Report"]
     CAR --> EXT["39. Live Visualization — Explorer Toggle"]
     EXT --> OSW["40. Opening a Script Without Reloading the Page"]
+    OSW --> PBT["41. Playbook Tab"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -229,6 +230,7 @@ flowchart TB
 | 38 | [Collapsing Across the Report](./Collapsing%20Across%20the%20Report.md) | One contract and one glyph for folding on every surface, with each surface keeping its own unit and its own state | Implemented |
 | 39 | [Live Visualization — Explorer Toggle](./Live%20Visualization%20-%20Explorer%20Toggle.md) | Summon the Explorer from a pinned Files toggle in the tab bar, shut by default when a document is open | Implemented |
 | 40 | [Opening a Script Without Reloading the Page](./Opening%20a%20Script%20Without%20Reloading%20the%20Page.md) | Open a script from the Explorer by replacing the report's contents rather than the page, keeping the reader's zoom and open tab | Implemented |
+| 41 | [Playbook Tab](./Playbook%20Tab.md) | The compiled playbook after Dialogue Graph: the JSON a runtime loads, read-only, beside its header and speaker tables | Implemented |
 
 ### Other notes
 

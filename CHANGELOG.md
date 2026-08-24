@@ -10,6 +10,18 @@ changes easy to categorize.
 
 ### Added
 
+- **A Playbook tab in the report** — after Dialogue Graph, the report now shows the compiled
+  playbook itself: the JSON a game runtime loads, read-only and searchable, beside tables naming
+  what a host must provide to run it, where a playthrough starts, and who can speak. Checking what
+  a script actually ships as no longer means emitting a file and opening it elsewhere. Hovering a
+  property explains it in the format's own words and washes in the stretch that description
+  covers, the way an editor does for any `$schema`-linked JSON. It reads the way JSON does in an
+  editor — a key, a string, a number, and a literal each on their own hue — and blocks fold from
+  the gutter as they do in the Source and Config editors. Beside it, the playbook's header,
+  speakers, and the anchors a jump may name each get a foldable, searchable table panel. A script
+  with errors compiles no playbook, and the tab says so. See the
+  [Playbook Tab](docs/contributing/design-notes/Playbook%20Tab.md) note.
+
 - **The Dialogue Graph says what a jump was called** — a jump now reads as `⇒ through the gate`
   rather than `(jump)`, so one jump is told from another at a glance, and choosing its line shows
   the same words beside what the route means and the nodes it joins. A jump is kept nowhere else in
