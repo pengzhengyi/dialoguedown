@@ -52,6 +52,23 @@ jobs:
               tests/DialogueDown.Tests/emission/goldens/*.verified.json
           done
 
+      # A document the corpus says a reader must accept has to be valid by the schema too,
+      # or the format's two specifications disagree. The refused cases are skipped: most of
+      # them are deliberately invalid, which is the whole point of the case.
+      - name: Validate every accepted conformance case against the schema
+        run: |
+          accepted=$(python3 - <<'PY'
+          import json, pathlib
+          for fixture in sorted(pathlib.Path("conformance/readable").glob("*/fixture.json")):
+              claim = json.loads(fixture.read_text(encoding="utf-8"))
+              if claim["verdict"] == "accept":
+                  print(fixture.parent / claim["playbook"])
+          PY
+          )
+          echo "$accepted"
+          test -n "$accepted"
+          pipx run check-jsonschema --schemafile schema/playbook-0.schema.json $accepted
+
       - name: Restore local tools
         run: dotnet tool restore
 
