@@ -121,6 +121,45 @@ describe("createTreeView — selection by stable id", () => {
         expect(view.svg.querySelectorAll("g.node").length).toBe(3);
         expect(view.svg.querySelector("g.node.selected")).not.toBeNull();
     });
+
+    // Fitting a long script leaves every node a few pixels tall. Centering there marks a node the
+    // reader still cannot read, which is the same failure as leaving it folded away.
+    it("brings a revealed node up to a readable scale", () => {
+        const cameras: { k: number; byUser: boolean }[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            initialCamera: { k: 0.15, x: 0, y: 0 },
+            onCameraChange: (transform, byUser) => cameras.push({ k: transform.k, byUser }),
+        });
+
+        expect(view.selectById("a", { center: true, reveal: true })).toBe(true);
+
+        expect(cameras.at(-1)?.k).toBeGreaterThanOrEqual(1);
+        expect(cameras.at(-1)?.byUser).toBe(false);
+    });
+
+    it("keeps a reader who is already closer at their own scale", () => {
+        const cameras: number[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            initialCamera: { k: 2, x: 0, y: 0 },
+            onCameraChange: (transform) => cameras.push(transform.k),
+        });
+
+        expect(view.selectById("a", { center: true, reveal: true })).toBe(true);
+
+        expect(cameras.at(-1)).toBe(2);
+    });
+
+    it("leaves the scale alone when a selection is not a reveal", () => {
+        const cameras: number[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            initialCamera: { k: 0.15, x: 0, y: 0 },
+            onCameraChange: (transform) => cameras.push(transform.k),
+        });
+
+        expect(view.selectById("a", { center: true })).toBe(true);
+
+        expect(cameras.at(-1)).toBe(0.15);
+    });
 });
 
 /**

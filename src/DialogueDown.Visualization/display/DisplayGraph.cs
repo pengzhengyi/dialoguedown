@@ -23,6 +23,20 @@ public sealed record DisplayGraph(
     public IReadOnlyList<DisplayRegion> Regions { get; init; } = [];
 
     /// <summary>
+    /// Whether a <see cref="DisplayEdgeKind.Child"/> edge nests the child's source inside the
+    /// parent's. True for a stage projected from a syntax tree, where a container's span is only
+    /// its header and its true reach comes from its children. False for a stage whose child edges
+    /// mark the spanning tree it is <em>drawn</em> with rather than what contains what — there a
+    /// node's own span already covers everything it holds, and following those edges would stretch
+    /// its reach along the flow instead.
+    /// </summary>
+    /// <remarks>
+    /// A reader relies on this when jumping from a source selection into a stage: it decides
+    /// whether the node revealed is found by subtree extent or by span alone.
+    /// </remarks>
+    public bool Nests { get; init; } = true;
+
+    /// <summary>
     /// A placeholder for a stage the compile did not produce (a halted compile): it carries the
     /// stage's <paramref name="title"/> and <paramref name="description"/> but no graph, plus a
     /// <paramref name="reason"/> the reader sees on its disabled tab.

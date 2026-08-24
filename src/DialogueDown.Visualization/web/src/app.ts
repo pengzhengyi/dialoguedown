@@ -311,7 +311,7 @@ export function runApp(
     ): void {
         const stage = currentStages.find((candidate) => candidate.title === title);
         if (stage == null || stage.unavailable != null) return;
-        const match = findEnclosingNode(stage.nodes, stage.edges, from, to);
+        const match = findEnclosingNode(stage, from, to);
         if (match == null) return;
         const index = titles.indexOf(title);
         if (index < 0) return;
@@ -341,7 +341,7 @@ export function runApp(
     function enclosingSpanByTitle(title: string, from: number, to: number): Span | null {
         const stage = currentStages.find((candidate) => candidate.title === title);
         if (stage == null || stage.unavailable != null) return null;
-        return findEnclosingNode(stage.nodes, stage.edges, from, to)?.extent ?? null;
+        return findEnclosingNode(stage, from, to)?.extent ?? null;
     }
     // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
     // node-detail panel and no keyboard tree navigation).

@@ -437,6 +437,39 @@ public sealed class GraphProjectionTests
             fallThrough => Assert.Null(fallThrough.Label));
     }
 
+    [Fact]
+    public void Project_TheStage_SaysItsChildEdgesDoNotNest()
+    {
+        // A child edge here is the spanning tree the drawing is laid out with, so it runs along
+        // the flow. Treating it as containment would grow a node's reach through everything it
+        // leads to — and a jump is such an edge, so that reach would leave the scene entirely.
+        var graph = Project("""
+            # The Gate
+
+            Alice: Ready?
+
+            => [through the gate](#the-gate)
+            """);
+
+        Assert.False(graph.Nests);
+    }
+
+    [Fact]
+    public void Project_ANodesSpan_CoversItsOwnTextAlone()
+    {
+        var source = """
+            Alice: First.
+
+            Alice: Second.
+            """;
+
+        var graph = Project(source);
+
+        var first = Assert.Single(graph.Nodes, node => node.Label == "Alice: First.");
+        var span = Assert.IsType<DisplaySpan>(first.Span);
+        Assert.Equal("Alice: First.", source[span.Start..span.End]);
+    }
+
     private static DisplayGraph Project(string source) =>
         new GraphProjection().Project(Pipeline.Graph(source), source);
 }
