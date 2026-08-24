@@ -342,11 +342,11 @@ the two can never be supplied together, and keeps `label` named `label`.
 A runtime must refuse the same documents. It need not refuse them in English.
 
 That leaves a hole: a document refused for an *accidental* reason still passes.
-Wherever the field under test allows it, a refusal is therefore paired with an
-acceptance built from the same playbook, differing only in that field —
-`unknown-requires` beside `unknown-uses`. The acceptance proves the rest of the
-document is sound, so the refusal can only be about the field the pair isolates.
-The reason is pinned without a word of the message being asserted.
+The readable half closes it with a **baseline**: one accepted case that nothing is
+wrong with, and every refusal is that same document with exactly one field
+changed. The baseline passing proves the rest is sound, so a refusal can only be
+about the field its case changed. The reason is pinned without a word of any
+message being asserted, and `because` names the change for a reader.
 
 ### F6 — Minimal fixtures over realistic ones
 
@@ -383,7 +383,7 @@ The corpus is itself test material, so the question is what tests *it*.
 | Level | What it covers |
 | --- | --- |
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
-| Readable corpus | Every refusal in C1's boundary table has a fixture, and every acceptance does too |
+| Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
 | Fixture integrity | Every case ships a fixture, a playbook, and a source. A `playable/` playbook is what its source compiles to; a `readable/` one deliberately is not, so only the former is regenerated and compared |
 
 That last one is the guard against a corpus rotting: a committed playbook that no
