@@ -55,8 +55,10 @@ jobs:
       # A document the corpus says a reader must accept has to be valid by the schema too,
       # or the format's two specifications disagree. The refused cases are skipped: most of
       # them are deliberately invalid, which is the whole point of the case.
-      - name: Validate every accepted conformance case against the schema
+      - name: Validate every conformance fixture and every accepted case
         run: |
+          pipx run check-jsonschema --schemafile schema/fixture-0.schema.json \
+            conformance/*/*/fixture.json
           accepted=$(python3 - <<'PY'
           import json, pathlib
           for fixture in sorted(pathlib.Path("conformance/readable").glob("*/fixture.json")):
