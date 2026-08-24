@@ -79,7 +79,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 1 | [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Proposed |
 | 2 | [Playbook Format](./Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
-| 3 | [Conformance Corpus](./Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Proposed |
+| 3 | [Conformance Corpus](./Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
 
 ### Language constructs
 

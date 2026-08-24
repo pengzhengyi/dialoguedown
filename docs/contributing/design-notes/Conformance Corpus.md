@@ -1,11 +1,13 @@
 # Conformance corpus
 
 > [!NOTE]
-> Status: **proposed** — not yet implemented. This note designs the fixtures that
-> keep more than one runtime honest, and the format they are written in. It
-> implements the conformance half of the
-> [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
-> owns the cross-cutting decisions this note applies.
+> Status: **implemented**, except the harness that runs the playable half, which
+> belongs to the runtime that can execute it
+> ([C2](https://github.com/pengzhengyi/dialoguedown/issues/297)) and whose shape
+> is settled below. This note records the fixtures that keep more than one runtime
+> honest, and the format they are written in. It implements the conformance half
+> of the [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md),
+> which owns the cross-cutting decisions this note applies.
 
 ## Table of contents
 
@@ -402,15 +404,21 @@ playbooks are already pinned by C1's goldens.
 
 ## Error and boundary cases
 
-| Case | Behavior |
-| --- | --- |
-| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch |
-| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it |
-| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing |
-| The run ends before the session does | Fail, for the same reason |
-| A `said` differs in one field | Fail, reporting the entry and the field rather than the whole document |
-| A fixture's playbook does not load | Fail as a fixture bug, distinct from a conformance failure |
-| A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why |
+The readable half's failures are implemented; the rest describe the session
+harness and arrive with it in
+[C2](https://github.com/pengzhengyi/dialoguedown/issues/297).
+
+| Case | Behavior | |
+| --- | --- | --- |
+| A fixture's playbook does not load | Fail as a fixture bug, naming the case and the file, distinct from a conformance failure | shipped |
+| A fixture is malformed | Fail naming the case, so nobody opens files hunting for it | shipped |
+| A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why | shipped |
+| A case missing a fixture, a playbook, or a source | Fail: the corpus is incomplete, in either half | shipped |
+| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | with C2 |
+| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it | with C2 |
+| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing | with C2 |
+| The run ends before the session does | Fail, for the same reason | with C2 |
+| A `said` differs in one field | Fail, reporting the entry and the field rather than the whole document | with C2 |
 
 ## Integration
 
@@ -418,7 +426,7 @@ playbooks are already pinned by C1's goldens.
 | --- | --- |
 | `conformance/` | New root folder, alongside `schema/`, with a `README.md` a port starts from |
 | `schema/fixture-0.schema.json` | The fixture format's own schema, published beside the playbook's, so a fixture is checked in an editor as it is hand-authored |
-| C# harness | A test project reads `conformance/readable/` and runs it through `PlaybookReader`; no new dependency |
+| C# harness | Two types in `DialogueDown.Playbook.Tests`: `CorpusFolder` finds cases and reads their files, naming the case in every failure; `ReadableCorpus` says what a readable case *means*. `Corpora` is the only place that knows where the corpus sits. No new dependency |
 | C2 | Inherits the playable fixtures as its acceptance suite, and implements the harness that runs them |
 | C4 | The `ddown play` REPL sends and receives the same messages, so a session and a REPL transcript are one shape — `--replay <fixture>` makes the REPL a harness |
 | C5b | The TypeScript runner is held to the same corpus, which is the whole reason the fixtures are language-neutral |
@@ -430,12 +438,18 @@ The corpus is itself test material, so the question is what tests *it*.
 
 | Level | What it covers |
 | --- | --- |
-| Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
+| Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture, a fixture naming a document that is not there |
 | Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
-| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together until C2 can run it. Every case ships a fixture, a playbook, and a source. A `playable/` playbook is what its source compiles to; a `readable/` one deliberately is not, so only the former is regenerated and compared |
+| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together until C2 can run it. Every case in **either** half ships a fixture, a playbook, and a source |
+| Source integrity | Every `playable/` case is recompiled from its source and compared to the committed playbook. A `readable/` case is exempt by design: its document is that compile with one field broken |
 
-That last one is the guard against a corpus rotting: a committed playbook that no
-longer matches its source is a fixture asserting yesterday's format.
+The last two are the guard against a corpus rotting. A committed playbook that no
+longer matches its source is a fixture asserting yesterday's format, and a case
+that quietly lost a file is one nobody can review — neither of which the harness
+itself would notice, because it reads only a fixture and the document it names.
+
+The source comparison lives in `DialogueDown.Tests`, which owns the compiler and
+already keeps the golden playbooks; the rest lives beside the reader it exercises.
 
 ## Open questions and deferred work
 
