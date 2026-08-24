@@ -69,7 +69,7 @@ playbook being a designed contract rather than a dump of the compiler's graph.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
 - [x] A C# harness that runs the readable fixtures today.
-- [ ] A documented shape for the playable harness, so C2 has an acceptance suite
+- [x] A documented shape for the playable harness, so C2 has an acceptance suite
       waiting rather than a corpus to write afterward.
 
 ## Where the corpus lives
@@ -267,6 +267,42 @@ meaning, so it cannot know there are only two nodes to point at, which versions 
 build reads, or that a node's id must equal its position. Only the type error and
 the truncated file are its to catch. Conversely, every case the corpus *accepts*
 must also validate, or the format's two specifications disagree; CI checks that.
+
+### Running a session
+
+The playable harness belongs to C2, which is the only component that can execute
+anything. Its **shape** is settled here, so that component inherits an acceptance
+suite rather than a corpus to interpret.
+
+```mermaid
+flowchart TD
+    READ["Read the fixture and its playbook"] --> BEGIN["Begin a run at the playbook's entry"]
+    BEGIN --> NEXT{"Another turn?"}
+    NEXT -->|"send"| DELIVER["Deliver the message to the runner"]
+    DELIVER --> NEXT
+    NEXT -->|"expect"| WAITING{"Has the runtime replied?"}
+    WAITING -->|"no"| SHORT["Fail: the run ended before the session"]
+    WAITING -->|"yes"| MATCH{"Does the reply match?"}
+    MATCH -->|"no"| DIVERGED["Fail: report both messages"]
+    MATCH -->|"yes"| NEXT
+    NEXT -->|"none left"| DRAINED{"Is the runtime silent?"}
+    DRAINED -->|"no"| EXTRA["Fail: the session ended before the run"]
+    DRAINED -->|"yes"| PASS["Conformant"]
+```
+
+Two rules carry most of the weight:
+
+- **Take the runtime's messages in order, one per `expect`.** A harness that
+  searched ahead for a match would accept a runner that reordered its replies,
+  which is the drift a session exists to catch.
+- **Both must run out together.** A run that stops early and a session that stops
+  early are different failures, and reporting them differently is what tells a
+  contributor whether the fixture or the runner is wrong.
+
+Matching a single message is ordinary equality with two exceptions, both already
+specified above: `speech` and `label` compare as fragments when written as an
+array and as the flattening when written as a string, and an absent `speaker`
+means the anonymous default speaker rather than "any speaker".
 
 ## What the corpus covers
 

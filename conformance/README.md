@@ -84,6 +84,21 @@ the messages a driver sends, interleaved with the replies a runner must give.
 A runtime is conformant when it can hold every session in the corpus — not merely
 produce the same story, but have the same conversation.
 
+To run one, walk the `session` in order:
+
+1. `send` — deliver that message to the runner.
+2. `expect` — take the runtime's **next** message and compare. Never search ahead
+   for a match: a harness that did would accept a runner that reordered its
+   replies, which is most of what a session is for.
+3. At the end, the run must be finished too. A run that stops early and a session
+   that stops early are different failures, and saying which is which is what
+   tells an author whether the fixture or the runtime is wrong.
+
+Comparison is ordinary equality, with the two exceptions above: `speech` and
+`label` compare as fragments when written as an array and as the flattening when
+written as a string, and an absent `speaker` means the anonymous default speaker
+rather than "any speaker".
+
 ## Adding a case
 
 1. Write `source.dialogue.md`, as small as it can be while showing the one thing
