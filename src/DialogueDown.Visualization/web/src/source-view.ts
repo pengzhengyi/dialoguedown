@@ -42,7 +42,8 @@ import {
     setIgnoredSpans,
     sourceIgnoredFold,
 } from "./source-ignored-fold";
-import { compactSearch, gotoLineKeymap } from "./search-panel";
+import { compactSearch } from "./search-panel";
+import { gotoLineKeymap } from "./goto-line";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { yamlLanguage } from "@codemirror/lang-yaml";
 import { tags } from "@lezer/highlight";

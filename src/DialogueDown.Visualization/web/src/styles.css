@@ -1949,96 +1949,68 @@ g.node.entity-highlight text.label {
    makes it behave like VS Code's Go to Line: a small box that floats over the text near the top,
    already focused, gone the moment the jump is made. Nothing reflows behind it. */
 
-/* CodeMirror makes the bottom panel row sticky, which would make it the dialog's containing
-   block and pin the dialog to the editor's foot. The row is the last child of the editor's flex
-   column, so it is already held at the bottom without it, and dropping the stickiness hands the
-   containing block back to the editor — where the dialog belongs. */
-:is(.source-pane, .config-source, .playbook-source) .cm-panels-bottom {
-    position: static;
+/* Go to line, shaped like VS Code's quick input: a small box floating over the text with the
+   field on one line and, under it, a sentence saying what Enter will do. It rides in the top
+   panel row, which the report already lifts out of flow, so nothing reflows as it opens — and it
+   is centred rather than pinned right, because it is a momentary prompt and not the find panel
+   the reader keeps open beside their work. */
+:is(.source-pane, .config-source, .playbook-source) .cm-panels-top:has(.dd-goto) {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-:is(.source-pane, .config-source, .playbook-source) .cm-panel:has(> form) {
-    position: absolute;
-    top: 0.4rem;
-    left: 50%;
-    z-index: 21;
-    transform: translateX(-50%);
+.dd-goto {
+    width: max-content;
+    max-width: min(26rem, 90vw);
+    padding: 0.4rem;
     background: var(--pico-card-background-color);
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
-    box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
 }
 
-:is(.source-pane, .config-source, .playbook-source) .cm-panel form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.3rem 0.55rem;
-    font-size: 0.76rem;
+/* Enter goes and Escape dismisses, so a close control would be a third way to do what two keys
+   and a click away already do — VS Code shows none either. */
+.dd-goto .cm-dialog-close {
+    display: none;
 }
 
-:is(.source-pane, .config-source, .playbook-source) .cm-panel form label {
+.dd-goto-form {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.35rem;
     margin: 0;
-    color: var(--pico-muted-color);
-    white-space: nowrap;
 }
 
-:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-textfield {
-    width: 7rem;
+.dd-goto-input {
+    width: 100%;
     height: auto;
     margin: 0;
-    padding: 0.22rem 0.4rem;
-    border: 1px solid var(--pico-form-element-border-color);
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--pico-primary);
     border-radius: var(--pico-border-radius);
     background: var(--pico-form-element-background-color);
     color: var(--pico-color);
-    font-size: 0.76rem;
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.8rem;
     line-height: 1.4;
 }
 
-:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-textfield:focus {
-    border-color: var(--pico-primary);
+.dd-goto-input:focus {
     outline: none;
     box-shadow: none;
 }
 
-:is(.source-pane, .config-source, .playbook-source) .cm-panel :is(.cm-button, .cm-dialog-close) {
-    /* Pico redefines --pico-color to white on buttons, which hid "go" and the close cross on the
-       light panel; inherit the normal text color, as the table panels' buttons already do. */
-    --pico-color: inherit;
-
-    color: inherit;
-}
-
-:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-button {
-    width: auto;
-    margin: 0;
-    padding: 0.22rem 0.6rem;
-    border: 1px solid var(--pico-muted-border-color);
+/* The sentence carries the accent so it reads as the dialog's answer rather than as fine print,
+   the way VS Code highlights the row under its field. */
+.dd-goto-guidance {
+    padding: 0.28rem 0.5rem;
     border-radius: var(--pico-border-radius);
-    background: var(--pico-card-background-color);
-    background-image: none;
-    font-size: 0.76rem;
-    line-height: 1.4;
-}
-
-:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-button:hover {
-    border-color: var(--pico-primary);
-}
-
-/* The dialog's close cross ships unsized and unpositioned; give it the room a target needs. */
-:is(.source-pane, .config-source, .playbook-source) .cm-panel .cm-dialog-close {
-    width: auto;
-    margin: 0;
-    padding: 0 0.35rem;
-    background: none;
-    border: none;
-    font-size: 1rem;
-    line-height: 1;
+    background: color-mix(in srgb, var(--pico-primary) 16%, transparent);
+    color: var(--pico-color);
+    font-size: 0.74rem;
+    line-height: 1.35;
 }
 
 /* Compiler-projected reserved targets are editor panels, not synthetic document lines. The faux

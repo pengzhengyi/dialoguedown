@@ -336,8 +336,10 @@ changes easy to categorize.
   Config, and Playbook editors, but only from a shortcut nothing mentioned, and its dialog arrived
   in browser-default chrome with an unreadable button, pushing the document up from the editor's
   foot. It now opens on <kbd>Ctrl-G</kbd> as it does in VS Code, and floats over the text near the
-  top — focused on arrival, gone once the jump is made, nothing reflowing behind it. A line
-  number, a `+`/`-` offset, a `%` of the document, or `line:column` all work.
+  top — focused on arrival, dismissed by Escape or by clicking away, gone once the jump is made,
+  nothing reflowing behind it. A line reading under the field says what Enter will do, and teaches
+  the expression while it is empty: a line number, `line:column`, a `+`/`-` offset, or a `%` of
+  the document all work, and none of them were discoverable before.
 
 - **A second script no longer silences the first one's tab** — opening a script stopped the one
   already open from hot-reloading in another browser tab, with nothing to say it had: the tab kept

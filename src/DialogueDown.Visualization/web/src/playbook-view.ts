@@ -32,7 +32,8 @@ import { initSplitDivider } from "./source-view";
 import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
-import { compactSearch, gotoLineKeymap } from "./search-panel";
+import { compactSearch } from "./search-panel";
+import { gotoLineKeymap } from "./goto-line";
 import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
 

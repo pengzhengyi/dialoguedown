@@ -1,5 +1,4 @@
 import { EditorView, type Panel, type ViewUpdate } from "@codemirror/view";
-import type { KeyBinding } from "@codemirror/view";
 import {
     search,
     SearchQuery,
@@ -10,7 +9,6 @@ import {
     replaceNext,
     replaceAll,
     closeSearchPanel,
-    gotoLine,
 } from "@codemirror/search";
 
 // Feather Icons (MIT), inline so the panel needs no icon dependency, matching the rest of the UI.
@@ -261,18 +259,3 @@ function row(className: string, ...children: HTMLElement[]): HTMLElement {
 export function compactSearch() {
     return search({ top: true, createPanel: (view) => new CompactSearchPanel(view) });
 }
-
-/**
- * VS Code's Go to Line binding, beside the `Mod-Alt-g` CodeMirror already provides.
- *
- * `Ctrl-g` is literal Control on every platform, which is exactly what VS Code binds — on macOS
- * `Cmd-g` stays Find Next there as it does here, and on Windows and Linux `F3` keeps Find Next
- * when this takes `Ctrl-g` over. It is listed before `searchKeymap` so it wins that overlap.
- *
- * `Mod-l` is not an option however tempting it reads: the browser owns `Cmd/Ctrl-L` for the
- * address bar and a page cannot take it back. A synthetic key event in a test would still
- * "press" it, so a test would pass while no reader could ever use it.
- */
-export const gotoLineKeymap: readonly KeyBinding[] = [
-    { key: "Ctrl-g", run: gotoLine, preventDefault: true },
-];
