@@ -160,6 +160,8 @@
     href: Live Visualization - Reverse Jump.md
   - name: Opening a Script Without Reloading the Page
     href: Opening a Script Without Reloading the Page.md
+  - name: Playbook Tab
+    href: Playbook Tab.md
 - name: Other notes
   items:
   - name: BBCode Rendering

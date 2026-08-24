@@ -38,7 +38,7 @@ test.beforeEach(async ({ page }) => {
 test("serves a view report bound to the document", async ({ page }) => {
     // The payload is a served session, so the tabs render. Config leads (it always has a
     // configuration context here), while the report still opens on Source.
-    await expect(page.locator(".tab")).toHaveCount(7); // Config + Source + Markdown/Dialogue/Desugared AST + Semantic Model + Dialogue Graph
+    await expect(page.locator(".tab")).toHaveCount(8); // Config + Source + Markdown/Dialogue/Desugared AST + Semantic Model + Dialogue Graph + Playbook
     await expect(page.locator(".tab").first()).toHaveText("Config");
     await expect(page.locator(".tab.active")).toHaveText("Source");
     // The View/Edit toggle is shown, starting in View.
@@ -1540,3 +1540,27 @@ test("folds and opens every scene at once from the legend", async ({ page }) => 
 function digitsOf(text: string | null): string {
     return (text ?? "").replace(/\D/g, "");
 }
+
+test("recompiles the Playbook tab on save, so it always matches the saved script", async ({
+    page,
+}) => {
+    const playbook = page.locator("#tabs .tab", { hasText: "Playbook" });
+    const speakers = page
+        .locator(".playbook-side .table-panel")
+        .filter({ has: page.locator(".table-panel-title", { hasText: /^Speakers$/ }) });
+    await playbook.click();
+    await expect(speakers).toContainText("Alice");
+    await expect(speakers).not.toContainText("Bruno");
+
+    // Rename the speaker in Source and save; the playbook is regenerated from the saved script.
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
+    await page.locator("#tabs .tab", { hasText: "Source" }).click();
+    await page.locator(".source-stage .cm-content").click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type("# Original Scene\n\nBruno: The original line.\n");
+    await page.locator(".save-button").click();
+
+    await playbook.click();
+    await expect(speakers).toContainText("Bruno");
+    await expect(page.locator(".playbook-source .cm-content")).toContainText("Bruno");
+});

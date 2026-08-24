@@ -162,7 +162,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         setContent: app.setContent,
         setDocument: app.setDocument,
         applyReport: (applied) => {
-            app.updateStages(applied.stages);
+            app.updateStages(applied.stages, applied.playbook);
             // A save recompiles, so the analyzer's symbols change — refresh the completion
             // holder or the editor keeps offering the old speakers/ids.
             currentSymbols = applied.symbols ?? EMPTY_SYMBOLS;
@@ -197,7 +197,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             if (applied.configuration) app.updateConfig(applied.configuration);
             // A config recompile changes the graph too, so refresh the stages exactly once, like
             // the Source binding does.
-            app.updateStages(applied.stages);
+            app.updateStages(applied.stages, applied.playbook);
             // Editing the config changes the resolved speakers/ids, so refresh the Source
             // editor's completion symbols and diagnostics from the same recompile.
             currentSymbols = applied.symbols ?? EMPTY_SYMBOLS;

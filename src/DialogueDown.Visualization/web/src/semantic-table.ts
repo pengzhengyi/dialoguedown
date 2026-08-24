@@ -61,8 +61,15 @@ let facetGroupSeq = 0;
  * whose choice shows as a chip in the header. Sorting and filtering run on TanStack `table-core`
  * (headless), so this module still owns every pixel: category accents, cross-link keys, and the
  * collapsible state all survive. The collapsed state persists across reloads.
+ *
+ * `storagePrefix` namespaces that remembered state. Two tabs can hold same-named tables — the
+ * Semantic tab and the Playbook tab both show Speakers and Anchors — and a shared key would make
+ * collapsing one silently collapse the other.
  */
-export function createTablePanel(table: SemanticTable): HTMLElement {
+export function createTablePanel(
+    table: SemanticTable,
+    storagePrefix = "dd-sem-panel-",
+): HTMLElement {
     const panel = document.createElement("section");
     panel.className = "table-panel";
 
@@ -100,7 +107,7 @@ export function createTablePanel(table: SemanticTable): HTMLElement {
     const collapsible = initCollapsiblePanel({
         container: panel,
         collapsedClass: "collapsed",
-        storageKey: `dd-sem-panel-${slug(table.title)}`,
+        storageKey: `${storagePrefix}${slug(table.title)}`,
         name: table.title,
     });
     const reflect = (): void =>

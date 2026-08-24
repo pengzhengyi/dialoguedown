@@ -2,6 +2,7 @@ using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Diagnostics;
 using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Editor;
+using DialogueDown.Visualization.Playbook;
 
 namespace DialogueDown.Visualization.Render;
 
@@ -34,11 +35,12 @@ internal static class HtmlTemplate
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
         ConfigStatusOverlay? configOverlay = null,
-        ReportProject? project = null)
+        ReportProject? project = null,
+        PlaybookReport? playbook = null)
     {
         return Fill(
             SelfContained(source), stages, source, mode, path, symbols,
-            configuration, diagnostics, semanticTokens, configOverlay, project);
+            configuration, diagnostics, semanticTokens, configOverlay, project, playbook);
     }
 
     /// <summary>
@@ -57,11 +59,12 @@ internal static class HtmlTemplate
         IReadOnlyList<LspDiagnostic>? diagnostics = null,
         IReadOnlyList<SemanticToken>? semanticTokens = null,
         ConfigStatusOverlay? configOverlay = null,
-        ReportProject? project = null)
+        ReportProject? project = null,
+        PlaybookReport? playbook = null)
     {
         return Fill(
             Linked(), stages, source, mode, path, symbols,
-            configuration, diagnostics, semanticTokens, configOverlay, project);
+            configuration, diagnostics, semanticTokens, configOverlay, project, playbook);
     }
 
     // Everything inlined, so the file opens from disk with no server and no network. Mermaid is
@@ -118,13 +121,14 @@ internal static class HtmlTemplate
         IReadOnlyList<LspDiagnostic>? diagnostics,
         IReadOnlyList<SemanticToken>? semanticTokens,
         ConfigStatusOverlay? configOverlay,
-        ReportProject? project)
+        ReportProject? project,
+        PlaybookReport? playbook)
     {
         return template.Replace(
             ReportSlot,
             DisplayGraphJson.SerializeReport(
                 mode, path, source, stages, symbols, configuration, diagnostics,
-                semanticTokens, configOverlay, project),
+                semanticTokens, configOverlay, project, playbook),
             StringComparison.Ordinal);
     }
 }

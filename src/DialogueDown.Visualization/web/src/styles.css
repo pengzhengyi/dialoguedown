@@ -16,6 +16,15 @@
     --md-link: #0969da;
     --md-code: #0550ae;
     --md-muted: #6e7781;
+
+    /* The Playbook editor's JSON, following the VS Code Light+ roles this file already uses for
+       code-span semantics (Dark+ counterparts below). JSON gets its own set rather than reusing
+       the Markdown hues, which are one blue family: a playbook is nearly all quoted strings, so
+       a key, a value, and a number have to part company on hue, not on shade. */
+    --json-key: #0451a5;
+    --json-string: #a31515;
+    --json-number: #098658;
+    --json-literal: #00f;
     --dd-chrome-muted: #57606a;
     --cm-selection: rgb(20 100 210 / 22%);
     --problem-text: #24292f;
@@ -97,6 +106,10 @@
         --md-link: #79c0ff;
         --md-code: #a5d6ff;
         --md-muted: #8b949e;
+        --json-key: #9cdcfe;
+        --json-string: #ce9178;
+        --json-number: #b5cea8;
+        --json-literal: #569cd6;
         --dd-chrome-muted: #8b949e;
         --cm-selection: rgb(100 165 255 / 35%);
         --problem-text: #c9d1d9;
@@ -134,6 +147,10 @@
     --md-link: #79c0ff;
     --md-code: #a5d6ff;
     --md-muted: #8b949e;
+    --json-key: #9cdcfe;
+    --json-string: #ce9178;
+    --json-number: #b5cea8;
+    --json-literal: #569cd6;
     --dd-chrome-muted: #8b949e;
     --cm-selection: rgb(100 165 255 / 35%);
     --problem-text: #c9d1d9;
@@ -1692,10 +1709,12 @@ g.node.entity-highlight text.label {
     caret-color: var(--pico-color);
 }
 
-/* The faint highlight previewing the source span a hovered Jump-to target would reveal — the
-   enclosing node in that stage. Kept lighter than the real selection so both read at once: the
-   selection stays the strong mark, the preview a soft wash over the wider enclosing span. */
-.source-pane .cm-content .dd-jump-preview {
+/* The faint highlight previewing an enclosing span a hover would reveal — the node a Jump-to
+   target lands in, or the stretch a playbook property's schema rule covers. Kept lighter than the
+   real selection so both read at once: the selection stays the strong mark, the preview a soft
+   wash over the wider enclosing span. */
+.source-pane .cm-content .dd-jump-preview,
+.playbook-source .cm-content .dd-jump-preview {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 20%, transparent);
     border-radius: 2px;
 }
@@ -1722,12 +1741,12 @@ g.node.entity-highlight text.label {
 }
 
 /* Fold markers in the gutter, and the placeholder shown for a folded section. */
-:is(.source-pane, .config-source) .cm-foldGutter .cm-gutterElement {
+:is(.source-pane, .config-source, .playbook-source) .cm-foldGutter .cm-gutterElement {
     color: var(--pico-muted-color);
     cursor: pointer;
 }
 
-:is(.source-pane, .config-source) .cm-foldPlaceholder {
+:is(.source-pane, .config-source, .playbook-source) .cm-foldPlaceholder {
     margin: 0 0.2rem;
     padding: 0 0.35rem;
     border: none;
@@ -1737,8 +1756,8 @@ g.node.entity-highlight text.label {
 }
 
 /* Subtle, theme-neutral highlights for the active line and other matches of the selection. */
-:is(.source-pane, .config-source) .cm-activeLine,
-:is(.source-pane, .config-source) .cm-activeLineGutter {
+:is(.source-pane, .config-source, .playbook-source) .cm-activeLine,
+:is(.source-pane, .config-source, .playbook-source) .cm-activeLineGutter {
     background: rgb(128 128 128 / 10%);
 }
 
@@ -1747,7 +1766,7 @@ g.node.entity-highlight text.label {
     box-shadow: inset 3px 0 0 var(--debug-current);
 }
 
-:is(.source-pane, .config-source) .cm-selectionMatch {
+:is(.source-pane, .config-source, .playbook-source) .cm-selectionMatch {
     background: rgb(120 160 255 / 25%);
 }
 
@@ -1899,7 +1918,7 @@ g.node.entity-highlight text.label {
 /* The compact find/replace panel floats over the top-right of the editor, VS Code-style, rather
    than sitting in a full-width bar. The panels container is made transparent and absolute so the
    card styling lives on `.dd-search` itself. */
-:is(.source-pane, .config-source) .cm-panels {
+:is(.source-pane, .config-source, .playbook-source) .cm-panels {
     background: transparent;
     color: var(--pico-color);
     border: none;
@@ -1911,7 +1930,7 @@ g.node.entity-highlight text.label {
     z-index: 1;
 }
 
-:is(.source-pane, .config-source) .cm-panels-top {
+:is(.source-pane, .config-source, .playbook-source) .cm-panels-top {
     position: absolute;
     top: 0.4rem;
     right: 0.7rem;
@@ -3577,6 +3596,8 @@ body.zen .source-view > .source-preview-shell,
 body.zen .source-view > .source-divider,
 body.zen .config-view > .config-side,
 body.zen .config-view > .config-divider,
+body.zen .playbook-view > .playbook-side,
+body.zen .playbook-view > .playbook-divider,
 body.zen .semantic-view > .semantic-tables,
 body.zen .semantic-view > .semantic-divider,
 body.zen #detail,
@@ -3601,7 +3622,8 @@ body.zen .tabbar-explorer {
 /* With its neighbour gone the primary pane takes the whole row, overriding the drag-set
    split variable the same way each panel's collapsed class does. */
 body.zen .source-view > .source-pane,
-body.zen .config-view > .config-source {
+body.zen .config-view > .config-source,
+body.zen .playbook-view > .playbook-source {
     flex-basis: 100%;
 }
 
@@ -3669,6 +3691,7 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle,
 .preview-collapsed .collapse-toggle,
 .config-collapsed .collapse-toggle,
+.playbook-collapsed .collapse-toggle,
 .tables-collapsed .collapse-toggle {
     --pico-color: inherit;
 
@@ -3693,6 +3716,7 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle .icon-collapse,
 .preview-collapsed .collapse-toggle .icon-collapse,
 .config-collapsed .collapse-toggle .icon-collapse,
+.playbook-collapsed .collapse-toggle .icon-collapse,
 .tables-collapsed .collapse-toggle .icon-collapse {
     display: none;
 }
@@ -3700,6 +3724,7 @@ body.zen .config-view > .config-source {
 .detail-collapsed .collapse-toggle .icon-expand,
 .preview-collapsed .collapse-toggle .icon-expand,
 .config-collapsed .collapse-toggle .icon-expand,
+.playbook-collapsed .collapse-toggle .icon-expand,
 .tables-collapsed .collapse-toggle .icon-expand {
     display: block;
 }
@@ -4993,49 +5018,62 @@ button.tab.tab-with-icon {
 
 /* The Config tab mirrors the Source split (its own `--config-split` variable) with a
    read-only TOML editor on the left and a scrollable speakers table on the right. */
-.config-view {
+.config-view,
+.playbook-view {
     position: relative;
     display: flex;
     height: 100%;
     min-height: 0;
 }
 
-.config-source {
+.config-source,
+.playbook-source {
     flex: 0 0 var(--config-split, 50%);
     min-width: 0;
     overflow: hidden;
     display: flex;
 }
 
-.config-side {
+/* Each split panel remembers its own width, so the Playbook reads its own variable. */
+.playbook-source {
+    flex-basis: var(--playbook-split, 50%);
+}
+
+.config-side,
+.playbook-side {
     flex: 1 1 auto;
     min-width: 0;
     overflow-y: auto;
     padding: 0.75rem 1rem;
 }
 
-.config-divider {
+.config-divider,
+.playbook-divider {
     position: relative;
     flex: 0 0 6px;
     cursor: col-resize;
     background: var(--pico-muted-border-color);
 }
 
-.config-divider:hover {
+.config-divider:hover,
+.playbook-divider:hover {
     background: var(--pico-primary);
 }
 
 /* Collapsed: hide the speakers panel so the source fills, and turn the divider into a
    plain rail (no resize cursor) that still hosts the re-open handle. */
-.config-view.config-collapsed .config-source {
+.config-view.config-collapsed .config-source,
+.playbook-view.playbook-collapsed .playbook-source {
     flex-basis: 100%;
 }
 
-.config-view.config-collapsed .config-side {
+.config-view.config-collapsed .config-side,
+.playbook-view.playbook-collapsed .playbook-side {
     display: none;
 }
 
-.config-view.config-collapsed .config-divider {
+.config-view.config-collapsed .config-divider,
+.playbook-view.playbook-collapsed .playbook-divider {
     cursor: default;
     background: var(--pico-muted-border-color);
 }
@@ -5045,7 +5083,8 @@ button.tab.tab-with-icon {
    its tag chips, so below this width it stacks like the Source tab: editor above, table
    below at full width. Placed after the base split rules so it wins the cascade. */
 @media (width <= 520px) {
-    .config-view {
+    .config-view,
+    .playbook-view {
         flex-direction: column;
     }
 
@@ -5054,32 +5093,42 @@ button.tab.tab-with-icon {
         min-height: 0;
     }
 
-    .config-side {
+    .playbook-source {
+        flex-basis: var(--playbook-split, 45%);
+        min-height: 0;
+    }
+
+    .config-side,
+    .playbook-side {
         min-height: 0;
 
-        /* Extra top padding so the "Configured speakers" heading clears the collapse toggle
-           centered on the seam (its lower half overlaps the panel top). */
+        /* Extra top padding so the panel's first heading clears the collapse toggle centered
+           on the seam (its lower half overlaps the panel top). */
         padding: 1.5rem 1rem 0.75rem;
     }
 
-    .config-divider {
+    .config-divider,
+    .playbook-divider {
         cursor: row-resize;
     }
 
     /* The Config divider is horizontal at this width, so rotate its collapse glyph to a
        bottom-panel orientation (down = hide, up = show), matching the Source divider. */
-    .config-divider .collapse-icon {
+    .config-divider .collapse-icon,
+    .playbook-divider .collapse-icon {
         transform: rotate(90deg);
     }
 
-    .config-view.config-collapsed .config-divider {
+    .config-view.config-collapsed .config-divider,
+    .playbook-view.playbook-collapsed .playbook-divider {
         cursor: default;
     }
 }
 
 /* The read-only TOML editor fills its pane, blends with the background, and follows
    the theme foreground — the same treatment the Source editor gets. */
-.config-source .cm-editor {
+.config-source .cm-editor,
+.playbook-source .cm-editor {
     flex: 1 1 auto;
     min-width: 0;
     height: 100%;
@@ -5087,21 +5136,25 @@ button.tab.tab-with-icon {
     font-size: 0.82rem;
 }
 
-.config-source .cm-editor.cm-focused {
+.config-source .cm-editor.cm-focused,
+.playbook-source .cm-editor.cm-focused {
     outline: none;
 }
 
-.config-source .cm-scroller {
+.config-source .cm-scroller,
+.playbook-source .cm-scroller {
     font-family: var(--pico-font-family-monospace);
 }
 
-.config-source .cm-gutters {
+.config-source .cm-gutters,
+.playbook-source .cm-gutters {
     background: transparent;
     border-right: 1px solid var(--pico-muted-border-color);
     color: var(--pico-muted-color);
 }
 
-.config-source .cm-content {
+.config-source .cm-content,
+.playbook-source .cm-content {
     color: var(--pico-color);
     caret-color: var(--pico-color);
 }
@@ -5110,17 +5163,22 @@ button.tab.tab-with-icon {
    cursor/selection element (so `caret-color` above is only a fallback), which would be
    invisible on the dark background without these, unlike the themed Source editor. */
 .config-source .cm-cursor,
-.config-source .cm-dropCursor {
+.config-source .cm-dropCursor,
+.playbook-source .cm-cursor,
+.playbook-source .cm-dropCursor {
     border-left-width: 2px;
     border-left-color: var(--pico-color);
 }
 
 .config-source .cm-selectionBackground,
-.config-source .cm-focused .cm-selectionBackground {
+.config-source .cm-focused .cm-selectionBackground,
+.playbook-source .cm-selectionBackground,
+.playbook-source .cm-focused .cm-selectionBackground {
     background-color: var(--cm-selection) !important;
 }
 
-.config-source ::selection {
+.config-source ::selection,
+.playbook-source ::selection {
     background-color: var(--cm-selection);
 }
 
@@ -5248,7 +5306,8 @@ button.tab.tab-with-icon {
 }
 
 /* The no-config left pane: a plain-language explanation, not an empty code block. */
-.config-empty-state {
+.config-empty-state,
+.playbook-empty-state {
     max-width: 40ch;
     margin: auto;
     padding: 1.5rem;
@@ -5256,7 +5315,8 @@ button.tab.tab-with-icon {
     text-align: center;
 }
 
-.config-empty-state p {
+.config-empty-state p,
+.playbook-empty-state p {
     margin: 0 0 0.75rem;
 }
 
@@ -5407,4 +5467,59 @@ button.tab.tab-with-icon {
     .app-footer .help-toggle {
         margin-left: calc(-1 * var(--dd-source-divider-width));
     }
+}
+
+/* The Playbook tab's right pane stacks its table panels, the same way the Semantic tab does. */
+.playbook-tables {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* The schema link closes the pane as a quiet footnote, not another panel. */
+.playbook-schema-note {
+    margin: 0.35rem 0 0;
+    font-size: 0.74rem;
+    color: var(--pico-muted-color);
+}
+
+/* The published schema, linked from the pane's closing footnote. Underlined on hover only, so
+   the line reads as a note until it is reached for. */
+.playbook-schema-link {
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.playbook-schema-link:hover {
+    text-decoration: underline;
+}
+
+/* Schema-driven hover over a playbook property: the path it resolved to, then what the format
+   says it means. Sized like a documentation popover rather than a bare title attribute. */
+.playbook-hover {
+    max-width: 34ch;
+    padding: 0.5rem 0.65rem;
+}
+
+.playbook-hover-path {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--pico-muted-color);
+}
+
+.playbook-hover-text {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--pico-color);
+}
+
+/* CodeMirror's default tooltip chrome is a bare bordered box; match the report's surfaces so a
+   playbook hover looks like the rest of the page in both themes. */
+.playbook-source .cm-tooltip {
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color, var(--pico-background-color));
+    box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
 }
