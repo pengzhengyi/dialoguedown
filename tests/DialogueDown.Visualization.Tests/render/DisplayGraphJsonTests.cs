@@ -28,6 +28,17 @@ public sealed class DisplayGraphJsonTests
     }
 
     [Fact]
+    public void Serialize_CarriesWhetherTheStageNests()
+    {
+        // The client reads this to decide how a reverse jump finds the node enclosing a selection.
+        var nesting = MakeGraph("Markdown AST", [Node("n0", "Document")], []);
+        var flow = MakeGraph("Dialogue Graph", [Node("n0", "Line")], []) with { Nests = false };
+
+        Assert.Contains("\"nests\":true", DisplayGraphJson.Serialize([nesting]));
+        Assert.Contains("\"nests\":false", DisplayGraphJson.Serialize([flow]));
+    }
+
+    [Fact]
     public void Serialize_IncludesStageDescription()
     {
         var graph = MakeGraph(

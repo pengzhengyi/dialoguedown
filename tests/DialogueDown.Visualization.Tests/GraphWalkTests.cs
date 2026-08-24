@@ -207,6 +207,18 @@ public sealed class GraphWalkTests
     }
 
     [Fact]
+    public void Walk_AStageWalkedFromATree_NestsItsChildren()
+    {
+        // A walk's child edge is the tree it descended, so a parent's reach includes its children.
+        var root = new Cell("root");
+        var projection = new CellProjection().Link(root, new Cell("leaf"));
+
+        var graph = GraphWalk.Walk(root, projection);
+
+        Assert.True(graph.Nests);
+    }
+
+    [Fact]
     public void Walk_NullNeighbor_Throws()
     {
         var root = new Cell("root");

@@ -229,6 +229,9 @@ export interface NodeSelectOptions {
      * navigation — a search hit, a neighbor row — where landing on a hidden node would look like
      * nothing happened. Restoring a selection after a rebuild leaves it off, so a fold the reader
      * closed stays closed.
+     *
+     * With `center`, this also brings the camera up to a readable scale: a node centered at a
+     * whole-script fit is a few pixels tall, which hides it just as surely as a closed fold.
      */
     reveal?: boolean;
 }
@@ -255,6 +258,17 @@ const MIN_ZOOM = 0.03;
  * than this — a default just should not choose it for them.
  */
 const LEGIBLE_ZOOM = 0.15;
+
+/**
+ * The smallest scale a *revealed* node is shown at.
+ *
+ * Deliberate navigation — a reverse jump from the Source, a neighbor row in the inspector — is a
+ * request to read one node, not to take in the whole drawing. A long script fits only at a scale
+ * where a node is a few pixels tall, so centering the camera there marks a node the reader still
+ * cannot read: the same failure as leaving it folded away. Revealing therefore raises the camera
+ * to this scale, and never lowers it — a reader already closer keeps the view they chose.
+ */
+const REVEAL_ZOOM = DEFAULT_ZOOM;
 
 /** Render one stage as an interactive, collapsible D3 tree with legend + zoom.
  *  `options` supply the initial camera/fold and hooks so the app can remember a
@@ -968,7 +982,7 @@ export function createTreeView(
     function applyNodeSelection(node: TreeNode, options: NodeSelectOptions): void {
         if (options.toggle) toggle(node);
         select(node);
-        if (options.center) centerOn(node);
+        if (options.center) centerOn(node, options.reveal ? REVEAL_ZOOM : undefined);
     }
 
     // Resolve a node by its stable id against this view's current hierarchy (including collapsed
@@ -1546,13 +1560,14 @@ export function createTreeView(
         return { right: Math.max(0, canvas.right - panel.left) + FLOATING_PANEL_GAP };
     }
 
-    function centerOn(node: TreeNode): void {
+    function centerOn(node: TreeNode, atLeast?: number): void {
         try {
             const size = viewportSize();
-            const transform = zoomTransform(svg.node()!);
-            const tx = size.width / 2 - node.y * transform.k;
-            const ty = size.height / 2 - node.x * transform.k;
-            svg.call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(transform.k));
+            const current = zoomTransform(svg.node()!).k;
+            const scale = clampScale(atLeast != null ? Math.max(current, atLeast) : current);
+            const tx = size.width / 2 - node.y * scale;
+            const ty = size.height / 2 - node.x * scale;
+            svg.call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(scale));
         } catch {
             /* centring is optional */
         }
