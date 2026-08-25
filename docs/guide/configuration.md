@@ -117,7 +117,7 @@ The CLI's [`--mode`](#using-it-with-the-cli) option overrides the configured mod
 for a single run, so the order of precedence is **`--mode` > `dialogue.toml` >
 the default**. For the rationale — and why the `fail-fast` mode is an embedding
 contract rather than a settable value — see the
-[Compilation Mode Configuration](../contributing/design-notes/Compilation%20Mode%20Configuration.md)
+[Compilation Mode Configuration](../contributing/design-notes/configuration/Compilation%20Mode%20Configuration.md)
 design note.
 
 ## Unmodeled Markdown
@@ -167,7 +167,7 @@ error, reported with its file, line, and column.
 > Comments are always ignored, and are not part of this setting.
 
 For the rationale and the full model, see the
-[Unmodeled Markdown Handling](../contributing/design-notes/Unmodeled%20Markdown%20Handling.md)
+[Unmodeled Markdown Handling](../contributing/design-notes/core/Unmodeled%20Markdown%20Handling.md)
 design note.
 
 ## Using it with the CLI

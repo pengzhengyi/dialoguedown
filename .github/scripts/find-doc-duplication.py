@@ -26,15 +26,15 @@ import sys
 # has that shape. Both legitimately show the same example.
 ALLOWED_PAIRS = {
     ("docs/guide/structure-and-flow.md",
-     "docs/contributing/design-notes/Random Choice.md"),
+     "docs/contributing/design-notes/language/Random Choice.md"),
     ("docs/guide/structure-and-flow.md",
-     "docs/contributing/design-notes/Conditional Choice.md"),
+     "docs/contributing/design-notes/language/Conditional Choice.md"),
     # The corpus README is the language-neutral specification a runtime implementer reads — it
     # ships beside the fixtures and is meant to be enough on its own, for someone writing a
     # runner in another language who will never open this repository's design notes. The note
     # is the design record for the corpus itself. Both must state the matching rules.
     ("conformance/README.md",
-     "docs/contributing/design-notes/Conformance Corpus.md"),
+     "docs/contributing/design-notes/runtime/Conformance Corpus.md"),
 }
 
 # Generated or vendored trees. `/bin/` and `/obj/` matter because a test project copies the
