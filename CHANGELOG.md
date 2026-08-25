@@ -335,6 +335,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Every assembly in the package reports the release version** — the core library and both
+  visualization layers shipped inside `ddown` as `1.0.0`, the .NET default for a project that
+  declares no version. Anything reading an assembly version to tell builds apart saw the wrong
+  number.
+
 - **`ddown compile script.md` emits a playbook again** — compiling with no `--emit` produced
   nothing at all, despite the help text, the guide, and `--emit`'s own default all promising a
   playbook on standard output. Diagnostics now go to standard error, so a warning can no longer
