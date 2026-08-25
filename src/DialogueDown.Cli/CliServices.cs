@@ -4,7 +4,6 @@ using DialogueDown.Emission;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Live.Serving;
 using Microsoft.Extensions.DependencyInjection;
-using Spectre.Console;
 
 namespace DialogueDown.Cli;
 
@@ -18,8 +17,10 @@ internal static class CliServices
         services.AddSingleton<ProjectConfiguration>();
         services.AddSingleton<Func<CompilerOptions, IScriptCompiler>>(
             _ => options => ScriptCompilerFactory.CreateDefault(options));
+        // The stream a playbook goes to when no destination is named. Injected rather than
+        // reached for so a test can read what a compile emitted.
+        services.AddSingleton(_ => Console.Out);
         services.AddSingleton<IPlaybookWriter>(_ => PlaybookWriterFactory.CreateDefault());
-        services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
         services.AddSingleton<IErrataRenderer, ErrataRenderer>();
         services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
         services.AddSingleton<IVisualizeRunner, VisualizeRunner>();

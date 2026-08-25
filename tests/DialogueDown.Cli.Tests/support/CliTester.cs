@@ -21,13 +21,15 @@ internal static class CliTester
     /// (wrapped as a factory that ignores the options); a <paramref name="compilerFactory"/>
     /// replaces the factory itself (to assert the resolved options); a
     /// <paramref name="runner"/> or <paramref name="shell"/> replaces its registration
-    /// (last wins).
+    /// (last wins). A <paramref name="standardOutput"/> replaces the stream a playbook goes to
+    /// when no destination is named, so a test can read what the compile emitted.
     /// </summary>
     public static CommandAppTester Create(
         IScriptCompiler? compiler = null,
         IVisualizeRunner? runner = null,
         IServedShellRunner? shell = null,
-        Func<CompilerOptions, IScriptCompiler>? compilerFactory = null)
+        Func<CompilerOptions, IScriptCompiler>? compilerFactory = null,
+        TextWriter? standardOutput = null)
     {
         var services = new ServiceCollection();
         CliServices.Register(services);
@@ -49,6 +51,11 @@ internal static class CliTester
         if (shell is not null)
         {
             services.AddSingleton(shell);
+        }
+
+        if (standardOutput is not null)
+        {
+            services.AddSingleton(standardOutput);
         }
 
         var tester = new CommandAppTester(new TypeRegistrar(services));

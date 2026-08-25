@@ -176,8 +176,9 @@ Leave `-o` off and the playbook goes to standard output, so it can be piped:
 ddown compile my-scene.dialogue.md | jq .anchors
 ```
 
-A script with errors writes nothing, so a broken compile never leaves a
-half-believable file behind.
+Diagnostics go to standard error, so a warning never lands in the middle of a
+playbook being piped. A script with errors writes nothing, so a broken compile
+never leaves a half-believable file behind.
 
 ### Options
 
