@@ -29,9 +29,18 @@ ALLOWED_PAIRS = {
      "docs/contributing/design-notes/Random Choice.md"),
     ("docs/guide/structure-and-flow.md",
      "docs/contributing/design-notes/Conditional Choice.md"),
+    # The corpus README is the language-neutral specification a runtime implementer reads — it
+    # ships beside the fixtures and is meant to be enough on its own, for someone writing a
+    # runner in another language who will never open this repository's design notes. The note
+    # is the design record for the corpus itself. Both must state the matching rules.
+    ("conformance/README.md",
+     "docs/contributing/design-notes/Conformance Corpus.md"),
 }
 
-SKIP = ("node_modules", "/_site/", "/api/", "/web/")
+# Generated or vendored trees. `/bin/` and `/obj/` matter because a test project copies the
+# conformance corpus — README and all — into its build output for every target framework, so a
+# single authored document reappears as an exact duplicate of itself once per framework.
+SKIP = ("node_modules", "/_site/", "/api/", "/web/", "/bin/", "/obj/")
 MIN_PARAGRAPH_CHARS = 160
 SHINGLE_SIZE = 6
 
