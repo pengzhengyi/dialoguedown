@@ -269,13 +269,10 @@ The jump is real; it simply has nothing to be called, and the report draws it as
 an unnamed jump.
 
 > [!NOTE]
-> **`=> <#the-market>` is not a shorter spelling.** Inside angle brackets,
-> `#the-market` is read as a [tag](speakers-and-lines.md#tags) — the same
-> construct as `#main` in `Alice #main: Hello.` — so the arrow finds no link and
-> stays on the page as two characters, with the usual warning. Markdown's own
-> angle-bracket links are for whole addresses such as `<https://example.com>`,
-> which is not a jump target. Write the link out, with an empty link text when the
-> target needs no name of its own.
+> **An autolink is not a jump.** `=> <#the-market>` is not part of the language:
+> a jump is `=>` followed by a Markdown link, so the arrow finds nothing to jump
+> to and stays on the page as two characters, with the usual warning. Write the
+> link out, with an empty link text when the target needs no name of its own.
 
 ## Conditional jumps
 
