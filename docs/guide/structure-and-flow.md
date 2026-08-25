@@ -12,6 +12,7 @@ Part of the [script language specification](script-language.md).
 - [Random choices](#random-choices)
   - [Dynamic weights](#dynamic-weights)
 - [Jumps](#jumps)
+  - [Naming a jump](#naming-a-jump)
 - [Conditional jumps](#conditional-jumps)
 - [Conditional lines](#conditional-lines)
 - [Conditional choices](#conditional-choices)
@@ -243,6 +244,45 @@ Alice: Tennis is fun!
 
 Bob: Yes, I agree.
 ```
+
+### Naming a jump
+
+A jump's link text is its **name**. The report draws it on the arrow the jump
+becomes, and when a whole choice is a jump, it is the wording the player is
+offered:
+
+```markdown
+- => [Take the east road](#the-market)
+```
+
+That option reads as "Take the east road". Writing the words twice — once as
+speech and once in the link — is never necessary.
+
+Sometimes the target needs no name of its own, because the words are already
+there. Leave the link text empty:
+
+```markdown
+- Take the east road => [](#the-market)
+```
+
+The jump is real; it simply has nothing to be called, and the report draws it as
+an unnamed jump. A Markdown **reference link** works too, and is worth reaching
+for when the same target is jumped to from several places:
+
+```markdown
+- Take the east road => [the market]
+- Turn back later => [the market]
+
+[the market]: #the-market
+```
+
+> [!NOTE]
+> **`=> <#the-market>` is not a shorter spelling.** Inside angle brackets,
+> `#the-market` is read as a [tag](speakers-and-lines.md#tags) — the same
+> construct as `#main` in `Alice #main: Hello.` — so the arrow finds no link and
+> stays on the page as two characters, with the usual warning. Markdown's own
+> angle-bracket links are for whole addresses such as `<https://example.com>`,
+> which is not a jump target. Use an empty link text or a reference link instead.
 
 ## Conditional jumps
 
