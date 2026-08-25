@@ -325,6 +325,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **`ddown compile script.md` emits a playbook again** — compiling with no `--emit` produced
+  nothing at all, despite the help text, the guide, and `--emit`'s own default all promising a
+  playbook on standard output. Diagnostics now go to standard error, so a warning can no longer
+  land in the middle of a playbook being piped. See
+  [the CLI guide](docs/guide/cli.md#compile).
+
 - **The live end-to-end suite no longer flakes on a busy machine, or tests the wrong build** —
   opening a script compiles it on the server, which outgrew the assertion's default timeout under
   load. The suite now waits long enough for the work it drives, and refuses to start when a

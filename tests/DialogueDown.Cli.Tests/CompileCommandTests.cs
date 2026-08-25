@@ -263,11 +263,50 @@ public sealed class CompileCommandTests
         // Standard output, like the stage graphs beside it, so a playbook can be piped.
         using var dir = new TempDir();
         using var script = new TempScript("Alice: Hello.");
+        var standardOutput = new StringWriter();
 
-        var result = CliTester.Create().Run("compile", script.Path, "--emit", "playbook");
+        var result = CliTester.Create(standardOutput: standardOutput)
+            .Run("compile", script.Path, "--emit", "playbook");
 
         Assert.Equal(ExitCodes.Success, result.ExitCode);
         Assert.Empty(Directory.EnumerateFiles(dir.Path));
+        PlaybookReader.Default.Read(standardOutput.ToString());
+    }
+
+    [Fact]
+    public void Compile_WithoutEmit_StillEmitsAPlaybook()
+    {
+        // A playbook is what compiling produces, so asking for nothing else asks for one. The
+        // help text, the guide, and the pipe example all promise it.
+        using var script = new TempScript("Alice: Hello.");
+        var standardOutput = new StringWriter();
+
+        var result = CliTester.Create(standardOutput: standardOutput).Run("compile", script.Path);
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        PlaybookReader.Default.Read(standardOutput.ToString());
+    }
+
+    [Fact]
+    public void Compile_AScriptWithErrors_LeavesStandardOutputEmpty()
+    {
+        // Nothing half-written to pipe into the next command: a failed compile has no playbook,
+        // and its diagnostics belong on standard error.
+        using var script = new TempScript("""
+            # Gate
+
+            Alice: One.
+
+            # Gate
+
+            Bob: Two.
+            """);
+        var standardOutput = new StringWriter();
+
+        var result = CliTester.Create(standardOutput: standardOutput).Run("compile", script.Path);
+
+        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        Assert.Empty(standardOutput.ToString());
     }
 
     [Fact]

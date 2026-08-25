@@ -36,16 +36,13 @@ internal sealed class CompileSettings : CommandSettings
     /// mode. Only valid after <see cref="Validate"/> succeeds.</summary>
     public CompilationMode? ResolvedMode => Mode is null ? null : CompilationModes.TryParse(Mode);
 
-    /// <summary>
-    /// Whether this compile writes a playbook: the emitted format when one is named, and what
-    /// naming a destination alone asks for.
-    /// </summary>
+    /// <summary>Whether this compile writes a playbook.</summary>
     /// <remarks>
     /// A playbook is the compiler's own artifact, so it is what <c>compile</c> emits unless told
-    /// otherwise. The stage graphs are the export that has to ask.
+    /// otherwise — with or without a destination, since standard output is a destination. The
+    /// stage graphs are the export that has to ask.
     /// </remarks>
-    public bool EmitsPlaybook =>
-        Emit is null ? Output is not null : IsPlaybook(Emit);
+    public bool EmitsPlaybook => Emit is null || IsPlaybook(Emit);
 
     /// <summary>
     /// Parses an <c>--emit</c> value (case-insensitively) into an <see cref="EmitFormat"/>.
