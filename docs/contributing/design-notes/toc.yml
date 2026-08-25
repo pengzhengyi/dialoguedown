@@ -28,6 +28,8 @@
     href: runtime/Playbook Format.md
   - name: Conformance Corpus
     href: runtime/Conformance Corpus.md
+  - name: Runtime Core
+    href: runtime/Runtime Core.md
 - name: Language constructs
   items:
   - name: Progression Order
