@@ -325,6 +325,12 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
+  east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
+  label, so a runtime building a menu drew an empty row unless it read the words off the node the
+  arm led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
+  labels across the shipped examples, and their playbooks change accordingly.
+
 - **The live end-to-end suite no longer flakes on a busy machine, or tests the wrong build** —
   opening a script compiles it on the server, which outgrew the assertion's default timeout under
   load. The suite now waits long enough for the work it drives, and refuses to start when a

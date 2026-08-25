@@ -188,8 +188,11 @@ internal sealed class GraphProjection
             Category = PlacementCategory,
         };
 
-    // Only a jump carries words of its own. A fall-through was never written down, and an option
-    // reads as the speech it leads to, so neither has a label to show.
+    // The graph draws a jump's words on the route it becomes. A fall-through was never written
+    // down, so it has none to draw. An option carries words of its own — a divert arm is named by
+    // its jump — but drawing them here would repeat what is already on screen a hop away: the
+    // speech the arm leads to for a spoken option, and the jump's own route label for a divert
+    // one. So the drawing stays with the jump, and the details panel answers what an arm offers.
     private static string? LabelOf(Edge edge) =>
         edge is DivertEdge divert && InlineText.Of(divert.Label).Trim() is { Length: > 0 } label
             ? label

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "the-crossroads": 0,
+    "the-forest": 6,
+    "the-market": 4
+  },
+  "speakers": [
+    {
+      "name": "Guide",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Which way?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 1,
+      "out": [
+        {
+          "kind": "option",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Take the east road"
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 3,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Brave the west road"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 2,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 4,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Take the east road"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 3,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 6,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Brave the west road"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Apples, fresh apples."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
+        }
+      ]
+    },
+    {
+      "kind": "control",
+      "id": 5,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 7,
+          "label": [
+            {
+              "kind": "text",
+              "text": "The end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 6,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Something moves in the dark."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 7
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 7,
+      "out": []
+    }
+  ]
+}

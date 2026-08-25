@@ -1,0 +1,22 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a menu option written as a jump is offered by the words the writer gave the jump",
+  "playbook": "playbook.json",
+  "because": "each arm is only a jump, so its words reach the option edge or nowhere a menu may look -- a runner that offered blank rows here would be reading them off the node the arm leads to, or not at all",
+  "session": [
+    { "expect": { "said": { "speaker": "Guide", "speech": "Which way?" } } },
+    { "send": "continue" },
+    {
+      "expect": {
+        "asked": [
+          { "label": "Take the east road", "available": true },
+          { "label": "Brave the west road", "available": true }
+        ]
+      }
+    },
+    { "send": { "choose": 0 } },
+    { "expect": { "said": { "speaker": "Guide", "speech": "Apples, fresh apples." } } },
+    { "send": "continue" },
+    { "expect": { "ended": {} } }
+  ]
+}

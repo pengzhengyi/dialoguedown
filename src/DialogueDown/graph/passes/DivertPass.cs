@@ -17,7 +17,7 @@ internal sealed class DivertPass : GraphBuildPass
     {
         foreach (var block in context.AllBlocks)
         {
-            foreach (var jump in Jumps(block))
+            foreach (var jump in block.Jumps())
             {
                 if (TargetOf(jump, draft, context) is { } target)
                 {
@@ -26,13 +26,6 @@ internal sealed class DivertPass : GraphBuildPass
             }
         }
     }
-
-    private static IEnumerable<Jump> Jumps(ScriptBlock block) => block switch
-    {
-        Line line => line.Speech.OfType<Jump>(),
-        ControlLine control => control.Effects.OfType<Jump>(),
-        _ => [],
-    };
 
     // Cross-file resolution is a later component, so a file-scoped target has no node to point at.
     private static NodeId? TargetOf(Jump jump, GraphDraft draft, GraphBuildContext context) =>

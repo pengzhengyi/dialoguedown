@@ -34,11 +34,23 @@ internal sealed class ChoicePass : GraphBuildPass
         }
     }
 
-    // An arm is labelled by its own first line. It is read here, where the body is still in hand:
-    // an arm with no body leads straight to whatever follows the choice, so a label read back off
-    // the target would be somebody else's words.
+    // An arm is named by its own first block. It is read here, where the body is still in hand: an
+    // arm with no body leads straight to whatever follows the choice, so a name read back off the
+    // target would be somebody else's words.
+    //
+    // What names it is what the writer wrote there. Usually that is the words the arm speaks; for
+    // an arm that only jumps — "- => [Take the east road](#the-market)", the ordinary way to write
+    // a branching menu — it is the jump's own text, which would otherwise reach the graph only on
+    // the divert edge one hop away, leaving the menu blank. The jump keeps its label there too:
+    // the two answer different questions, one naming what the player is offered and the other what
+    // the route is called, and a single piece of writing here plays both parts.
     private static IReadOnlyList<InlineFragment> LabelOf(Choice option) =>
-        option.Body.FirstOrDefault() is Line line ? line.Spoken() : [];
+        option.Body.FirstOrDefault() switch
+        {
+            Line line when line.Spoken() is { Count: > 0 } spoken => spoken,
+            { } block => block.Jumps().FirstOrDefault()?.Label ?? [],
+            _ => [],
+        };
 
     // The two group kinds lead to their arms differently, so each builds the edge that carries what
     // its runtime needs.
