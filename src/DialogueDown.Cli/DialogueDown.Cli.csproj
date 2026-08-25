@@ -8,7 +8,6 @@
     <RootNamespace>DialogueDown.Cli</RootNamespace>
     <AssemblyName>DialogueDown.Cli</AssemblyName>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.0</Version>
     <!-- The command-line front-end for DialogueDown scripts. A thin Spectre.Console.Cli
          host over the library; the real work lives behind the compilation seam. -->
     <Description>Compile and visualize DialogueDown dialogue scripts from the command line.</Description>

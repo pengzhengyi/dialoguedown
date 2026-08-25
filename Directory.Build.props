@@ -1,4 +1,11 @@
 <Project>
+  <PropertyGroup>
+    <!-- The release version, in one place. Every project inherits it, so no assembly can
+         quietly ship the SDK's 1.0.0 default and no cut has to remember a list of files.
+         `EveryShippedAssembly_CarriesTheReleaseVersion` holds this. -->
+    <Version>0.2.0</Version>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" />
   </ItemGroup>
