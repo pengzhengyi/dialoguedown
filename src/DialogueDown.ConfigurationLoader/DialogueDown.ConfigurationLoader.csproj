@@ -7,7 +7,6 @@
     <RootNamespace>DialogueDown.ConfigurationLoader</RootNamespace>
     <AssemblyName>DialogueDown.ConfigurationLoader</AssemblyName>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.0</Version>
     <!-- Reads a project's dialogue.toml into a CompilerOptions with Tomlyn, so the
          engine-agnostic core never takes a TOML dependency. -->
     <Description>Loads a DialogueDown dialogue.toml project configuration into CompilerOptions.</Description>
