@@ -269,7 +269,12 @@
         {
           "kind": "option",
           "target": 8,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Under One Umbrella"
+            }
+          ]
         }
       ]
     },
@@ -375,7 +380,12 @@
         {
           "kind": "option",
           "target": 12,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Under One Umbrella"
+            }
+          ]
         }
       ]
     },
@@ -706,7 +716,12 @@
         {
           "kind": "option",
           "target": 24,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Confession"
+            }
+          ]
         }
       ]
     },
@@ -815,7 +830,12 @@
         {
           "kind": "option",
           "target": 28,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Confession"
+            }
+          ]
         }
       ]
     },
@@ -905,7 +925,12 @@
         {
           "kind": "option",
           "target": 32,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Confession"
+            }
+          ]
         }
       ]
     },

@@ -201,12 +201,22 @@
         {
           "kind": "option",
           "target": 7,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Take the east road to the market"
+            }
+          ]
         },
         {
           "kind": "option",
           "target": 8,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Brave the west road"
+            }
+          ]
         },
         {
           "kind": "option",
@@ -695,12 +705,22 @@
         {
           "kind": "option",
           "target": 31,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Turn back to the crossroads"
+            }
+          ]
         },
         {
           "kind": "option",
           "target": 32,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Follow the moonlight ahead"
+            }
+          ]
         }
       ]
     },

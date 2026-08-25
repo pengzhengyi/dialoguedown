@@ -8,6 +8,14 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
+  east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
+  label, so a runtime building a menu drew an empty row unless it read the words off the node the
+  arm led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
+  labels across the shipped examples, and their playbooks change accordingly.
+
 ## [0.2.0] - 2026-08-25
 
 ### Added

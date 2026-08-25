@@ -58,7 +58,10 @@ This note assumes the vocabulary and decisions of the
 - [x] A default `entry`, and an `anchors` table.
 - [x] Compiled option labels, so a menu never peeks at a target node — carried on
       the graph's own option edge, since only the pass that fans a choice out
-      knows which nodes belong to which arm.
+      knows which nodes belong to which arm. An arm that only jumps is named by
+      the jump's own text, which stays on the divert edge as well: the two answer
+      different questions — what the player is offered, and what the route is
+      called — and one piece of writing plays both parts.
 - [x] A reader that round-trips every construct.
 - [x] Refusal on an unsupported version, an unknown required capability, a
       malformed document, or a broken node reference.

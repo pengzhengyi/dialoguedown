@@ -227,7 +227,12 @@
         {
           "kind": "option",
           "target": 7,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Mountain Road"
+            }
+          ]
         }
       ]
     },
@@ -338,7 +343,12 @@
         {
           "kind": "option",
           "target": 11,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Mountain Road"
+            }
+          ]
         }
       ]
     },
@@ -436,7 +446,12 @@
         {
           "kind": "option",
           "target": 15,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "The Mountain Road"
+            }
+          ]
         }
       ]
     },

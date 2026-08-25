@@ -127,12 +127,22 @@
         {
           "kind": "option",
           "target": 4,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Feel the hallway door before you open it"
+            }
+          ]
         },
         {
           "kind": "option",
           "target": 5,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Call the elevator and hurry down"
+            }
+          ]
         },
         {
           "kind": "option",
@@ -236,7 +246,12 @@
         {
           "kind": "option",
           "target": 9,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Feel the hallway door before you open it"
+            }
+          ]
         }
       ]
     },
@@ -503,12 +518,22 @@
         {
           "kind": "option",
           "target": 21,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Crawl low and take the stairs down"
+            }
+          ]
         },
         {
           "kind": "option",
           "target": 22,
-          "label": [],
+          "label": [
+            {
+              "kind": "text",
+              "text": "Use the second exit you scouted last week"
+            }
+          ],
           "condition": {
             "kind": "key",
             "key": "Resident.KnowsExits"
@@ -616,7 +641,12 @@
         {
           "kind": "option",
           "target": 26,
-          "label": []
+          "label": [
+            {
+              "kind": "text",
+              "text": "Crawl low and take the stairs down"
+            }
+          ]
         }
       ]
     },

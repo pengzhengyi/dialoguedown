@@ -274,6 +274,51 @@ public sealed class ScriptNodeExtensionsTests
     public void PlainText_EmptySequence_IsEmpty() =>
         Assert.Equal(string.Empty, Array.Empty<InlineFragment>().PlainText());
 
+    [Fact]
+    public void Jumps_ALine_FindsTheJumpItEndsIn()
+    {
+        var jump = Jump("#the-market", Text("east"));
+        var line = Line(Text("Away. "), jump);
+
+        Assert.Equal([jump], line.Jumps());
+    }
+
+    [Fact]
+    public void Jumps_AControlLine_FindsTheJumpAmongItsEffects()
+    {
+        // A jump hides in a different place in each block, which is the whole reason this is
+        // asked here rather than known separately by everything that lowers or names one.
+        var jump = Jump("#the-market", Text("east"));
+        var control = ControlLine(DefaultCommand("fade out"), jump);
+
+        Assert.Equal([jump], control.Jumps());
+    }
+
+    [Fact]
+    public void Jumps_SeveralOnOneBlock_ComeInTheOrderTheyAreWritten()
+    {
+        var first = Jump("#first", Text("first"));
+        var second = Jump("#second", Text("second"));
+
+        Assert.Equal([first, second], Line(first, second).Jumps());
+    }
+
+    [Fact]
+    public void Jumps_ABlockThatLeavesByNoJump_FindsNone()
+    {
+        Assert.Empty(Line(Text("Just speech.")).Jumps());
+        Assert.Empty(ControlLine(DefaultCommand("fade out")).Jumps());
+    }
+
+    [Fact]
+    public void Jumps_ABlockThatCannotCarryOne_FindsNone()
+    {
+        // A heading and a choice group are not places a jump is written, so asking is answered
+        // rather than refused: a caller sweeping every block should not have to know which is which.
+        Assert.Empty(SceneHeading().Jumps());
+        Assert.Empty(Choices(Choice(Line(Text("pick")))).Jumps());
+    }
+
     // Script nodes the traversal helpers do not recognize, used to prove each category's
     // dispatch throws on an unhandled type as the AST grows.
     private sealed record UnknownNode(SourceSpan Span) : ScriptNode(Span);

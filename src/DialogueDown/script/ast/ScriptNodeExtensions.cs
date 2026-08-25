@@ -23,6 +23,22 @@ internal static class ScriptNodeExtensions
     }
 
     /// <summary>
+    /// The jumps a block leaves by, in the order they are written.
+    /// </summary>
+    /// <remarks>
+    /// A jump rides inside the block it leaves from, and where it rides depends on the block: a
+    /// line ends in one, while a control line runs it among its effects. Both lowering a jump to
+    /// an edge and naming the option a jump stands for need the same answer, so they ask here
+    /// rather than each knowing where a jump can hide.
+    /// </remarks>
+    internal static IEnumerable<Jump> Jumps(this ScriptBlock block) => block switch
+    {
+        Line line => line.Speech.OfType<Jump>(),
+        ControlLine control => control.Effects.OfType<Jump>(),
+        _ => [],
+    };
+
+    /// <summary>
     /// Yields <paramref name="node"/> and then each descendant, depth-first in document
     /// order (a node before its children). Returning a sequence lets callers compose with
     /// LINQ; the script's nesting is shallow, so recursion is safe.
