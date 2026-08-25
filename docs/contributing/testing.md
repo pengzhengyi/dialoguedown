@@ -143,7 +143,7 @@ a compiler bug.
 
 **Prove a runtime agrees with the specification, not with us.**
 
-The corpus under [`conformance/`](../../conformance/README.md) is language-neutral
+The corpus under [`conformance/`](https://github.com/pengzhengyi/dialoguedown/blob/main/conformance/README.md) is language-neutral
 data: a runtime in any language runs it without building anything of ours. Each
 case is a folder whose `fixture.json` states what must happen, beside the playbook
 it happens to and the source that playbook was compiled from.
