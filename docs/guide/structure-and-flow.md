@@ -12,6 +12,7 @@ Part of the [script language specification](script-language.md).
 - [Random choices](#random-choices)
   - [Dynamic weights](#dynamic-weights)
 - [Jumps](#jumps)
+  - [Naming a jump](#naming-a-jump)
 - [Conditional jumps](#conditional-jumps)
 - [Conditional lines](#conditional-lines)
 - [Conditional choices](#conditional-choices)
@@ -243,6 +244,35 @@ Alice: Tennis is fun!
 
 Bob: Yes, I agree.
 ```
+
+### Naming a jump
+
+A jump's link text is its **name**. The report draws it on the arrow the jump
+becomes, and when a whole choice is a jump, it is the wording the player is
+offered:
+
+```markdown
+- => [Take the east road](#the-market)
+```
+
+That option reads as "Take the east road". Writing the words twice — once as
+speech and once in the link — is never necessary.
+
+Sometimes the target needs no name of its own, because the words are already
+there. Leave the link text empty:
+
+```markdown
+- Take the east road => [](#the-market)
+```
+
+The jump is real; it simply has nothing to be called, and the report draws it as
+an unnamed jump.
+
+> [!NOTE]
+> **An autolink is not a jump.** `=> <#the-market>` is not part of the language:
+> a jump is `=>` followed by a Markdown link, so the arrow finds nothing to jump
+> to and stays on the page as two characters, with the usual warning. Write the
+> link out, with an empty link text when the target needs no name of its own.
 
 ## Conditional jumps
 
