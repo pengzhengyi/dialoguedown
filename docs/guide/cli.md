@@ -192,7 +192,7 @@ never leaves a half-believable file behind.
 `--emit dot` writes the compiler's internal stage graphs instead, for feeding into
 other tools. That's for building tooling rather than writing dialogue, so it lives
 in the
-[developer docs](https://github.com/pengzhengyi/dialoguedown/blob/main/docs/contributing/design-notes/Compile%20CLI%20-%20Emit%20DOT.md);
+[developer docs](https://github.com/pengzhengyi/dialoguedown/blob/main/docs/contributing/design-notes/cli/Compile%20CLI%20-%20Emit%20DOT.md);
 `ddown compile --help` lists it too.
 
 ## Keep ddown up to date

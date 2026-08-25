@@ -8,7 +8,10 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 
 - **`docs/guide/`** — writer-facing: the overview and the script-language spec.
 - **`docs/contributing/design-notes/`** — one design note per component and
-  compiler stage, each recording the goal, key decisions, and tradeoffs.
+  compiler stage, each recording the goal, key decisions, and tradeoffs. Notes
+  are filed in a folder per area (`core/`, `runtime/`, `language/`,
+  `configuration/`, `diagnostics/`, `cli/`, `visualization/<surface>/`, `other/`);
+  the [reading guide](../../docs/contributing/design-notes/README.md) maps them.
 - **`docs/api/`** — the generated C# API reference (do not hand-edit).
 
 ## Writing
@@ -28,17 +31,17 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 
 ## How to add a design note
 
-1. Create `docs/contributing/design-notes/<Note Name>.md` with a status callout
-   and the note's goal, key decisions, and tradeoffs. Use `> [!NOTE]` for the
-   neutral status line (e.g. "Status: **implemented**") — status is informational,
-   not an alarm. Reserve `> [!IMPORTANT]`/`> [!WARNING]` for genuine caveats or
-   hazards.
+1. Create `docs/contributing/design-notes/<area>/<Note Name>.md` with a status
+   callout and the note's goal, key decisions, and tradeoffs. Pick `<area>` from
+   the folders above — the one whose reading guide section the note belongs to.
+   Use `> [!NOTE]` for the neutral status line (e.g. "Status: **implemented**") —
+   status is informational, not an alarm. Reserve `> [!IMPORTANT]`/`> [!WARNING]`
+   for genuine caveats or hazards.
 2. Add the note to the **reading guide** in
-   `docs/contributing/design-notes/README.md`: place it in the right area (Core,
-   CLI, Visualization, or Other notes) and reading order, and keep that section's
-   Mermaid reading-order chart current.
+   `docs/contributing/design-notes/README.md`: put it in the section matching its
+   folder, in reading order, and keep that section's Mermaid chart current.
 3. Register it in `docs/contributing/design-notes/toc.yml` so it appears in the
-   site sidebar (`- name:` + `href:`).
+   site sidebar (`- name:` + `href:`), with the folder in the `href:`.
 4. Build the site to confirm it renders and links resolve:
 
    ```bash

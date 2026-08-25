@@ -41,7 +41,7 @@ engine presentation adapters — is **planned**, not yet built.
 - **Target frameworks:** the libraries a game references ship for both `net8.0` and `net10.0`,
   so a Godot project keeps Godot's bundled runtime while the toolchain moves to .NET 10 LTS.
   The `ddown` CLI targets `net10.0`. See the
-  [Target Frameworks](docs/contributing/design-notes/Target%20Frameworks.md) note.
+  [Target Frameworks](docs/contributing/design-notes/other/Target%20Frameworks.md) note.
 - **Engine dependency:** none in the core library.
 - **Primary consumer:** Godot/C# game projects through `ProjectReference`.
 - **Built today:** the compiler pipeline (Markdown → semantic model), collected
@@ -198,7 +198,7 @@ ddown compile scene.dialogue.md --emit dot -o scene.dot
 > the core library; its API and abstractions may still change.
 
 See the
-[Compilation Visualization note](docs/contributing/design-notes/Compilation%20Visualization.md).
+[Compilation Visualization note](docs/contributing/design-notes/visualization/report/Compilation%20Visualization.md).
 
 ## Similar projects
 

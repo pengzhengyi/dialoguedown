@@ -30,7 +30,7 @@ changes easy to categorize.
   the gutter as they do in the Source and Config editors. Beside it, the playbook's header,
   speakers, and the anchors a jump may name each get a foldable, searchable table panel. A script
   with errors compiles no playbook, and the tab says so. See the
-  [Playbook Tab](docs/contributing/design-notes/Playbook%20Tab.md) note.
+  [Playbook Tab](docs/contributing/design-notes/visualization/report/Playbook%20Tab.md) note.
 
 - **The Dialogue Graph says what a jump was called** — a jump now reads as `⇒ through the gate`
   rather than `(jump)`, so one jump is told from another at a glance, and choosing its line shows
@@ -51,7 +51,7 @@ changes easy to categorize.
   a navigation and not an intent to edit. Warm, a script opens in about 77 ms rather than 160 ms.
   Unsaved work is still settled first, and a script that compiles under a different `dialogue.toml`
   still loads a whole page. See the
-  [Opening a Script Without Reloading the Page](docs/contributing/design-notes/Opening%20a%20Script%20Without%20Reloading%20the%20Page.md)
+  [Opening a Script Without Reloading the Page](docs/contributing/design-notes/visualization/session/Opening%20a%20Script%20Without%20Reloading%20the%20Page.md)
   note.
 
 - **Fold ignored Markdown in the Source editor** — the editor's gutter now folds the same regions
@@ -60,7 +60,7 @@ changes easy to categorize.
   to click. Folding is the editor's own, so the cursor cannot enter a folded range and hidden text
   is never silently changed. Source and Preview keep separate state: a reading choice must not hide
   the text a writer needs to edit. See the
-  [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
+  [Collapsing Across the Report](docs/contributing/design-notes/visualization/report/Collapsing%20Across%20the%20Report.md)
   note.
 
 - **One way to fold** — the Source editor, the Preview, the Dialogue Graph, the legend, and the
@@ -69,21 +69,21 @@ changes easy to categorize.
   scenes beside the legend group that lists them, stating the current view — including a mixed one
   — and re-framing the drawing. Each scene row shows its own state as a filled or hollow mark and
   says how many nodes it holds. See the
-  [Collapsing Across the Report](docs/contributing/design-notes/Collapsing%20Across%20the%20Report.md)
+  [Collapsing Across the Report](docs/contributing/design-notes/visualization/report/Collapsing%20Across%20the%20Report.md)
   note.
 
 - **Explorer on demand** — the project tree now starts out of the way when a script is
   open, and a Files control pinned at the tab bar's leading edge summons it and says whether
   it is showing. The empty shell still opens with the tree, where it is the only way forward,
   and an explicit choice is remembered. See the
-  [Explorer Toggle](docs/contributing/design-notes/Live%20Visualization%20-%20Explorer%20Toggle.md)
+  [Explorer Toggle](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Explorer%20Toggle.md)
   note.
 
 - **Fold a scene in the Dialogue Graph** — a chevron on each scene band shuts the scene away to a
   single box that names it and counts what it holds, with the flow still passing through: routes
   crossing its border re-point at the box and everything downstream stays where it was. The band's
   own click still selects the scene, so inspecting one never rearranges the drawing. See the
-  [Dialogue Graph — Region Fold](docs/contributing/design-notes/Dialogue%20Graph%20Region%20Fold.md)
+  [Dialogue Graph — Region Fold](docs/contributing/design-notes/visualization/graph/Dialogue%20Graph%20Region%20Fold.md)
   note.
 
 - **Ignored-content Preview visibility** — a fixed footer matching Source's `#END` row reports how
@@ -91,14 +91,14 @@ changes easy to categorize.
   Preview. Each region also shows or hides on its own from its chevron, and the footer states a
   mixed view exactly. A hidden block keeps its kind and source-line count, a hidden inline link
   collapses to its host and still leads there, and Source stays visible and editable. See the
-  [Ignored Markdown Preview Toggle](docs/contributing/design-notes/Ignored%20Markdown%20Preview%20Toggle.md)
+  [Ignored Markdown Preview Toggle](docs/contributing/design-notes/visualization/editor/Ignored%20Markdown%20Preview%20Toggle.md)
   note.
 
 - **Mermaid authoring diagrams** — fenced `mermaid` blocks render as
   theme-aware SVG diagrams in every Markdown preview while remaining outside the
   compiled dialogue. Invalid diagrams keep their source visible, and the
   self-contained report stays fully offline. See
-  [Mermaid authoring diagrams](docs/contributing/design-notes/Mermaid%20Authoring%20Diagrams.md).
+  [Mermaid authoring diagrams](docs/contributing/design-notes/visualization/editor/Mermaid%20Authoring%20Diagrams.md).
 - **Configure unmodeled Markdown per project** — `dialogue.toml` can now choose
   `keep` or `ignore` for code blocks, thematic breaks, tables, raw HTML,
   autolinks, and other unmodeled constructs. Omitted kinds retain their built-in
@@ -116,7 +116,7 @@ changes easy to categorize.
   A scene is drawn as a tinted band around the nodes written under it — clickable in turn, to
   see how much it holds, what crosses its border, and the text it was written as. Selecting a
   node lists what leads to it and where it leads, and every row walks the flow. See the
-  [Dialogue Graph Visualization Tab](docs/contributing/design-notes/Dialogue%20Graph%20Visualization%20Tab.md) note.
+  [Dialogue Graph Visualization Tab](docs/contributing/design-notes/visualization/report/Dialogue%20Graph%20Visualization%20Tab.md) note.
 - **Dialogue graph — the compiler's final stage** — a clean compile now lowers its semantic
   model into an immutable **dialogue graph**: one node per block (a line, a control line, a
   choice, a random choice, a block conditional, and the terminal End) joined by typed edges
@@ -125,7 +125,7 @@ changes easy to categorize.
   node carries the source it came from, and scenes are overlaid as named regions a jump can
   enter. This is the artifact a future runtime walks to play a script — playing it is still to
   come ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)). See the
-  [Dialogue Graph](docs/contributing/design-notes/Dialogue%20Graph.md) note.
+  [Dialogue Graph](docs/contributing/design-notes/core/Dialogue%20Graph.md) note.
 - **`ddown` shows usage examples** — the `compile` and `visualize` commands now list example
   invocations in their `--help` output.
 - **Example scripts and a live demo gallery** — three genre examples (a high-rise fire-safety
@@ -135,49 +135,49 @@ changes easy to categorize.
   each row jumping to the text it describes. The status line now carries error, warning, and
   info counts that open it, so problems are visible from every tab instead of only as squiggles
   inside the Source editor. Press `p` to open it. See the
-  [Problems Panel](docs/contributing/design-notes/Live%20Visualization%20-%20Problems%20Panel.md) note.
+  [Problems Panel](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Problems%20Panel.md) note.
 - **Jump from the source to a stage** — right-click a selection in the Source editor (or press
   `Alt-J`) and choose **Jump to ▸** a compiler stage to open that tab with the enclosing node
   revealed and centered. It is the reverse of **Jump to source**, and works in View and Edit. See
-  [Reverse Jump](docs/contributing/design-notes/Live%20Visualization%20-%20Reverse%20Jump.md).
+  [Reverse Jump](docs/contributing/design-notes/visualization/graph/Live%20Visualization%20-%20Reverse%20Jump.md).
 - **Fixed End sentinel in the Source editor** — the compiler-projected `#END` target now appears
   in a read-only row below the source with an infinity marker; clicking it copies
   `[End](#END)`. It is reserved-target metadata, not a synthetic heading or source line, leaving
   the same panel seam for a future `#START` entry target once its semantics are defined. See
-  [Progression order](docs/contributing/design-notes/Progression%20Order.md).
+  [Progression order](docs/contributing/design-notes/language/Progression%20Order.md).
 - **Zen mode in the report** — press `z` for a deeper full screen that also steps the active
   tab's side panel aside: the editor alone on Source and Config, the graph alone on the AST and
   Semantic Model tabs. `z` or `Esc` restores your layout exactly as it was. See the
-  [Zen Mode](docs/contributing/design-notes/Live%20Visualization%20-%20Zen%20Mode.md) note.
+  [Zen Mode](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Zen%20Mode.md) note.
 - **Block conditionals** — group dialogue, commands, choices, and jumps into connected
   blockquote branches opened by `` `if` `` / `` `elseif` `` conditions and an optional
   `` `else` `` fallback. The compiler diagnoses severed or malformed branch chains, preserves
   nested blocks, and highlights marker keywords in the source editor. See
-  [Block controls](docs/contributing/design-notes/Block%20Controls.md).
+  [Block controls](docs/contributing/design-notes/language/Block%20Controls.md).
 - **Jump from a graph node to its source** — the Node details panel now has a **Jump to source**
   icon beside the node title (on the AST graph tabs and the Semantic Model tab) that opens the
   Source tab with the node's text selected, so you can move from a node straight to the lines it
   came from. A synthetic node the compiler inserted (a filled-in default speaker) has no text of
   its own, so the jump places the cursor where it belongs instead.
-  See the [Node Editing](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Inspector.md) note.
+  See the [Node Editing](docs/contributing/design-notes/visualization/graph/Live%20Visualization%20-%20Node%20Inspector.md) note.
 - **File Explorer in the report** — a served report opened through the launcher now shows a
   collapsible **Explorer** sidebar: browse the project's scripts as a tree, see the active one
   highlighted, and open another by clicking it or following a cross-file link. A VS Code-style
   header toolbar and right-click menus create files and folders and rename scripts and folders in
   place, and a pinned `dialogue.toml` entry opens the Config tab; switching scripts respects the
   save mode (Auto flushes, Manual prompts). See the
-  [Live Visualization — File Explorer](docs/contributing/design-notes/Live%20Visualization%20-%20File%20Explorer.md) note.
+  [Live Visualization — File Explorer](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20File%20Explorer.md) note.
 - **Jump to a scene by typing `=>`** — the source editor now completes the whole jump
   target from the `=>` jump indicator: type `=>` and the report offers every scene by its
   heading; accepting one inserts a well-formed `[Heading](#slug)` with the heading as an
   editable field, so a dead link from a mistyped anchor is one keystroke to avoid. See the
-  [Jump-Target Completion](docs/contributing/design-notes/Jump-Target%20Completion.md) note.
+  [Jump-Target Completion](docs/contributing/design-notes/visualization/editor/Jump-Target%20Completion.md) note.
 - **Quote and unquote blocks in the editor** — in Live Edit, `⌘/Ctrl-.` wraps every line the
   selection touches in a Markdown blockquote (nesting on an already-quoted line) and
   `⌘/Ctrl-Shift-.` removes one level; a right-click **surround menu** offers the same alongside
   bold, italic, and strikethrough, and the preview marks each nesting level with its own color.
   Handy for the blockquote-based block controls. See the
-  [Live Edit](docs/contributing/design-notes/Live%20Visualization%20-%20Live%20Edit.md) note.
+  [Live Edit](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Live%20Edit.md) note.
 
 ### Changed
 
@@ -202,7 +202,7 @@ changes easy to categorize.
   folder once, instead of starting a fresh file-system watch for every script opened. Opening a
   script falls from about 330 ms to about 135 ms, and the switch behind it from about 150 ms to
   around a millisecond once its folder is known. Hot reload is unchanged. See the
-  [One Watcher for the Served Tree](docs/contributing/design-notes/One%20Watcher%20for%20the%20Served%20Tree.md)
+  [One Watcher for the Served Tree](docs/contributing/design-notes/other/One%20Watcher%20for%20the%20Served%20Tree.md)
   note.
 
 - **One home per concept in the documentation** — a committed duplication scan
@@ -217,7 +217,7 @@ changes easy to categorize.
   diagram, and an exported report carries it only when that script draws one, so a typical export
   falls from 4.8 MB to 1.4 MB. Diagrams render exactly as before, still with no CDN and still
   offline. See the
-  [Development Cycle Optimization](docs/contributing/design-notes/Development%20Cycle%20Optimization.md)
+  [Development Cycle Optimization](docs/contributing/design-notes/other/Development%20Cycle%20Optimization.md)
   note.
 
 - **Guardrails against the mistakes a compiler cannot afford** — the core may no longer read the
@@ -230,7 +230,7 @@ changes easy to categorize.
   an unchanged script: about 1.3 s down to about 0.3 s, and 1.86 MB down to 4.7 kB per navigation.
   An exported report is unaffected — it still inlines everything, because a file that leaves the
   server has to work offline. See the
-  [Development Cycle Optimization](docs/contributing/design-notes/Development%20Cycle%20Optimization.md)
+  [Development Cycle Optimization](docs/contributing/design-notes/other/Development%20Cycle%20Optimization.md)
   note.
 
 - **Every assembly's root namespace now names its parts** — an architecture rule caps how many
@@ -238,7 +238,7 @@ changes easy to categorize.
   Satisfying it moved the bulk of `DialogueDown.Visualization`,
   `DialogueDown.Visualization.Live`, and `DialogueDown.ConfigurationLoader` into sub-namespaces
   that name their roles. See the
-  [Namespace Layout](docs/contributing/design-notes/Namespace%20Layout.md) note.
+  [Namespace Layout](docs/contributing/design-notes/other/Namespace%20Layout.md) note.
 
   **BREAKING CHANGE:** consumers of those three assemblies need a `using` directive for the new
   sub-namespace. Nothing was renamed or removed, so each type is found under its role —
@@ -251,7 +251,7 @@ changes easy to categorize.
   fewer tests than the suite holds fails loudly instead of reporting a green
   "Zero tests ran". Inner-loop runs stop at the first failure, and a new `test: class`
   VS Code task selects one class through xUnit's own class filter. See the
-  [Development Cycle Optimization](docs/contributing/design-notes/Development%20Cycle%20Optimization.md)
+  [Development Cycle Optimization](docs/contributing/design-notes/other/Development%20Cycle%20Optimization.md)
   note for the measurements behind rejecting the platform's speed options.
 
 - **.NET 10 LTS, without moving Godot projects with it** — the libraries a game references
@@ -260,7 +260,7 @@ changes easy to categorize.
   LTS ahead of .NET 8's end of support on November 10, 2026. The `ddown` CLI now targets
   `net10.0` and requires the .NET 10 runtime; building the repository now needs the .NET 10
   SDK. See the
-  [Target Frameworks](docs/contributing/design-notes/Target%20Frameworks.md) note.
+  [Target Frameworks](docs/contributing/design-notes/other/Target%20Frameworks.md) note.
 
 - **Breaking (pre-1.0): configuration values are deeply immutable and compare by
   content.** `CompilerOptions.Speakers` and configured-speaker tag lists are now
@@ -270,7 +270,7 @@ changes easy to categorize.
   sequences safely. Callers assigning an existing mutable list or dictionary
   directly to a property must use a collection expression, convert it to the
   matching immutable type, or use the snapshot constructor. See
-  [Configuration](docs/contributing/design-notes/Configuration.md).
+  [Configuration](docs/contributing/design-notes/configuration/Configuration.md).
 - **The graph legend now draws each route as the line it really is** — the same dashes the canvas
   draws, ending in the same arrowhead, and stamped with the same crosses where a line marks a node
   nothing reaches. A jump is drawn dash‑dot so it differs from a conditional in kind rather than
@@ -289,7 +289,7 @@ changes easy to categorize.
   longer describes what you wrote; everything the compile did reach is still there, so the
   report keeps showing a broken script's stages. `Source`, `HasErrors`, and
   `LocatedDiagnostics` are unchanged. See the
-  [Compilation Outcome](docs/contributing/design-notes/Compilation%20Outcome.md) note.
+  [Compilation Outcome](docs/contributing/design-notes/core/Compilation%20Outcome.md) note.
 - **A jump to another file now warns instead of passing silently** — a target naming a file or
   a URL (`=> [Meet Bob](chapter-02.md#meet-bob)`) reports **DLG2016** and leads nowhere, so
   reading continues with the next line. Cross-file targets are not resolved yet
@@ -309,7 +309,7 @@ changes easy to categorize.
   text with its span selected. Editing a node in the side panel is gone: it duplicated the
   editor in a narrower space (selecting the root Document node rendered the whole file there),
   and only some tabs offered it. See the
-  [Node Inspector](docs/contributing/design-notes/Live%20Visualization%20-%20Node%20Inspector.md) note.
+  [Node Inspector](docs/contributing/design-notes/visualization/graph/Live%20Visualization%20-%20Node%20Inspector.md) note.
 - **Jump indicators use a preview ligature** — the Source tab and recognized
   jump syntax in node previews from Dialogue AST through Semantic Model show `=>` with a bundled
   Fira Code ligature, including parent Line/Document previews, while editors and underlying
@@ -324,7 +324,7 @@ changes easy to categorize.
   `visualize <script>` opens that same shell on your script, so the Explorer sidebar is available
   whichever way you start and there is a single page to learn. Serving a script that links images
   above its folder still resolves them with your consent (or an explicit `--root`). See the
-  [Unified Served Shell](docs/contributing/design-notes/Live%20Visualization%20-%20Unified%20Served%20Shell.md) note.
+  [Unified Served Shell](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Unified%20Served%20Shell.md) note.
 
 ### Removed
 
@@ -344,7 +344,7 @@ changes easy to categorize.
   nothing at all, despite the help text, the guide, and `--emit`'s own default all promising a
   playbook on standard output. Diagnostics now go to standard error, so a warning can no longer
   land in the middle of a playbook being piped. See
-  [the CLI guide](docs/guide/cli.md#compile).
+  [the CLI guide](docs/guide/cli.md#compile--check-a-script).
 
 - **The live end-to-end suite no longer flakes on a busy machine, or tests the wrong build** —
   opening a script compiles it on the server, which outgrew the assertion's default timeout under
@@ -424,7 +424,7 @@ changes easy to categorize.
   `--- … ---` block receives YAML keys, values, comments, indentation, and folding instead of
   being misread as ordinary Markdown; the dialogue body keeps its existing Markdown and
   compiler-projected highlighting. See
-  [Front Matter Source Highlighting](docs/contributing/design-notes/Front%20Matter%20Source%20Highlighting.md).
+  [Front Matter Source Highlighting](docs/contributing/design-notes/visualization/editor/Front%20Matter%20Source%20Highlighting.md).
 - **Co-located diagnostics now present deterministically** — overlapping editor
   marks use the severest active level while hover and the Problems panel retain
   every message; diagnostics at one position list errors before warnings and
@@ -436,7 +436,7 @@ changes easy to categorize.
   leaves out are dimmed and enclosed in eye-marked Preview regions instead of reading like
   dialogue, the blockquotes that carry control blocks are no longer muted and carry a question
   sticker, and comments read as the writer-only notes they are. See
-  the [Unmodeled Markdown Highlighting](docs/contributing/design-notes/Unmodeled%20Markdown%20Highlighting.md)
+  the [Unmodeled Markdown Highlighting](docs/contributing/design-notes/visualization/editor/Unmodeled%20Markdown%20Highlighting.md)
   note.
 
 - **Cross-links in the Dialogue Graph are far enough apart to aim between.** Node labels are now
@@ -493,7 +493,7 @@ changes easy to categorize.
   over the stage instead of being squeezed into an unreadable strip. Arrow buttons appear
   beside the tabs when they overflow, so a mouse without horizontal scrolling can still reach
   every stage. At 390px the stage went from a quarter of the window to just over half. See the
-  [Narrow Screen Layout](docs/contributing/design-notes/Live%20Visualization%20-%20Narrow%20Screen%20Layout.md)
+  [Narrow Screen Layout](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Narrow%20Screen%20Layout.md)
   note.
 - **Graph zoom focus is visually lighter** — the editable percentage now uses a theme-accent
   underline instead of a rounded input focus ring inside the compact toolbar.
@@ -528,7 +528,7 @@ changes easy to categorize.
   (`*Alice*:`), it is not recognized as a speaker prefix and the line would otherwise be left
   silently unattributed; the compiler now warns and points at the fix — remove the styling to
   declare the speaker (`Alice:`). See the
-  [Styled Speaker Prefix Diagnostic](docs/contributing/design-notes/Styled%20Speaker%20Prefix%20Diagnostic.md) note.
+  [Styled Speaker Prefix Diagnostic](docs/contributing/design-notes/diagnostics/Styled%20Speaker%20Prefix%20Diagnostic.md) note.
 - **Searchable, sortable Semantic-tab tables** — the report's Speakers, Anchors, and Jump
   resolutions tables now filter as you type, sort on any column header, and offer a faceted filter
   for their categorical columns (a jump's Type, a speaker's Default), so a writer can find a
@@ -545,32 +545,32 @@ changes easy to categorize.
   keyword and completion offers it as a jump target. Because a jump is non-returning, the compiler
   now warns when unreachable content — a trailing fragment or a second jump — follows a jump on the
   same line. See the
-  [Progression Order](docs/contributing/design-notes/Progression%20Order.md) note.
+  [Progression Order](docs/contributing/design-notes/language/Progression%20Order.md) note.
 - **Conditions** — put a game-state query with a `?` in front of a jump, a line, or a choice
   option (`` `"FoundKey"?` ``) to guard it: the jump fires, the line plays, or the option is
   offered only when the query reads as true, and otherwise it is skipped. A random option can
   lead with a condition before its weight, so a random pool can offer a dynamic set of options.
   The game answers each condition with a boolean; an unset one counts as false. See the
-  [Conditional Jump](docs/contributing/design-notes/Conditional%20Jump.md),
-  [Conditional Line](docs/contributing/design-notes/Conditional%20Line.md), and
-  [Conditional Choice](docs/contributing/design-notes/Conditional%20Choice.md) notes.
+  [Conditional Jump](docs/contributing/design-notes/language/Conditional%20Jump.md),
+  [Conditional Line](docs/contributing/design-notes/language/Conditional%20Line.md), and
+  [Conditional Choice](docs/contributing/design-notes/language/Conditional%20Choice.md) notes.
 - **Unquoted keys** — a condition and a dynamic weight may now drop the quotes around their key:
   write `` `IsAngry?` `` or `` `Luck%` `` instead of `` `"IsAngry"?` ``/`` `"Luck"%` ``. The
   trailing `?`/`%` marks where the key ends, so a key can read as a natural phrase and may contain
   spaces (`` `Is Alice happy?` ``). Quotes remain the escape for a key that must end in a literal
   `?`/`%`, and a value read (`` `"Alice.FavoriteColor"` ``) is still quoted. See the
-  [Unquoted Keys](docs/contributing/design-notes/Unquoted%20Keys.md) note.
+  [Unquoted Keys](docs/contributing/design-notes/language/Unquoted%20Keys.md) note.
 - **Copy a scene heading's anchor from the report** — hovering a heading in the live
   visualization's Source preview reveals a link icon that copies a ready-to-paste jump
   `[Heading](#slug)`, and the editor shows the bare `#slug` anchor on the heading line you're on.
   See the
-  [Live Visualization — Heading Anchors](docs/contributing/design-notes/Live%20Visualization%20-%20Heading%20Anchors.md) note.
+  [Live Visualization — Heading Anchors](docs/contributing/design-notes/visualization/editor/Live%20Visualization%20-%20Heading%20Anchors.md) note.
 - **Random choices** — a choice list whose options lead with a `` `%` `` weight now becomes a
   *random choice*: the engine picks one option at random by weight instead of offering the player a
   menu. Write an explicit percentage (`` `50%` ``), a bare `` `%` `` to share the remaining chance
   equally, or a game-state query (`` `"Bob's Affection"%` ``) to weight an option by a value read at
   runtime. The report's AST tabs show each option's weight. See the
-  [Random Choice](docs/contributing/design-notes/Random%20Choice.md) note.
+  [Random Choice](docs/contributing/design-notes/language/Random%20Choice.md) note.
 - **Autosave in the live visualization editor** — each editable document now has a persisted
   **Auto | Manual** save mode beside the Save button. Source defaults to Auto (saving 1s after you
   stop typing) and Config defaults to Manual, and explicit Save / <kbd>⌘/Ctrl-S</kbd> stay immediate
@@ -581,7 +581,7 @@ changes easy to categorize.
   confirmed overwrite; Config Auto validates the TOML before writing, while an explicit Config Save
   may persist invalid TOML. Navigation (tabs, node selection, Edit→View) flushes an Auto save and
   awaits it, or runs the Manual save-or-discard prompt. See the
-  [Live Visualization — Autosave](docs/contributing/design-notes/Live%20Visualization%20-%20Autosave.md) note.
+  [Live Visualization — Autosave](docs/contributing/design-notes/visualization/session/Live%20Visualization%20-%20Autosave.md) note.
 
 - **Diagnostics on the CLI** — `dialoguedown compile` now shows a script's problems and fails with
   a data-error exit code when it has errors, instead of silently succeeding. On a terminal each
@@ -590,14 +590,14 @@ changes easy to categorize.
   to its entry on the hosted Error codes page. `--mode` chooses how far a
   compile proceeds after an error. The compiled result also exposes the located diagnostics
   (`CompilationResult.LocatedDiagnostics`) for other tools to render. See the
-  [CLI Diagnostic Rendering](docs/contributing/design-notes/CLI%20Diagnostic%20Rendering.md) note.
+  [CLI Diagnostic Rendering](docs/contributing/design-notes/diagnostics/CLI%20Diagnostic%20Rendering.md) note.
 - **Diagnostics overlay in the visualization editor** — the report's source editor now marks each
   of a script's problems in place: a squiggle under the offending text, a gutter marker, and a
   hover tooltip that explains it and links to its entry on the hosted Error codes page. The overlay
   refreshes on every recompile — save and hot-reload — and clears once the script is clean. It is
   built on a reusable, LSP-shaped diagnostic projection, laying the groundwork for a future language
   server and editor extension. See the
-  [Diagnostics Overlay](docs/contributing/design-notes/Diagnostics%20Overlay.md) note.
+  [Diagnostics Overlay](docs/contributing/design-notes/visualization/editor/Diagnostics%20Overlay.md) note.
 - **Dialogue highlighting and grammar-correct completions in the visualization editor** — the
   report's source editor now colors dialogue as you read and write it — a speaker's name, `@id`,
   and `:` separator each distinctly, its tags, and jump indicators — over the Markdown, and its
@@ -605,13 +605,13 @@ changes easy to categorize.
   so a suggestion can never be a name the compiler would reject. Both are projected from the
   compiler's own parse instead of a second grammar in the browser, sharing the LSP-shaped
   groundwork laid for a future language server. See the
-  [Compiler-Projected Editor Semantics](docs/contributing/design-notes/Compiler-Projected%20Editor%20Semantics.md)
-  and [Precise Speaker Tokens](docs/contributing/design-notes/Precise%20Speaker%20Tokens.md) notes.
+  [Compiler-Projected Editor Semantics](docs/contributing/design-notes/visualization/editor/Compiler-Projected%20Editor%20Semantics.md)
+  and [Precise Speaker Tokens](docs/contributing/design-notes/visualization/editor/Precise%20Speaker%20Tokens.md) notes.
 - **Set the compilation mode per project** — a `dialogue.toml` can now choose how far a compile
   proceeds after an error (`mode = "stage-boundary"` or `"best-effort"`), and the visualization's
   Config tab shows, edits, and autocompletes it. The CLI `--mode` still overrides the project
   setting. See the
-  [Compilation Mode Configuration](docs/contributing/design-notes/Compilation%20Mode%20Configuration.md) note.
+  [Compilation Mode Configuration](docs/contributing/design-notes/configuration/Compilation%20Mode%20Configuration.md) note.
 - **The report reopens on the tab you left it on.** After a refresh, the visualization
   returns to the last tab you were viewing (Source, an AST stage, or the Semantic model)
   instead of always resetting to the Source tab.
@@ -630,8 +630,8 @@ changes easy to categorize.
   stop at the stage boundary (the default), or run every stage — and results carry the
   collected diagnostics and `HasErrors`. Structural checks warn when a line carries more
   than one jump or when a choice branch reaches a fourth nesting level. See the
-  [Diagnostics and Validation](docs/contributing/design-notes/Diagnostics%20and%20Validation.md)
-  and [Choice Nesting Diagnostic](docs/contributing/design-notes/Choice%20Nesting%20Diagnostic.md)
+  [Diagnostics and Validation](docs/contributing/design-notes/diagnostics/Diagnostics%20and%20Validation.md)
+  and [Choice Nesting Diagnostic](docs/contributing/design-notes/diagnostics/Choice%20Nesting%20Diagnostic.md)
   notes.
 - **Configurable speakers, in code or from a `dialogue.toml`** — supply speakers (and
   mark one the default) through `CompilerOptions`, and the compiler binds them
@@ -676,7 +676,7 @@ changes easy to categorize.
   a stage, the report shows the stages it did produce and disables the ones it could not —
   each grayed tab noting it is unavailable because of compilation errors — instead of
   failing to open. See the
-  [Unavailable Stage Tabs](docs/contributing/design-notes/Unavailable%20Stage%20Tabs.md) note.
+  [Unavailable Stage Tabs](docs/contributing/design-notes/visualization/report/Unavailable%20Stage%20Tabs.md) note.
 - **Documentation site and live demo** — a
   [DocFX site](https://pengzhengyi.github.io/dialoguedown/) (a writer Guide, a
   Contributing section with the design notes, and a generated C# API reference) and a
@@ -695,7 +695,7 @@ changes easy to categorize.
   game-state command on its own line is now an effect-only *control line* with no
   speaker, so it is never attributed to a character or the configured default
   speaker; narration by the default speaker is unchanged. See the
-  [Control Line](docs/contributing/design-notes/Control%20Line.md) note.
+  [Control Line](docs/contributing/design-notes/language/Control%20Line.md) note.
 - **One maximize control for the whole report.** The visualization report's *full screen*
   toggle now lives once at the right end of the tab bar (with a matching exit control while
   maximized), instead of a separate button in each tab's toolbar; `f` and `Escape` still toggle it.
