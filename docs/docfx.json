@@ -6,6 +6,10 @@
         {
           "src": "../src/DialogueDown",
           "files": ["**/*.csproj"]
+        },
+        {
+          "src": "../src/DialogueDown.Playbook",
+          "files": ["**/*.csproj"]
         }
       ],
       "dest": "api",

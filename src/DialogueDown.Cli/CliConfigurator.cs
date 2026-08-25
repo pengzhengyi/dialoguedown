@@ -17,6 +17,11 @@ internal static class CliConfigurator
     public static void Configure(IConfigurator config)
     {
         ArgumentNullException.ThrowIfNull(config);
+        // Everything a person reads — diagnostics, usage errors, unhandled exceptions — goes to
+        // standard error, so standard output carries only what a compile emits. Set here rather
+        // than in the container because Spectre registers this console itself, after ours, and
+        // the later registration is the one that resolves.
+        config.Settings.Console = ErrorConsole();
         config.SetApplicationName("ddown");
         config.SetApplicationVersion(ResolveVersion());
         config.SetExceptionHandler(HandleException);
@@ -56,6 +61,13 @@ internal static class CliConfigurator
                 return ExitCodes.Error;
         }
     }
+
+    /// <summary>
+    /// The console for everything a person reads: standard error, so a playbook on standard
+    /// output is never interrupted by a warning and stays safe to pipe.
+    /// </summary>
+    private static IAnsiConsole ErrorConsole() =>
+        AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Error) });
 
     /// <summary>The tool version, read from the assembly (set by <c>&lt;Version&gt;</c>).</summary>
     private static string ResolveVersion()

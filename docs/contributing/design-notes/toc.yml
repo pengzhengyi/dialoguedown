@@ -22,6 +22,8 @@
     href: Dialogue Runtime Architecture.md
   - name: Playbook Format
     href: Playbook Format.md
+  - name: Conformance Corpus
+    href: Conformance Corpus.md
 - name: Language constructs
   items:
   - name: Progression Order

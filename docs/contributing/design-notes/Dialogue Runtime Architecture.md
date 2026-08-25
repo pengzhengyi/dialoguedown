@@ -1,7 +1,11 @@
 # Dialogue runtime architecture
 
 > [!NOTE]
-> Status: **proposed** — an umbrella architecture, not yet implemented. This note
+> Status: **partially implemented** — the umbrella. Its first two components have
+> shipped: the [playbook format and writer](./Playbook%20Format.md) (C1) and the
+> [conformance corpus](./Conformance%20Corpus.md) (C3). The runner and everything
+> that builds on it (C2, C4–C8) remain proposed; see the
+> [component table](#components-and-sequencing). This note
 > fixes the cross-cutting shape of everything after the
 > [Dialogue Graph](./Dialogue%20Graph.md): the portable **playbook** a compile
 > emits, the **runner** that plays one, the **protocol** between a runner and its

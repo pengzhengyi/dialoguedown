@@ -8,6 +8,16 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
+  east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
+  label, so a runtime building a menu drew an empty row unless it read the words off the node the
+  arm led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
+  labels across the shipped examples, and their playbooks change accordingly.
+
+## [0.2.0] - 2026-08-25
+
 ### Added
 
 - **A Playbook tab in the report** — after Dialogue Graph, the report now shows the compiled
@@ -325,11 +335,11 @@ changes easy to categorize.
 
 ### Fixed
 
-- **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
-  east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
-  label, so a runtime building a menu drew an empty row unless it read the words off the node the
-  arm led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
-  labels across the shipped examples, and their playbooks change accordingly.
+- **`ddown compile script.md` emits a playbook again** — compiling with no `--emit` produced
+  nothing at all, despite the help text, the guide, and `--emit`'s own default all promising a
+  playbook on standard output. Diagnostics now go to standard error, so a warning can no longer
+  land in the middle of a playbook being piped. See
+  [the CLI guide](docs/guide/cli.md#compile).
 
 - **The live end-to-end suite no longer flakes on a busy machine, or tests the wrong build** —
   opening a script compiles it on the server, which outgrew the assertion's default timeout under
@@ -727,5 +737,6 @@ changes easy to categorize.
 - Escaped inline punctuation (for example `\*`) no longer shifts the source spans of
   the text that follows it, so spans stay exact for diagnostics and the visualizer.
 
-[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pengzhengyi/dialoguedown/releases/tag/v0.1.0

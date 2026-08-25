@@ -23,24 +23,28 @@ internal sealed class CompileCommand : Command<CompileSettings>
     private readonly IErrataRenderer _errata;
     private readonly IVisualizeRunner _runner;
     private readonly IPlaybookWriter _playbooks;
+    private readonly TextWriter _standardOutput;
 
     public CompileCommand(
         ProjectConfiguration configuration,
         Func<CompilerOptions, IScriptCompiler> compilerFactory,
         IErrataRenderer errata,
         IVisualizeRunner runner,
-        IPlaybookWriter playbooks)
+        IPlaybookWriter playbooks,
+        TextWriter standardOutput)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(compilerFactory);
         ArgumentNullException.ThrowIfNull(errata);
         ArgumentNullException.ThrowIfNull(runner);
         ArgumentNullException.ThrowIfNull(playbooks);
+        ArgumentNullException.ThrowIfNull(standardOutput);
         _configuration = configuration;
         _compilerFactory = compilerFactory;
         _errata = errata;
         _runner = runner;
         _playbooks = playbooks;
+        _standardOutput = standardOutput;
     }
 
     /// <inheritdoc />
@@ -94,7 +98,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
         }
         else
         {
-            Console.Out.WriteLine(json);
+            _standardOutput.WriteLine(json);
         }
     }
 
