@@ -8,6 +8,8 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-25
+
 ### Added
 
 - **A Playbook tab in the report** — after Dialogue Graph, the report now shows the compiled
@@ -727,5 +729,6 @@ changes easy to categorize.
 - Escaped inline punctuation (for example `\*`) no longer shifts the source spans of
   the text that follows it, so spans stay exact for diagnostics and the visualizer.
 
-[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/pengzhengyi/dialoguedown/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/pengzhengyi/dialoguedown/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pengzhengyi/dialoguedown/releases/tag/v0.1.0
