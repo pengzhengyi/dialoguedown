@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut and publish a DialogueDown release. Package, locally test, and publish the `ddown` CLI as a cross-platform .NET global tool on NuGet; refresh the locally installed tool after a merge to main; and on a changelog release resync the documentation against the code as a release gate, then set the semantic version, pack, and push the package. Composes with maintain-oss, curate-docs, and polish-tech-doc, and keeps docs/guide/cli.md as the user-facing source of truth. Self-contained binaries and a Homebrew tap are a planned second channel.
+description: Cut and publish a DialogueDown release. Package, locally test, and publish the `ddown` CLI as a cross-platform .NET global tool on NuGet; refresh the locally installed tool after a merge to main; and on a changelog release resync the documentation against the code as a release gate, then set the semantic version and push a `v*` tag, which triggers the release workflow that tests, packs, and publishes. Composes with maintain-oss, curate-docs, and polish-tech-doc, and keeps docs/guide/cli.md as the user-facing source of truth. Self-contained binaries and a Homebrew tap are a planned second channel.
 ---
 
 # Release DialogueDown
@@ -14,9 +14,12 @@ decision, or tag; those belong to `maintain-oss`. Invoke this skill from within
 that release flow.
 
 > [!IMPORTANT]
-> Publishing to NuGet, creating tags, adding a publishing workflow or its secret, and
-> changing the public command name are **sensitive actions**. Never do them without
-> explicit user approval, and never commit a NuGet API key. Verify locally first.
+> Publishing to NuGet, creating tags, changing the release workflow, and changing the
+> public command name are **sensitive actions**. Never do them without explicit user
+> approval. Verify locally first.
+>
+> **Pushing a `v*` tag publishes to NuGet** — it is not a bookkeeping step. See
+> [Release push](#4-release-push-approval-gated).
 
 ## Ubiquitous language
 
@@ -45,9 +48,11 @@ name, and runtime requirements in this skill, that doc, and the CLI code in sync
 
 - The **.NET 10 SDK** (`global.json` pins the floor). `dotnet pack` and
   `dotnet tool` are part of the SDK.
-- For a release push: a **NuGet.org account** and an **API key** (NuGet.org →
-  *Account* → *API Keys*), provided as the `NUGET_API_KEY` environment variable or
-  a repository secret. Never hard-code or commit it.
+- For a release push: **nothing local**. Publishing runs in GitHub Actions over
+  **NuGet Trusted Publishing (OIDC)**, so there is no API key to hold. The
+  nuget.org trusted-publishing policy must name this repository and the workflow
+  file `release.yml`; `secrets.NUGET_USER` holds the nuget.org username it
+  publishes as.
 
 `ddown` depends on `DialogueDown.Visualization.Live`, which is built on ASP.NET
 Core, so the packaged tool is **framework-dependent** and needs the **ASP.NET Core
@@ -449,41 +454,77 @@ to read first, and an author knows not to restate it.
 
 ## 4. Release push (approval-gated)
 
+> [!IMPORTANT]
+> **Pushing the tag is the release.** Do not pack or `dotnet nuget push` by hand —
+> [`.github/workflows/release.yml`](../../workflows/release.yml) fires on any `v*`
+> tag and does all of it. A manual push cannot succeed anyway: publishing uses
+> **NuGet Trusted Publishing (OIDC)**, so no long-lived API key exists on any
+> machine, and `dotnet nuget push` from a laptop returns `401`.
+
 Run only when `maintain-oss` has cut a changelog release, the
 [documentation resync](#3-resync-the-documentation-release-gate) is clean, and the
 user has approved publishing. `maintain-oss` owns the version choice, the dated
-`CHANGELOG.md` heading, and the git tag; this skill packs that version and pushes
-it.
+`CHANGELOG.md` heading, and the tag; this skill owns what the tag then produces.
 
-1. **Set the version** to the release's SemVer — either bump `<Version>` in the
-   csproj to match the changelog heading, or pass it at pack time:
+### What the workflow does
+
+Triggered by `push: tags: v*`, it derives the version from the tag name
+(`v0.2.0` → `0.2.0`) and then, in order:
+
+| Step | Detail |
+| --- | --- |
+| Restore, build, **test** | The full suite with `--minimum-expected-tests 3000`. A red suite stops the release before anything is published. |
+| Pack | `-p:Version=<derived>`, so the tag alone decides the package version. |
+| NuGet login | `NuGet/login@v1` exchanges an OIDC token for a **short-lived** key. The only stored value is `secrets.NUGET_USER` — a username, not a credential. |
+| Push | `--skip-duplicate`, so re-running a tag is safe. |
+| GitHub Release | Notes from that version's `CHANGELOG.md` section, and it **skips if the release already exists**. |
+
+Because the workflow builds with `-p:Version=` from the tag, a mismatch between
+the tag and `<Version>` in `Directory.Build.props` publishes the **tag's** number.
+Keep them equal so the repository and the feed agree.
+
+### Steps
+
+1. **Confirm the version is set** in `Directory.Build.props` — one `<Version>` that
+   every project inherits, matching the changelog heading. The architecture rule
+   `EveryShippedAssembly_CarriesTheReleaseVersion` fails the suite if any assembly
+   disagrees, which is what keeps a project from shipping the SDK's `1.0.0` default.
+
+2. **Re-verify locally** (section 2) against a Release build, from the packed tool
+   rather than the build output.
+
+3. **Create and push the tag** (needs approval — this publishes):
 
    ```sh
-   dotnet pack src/DialogueDown.Cli/DialogueDown.Cli.csproj -c Release -o ./artifacts -p:Version=<x.y.z>
+   git tag -a v<x.y.z> <merge-commit> -m "DialogueDown <x.y.z>"
+   git push origin v<x.y.z>
    ```
 
-2. **Re-verify locally** (section 2) against the release build.
-
-3. **Push to NuGet** (needs approval; `NUGET_API_KEY` must be set in the
-   environment, never committed):
+4. **Watch the workflow**, and read it as the source of truth for whether the
+   release succeeded:
 
    ```sh
-   dotnet nuget push ./artifacts/DialogueDown.Cli.<x.y.z>.nupkg \
-     --api-key "$NUGET_API_KEY" \
-     --source https://api.nuget.org/v3/index.json \
-     --skip-duplicate
+   gh run list --workflow=release.yml --limit 1
+   gh run watch $(gh run list --workflow=release.yml --limit 1 --json databaseId --jq '.[0].databaseId')
    ```
 
-4. **Confirm** the package appears at
-   `https://www.nuget.org/packages/DialogueDown.Cli` and installs cleanly:
-   `dotnet tool install --global DialogueDown.Cli`.
+5. **Confirm the package is live.** The flat-container index updates within
+   seconds; the **search index lags by minutes**, so a bare
+   `dotnet tool install` can still resolve the *previous* version and look like a
+   failed publish. Check the index directly, and pin the version when installing:
 
-> [!TIP]
-> To automate this, add a GitHub Actions release workflow triggered on a `v*` tag
-> that packs and pushes with the key stored as the `NUGET_API_KEY` repository
-> secret. Adding a publishing workflow **and** its secret is a sensitive action:
-> propose it and wait for approval before committing the workflow or creating the
-> secret.
+   ```sh
+   curl -s https://api.nuget.org/v3-flatcontainer/dialoguedown.cli/index.json | jq .versions
+   dotnet tool install --global DialogueDown.Cli --version <x.y.z>
+   ddown --version
+   ```
+
+### If the tag was already pushed
+
+The workflow is idempotent where it matters: `--skip-duplicate` on the push, and a
+release-exists check before `gh release create`. To re-run after fixing a
+workflow-side problem, re-run the failed run rather than deleting and re-pushing
+the tag — a moved tag on a published version desynchronizes the feed from history.
 
 ## Planned second channel: self-contained binaries
 
@@ -503,10 +544,12 @@ only if a headless `ddown compile` CI use case emerges.
 
 ## Guardrails
 
-- **Approval-gated:** the NuGet push, git tags, any publishing workflow or secret,
-  and renaming the public `ddown` command. Ask first.
-- **Never commit secrets** — the NuGet API key stays in the environment or a
-  repository secret.
+- **Approval-gated:** pushing a `v*` tag (it publishes), changing
+  `.github/workflows/release.yml`, and renaming the public `ddown` command. Ask first.
+- **Never pack or push to NuGet by hand.** The tag-triggered workflow owns it, and
+  Trusted Publishing means there is no key to push with anyway.
+- **No secrets to commit** — publishing authenticates over OIDC. The only stored
+  value is `secrets.NUGET_USER`, a username.
 - **Never publish against stale documentation** — the
   [documentation resync](#3-resync-the-documentation-release-gate) is a release
   gate, not a nicety. A push freezes whatever the docs claim about that version.
