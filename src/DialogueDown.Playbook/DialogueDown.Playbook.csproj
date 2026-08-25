@@ -7,7 +7,7 @@
     <RootNamespace>DialogueDown.Playbook</RootNamespace>
     <AssemblyName>DialogueDown.Playbook</AssemblyName>
     <LangVersion>latest</LangVersion>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <!-- The contract between a compiler and a runtime, so it belongs to neither and
          depends on nothing: a game embeds this and a runner, never the compiler. -->
     <Description>The portable playbook a DialogueDown compile emits, and the reader that loads one back.</Description>
