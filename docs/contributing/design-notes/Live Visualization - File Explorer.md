@@ -140,8 +140,8 @@ The pieces are mostly built — as a *separate page*:
 - **`ServedShellServer`** already exposes `GET /api/browse`, `POST /api/open`,
   `POST /api/create`, and serves the opened report under `/r` — but the launcher
   is its **own page**; opening a script `303`-redirects away to the report.
-- **`LiveVisualizationServer`** serves a directly-opened report (`visualize
-  <script>`) and has `document`/`events`/`save`/`reload`/`create-config` — but
+- **`LiveVisualizationServer`** serves a directly-opened report
+  (`visualize <script>`) and has `document`/`events`/`save`/`reload`/`create-config` — but
   **no** browse/open/create.
 - The web client's `launcher.ts` renders a **flat, one-folder-at-a-time** listing
   with a working **New file** row, driven by injected `LauncherPorts`
