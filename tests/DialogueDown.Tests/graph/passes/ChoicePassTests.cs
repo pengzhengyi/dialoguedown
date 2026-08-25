@@ -59,6 +59,51 @@ public sealed class ChoicePassTests
     }
 
     [Fact]
+    public void Apply_AnOptionThatOnlyJumps_IsNamedByTheJumpsOwnWords()
+    {
+        // "- => [Take the east road](#END)" is the ordinary way to write a branching menu. Those
+        // words are the writer's name for the option, so a menu has to be able to show them
+        // without reading the node the arm leads to.
+        var graph = Build("""
+            Guide: Which way?
+
+            - => [Take the east road](#END)
+
+            - Alice: Stay here.
+            """);
+
+        AssertOffers(
+            Assert.IsType<ChoiceNode>(graph.Nodes[1]), "Take the east road", "Stay here.");
+    }
+
+    [Fact]
+    public void Apply_AnOptionThatActsBeforeJumping_IsStillNamedByItsJump()
+    {
+        var graph = Build("""
+            - `("fade out")` => [Leave quietly](#END)
+
+            - Alice: Stay.
+            """);
+
+        AssertOffers(Assert.IsType<ChoiceNode>(graph.Nodes[0]), "Leave quietly", "Stay.");
+    }
+
+    [Fact]
+    public void Apply_AnOptionWithNeitherWordsNorAJump_IsNamedByNothing()
+    {
+        // Nothing the writer wrote names this arm, and reading the words off the node it leads to
+        // would put somebody else's line in the player's mouth. So the compile invents nothing and
+        // leaves the arm unnamed.
+        var graph = Build("""
+            - `("fade out")`
+
+            - Alice: Stay.
+            """);
+
+        AssertOffers(Assert.IsType<ChoiceNode>(graph.Nodes[0]), "", "Stay.");
+    }
+
+    [Fact]
     public void Apply_AnOptionWithSeveralBlocks_LeadsToItsFirstOnly()
     {
         var graph = Build("""
