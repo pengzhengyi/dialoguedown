@@ -5,9 +5,9 @@
   "because": "succession is the plainest thing a runner does, so a port that fails here fails everything",
   "session": [
     { "expect": { "said": { "speaker": "Alice", "speech": "Hello." } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "said": { "speaker": "Bob", "speech": "Goodbye." } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "ended": {} } }
   ]
 }

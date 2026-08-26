@@ -106,10 +106,10 @@
       "oneOf": [
         {
           "enum": [
-            "continue",
+            "next",
             "describe"
           ],
-          "description": "Proceed past what was just said, or ask where the run stands."
+          "description": "Advance one step, or ask where the run stands."
         },
         {
           "type": "object",
