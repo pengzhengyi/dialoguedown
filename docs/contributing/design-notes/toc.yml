@@ -100,6 +100,8 @@
       href: visualization/report/Dialogue Graph Visualization Tab.md
     - name: Collapsing Across the Report
       href: visualization/report/Collapsing Across the Report.md
+    - name: Saying Nothing Across the Report
+      href: visualization/report/Saying Nothing Across the Report.md
     - name: Configuration Tab
       href: visualization/report/Configuration Tab.md
     - name: Configuration Tab — Live Edit

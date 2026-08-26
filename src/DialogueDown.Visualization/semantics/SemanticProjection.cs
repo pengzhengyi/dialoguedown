@@ -20,7 +20,10 @@ internal sealed class SemanticProjection
 
     // Shown in a cell whose single value is absent — a speaker with no name or no @id — so the
     // gap reads as "not applicable" rather than an ambiguous dash.
-    private const string Absent = "N/A";
+    // The anonymous speaker — the one an unprefixed line belongs to. Its namelessness is a fact
+    // about the script rather than a gap in the table, so it is the one absence the report names;
+    // every other empty cell is left empty.
+    private const string Anonymous = "(anonymous)";
 
     // Jump-resolution kind colors. "terminal" reuses the reserved #END editor hue so the End type
     // reads the same in the table and the source; "deferred" marks a not-yet-resolvable cross-file
@@ -69,8 +72,8 @@ internal sealed class SemanticProjection
 
             rows.Add(new SemanticRow(
                 [
-                    new SemanticCell(symbol.Name ?? Absent, Category: SpeechCategory),
-                    new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : Absent),
+                    new SemanticCell(symbol.Name ?? Anonymous, Category: SpeechCategory),
+                    new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : string.Empty),
                     new SemanticCell(TagsText(symbol)),
                     new SemanticCell(symbol.IsDefault ? "✓" : ""),
                 ],

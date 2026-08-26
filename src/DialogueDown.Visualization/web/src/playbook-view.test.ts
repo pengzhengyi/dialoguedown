@@ -83,21 +83,38 @@ describe("createPlaybookView", () => {
         expect(link?.rel).toBe("noopener noreferrer");
     });
 
-    it("shows an em dash for a header list the playbook left empty", () => {
+    it("says nothing for a header list the playbook did not fill", () => {
         const rows = bodyRows(createPlaybookView(compiled()), "Playbook");
         const uses = rows.find((row) => row.cells[0]?.textContent === "Uses");
 
-        expect(uses?.cells[1]?.textContent).toBe("—");
+        expect(uses?.cells[1]?.textContent).toBe("");
     });
 
-    it("names the anonymous default speaker rather than showing an empty cell", () => {
+    it("names the anonymous default speaker, whose namelessness is the point", () => {
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
         expect(rows).toHaveLength(2);
         expect(rows[0].textContent).toContain("Alice");
         expect(rows[0].textContent).toContain("alice");
         expect(rows[1].cells[0]?.textContent).toBe("(anonymous)");
-        expect(rows[1].cells[2]?.textContent).toBe("yes");
+    });
+
+    it("ticks the default speaker and leaves the others' cell empty", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
+
+        expect(rows[0].cells[2]?.textContent).toBe("");
+        expect(rows[1].cells[2]?.textContent).toBe("✓");
+    });
+
+    it("leaves an absent id and an empty tag list as empty cells", () => {
+        // Nothing to say, so the table says nothing: the reader's eye goes to the speakers that
+        // do carry an id or a tag, not to a column of placeholders.
+        const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
+
+        expect(rows[0].cells[1]?.textContent).toBe("alice");
+        expect(rows[0].cells[3]?.textContent).toBe("role=guide");
+        expect(rows[1].cells[1]?.textContent).toBe("");
+        expect(rows[1].cells[3]?.textContent).toBe("");
     });
 
     it("lists every anchor a jump may name, with the node it lands on", () => {

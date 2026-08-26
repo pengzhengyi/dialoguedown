@@ -346,13 +346,13 @@ function copyCell(text: string): string {
 }
 
 function speakerCells(speaker: ConfiguredSpeakerView): string {
-    // The id is shown (and copied) with its `@` sigil, exactly as a script references it.
-    const id = speaker.id
-        ? copyCell(`@${speaker.id}`)
-        : `<td><span class="config-empty">—</span></td>`;
+    // The id is shown (and copied) with its `@` sigil, exactly as a script references it. A
+    // speaker with no id, or no tags, gets an empty cell: there is nothing to say, so the table
+    // says nothing and the eye goes to the speakers that do carry one.
+    const id = speaker.id ? copyCell(`@${speaker.id}`) : "<td></td>";
     const tags =
         speaker.tags.length === 0
-            ? `<td><span class="config-empty">—</span></td>`
+            ? "<td></td>"
             : `<td><div class="config-tags">${speaker.tags.map(tagChip).join(" ")}</div></td>`;
     return copyCell(speaker.name) + id + tags;
 }
