@@ -213,6 +213,7 @@ Configuration tab and the folding contract every surface shares.
 | 43 | [Saying Nothing Across the Report](./visualization/report/Saying%20Nothing%20Across%20the%20Report.md) | One rule for an absent value in any table cell: an empty cell, and the anonymous speaker named | Implemented |
 | 44 | [Tag Capsules](./visualization/report/Tag%20Capsules.md) | One capsule draws a tag on every surface: kind in the fill, identity in a leading dot | Implemented |
 | 45 | [Copyable Identifiers](./visualization/report/Copyable%20Identifiers.md) | An `@id`, an anchor, and a jump target copy on click; prose does not | Implemented |
+| 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
 
 #### Source editor
 

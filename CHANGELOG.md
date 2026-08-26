@@ -10,6 +10,11 @@ changes easy to categorize.
 
 ### Added
 
+- **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
+  a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
+  it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
+  [Jumping into the Playbook](docs/contributing/design-notes/visualization/report/Jumping%20into%20the%20Playbook.md).
+
 - **`DLG2017` warns about an option a player cannot read** — an arm with neither words nor a named
   jump compiles to a blank line in the menu, which the compiler now points at instead of leaving
   for a playtest to find. See

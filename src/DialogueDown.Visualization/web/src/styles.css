@@ -5338,6 +5338,7 @@ button.tab.tab-with-icon {
    subtle hover cue, so a writer can lift a name, `@id`, or tag straight into a script. */
 .config-copy,
 .dd-copy,
+.dd-jump,
 .dd-tag {
     cursor: pointer;
 }
@@ -5349,8 +5350,21 @@ button.tab.tab-with-icon {
 }
 
 .config-copy:hover,
-.dd-copy:hover {
+.dd-copy:hover,
+.dd-jump:hover {
     background: rgb(128 128 128 / 12%);
+}
+
+/* A cell that reveals a place in the playbook underlines on hover, so it reads as a
+   destination rather than as another value to copy. */
+.dd-jump {
+    border-radius: var(--pico-border-radius);
+    transition: background-color 0.12s ease;
+}
+
+.dd-jump:hover {
+    text-decoration: underline dotted currentcolor;
+    text-underline-offset: 0.2em;
 }
 
 .dd-tag:hover {

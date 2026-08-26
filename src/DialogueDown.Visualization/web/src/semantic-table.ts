@@ -450,6 +450,14 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
     const td = document.createElement("td");
     // An identifier is something a writer lifts into a script, so it offers itself for copying.
     // `data-copy` is all the shared listener needs; the class carries the hover cue.
+    // A cell that stands for a place in a document offers to take the reader there. It is
+    // marked rather than wired here: the table does not know what document, so the surface that
+    // built the cell listens for the click.
+    if (cell.jump && cell.text !== "") {
+        td.classList.add("dd-jump");
+        td.dataset.jump = JSON.stringify(cell.jump);
+        td.title = "Click to reveal in the playbook";
+    }
     if (cell.copyable && cell.text !== "") {
         td.dataset.copy = cell.text;
         td.classList.add("dd-copy");

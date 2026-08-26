@@ -3,6 +3,36 @@ import AxeBuilder from "@axe-core/playwright";
 import { writeReport, SAMPLE_STAGES } from "./report";
 import type { Report } from "../src/model";
 
+/**
+ * A playbook with enough nodes to scroll, and a last node whose id (`9`) is deliberately not its
+ * position — the corpus allows sparse ids, so a jump that indexed the array would land wrong.
+ */
+const JUMPABLE_JSON = `{
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ]
+  },
+  "entry": 0,
+  "script": "scene.dialogue.md",
+  "speakers": [
+    {
+      "name": "Guide"
+    },
+    {
+      "name": "(anonymous)"
+    }
+  ],
+  "nodes": [
+${Array.from({ length: 9 }, (_, i) => `    {\n      "kind": "line",\n      "id": ${i}\n    },`).join("\n")}
+    {
+      "kind": "line",
+      "id": 9
+    }
+  ]
+}`;
+
 // A report carrying a compiled playbook: one named speaker with an id and a tag, plus the
 // anonymous default every script has. Enough to show both tables and the read-only editor.
 const compiled: Report = {
@@ -13,9 +43,7 @@ const compiled: Report = {
         { title: "Dialogue Graph", description: "The runtime graph.", nodes: [], edges: [] },
     ],
     playbook: {
-        json:
-            '{\n  "format": {\n    "version": 0,\n    "requires": [\n      "core"\n    ]\n  },\n' +
-            '  "script": "scene.dialogue.md"\n}',
+        json: JUMPABLE_JSON,
         metadata: {
             script: "scene.dialogue.md",
             formatVersion: 0,
@@ -26,7 +54,7 @@ const compiled: Report = {
             nodeCount: 4,
             anchorCount: 1,
         },
-        anchors: [{ name: "the-tavern", node: 0 }],
+        anchors: [{ name: "the-tavern", node: 9 }],
         speakers: [
             {
                 id: "guide",
@@ -118,6 +146,48 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(panel(page, "Playbook")).toContainText("scene.dialogue.md");
         await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(2);
         await expect(panel(page, "Anchors")).toContainText("#the-tavern");
+    });
+
+    test("reveals the node an anchor lands on, found by id and not by position", async ({
+        page,
+    }) => {
+        // The anchor points at node 9, the last of ten. Landing on it proves both halves: the
+        // editor really scrolled, and the search matched the id rather than counting elements.
+        await page.click(playbookTab);
+
+        await panel(page, "Anchors").locator("tbody td").nth(1).click();
+
+        const cursorLine = await page.evaluate(() => {
+            const editor = document.querySelector(".playbook-source .cm-editor");
+            const active = editor?.querySelector(".cm-activeLine");
+            return active?.textContent ?? null;
+        });
+        expect(cursorLine).toBe("    {");
+
+        // The revealed node is on screen, not merely selected somewhere above the fold.
+        const visible = await page.evaluate(() => {
+            const pane = document.querySelector(".playbook-source .cm-scroller")!;
+            const line = document.querySelector(".playbook-source .cm-activeLine")!;
+            const a = pane.getBoundingClientRect();
+            const b = line.getBoundingClientRect();
+            return b.top >= a.top && b.bottom <= a.bottom;
+        });
+        expect(visible).toBe(true);
+    });
+
+    test("reveals a speaker when their name is clicked", async ({ page }) => {
+        await page.click(playbookTab);
+
+        await panel(page, "Speakers").locator("tbody tr").nth(1).locator("td").first().click();
+
+        const revealed = await page.evaluate(() => {
+            const editor = document.querySelector(".playbook-source .cm-editor");
+            const lines = [...(editor?.querySelectorAll(".cm-line") ?? [])];
+            const active = editor?.querySelector(".cm-activeLine");
+            const at = lines.indexOf(active as Element);
+            return lines[at + 1]?.textContent ?? null;
+        });
+        expect(revealed).toContain("(anonymous)");
     });
 
     test("filters a table down through its search box", async ({ page }) => {
