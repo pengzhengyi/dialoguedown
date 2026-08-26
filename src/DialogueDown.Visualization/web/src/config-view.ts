@@ -27,6 +27,7 @@ import { foldGutterMarker } from "./fold-glyph";
 import type { ConfigReport, ConfiguredSpeakerView } from "./model";
 import { isConfiguredFromFile } from "./model";
 import { initSplitDivider } from "./source-view";
+import { renderTags } from "./tag-chip";
 import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { showToast } from "./toast";
@@ -351,23 +352,8 @@ function speakerCells(speaker: ConfiguredSpeakerView): string {
     // says nothing and the eye goes to the speakers that do carry one.
     const id = speaker.id ? copyCell(`@${speaker.id}`) : "<td></td>";
     const tags =
-        speaker.tags.length === 0
-            ? "<td></td>"
-            : `<td><div class="config-tags">${speaker.tags.map(tagChip).join(" ")}</div></td>`;
+        speaker.tags.length === 0 ? "<td></td>" : `<td>${renderTags(speaker.tags).outerHTML}</td>`;
     return copyCell(speaker.name) + id + tags;
-}
-
-/** One tag chip, marked reserved or custom so CSS colors the two apart; click-to-copy. */
-function tagChip(tag: { name: string; value?: string; reserved: boolean }): string {
-    // Reserved tags are written with a double hash (`##default`), custom ones with a single.
-    const prefix = tag.reserved ? "##" : "#";
-    const label = tag.value == null ? `${prefix}${tag.name}` : `${prefix}${tag.name}=${tag.value}`;
-    const kind = tag.reserved ? "reserved" : "custom";
-    const safe = escapeHtml(label);
-    return (
-        `<span class="config-tag config-tag-${kind}" data-copy="${safe}" title="Click to copy">` +
-        `${safe}</span>`
-    );
 }
 
 /** A controller over the no-config pane: it flips its create call to action with View⇄Edit. */

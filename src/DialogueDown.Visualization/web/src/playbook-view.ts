@@ -36,6 +36,7 @@ import { compactSearch } from "./search-panel";
 import { gotoLineKeymap } from "./goto-line";
 import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
+import { tagLabel } from "./tag-chip";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -225,7 +226,7 @@ function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
                 // the speakers that do carry an id, a tag, or the default mark.
                 { text: speaker.id ?? "" },
                 { text: speaker.default ? "✓" : "" },
-                { text: speaker.tags.join(", ") },
+                { text: speaker.tags.map(tagLabel).join(" "), tags: speaker.tags },
             ],
         })),
         emptyText: "This playbook has no speakers.",

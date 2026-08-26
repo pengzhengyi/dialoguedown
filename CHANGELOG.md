@@ -10,6 +10,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **Every tag is drawn as one capsule, wherever it appears** — the Config tab drew tags as
+  rounded, copyable capsules while the Semantic Model and Playbook joined them into a run of text,
+  so the same tag read as three different objects and the Playbook dropped the `#` a script writes.
+  All three now draw the same capsule: the palette's tag color says *this is a tag*, a small
+  leading dot colored from the tag's own name says *which* tag, so `#wise` looks the same in every
+  table, and a click copies it verbatim. See
+  [Tag Capsules](docs/contributing/design-notes/visualization/report/Tag%20Capsules.md).
+
 - **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
   empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
   speaker carried a tag showed eight placeholders around it and the eye landed on the absences.

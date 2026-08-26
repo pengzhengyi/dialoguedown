@@ -1,3 +1,5 @@
+using DialogueDown.Visualization.Display;
+
 namespace DialogueDown.Visualization.Configuration;
 
 /// <summary>
@@ -6,4 +8,4 @@ namespace DialogueDown.Visualization.Configuration;
 /// reserved/custom flag for coloring.
 /// </summary>
 internal sealed record ConfiguredSpeakerView(
-    string Name, string? Id, IReadOnlyList<ConfiguredTagView> Tags);
+    string Name, string? Id, IReadOnlyList<TagView> Tags);

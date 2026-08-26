@@ -28,7 +28,12 @@ const compiled: Report = {
         },
         anchors: [{ name: "the-tavern", node: 0 }],
         speakers: [
-            { id: "guide", name: "Guide", default: false, tags: ["role=host"] },
+            {
+                id: "guide",
+                name: "Guide",
+                default: false,
+                tags: [{ name: "role", value: "host", reserved: false }],
+            },
             { default: true, tags: [] },
         ],
     },

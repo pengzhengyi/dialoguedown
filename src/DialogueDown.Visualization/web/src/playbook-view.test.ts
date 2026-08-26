@@ -20,7 +20,12 @@ function compiled(): PlaybookReport {
         },
         anchors: [{ name: "the-tavern", node: 0 }],
         speakers: [
-            { id: "alice", name: "Alice", default: false, tags: ["role=guide"] },
+            {
+                id: "alice",
+                name: "Alice",
+                default: false,
+                tags: [{ name: "role", value: "guide", reserved: false }],
+            },
             { default: true, tags: [] },
         ],
     };
@@ -106,13 +111,24 @@ describe("createPlaybookView", () => {
         expect(rows[1].cells[2]?.textContent).toBe("✓");
     });
 
+    it("draws each tag as a capsule carrying the text to copy", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
+        const chip = rows[0].cells[3]?.querySelector<HTMLElement>(".dd-tag");
+
+        expect(chip?.dataset.copy).toBe("#role=guide");
+        expect(chip?.classList.contains("dd-tag-custom")).toBe(true);
+        // The identity dot is what tells one writer-invented tag from the next.
+        expect(chip?.querySelector(".dd-tag-dot")).not.toBeNull();
+    });
+
     it("leaves an absent id and an empty tag list as empty cells", () => {
         // Nothing to say, so the table says nothing: the reader's eye goes to the speakers that
         // do carry an id or a tag, not to a column of placeholders.
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
         expect(rows[0].cells[1]?.textContent).toBe("alice");
-        expect(rows[0].cells[3]?.textContent).toBe("role=guide");
+        // Written with its `#`, exactly as a script writes it and as the other two tabs show it.
+        expect(rows[0].cells[3]?.textContent).toBe("#role=guide");
         expect(rows[1].cells[1]?.textContent).toBe("");
         expect(rows[1].cells[3]?.textContent).toBe("");
     });

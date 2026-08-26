@@ -1,5 +1,7 @@
 using DialogueDown.Configuration;
 
+using DialogueDown.Visualization.Display;
+
 namespace DialogueDown.Visualization.Configuration;
 
 /// <summary>
@@ -23,8 +25,8 @@ internal static class ConfigurationProjection
 
     private static ConfiguredSpeakerView ToView(ConfiguredSpeaker speaker)
     {
-        var tags = speaker.CustomTags.Select(tag => new ConfiguredTagView(tag.Name, tag.Value, false))
-            .Concat(speaker.ReservedTags.Select(tag => new ConfiguredTagView(tag.Name, tag.Value, true)))
+        var tags = speaker.CustomTags.Select(tag => new TagView(tag.Name, tag.Value, false))
+            .Concat(speaker.ReservedTags.Select(tag => new TagView(tag.Name, tag.Value, true)))
             .ToList();
         return new ConfiguredSpeakerView(speaker.Name, speaker.Id, tags);
     }
