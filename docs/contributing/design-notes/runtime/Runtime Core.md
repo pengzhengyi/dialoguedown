@@ -33,7 +33,7 @@ In scope:
 - `DialogueDown.Runtime`, a package that must never reference the compiler;
 - `PlayState`: where a run stands, in a form that cannot contradict itself;
 - `Step`: a total, deterministic transition from a state and a command;
-- the protocol this slice needs — `Next`, `Speech`, `End`, `Refused`;
+- the protocol this slice needs — `Start`, `Next`, `Said`, `Ended`, `Refused`;
 - renaming the corpus's `continue` to `next`, which this pass is the first to have
   a reason for;
 - the **playable conformance harness**, and the corpus reader it shares with the
@@ -61,14 +61,15 @@ is far cheaper to learn now than after six components assume it.
 
 - [ ] `DialogueDown.Runtime`, referencing `DialogueDown.Playbook` and nothing else,
       with an architecture test that fails if it ever reaches for the compiler.
-- [ ] `PlayState` — a position that carries where the run stands *and* what stage
-      it is at, so the two cannot disagree.
+- [ ] `PlayState` — a position, and nothing else it has no use for yet.
 - [ ] `Step` — total and deterministic, with no I/O and no mutation.
+- [ ] `Start` begins a run at the entry, from wherever it stood, so starting over needs no
+      way to abort what was already running.
 - [ ] A line is spoken with its speaker's name, and succession advances.
 - [ ] A run ends, and an ended run accepts nothing further.
 - [ ] A command the run cannot take is refused as a message, not an exception.
-- [ ] `continue` becomes `next` in the fixture schema, the nine playable fixtures,
-      and the corpus README.
+- [ ] `continue` becomes `next` in the fixture schema, every playable fixture, and
+      the corpus README.
 - [ ] The corpus reader is shared by both halves rather than duplicated.
 - [ ] A playable harness that runs a session and reports the first divergence.
 - [ ] `linear-speech` and `styled-speech` pass; every other playable case is
@@ -77,19 +78,27 @@ is far cheaper to learn now than after six components assume it.
 ## Where the types live
 
 ```text
-src/DialogueDown.Runtime/
-  PlayContext.cs          what a run needs and never changes
-  PlayState.cs            where a run stands
-  Position.cs             that place, as a closed union
-  Runner.cs               Step: the whole functional core
-  StepResult.cs           the next state, and what the runner has to say
-  protocol/
-    Command.cs            Next, and its siblings in later passes
-    Event.cs              Speech, End, Refused
+src/DialogueDown.Runtime/          the facade: what a consumer calls
+  PlayContext.cs  PlayState.cs  Runner.cs  StepResult.cs
+  positions/                       where a run stands, as a closed union
+    Position.cs  NotStarted.cs  AtNode.cs  AtEnd.cs
+  protocol/                        what a run is told, and what it reports
+    Command.cs  commands/Start.cs  commands/Next.cs
+    Event.cs    events/Said.cs  events/Ended.cs  events/Refused.cs
 ```
 
-Types are grouped by role rather than piled into the root namespace, as the rest
-of the repository is.
+Each member of a union gets its own file, as the playbook's nodes and edges do,
+and each family gets a folder so the tree reads as the vocabulary it is.
+
+The root namespace keeps only the façade, so `Position` and its cases live in
+`DialogueDown.Runtime.Positions`. The protocol's folders are for reading: commands
+and events are used together, so both stay in one namespace a consumer imports
+once.
+
+**Events are named as the corpus names them** — `said`, `ended` — so a fixture, a
+harness, and the code that satisfies them read in one vocabulary. The past tense
+is the point: an event reports something that already happened. This supersedes
+the architecture note's `Speech` and `End`.
 
 ## The state
 
@@ -98,13 +107,14 @@ of the repository is.
 | Carries | Why |
 | --- | --- |
 | `Position` | Where the run stands, and at what stage |
-| `Fingerprint` | The playbook this state belongs to |
 
-The architecture note also gives `PlayState` a **call stack** and an **effect
-ordinal**. Neither has a consumer yet — the first needs cross-script jumps and the
-second needs effects — so each arrives with the pass that gives it meaning rather
-than sitting empty through four of them. `PlayState` is not serialized until C2f,
-so nothing is frozen by waiting.
+That is the whole of it in this pass. The architecture note also gives `PlayState`
+a **call stack**, an **effect ordinal**, and the **playbook fingerprint** it
+belongs to. None has a consumer yet — the first needs cross-script jumps, the
+second needs effects, and the third needs a save to be loaded against a script
+that has since been recompiled — so each arrives with the pass that gives it
+meaning rather than sitting empty through several of them. `PlayState` is not
+serialized until C2f, so nothing is frozen by waiting.
 
 **Visit counts stay out**, as the architecture note settles: a host that wants
 "only once" answers a query it owns, and a counter in the core would grow every
@@ -118,16 +128,18 @@ a different stage. So the position is a closed union rather than an index:
 
 ```mermaid
 flowchart LR
-    AT["AtNode(i)"] -->|"Next"| AT2["AtNode(j)"]
-    AT2 --> ENDED["Ended"]
+    NS["NotStarted"] -->|"Start"| AT["AtNode(i)"]
+    AT -->|"Next"| AT2["AtNode(j)"]
+    AT2 -->|"Next"| ENDED["AtEnd"]
+    ENDED -->|"Start"| AT
     AT -. "C2c" .-> ASK["AwaitingAnswers(i, keys)"]
     ASK -. "Supply" .-> AT
 ```
 
 Holding the stage *in* the position, rather than in a flag beside it, means the
 two can never disagree. It also keeps the state free of a "what may I send next"
-declaration: the runner has just said what it wants — `Speech` means advance,
-`Choices` means choose — and a driver that reads state instead of reacting to the
+declaration: the runner has just said what it wants — `Said` means advance,
+`Asked` will mean choose — and a driver that reads state instead of reacting to the
 message it received is coupled to the state model for nothing. Asking a run to
 explain itself is [`Describe`](./Dialogue%20Runtime%20Architecture.md)'s job when
 C2e arrives.
@@ -154,7 +166,7 @@ and leaves the run ready to advance, and the corpus's `an-effect` already expect
 a performed effect before the line that follows it. Events are therefore an
 ordered list from the first pass.
 
-A `Speech` event carries the speaker's **name**, not their index. The playbook
+A `Said` event carries the speaker's **name**, not their index. The playbook
 addresses speakers by position because that is cheap to write; a driver should
 never have to look one up, and the anonymous default speaker has no name at all —
 which is why the corpus asserts a `said` with no speaker.
@@ -236,11 +248,42 @@ The primitive is therefore `Next`, not `Continue`. In a debugger `continue` mean
 *run until something stops you*, so a driver will want that word for the policy;
 using it for the primitive as well would give one word two meanings at two layers.
 The cost is real and paid once: ink spells it `Continue`, the architecture note
-follows ink, and the corpus's nine playable fixtures and its schema spell it
+follows ink, and every playable fixture and the fixture schema spell it
 `continue`. The playbook format is deliberately unstable at version 0 until a
 runner plays it, which is exactly the licence to spend that now.
 
-### R7 — The harness ships with the first pass, not the last
+### R7 — Starting is a command, and therefore also a restart
+
+`Step` is the only way in. Beginning a run through a separate entry point would
+leave a `PlayLog` unable to say *"the run began"* — and a log that cannot record
+its own start is not replayable from nothing.
+
+Because state is a value, `Start` is accepted wherever a run stands and simply
+produces a fresh one, which is how gdb's `run` behaves. The Debug Adapter Protocol
+needs a distinct `restart` request precisely because its debuggee is an operating
+system process: stateful, costly to recreate, impossible to hold as a value. None
+of that applies here, so restart arrives without being designed.
+
+### R8 — A command validates itself; it does not execute itself
+
+A command checks its own invariants where it is built, as the playbook's records
+do with `AssertNotNegative`: `Choose(-1)` should be impossible to construct. What
+it cannot check there is legality — whether the index addresses an option that was
+offered needs the playbook and the position, so it belongs to the step, where both
+are in view. The line is *what only the command can know* against *what needs the
+world*.
+
+Execution stays out of the command for a reason that outlives this pass: a command
+is a message. It crosses a transport, it is recorded in a `PlayLog`, and a port
+reads that log as data. A message carrying `Apply(context, state)` is a message
+that knows the playbook's internals, and the log stops being something another
+language can simply read.
+
+The commands in this pass carry no arguments, so there is nothing yet to validate.
+The rule is recorded because `Choose` and `Start`'s anchor arrive with the passes
+that need them.
+
+### R9 — The harness ships with the first pass, not the last
 
 Argued in [Goal and scope](#goal-and-scope): it converts every later component's
 review from a discussion into a count.
@@ -251,6 +294,8 @@ review from a discussion into a count.
 | --- | --- |
 | A command the run cannot take here | A `Refused` event; the position does not move |
 | `Next` at an ended run | Refused, for the same reason — an ended run goes nowhere |
+| `Next` before a run has started | Refused: there is nothing to advance from |
+| `Start` at any position | Accepted, and begins again at the entry |
 | A state whose fingerprint is not this playbook's | Refused: a state from another script is not a state at all |
 | A playbook whose entry leads nowhere | Cannot occur; `PlaybookReader` refuses it before a runner sees it |
 | A line whose speaker index is out of range | Cannot occur; refused by the reader |
@@ -265,7 +310,7 @@ review from a discussion into a count.
 | Shared corpus library | `CorpusFolder` and the fixture types move out of the playbook tests |
 | `DialogueDown.Playbook.Tests` | Keeps the readable harness, now reading the corpus through the shared library |
 | `conformance/` and `schema/fixture-0.schema.json` | `continue` becomes `next`, in the fixtures, the schema, and the README |
-| Architecture note | `PlayState` no longer declares what it awaits; that sentence is corrected when this ships |
+| Architecture note | `PlayState` no longer declares what it awaits, and the events are named as the corpus names them; both are corrected when this ships |
 | C2b–C2g | Each adds commands, events, and position cases to what this pass establishes |
 | CI | Nothing new is scheduled; the harness runs with the existing suite |
 
@@ -273,7 +318,7 @@ review from a discussion into a count.
 
 | Level | What it covers |
 | --- | --- |
-| Unit — `Step` | One test per transition: a line spoken, succession taken, a run ended, a command refused |
+| Unit — `Step` | One test per transition: a run started and restarted, a line spoken, succession taken, a run ended, a command refused |
 | Unit — harness | The harness fails when it should: a divergence, a short run, a long session |
 | Conformance | `linear-speech` and `styled-speech` play; the rest are counted as not yet runnable |
 | Architecture | The runtime references neither the compiler nor a host |
@@ -290,10 +335,40 @@ CsCheck is already used this way in `CompilerPropertyTests`.
   assert the count against an expected number: it stays green, it cannot drift
   unnoticed, and it goes up every pass. **The mechanism is temporary** and comes
   out when the last fixture runs, or it becomes a ceiling nobody revisits.
-- **Does `Speech` carry resolved fragments or the playbook's own?** They are the
+- **`Step` stays one switch until the third node kind.** The dispatch looks like a
+  state machine, but the position-and-command grid collapses to about seven arms
+  and stays there: `Start` and `Restore` are legal everywhere, and each of the
+  others in one place. Growth is on a different axis — six node kinds to arrive at
+  and five edge kinds to follow, each with real work. Splitting by state or by
+  command would scatter a *relation* that reads best as one matrix, so the split,
+  when it comes, follows the constructs, as `emission/` already does with a mapping
+  per node, edge, and fragment. C2b's choice node is the third kind, and the moment
+  to do it.
+- **Undo is replay, not compensation.** Two undos exist, and only one is the
+  runner's: rewinding the *position* is free because state is a value, while
+  rewinding the *world* is the host's and is often impossible — a transferred item
+  does not come back. The architecture note settles the second as
+  [D9](./Dialogue%20Runtime%20Architecture.md), and a saga of host-declared
+  compensators does not rescue it: compensation can itself fail, leaving a
+  half-undone world, and the runner has no transaction boundary to offer, since
+  whether "undo" means a step, a line, or the last choice is a driver's decision.
+  What the command vocabulary *does* buy is cheaper: **replaying the log without
+  its last command** rewinds the runner exactly, needs no inverses, and is safe
+  because a replaying driver runs in `Simulate`. C2f and C2g inherit this rather
+  than an `Undo` on each command.
+- **The playbook fingerprint waits for C2f.** A state carried into a recompiled
+  script resumes at an index that now means a different line, which is how this
+  class of engine corrupts a playthrough. Catching it needs the state to record
+  which playbook it came from, so that `Step` can refuse the pair rather than
+  leave the check to whoever remembers. Nothing serializes a state until saves
+  land, so it arrives with them. **Note for that pass:** the architecture note
+  carries the fingerprint both on `PlayState` and in the save envelope, and once
+  the state has it the envelope's copy is the same field written twice.
+- **Does `Said` carry resolved fragments or the playbook's own?** They are the
   same until C2c introduces queries, so this pass cannot answer it and should not
   pretend to.
 - **The playbook format may change.** It stays unstable at `playbookVersion: 0`
-  until a runner plays it, precisely so the first runner can fix what it uncovers;
-  [#369](https://github.com/pengzhengyi/dialoguedown/issues/369) is the first
-  thing collected.
+  until a runner plays it, precisely so the first runner can fix what it uncovers.
+  Writing the corpus already found one such defect before any runner existed
+  ([#369](https://github.com/pengzhengyi/dialoguedown/issues/369), since fixed);
+  stepping a playbook is the next thing likely to find one.
