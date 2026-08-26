@@ -4,10 +4,33 @@ import { insertNewlineAndIndent } from "@codemirror/commands";
 import { createPlaybookView } from "./playbook-view";
 import type { PlaybookReport } from "./model";
 
+/** Real enough to jump inside: two speakers, and a second node whose id is not its position. */
+const JUMPABLE_JSON = `{
+  "entry": 0,
+  "speakers": [
+    {
+      "name": "Alice"
+    },
+    {
+      "name": "(anonymous)"
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0
+    },
+    {
+      "kind": "line",
+      "id": 9
+    }
+  ]
+}`;
+
 /** A compiled playbook with a named speaker, an anonymous default, and one tag. */
 function compiled(): PlaybookReport {
     return {
-        json: '{\n  "version": 0,\n  "entry": 0\n}',
+        json: JUMPABLE_JSON,
         metadata: {
             script: "scene.dialogue.md",
             formatVersion: 0,
@@ -18,7 +41,7 @@ function compiled(): PlaybookReport {
             nodeCount: 6,
             anchorCount: 2,
         },
-        anchors: [{ name: "the-tavern", node: 0 }],
+        anchors: [{ name: "the-tavern", node: 9 }],
         speakers: [
             {
                 id: "alice",
@@ -138,6 +161,43 @@ describe("createPlaybookView", () => {
         expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-tavern");
     });
 
+    it("offers a node's number, a speaker's name, and the entry node as jumps", () => {
+        // Where the click *lands* is the resolver's business and is tested against a document in
+        // playbook-jump.test.ts; what matters here is that the right cells carry the right target.
+        const view = createPlaybookView(compiled());
+
+        expect(bodyRows(view, "Anchors")[0].cells[1]?.dataset.jump).toBe('{"kind":"node","id":9}');
+        expect(bodyRows(view, "Speakers")[1].cells[0]?.dataset.jump).toBe(
+            '{"kind":"speaker","index":1}',
+        );
+        const entry = bodyRows(view, "Playbook").find(
+            (row) => row.cells[0]?.textContent === "Entry node",
+        );
+        expect(entry?.cells[1]?.dataset.jump).toBe('{"kind":"node","id":0}');
+    });
+
+    it("binds a speaker's jump to its place in the array, not to its row", () => {
+        // The panels sort and filter, so a row's position is not the speaker's index. Binding at
+        // build time is what keeps a sorted table pointing at the right object.
+        const view = createPlaybookView(compiled());
+        const rows = bodyRows(view, "Speakers");
+
+        expect(rows.map((row) => row.cells[0]?.dataset.jump)).toEqual([
+            '{"kind":"speaker","index":0}',
+            '{"kind":"speaker","index":1}',
+        ]);
+    });
+
+    it("leaves prose alone, so only a place in the document is a destination", () => {
+        const view = createPlaybookView(compiled());
+        const script = bodyRows(view, "Playbook").find(
+            (row) => row.cells[0]?.textContent === "Script",
+        );
+
+        expect(script?.cells[1]?.dataset.jump).toBeUndefined();
+        expect(bodyRows(view, "Anchors")[0].cells[0]?.dataset.jump).toBeUndefined();
+    });
+
     it("copies a tag when it is clicked, the same as the Config tab", () => {
         // The capsule wears a hover ring and carries the text to copy, so it promises a click
         // will work. That promise is the shared table's to keep, not the Config tab's alone.
@@ -172,7 +232,7 @@ describe("createPlaybookView", () => {
         expect(rows).toHaveLength(1);
         // Written with its `#`, exactly as a jump names it.
         expect(rows[0].cells[0]?.textContent).toBe("#the-tavern");
-        expect(rows[0].cells[1]?.textContent).toBe("0");
+        expect(rows[0].cells[1]?.textContent).toBe("9");
     });
 
     it("gives each table the report's panel chrome — a count, a caret, and a search", () => {

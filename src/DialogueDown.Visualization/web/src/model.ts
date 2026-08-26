@@ -1,5 +1,7 @@
 /** The display model produced by the .NET walk and serialized into the report. */
 
+import type { PlaybookTarget } from "./playbook-jump";
+
 /**
  * A half-open `[start, end)` character range into the original document. A zero-width span
  * (`start === end`) is a caret position rather than a selection.
@@ -84,6 +86,14 @@ export interface SemanticCell {
      * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
      */
     copyable?: boolean;
+    /**
+     * Set when the cell summarizes a place in an accompanying document, so clicking it takes the
+     * reader there. Bound where the table is built, because a sorted or filtered table no longer
+     * has the row in the position the data came from.
+     *
+     * Client-authored: no projection emits it.
+     */
+    jump?: PlaybookTarget;
 }
 
 /** One row of a {@link SemanticTable}; `entityKey` names the entity the row represents. */
