@@ -8,6 +8,15 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+### Changed
+
+- **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
+  empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
+  speaker carried a tag showed eight placeholders around it and the eye landed on the absences.
+  Every table now says nothing when there is nothing to say, marks the default speaker with a
+  tick, and names the nameless one `(anonymous)` in all three tabs rather than three ways. See
+  [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
+
 ### Fixed
 
 - **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the

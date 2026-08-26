@@ -131,15 +131,16 @@ public sealed class SemanticProjectionTests
     }
 
     [Fact]
-    public void Project_SpeakerTable_ShowsNaForASpeakerWithNoNameOrId()
+    public void Project_SpeakerTable_NamesTheAnonymousSpeakerAndLeavesItsIdEmpty()
     {
-        // A speaker-less line resolves to the anonymous default speaker: it has neither a name nor
-        // an @id, so both cells read "N/A" rather than an ambiguous dash.
+        // A speaker-less line resolves to the anonymous default speaker. Having no name is what
+        // that speaker *is*, so the table says so; having no @id is merely nothing, so it says
+        // nothing — the same rule the Playbook and Config tables follow.
         var graph = Project("The room is silent.");
 
         var row = Assert.Single(Table(graph, "Speakers").Rows);
-        Assert.Equal("N/A", row.Cells[0].Text);
-        Assert.Equal("N/A", row.Cells[1].Text);
+        Assert.Equal("(anonymous)", row.Cells[0].Text);
+        Assert.Equal(string.Empty, row.Cells[1].Text);
     }
 
     [Fact]
