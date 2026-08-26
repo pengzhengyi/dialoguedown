@@ -422,6 +422,40 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
+    public void Edges_AChoiceArm_CarriesTheWordingItsMenuShows()
+    {
+        // Choosing an arm in the report should answer "what does the player pick here?" without
+        // following it to the node it leads to.
+        var graph = Project("""
+            Guide: Which way?
+
+            - Alice: Go east.
+
+            - => [Brave the west road](#END)
+            """);
+
+        Assert.Equal(
+            ["Go east.", "Brave the west road"],
+            graph.Edges.Where(edge => edge.Category == "choice").Select(edge => edge.Label));
+    }
+
+    [Fact]
+    public void Edges_AChoiceArmWithNothingToShow_HasNoLabel()
+    {
+        // The arm DLG2017 warns about: nothing named it, so the route reports nothing rather than
+        // an empty string the panel would render as a blank line.
+        var graph = Project("""
+            Guide: Which way?
+
+            - `("fade out")`
+
+            - Alice: Stay.
+            """);
+
+        Assert.Contains(graph.Edges, edge => edge.Category == "choice" && edge.Label is null);
+    }
+
+    [Fact]
     public void Edges_ARouteWithNoWordsOfItsOwn_HasNoLabel()
     {
         // A fall-through was never written down; showing anything for it would be the report
