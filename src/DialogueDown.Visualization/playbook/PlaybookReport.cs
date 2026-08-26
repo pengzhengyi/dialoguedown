@@ -1,3 +1,5 @@
+using DialogueDown.Visualization.Display;
+
 namespace DialogueDown.Visualization.Playbook;
 
 /// <summary>
@@ -50,9 +52,9 @@ internal sealed record PlaybookMetadataView(
 /// <param name="Id">The speaker's stable id, or null when it has none.</param>
 /// <param name="Name">The speaker's display name, or null for an anonymous speaker.</param>
 /// <param name="Default">Whether unattributed lines belong to this speaker.</param>
-/// <param name="Tags">The speaker's tags, flattened for display.</param>
+/// <param name="Tags">The speaker's tags, structured so the report can draw each as a capsule.</param>
 internal sealed record PlaybookSpeakerView(
     string? Id,
     string? Name,
     bool Default,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<TagView> Tags);

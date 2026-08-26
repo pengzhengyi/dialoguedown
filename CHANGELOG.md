@@ -17,6 +17,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **Every tag is drawn as one capsule, wherever it appears** — the Config tab drew tags as
+  rounded, copyable capsules while the Semantic Model and Playbook joined them into a run of text,
+  so the same tag read as three different objects and the Playbook dropped the `#` a script writes.
+  All three now draw the same capsule: the palette's tag color says *this is a tag*, a small
+  leading dot colored from the tag's own name says *which* tag, so `#wise` looks the same in every
+  table, and a click copies it verbatim. See
+  [Tag Capsules](docs/contributing/design-notes/visualization/report/Tag%20Capsules.md).
+
 - **Choosing a choice arm in the Dialogue Graph shows what the player would read** — the details
   panel named the two nodes an arm joins but not the wording it offers, so answering "what is
   picked here?" meant following the arm to find out. The drawing is unchanged.

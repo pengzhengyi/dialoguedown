@@ -211,6 +211,7 @@ Configuration tab and the folding contract every surface shares.
 | 38 | [Collapsing Across the Report](./visualization/report/Collapsing%20Across%20the%20Report.md) | One contract and one glyph for folding on every surface, with each surface keeping its own unit and its own state | Implemented |
 | 41 | [Playbook Tab](./visualization/report/Playbook%20Tab.md) | The compiled playbook after Dialogue Graph: the JSON a runtime loads, read-only, beside its header and speaker tables | Implemented |
 | 43 | [Saying Nothing Across the Report](./visualization/report/Saying%20Nothing%20Across%20the%20Report.md) | One rule for an absent value in any table cell: an empty cell, and the anonymous speaker named | Implemented |
+| 44 | [Tag Capsules](./visualization/report/Tag%20Capsules.md) | One capsule draws a tag on every surface: kind in the fill, identity in a leading dot | Implemented |
 
 #### Source editor
 

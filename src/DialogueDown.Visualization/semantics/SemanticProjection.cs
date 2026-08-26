@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
@@ -74,7 +75,7 @@ internal sealed class SemanticProjection
                 [
                     new SemanticCell(symbol.Name ?? Anonymous, Category: SpeechCategory),
                     new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : string.Empty),
-                    new SemanticCell(TagsText(symbol)),
+                    new SemanticCell(TagsText(symbol), Tags: TagViews(symbol)),
                     new SemanticCell(symbol.IsDefault ? "✓" : ""),
                 ],
                 EntityKey: SpeakerEntity.Key(symbol)));
@@ -164,6 +165,10 @@ internal sealed class SemanticProjection
         var label = InlineText.Of(jump.Label).Trim();
         return label.Length > 0 ? label : "(no label)";
     }
+
+    // The same tags the text spells out, kept apart so the client can draw one capsule each.
+    private static IReadOnlyList<TagView> TagViews(SpeakerSymbol symbol) =>
+        [.. symbol.Tags.Select(tag => new TagView(tag.Name, tag.Value, ReservedTagNames.Known.Contains(tag.Name)))];
 
     private static string TagsText(SpeakerSymbol symbol) =>
         string.Join(" ", symbol.Tags.Select(tag => tag.Value is null ? $"#{tag.Name}" : $"#{tag.Name}={tag.Value}"));

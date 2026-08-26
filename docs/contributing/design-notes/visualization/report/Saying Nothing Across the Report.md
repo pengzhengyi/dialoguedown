@@ -108,6 +108,9 @@ Each was written first and confirmed to fail against the previous rendering.
 
 ## Open questions
 
+- **Tag capsules.** Settled since: every tag is now drawn as one capsule wherever the report
+  shows it, colored by kind with its identity in a leading dot. See
+  [Tag Capsules](./Tag%20Capsules.md).
 - **The `@` sigil.** The Config tab and the Semantic Model write an id as `@guide`, exactly as a
   script references it; the Playbook writes the bare `guide`, because a playbook is data a runtime
   keys on rather than syntax a writer types. Both readings are defensible, so the difference is

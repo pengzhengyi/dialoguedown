@@ -5280,16 +5280,18 @@ button.tab.tab-with-icon {
 /* Tags wrap inside an inner flex box, never on the `<td>` itself: a flex `<td>` drops out of
    table-cell layout, so a tall multi-tag cell would stop sharing the row height and its row
    border would desync from the sibling Name/Id cells. */
-.config-speakers-table .config-tags {
+.dd-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
 }
 
-/* Tag chips: reserved names (like `default`) take a distinct accent so they read apart
-   from custom tags at a glance. */
-.config-tag {
-    display: inline-block;
+/* Tag capsules. One shape everywhere the report shows a tag — the Config tab, the Semantic
+   Model, and the Playbook — so a reader meets the same object in every table. */
+.dd-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     padding: 0.05rem 0.45rem;
     border-radius: 999px;
     border: 1px solid transparent;
@@ -5301,30 +5303,41 @@ button.tab.tab-with-icon {
 /* Two hues tell the tag kinds apart at a glance, both chosen to avoid the mode
    accents (View blue, Edit green): custom tags wear the palette's canonical "tag"
    pink; reserved names DialogueDown owns (like `default`) wear a distinct violet. */
-.config-tag-custom {
+.dd-tag-custom {
     background: rgb(236 72 153 / 12%);
     border-color: rgb(236 72 153 / 32%);
     color: #be185d;
 }
 
-.config-tag-reserved {
+.dd-tag-reserved {
     background: rgb(124 58 237 / 14%);
     border-color: rgb(124 58 237 / 38%);
     color: #6d28d9;
 }
 
-[data-theme="dark"] .config-tag-custom {
+[data-theme="dark"] .dd-tag-custom {
     color: #f9a8d4;
 }
 
-[data-theme="dark"] .config-tag-reserved {
+[data-theme="dark"] .dd-tag-reserved {
     color: #c4b5fd;
+}
+
+/* The identity dot. The capsule's hue says "this is a tag"; the dot says *which* tag, from a
+   hue derived from the name, so one tag looks the same in every table without color having to
+   carry both meanings at once. */
+.dd-tag-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 999px;
+    background: var(--dd-tag-hue);
+    flex: none;
 }
 
 /* Click-to-copy affordance: value cells and tag chips copy their text on click and give a
    subtle hover cue, so a writer can lift a name, `@id`, or tag straight into a script. */
 .config-copy,
-.config-tag {
+.dd-tag {
     cursor: pointer;
 }
 
@@ -5337,7 +5350,7 @@ button.tab.tab-with-icon {
     background: rgb(128 128 128 / 12%);
 }
 
-.config-tag:hover {
+.dd-tag:hover {
     box-shadow: 0 0 0 1px currentcolor inset;
 }
 

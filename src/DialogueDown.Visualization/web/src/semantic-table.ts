@@ -18,6 +18,8 @@ import {
     type Table,
 } from "@tanstack/table-core";
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
+import { renderTags } from "./tag-chip";
+import { wireClickToCopy } from "./copy-on-click";
 
 // The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
 // rather than bundling every feature: sorting, per-column (facet) filtering, and the global
@@ -118,6 +120,7 @@ export function createTablePanel(
     });
     reflect();
 
+    wireClickToCopy(panel);
     return panel;
 }
 
@@ -451,6 +454,13 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         td.dataset.category = cell.category;
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
+    // A tag cell is drawn as capsules. Its `text` stays the plain rendering, so search and sort
+    // still read the cell; only the drawing differs.
+    if (cell.tags) {
+        if (cell.tags.length > 0) td.appendChild(renderTags(cell.tags));
+        return td;
+    }
+
     const ranges = query ? findMatches(cell.text, query.query, query) : [];
     if (ranges.length === 0) {
         td.textContent = cell.text;
