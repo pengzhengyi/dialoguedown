@@ -27,6 +27,19 @@ export function baseLabel(label: string): string {
 }
 
 /** HTML for a node's hover tooltip: its label and full (untruncated) attributes. */
+/**
+ * The hover tooltip for a route: what kind it is, what that kind means, and — when the writer gave
+ * the route words of its own — those words.
+ *
+ * A route's `<title>` names its kind for assistive technology and must keep doing only that, so the
+ * detail a reader wants on hover rides here instead, the way a node's does.
+ */
+export function edgeTooltipHtml(kind: string, meaning: string, written: string | null): string {
+    const parts = [`<strong>${escapeHtml(kind)}</strong>`, `<div>${escapeHtml(meaning)}</div>`];
+    if (written) parts.push(`<div class="tip-label">\u201C${escapeHtml(written)}\u201D</div>`);
+    return parts.join("");
+}
+
 export function tooltipHtml(node: DisplayNode): string {
     const parts = [`<strong>${escapeHtml(node.label)}</strong>`];
     for (const attr of node.attributes) {
