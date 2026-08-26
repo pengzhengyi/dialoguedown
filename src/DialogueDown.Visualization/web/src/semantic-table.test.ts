@@ -426,3 +426,40 @@ describe("createTablePanel — copying a tag", () => {
         expect(writeText).toHaveBeenCalledWith("#wise");
     });
 });
+
+describe("createTablePanel — copying an identifier", () => {
+    function panelWith(cell: { text: string; copyable?: boolean }): HTMLElement {
+        return createTablePanel({
+            title: "Anchors",
+            columns: ["Anchor"],
+            emptyText: "No scenes.",
+            rows: [{ cells: [cell] }],
+        });
+    }
+
+    function clickCell(panel: HTMLElement): void {
+        panel
+            .querySelector<HTMLElement>("tbody td")
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+
+    it("copies a cell a writer would paste into a script", () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+        clickCell(panelWith({ text: "#the-market", copyable: true }));
+
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-market");
+    });
+
+    it("leaves an ordinary cell alone, so clicking prose copies nothing", () => {
+        // Only identifiers are copyable. A sentence-shaped cell — a jump's label, a scene title —
+        // would copy something nobody asked for and steal the reader's selection.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+        clickCell(panelWith({ text: "Take the east road" }));
+
+        expect(writeText).not.toHaveBeenCalled();
+    });
+});

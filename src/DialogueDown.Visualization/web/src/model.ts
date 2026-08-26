@@ -79,6 +79,11 @@ export interface SemanticCell {
     category?: string;
     /** Present when the cell is a tag list: drawn as capsules instead of {@link text}. */
     tags?: TagView[];
+    /**
+     * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
+     * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
+     */
+    copyable?: boolean;
 }
 
 /** One row of a {@link SemanticTable}; `entityKey` names the entity the row represents. */

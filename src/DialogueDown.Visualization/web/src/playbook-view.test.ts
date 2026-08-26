@@ -121,6 +121,23 @@ describe("createPlaybookView", () => {
         expect(chip?.querySelector(".dd-tag-dot")).not.toBeNull();
     });
 
+    it("copies an @id and an anchor, the identifiers a writer pastes into a script", () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+        const view = createPlaybookView(compiled());
+
+        bodyRows(view, "Speakers")[0].cells[1]?.dispatchEvent(
+            new MouseEvent("click", { bubbles: true }),
+        );
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("@alice");
+
+        writeText.mockClear();
+        bodyRows(view, "Anchors")[0].cells[0]?.dispatchEvent(
+            new MouseEvent("click", { bubbles: true }),
+        );
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-tavern");
+    });
+
     it("copies a tag when it is clicked, the same as the Config tab", () => {
         // The capsule wears a hover ring and carries the text to copy, so it promises a click
         // will work. That promise is the shared table's to keep, not the Config tab's alone.
@@ -141,7 +158,8 @@ describe("createPlaybookView", () => {
         // do carry an id or a tag, not to a column of placeholders.
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
-        expect(rows[0].cells[1]?.textContent).toBe("alice");
+        // Written with its `@`, exactly as a script references it.
+        expect(rows[0].cells[1]?.textContent).toBe("@alice");
         // Written with its `#`, exactly as a script writes it and as the other two tabs show it.
         expect(rows[0].cells[3]?.textContent).toBe("#role=guide");
         expect(rows[1].cells[1]?.textContent).toBe("");

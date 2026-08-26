@@ -144,6 +144,33 @@ public sealed class SemanticProjectionTests
     }
 
     [Fact]
+    public void Project_MarksTheIdentifiersAWriterWouldPaste_AsCopyable()
+    {
+        // An @id, an anchor, and a jump's target are all written into a script by hand, so the
+        // report offers each for copying. Prose beside them — a speaker's name, a jump's label —
+        // is not an identifier and stays inert.
+        var graph = Project("""
+            # The Market
+
+            Guide @guide: Take the east road.
+
+            - => [To the market](#the-market)
+            """);
+
+        var speaker = Assert.Single(Table(graph, "Speakers").Rows);
+        Assert.True(speaker.Cells[1].Copyable);
+        Assert.False(speaker.Cells[0].Copyable);
+
+        var anchor = Assert.Single(Table(graph, "Anchors").Rows);
+        Assert.True(anchor.Cells[0].Copyable);
+        Assert.False(anchor.Cells[1].Copyable);
+
+        var jump = Assert.Single(Table(graph, "Jump resolutions").Rows);
+        Assert.True(jump.Cells[2].Copyable);
+        Assert.False(jump.Cells[1].Copyable);
+    }
+
+    [Fact]
     public void Project_MarksTheCategoricalColumnsAsFacets()
     {
         var graph = Project(
