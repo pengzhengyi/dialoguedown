@@ -38,10 +38,16 @@ public sealed record SemanticRow(
 /// <remarks>
 /// A cell carrying <see cref="Tags"/> is drawn as capsules rather than as its <see cref="Text"/>,
 /// which stays the plain-text rendering so search, sort, and export still read the cell.
+/// <para>
+/// A <see cref="Copyable"/> cell is an identifier a writer would paste into a script — an
+/// <c>@id</c>, an anchor, a jump target — and copies its text on click. Prose cells do not, so a
+/// click never lifts a sentence nobody asked for.
+/// </para>
 /// </remarks>
 public sealed record SemanticCell(
     string Text,
     string? EntityKey = null,
     string? RefKey = null,
     string? Category = null,
-    IReadOnlyList<TagView>? Tags = null);
+    IReadOnlyList<TagView>? Tags = null,
+    bool Copyable = false);

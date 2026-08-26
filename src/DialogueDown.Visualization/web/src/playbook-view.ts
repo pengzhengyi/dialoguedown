@@ -211,7 +211,9 @@ function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
                 { text: speaker.name ?? "(anonymous)" },
                 // Everything else says nothing when there is nothing to say, so the eye lands on
                 // the speakers that do carry an id, a tag, or the default mark.
-                { text: speaker.id ?? "" },
+                // Written with its `@`, exactly as a script references it and as the other two
+                // tabs show it — and copyable, so a writer can lift it straight into a line.
+                { text: speaker.id == null ? "" : `@${speaker.id}`, copyable: true },
                 { text: speaker.default ? "✓" : "" },
                 { text: speaker.tags.map(tagLabel).join(" "), tags: speaker.tags },
             ],
@@ -229,7 +231,7 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
         columns: ["Anchor", "Node"],
         rows: anchors.map((anchor) => ({
             // An anchor is written with its `#`, exactly as a jump names it.
-            cells: [{ text: `#${anchor.name}` }, { text: String(anchor.node) }],
+            cells: [{ text: `#${anchor.name}`, copyable: true }, { text: String(anchor.node) }],
         })),
         emptyText: "No scene in this playbook can be jumped to by name.",
     };

@@ -17,6 +17,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **Click an identifier to copy it** — a speaker's `@id`, a scene's anchor, and a jump's target
+  now copy on click in every table that shows one, not only in the Config tab, so a writer can
+  lift one into a script instead of retyping it. Prose beside them stays inert, and the Playbook
+  now writes an id as `@guide` like the rest of the report — a bare `guide` copied something no
+  script accepts. See
+  [Copyable Identifiers](docs/contributing/design-notes/visualization/report/Copyable%20Identifiers.md).
+
 - **Every tag is drawn as one capsule, wherever it appears** — the Config tab drew tags as
   rounded, copyable capsules while the Semantic Model and Playbook joined them into a run of text,
   so the same tag read as three different objects and the Playbook dropped the `#` a script writes.

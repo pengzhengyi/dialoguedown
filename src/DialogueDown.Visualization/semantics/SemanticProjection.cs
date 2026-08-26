@@ -74,7 +74,9 @@ internal sealed class SemanticProjection
             rows.Add(new SemanticRow(
                 [
                     new SemanticCell(symbol.Name ?? Anonymous, Category: SpeechCategory),
-                    new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : string.Empty),
+                    new SemanticCell(
+                        symbol.Id is not null ? $"@{symbol.Id}" : string.Empty,
+                        Copyable: true),
                     new SemanticCell(TagsText(symbol), Tags: TagViews(symbol)),
                     new SemanticCell(symbol.IsDefault ? "✓" : ""),
                 ],
@@ -101,7 +103,7 @@ internal sealed class SemanticProjection
 
             rows.Add(new SemanticRow(
                 [
-                    new SemanticCell($"#{scene.Anchor}", Category: StructureCategory),
+                    new SemanticCell($"#{scene.Anchor}", Category: StructureCategory, Copyable: true),
                     new SemanticCell(SceneEntity.Label(scene)),
                     new SemanticCell($"{scene.Level}"),
                 ],
@@ -123,7 +125,7 @@ internal sealed class SemanticProjection
                 [
                     new SemanticCell(type, Category: category),
                     new SemanticCell(JumpText(jump)),
-                    new SemanticCell(jump.Target),
+                    new SemanticCell(jump.Target, Copyable: true),
                     new SemanticCell(resolvesTo, RefKey: refKey),
                 ]));
         }
