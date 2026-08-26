@@ -1365,14 +1365,16 @@ test("names each kind of route with its own pointer", async ({ page }) => {
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active path.edge-hit")).not.toHaveCount(0);
 
+    // The route names itself; the twin lying over it is the target the pointer meets. Reading the
+    // pair together says a reader both hears the right name and is offered the right pointer.
     const pointers = await page
-        .locator("section.stage.active path.edge-hit")
-        .evaluateAll((hits) =>
+        .locator("section.stage.active path.link.routed")
+        .evaluateAll((routes) =>
             [
                 ...new Set(
-                    hits.map(
-                        (hit) =>
-                            `${hit.querySelector("title")?.textContent}=${(hit as SVGPathElement).style.cursor}`,
+                    routes.map(
+                        (route) =>
+                            `${route.querySelector("title")?.textContent}=${(route as SVGPathElement).dataset.cursor}`,
                     ),
                 ),
             ].sort(),
@@ -1566,4 +1568,39 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     await playbook.click();
     await expect(speakers).toContainText("Bruno");
     await expect(page.locator(".playbook-source .cm-content")).toContainText("Bruno");
+});
+
+test("hovering a route says what it is and what the writer called it", async ({ page }) => {
+    // A route's <title> names its kind for a screen reader and must keep doing only that, so the
+    // detail a reader wants rides on the hover instead — the way a node's already does.
+    await openDocument(
+        page,
+        [
+            "# The Gate",
+            "",
+            "Guide: Which way?",
+            "",
+            "- => [Brave the west road](#the-gate)",
+            "",
+        ].join("\n"),
+    );
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await expect(page.locator("section.stage.active path.edge-hit")).not.toHaveCount(0);
+
+    // A twin is drawn per route, in the same order, so the choice arm's target is the twin at the
+    // choice route's index. The script offers one arm, so there is exactly one.
+    const arm = await page
+        .locator("section.stage.active path.link.routed")
+        .evaluateAll((routes) =>
+            routes.findIndex((route) => route.querySelector("title")?.textContent === "Choice"),
+        );
+    expect(arm).toBeGreaterThanOrEqual(0);
+
+    // A route is a hairline path, which Playwright will not treat as hoverable on its own.
+    await page.locator("section.stage.active path.edge-hit").nth(arm).hover({ force: true });
+
+    const tip = page.locator(".tippy-content");
+    await expect(tip).toContainText("Choice");
+    await expect(tip).toContainText("One arm of a choice");
+    await expect(tip).toContainText("Brave the west road");
 });
