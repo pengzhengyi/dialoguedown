@@ -104,6 +104,8 @@
       href: visualization/report/Saying Nothing Across the Report.md
     - name: Tag Capsules
       href: visualization/report/Tag Capsules.md
+    - name: Copyable Identifiers
+      href: visualization/report/Copyable Identifiers.md
     - name: Configuration Tab
       href: visualization/report/Configuration Tab.md
     - name: Configuration Tab — Live Edit

@@ -111,10 +111,10 @@ Each was written first and confirmed to fail against the previous rendering.
 - **Tag capsules.** Settled since: every tag is now drawn as one capsule wherever the report
   shows it, colored by kind with its identity in a leading dot. See
   [Tag Capsules](./Tag%20Capsules.md).
-- **The `@` sigil.** The Config tab and the Semantic Model write an id as `@guide`, exactly as a
-  script references it; the Playbook writes the bare `guide`, because a playbook is data a runtime
-  keys on rather than syntax a writer types. Both readings are defensible, so the difference is
-  left standing rather than settled by this note.
+- **The `@` sigil.** Settled since: the Playbook writes `@guide` like the other two tabs. What
+  decided it was making identifiers copyable — a bare `guide` copies something no script accepts,
+  so the sigil stopped being a matter of taste. See
+  [Copyable Identifiers](./Copyable%20Identifiers.md).
 - **Column order.** The Semantic Model orders speakers *Name, @id, Tags, Default*; the Playbook
   orders them *Name, Id, Default, Tags*. Aligning them would help a reader moving between tabs,
   but it is a layout question rather than an absence one.

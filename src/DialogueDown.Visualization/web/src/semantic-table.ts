@@ -448,6 +448,13 @@ function renderRow(row: SemanticRow, query: SearchQuery | undefined): HTMLElemen
 /** A `<td>` carrying the cell's text, category color accent, and any cross-link key. */
 function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLElement {
     const td = document.createElement("td");
+    // An identifier is something a writer lifts into a script, so it offers itself for copying.
+    // `data-copy` is all the shared listener needs; the class carries the hover cue.
+    if (cell.copyable && cell.text !== "") {
+        td.dataset.copy = cell.text;
+        td.classList.add("dd-copy");
+        td.title = "Click to copy";
+    }
     if (cell.entityKey) td.setAttribute("data-entity-key", cell.entityKey);
     if (cell.refKey) td.setAttribute("data-ref-key", cell.refKey);
     if (cell.category) {

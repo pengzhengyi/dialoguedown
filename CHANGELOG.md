@@ -17,6 +17,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **Click an identifier to copy it** — a speaker's `@id`, a scene's anchor, and a jump's target
+  now copy on click in every table that shows one, not only in the Config tab, so a writer can
+  lift one into a script instead of retyping it. Prose beside them stays inert, and the Playbook
+  now writes an id as `@guide` like the rest of the report — a bare `guide` copied something no
+  script accepts. See
+  [Copyable Identifiers](docs/contributing/design-notes/visualization/report/Copyable%20Identifiers.md).
+
 - **Hovering a route in the Dialogue Graph says what it is** — a route's hover gave only the name
   of its kind, in the browser's own tooltip. It now opens the same rich tooltip a node has, adding
   what that kind of route means and the words the writer gave this one, so reading a menu no longer
