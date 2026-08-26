@@ -85,6 +85,9 @@ src/DialogueDown.Runtime/          the facade: what a consumer calls
   protocol/                        what a run is told, and what it reports
     Command.cs  commands/Start.cs  commands/Next.cs
     Event.cs    events/Said.cs  events/Ended.cs  events/Refused.cs
+  stepping/                        the work each construct does
+    Arrival.cs                     one arm per node kind
+    NodeTraversalExtensions.cs     one reader per edge kind
 ```
 
 Each member of a union gets its own file, as the playbook's nodes and edges do,
@@ -283,7 +286,20 @@ The commands in this pass carry no arguments, so there is nothing yet to validat
 The rule is recorded because `Choose` and `Start`'s anchor arrive with the passes
 that need them.
 
-### R9 — The harness ships with the first pass, not the last
+### R9 — The protocol is a matrix; the constructs are a list
+
+`Step` keeps the whole of *what may be sent where* as one switch, because that is
+a **relation** between a position and a command: split it by either axis and
+answering "what can I send here?" means reading several files. It stays small —
+about seven arms once every command exists, since `Start` and `Restore` are legal
+everywhere and the rest in one place each.
+
+Growth is on the other axis: six node kinds to arrive at, five edge kinds to
+follow, each with work of its own. Those live in `Arrival` and in the traversal
+extensions, one reader apiece, as `emission/` already keeps a mapping per node,
+edge, and fragment.
+
+### R10 — The harness ships with the first pass, not the last
 
 Argued in [Goal and scope](#goal-and-scope): it converts every later component's
 review from a discussion into a count.
@@ -299,6 +315,7 @@ review from a discussion into a count.
 | A state whose fingerprint is not this playbook's | Refused: a state from another script is not a state at all |
 | A playbook whose entry leads nowhere | Cannot occur; `PlaybookReader` refuses it before a runner sees it |
 | A line whose speaker index is out of range | Cannot occur; refused by the reader |
+| A node kind this pass cannot play | A `Refused` event naming the kind, so an unteachable construct reads as such rather than as a hang |
 | A fixture the runner cannot yet play | Counted as not yet runnable, naming the case, never skipped in silence |
 
 ## Integration
@@ -328,6 +345,18 @@ The property test is worth its keep here rather than later: a walk that can loop
 forever or step off the end is the failure mode a handful of examples miss, and
 CsCheck is already used this way in `CompilerPropertyTests`.
 
+**Unit tests build playbooks by hand; the corpus supplies compiled ones.** A
+playbook is an immutable record, so a real one is a better stand-in than a
+substitute, and stepping dispatches on the kind of node it finds, which a
+substitute would have to return anyway. More to the point, several cases a total
+function must handle are shapes a compiler will never emit — a line leading
+nowhere, a node kind this pass cannot play, a control node holding both a divert
+and a succession — so they can only be stated outright. Building them also states
+the indices, which is what a runner is *about*: a test that compiled a script
+would assert against a position its source text does not show. Real compiler
+output arrives where it belongs, in the conformance corpus, whose every playbook
+is `ddown compile`'s and is checked against its source.
+
 ## Open questions and deferred work
 
 - **How should a not-yet-runnable fixture be reported?** A failing test would make
@@ -335,15 +364,6 @@ CsCheck is already used this way in `CompilerPropertyTests`.
   assert the count against an expected number: it stays green, it cannot drift
   unnoticed, and it goes up every pass. **The mechanism is temporary** and comes
   out when the last fixture runs, or it becomes a ceiling nobody revisits.
-- **`Step` stays one switch until the third node kind.** The dispatch looks like a
-  state machine, but the position-and-command grid collapses to about seven arms
-  and stays there: `Start` and `Restore` are legal everywhere, and each of the
-  others in one place. Growth is on a different axis — six node kinds to arrive at
-  and five edge kinds to follow, each with real work. Splitting by state or by
-  command would scatter a *relation* that reads best as one matrix, so the split,
-  when it comes, follows the constructs, as `emission/` already does with a mapping
-  per node, edge, and fragment. C2b's choice node is the third kind, and the moment
-  to do it.
 - **Undo is replay, not compensation.** Two undos exist, and only one is the
   runner's: rewinding the *position* is free because state is a value, while
   rewinding the *world* is the host's and is often impossible — a transferred item
