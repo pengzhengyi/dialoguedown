@@ -516,6 +516,28 @@ internal static class DiagnosticDocs
                 ["`0%`"],
                 ["`50%`"])),
         new(
+            DiagnosticCatalog.OptionWithNothingToShow,
+            "A menu shows each option by the words written in it — the line it speaks, or the "
+            + "text of the jump it makes. An option with neither leaves the player a blank line "
+            + "to pick. The compiler will not read words off the scene the option leads to, "
+            + "because those belong to whoever wrote them, so the option stays as blank as it "
+            + "was written.",
+            new(
+                """
+                Alice: Which way?
+
+                - `("fade out")`
+                - Alice: Stay here.
+                """,
+                """
+                Alice: Which way?
+
+                - Slip away quietly `("fade out")`
+                - Alice: Stay here.
+                """,
+                ["- `(\"fade out\")`"],
+                ["- Slip away quietly `(\"fade out\")`"])),
+        new(
             DiagnosticCatalog.ExternalJumpNotResolved,
             "A jump reaches a scene in the script it is written in. Reaching one in another script "
             + "is not built yet, so a target naming a file or a URL resolves to nothing and the "
