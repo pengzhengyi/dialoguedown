@@ -1,7 +1,6 @@
-using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime;
 
@@ -17,7 +16,7 @@ public static class Runner
     /// <summary>Advances a run by one command.</summary>
     /// <param name="context">What the run needs and never changes.</param>
     /// <param name="state">Where the run stands.</param>
-    /// <param name="command">What the driver is asking for.</param>
+    /// <param name="command">What is being asked for.</param>
     /// <returns>The next state, and what the runner has to say.</returns>
     public static StepResult Step(PlayContext context, PlayState state, Command command)
     {
@@ -25,55 +24,27 @@ public static class Runner
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(command);
 
-
+        // What may be sent where, as one matrix. The work each construct does lives in Arrival
+        // and Traversal, which is the axis this grows along.
         return (state.Position, command) switch
         {
-            (_, Start) => Arrive(context, context.Playbook.Entry),
+            (_, Start) => Arrival.At(context, context.Entry),
             (AtNode at, Next) => Advance(context, state, at),
             (AtEnd, Next) => Refuse(state, "The run is over, so there is nothing to advance to."),
             (NotStarted, Next) => Refuse(state, "The run has not started, so there is nothing to advance from."),
-            _ => Refuse(state, $"A run at {Describe(state.Position)} cannot take {command.GetType().Name}."),
+            _ => Refuse(state, $"A run at {Where(state.Position)} cannot take {command.GetType().Name}."),
         };
     }
 
-    private static StepResult Advance(PlayContext context, PlayState state, AtNode at)
-    {
-        var node = context.Playbook.Nodes[at.Node];
-        var onward = node.Out.OfType<SuccessionEdge>().FirstOrDefault();
-
-        return onward is null
-            ? Refuse(state, $"Node {at.Node} leads nowhere by succession.")
-            : Arrive(context, onward.Target);
-    }
-
-    // Arriving is where a node speaks for itself, so both starting a run and advancing one report
-    // what they found in the same words.
-    private static StepResult Arrive(PlayContext context, int node)
-    {
-        var arrived = context.Playbook.Nodes[node];
-
-        return arrived switch
-        {
-            LineNode line => new StepResult(
-                At(node),
-                [new Said(NameOf(context, line.Speaker), line.Speech)]),
-            EndNode => new StepResult(Over(), [new Ended()]),
-            _ => new StepResult(At(node), []),
-        };
-    }
-
-    private static string? NameOf(PlayContext context, int speaker) =>
-        context.Playbook.Speakers[speaker].Name;
-
-    private static PlayState At(int node) =>
-        new(new AtNode(node));
-
-    private static PlayState Over() => new(new AtEnd());
+    private static StepResult Advance(PlayContext context, PlayState state, AtNode at) =>
+        context.NodeAt(at.Node).SuccessionTarget() is int onward
+            ? Arrival.At(context, onward)
+            : Refuse(state, $"Node {at.Node} leads nowhere by succession.");
 
     private static StepResult Refuse(PlayState state, string because) =>
         new(state, [new Refused(because)]);
 
-    private static string Describe(Position position) =>
+    private static string Where(Position position) =>
         position switch
         {
             AtNode at => $"node {at.Node}",
