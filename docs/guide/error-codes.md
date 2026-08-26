@@ -612,6 +612,28 @@ A jump reaches a scene in the script it is written in. Reaching one in another s
 
 # The vault</code></pre>
 
+### DLG2017
+
+<span class="dd-sev dd-sev--warning">Warning</span> · Option with nothing to show
+
+Nothing here names this option, so a player is offered a blank line to pick. Give the option something to say, or name the jump it makes: `- => [Take the east road](#the-market)`.
+
+A menu shows each option by the words written in it — the line it speaks, or the text of the jump it makes. An option with neither leaves the player a blank line to pick. The compiler will not read words off the scene the option leads to, because those belong to whoever wrote them, so the option stays as blank as it was written.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">Alice: Which way?
+
+<mark class="dd-mark-bad">- `(&quot;fade out&quot;)`</mark>
+- Alice: Stay here.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">Alice: Which way?
+
+<mark class="dd-mark-fix">- Slip away quietly `(&quot;fade out&quot;)`</mark>
+- Alice: Stay here.</code></pre>
+
 ## Style (`DLG3xxx`)
 
 A valid script that reads correctly but could read better.

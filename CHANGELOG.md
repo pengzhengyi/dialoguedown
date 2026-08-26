@@ -8,6 +8,13 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+### Added
+
+- **`DLG2017` warns about an option a player cannot read** — an arm with neither words nor a named
+  jump compiles to a blank line in the menu, which the compiler now points at instead of leaving
+  for a playtest to find. See
+  [the error catalog](docs/guide/error-codes.md#dlg2017).
+
 ### Changed
 
 - **Every tag is drawn as one capsule, wherever it appears** — the Config tab drew tags as
