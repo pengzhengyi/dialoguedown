@@ -210,6 +210,7 @@ Configuration tab and the folding contract every surface shares.
 | 31 | [Dialogue Graph Visualization Tab](./visualization/report/Dialogue%20Graph%20Visualization%20Tab.md) | The compiled dialogue graph as a fifth stage tab: every node in graph order, typed edges, and orphans made visible | Implemented |
 | 38 | [Collapsing Across the Report](./visualization/report/Collapsing%20Across%20the%20Report.md) | One contract and one glyph for folding on every surface, with each surface keeping its own unit and its own state | Implemented |
 | 41 | [Playbook Tab](./visualization/report/Playbook%20Tab.md) | The compiled playbook after Dialogue Graph: the JSON a runtime loads, read-only, beside its header and speaker tables | Implemented |
+| 43 | [Saying Nothing Across the Report](./visualization/report/Saying%20Nothing%20Across%20the%20Report.md) | One rule for an absent value in any table cell: an empty cell, and the anonymous speaker named | Implemented |
 
 #### Source editor
 
@@ -262,6 +263,7 @@ browsing the project, and the modes the window can take.
 | 29 | [Live Visualization — Problems Panel](./visualization/session/Live%20Visualization%20-%20Problems%20Panel.md) | Every diagnostic as a navigable list in a tabbed footer drawer, summarized on the status line so problems are visible from every tab | Implemented |
 | 39 | [Live Visualization — Explorer Toggle](./visualization/session/Live%20Visualization%20-%20Explorer%20Toggle.md) | Summon the Explorer from a pinned Files toggle in the tab bar, shut by default when a document is open | Implemented |
 | 40 | [Opening a Script Without Reloading the Page](./visualization/session/Opening%20a%20Script%20Without%20Reloading%20the%20Page.md) | Open a script from the Explorer by replacing the report's contents rather than the page, keeping the reader's zoom and open tab | Implemented |
+| 42 | [One Watcher for the Served Tree](./visualization/session/One%20Watcher%20for%20the%20Served%20Tree.md) | Watch the served tree once instead of once per document, so switching scripts stops paying for a fresh operating-system registration | Implemented |
 
 ### Other notes
 
@@ -274,6 +276,5 @@ passes that sit outside the pipeline and its tools.
 | [Development Cycle Optimization](./other/Development%20Cycle%20Optimization.md) | Implemented: reduce local and CI feedback time through measured, behavior-preserving increments | Implemented |
 | [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
 | [Namespace Layout](./other/Namespace%20Layout.md) | Implemented: an architecture rule capping how many types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list | Implemented |
-| [One Watcher for the Served Tree](./other/One%20Watcher%20for%20the%20Served%20Tree.md) | Implemented: watch the served tree once instead of once per document, so switching scripts stops paying for a fresh operating-system registration | Implemented |
 | [Target Frameworks](./other/Target%20Frameworks.md) | Implemented: multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 LTS | Implemented |
 | [README Shipping-Status Refresh](./other/README%20Shipping-Status%20Refresh.md) | A docs-only pass reconciling the README's visualization section with what actually ships | Implemented |

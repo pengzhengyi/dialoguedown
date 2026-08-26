@@ -100,6 +100,8 @@
       href: visualization/report/Dialogue Graph Visualization Tab.md
     - name: Collapsing Across the Report
       href: visualization/report/Collapsing Across the Report.md
+    - name: Saying Nothing Across the Report
+      href: visualization/report/Saying Nothing Across the Report.md
     - name: Configuration Tab
       href: visualization/report/Configuration Tab.md
     - name: Configuration Tab — Live Edit
@@ -174,6 +176,8 @@
       href: visualization/session/Live Visualization - Problems Panel.md
     - name: Opening a Script Without Reloading the Page
       href: visualization/session/Opening a Script Without Reloading the Page.md
+    - name: One Watcher for the Served Tree
+      href: visualization/session/One Watcher for the Served Tree.md
 - name: Other notes
   items:
   - name: BBCode Rendering
@@ -184,8 +188,6 @@
     href: other/Interactive Playthrough.md
   - name: Namespace Layout
     href: other/Namespace Layout.md
-  - name: One Watcher for the Served Tree
-    href: other/One Watcher for the Served Tree.md
   - name: README Shipping-Status Refresh
     href: other/README Shipping-Status Refresh.md
   - name: Target Frameworks

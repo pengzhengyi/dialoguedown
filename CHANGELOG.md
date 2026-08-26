@@ -15,6 +15,15 @@ changes easy to categorize.
   for a playtest to find. See
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
+### Changed
+
+- **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
+  empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
+  speaker carried a tag showed eight placeholders around it and the eye landed on the absences.
+  Every table now says nothing when there is nothing to say, marks the default speaker with a
+  tick, and names the nameless one `(anonymous)` in all three tabs rather than three ways. See
+  [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
+
 ### Fixed
 
 - **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
@@ -209,7 +218,7 @@ changes easy to categorize.
   folder once, instead of starting a fresh file-system watch for every script opened. Opening a
   script falls from about 330 ms to about 135 ms, and the switch behind it from about 150 ms to
   around a millisecond once its folder is known. Hot reload is unchanged. See the
-  [One Watcher for the Served Tree](docs/contributing/design-notes/other/One%20Watcher%20for%20the%20Served%20Tree.md)
+  [One Watcher for the Served Tree](docs/contributing/design-notes/visualization/session/One%20Watcher%20for%20the%20Served%20Tree.md)
   note.
 
 - **One home per concept in the documentation** — a committed duplication scan

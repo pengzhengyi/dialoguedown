@@ -193,8 +193,8 @@ function headerTable(metadata: PlaybookMetadataView | undefined): SemanticTable 
             : [
                   ["Script", metadata.script],
                   ["Format version", String(metadata.formatVersion)],
-                  ["Requires", listOrDash(metadata.requires)],
-                  ["Uses", listOrDash(metadata.uses)],
+                  ["Requires", metadata.requires.join(", ")],
+                  ["Uses", metadata.uses.join(", ")],
                   ["Entry node", String(metadata.entry)],
                   ["Nodes", String(metadata.nodeCount)],
                   ["Anchors", String(metadata.anchorCount)],
@@ -217,11 +217,15 @@ function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
         columns: ["Name", "Id", "Default", "Tags"],
         rows: speakers.map((speaker) => ({
             cells: [
-                // The anonymous speaker is the one an unprefixed line belongs to; it has no name.
+                // The anonymous speaker is the one an unprefixed line belongs to. Its
+                // namelessness is a fact about the script, not a gap in the table, so it is the
+                // one absence worth naming.
                 { text: speaker.name ?? "(anonymous)" },
-                { text: speaker.id ?? "—" },
-                { text: speaker.default ? "yes" : "—" },
-                { text: speaker.tags.length === 0 ? "—" : speaker.tags.join(", ") },
+                // Everything else says nothing when there is nothing to say, so the eye lands on
+                // the speakers that do carry an id, a tag, or the default mark.
+                { text: speaker.id ?? "" },
+                { text: speaker.default ? "✓" : "" },
+                { text: speaker.tags.join(", ") },
             ],
         })),
         emptyText: "This playbook has no speakers.",
@@ -257,8 +261,4 @@ function schemaNote(url: string | undefined): HTMLElement {
         `Described by <a class="playbook-schema-link" href="${escapeHtml(url)}" target="_blank"` +
         ` rel="noopener noreferrer" title="${escapeHtml(url)}">${name}</a>.`;
     return note;
-}
-
-function listOrDash(values: readonly string[]): string {
-    return values.length === 0 ? "—" : values.join(", ");
 }

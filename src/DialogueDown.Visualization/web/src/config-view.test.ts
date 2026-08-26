@@ -71,6 +71,22 @@ describe("createConfigView", () => {
         expect(view.querySelector(".config-mode-value")?.textContent).toBe("best-effort");
     });
 
+    it("leaves a speaker's absent id and empty tag list as empty cells", () => {
+        // Nothing to say, so the table says nothing — the same rule the Semantic Model and
+        // Playbook speaker tables follow, so one speaker reads the same way in all three.
+        const view = mount({
+            file: { path: "/proj/dialogue.toml", source: '[[speakers]]\nname = "Bob"\n' },
+            speakers: [{ name: "Bob", tags: [] }],
+        });
+        const cells = [
+            ...view.querySelectorAll<HTMLTableCellElement>(".config-speakers-table tbody td"),
+        ];
+
+        expect(cells[0]?.textContent).toContain("Bob");
+        expect(cells[1]?.textContent).toBe("");
+        expect(cells[2]?.textContent).toBe("");
+    });
+
     it("shows a friendly explanation and no editor when there is no config file", () => {
         const view = mount({ speakers: [] });
 
