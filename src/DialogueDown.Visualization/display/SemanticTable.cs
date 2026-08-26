@@ -35,8 +35,13 @@ public sealed record SemanticRow(
 /// "resolves to" cell pointing at a scene), and an optional <see cref="Category"/> for color.
 /// Hovering a cell that carries a key highlights every element sharing it.
 /// </summary>
+/// <remarks>
+/// A cell carrying <see cref="Tags"/> is drawn as capsules rather than as its <see cref="Text"/>,
+/// which stays the plain-text rendering so search, sort, and export still read the cell.
+/// </remarks>
 public sealed record SemanticCell(
     string Text,
     string? EntityKey = null,
     string? RefKey = null,
-    string? Category = null);
+    string? Category = null,
+    IReadOnlyList<TagView>? Tags = null);

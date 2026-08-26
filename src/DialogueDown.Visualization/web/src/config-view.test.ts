@@ -47,8 +47,8 @@ describe("createConfigView", () => {
     it("colors reserved and custom tags apart with distinct chip classes", () => {
         const view = mount(withFile());
 
-        const custom = view.querySelector(".config-tag-custom");
-        const reserved = view.querySelector(".config-tag-reserved");
+        const custom = view.querySelector(".dd-tag-custom");
+        const reserved = view.querySelector(".dd-tag-reserved");
         expect(custom?.textContent).toBe("#role=guide");
         expect(reserved?.textContent).toBe("##default");
     });
@@ -215,7 +215,7 @@ describe("createConfigView", () => {
         });
 
         it("copies a tag chip's text", () => {
-            clickCopy(".config-tag-reserved");
+            clickCopy(".dd-tag-reserved");
             expect(writeText).toHaveBeenCalledWith("##default");
         });
     });

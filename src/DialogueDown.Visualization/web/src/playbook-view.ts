@@ -29,13 +29,12 @@ import type {
 } from "./model";
 import { createTablePanel } from "./semantic-table";
 import { initSplitDivider } from "./source-view";
-import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { showToast } from "./toast";
 import { compactSearch } from "./search-panel";
 import { gotoLineKeymap } from "./goto-line";
 import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
+import { tagLabel } from "./tag-chip";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -159,7 +158,6 @@ function renderTables(playbook: PlaybookReport): HTMLElement {
         wrapper.appendChild(createTablePanel(table, "dd-playbook-panel-"));
     }
     wrapper.appendChild(schemaNote(playbook.metadata?.schemaUrl));
-    wireClickToCopy(wrapper);
     return wrapper;
 }
 
@@ -170,16 +168,6 @@ function tablesOf(playbook: PlaybookReport): SemanticTable[] {
         speakerTable(playbook.speakers),
         anchorTable(playbook.anchors),
     ];
-}
-
-/** Copy the text of a clicked cell (any element carrying `data-copy`), and confirm it. */
-function wireClickToCopy(root: HTMLElement): void {
-    root.addEventListener("click", (event) => {
-        const target = (event.target as Element | null)?.closest<HTMLElement>("[data-copy]");
-        const value = target?.dataset.copy;
-        if (!value) return;
-        void copyToClipboard(value).then(() => showToast(`Copied ${value}`));
-    });
 }
 
 /**
@@ -225,7 +213,7 @@ function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
                 // the speakers that do carry an id, a tag, or the default mark.
                 { text: speaker.id ?? "" },
                 { text: speaker.default ? "✓" : "" },
-                { text: speaker.tags.join(", ") },
+                { text: speaker.tags.map(tagLabel).join(" "), tags: speaker.tags },
             ],
         })),
         emptyText: "This playbook has no speakers.",
