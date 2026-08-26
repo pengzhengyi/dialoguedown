@@ -59,18 +59,18 @@ is far cheaper to learn now than after six components assume it.
 
 ## Functionality checklist
 
-- [ ] `DialogueDown.Runtime`, referencing `DialogueDown.Playbook` and nothing else,
+- [x] `DialogueDown.Runtime`, referencing `DialogueDown.Playbook` and nothing else,
       with an architecture test that fails if it ever reaches for the compiler.
-- [ ] `PlayState` — a position, and nothing else it has no use for yet.
-- [ ] `Step` — total and deterministic, with no I/O and no mutation.
-- [ ] `Start` begins a run at the entry, from wherever it stood, so starting over needs no
+- [x] `PlayState` — a position, and nothing else it has no use for yet.
+- [x] `Step` — total and deterministic, with no I/O and no mutation.
+- [x] `Start` begins a run at the entry, from wherever it stood, so starting over needs no
       way to abort what was already running.
-- [ ] A line is spoken with its speaker's name, and succession advances.
-- [ ] A run ends, and an ended run accepts nothing further.
-- [ ] A command the run cannot take is refused as a message, not an exception.
-- [ ] `continue` becomes `next` in the fixture schema, every playable fixture, and
+- [x] A line is spoken with its speaker's name, and succession advances.
+- [x] A run ends, and an ended run accepts nothing further.
+- [x] A command the run cannot take is refused as a message, not an exception.
+- [x] `continue` becomes `next` in the fixture schema, every playable fixture, and
       the corpus README.
-- [ ] The corpus reader is shared by both halves rather than duplicated.
+- [x] The corpus reader is shared by both halves rather than duplicated.
 - [ ] A playable harness that runs a session and reports the first divergence.
 - [ ] `linear-speech` and `styled-speech` pass; every other playable case is
       counted as not yet runnable rather than skipped in silence.
