@@ -29,7 +29,7 @@ import { bandsOf, type PlacedNode } from "./region-bands";
 import { foldRegions, regionNodeIdFor, type FoldedGraph } from "./region-fold";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
-import { tooltipHtml } from "./text";
+import { edgeTooltipHtml, tooltipHtml } from "./text";
 import { clipToWidth } from "./clip-text";
 import { createLegend, regionCounts, setRegionFoldState } from "./legend";
 import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
@@ -310,11 +310,16 @@ export function createTreeView(
     // The lookup is by the pair an edge joins, which is unique because a node is reached from a
     // given node at most once — and the fold merges any pair a contraction would have doubled.
     let edgeCategories = new Map<string, string>();
+    let edgeLabels = new Map<string, string>();
     let root: TreeNode;
     rebuildGraph();
 
     const categoryOfLink = (fromId: string, toId: string): string | undefined =>
         edgeCategories.get(`${fromId}->${toId}`);
+
+    // The words the writer gave a route, for the hover that says what it is.
+    const labelOfLink = (fromId: string, toId: string): string | undefined =>
+        edgeLabels.get(`${fromId}->${toId}`);
 
     let selected: TreeNode | null = null;
     const dimmed = new Set<string>();
@@ -513,6 +518,11 @@ export function createTreeView(
     // Names the route a line is, so hovering it says what it means and a screen reader can read
     // it. The class is what the stylesheet thickens on hover — an edge is thin, so it needs a
     // generous target and a clear response.
+    //
+    // Two channels, because they answer to different readers. The `<title>` names the *kind* of
+    // route and nothing else, which is what assistive technology announces. The hover carries the
+    // detail — what the kind means, and the words the writer gave this particular route — the way
+    // a node's does, so learning what an arm offers costs a hover rather than a click.
     function describeEdge<Datum>(
         selection: Selection<SVGPathElement, Datum, SVGGElement, unknown>,
         categoryOfDatum: (datum: Datum) => string | undefined,
@@ -530,9 +540,15 @@ export function createTreeView(
                 const style = edgeStyle(category);
                 delete this.dataset.cursor;
                 delete this.dataset.category;
+                delete this.dataset.tip;
                 if (!style) return;
                 this.dataset.cursor = style.cursor;
                 this.dataset.category = category;
+                this.dataset.tip = edgeTooltipHtml(
+                    style.label,
+                    style.meaning,
+                    labelOfLink(ends.fromId, ends.toId) ?? null,
+                );
                 const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
                 title.textContent = style.label;
                 this.appendChild(title);
@@ -960,6 +976,11 @@ export function createTreeView(
                 .filter((edge) => edge.category)
                 .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.category!]),
         );
+        edgeLabels = new Map(
+            graph.edges
+                .filter((edge) => edge.label)
+                .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.label!]),
+        );
         root = buildHierarchy(graph.nodes, graph.edges);
         root.each((node) => {
             (node as TreeNode)._children = (node as TreeNode).children;
@@ -1371,8 +1392,13 @@ export function createTreeView(
             .style("cursor", (route) => route.dataset.cursor ?? null)
             .each(function (route) {
                 this.replaceChildren();
-                const title = route.querySelector("title");
-                if (title) this.appendChild(title.cloneNode(true));
+                // The twin is a transparent target lying over the route, so it does not name
+                // itself: the line beneath it carries the name a screen reader reads, and a
+                // `<title>` here would both repeat that and raise the browser's own tooltip
+                // beside the one this hover opens.
+                this.setAttribute("aria-hidden", "true");
+                if (route.dataset.tip) this.dataset.tip = route.dataset.tip;
+                else delete this.dataset.tip;
             })
             .on("mouseenter", (event, route) => nearestTo(event, route).classList.add("hovered"))
             .on("mouseleave", () => clearHovered())

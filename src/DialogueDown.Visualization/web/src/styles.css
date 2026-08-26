@@ -1361,6 +1361,13 @@ section.stage.empty-shell {
     border-radius: 999px;
 }
 
+/* A route's own words inside its hover, set apart from the meaning above them the way the
+   details panel sets them apart from the route's explanation. */
+.tippy-content .tip-label {
+    margin-top: 0.35rem;
+    font-style: italic;
+}
+
 /* The facet radio menu, a tippy popover appended to the document body. */
 .tippy-box[data-theme~="dd-facet"] {
     /* Keep the menu text at or below the table's own size (0.8rem), overriding tippy's larger

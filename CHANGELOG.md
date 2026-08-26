@@ -29,6 +29,11 @@ changes easy to categorize.
   script accepts. See
   [Copyable Identifiers](docs/contributing/design-notes/visualization/report/Copyable%20Identifiers.md).
 
+- **Hovering a route in the Dialogue Graph says what it is** — a route's hover gave only the name
+  of its kind, in the browser's own tooltip. It now opens the same rich tooltip a node has, adding
+  what that kind of route means and the words the writer gave this one, so reading a menu no longer
+  needs a click. It opens at the pointer, because a route's shape spans the drawing.
+
 - **Every tag is drawn as one capsule, wherever it appears** — the Config tab drew tags as
   rounded, copyable capsules while the Semantic Model and Playbook joined them into a run of text,
   so the same tag read as three different objects and the Playbook dropped the `#` a script writes.
