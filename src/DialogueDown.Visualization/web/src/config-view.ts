@@ -28,13 +28,12 @@ import type { ConfigReport, ConfiguredSpeakerView } from "./model";
 import { isConfiguredFromFile } from "./model";
 import { initSplitDivider } from "./source-view";
 import { renderTags } from "./tag-chip";
-import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { showToast } from "./toast";
 import { configCompletions } from "./config-completions";
 import { compactSearch } from "./search-panel";
 import { gotoLineKeymap } from "./goto-line";
 import { escapeHtml } from "./text";
+import { wireClickToCopy } from "./copy-on-click";
 
 /** Options for the Config tab. */
 export interface ConfigViewOptions {
@@ -303,16 +302,6 @@ function renderModeRow(mode: string | undefined): HTMLElement {
         `<span class="config-mode-label">Mode</span>` +
         `<span class="config-mode-value">${escapeHtml(value)}</span>`;
     return row;
-}
-
-/** Copy the text of a clicked cell or tag chip (any element carrying `data-copy`), and confirm it. */
-function wireClickToCopy(root: HTMLElement): void {
-    root.addEventListener("click", (event) => {
-        const target = (event.target as Element | null)?.closest<HTMLElement>("[data-copy]");
-        const value = target?.dataset.copy;
-        if (!value) return;
-        void copyToClipboard(value).then(() => showToast(`Copied ${value}`));
-    });
 }
 
 /** A focusable, read-only CodeMirror showing the TOML source. */

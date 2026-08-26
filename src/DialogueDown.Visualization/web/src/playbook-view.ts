@@ -29,9 +29,7 @@ import type {
 } from "./model";
 import { createTablePanel } from "./semantic-table";
 import { initSplitDivider } from "./source-view";
-import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { showToast } from "./toast";
 import { compactSearch } from "./search-panel";
 import { gotoLineKeymap } from "./goto-line";
 import { schemaHover } from "./playbook-schema";
@@ -160,7 +158,6 @@ function renderTables(playbook: PlaybookReport): HTMLElement {
         wrapper.appendChild(createTablePanel(table, "dd-playbook-panel-"));
     }
     wrapper.appendChild(schemaNote(playbook.metadata?.schemaUrl));
-    wireClickToCopy(wrapper);
     return wrapper;
 }
 
@@ -171,16 +168,6 @@ function tablesOf(playbook: PlaybookReport): SemanticTable[] {
         speakerTable(playbook.speakers),
         anchorTable(playbook.anchors),
     ];
-}
-
-/** Copy the text of a clicked cell (any element carrying `data-copy`), and confirm it. */
-function wireClickToCopy(root: HTMLElement): void {
-    root.addEventListener("click", (event) => {
-        const target = (event.target as Element | null)?.closest<HTMLElement>("[data-copy]");
-        const value = target?.dataset.copy;
-        if (!value) return;
-        void copyToClipboard(value).then(() => showToast(`Copied ${value}`));
-    });
 }
 
 /**

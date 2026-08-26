@@ -19,6 +19,7 @@ import {
 } from "@tanstack/table-core";
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
 import { renderTags } from "./tag-chip";
+import { wireClickToCopy } from "./copy-on-click";
 
 // The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
 // rather than bundling every feature: sorting, per-column (facet) filtering, and the global
@@ -119,6 +120,7 @@ export function createTablePanel(
     });
     reflect();
 
+    wireClickToCopy(panel);
     return panel;
 }
 

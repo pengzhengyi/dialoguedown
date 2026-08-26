@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createTablePanel } from "./semantic-table";
 import type { SemanticTable } from "./model";
 
@@ -394,5 +394,35 @@ describe("createTablePanel — match highlighting and options", () => {
 
         toggle(panel, "Match whole word").click();
         expect(panel.querySelector(".table-nomatch")).not.toBeNull(); // "Ali" is not a whole word
+    });
+});
+
+describe("createTablePanel — copying a tag", () => {
+    it("copies a tag capsule when it is clicked", () => {
+        // Every table built here draws tag capsules, and a capsule wears a hover ring and carries
+        // the text to copy — so the promise of a click belongs to the shared table, not to
+        // whichever tab remembered to wire it.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+        const table: SemanticTable = {
+            title: "Speakers",
+            columns: ["Name", "Tags"],
+            emptyText: "No speakers.",
+            rows: [
+                {
+                    cells: [
+                        { text: "Guide" },
+                        { text: "#wise", tags: [{ name: "wise", reserved: false }] },
+                    ],
+                },
+            ],
+        };
+
+        const panel = createTablePanel(table);
+        panel
+            .querySelector<HTMLElement>(".dd-tag")
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+        expect(writeText).toHaveBeenCalledWith("#wise");
     });
 });

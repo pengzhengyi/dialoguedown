@@ -66,6 +66,9 @@ The resolution is that the two claims are different in kind, so they get differe
   `role=merchant` — the tags a reader thinks of as related look related.
 - **Text.** Written as a script writes it: `#wise`, `#role=guide`, `##default`.
 - **Copy.** The whole capsule carries `data-copy`, so a click lifts the tag verbatim into a script.
+  The listener belongs to the table that draws the capsule, not to the tab around it — a capsule
+  that wears a hover ring promises a click will work, and that promise cannot depend on which tab
+  remembered to wire it.
 
 ## Key design decisions
 
@@ -75,6 +78,7 @@ The resolution is that the two claims are different in kind, so they get differe
 | **A separate, small identity palette** | Reusing `CATEGORY_COLORS` would say a tag *is* a jump or a scene. The identity hues are their own set, chosen to stay apart and legible on both themes. |
 | **Derive the hue, do not store it** | A stored color drifts from the tag and needs migrating. Hashing is stable across reloads and needs no state. |
 | **No dot on a reserved tag** | Its violet already identifies it, and the closed set is small enough to learn. A dot would imply a variety that does not exist. |
+| **One copy listener, in the shared table** | Two tabs had grown their own identical handler and the third had none, so a capsule was copyable in some tables and inert in others. The delegated listener now sits where the capsule is drawn, and `data-copy` stays the whole contract. |
 | **Keep the cell's plain text** | A tag cell still carries its joined text, so search, sort, and export read the cell even though the drawing differs. |
 
 ## What the data had to become

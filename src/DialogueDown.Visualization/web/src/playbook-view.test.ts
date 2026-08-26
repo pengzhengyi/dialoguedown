@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { EditorView } from "@codemirror/view";
 import { insertNewlineAndIndent } from "@codemirror/commands";
 import { createPlaybookView } from "./playbook-view";
@@ -119,6 +119,21 @@ describe("createPlaybookView", () => {
         expect(chip?.classList.contains("dd-tag-custom")).toBe(true);
         // The identity dot is what tells one writer-invented tag from the next.
         expect(chip?.querySelector(".dd-tag-dot")).not.toBeNull();
+    });
+
+    it("copies a tag when it is clicked, the same as the Config tab", () => {
+        // The capsule wears a hover ring and carries the text to copy, so it promises a click
+        // will work. That promise is the shared table's to keep, not the Config tab's alone.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+        const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
+
+        rows[0].cells[3]
+            ?.querySelector<HTMLElement>(".dd-tag")
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+        // Exactly once: the table panel wires the copying, so the view must not wire it again.
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("#role=guide");
     });
 
     it("leaves an absent id and an empty tag list as empty cells", () => {
