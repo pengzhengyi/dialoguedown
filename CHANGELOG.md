@@ -32,6 +32,10 @@ changes easy to categorize.
   table, and a click copies it verbatim. See
   [Tag Capsules](docs/contributing/design-notes/visualization/report/Tag%20Capsules.md).
 
+- **Choosing a choice arm in the Dialogue Graph shows what the player would read** — the details
+  panel named the two nodes an arm joins but not the wording it offers, so answering "what is
+  picked here?" meant following the arm to find out. The drawing is unchanged.
+
 - **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
   empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
   speaker carried a tag showed eight placeholders around it and the eye landed on the absences.
