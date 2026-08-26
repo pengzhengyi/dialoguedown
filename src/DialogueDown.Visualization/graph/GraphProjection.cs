@@ -188,15 +188,26 @@ internal sealed class GraphProjection
             Category = PlacementCategory,
         };
 
-    // The graph draws a jump's words on the route it becomes. A fall-through was never written
-    // down, so it has none to draw. An option carries words of its own — a divert arm is named by
-    // its jump — but drawing them here would repeat what is already on screen a hop away: the
-    // speech the arm leads to for a spoken option, and the jump's own route label for a divert
-    // one. So the drawing stays with the jump, and the details panel answers what an arm offers.
-    private static string? LabelOf(Edge edge) =>
-        edge is DivertEdge divert && InlineText.Of(divert.Label).Trim() is { Length: > 0 } label
-            ? label
-            : null;
+    // A route carries the words the writer gave it, which the details panel shows when the route is
+    // chosen. Only a jump and a choice arm have any: a jump is named by its link text, an arm by
+    // what the player is offered. A fall-through was never written down, and a random arm is picked
+    // by the engine rather than read, so neither has words to report.
+    //
+    // The drawing itself stays free of them. It draws no route text at all, and adding it here
+    // would repeat what is already on screen a hop away — the speech an arm leads to, or the
+    // jump's own node.
+    private static string? LabelOf(Edge edge) => Written(edge) switch
+    {
+        { Count: > 0 } written => InlineText.Of(written).Trim() is { Length: > 0 } label ? label : null,
+        _ => null,
+    };
+
+    private static IReadOnlyList<InlineFragment>? Written(Edge edge) => edge switch
+    {
+        DivertEdge divert => divert.Label,
+        OptionEdge option => option.Label,
+        _ => null,
+    };
 
     private static string CategoryOf(Edge edge) => edge switch
     {
