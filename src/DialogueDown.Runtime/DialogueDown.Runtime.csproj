@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DialogueDown.Runtime</RootNamespace>
+    <AssemblyName>DialogueDown.Runtime</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <!-- A game embeds a playbook and a runner, never the compiler: shipping a Markdown parser
+         inside a shipped game would be a defect rather than an inefficiency. An architecture
+         test asserts this reference list stays as short as it looks. -->
+    <Description>Plays a DialogueDown playbook: a total, deterministic step over immutable state.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DialogueDown.Runtime.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DialogueDown.Playbook\DialogueDown.Playbook.csproj" />
+  </ItemGroup>
+
+</Project>
