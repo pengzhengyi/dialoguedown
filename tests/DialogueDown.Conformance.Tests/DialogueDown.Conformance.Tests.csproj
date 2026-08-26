@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.MTP" />
-    <PackageReference Include="NSubstitute" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
@@ -21,14 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DialogueDown.Playbook\DialogueDown.Playbook.csproj" />
     <ProjectReference Include="..\DialogueDown.Conformance\DialogueDown.Conformance.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The conformance corpus, so the harness reads it from the output rather than hunting for
-         the checkout it was built from. The sources come too: they are a reading aid rather than
-         something the harness runs, and a case that lost one would be far harder to review. -->
+    <!-- The corpus, so a test reads it from the output rather than hunting for the checkout. -->
     <None Include="..\..\conformance\**\*.json;..\..\conformance\**\*.md"
           Link="conformance\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />

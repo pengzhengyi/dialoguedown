@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// A folder of conformance cases, one subfolder each.

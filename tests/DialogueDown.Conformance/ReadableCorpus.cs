@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// Reads the cases under <c>conformance/readable/</c>, each a document and the verdict a reader

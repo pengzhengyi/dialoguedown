@@ -1,12 +1,11 @@
-using DialogueDown.Playbook.Tests.Conformance;
 
-namespace DialogueDown.Playbook.Tests.Support;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// A corpus on disk that lasts as long as one test, so a loader can be asked about cases the
 /// shipped corpus must never contain.
 /// </summary>
-internal sealed class TemporaryCorpus : IDisposable
+public sealed class TemporaryCorpus : IDisposable
 {
     private readonly DirectoryInfo _root = Directory.CreateTempSubdirectory("ddown-conformance-");
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// One fixture from <c>conformance/readable/</c>: a playbook, and whether a reader must take it.

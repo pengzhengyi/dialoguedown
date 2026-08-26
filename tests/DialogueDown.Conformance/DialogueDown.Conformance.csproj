@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DialogueDown.Conformance</RootNamespace>
+    <AssemblyName>DialogueDown.Conformance</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <!-- Reads the corpus and nothing else, so both halves' harnesses can share it: the readable
+         half runs against the reader, the playable half against a runner, and neither project may
+         reference the other. -->
+  </PropertyGroup>
+
+  <!-- JsonStringEnumMemberName pins an enum's wire name against a C# rename. It is in-box from
+       .NET 9, so only the net8.0 build needs the out-of-band package; the reference goes away with
+       that target. See https://github.com/pengzhengyi/dialoguedown/issues/314. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+</Project>

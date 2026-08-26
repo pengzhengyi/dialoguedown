@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 public sealed class ReadableFixtureTests
 {
