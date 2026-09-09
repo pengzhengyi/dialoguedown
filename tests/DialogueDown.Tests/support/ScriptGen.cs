@@ -113,10 +113,31 @@ internal static class ScriptGen
                 _key, line, line,
                 (k, a, b) => $"> `if` `{k}?`\n>\n> {a}\n>\n> `else`\n>\n> {b}");
 
+        // A line can carry its own jump, so its way out is a divert rather than a succession; when
+        // the line is also gated, the succession comes back as the fallthrough.
+        var lineToDivert =
+            Gen.Select(
+                _speaker, speech, _word, anchor,
+                (s, t, w, target) => $"{s}: {t}. => [{w}]({target})");
+        var conditionalLineToDivert =
+            Gen.Select(
+                _key, _speaker, speech, _word, anchor,
+                (k, s, t, w, target) => $"`{k}?` {s}: {t}. => [{w}]({target})");
+
+        // A choice whose options are all gated, and an `if` with no `else`: both gain a succession
+        // for the run where every arm is declined.
+        var gatedChoice =
+            Gen.Select(
+                _key, _key, _prose, _prose,
+                (k1, k2, a, b) => $"- `{k1}?` {a}\n- `{k2}?` {b}");
+        var blockControlWithoutElse =
+            Gen.Select(_key, line, (k, a) => $"> `if` `{k}?`\n>\n> {a}");
+
         return Gen.OneOf(
             line, line, line,
             conditionalLine, jump, conditionalJump, _controlLine,
-            choice, _randomChoice, blockControl, _unmodeled);
+            choice, _randomChoice, blockControl, _unmodeled,
+            lineToDivert, conditionalLineToDivert, gatedChoice, blockControlWithoutElse);
     }
 
     private static string Assemble(
