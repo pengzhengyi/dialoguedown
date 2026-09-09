@@ -230,6 +230,10 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
      <strong>Hover a property</strong> to see
      what the format says it means, taken from the published schema; the stretch it covers is
      washed in while the tip is open.</p>
+  <p><strong>Following an index.</strong> A number that points elsewhere — an
+     <kbd>entry</kbd>, an edge's <kbd>target</kbd>, a line's <kbd>speaker</kbd>, an anchor's
+     node — is underlined. <strong>Click it</strong>, or put the cursor on its line and press
+     <kbd>F12</kbd>, to reveal the node or speaker it names.</p>
   <p><strong>Beside it</strong> are three panels — the playbook's header, its speakers, and the
      anchors a jump may name. Each folds from its caret, counts its rows, and searches from the
      magnifier, the same way the Semantic tab's tables do.</p>

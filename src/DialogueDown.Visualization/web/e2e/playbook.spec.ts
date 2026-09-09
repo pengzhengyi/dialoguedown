@@ -329,6 +329,9 @@ test.describe("Playbook tab — a compiled script", () => {
         await page.click("#help-toggle");
 
         await expect(page.locator("#help-content")).toContainText("read-only");
+        // The reference links and their keyboard shortcut are documented here.
+        await expect(page.locator("#help-content")).toContainText("Following an index");
+        await expect(page.locator("#help-content")).toContainText("F12");
     });
 });
 

@@ -89,6 +89,7 @@ is the CodeMirror extension that connects them and the mark it paints.
       jump, no error, the reader stays put.
 - [x] The Playbook editor wires the extension in; no other tab changes.
 - [x] `dd-playbook-ref` follows the page's light and dark themes.
+- [x] The Playbook tab's help panel documents the underline, the click, and `F12`.
 
 ## Interfaces and abstractions
 
@@ -149,7 +150,8 @@ purpose is reading.
 `F12` is VS Code's **Go to Definition**, offered for the keyboard: with the
 cursor anywhere on a reference line, it follows that reference. It is bound on
 the Playbook editor's keymap ahead of the defaults so nothing else claims it
-there.
+there, and the tab's help panel names it — a shortcut with no on-screen control
+has to be written down somewhere.
 
 ### DD6 — An unresolved reference is a quiet no-op
 
@@ -184,6 +186,9 @@ scan for a case that barely arises.
   `keymap.of([...])`.
 - **`styles.css`** gains the `.playbook-source .cm-content .dd-playbook-ref`
   rules, beside the existing `dd-jump-preview` rule for that pane.
+- **`help.ts`** — the Playbook tab's help panel gains a *Following an index*
+  paragraph naming the underline, the click, and `F12`, since a keyboard shortcut
+  a reader cannot see needs somewhere to be found.
 - **No .NET change.** Every input — the rendered text and the schema — is already
   on the client.
 - **Docs:** a new row in the design-notes README's
@@ -201,6 +206,7 @@ scan for a case that barely arises.
 | Playwright — marks | Reference digits carry `dd-playbook-ref`; a node's `"id"` and a plain `version` do not. |
 | Playwright — click | Clicking an edge `target` centers the node with that id — proven with a sparse id, as the table-jump test is. |
 | Playwright — `F12` | Cursor on a `speaker` reference, press F12, the speaker object is revealed. |
+| Playwright / Vitest — help | The Playbook help panel names *Following an index* and `F12`. |
 | Playwright — axe | No accessibility violations on the Playbook tab with the marks present. |
 
 Unit tests build playbook text as multi-line raw string literals, reusing the
