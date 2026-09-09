@@ -49,6 +49,7 @@ internal sealed class SemanticProjection
         var index = DialogueTreeIndex.Build(model.Desugared);
         return graph with
         {
+            ReadsDialogueMeaning = true,
             Tables =
             [
                 SpeakerTable(index, model),
