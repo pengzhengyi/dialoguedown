@@ -240,15 +240,13 @@ caught by a number rather than by a reader.
 
 ## Open questions and deferred work
 
-- **The legend floats over the canvas.** It is absolutely positioned top-right and
-  now taller, so it can sit over the drawing at some zooms. Drawing each route as
-  a real line also made it wider, and on a narrow canvas — the live server splits
-  the window between source and report — the legend can take enough room that a
-  graph no longer fits above the legibility floor and falls back to anchoring on
-  its root. Folding the legend when the fit would otherwise fail is the obvious
-  next move.
-- **The camera opens at 100%.** A large graph therefore starts off-screen; a
-  fit-to-view default would frame it, and is a change every stage tab shares.
+- **Automatically folding the legend when a fit would fail.** The legend already
+  folds by hand and a stage reserves its measured width when it frames
+  ([#258](https://github.com/pengzhengyi/dialoguedown/pull/258)), and folding
+  every scene at once now exists
+  ([#291](https://github.com/pengzhengyi/dialoguedown/pull/291)). What remains is
+  doing it *automatically* — folding the legend, or collapsing scenes — when a fit
+  would otherwise fall back to anchoring the root.
 - **Playing the graph from the tab.** Stepping through the flow belongs to the
   [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
 - **Cross-linking a divert to its scene.** Hovering a jump could highlight its
