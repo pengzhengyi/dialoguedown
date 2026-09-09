@@ -47,7 +47,13 @@ internal static class ScriptGen
             Gen.Select(_word, w => $"`GiveGold(\"{w}\")`"));
 
     private static readonly Gen<string> _randomChoice =
-        Gen.Select(_prose, _prose, (a, b) => $"- `60%` {a}\n- `%` {b}");
+        Gen.Select(
+            _prose,
+            _prose,
+            (a, b) => $"""
+                - `60%` {a}
+                - `%` {b}
+                """);
 
     // Markdown the compiler does not model as dialogue. Its handling is configurable, and the two
     // handlings take different paths: an ignored construct is dropped, while a kept one is sliced
@@ -56,8 +62,16 @@ internal static class ScriptGen
         Gen.OneOfConst(
             // Ignored by the default policy.
             "---",
-            "| a | b |\n| --- | --- |\n| 1 | 2 |",
-            "```\ncode\n```",
+            """
+            | a | b |
+            | --- | --- |
+            | 1 | 2 |
+            """,
+            """
+            ```
+            code
+            ```
+            """,
             // Kept, so their source text is sliced by span.
             "<div>aside</div>",
             "<https://example.com>",
@@ -107,11 +121,22 @@ internal static class ScriptGen
             Gen.Select(
                 Gen.OneOf(_prose, jump),
                 Gen.OneOf(_prose, Gen.Select(_key, k => $"`{k}?` later")),
-                (a, b) => $"- {a}\n- {b}");
+                (a, b) => $"""
+                    - {a}
+                    - {b}
+                    """);
         var blockControl =
             Gen.Select(
                 _key, line, line,
-                (k, a, b) => $"> `if` `{k}?`\n>\n> {a}\n>\n> `else`\n>\n> {b}");
+                (k, a, b) => $"""
+                    > `if` `{k}?`
+                    >
+                    > {a}
+                    >
+                    > `else`
+                    >
+                    > {b}
+                    """);
 
         // A line can carry its own jump, so its way out is a divert rather than a succession; when
         // the line is also gated, the succession comes back as the fallthrough.
@@ -129,9 +154,19 @@ internal static class ScriptGen
         var gatedChoice =
             Gen.Select(
                 _key, _key, _prose, _prose,
-                (k1, k2, a, b) => $"- `{k1}?` {a}\n- `{k2}?` {b}");
+                (k1, k2, a, b) => $"""
+                    - `{k1}?` {a}
+                    - `{k2}?` {b}
+                    """);
         var blockControlWithoutElse =
-            Gen.Select(_key, line, (k, a) => $"> `if` `{k}?`\n>\n> {a}");
+            Gen.Select(
+                _key,
+                line,
+                (k, a) => $"""
+                    > `if` `{k}?`
+                    >
+                    > {a}
+                    """);
 
         return Gen.OneOf(
             line, line, line,
