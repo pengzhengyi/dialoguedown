@@ -19,9 +19,9 @@ public sealed record PlayableFixture
         // older reader and is deliberately ignored.
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
 
-        // Turns are decoded by TurnJsonConverter, which performs the same per-turn validation the
-        // hand-rolled reader used to.
-        Converters = { new TurnJsonConverter() },
+        // Session entries are decoded by SessionEntryJsonConverter, which performs the same
+        // per-entry validation the hand-rolled reader used to.
+        Converters = { new SessionEntryJsonConverter() },
     };
 
     /// <summary>
@@ -51,7 +51,7 @@ public sealed record PlayableFixture
     public required string Because { get; init; }
 
     /// <summary>Gets the exchange, in the order it happens.</summary>
-    public required ImmutableArray<Turn> Session { get; init; }
+    public required ImmutableArray<SessionEntry> Session { get; init; }
 
     /// <summary>Reads one fixture.</summary>
     /// <param name="json">The fixture document.</param>

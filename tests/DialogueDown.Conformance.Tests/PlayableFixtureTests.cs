@@ -86,7 +86,7 @@ public sealed class PlayableFixtureTests
     }
 
     [Fact]
-    public void Read_ATurnCarryingBothSendAndExpect_IsRefused()
+    public void Read_ASessionEntryCarryingBothSendAndExpect_IsRefused()
     {
         var json = With("session", new JsonArray(
             new JsonObject { ["send"] = "next", ["expect"] = "same" }));
@@ -95,7 +95,7 @@ public sealed class PlayableFixtureTests
     }
 
     [Fact]
-    public void Read_ATurnCarryingNeitherSendNorExpect_IsRefused()
+    public void Read_ASessionEntryCarryingNeitherSendNorExpect_IsRefused()
     {
         var json = With("session", new JsonArray(
             new JsonObject { ["unrelated"] = 1 }));
