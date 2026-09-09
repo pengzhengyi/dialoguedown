@@ -6,7 +6,8 @@
 > graph remembers where the reader left it. A graph the reader has adjusted keeps
 > its own zoom, pan, and collapsed branches; a graph they have not yet positioned
 > **inherits the current view**, so switching tabs stays at roughly the same place.
-> Graphs open on a **root-centered default framing**, and the zoom toolbar takes a
+> Graphs open **framed to fit the whole drawing** and drop to a root-centered view
+> only when that fit would fall below a legibility floor; the zoom toolbar takes a
 > **typed percentage** or a one-click **revert**. The memory lives entirely in the
 > browser; nothing new is serialized or sent to the server.
 >
@@ -39,9 +40,9 @@ Make each stage's graph **spatially stable**, with a hybrid memory that favors
 continuity by default. A graph the reader has adjusted keeps its own camera and
 fold across tab switches and hot-reloads. A graph they have not positioned inherits
 the **current** camera — wherever they are now — so moving between tabs does not
-jump the view around. Graphs open on a readable, root-centered default rather than
-a whole-graph shrink-to-fit, and the reader can dial in an exact zoom or revert a
-graph to its default.
+jump the view around. Graphs open framed to fit the whole drawing, anchoring the
+root only when that fit would fall below a legibility floor, and the reader can
+dial in an exact zoom or revert a graph to its default.
 
 In scope:
 
@@ -49,8 +50,9 @@ In scope:
   shared **current** camera an untouched graph inherits.
 - Per-graph **fold state** (which nodes are collapsed), independent of other graphs.
 - Re-applying both across tab switches and hot-reloads, instead of re-framing.
-- A **default framing** that anchors the root near the left, vertically centered, at
-  a readable 100%.
+- A **default framing** that fits the whole drawing within the viewport, clear of
+  the panels floating over it, and anchors the root near the left, vertically
+  centered, only when that fit would fall below a legibility floor.
 - A zoom toolbar that accepts a **typed percentage** and a **Revert** control that
   restores the default and drops the graph's remembered position.
 
@@ -70,7 +72,7 @@ Out of scope:
 | **Override** | A camera a graph pins for itself the moment the reader adjusts it; it survives tab switches and hot-reloads regardless of the shared camera. |
 | **Current camera** | The shared camera reflecting wherever the reader is now. An untouched graph inherits it, so switching tabs stays at roughly the same view. |
 | **Fold state** | The set of node ids currently collapsed (their children hidden) in a graph's tree; always per-graph. |
-| **Default framing** | The camera an untouched graph falls back to when there is no override or current camera: a readable 100% with the root anchored near the left and vertically centered. |
+| **Default framing** | The camera an untouched graph falls back to when there is no override or current camera: a fit of the whole drawing within the viewport, or — when that fit would fall below the legibility floor — the root anchored near the left and vertically centered. |
 | **Camera store** | The in-browser memory holding each graph's override and fold, plus the one shared current camera. |
 | **Stage title** | (Existing.) The stable tab label (`Markdown AST`, `Dialogue AST`, …) used as the store's per-graph key. |
 
@@ -133,12 +135,14 @@ tab has no graph and no camera, so it is skipped throughout.
 
 ### Default framing and the zoom toolbar
 
-The default framing anchors the root near the left edge and vertically centered at
-a readable 100%, so the reader starts at the root with its subtree filling the
-viewport rightward — rather than a whole-graph fit that shrinks large trees. It is
-applied once the tab's container has a real size (a just-shown tab reads zero until
-it lays out), retried per frame and capped, and conditional by a generation token so a
-stale retry cannot clobber a camera a later reveal has applied.
+The default framing fits the whole of what the stage draws within the viewport,
+kept clear of the panels floating over the canvas. Where that fit would fall below
+a legibility floor — a long script shrunk to an unreadable smudge — it anchors the
+root near the left edge, vertically centered, at the floor zoom instead, and the
+reader can zoom out further by hand. It is applied once the tab's container has a
+real size (a just-shown tab reads zero until it lays out), retried per frame and
+capped, and conditional by a generation token so a stale retry cannot clobber a
+camera a later reveal has applied.
 
 The zoom toolbar's ratio becomes a number input the reader types a percentage into
 (clamped to the zoom extent), alongside the `−`/`+` steppers and a **Revert** button
@@ -164,11 +168,11 @@ that restores the default framing and clears the graph's remembered position.
   and fold changes through callbacks as they happen, so the store is always current
   and a rebuild simply reads it — no snapshot-before-teardown step, and reader
   gestures are told apart from programmatic applies so only real adjustments pin.
-- **D6 — Root-centered default over shrink-to-fit.** A whole-graph fit makes large
-  trees tiny; anchoring the root at a readable 100% starts the reader where the
-  graph begins. The tradeoff — deep nodes start off screen — is acceptable because
-  the reader pans and zooms to explore, and a typed percentage plus Revert make
-  moving around and resetting easy.
+- **D6 — Fit the whole drawing, with a legibility floor.** An untouched graph
+  opens framed on everything it draws, so the reader sees the shape of the flow at
+  once. A fit that would shrink a long script below a legibility floor is refused:
+  the stage anchors the root at the floor zoom instead, and the reader zooms out
+  by hand. A typed percentage plus Revert make moving around and resetting easy.
 - **D7 — A pure store module for testability.** The hybrid memory is a
   dependency-free module covered by fast unit tests; the DOM/D3 glue that applies a
   view and reports adjustments stays in the Playwright-tested tree view and app,
@@ -185,7 +189,8 @@ that restores the default framing and clears the graph's remembered position.
   value, and reflecting the scale unless the input is focused.
 - **End-to-end (Playwright).** The apply-and-report glue lives in `tree-view.ts`
   and `app.ts`, exercised in a real browser:
-  - The default view frames the root in the left portion, near the vertical center.
+  - The default view fits the whole drawing within the viewport, dropping to a
+    root anchor only when the fit would fall below the legibility floor.
   - The zoom input reflects, sets, and reverts the zoom.
   - A stage keeps its zoom when you leave the tab and come back.
   - A graph keeps its zoom across a hot reload.
@@ -198,7 +203,8 @@ that restores the default framing and clears the graph's remembered position.
 - [x] `TreeView.applyView`, the `onCameraChange` / `onFoldChange` / `onRevert`
       hooks and initial camera/fold on `createTreeView`, with reader-gesture
       detection.
-- [x] Root-centered default framing (real-size retry, generation-token conditional).
+- [x] Fit-to-fit default framing with a legibility floor that falls back to a root
+      anchor (real-size retry, generation-token conditional).
 - [x] Zoom toolbar: editable percentage input and a Revert button.
 - [x] `runApp` records adjustments live and applies the store on reveal / rebuild.
 - [x] Vitest coverage for the store and the zoom controls.
