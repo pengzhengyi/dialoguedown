@@ -130,13 +130,13 @@ describe("createPlaybookView", () => {
     it("ticks the default speaker and leaves the others' cell empty", () => {
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
-        expect(rows[0].cells[2]?.textContent).toBe("");
-        expect(rows[1].cells[2]?.textContent).toBe("✓");
+        expect(rows[0].cells[3]?.textContent).toBe("");
+        expect(rows[1].cells[3]?.textContent).toBe("✓");
     });
 
     it("draws each tag as a capsule carrying the text to copy", () => {
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
-        const chip = rows[0].cells[3]?.querySelector<HTMLElement>(".dd-tag");
+        const chip = rows[0].cells[2]?.querySelector<HTMLElement>(".dd-tag");
 
         expect(chip?.dataset.copy).toBe("#role=guide");
         expect(chip?.classList.contains("dd-tag-custom")).toBe(true);
@@ -205,7 +205,7 @@ describe("createPlaybookView", () => {
         Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
-        rows[0].cells[3]
+        rows[0].cells[2]
             ?.querySelector<HTMLElement>(".dd-tag")
             ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
@@ -221,9 +221,9 @@ describe("createPlaybookView", () => {
         // Written with its `@`, exactly as a script references it.
         expect(rows[0].cells[1]?.textContent).toBe("@alice");
         // Written with its `#`, exactly as a script writes it and as the other two tabs show it.
-        expect(rows[0].cells[3]?.textContent).toBe("#role=guide");
+        expect(rows[0].cells[2]?.textContent).toBe("#role=guide");
         expect(rows[1].cells[1]?.textContent).toBe("");
-        expect(rows[1].cells[3]?.textContent).toBe("");
+        expect(rows[1].cells[2]?.textContent).toBe("");
     });
 
     it("lists every anchor a jump may name, with the node it lands on", () => {
