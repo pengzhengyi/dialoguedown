@@ -486,6 +486,8 @@ public sealed class GraphProjectionTests
             """);
 
         Assert.False(graph.Nests);
+        // The graph is projected after the transpiler, so `=>` is the jump the writer meant.
+        Assert.True(graph.ReadsDialogueMeaning);
     }
 
     [Fact]
