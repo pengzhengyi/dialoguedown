@@ -1,10 +1,14 @@
-# Implementation note: Playbook index navigation
+# Following an index in the Playbook
 
 > [!NOTE]
-> Status: **proposed** — not yet implemented. Extends the
-> [Playbook tab](./Playbook%20Tab.md) so a bare index in the serialized
-> playbook — a node reference or a speaker reference — is a link the reader can
-> follow to the node or speaker it names, without leaving the JSON.
+> Status: **implemented**. In the [Playbook tab](./Playbook%20Tab.md), a bare
+> index in the serialized JSON — a node reference or a speaker reference — is a
+> link the reader follows to the node or speaker it names, without leaving the
+> editor.
+>
+> The companion note [Jumping into the Playbook](./Jumping%20into%20the%20Playbook.md)
+> covers the other direction: from a summary table into the JSON. This one starts
+> from the JSON text itself.
 
 ## Table of contents
 
@@ -21,11 +25,11 @@
 
 ## Goal and scope
 
-The Playbook tab already lets a reader jump *from a summary table* into the
-JSON — click the entry-node row, land on that node. The JSON itself is still
-inert: it is full of bare integers that point somewhere — `"entry": 0`,
-`"target": 5`, `"speaker": 1`, an anchor's node — and following one means
-scrolling and counting by hand.
+[Jumping into the Playbook](./Jumping%20into%20the%20Playbook.md) lets a reader
+jump *from a summary table* into the JSON — click the entry-node row, land on that
+node. The JSON itself is still inert: it is full of bare integers that point
+somewhere — `"entry": 0`, `"target": 5`, `"speaker": 1`, an anchor's node — and
+following one means scrolling and counting by hand.
 
 This component makes each of those integers a link. Following it reveals the node
 or speaker it refers to, in the same editor, centered — the reading motion the
@@ -68,23 +72,23 @@ is the CodeMirror extension that connects them and the mark it paints.
 
 ## Functionality checklist
 
-- [ ] `referenceTypeAt(path, kinds)` reports whether a schema path ends at a
+- [x] `referenceTypeAt(path, kinds)` reports whether a schema path ends at a
       `nodeReference`, a `speakerReference`, or neither, by walking the bundled
       schema the same way the hover does.
-- [ ] `referenceKindAt(state, lineNumber)` classifies a rendered line: `"node"`,
+- [x] `referenceKindAt(state, lineNumber)` classifies a rendered line: `"node"`,
       `"speaker"`, or `null`, combining the line's schema path with its text.
-- [ ] A node's own `"id"` line is never classified as a reference.
-- [ ] `referenceRanges(state, from, to)` returns the digit spans to mark within
+- [x] A node's own `"id"` line is never classified as a reference.
+- [x] `referenceRanges(state, from, to)` returns the digit spans to mark within
       a range, each with its kind and value.
-- [ ] `playbookReferences()` marks every reference in the viewport with
+- [x] `playbookReferences()` marks every reference in the viewport with
       `dd-playbook-ref` and keeps the marks current as the reader scrolls.
-- [ ] A click on a reference mark reveals its definition, centered, and focuses
+- [x] A click on a reference mark reveals its definition, centered, and focuses
       the editor.
-- [ ] `F12` with the cursor on a reference line reveals its definition.
-- [ ] A reference whose target is absent from the document is left alone — no
+- [x] `F12` with the cursor on a reference line reveals its definition.
+- [x] A reference whose target is absent from the document is left alone — no
       jump, no error, the reader stays put.
-- [ ] The Playbook editor wires the extension in; no other tab changes.
-- [ ] `dd-playbook-ref` follows the page's light and dark themes.
+- [x] The Playbook editor wires the extension in; no other tab changes.
+- [x] `dd-playbook-ref` follows the page's light and dark themes.
 
 ## Interfaces and abstractions
 
@@ -93,14 +97,10 @@ is the CodeMirror extension that connects them and the mark it paints.
 | `referenceTypeAt(path, kinds) → "node" \| "speaker" \| null` | Read the schema: does this path end at a reference `$ref`, and to which list? Added beside `describeSchemaPath` in `playbook-schema.ts`, reusing its private `expand`/`step`. | `playbook-0.schema.json` |
 | `referenceKindAt(state, lineNumber) → "node" \| "speaker" \| null` | Classify one rendered line, excluding a node's own `"id"`. | `schemaPathAt`, `referenceTypeAt` |
 | `referenceRanges(state, from, to) → ReferenceRange[]` | The digit spans to mark within a document range, each `{ from, to, kind, value }`. Pure, so it is unit-tested without a view. | `referenceKindAt` |
-| `playbookReferences() → Extension` | The `ViewPlugin` that paints marks over the viewport, plus the `mousedown` handler that follows one. | `referenceRanges`, `playbook-jump` |
-| `playbookReferenceKeymap: readonly KeyBinding[]` | `F12` → Go to Definition from the cursor line. | `playbook-jump` |
-| `dd-playbook-ref` (CSS) | The mark's look: dotted underline and pointer, solid and accent-colored on hover. | `styles.css` |
-
-`referenceRanges` and the keymap resolver share one private helper that turns a
-classified line into a target line via `nodeLine` or `elementLine` from
-`playbook-jump`, so a click and a keypress can never disagree about where a
-reference leads.
+| `definitionLineFor(state, lineNumber) → number \| null` | The line a reference line points to, or `null` when it is not a reference or its target is absent. A click and `F12` both go through it, so they cannot disagree. Exported so it is unit-tested directly. | `referenceKindAt`, `nodeLine`, `elementLine` |
+| `playbookReferences() → Extension` | The `ViewPlugin` that paints marks over the viewport and carries the `mousedown` handler that follows one. | `referenceRanges`, `definitionLineFor` |
+| `playbookReferenceKeymap: readonly KeyBinding[]` | `F12` → Go to Definition from the cursor line. Exported apart from the extension so the editor orders it against its other bindings. | `definitionLineFor` |
+| `dd-playbook-ref` (CSS) | The mark's look: dotted underline and pointer, firming to solid and the link hue on hover. Carries a `title` so hovering the number also names the gesture. | `styles.css` |
 
 ## Key design decisions
 
@@ -140,11 +140,11 @@ so it answers the same at any scroll depth — the reasoning
 
 ### DD5 — Two ways in: a click, and `F12`
 
-The mark carries a dotted underline and a pointer cursor, so a reference *looks*
-followable; a plain click follows it. The editor is read-only, so a click on a
-digit has no other meaning to compete with — no `Ctrl` or `Cmd`
-gate, which would only hide the feature in a surface whose whole purpose is
-reading.
+The mark carries a dotted underline, a pointer cursor, and a `title` naming the
+gesture, so a reference *looks* followable; a plain click follows it. The editor
+is read-only, so a click on a digit has no other meaning to compete with — no
+`Ctrl` or `Cmd` gate, which would only hide the feature in a surface whose whole
+purpose is reading.
 
 `F12` is VS Code's **Go to Definition**, offered for the keyboard: with the
 cursor anywhere on a reference line, it follows that reference. It is bound on
@@ -178,9 +178,10 @@ scan for a case that barely arises.
   `describeSchemaPath` and sharing its private schema walk. No change to the
   hover.
 - **`playbook-references.ts`** is new: `referenceKindAt`, `referenceRanges`,
-  `playbookReferences()`, `playbookReferenceKeymap`.
+  `definitionLineFor`, `playbookReferences()`, `playbookReferenceKeymap`.
 - **`playbook-view.ts`** adds `playbookReferences()` to the editor's extensions
-  and spreads `playbookReferenceKeymap` into its `keymap.of([...])`. Two lines.
+  and spreads `playbookReferenceKeymap` in ahead of the defaults in its existing
+  `keymap.of([...])`.
 - **`styles.css`** gains the `.playbook-source .cm-content .dd-playbook-ref`
   rules, beside the existing `dd-jump-preview` rule for that pane.
 - **No .NET change.** Every input — the rendered text and the schema — is already
@@ -195,7 +196,8 @@ scan for a case that barely arises.
 | Vitest — `referenceTypeAt` | `entry`, `anchors/*`, each edge `target` by `kind`, a line's `speaker`, a node's `id` (still `"node"` at this layer), a non-reference number, and a path outside the format. |
 | Vitest — `referenceKindAt` | The same paths read off a rendered document, with `/id` now excluded and a non-reference line `null`. |
 | Vitest — `referenceRanges` | The digit spans in a slice of a playbook, their kinds and values; nothing outside the range; an empty result where there is nothing to mark. |
-| Vitest — the shared resolver | A classified line to its target line via `nodeLine`/`elementLine`; `null` when the target is absent. |
+| Vitest — `definitionLineFor` | A classified line to its target line via `nodeLine`/`elementLine`; `null` on an `"id"` line, a non-reference, and an absent target. |
+| Vitest — the extension in jsdom | The marks painted match `referenceRanges`; a click on a mark follows it; `F12` from the cursor line moves to the definition and does nothing off a reference. |
 | Playwright — marks | Reference digits carry `dd-playbook-ref`; a node's `"id"` and a plain `version` do not. |
 | Playwright — click | Clicking an edge `target` centers the node with that id — proven with a sparse id, as the table-jump test is. |
 | Playwright — `F12` | Cursor on a `speaker` reference, press F12, the speaker object is revealed. |
