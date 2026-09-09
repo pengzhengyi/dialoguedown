@@ -21,11 +21,18 @@ internal static class ScriptDisplayExtensions
         "an arrow and its link, and a default speaker filled on lines that name none.";
 
     public static DisplayGraph ToDisplayGraph(this ScriptDocument document, string source) =>
-        GraphWalk.Walk<object>(document, new DialogueAstProjection(source));
+        GraphWalk.Walk<object>(document, new DialogueAstProjection(source)) with
+        {
+            ReadsDialogueMeaning = true,
+        };
 
     public static DisplayGraph ToDisplayGraph(this DesugaredScriptDocument document, string source) =>
         GraphWalk.Walk<object>(
-            document.Document, new DialogueAstProjection(source, DesugaredTitle, DesugaredDescription));
+            document.Document,
+            new DialogueAstProjection(source, DesugaredTitle, DesugaredDescription)) with
+        {
+            ReadsDialogueMeaning = true,
+        };
 
     /// <summary>
     /// A placeholder for the Desugared AST stage when the compile halted before desugaring, so the
