@@ -23,6 +23,9 @@ public static class Corpora
     /// <summary>Gets the readable half, read as cases rather than as files.</summary>
     public static ReadableCorpus Readable { get; } = new(ReadableFolder);
 
+    /// <summary>Gets the playable half, read as cases rather than as files.</summary>
+    public static PlayableCorpus Playable { get; } = new(PlayableFolder);
+
     /// <summary>Both halves, for the checks that hold across the whole corpus.</summary>
     /// <returns>Each half, as a folder of cases.</returns>
     public static IEnumerable<CorpusFolder> Halves() => [ReadableFolder, PlayableFolder];
