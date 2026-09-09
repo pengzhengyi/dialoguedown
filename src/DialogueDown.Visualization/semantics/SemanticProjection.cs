@@ -49,6 +49,7 @@ internal sealed class SemanticProjection
         var index = DialogueTreeIndex.Build(model.Desugared);
         return graph with
         {
+            ReadsDialogueMeaning = true,
             Tables =
             [
                 SpeakerTable(index, model),
@@ -86,7 +87,7 @@ internal sealed class SemanticProjection
         return new SemanticTable(
             "Speakers", ["Name", "@id", "Tags", "Default"], rows, "No speakers.")
         {
-            FacetColumns = ["Default"],
+            FacetColumns = ["Default", "Tags"],
         };
     }
 

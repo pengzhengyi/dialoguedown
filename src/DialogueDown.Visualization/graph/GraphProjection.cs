@@ -76,6 +76,7 @@ internal sealed class GraphProjection
             // A child edge here is the spanning tree the drawing is laid out with — the flow, not
             // what contains what. Every node's span already covers its own text.
             Nests = false,
+            ReadsDialogueMeaning = true,
         };
     }
 

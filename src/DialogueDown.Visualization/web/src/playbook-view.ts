@@ -227,13 +227,16 @@ function headerTable(metadata: PlaybookMetadataView | undefined): SemanticTable 
 }
 
 /**
- * The playbook's speaker table: who can speak, the id a runtime looks them up by, which one owns
- * an unprefixed line, and the tags a host reads for portraits or voices.
+ * The playbook's speaker table: who can speak, the id a runtime looks them up by, the tags a host
+ * reads for portraits or voices, and which one owns an unprefixed line.
+ *
+ * The columns are in the Semantic Model tab's order, so a reader who has learned one table reads
+ * the other the same way.
  */
 function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
     return {
         title: "Speakers",
-        columns: ["Name", "Id", "Default", "Tags"],
+        columns: ["Name", "@id", "Tags", "Default"],
         rows: speakers.map((speaker, index) => ({
             cells: [
                 // The anonymous speaker is the one an unprefixed line belongs to. Its
@@ -247,13 +250,14 @@ function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
                 // Written with its `@`, exactly as a script references it and as the other two
                 // tabs show it — and copyable, so a writer can lift it straight into a line.
                 { text: speaker.id == null ? "" : `@${speaker.id}`, copyable: true },
-                { text: speaker.default ? "✓" : "" },
                 { text: speaker.tags.map(tagLabel).join(" "), tags: speaker.tags },
+                { text: speaker.default ? "✓" : "" },
             ],
         })),
         emptyText: "This playbook has no speakers.",
-        // Which speaker owns an unprefixed line is the question worth filtering on.
-        facetColumns: ["Default"],
+        // Which speaker owns an unprefixed line, and which carry a given tag, are the questions
+        // worth filtering on.
+        facetColumns: ["Default", "Tags"],
     };
 }
 

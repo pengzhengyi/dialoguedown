@@ -323,6 +323,98 @@ describe("createTablePanel — faceted filters", () => {
     });
 });
 
+/** A speaker table whose Tags column is faceted — a speaker carries zero or more tags. */
+function tagFacetTable(): SemanticTable {
+    const tag = (name: string, value?: string) => ({ name, value, reserved: false });
+    return {
+        title: "Speakers",
+        columns: ["Name", "Tags"],
+        emptyText: "No speakers.",
+        facetColumns: ["Tags"],
+        rows: [
+            {
+                cells: [
+                    { text: "Guide" },
+                    { text: "#wise #role=host", tags: [tag("wise"), tag("role", "host")] },
+                ],
+            },
+            {
+                cells: [
+                    { text: "Merchant" },
+                    { text: "#role=merchant", tags: [tag("role", "merchant")] },
+                ],
+            },
+            { cells: [{ text: "Ghost" }, { text: "", tags: [] }] },
+        ],
+    };
+}
+
+describe("createTablePanel — tag facet", () => {
+    beforeEach(() => {
+        document.body.innerHTML = "";
+    });
+
+    it("offers each individual tag as a facet value, not the joined cell text", () => {
+        const panel = createTablePanel(tagFacetTable());
+        const control = panel.querySelector<HTMLButtonElement>(".th-facet")!;
+
+        (control as unknown as { _tippy: { show: () => void } })._tippy.show();
+        expect(
+            [...document.querySelectorAll(".facet-popover .facet-option span")].map(
+                (s) => s.textContent,
+            ),
+        ).toEqual(["All", "#wise", "#role=host", "#role=merchant"]);
+    });
+
+    it("keeps a row that carries the chosen tag among several, and clears with All", () => {
+        const panel = createTablePanel(tagFacetTable());
+
+        chooseFacet(panel, "#wise"); // only Guide has #wise, and it has another tag too
+        expect(firstColumn(panel)).toEqual(["Guide"]);
+
+        chooseFacet(panel, "#role=merchant");
+        expect(firstColumn(panel)).toEqual(["Merchant"]);
+
+        chooseFacet(panel, ""); // All
+        expect(firstColumn(panel)).toEqual(["Guide", "Merchant", "Ghost"]);
+    });
+
+    it("leaves a single-value facet column matching exactly", () => {
+        // A table with both a plain facet and a tag facet: the plain one is unaffected.
+        const table: SemanticTable = {
+            title: "Speakers",
+            columns: ["Name", "Default", "Tags"],
+            emptyText: "No speakers.",
+            facetColumns: ["Default", "Tags"],
+            rows: [
+                {
+                    cells: [
+                        { text: "Guide" },
+                        { text: "" },
+                        { text: "#wise", tags: [{ name: "wise", reserved: false }] },
+                    ],
+                },
+                { cells: [{ text: "Narrator" }, { text: "✓" }, { text: "", tags: [] }] },
+            ],
+        };
+        const panel = createTablePanel(table);
+        const [defaultFacet, tagFacet] = panel.querySelectorAll<HTMLButtonElement>(".th-facet");
+
+        (defaultFacet as unknown as { _tippy: { show: () => void } })._tippy.show();
+        const chooseIn = (value: string): void => {
+            const radio = document.querySelector<HTMLInputElement>(
+                `.facet-popover input[value="${value}"]`,
+            )!;
+            radio.checked = true;
+            radio.dispatchEvent(new Event("change"));
+        };
+        chooseIn("✓");
+        expect(firstColumn(panel)).toEqual(["Narrator"]);
+
+        expect(tagFacet.getAttribute("aria-label")).toBe("Filter by Tags");
+    });
+});
+
 /** The match toggle button (Match case / Match whole word) by its accessible label. */
 function toggle(panel: HTMLElement, label: string): HTMLButtonElement {
     return panel.querySelector<HTMLButtonElement>(`.dd-search-toggle[aria-label="${label}"]`)!;

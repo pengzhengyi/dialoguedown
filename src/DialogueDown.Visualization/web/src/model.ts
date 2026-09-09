@@ -134,6 +134,12 @@ export interface Stage {
      */
     nests?: boolean;
     /**
+     * Whether this stage has read Dialogue meaning into the document, so `=>` renders as the jump
+     * ligature the writer meant rather than two characters of text. True from the Dialogue AST
+     * on; absent (falsy) for the Markdown AST and for a stage of unknown provenance.
+     */
+    readsDialogueMeaning?: boolean;
+    /**
      * Present when the stage's artifact was not produced (a halted compile). The stage
      * renders as a disabled tab; `nodes`/`edges` are empty.
      */

@@ -42,20 +42,12 @@ import { ellipsize, escapeHtml } from "./text";
 import { hideArrivalNote, showArrivalNote } from "./arrival-note";
 
 /**
- * The stages that have read Dialogue meaning into the document, and so render `=>` as the jump
- * ligature the writer meant.
- *
- * Markdown AST is deliberately absent: there `=>` is still two characters of text. The list is
- * opt-in rather than "everything but Markdown AST" because a stage of unknown provenance — one a
- * host adds — has not interpreted anything, and must not be assumed to have.
+ * Whether a stage renders `=>` as the jump ligature the writer meant rather than two characters
+ * of text. The stage declares it (a payload flag the projections set once the transpiler has read
+ * Dialogue meaning); the Markdown AST does not, and a stage of unknown provenance — one a host
+ * adds — has interpreted nothing, so it is left as plain text.
  */
-const JUMP_AWARE_STAGE_TITLES = new Set([
-    "Dialogue AST",
-    "Desugared AST",
-    "Semantic Model",
-    "Dialogue Graph",
-]);
-const recognizesJumps = (title: string): boolean => JUMP_AWARE_STAGE_TITLES.has(title);
+const recognizesJumps = (stage: Stage): boolean => stage.readsDialogueMeaning ?? false;
 import { setHelp, helpBody } from "./help";
 import { createProblemsPanel } from "./problems-panel";
 import { createDiagnosticSummary } from "./diagnostic-summary";
@@ -208,7 +200,7 @@ export function runApp(
         selectedNodeId = null;
         shownStage = stage;
         panel.showRegion(detail, text, {
-            recognizeJumps: recognizesJumps(stage.title),
+            recognizeJumps: recognizesJumps(stage),
         });
     }
 
@@ -610,7 +602,7 @@ export function runApp(
         // It is still a graph stage, so it reuses the tree view (camera memory, fold, full
         // screen) — only the surrounding layout differs.
         const isSemantic = stage.tables != null;
-        const recognizeJumps = recognizesJumps(stage.title);
+        const recognizeJumps = recognizesJumps(stage);
         if (isSemantic) section.classList.add("semantic-stage");
         let view: TreeView | null = null;
         let dispose = (): void => undefined;
