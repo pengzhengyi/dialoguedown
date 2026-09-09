@@ -493,3 +493,90 @@ test.describe("Playbook tab — following an index", () => {
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 });
+
+/** A playbook whose speakers carry distinguishable tags, so the Tags facet has something to do. */
+const tagged: Report = {
+    source: "# Market\n\nGuide: Hello.\n",
+    path: "/proj/scene.dialogue.md",
+    stages: [
+        ...SAMPLE_STAGES,
+        { title: "Dialogue Graph", description: "The runtime graph.", nodes: [], edges: [] },
+    ],
+    playbook: {
+        json: '{\n  "speakers": []\n}',
+        metadata: {
+            script: "scene.dialogue.md",
+            formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+            requires: ["core"],
+            uses: [],
+            entry: 0,
+            nodeCount: 1,
+            anchorCount: 0,
+        },
+        anchors: [],
+        speakers: [
+            {
+                name: "Guide",
+                default: false,
+                tags: [
+                    { name: "wise", reserved: false },
+                    { name: "role", value: "host", reserved: false },
+                ],
+            },
+            {
+                name: "Merchant",
+                default: false,
+                tags: [{ name: "role", value: "merchant", reserved: false }],
+            },
+            { name: "Ghost", default: false, tags: [] },
+        ],
+    },
+};
+
+test.describe("Playbook tab — the Speakers tag facet", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(writeReport(tagged));
+        await page.click(playbookTab);
+    });
+
+    const tagFacet = (page: Page) =>
+        panel(page, "Speakers").locator('th:has(.th-sort:text-is("Tags")) .th-facet');
+
+    test("offers each tag on its own, not the joined cell text", async ({ page }) => {
+        await tagFacet(page).click();
+
+        await expect(page.locator(".facet-popover .facet-option span")).toHaveText([
+            "All",
+            "#wise",
+            "#role=host",
+            "#role=merchant",
+        ]);
+    });
+
+    test("keeps the speakers that carry the chosen tag, and clears with All", async ({ page }) => {
+        const rows = panel(page, "Speakers").locator("tbody tr");
+
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value="#role=host"]').click();
+        await expect(rows).toHaveCount(1);
+        await expect(rows.locator("td").first()).toHaveText("Guide");
+
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value="#wise"]').click();
+        await expect(rows).toHaveCount(1);
+        await expect(rows.locator("td").first()).toHaveText("Guide");
+
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value=""]').click();
+        await expect(rows).toHaveCount(3);
+    });
+
+    test("has no accessibility violations with the tag facet chosen", async ({ page }) => {
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value="#role=merchant"]').click();
+        await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(1);
+
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
+});

@@ -182,9 +182,10 @@ public sealed class SemanticProjectionTests
             => [east](#the-market)
             """);
 
-        // Type (jumps) and Default (speakers) are categorical; the free-text tables carry none.
+        // Type (jumps) and Default plus Tags (speakers) are filterable; the free-text tables carry
+        // none. The Tags facet is multi-valued — the client offers one tag at a time.
         Assert.Equal(["Type"], Table(graph, "Jump resolutions").FacetColumns);
-        Assert.Equal(["Default"], Table(graph, "Speakers").FacetColumns);
+        Assert.Equal(["Default", "Tags"], Table(graph, "Speakers").FacetColumns);
         Assert.Empty(Table(graph, "Anchors").FacetColumns);
     }
 

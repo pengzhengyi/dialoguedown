@@ -252,8 +252,9 @@ function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
             ],
         })),
         emptyText: "This playbook has no speakers.",
-        // Which speaker owns an unprefixed line is the question worth filtering on.
-        facetColumns: ["Default"],
+        // Which speaker owns an unprefixed line, and which carry a given tag, are the questions
+        // worth filtering on.
+        facetColumns: ["Default", "Tags"],
     };
 }
 

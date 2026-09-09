@@ -86,7 +86,7 @@ internal sealed class SemanticProjection
         return new SemanticTable(
             "Speakers", ["Name", "@id", "Tags", "Default"], rows, "No speakers.")
         {
-            FacetColumns = ["Default"],
+            FacetColumns = ["Default", "Tags"],
         };
     }
 
