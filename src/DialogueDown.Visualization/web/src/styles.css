@@ -1726,6 +1726,22 @@ g.node.entity-highlight text.label {
     border-radius: 2px;
 }
 
+/* An index that points elsewhere in the playbook — a node or a speaker reference. It keeps the
+   number's own hue so it does not shout, and wears a dotted underline that firms up on hover to
+   say it can be followed (by click, or F12 from its line). */
+.playbook-source .cm-content .dd-playbook-ref {
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-decoration-color: color-mix(in srgb, var(--json-number) 60%, transparent);
+    text-underline-offset: 2px;
+}
+
+.playbook-source .cm-content .dd-playbook-ref:hover {
+    text-decoration-style: solid;
+    text-decoration-color: var(--md-link, #0969da);
+    color: var(--md-link, #0969da);
+}
+
 /* A prominent caret and a readable selection in both themes (drawSelection draws its
    own cursor/selection, so the native caret-color above is only a fallback). */
 .source-pane .cm-cursor,

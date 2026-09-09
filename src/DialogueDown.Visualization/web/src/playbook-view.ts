@@ -37,6 +37,7 @@ import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
 import { tagLabel } from "./tag-chip";
 import { lineOf, revealLine, type PlaybookTarget } from "./playbook-jump";
+import { playbookReferences, playbookReferenceKeymap } from "./playbook-references";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -119,6 +120,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 bracketMatching(),
                 compactSearch(),
                 schemaHover(),
+                playbookReferences(),
                 EditorState.readOnly.of(true),
                 EditorView.contentAttributes.of({
                     "aria-label": "Compiled playbook",
@@ -128,7 +130,13 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 json(),
                 syntaxHighlighting(jsonHighlightStyle),
                 EditorView.lineWrapping,
-                keymap.of([...defaultKeymap, ...gotoLineKeymap, ...searchKeymap, ...foldKeymap]),
+                keymap.of([
+                    ...playbookReferenceKeymap,
+                    ...defaultKeymap,
+                    ...gotoLineKeymap,
+                    ...searchKeymap,
+                    ...foldKeymap,
+                ]),
             ],
         }),
     });
