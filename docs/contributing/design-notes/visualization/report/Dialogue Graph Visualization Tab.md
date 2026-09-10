@@ -251,6 +251,9 @@ caught by a number rather than by a reader.
   [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
 - **Cross-linking a divert to its scene.** Hovering a jump could highlight its
   target scene in the Semantic tab's tables, as the earlier stages already do.
-- **A stage saying whether it has read Dialogue meaning.** Whether `=>` renders as
-  a ligature is decided by matching stage titles. A flag on the stage would let a
-  host-added stage answer for itself instead of being guessed at by name.
+- **Routing a divert that now crosses scenes.** Giving every scene its own run of
+  rows, so no two bands can overlap, moves a scene away from whatever led into it.
+  The spanning-tree edge into a scene's first node is drawn as a plain curve with
+  no detour, so it is now longer and steeper than it was; a route for those edges,
+  like the corridor a reference edge already takes, is the next piece of work here.
+  The layout itself has its own note, *Region-Aware Graph Layout*.

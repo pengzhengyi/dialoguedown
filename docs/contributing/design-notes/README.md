@@ -248,6 +248,7 @@ and how a scene folds.
 | 13 | [Live Visualization — Node Inspector](./visualization/graph/Live%20Visualization%20-%20Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
 | 30 | [Live Visualization — Reverse Jump](./visualization/graph/Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
 | 37 | [Dialogue Graph — Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through, from a chevron separate from the band's own click | Implemented |
+| 48 | [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows after the tree layout, so no two scene bands can be drawn across each other | Implemented |
 
 #### Live session
 

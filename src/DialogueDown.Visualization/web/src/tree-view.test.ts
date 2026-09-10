@@ -372,6 +372,100 @@ describe("createTreeView — folding a scene", () => {
     });
 });
 
+/**
+ * A graph whose scenes the flow weaves through, as a branching script's does: the Market's own
+ * choice keeps one arm for itself and sends the other into the Forest, which fans out in three.
+ *
+ * Laid out by subtree extent alone, the Market's choice sinks towards the Forest's fan while the
+ * Forest's band reaches up to hold its first arm, and the two bands cross.
+ */
+function wovenStage(): Stage {
+    const line = (id: string, label: string, region?: string): DisplayNode => ({
+        id,
+        label,
+        attributes: [],
+        region,
+    });
+    return {
+        title: "Dialogue Graph",
+        description: "",
+        nodes: [
+            line("root", "Document"),
+            line("m1", "Which way?", "The Market"),
+            line("m2", "Mind the stalls", "The Market"),
+            line("f1", "Branches close in", "The Forest"),
+            line("f2", "A owl calls", "The Forest"),
+            line("f3", "The path forks", "The Forest"),
+            line("f4", "Something moves", "The Forest"),
+            line("h1", "Home at last", "The Hollow"),
+        ],
+        edges: [
+            { fromId: "root", toId: "m1", kind: "Child", category: "structure" },
+            { fromId: "m1", toId: "m2", kind: "Child", category: "choice" },
+            { fromId: "m1", toId: "f1", kind: "Child", category: "jump" },
+            { fromId: "m2", toId: "h1", kind: "Child", category: "jump" },
+            { fromId: "f1", toId: "f2", kind: "Child", category: "choice" },
+            { fromId: "f1", toId: "f3", kind: "Child", category: "choice" },
+            { fromId: "f1", toId: "f4", kind: "Child", category: "choice" },
+        ],
+        regions: [
+            { name: "The Market", kind: "Scene" },
+            { name: "The Forest", kind: "Scene" },
+            { name: "The Hollow", kind: "Scene" },
+        ],
+    };
+}
+
+/**
+ * The rows each band covers, named and in drawn order.
+ *
+ * Only the rows: jsdom lays no text out, so a measured label width is zero and a band's *width*
+ * degenerates. Rows are what the layout pass actually promises.
+ */
+function bandRows(view: { svg: SVGSVGElement }): { region: string; top: number; bottom: number }[] {
+    return [...view.svg.querySelectorAll<SVGGElement>("g.region")].map((band) => {
+        const rect = band.querySelector("rect.region-band")!;
+        const top = Number(rect.getAttribute("y"));
+        return {
+            region: band.querySelector("text.region-name")!.textContent ?? "",
+            top,
+            bottom: top + Number(rect.getAttribute("height")),
+        };
+    });
+}
+
+describe("createTreeView — scenes never share rows with one another", () => {
+    it("gives each scene a run of rows clear of every other scene's", () => {
+        const rows = bandRows(createTreeView(wovenStage(), () => {})).sort(
+            (left, right) => left.top - right.top,
+        );
+
+        expect(rows).toHaveLength(3);
+        for (let index = 1; index < rows.length; index++) {
+            expect(rows[index].top).toBeGreaterThan(rows[index - 1].bottom);
+        }
+    });
+
+    it("stacks the scenes in the order the legend names them", () => {
+        const rows = bandRows(createTreeView(wovenStage(), () => {})).sort(
+            (left, right) => left.top - right.top,
+        );
+
+        expect(rows.map((row) => row.region)).toEqual(["The Market", "The Forest", "The Hollow"]);
+    });
+
+    it("keeps the scenes clear of one another with one of them folded away", () => {
+        const view = createTreeView(wovenStage(), () => {});
+
+        foldScene(view, "The Forest");
+
+        const rows = bandRows(view).sort((left, right) => left.top - right.top);
+        for (let index = 1; index < rows.length; index++) {
+            expect(rows[index].top).toBeGreaterThan(rows[index - 1].bottom);
+        }
+    });
+});
+
 describe("createTreeView — the fold control keeps to its own corner", () => {
     it("dresses the band and the control in classes of their own", () => {
         // The stylesheet paints a folded band with a broken edge. A rule reaching every rect
