@@ -109,7 +109,7 @@ flowchart LR
 | 1 | [Dialogue Runtime Architecture](./runtime/Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Partially implemented |
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
 | 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
-| 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Proposed |
+| 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
 
 ### Language constructs
 
