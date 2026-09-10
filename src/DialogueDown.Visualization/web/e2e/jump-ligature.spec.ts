@@ -7,13 +7,19 @@ const url = writeReport({
     stages: SAMPLE_STAGES,
 });
 
-function jumpStage(title: string, label: "Jump indicator" | "Jump", semantic = false): Stage {
+function jumpStage(
+    title: string,
+    label: "Jump indicator" | "Jump",
+    semantic = false,
+    readsDialogueMeaning = false,
+): Stage {
     const prefix = title.toLowerCase().replaceAll(" ", "-");
     const assembled = label === "Jump";
     const lineSource = "=> [Go](#go)\nGuide: Leave.";
     return {
         title,
         description: `${title} jump preview fixture.`,
+        readsDialogueMeaning,
         nodes: [
             {
                 id: `${prefix}-root`,
@@ -63,11 +69,13 @@ function jumpStage(title: string, label: "Jump indicator" | "Jump", semantic = f
 const graphUrl = writeReport({
     source: "=> [Go](#go)\n",
     stages: [
+        // "Parse Tree" and "Custom Tables" are stages of unknown provenance — they have not read
+        // Dialogue meaning, so `=>` stays two characters of text.
         jumpStage("Parse Tree", "Jump"),
         jumpStage("Custom Tables", "Jump", true),
-        jumpStage("Dialogue AST", "Jump indicator"),
-        jumpStage("Desugared AST", "Jump"),
-        jumpStage("Semantic Model", "Jump", true),
+        jumpStage("Dialogue AST", "Jump indicator", false, true),
+        jumpStage("Desugared AST", "Jump", false, true),
+        jumpStage("Semantic Model", "Jump", true, true),
     ],
 });
 

@@ -132,6 +132,49 @@ function describedIn(nodes: readonly SchemaNode[]): { description: string } | un
     return found == null ? undefined : { description: found.description as string };
 }
 
+/** What a schema path ends at, when it ends at one of the format's two reference kinds. */
+export type ReferenceType = "node" | "speaker";
+
+/**
+ * Whether a schema path ends at a reference — a `nodeReference` or a `speakerReference` — and to
+ * which list.
+ *
+ * The playbook schema tags every place a runtime resolves an index: `entry`, every `anchors/*`,
+ * an edge's `target`, and a line's `speaker` all `$ref` one of the two reference definitions.
+ * Reading that tag off the schema, rather than listing the paths here, keeps this true as the
+ * format grows a new reference site.
+ *
+ * The walk is `describeSchemaPath`'s: step each segment, following the document's own `kind` tag
+ * through a tagged union. The `$ref` is read at the path's end from the *unresolved* schema node,
+ * before `expand` would dereference it away.
+ */
+export function referenceTypeAt(
+    path: string,
+    kinds: readonly (string | undefined)[] = [],
+): ReferenceType | null {
+    const segments = path.split("/").filter((segment) => segment.length > 0);
+    if (segments.length === 0) return null;
+    let frontier: unknown[] = [schema];
+    for (const [index, segment] of segments.entries()) {
+        const next = expand(frontier, kinds[index]).flatMap((node) => step(node, segment));
+        if (next.length === 0) return null;
+        frontier = next;
+    }
+    for (const node of frontier) {
+        const ref = dereferenceName(node);
+        if (ref === "nodeReference") return "node";
+        if (ref === "speakerReference") return "speaker";
+    }
+    return null;
+}
+
+/** The `$defs` name a schema node refers to, when it is a bare `$ref`. */
+function dereferenceName(node: unknown): string | undefined {
+    if (typeof node !== "object" || node === null) return undefined;
+    const ref = (node as SchemaNode).$ref;
+    return typeof ref === "string" ? ref.split("/").pop() : undefined;
+}
+
 /** A property line, capturing its indentation and name: `  "requires": [`. */
 const PROPERTY = /^(\s*)"((?:[^"\\]|\\.)*)"\s*:/;
 /** The discriminator line the format tags a variant with: `  "kind": "line",`. */

@@ -27,6 +27,15 @@ describe("setHelp", () => {
         expect(html).toContain("collapse or expand");
     });
 
+    it("shows Playbook help, including how to follow an index", () => {
+        setHelp("playbook");
+        expect(document.querySelector("button")!.getAttribute("title")).toContain("Playbook");
+        const html = document.getElementById("help-content")!.innerHTML;
+        expect(html).toContain("read-only");
+        expect(html).toContain("Following an index");
+        expect(html).toContain("F12");
+    });
+
     it("shows Explorer help on the empty state", () => {
         setHelp("explorer");
         expect(document.querySelector("button")!.getAttribute("title")).toContain("Explorer");

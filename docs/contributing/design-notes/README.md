@@ -216,6 +216,7 @@ Configuration tab and the folding contract every surface shares.
 | 44 | [Tag Capsules](./visualization/report/Tag%20Capsules.md) | One capsule draws a tag on every surface: kind in the fill, identity in a leading dot | Implemented |
 | 45 | [Copyable Identifiers](./visualization/report/Copyable%20Identifiers.md) | An `@id`, an anchor, and a jump target copy on click; prose does not | Implemented |
 | 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
+| 47 | [Following an Index in the Playbook](./visualization/report/Following%20an%20Index%20in%20the%20Playbook.md) | A node or speaker reference in the JSON is a link: click it, or press F12, to reveal the definition it names | Implemented |
 
 #### Source editor
 

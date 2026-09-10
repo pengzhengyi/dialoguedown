@@ -18,7 +18,7 @@ import {
     type Table,
 } from "@tanstack/table-core";
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
-import { renderTags } from "./tag-chip";
+import { renderTags, tagLabel } from "./tag-chip";
 import { wireClickToCopy } from "./copy-on-click";
 
 // The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
@@ -198,13 +198,14 @@ function buildInteractiveTable(
     element.append(thead, tbody);
 
     // One column per source column; each reads its cell's text so sort and filter act on what the
-    // reader sees. A categorical column also matches by exact value, for its faceted filter.
+    // reader sees. A faceted column matches a chosen value exactly — or, when its cells hold a
+    // tag list, matches a row that carries that one tag among several.
     const columns: ColumnDef<SemanticFeatures, SemanticRow>[] = table.columns.map(
         (name, index) => ({
             id: name,
             header: name,
             accessorFn: (row) => row.cells[index]?.text ?? "",
-            filterFn: facetNames.has(name) ? "equalsString" : "includesString",
+            filterFn: facetFilterFn(table.rows, index, facetNames.has(name)),
         }),
     );
 
@@ -410,18 +411,53 @@ function ariaSort(direction: false | "asc" | "desc" | undefined): string {
     return "none";
 }
 
-/** The distinct non-empty cell texts of one column, in first-seen order. */
+/** Whether a column's cells hold tag lists rather than plain text, so its facet is multi-valued. */
+function isTagColumn(rows: readonly SemanticRow[], index: number): boolean {
+    return rows.some((row) => (row.cells[index]?.tags?.length ?? 0) > 0);
+}
+
+/**
+ * The distinct values a column's facet offers, in first-seen order. A tag column contributes each
+ * tag's own label, so a reader filters by one tag at a time; any other column contributes the
+ * text its cells show.
+ */
 function distinctValues(rows: readonly SemanticRow[], index: number): string[] {
     const seen = new Set<string>();
     const values: string[] = [];
+    const add = (value: string): void => {
+        if (value !== "" && !seen.has(value)) {
+            seen.add(value);
+            values.push(value);
+        }
+    };
+    const tagColumn = isTagColumn(rows, index);
     for (const row of rows) {
-        const text = row.cells[index]?.text ?? "";
-        if (text !== "" && !seen.has(text)) {
-            seen.add(text);
-            values.push(text);
+        const cell = row.cells[index];
+        if (tagColumn) {
+            for (const tag of cell?.tags ?? []) add(tagLabel(tag));
+        } else {
+            add(cell?.text ?? "");
         }
     }
     return values;
+}
+
+/**
+ * The filter a column uses. A free column matches by substring; a faceted column matches a chosen
+ * value exactly — unless its cells hold a tag list, in which case a row matches when any of its
+ * tags is the chosen one.
+ */
+function facetFilterFn(
+    rows: readonly SemanticRow[],
+    index: number,
+    faceted: boolean,
+): FilterFn<SemanticFeatures, SemanticRow> | "equalsString" | "includesString" {
+    if (!faceted) return "includesString";
+    if (!isTagColumn(rows, index)) return "equalsString";
+    return (row, _columnId, value) =>
+        ((row.original as SemanticRow).cells[index]?.tags ?? []).some(
+            (tag) => tagLabel(tag) === value,
+        );
 }
 
 /** The single "no matches" row shown when a filter hides every row. */

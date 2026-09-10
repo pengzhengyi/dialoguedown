@@ -329,6 +329,9 @@ test.describe("Playbook tab — a compiled script", () => {
         await page.click("#help-toggle");
 
         await expect(page.locator("#help-content")).toContainText("read-only");
+        // The reference links and their keyboard shortcut are documented here.
+        await expect(page.locator("#help-content")).toContainText("Following an index");
+        await expect(page.locator("#help-content")).toContainText("F12");
     });
 });
 
@@ -342,5 +345,238 @@ test.describe("Playbook tab — a script that did not compile", () => {
         await expect(page.locator(".playbook-empty-state")).toContainText(
             "compiles without errors",
         );
+    });
+});
+
+/**
+ * A playbook whose references sit far from what they name: node 0 speaks as speaker 1 and its
+ * edge targets node 9 — the last of many, and a sparse id, so a jump that counted array
+ * positions would land wrong.
+ */
+const LINKABLE_JSON = `{
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ]
+  },
+  "entry": 0,
+  "script": "scene.dialogue.md",
+  "anchors": {
+    "the-end": 9
+  },
+  "speakers": [
+    {
+      "name": "Guide"
+    },
+    {
+      "name": "Bob"
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 1,
+      "out": [
+        {
+          "kind": "succession",
+          "target": 9
+        }
+      ]
+    },
+${Array.from({ length: 8 }, (_, i) => `    {\n      "kind": "end",\n      "id": ${i + 1}\n    },`).join("\n")}
+    {
+      "kind": "end",
+      "id": 9
+    }
+  ]
+}`;
+
+const linkable: Report = {
+    source: "# Market\n\nGuide: Hello.\n",
+    path: "/proj/scene.dialogue.md",
+    stages: [
+        ...SAMPLE_STAGES,
+        { title: "Dialogue Graph", description: "The runtime graph.", nodes: [], edges: [] },
+    ],
+    playbook: {
+        json: LINKABLE_JSON,
+        metadata: {
+            script: "scene.dialogue.md",
+            formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+            requires: ["core"],
+            uses: [],
+            entry: 0,
+            nodeCount: 10,
+            anchorCount: 1,
+        },
+        anchors: [{ name: "the-end", node: 9 }],
+        speakers: [
+            { name: "Guide", default: false, tags: [] },
+            { name: "Bob", default: false, tags: [] },
+        ],
+    },
+};
+
+/** The `[from, to)` text of the line CodeMirror currently marks active, trimmed. */
+const activeLine = (page: Page) =>
+    page.evaluate(
+        () =>
+            document.querySelector(".playbook-source .cm-activeLine")?.textContent?.trim() ?? null,
+    );
+
+/** A reference mark on the line that reads `text`, e.g. `"target": 9`. */
+const refOnLine = (page: Page, text: string) =>
+    page.locator(".playbook-source .cm-line", { hasText: text }).locator(".dd-playbook-ref");
+
+test.describe("Playbook tab — following an index", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(writeReport(linkable));
+        await page.click(playbookTab);
+    });
+
+    test("marks a reference's digits, but never a node's own id", async ({ page }) => {
+        await expect(refOnLine(page, '"entry": 0')).toHaveText("0");
+        await expect(refOnLine(page, '"speaker": 1')).toHaveText("1");
+        await expect(refOnLine(page, '"target": 9')).toHaveText("9");
+        await expect(refOnLine(page, '"the-end": 9')).toHaveText("9");
+
+        // The definition a jump lands on is not itself a link, and neither is a plain number.
+        await expect(refOnLine(page, '"id": 9')).toHaveCount(0);
+        await expect(refOnLine(page, '"version": 0')).toHaveCount(0);
+    });
+
+    test("clicking an edge target reveals the node with that id, not that position", async ({
+        page,
+    }) => {
+        await refOnLine(page, '"target": 9').click();
+
+        // Node 9 is the tenth element; its opener is the revealed line, and it is on screen.
+        expect(await activeLine(page)).toBe("{");
+        const framed = await page.evaluate(() => {
+            const scroller = document.querySelector(".playbook-source .cm-scroller")!;
+            const line = document.querySelector(".playbook-source .cm-activeLine")!;
+            const a = scroller.getBoundingClientRect();
+            const b = line.getBoundingClientRect();
+            return b.top >= a.top && b.bottom <= a.bottom;
+        });
+        expect(framed).toBe(true);
+
+        // The line below the opener is node 9's own — the definition, found by id.
+        const below = await page.evaluate(() => {
+            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
+            return lines[at + 2]?.textContent ?? null;
+        });
+        expect(below).toContain('"id": 9');
+    });
+
+    test("F12 with the cursor on a reference line follows it", async ({ page }) => {
+        await page.locator(".playbook-source .cm-line", { hasText: '"speaker": 1' }).click();
+        await page.keyboard.press("F12");
+
+        // The second speaker's opening brace.
+        expect(await activeLine(page)).toBe("{");
+        const below = await page.evaluate(() => {
+            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
+            return lines[at + 1]?.textContent ?? null;
+        });
+        expect(below).toContain('"name": "Bob"');
+    });
+
+    test("has no accessibility violations with the marks present", async ({ page }) => {
+        await expect(refOnLine(page, '"target": 9')).toBeVisible();
+
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
+});
+
+/** A playbook whose speakers carry distinguishable tags, so the Tags facet has something to do. */
+const tagged: Report = {
+    source: "# Market\n\nGuide: Hello.\n",
+    path: "/proj/scene.dialogue.md",
+    stages: [
+        ...SAMPLE_STAGES,
+        { title: "Dialogue Graph", description: "The runtime graph.", nodes: [], edges: [] },
+    ],
+    playbook: {
+        json: '{\n  "speakers": []\n}',
+        metadata: {
+            script: "scene.dialogue.md",
+            formatVersion: 0,
+            schemaUrl: "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+            requires: ["core"],
+            uses: [],
+            entry: 0,
+            nodeCount: 1,
+            anchorCount: 0,
+        },
+        anchors: [],
+        speakers: [
+            {
+                name: "Guide",
+                default: false,
+                tags: [
+                    { name: "wise", reserved: false },
+                    { name: "role", value: "host", reserved: false },
+                ],
+            },
+            {
+                name: "Merchant",
+                default: false,
+                tags: [{ name: "role", value: "merchant", reserved: false }],
+            },
+            { name: "Ghost", default: false, tags: [] },
+        ],
+    },
+};
+
+test.describe("Playbook tab — the Speakers tag facet", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(writeReport(tagged));
+        await page.click(playbookTab);
+    });
+
+    const tagFacet = (page: Page) =>
+        panel(page, "Speakers").locator('th:has(.th-sort:text-is("Tags")) .th-facet');
+
+    test("offers each tag on its own, not the joined cell text", async ({ page }) => {
+        await tagFacet(page).click();
+
+        await expect(page.locator(".facet-popover .facet-option span")).toHaveText([
+            "All",
+            "#wise",
+            "#role=host",
+            "#role=merchant",
+        ]);
+    });
+
+    test("keeps the speakers that carry the chosen tag, and clears with All", async ({ page }) => {
+        const rows = panel(page, "Speakers").locator("tbody tr");
+
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value="#role=host"]').click();
+        await expect(rows).toHaveCount(1);
+        await expect(rows.locator("td").first()).toHaveText("Guide");
+
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value="#wise"]').click();
+        await expect(rows).toHaveCount(1);
+        await expect(rows.locator("td").first()).toHaveText("Guide");
+
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value=""]').click();
+        await expect(rows).toHaveCount(3);
+    });
+
+    test("has no accessibility violations with the tag facet chosen", async ({ page }) => {
+        await tagFacet(page).click();
+        await page.locator('.facet-popover input[value="#role=merchant"]').click();
+        await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(1);
+
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 });
