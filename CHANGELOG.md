@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
+  node carries an edge kind it cannot act on, more than one succession, no arm where one is
+  required, or no way onward at all; the schema and the conformance corpus enforce the same as far
+  as they reach. This catches a hand-edited or tool-written playbook that would play differently
+  between two conformant runtimes. See
+  [Node outward shape](docs/contributing/design-notes/runtime/Node%20Outward%20Shape.md).
+
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
