@@ -102,9 +102,8 @@ identifiers.
 
 ## Open questions
 
-- **Column order.** The Semantic Model orders speakers *Name, @id, Tags, Default*; the Playbook
-  orders them *Name, Id, Default, Tags*. Aligning them would help a reader moving between tabs,
-  but it is a layout question rather than a copying one.
+- **Column order.** Resolved: both speaker tables now read *Name, @id, Tags, Default*, so a reader
+  moving between the Semantic Model and the Playbook meets the columns in the same order.
 - **A copy affordance a keyboard can reach.** A click is a mouse gesture; a cell is not focusable,
   so a keyboard user cannot copy one today. That is an accessibility gap worth its own pass,
   covering the tag capsules at the same time.
