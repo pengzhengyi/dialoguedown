@@ -263,12 +263,13 @@ runtime should explain itself in its own language, and pinning English would mak
 the corpus untranslatable. `because` documents the fixture for a human reading it.
 
 This half is not made redundant by `schema/playbook-0.schema.json`, and measuring
-that was worth the trouble: **seven of the nine refusals shipped are valid by the
-schema.** A schema constrains shape — `entry` is a non-negative integer — but not
-meaning, so it cannot know there are only two nodes to point at, which versions a
-build reads, or that a node's id must equal its position. Only the type error and
-the truncated file are its to catch. Conversely, every case the corpus *accepts*
-must also validate, or the format's two specifications disagree; CI checks that.
+that was worth the trouble: **eight of the twelve refusals shipped are valid by
+the schema.** A schema constrains shape — `entry` is a non-negative integer — but
+not meaning, so it cannot know there are only two nodes to point at, which
+versions a build reads, or that a node's id must equal its position. Only the
+type error, the truncated file, a foreign arm kind, and two successions on one
+node are its to catch. Conversely, every case the corpus *accepts* must also
+validate, or the format's two specifications disagree; CI checks that.
 
 ### Running a session
 

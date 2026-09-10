@@ -146,8 +146,9 @@ cap an array's length and require it to contain an edge of a given `kind`, so it
 catches a second `succession`, a missing arm, and a foreign arm kind. It cannot
 relate the *presence* of a `succession` to the *conditions* on the other edges,
 which is the "leads somewhere" half. So the reader states the whole rule and the
-schema mirrors the part it can; seven of the nine existing `readable/` refusals
-are already valid by the schema, and these will be too.
+schema mirrors the part it can. That is the split the rest of the corpus already
+shows: most `readable/` refusals are valid by the schema, and the reader is what
+makes them refusals.
 
 ```mermaid
 flowchart LR
