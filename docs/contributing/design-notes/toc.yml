@@ -158,6 +158,8 @@
       href: visualization/graph/Live Visualization - Node Inspector.md
     - name: Live Visualization — Reverse Jump
       href: visualization/graph/Live Visualization - Reverse Jump.md
+    - name: Region-Aware Graph Layout
+      href: visualization/graph/Region-Aware Graph Layout.md
   - name: Live session
     items:
     - name: Live Visualization — Explorer Toggle

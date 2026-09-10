@@ -26,6 +26,7 @@ import {
     type Point,
 } from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
+import { rankByRegion } from "./region-layout";
 import { foldRegions, regionNodeIdFor, type FoldedGraph } from "./region-fold";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
@@ -1270,9 +1271,40 @@ export function createTreeView(
 
     /* --- rendering --- */
 
+    /**
+     * Lift each scene onto rows of its own, so the band drawn behind it never crosses another's.
+     *
+     * The tree layout reads only the shape of the hierarchy, so two scenes whose flow crosses come
+     * back interleaved. This rewrites the row each node sits on — never its column — leaving the
+     * drawing's columns and reading direction exactly as the layout arranged them.
+     *
+     * The scenes are stacked in the order the stage names them, which is the order the legend
+     * lists, and that order does not change when a scene is folded away.
+     */
+    function placeRegionTiers(nodes: readonly TreeNode[]): void {
+        if (foldableRegions.length === 0) {
+            return;
+        }
+        const placed = rankByRegion(
+            nodes.map((node) => ({
+                id: node.data.id,
+                region: node.data.region,
+                row: node.x,
+            })),
+            foldableRegions,
+        );
+        for (const node of nodes) {
+            const row = placed.get(node.data.id);
+            if (row !== undefined) {
+                node.x = row;
+            }
+        }
+    }
+
     function update(): void {
         layout(root);
         const nodes = root.descendants() as TreeNode[];
+        placeRegionTiers(nodes);
         const positionById = new Map(nodes.map((node) => [node.data.id, node]));
 
         // Nodes are placed and measured before any line is drawn, because a line's shape depends

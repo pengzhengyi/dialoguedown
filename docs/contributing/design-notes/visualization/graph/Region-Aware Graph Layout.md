@@ -1,11 +1,11 @@
 # Region-Aware Graph Layout
 
 > [!NOTE]
-> Status: **proposed** — not yet implemented. The Dialogue Graph lays its nodes
-> out with a region-blind tree layout, so a scene's nodes interleave with another
-> scene's rows and the bands drawn behind them overlap. This note adds a layout
-> pass that gives every scene a contiguous band of rows, so a band is never drawn
-> over another.
+> Status: **implemented**. The Dialogue Graph used to lay its nodes out with a
+> region-blind tree layout, so a scene's rows interleaved with another scene's and
+> the bands drawn behind them overlapped. A pass now gives every scene a
+> contiguous **tier** of rows, so no band is ever drawn over another and no node
+> sits inside a band it does not belong to.
 >
 > Like the rest of the visualization tooling, this surface is "vibe-coded" (see
 > the visualization note's maturity caveat); the compiler stays the reviewed
@@ -28,37 +28,39 @@
 ## Goal and scope
 
 The Dialogue Graph draws a tinted **band** behind the nodes of each scene. A band
-is the bounding box of its nodes, and the layout that places those nodes does not
-know which scene a node belongs to. When flow crosses between scenes — a scene
-entered from partway through another, two scenes both diverting into a third — the
-scenes' rows interleave and their bounding boxes **overlap**: translucent tints
-stack into a third colour, and a node in the overlap reads as belonging to two
-scenes at once.
+is the padded bounding box of its nodes, and the layout that places those nodes
+does not know which scene a node belongs to. When flow crosses between scenes — a
+scene entered from partway through another, two scenes both diverting into a
+third — the scenes' rows interleave and their bounding boxes **overlap**:
+translucent tints stack into a third colour, and a node in the overlap reads as
+belonging to two scenes at once.
 
-Measured on `examples/highrise-fire.dialogue.md`, five band pairs overlap, several
-by more than 500 px.
+Measured on `examples/highrise-fire.dialogue.md` by reading the rendered
+`rect.region-band` geometry out of the live report and testing every pair for
+intersection: **five pairs overlap**, the largest by 550 × 176 px. That script is
+the regression baseline.
 
-This component makes the overlap **impossible**: after the tree layout runs, a
-re-ranking pass moves each node's row so that every scene occupies a contiguous,
-disjoint interval of rows. A band's bounding box is then guaranteed not to touch
-another's.
+This component makes the overlap **impossible**. After the tree layout runs, a
+re-ranking pass rewrites each node's row so that every scene owns a contiguous,
+disjoint interval of rows — a **tier** — and the nodes belonging to no scene own
+a tier of their own above them. Two bands then cannot intersect, and no node can
+fall inside a band that is not its own. Re-measured the same way with the pass in
+place, that script reports **no overlapping pair**.
 
 **In scope:**
 
-- A pure `rankByRegion` pass that reassigns node rows so scenes do not interleave.
+- A pure `rankByRegion` pass that reassigns rows so scenes never interleave.
 - Wiring it into the Dialogue Graph's `update()` between the tree layout and the
   render.
-- Keeping it correct under scene folding and node collapse.
+- Keeping it correct when a scene is folded.
 
 **Out of scope:**
 
-- The tree layout itself (`d3.tree`) — column/depth positions and the parent
-  fan-out shape are unchanged.
-- Routing the longer cross-scene edges the re-ranking produces — see
-  [DD5](#dd5--cross-scene-edges-stretch-and-that-is-acceptable).
-- The other stage tabs (Markdown AST, Dialogue AST, …) — they draw no bands, so
-  the pass is a no-op there and is not applied.
-- Any C# change: a node already carries its `Region`.
+- The tree layout itself (`d3.tree`) — depth/column positions are untouched.
+- Routing the cross-tier edges the re-ranking lengthens — see
+  [DD5](#dd5--cross-tier-tree-edges-stretch-and-have-no-detour).
+- The other stage tabs — they draw no bands, so the pass is not applied there.
+- Any compiler change: a node already carries its `Region`.
 
 ## Ubiquitous language
 
@@ -66,30 +68,33 @@ One concept, one name — here, in the code, and in the tests.
 
 | Term | Meaning |
 | --- | --- |
-| **Region** | A scene: the named area of the document a node sits in. `DisplayNode.region`. A node has zero or one. |
-| **Band** | The rounded rectangle drawn behind a region's nodes — its bounding box, from `bandsOf`. |
-| **Row** | A node's cross-axis position (`node.x` from `d3.tree`, drawn as the vertical coordinate). Depth is the other axis and is not touched. |
-| **Lane** | The contiguous interval of rows one region is given. Two lanes never overlap; that is the whole point. |
-| **Rank** | The order the lanes are stacked in, top to bottom. |
-| **Loose node** | A node with no region — the entry, a control line outside every scene, unreachable content. It is not in any lane. |
+| **Region** | A scene: the named area of the document a node sits in (`DisplayNode.region`). A node has zero or one. |
+| **Band** | The rounded rectangle drawn behind a region's nodes — its padded bounding box, from `bandsOf`. |
+| **Row** | A node's cross-axis position (`node.x` from `d3.tree`, drawn as the vertical coordinate). Depth is the other axis and is never touched. |
+| **Tier** | The contiguous interval of rows one region owns. Two tiers never overlap; that is the point. Deliberately **not** "lane" — `tree-view.ts` already uses *lane* for the corridors cross-links travel along below the drawing. |
+| **Prologue tier** | The one tier holding every node that belongs to no region. |
+| **Loose node** | A node with no region: the entry, and anything written before the first scene heading. |
 
 ## Functionality checklist
 
-- [ ] `rankByRegion(nodes)` returns a new row for every node such that each
+- [x] `rankByRegion(nodes)` returns a new row for every node such that each
       region's rows form a contiguous interval and no two intervals overlap.
-- [ ] Within a lane, nodes keep the **relative row order** the tree layout gave
-      them, so a scene still reads top-to-bottom as its flow does.
-- [ ] Lanes are stacked in **document order** — the order scenes first appear —
-      matching the legend and the anchor table.
-- [ ] The node pitch inside a lane is unchanged; lanes are separated by a fixed
-      gap that clears the band's header and padding.
-- [ ] Loose nodes keep their tree row and are not pushed into a lane; a lane's
-      interval is computed to leave room for any loose rows that fall inside it.
-- [ ] The Dialogue Graph applies the pass on every `update()`; no other stage
+- [x] Nodes the tree layout placed on the **same** row stay on the same row;
+      distinct rows keep their relative order within a tier.
+- [x] Scene tiers are stacked in the order `regionCounts(stage.nodes)` gives —
+      the same order the legend lists.
+- [x] Every loose node sits in the prologue tier, above every scene tier.
+- [x] Consecutive tiers are separated by more than `PAD_TOP + PAD_BOTTOM`, so the
+      **padded** bands clear each other, not merely the node rows.
+- [x] The row origin is preserved, so the drawing does not shift wholesale
+      relative to the root.
+- [x] A region named by the stage but with no drawn node consumes no vertical
+      space.
+- [x] The Dialogue Graph applies the pass on every `update()`; no other stage
       does.
-- [ ] Folding a scene, collapsing a node, and reverting all re-run the pass and
-      stay disjoint.
-- [ ] `bandsOf` output for a re-ranked graph has no overlapping bands — asserted.
+- [x] Folding a scene and reverting re-run the pass and stay disjoint.
+- [x] `bandsOf` output for a re-ranked graph has no intersecting bands, and no
+      node lies inside a band whose region it does not share — both asserted.
 
 ## How it works today
 
@@ -101,12 +106,21 @@ flowchart LR
     L --> N["render nodes at (y, x)"]
 ```
 
-`d3.tree` sets a node's row from its position among its siblings and the vertical
-extent of its subtree, with a `separation` that only widens the gap between
-different parents. **Region membership is never read.** A scene reached by a
-divert from deep inside another scene's subtree gets its rows wherever that
-subtree put them — interleaved with the other scene's — and `bandsOf`, which only
-sees final positions, draws two boxes that cross.
+`d3.tree` sets a node's row from its place among its siblings and the extent of
+its subtree. **Region membership is never read.** A scene reached by a divert
+from deep inside another scene's subtree takes its rows from wherever that
+subtree put them — interleaved with the other scene's — and `bandsOf`, which sees
+only final positions, draws two boxes that cross.
+
+Two properties of the real layout shape the design, and both are easy to get
+wrong from intuition:
+
+- **Many nodes share one row.** A straight run of dialogue is a single-child
+  chain, and `d3.tree` gives every node in it the *same* `x`. A scene of thirty
+  lines is one horizontal row marching rightwards across thirty columns, not
+  thirty rows.
+- **Rows are signed and centred on the root.** The root sits near `x = 0` with
+  descendants spread above (negative) and below (positive).
 
 ## Design
 
@@ -114,199 +128,262 @@ One pure function sits between the tree layout and the render.
 
 ```mermaid
 flowchart LR
-    L["d3.tree layout<br/>(node.x, node.y)"] --> RK["rankByRegion(nodes)<br/>to Map of id -> newRow"]
+    L["d3.tree layout<br/>(node.x, node.y)"] --> RK["rankByRegion(nodes, tierOrder)<br/>to Map of id to newRow"]
     RK --> AP["node.x = newRow"]
     AP --> R["drawRegions / render<br/>(unchanged)"]
 ```
 
-### The re-ranking pass
+### The pass
 
-Given the laid-out nodes (each with an `id`, a `region`, and a tree row `x`):
+A tier is built from the **distinct rows** its members occupy, not from its
+members, so nodes the tree layout put side by side on one row stay there.
 
-1. **Order the lanes.** Collect the distinct regions in document order (the order
-   their first node appears in the stage's node list — the same order the legend
-   and anchor table use).
-2. **Order nodes within a lane.** For each region, take its nodes sorted by their
-   current tree row. This keeps the scene reading the way the flow laid it out.
-3. **Lay the lanes down, top to bottom.** Walk a cursor down the row axis. For
-   each lane in rank order:
-   - place the lane's nodes at `cursor, cursor + PITCH, cursor + 2·PITCH, …`;
-   - advance the cursor past the lane, then by `LANE_GAP` (enough to clear the
-     band's `PAD_TOP`/`PAD_BOTTOM` and its name).
-4. **Place the loose nodes.** A loose node keeps its original tree row, mapped
-   through the same top-to-bottom compression so it lands near the lane it was
-   drawn beside. Where a loose row falls inside a lane's interval, the lane's
-   cursor is nudged so the two do not collide.
-5. **Return** a `Map<id, newRow>`; the caller assigns `node.x` from it and renders
-   as before.
-
-Depth (`node.y`) is never touched, so every node stays in its column and the
-parent-to-child fan-out keeps its shape; only the cross-axis order changes.
+1. **Order the tiers.** The prologue tier first, then one tier per region in
+   `regionCounts(stage.nodes)` order. A region with no drawn member is skipped.
+2. **Group by tier.** Each node joins its region's tier, or the prologue tier if
+   it has none.
+3. **Lay the tiers down.** Start a cursor at the drawing's original minimum row.
+   For each tier in order:
+   - take its members' **distinct** rows, ascending;
+   - map the *k*-th distinct row to `cursor + k · ROW_PITCH`, giving every node
+     on that row the same new row;
+   - advance the cursor past the tier's last row, then by `TIER_GAP`.
+4. **Return** a `Map<id, newRow>`; the caller assigns `node.x` from it.
 
 ```text
-rankByRegion(nodes):
-    laneOrder   = distinct regions, in first-appearance order
-    looseRows   = sorted rows of region-less nodes
-    cursor      = topmost row
-    newRow      = {}
+rankByRegion(nodes, tierOrder):
+    tiers  = [PROLOGUE] + tierOrder            # regions with no member are dropped
+    cursor = min(row of any node)              # keep the drawing's origin
+    newRow = {}
 
-    for region in laneOrder:
-        members = nodes with this region, sorted by current row
-        # keep room for any loose node whose row sits in this lane's span
-        cursor  = skipLooseRowsBefore(cursor, looseRows)
-        for m in members:
-            newRow[m.id] = cursor
-            cursor += PITCH
-        cursor += LANE_GAP
-
-    for n in region-less nodes:
-        newRow[n.id] = compressedPosition(n.row, laneOrder, ...)
+    for tier in tiers:
+        members = nodes in this tier
+        if members is empty: continue
+        rows    = distinct rows of members, ascending
+        for k, row in enumerate(rows):
+            place = cursor + k * ROW_PITCH
+            for n in members with this row:
+                newRow[n.id] = place
+        cursor = cursor + (len(rows) - 1) * ROW_PITCH + TIER_GAP
 
     return newRow
 ```
+
+Depth (`node.y`) is never read or written, so every node keeps its column.
+
+### Why the bands cannot touch
+
+`bandsOf` pads a region's box by `PAD_TOP` above and `PAD_BOTTOM` below. Two
+tiers' bands are therefore disjoint exactly when the gap between the last row of
+one and the first row of the next exceeds `PAD_TOP + PAD_BOTTOM` (26 + 18 = 44).
+`TIER_GAP` is defined as that sum plus air, and `region-bands.ts` exports the two
+pads so the invariant is derived rather than copied. The cursor only ever
+increases, so the tiers' row intervals are ordered and disjoint by construction;
+disjoint vertical intervals give non-intersecting axis-aligned boxes whatever the
+columns do.
 
 ## Interfaces and abstractions
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `rankByRegion(nodes: RankInput[]) -> Map<string, number>` | The pure pass. Reassigns rows so regions do not interleave. No d3, no DOM. New file `region-layout.ts`. | called from `tree-view.ts` `update()` |
+| `rankByRegion(nodes: RankInput[], tierOrder: readonly string[]) → Map<string, number>` | The pure pass. No d3, no DOM. New file `region-layout.ts`. | called from `tree-view.ts` `update()` |
 | `RankInput` | What the pass needs from a laid-out node: `{ id: string; region?: string; row: number }`. | `tree-view.ts` adapts `TreeNode` to this |
-| `tree-view.ts` `update()` | After `layout(root)`, when the stage has regions, overwrite each `node.x` from `rankByRegion`. | `rankByRegion`, `drawRegions` |
-| `bandsOf` (unchanged) | Bounding box per region. Fed disjoint positions, it now yields disjoint bands. | `drawRegions` |
+| `PAD_TOP`, `PAD_BOTTOM` | The band's vertical padding, newly **exported** from `region-bands.ts` so `TIER_GAP` is derived from the geometry it must clear. | `region-layout.ts` |
+| `tree-view.ts` `update()` | After `layout(root)`, when the stage has regions, overwrite each `node.x` from `rankByRegion`, passing `foldableRegions` as the tier order. | `rankByRegion`, `drawRegions` |
+| `bandsOf` (unchanged) | Padded bounding box per region. Fed disjoint rows, it yields disjoint bands. | `drawRegions` |
 
-The pass takes a plain array, not d3 nodes, so it is unit-tested with hand-built
-rows and never needs a rendered tree.
+The pass takes a plain array and a plain order, not d3 nodes, so it is unit-
+tested with hand-built rows and never needs a rendered tree.
 
 ## Key design decisions
 
 ### DD1 — Re-rank after the tree layout, do not replace it
 
-`d3.tree` gives the graph its readable shape: columns by depth, children fanning
-out below a parent. That is worth keeping. The pass runs **after** it and only
-rewrites the cross-axis coordinate, so the fan-out, the column pitch, and the
-depth of every node survive. A from-scratch region-aware layout (laying each
-scene out on its own and stitching the diverts back) was considered and rejected:
-it is a compound-graph layout problem, weeks of work, and it would throw away the
-flowchart read the current layout gets for free.
+`d3.tree` gives the graph its columns and its overall reading direction, and that
+is worth keeping. The pass runs **after** it and rewrites only the cross-axis
+coordinate, so depth, column pitch, and the left-to-right flow survive. A
+from-scratch region-aware layout — laying each scene out independently and
+stitching the diverts back — is a compound-graph problem, far more work, and it
+would throw away a readable result the current layout already produces.
 
-### DD2 — A lane per scene, stacked in document order
+### DD2 — A tier per region, ordered as the legend orders them
 
-Each scene is given one contiguous interval of rows — a lane — and no two lanes
-overlap, so `bandsOf` cannot produce overlapping boxes. The lanes are stacked in
-the order the scenes first appear in the document, which is the order the legend
-lists them and the order the anchor table shows them. A reader scanning the graph
-top to bottom meets the scenes in the same order as everywhere else.
+Each region owns one contiguous interval of rows, and no two intervals overlap,
+so `bandsOf` cannot produce intersecting boxes. The tiers are stacked in
+`regionCounts(stage.nodes)` order — first appearance in the stage's own node
+list, which is what the legend shows and what `tree-view.ts` already computes as
+`foldableRegions`. A reader scanning top to bottom meets the scenes in the order
+the legend lists them.
 
-The alternative — ordering lanes by where the tree layout happened to put each
-scene's first node — would track the flow more closely but would disagree with
-every other surface that lists scenes, for no clear gain.
+Three orders were rejected. `root.descendants()` (d3 pre-order) is *not* the same
+list and would disagree with the legend. The Semantic tab's anchor table is not an
+authority here at all: it belongs to another stage, is ordered by scene-tree
+pre-order, and omits scenes with no anchor.
 
-### DD3 — Within a lane, keep the tree's row order
+**Ordering the tiers by flow** — by where the layout first reaches each scene —
+was built and measured, and it is clearly worse. Tree rows are signed and centred
+on the root, so a scene down a deep branch takes a large negative row and floats
+to the top. On `examples/highrise-fire.dialogue.md` it stacks the scenes
+`Shelter in Place, Rescued, The Door, The Alarm, …` — the fourth scene first and
+the first scene fourth. Naming order stacks them exactly as the document and the
+legend read: `The Alarm, The Door, The Stairwell, The Elevator, Shelter in Place,
+Outside, Rescued`. Both orders remove every overlap; only one of them is
+readable.
 
-The pass does not re-lay-out a scene; it only lifts the scene's rows into their
-lane. Each scene's nodes stay in the relative order `d3.tree` gave them, so the
-scene still reads top-to-bottom as its own flow, and a node the reader was
-looking at is roughly where they left it.
+### DD3 — Order is preserved within a tier; spacing is normalised
 
-### DD4 — Loose nodes keep their row; lanes make room
+The pass keeps the relative order of a scene's distinct rows, and keeps nodes
+that shared a row together. It does **not** keep the tree's *spacing*: rows are
+re-laid at a uniform `ROW_PITCH`, so the proportional gaps `d3.tree` gives a
+scene — wider between big subtrees, zero along a chain — are lost, and a parent is
+no longer centred over its children.
 
-The entry, a scene-less control line, and unreachable content belong to no lane.
-Forcing them into one would misrepresent the document. They keep their tree row,
-compressed through the same top-to-bottom walk so they stay near the scene they
-were drawn beside, and a lane whose interval would land on a loose row is nudged
-down to clear it. This keeps loose nodes visible and roughly in place without
-giving them a band.
+That is a real cost, accepted deliberately. What a reader needs from a scene is
+which lines it holds and in what order; the exact vertical proportions inside it
+carry far less than the guarantee that the scene is one unbroken block. Uniform
+pitch is also what makes a tier's height predictable, which is what lets the
+tiers be stacked without measuring.
 
-### DD5 — Cross-scene edges stretch, and that is acceptable
+### DD4 — Loose nodes get their own tier at the top
 
-Lifting a scene into its lane moves its nodes away from the nodes in other scenes
-that lead into it, so a **divert** or a **jump** edge between two scenes gets
-longer and more diagonal. This is a real cost, taken deliberately: a jump already
-reads as "control goes elsewhere", the legend draws jump and divert edges in
-their own colours and dash patterns, and the alternative (routing those edges
-around the lanes) is a separate, larger piece of work. Succession and choice
-edges, which stay within a scene far more often, are barely affected.
+Every node with no region goes into one **prologue tier**, above every scene
+tier, ordered among themselves by their tree rows.
 
-### DD6 — Fold and collapse re-run the pass
+This is exact rather than approximate because of an invariant the projection
+already guarantees: `ScenesByNode` walks the nodes in document order and never
+clears the scene it is inside, so a node has no region **only if it precedes the
+first scene heading**. Loose nodes are a document prefix — the entry and whatever
+was written above the first `#` — not an arbitrary scatter. Putting them in one
+block at the top is therefore where they belong in the document too.
 
-Folding a scene contracts its nodes to one supernode; collapsing a node hides its
-subtree. Both rebuild the hierarchy and call `update()`, so `rankByRegion` runs
-again on whatever nodes are now drawn. A folded scene is a single node and its
-lane is one row — trivially disjoint. Nothing special is needed; a test pins it.
+Keeping each loose node near its original row was considered and rejected: a
+loose node's row can fall in the *middle* of a scene's interval, and a tier is
+contiguous by construction, so there is nowhere inside it to make room. The node
+would be drawn inside a band it does not belong to — the same defect this
+component exists to remove. The entry node makes this the default rather than an
+edge case: it is the hierarchy root, so `d3.tree` centres it over everything.
+
+### DD5 — Cross-tier tree edges stretch, and have no detour
+
+Lifting each scene into its own tier moves it away from the scenes that lead into
+it, so an edge crossing tiers gets longer and steeper. The exposure is uneven,
+and the important split is **`Child` versus `Reference`**, not divert versus
+succession:
+
+- A **`Reference`** edge already detours: it drops to a corridor below the whole
+  drawing and travels there, so a longer span costs it little.
+- A **`Child`** edge is drawn as a plain S-curve between its two ends, with no
+  detour. The spanning-tree edge into a scene's first node — often the very
+  divert that caused the interleave — is a `Child` edge, so after re-ranking it
+  becomes a near-vertical curve crossing one column horizontally and possibly
+  several tiers vertically, passing through whatever bands and labels lie between.
+
+Routing those edges is out of scope and would be its own component. Whether the
+cost is acceptable is settled by looking at it: see
+[the open question](#open-questions).
+
+### DD6 — Folding a scene re-runs the pass
+
+Folding contracts a scene's nodes to one supernode that still carries the
+region, so the folded scene is a tier of one row — trivially disjoint. Folding
+rebuilds the hierarchy and calls `update()`, so the pass simply runs again on
+whatever is now drawn; nothing special is needed.
+
+Node collapse does not arise here: the Dialogue Graph is not node-foldable,
+because every edge it draws carries a category.
 
 ### DD7 — The pass is Dialogue-Graph-only
 
-Only the Dialogue Graph draws region bands. The other stage tabs pass no regions,
-so `rankByRegion` would be a no-op, but rather than rely on that it is only wired
-in when the stage has regions. The pass lives in its own module so a future
-banded stage can opt in without copying it.
+Only the Dialogue Graph carries regions, so only it is banded. Rather than rely
+on the pass being a no-op elsewhere, it is applied only when the stage has
+regions. It lives in its own module so a future banded stage can opt in.
+
+### DD8 — No runtime overlap assertion in `bandsOf`
+
+A cheap development-only check inside `bandsOf` — test every pair of bands and
+complain on an intersection — was considered as a safety net and rejected.
+
+The invariant is structural, not statistical: the cursor only increases, and it
+increases by more than the padding, so disjointness follows from the construction
+rather than from luck. A pairwise scan would therefore never fire for a reason the
+tests do not already cover, and it would cost a quadratic scan on every `update()`
+— which runs on every pan, fold, and rebuild. The guarantee is asserted where
+assertions belong: against the pass directly, against a drawing rendered in jsdom,
+and against one rendered in a browser, each checked to fail without the pass.
 
 ## Error and boundary cases
 
 | Case | Behaviour |
 | --- | --- |
 | Stage has no regions (every AST tab) | The pass is not applied; the tree layout stands. |
-| One region, rest loose | One lane; loose nodes flow around it; nothing can overlap. |
-| A region with a single node | A one-row lane. |
-| Two scenes both divert into a third | The third scene is one lane below both; its band sits clear of theirs. |
-| A scene whose nodes the tree layout already placed contiguously | The pass still lifts them into a lane; the visible change is only the inter-lane gap. |
-| Folded scene | Its lane is the supernode's single row. |
-| All nodes collapsed to the root | One loose node, no lanes, no bands — unchanged. |
-| A loose node whose tree row sits between two lanes | Kept between them; the lower lane's cursor clears it. |
-| Regions present but every node is loose (cannot happen from the compiler, but the pass is total) | No lanes; every row is the compressed tree row. |
+| A scene whose nodes all share one row (a straight run of lines) | A one-row tier — the run stays horizontal, as it is drawn today. |
+| A region named by the stage with no drawn node | Skipped; it consumes no vertical space. |
+| No loose nodes at all | The prologue tier is empty and skipped; the first scene starts at the origin. |
+| Every node loose (no scenes) | One prologue tier; no bands; ordering is the tree's own. |
+| Two scenes both diverting into a third | The third is a tier of its own below both; its band is clear of theirs. |
+| Folded scene | A tier of one row. |
+| A scene already contiguous before the pass | Still lifted into its tier; the visible change is only the inter-tier gap. |
+| Repeated `update()` calls | Idempotent: `d3.tree` recomputes `x` from scratch each time, so the pass always sees pristine tree rows. |
 
 ## Integration
 
-- **`tree-view.ts`** — `createTreeView` learns whether the stage has regions (it
-  already receives them for the bands). In `update()`, after `layout(root)` and
-  before the node/region render, when regions are present it builds `RankInput[]`
-  from `root.descendants()` and overwrites each `node.x` from `rankByRegion`.
-- **`region-layout.ts`** — new: `rankByRegion` and its small helpers. No imports
-  from d3 or the DOM.
-- **`region-bands.ts`** — unchanged. It consumes final positions; disjoint
-  positions give disjoint bands. Its existing "scattered region" test still
-  passes because a lane is still one box around all the region's nodes.
-- **`graph-camera.ts`, `fit-view.ts`, reverse jump** — all read node positions
-  fresh each `update()`, so they see the re-ranked layout with no change. Camera
-  overrides and fold state are keyed by stage title and are untouched.
-- **No C# change.** `DisplayNode.Region` already carries what the pass needs.
-- **Design notes** — a link from `Dialogue Graph Region Fold.md` (which mentions
-  the flat-region model) and from the Dialogue Graph tab note's "Open questions",
-  where the overlap is currently listed.
+- **`region-layout.ts`** — new: `rankByRegion`, `RankInput`, `ROW_PITCH`,
+  `TIER_GAP`. No d3, no DOM imports.
+- **`region-bands.ts`** — exports `PAD_TOP` and `PAD_BOTTOM` so
+  `TIER_GAP` is derived from the padding it must clear. `bandsOf` itself is
+  unchanged.
+- **`tree-view.ts`** — in `update()`, after `layout(root)` and before the render,
+  when `foldableRegions` is non-empty, build `RankInput[]` from
+  `root.descendants()` and overwrite each `node.x` from `rankByRegion`, passing
+  `foldableRegions` as the tier order.
+- **Framing** — the drawing grows taller, so a graph that opens framed today may
+  fall below the legibility floor and open anchored on its root instead. Keeping
+  the row origin (step 3) stops the root from drifting to the top of the
+  viewport. The Dialogue Graph tab note already tracks automatic legend folding
+  for the fit-fallback case; this makes that want stronger.
+- **Cross-link corridors** — `assignLanes` puts its first corridor below the
+  deepest row, so the corridor stack moves down with the taller drawing. No
+  change needed.
+- **Keyboard navigation** — arrow keys move between *siblings in the hierarchy*,
+  which today reads as up/down because siblings are ordered by row. Siblings in
+  different regions now land in different tiers, so an arrow can move the
+  selection against its apparent direction. Accepted for now; noted so it is not
+  a surprise.
+- **No compiler change.** `DisplayNode.Region` already carries what the pass needs.
+- **Design notes** — this note joins `design-notes/toc.yml`. The Dialogue Graph
+  tab note no longer has the overlap to describe, and carries the follow-on
+  instead: routing the diverts the tiers have stretched.
 
 ## Testability
 
 | Level | Covers |
 | --- | --- |
-| Vitest — `rankByRegion` | Lanes are contiguous and disjoint; document order; within-lane order preserved; a loose node between lanes; one region; a single-node region; the pitch and gap. Built from hand-written `RankInput[]`, no d3. |
-| Vitest — `region-bands` composed with `rankByRegion` | Feed an interleaved node set through both; assert `bandsOf` yields no overlapping boxes. This is the regression the whole component exists to prevent. |
-| Vitest — `tree-view` (jsdom) | A stage with interleaved regions renders bands that do not overlap (read the `<rect>` geometry); an AST stage is unaffected. |
-| Playwright | Load a report whose Dialogue Graph has interleaving scenes; assert no two `.region-band` rectangles intersect; fold a scene and re-assert; `axe` clean. |
-| Playwright | The existing Dialogue Graph specs (fold, reverse jump, camera) still pass — the layout moved but the behaviours did not. |
+| Vitest — `rankByRegion` | Tiers are contiguous and disjoint; co-row nodes stay co-row; distinct-row order preserved; legend order followed; prologue tier above every scene tier; empty region skipped; origin preserved; gap exceeds `PAD_TOP + PAD_BOTTOM`. Hand-written `RankInput[]`, no d3. |
+| Vitest — `rankByRegion` + `bandsOf` | An interleaved node set through both: no two bands intersect, **and** no node lies inside a band whose region it does not share. A companion case feeds the *same* set through `bandsOf` un-re-ranked and asserts the bands *do* overlap, so the fixture is proven to be the defect rather than an easy case. |
+| Vitest — property | Over a random tree with **contiguous-run** region assignment (the shape `ScenesByNode` can actually emit): the two band properties above hold. A second, unconstrained generator asserts only that the pass is total and its tiers are disjoint — loose-node and order properties are not asserted there, since scattered membership cannot occur. Both run a hundred seeded drawings. |
+| Vitest — `tree-view` (jsdom) | A stage whose scenes the flow weaves through renders bands whose row intervals are disjoint, stacked in legend order, and still disjoint with a scene folded. jsdom has no `getComputedTextLength`, so measured label widths are zero and band *widths* degenerate — the assertions are on rows, which is what the pass guarantees. |
+| Playwright | The same woven stage through a real browser, where widths are measured: no two `.region-band` rectangles intersect, they stack in legend order, no node's dot falls inside a foreign band, and folding a scene keeps them apart. |
+| Playwright | The existing Dialogue Graph specs (fold, reverse jump, camera) still pass, static and live. |
 
-A generative check is worth its keep here: random region assignments over a
-random tree, asserting "no two bands overlap" for every case. The overlap is a
-geometric property that hand-picked examples miss.
+Both the jsdom and the browser fixture were checked against a build with the pass
+switched off: three of the four browser assertions and all three jsdom assertions
+fail there. A test that passes either way would guard nothing.
+
+There is no `axe` scan among them. The pass moves nodes and bands; it adds no
+element, no role, and no text, so a scan here would only re-cover what the
+Dialogue Graph's existing accessibility specs already assert.
 
 ## Open questions
 
-- **Lane order — document order or flow order?**
-  [DD2](#dd2--a-lane-per-scene-stacked-in-document-order) picks document order to
-  agree with the legend and anchor table. If a reader reasons about the graph
-  purely as flow, tracking the tree's own vertical order might read better. Which
-  matters more?
-- **Loose-node placement.**
-  [DD4](#dd4--loose-nodes-keep-their-row-lanes-make-room) keeps a loose node at
-  its compressed tree row. An alternative is to attach each loose node to the
-  lane of its tree parent (or nearest regioned ancestor), so loose nodes never
-  sit between bands. Simpler visually, but it puts a scene-less node inside a
-  scene's band. Worth it?
-- **Edge stretch — accept or mitigate now?**
-  [DD5](#dd5--cross-scene-edges-stretch-and-that-is-acceptable) accepts longer
-  divert/jump edges. If the stretch turns out to dominate a real script's graph,
-  a lightweight mitigation (order lanes to minimise total cross-lane edge length
-  instead of by document order) could be folded in — at the cost of the
-  document-order property. Decide after seeing it on `highrise-fire` and
-  `rpg-quest`.
-- **Should `bandsOf` keep a cheap overlap guard** (a dev-only assertion) as a
-  safety net, or trust the pass entirely?
+Two questions this design had to settle are settled: the tier order, by building
+both orders and measuring them
+([DD2](#dd2--a-tier-per-region-ordered-as-the-legend-orders-them)), and the runtime
+overlap assertion ([DD8](#dd8--no-runtime-overlap-assertion-in-bandsof)). One
+judgement is left, and no measurement settles it:
+
+- **Are the stretched cross-tier `Child` edges acceptable?**
+  [DD5](#dd5--cross-tier-tree-edges-stretch-and-have-no-detour) explains why the
+  divert into a scene's first node becomes a near-vertical curve, and why routing
+  it would be its own component. Whether that reads well enough is settled by
+  looking at the drawing; if not, a detour for cross-tier `Child` edges is the
+  next piece of work.
