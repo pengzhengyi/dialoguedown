@@ -544,6 +544,41 @@ describe("createTablePanel — copying an identifier", () => {
         expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-market");
     });
 
+    it("puts the identifier in a button, so a keyboard can reach the copy", () => {
+        // A `<td>` is not focusable and answers no key, so a click-only cell is unreachable
+        // without a mouse. The button is nested rather than replacing the cell, because a `<td>`
+        // given a button role stops being a cell and the table stops being a table.
+        const panel = panelWith({ text: "#the-market", copyable: true });
+        const cell = panel.querySelector<HTMLElement>("tbody td")!;
+        const button = cell.querySelector<HTMLButtonElement>("button.cell-action");
+
+        expect(cell.tagName).toBe("TD");
+        expect(cell.getAttribute("role")).toBeNull();
+        expect(button).not.toBeNull();
+        expect(button!.type).toBe("button");
+        expect(button!.getAttribute("aria-label")).toBe("Copy #the-market");
+        expect(cell.textContent).toBe("#the-market");
+    });
+
+    it("copies when the button itself is pressed, not only the cell around it", () => {
+        // The keyboard activates the button; the mouse may hit anywhere in the cell. Both must
+        // reach the same listener, which they do because the button's click bubbles to the cell.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+        panelWith({ text: "#the-market", copyable: true })
+            .querySelector<HTMLButtonElement>("button.cell-action")!
+            .click();
+
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-market");
+    });
+
+    it("gives a plain cell no button, so prose is not announced as a control", () => {
+        const panel = panelWith({ text: "Take the east road" });
+
+        expect(panel.querySelector("tbody td button")).toBeNull();
+    });
+
     it("leaves an ordinary cell alone, so clicking prose copies nothing", () => {
         // Only identifiers are copyable. A sentence-shaped cell — a jump's label, a scene title —
         // would copy something nobody asked for and steal the reader's selection.

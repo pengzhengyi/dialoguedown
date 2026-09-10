@@ -5394,6 +5394,49 @@ button.tab.tab-with-icon {
     box-shadow: 0 0 0 1px currentcolor inset;
 }
 
+/* A cell that copies or reveals puts its text in a real button, so the act is reachable without
+   a mouse. The button must not *look* like one: the cell around it already carries the hover cue
+   and the accent, so everything Pico paints on a button is stripped back off.
+
+   `display: inline` rather than `inline-block`, so the text wraps exactly as the bare text node
+   it replaced did, and so the jump cell's dotted hover underline still reaches it. */
+.cell-action {
+    appearance: none;
+    display: inline;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    text-decoration: inherit;
+    cursor: pointer;
+}
+
+/* The capsule is already dressed by `.dd-tag` and its kind; only the chrome Pico adds on top of
+   a button is removed here, and nothing may touch the capsule's own shape or color. */
+button.dd-tag {
+    appearance: none;
+    margin: 0;
+    width: auto;
+    box-shadow: none;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+/* Keyboard focus is the whole reason these are buttons, so it is the one piece of chrome kept.
+   The themed outline matches the Explorer's, rather than Pico's blue button ring. */
+.cell-action:focus-visible,
+button.dd-tag:focus-visible {
+    outline: 2px solid var(--mode-accent, var(--pico-primary));
+    outline-offset: 2px;
+    border-radius: var(--pico-border-radius);
+}
+
 .config-empty {
     color: var(--pico-muted-color);
     font-style: italic;

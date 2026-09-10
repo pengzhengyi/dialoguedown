@@ -62,6 +62,19 @@ changes easy to categorize.
 
 ### Fixed
 
+- **An identifier, a jump, and a tag can be reached without a mouse** — the report's tables offer
+  acts a reader performs by pressing a cell: copying an `@id`, an anchor, or a tag, and revealing a
+  place in the playbook. Those cells answered a click and nothing else, so a keyboard could perform
+  none of them. Each now carries a real button, so Tab reaches it, Enter and Space take it, and a
+  screen reader says what pressing it does. See
+  [Copyable identifiers](docs/contributing/design-notes/visualization/report/Copyable%20Identifiers.md).
+
+- **A scene's band is never drawn across another's** — where the flow crossed between scenes in the
+  Dialogue Graph, the tinted bands behind them overlapped: the tints stacked into a third color,
+  and a node in the overlap read as belonging to two scenes at once. Every scene now gets its own
+  run of rows, so the bands stay apart whatever the flow does. See
+  [Region-aware graph layout](docs/contributing/design-notes/visualization/graph/Region-Aware%20Graph%20Layout.md).
+
 - **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
   east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
   label, so a runtime building a menu drew an empty row unless it read the words off the node the
