@@ -20,6 +20,7 @@ import {
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
 import { renderTags, tagLabel } from "./tag-chip";
 import { wireClickToCopy } from "./copy-on-click";
+import { cellAction } from "./cell-action";
 
 // The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
 // rather than bundling every feature: sorting, per-column (facet) filtering, and the global
@@ -489,15 +490,18 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
     // A cell that stands for a place in a document offers to take the reader there. It is
     // marked rather than wired here: the table does not know what document, so the surface that
     // built the cell listens for the click.
+    let action: string | undefined;
     if (cell.jump && cell.text !== "") {
         td.classList.add("dd-jump");
         td.dataset.jump = JSON.stringify(cell.jump);
         td.title = "Click to reveal in the playbook";
+        action = `Reveal ${cell.text} in the playbook`;
     }
     if (cell.copyable && cell.text !== "") {
         td.dataset.copy = cell.text;
         td.classList.add("dd-copy");
         td.title = "Click to copy";
+        action = `Copy ${cell.text}`;
     }
     if (cell.entityKey) td.setAttribute("data-entity-key", cell.entityKey);
     if (cell.refKey) td.setAttribute("data-ref-key", cell.refKey);
@@ -512,12 +516,17 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         return td;
     }
 
+    // A cell that acts when pressed puts its text inside a button, so a keyboard can reach the
+    // act. The cell keeps `data-copy`/`data-jump`, so the whole cell stays the mouse's target and
+    // the button's own click bubbles to the same listener.
+    const host = action ? cellAction(action) : td;
     const ranges = query ? findMatches(cell.text, query.query, query) : [];
     if (ranges.length === 0) {
-        td.textContent = cell.text;
+        host.textContent = cell.text;
     } else {
-        highlightInto(td, cell.text, ranges);
+        highlightInto(host, cell.text, ranges);
     }
+    if (host !== td) td.appendChild(host);
     return td;
 }
 
