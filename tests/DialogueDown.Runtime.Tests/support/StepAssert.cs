@@ -46,8 +46,13 @@ internal static class StepAssert
     /// <summary>Asserts a step left the run standing at a node.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should stand.</param>
-    public static void AssertAt(StepResult result, int node) =>
-        Assert.Equal(node, Assert.IsType<AtNode>(result.State.Position).Node);
+    public static void AssertAt(StepResult result, int node) => AssertAt(result.State, node);
+
+    /// <summary>Asserts a run stands at a node.</summary>
+    /// <param name="state">Where the run stands.</param>
+    /// <param name="node">Where it should stand.</param>
+    public static void AssertAt(PlayState state, int node) =>
+        Assert.Equal(node, Assert.IsType<AtNode>(state.Position).Node);
 
     private static string Flatten(IEnumerable<SpeechFragment> speech) =>
         string.Concat(speech.OfType<TextFragment>().Select(fragment => fragment.Text));

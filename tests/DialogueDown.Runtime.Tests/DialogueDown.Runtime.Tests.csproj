@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown.Runtime\DialogueDown.Runtime.csproj" />
+    <ProjectReference Include="..\DialogueDown.Conformance\DialogueDown.Conformance.csproj" />
   </ItemGroup>
 
 </Project>
