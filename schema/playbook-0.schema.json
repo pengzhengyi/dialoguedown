@@ -501,12 +501,155 @@
         }
       ]
     },
-    "out": {
+    "lineOut": {
       "type": "array",
-      "description": "The ways out of a node, in the order they were written.",
+      "description": "A line's or control's way out: at most one divert, and at most one succession to fall through to.",
       "items": {
-        "$ref": "#/$defs/edge"
-      }
+        "$ref": "#/$defs/edge",
+        "properties": {
+          "kind": {
+            "enum": [
+              "divert",
+              "succession"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "divert"
+              }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "succession"
+              }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      ]
+    },
+    "choiceOut": {
+      "type": "array",
+      "description": "A choice's options, plus at most one succession to fall through to.",
+      "items": {
+        "$ref": "#/$defs/edge",
+        "properties": {
+          "kind": {
+            "enum": [
+              "option",
+              "succession"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "option"
+              }
+            }
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "succession"
+              }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      ]
+    },
+    "randomChoiceOut": {
+      "type": "array",
+      "description": "A random choice's arms, plus at most one succession to fall through to.",
+      "items": {
+        "$ref": "#/$defs/edge",
+        "properties": {
+          "kind": {
+            "enum": [
+              "random-option",
+              "succession"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "random-option"
+              }
+            }
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "succession"
+              }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      ]
+    },
+    "branchOut": {
+      "type": "array",
+      "description": "A branch's arms, plus at most one succession to fall through to when there is no else.",
+      "items": {
+        "$ref": "#/$defs/edge",
+        "properties": {
+          "kind": {
+            "enum": [
+              "branch",
+              "succession"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "branch"
+              }
+            }
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "succession"
+              }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      ]
     },
     "node": {
       "description": "One step of a playthrough.",
@@ -537,7 +680,7 @@
               "$ref": "#/$defs/condition"
             },
             "out": {
-              "$ref": "#/$defs/out"
+              "$ref": "#/$defs/lineOut"
             }
           },
           "description": "A line somebody says."
@@ -561,7 +704,7 @@
               "description": "Present only when the options must be offered in the order given."
             },
             "out": {
-              "$ref": "#/$defs/out"
+              "$ref": "#/$defs/choiceOut"
             }
           },
           "description": "A choice the player makes. It holds no content: an option's text is on the edge that offers it."
@@ -581,7 +724,7 @@
               "$ref": "#/$defs/nodeReference"
             },
             "out": {
-              "$ref": "#/$defs/out"
+              "$ref": "#/$defs/randomChoiceOut"
             }
           },
           "description": "A choice the engine makes, by weight."
@@ -601,7 +744,7 @@
               "$ref": "#/$defs/nodeReference"
             },
             "out": {
-              "$ref": "#/$defs/out"
+              "$ref": "#/$defs/branchOut"
             }
           },
           "description": "A conditional block: its arms are tried in order."
@@ -629,7 +772,7 @@
               "$ref": "#/$defs/condition"
             },
             "out": {
-              "$ref": "#/$defs/out"
+              "$ref": "#/$defs/lineOut"
             }
           },
           "description": "Effects and nothing else."
