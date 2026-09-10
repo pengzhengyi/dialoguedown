@@ -114,6 +114,6 @@ writes a tag with its `#`, and `config-view.test.ts` pins the kind classes.
 - **Tags elsewhere.** Only speaker tables draw capsules today. Line tags in the Dialogue AST and
   the graph's node details still render as text; whether they should is a separate question about
   those surfaces, not about the capsule.
-- **Filtering by tag.** A capsule is an obvious click target for "show me every speaker tagged
-  `#wise`". The Speakers table already facets on Default, so the seam exists — but a tag facet is
-  a table feature rather than a drawing one, and is left for when someone wants it.
+- **Filtering by tag.** Resolved: the Speakers table offers a tag facet alongside its Default one,
+  and a row matches when any of its tags is chosen. It is a table feature rather than a drawing
+  one, so the capsule itself is unchanged.

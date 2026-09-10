@@ -113,6 +113,6 @@ Each was written first and confirmed to fail against the previous rendering.
 - **The `@` sigil.** Resolved: the Playbook writes `@guide` like the other two tabs, because a
   bare `guide` copies something no script accepts — see
   [Copyable Identifiers](./Copyable%20Identifiers.md).
-- **Column order.** The Semantic Model and the Playbook order the speaker columns
-  differently. That is a layout question rather than an absence one — see
+- **Column order.** Resolved: the Semantic Model and the Playbook order the speaker
+  columns the same way — see
   [Copyable Identifiers](./Copyable%20Identifiers.md#open-questions).
