@@ -1,4 +1,6 @@
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionOperatorAssert;
+using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.Runtime.Tests.StepAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
@@ -10,12 +12,12 @@ public sealed class SessionOperatorTests
     {
         var op = new SessionOperator(Playbooks.OneLine());
 
-        op.AssertNoUnreadEvents();
+        AssertNoUnreadEvents(op);
 
         op.Start();
 
         AssertAt(op.State, 0);
-        op.AssertOnlyEvent<Said>();
+        AssertOnlyEvent<Said>(op);
     }
 
     [Fact]
@@ -24,7 +26,7 @@ public sealed class SessionOperatorTests
         var op = new SessionOperator(Playbooks.OneLine());
 
         op.Start();
-        op.AssertNextEvent<Said>();
+        AssertNextEvent<Said>(op);
 
         Assert.Null(op.NextEvent());
     }
@@ -49,13 +51,12 @@ public sealed class SessionOperatorTests
     {
         var op = new SessionOperator(Playbooks.TwoLines());
         op.Start();
-        op.AssertNextEvent<Said>();
+        AssertNextEvent<Said>(op);
 
-        var outcome = op.SendCommand("next");
+        AssertConformed(op.SendCommand("next"));
 
-        Assert.True(outcome.IsConformed);
         AssertAt(op.State, 1);
-        Assert.Equal("Bob", op.AssertOnlyEvent<Said>().Speaker);
+        Assert.Equal("Bob", AssertOnlyEvent<Said>(op).Speaker);
     }
 
     [Fact]
@@ -64,12 +65,10 @@ public sealed class SessionOperatorTests
         var op = new SessionOperator(Playbooks.OneLine());
         var stateBefore = op.State;
 
-        var outcome = op.SendCommand("frobnicate");
+        AssertNotYetRunnable(op.SendCommand("frobnicate"), "frobnicate");
 
-        Assert.Equal(SessionVerdict.NotYetRunnable, outcome.Verdict);
-        Assert.Contains("frobnicate", outcome.Because);
         Assert.Equal(stateBefore, op.State);
-        op.AssertNoUnreadEvents();
+        AssertNoUnreadEvents(op);
     }
 
     [Fact]
@@ -79,12 +78,12 @@ public sealed class SessionOperatorTests
 
         op.Start();
 
-        Assert.Equal("Alice", op.AssertNextEvent<Said>().Speaker);
+        Assert.Equal("Alice", AssertNextEvent<Said>(op).Speaker);
 
-        Assert.True(op.SendCommand("next").IsConformed);
-        Assert.Equal("Bob", op.AssertNextEvent<Said>().Speaker);
+        AssertConformed(op.SendCommand("next"));
+        Assert.Equal("Bob", AssertNextEvent<Said>(op).Speaker);
 
-        Assert.True(op.SendCommand("next").IsConformed);
-        op.AssertOnlyEvent<Ended>();
+        AssertConformed(op.SendCommand("next"));
+        AssertOnlyEvent<Ended>(op);
     }
 }

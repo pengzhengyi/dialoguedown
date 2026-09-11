@@ -8,11 +8,11 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// came back and another on what kind it was before it can say anything about the event itself.
 /// These name the claim instead, and hand the event back for a test that wants to say more.
 /// </remarks>
-internal static class SessionOperatorAssertions
+internal static class SessionOperatorAssert
 {
     /// <summary>Asserts the run has fallen silent, and stays silent when read again.</summary>
     /// <param name="op">The session being driven.</param>
-    public static void AssertNoUnreadEvents(this SessionOperator op)
+    public static void AssertNoUnreadEvents(SessionOperator op)
     {
         Assert.Equal(0, op.UnreadEventCount);
         Assert.Null(op.NextEvent());
@@ -22,7 +22,7 @@ internal static class SessionOperatorAssertions
     /// <typeparam name="TEvent">The kind it should be.</typeparam>
     /// <param name="op">The session being driven.</param>
     /// <returns>The event, for a test that wants to say more about it.</returns>
-    public static TEvent AssertNextEvent<TEvent>(this SessionOperator op)
+    public static TEvent AssertNextEvent<TEvent>(SessionOperator op)
         where TEvent : Event =>
         Assert.IsType<TEvent>(op.NextEvent());
 
@@ -30,11 +30,11 @@ internal static class SessionOperatorAssertions
     /// <typeparam name="TEvent">The kind it should be.</typeparam>
     /// <param name="op">The session being driven.</param>
     /// <returns>The event, for a test that wants to say more about it.</returns>
-    public static TEvent AssertOnlyEvent<TEvent>(this SessionOperator op)
+    public static TEvent AssertOnlyEvent<TEvent>(SessionOperator op)
         where TEvent : Event
     {
-        var only = op.AssertNextEvent<TEvent>();
-        op.AssertNoUnreadEvents();
+        var only = AssertNextEvent<TEvent>(op);
+        AssertNoUnreadEvents(op);
 
         return only;
     }
