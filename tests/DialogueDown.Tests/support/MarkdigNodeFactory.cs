@@ -21,6 +21,9 @@ internal static class MarkdigNodeFactory
 
     public static Block HtmlBlockNode(SourceSpan span = default) => At(new HtmlBlock(null!), span);
 
+    public static Block LinkReferenceDefinitionGroupNode(SourceSpan span = default) =>
+        At(new LinkReferenceDefinitionGroup(), span);
+
     public static Block UnrecognizedBlock(SourceSpan span = default) => At(new ParagraphBlock(), span);
 
     public static Inline Autolink(SourceSpan span = default) =>
