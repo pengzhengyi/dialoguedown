@@ -1247,6 +1247,84 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
     expect(Math.min(...widths.filter((width) => width > 50))).toBeGreaterThan(budget * 0.9);
 });
 
+test("keeps a cross-link's verticals out of every other node's words", async ({ page }) => {
+    // A cross-link leaves its row, runs below the drawing, and climbs back. Its lane can strike
+    // nothing; its two vertical moves can strike everything, and used to — a route doubling back
+    // climbed on its target's right, which is exactly where that column writes its words.
+    //
+    // Only a browser can judge this: the labels are measured text, and the gutter they leave is
+    // a consequence of that measurement rather than a number the layout can be told.
+    await openDocument(
+        page,
+        [
+            "# The Gate",
+            "",
+            "Guide: The gate stands open and the courtyard beyond is quiet.",
+            "",
+            "1. => [Step through the gate](#the-courtyard)",
+            "2. => [Turn back toward the road](#the-road)",
+            "",
+            "# The Courtyard",
+            "",
+            "Guide: Gravel underfoot, and a fountain that has not run in years.",
+            "",
+            "=> [Turn back toward the road](#the-road)",
+            "",
+            "# The Road",
+            "",
+            "Guide: The road runs on, indifferent to whether you took the gate.",
+            "",
+            "=> [Step through the gate](#the-courtyard)",
+            "",
+        ].join("\n"),
+    );
+    await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
+    await expect(page.locator("section.stage.active path.reference")).not.toHaveCount(0);
+
+    const trespasses = await page.evaluate(() => {
+        const stage = document.querySelector("section.stage.active")!;
+        // Every drawn label, as a box on screen, with the node it belongs to.
+        const labels: { id: string; box: DOMRect }[] = [];
+        for (const group of stage.querySelectorAll("g.node")) {
+            const id = (group as SVGGElement & { __data__?: { data?: { id?: string } } }).__data__
+                ?.data?.id;
+            if (!id) continue;
+            for (const text of group.querySelectorAll("text")) {
+                const box = text.getBoundingClientRect();
+                if (box.width > 1) labels.push({ id, box });
+            }
+        }
+
+        const hits: string[] = [];
+        for (const path of stage.querySelectorAll<SVGPathElement>("path.reference")) {
+            const edge = (path as SVGPathElement & { __data__?: { fromId: string; toId: string } })
+                .__data__;
+            if (!edge) continue;
+            const length = path.getTotalLength();
+            const screen = path.getScreenCTM()!;
+            for (let step = 0; step <= 300; step++) {
+                const at = path.getPointAtLength((length * step) / 300);
+                const point = new DOMPoint(at.x, at.y).matrixTransform(screen);
+                for (const label of labels) {
+                    if (label.id === edge.fromId || label.id === edge.toId) continue;
+                    const { box } = label;
+                    if (
+                        point.x >= box.left &&
+                        point.x <= box.right &&
+                        point.y >= box.top &&
+                        point.y <= box.bottom
+                    ) {
+                        hits.push(`${edge.fromId}->${edge.toId} over ${label.id}`);
+                    }
+                }
+            }
+        }
+        return [...new Set(hits)];
+    });
+
+    expect(trespasses).toEqual([]);
+});
+
 test("lands a route's arrowhead on its target's edge, with no line showing past it", async ({
     page,
 }) => {

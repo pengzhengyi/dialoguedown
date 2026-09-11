@@ -93,7 +93,40 @@ describe("laneRoute", () => {
     it("turns toward its target, so a backward run heads left along the lane", () => {
         const route = laneRoute({ x: 900, y: 0 }, from, 400);
         expect(route.drop.x).toBeLessThan(route.start.x);
-        expect(route.rise.x).toBeGreaterThan(0);
+    });
+
+    it("climbs before its target whichever way it travelled, never past it", () => {
+        // Right of a dot is where its words are, and a column's words sit on every row. A climb
+        // on that side is a line drawn through the text of rows the route has no business in, so
+        // both directions climb on the left — in the gutter no label may enter.
+        const target = { x: 900, y: 62 };
+
+        expect(laneRoute(from, target, 400).rise.x).toBeLessThan(target.x);
+        expect(laneRoute({ x: 1800, y: 0 }, target, 400).rise.x).toBeLessThan(target.x);
+    });
+
+    it("drops in the gutter it is given rather than beside its own dot", () => {
+        const route = laneRoute(from, { x: 900, y: 62 }, 400, 0, { dropX: 188, clearance: 120 });
+
+        expect(route.drop.x).toBe(188);
+        // Leaving rightwards, it clears its own words before turning down.
+        expect(route.start.x).toBe(120);
+    });
+
+    it("never starts past the column it is about to drop in", () => {
+        // A short run can leave less room than the label wants; the line yields rather than
+        // doubling back on itself.
+        const route = laneRoute(from, { x: 900, y: 62 }, 400, 0, { dropX: 40, clearance: 400 });
+
+        expect(route.start.x).toBe(40);
+        expect(route.drop.x).toBe(40);
+    });
+
+    it("has nothing to clear when it leaves leftwards, because labels never reach back", () => {
+        const route = laneRoute({ x: 900, y: 0 }, from, 400, 0, { dropX: 800, clearance: 300 });
+
+        expect(route.start.x).toBeLessThan(900);
+        expect(route.drop.x).toBe(800);
     });
 });
 
@@ -129,11 +162,15 @@ describe("edgePath", () => {
         expect(laneRoute(from, target, 400, 3).end).toEqual(target);
     });
 
-    it("climbs further back on a backward run too, not further forward", () => {
-        const first = laneRoute({ x: 900, y: 0 }, from, 400, 0);
-        const second = laneRoute({ x: 900, y: 0 }, from, 400, 1);
+    it("fans its corridors back from the target on a backward run too", () => {
+        const target = { x: 900, y: 0 };
+        const first = laneRoute({ x: 1800, y: 0 }, target, 400, 0);
+        const second = laneRoute({ x: 1800, y: 0 }, target, 400, 1);
 
-        expect(second.rise.x).toBeGreaterThan(first.rise.x);
+        // Back from the target means left of it, the same side a forward run climbs on, so two
+        // routes doubling back to one node still stand apart instead of on top of each other.
+        expect(second.rise.x).toBeLessThan(first.rise.x);
+        expect(first.rise.x).toBeLessThan(target.x);
     });
 });
 

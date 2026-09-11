@@ -52,6 +52,14 @@ export interface RouteOptions {
      */
     readonly corridor?: number;
     /**
+     * The column a cross-link drops in, on its way down to the lane.
+     *
+     * Given by the caller because it is a fact about the *layout* — where one column's gutter
+     * begins — and this module deliberately knows nothing of column widths. Absent, the line drops
+     * just outside its source's dot, which is only safe when nothing stands below it.
+     */
+    readonly dropX?: number;
+    /**
      * How far off its target's row the line makes its final approach, so that even the last leg
      * of two routes to the same node arrives at a different angle.
      */
@@ -132,19 +140,35 @@ export function routeCurve(from: Point, to: Point, clearance = 0): Curve {
 /**
  * The route a cross-link follows, down into the lane and along it.
  *
- * It drops in the empty column just outside its source's dot and rises in its target's own dot
- * column — both to the left of any label — so the only rows it can touch are its own two ends.
+ * Its two vertical moves are the only places it can strike a row it has no business in, so both
+ * are made in a **gutter** — the strip at the end of a column that no label is allowed to enter.
+ * The climb takes the gutter before its target's column; the drop takes the one the caller names
+ * through `dropX`, which is the only piece of column arithmetic this module does not own.
+ *
+ * Both verticals run to the *left* of the column they serve, so every cross-link arrives at its
+ * target from the same side as every other edge, whichever way along the flow it travels.
  */
-export function laneRoute(from: Point, to: Point, lane: number, corridor = 0): LaneRoute {
-    const backward = to.x <= from.x;
-    const start = { x: from.x + (backward ? -LANE_LEAD : LANE_LEAD), y: from.y };
-    const step = backward ? -LANE_CORNER : LANE_CORNER;
+export function laneRoute(
+    from: Point,
+    to: Point,
+    lane: number,
+    corridor = 0,
+    gutter: { readonly dropX?: number; readonly clearance?: number } = {},
+): LaneRoute {
     // Climb one corridor further back for each route already claiming this target's approach.
     const reach = Math.min(LANE_CORNER + corridor * CORRIDOR_STEP, MAX_CORRIDOR_REACH);
+    const aside = LANE_LEAD + LANE_CORNER;
+    const dropX = gutter.dropX ?? from.x + (to.x <= from.x ? -aside : aside);
+    // Leaving rightwards means crossing the source's own words unless the line clears them first;
+    // leaving leftwards has nothing to clear, because a label never reaches back past its dot.
+    const lead =
+        dropX >= from.x
+            ? Math.max(LANE_LEAD, Math.min(gutter.clearance ?? LANE_LEAD, dropX - from.x))
+            : -LANE_LEAD;
     return {
-        start,
-        drop: { x: start.x + step, y: lane },
-        rise: { x: to.x - (backward ? -reach : reach), y: lane },
+        start: { x: from.x + lead, y: from.y },
+        drop: { x: dropX, y: lane },
+        rise: { x: to.x - reach, y: lane },
         end: to,
     };
 }
@@ -157,7 +181,10 @@ export function edgePath(from: Point, to: Point, options: RouteOptions = {}): st
         const tip = pullBack(end, control2, standoff, start);
         return `M${at(start)}C${at(control1)},${at(control2)},${at(tip)}`;
     }
-    const { start, drop, rise, end } = laneRoute(from, to, lane, options.corridor ?? 0);
+    const { start, drop, rise, end } = laneRoute(from, to, lane, options.corridor ?? 0, {
+        dropX: options.dropX,
+        clearance,
+    });
     const corner = (turn: Point, into: Point): string => `C${at(turn)},${at(turn)},${at(into)}`;
     // The lean-in row is the route's own port, and also the direction its head must point.
     const lean = { x: rise.x, y: end.y + (options.port ?? 0) };

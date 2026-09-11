@@ -62,6 +62,15 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A jump's line is no longer drawn through another node's words** — in the Dialogue
+  Graph, a jump that spans the drawing leaves its row, travels below the graph, and
+  climbs back. The columns it dropped and climbed in were picked from its own two
+  ends without regard to what stood between, so the vertical runs were struck
+  through the text of unrelated lines. They now run in the label-free gutter each
+  column reserves. On the bundled high-rise example this took the cross-links
+  drawn through someone else's words from six of nine to none. See
+  [Dialogue Graph tab](docs/contributing/design-notes/visualization/report/Dialogue%20Graph%20Visualization%20Tab.md).
+
 - **An identifier, a jump, and a tag can be reached without a mouse** — the report's tables offer
   acts a reader performs by pressing a cell: copying an `@id`, an anchor, or a tag, and revealing a
   place in the playbook. Those cells answered a click and nothing else, so a keyboard could perform

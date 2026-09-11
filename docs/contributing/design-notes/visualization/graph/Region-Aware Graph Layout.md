@@ -275,12 +275,14 @@ succession:
 - A **`Child`** edge is drawn as a plain S-curve between its two ends, with no
   detour. The spanning-tree edge into a scene's first node — often the very
   divert that caused the interleave — is a `Child` edge, so after re-ranking it
-  becomes a near-vertical curve crossing one column horizontally and possibly
-  several tiers vertically, passing through whatever bands and labels lie between.
+  becomes a near-vertical curve crossing one column horizontally and several
+  tiers vertically.
 
-Routing those edges is out of scope and would be its own component. Whether the
-cost is acceptable is settled by looking at it: see
-[the open question](#open-questions).
+What that curve costs was left as an open question and has since been **measured**
+rather than argued: it crosses no labels at all, and only grazes a band twice
+across the whole of `examples/highrise-fire.dialogue.md`. Routing these edges was
+therefore not built. The measurement and its consequence are recorded under
+[Open questions](#open-questions).
 
 ### DD6 — Folding a scene re-runs the pass
 
@@ -375,15 +377,30 @@ Dialogue Graph's existing accessibility specs already assert.
 
 ## Open questions
 
-Two questions this design had to settle are settled: the tier order, by building
-both orders and measuring them
-([DD2](#dd2--a-tier-per-region-ordered-as-the-legend-orders-them)), and the runtime
-overlap assertion ([DD8](#dd8--no-runtime-overlap-assertion-in-bandsof)). One
-judgement is left, and no measurement settles it:
+None. All three questions this design had to settle are settled: the tier order,
+by building both orders and measuring them
+([DD2](#dd2--a-tier-per-region-ordered-as-the-legend-orders-them)); the runtime
+overlap assertion ([DD8](#dd8--no-runtime-overlap-assertion-in-bandsof)); and the
+stretched cross-tier edges, below.
 
-- **Are the stretched cross-tier `Child` edges acceptable?**
-  [DD5](#dd5--cross-tier-tree-edges-stretch-and-have-no-detour) explains why the
-  divert into a scene's first node becomes a near-vertical curve, and why routing
-  it would be its own component. Whether that reads well enough is settled by
-  looking at the drawing; if not, a detour for cross-tier `Child` edges is the
-  next piece of work.
+**Are the stretched cross-tier `Child` edges acceptable? Measured: yes.** The
+drawing of `examples/highrise-fire.dialogue.md` was sampled path by path and each
+sample tested against every band and every drawn label. Of 53 `Child` edges, 7
+cross a tier boundary. **None of them crosses a label** — they fall through the
+empty gutters between columns, which is the one thing that would genuinely cost a
+reader. Two graze a band they do not belong to, and one of those two runs down the
+left margin outside every band's width.
+
+[DD5](#dd5--cross-tier-tree-edges-stretch-and-have-no-detour) predicted these
+edges would pass "through whatever bands and labels lie between". That was
+reasoning rather than measurement, and it overstated the case: the bands, barely;
+the labels, not at all. Routing them was therefore **not** built. The corridor a
+`Reference` edge takes was the obvious mechanism to reuse, and reusing it would
+have traded a diagonal that harms nothing for a detour of the kind that is
+already the drawing's real source of lines-through-text.
+
+That measurement did surface a defect, but a different and older one: it is the
+**`Reference`** edges, not the `Child` edges, that are drawn through labels — and
+they were before this component existed. Their routing is
+[the Dialogue Graph tab note's](../report/Dialogue%20Graph%20Visualization%20Tab.md)
+to own, not this one's.

@@ -120,6 +120,8 @@ interface CrossLinkTrack {
     lane: number;
     corridor: number;
     port: number;
+    /** The gutter column it drops in — clear of every label, whichever way it is headed. */
+    dropX: number;
 }
 
 /**
@@ -135,6 +137,15 @@ const COLUMN_STEP = 320;
 const CORRIDOR_AIR = 18;
 const CORRIDOR_GUTTER = MAX_CORRIDOR_REACH + CORRIDOR_AIR;
 const LABEL_BUDGET = COLUMN_STEP - LABEL_INSET - CORRIDOR_GUTTER;
+
+/**
+ * Where in a gutter a cross-link drops.
+ *
+ * The gutter is shared: climbs occupy its last {@link MAX_CORRIDOR_REACH} pixels, fanning back
+ * from the column they serve. A drop therefore takes the near end instead, so the two kinds of
+ * vertical never stand in the same place.
+ */
+const DROP_INSET = 6;
 
 /**
  * A scene-tree backbone node — a scene or the implicit document root. The Semantic tab
@@ -739,10 +750,27 @@ export function createTreeView(
                             lane: floor + depth * LANE_STEP,
                             corridor: queued,
                             port: portOffset(queued),
+                            dropX: dropColumn(edge, positionById),
                         },
                     ] as const;
                 }),
         );
+    }
+
+    /**
+     * The column a cross-link drops in, on its way out of its row.
+     *
+     * A label runs rightwards from its dot and is clipped so it stops before the column's gutter,
+     * which leaves that gutter free of words on *every* row — the one place a vertical can pass
+     * a row without striking it. A route headed along the flow takes the gutter at the end of its
+     * source's own column, having first cleared its own words; a route doubling back takes the
+     * gutter before that column, where there is nothing to clear.
+     */
+    function dropColumn(edge: DisplayEdge, positionById: Map<string, TreeNode>): number {
+        const from = positionById.get(edge.fromId)!.y;
+        const to = positionById.get(edge.toId)!.y;
+        const gutterStart = from + (to > from ? COLUMN_STEP : 0) - CORRIDOR_GUTTER;
+        return gutterStart + DROP_INSET;
     }
 
     // Ports fan either side of the target's own row — 0, above, below, further above — so the
