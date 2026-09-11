@@ -1,20 +1,24 @@
 namespace DialogueDown.Runtime.Tests.Conformance;
 
 /// <summary>
-/// What became of one fixture's session.
+/// What became of a session, or of one claim within it.
 /// </summary>
 /// <remarks>
-/// A case this build cannot run is not a failure and not a pass: saying so keeps the suite honest
-/// while the runner is still learning constructs, and the count of them is asserted so it cannot
-/// drift unnoticed.
+/// An outcome is partial: a single check reports one, and combining the partials gives the verdict
+/// on the whole. A case this build cannot run is not a failure and not a pass; saying so keeps the
+/// suite honest while the runner is still learning constructs, and the count of them is asserted so
+/// it cannot drift unnoticed.
 /// </remarks>
-/// <param name="Verdict">Whether the conversation conformed, diverged, or could not yet be run.</param>
+/// <param name="Verdict">Whether what was checked conformed, diverged, or could not yet be run.</param>
 /// <param name="Because">What happened, in words a contributor can act on.</param>
 internal sealed record SessionOutcome(SessionVerdict Verdict, string Because)
 {
-    /// <summary>The runner's replies conformed to the whole conversation.</summary>
+    /// <summary>Gets a value indicating whether what was checked held without diverging.</summary>
+    public bool IsConformed => Verdict == SessionVerdict.Conformed;
+
+    /// <summary>Nothing to report: what was checked held.</summary>
     /// <returns>The outcome.</returns>
-    public static SessionOutcome Conformed() => new(SessionVerdict.Conformed, "the conversation conformed");
+    public static SessionOutcome Conformed() => new(SessionVerdict.Conformed, "nothing diverged");
 
     /// <summary>The runner said something else, or stopped short.</summary>
     /// <param name="because">What diverged.</param>
@@ -25,4 +29,27 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, string Because)
     /// <param name="because">What is missing.</param>
     /// <returns>The outcome.</returns>
     public static SessionOutcome NotYetRunnable(string because) => new(SessionVerdict.NotYetRunnable, because);
+
+    /// <summary>The gravest of several partial outcomes, or a conforming one when there are none.</summary>
+    /// <remarks>
+    /// A divergence outranks a construct nobody has taught the runner, so a real failure is never
+    /// hidden behind an unrelated check that could not be made. Every argument is evaluated, which
+    /// suits claims already checked; a caller whose later checks would advance the run must stop at
+    /// the first non-conforming outcome itself.
+    /// </remarks>
+    /// <param name="partials">What each check made of it, in the order they were checked.</param>
+    /// <returns>The gravest, and the earliest among equals.</returns>
+    public static SessionOutcome Combine(params SessionOutcome[] partials) =>
+        partials.Aggregate(
+            Conformed(),
+            (gravest, partial) => Graveness(partial.Verdict) > Graveness(gravest.Verdict) ? partial : gravest);
+
+    // Spelled out rather than taken from the enum's order, which ranks the verdicts by nothing.
+    private static int Graveness(SessionVerdict verdict) =>
+        verdict switch
+        {
+            SessionVerdict.Diverged => 2,
+            SessionVerdict.NotYetRunnable => 1,
+            _ => 0,
+        };
 }
