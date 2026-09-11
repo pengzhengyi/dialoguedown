@@ -8,9 +8,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// while the runner is still learning constructs, and the count of them is asserted so it cannot
 /// drift unnoticed.
 /// </remarks>
-/// <param name="Kind">Whether the conversation conformed, diverged, or could not yet be run.</param>
+/// <param name="Verdict">Whether the conversation conformed, diverged, or could not yet be run.</param>
 /// <param name="Because">What happened, in words a contributor can act on.</param>
-internal sealed record SessionOutcome(SessionVerdict Kind, string Because)
+internal sealed record SessionOutcome(SessionVerdict Verdict, string Because)
 {
     /// <summary>The runner's replies conformed to the whole conversation.</summary>
     /// <returns>The outcome.</returns>

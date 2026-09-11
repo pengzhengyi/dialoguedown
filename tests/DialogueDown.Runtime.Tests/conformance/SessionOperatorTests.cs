@@ -72,7 +72,7 @@ public sealed class SessionOperatorTests
         var outcome = op.SendCommand("frobnicate");
 
         Assert.NotNull(outcome);
-        Assert.Equal(SessionVerdict.NotYetRunnable, outcome.Kind);
+        Assert.Equal(SessionVerdict.NotYetRunnable, outcome.Verdict);
         Assert.Contains("frobnicate", outcome.Because);
         Assert.Equal(stateBefore, op.State);
         Assert.Equal(0, op.PendingCount);
