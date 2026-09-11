@@ -10,40 +10,40 @@ public sealed class SessionOperatorTests
     {
         var op = new SessionOperator(Playbooks.OneLine());
 
-        Assert.Equal(0, op.PendingCount);
+        Assert.Equal(0, op.UnreadEventCount);
 
         op.Start();
 
-        Assert.Equal(1, op.PendingCount);
+        Assert.Equal(1, op.UnreadEventCount);
         AssertAt(op.State, 0);
     }
 
     [Fact]
-    public void NextReply_AfterStart_DrainsQueuedSaidThenReturnsNull()
+    public void NextEvent_AfterStart_DrainsQueuedSaidThenReturnsNull()
     {
         var op = new SessionOperator(Playbooks.OneLine());
 
         op.Start();
 
-        var first = op.NextReply();
+        var first = op.NextEvent();
         Assert.NotNull(first);
         Assert.IsType<Said>(first);
-        Assert.Null(op.NextReply());
-        Assert.Equal(0, op.PendingCount);
+        Assert.Null(op.NextEvent());
+        Assert.Equal(0, op.UnreadEventCount);
     }
 
     [Fact]
-    public void PendingCount_TracksQueuedReplies()
+    public void UnreadEventCount_TracksQueuedEvents()
     {
         var op = new SessionOperator(Playbooks.OneLine());
 
-        Assert.Equal(0, op.PendingCount);
+        Assert.Equal(0, op.UnreadEventCount);
 
         op.Start();
-        Assert.Equal(1, op.PendingCount);
+        Assert.Equal(1, op.UnreadEventCount);
 
-        Assert.NotNull(op.NextReply());
-        Assert.Equal(0, op.PendingCount);
+        Assert.NotNull(op.NextEvent());
+        Assert.Equal(0, op.UnreadEventCount);
     }
 
     [Fact]
@@ -52,14 +52,14 @@ public sealed class SessionOperatorTests
         var op = new SessionOperator(Playbooks.TwoLines());
         op.Start();
 
-        Assert.NotNull(op.NextReply());
+        Assert.NotNull(op.NextEvent());
 
         var outcome = op.SendCommand("next");
 
         Assert.True(outcome.IsConformed);
         AssertAt(op.State, 1);
 
-        var said = Assert.IsType<Said>(op.NextReply());
+        var said = Assert.IsType<Said>(op.NextEvent());
         Assert.Equal("Bob", said.Speaker);
     }
 
@@ -74,7 +74,7 @@ public sealed class SessionOperatorTests
         Assert.Equal(SessionVerdict.NotYetRunnable, outcome.Verdict);
         Assert.Contains("frobnicate", outcome.Because);
         Assert.Equal(stateBefore, op.State);
-        Assert.Equal(0, op.PendingCount);
+        Assert.Equal(0, op.UnreadEventCount);
     }
 
     [Fact]
@@ -84,13 +84,13 @@ public sealed class SessionOperatorTests
 
         op.Start();
 
-        Assert.Equal("Alice", Assert.IsType<Said>(op.NextReply()).Speaker);
+        Assert.Equal("Alice", Assert.IsType<Said>(op.NextEvent()).Speaker);
 
         Assert.True(op.SendCommand("next").IsConformed);
-        Assert.Equal("Bob", Assert.IsType<Said>(op.NextReply()).Speaker);
+        Assert.Equal("Bob", Assert.IsType<Said>(op.NextEvent()).Speaker);
 
         Assert.True(op.SendCommand("next").IsConformed);
-        Assert.IsType<Ended>(op.NextReply());
-        Assert.Null(op.NextReply());
+        Assert.IsType<Ended>(op.NextEvent());
+        Assert.Null(op.NextEvent());
     }
 }

@@ -3,15 +3,15 @@ using DialogueDown.Runtime.Protocol;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
-/// <summary>Drives a runner for one session, buffering the replies nobody has checked yet.</summary>
+/// <summary>Drives a runner for one session, holding the events nobody has read yet.</summary>
 /// <remarks>
 /// Owns the only state a session run needs to track between one session entry and the next: where
-/// the run stands, and what it has said that the session has not yet consumed.
+/// the run stands, and what it has said that the session has not yet read.
 /// </remarks>
 internal sealed class SessionOperator
 {
     private readonly PlayContext _context;
-    private readonly Queue<Event> _pending = new();
+    private readonly Queue<Event> _unread = new();
 
     /// <summary>Initializes a new instance of the <see cref="SessionOperator"/> class.</summary>
     /// <param name="context">What the run needs and never changes.</param>
@@ -20,14 +20,14 @@ internal sealed class SessionOperator
     /// <summary>Gets where the run currently stands.</summary>
     public PlayState State { get; private set; } = PlayState.Initial;
 
-    /// <summary>Gets how many replies are queued but not yet checked.</summary>
-    public int PendingCount => _pending.Count;
+    /// <summary>Gets how many events the run has said that nobody has read yet.</summary>
+    public int UnreadEventCount => _unread.Count;
 
     /// <summary>Starts the run, queuing whatever it says.</summary>
     public void Start() => Act(new Start());
 
     /// <summary>
-    /// Recognizes a session's <c>send</c> and steps the runner, queuing the reply.
+    /// Recognizes a session's <c>send</c> and steps the runner, queuing whatever it says.
     /// </summary>
     /// <param name="send">The session entry naming what to send.</param>
     /// <returns>
@@ -45,17 +45,17 @@ internal sealed class SessionOperator
         return SessionOutcome.Conformed();
     }
 
-    /// <summary>The next reply nobody has checked yet.</summary>
-    /// <returns>The reply, or <see langword="null"/> if the run has fallen silent.</returns>
-    public Event? NextReply() => _pending.TryDequeue(out var result) ? result : null;
+    /// <summary>Reads the next event nobody has read yet.</summary>
+    /// <returns>The event, or <see langword="null"/> if the run has fallen silent.</returns>
+    public Event? NextEvent() => _unread.TryDequeue(out var result) ? result : null;
 
     private void Act(Command command)
     {
         var step = Runner.Step(_context, State, command);
         State = step.State;
-        foreach (var reply in step.Events)
+        foreach (var happened in step.Events)
         {
-            _pending.Enqueue(reply);
+            _unread.Enqueue(happened);
         }
     }
 }
