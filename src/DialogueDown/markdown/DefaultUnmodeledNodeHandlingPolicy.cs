@@ -3,7 +3,7 @@ namespace DialogueDown.Markdown;
 
 /// <summary>
 /// The default handling policy: ignore authoring aids that are not dialogue (code
-/// blocks, thematic breaks, tables) and keep everything else.
+/// blocks, thematic breaks, tables, link reference definitions) and keep everything else.
 /// </summary>
 internal sealed class DefaultUnmodeledNodeHandlingPolicy : IUnmodeledNodeHandlingPolicy
 {
@@ -17,7 +17,8 @@ internal sealed class DefaultUnmodeledNodeHandlingPolicy : IUnmodeledNodeHandlin
     {
         UnmodeledNodeKind.CodeBlock
             or UnmodeledNodeKind.ThematicBreak
-            or UnmodeledNodeKind.Table => UnmodeledNodeHandling.Ignore,
+            or UnmodeledNodeKind.Table
+            or UnmodeledNodeKind.LinkReferenceDefinition => UnmodeledNodeHandling.Ignore,
         _ => UnmodeledNodeHandling.Keep,
     };
 }
