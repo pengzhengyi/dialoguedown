@@ -223,11 +223,49 @@ document. The tab now rests on client work of its own:
 | --- | --- |
 | A graph is not a tree | `SpanningTree` names one parent per node so `stratify` succeeds; every other edge is a `Reference` |
 | Telling routes apart | `edge-style.ts` — one table owning each route's name, dash, arrow, pointer, glyph, and meaning |
-| Lines crossing words | `edge-path.ts` — a line leaves past its source's *measured* label; a cross-link drops into a lane below every row, runs, and rises in its target's own column |
+| Lines crossing words | `edge-path.ts` — a line leaves past its source's *measured* label; a cross-link drops into a lane below every row, runs, and climbs back, making both of its vertical moves in a column's [gutter](#the-gutter-a-cross-link-travels-in) |
 | A scene is an area | `region-bands.ts` draws it as a tinted band named once, replacing a `scene:` line under every node |
 | Reading the flow as text | `neighbors.ts` and `region-detail.ts` answer what leads here, what it leads to, and what crosses a region's border |
 | Choosing a thing | A node, a route, or a region is the reader's current object — and only one at a time |
 | Shutting a scene away | `region-fold.ts` contracts a region to one box the flow still passes through — see [Dialogue Graph — Region Fold](../graph/Dialogue%20Graph%20Region%20Fold.md) |
+
+### The gutter a cross-link travels in
+
+A cross-link leaves its row, runs a lane below the whole drawing, and climbs back.
+The lane itself can cross nothing — there are no rows down there. Its two
+**vertical** moves are the only places it can strike a row it has no business in,
+and a vertical is drawn through text whenever it stands where a label stands.
+
+A column spends its width on three things: the dot, the words beside it, and a
+**gutter** at the end that no label may enter. `LABEL_BUDGET` is what is left for
+the words once the gutter is reserved, and every label is clipped to it — so the
+gutter is free of words on *every* row, which makes it the one place a vertical
+can pass a row without touching it.
+
+The rule is therefore one line:
+
+> A cross-link makes both of its vertical moves in a gutter, never beside a dot.
+
+Two corollaries do the actual work, and both were once wrong:
+
+- **A climb goes on the target's left, whichever way the route travelled.** Right
+  of a dot is where its words are. A route doubling back used to mirror and climb
+  on the right, straight through the text of every row in that column; it now
+  overshoots and climbs on the left like every other route. Arriving from the left
+  is also what every other edge does, so the drawing reads the same either way.
+- **A drop goes in a gutter, not beside the source's dot.** It used to drop a
+  fixed step from the dot, which is inside its own column's words. Travelling
+  along the flow it now clears its own label and drops in the gutter that ends its
+  column; doubling back it drops in the gutter before that column, where a label —
+  which only ever runs rightwards — cannot reach.
+
+Climbs fan back from the column they serve and so occupy the gutter's far end;
+drops take the near end, so the two kinds of vertical never stand in one place.
+
+The payoff is measurable, and was measured: on
+`examples/highrise-fire.dialogue.md`, six of the nine cross-links crossed at least
+one label belonging to neither of their endpoints — two of them crossed two. After
+the change, none does.
 
 ### Reviewing a visual change
 
@@ -251,9 +289,11 @@ caught by a number rather than by a reader.
   [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
 - **Cross-linking a divert to its scene.** Hovering a jump could highlight its
   target scene in the Semantic tab's tables, as the earlier stages already do.
-- **Routing a divert that now crosses scenes.** Giving every scene its own run of
-  rows, so no two bands can overlap, moves a scene away from whatever led into it.
-  The spanning-tree edge into a scene's first node is drawn as a plain curve with
-  no detour, so it is now longer and steeper than it was; a route for those edges,
-  like the corridor a reference edge already takes, is the next piece of work here.
-  The layout itself has its own note, *Region-Aware Graph Layout*.
+- **A cross-link that must double back overshoots its target to climb.** Climbing
+  on the target's left is what keeps the line out of that column's words, but it
+  means a backward route runs past its target along the lane and comes back up to
+  it. The overshoot is bounded by the gutter's width, so it is short, and no
+  reader has yet been observed to mind — but a route that climbed on the right
+  *without* crossing a label, when the rows above happen to be empty, would be
+  shorter still. It would also need to know what stands in those rows, which is
+  the kind of thing the drawing deliberately does not compute per edge.
