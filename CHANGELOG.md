@@ -62,6 +62,13 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A link reference definition is no longer spoken** — `[the market]: #b` and similar CommonMark
+  reference definitions used to leak into the playbook as a spurious line, its text sliced from
+  the wrong offset in the file; a runtime would speak it. It's CommonMark plumbing, not dialogue,
+  so it's dropped like a table or a code block, and a reference-style jump or link that names one
+  now resolves correctly with no leftover node. See
+  [Unmodeled Markdown Handling](docs/contributing/design-notes/core/Unmodeled%20Markdown%20Handling.md).
+
 - **A jump's line is no longer drawn through another node's words** — in the Dialogue
   Graph, a jump that spans the drawing leaves its row, travels below the graph, and
   climbs back. The columns it dropped and climbed in were picked from its own two
