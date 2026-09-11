@@ -6,35 +6,33 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 public sealed class SessionOperatorTests
 {
     [Fact]
-    public void Start_OnOneLine_QueuesOpeningSaidAndStandsAtEntry()
+    public void Start_OnOneLine_SaysTheOpeningLineAndStandsAtTheEntry()
     {
         var op = new SessionOperator(Playbooks.OneLine());
 
-        Assert.Equal(0, op.UnreadEventCount);
+        op.AssertNoUnreadEvents();
 
         op.Start();
 
-        Assert.Equal(1, op.UnreadEventCount);
         AssertAt(op.State, 0);
+        op.AssertOnlyEvent<Said>();
     }
 
     [Fact]
-    public void NextEvent_AfterStart_DrainsQueuedSaidThenReturnsNull()
+    public void NextEvent_PastTheLastOne_ReadsAsNull()
     {
         var op = new SessionOperator(Playbooks.OneLine());
 
         op.Start();
+        op.AssertNextEvent<Said>();
 
-        var first = op.NextEvent();
-        Assert.NotNull(first);
-        Assert.IsType<Said>(first);
         Assert.Null(op.NextEvent());
-        Assert.Equal(0, op.UnreadEventCount);
     }
 
     [Fact]
-    public void UnreadEventCount_TracksQueuedEvents()
+    public void UnreadEventCount_TracksWhatIsWaitingToBeRead()
     {
+        // The counter's own test, so it counts rather than asking a helper that wraps it.
         var op = new SessionOperator(Playbooks.OneLine());
 
         Assert.Equal(0, op.UnreadEventCount);
@@ -47,20 +45,17 @@ public sealed class SessionOperatorTests
     }
 
     [Fact]
-    public void Send_NextAfterStart_OnTwoLinesStepsRunnerAndQueuesNextSaid()
+    public void Send_NextAfterStart_OnTwoLinesStepsRunnerAndSaysTheNextLine()
     {
         var op = new SessionOperator(Playbooks.TwoLines());
         op.Start();
-
-        Assert.NotNull(op.NextEvent());
+        op.AssertNextEvent<Said>();
 
         var outcome = op.SendCommand("next");
 
         Assert.True(outcome.IsConformed);
         AssertAt(op.State, 1);
-
-        var said = Assert.IsType<Said>(op.NextEvent());
-        Assert.Equal("Bob", said.Speaker);
+        Assert.Equal("Bob", op.AssertOnlyEvent<Said>().Speaker);
     }
 
     [Fact]
@@ -74,7 +69,7 @@ public sealed class SessionOperatorTests
         Assert.Equal(SessionVerdict.NotYetRunnable, outcome.Verdict);
         Assert.Contains("frobnicate", outcome.Because);
         Assert.Equal(stateBefore, op.State);
-        Assert.Equal(0, op.UnreadEventCount);
+        op.AssertNoUnreadEvents();
     }
 
     [Fact]
@@ -84,13 +79,12 @@ public sealed class SessionOperatorTests
 
         op.Start();
 
-        Assert.Equal("Alice", Assert.IsType<Said>(op.NextEvent()).Speaker);
+        Assert.Equal("Alice", op.AssertNextEvent<Said>().Speaker);
 
         Assert.True(op.SendCommand("next").IsConformed);
-        Assert.Equal("Bob", Assert.IsType<Said>(op.NextEvent()).Speaker);
+        Assert.Equal("Bob", op.AssertNextEvent<Said>().Speaker);
 
         Assert.True(op.SendCommand("next").IsConformed);
-        Assert.IsType<Ended>(op.NextEvent());
-        Assert.Null(op.NextEvent());
+        op.AssertOnlyEvent<Ended>();
     }
 }
