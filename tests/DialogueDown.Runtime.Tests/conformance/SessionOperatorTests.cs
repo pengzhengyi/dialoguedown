@@ -56,7 +56,7 @@ public sealed class SessionOperatorTests
 
         var outcome = op.SendCommand("next");
 
-        Assert.Null(outcome);
+        Assert.True(outcome.IsConformed);
         AssertAt(op.State, 1);
 
         var said = Assert.IsType<Said>(op.NextReply());
@@ -71,7 +71,6 @@ public sealed class SessionOperatorTests
 
         var outcome = op.SendCommand("frobnicate");
 
-        Assert.NotNull(outcome);
         Assert.Equal(SessionVerdict.NotYetRunnable, outcome.Verdict);
         Assert.Contains("frobnicate", outcome.Because);
         Assert.Equal(stateBefore, op.State);
@@ -87,10 +86,10 @@ public sealed class SessionOperatorTests
 
         Assert.Equal("Alice", Assert.IsType<Said>(op.NextReply()).Speaker);
 
-        Assert.Null(op.SendCommand("next"));
+        Assert.True(op.SendCommand("next").IsConformed);
         Assert.Equal("Bob", Assert.IsType<Said>(op.NextReply()).Speaker);
 
-        Assert.Null(op.SendCommand("next"));
+        Assert.True(op.SendCommand("next").IsConformed);
         Assert.IsType<Ended>(op.NextReply());
         Assert.Null(op.NextReply());
     }

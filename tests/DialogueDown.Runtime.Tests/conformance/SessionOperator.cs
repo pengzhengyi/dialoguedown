@@ -31,10 +31,10 @@ internal sealed class SessionOperator
     /// </summary>
     /// <param name="send">The session entry naming what to send.</param>
     /// <returns>
-    /// An outcome only when the message itself is not yet something anything can send;
-    /// <see langword="null"/> when the runner was stepped.
+    /// A conforming outcome once the runner was stepped, or what stopped the send when the message
+    /// is not yet something anything can send.
     /// </returns>
-    public SessionOutcome? Send(Send send)
+    public SessionOutcome Send(Send send)
     {
         if (Commands.Read(send.Message) is not { } command)
         {
@@ -42,7 +42,7 @@ internal sealed class SessionOperator
         }
 
         Act(command);
-        return null;
+        return SessionOutcome.Conformed();
     }
 
     /// <summary>The next reply nobody has checked yet.</summary>
