@@ -48,7 +48,7 @@ Three pieces are deliberately left out, each tracked as its own follow-up:
   the runner's code — made from here it would only cause a merge conflict.
 - **Edge ordering.** A `branch` arm's `order` should ascend, and the `else` arm
   should come last. That is a separate invariant about the sequence of arms, not
-  their shape.
+  their shape, designed in [Branch Arm Order](./Branch%20Arm%20Order.md).
 - **A diagnostics channel on the reader** for valid-but-suspect documents — see
   [decision 3](#3-a-fall-through-that-cannot-run).
 
