@@ -6,9 +6,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 
 /// <summary>Reads a session's <c>send</c> message as the runtime command it names.</summary>
 /// <remarks>
-/// A separate, testable concern from operating the runner. It recognizes only the commands this
-/// pass can play; anything else reads as <see langword="null"/>, which the caller reports as not
-/// yet runnable.
+/// A separate, testable concern from operating the runner. It recognizes the commands this pass
+/// can play; anything else reads as <see langword="null"/>, which the caller reports as not yet
+/// runnable.
 /// </remarks>
 internal static class Commands
 {

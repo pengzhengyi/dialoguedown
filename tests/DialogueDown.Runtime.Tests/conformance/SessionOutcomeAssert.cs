@@ -2,9 +2,8 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 
 /// <summary>What became of a check, asserted in the words it reports.</summary>
 /// <remarks>
-/// An outcome carries a verdict and the words explaining it, so a test that asserts only the
-/// verdict throws away the message that would have said what went wrong. These assert both, and a
-/// surprise pass reports the outcome's own reason rather than that something was not true.
+/// An outcome carries a verdict and the words explaining it, and these assert both. A failure
+/// reports the outcome's own reason.
 /// </remarks>
 internal static class SessionOutcomeAssert
 {

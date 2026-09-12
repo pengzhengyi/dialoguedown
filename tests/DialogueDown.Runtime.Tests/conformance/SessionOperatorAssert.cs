@@ -4,9 +4,8 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 
 /// <summary>What a driven session has said, asserted in one line rather than three.</summary>
 /// <remarks>
-/// Reading an event takes it off the queue, so an unhelped test spends a line proving something
-/// came back and another on what kind it was before it can say anything about the event itself.
-/// These name the claim instead, and hand the event back for a test that wants to say more.
+/// Each names a claim about what the run has said, and hands the event back for a test that wants
+/// to say more about it.
 /// </remarks>
 internal static class SessionOperatorAssert
 {

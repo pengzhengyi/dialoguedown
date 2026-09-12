@@ -5,9 +5,8 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </summary>
 /// <remarks>
 /// An outcome is partial: a single check reports one, and combining the partials gives the verdict
-/// on the whole. A case this build cannot run is not a failure and not a pass; saying so keeps the
-/// suite honest while the runner is still learning constructs, and the count of them is asserted so
-/// it cannot drift unnoticed.
+/// on the whole. A case this build cannot run is neither a failure nor a pass, and has a verdict of
+/// its own while the runner is still learning constructs.
 /// </remarks>
 /// <param name="Verdict">Whether what was checked conformed, diverged, or could not yet be run.</param>
 /// <param name="Because">What happened, in words a contributor can act on.</param>
@@ -32,9 +31,8 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, string Because)
 
     /// <summary>The gravest of several partial outcomes, or a conforming one when there are none.</summary>
     /// <remarks>
-    /// A divergence outranks a construct nobody has taught the runner, so a real failure is the one
-    /// reported when a check that could not be made sits beside it. Reading stops at the first
-    /// divergence, since nothing outranks one.
+    /// A divergence outranks a construct nobody has taught the runner, and reading stops at the
+    /// first one, since nothing outranks it.
     /// </remarks>
     /// <param name="partials">What each check made of it, in the order they were checked.</param>
     /// <returns>The gravest, and the earliest among equals.</returns>

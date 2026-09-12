@@ -8,7 +8,7 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// </summary>
 /// <remarks>
 /// One implementation per key an expectation object can carry, so each shape's matching logic
-/// lives in its own small, focused type rather than growing as another branch in a shared method.
+/// lives in its own small, focused type.
 /// </remarks>
 internal interface IExpectationMatcher
 {
