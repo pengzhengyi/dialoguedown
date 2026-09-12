@@ -70,6 +70,68 @@ public sealed class SpeechTextTests
     }
 
     [Fact]
+    public void Of_WithoutAnswers_NamesTheQueryInBraces()
+    {
+        // Braces mark the one part of the line this reader cannot know. They are a drawing
+        // convention rather than anything a writer types.
+        Assert.Equal(
+            "You are {HeroName}.",
+            SpeechText.Of([Text("You are "), Query("HeroName"), Text(".")]));
+    }
+
+    [Fact]
+    public void Of_WithAnAnswer_SaysTheAnswer()
+    {
+        Assert.Equal(
+            "You are Ada.",
+            SpeechText.Of([Text("You are "), Query("HeroName"), Text(".")], _ => "Ada"));
+    }
+
+    [Fact]
+    public void Of_WithAnswersForSomeKeys_NamesOnlyTheRest()
+    {
+        // A reader that knows some of the world hands the keys it does not know to the placeholder,
+        // so one unknown key costs only that key.
+        Assert.Equal(
+            "Ada holds {Gold} gold.",
+            SpeechText.Of(
+                [Query("HeroName"), Text(" holds "), Query("Gold"), Text(" gold.")],
+                key => key == "HeroName" ? "Ada" : SpeechText.PlaceholderFor(key)));
+    }
+
+    [Fact]
+    public void Of_WithAnAnswerOfItsOwnChoosing_SaysThat()
+    {
+        // The placeholder is the default rather than the rule: a reader that would rather mark an
+        // unknown key its own way says so.
+        Assert.Equal(
+            "You are ???.",
+            SpeechText.Of([Text("You are "), Query("HeroName"), Text(".")], _ => "???"));
+    }
+
+    [Fact]
+    public void PlaceholderFor_WrapsTheKeyInBraces()
+    {
+        Assert.Equal("{HeroName}", SpeechText.PlaceholderFor("HeroName"));
+    }
+
+    [Fact]
+    public void Of_WithAnEmptyAnswer_SaysNothingForTheQuery()
+    {
+        // An answered query is answered. A world that says a key is worth nothing has still said
+        // so, and speaking for it would overrule the answer.
+        Assert.Equal(
+            "You are .",
+            SpeechText.Of([Text("You are "), Query("HeroName"), Text(".")], _ => string.Empty));
+    }
+
+    [Fact]
+    public void Of_ReadsAQueryNestedInsideStyling()
+    {
+        Assert.Equal("Ada", SpeechText.Of([Bold(Query("HeroName"))], _ => "Ada"));
+    }
+
+    [Fact]
     public void Of_KeepsTheSpaceAroundTheWords()
     {
         // Speech often opens or closes on a space that matters once it sits beside another
