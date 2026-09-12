@@ -32,17 +32,33 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, string Because)
 
     /// <summary>The gravest of several partial outcomes, or a conforming one when there are none.</summary>
     /// <remarks>
-    /// A divergence outranks a construct nobody has taught the runner, so a real failure is never
-    /// hidden behind an unrelated check that could not be made. Every argument is evaluated, which
-    /// suits claims already checked; a caller whose later checks would advance the run must stop at
-    /// the first non-conforming outcome itself.
+    /// A divergence outranks a construct nobody has taught the runner, so a real failure is the one
+    /// reported when a check that could not be made sits beside it. Reading stops at the first
+    /// divergence, since nothing outranks one.
     /// </remarks>
     /// <param name="partials">What each check made of it, in the order they were checked.</param>
     /// <returns>The gravest, and the earliest among equals.</returns>
-    public static SessionOutcome Combine(params SessionOutcome[] partials) =>
-        partials.Aggregate(
-            Conformed(),
-            (gravest, partial) => Graveness(partial.Verdict) > Graveness(gravest.Verdict) ? partial : gravest);
+    public static SessionOutcome Combine(IEnumerable<SessionOutcome> partials)
+    {
+        var gravest = Conformed();
+
+        foreach (var partial in partials)
+        {
+            if (Graveness(partial.Verdict) <= Graveness(gravest.Verdict))
+            {
+                continue;
+            }
+
+            gravest = partial;
+
+            if (gravest.Verdict == SessionVerdict.Diverged)
+            {
+                break;
+            }
+        }
+
+        return gravest;
+    }
 
     // Spelled out rather than taken from the enum's order, which ranks the verdicts by nothing.
     private static int Graveness(SessionVerdict verdict) =>

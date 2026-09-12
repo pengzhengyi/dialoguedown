@@ -32,8 +32,7 @@ internal sealed class SaidMatcher : IExpectationMatcher
         // Both claims are checked, so an event that gets the speaker and the speech wrong is not
         // reported as though only the speaker were at fault.
         return SessionOutcome.Combine(
-            MatchSpeaker(said.Speaker, speaker),
-            MatchSpeech(said.Speech, speech));
+            [MatchSpeaker(said.Speaker, speaker), MatchSpeech(said.Speech, speech)]);
     }
 
     private static SessionOutcome MatchSpeaker(string? spoken, string? claimed) =>
@@ -69,10 +68,8 @@ internal sealed class SaidMatcher : IExpectationMatcher
                 $"expected {fragments.Length} fragments, but heard {spoken.Length}");
         }
 
-        return spoken
-            .Select((fragment, at) => MatchFragment(fragment, fragments[at], at))
-            .FirstOrDefault(outcome => !outcome.IsConformed)
-            ?? SessionOutcome.Conformed();
+        return SessionOutcome.Combine(
+            spoken.Select((fragment, at) => MatchFragment(fragment, fragments[at], at)));
     }
 
     // Compared as each writes out. The writer is what the corpus quotes, so it decides what two
