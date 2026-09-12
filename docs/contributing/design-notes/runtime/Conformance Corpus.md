@@ -130,7 +130,7 @@ the runtime must reply, in the order they occur.
     { "expect": { "resolve": ["IsCurious"] } },
     { "send": { "supply": { "IsCurious": false } } },
     { "expect": { "said": { "speaker": "Alice", "speech": "My favorite color is red." } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "asked": [
         { "label": "Ask about the inn", "available": false },
         { "label": "Say nothing", "available": true }
@@ -153,7 +153,7 @@ so a fixture reads as the conversation it replays:
 
 | `send` | Means |
 | --- | --- |
-| `"continue"` | `Continue` — proceed past what was just said |
+| `"next"` | `Next` — proceed past what was just said |
 | `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
 | `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
@@ -366,8 +366,8 @@ Interleaving also changes what conformance *means*, and for the better:
 | Transcript | the same story came out |
 | Session | the same conversation happened |
 
-A fold over the event stream cannot see a runner that emits `Choices` before
-`Speech`, or asks `Resolve` for the wrong keys, or asks too eagerly. A session
+A fold over the event stream cannot see a runner that emits `Asked` before
+`Said`, or asks `Resolve` for the wrong keys, or asks too eagerly. A session
 can, and it has somewhere to put `describe` — which a transcript, having no slot
 for a question, could not express at all.
 

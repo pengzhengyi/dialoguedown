@@ -100,8 +100,7 @@ once.
 
 **Events are named as the corpus names them** — `said`, `ended` — so a fixture, a
 harness, and the code that satisfies them read in one vocabulary. The past tense
-is the point: an event reports something that already happened. This supersedes
-the architecture note's `Speech` and `End`.
+is the point: an event reports something that already happened.
 
 ## The state
 
@@ -233,9 +232,9 @@ replay stop working.
 
 ### R3 — The position carries the stage; nothing declares what it awaits
 
-Argued in [the state](#the-position-carries-the-stage). One consequence is worth
-stating on its own: this supersedes the architecture note's *"`PlayState` declares
-what it awaits"*, which that note should be corrected to match when this ships.
+Argued in [the state](#the-position-carries-the-stage). A driver reacts to the
+event it just received rather than reading the state, so the state needs no
+declaration of what may be sent next.
 
 ### R4 — A misplaced command is an event, not an exception
 
@@ -267,10 +266,9 @@ sending that primitive repeatedly — so stop-and-play needs nothing from the co
 The primitive is therefore `Next`, not `Continue`. In a debugger `continue` means
 *run until something stops you*, so a driver will want that word for the policy;
 using it for the primitive as well would give one word two meanings at two layers.
-The cost is real and paid once: ink spells it `Continue`, the architecture note
-follows ink, and every playable fixture and the fixture schema spell it
-`continue`. The playbook format is deliberately unstable at version 0 until a
-runner plays it, which is exactly the license to spend that now.
+Ink spells the primitive `Continue`, and this diverges from it deliberately: the
+playbook format is unstable at version 0 until a runner plays it, which is what
+made renaming the corpus cheap.
 
 ### R7 — Starting is a command, and therefore also a restart
 
@@ -344,7 +342,7 @@ the fixtures that light up rather than by argument.
 | Shared corpus library | `CorpusFolder` and the fixture types live in `DialogueDown.Conformance`, which both test projects reference |
 | `DialogueDown.Playbook.Tests` | Keeps the readable harness, now reading the corpus through the shared library |
 | `conformance/` and `schema/fixture-0.schema.json` | `continue` becomes `next`, in the fixtures, the schema, and the README |
-| Architecture note | `PlayState` no longer declares what it awaits, and the events are named as the corpus names them; both are corrected when this ships |
+| Architecture note | `PlayState` no longer declares what it awaits, and the commands and events are named as the corpus names them |
 | C2b–C2g | Each adds commands, events, and position cases to what this pass establishes |
 | CI | Nothing new is scheduled; the harness runs with the existing suite |
 

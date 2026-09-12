@@ -66,7 +66,7 @@ configuration surface for capability targeting (see
 | **Script**             | The authored source, a `*.dialogue.md` file. Unchanged.                                                                                         |
 | **Playbook**           | The compiled, portable artifact for **one script**: nodes, edges, tables, and a compatibility header. What a compile emits and a runtime loads. |
 | **Runner**             | The pure function that advances play: given a playbook, a `PlayState`, and one input, it returns the next state and the events it emitted.      |
-| **`PlayState`**        | An immutable value: where play is — position, call stack, effect ordinal, and what input it awaits. It *is* the save.                           |
+| **`PlayState`**        | An immutable value: where play is — position, call stack, and effect ordinal. It *is* the save.                                                 |
 | **`PlaySession`**      | The stateful shell around the runner: holds the current `PlayState`, talks to the driver, records the transcript.                               |
 | **Driver**             | The party that drives a session — a CLI, the report, a game, a debugger. It sends commands and answers reverse requests.                        |
 | **World**              | The game state a script asks about. A **role behind the driver**, not a separate protocol party.                                                |
@@ -86,7 +86,7 @@ explains why this project needs neither.
 | System                                                                                                                    | What we take                                                                                                                                                                                              | What we avoid                                                                                                |
 |---------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 | [Ink](https://github.com/inkle/ink)                                                                                       | The pull loop; two independent version lines (`inkVersionCurrent` / `inkVersionMinimumCompatible`, and a separate save-state pair); `StoryState` as one serializable value holding pointer and call stack | Synchronous external functions, and the `lookaheadSafe` flag they force to stop double-invoking side effects |
-| [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)                                                            | The localization split; `[disabled]` options in its test plans; pre-fetch hints (`PrepareForLinesHandler`)                                                                                                | Push-style handlers, which impose re-entrancy discipline on every host                                       |
+| [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)                                                            | The localization split; `[disabled]` options in its test plans; pre-fetch hints (`PrepareForLinesHandler`)                                                                                                | Push-style handlers, which impose reentrancy discipline on every host                                        |
 | [LSP](https://microsoft.github.io/language-server-protocol/) / [DAP](https://microsoft.github.io/debug-adapter-protocol/) | **Reverse requests** as a named concept, capability negotiation at handshake, and DAP's `Invalidated` "your snapshot is stale" event                                                                      | —                                                                                                            |
 | [glTF 2.0](https://registry.khronos.org/glTF/)                                                                            | `extensionsUsed` / `extensionsRequired`: advisory versus **must-understand**; text now, binary later                                                                                                      | —                                                                                                            |
 | [CommonMark](https://spec.commonmark.org/)                                                                                | A data-driven conformance suite every implementation runs                                                                                                                                                 | —                                                                                                            |
@@ -312,9 +312,10 @@ public static StepResult Step(Playbook playbook, PlayState state, DriverCommand 
 public sealed record StepResult(PlayState State, IReadOnlyList<RunnerEvent> Events);
 ```
 
-`PlayState` declares what it awaits, so `Step` is total and the shell always knows
-what may be sent next. `PlaySession` is the imperative shell: it holds the current
-state, performs transport, and records the transcript.
+The position carries the stage a run is at, so a state cannot contradict itself and
+`Step` stays total. What may be sent next is read from the event the runner just
+produced. `PlaySession` is the imperative shell: it holds the current state,
+performs transport, and records the transcript.
 
 Dialogue advances at human speed — a few steps per second, not per frame — so
 allocating a small record per step costs nothing measurable. This is the case
@@ -332,12 +333,12 @@ client/server game an HTTP call the driver makes. LSP and DAP both solve this by
 naming the message **direction** rather than inventing a third party, and so do
 we.
 
-| Direction       | Kind                | Examples                                                  |
-|-----------------|---------------------|-----------------------------------------------------------|
-| driver → runner | **command**         | `Continue`, `Choose(i)`, `Restore(state)`                 |
-| runner → driver | **event**           | `Speech`, `Choices`, `Effect`, `ChoiceInvalidated`, `End` |
-| runner → driver | **reverse request** | `Resolve(keys)`, answered by `Supply(answers)`            |
-| driver → runner | **query**           | `Describe()`, answered with the current location          |
+| Direction       | Kind                | Examples                                                        |
+|-----------------|---------------------|-----------------------------------------------------------------|
+| driver → runner | **command**         | `Next`, `Choose(i)`, `Restore(state)`                           |
+| runner → driver | **event**           | `Said`, `Asked`, `Performed`, `Invalidated`, `Ended`, `Refused` |
+| runner → driver | **reverse request** | `Resolve(keys)`, answered by `Supply(answers)`                  |
+| driver → runner | **query**           | `Describe()`, answered with the current location                |
 
 `Resolve` is exactly LSP's `workspace/configuration`: *the server knows what it
 needs; the client knows where to find it.*
@@ -350,14 +351,14 @@ sequenceDiagram
     R-->>D: Resolve(["Alice.FavoriteColor"])
     Note over D: free to block, await,<br/>or call a remote server
     D->>R: Supply({ "Alice.FavoriteColor": "red" })
-    R-->>D: Speech(Alice, "My favorite color is red.")
-    D->>R: Continue()
-    R-->>D: Effect(JoinClub("Alice", "Kung Fu"))
+    R-->>D: Said(Alice, "My favorite color is red.")
+    D->>R: Next()
+    R-->>D: Performed(JoinClub("Alice", "Kung Fu"))
     Note over D: plays a 3s animation
-    D->>R: Continue()
-    R-->>D: Choices([Ask about the inn, Say nothing])
+    D->>R: Next()
+    R-->>D: Asked([Ask about the inn, Say nothing])
     D->>R: Choose(1)
-    R-->>D: End
+    R-->>D: Ended
 ```
 
 All waiting — network, animation, a player deliberating — happens *between*
@@ -444,10 +445,10 @@ a gap worth filling.
 The mitigation is the HTTP `ETag` / `If-Match` pattern, gated by driver
 capability:
 
-| Driver capability                      | Behavior on `Choose`                                                                      |
-|----------------------------------------|-------------------------------------------------------------------------------------------|
-| supplies a version token with `Supply` | Compare tokens. Match → traverse. Mismatch → `ChoiceInvalidated`, re-snapshot, re-present |
-| no token                               | **Trust** — traverse on the snapshot                                                      |
+| Driver capability                      | Behavior on `Choose`                                                                |
+|----------------------------------------|-------------------------------------------------------------------------------------|
+| supplies a version token with `Supply` | Compare tokens. Match → traverse. Mismatch → `Invalidated`, re-snapshot, re-present |
+| no token                               | **Trust** — traverse on the snapshot                                                |
 
 Comparing one token is free in the common case, since most games freeze the world
 during dialogue. A world that knows when it changed may instead **push**
@@ -543,7 +544,7 @@ stops a retrying transport running `JoinClub` twice, the world-clock that makes 
 effect 47" checkable, and the mismatch detector on load.
 
 **The runner never compensates.** Inverses are usually wrong or meaningless — what
-un-does `PlaySound`, and is the inverse of `JoinClub` really `LeaveClub` if the
+undoes `PlaySound`, and is the inverse of `JoinClub` really `LeaveClub` if the
 player was already a member? Compensating transactions are correct only when a
 genuine inverse exists, which is a domain property we cannot assume. Ren'Py, the
 most ambitious rollback in this space, still cannot undo file I/O and requires
@@ -792,7 +793,7 @@ never quietly drift from what the runtimes do.
 - **An async core.** Inverts the FCIS dependency direction, taxes every runtime for
   a need most hosts do not have, and still fails to decouple the runner from its
   host.
-- **Push-style handlers (Yarn Spinner).** Impose re-entrancy discipline on every
+- **Push-style handlers (Yarn Spinner).** Impose reentrancy discipline on every
   host and fight `async` in both JavaScript and Godot.
 - **Effect compensation.** See [D9](#d9--the-runner-restores-it-never-compensates).
 - **One .NET runtime everywhere, via WebAssembly.** Removes the port and all drift,
