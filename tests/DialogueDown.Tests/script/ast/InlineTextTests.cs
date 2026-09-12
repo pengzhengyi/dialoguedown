@@ -1,5 +1,5 @@
-using DialogueDown.Common;
 using DialogueDown.Script.Ast;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Ast;
 
@@ -8,16 +8,16 @@ public sealed class InlineTextTests
     [Fact]
     public void Of_ConcatenatesPlainText()
     {
-        var fragments = new InlineFragment[] { new Text("Hello ", Span()), new Text("world", Span()) };
-        Assert.Equal("Hello world", InlineText.Of(fragments));
+        Assert.Equal("Hello world", InlineText.Of([Text("Hello "), Text("world")]));
     }
 
     [Fact]
     public void Of_FlattensStyledAndLinkChildren()
     {
-        var styled = new StyledText(SpeechStyle.Italic, [new Text("bold", Span())], Span());
-        var link = new Link("#x", [new Text("here", Span())], Span());
-        Assert.Equal("boldhere", InlineText.Of([styled, link]));
+        Assert.Equal(
+            "boldhere",
+            InlineText.Of(
+                [StyledText(SpeechStyle.Italic, Text("bold")), Link("#x", Text("here"))]));
     }
 
     // A jump's label and an image's alt are the words a reader sees, so a flattened run keeps
@@ -25,18 +25,31 @@ public sealed class InlineTextTests
     [Fact]
     public void Of_ReadsAJumpsLabelAndAnImagesAlt()
     {
-        var jump = new Jump("#scene", [new Text("go there", Span())], Span());
-        var image = new Image("map.png", [new Text("a map", Span())], Span());
-
-        Assert.Equal("go therea map", InlineText.Of([jump, image]));
+        Assert.Equal(
+            "go therea map",
+            InlineText.Of([Jump("#scene", Text("go there")), Image("map.png", Text("a map"))]));
     }
 
     [Fact]
     public void Of_RendersALineBreakAsASpace()
     {
-        var fragments = new InlineFragment[] { new Text("a", Span()), new LineBreak(Span()), new Text("b", Span()) };
-        Assert.Equal("a b", InlineText.Of(fragments));
+        Assert.Equal("a b", InlineText.Of([Text("a"), LineBreak(), Text("b")]));
     }
 
-    private static SourceSpan Span() => new(0, 1);
+    // A query's value is only knowable while a game runs, so a reading with no game behind it
+    // names the query rather than leaving a gap where its words would have stood.
+    [Fact]
+    public void Of_NamesAQueryItCannotAnswer()
+    {
+        Assert.Equal(
+            "You are {HeroName}.",
+            InlineText.Of([Text("You are "), Query("HeroName"), Text(".")]));
+    }
+
+    [Fact]
+    public void Of_SaysNothingForACommand()
+    {
+        Assert.Equal(
+            "Careful.", InlineText.Of([DefaultCommand("fade out"), Text("Careful.")]));
+    }
 }
