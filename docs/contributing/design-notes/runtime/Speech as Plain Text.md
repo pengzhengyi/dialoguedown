@@ -1,19 +1,20 @@
 # Speech as Plain Text
 
-> [!NOTE]
-> Status: **proposed** — not yet implemented. A line's speech is a list of
-> fragments, because a host renders it and every host renders it differently.
-> But several places need the same lossy fallback: the words, as one line of
-> plain text. Four of them already compute it, three different ways, and two of
-> those are wrong — one of them on every report surface that shows a line. This
-> note designs the single public function they should share, and repairs the
-> compiler-side flattening the report reads through.
+> [!IMPORTANT]
+> Status: **implemented**. A line's speech is a list of fragments, because a host
+> renders it and every host renders it differently. But several readers want the
+> same lossy rendering: the words, as one line of plain text. `SpeechText.Of` is
+> the public function they share, and the compiler's own flattening was repaired
+> to agree with it.
+>
+> One divergence remains by design: the runtime's test helper still keeps a
+> flattening of its own, and adopts this one when that work next rebases.
 
 ## Table of contents
 
 - [Goal and scope](#goal-and-scope)
 - [Ubiquitous language](#ubiquitous-language)
-- [What exists today](#what-exists-today)
+- [The readings that exist](#the-readings-that-exist)
 - [Functionality checklist](#functionality-checklist)
 - [The flattening](#the-flattening)
 - [Interfaces and abstractions](#interfaces-and-abstractions)
@@ -58,7 +59,7 @@ This component is that specification, implemented once as a public function.
   This adds a way to read what is already there.
 - **Migrating the runtime's own test helper.** It lives on a branch this work does
   not touch, and it adopts this function after this lands. See
-  [What exists today](#what-exists-today).
+  [The readings that exist](#the-readings-that-exist).
 
 ## Ubiquitous language
 
@@ -75,83 +76,51 @@ This component is that specification, implemented once as a public function.
 corpus note and from the helper the compiler already has. This note invents no
 vocabulary.
 
-## What exists today
+## The readings that exist
 
-Four places answer this question already, written independently of each other.
+Reading speech as plain text happens in three places, and they have to give the
+same answer.
 
-| Where                                  | What it does                                                                                                                           | Status                         |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `Conformance Corpus.md`                | Specifies it normatively for every port: "concatenate each fragment's plain text, drop style markers, and substitute resolved queries" | The contract. No code.         |
-| `script/ast/InlineText.cs`             | Flattens the compiler's AST fragments. Text, styled children, link label, image alt, a break as a space, everything else empty.        | **Drops queries** — see below. |
-| The report's eight label sites         | Call `InlineText.Of` to draw a line, a divert, an option, a scene heading.                                                             | Callers, not implementations.  |
-| The runtime's `StepAssert` test helper | Concatenates only the top-level text fragments.                                                                                        | **Drops nested styling.**      |
+| Where                   | What reads                                                                                                                                      | Agreement                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `Conformance Corpus.md` | Specifies the reading normatively for every port: "concatenate each fragment's plain text, drop style markers, and substitute resolved queries" | The contract all three answer to                                    |
+| `SpeechText.Of`         | A playbook's speech, after a script ships                                                                                                       | The public one; every kind covered, enforced by a test              |
+| `InlineText.Of`         | The compiler's own fragments, while a script compiles                                                                                           | Held to `SpeechText` fragment by fragment, through the real mapping |
 
-Both defects are the same mistake in different clothing: a flattening that handles
-the fragment kinds its author happened to need and silently contributes nothing for
-the rest. Neither fails loudly. Both produce a plausible string that is missing
-words.
+The compiler's reading had no arm for a query and ended in a catch-all, so it
+contributed nothing for one. That reading labels a line, a divert, an option, and a
+scene heading across the graph, the semantic model, and the desugared AST, which
+meant every surface drawing a line's words drew it with its queries missing. It now
+names a query using this function's own wording, so the two cannot disagree about
+the one fragment whose words are not in the fragment.
 
-**Queries vanish from the report.** A query is a game call, and `InlineText.Of`
-ends in a catch-all that yields the empty string, so it drops one. That flattening
-feeds eight label sites across the Dialogue Graph, the Semantic Model, and the
-Desugared AST tab — every surface that draws a line's words. On a shipped example
-script, a line written
-
-```text
-Rain hammers the shutters of the Salted Hart. You are `"HeroName"`, and your purse
-holds `"Gold"` gold — enough for a bed, not for a legend.
-```
-
-is drawn in the Dialogue Graph as
-
-```text
-Rain hammers the shutters of the Salted Hart. You are , and your purse holds  gold — enough for a bed, not for a legend.
-```
-
-This is live, and it is on the surfaces a writer reads. Fixing it is in scope,
-because a shared flattening that renders a query while the compiler's drops one
-would be two helpers disagreeing about the one fragment kind this note is mostly
-about — exactly the drift DD3 exists to prevent.
-
-**Nested styling vanishes from the runtime's test helper.** Taking only top-level
-text fragments means the corpus note's own example —
-
-```json
-[ { "kind": "text", "text": "My key is " },
-  { "kind": "styled", "style": "bold", "children": [ { "kind": "text", "text": "rusty" } ] },
-  { "kind": "text", "text": "." } ]
-```
-
-— flattens to `"My key is ."` rather than `"My key is rusty."`. No runtime test uses
-a styled fragment yet, so this one is still latent. It stops being latent the moment
-a conformance fixture about conditions happens to contain a bold word, which the
-corpus explicitly invites: a fixture writes the string form precisely when styling
-is *not* its subject.
-
-That helper lives on in-flight runtime work rather than on the main line, so this
-component does not reach in and change it. Landing the shared function first is what
-makes the fix available: the playbook library is already referenced there, so
-adoption becomes a one-call-site change owned by the branch that needs it. The same
-holds for the conformance harness, which has not implemented speech matching yet, so
-the shared function can land before the matcher that would otherwise grow a fifth
-flattening.
+A fourth reading sits outside this work. The runtime's `StepAssert` test helper
+concatenates only the top-level text fragments, so nested styling vanishes from it:
+the corpus note's own `"My key is **rusty**."` example reads as `"My key is ."`. It
+is latent, because no runtime test uses a styled fragment yet — and it stops being
+latent as soon as a fixture about conditions happens to contain a bold word, which
+the corpus invites by reserving the string form for fixtures whose subject is *not*
+styling. That helper lives on in-flight runtime work rather than on the main line,
+so this component does not reach in and change it. Landing the shared function first
+is what makes the fix available: the playbook library is already referenced there,
+so adoption is a one-call-site change owned by the branch that needs it.
 
 ## Functionality checklist
 
-- [ ] Every one of the nine fragment kinds has a defined plain text.
-- [ ] Styled runs contribute their words and drop their style.
-- [ ] Nesting is followed to any depth.
-- [ ] A link contributes its label; an image contributes its alt text.
-- [ ] A line break contributes a single space, because it records where the writer's source
+- [x] Every one of the nine fragment kinds has a defined plain text.
+- [x] Styled runs contribute their words and drop their style.
+- [x] Nesting is followed to any depth.
+- [x] A link contributes its label; an image contributes its alt text.
+- [x] A line break contributes a single space, because it records where the writer's source
       wrapped rather than a break they asked for.
-- [ ] A tag and a command contribute nothing — they are not words in the line.
-- [ ] A caller that can answer a query gets the answer substituted.
-- [ ] A caller with no answers gets the key in braces, `{HeroName}`.
-- [ ] An option's label flattens by the same function as a line's speech.
-- [ ] The result is returned exactly as composed; trimming is the caller's business.
-- [ ] `InlineText.Of` renders a query the same way, so the report stops drawing a
+- [x] A tag and a command contribute nothing — they are not words in the line.
+- [x] A caller that can answer a query gets the answer substituted.
+- [x] A caller with no answers gets the key in braces, `{HeroName}`.
+- [x] An option's label flattens by the same function as a line's speech.
+- [x] The result is returned exactly as composed; trimming is the caller's business.
+- [x] `InlineText.Of` renders a query the same way, so the report stops drawing a
       line with its queries missing.
-- [ ] The placeholder's rough edges are documented where a writer will meet them.
+- [x] The placeholder's rough edges are documented where a writer will meet them.
 
 ## The flattening
 
@@ -367,14 +336,16 @@ control node by its effects rather than by its speech.
 ## Integration
 
 - **`speech/SpeechText.cs`** — new, public, in `DialogueDown.Playbook`.
-- **`script/ast/InlineText.cs`** — gains a `Query` arm before its catch-all, which
-  stops the report drawing a line with its queries missing. Kept rather than merged
-  away; see DD3.
+- **`script/ast/InlineText.cs`** — gained a `Query` arm before its catch-all, which
+  stops the report drawing a line with its queries missing. It calls this component's
+  own placeholder rather than spelling the braces again, so the convention has one
+  definition. The reference is aliased rather than imported, because that namespace
+  has a `SpeechStyle` of its own and importing the other would leave two of that name
+  in scope. Kept rather than merged away; see DD3.
 - **The report's label sites** — unchanged code, changed output: eight places across
-  the Dialogue Graph, the Semantic Model, and the Desugared AST tab begin drawing a
-  query instead of swallowing it. Any snapshot or label assertion over a script with
-  a query needs its expectation updated, which is the bug being fixed rather than a
-  regression.
+  the Dialogue Graph, the Semantic Model, and the Desugared AST tab now draw a query
+  instead of swallowing it. No existing assertion had to move, because none of them
+  flattened a script carrying a query.
 - **`PlaybookNodeSummary`** — the Nodes table's summary consumes it, for a line's
   speech and for an option's label alike.
 - **The conformance harness** — its speech matcher, still to be written, compares a
@@ -383,8 +354,8 @@ control node by its effects rather than by its speech.
 - **The runtime's `StepAssert`** — not touched here. It adopts this function when the
   in-flight runtime work next rebases, which retires its own flattening and the
   nested-styling bug with it.
-- **The writer's guide** — the queries section of the game-state guide gains a short
-  passage on the placeholder: that a surface with no world shows `{Key}`, that braces
+- **The writer's guide** — the queries section of the game-state guide gained a
+  short passage on the placeholder: that a surface with no world shows `{Key}`, that braces
   are a drawing convention rather than script syntax, and that typing them into a
   script writes literal braces. This is where a writer already goes to learn what a
   query is, so it is where they should meet what one looks like unresolved.

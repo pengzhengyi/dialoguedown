@@ -16,7 +16,8 @@ changes easy to categorize.
   asserting what was said, a report listing a script's lines, a host with no renderer of its own.
   It takes what the world says a query is worth, so a host passes the method it already
   implements to answer one, and names a query nobody answered as
-  [its key in braces](docs/guide/game-state.md#where-a-query-has-no-answer-yet).
+  [its key in braces](docs/guide/game-state.md#where-a-query-has-no-answer-yet). See
+  [Speech as plain text](docs/contributing/design-notes/runtime/Speech%20as%20Plain%20Text.md).
 
 - **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
   node carries an edge kind it cannot act on, more than one succession, no arm where one is
