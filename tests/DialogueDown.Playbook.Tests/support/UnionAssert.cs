@@ -29,6 +29,24 @@ internal static class UnionAssert
         Assert.Equal(ConcreteMembers<TUnion>(), registrations.Values.Select(type => type.Name).Order().ToList());
     }
 
+    /// <summary>
+    /// Asserts that <paramref name="covered"/> names every concrete member of
+    /// <typeparamref name="TUnion"/>.
+    /// </summary>
+    /// <typeparam name="TUnion">The union's base type.</typeparam>
+    /// <param name="covered">The members the caller has accounted for.</param>
+    /// <remarks>
+    /// Reach for this where a test examines the union one member at a time. The examination is
+    /// only as complete as the list it walks, and a member added later joins the union without
+    /// joining that list; this says so at build time instead of leaving the new member untested.
+    /// </remarks>
+    public static void AssertCoversEveryMember<TUnion>(IEnumerable<Type> covered)
+    {
+        Assert.Equal(
+            ConcreteMembers<TUnion>(),
+            [.. covered.Select(type => type.Name).Distinct().Order()]);
+    }
+
     private static List<string> DeclaredTags(Type kinds) =>
         [.. kinds.GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(field => field.IsLiteral && field.FieldType == typeof(string))

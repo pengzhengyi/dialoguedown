@@ -1,10 +1,44 @@
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Tests.Support;
 using static DialogueDown.Playbook.Tests.Support.PlaybookFactory;
 
 namespace DialogueDown.Playbook.Tests.Speech;
 
 public sealed class SpeechTextTests
 {
+    /// <summary>
+    /// One sample of each fragment kind beside the words it reads as. The tests below this pair
+    /// take the kinds that carry nuance further; these two together settle that a reading exists
+    /// for all of them and that none was left to chance.
+    /// </summary>
+    private static readonly (SpeechFragment Fragment, string Words)[] _everyKind =
+    [
+        (Text("words"), "words"),
+        (Bold("words"), "words"),
+        (Link("#the-old-road", Text("words")), "words"),
+        (Image("art/key.png", Text("words")), "words"),
+        (LineBreak(), " "),
+        (Query("Key"), "{Key}"),
+        (Tag("wary"), ""),
+        (DefaultCommand("fade out"), ""),
+        (CustomCommand("ShowSprite", "yuki"), ""),
+    ];
+
+    [Fact]
+    public void Of_ReadsEachFragmentKindAsItsWords()
+    {
+        Assert.All(_everyKind, kind => Assert.Equal(kind.Words, SpeechText.Of([kind.Fragment])));
+    }
+
+    [Fact]
+    public void Of_ReadsEveryFragmentKindTheFormatDeclares()
+    {
+        // A kind nobody taught it to read would say nothing at all, which looks like a line that
+        // happens to be quiet rather than a reading that was never written.
+        UnionAssert.AssertCoversEveryMember<SpeechFragment>(
+            _everyKind.Select(kind => kind.Fragment.GetType()));
+    }
+
     [Fact]
     public void Of_WithoutFragments_SaysNothing()
     {
