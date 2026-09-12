@@ -218,6 +218,42 @@ you can build, test, and clean without memorising commands: `build` / `test`
 run the normal analyzer-enabled build/test and full frontend gates before
 pushing.
 
+### Local schema validation while a schema is mid-change
+
+Every fixture and playbook JSON file points `$schema` at the **published** copy
+under `https://pengzhengyi.github.io/dialoguedown/schema/`, which
+[`pages.yml`](.github/workflows/pages.yml) rebuilds from `main` on deploy. An
+editor that resolves `$schema` over the network (VS Code's built-in JSON
+validation does) therefore validates against whatever is live on `main` — one
+version behind on any branch that is itself changing `schema/*.schema.json`,
+which shows up as a real-looking "value not accepted" error for a value the
+branch's own local schema already allows.
+
+`.vscode/settings.json` is intentionally untracked (see `.gitignore`), so
+there is no shared fix to commit for this. If it bites you while iterating on
+a schema, add a local override to your own `.vscode/settings.json`:
+
+```json
+"json.schemas": [
+  {
+    "fileMatch": ["conformance/**/fixture.json"],
+    "url": "./schema/fixture-0.schema.json"
+  },
+  {
+    "fileMatch": [
+      "conformance/**/playbook.json",
+      "tests/DialogueDown.Tests/emission/goldens/*.verified.json"
+    ],
+    "url": "./schema/playbook-0.schema.json"
+  }
+]
+```
+
+This points your editor at the workspace copy instead of the published one, so
+validation matches what the branch actually ships. It is a no-op once the
+published schema catches up after merge, so there is no need to remove it
+afterward.
+
 ## Commit style
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
