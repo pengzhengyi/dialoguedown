@@ -88,11 +88,15 @@ same answer.
 | `InlineText.Of`         | The compiler's own fragments, while a script compiles                                                                                           | Held to `SpeechText` fragment by fragment, through the real mapping |
 
 The compiler's reading had no arm for a query and ended in a catch-all, so it
-contributed nothing for one. That reading labels a line, a divert, an option, and a
-scene heading across the graph, the semantic model, and the desugared AST, which
-meant every surface drawing a line's words drew it with its queries missing. It now
-names a query using this function's own wording, so the two cannot disagree about
-the one fragment whose words are not in the fragment.
+contributed nothing for one. Eight label sites across the graph, the semantic model,
+and the desugared AST share that reading. Four of them can hold a query — a line's
+speech, and a scene's heading wherever the report names it — and those four drew the
+line with its query missing. The other four label a link: a divert, an option, an
+image alt. A query cannot reach them, because a code span inside a label is restored
+to the characters the writer typed rather than read as a call, so a reader there is
+meant to see the backticks. The reading now names a query using this function's own
+wording, so the two cannot disagree about the one fragment whose words are not in the
+fragment.
 
 A fourth reading sits outside this work. The runtime's `StepAssert` test helper
 concatenates only the top-level text fragments, so nested styling vanishes from it:
@@ -342,10 +346,10 @@ control node by its effects rather than by its speech.
   definition. The reference is aliased rather than imported, because that namespace
   has a `SpeechStyle` of its own and importing the other would leave two of that name
   in scope. Kept rather than merged away; see DD3.
-- **The report's label sites** — unchanged code, changed output: eight places across
-  the Dialogue Graph, the Semantic Model, and the Desugared AST tab now draw a query
-  instead of swallowing it. No existing assertion had to move, because none of them
-  flattened a script carrying a query.
+- **The report's label sites** — unchanged code, changed output: the four places that
+  can hold a query now draw it instead of swallowing it. No existing assertion had to
+  move, because none of them flattened a script carrying a query. Two new tests close
+  that gap, one per affected tab.
 - **`PlaybookNodeSummary`** — the Nodes table's summary consumes it, for a line's
   speech and for an option's label alike.
 - **The conformance harness** — its speech matcher, still to be written, compares a
@@ -371,13 +375,16 @@ published API is meant to stay small and deliberate.
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | xUnit — one test per kind           | The nine rows of the flattening table, each asserted on its own.                                                                                                                                                                                                                                 |
 | xUnit — nesting                     | Styling inside styling; a link whose label is styled; the corpus note's own example, asserted to produce the string the corpus prints.                                                                                                                                                           |
-| xUnit — queries                     | Substituted from a resolver; `{Key}` with no resolver; a `null` answer; an empty answer; several keys where only some resolve.                                                                                                                                                                   |
+| xUnit — queries                     | Substituted from an answering function; the key in braces when none is given; an answer of the caller's own choosing; an empty answer; a query nested inside styling; several keys where only some are answered.                                                                                 |
 | xUnit — coverage                    | Reflecting over the fragment union's registered members, every kind is handled deliberately rather than reaching the catch-all. The repository's `UnionAssert` already asserts union completeness this way.                                                                                      |
 | xUnit — agreement with `InlineText` | Corresponding fragment pairs of the two types flatten to the same string, queries included — the assertion that keeps the compiler's helper and this one from drifting apart.                                                                                                                    |
+| xUnit — the report's labels         | Script text compiled through the real pipeline, asserting that a query written in a line and in a scene's name reaches the label a reader sees. One test per affected tab.                                                                                                                       |
 | Generative (optional)               | Flattening never throws and never returns `null`, over randomly generated fragment trees. Worth little for a total function on a closed union, and this test project does not reference Bogus today, though two sibling projects do. Listed so the decision is deliberate rather than forgotten. |
 
-Every test is a pure function call on hand-built fragments: no document, no
-compile, no playbook.
+The reading's own tests are pure function calls on hand-built fragments — no
+document, no compile, no playbook. The report's label tests are the deliberate
+exception: what they guard is the whole chain from the writer's backticks to the
+drawing, which only a real compile exercises.
 
 ## Open questions
 
