@@ -10,6 +10,14 @@ changes easy to categorize.
 
 ### Added
 
+- **`SpeechText` reads a line's speech as plain text** — a new public helper in the playbook
+  library flattens a run of speech fragments to one line of words, dropping styling and markup.
+  Several places want the same lossy rendering and must agree on it: a conformance fixture
+  asserting what was said, a report listing a script's lines, a host with no renderer of its own.
+  It takes what the world says a query is worth, so a host passes the method it already
+  implements to answer one, and names a query nobody answered as
+  [its key in braces](docs/guide/game-state.md#where-a-query-has-no-answer-yet).
+
 - **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
   node carries an edge kind it cannot act on, more than one succession, no arm where one is
   required, or no way onward at all; the schema and the conformance corpus enforce the same as far
@@ -61,6 +69,14 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **A query is drawn where its value will go, instead of a gap** — flattening a line's words had
+  no case for a query, so every surface that shows a line without running the game quietly dropped
+  it: the Dialogue Graph, the Semantic Model, and the Desugared AST tab all drew
+  `You are , and your purse holds  gold` for a line written with two queries in it. Each now
+  appears as its key in braces — `You are {HeroName}, and your purse holds {Gold} gold` — which
+  also shows a writer which parts of a line change at play time. See
+  [Where a query has no answer yet](docs/guide/game-state.md#where-a-query-has-no-answer-yet).
 
 - **A link reference definition is no longer spoken** — `[the market]: #b` and similar CommonMark
   reference definitions used to leak into the playbook as a spurious line, its text sliced from
