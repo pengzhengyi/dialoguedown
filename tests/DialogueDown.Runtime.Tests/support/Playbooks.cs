@@ -34,18 +34,35 @@ internal static class Playbooks
             nodes: nodes));
 
     /// <summary>One line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello.
+    /// </code>
+    /// </remarks>
     /// <returns>A context a single <c>Next</c> finishes.</returns>
     public static PlayContext OneLine() =>
         Of([Line(0, speaker: 0, "Hello.", next: 1), new EndNode(1)], ["Alice"]);
 
     /// <summary>Two lines, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello.
+    ///
+    /// Bob: Goodbye.
+    /// </code>
+    /// </remarks>
     /// <returns>A context that shows succession going somewhere.</returns>
     public static PlayContext TwoLines() =>
         Of(
             [Line(0, speaker: 0, "Hello.", next: 1), Line(1, speaker: 1, "Goodbye.", next: 2), new EndNode(2)],
             ["Alice", "Bob"]);
 
-    /// <summary>A line, spoken by a node kind this pass cannot play.</summary>
+    /// <summary>A choice, which is a node kind this pass cannot play.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Go east
+    /// </code>
+    /// </remarks>
     /// <returns>A context that begins at a choice.</returns>
     public static PlayContext NotYetPlayable() =>
         Of([new ChoiceNode(0, Ordered: true, [new OptionEdge(1, [new TextFragment("Go east")], null)]), new EndNode(1)], ["Alice"]);
