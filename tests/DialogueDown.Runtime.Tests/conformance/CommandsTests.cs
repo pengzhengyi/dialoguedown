@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -35,14 +35,32 @@ public sealed class CommandsTests
         AssertNotReadable("42");
     }
 
+    [Fact]
+    public void IsStart_ASendNamingWhereToBegin_OpensTheRun()
+    {
+        Assert.True(Commands.IsStart(Sent("""{ "start": {} }""")));
+    }
+
+    [Fact]
+    public void IsStart_ASendNamingSomethingElse_DoesNot()
+    {
+        Assert.False(Commands.IsStart(Sent("""{ "choose": 0 }""")));
+    }
+
+    [Fact]
+    public void IsStart_ABareCommand_DoesNot()
+    {
+        Assert.False(Commands.IsStart(Sent("\"next\"")));
+    }
+
     private static void AssertNotReadable(string jsonMessage)
     {
-        Assert.Null(Commands.Read(JsonNode.Parse(jsonMessage)!));
+        Assert.Null(Commands.Read(Sent(jsonMessage)));
     }
 
     private static void AssertReadableCommand<TCommand>(string jsonCommand)
     where TCommand : Command
     {
-        Assert.IsType<TCommand>(Commands.Read(JsonNode.Parse(jsonCommand)!));
+        Assert.IsType<TCommand>(Commands.Read(Sent(jsonCommand)));
     }
 }

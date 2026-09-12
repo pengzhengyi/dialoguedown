@@ -16,6 +16,16 @@ internal static class ExpectationMatchers
         new IExpectationMatcher[] { new SaidMatcher(), new EndedMatcher() }
             .ToDictionary(matcher => matcher.Key, StringComparer.Ordinal);
 
+    /// <summary>Checks what the run said next against what the session expected.</summary>
+    /// <param name="happened">What the runner said, or <see langword="null"/> if it has fallen silent.</param>
+    /// <param name="expect">What the session expected.</param>
+    /// <returns>What the claims together made of it.</returns>
+    public static SessionOutcome Match(Event? happened, Expect expect) =>
+        happened is { } said
+            ? Match(said, expect.Message.AsObject())
+            : SessionOutcome.Diverged(
+                $"the run fell silent, but the session still expects {expect.Message.ToJsonString()}");
+
     /// <summary>Checks an event against everything an expectation claims of it.</summary>
     /// <param name="happened">What the runner actually said.</param>
     /// <param name="expectation">What the session expected, as an object of claims.</param>

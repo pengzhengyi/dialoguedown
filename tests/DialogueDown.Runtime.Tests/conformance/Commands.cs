@@ -1,10 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
-/// <summary>Reads a session's <c>send</c> message as the runtime command it names.</summary>
+/// <summary>Reads what a session sends.</summary>
 /// <remarks>
 /// A separate, testable concern from operating the runner. It recognizes the commands this pass
 /// can play; anything else reads as <see langword="null"/>, which the caller reports as not yet
@@ -12,11 +13,21 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </remarks>
 internal static class Commands
 {
-    /// <summary>Reads the command a <c>send</c> message names.</summary>
-    /// <param name="message">The <c>send</c> value, in the corpus's own words.</param>
+    /// <summary>Reads the command a send names.</summary>
+    /// <param name="send">What the session sends, in the corpus's own words.</param>
     /// <returns>The command, or <see langword="null"/> when nothing plays it yet.</returns>
-    public static Command? Read(JsonNode message) =>
-        message.GetValueKind() == JsonValueKind.String && message.GetValue<string>() == "next"
+    public static Command? Read(Send send)
+    {
+        var message = send.Message;
+
+        return message.GetValueKind() == JsonValueKind.String && message.GetValue<string>() == "next"
             ? new Next()
             : null;
+    }
+
+    /// <summary>Whether a send is the one that opens the run.</summary>
+    /// <param name="send">What the session sends.</param>
+    /// <returns><see langword="true"/> when the send opens the run.</returns>
+    public static bool IsStart(Send send) =>
+        send.Message is JsonObject message && message.ContainsKey("start");
 }

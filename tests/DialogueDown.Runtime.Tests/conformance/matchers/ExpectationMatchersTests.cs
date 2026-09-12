@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
@@ -67,6 +68,15 @@ public sealed class ExpectationMatchersTests
     public void AClaimSayingNothingIsAnInvalidFixture()
     {
         Assert.Throws<InvalidFixtureException>(() => Match(_hello, """{ "said": null }"""));
+    }
+
+    [Fact]
+    public void ARunThatHasFallenSilentDiverges()
+    {
+        AssertDiverged(
+            ExpectationMatchers.Match(null, Expected(SaidHi)),
+            "the run fell silent",
+            "Alice");
     }
 
     private static SessionOutcome Match(Event happened, string expectation) =>
