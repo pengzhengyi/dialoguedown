@@ -36,7 +36,7 @@ public sealed class SpeechTextTests
         // A kind nobody taught it to read would say nothing at all, which looks like a line that
         // happens to be quiet rather than a reading that was never written.
         UnionAssert.AssertCoversEveryMember<SpeechFragment>(
-            _everyKind.Select(kind => kind.Fragment.GetType()));
+            _everyKind.Select(kind => kind.Fragment));
     }
 
     [Fact]
