@@ -30,6 +30,8 @@
     href: runtime/Conformance Corpus.md
   - name: Node Outward Shape
     href: runtime/Node Outward Shape.md
+  - name: Speech as Plain Text
+    href: runtime/Speech as Plain Text.md
 - name: Language constructs
   items:
   - name: Progression Order
@@ -124,6 +126,8 @@
       href: visualization/report/Unavailable Stage Tabs.md
     - name: Playbook Tab
       href: visualization/report/Playbook Tab.md
+    - name: Playbook Nodes Table
+      href: visualization/report/Playbook Nodes Table.md
   - name: Source editor
     items:
     - name: Unmodeled Markdown Highlighting
