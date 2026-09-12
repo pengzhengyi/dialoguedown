@@ -46,6 +46,28 @@ internal static class DialogueAstFactory
 
     public static LineBreak LineBreak() => new(SourceSpanFactory.Span());
 
+    /// <summary>One of every inline fragment that is something a line says.</summary>
+    public static IReadOnlyList<InlineFragment> SpeakableFragments() =>
+    [
+        Text("plain"),
+        StyledText(SpeechStyle.Italic),
+        Link("#inn"),
+        Image("inn.png"),
+        LineBreak(),
+        Query("Key"),
+        DefaultCommand("wait"),
+        CustomCommand("shake"),
+        ReservedTag("aside"),
+        CustomTag("mood", "wry"),
+    ];
+
+    /// <summary>
+    /// One of every inline fragment that describes flow rather than speech. The compile turns each
+    /// into an edge or a guard, so none of them reaches a playbook.
+    /// </summary>
+    public static IReadOnlyList<InlineFragment> FlowFragments() =>
+        [Condition("IsCurious"), Jump("#the-inn"), JumpIndicator()];
+
     public static DefaultSpeaker DefaultSpeaker() => new(SourceSpanFactory.Span());
 
     public static Line Line(params InlineFragment[] speech) =>

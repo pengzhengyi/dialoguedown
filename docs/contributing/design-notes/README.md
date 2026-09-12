@@ -101,7 +101,8 @@ flowchart LR
     RA["1. Runtime Architecture"] --> PF["2. Playbook Format"]
     PF --> CC["3. Conformance Corpus"]
     CC --> NOS["4. Node Outward Shape"]
-    NOS --> RUN(["runner, players,<br/>adapters"])
+    NOS --> SPT["5. Speech as Plain Text"]
+    SPT --> RUN(["runner, players,<br/>adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -110,6 +111,7 @@ flowchart LR
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
 | 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
 | 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
+| 5 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
 
 ### Language constructs
 
@@ -217,6 +219,7 @@ Configuration tab and the folding contract every surface shares.
 | 45 | [Copyable Identifiers](./visualization/report/Copyable%20Identifiers.md) | An `@id`, an anchor, and a jump target copy on click; prose does not | Implemented |
 | 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
 | 47 | [Following an Index in the Playbook](./visualization/report/Following%20an%20Index%20in%20the%20Playbook.md) | A node or speaker reference in the JSON is a link: click it, or press F12, to reveal the definition it names | Implemented |
+| 49 | [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Proposed |
 
 #### Source editor
 
