@@ -142,7 +142,8 @@ flattening.
 - [ ] Styled runs contribute their words and drop their style.
 - [ ] Nesting is followed to any depth.
 - [ ] A link contributes its label; an image contributes its alt text.
-- [ ] A line break contributes a single space, because the result is one line.
+- [ ] A line break contributes a single space, because it records where the writer's source
+      wrapped rather than a break they asked for.
 - [ ] A tag and a command contribute nothing — they are not words in the line.
 - [ ] A caller that can answer a query gets the answer substituted.
 - [ ] A caller with no answers gets the key in braces, `{HeroName}`.
@@ -154,17 +155,17 @@ flattening.
 
 ## The flattening
 
-| Fragment          | Plain text                | Why                                                      |
-| ----------------- | ------------------------- | -------------------------------------------------------- |
-| `text`            | its `text`                | The words themselves.                                    |
-| `styled`          | its `children`, flattened | The corpus says to drop style markers, not styled words. |
-| `link`            | its `label`, flattened    | The label is what a reader sees; the target is not said. |
-| `image`           | its `alt`, flattened      | Alt text exists to stand in for the image in words.      |
-| `break`           | a single space            | The result is one line, so a line break becomes a gap.   |
-| `query`           | the answer, else `{Key}`  | The corpus says to substitute resolved queries.          |
-| `tag`             | nothing                   | Metadata about the line, not words in it.                |
-| `default-command` | nothing                   | An effect the host performs, not something said.         |
-| `custom-command`  | nothing                   | As above.                                                |
+| Fragment          | Plain text                | Why                                                       |
+| ----------------- | ------------------------- | --------------------------------------------------------- |
+| `text`            | its `text`                | The words themselves.                                     |
+| `styled`          | its `children`, flattened | The corpus says to drop style markers, not styled words.  |
+| `link`            | its `label`, flattened    | The label is what a reader sees; the target is not said.  |
+| `image`           | its `alt`, flattened      | Alt text exists to stand in for the image in words.       |
+| `break`           | a single space            | It marks where the source wrapped, not a break asked for. |
+| `query`           | the answer, else `{Key}`  | The corpus says to substitute resolved queries.           |
+| `tag`             | nothing                   | Metadata about the line, not words in it.                 |
+| `default-command` | nothing                   | An effect the host performs, not something said.          |
+| `custom-command`  | nothing                   | As above.                                                 |
 
 ```mermaid
 flowchart LR
@@ -178,11 +179,12 @@ flowchart LR
 
 ## Interfaces and abstractions
 
-| Type                                                                   | Responsibility                                                                                       | Collaborators                 |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `SpeechText`                                                           | Public static class in `DialogueDown.Playbook.Speech`. The flattening, and nothing else.             | the nine fragment records     |
-| `SpeechText.Of(ImmutableArray<SpeechFragment>)`                        | Flattens, rendering a query as a placeholder.                                                        | —                             |
-| `SpeechText.Of(ImmutableArray<SpeechFragment>, Func<string, string?>)` | Flattens, asking the caller to answer each query key. A `null` answer falls back to the placeholder. | the caller's world or fixture |
+| Type                                                                  | Responsibility                                                                                          | Collaborators                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `SpeechText`                                                          | Public static class in `DialogueDown.Playbook.Speech`. The flattening, and nothing else.                | the nine fragment records     |
+| `SpeechText.Of(ImmutableArray<SpeechFragment>)`                       | Flattens, naming each query rather than saying what it is worth.                                        | `SpeechText.PlaceholderFor`   |
+| `SpeechText.Of(ImmutableArray<SpeechFragment>, Func<string, string>)` | Flattens, asking the caller what each query key is worth.                                               | the caller's world or fixture |
+| `SpeechText.PlaceholderFor(string)`                                   | Writes one key as `{Key}`. Public, so a caller answering only some keys has somewhere to send the rest. | —                             |
 
 ## Key design decisions
 
@@ -261,10 +263,22 @@ The three callers genuinely differ:
 | The report          | None — a static report has no world | Something that names the key |
 | A host's fallback   | The live world                      | The substituted value        |
 
-So the function takes the answers rather than owning them, and the no-answer case
-is a documented placeholder rather than a guess or a throw. A throw would make a
-report crash on a script that is perfectly valid. An empty string is what the
-report does today, and it is the defect this note repairs.
+So the function takes the answers rather than owning them. The asking is a **total**
+`string` to `string`, which settles two things at once.
+
+It is the shape a host already implements. A host answers a query through
+`string Query(string query)`, so it hands that very method in rather than wrapping it
+to admit a null the format never asks for anywhere else.
+
+And it leaves the caller in charge of a key it cannot answer, which is what this
+decision claims to do. A function that took a nullable answer and filled the gap
+itself would be deciding query policy after all — the same overreach DD6 avoids for
+trimming. Total means the braces are a default rather than a rule: a terminal that
+would rather mark an unknown key its own way can.
+
+The alternatives for an unanswerable key were a throw and an empty string. A throw
+would crash a report over a script that is perfectly valid. An empty string is what
+the report does today, and it is the defect this note repairs.
 
 ### DD5 — An unanswered query reads as `{Key}`
 
@@ -296,6 +310,11 @@ Brace-wrapping also follows a precedent this project already set. The Dialogue
 Graph draws a jump as `⇒` rather than the `=>` a writer types, and says why: a
 drawing shows the meaning and leaves the source characters to the source. A query
 is the same question with the same answer.
+
+Because the asking is total, this placeholder is public rather than buried. A caller
+that knows some of the world and not the rest has to produce something for the keys
+it does not know, and without a named default every such caller would spell the
+braces again — which is how two renderings of the same idea start to drift.
 
 The rough edges are real, and are documented rather than designed away:
 
@@ -340,7 +359,7 @@ control node by its effects rather than by its speech.
 | A styled run with no children               | Contributes nothing.                                                                                                                      |
 | Nesting many levels deep                    | Followed to the bottom; the recursion is over a tree the reader already validated.                                                        |
 | A link or image whose label or alt is empty | Contributes nothing, rather than the target or source URL. A reader asked for words, and a path is not words.                             |
-| A query whose answer is `null`              | The placeholder, as though no resolver were supplied. A resolver that cannot answer one key still answers the others.                     |
+| A caller that can answer only some keys     | It sends the rest to `PlaceholderFor`, so one unknown key costs only that key.                                                            |
 | A query whose answer is the empty string    | The empty string. An answered query is answered, even when the answer is nothing.                                                         |
 | A fragment kind added to the format later   | Contributes nothing, via the catch-all the match needs anyway — and fails the coverage test described below, so it cannot ship unnoticed. |
 | A line that is only commands and tags       | The empty string.                                                                                                                         |
@@ -371,8 +390,9 @@ control node by its effects rather than by its speech.
   query is, so it is where they should meet what one looks like unresolved.
 - **No format change.** Nothing about the serialized document moves.
 
-The public surface grows by one static class, which is worth noting because the
-library's published API is meant to stay small and deliberate.
+The public surface grows by one static class holding three members — two `Of`
+overloads and `PlaceholderFor` — which is worth counting because the library's
+published API is meant to stay small and deliberate.
 
 ## Testability
 
@@ -390,6 +410,13 @@ compile, no playbook.
 
 ## Open questions
 
+- **Should speech be able to hold a break a writer does mean?** The only break that
+  reaches a playbook is where the source wrapped, because a break a writer asks for
+  is split into the next line during the compile. So a writer who wants two lines of
+  one speaker's speech to arrive as one line with a break inside it has no way to say
+  so. That is the format's existing shape rather than anything this function decides,
+  and changing it would be a format change — but the question belongs somewhere, and
+  flattening is where it surfaces.
 - **Should the report mark an unanswered query as a diagnostic rather than only
   drawing it?** A line whose words depend on the world is worth knowing about when
   auditing a script, and the report has a Problems panel that could say so. Against:
