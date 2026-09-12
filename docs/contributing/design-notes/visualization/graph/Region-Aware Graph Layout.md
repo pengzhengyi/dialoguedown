@@ -32,7 +32,7 @@ is the padded bounding box of its nodes, and the layout that places those nodes
 does not know which scene a node belongs to. When flow crosses between scenes — a
 scene entered from partway through another, two scenes both diverting into a
 third — the scenes' rows interleave and their bounding boxes **overlap**:
-translucent tints stack into a third colour, and a node in the overlap reads as
+translucent tints stack into a third color, and a node in the overlap reads as
 belonging to two scenes at once.
 
 Measured on `examples/highrise-fire.dialogue.md` by reading the rendered
