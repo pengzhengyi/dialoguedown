@@ -86,14 +86,16 @@ invents none.
 
 - [ ] Every node in the playbook has exactly one row.
 - [ ] A `line`'s summary names its speaker and quotes what is said.
-- [ ] A `control`'s summary lists the commands it performs.
+- [ ] A `control`'s summary lists the commands it performs, in order.
 - [ ] A `control` with no effects — which is a divert wearing a control's clothes —
       is given the words the writer put on the divert.
-- [ ] A `choice` and a `random-choice` quote the options they offer, and mark the
-      ones offered only on a condition.
+- [ ] A `choice` lists the options it offers, marking the ones offered only on a
+      condition.
+- [ ] A `random-choice` reports how many arms it draws from and their odds, because
+      its arms carry no words.
 - [ ] A node that is itself conditional says so, ahead of everything else.
-- [ ] A `branch` says what it tests.
-- [ ] An `end` says that it ends the script.
+- [ ] A `branch` pairs each condition with the node it reaches.
+- [ ] An `end` says only that the run stops.
 - [ ] A node's kind carries the same color the Dialogue Graph gives that kind.
 - [ ] A node with one way out has that target as a link, which reveals the node in
       the JSON beside the table; a node with several lists them as text.
@@ -121,9 +123,9 @@ to node 16*, a reader must resolve `speaker: 1` against a table above, flatten
 three fragments in their head, and hold `16` until they find it. The row below
 says the same thing:
 
-| #   | Kind | Summary                                                              | Leads to |
-| --- | ---- | -------------------------------------------------------------------- | -------- |
-| 6   | line | Keeper: "North, past the burned mile. Take a torch — and take care." | 16       |
+| # | Kind | Summary                                                            | Leads to |
+| - | ---- | ------------------------------------------------------------------ | -------- |
+| 6 | line | Keeper: North, past the burned mile. Take a torch — and take care. | 16       |
 
 ## Design
 
@@ -144,34 +146,48 @@ planned hover card show the identical words without a second implementation.
 ### Writing a summary
 
 A summary is composed by matching on the node's type. Speech and option labels
-reach it already flattened, from the preceding component; everything else here is
-the node's own shape.
+reach it already flattened and are trimmed before use; everything else here is the
+node's own shape.
 
 ```text
 summaryOf(node, speakers):
-    line          -> "{speaker}: “{speech}”"
-    control       -> effects, if any -> "{name}({args}) · …"
-                     otherwise       -> "⇒ {the words on its divert}"
-    choice        -> "“{option}” / “{option}” / …"
-    random-choice -> "“{option}” / …", each with its weight
-    branch        -> "if {key} · otherwise"
-    end           -> "Ends the script"
+    line          -> "{speaker}: {speech}"
+    control       -> commands, if any -> "{Name}({args}); …"
+                     otherwise        -> "⇒ {the words on its divert}"
+                     neither          -> "CONTINUE"
+    choice        -> "{option} || {option} || …"
+    random-choice -> "DRAW 1 OF {n}: {odds} || {odds} || …"
+    branch        -> "IF {key} THEN {n} ELSE IF {key} THEN {n} ELSE {n}"
+    end           -> "END"
 
-    # An option available only on a condition carries it in parentheses:
-    #     “Brave the west road” (if Alice.HasMap)
+    # A guard on one way out trails the thing it governs:
+    #     Brave the west road IF Alice.HasMap
+    #     50% IF Hero.HasMap
     #
     # A line or a control may itself be conditional, and then nothing it holds
     # happens unless the key is true. That governs the whole node rather than one
     # way out of it, so it leads instead of trailing:
-    #     if Hero.IsBrave · Keeper: “…”
+    #     IF Hero.IsBrave THEN Keeper: …
 ```
 
-Quotation marks set off **words that reach a player verbatim** — a line's speech
-and an option's label. Everything else in the column is the table's own prose: it
-says that a node ends the script, or what a branch tests. The quotes are what keep
-the two apart inside one cell. The Dialogue Graph draws a line's label unquoted,
-and is right to: a node box holds nothing else that could be confused with speech.
-A table column does.
+The column reads as a little pseudocode, with four registers each carrying one
+job. **Capitals** are what the table itself asserts. **A name in angle brackets**
+stands where a value is missing or cannot be resolved: `<anonymous>`, `<unknown>`,
+`<no speech>`, `<no label>`. **Round brackets** always mean a command:
+`(fade in)` for an action the host already knows, `ShowBackground(tavern, firelit)`
+for one the script names. Everything else came from the script.
+
+Case is what keeps the table's own words apart from a writer's, so speech needs no
+quotation marks around it: a capitalized keyword can never be mistaken for
+something a player hears, and the speaker's colon already marks where speech
+begins. The Dialogue Graph draws a line's label unquoted for a simpler reason — a
+node box holds nothing else — and the two surfaces agree.
+
+A branch pairs each condition with the node it reaches, which is the one thing the
+Leads to column cannot express: it lists a branch's targets but not which guard
+leads to which. A random choice reports its arms' odds rather than their words,
+because a random arm carries no words at all — the engine picks, so nobody is
+shown a menu, and the odds are the whole of what the arm holds.
 
 ## Interfaces and abstractions
 
@@ -317,19 +333,19 @@ not a rider on adding the fourth.
 
 ## Error and boundary cases
 
-| Case                                                     | Behavior                                                                                                                                                                                                                                                                  |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The compile produced no playbook                         | No Nodes table, as there are no Speakers or Anchors tables either.                                                                                                                                                                                                        |
-| A node with no ways out (`end`)                          | The Leads to cell is empty, per the report's rule that an absent value is an empty cell. An empty cell is never a link, which the table already enforces.                                                                                                                 |
-| A line whose speaker is the anonymous one                | Named `(anonymous)`, the same rendering the Speakers table uses.                                                                                                                                                                                                          |
-| A line with no speech                                    | The summary is the speaker and an empty quotation, which is what the document says.                                                                                                                                                                                       |
-| A speaker index outside the speaker list                 | Cannot occur in a playbook the writer produced; projected defensively as `(unknown speaker)` rather than throwing, because a report that renders nothing is worse than one that says so.                                                                                  |
-| A control node with neither effects nor a labeled divert | `passes straight through`.                                                                                                                                                                                                                                                |
-| An option with no label                                  | Rendered as `(no label)`. The compiler already reports a blank menu row as a diagnostic, so this names a script the writer has been told about rather than inventing text for it.                                                                                         |
-| A line or control carrying its own condition             | The condition leads the summary: `if Hero.IsBrave · Keeper: "…"`. No shipped example produces one — every condition in `rpg-quest` and `highrise-fire` sits on an edge — but the format allows it, and a summary that dropped it would misdescribe what the runtime does. |
-| A choice with many options                               | Options are quoted in order until the cap is reached; the row then ends in an ellipsis. Every target is still listed in the Leads to cell, so the number of ways out stays readable.                                                                                      |
-| A summary longer than the cap                            | Cut at the cap, on a word boundary, with an ellipsis.                                                                                                                                                                                                                     |
-| A very large playbook                                    | One row per node, drawn by a component that already carries thousands of rows elsewhere in the report.                                                                                                                                                                    |
+| Case                                                     | Behavior                                                                                                                                                                                                                                       |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The compile produced no playbook                         | No Nodes table, as there are no Speakers or Anchors tables either.                                                                                                                                                                             |
+| A node with no ways out (`end`)                          | The Leads to cell is empty, per the report's rule that an absent value is an empty cell. An empty cell is never a link, which the table already enforces.                                                                                      |
+| A line whose speaker is the anonymous one                | Stands in as `<anonymous>`.                                                                                                                                                                                                                    |
+| A line with no speech                                    | The summary is the speaker and `<no speech>`, so an empty cell never reads as a rendering fault.                                                                                                                                               |
+| A speaker index outside the speaker list                 | Cannot occur in a playbook the writer produced; projected defensively as `<unknown>` rather than throwing, because a report that renders nothing is worse than one that says so.                                                               |
+| A control node with neither effects nor a labeled divert | `CONTINUE`.                                                                                                                                                                                                                                    |
+| An option with no label                                  | Rendered as `<no label>`. The compiler already reports a blank menu row as a diagnostic, so this names a script the writer has been told about rather than inventing text for it.                                                              |
+| A line or control carrying its own condition             | The condition leads the summary: `IF Hero.IsBrave THEN Keeper: …`. Every condition in `rpg-quest` and `highrise-fire` sits on an edge, but `gallery` has one on a line, and a summary that dropped it would misdescribe what the runtime does. |
+| A choice with many options                               | Options are quoted in order until the cap is reached; the row then ends in an ellipsis. Every target is still listed in the Leads to cell, so the number of ways out stays readable.                                                           |
+| A summary longer than the cap                            | Cut at the cap, on a word boundary, with an ellipsis.                                                                                                                                                                                          |
+| A very large playbook                                    | One row per node, drawn by a component that already carries thousands of rows elsewhere in the report.                                                                                                                                         |
 
 ## Integration
 
