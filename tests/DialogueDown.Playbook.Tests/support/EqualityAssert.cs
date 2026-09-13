@@ -15,6 +15,7 @@ internal static class EqualityAssert
     /// <param name="left">One of the two values.</param>
     /// <param name="right">The other, structurally equal to <paramref name="left"/>.</param>
     public static void AssertValueEqual<T>(T left, T right)
+        where T : notnull
     {
         Assert.Equal(left, right);
         Assert.Equal(left.GetHashCode(), right.GetHashCode());
@@ -24,6 +25,7 @@ internal static class EqualityAssert
     /// <typeparam name="T">The value's type.</typeparam>
     /// <param name="left">One of the two values.</param>
     /// <param name="right">The other, structurally different from <paramref name="left"/>.</param>
-    public static void AssertValueUnequal<T>(T left, T right) =>
+    public static void AssertValueUnequal<T>(T left, T right)
+        where T : notnull =>
         Assert.NotEqual(left, right);
 }
