@@ -41,6 +41,13 @@ internal static class PlaybookNodeSummary
     /// <summary>How an arm of a random choice reads when its share is left to the other arms.</summary>
     private const string Evenly = "evenly";
 
+    /// <summary>How many characters a finished summary keeps before it is cut.</summary>
+    /// <remarks>
+    /// One enormous paragraph would otherwise travel in the report payload and wrap a single row
+    /// into a wall of text. The cap is generous enough that most rows never meet it.
+    /// </remarks>
+    private const int SummaryCap = 200;
+
     /// <summary>
     /// Summarizes one node, leading with the node's own condition when it carries one.
     /// </summary>
@@ -54,10 +61,23 @@ internal static class PlaybookNodeSummary
         var body = BodyOf(node, speakers);
         if (body.Length == 0 || ConditionOf(node) is not { } condition)
         {
-            return body;
+            return Capped(body);
         }
 
-        return $"IF {condition.Key} THEN {body}";
+        return Capped($"IF {condition.Key} THEN {body}");
+    }
+
+    // The cut respects a word boundary so no word is left half-written.
+    private static string Capped(string summary)
+    {
+        if (summary.Length <= SummaryCap)
+        {
+            return summary;
+        }
+
+        var boundary = summary.LastIndexOf(' ', SummaryCap);
+        var kept = boundary >= 0 ? summary[..boundary] : summary[..SummaryCap];
+        return $"{kept.TrimEnd()}…";
     }
 
     private static string BodyOf(Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
