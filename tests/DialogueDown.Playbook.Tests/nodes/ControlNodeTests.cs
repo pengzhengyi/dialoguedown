@@ -1,4 +1,5 @@
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 namespace DialogueDown.Playbook.Tests.Nodes;
 
@@ -35,5 +36,25 @@ public sealed class ControlNodeTests
             """;
 
         PlaybookJsonAssert.AssertRoundTrip<Node, ControlNode>(Json);
+    }
+
+    [Fact]
+    public void Equality_EqualEffects_AreEqual()
+    {
+        var left = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Alice"])], Condition: null, []);
+        var right = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Alice"])], Condition: null, []);
+
+        Assert.True(left == right);
+        Assert.Equal(left, right);
+        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+    }
+
+    [Fact]
+    public void Equality_DifferentEffects_AreNotEqual()
+    {
+        var left = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Alice"])], Condition: null, []);
+        var right = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Bob"])], Condition: null, []);
+
+        Assert.False(left == right);
     }
 }

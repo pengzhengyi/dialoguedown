@@ -1,4 +1,5 @@
 using DialogueDown.Playbook.Edges;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 namespace DialogueDown.Playbook.Tests.Edges;
 
@@ -47,5 +48,25 @@ public sealed class OptionEdgeTests
         var option = PlaybookJsonAssert.AssertRoundTrip<Edge, OptionEdge>(Json);
 
         Assert.Null(option.Condition);
+    }
+
+    [Fact]
+    public void Equality_EqualLabels_AreEqual()
+    {
+        var left = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
+        var right = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
+
+        Assert.True(left == right);
+        Assert.Equal(left, right);
+        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+    }
+
+    [Fact]
+    public void Equality_DifferentLabels_AreNotEqual()
+    {
+        var left = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
+        var right = new OptionEdge(2, [new TextFragment("Say nothing")], Condition: null);
+
+        Assert.False(left == right);
     }
 }

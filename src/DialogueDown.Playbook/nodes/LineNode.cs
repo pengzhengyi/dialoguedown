@@ -4,6 +4,7 @@ using DialogueDown.Playbook.Common;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Speech;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Nodes;
 
@@ -15,7 +16,8 @@ namespace DialogueDown.Playbook.Nodes;
 /// <param name="Speech">What is said.</param>
 /// <param name="Condition">What must hold for the line to play, or <c>null</c>.</param>
 /// <param name="Out">The ways out of this node.</param>
-public sealed record LineNode(
+[Equatable]
+public sealed partial record LineNode(
     int Id,
     int Speaker,
     ImmutableArray<SpeechFragment> Speech,
@@ -32,6 +34,7 @@ public sealed record LineNode(
     /// <summary>
     /// Gets what is said.
     /// </summary>
+    [OrderedEquality]
     [JsonPropertyOrder(4)]
     [JsonPropertyName("speech")]
     public ImmutableArray<SpeechFragment> Speech { get; } = Speech.OrEmpty();
