@@ -1220,6 +1220,34 @@ section.stage.empty-shell {
     white-space: nowrap;
 }
 
+/* The Summary cell's styled runs. Only the three distinctions worth finding carry a colour — who
+   speaks, what the host is asked to perform, and a value only a running game can supply — drawn
+   from the Source editor's own syntax tokens, already defined for both themes. The grammar around
+   them is muted, so the words a writer wrote stay the most legible thing in the row. */
+.dd-sum-speaker {
+    color: var(--tok-speaker-name);
+}
+
+.dd-sum-command {
+    color: var(--tok-command);
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.95em;
+}
+
+.dd-sum-query {
+    color: var(--tok-query);
+}
+
+.dd-sum-keyword,
+.dd-sum-separator {
+    color: var(--pico-muted-color);
+}
+
+.dd-sum-absent {
+    color: var(--pico-muted-color);
+    font-style: italic;
+}
+
 /* The revealed search box: a slim, horizontally inset row above the table (not edge-to-edge),
    shown on demand from the title bar. */
 .table-search-row {

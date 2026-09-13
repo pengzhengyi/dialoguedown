@@ -528,6 +528,14 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         return td;
     }
 
+    // A cell drawn in styled runs. The split is only for drawing: the highlight is still found in
+    // the cell's own text and then laid across the runs, so searching keeps marking a cell that
+    // has gained colour.
+    if (cell.runs && cell.runs.length > 0) {
+        drawRuns(td, cell, query);
+        return td;
+    }
+
     // A tag cell is drawn as capsules. Its `text` stays the plain rendering, so search and sort
     // still read the cell; only the drawing differs.
     if (cell.tags) {
@@ -564,6 +572,36 @@ function highlightInto(td: HTMLElement, text: string, ranges: MatchRange[]): voi
     }
     if (cursor < text.length) {
         td.appendChild(document.createTextNode(text.slice(cursor)));
+    }
+}
+
+/**
+ * Draws a cell as its styled runs, keeping the search highlight. The match ranges are found once
+ * over the cell's own text and then laid across whichever run covers them; a range that straddles
+ * two runs is drawn as a marked stretch in each.
+ */
+function drawRuns(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
+    const ranges = query ? findMatches(cell.text, query.query, query) : [];
+    let emitted = 0;
+    for (const run of cell.runs ?? []) {
+        const start = emitted;
+        const end = start + run.text.length;
+        emitted = end;
+        // Each global range overlapping this run is translated into the run's own coordinates.
+        const local = ranges
+            .filter((range) => range.start < end && range.end > start)
+            .map((range): MatchRange => ({
+                start: Math.max(range.start, start) - start,
+                end: Math.min(range.end, end) - start,
+            }));
+        if (run.className) {
+            const span = document.createElement("span");
+            span.className = run.className;
+            highlightInto(span, run.text, local);
+            td.appendChild(span);
+        } else {
+            highlightInto(td, run.text, local);
+        }
     }
 }
 

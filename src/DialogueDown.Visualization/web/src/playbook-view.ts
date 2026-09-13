@@ -40,6 +40,7 @@ import { escapeHtml } from "./text";
 import { tagLabel } from "./tag-chip";
 import { lineOf, revealLine, type PlaybookTarget } from "./playbook-jump";
 import { playbookReferences, playbookReferenceKeymap } from "./playbook-references";
+import { summaryRuns, type SummaryRole } from "./summary-runs";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -290,6 +291,31 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
 }
 
 /**
+ * The class each summary role wears in the Nodes table. A writer's own words (`plain`) carry
+ * none, so they keep the cell's own colour while the report's scaffolding steps back.
+ */
+const SUMMARY_RUN_CLASS: Record<SummaryRole, string | undefined> = {
+    speaker: "dd-sum-speaker",
+    keyword: "dd-sum-keyword",
+    separator: "dd-sum-separator",
+    command: "dd-sum-command",
+    query: "dd-sum-query",
+    absent: "dd-sum-absent",
+    plain: undefined,
+};
+
+/** The node's summary as text plus the styled runs its kind's grammar splits it into. */
+function summaryCell(node: PlaybookNodeView): SemanticCell {
+    return {
+        text: node.summary,
+        runs: summaryRuns(node.summary, node.kind).map((run) => {
+            const className = SUMMARY_RUN_CLASS[run.role];
+            return className === undefined ? { text: run.text } : { text: run.text, className };
+        }),
+    };
+}
+
+/**
  * The nodes themselves: each one's position, the tag the document names it by, what it holds,
  * and where it leads — the table that answers "show me every choice", which the Kind column
  * makes a filter rather than a reading exercise.
@@ -308,7 +334,9 @@ function nodeTable(nodes: readonly PlaybookNodeView[]): SemanticTable {
                     // The kind wears the color the Dialogue Graph gives it, so the table and the
                     // drawing name a node the same way.
                     { text: node.kind, category: node.category },
-                    { text: node.summary },
+                    // The words a writer wrote keep the plain colour while the report's own
+                    // scaffolding steps back, so the speech is what the eye lands on.
+                    summaryCell(node),
                     waysOut(node.targets),
                 ],
             };

@@ -83,6 +83,12 @@ export interface SemanticJump {
     refKey?: string;
 }
 
+/** One styled stretch of a cell's text. */
+export interface SemanticRun {
+    text: string;
+    className?: string;
+}
+
 /** One cell of a {@link SemanticTable}. */
 export interface SemanticCell {
     text: string;
@@ -94,6 +100,13 @@ export interface SemanticCell {
     category?: string;
     /** Present when the cell is a tag list: drawn as capsules instead of {@link text}. */
     tags?: TagView[];
+    /**
+     * Set when the cell's text is drawn in styled stretches rather than as one run of prose.
+     * `text` stays the plain rendering, so search and sort still read the cell and only the
+     * drawing differs — the same arrangement {@link tags} uses. The runs' texts must concatenate
+     * back to `text`, because the search highlight is found in `text` and drawn across the runs.
+     */
+    runs?: SemanticRun[];
     /**
      * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
      * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
