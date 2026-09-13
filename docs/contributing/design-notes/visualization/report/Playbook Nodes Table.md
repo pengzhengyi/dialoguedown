@@ -156,7 +156,7 @@ summaryOf(node, speakers):
                      otherwise        -> "⇒ {the words on its divert}"
                      neither          -> "CONTINUE"
     choice        -> "{option} || {option} || …"
-    random-choice -> "DRAW 1 OF {n}: {odds} || {odds} || …"
+    random-choice -> "DRAW 1 FROM {n}: {odds} || {odds} || …"
     branch        -> "IF {key} THEN {n} ELSE IF {key} THEN {n} ELSE {n}"
     end           -> "END"
 

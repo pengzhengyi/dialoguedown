@@ -114,7 +114,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_ARandomChoice_SaysHowManyArmsItDrawsFromAndTheirOdds()
     {
         Assert.Equal(
-            "DRAW 1 OF 3: 50% || 25% || 25%",
+            "DRAW 1 FROM 3: 50% || 25% || 25%",
             PlaybookNodeSummary.Of(
                 RandomChoice(Chance(50), Chance(25), Chance(25)), Speakers()));
     }
@@ -123,7 +123,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_ARandomChoiceWeightedByTheWorld_NamesTheKeyItWillAsk()
     {
         Assert.Equal(
-            "DRAW 1 OF 2: {Hero.Attack} || {Dragon.Fury}",
+            "DRAW 1 FROM 2: {Hero.Attack} || {Dragon.Fury}",
             PlaybookNodeSummary.Of(
                 RandomChoice(Chance("Hero.Attack"), Chance("Dragon.Fury")), Speakers()));
     }
@@ -132,7 +132,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_ARandomChoiceArmWithNoWeightOfItsOwn_SaysItSharesEvenly()
     {
         Assert.Equal(
-            "DRAW 1 OF 2: 50% || evenly",
+            "DRAW 1 FROM 2: 50% || evenly",
             PlaybookNodeSummary.Of(RandomChoice(Chance(50), EvenChance()), Speakers()));
     }
 
@@ -140,7 +140,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_ARandomChoiceArmInThePoolOnlyOnACondition_MarksItAfterTheOdds()
     {
         Assert.Equal(
-            "DRAW 1 OF 2: 50% IF Hero.HasMap || 50%",
+            "DRAW 1 FROM 2: 50% IF Hero.HasMap || 50%",
             PlaybookNodeSummary.Of(
                 RandomChoice(Chance(50, condition: "Hero.HasMap"), Chance(50)), Speakers()));
     }
@@ -149,7 +149,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_AFractionalWeight_KeepsItsDecimalAndDropsTrailingZeros()
     {
         Assert.Equal(
-            "DRAW 1 OF 2: 12.5% || 87.5%",
+            "DRAW 1 FROM 2: 12.5% || 87.5%",
             PlaybookNodeSummary.Of(RandomChoice(Chance(12.5), Chance(87.5)), Speakers()));
     }
 

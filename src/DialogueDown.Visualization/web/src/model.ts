@@ -70,6 +70,19 @@ export interface DisplayEdge {
     label?: string;
 }
 
+/** One destination inside a cell that names several: how it reads, and where it leads. */
+export interface SemanticJump {
+    /** How this destination reads in the cell. */
+    text: string;
+    /** Where it leads. */
+    target: PlaybookTarget;
+    /**
+     * Set when this destination references a keyed entity, so hovering it highlights that entity
+     * wherever else it appears.
+     */
+    refKey?: string;
+}
+
 /** One cell of a {@link SemanticTable}. */
 export interface SemanticCell {
     text: string;
@@ -94,6 +107,12 @@ export interface SemanticCell {
      * Client-authored: no projection emits it.
      */
     jump?: PlaybookTarget;
+    /**
+     * Set when the cell names several places at once, so each is reachable on its own instead of
+     * the cell standing for one of them. `text` stays the plain rendering, so search and sort
+     * still read the cell and only the drawing differs — the same arrangement {@link tags} uses.
+     */
+    jumps?: SemanticJump[];
 }
 
 /** One row of a {@link SemanticTable}; `entityKey` names the entity the row represents. */
@@ -206,6 +225,20 @@ export interface PlaybookAnchorView {
     node: number;
 }
 
+/** One row of the playbook's node table. */
+export interface PlaybookNodeView {
+    /** The node's own position. */
+    id: number;
+    /** The tag the document names the node by. */
+    kind: string;
+    /** The cross-stage color group the node's kind belongs to. */
+    category: string;
+    /** The one line saying what the node holds. */
+    summary: string;
+    /** The nodes this node leads to. */
+    targets: number[];
+}
+
 /**
  * The compiled playbook — the runtime's artifact — shown in the Playbook tab: the serialized
  * JSON a host would load, beside the tables that summarize it.
@@ -219,6 +252,8 @@ export interface PlaybookReport {
     speakers: PlaybookSpeakerView[];
     /** The playbook's anchors, shown as a table. */
     anchors: PlaybookAnchorView[];
+    /** Every node the playbook holds, in document order, shown as a table. */
+    nodes: PlaybookNodeView[];
     /** Why no playbook exists, when the compile did not reach one. */
     unavailable?: string;
 }

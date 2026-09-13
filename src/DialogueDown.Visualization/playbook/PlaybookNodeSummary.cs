@@ -164,7 +164,7 @@ internal static class PlaybookNodeSummary
     private static string RandomChoice(RandomChoiceNode random)
     {
         var arms = random.Out.OfType<RandomOptionEdge>().ToImmutableArray();
-        return $"DRAW 1 OF {arms.Length}: {string.Join(" || ", arms.Select(Odds))}";
+        return $"DRAW 1 FROM {arms.Length}: {string.Join(" || ", arms.Select(Odds))}";
     }
 
     private static string Odds(RandomOptionEdge arm) =>

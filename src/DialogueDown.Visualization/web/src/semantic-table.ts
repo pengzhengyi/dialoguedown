@@ -509,6 +509,25 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         td.dataset.category = cell.category;
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
+    // A cell naming several destinations offers each one rather than picking one for the reader.
+    // The delegated listener finds whichever control was pressed, because it looks for the
+    // nearest element carrying the jump data.
+    if (cell.jumps && cell.jumps.length > 0) {
+        cell.jumps.forEach((jump, index) => {
+            if (index > 0) {
+                td.appendChild(document.createTextNode(", "));
+            }
+            const control = cellAction(`Reveal ${jump.text} in the playbook`);
+            control.dataset.jump = JSON.stringify(jump.target);
+            if (jump.refKey) control.setAttribute("data-ref-key", jump.refKey);
+            control.classList.add("dd-jump");
+            control.title = "Click to reveal in the playbook";
+            control.textContent = jump.text;
+            td.appendChild(control);
+        });
+        return td;
+    }
+
     // A tag cell is drawn as capsules. Its `text` stays the plain rendering, so search and sort
     // still read the cell; only the drawing differs.
     if (cell.tags) {

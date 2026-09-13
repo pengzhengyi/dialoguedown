@@ -144,6 +144,7 @@ describe("runApp Playbook tab", () => {
         },
         anchors: [{ name: "the-tavern", node: 0 }],
         speakers: [{ name: "Alice", default: false, tags: [] }],
+        nodes: [],
     });
     const titles = () => [...document.querySelectorAll("#tabs .tab")].map((t) => t.textContent);
 
@@ -197,6 +198,7 @@ describe("runApp Playbook help", () => {
                 json: "{}",
                 anchors: [{ name: "the-tavern", node: 0 }],
                 speakers: [],
+                nodes: [],
             },
         });
         app.updateStages([graph]);
