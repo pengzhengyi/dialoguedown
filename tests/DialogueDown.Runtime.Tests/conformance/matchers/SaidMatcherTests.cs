@@ -20,6 +20,18 @@ public sealed class SaidMatcherTests
     }
 
     [Fact]
+    public void FlattenedSpeechReadsTheWordsInsideAStyledRun()
+    {
+        AssertConformed(Match(
+            new Said("Alice", [
+                new TextFragment("My key is "),
+                new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("rusty")]),
+                new TextFragment("."),
+            ]),
+            """{ "speaker": "Alice", "speech": "My key is rusty." }"""));
+    }
+
+    [Fact]
     public void SpeechClaimedAsFragmentsConformsWhenTheyAgree()
     {
         AssertConformed(Match(Spoke("Alice", "Hi"), Fragments));

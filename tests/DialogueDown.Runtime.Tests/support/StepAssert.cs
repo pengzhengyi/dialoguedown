@@ -22,7 +22,7 @@ internal static class StepAssert
         var said = Assert.IsType<Said>(Assert.Single(result.Events));
 
         Assert.Equal(speaker, said.Speaker);
-        Assert.Equal(text, Flatten(said.Speech));
+        Assert.Equal(text, SpeechText.Of(said.Speech));
     }
 
     /// <summary>Asserts a step ended the run, and left it standing at the end.</summary>
@@ -53,7 +53,4 @@ internal static class StepAssert
     /// <param name="node">Where it should stand.</param>
     public static void AssertAt(PlayState state, int node) =>
         Assert.Equal(node, Assert.IsType<AtNode>(state.Position).Node);
-
-    private static string Flatten(IEnumerable<SpeechFragment> speech) =>
-        string.Concat(speech.OfType<TextFragment>().Select(fragment => fragment.Text));
 }

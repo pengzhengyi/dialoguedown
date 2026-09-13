@@ -48,7 +48,7 @@ internal sealed class SaidMatcher : IExpectationMatcher
 
     private static SessionOutcome MatchSpeechAsText(ImmutableArray<SpeechFragment> spoken, string claimed)
     {
-        var words = string.Concat(spoken.OfType<TextFragment>().Select(fragment => fragment.Text));
+        var words = SpeechText.Of(spoken);
 
         return words == claimed
             ? SessionOutcome.Conformed()
