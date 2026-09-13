@@ -163,6 +163,11 @@ public sealed class CompilationVisualizerTests
         Assert.Contains(stages[1].Nodes, n => n.Label == "Line");
         Assert.Contains(stages[2].Nodes, n => n.Label == "Line");
         Assert.NotNull(stages[3].Tables);
+
+        // The Markdown AST has not read Dialogue meaning, so `=>` there is still plain text; every
+        // stage from the transpiler on has, and says so itself rather than being matched by title.
+        Assert.False(stages[0].ReadsDialogueMeaning);
+        Assert.All(stages.Skip(1), stage => Assert.True(stage.ReadsDialogueMeaning));
     }
 
     [Fact]

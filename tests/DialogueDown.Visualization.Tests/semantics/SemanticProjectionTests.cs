@@ -44,6 +44,21 @@ public sealed class SemanticProjectionTests
         Assert.Contains(graph.Nodes, node => node.EntityKey == "scene:the-forest" && node.Label == "The Forest");
     }
 
+    // A heading is a run of speech too, so a query in a scene's name is named the same way a query
+    // in a line is, and the scene reads as the writer wrote it.
+    [Fact]
+    public void Project_ASceneHeadingHoldingAQuery_NamesItInTheLabel()
+    {
+        var graph = Project(
+            """
+            # The `"Region"` Inn
+
+            Alice: Hi.
+            """);
+
+        Assert.Contains(graph.Nodes, node => node.Label == "The {Region} Inn");
+    }
+
     [Fact]
     public void Project_SceneTree_IncludesEachScenesScriptBlocks()
     {
@@ -131,15 +146,43 @@ public sealed class SemanticProjectionTests
     }
 
     [Fact]
-    public void Project_SpeakerTable_ShowsNaForASpeakerWithNoNameOrId()
+    public void Project_SpeakerTable_NamesTheAnonymousSpeakerAndLeavesItsIdEmpty()
     {
-        // A speaker-less line resolves to the anonymous default speaker: it has neither a name nor
-        // an @id, so both cells read "N/A" rather than an ambiguous dash.
+        // A speaker-less line resolves to the anonymous default speaker. Having no name is what
+        // that speaker *is*, so the table says so; having no @id is merely nothing, so it says
+        // nothing — the same rule the Playbook and Config tables follow.
         var graph = Project("The room is silent.");
 
         var row = Assert.Single(Table(graph, "Speakers").Rows);
-        Assert.Equal("N/A", row.Cells[0].Text);
-        Assert.Equal("N/A", row.Cells[1].Text);
+        Assert.Equal("(anonymous)", row.Cells[0].Text);
+        Assert.Equal(string.Empty, row.Cells[1].Text);
+    }
+
+    [Fact]
+    public void Project_MarksTheIdentifiersAWriterWouldPaste_AsCopyable()
+    {
+        // An @id, an anchor, and a jump's target are all written into a script by hand, so the
+        // report offers each for copying. Prose beside them — a speaker's name, a jump's label —
+        // is not an identifier and stays inert.
+        var graph = Project("""
+            # The Market
+
+            Guide @guide: Take the east road.
+
+            - => [To the market](#the-market)
+            """);
+
+        var speaker = Assert.Single(Table(graph, "Speakers").Rows);
+        Assert.True(speaker.Cells[1].Copyable);
+        Assert.False(speaker.Cells[0].Copyable);
+
+        var anchor = Assert.Single(Table(graph, "Anchors").Rows);
+        Assert.True(anchor.Cells[0].Copyable);
+        Assert.False(anchor.Cells[1].Copyable);
+
+        var jump = Assert.Single(Table(graph, "Jump resolutions").Rows);
+        Assert.True(jump.Cells[2].Copyable);
+        Assert.False(jump.Cells[1].Copyable);
     }
 
     [Fact]
@@ -154,9 +197,10 @@ public sealed class SemanticProjectionTests
             => [east](#the-market)
             """);
 
-        // Type (jumps) and Default (speakers) are categorical; the free-text tables carry none.
+        // Type (jumps) and Default plus Tags (speakers) are filterable; the free-text tables carry
+        // none. The Tags facet is multi-valued — the client offers one tag at a time.
         Assert.Equal(["Type"], Table(graph, "Jump resolutions").FacetColumns);
-        Assert.Equal(["Default"], Table(graph, "Speakers").FacetColumns);
+        Assert.Equal(["Default", "Tags"], Table(graph, "Speakers").FacetColumns);
         Assert.Empty(Table(graph, "Anchors").FacetColumns);
     }
 

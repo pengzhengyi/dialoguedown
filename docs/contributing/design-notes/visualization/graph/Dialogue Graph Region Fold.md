@@ -180,11 +180,8 @@ Fold state is remembered per graph alongside the camera and the node fold, and
 
 ## Open questions and deferred work
 
-- **Folding every scene at once.** A "collapse all scenes" control would turn the
-  graph into a scene-level map in one gesture. The per-scene chevron is the
-  primitive it would be built from.
 - **Folding a scene's subscenes with it.** Regions are flat today, so a nested
   scene is its own region and folds separately.
-- **Remembering folds across a reload.** Fold state lives with the in-memory
-  camera store, which is deliberately not serialized so the offline report stays
-  self-contained.
+- **Folds are not carried across a reload, by design.** Fold state lives with the
+  in-memory camera store, which is deliberately not serialized so the offline
+  report stays self-contained.

@@ -54,6 +54,7 @@ aids, keep ambiguous content:
 | `Table` | `\| Speaker \| Mood \|` | `Ignore` | Organizes reference data; not dialogue |
 | `RawHtml` | `<div>`, `<br>` | `Keep` | Ambiguous; the author typed it deliberately |
 | `Autolink` | `<https://example.com>` | `Keep` | A URL that is content |
+| `LinkReferenceDefinition` | `[label]: target` | `Ignore` | CommonMark plumbing; no tool renders it |
 | `Other` | any unrecognized unmodeled construct | `Keep` | Fallback; kept rather than silently lost |
 
 ## The policy seam
@@ -147,6 +148,7 @@ thematic-break = "ignore"
 table          = "ignore"
 raw-html       = "keep"
 autolink       = "keep"
+link-reference-definition = "ignore"
 other          = "keep"
 ```
 

@@ -26,16 +26,18 @@ import type {
     PlaybookSpeakerView,
     PlaybookAnchorView,
     SemanticTable,
+    SemanticCell,
 } from "./model";
 import { createTablePanel } from "./semantic-table";
 import { initSplitDivider } from "./source-view";
-import { copyToClipboard } from "./path-display";
 import { initCollapsiblePanel } from "./collapse-toggle";
-import { showToast } from "./toast";
 import { compactSearch } from "./search-panel";
 import { gotoLineKeymap } from "./goto-line";
 import { schemaHover } from "./playbook-schema";
 import { escapeHtml } from "./text";
+import { tagLabel } from "./tag-chip";
+import { lineOf, revealLine, type PlaybookTarget } from "./playbook-jump";
+import { playbookReferences, playbookReferenceKeymap } from "./playbook-references";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -80,9 +82,9 @@ export function createPlaybookView(playbook: PlaybookReport): HTMLElement {
     const side = document.createElement("div");
     side.className = "playbook-side";
 
-    if (playbook.json != null) mountEditor(pane, playbook.json);
-    else pane.appendChild(renderUnavailable(playbook.unavailable));
-    side.appendChild(renderTables(playbook));
+    const editor = playbook.json != null ? mountEditor(pane, playbook.json) : null;
+    if (editor === null) pane.appendChild(renderUnavailable(playbook.unavailable));
+    side.appendChild(renderTables(playbook, editor));
 
     container.append(pane, divider, side);
     initSplitDivider(container, divider, "--playbook-split", "playbook-collapsed");
@@ -118,6 +120,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 bracketMatching(),
                 compactSearch(),
                 schemaHover(),
+                playbookReferences(),
                 EditorState.readOnly.of(true),
                 EditorView.contentAttributes.of({
                     "aria-label": "Compiled playbook",
@@ -127,7 +130,13 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
                 json(),
                 syntaxHighlighting(jsonHighlightStyle),
                 EditorView.lineWrapping,
-                keymap.of([...defaultKeymap, ...gotoLineKeymap, ...searchKeymap, ...foldKeymap]),
+                keymap.of([
+                    ...playbookReferenceKeymap,
+                    ...defaultKeymap,
+                    ...gotoLineKeymap,
+                    ...searchKeymap,
+                    ...foldKeymap,
+                ]),
             ],
         }),
     });
@@ -150,17 +159,33 @@ function renderUnavailable(reason: string | undefined): HTMLElement {
  * headers — because they answer the same kind of question about a different artifact, and a
  * reader who has learned one should not have to learn the other.
  */
-function renderTables(playbook: PlaybookReport): HTMLElement {
+function renderTables(playbook: PlaybookReport, editor: EditorView | null): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "playbook-tables";
+    if (editor !== null) wireJumps(wrapper, editor);
     for (const table of tablesOf(playbook)) {
         // Its own namespace: the Semantic tab has Speakers and Anchors panels too, and one
         // remembered key would make collapsing a panel here collapse that tab's as well.
         wrapper.appendChild(createTablePanel(table, "dd-playbook-panel-"));
     }
     wrapper.appendChild(schemaNote(playbook.metadata?.schemaUrl));
-    wireClickToCopy(wrapper);
     return wrapper;
+}
+
+/**
+ * Take the reader to the place a clicked cell stands for.
+ *
+ * Delegated from the tables, so a panel that re-renders its rows on a search or a sort keeps
+ * working. A target that no longer resolves is left alone rather than guessed at: the reader
+ * stays where they are instead of being sent somewhere plausible and wrong.
+ */
+function wireJumps(root: HTMLElement, editor: EditorView): void {
+    root.addEventListener("click", (event) => {
+        const cell = (event.target as Element | null)?.closest<HTMLElement>("[data-jump]");
+        if (!cell?.dataset.jump) return;
+        const line = lineOf(editor.state, JSON.parse(cell.dataset.jump) as PlaybookTarget);
+        if (line !== null) revealLine(editor, line);
+    });
 }
 
 /** The three tables, in the order the format itself reads: what it is, who speaks, where jumps land. */
@@ -172,61 +197,67 @@ function tablesOf(playbook: PlaybookReport): SemanticTable[] {
     ];
 }
 
-/** Copy the text of a clicked cell (any element carrying `data-copy`), and confirm it. */
-function wireClickToCopy(root: HTMLElement): void {
-    root.addEventListener("click", (event) => {
-        const target = (event.target as Element | null)?.closest<HTMLElement>("[data-copy]");
-        const value = target?.dataset.copy;
-        if (!value) return;
-        void copyToClipboard(value).then(() => showToast(`Copied ${value}`));
-    });
-}
-
 /**
  * The playbook's header as a field/value table: what it was compiled from, what a host must
  * provide to run it, where it starts, and how big it is.
  */
 function headerTable(metadata: PlaybookMetadataView | undefined): SemanticTable {
-    const fields: [string, string][] =
+    const fields: [string, SemanticCell][] =
         metadata == null
             ? []
             : [
-                  ["Script", metadata.script],
-                  ["Format version", String(metadata.formatVersion)],
-                  ["Requires", listOrDash(metadata.requires)],
-                  ["Uses", listOrDash(metadata.uses)],
-                  ["Entry node", String(metadata.entry)],
-                  ["Nodes", String(metadata.nodeCount)],
-                  ["Anchors", String(metadata.anchorCount)],
+                  ["Script", { text: metadata.script }],
+                  ["Format version", { text: String(metadata.formatVersion) }],
+                  ["Requires", { text: metadata.requires.join(", ") }],
+                  ["Uses", { text: metadata.uses.join(", ") }],
+                  // Where a playthrough begins is a node like any other, so it goes there too.
+                  [
+                      "Entry node",
+                      { text: String(metadata.entry), jump: { kind: "node", id: metadata.entry } },
+                  ],
+                  ["Nodes", { text: String(metadata.nodeCount) }],
+                  ["Anchors", { text: String(metadata.anchorCount) }],
               ];
     return {
         title: "Playbook",
         columns: ["Field", "Value"],
-        rows: fields.map(([field, value]) => ({ cells: [{ text: field }, { text: value }] })),
+        rows: fields.map(([field, value]) => ({ cells: [{ text: field }, value] })),
         emptyText: "No playbook metadata yet.",
     };
 }
 
 /**
- * The playbook's speaker table: who can speak, the id a runtime looks them up by, which one owns
- * an unprefixed line, and the tags a host reads for portraits or voices.
+ * The playbook's speaker table: who can speak, the id a runtime looks them up by, the tags a host
+ * reads for portraits or voices, and which one owns an unprefixed line.
+ *
+ * The columns are in the Semantic Model tab's order, so a reader who has learned one table reads
+ * the other the same way.
  */
 function speakerTable(speakers: readonly PlaybookSpeakerView[]): SemanticTable {
     return {
         title: "Speakers",
-        columns: ["Name", "Id", "Default", "Tags"],
-        rows: speakers.map((speaker) => ({
+        columns: ["Name", "@id", "Tags", "Default"],
+        rows: speakers.map((speaker, index) => ({
             cells: [
-                // The anonymous speaker is the one an unprefixed line belongs to; it has no name.
-                { text: speaker.name ?? "(anonymous)" },
-                { text: speaker.id ?? "—" },
-                { text: speaker.default ? "yes" : "—" },
-                { text: speaker.tags.length === 0 ? "—" : speaker.tags.join(", ") },
+                // The anonymous speaker is the one an unprefixed line belongs to. Its
+                // namelessness is a fact about the script, not a gap in the table, so it is the
+                // one absence worth naming.
+                // Bound by index here, not read off the row: a sorted table no longer has the
+                // speaker in the position the array gave it.
+                { text: speaker.name ?? "(anonymous)", jump: { kind: "speaker", index } },
+                // Everything else says nothing when there is nothing to say, so the eye lands on
+                // the speakers that do carry an id, a tag, or the default mark.
+                // Written with its `@`, exactly as a script references it and as the other two
+                // tabs show it — and copyable, so a writer can lift it straight into a line.
+                { text: speaker.id == null ? "" : `@${speaker.id}`, copyable: true },
+                { text: speaker.tags.map(tagLabel).join(" "), tags: speaker.tags },
+                { text: speaker.default ? "✓" : "" },
             ],
         })),
         emptyText: "This playbook has no speakers.",
-        // Which speaker owns an unprefixed line is the question worth filtering on.
-        facetColumns: ["Default"],
+        // Which speaker owns an unprefixed line, and which carry a given tag, are the questions
+        // worth filtering on.
+        facetColumns: ["Default", "Tags"],
     };
 }
 
@@ -236,8 +267,12 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
         title: "Anchors",
         columns: ["Anchor", "Node"],
         rows: anchors.map((anchor) => ({
-            // An anchor is written with its `#`, exactly as a jump names it.
-            cells: [{ text: `#${anchor.name}` }, { text: String(anchor.node) }],
+            // An anchor is written with its `#`, exactly as a jump names it; the node it lands
+            // on takes the reader to that node in the JSON beside it.
+            cells: [
+                { text: `#${anchor.name}`, copyable: true },
+                { text: String(anchor.node), jump: { kind: "node", id: anchor.node } },
+            ],
         })),
         emptyText: "No scene in this playbook can be jumped to by name.",
     };
@@ -257,8 +292,4 @@ function schemaNote(url: string | undefined): HTMLElement {
         `Described by <a class="playbook-schema-link" href="${escapeHtml(url)}" target="_blank"` +
         ` rel="noopener noreferrer" title="${escapeHtml(url)}">${name}</a>.`;
     return note;
-}
-
-function listOrDash(values: readonly string[]): string {
-    return values.length === 0 ? "—" : values.join(", ");
 }

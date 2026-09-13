@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { EditorState } from "@codemirror/state";
-import { schemaPathAt, describeSchemaPath, appliedRange } from "./playbook-schema";
+import { schemaPathAt, describeSchemaPath, appliedRange, referenceTypeAt } from "./playbook-schema";
 
 /**
  * A playbook shaped exactly as `JsonSerializer` with `WriteIndented` writes one: two spaces per
@@ -124,6 +124,52 @@ describe("describeSchemaPath", () => {
 
     it("describes nothing outside the format", () => {
         expect(describeSchemaPath("nowhere/at/all")).toBeNull();
+    });
+});
+
+describe("referenceTypeAt", () => {
+    const refOf = (needle: string): ReturnType<typeof referenceTypeAt> => {
+        const located = schemaPathAt(state, lineOf(needle));
+        return referenceTypeAt(located.path, located.kinds);
+    };
+
+    // The `kind` tag aligned to each path segment; `edge` sits at the fifth (`nodes/*/out/*/…`).
+    const edgeKinds = (kind: string): (string | undefined)[] => [
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        kind,
+    ];
+
+    it("reads a node reference wherever the schema tags one", () => {
+        expect(referenceTypeAt("entry")).toBe("node");
+        expect(refOf('"the-tavern"')).toBe("node");
+        // Every edge kind's `target`, chosen by the document's own `kind`.
+        expect(referenceTypeAt("nodes/*/out/*/target", edgeKinds("succession"))).toBe("node");
+        expect(referenceTypeAt("nodes/*/out/*/target", edgeKinds("divert"))).toBe("node");
+        // An edge with no usable kind still resolves: every branch's `target` is a node reference.
+        expect(referenceTypeAt("nodes/*/out/*/target")).toBe("node");
+    });
+
+    it("reads a speaker reference on a line's speaker", () => {
+        expect(referenceTypeAt("nodes/*/speaker", [undefined, undefined, "line"])).toBe("speaker");
+    });
+
+    it("still reports a node's own id as a node reference at this layer", () => {
+        // The schema does `$ref` `nodeReference` for `id`; excluding the definition is
+        // `referenceKindAt`'s job, one layer up, where the document is in view.
+        expect(refOf('"id": 1')).toBe("node");
+    });
+
+    it("says nothing for a number the schema never tags", () => {
+        expect(refOf('"version"')).toBeNull();
+        expect(referenceTypeAt("nodes/*/out/*/order", edgeKinds("branch"))).toBeNull();
+    });
+
+    it("says nothing for a path outside the format", () => {
+        expect(referenceTypeAt("nowhere/at/all")).toBeNull();
+        expect(referenceTypeAt("")).toBeNull();
     });
 });
 

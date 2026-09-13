@@ -47,8 +47,8 @@ describe("createConfigView", () => {
     it("colors reserved and custom tags apart with distinct chip classes", () => {
         const view = mount(withFile());
 
-        const custom = view.querySelector(".config-tag-custom");
-        const reserved = view.querySelector(".config-tag-reserved");
+        const custom = view.querySelector(".dd-tag-custom");
+        const reserved = view.querySelector(".dd-tag-reserved");
         expect(custom?.textContent).toBe("#role=guide");
         expect(reserved?.textContent).toBe("##default");
     });
@@ -69,6 +69,22 @@ describe("createConfigView", () => {
         const view = mount({ speakers: [], mode: "best-effort" });
 
         expect(view.querySelector(".config-mode-value")?.textContent).toBe("best-effort");
+    });
+
+    it("leaves a speaker's absent id and empty tag list as empty cells", () => {
+        // Nothing to say, so the table says nothing — the same rule the Semantic Model and
+        // Playbook speaker tables follow, so one speaker reads the same way in all three.
+        const view = mount({
+            file: { path: "/proj/dialogue.toml", source: '[[speakers]]\nname = "Bob"\n' },
+            speakers: [{ name: "Bob", tags: [] }],
+        });
+        const cells = [
+            ...view.querySelectorAll<HTMLTableCellElement>(".config-speakers-table tbody td"),
+        ];
+
+        expect(cells[0]?.textContent).toContain("Bob");
+        expect(cells[1]?.textContent).toBe("");
+        expect(cells[2]?.textContent).toBe("");
     });
 
     it("shows a friendly explanation and no editor when there is no config file", () => {
@@ -199,7 +215,7 @@ describe("createConfigView", () => {
         });
 
         it("copies a tag chip's text", () => {
-            clickCopy(".config-tag-reserved");
+            clickCopy(".dd-tag-reserved");
             expect(writeText).toHaveBeenCalledWith("##default");
         });
     });

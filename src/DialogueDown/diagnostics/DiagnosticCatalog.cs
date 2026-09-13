@@ -248,6 +248,16 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Warning);
 
+    /// <summary>DLG2017 — a player-choice arm carries nothing a menu could show for it.</summary>
+    public static readonly DiagnosticDescriptor OptionWithNothingToShow = new(
+        "DLG2017",
+        "Option with nothing to show",
+        "Nothing here names this option, so a player is offered a blank line to pick. Give the "
+            + "option something to say, or name the jump it makes: "
+            + "`- => [Take the east road](#the-market)`.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Warning);
+
     /// <summary>DLG2015 — a scene heading is nested inside a control or choice branch.</summary>
     public static readonly DiagnosticDescriptor SceneHeadingInsideBranch = new(
         "DLG2015",

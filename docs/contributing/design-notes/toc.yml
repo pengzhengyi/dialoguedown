@@ -28,6 +28,10 @@
     href: runtime/Playbook Format.md
   - name: Conformance Corpus
     href: runtime/Conformance Corpus.md
+  - name: Node Outward Shape
+    href: runtime/Node Outward Shape.md
+  - name: Speech as Plain Text
+    href: runtime/Speech as Plain Text.md
   - name: Runtime Core
     href: runtime/Runtime Core.md
 - name: Language constructs
@@ -102,6 +106,16 @@
       href: visualization/report/Dialogue Graph Visualization Tab.md
     - name: Collapsing Across the Report
       href: visualization/report/Collapsing Across the Report.md
+    - name: Saying Nothing Across the Report
+      href: visualization/report/Saying Nothing Across the Report.md
+    - name: Tag Capsules
+      href: visualization/report/Tag Capsules.md
+    - name: Copyable Identifiers
+      href: visualization/report/Copyable Identifiers.md
+    - name: Jumping into the Playbook
+      href: visualization/report/Jumping into the Playbook.md
+    - name: Following an Index in the Playbook
+      href: visualization/report/Following an Index in the Playbook.md
     - name: Configuration Tab
       href: visualization/report/Configuration Tab.md
     - name: Configuration Tab — Live Edit
@@ -114,6 +128,8 @@
       href: visualization/report/Unavailable Stage Tabs.md
     - name: Playbook Tab
       href: visualization/report/Playbook Tab.md
+    - name: Playbook Nodes Table
+      href: visualization/report/Playbook Nodes Table.md
   - name: Source editor
     items:
     - name: Unmodeled Markdown Highlighting
@@ -148,6 +164,8 @@
       href: visualization/graph/Live Visualization - Node Inspector.md
     - name: Live Visualization — Reverse Jump
       href: visualization/graph/Live Visualization - Reverse Jump.md
+    - name: Region-Aware Graph Layout
+      href: visualization/graph/Region-Aware Graph Layout.md
   - name: Live session
     items:
     - name: Live Visualization — Explorer Toggle
@@ -176,6 +194,8 @@
       href: visualization/session/Live Visualization - Problems Panel.md
     - name: Opening a Script Without Reloading the Page
       href: visualization/session/Opening a Script Without Reloading the Page.md
+    - name: One Watcher for the Served Tree
+      href: visualization/session/One Watcher for the Served Tree.md
 - name: Other notes
   items:
   - name: BBCode Rendering
@@ -186,8 +206,6 @@
     href: other/Interactive Playthrough.md
   - name: Namespace Layout
     href: other/Namespace Layout.md
-  - name: One Watcher for the Served Tree
-    href: other/One Watcher for the Served Tree.md
   - name: README Shipping-Status Refresh
     href: other/README Shipping-Status Refresh.md
   - name: Target Frameworks

@@ -8,7 +8,105 @@ changes easy to categorize.
 
 ## [Unreleased]
 
+### Added
+
+- **`SpeechText` reads a line's speech as plain text** — a new public helper in the playbook
+  library flattens a run of speech fragments to one line of words, dropping styling and markup.
+  Several places want the same lossy rendering and must agree on it: a conformance fixture
+  asserting what was said, a report listing a script's lines, a host with no renderer of its own.
+  It takes what the world says a query is worth, so a host passes the method it already
+  implements to answer one, and names a query nobody answered as
+  [its key in braces](docs/guide/game-state.md#where-a-query-has-no-answer-yet). See
+  [Speech as plain text](docs/contributing/design-notes/runtime/Speech%20as%20Plain%20Text.md).
+
+- **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
+  node carries an edge kind it cannot act on, more than one succession, no arm where one is
+  required, or no way onward at all; the schema and the conformance corpus enforce the same as far
+  as they reach. This catches a hand-edited or tool-written playbook that would play differently
+  between two conformant runtimes. See
+  [Node outward shape](docs/contributing/design-notes/runtime/Node%20Outward%20Shape.md).
+
+- **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
+  a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
+  it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
+  [Jumping into the Playbook](docs/contributing/design-notes/visualization/report/Jumping%20into%20the%20Playbook.md).
+
+- **`DLG2017` warns about an option a player cannot read** — an arm with neither words nor a named
+  jump compiles to a blank line in the menu, which the compiler now points at instead of leaving
+  for a playtest to find. See
+  [the error catalog](docs/guide/error-codes.md#dlg2017).
+
+### Changed
+
+- **Click an identifier to copy it** — a speaker's `@id`, a scene's anchor, and a jump's target
+  now copy on click in every table that shows one, not only in the Config tab, so a writer can
+  lift one into a script instead of retyping it. Prose beside them stays inert, and the Playbook
+  now writes an id as `@guide` like the rest of the report — a bare `guide` copied something no
+  script accepts. See
+  [Copyable Identifiers](docs/contributing/design-notes/visualization/report/Copyable%20Identifiers.md).
+
+- **Hovering a route in the Dialogue Graph says what it is** — a route's hover gave only the name
+  of its kind, in the browser's own tooltip. It now opens the same rich tooltip a node has, adding
+  what that kind of route means and the words the writer gave this one, so reading a menu no longer
+  needs a click. It opens at the pointer, because a route's shape spans the drawing.
+
+- **Every tag is drawn as one capsule, wherever it appears** — the Config tab drew tags as
+  rounded, copyable capsules while the Semantic Model and Playbook joined them into a run of text,
+  so the same tag read as three different objects and the Playbook dropped the `#` a script writes.
+  All three now draw the same capsule: the palette's tag color says *this is a tag*, a small
+  leading dot colored from the tag's own name says *which* tag, so `#wise` looks the same in every
+  table, and a click copies it verbatim. See
+  [Tag Capsules](docs/contributing/design-notes/visualization/report/Tag%20Capsules.md).
+
+- **Choosing a choice arm in the Dialogue Graph shows what the player would read** — the details
+  panel named the two nodes an arm joins but not the wording it offers, so answering "what is
+  picked here?" meant following the arm to find out. The drawing is unchanged.
+
+- **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
+  empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
+  speaker carried a tag showed eight placeholders around it and the eye landed on the absences.
+  Every table now says nothing when there is nothing to say, marks the default speaker with a
+  tick, and names the nameless one `(anonymous)` in all three tabs rather than three ways. See
+  [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
+
 ### Fixed
+
+- **A query is drawn where its value will go, instead of a gap** — flattening a line's words had
+  no case for a query, so every surface that shows a line without running the game quietly dropped
+  it: the Dialogue Graph, the Semantic Model, and the Desugared AST tab all drew
+  `You are , and your purse holds  gold` for a line written with two queries in it. Each now
+  appears as its key in braces — `You are {HeroName}, and your purse holds {Gold} gold` — which
+  also shows a writer which parts of a line change at play time. See
+  [Where a query has no answer yet](docs/guide/game-state.md#where-a-query-has-no-answer-yet).
+
+- **A link reference definition is no longer spoken** — `[the market]: #b` and similar CommonMark
+  reference definitions used to leak into the playbook as a spurious line, its text sliced from
+  the wrong offset in the file; a runtime would speak it. It's CommonMark plumbing, not dialogue,
+  so it's dropped like a table or a code block, and a reference-style jump or link that names one
+  now resolves correctly with no leftover node. See
+  [Unmodeled Markdown Handling](docs/contributing/design-notes/core/Unmodeled%20Markdown%20Handling.md).
+
+- **A jump's line is no longer drawn through another node's words** — in the Dialogue
+  Graph, a jump that spans the drawing leaves its row, travels below the graph, and
+  climbs back. The columns it dropped and climbed in were picked from its own two
+  ends without regard to what stood between, so the vertical runs were struck
+  through the text of unrelated lines. They now run in the label-free gutter each
+  column reserves. On the bundled high-rise example this took the cross-links
+  drawn through someone else's words from six of nine to none. See
+  [Dialogue Graph tab](docs/contributing/design-notes/visualization/report/Dialogue%20Graph%20Visualization%20Tab.md).
+
+- **An identifier, a jump, and a tag can be reached without a mouse** — the report's tables offer
+  acts a reader performs by pressing a cell: copying an `@id`, an anchor, or a tag, and revealing a
+  place in the playbook. Those cells answered a click and nothing else, so a keyboard could perform
+  none of them. Each now carries a real button, so Tab reaches it, Enter and Space take it, and a
+  screen reader says what pressing it does. See
+  [Copyable identifiers](docs/contributing/design-notes/visualization/report/Copyable%20Identifiers.md).
+
+- **A scene's band is never drawn across another's** — where the flow crossed between scenes in the
+  Dialogue Graph, the tinted bands behind them overlapped: the tints stacked into a third color,
+  and a node in the overlap read as belonging to two scenes at once. Every scene now gets its own
+  run of rows, so the bands stay apart whatever the flow does. See
+  [Region-aware graph layout](docs/contributing/design-notes/visualization/graph/Region-Aware%20Graph%20Layout.md).
 
 - **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
   east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
@@ -202,7 +300,7 @@ changes easy to categorize.
   folder once, instead of starting a fresh file-system watch for every script opened. Opening a
   script falls from about 330 ms to about 135 ms, and the switch behind it from about 150 ms to
   around a millisecond once its folder is known. Hot reload is unchanged. See the
-  [One Watcher for the Served Tree](docs/contributing/design-notes/other/One%20Watcher%20for%20the%20Served%20Tree.md)
+  [One Watcher for the Served Tree](docs/contributing/design-notes/visualization/session/One%20Watcher%20for%20the%20Served%20Tree.md)
   note.
 
 - **One home per concept in the documentation** — a committed duplication scan

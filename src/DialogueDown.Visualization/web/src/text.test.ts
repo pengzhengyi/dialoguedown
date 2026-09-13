@@ -7,6 +7,7 @@ import {
     ellipsize,
     baseLabel,
     tooltipHtml,
+    edgeTooltipHtml,
     splitFrontMatter,
     renderMarkdown,
     renderNodePreview,
@@ -61,6 +62,38 @@ describe("baseLabel", () => {
 
     it("only strips a parenthetical at the end", () => {
         expect(baseLabel("List (ordered) item")).toBe("List (ordered) item");
+    });
+});
+
+describe("edgeTooltipHtml", () => {
+    it("names the kind of route and what it means", () => {
+        expect(edgeTooltipHtml("Choice", "One arm of a choice.", null)).toBe(
+            "<strong>Choice</strong><div>One arm of a choice.</div>",
+        );
+    });
+
+    it("adds the writer's own words for a route that has any", () => {
+        // A jump and a choice arm are named by the writer; hovering should say so without
+        // making the reader click through to the details panel.
+        expect(
+            edgeTooltipHtml("Jump", "Control leaves the written order.", "through the gate"),
+        ).toBe(
+            "<strong>Jump</strong><div>Control leaves the written order.</div>" +
+                '<div class="tip-label">\u201Cthrough the gate\u201D</div>',
+        );
+    });
+
+    it("says nothing extra for a route with no words of its own", () => {
+        expect(edgeTooltipHtml("Succession", "The natural order.", null)).not.toContain(
+            "tip-label",
+        );
+    });
+
+    it("escapes the kind, the meaning, and the words", () => {
+        expect(edgeTooltipHtml("<b>", "a<b>c", "d<e>f")).toBe(
+            "<strong>&lt;b&gt;</strong><div>a&lt;b&gt;c</div>" +
+                '<div class="tip-label">\u201Cd&lt;e&gt;f\u201D</div>',
+        );
     });
 });
 

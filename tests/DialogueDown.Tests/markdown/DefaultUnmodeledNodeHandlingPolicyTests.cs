@@ -10,6 +10,7 @@ public sealed class DefaultUnmodeledNodeHandlingPolicyTests
         UnmodeledNodeKind.CodeBlock,
         UnmodeledNodeKind.ThematicBreak,
         UnmodeledNodeKind.Table,
+        UnmodeledNodeKind.LinkReferenceDefinition,
     ];
 
     private readonly IUnmodeledNodeHandlingPolicy _policy = DefaultUnmodeledNodeHandlingPolicy.Instance;

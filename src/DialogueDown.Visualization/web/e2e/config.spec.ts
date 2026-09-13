@@ -57,8 +57,8 @@ test.describe("Config tab — a configured project", () => {
         await expect(row).toContainText("Guide");
         // The id shows with its @ sigil (what you'd type in a script), not a bare "G".
         await expect(page.locator(".config-speakers-table tbody td").nth(1)).toHaveText("@G");
-        await expect(page.locator(".config-tag-custom")).toHaveText("#role=host");
-        await expect(page.locator(".config-tag-reserved")).toHaveText("##default");
+        await expect(page.locator(".dd-tag-custom")).toHaveText("#role=host");
+        await expect(page.locator(".dd-tag-reserved")).toHaveText("##default");
     });
 
     test("copies a cell's text on click and confirms with a toast", async ({ page }) => {

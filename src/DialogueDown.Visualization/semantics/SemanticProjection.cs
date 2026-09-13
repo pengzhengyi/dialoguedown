@@ -1,3 +1,4 @@
+using DialogueDown.Configuration;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
@@ -20,7 +21,10 @@ internal sealed class SemanticProjection
 
     // Shown in a cell whose single value is absent — a speaker with no name or no @id — so the
     // gap reads as "not applicable" rather than an ambiguous dash.
-    private const string Absent = "N/A";
+    // The anonymous speaker — the one an unprefixed line belongs to. Its namelessness is a fact
+    // about the script rather than a gap in the table, so it is the one absence the report names;
+    // every other empty cell is left empty.
+    private const string Anonymous = "(anonymous)";
 
     // Jump-resolution kind colors. "terminal" reuses the reserved #END editor hue so the End type
     // reads the same in the table and the source; "deferred" marks a not-yet-resolvable cross-file
@@ -45,6 +49,7 @@ internal sealed class SemanticProjection
         var index = DialogueTreeIndex.Build(model.Desugared);
         return graph with
         {
+            ReadsDialogueMeaning = true,
             Tables =
             [
                 SpeakerTable(index, model),
@@ -69,9 +74,11 @@ internal sealed class SemanticProjection
 
             rows.Add(new SemanticRow(
                 [
-                    new SemanticCell(symbol.Name ?? Absent, Category: SpeechCategory),
-                    new SemanticCell(symbol.Id is not null ? $"@{symbol.Id}" : Absent),
-                    new SemanticCell(TagsText(symbol)),
+                    new SemanticCell(symbol.Name ?? Anonymous, Category: SpeechCategory),
+                    new SemanticCell(
+                        symbol.Id is not null ? $"@{symbol.Id}" : string.Empty,
+                        Copyable: true),
+                    new SemanticCell(TagsText(symbol), Tags: TagViews(symbol)),
                     new SemanticCell(symbol.IsDefault ? "✓" : ""),
                 ],
                 EntityKey: SpeakerEntity.Key(symbol)));
@@ -80,7 +87,7 @@ internal sealed class SemanticProjection
         return new SemanticTable(
             "Speakers", ["Name", "@id", "Tags", "Default"], rows, "No speakers.")
         {
-            FacetColumns = ["Default"],
+            FacetColumns = ["Default", "Tags"],
         };
     }
 
@@ -97,7 +104,7 @@ internal sealed class SemanticProjection
 
             rows.Add(new SemanticRow(
                 [
-                    new SemanticCell($"#{scene.Anchor}", Category: StructureCategory),
+                    new SemanticCell($"#{scene.Anchor}", Category: StructureCategory, Copyable: true),
                     new SemanticCell(SceneEntity.Label(scene)),
                     new SemanticCell($"{scene.Level}"),
                 ],
@@ -119,7 +126,7 @@ internal sealed class SemanticProjection
                 [
                     new SemanticCell(type, Category: category),
                     new SemanticCell(JumpText(jump)),
-                    new SemanticCell(jump.Target),
+                    new SemanticCell(jump.Target, Copyable: true),
                     new SemanticCell(resolvesTo, RefKey: refKey),
                 ]));
         }
@@ -161,6 +168,10 @@ internal sealed class SemanticProjection
         var label = InlineText.Of(jump.Label).Trim();
         return label.Length > 0 ? label : "(no label)";
     }
+
+    // The same tags the text spells out, kept apart so the client can draw one capsule each.
+    private static IReadOnlyList<TagView> TagViews(SpeakerSymbol symbol) =>
+        [.. symbol.Tags.Select(tag => new TagView(tag.Name, tag.Value, ReservedTagNames.Known.Contains(tag.Name)))];
 
     private static string TagsText(SpeakerSymbol symbol) =>
         string.Join(" ", symbol.Tags.Select(tag => tag.Value is null ? $"#{tag.Name}" : $"#{tag.Name}={tag.Value}"));

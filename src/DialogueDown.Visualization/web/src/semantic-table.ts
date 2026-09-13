@@ -18,6 +18,9 @@ import {
     type Table,
 } from "@tanstack/table-core";
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
+import { renderTags, tagLabel } from "./tag-chip";
+import { wireClickToCopy } from "./copy-on-click";
+import { cellAction } from "./cell-action";
 
 // The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
 // rather than bundling every feature: sorting, per-column (facet) filtering, and the global
@@ -118,6 +121,7 @@ export function createTablePanel(
     });
     reflect();
 
+    wireClickToCopy(panel);
     return panel;
 }
 
@@ -195,13 +199,14 @@ function buildInteractiveTable(
     element.append(thead, tbody);
 
     // One column per source column; each reads its cell's text so sort and filter act on what the
-    // reader sees. A categorical column also matches by exact value, for its faceted filter.
+    // reader sees. A faceted column matches a chosen value exactly — or, when its cells hold a
+    // tag list, matches a row that carries that one tag among several.
     const columns: ColumnDef<SemanticFeatures, SemanticRow>[] = table.columns.map(
         (name, index) => ({
             id: name,
             header: name,
             accessorFn: (row) => row.cells[index]?.text ?? "",
-            filterFn: facetNames.has(name) ? "equalsString" : "includesString",
+            filterFn: facetFilterFn(table.rows, index, facetNames.has(name)),
         }),
     );
 
@@ -407,18 +412,53 @@ function ariaSort(direction: false | "asc" | "desc" | undefined): string {
     return "none";
 }
 
-/** The distinct non-empty cell texts of one column, in first-seen order. */
+/** Whether a column's cells hold tag lists rather than plain text, so its facet is multi-valued. */
+function isTagColumn(rows: readonly SemanticRow[], index: number): boolean {
+    return rows.some((row) => (row.cells[index]?.tags?.length ?? 0) > 0);
+}
+
+/**
+ * The distinct values a column's facet offers, in first-seen order. A tag column contributes each
+ * tag's own label, so a reader filters by one tag at a time; any other column contributes the
+ * text its cells show.
+ */
 function distinctValues(rows: readonly SemanticRow[], index: number): string[] {
     const seen = new Set<string>();
     const values: string[] = [];
+    const add = (value: string): void => {
+        if (value !== "" && !seen.has(value)) {
+            seen.add(value);
+            values.push(value);
+        }
+    };
+    const tagColumn = isTagColumn(rows, index);
     for (const row of rows) {
-        const text = row.cells[index]?.text ?? "";
-        if (text !== "" && !seen.has(text)) {
-            seen.add(text);
-            values.push(text);
+        const cell = row.cells[index];
+        if (tagColumn) {
+            for (const tag of cell?.tags ?? []) add(tagLabel(tag));
+        } else {
+            add(cell?.text ?? "");
         }
     }
     return values;
+}
+
+/**
+ * The filter a column uses. A free column matches by substring; a faceted column matches a chosen
+ * value exactly — unless its cells hold a tag list, in which case a row matches when any of its
+ * tags is the chosen one.
+ */
+function facetFilterFn(
+    rows: readonly SemanticRow[],
+    index: number,
+    faceted: boolean,
+): FilterFn<SemanticFeatures, SemanticRow> | "equalsString" | "includesString" {
+    if (!faceted) return "includesString";
+    if (!isTagColumn(rows, index)) return "equalsString";
+    return (row, _columnId, value) =>
+        ((row.original as SemanticRow).cells[index]?.tags ?? []).some(
+            (tag) => tagLabel(tag) === value,
+        );
 }
 
 /** The single "no matches" row shown when a filter hides every row. */
@@ -445,18 +485,48 @@ function renderRow(row: SemanticRow, query: SearchQuery | undefined): HTMLElemen
 /** A `<td>` carrying the cell's text, category color accent, and any cross-link key. */
 function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLElement {
     const td = document.createElement("td");
+    // An identifier is something a writer lifts into a script, so it offers itself for copying.
+    // `data-copy` is all the shared listener needs; the class carries the hover cue.
+    // A cell that stands for a place in a document offers to take the reader there. It is
+    // marked rather than wired here: the table does not know what document, so the surface that
+    // built the cell listens for the click.
+    let action: string | undefined;
+    if (cell.jump && cell.text !== "") {
+        td.classList.add("dd-jump");
+        td.dataset.jump = JSON.stringify(cell.jump);
+        td.title = "Click to reveal in the playbook";
+        action = `Reveal ${cell.text} in the playbook`;
+    }
+    if (cell.copyable && cell.text !== "") {
+        td.dataset.copy = cell.text;
+        td.classList.add("dd-copy");
+        td.title = "Click to copy";
+        action = `Copy ${cell.text}`;
+    }
     if (cell.entityKey) td.setAttribute("data-entity-key", cell.entityKey);
     if (cell.refKey) td.setAttribute("data-ref-key", cell.refKey);
     if (cell.category) {
         td.dataset.category = cell.category;
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
+    // A tag cell is drawn as capsules. Its `text` stays the plain rendering, so search and sort
+    // still read the cell; only the drawing differs.
+    if (cell.tags) {
+        if (cell.tags.length > 0) td.appendChild(renderTags(cell.tags));
+        return td;
+    }
+
+    // A cell that acts when pressed puts its text inside a button, so a keyboard can reach the
+    // act. The cell keeps `data-copy`/`data-jump`, so the whole cell stays the mouse's target and
+    // the button's own click bubbles to the same listener.
+    const host = action ? cellAction(action) : td;
     const ranges = query ? findMatches(cell.text, query.query, query) : [];
     if (ranges.length === 0) {
-        td.textContent = cell.text;
+        host.textContent = cell.text;
     } else {
-        highlightInto(td, cell.text, ranges);
+        highlightInto(host, cell.text, ranges);
     }
+    if (host !== td) td.appendChild(host);
     return td;
 }
 

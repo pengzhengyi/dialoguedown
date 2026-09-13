@@ -1,5 +1,6 @@
 using DialogueDown.Configuration;
 using DialogueDown.Visualization.Configuration;
+using DialogueDown.Visualization.Display;
 
 namespace DialogueDown.Visualization.Tests.Configuration;
 
@@ -80,7 +81,7 @@ public sealed class ConfigurationProjectionTests
             tag => AssertTag(tag, "default", null, reserved: true));
     }
 
-    private static void AssertTag(ConfiguredTagView tag, string name, string? value, bool reserved)
+    private static void AssertTag(TagView tag, string name, string? value, bool reserved)
     {
         Assert.Equal(name, tag.Name);
         Assert.Equal(value, tag.Value);

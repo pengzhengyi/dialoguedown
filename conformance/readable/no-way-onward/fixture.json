@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "no way onward is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "a line has no way out at all, so a run that reached it would have nowhere to go"
+}

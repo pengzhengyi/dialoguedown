@@ -26,10 +26,11 @@ import {
     type Point,
 } from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
+import { rankByRegion } from "./region-layout";
 import { foldRegions, regionNodeIdFor, type FoldedGraph } from "./region-fold";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
-import { tooltipHtml } from "./text";
+import { edgeTooltipHtml, tooltipHtml } from "./text";
 import { clipToWidth } from "./clip-text";
 import { createLegend, regionCounts, setRegionFoldState } from "./legend";
 import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
@@ -119,6 +120,8 @@ interface CrossLinkTrack {
     lane: number;
     corridor: number;
     port: number;
+    /** The gutter column it drops in — clear of every label, whichever way it is headed. */
+    dropX: number;
 }
 
 /**
@@ -134,6 +137,15 @@ const COLUMN_STEP = 320;
 const CORRIDOR_AIR = 18;
 const CORRIDOR_GUTTER = MAX_CORRIDOR_REACH + CORRIDOR_AIR;
 const LABEL_BUDGET = COLUMN_STEP - LABEL_INSET - CORRIDOR_GUTTER;
+
+/**
+ * Where in a gutter a cross-link drops.
+ *
+ * The gutter is shared: climbs occupy its last {@link MAX_CORRIDOR_REACH} pixels, fanning back
+ * from the column they serve. A drop therefore takes the near end instead, so the two kinds of
+ * vertical never stand in the same place.
+ */
+const DROP_INSET = 6;
 
 /**
  * A scene-tree backbone node — a scene or the implicit document root. The Semantic tab
@@ -310,11 +322,16 @@ export function createTreeView(
     // The lookup is by the pair an edge joins, which is unique because a node is reached from a
     // given node at most once — and the fold merges any pair a contraction would have doubled.
     let edgeCategories = new Map<string, string>();
+    let edgeLabels = new Map<string, string>();
     let root: TreeNode;
     rebuildGraph();
 
     const categoryOfLink = (fromId: string, toId: string): string | undefined =>
         edgeCategories.get(`${fromId}->${toId}`);
+
+    // The words the writer gave a route, for the hover that says what it is.
+    const labelOfLink = (fromId: string, toId: string): string | undefined =>
+        edgeLabels.get(`${fromId}->${toId}`);
 
     let selected: TreeNode | null = null;
     const dimmed = new Set<string>();
@@ -513,6 +530,11 @@ export function createTreeView(
     // Names the route a line is, so hovering it says what it means and a screen reader can read
     // it. The class is what the stylesheet thickens on hover — an edge is thin, so it needs a
     // generous target and a clear response.
+    //
+    // Two channels, because they answer to different readers. The `<title>` names the *kind* of
+    // route and nothing else, which is what assistive technology announces. The hover carries the
+    // detail — what the kind means, and the words the writer gave this particular route — the way
+    // a node's does, so learning what an arm offers costs a hover rather than a click.
     function describeEdge<Datum>(
         selection: Selection<SVGPathElement, Datum, SVGGElement, unknown>,
         categoryOfDatum: (datum: Datum) => string | undefined,
@@ -530,9 +552,15 @@ export function createTreeView(
                 const style = edgeStyle(category);
                 delete this.dataset.cursor;
                 delete this.dataset.category;
+                delete this.dataset.tip;
                 if (!style) return;
                 this.dataset.cursor = style.cursor;
                 this.dataset.category = category;
+                this.dataset.tip = edgeTooltipHtml(
+                    style.label,
+                    style.meaning,
+                    labelOfLink(ends.fromId, ends.toId) ?? null,
+                );
                 const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
                 title.textContent = style.label;
                 this.appendChild(title);
@@ -722,10 +750,27 @@ export function createTreeView(
                             lane: floor + depth * LANE_STEP,
                             corridor: queued,
                             port: portOffset(queued),
+                            dropX: dropColumn(edge, positionById),
                         },
                     ] as const;
                 }),
         );
+    }
+
+    /**
+     * The column a cross-link drops in, on its way out of its row.
+     *
+     * A label runs rightwards from its dot and is clipped so it stops before the column's gutter,
+     * which leaves that gutter free of words on *every* row — the one place a vertical can pass
+     * a row without striking it. A route headed along the flow takes the gutter at the end of its
+     * source's own column, having first cleared its own words; a route doubling back takes the
+     * gutter before that column, where there is nothing to clear.
+     */
+    function dropColumn(edge: DisplayEdge, positionById: Map<string, TreeNode>): number {
+        const from = positionById.get(edge.fromId)!.y;
+        const to = positionById.get(edge.toId)!.y;
+        const gutterStart = from + (to > from ? COLUMN_STEP : 0) - CORRIDOR_GUTTER;
+        return gutterStart + DROP_INSET;
     }
 
     // Ports fan either side of the target's own row — 0, above, below, further above — so the
@@ -959,6 +1004,11 @@ export function createTreeView(
             graph.edges
                 .filter((edge) => edge.category)
                 .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.category!]),
+        );
+        edgeLabels = new Map(
+            graph.edges
+                .filter((edge) => edge.label)
+                .map((edge) => [`${edge.fromId}->${edge.toId}`, edge.label!]),
         );
         root = buildHierarchy(graph.nodes, graph.edges);
         root.each((node) => {
@@ -1249,9 +1299,40 @@ export function createTreeView(
 
     /* --- rendering --- */
 
+    /**
+     * Lift each scene onto rows of its own, so the band drawn behind it never crosses another's.
+     *
+     * The tree layout reads only the shape of the hierarchy, so two scenes whose flow crosses come
+     * back interleaved. This rewrites the row each node sits on — never its column — leaving the
+     * drawing's columns and reading direction exactly as the layout arranged them.
+     *
+     * The scenes are stacked in the order the stage names them, which is the order the legend
+     * lists, and that order does not change when a scene is folded away.
+     */
+    function placeRegionTiers(nodes: readonly TreeNode[]): void {
+        if (foldableRegions.length === 0) {
+            return;
+        }
+        const placed = rankByRegion(
+            nodes.map((node) => ({
+                id: node.data.id,
+                region: node.data.region,
+                row: node.x,
+            })),
+            foldableRegions,
+        );
+        for (const node of nodes) {
+            const row = placed.get(node.data.id);
+            if (row !== undefined) {
+                node.x = row;
+            }
+        }
+    }
+
     function update(): void {
         layout(root);
         const nodes = root.descendants() as TreeNode[];
+        placeRegionTiers(nodes);
         const positionById = new Map(nodes.map((node) => [node.data.id, node]));
 
         // Nodes are placed and measured before any line is drawn, because a line's shape depends
@@ -1371,8 +1452,13 @@ export function createTreeView(
             .style("cursor", (route) => route.dataset.cursor ?? null)
             .each(function (route) {
                 this.replaceChildren();
-                const title = route.querySelector("title");
-                if (title) this.appendChild(title.cloneNode(true));
+                // The twin is a transparent target lying over the route, so it does not name
+                // itself: the line beneath it carries the name a screen reader reads, and a
+                // `<title>` here would both repeat that and raise the browser's own tooltip
+                // beside the one this hover opens.
+                this.setAttribute("aria-hidden", "true");
+                if (route.dataset.tip) this.dataset.tip = route.dataset.tip;
+                else delete this.dataset.tip;
             })
             .on("mouseenter", (event, route) => nearestTo(event, route).classList.add("hovered"))
             .on("mouseleave", () => clearHovered())

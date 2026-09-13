@@ -1,5 +1,7 @@
 /** The display model produced by the .NET walk and serialized into the report. */
 
+import type { PlaybookTarget } from "./playbook-jump";
+
 /**
  * A half-open `[start, end)` character range into the original document. A zero-width span
  * (`start === end`) is a caret position rather than a selection.
@@ -77,6 +79,21 @@ export interface SemanticCell {
     refKey?: string;
     /** A cross-stage category for color. */
     category?: string;
+    /** Present when the cell is a tag list: drawn as capsules instead of {@link text}. */
+    tags?: TagView[];
+    /**
+     * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
+     * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
+     */
+    copyable?: boolean;
+    /**
+     * Set when the cell summarizes a place in an accompanying document, so clicking it takes the
+     * reader there. Bound where the table is built, because a sorted or filtered table no longer
+     * has the row in the position the data came from.
+     *
+     * Client-authored: no projection emits it.
+     */
+    jump?: PlaybookTarget;
 }
 
 /** One row of a {@link SemanticTable}; `entityKey` names the entity the row represents. */
@@ -116,6 +133,12 @@ export interface Stage {
      * rather than containment. Absent means it nests.
      */
     nests?: boolean;
+    /**
+     * Whether this stage has read Dialogue meaning into the document, so `=>` renders as the jump
+     * ligature the writer meant rather than two characters of text. True from the Dialogue AST
+     * on; absent (falsy) for the Markdown AST and for a stage of unknown provenance.
+     */
+    readsDialogueMeaning?: boolean;
     /**
      * Present when the stage's artifact was not produced (a halted compile). The stage
      * renders as a disabled tab; `nodes`/`edges` are empty.
@@ -171,8 +194,8 @@ export interface PlaybookSpeakerView {
     name?: string;
     /** Whether this is the speaker a line with no prefix belongs to. */
     default: boolean;
-    /** The speaker's tags, each rendered as `name` or `name=value`. */
-    tags: string[];
+    /** The speaker's tags, each drawn as a capsule. */
+    tags: TagView[];
 }
 
 /** One row of the playbook's anchor table. */
@@ -377,8 +400,12 @@ export type VisualizationMode = "static" | "view" | "edit";
 /** The two interactive modes of a served session, toggled in the browser (Vim-like). */
 export type ServedMode = "view" | "edit";
 
-/** One tag of a {@link ConfiguredSpeakerView}; `reserved` colors reserved names apart from custom. */
-export interface ConfiguredTagView {
+/**
+ * One speaker tag, wherever the report shows it. `reserved` marks a name DialogueDown owns
+ * (such as `default`) apart from one the writer invented; keeping `name` and `value` apart is
+ * what lets a capsule color by identity and copy the tag as written.
+ */
+export interface TagView {
     name: string;
     value?: string;
     reserved: boolean;
@@ -388,7 +415,7 @@ export interface ConfiguredTagView {
 export interface ConfiguredSpeakerView {
     name: string;
     id?: string;
-    tags: ConfiguredTagView[];
+    tags: TagView[];
 }
 
 /**

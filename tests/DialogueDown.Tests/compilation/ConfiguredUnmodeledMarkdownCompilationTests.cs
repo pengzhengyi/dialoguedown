@@ -83,6 +83,29 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
         Assert.DoesNotContain("***", text);
     }
 
+    [Fact]
+    public void CreateDefault_Unconfigured_IgnoresALinkReferenceDefinition()
+    {
+        // A link reference definition is CommonMark plumbing, not a spoken line — regression
+        // guard for the phantom paragraph it used to leave behind (falling through to `Other`,
+        // whose default is `Keep`).
+        const string Script = """
+            # A
+
+            Guide: Hi.
+
+            [the market]: #b
+
+            # B
+
+            Guide: There.
+            """;
+
+        var text = TextOf(ScriptCompilerFactory.CreateDefault().Compile(Script));
+
+        Assert.Equal("A\nGuide: Hi.\nB\nGuide: There.", text);
+    }
+
     private static CompilationResult Compile(IScriptCompiler compiler) =>
         compiler.Compile(ScriptWithTable);
 

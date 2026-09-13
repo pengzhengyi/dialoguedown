@@ -13,6 +13,9 @@ public sealed class MarkdigUnmodeledNodeClassifierTests
         Assert.Equal(UnmodeledNodeKind.ThematicBreak, ClassifyBlock(ThematicBreak()));
         Assert.Equal(UnmodeledNodeKind.Table, ClassifyBlock(PipeTable()));
         Assert.Equal(UnmodeledNodeKind.RawHtml, ClassifyBlock(HtmlBlockNode()));
+        Assert.Equal(
+            UnmodeledNodeKind.LinkReferenceDefinition,
+            ClassifyBlock(LinkReferenceDefinitionGroupNode()));
     }
 
     [Fact]

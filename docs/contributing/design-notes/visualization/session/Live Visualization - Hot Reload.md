@@ -109,10 +109,10 @@ leaves a seam for them, but are not built here.
       silently.
 
 The design also called for a distinct inline banner on a **compile error** after a
-change. On `main` today the single Markdown stage always parses (any text is valid
-Markdown), so there is no compile-failure path to surface yet; the banner is wired
-for document-read failures (missing file) and will cover compile errors unchanged
-once a stage that can reject input (the Dialogue AST) lands.
+change. That path now exists, though not as a banner: the Dialogue AST stage can
+reject input, and a recompile's diagnostics ride the `reload` payload to the
+Source editor's overlay and the **Problems** panel. The inline banner stays
+reserved for a document that cannot be read at all (a missing file).
 
 ## Architecture
 
@@ -324,7 +324,7 @@ outside the hosted root is blocked by the static-files middleware (see Security)
 | No interactive terminal (piped / CI) | The hosting prompt is skipped and declined; a message points at `--render-root` to allow it up front. |
 | `--render-root` missing or not containing the document | CLI exits with a clear message before starting a session. |
 | Port in use (`--port`) | Kestrel fails to bind and the process reports the error; omit `--port` to take an ephemeral port. |
-| Compile error after a change (future) | Deferred: today's single Markdown stage always parses, so there is no failure to surface. The `problem` event and banner are wired and will carry compile errors once a rejecting stage (Dialogue AST) lands. |
+| Compile error after a change | The document is still readable, so the recompile pushes a `reload`; its diagnostics ride the payload to the Source editor's overlay and the **Problems** panel (with a status-line summary). The `problem` event and banner stay reserved for a document that cannot be read at all. |
 
 ## Security
 

@@ -55,3 +55,6 @@ docs/api/.manifest
 
 # Verify writes these beside a golden when one does not match; they are never committed.
 *.received.*
+
+# aider (used via the /harness workflow) writes chat/input history and caches here.
+.aider*

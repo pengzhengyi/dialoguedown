@@ -39,6 +39,32 @@ internal static class ScriptNodeExtensions
     };
 
     /// <summary>
+    /// The words a menu shows for an option arm, or empty when the writer wrote nothing that could
+    /// name it.
+    /// </summary>
+    /// <remarks>
+    /// An arm is labelled by its own first block, read while the body is still in hand — an arm
+    /// with no body leads straight to whatever follows the choice, so a label read back off the
+    /// target would be somebody else's words. Usually the label is the words the arm speaks; for an
+    /// arm that only jumps it is the jump's own text, which is how the ordinary branching menu
+    /// (<c>- =&gt; [Take the east road](#the-market)</c>) is written.
+    ///
+    /// Lowering an arm and telling a writer their arm has nothing to show are the same question,
+    /// so they ask it here rather than each carrying its own copy of the rule.
+    /// </remarks>
+    internal static IReadOnlyList<InlineFragment> Label(this Choice option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+
+        return option.Body.FirstOrDefault() switch
+        {
+            Line line when line.Spoken() is { Count: > 0 } spoken => spoken,
+            { } block => block.Jumps().FirstOrDefault()?.Label ?? [],
+            _ => [],
+        };
+    }
+
+    /// <summary>
     /// Yields <paramref name="node"/> and then each descendant, depth-first in document
     /// order (a node before its children). Returning a sequence lets callers compose with
     /// LINQ; the script's nesting is shallow, so recursion is safe.

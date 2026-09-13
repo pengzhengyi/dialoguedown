@@ -140,8 +140,8 @@ The pieces are mostly built — as a *separate page*:
 - **`ServedShellServer`** already exposes `GET /api/browse`, `POST /api/open`,
   `POST /api/create`, and serves the opened report under `/r` — but the launcher
   is its **own page**; opening a script `303`-redirects away to the report.
-- **`LiveVisualizationServer`** serves a directly-opened report (`visualize
-  <script>`) and has `document`/`events`/`save`/`reload`/`create-config` — but
+- **`LiveVisualizationServer`** serves a directly-opened report
+  (`visualize <script>`) and has `document`/`events`/`save`/`reload`/`create-config` — but
   **no** browse/open/create.
 - The web client's `launcher.ts` renders a **flat, one-folder-at-a-time** listing
   with a working **New file** row, driven by injected `LauncherPorts`
@@ -231,7 +231,10 @@ the only new model field is the served-mode `Report.project` context that says
 - **Navigate-per-file, keeping the single-document model.** Opening a script
   reuses the launcher's `open`→`303`→report flow, so the report client stays
   single-document and this component stays small. The smooth in-place swap (and
-  the multi-document model it needs) is a deliberate later seam.
+  the multi-document model it needs) is a deliberate later seam. *Later
+  superseded: the in-place swap shipped in
+  [#347](https://github.com/pengzhengyi/dialoguedown/pull/347) — see
+  [Opening a Script Without Reloading the Page](./Opening%20a%20Script%20Without%20Reloading%20the%20Page.md).*
 - **Switching respects the save mode.** In **Auto** save a pending change flushes
   silently before navigating (the report's existing save-before-navigation); in
   **Manual** the writer is prompted to save or discard first, because choosing

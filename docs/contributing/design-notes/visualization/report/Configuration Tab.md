@@ -55,7 +55,9 @@ in the status bar beside the dialogue file's.
 | **2 — Editing** | the View⇄Edit toggle acts on the config buffer: edit the TOML with autocompletion, dirty state, navigation lock, and Save→recompile. This is the heavy one — today a served session has a *single* editable document (the dialogue file); the config file is a *second* editable document. |
 | **3 — Create** | a call to action, when no `dialogue.toml` exists, that reuses the launcher's create-file flow to write one at the project root. |
 
-Live-watching the config file for hot-reload is deferred to the editing stage.
+Live-watching the config file for hot-reload has since shipped with the served
+editing stage: an external `dialogue.toml` change pushes a `reload-config`
+event that refreshes the tab, the same way the dialogue file hot-reloads.
 
 ## Where it sits
 

@@ -37,6 +37,15 @@ public sealed record DisplayGraph(
     public bool Nests { get; init; } = true;
 
     /// <summary>
+    /// Whether this stage has read Dialogue meaning into the document, so <c>=&gt;</c> is the jump
+    /// the writer meant rather than two characters of text. True for the stages projected once the
+    /// transpiler has run (Dialogue AST onward); false for the Markdown AST, where <c>=&gt;</c> is
+    /// still plain text, and for a stage of unknown provenance — one a host adds — which has
+    /// interpreted nothing and must not be assumed to have.
+    /// </summary>
+    public bool ReadsDialogueMeaning { get; init; } = false;
+
+    /// <summary>
     /// A placeholder for a stage the compile did not produce (a halted compile): it carries the
     /// stage's <paramref name="title"/> and <paramref name="description"/> but no graph, plus a
     /// <paramref name="reason"/> the reader sees on its disabled tab.

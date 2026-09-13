@@ -51,6 +51,23 @@ public sealed class GraphProjectionTests
         Assert.Equal("speech", graph.Nodes[0].Category);
     }
 
+    // Only a running game can answer a query, so every place the drawing shows the words names the
+    // query instead, and a reader sees which parts of the script the game fills in.
+    [Fact]
+    public void Project_AQueryInALineOrASceneName_IsNamed()
+    {
+        var graph = Project(
+            """
+            # The `"Region"` Inn
+
+            Alice: You are `"HeroName"`.
+            """);
+
+        Assert.Equal("Alice: You are {HeroName}.", graph.Nodes[0].Label);
+        Assert.Equal("The {Region} Inn", graph.Nodes[0].Region);
+        Assert.Equal("The {Region} Inn", Assert.Single(graph.Regions).Name);
+    }
+
     [Fact]
     public void Project_TheEndSentinel_IsLabeledEnd()
     {
@@ -422,6 +439,40 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
+    public void Edges_AChoiceArm_CarriesTheWordingItsMenuShows()
+    {
+        // Choosing an arm in the report should answer "what does the player pick here?" without
+        // following it to the node it leads to.
+        var graph = Project("""
+            Guide: Which way?
+
+            - Alice: Go east.
+
+            - => [Brave the west road](#END)
+            """);
+
+        Assert.Equal(
+            ["Go east.", "Brave the west road"],
+            graph.Edges.Where(edge => edge.Category == "choice").Select(edge => edge.Label));
+    }
+
+    [Fact]
+    public void Edges_AChoiceArmWithNothingToShow_HasNoLabel()
+    {
+        // The arm DLG2017 warns about: nothing named it, so the route reports nothing rather than
+        // an empty string the panel would render as a blank line.
+        var graph = Project("""
+            Guide: Which way?
+
+            - `("fade out")`
+
+            - Alice: Stay.
+            """);
+
+        Assert.Contains(graph.Edges, edge => edge.Category == "choice" && edge.Label is null);
+    }
+
+    [Fact]
     public void Edges_ARouteWithNoWordsOfItsOwn_HasNoLabel()
     {
         // A fall-through was never written down; showing anything for it would be the report
@@ -452,6 +503,8 @@ public sealed class GraphProjectionTests
             """);
 
         Assert.False(graph.Nests);
+        // The graph is projected after the transpiler, so `=>` is the jump the writer meant.
+        Assert.True(graph.ReadsDialogueMeaning);
     }
 
     [Fact]

@@ -39,6 +39,18 @@ public sealed class DisplayGraphJsonTests
     }
 
     [Fact]
+    public void Serialize_CarriesWhetherTheStageHasReadDialogueMeaning()
+    {
+        // The client reads this to decide whether `=>` renders as the jump ligature or plain text.
+        var plain = MakeGraph("Markdown AST", [Node("n0", "Document")], []);
+        var dialogue =
+            MakeGraph("Dialogue AST", [Node("n0", "Line")], []) with { ReadsDialogueMeaning = true };
+
+        Assert.Contains("\"readsDialogueMeaning\":false", DisplayGraphJson.Serialize([plain]));
+        Assert.Contains("\"readsDialogueMeaning\":true", DisplayGraphJson.Serialize([dialogue]));
+    }
+
+    [Fact]
     public void Serialize_IncludesStageDescription()
     {
         var graph = MakeGraph(

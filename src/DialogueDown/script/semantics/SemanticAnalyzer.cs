@@ -35,10 +35,8 @@ internal sealed class SemanticAnalyzer : ISemanticAnalyzer
 
         var jumps = JumpResolver.Resolve(index.OfType<Jump>(), anchors, context.Diagnostics);
         TagValidator.Validate(index.OfType<ReservedTag>(), context.Diagnostics);
+        ChoiceLabelValidator.Validate(index.OfType<Choice>(), context.Diagnostics);
 
-        // TODO(diagnostics): the context is validated but not yet read — analysis works off the
-        // tree and the spans it carries. Report source-anchored diagnostics into
-        // context.Diagnostics when the producers replace the sub-passes' throw sites.
         return new SemanticModel(document, speakers, sceneRoot, anchors, jumps);
     }
 }

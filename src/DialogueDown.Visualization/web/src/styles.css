@@ -1361,6 +1361,13 @@ section.stage.empty-shell {
     border-radius: 999px;
 }
 
+/* A route's own words inside its hover, set apart from the meaning above them the way the
+   details panel sets them apart from the route's explanation. */
+.tippy-content .tip-label {
+    margin-top: 0.35rem;
+    font-style: italic;
+}
+
 /* The facet radio menu, a tippy popover appended to the document body. */
 .tippy-box[data-theme~="dd-facet"] {
     /* Keep the menu text at or below the table's own size (0.8rem), overriding tippy's larger
@@ -1717,6 +1724,22 @@ g.node.entity-highlight text.label {
 .playbook-source .cm-content .dd-jump-preview {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 20%, transparent);
     border-radius: 2px;
+}
+
+/* An index that points elsewhere in the playbook — a node or a speaker reference. It keeps the
+   number's own hue so it does not shout, and wears a dotted underline that firms up on hover to
+   say it can be followed (by click, or F12 from its line). */
+.playbook-source .cm-content .dd-playbook-ref {
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-decoration-color: color-mix(in srgb, var(--json-number) 60%, transparent);
+    text-underline-offset: 2px;
+}
+
+.playbook-source .cm-content .dd-playbook-ref:hover {
+    text-decoration-style: solid;
+    text-decoration-color: var(--md-link, #0969da);
+    color: var(--md-link, #0969da);
 }
 
 /* A prominent caret and a readable selection in both themes (drawSelection draws its
@@ -5280,16 +5303,18 @@ button.tab.tab-with-icon {
 /* Tags wrap inside an inner flex box, never on the `<td>` itself: a flex `<td>` drops out of
    table-cell layout, so a tall multi-tag cell would stop sharing the row height and its row
    border would desync from the sibling Name/Id cells. */
-.config-speakers-table .config-tags {
+.dd-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
 }
 
-/* Tag chips: reserved names (like `default`) take a distinct accent so they read apart
-   from custom tags at a glance. */
-.config-tag {
-    display: inline-block;
+/* Tag capsules. One shape everywhere the report shows a tag — the Config tab, the Semantic
+   Model, and the Playbook — so a reader meets the same object in every table. */
+.dd-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     padding: 0.05rem 0.45rem;
     border-radius: 999px;
     border: 1px solid transparent;
@@ -5301,44 +5326,115 @@ button.tab.tab-with-icon {
 /* Two hues tell the tag kinds apart at a glance, both chosen to avoid the mode
    accents (View blue, Edit green): custom tags wear the palette's canonical "tag"
    pink; reserved names DialogueDown owns (like `default`) wear a distinct violet. */
-.config-tag-custom {
+.dd-tag-custom {
     background: rgb(236 72 153 / 12%);
     border-color: rgb(236 72 153 / 32%);
     color: #be185d;
 }
 
-.config-tag-reserved {
+.dd-tag-reserved {
     background: rgb(124 58 237 / 14%);
     border-color: rgb(124 58 237 / 38%);
     color: #6d28d9;
 }
 
-[data-theme="dark"] .config-tag-custom {
+[data-theme="dark"] .dd-tag-custom {
     color: #f9a8d4;
 }
 
-[data-theme="dark"] .config-tag-reserved {
+[data-theme="dark"] .dd-tag-reserved {
     color: #c4b5fd;
+}
+
+/* The identity dot. The capsule's hue says "this is a tag"; the dot says *which* tag, from a
+   hue derived from the name, so one tag looks the same in every table without color having to
+   carry both meanings at once. */
+.dd-tag-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 999px;
+    background: var(--dd-tag-hue);
+    flex: none;
 }
 
 /* Click-to-copy affordance: value cells and tag chips copy their text on click and give a
    subtle hover cue, so a writer can lift a name, `@id`, or tag straight into a script. */
 .config-copy,
-.config-tag {
+.dd-copy,
+.dd-jump,
+.dd-tag {
     cursor: pointer;
 }
 
-.config-copy {
+.config-copy,
+.dd-copy {
     border-radius: var(--pico-border-radius);
     transition: background-color 0.12s ease;
 }
 
-.config-copy:hover {
+.config-copy:hover,
+.dd-copy:hover,
+.dd-jump:hover {
     background: rgb(128 128 128 / 12%);
 }
 
-.config-tag:hover {
+/* A cell that reveals a place in the playbook underlines on hover, so it reads as a
+   destination rather than as another value to copy. */
+.dd-jump {
+    border-radius: var(--pico-border-radius);
+    transition: background-color 0.12s ease;
+}
+
+.dd-jump:hover {
+    text-decoration: underline dotted currentcolor;
+    text-underline-offset: 0.2em;
+}
+
+.dd-tag:hover {
     box-shadow: 0 0 0 1px currentcolor inset;
+}
+
+/* A cell that copies or reveals puts its text in a real button, so the act is reachable without
+   a mouse. The button must not *look* like one: the cell around it already carries the hover cue
+   and the accent, so everything Pico paints on a button is stripped back off.
+
+   `display: inline` rather than `inline-block`, so the text wraps exactly as the bare text node
+   it replaced did, and so the jump cell's dotted hover underline still reaches it. */
+.cell-action {
+    appearance: none;
+    display: inline;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    text-decoration: inherit;
+    cursor: pointer;
+}
+
+/* The capsule is already dressed by `.dd-tag` and its kind; only the chrome Pico adds on top of
+   a button is removed here, and nothing may touch the capsule's own shape or color. */
+button.dd-tag {
+    appearance: none;
+    margin: 0;
+    width: auto;
+    box-shadow: none;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+/* Keyboard focus is the whole reason these are buttons, so it is the one piece of chrome kept.
+   The themed outline matches the Explorer's, rather than Pico's blue button ring. */
+.cell-action:focus-visible,
+button.dd-tag:focus-visible {
+    outline: 2px solid var(--mode-accent, var(--pico-primary));
+    outline-offset: 2px;
+    border-radius: var(--pico-border-radius);
 }
 
 .config-empty {

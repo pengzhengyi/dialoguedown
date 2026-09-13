@@ -4,6 +4,8 @@ using DialogueDown.Emission;
 using DialogueDown.Playbook;
 using DialogueDown.Playbook.Speakers;
 
+using DialogueDown.Visualization.Display;
+
 namespace DialogueDown.Visualization.Playbook;
 
 /// <summary>
@@ -70,7 +72,7 @@ internal static class PlaybookProjection
             speaker.Id,
             speaker.Name,
             speaker.Default,
-            [.. speaker.Tags.Select(tag => tag.Value is null ? tag.Name : $"{tag.Name}={tag.Value}")]);
+            [.. speaker.Tags.Select(tag => new TagView(tag.Name, tag.Value, tag.Reserved))]);
 
     private static JsonSerializerOptions Readable()
     {

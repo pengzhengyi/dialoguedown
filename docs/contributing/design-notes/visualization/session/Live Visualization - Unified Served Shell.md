@@ -52,8 +52,10 @@ The work landed as two components, in sequence:
 
 Out of scope: the graceful Ctrl+C shutdown of the SSE stream — a **pre-existing**
 server issue owned by the `fix/visualize-ctrl-c` branch (see
-[Integration](#integration)); the deferred in-place document swap (still
-navigate-per-file); and any new Explorer capability.
+[Integration](#integration)); and any new Explorer capability. (The in-place
+document swap this note left for later shipped in
+[#347](https://github.com/pengzhengyi/dialoguedown/pull/347) — see
+[Opening a Script Without Reloading the Page](./Opening%20a%20Script%20Without%20Reloading%20the%20Page.md).)
 
 ## Ubiquitous language
 

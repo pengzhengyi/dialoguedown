@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createTablePanel } from "./semantic-table";
 import type { SemanticTable } from "./model";
 
@@ -323,6 +323,98 @@ describe("createTablePanel — faceted filters", () => {
     });
 });
 
+/** A speaker table whose Tags column is faceted — a speaker carries zero or more tags. */
+function tagFacetTable(): SemanticTable {
+    const tag = (name: string, value?: string) => ({ name, value, reserved: false });
+    return {
+        title: "Speakers",
+        columns: ["Name", "Tags"],
+        emptyText: "No speakers.",
+        facetColumns: ["Tags"],
+        rows: [
+            {
+                cells: [
+                    { text: "Guide" },
+                    { text: "#wise #role=host", tags: [tag("wise"), tag("role", "host")] },
+                ],
+            },
+            {
+                cells: [
+                    { text: "Merchant" },
+                    { text: "#role=merchant", tags: [tag("role", "merchant")] },
+                ],
+            },
+            { cells: [{ text: "Ghost" }, { text: "", tags: [] }] },
+        ],
+    };
+}
+
+describe("createTablePanel — tag facet", () => {
+    beforeEach(() => {
+        document.body.innerHTML = "";
+    });
+
+    it("offers each individual tag as a facet value, not the joined cell text", () => {
+        const panel = createTablePanel(tagFacetTable());
+        const control = panel.querySelector<HTMLButtonElement>(".th-facet")!;
+
+        (control as unknown as { _tippy: { show: () => void } })._tippy.show();
+        expect(
+            [...document.querySelectorAll(".facet-popover .facet-option span")].map(
+                (s) => s.textContent,
+            ),
+        ).toEqual(["All", "#wise", "#role=host", "#role=merchant"]);
+    });
+
+    it("keeps a row that carries the chosen tag among several, and clears with All", () => {
+        const panel = createTablePanel(tagFacetTable());
+
+        chooseFacet(panel, "#wise"); // only Guide has #wise, and it has another tag too
+        expect(firstColumn(panel)).toEqual(["Guide"]);
+
+        chooseFacet(panel, "#role=merchant");
+        expect(firstColumn(panel)).toEqual(["Merchant"]);
+
+        chooseFacet(panel, ""); // All
+        expect(firstColumn(panel)).toEqual(["Guide", "Merchant", "Ghost"]);
+    });
+
+    it("leaves a single-value facet column matching exactly", () => {
+        // A table with both a plain facet and a tag facet: the plain one is unaffected.
+        const table: SemanticTable = {
+            title: "Speakers",
+            columns: ["Name", "Default", "Tags"],
+            emptyText: "No speakers.",
+            facetColumns: ["Default", "Tags"],
+            rows: [
+                {
+                    cells: [
+                        { text: "Guide" },
+                        { text: "" },
+                        { text: "#wise", tags: [{ name: "wise", reserved: false }] },
+                    ],
+                },
+                { cells: [{ text: "Narrator" }, { text: "✓" }, { text: "", tags: [] }] },
+            ],
+        };
+        const panel = createTablePanel(table);
+        const [defaultFacet, tagFacet] = panel.querySelectorAll<HTMLButtonElement>(".th-facet");
+
+        (defaultFacet as unknown as { _tippy: { show: () => void } })._tippy.show();
+        const chooseIn = (value: string): void => {
+            const radio = document.querySelector<HTMLInputElement>(
+                `.facet-popover input[value="${value}"]`,
+            )!;
+            radio.checked = true;
+            radio.dispatchEvent(new Event("change"));
+        };
+        chooseIn("✓");
+        expect(firstColumn(panel)).toEqual(["Narrator"]);
+
+        expect(tagFacet.getAttribute("aria-label")).toBe("Filter by Tags");
+    });
+});
+
 /** The match toggle button (Match case / Match whole word) by its accessible label. */
 function toggle(panel: HTMLElement, label: string): HTMLButtonElement {
     return panel.querySelector<HTMLButtonElement>(`.dd-search-toggle[aria-label="${label}"]`)!;
@@ -394,5 +486,107 @@ describe("createTablePanel — match highlighting and options", () => {
 
         toggle(panel, "Match whole word").click();
         expect(panel.querySelector(".table-nomatch")).not.toBeNull(); // "Ali" is not a whole word
+    });
+});
+
+describe("createTablePanel — copying a tag", () => {
+    it("copies a tag capsule when it is clicked", () => {
+        // Every table built here draws tag capsules, and a capsule wears a hover ring and carries
+        // the text to copy — so the promise of a click belongs to the shared table, not to
+        // whichever tab remembered to wire it.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+        const table: SemanticTable = {
+            title: "Speakers",
+            columns: ["Name", "Tags"],
+            emptyText: "No speakers.",
+            rows: [
+                {
+                    cells: [
+                        { text: "Guide" },
+                        { text: "#wise", tags: [{ name: "wise", reserved: false }] },
+                    ],
+                },
+            ],
+        };
+
+        const panel = createTablePanel(table);
+        panel
+            .querySelector<HTMLElement>(".dd-tag")
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+        expect(writeText).toHaveBeenCalledWith("#wise");
+    });
+});
+
+describe("createTablePanel — copying an identifier", () => {
+    function panelWith(cell: { text: string; copyable?: boolean }): HTMLElement {
+        return createTablePanel({
+            title: "Anchors",
+            columns: ["Anchor"],
+            emptyText: "No scenes.",
+            rows: [{ cells: [cell] }],
+        });
+    }
+
+    function clickCell(panel: HTMLElement): void {
+        panel
+            .querySelector<HTMLElement>("tbody td")
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+
+    it("copies a cell a writer would paste into a script", () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+        clickCell(panelWith({ text: "#the-market", copyable: true }));
+
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-market");
+    });
+
+    it("puts the identifier in a button, so a keyboard can reach the copy", () => {
+        // A `<td>` is not focusable and answers no key, so a click-only cell is unreachable
+        // without a mouse. The button is nested rather than replacing the cell, because a `<td>`
+        // given a button role stops being a cell and the table stops being a table.
+        const panel = panelWith({ text: "#the-market", copyable: true });
+        const cell = panel.querySelector<HTMLElement>("tbody td")!;
+        const button = cell.querySelector<HTMLButtonElement>("button.cell-action");
+
+        expect(cell.tagName).toBe("TD");
+        expect(cell.getAttribute("role")).toBeNull();
+        expect(button).not.toBeNull();
+        expect(button!.type).toBe("button");
+        expect(button!.getAttribute("aria-label")).toBe("Copy #the-market");
+        expect(cell.textContent).toBe("#the-market");
+    });
+
+    it("copies when the button itself is pressed, not only the cell around it", () => {
+        // The keyboard activates the button; the mouse may hit anywhere in the cell. Both must
+        // reach the same listener, which they do because the button's click bubbles to the cell.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+        panelWith({ text: "#the-market", copyable: true })
+            .querySelector<HTMLButtonElement>("button.cell-action")!
+            .click();
+
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("#the-market");
+    });
+
+    it("gives a plain cell no button, so prose is not announced as a control", () => {
+        const panel = panelWith({ text: "Take the east road" });
+
+        expect(panel.querySelector("tbody td button")).toBeNull();
+    });
+
+    it("leaves an ordinary cell alone, so clicking prose copies nothing", () => {
+        // Only identifiers are copyable. A sentence-shaped cell — a jump's label, a scene title —
+        // would copy something nobody asked for and steal the reader's selection.
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+        clickCell(panelWith({ text: "Take the east road" }));
+
+        expect(writeText).not.toHaveBeenCalled();
     });
 });
