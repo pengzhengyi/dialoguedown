@@ -63,6 +63,8 @@ This note assumes the vocabulary and decisions of the
       different questions — what the player is offered, and what the route is
       called — and one piece of writing plays both parts.
 - [x] A reader that round-trips every construct.
+- [ ] Records that compare by value across every collection property, guarded by a
+      fitness test that fails when one is left uncovered.
 - [x] Refusal on an unsupported version, an unknown required capability, a
       malformed document, or a broken node reference.
 - [x] A hand-written JSON Schema 2020-12 that documents the format and validates
@@ -515,6 +517,32 @@ what a schema, a reader, and a golden file each have to say.
 > The blanket condition also drops value types equal to zero — which would silently
 > erase a node's `id`, an edge's `target`, and the first branch arm's `order`.
 
+### P12 — Records compare by value
+
+The playbook types are records, which advertise value equality, but every collection
+property is an `ImmutableArray<T>` or an `ImmutableSortedDictionary<TKey,TValue>`,
+whose own `Equals` is reference equality. Left alone, two structurally identical
+playbooks compare unequal, so `==` on a public contract means something narrower
+than it appears to.
+
+Each affected record declares its own `Equals` and `GetHashCode`, comparing every
+collection element-wise and folding the scalars into the hash — the precedent
+`Diagnostic` set for its message arguments.
+
+The alternatives do not fit the contract. Replacing `ImmutableArray<T>` with a
+custom `EquatableArray<T>` fixes every case at once but changes the declared type of
+public properties, a breaking change for the game that embeds the contract. A
+third-party equality library — a source generator or a runtime comparer — would add
+a reference the assembly is built to avoid: it may depend on nothing outside
+`System`, so an attribute type or a helper assembly from a package would break that
+boundary. Hand-written equality costs a few lines per record and keeps the assembly
+self-contained.
+
+The hand-written form has one failure mode: a collection property added later and
+forgotten in `Equals` silently weakens equality. A fitness test closes it by
+reflecting over the assembly's public records and failing when a collection property
+is not covered.
+
 ## Error and boundary cases
 
 | Case                                           | Behavior                                                                                                             |
@@ -555,6 +583,7 @@ what a schema, a reader, and a golden file each have to say.
 | Unit — writer | One test per row of [Mapping the graph](#mapping-the-graph): each node, edge, fragment, condition, and weight kind                   |
 | Unit — reader | Every refusal in [Error and boundary cases](#error-and-boundary-cases), each asserting the message names the offending value         |
 | Round-trip    | Compile, write, read, and assert the JSON comes back identical — the primary safety net, and cheap because both directions land here |
+| Equality      | Every record with a collection property compares by value; a reflection fitness test fails when one is uncovered                      |
 | Exhaustive    | Reflection over each closed union, so a construct added to the AST fails here rather than at whatever runtime reaches it first       |
 | Golden        | A committed playbook per compiling `examples/*.dialogue.md`, so a format change is a reviewable diff                                 |
 | Schema        | Every golden playbook validates against the schema in CI                                                                             |
@@ -563,11 +592,11 @@ Round-trip tests live in `DialogueDown.Tests`, which already sees internals and 
 reference both assemblies. Playbook fixtures are built through a shared factory so a
 shape change touches one file.
 
-A round trip is asserted **as text, not as objects**. The playbook types are records
-holding `ImmutableArray`, which compares by reference, so two structurally identical
-playbooks are unequal. Comparing the serialized JSON is also the truer assertion:
-the format is the bytes, and giving the types value equality would cost the
-dependency-free property that keeps the assembly shippable.
+A round trip is asserted **as text, not as objects**: the writer's JSON must read
+back into a document that writes the same JSON again, so a change in how a field is
+spelled or ordered is caught rather than hidden. Where a test asks a question about
+the model, the records compare by value (see [P12](#p12--records-compare-by-value))
+and can be asserted directly.
 
 Goldens use [Verify](https://github.com/VerifyTests/Verify), which supplies the
 matching and the accept workflow. It was measured against this suite before being
