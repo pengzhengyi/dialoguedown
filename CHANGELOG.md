@@ -10,6 +10,20 @@ changes easy to categorize.
 
 ### Added
 
+- **A compiled script can be played** — `DialogueDown.Runtime` is a new package that walks a
+  playbook: `Runner.Step` takes where a run stands and one command, and returns where it now
+  stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
+  keeps the loop, the world, and the save; a command the run cannot take comes back as a refusal
+  rather than an exception, because a driver may sit across a transport an exception cannot cross.
+  This first pass speaks a script's lines and ends a run. See
+  [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
+
+- **The conformance corpus is played by the C# runtime** — every playable fixture is now run
+  against the runner and held to the conversation it records, so the corpus specifies a port
+  rather than describing one. Two cases play end to end; each of the rest is named for the
+  construct nobody has taught the runner yet, so a case that starts passing and a case that stops
+  are both noticed.
+
 - **`SpeechText` reads a line's speech as plain text** — a new public helper in the playbook
   library flattens a run of speech fragments to one line of words, dropping styling and markup.
   Several places want the same lossy rendering and must agree on it: a conformance fixture
@@ -37,6 +51,12 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **A fixture advances a run with `next`, not `continue`** — the command a driver sends to move
+  past what was just said is spelled `next` in the fixture schema, in every playable fixture, and
+  in the corpus README. In a debugger `continue` means *run until something stops you*, which is
+  the word a driver will want for that policy, and one word cannot carry both meanings at two
+  layers. A fixture written against the old spelling no longer validates.
 
 - **Click an identifier to copy it** — a speaker's `@id`, a scene's anchor, and a jump's target
   now copy on click in every table that shows one, not only in the Config tab, so a writer can
