@@ -5,7 +5,7 @@
   "because": "each arm is only a jump, so its words reach the option edge or nowhere a menu may look -- a runner that offered blank rows here would be reading them off the node the arm leads to, or not at all",
   "session": [
     { "expect": { "said": { "speaker": "Guide", "speech": "Which way?" } } },
-    { "send": "continue" },
+    { "send": "next" },
     {
       "expect": {
         "asked": [
@@ -16,7 +16,7 @@
     },
     { "send": { "choose": 0 } },
     { "expect": { "said": { "speaker": "Guide", "speech": "Apples, fresh apples." } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "ended": {} } }
   ]
 }

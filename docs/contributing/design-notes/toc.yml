@@ -32,6 +32,8 @@
     href: runtime/Node Outward Shape.md
   - name: Speech as Plain Text
     href: runtime/Speech as Plain Text.md
+  - name: Runtime Core
+    href: runtime/Runtime Core.md
 - name: Language constructs
   items:
   - name: Progression Order

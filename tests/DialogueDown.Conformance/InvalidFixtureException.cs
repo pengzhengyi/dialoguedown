@@ -1,10 +1,10 @@
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// A conformance fixture is malformed, which is a bug in the corpus rather than in a runtime.
 /// </summary>
 /// <remarks>
-/// Kept distinct from <see cref="InvalidPlaybookException"/> so a failing run says whether the
+/// Kept distinct from the exception a reader throws, so a failing run says whether the
 /// corpus is wrong or the reader is. Conflating the two would let a broken fixture masquerade as
 /// a conformance failure, which is the one thing a corpus must never do.
 /// </remarks>

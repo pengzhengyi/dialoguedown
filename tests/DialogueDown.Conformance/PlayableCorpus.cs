@@ -1,25 +1,20 @@
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
-/// Reads the cases under <c>conformance/readable/</c>, each a document and the verdict a reader
-/// must reach about it.
+/// Reads the cases under <c>conformance/playable/</c>, each a playbook and the conversation a
+/// runner must be able to hold with it.
 /// </summary>
-/// <remarks>
-/// This is the C# reference for what a port's own loader has to do. It reads a fixture and the
-/// document that fixture is about, and nothing else: the source beside them is a reading aid, so
-/// requiring it would ask a port to carry a file it has no use for.
-/// </remarks>
-public sealed class ReadableCorpus
+public sealed class PlayableCorpus
 {
     private const string FixtureFile = "fixture.json";
 
     private readonly CorpusFolder _folder;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadableCorpus"/> class.
+    /// Initializes a new instance of the <see cref="PlayableCorpus"/> class.
     /// </summary>
     /// <param name="folder">Where the cases live.</param>
-    public ReadableCorpus(CorpusFolder folder)
+    public PlayableCorpus(CorpusFolder folder)
     {
         ArgumentNullException.ThrowIfNull(folder);
 
@@ -30,25 +25,24 @@ public sealed class ReadableCorpus
     /// <returns>The case names.</returns>
     public IEnumerable<string> Cases() => _folder.Cases();
 
-
     /// <summary>Reads one case.</summary>
     /// <param name="caseName">The case's folder name.</param>
     /// <returns>The case, ready to run.</returns>
     /// <exception cref="InvalidFixtureException">The case is missing or malformed.</exception>
-    public ReadableCase Read(string caseName)
+    public PlayableCase Read(string caseName)
     {
         var fixture = ReadFixture(caseName);
 
-        return new ReadableCase(caseName, fixture, _folder.Read(caseName, fixture.Playbook));
+        return new PlayableCase(caseName, fixture, _folder.Read(caseName, fixture.Playbook));
     }
 
-    private ReadableFixture ReadFixture(string caseName)
+    private PlayableFixture ReadFixture(string caseName)
     {
         var json = _folder.Read(caseName, FixtureFile);
 
         try
         {
-            return ReadableFixture.Read(json);
+            return PlayableFixture.Read(json);
         }
         catch (InvalidFixtureException error)
         {
