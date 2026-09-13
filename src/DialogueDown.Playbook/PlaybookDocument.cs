@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook;
 
@@ -13,7 +14,8 @@ namespace DialogueDown.Playbook;
 /// Named a document rather than a playbook because a type may not share its namespace's name
 /// without shadowing it.
 /// </remarks>
-public sealed record PlaybookDocument
+[Equatable]
+public sealed partial record PlaybookDocument
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaybookDocument"/> class.
@@ -84,16 +86,19 @@ public sealed record PlaybookDocument
     /// <em>ordinally</em>, so that holds on any machine — the default comparer follows the
     /// current culture, which puts "a" before "B" in one place and after it in another.
     /// </remarks>
+    [UnorderedEquality]
     [JsonPropertyOrder(4)]
     [JsonPropertyName("anchors")]
     public ImmutableSortedDictionary<string, int> Anchors { get; }
 
     /// <summary>Gets everybody who speaks here.</summary>
+    [OrderedEquality]
     [JsonPropertyOrder(5)]
     [JsonPropertyName("speakers")]
     public ImmutableArray<PlaybookSpeaker> Speakers { get; }
 
     /// <summary>Gets the steps of a playthrough, each at its own index.</summary>
+    [OrderedEquality]
     [JsonPropertyOrder(6)]
     [JsonPropertyName("nodes")]
     public ImmutableArray<Node> Nodes { get; }
