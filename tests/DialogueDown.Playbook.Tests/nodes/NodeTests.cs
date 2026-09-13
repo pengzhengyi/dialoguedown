@@ -17,9 +17,7 @@ public sealed class NodeTests
         var left = new ChoiceNode(0, false, [new SuccessionEdge(1)]);
         var right = new ChoiceNode(0, false, [new SuccessionEdge(1)]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -28,7 +26,7 @@ public sealed class NodeTests
         var left = new ChoiceNode(0, false, [new SuccessionEdge(1)]);
         var right = new ChoiceNode(0, false, [new SuccessionEdge(2)]);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 
     [Fact]
@@ -38,6 +36,6 @@ public sealed class NodeTests
         Node choice = new ChoiceNode(0, false, []);
         Node branch = new BranchNode(0, []);
 
-        Assert.NotEqual(choice, branch);
+        EqualityAssert.AssertValueUnequal(choice, branch);
     }
 }

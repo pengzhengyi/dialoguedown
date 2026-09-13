@@ -117,9 +117,7 @@ public sealed class PlaybookDocumentTests
         var left = Build();
         var right = Build();
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -128,6 +126,6 @@ public sealed class PlaybookDocumentTests
         var left = PlaybookFactory.Document(nodes: [new EndNode(0)]);
         var right = PlaybookFactory.Document(nodes: [new EndNode(0), new EndNode(1)]);
 
-        Assert.NotEqual(left, right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

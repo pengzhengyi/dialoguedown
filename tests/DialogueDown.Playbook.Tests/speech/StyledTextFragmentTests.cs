@@ -63,9 +63,7 @@ public sealed class StyledTextFragmentTests
             SpeechStyle.Bold,
             [new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")])]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -74,6 +72,6 @@ public sealed class StyledTextFragmentTests
         var left = new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")]);
         var right = new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("quite")]);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

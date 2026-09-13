@@ -49,9 +49,7 @@ public sealed class LineNodeTests
         var left = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, [new SuccessionEdge(1)]);
         var right = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, [new SuccessionEdge(1)]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -60,6 +58,6 @@ public sealed class LineNodeTests
         var left = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, []);
         var right = new LineNode(0, 0, [new TextFragment("goodbye")], Condition: null, []);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

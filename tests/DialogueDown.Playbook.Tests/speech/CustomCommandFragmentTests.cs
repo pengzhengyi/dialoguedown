@@ -49,9 +49,7 @@ public sealed class CustomCommandFragmentTests
         var left = new CustomCommandFragment("JoinClub", ["Alice", "Kung Fu"]);
         var right = new CustomCommandFragment("JoinClub", ["Alice", "Kung Fu"]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -60,6 +58,6 @@ public sealed class CustomCommandFragmentTests
         var left = new CustomCommandFragment("JoinClub", ["Alice", "Kung Fu"]);
         var right = new CustomCommandFragment("JoinClub", ["Bob", "Kung Fu"]);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

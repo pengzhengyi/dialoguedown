@@ -58,9 +58,7 @@ public sealed class PlaybookSpeakerTests
         var left = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)]);
         var right = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -69,6 +67,6 @@ public sealed class PlaybookSpeakerTests
         var left = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)]);
         var right = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "cold", false)]);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

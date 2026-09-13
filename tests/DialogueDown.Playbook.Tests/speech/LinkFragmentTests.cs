@@ -36,9 +36,7 @@ public sealed class LinkFragmentTests
         var left = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
         var right = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -47,6 +45,6 @@ public sealed class LinkFragmentTests
         var left = new LinkFragment("https://example.com", [new TextFragment("one")]);
         var right = new LinkFragment("https://example.com", [new TextFragment("another")]);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

@@ -56,9 +56,7 @@ public sealed class OptionEdgeTests
         var left = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
         var right = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -67,6 +65,6 @@ public sealed class OptionEdgeTests
         var left = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
         var right = new OptionEdge(2, [new TextFragment("Say nothing")], Condition: null);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

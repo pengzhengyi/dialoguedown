@@ -52,9 +52,7 @@ public sealed class DivertEdgeTests
         var left = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
         var right = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -63,6 +61,6 @@ public sealed class DivertEdgeTests
         var left = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
         var right = new DivertEdge(4, [new TextFragment("the market")], Condition: null);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

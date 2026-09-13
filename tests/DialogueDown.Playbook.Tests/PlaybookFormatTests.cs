@@ -51,9 +51,7 @@ public sealed class PlaybookFormatTests
         var left = new PlaybookFormat(0, [Capabilities.Core], ["source-map"]);
         var right = new PlaybookFormat(0, [Capabilities.Core], ["source-map"]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -62,6 +60,6 @@ public sealed class PlaybookFormatTests
         var left = new PlaybookFormat(0, [Capabilities.Core], []);
         var right = new PlaybookFormat(0, [Capabilities.Core, "cross-file-jump"], []);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

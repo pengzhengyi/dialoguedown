@@ -44,9 +44,7 @@ public sealed class ControlNodeTests
         var left = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Alice"])], Condition: null, []);
         var right = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Alice"])], Condition: null, []);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -55,6 +53,6 @@ public sealed class ControlNodeTests
         var left = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Alice"])], Condition: null, []);
         var right = new ControlNode(7, [new CustomCommandFragment("JoinClub", ["Bob"])], Condition: null, []);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

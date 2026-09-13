@@ -53,9 +53,7 @@ public sealed class ImageFragmentTests
         var left = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
         var right = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
 
-        Assert.True(left == right);
-        Assert.Equal(left, right);
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        EqualityAssert.AssertValueEqual(left, right);
     }
 
     [Fact]
@@ -64,6 +62,6 @@ public sealed class ImageFragmentTests
         var left = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
         var right = new ImageFragment("portrait.png", [new TextFragment("Alice frowning")]);
 
-        Assert.False(left == right);
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }
