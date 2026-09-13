@@ -14,8 +14,7 @@ internal static class NodeTraversalExtensions
 {
     /// <summary>Where a node leads when a run simply carries on.</summary>
     /// <remarks>
-    /// A node carries on by a single succession edge. The first is taken, so a document that
-    /// somehow holds more plays the one it lists first rather than stopping.
+    /// A node falls through at most one way, so it carries one succession edge or none.
     /// </remarks>
     /// <param name="node">The node being left.</param>
     /// <returns>The node to arrive at, or <see langword="null"/> when nothing leads onward.</returns>
@@ -23,6 +22,6 @@ internal static class NodeTraversalExtensions
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return node.Out.OfType<SuccessionEdge>().FirstOrDefault()?.Target;
+        return node.Out.OfType<SuccessionEdge>().SingleOrDefault()?.Target;
     }
 }
