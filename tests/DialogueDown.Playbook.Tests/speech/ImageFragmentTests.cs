@@ -46,4 +46,24 @@ public sealed class ImageFragmentTests
     {
         Assert.Throws<ArgumentNullException>(() => new ImageFragment(null!, []));
     }
+
+    [Fact]
+    public void Equality_EqualAlternativeText_AreEqual()
+    {
+        var left = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
+        var right = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
+
+        Assert.True(left == right);
+        Assert.Equal(left, right);
+        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+    }
+
+    [Fact]
+    public void Equality_DifferentAlternativeText_AreNotEqual()
+    {
+        var left = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
+        var right = new ImageFragment("portrait.png", [new TextFragment("Alice frowning")]);
+
+        Assert.False(left == right);
+    }
 }

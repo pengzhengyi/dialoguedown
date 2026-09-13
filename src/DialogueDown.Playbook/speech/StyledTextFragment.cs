@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Speech;
 
@@ -9,7 +10,8 @@ namespace DialogueDown.Playbook.Speech;
 /// </summary>
 /// <param name="Style">How the wrapped speech is emphasized.</param>
 /// <param name="Children">The wrapped speech. Never empty.</param>
-public sealed record StyledTextFragment(SpeechStyle Style, ImmutableArray<SpeechFragment> Children)
+[Equatable]
+public sealed partial record StyledTextFragment(SpeechStyle Style, ImmutableArray<SpeechFragment> Children)
     : SpeechFragment
 {
     /// <summary>
@@ -25,6 +27,7 @@ public sealed record StyledTextFragment(SpeechStyle Style, ImmutableArray<Speech
     /// Never empty: styling that wraps nothing is never produced, and accepting it would let a
     /// reader render an emphasis around no words at all.
     /// </remarks>
+    [OrderedEquality]
     [JsonPropertyName("children")]
     public ImmutableArray<SpeechFragment> Children { get; } = Children.AssertNotEmpty(nameof(Children));
 }

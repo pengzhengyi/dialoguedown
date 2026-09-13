@@ -29,4 +29,24 @@ public sealed class LinkFragmentTests
     {
         Assert.Throws<ArgumentNullException>(() => new LinkFragment(null!, []));
     }
+
+    [Fact]
+    public void Equality_EqualLabels_AreEqual()
+    {
+        var left = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
+        var right = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
+
+        Assert.True(left == right);
+        Assert.Equal(left, right);
+        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+    }
+
+    [Fact]
+    public void Equality_DifferentLabels_AreNotEqual()
+    {
+        var left = new LinkFragment("https://example.com", [new TextFragment("one")]);
+        var right = new LinkFragment("https://example.com", [new TextFragment("another")]);
+
+        Assert.False(left == right);
+    }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Speech;
 
@@ -9,7 +10,8 @@ namespace DialogueDown.Playbook.Speech;
 /// </summary>
 /// <param name="Target">Where the link points, as the writer wrote it.</param>
 /// <param name="Label">The speech shown in the link's place.</param>
-public sealed record LinkFragment(string Target, ImmutableArray<SpeechFragment> Label)
+[Equatable]
+public sealed partial record LinkFragment(string Target, ImmutableArray<SpeechFragment> Label)
     : SpeechFragment
 {
     /// <summary>
@@ -21,6 +23,7 @@ public sealed record LinkFragment(string Target, ImmutableArray<SpeechFragment> 
     /// <summary>
     /// Gets the speech shown in the link's place.
     /// </summary>
+    [OrderedEquality]
     [JsonPropertyName("label")]
     public ImmutableArray<SpeechFragment> Label { get; } = Label.OrEmpty();
 }
