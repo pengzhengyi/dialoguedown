@@ -99,6 +99,14 @@ describe("summaryRuns", () => {
         ]);
     });
 
+    // The count belongs to the phrase around it, not to the odds: how many arms there are is
+    // already visible in the odds themselves, so it steps back with the words it sits among.
+    it("reads a random choice's whole draw phrase as one keyword", () => {
+        expect(textOf("DRAW 1 FROM 3: 50% || 25% || 25%", "random-choice", "keyword")).toEqual([
+            "DRAW 1 FROM 3",
+        ]);
+    });
+
     it("names the odds a random choice draws against", () => {
         expect(
             textOf("DRAW 1 FROM 2: {Hero.Attack} || {Dragon.Fury}", "random-choice", "query"),

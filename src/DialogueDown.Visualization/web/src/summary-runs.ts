@@ -213,9 +213,9 @@ function randomChoiceRuns(body: string): SummaryRun[] {
         return plainRuns(body);
     }
     return [
-        ...keywordRuns("DRAW 1 FROM"),
-        ...plainRuns(" "),
-        ...plainRuns(rest.slice(0, divider)),
+        // The count is part of the phrase, not a value worth finding: the odds listed after it
+        // already say how many arms there are, so the whole phrase steps back together.
+        ...keywordRuns(`${DRAW_PREFIX}${rest.slice(0, divider)}`),
         ...separatorRuns(":"),
         ...plainRuns(" "),
         ...listRuns(rest.slice(divider + 2), oddsRuns),
