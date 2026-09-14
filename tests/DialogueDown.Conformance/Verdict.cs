@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// What a reader must do with a fixture's playbook.

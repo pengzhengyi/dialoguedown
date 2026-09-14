@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// The corpus this build ships, resolved once from where the build put it.
@@ -12,7 +12,7 @@ namespace DialogueDown.Playbook.Tests.Conformance;
 /// reached forward to a later one would quietly see null.
 /// </para>
 /// </remarks>
-internal static class Corpora
+public static class Corpora
 {
     /// <summary>Gets the readable half: can a reader load this document at all.</summary>
     public static CorpusFolder ReadableFolder { get; } = Half("readable");
@@ -22,6 +22,9 @@ internal static class Corpora
 
     /// <summary>Gets the readable half, read as cases rather than as files.</summary>
     public static ReadableCorpus Readable { get; } = new(ReadableFolder);
+
+    /// <summary>Gets the playable half, read as cases rather than as files.</summary>
+    public static PlayableCorpus Playable { get; } = new(PlayableFolder);
 
     /// <summary>Both halves, for the checks that hold across the whole corpus.</summary>
     /// <returns>Each half, as a folder of cases.</returns>

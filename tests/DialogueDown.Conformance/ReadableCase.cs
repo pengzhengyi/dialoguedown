@@ -1,4 +1,4 @@
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 /// <summary>
 /// One case from the corpus: what it claims, and the document it claims it about.

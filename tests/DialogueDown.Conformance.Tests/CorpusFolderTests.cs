@@ -1,6 +1,5 @@
-using DialogueDown.Playbook.Tests.Support;
 
-namespace DialogueDown.Playbook.Tests.Conformance;
+namespace DialogueDown.Conformance;
 
 public sealed class CorpusFolderTests
 {
