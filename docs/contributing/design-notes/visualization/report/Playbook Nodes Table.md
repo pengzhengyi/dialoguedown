@@ -1,16 +1,14 @@
 # Playbook Nodes Table
 
-> [!NOTE]
-> Status: **proposed** — not yet implemented. The Playbook tab shows the compiled
-> playbook verbatim, and a node in that document is the one part of it a reader
-> cannot read: an integer id, a speaker index, and a list of target numbers. This
-> note adds a fourth table beside the JSON in which every node is one row that
-> reads as a sentence.
+> [!IMPORTANT]
+> Status: **implemented**. The Playbook tab shows the compiled playbook verbatim,
+> and a node in that document was the one part of it a reader could not read: an
+> integer id, a speaker index, and a list of target numbers. A fourth table beside
+> the JSON now gives every node one row that reads as a sentence.
 >
-> It depends on one thing it does not build: a public flattening of speech to
-> plain text, designed in the sibling note *Speech as Plain Text*. That flattening
-> is a format-level contract shared with the runtime, so it is its own component
-> and lands first.
+> It builds on a public flattening of speech to plain text, designed in the sibling
+> note *Speech as Plain Text*. That flattening is a format-level contract shared
+> with the runtime, so it is its own component and landed first.
 >
 > Like the rest of the visualization tooling, this surface is "vibe-coded" (see
 > the visualization note's maturity caveat); the compiler stays the reviewed
@@ -84,23 +82,28 @@ invents none.
 
 ## Functionality checklist
 
-- [ ] Every node in the playbook has exactly one row.
-- [ ] A `line`'s summary names its speaker and quotes what is said.
-- [ ] A `control`'s summary lists the commands it performs, in order.
-- [ ] A `control` with no effects — which is a divert wearing a control's clothes —
+- [x] Every node in the playbook has exactly one row.
+- [x] A `line`'s summary names its speaker and says what is said.
+- [x] A `control`'s summary lists the commands it performs, in order.
+- [x] A `control` with no effects — which is a divert wearing a control's clothes —
       is given the words the writer put on the divert.
-- [ ] A `choice` lists the options it offers, marking the ones offered only on a
+- [x] A `choice` lists the options it offers, marking the ones offered only on a
       condition.
-- [ ] A `random-choice` reports how many arms it draws from and their odds, because
+- [x] A `random-choice` reports how many arms it draws from and their odds, because
       its arms carry no words.
-- [ ] A node that is itself conditional says so, ahead of everything else.
-- [ ] A `branch` pairs each condition with the node it reaches.
-- [ ] An `end` says only that the run stops.
-- [ ] A node's kind carries the same color the Dialogue Graph gives that kind.
-- [ ] A node with one way out has that target as a link, which reveals the node in
-      the JSON beside the table; a node with several lists them as text.
-- [ ] The table can be faceted by kind.
-- [ ] Narrowing the panel wraps the summary and leaves every number on one line.
+- [x] A node that is itself conditional says so, ahead of everything else.
+- [x] A `branch` pairs each condition with the node it reaches.
+- [x] An `end` says only that the run stops.
+- [x] A node's kind carries the same color the Dialogue Graph gives that kind.
+- [x] Every node a row leads to is a link of its own, which reveals that node in
+      the JSON beside the table.
+- [x] Hovering a way out lights the row it leads to, so a reader sees where it
+      goes without leaving the row they are reading.
+- [x] A summary is drawn in the report's own syntax colors, so the words a writer
+      wrote stand apart from the table's grammar.
+- [x] The table can be faceted by kind.
+- [x] Narrowing the panel wraps the summary and keeps every number on one line,
+      scrolling the table sideways rather than dropping a column out of sight.
 
 ## How it reads today
 
@@ -191,14 +194,15 @@ shown a menu, and the odds are the whole of what the arm holds.
 
 ## Interfaces and abstractions
 
-| Type                                                                                    | Responsibility                                                        | Collaborators                                     |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
-| `PlaybookNodeView(int Id, string Kind, string Category, string Summary, int[] Targets)` | One node as the table shows it. New record in `PlaybookReport.cs`.    | `PlaybookProjection`                              |
-| `PlaybookProjection.NodesOf(PlaybookDocument)`                                          | Projects every node to a view, in document order.                     | `PlaybookNodeSummary`                             |
-| `PlaybookNodeSummary`                                                                   | Writes one node's summary. New internal static class.                 | the playbook's node and edge models, `SpeechText` |
-| `nodeTable(nodes)` in `playbook-view.ts`                                                | Shapes the views into a `SemanticTable`.                              | `createTablePanel`                                |
-| `createTablePanel`                                                                      | Draws it, with sorting, filtering, faceting, and collapse. Unchanged. | —                                                 |
-| `styles.css`                                                                            | One new rule pinning the three short columns to one line.             | —                                                 |
+| Type                                                                                    | Responsibility                                                                                           | Collaborators                                     |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `PlaybookNodeView(int Id, string Kind, string Category, string Summary, int[] Targets)` | One node as the table shows it. New record in `PlaybookReport.cs`.                                       | `PlaybookProjection`                              |
+| `PlaybookProjection.NodesOf(PlaybookDocument)`                                          | Projects every node to a view, in document order.                                                        | `PlaybookNodeSummary`                             |
+| `PlaybookNodeSummary`                                                                   | Writes one node's summary. New internal static class.                                                    | the playbook's node and edge models, `SpeechText` |
+| `nodeTable(nodes)` in `playbook-view.ts`                                                | Shapes the views into a `SemanticTable`.                                                                 | `createTablePanel`                                |
+| `summaryRuns(summary, kind)` in `summary-runs.ts`                                       | Splits a summary into styled runs using the grammar of the node's kind.                                  | `nodeTable`                                       |
+| `createTablePanel`                                                                      | Draws it, with sorting, filtering, faceting, and collapse. Gains styled runs and a link per destination. | `summaryRuns`                                     |
+| `styles.css`                                                                            | The column widths, the sideways scroll, the hover tint, and the summary's colors.                        | —                                                 |
 
 ## Key design decisions
 
@@ -276,7 +280,7 @@ The Dialogue Graph already reached this conclusion and labels a bare jump the sa
 way, down to the rendered `⇒` rather than the `=>` a writer types. The table
 follows it rather than inventing a second treatment.
 
-### DD5 — Three columns hold their line; the summary wraps
+### DD5 — Three columns hold their line; the summary wraps; the panel scrolls
 
 `#`, `Kind`, and `Leads to` are pinned to one line; the summary takes the remaining
 width and wraps. Narrowing the panel — or the window — then grows a row's height
@@ -291,6 +295,13 @@ pins its leading `Type` column, keyed off the table's own `data-table` attribute
 for exactly this reason. This table is `data-table="nodes"` and gains the same kind
 of rule.
 
+Wrapping alone is not enough at the narrow end. Once the summary has given up all
+the width it can, three pinned columns still need more than the panel has, and a
+table that simply overflows its panel carries `Leads to` out of sight with no way
+to reach it. So the panel body scrolls sideways: the columns keep their
+proportions and the reader pans to the numbers. A pinned column that cannot be
+reached is worse than one that has to be scrolled to.
+
 The projection still caps a summary at a couple of hundred characters, so one
 enormous paragraph cannot bloat the payload or wrap a row into a wall of text. The
 cap is generous enough that most rows never meet it.
@@ -301,35 +312,74 @@ cap is generous enough that most rows never meet it.
 faceted filter the Speakers table already uses answers it for free — `kind` joins
 `facetColumns` and nothing else is needed.
 
-### DD7 — A single way out is a link; several are listed, and the summary names them
+### DD7 — Every way out is a link of its own
 
-A cell in this table carries **one** jump, not several: the table marks a cell with
-a single `data-jump` key and labels the link with the cell's whole text. So the
-column behaves differently depending on how many ways out a node has.
+A node's targets are listed in order, and each one is separately clickable: a
+target carries `PlaybookTarget { kind: "node" }`, which the tab already knows how
+to reveal in the JSON. That is the same mechanism the Anchors table's Node column
+and the header's Entry node use, so a target behaves the way every other node
+reference in the tab behaves, including from the keyboard.
 
-- **One way out** — the cell is a link carrying `PlaybookTarget { kind: "node" }`,
-  which the tab already knows how to reveal in the JSON. That is the same mechanism
-  the Anchors table's Node column and the header's Entry node use, so the target
-  behaves the way every other node reference in the tab behaves, including from the
-  keyboard. This is most rows: every line, every succession, every bare jump.
-- **Several ways out** — the cell lists the targets as plain text. A link labeled
-  `16, 22, 31` that lands on `16` would announce three destinations and deliver
-  one, and a cell that silently picks the first is worse than a cell that does not
-  pretend to be clickable at all. The JSON beside the table is how a reader follows
-  any of them.
+One link for the whole cell could not do this. A link labeled `16, 22, 31` that
+lands on `16` announces three destinations and delivers one, and a cell that
+silently picks the first is worse than a cell that does not pretend to be
+clickable. So the cell draws one control per target, which is what makes a
+branching row as reachable as a straight one. That is a cell shape the component
+now offers to all four tables rather than to this one alone.
 
-What makes a branching row readable is therefore the summary, not the link: it
-quotes each option in order, so the row says *what* the ways out are even where it
-cannot offer them individually.
+Hovering a target also lights the row it leads to. The report already cross-links
+entities by key and a node row carries its own, so pointing at `22` tints row 22
+wherever it sits — and the row under the pointer is tinted differently from the
+row it leads to, so the two never read alike. Nothing scrolls: a reader pointing
+at a number has not asked to be moved.
 
-That is worth doing on its own merits. An option's label is text a player will
-read, and it currently appears on **no** surface in the report: the graph draws it
-on an edge only when there is room, and the JSON buries it in a fragment list.
-Putting it in the summary is the feature, not a consolation for the single jump.
+The summary is what makes a branching row readable in the first place. It lists
+each option in order, so the row says *what* the ways out are as well as where
+they land. An option's label is text a player will read, and before this table it
+appeared on **no** surface in the report: the graph draws it on an edge only when
+there is room, and the JSON buries it in a fragment list.
 
-Teaching `SemanticCell` to carry a jump per target would be the richer answer, and
-it is a real option later. It is a change to a component four tables share, which is
-not a rider on adding the fourth.
+### DD8 — The summary is colored in the report's own syntax colors
+
+A summary packs a speaker, their words, the table's grammar, a command, and a value
+only a running game can supply into one cell. Drawn in a single color, all of it
+reads as equally important, and the words a writer wrote — the thing a reader came
+for — sit in the middle of the scaffolding around them.
+
+Three distinctions take a color: who speaks, what the host is asked to perform, and
+a value the game supplies. They wear the colors the Source editor already uses for
+those same three things, so a speaker is the same purple in the table as in the
+script, a command the same olive, a query the same red. That is a palette the
+report already had, tuned for both themes, rather than a second color language
+invented for one table. The table's own grammar — the capitals, the separators, the
+angle-bracket markers — is muted so it steps back, and a writer's own words keep the
+cell's plain color, which leaves them the most legible thing in the row. Every role
+was measured against the table's background in both themes; the tightest is muted
+grammar on dark at 4.77:1.
+
+Only three distinctions take a color because keywords and speaker names always sit
+adjacent in a summary. Coloring the grammar as well puts neighboring hues side by
+side, and the row then reads as a stripe rather than a sentence.
+
+The split into runs happens in the client, and the node's kind is what scopes it:
+each kind has a small grammar of its own, and the pieces holding a writer's own
+words are handed back whole rather than scanned. The split is total — the runs
+concatenate back to the summary for any input, including one the cap cut short
+mid-construct — which is what lets a search match still be found in the cell's text
+and then laid back across the runs.
+
+That split reads back a line the projection wrote, so it can only ever be a good
+guess. The characters it looks for are ones a writer can also type: an option label
+holding the option separator, or a command argument holding the argument separator,
+is read as two pieces where the script has one. The consequence is confined to
+color, because the drawing stays one flowing line and asserts nothing about
+structure.
+
+This is why the column does not draw a choice as a list of options, which would
+otherwise suit it. A list asserts how many options there are, and an assertion has
+to come from the side that holds the real edges. Having the projection label the
+parts it already has, so the client only draws what it is told, is worth doing and
+is tracked as its own work.
 
 ## Error and boundary cases
 
@@ -343,7 +393,7 @@ not a rider on adding the fourth.
 | A control node with neither effects nor a labeled divert | `CONTINUE`.                                                                                                                                                                                                                                    |
 | An option with no label                                  | Rendered as `<no label>`. The compiler already reports a blank menu row as a diagnostic, so this names a script the writer has been told about rather than inventing text for it.                                                              |
 | A line or control carrying its own condition             | The condition leads the summary: `IF Hero.IsBrave THEN Keeper: …`. Every condition in `rpg-quest` and `highrise-fire` sits on an edge, but `gallery` has one on a line, and a summary that dropped it would misdescribe what the runtime does. |
-| A choice with many options                               | Options are quoted in order until the cap is reached; the row then ends in an ellipsis. Every target is still listed in the Leads to cell, so the number of ways out stays readable.                                                           |
+| A choice with many options                               | Options are listed in order until the cap is reached; the row then ends in an ellipsis. Every target is still listed in the Leads to cell, so the number of ways out stays readable.                                                           |
 | A summary longer than the cap                            | Cut at the cap, on a word boundary, with an ellipsis.                                                                                                                                                                                          |
 | A very large playbook                                    | One row per node, drawn by a component that already carries thousands of rows elsewhere in the report.                                                                                                                                         |
 
@@ -357,37 +407,46 @@ not a rider on adding the fourth.
 - **`SpeechText`** — consumed, not changed. It is the preceding component's public
   flattening, and the only thing this component needs from outside the
   visualization assembly.
-- **`model.ts`** — gains `PlaybookNodeView` and `nodes` on `PlaybookReport`.
+- **`model.ts`** — gains `PlaybookNodeView` and `nodes` on `PlaybookReport`, and
+  the two shapes a cell needs to draw itself: a run carrying a class, and a link
+  per destination.
+- **`summary-runs.ts`** — new: splits a summary into styled runs using the grammar
+  of the node's kind.
+- **`semantic-table.ts`** — a cell can now be drawn in styled runs, and can carry
+  one link per destination instead of one for the whole cell. Both are general to
+  the component rather than particular to this table.
 - **`playbook-view.ts`** — gains `nodeTable`, added to `tablesOf` after the
   anchors, so the tab reads header, speakers, anchors, then the nodes themselves.
-- **`styles.css`** — one rule pinning this table's `#`, `Kind`, and `Leads to`
-  columns to a single line.
+- **`styles.css`** — pins this table's `#`, `Kind`, and `Leads to` columns to a
+  single line, scrolls the panel body sideways when they no longer fit, tints the
+  row under the pointer, and gives each summary role its color.
 - **No format change.** The playbook document, its schema, and the bytes
   `ddown compile --emit playbook` writes are untouched.
 
 ## Testability
 
-| Level                           | Covers                                                                                                                                                                                        |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| xUnit — `PlaybookNodeSummary`   | One test per node kind; the effect-less control node; a node-level condition; a conditional option; an unlabeled option; the missing-speaker guard; the word-boundary cap.                    |
-| xUnit — union coverage          | Reflecting over the node union's registered members, every kind produces a non-empty summary — so a seventh kind fails a test instead of silently falling through a discard arm.              |
-| xUnit — `PlaybookProjection`    | Every node projects to exactly one view, in document order, with its kind, its category, and its targets; an unavailable compile projects none.                                               |
-| xUnit — colors follow the graph | The kind-to-category mapping equals the Dialogue Graph's, so the two surfaces cannot drift apart silently.                                                                                    |
-| Vitest — `playbook-view`        | The table's columns, its kind categories, its facet, and that a one-way-out node's target cell carries a node jump while a branching node's does not.                                         |
-| Playwright                      | The Nodes table renders for a real playbook, facets to a single kind, and a target cell reveals that node in the JSON beside it. A narrow viewport keeps the three short columns on one line. |
+| Level                           | Covers                                                                                                                                                                                                                                                                                 |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| xUnit — `PlaybookNodeSummary`   | One test per node kind; the effect-less control node; a node-level condition; a conditional option; an unlabeled option; the missing-speaker guard; the word-boundary cap.                                                                                                             |
+| xUnit — union coverage          | Reflecting over the node union's registered members, every kind produces a non-empty summary — so a seventh kind fails a test instead of silently falling through a discard arm.                                                                                                       |
+| xUnit — `PlaybookProjection`    | Every node projects to exactly one view, in document order, with its kind, its category, and its targets; an unavailable compile projects none.                                                                                                                                        |
+| xUnit — colors follow the graph | The kind-to-category mapping equals the Dialogue Graph's, so the two surfaces cannot drift apart silently.                                                                                                                                                                             |
+| Vitest — `summary-runs`         | Every real summary splits and rejoins exactly, including one the cap cut short; a writer's brackets are never read as a command, and a writer's own separator never splits their words.                                                                                                |
+| Vitest — `playbook-view`        | The table's columns, its kind categories, its facet, and that every target in a cell carries a link of its own.                                                                                                                                                                        |
+| Vitest — `semantic-table`       | A cell drawn in runs shows each run in its own class, and a search match is still marked inside a colored run and across a run boundary.                                                                                                                                               |
+| Playwright                      | The Nodes table renders for a real playbook, facets to a single kind, and each target reveals that node in the JSON beside it. Hovering a target lights the row it leads to, tinted apart from the row under the pointer. A narrow viewport keeps the three short columns on one line. |
 
 A summary is a pure function of a node and the speaker list, so its tests need no
 document, no compile, and no DOM.
 
 ## Open questions
 
-- **Does the `Leads to` column earn its width once the summary quotes the
-  options?** The summary already says what the ways out *are*; the numbers say
-  where they land, and on a branching node none of them is clickable. Dropping the
-  column would give the summary the whole remaining width, at the cost of the one
-  reliable way to see that three separate rows converge on node 22. Worth deciding
-  against the real table rather than on paper.
-- **Should a random choice show its weights?** A `random-option` carries a weight,
-  and `AutoWeight` means "share what is left." Showing them makes the row honest
-  about what chance will do; it also spends characters on a number a reader
-  auditing content may not care about.
+None outstanding.
+
+The `Leads to` column earns its width. Seeing that three separate rows converge on
+node 22 is the one thing the summary cannot say, and now that every target is a
+link of its own, the column is also where a branching row is followed from.
+
+A random choice shows its odds rather than only its arm count. An arm carries no
+words at all, so the odds are the whole of what it holds, and a row naming only
+the count would say less than the JSON beside it.
