@@ -41,9 +41,7 @@ public sealed class EqualityTests
         // must be one value both times — which only holds if each construct compares by value.
         var json = PlaybookJsonAssert.Serialize(ComprehensivePlaybook());
 
-        EqualityAssert.AssertValueEqual(
-            PlaybookJsonAssert.AssertDeserialize<PlaybookDocument>(json),
-            PlaybookJsonAssert.AssertDeserialize<PlaybookDocument>(json));
+        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(json);
     }
 
     private static bool DeclaresCollection(Type type) =>
