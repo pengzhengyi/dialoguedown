@@ -16,6 +16,7 @@ ignores:
   - "**/*.dialogue.md"   # DialogueDown scripts: `#` headings are scenes, not titles
   - "docs/_site/**"      # docfx build output
   - "docs/api/**"        # docfx-generated API reference
+  - ".aider*"            # aider's own chat transcript, written where it is run
 
 config:
   MD013: false  # line length — design notes wrap prose at ~80 cols by intent

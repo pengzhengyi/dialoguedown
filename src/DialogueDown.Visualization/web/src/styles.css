@@ -1149,6 +1149,13 @@ section.stage.empty-shell {
     border-radius: 999px;
 }
 
+/* A panel narrowed past the point where even its short columns fit scrolls sideways rather than
+   clipping its last column out of sight. That holds for every table, not only a wide one: a
+   column that cannot be reached at all is worse than a column a scroll away. */
+.table-panel-body {
+    overflow-x: auto;
+}
+
 .table-panel.collapsed .table-panel-body {
     display: none;
 }
@@ -1196,6 +1203,49 @@ section.stage.empty-shell {
 .semantic-table[data-table="jump-resolutions"] th:first-child,
 .semantic-table[data-table="jump-resolutions"] td:first-child {
     white-space: nowrap;
+}
+
+/* The nodes table's three short columns — the position, the kind, and the ways out — take the
+   width of their own content, and the summary takes what is left and wraps. `width: 1%` is what
+   does it: in a `width: 100%` table the browser shrinks a column past its stated width rather
+   than below its content, and hands the remainder to the one column left unclaimed — so the short
+   columns stay on one line without a width having to be guessed for any of them. */
+.semantic-table[data-table="nodes"] th:nth-child(1),
+.semantic-table[data-table="nodes"] td:nth-child(1),
+.semantic-table[data-table="nodes"] th:nth-child(2),
+.semantic-table[data-table="nodes"] td:nth-child(2),
+.semantic-table[data-table="nodes"] th:nth-child(4),
+.semantic-table[data-table="nodes"] td:nth-child(4) {
+    width: 1%;
+    white-space: nowrap;
+}
+
+/* The Summary cell's styled runs. Only the three distinctions worth finding carry a colour — who
+   speaks, what the host is asked to perform, and a value only a running game can supply — drawn
+   from the Source editor's own syntax tokens, already defined for both themes. The grammar around
+   them is muted, so the words a writer wrote stay the most legible thing in the row. */
+.dd-sum-speaker {
+    color: var(--tok-speaker-name);
+}
+
+.dd-sum-command {
+    color: var(--tok-command);
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.95em;
+}
+
+.dd-sum-query {
+    color: var(--tok-query);
+}
+
+.dd-sum-keyword,
+.dd-sum-separator {
+    color: var(--pico-muted-color);
+}
+
+.dd-sum-absent {
+    color: var(--pico-muted-color);
+    font-style: italic;
 }
 
 /* The revealed search box: a slim, horizontally inset row above the table (not edge-to-edge),
@@ -1417,6 +1467,16 @@ section.stage.empty-shell {
 .table-nomatch {
     font-style: italic;
     color: var(--pico-muted-color);
+}
+
+/* A row is wide and its short columns sit at either end, so tinting the row under the pointer
+   keeps a cell tied to the row it belongs to while the eye travels across.
+
+   This selector outweighs the cross-link tint further down, so the row under the pointer wears
+   this tint rather than the highlight color — which is what a reader wants when hovering a way
+   out: the row they are on and the row it leads to then read as two different things. */
+.semantic-table tbody tr:hover td {
+    background: var(--pico-code-background-color);
 }
 
 /* Cross-linked rows and cells invite a hover; the highlighter (entity-highlight.ts)

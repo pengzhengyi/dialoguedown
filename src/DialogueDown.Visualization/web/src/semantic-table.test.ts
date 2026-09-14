@@ -590,3 +590,68 @@ describe("createTablePanel — copying an identifier", () => {
         expect(writeText).not.toHaveBeenCalled();
     });
 });
+
+describe("createTablePanel — a cell drawn in styled runs", () => {
+    function runsTable(): SemanticTable {
+        return {
+            title: "Nodes",
+            columns: ["#", "Summary"],
+            emptyText: "No nodes.",
+            rows: [
+                {
+                    cells: [
+                        { text: "2" },
+                        {
+                            text: "Keeper: Take a torch and go north.",
+                            runs: [
+                                { text: "Keeper", className: "dd-sum-speaker" },
+                                { text: ":", className: "dd-sum-separator" },
+                                { text: " Take a torch and go north." },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+    }
+
+    function summaryCell(panel: HTMLElement): HTMLElement {
+        return panel.querySelectorAll<HTMLElement>("tbody td")[1]!;
+    }
+
+    it("draws each run in its own class and leaves a plain run unwrapped", () => {
+        const panel = createTablePanel(runsTable());
+        const cell = summaryCell(panel);
+
+        expect(cell.querySelector(".dd-sum-speaker")?.textContent).toBe("Keeper");
+        expect(cell.querySelector(".dd-sum-separator")?.textContent).toBe(":");
+        expect(cell.textContent).toBe("Keeper: Take a torch and go north.");
+    });
+
+    // The split is only for drawing. If the highlight were not laid back across the runs, a cell
+    // would stop marking its matches the moment it gained colour.
+    it("still marks a search match inside a coloured run", () => {
+        const panel = createTablePanel(runsTable());
+        setFilter(panel, "torch");
+
+        const marks = [...summaryCell(panel).querySelectorAll(".table-mark")];
+        expect(marks.map((mark) => mark.textContent)).toEqual(["torch"]);
+    });
+
+    it("marks a match that falls inside a run carrying a class", () => {
+        const panel = createTablePanel(runsTable());
+        setFilter(panel, "Keep");
+
+        const speaker = summaryCell(panel).querySelector(".dd-sum-speaker");
+        expect(speaker?.querySelector(".table-mark")?.textContent).toBe("Keep");
+    });
+
+    // A reader searching for something spanning the boundary should still see both halves marked.
+    it("marks both halves of a match that straddles two runs", () => {
+        const panel = createTablePanel(runsTable());
+        setFilter(panel, "Keeper:");
+
+        const marks = [...summaryCell(panel).querySelectorAll(".table-mark")];
+        expect(marks.map((mark) => mark.textContent).join("")).toBe("Keeper:");
+    });
+});

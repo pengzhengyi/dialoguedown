@@ -70,6 +70,25 @@ export interface DisplayEdge {
     label?: string;
 }
 
+/** One destination inside a cell that names several: how it reads, and where it leads. */
+export interface SemanticJump {
+    /** How this destination reads in the cell. */
+    text: string;
+    /** Where it leads. */
+    target: PlaybookTarget;
+    /**
+     * Set when this destination references a keyed entity, so hovering it highlights that entity
+     * wherever else it appears.
+     */
+    refKey?: string;
+}
+
+/** One styled stretch of a cell's text. */
+export interface SemanticRun {
+    text: string;
+    className?: string;
+}
+
 /** One cell of a {@link SemanticTable}. */
 export interface SemanticCell {
     text: string;
@@ -81,6 +100,13 @@ export interface SemanticCell {
     category?: string;
     /** Present when the cell is a tag list: drawn as capsules instead of {@link text}. */
     tags?: TagView[];
+    /**
+     * Set when the cell's text is drawn in styled stretches rather than as one run of prose.
+     * `text` stays the plain rendering, so search and sort still read the cell and only the
+     * drawing differs — the same arrangement {@link tags} uses. The runs' texts must concatenate
+     * back to `text`, because the search highlight is found in `text` and drawn across the runs.
+     */
+    runs?: SemanticRun[];
     /**
      * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
      * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
@@ -94,6 +120,12 @@ export interface SemanticCell {
      * Client-authored: no projection emits it.
      */
     jump?: PlaybookTarget;
+    /**
+     * Set when the cell names several places at once, so each is reachable on its own instead of
+     * the cell standing for one of them. `text` stays the plain rendering, so search and sort
+     * still read the cell and only the drawing differs — the same arrangement {@link tags} uses.
+     */
+    jumps?: SemanticJump[];
 }
 
 /** One row of a {@link SemanticTable}; `entityKey` names the entity the row represents. */
@@ -206,6 +238,20 @@ export interface PlaybookAnchorView {
     node: number;
 }
 
+/** One row of the playbook's node table. */
+export interface PlaybookNodeView {
+    /** The node's own position. */
+    id: number;
+    /** The tag the document names the node by. */
+    kind: string;
+    /** The cross-stage color group the node's kind belongs to. */
+    category: string;
+    /** The one line saying what the node holds. */
+    summary: string;
+    /** The nodes this node leads to. */
+    targets: number[];
+}
+
 /**
  * The compiled playbook — the runtime's artifact — shown in the Playbook tab: the serialized
  * JSON a host would load, beside the tables that summarize it.
@@ -219,6 +265,8 @@ export interface PlaybookReport {
     speakers: PlaybookSpeakerView[];
     /** The playbook's anchors, shown as a table. */
     anchors: PlaybookAnchorView[];
+    /** Every node the playbook holds, in document order, shown as a table. */
+    nodes: PlaybookNodeView[];
     /** Why no playbook exists, when the compile did not reach one. */
     unavailable?: string;
 }
