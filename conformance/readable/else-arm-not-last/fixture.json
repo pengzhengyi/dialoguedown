@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "an else before another arm is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "the else arm is listed before the gated arms, but the else is the fallback and must be tried last"
+}

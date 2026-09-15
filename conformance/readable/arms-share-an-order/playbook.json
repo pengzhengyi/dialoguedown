@@ -1,0 +1,86 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "branch",
+      "id": 0,
+      "out": [
+        { "kind": "branch", "target": 1, "order": 0, "condition": { "kind": "key", "key": "Alice.HasMap" } },
+        { "kind": "branch", "target": 2, "order": 0, "condition": { "kind": "key", "key": "Alice.HasLantern" } },
+        { "kind": "branch", "target": 3, "order": 1 }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You have the map."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You have the lantern."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "You have neither."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 4,
+      "out": []
+    }
+  ]
+}
