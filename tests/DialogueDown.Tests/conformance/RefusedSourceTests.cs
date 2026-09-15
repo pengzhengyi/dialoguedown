@@ -1,4 +1,5 @@
 using DialogueDown.Conformance;
+using DialogueDown.Conformance.Authoring;
 using DialogueDown.Playbook;
 using DialogueDown.Tests.Support;
 
@@ -18,8 +19,6 @@ public sealed class RefusedSourceTests
 {
     private const string SourceFile = "source.dialogue.md";
     private const string PlaybookFile = "playbook.json";
-    private const string BrokenMarker = "<!-- broken:";
-    private const string Closer = "-->";
 
     public static TheoryData<ReadableCase> Refusals() =>
         [.. Corpora.Readable.Cases().Where(aCase => aCase.WillRefuse)];
@@ -31,20 +30,12 @@ public sealed class RefusedSourceTests
         var source = Corpora.ReadableFolder.Read(aCase.Name, SourceFile);
         var committed = Corpora.ReadableFolder.Read(aCase.Name, PlaybookFile);
 
-        var compiled = Playbooks.Serialize(Playbooks.Of(SourceBelowBlock(source), SourceFile));
+        var compiled = Playbooks.Serialize(Playbooks.Of(BrokenBlock.Parse(source).Script, SourceFile));
 
         // The source is a document the reader takes ...
         PlaybookReader.Default.Read(compiled);
 
         // ... and the case is broken, not a second copy of that document.
         Assert.NotEqual(committed, compiled);
-    }
-
-    private static string SourceBelowBlock(string source)
-    {
-        var close = source.IndexOf(Closer, StringComparison.Ordinal);
-        Assert.True(close > BrokenMarker.Length, "A refusal's source has no closed `broken:` block.");
-
-        return source[(close + Closer.Length)..].TrimStart('\r', '\n');
     }
 }

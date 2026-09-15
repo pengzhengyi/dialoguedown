@@ -1,3 +1,5 @@
+using DialogueDown.Conformance.Authoring;
+
 namespace DialogueDown.Conformance;
 
 /// <summary>
@@ -11,10 +13,9 @@ namespace DialogueDown.Conformance;
 public sealed class CorpusIntegrityTests
 {
     private const string SourceFile = "source.dialogue.md";
-    private const string BrokenMarker = "<!-- broken:";
 
     private static readonly string[] _everyCaseShips =
-        ["fixture.json", "playbook.json", "source.dialogue.md"];
+        ["fixture.json", "playbook.json", SourceFile];
 
     public static TheoryData<string, string> EveryCase()
     {
@@ -63,20 +64,9 @@ public sealed class CorpusIntegrityTests
     {
         var source = Corpora.ReadableFolder.Read(aCase.Name, SourceFile);
 
-        Assert.StartsWith(BrokenMarker, source, StringComparison.Ordinal);
+        var block = BrokenBlock.Parse(source);
 
-        var close = source.IndexOf("-->", StringComparison.Ordinal);
-        Assert.True(close > BrokenMarker.Length, $"The case '{aCase}' has no closed `broken:` block.");
-
-        var note = source[BrokenMarker.Length..source.IndexOf('\n')].Trim();
-        Assert.NotEmpty(note);
-
-        // The block must hold no second marker, or the parser would close it early and leak the
-        // rest into the script. A blank line separates the note from the evidence.
-        var body = source[BrokenMarker.Length..close];
-        Assert.DoesNotContain("--", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("<!--", body, StringComparison.Ordinal);
-        Assert.Contains("\n\n", body, StringComparison.Ordinal);
+        Assert.NotEmpty(block.Note);
     }
 
     [Theory]
@@ -85,6 +75,6 @@ public sealed class CorpusIntegrityTests
     {
         var source = Corpora.ReadableFolder.Read(aCase.Name, SourceFile);
 
-        Assert.DoesNotContain(BrokenMarker, source, StringComparison.Ordinal);
+        Assert.DoesNotContain(BrokenBlock.Marker, source, StringComparison.Ordinal);
     }
 }
