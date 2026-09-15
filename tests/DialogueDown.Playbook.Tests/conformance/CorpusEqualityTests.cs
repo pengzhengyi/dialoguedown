@@ -17,7 +17,7 @@ public sealed class CorpusEqualityTests
     public static TheoryData<ReadableCase> ReadableAccepted() =>
         [.. Corpora.Readable.Cases().Where(aCase => aCase.WillAccept)];
 
-    public static TheoryData<string> Playable() =>
+    public static TheoryData<PlayableCase> Playable() =>
         [.. Corpora.Playable.Cases()];
 
     [Theory]
@@ -27,9 +27,8 @@ public sealed class CorpusEqualityTests
 
     [Theory]
     [MemberData(nameof(Playable))]
-    public void APlayableCase_ReadTwice_IsOneValue(string caseName) =>
-        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(
-            Corpora.Playable.Read(caseName).Playbook);
+    public void APlayableCase_ReadTwice_IsOneValue(PlayableCase aCase) =>
+        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(aCase.Playbook);
 
     [Fact]
     public void TheCorpus_OffersPlaybooksToCompare()
