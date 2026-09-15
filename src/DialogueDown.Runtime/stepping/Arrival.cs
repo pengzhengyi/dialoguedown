@@ -119,9 +119,8 @@ internal static class Arrival
     private readonly record struct Visited(StepResult? Stopped, int Onward)
     {
         /// <summary>
-        /// No node, for a walk that stopped. Negative because every real target is not, so a
-        /// reader that took this for a node would fail at once rather than quietly carry on at
-        /// the entry, which is what a zero here would have done.
+        /// No node, for a walk that stopped. Every real target is not negative, so a reader that
+        /// took this for a node would fail at once.
         /// </summary>
         public const int Nowhere = -1;
 
