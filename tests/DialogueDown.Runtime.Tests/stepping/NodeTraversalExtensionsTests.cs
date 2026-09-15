@@ -18,6 +18,26 @@ public sealed class NodeTraversalExtensionsTests
     }
 
     [Fact]
+    public void OnwardTarget_ANodeCarryingAJump_LeadsWhereTheJumpGoes()
+    {
+        // The jump is the way out the writer asked for. The succession beside it is where the run
+        // would have landed had the jump not applied, so taking it here would be reading past the
+        // jump rather than through it.
+        var node = new ControlNode(
+            0, [], Condition: null, [new DivertEdge(9, [], Condition: null), new SuccessionEdge(4)]);
+
+        Assert.Equal(9, node.OnwardTarget());
+    }
+
+    [Fact]
+    public void OnwardTarget_ANodeWithOnlyAFallThrough_LeadsWhereItFallsThrough()
+    {
+        var node = Playbooks.Line(0, speaker: 0, "Hello.", next: 7);
+
+        Assert.Equal(7, node.OnwardTarget());
+    }
+
+    [Fact]
     public void SuccessionTarget_ANodeWithNoWayOut_IsNowhere()
     {
         Assert.Null(new EndNode(0).SuccessionTarget());

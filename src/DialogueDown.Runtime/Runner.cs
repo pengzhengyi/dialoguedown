@@ -37,9 +37,9 @@ public static class Runner
     }
 
     private static StepResult Advance(PlayContext context, PlayState state, AtNode at) =>
-        context.NodeAt(at.Node).SuccessionTarget() is int onward
+        context.NodeAt(at.Node).OnwardTarget() is int onward
             ? Arrival.At(context, onward)
-            : Refuse(state, $"Node {at.Node} leads nowhere by succession.");
+            : Refuse(state, $"Node {at.Node} leads nowhere.");
 
     private static StepResult Refuse(PlayState state, string because) =>
         new(state, [new Refused(because)]);
