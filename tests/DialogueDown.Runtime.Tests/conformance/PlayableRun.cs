@@ -28,9 +28,14 @@ internal static class PlayableRun
         PlayContext context, [NotNullWhen(true)] out string? construct)
     {
         construct = context.Playbook.Nodes
-            .FirstOrDefault(node => node is not (LineNode or EndNode))
+            .FirstOrDefault(node => !IsPlayable(node))
             ?.GetType().Name;
 
         return construct is not null;
     }
+
+    // A control node that hands the host nothing is walked past, so a playbook carrying one is
+    // playable. One carrying effects is not: nothing asks the host to perform them yet.
+    private static bool IsPlayable(Node node) =>
+        node is LineNode or EndNode or ControlNode { Effects.IsEmpty: true };
 }

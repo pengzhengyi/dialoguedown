@@ -72,6 +72,39 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_AJumpOnItsOwnLine_WalksStraightPastIt()
+    {
+        // Such a node has nothing to say and nothing for the host to do. Stopping would ask the
+        // player to advance past something they were never shown.
+        var context = Playbooks.Of(
+            [
+                Playbooks.Jump(0, jumpTo: 2),
+                Playbooks.Line(1, speaker: 0, "Never spoken.", next: 2),
+                Playbooks.Line(2, speaker: 0, "Here.", next: 3),
+                new EndNode(3),
+            ],
+            ["Alice"]);
+
+        AssertSaid(Arrival.At(context, 0), speaker: "Alice", text: "Here.");
+    }
+
+    [Fact]
+    public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
+    {
+        // Nothing in the ring ever hands the host anything, so a walk with no bound would never
+        // return and a total step would become a hang.
+        AssertRefused(Arrival.At(Playbooks.RingOfJumps(3), 0), "ring");
+    }
+
+    [Fact]
+    public void At_AWalkAsLongAsThePlaybook_IsNotMistakenForARing()
+    {
+        // The bound counts nodes passed, so a chain touching every node is the case it must not
+        // refuse -- one node further and it would be a repeat.
+        AssertEnded(Arrival.At(Playbooks.ChainOfJumps(jumps: 5), 0));
+    }
+
+    [Fact]
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather

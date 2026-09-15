@@ -113,6 +113,38 @@ internal static class Playbooks
             Condition: null,
             [new DivertEdge(jumpTo, [], new KeyCondition(key)), new SuccessionEdge(next)]);
 
+    /// <summary>A jump on its own line: nothing said, nothing performed, one way out.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="jumpTo">Where the jump leads.</param>
+    /// <returns>The node.</returns>
+    public static ControlNode Jump(int id, int jumpTo) =>
+        new(id, [], Condition: null, [new DivertEdge(jumpTo, [], Condition: null)]);
+
+    /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
+    /// <remarks>
+    /// <code>
+    /// 0 => 1 => 2 => ... => length-1 => 0
+    /// </code>
+    /// Nothing in it ever hands the host anything, so a walk with no bound never comes out.
+    /// </remarks>
+    /// <param name="length">How many jumps the ring holds.</param>
+    /// <returns>A context whose entry walks forever unless something stops it.</returns>
+    public static PlayContext RingOfJumps(int length) =>
+        Of([.. Enumerable.Range(0, length).Select(at => Jump(at, (at + 1) % length))]);
+
+    /// <summary>A chain of jumps ending at the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// 0 => 1 => 2 => ... => jumps-1 => jumps(end)
+    /// </code>
+    /// The walk passes every node the playbook has, exactly once. One node further along and it
+    /// would be passing one of them twice, which is the case a bound must not confuse this with.
+    /// </remarks>
+    /// <param name="jumps">How many jumps precede the end.</param>
+    /// <returns>A context whose walk passes every node exactly once.</returns>
+    public static PlayContext ChainOfJumps(int jumps) =>
+        Of([.. Enumerable.Range(0, jumps).Select(at => (Node)Jump(at, at + 1)), new EndNode(jumps)]);
+
     /// <summary>A line node nothing leads on from.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="text">What is said.</param>

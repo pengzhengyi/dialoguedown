@@ -22,12 +22,55 @@ internal static class Arrival
     /// <returns>Where the run now stands, and what it has to say.</returns>
     public static StepResult At(PlayContext context, int node)
     {
+        // A ring of nodes that hand the host nothing would walk forever, and a step must stay
+        // total. A walk passing more nodes than the playbook has must have passed one of them
+        // twice, so that is the bound: exact, and no number anybody has to choose. Counting is
+        // all this does; what a node means is Visit's to say.
+        for (var passed = 0; passed <= context.Playbook.Nodes.Length; passed++)
+        {
+            var visited = Visit(context, node);
+
+            if (visited.Stopped is { } result)
+            {
+                return result;
+            }
+
+            node = visited.Onward;
+        }
+
+        return RefuseRing(node);
+    }
+
+    // What being at one node means, with no regard for how many the walk passed to get here.
+    private static Visited Visit(PlayContext context, int node)
+    {
         var arrived = context.NodeAt(node);
 
-        return TryFindCondition(arrived, out var unanswered)
-            ? RefuseUnanswered(node, unanswered)
-            : Play(context, node, arrived);
+        if (TryFindCondition(arrived, out var unanswered))
+        {
+            return Visited.Stopping(RefuseUnanswered(node, unanswered));
+        }
+
+        if (!WalksOn(arrived))
+        {
+            return Visited.Stopping(Play(context, node, arrived));
+        }
+
+        return arrived.OnwardTarget() is int onward
+            ? Visited.CarryingOn(onward)
+            : Visited.Stopping(Refuse(node, $"Node {node} leads nowhere."));
     }
+
+    // A node that hands the host nothing is walked past rather than stood at. A jump written on
+    // its own line compiles to one of these: nothing said, nothing performed, one way out. Standing
+    // there would ask the player to advance past something they were never shown.
+    private static bool WalksOn(Node node) => node is ControlNode { Effects.IsEmpty: true };
+
+    private static StepResult RefuseRing(int node) =>
+        Refuse(
+            node,
+            $"Node {node} sits in a ring of nodes that hand the host nothing, "
+                + "so a run entering it would never come out.");
 
     // Asked before the kind is dispatched on, because a condition makes a node unplayable whatever
     // kind it is.
@@ -69,4 +112,23 @@ internal static class Arrival
 
     private static StepResult Refuse(int node, string because) =>
         new(new PlayState(new AtNode(node)), [new Refused(because)]);
+
+    /// <summary>What one node means to a walk: where the run stops, or the node it carries on to.</summary>
+    /// <param name="Stopped">What the step produced, or <see langword="null"/> when the walk goes on.</param>
+    /// <param name="Onward">Where the walk goes on to, or <see cref="Nowhere"/> when it stopped.</param>
+    private readonly record struct Visited(StepResult? Stopped, int Onward)
+    {
+        /// <summary>
+        /// No node, for a walk that stopped. Negative because every real target is not, so a
+        /// reader that took this for a node would fail at once rather than quietly carry on at
+        /// the entry, which is what a zero here would have done.
+        /// </summary>
+        public const int Nowhere = -1;
+
+        /// <summary>The walk ends here, with this to report.</summary>
+        public static Visited Stopping(StepResult result) => new(result, Nowhere);
+
+        /// <summary>The node handed the host nothing, so the walk goes on.</summary>
+        public static Visited CarryingOn(int onward) => new(Stopped: null, onward);
+    }
 }
