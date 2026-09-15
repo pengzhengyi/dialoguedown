@@ -62,6 +62,13 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Two playbooks that say the same thing are now equal** — the records a playbook is built
+  from compared their collections by reference, so decoding the same file twice produced two
+  values that were never equal even though every field matched, and comparing a decoded
+  playbook to an expected one reported differences that were not there. Every record now
+  compares by value, its collections included. See
+  [Playbook Format](docs/contributing/design-notes/runtime/Playbook%20Format.md).
+
 - **A link reference definition is no longer spoken** — `[the market]: #b` and similar CommonMark
   reference definitions used to leak into the playbook as a spurious line, its text sliced from
   the wrong offset in the file; a runtime would speak it. It's CommonMark plumbing, not dialogue,
