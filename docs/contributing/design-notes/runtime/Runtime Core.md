@@ -354,11 +354,18 @@ the fixtures that light up rather than by argument.
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a whole session |
 | Conformance | `linear-speech` and `styled-speech` play; the rest are named as not yet runnable |
 | Architecture | The runtime references neither the compiler nor a host |
-| Property | Stepping any playbook from its entry terminates, and never leaves a position outside the document |
+| Property | A walk over any playbook the reader accepts only ever stands at a node that playbook has |
 
-The property test is worth its keep here rather than later: a walk that can loop
-forever or step off the end is the failure mode a handful of examples miss, and
-CsCheck is already used this way in `CompilerPropertyTests`.
+The property test is worth its keep here rather than later: stepping off the end
+of the document is the failure mode a handful of examples miss, and each pass adds
+a way to compute the next position, so the guard is cheapest to put up first.
+Playbooks are drawn rather than compiled, because the generator must not reach for
+a compiler the runtime may not reference, and what it draws is put to the reader
+so the drawing and the rules cannot drift apart in silence.
+
+A walk is cut off after a fixed number of steps rather than run to an end: a
+playbook may legitimately loop, so reaching an end is not something every walk
+owes.
 
 **Unit tests build playbooks by hand; the corpus supplies compiled ones.** A
 playbook is an immutable record, so a real one is a better stand-in than a
