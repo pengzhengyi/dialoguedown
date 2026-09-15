@@ -4,6 +4,7 @@ using DialogueDown.Playbook.Common;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Speech;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Nodes;
 
@@ -14,7 +15,8 @@ namespace DialogueDown.Playbook.Nodes;
 /// <param name="Effects">What the host performs here.</param>
 /// <param name="Condition">What must hold for the effects to fire, or <c>null</c>.</param>
 /// <param name="Out">The ways out of this node.</param>
-public sealed record ControlNode(
+[Equatable]
+public sealed partial record ControlNode(
     int Id,
     ImmutableArray<SpeechFragment> Effects,
     Condition? Condition,
@@ -23,6 +25,7 @@ public sealed record ControlNode(
     /// <summary>
     /// Gets what the host performs here.
     /// </summary>
+    [OrderedEquality]
     [JsonPropertyOrder(4)]
     [JsonPropertyName("effects")]
     public ImmutableArray<SpeechFragment> Effects { get; } = Effects.OrEmpty();

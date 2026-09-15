@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Speakers;
 
@@ -16,7 +17,8 @@ namespace DialogueDown.Playbook.Speakers;
 /// <param name="Name">What the writer calls them, or <c>null</c> for the anonymous default.</param>
 /// <param name="Default">Whether unattributed lines belong to this speaker.</param>
 /// <param name="Tags">Annotations a host may bind.</param>
-public sealed record PlaybookSpeaker(
+[Equatable]
+public sealed partial record PlaybookSpeaker(
     string? Id, string? Name, bool Default, ImmutableArray<SpeakerTag> Tags)
 {
     /// <summary>
@@ -47,6 +49,7 @@ public sealed record PlaybookSpeaker(
     public bool Default { get; } = Default;
 
     /// <summary>Gets annotations a host may bind.</summary>
+    [OrderedEquality]
     [JsonPropertyOrder(4)]
     [JsonPropertyName("tags")]
     public ImmutableArray<SpeakerTag> Tags { get; } = Tags.OrEmpty();

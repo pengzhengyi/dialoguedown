@@ -51,4 +51,22 @@ public sealed class PlaybookSpeakerTests
         Assert.Null(anonymous.Id);
         Assert.Null(anonymous.Name);
     }
+
+    [Fact]
+    public void Equality_EqualTags_AreEqual()
+    {
+        var left = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)]);
+        var right = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)]);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentTags_AreNotEqual()
+    {
+        var left = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)]);
+        var right = new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "cold", false)]);
+
+        EqualityAssert.AssertValueUnequal(left, right);
+    }
 }

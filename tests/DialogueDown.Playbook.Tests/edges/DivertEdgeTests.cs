@@ -1,4 +1,5 @@
 using DialogueDown.Playbook.Edges;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 namespace DialogueDown.Playbook.Tests.Edges;
 
@@ -43,5 +44,23 @@ public sealed class DivertEdgeTests
         var divert = PlaybookJsonAssert.AssertRoundTrip<Edge, DivertEdge>(Json);
 
         Assert.Null(divert.Condition);
+    }
+
+    [Fact]
+    public void Equality_EqualLabels_AreEqual()
+    {
+        var left = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
+        var right = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentLabels_AreNotEqual()
+    {
+        var left = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
+        var right = new DivertEdge(4, [new TextFragment("the market")], Condition: null);
+
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

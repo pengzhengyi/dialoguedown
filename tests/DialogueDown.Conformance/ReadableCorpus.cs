@@ -26,9 +26,13 @@ public sealed class ReadableCorpus
         _folder = folder;
     }
 
-    /// <summary>Every case, by folder name, in a stable order.</summary>
+    /// <summary>Every case, in a stable order, each read from its folder.</summary>
+    /// <returns>The cases.</returns>
+    public IEnumerable<ReadableCase> Cases() => CaseNames().Select(Read);
+
+    /// <summary>Every case's folder name, in a stable order.</summary>
     /// <returns>The case names.</returns>
-    public IEnumerable<string> Cases() => _folder.Cases();
+    public IEnumerable<string> CaseNames() => _folder.Cases();
 
 
     /// <summary>Reads one case.</summary>

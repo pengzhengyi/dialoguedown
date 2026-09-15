@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
 using DialogueDown.Playbook.Edges;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Nodes;
 
@@ -20,7 +21,8 @@ namespace DialogueDown.Playbook.Nodes;
 [JsonDerivedType(typeof(BranchNode), NodeKinds.Branch)]
 [JsonDerivedType(typeof(ControlNode), NodeKinds.Control)]
 [JsonDerivedType(typeof(EndNode), NodeKinds.End)]
-public abstract record Node
+[Equatable]
+public abstract partial record Node
 {
     private protected Node(int id, ImmutableArray<Edge> ways)
     {
@@ -38,6 +40,7 @@ public abstract record Node
     /// <summary>
     /// Gets the ways out of this node.
     /// </summary>
+    [OrderedEquality]
     [JsonPropertyOrder(6)]
     [JsonPropertyName("out")]
     public ImmutableArray<Edge> Out { get; }

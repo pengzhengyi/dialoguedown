@@ -12,21 +12,21 @@ public sealed class PlayableConformanceTests
     // is noticed and one that stops passing is a failure.
     private static readonly string[] _conforming = ["linear-speech", "styled-speech"];
 
-    public static TheoryData<string> EveryCase() => [.. Corpora.Playable.Cases()];
+    public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];
 
     [Theory]
     [MemberData(nameof(EveryCase))]
-    public void ACaseThisBuildCanPlay_ConformsToTheWholeConversation(string caseName)
+    public void ACaseThisBuildCanPlay_ConformsToTheWholeConversation(PlayableCase aCase)
     {
-        var outcome = PlayableRun.Of(Corpora.Playable.Read(caseName));
+        var outcome = PlayableRun.Of(aCase);
 
-        var expected = _conforming.Contains(caseName)
+        var expected = _conforming.Contains(aCase.Name)
             ? SessionVerdict.Conformed
             : SessionVerdict.NotYetRunnable;
 
         Assert.True(
             expected == outcome.Verdict,
-            $"{caseName}: expected {expected}, but was {outcome.Verdict} — {outcome.Because}");
+            $"{aCase.Name}: expected {expected}, but was {outcome.Verdict} — {outcome.Because}");
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class PlayableConformanceTests
         // A divergence is the failure the corpus exists to catch, so it is reported apart from a
         // construct the runner has simply not learned yet.
         var diverged = Corpora.Playable.Cases()
-            .Select(caseName => (Case: caseName, Outcome: PlayableRun.Of(Corpora.Playable.Read(caseName))))
+            .Select(aCase => (Case: aCase.Name, Outcome: PlayableRun.Of(aCase)))
             .Where(run => run.Outcome.Verdict == SessionVerdict.Diverged)
             .Select(run => $"{run.Case}: {run.Outcome.Because}")
             .ToList();

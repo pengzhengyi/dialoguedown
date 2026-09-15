@@ -1,5 +1,8 @@
 using System.Collections.Immutable;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speakers;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 
 namespace DialogueDown.Playbook.Tests;
@@ -96,5 +99,33 @@ public sealed class PlaybookDocumentTests
         // Without a header nothing can decide whether the document is playable at all.
         Assert.Throws<ArgumentNullException>(
             () => new PlaybookDocument(null!, "chapter-01.dialogue.md", 0, null!, [], []));
+    }
+
+    [Fact]
+    public void Equality_EquivalentSeparatelyBuiltDocuments_AreEqual()
+    {
+        // The whole document compares by value, so every table and node it holds does too.
+        PlaybookDocument Build() => PlaybookFactory.Document(
+            anchors: [("the-inn", 1)],
+            speakers: [new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)])],
+            nodes:
+            [
+                new LineNode(0, 0, [new TextFragment("Welcome.")], Condition: null, [new SuccessionEdge(1)]),
+                new EndNode(1),
+            ]);
+
+        var left = Build();
+        var right = Build();
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentNodes_AreNotEqual()
+    {
+        var left = PlaybookFactory.Document(nodes: [new EndNode(0)]);
+        var right = PlaybookFactory.Document(nodes: [new EndNode(0), new EndNode(1)]);
+
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

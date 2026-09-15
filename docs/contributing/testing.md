@@ -101,11 +101,12 @@ every generated script that compiles, `PlaybookRoundTripTests` writes a playbook
 reads it with `PlaybookReader`, and writes it again: the two renderings must
 match.
 
-Equality is taken over the serialized JSON, not over the document. A
-`PlaybookDocument` holds its nodes in `ImmutableArray`, whose record equality
-compares the underlying array **by reference**, so two structurally identical
-documents are never equal. Re-serializing compares what a file would actually
-hold.
+A round trip compares the two serialized JSON renderings, not the document objects:
+`PlaybookRoundTripTests` writes a playbook, reads it back, and writes it again, and
+the JSON text must match. Comparing the text is deliberate — it also catches a change
+in how a field is spelled or ordered, which comparing objects would hide. The
+playbook records compare by value as well, so a test asking a question about the
+model can compare objects directly.
 
 A round trip needs no oracle beyond the input itself, and a counterexample is
 directly a bug report: either the reader lost something the writer emitted, or

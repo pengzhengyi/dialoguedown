@@ -91,6 +91,13 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Two playbooks that say the same thing are now equal** — the records a playbook is built
+  from compared their collections by reference, so decoding the same file twice produced two
+  values that were never equal even though every field matched, and comparing a decoded
+  playbook to an expected one reported differences that were not there. Every record now
+  compares by value, its collections included. See
+  [Playbook Format](docs/contributing/design-notes/runtime/Playbook%20Format.md).
+
 - **A query is drawn where its value will go, instead of a gap** — flattening a line's words had
   no case for a query, so every surface that shows a line without running the game quietly dropped
   it: the Dialogue Graph, the Semantic Model, and the Desugared AST tab all drew

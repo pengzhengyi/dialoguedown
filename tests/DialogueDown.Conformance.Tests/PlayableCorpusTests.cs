@@ -68,6 +68,16 @@ public sealed class PlayableCorpusTests
         Assert.Contains("elsewhere.json", error.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Cases_ReadEveryCaseName()
+    {
+        using var corpus = Holding("a-case");
+        var reader = new PlayableCorpus(corpus.Folder);
+
+        Assert.Equal(["a-case"], reader.CaseNames());
+        Assert.Equal("a-case", Assert.Single(reader.Cases()).Name);
+    }
+
     private static TemporaryCorpus Holding(string caseName) =>
         new TemporaryCorpus().With(caseName, ("fixture.json", Fixture), ("playbook.json", Playbook));
 }

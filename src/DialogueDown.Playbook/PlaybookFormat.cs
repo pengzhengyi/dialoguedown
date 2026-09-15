@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook;
 
@@ -12,7 +13,8 @@ namespace DialogueDown.Playbook;
 /// Capabilities rather than the version number carry compatibility, so a new
 /// construct gates only the playbooks that actually use it.
 /// </remarks>
-public sealed record PlaybookFormat
+[Equatable]
+public sealed partial record PlaybookFormat
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaybookFormat"/> class.
@@ -40,6 +42,7 @@ public sealed record PlaybookFormat
     /// Gets the capabilities a runtime must understand to play this playbook
     /// correctly. An unknown entry is a hard refusal, never a skipped construct.
     /// </summary>
+    [OrderedEquality]
     [JsonPropertyName("requires")]
     public ImmutableArray<string> Requires { get; }
 
@@ -47,6 +50,7 @@ public sealed record PlaybookFormat
     /// Gets the capabilities the document uses but a runtime may ignore and still
     /// play the story correctly.
     /// </summary>
+    [OrderedEquality]
     [JsonPropertyName("uses")]
     public ImmutableArray<string> Uses { get; }
 }

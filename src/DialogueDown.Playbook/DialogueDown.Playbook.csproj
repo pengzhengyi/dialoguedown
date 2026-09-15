@@ -8,12 +8,24 @@
     <AssemblyName>DialogueDown.Playbook</AssemblyName>
     <LangVersion>latest</LangVersion>
     <!-- The contract between a compiler and a runtime, so it belongs to neither and
-         depends on nothing: a game embeds this and a runner, never the compiler. -->
+         depends on no compiler project: a game embeds this and a runner, never the
+         compiler. The equality generator is its one package beyond the framework. -->
     <Description>The portable playbook a DialogueDown compile emits, and the reader that loads one back.</Description>
+    <!-- GE001: an [Equatable] record's collection property without an equality attribute would
+         compare by reference, so the analyzer's warning is a build failure here. -->
+    <WarningsAsErrors>$(WarningsAsErrors);GE001</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="DialogueDown.Playbook.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Generate collection-aware value equality at build time. The generator is private;
+         generated code uses the tiny runtime comparer/attribute assembly, so that dependency
+         intentionally flows to package consumers. -->
+    <PackageReference Include="Generator.Equals" PrivateAssets="all" />
+    <PackageReference Include="Generator.Equals.Runtime" />
   </ItemGroup>
 
   <!-- JsonStringEnumMemberName pins an enum's wire name against a C# rename. It is in-box from
