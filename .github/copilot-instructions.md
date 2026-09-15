@@ -78,7 +78,8 @@ multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
   *what* tangled code does is a signal to refactor it.
 - **Keep the core engine-agnostic:** no Godot or rendering dependency in
   `DialogueDown`.
-- When you change `web/src`, rebuild and commit `web/dist/report.html`.
+- When you change `web/src`, or a file it embeds — the report imports
+  `schema/playbook-0.schema.json` — rebuild and commit `web/dist/report.html`.
 
 ## Engineering principles
 
