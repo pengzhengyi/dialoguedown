@@ -25,13 +25,22 @@ internal static class Playbooks
     /// <returns>A context ready to step.</returns>
     public static PlayContext Of(
         ImmutableArray<Node> nodes, IEnumerable<string?>? speakers = null, int entry = 0) =>
-        PlayContext.Of(new PlaybookDocument(
+        PlayContext.Of(Document(nodes, [.. (speakers ?? []).Select(Speaker)], entry));
+
+    /// <summary>The document behind such a context, for a test that needs the playbook itself.</summary>
+    /// <param name="nodes">The steps of the playthrough.</param>
+    /// <param name="speakers">Everybody who speaks.</param>
+    /// <param name="entry">Where a playthrough begins.</param>
+    /// <returns>The playbook.</returns>
+    public static PlaybookDocument Document(
+        ImmutableArray<Node> nodes, ImmutableArray<PlaybookSpeaker> speakers, int entry = 0) =>
+        new(
             new PlaybookFormat(PlaybookSupport.NewestReadableVersion, ["core"], []),
             script: "a-script.dialogue.md",
             entry: entry,
             anchors: ImmutableSortedDictionary<string, int>.Empty,
-            speakers: [.. (speakers ?? []).Select(Speaker)],
-            nodes: nodes));
+            speakers: speakers,
+            nodes: nodes);
 
     /// <summary>One line, then the end.</summary>
     /// <remarks>

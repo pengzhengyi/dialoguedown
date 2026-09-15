@@ -41,6 +41,16 @@ public sealed class NodeTraversalExtensionsTests
     }
 
     [Fact]
+    public void SuccessionTarget_ANodeFallingThroughTwoWays_IsRefused()
+    {
+        // A reader refuses such a node, so a run never meets one. Reading the single succession
+        // rather than the first of however many is what keeps that guarantee load-bearing.
+        var node = new ControlNode(0, [], Condition: null, [new SuccessionEdge(4), new SuccessionEdge(9)]);
+
+        Assert.Throws<InvalidOperationException>(() => node.SuccessionTarget());
+    }
+
+    [Fact]
     public void SuccessionTarget_NoNode_IsRefused()
     {
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).SuccessionTarget());
