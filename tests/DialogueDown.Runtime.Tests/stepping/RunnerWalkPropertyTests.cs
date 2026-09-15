@@ -42,9 +42,9 @@ public sealed class RunnerWalkPropertyTests
             {
                 var state = Step(context, PlayState.Initial, new Start());
 
-                for (var taken = 0; taken < MostSteps && state.Position is AtNode; taken++)
+                for (var taken = 0; taken < MostSteps && MovesOnFrom(state.Position) is { } command; taken++)
                 {
-                    state = Step(context, state, new Next());
+                    state = Step(context, state, command);
                 }
 
                 AssertAddressable(context, state.Position);
@@ -76,6 +76,15 @@ public sealed class RunnerWalkPropertyTests
 
         return stepped;
     }
+
+    // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
+    // host work carries on rather than ending the walk where the first effect is drawn.
+    private static Command? MovesOnFrom(Position position) => position switch
+    {
+        AtNode => new Next(),
+        AwaitingDone => new Done(),
+        _ => null,
+    };
 
     private static void AssertAddressable(PlayContext context, Position position)
     {

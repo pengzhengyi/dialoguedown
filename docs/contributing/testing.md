@@ -245,7 +245,7 @@ list should have grown.
 | Test | Covers today | Widens when | Tells you when to widen |
 | --- | --- | --- | --- |
 | `PlayableConformanceTests` | `linear-speech` and `styled-speech` | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
-| `PlaybookGen` | Lines that carry on, and ends | Each runtime pass teaches the runner a node or edge kind | Not yet — nothing fails when the runner outgrows what it draws |
+| `PlaybookGen` | Lines, ends, jumps, and effects — what the runner can play | Each runtime pass teaches the runner a node or edge kind | Not yet — nothing fails when the runner outgrows what it draws |
 
 `PlaybookGen` is the one still to fix, and `ExampleConstructCoverageTests` is the
 pattern to copy: it enumerates the constructs the compiler models by reflection,

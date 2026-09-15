@@ -65,10 +65,10 @@ Out of scope, each with the pass that owns it: conditions and the world seam
 - [x] A node or edge carrying a condition is refused by name, not played as though
       the condition held.
 - [x] A ring of nodes that concern nobody is refused, so `Step` stays total.
-- [ ] `perform` and `done` are settled in the fixture schema, written into
+- [x] `perform` and `done` are settled in the fixture schema, written into
       `an-effect`, and matched by the harness.
-- [ ] `a-jump` and `an-effect` play, and join the named conforming list.
-- [ ] The walk property's generator draws control nodes and diverts, so the
+- [x] `a-jump` and `an-effect` play, and join the named conforming list.
+- [x] The walk property's generator draws control nodes and diverts, so the
       property keeps covering what a run can meet.
 
 ## What waits, and what does not
