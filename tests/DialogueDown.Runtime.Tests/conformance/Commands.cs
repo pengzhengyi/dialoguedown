@@ -20,9 +20,17 @@ internal static class Commands
     {
         var message = send.Message;
 
-        return message.GetValueKind() == JsonValueKind.String && message.GetValue<string>() == "next"
-            ? new Next()
-            : null;
+        if (message.GetValueKind() != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        return message.GetValue<string>() switch
+        {
+            "next" => new Next(),
+            "done" => new Done(),
+            _ => null,
+        };
     }
 
     /// <summary>Whether a send is the one that opens the run.</summary>

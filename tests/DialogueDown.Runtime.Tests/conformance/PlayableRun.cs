@@ -23,6 +23,17 @@ internal static class PlayableRun
         return SessionMatcher.Match(new SessionOperator(context), playable.Fixture.Session);
     }
 
+    /// <summary>Whether this build can play a node of this kind at all.</summary>
+    /// <remarks>
+    /// A second statement of what the runner knows, which is why a test holds the two to each
+    /// other: were they to disagree, a case would be reported as untaught when it plays, or as a
+    /// divergence when nobody had taught it.
+    /// </remarks>
+    /// <param name="node">The node to ask about.</param>
+    /// <returns><see langword="true"/> when arriving at such a node is something this build does.</returns>
+    internal static bool IsPlayable(Node node) =>
+        node is LineNode or EndNode or ControlNode;
+
     // Asked before a step is taken, so a construct nobody has taught the runner is reported as that.
     private static bool TryFindUnplayable(
         PlayContext context, [NotNullWhen(true)] out string? construct)
@@ -34,8 +45,4 @@ internal static class PlayableRun
         return construct is not null;
     }
 
-    // A control node that hands the host nothing is walked past, so a playbook carrying one is
-    // playable. One carrying effects is not: nothing asks the host to perform them yet.
-    private static bool IsPlayable(Node node) =>
-        node is LineNode or EndNode or ControlNode { Effects.IsEmpty: true };
 }
