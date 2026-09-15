@@ -22,7 +22,7 @@ Each case is a folder, and `fixture.json` is always the entry point:
 readable/entry-leads-nowhere/
   fixture.json         what a reader must do with the document, and why
   playbook.json        the document itself
-  source.dialogue.md   what it was compiled from, so a reviewer reads dialogue
+  source.dialogue.md   the compile, opening with a broken: comment that shows the edit
 ```
 
 ## The readable half
@@ -108,7 +108,11 @@ rather than "any speaker".
 2. Compile it: `ddown compile <source> --emit playbook -o playbook.json`.
 3. For a refusal, change **one** field of that playbook by hand — a compiler will
    not emit a broken document, so the edit is the only way to write the case.
-4. Write `fixture.json`, and say in `because` what a reviewer should weigh.
+4. For a refusal, open `source.dialogue.md` with a **`broken:` block**: an HTML
+   comment naming the edit and showing it — the invalid script where the language
+   can express it, otherwise the changed part of the playbook. The comment is
+   ignored, and the script below it still compiles.
+5. Write `fixture.json`, and say in `because` what a reviewer should weigh.
 
 Keep a case minimal and about one thing: a failure should name the construct, not
 send someone reading a script.
