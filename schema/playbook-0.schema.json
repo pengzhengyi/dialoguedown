@@ -616,7 +616,7 @@
     },
     "branchOut": {
       "type": "array",
-      "description": "A branch's arms, plus at most one succession to fall through to when there is no else.",
+      "description": "A branch's arms: at least one gated and at most one else, plus at most one succession.",
       "items": {
         "$ref": "#/$defs/edge",
         "properties": {
@@ -635,8 +635,23 @@
               "kind": {
                 "const": "branch"
               }
-            }
+            },
+            "required": [
+              "condition"
+            ]
           }
+        },
+        {
+          "contains": {
+            "properties": {
+              "kind": {
+                "const": "branch"
+              },
+              "condition": false
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
         },
         {
           "contains": {
