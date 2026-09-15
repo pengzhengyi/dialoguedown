@@ -15,7 +15,8 @@ changes easy to categorize.
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
   keeps the loop, the world, and the save; a command the run cannot take comes back as a refusal
   rather than an exception, because a driver may sit across a transport an exception cannot cross.
-  This first pass speaks a script's lines and ends a run. See
+  It speaks a script's lines, follows a jump, asks the host to carry out an effect and waits
+  until that is done, and ends a run. See
   [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
 
 - **The conformance corpus is played by the C# runtime** — every playable fixture is now run

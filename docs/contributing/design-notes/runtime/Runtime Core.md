@@ -352,7 +352,7 @@ the fixtures that light up rather than by argument.
 | --- | --- |
 | Unit — `Step` | One test per transition: a run started and restarted, a line spoken, succession taken, a run ended, a command refused |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a whole session |
-| Conformance | `linear-speech` and `styled-speech` play; the rest are named as not yet runnable |
+| Conformance | Every case the runner has been taught plays; the rest are named as not yet runnable |
 | Architecture | The runtime references neither the compiler nor a host |
 | Property | A walk over any playbook the reader accepts only ever stands at a node that playbook has |
 
