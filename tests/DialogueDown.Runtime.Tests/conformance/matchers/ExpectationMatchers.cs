@@ -13,7 +13,7 @@ internal static class ExpectationMatchers
     // Keyed rather than searched, so two matchers claiming one key is a startup failure rather
     // than a silent win for whichever was registered first.
     private static readonly Dictionary<string, IExpectationMatcher> _byKey =
-        new IExpectationMatcher[] { new SaidMatcher(), new EndedMatcher() }
+        new IExpectationMatcher[] { new SaidMatcher(), new EndedMatcher(), new PerformMatcher() }
             .ToDictionary(matcher => matcher.Key, StringComparer.Ordinal);
 
     /// <summary>Checks what the run said next against what the session expected.</summary>

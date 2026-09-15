@@ -10,7 +10,7 @@ public sealed class PlayableConformanceTests
 {
     // Every case this pass conforms to, named rather than counted, so a case that starts passing
     // is noticed and one that stops passing is a failure.
-    private static readonly string[] _conforming = ["linear-speech", "styled-speech"];
+    private static readonly string[] _conforming = ["a-jump", "an-effect", "linear-speech", "styled-speech"];
 
     public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];
 

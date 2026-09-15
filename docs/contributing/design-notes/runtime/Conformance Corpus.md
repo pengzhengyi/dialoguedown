@@ -173,6 +173,7 @@ so a fixture reads as the conversation it replays:
 | `"next"` | `Next` — proceed past what was just said |
 | `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
 | `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
+| `"done"` | `Done()` — the effect just asked for has been carried out |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
 | `"describe"` | `Describe()` — ask where the run stands |
 
@@ -193,7 +194,7 @@ Each `expect` is one message the runtime must produce next.
 | --- | --- |
 | `said` | `speaker` (the name, never the index) and the `speech` — see below |
 | `asked` | the options offered, each a `label` and whether it was `available` |
-| `performed` | the effect, as the playbook names it |
+| `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asked the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
@@ -339,7 +340,7 @@ make good regression material, but a failure in one says little about what broke
 | A conditional line | Is a line skipped without ending the run? |
 | A conditional block | Are the arms tried in the order written? |
 | A jump | Does a divert transfer without returning? |
-| An effect | Is a control block's effect performed, and reported? |
+| An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
 | Ordered and unordered choices | Is a menu's stated order honored where it is stated? |

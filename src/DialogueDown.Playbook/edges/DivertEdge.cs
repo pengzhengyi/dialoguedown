@@ -15,7 +15,8 @@ namespace DialogueDown.Playbook.Edges;
 /// <param name="Condition">What must hold for the jump to fire, or <c>null</c>.</param>
 [Equatable]
 public sealed partial record DivertEdge(
-    int Target, ImmutableArray<SpeechFragment> Label, Condition? Condition) : Edge(Target)
+    int Target, ImmutableArray<SpeechFragment> Label, Condition? Condition)
+    : Edge(Target), IConditional
 {
     /// <summary>
     /// Gets what the writer called this jump.

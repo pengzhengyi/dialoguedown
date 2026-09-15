@@ -12,7 +12,7 @@ namespace DialogueDown.Playbook.Edges;
 /// <param name="Weight">How likely this option is to be drawn.</param>
 /// <param name="Condition">What must hold for the option to be in the pool, or <c>null</c>.</param>
 public sealed record RandomOptionEdge(int Target, ChoiceWeight Weight, Condition? Condition)
-    : Edge(Target)
+    : Edge(Target), IConditional
 {
     /// <summary>
     /// Gets how likely this option is to be drawn.

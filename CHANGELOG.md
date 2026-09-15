@@ -15,7 +15,8 @@ changes easy to categorize.
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
   keeps the loop, the world, and the save; a command the run cannot take comes back as a refusal
   rather than an exception, because a driver may sit across a transport an exception cannot cross.
-  This first pass speaks a script's lines and ends a run. See
+  It speaks a script's lines, follows a jump, asks the host to carry out an effect and waits
+  until that is done, and ends a run. See
   [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
 
 - **The conformance corpus is played by the C# runtime** — every playable fixture is now run
@@ -57,6 +58,14 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **An effect is asked for, and the run waits until it is done** — a runtime no longer reports
+  an effect and carries straight on. It asks the host to perform one and stands still until the
+  driver answers, so a guard that follows an effect reads a world the effect has already
+  changed. In the fixture schema the expectation is spelled `perform` rather than `performed`,
+  and a session answers it with `done`; a fixture written against the old spelling no longer
+  validates. See
+  [Waiting on the host](docs/contributing/design-notes/runtime/Waiting%20on%20the%20Host.md).
 
 - **A fixture advances a run with `next`, not `continue`** — the command a driver sends to move
   past what was just said is spelled `next` in the fixture schema, in every playable fixture, and

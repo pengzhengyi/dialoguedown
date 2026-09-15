@@ -134,7 +134,7 @@ flowchart LR
     AT -->|"Next"| AT2["AtNode(j)"]
     AT2 -->|"Next"| ENDED["AtEnd"]
     ENDED -->|"Start"| AT
-    AT -. "C2c" .-> ASK["AwaitingAnswers(i, keys)"]
+    AT -. "C2c" .-> ASK["AwaitingSupply(i, keys)"]
     ASK -. "Supply" .-> AT
 ```
 
@@ -163,10 +163,10 @@ and in later passes the entropy settings and the capabilities a driver declared.
 Without it each of those would change the signature of the one function every
 component calls.
 
-One step may produce **several** events, in order: arriving at a line both says it
-and leaves the run ready to advance, and the corpus's `an-effect` already expects
-a performed effect before the line that follows it. Events are therefore an
-ordered list from the first pass.
+One step may produce **several** events, in order: a control node carrying more
+than one effect asks the host to perform each of them, in the order written,
+before the run waits for them to be done. Events are therefore an ordered list
+from the first pass.
 
 A `Said` event carries the speaker's **name**, not their index. The playbook
 addresses speakers by position because that is cheap to write; a driver should
@@ -352,7 +352,7 @@ the fixtures that light up rather than by argument.
 | --- | --- |
 | Unit — `Step` | One test per transition: a run started and restarted, a line spoken, succession taken, a run ended, a command refused |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a whole session |
-| Conformance | `linear-speech` and `styled-speech` play; the rest are named as not yet runnable |
+| Conformance | Every case the runner has been taught plays; the rest are named as not yet runnable |
 | Architecture | The runtime references neither the compiler nor a host |
 | Property | A walk over any playbook the reader accepts only ever stands at a node that playbook has |
 

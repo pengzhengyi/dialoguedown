@@ -32,6 +32,40 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_NextWhileTheHostHasSomethingToCarryOut_IsRefused()
+    {
+        // The wait a fast-forward must not collapse: advancing here would read past an effect the
+        // world has not applied, and the next thing read might depend on it.
+        var context = Playbooks.AnEffectThenALine();
+
+        var result = Runner.Step(context, Started(context), new Next());
+
+        AssertRefused(result, "waiting for the host");
+        AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void Step_DoneOnceTheHostHasCarriedItOut_MovesOnToWhatFollows()
+    {
+        var context = Playbooks.AnEffectThenALine();
+
+        var result = Runner.Step(context, Started(context), new Done());
+
+        AssertAt(result, 1);
+        AssertSaid(result, "Alice", "Hello.");
+    }
+
+    [Fact]
+    public void Step_DoneWhereNothingWasAskedOfTheHost_IsRefused()
+    {
+        // Nothing was asked here, so there is nothing to report done -- and accepting it would let
+        // a driver advance a line by answering a question the run never put.
+        var context = Playbooks.TwoLines();
+
+        AssertRefused(Runner.Step(context, Started(context), new Done()), "cannot take Done");
+    }
+
+    [Fact]
     public void Step_NextPastTheLastLine_EndsTheRun()
     {
         var context = Playbooks.OneLine();

@@ -20,7 +20,7 @@ public sealed partial record ControlNode(
     int Id,
     ImmutableArray<SpeechFragment> Effects,
     Condition? Condition,
-    ImmutableArray<Edge> Out) : Node(Id, Out)
+    ImmutableArray<Edge> Out) : Node(Id, Out), IConditional
 {
     /// <summary>
     /// Gets what the host performs here.
