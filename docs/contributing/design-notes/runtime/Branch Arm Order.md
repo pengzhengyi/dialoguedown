@@ -1,10 +1,10 @@
 # Branch arm order
 
 > [!NOTE]
-> Status: **proposed**. A `branch` node's arms carry an explicit `order` and a
-> conditionless `else`; this note adds a reader rule that the arms appear in
-> ascending order with the `else` last, and mirrors the part of it the schema can
-> express. It assumes the vocabulary of the
+> Status: **implemented**. A `branch` node's arms carry an explicit `order` and a
+> conditionless `else`; the reader now checks that the arms ascend, that at least
+> one is gated, and that the `else` is last, and the schema states the two things
+> JSON Schema can express. It assumes the vocabulary of the
 > [Playbook format](./Playbook%20Format.md) and the
 > [Node outward shape](./Node%20Outward%20Shape.md) note — *playbook*, *reader*,
 > *checker*, *node*, *edge*, *arm*, *gated*, *open*, *else*, *fall-through* — and
@@ -30,17 +30,18 @@ kinds a node carries and *how many*; it deliberately says nothing about the orde
 of a `branch`'s arms. But the arms are tried in that order, and each carries an
 explicit `order` so the meaning does not depend on a reader preserving the array
 it was written in: a port may reorder, normalize, or model `out` as an unordered
-collection. When the arms are listed out of order, or the `else` arm does not come
-last, two conformant readers — one that trusts the array, one that sorts by
-`order` — can take different arms: a silent disagreement, exactly what the
-[conformance corpus](./Conformance%20Corpus.md) exists to prevent.
+collection. When the arms are listed out of order, or carry no gated arm, or the
+`else` arm does not come last, two conformant readers — one that trusts the array,
+one that sorts by `order` — can take different arms: a silent disagreement,
+exactly what the [conformance corpus](./Conformance%20Corpus.md) exists to prevent.
 
 In scope:
 
 - a **reader rule** — a `branch`'s arms appear in its `out` in strictly ascending
-  `order`, and the conditionless `else` arm, when present, is the last arm;
-- the **schema constraint** where JSON Schema 2020-12 reaches — at most one
-  conditionless `branch` arm;
+  `order`, at least one is gated, and the conditionless `else`, when present, is
+  the last arm;
+- the **schema constraints** where JSON Schema 2020-12 reaches — at least one gated
+  `branch` arm and at most one conditionless one;
 - **conformance `readable/` cases** for the refusals that result.
 
 Two pieces are deliberately left out, each tracked as its own follow-up, as the
@@ -64,11 +65,14 @@ arm**, **fall-through**, and **else** ("a `branch` arm with no condition is the
 
 ## The rule
 
-> A `branch` node's arms appear in its `out` in strictly ascending `order`, and a
-> conditionless `branch` arm — the `else` — is the last arm.
+> A `branch` node's arms appear in its `out` in strictly ascending `order`, at
+> least one of them is gated, and a conditionless `branch` arm — the `else` — is
+> the last arm.
 
-The rule is **two independent guards**, and a document must satisfy both:
+The rule is **three independent guards**, and a document must satisfy all three:
 
+- at least one arm is gated, so the branch is a condition and its `else` has
+  something to fall back from;
 - the arms ascend, so the order a reader sees in the array is the order the
   `order` fields state;
 - the `else`, when present, is last, so it is tried only after every gated arm.
@@ -80,28 +84,29 @@ also means a second conditionless arm is refused.
 
 ## Functionality checklist
 
-- [ ] Refuse a `branch` whose arms are not in strictly ascending `order`.
-- [ ] Refuse a `branch` whose `else` arm is not the last arm.
-- [ ] Refuse a `branch` with more than one conditionless arm (the earlier is not
+- [x] Refuse a `branch` whose arms are not in strictly ascending `order`.
+- [x] Refuse a `branch` whose `else` arm is not the last arm.
+- [x] Refuse a `branch` with more than one conditionless arm (the earlier is not
       last).
-- [ ] Refuse a `branch` whose `else` is last but whose `order`s do not ascend.
-- [ ] Accept a `branch` with a single arm — nothing to order.
-- [ ] Accept a `branch` whose `order`s have gaps (for example `0`, `2`).
-- [ ] Accept a `succession` fall-through wherever it sits among the arms.
-- [ ] Ignore non-`branch` nodes, whatever their edges.
-- [ ] Schema: `branchOut` allows at most one conditionless `branch` arm, and still
-      allows none.
-- [ ] Conformance `readable/` cases covering the new refusals.
-- [ ] The checker wired into `PlaybookCheckerFactory.CreateDefault()`.
+- [x] Refuse a `branch` whose `else` is last but whose `order`s do not ascend.
+- [x] Refuse a `branch` with no gated arm — an `else` needs one to fall back from.
+- [x] Accept a `branch` with a single gated arm — nothing to order.
+- [x] Accept a `branch` whose `order`s have gaps (for example `0`, `2`).
+- [x] Accept a `succession` fall-through wherever it sits among the arms.
+- [x] Ignore non-`branch` nodes, whatever their edges.
+- [x] Schema: `branchOut` requires at least one gated `branch` arm and allows at
+      most one conditionless one.
+- [x] Conformance `readable/` cases covering the new refusals.
+- [x] The checker wired into `PlaybookCheckerFactory.CreateDefault()`.
 
 ## Interfaces and abstractions
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `BranchArmOrderChecker : IPlaybookChecker` | Walk the nodes; for each `branch`, refuse the first whose arms are out of order or whose `else` is not last. Two guards: ascending `order`, else last. | `PlaybookDocument`, the `Node` / `BranchEdge` model, `InvalidPlaybookException` |
+| `BranchArmOrderChecker : IPlaybookChecker` | Walk the nodes; for each `branch`, refuse the first with no gated arm, arms out of order, or an `else` that is not last. Three guards: a gated arm, ascending `order`, else last. | `PlaybookDocument`, the `Node` / `BranchEdge` model, `InvalidPlaybookException` |
 | `PlaybookCheckerFactory` | Adds `BranchArmOrderChecker` to `CreateDefault()`, after `OutwardShapeChecker`. | `CompositeChecker` |
-| `schema/playbook-0.schema.json` | `branchOut` gains a `contains` capping conditionless `branch` arms at one — `minContains: 0`, `maxContains: 1`. | `check-jsonschema` in CI |
-| `conformance/readable/<case>/` | One refusal each: an accepted compiled source and its `playbook.json` with one field changed, verdict `refuse`. | the readable harness |
+| `schema/playbook-0.schema.json` | `branchOut` requires at least one gated `branch` arm and caps conditionless arms at one — `minContains: 0`, `maxContains: 1`. | `check-jsonschema` in CI |
+| `conformance/readable/<case>/` | One refusal each: an accepted compiled source and its `playbook.json` with the `out` edited, verdict `refuse`. | the readable harness |
 
 The checker follows the house contract: it refuses at the first fault with a
 message naming the offending node and what was expected — a playbook is compiler
@@ -137,49 +142,61 @@ The outward-shape note left this invariant out on purpose — it is about the
 checker one idea and its tests focused. Running it after `OutwardShapeChecker`
 means the branch it examines is already known to carry at least one arm and only
 arms of the right kind, so it never has to guess whether a malformed edge is also
-an ordering error.
+an ordering error. The gated-arm guard reads the arms' conditions rather than their
+kind, so it could not have lived in the shape checker's rule without widening what
+that rule means.
 
 ### 4. The reader is the authority; the schema helps where it can
 
 JSON Schema 2020-12 cannot compare positions or values, so it cannot express
-"ascending" or "last". What it can express is a count: how many conditionless
-`branch` arms an array contains, capped at one. That single constraint mirrors the
-`else` half of the rule; the ascending half, and the whole rule together, belong to
-the reader. This is the same split the outward-shape work draws, where most
-`readable/` refusals are valid by the schema and the reader is what makes them
-refusals.
+"ascending" or "last". What it can count is arms: it demands at least one gated
+`branch` arm and allows at most one conditionless one. Those two constraints
+mirror the gated-arm and `else` halves of the rule; the ascending half, and the
+rule as a whole, belong to the reader. This is the same split the outward-shape
+work draws, where most `readable/` refusals are valid by the schema and the reader
+is what makes them refusals.
 
-The clause is easy to get subtly wrong: `contains` defaults `minContains` to `1`,
-so `minContains: 0` is required or the schema would demand exactly one conditionless
-arm and reject every else-less branch the compiler emits. Matching "no condition"
-uses `"condition": false` on the sub-schema — a property that must be absent.
+Both clauses are easy to get subtly wrong. `contains` defaults `minContains` to
+`1`, so the else clause needs `minContains: 0` or the schema would demand exactly
+one conditionless arm and reject every else-less branch. And "no condition" is
+matched with `"condition": false` on the sub-schema — a property that must be
+absent — while the gated clause requires the property:
 
 ```json
-{
-    "contains": {
-        "properties": { "kind": { "const": "branch" }, "condition": false }
+"allOf": [
+    {
+        "contains": {
+            "properties": { "kind": { "const": "branch" } },
+            "required": ["condition"]
+        }
     },
-    "minContains": 0,
-    "maxContains": 1
-}
+    {
+        "contains": {
+            "properties": { "kind": { "const": "branch" }, "condition": false }
+        },
+        "minContains": 0,
+        "maxContains": 1
+    }
+]
 ```
 
 ### 5. A richer conformance case ships its own accepted source
 
-`readable/baseline/` holds only a `line` and an `end`, so no one-field edit of it
-can produce a branch. The ordering refusals therefore ship their own compiled
-`source.dialogue.md` — an accepted branch document — and change one field, exactly
-as the corpus's [Adding a case](../../../../conformance/README.md) process already
-describes. The corpus README's "every refusal is `baseline` with one field changed"
-story is narrowed accordingly: a refusal is *an accepted document* with one field
-changed, and the simple line-level cases happen to share `baseline/`.
+`readable/baseline/` holds only a `line` and an `end`, so no field edit of it can
+produce a branch. The ordering refusals therefore ship their own compiled
+`source.dialogue.md` — an accepted branch document whose `out` is then edited —
+exactly as the corpus's [Adding a case](../../../../conformance/README.md) process
+already describes. That narrowing is written into the corpus README: a refusal is
+*an accepted document* with one field changed, and the simple line-level cases
+happen to share `baseline/`.
 
 ## Error and boundary cases
 
 | Case | Behaviour |
 | --- | --- |
-| `branch` with one arm | accept — nothing to order |
-| `branch` with no arm | cannot reach here — the outward-shape checker refuses it first, and this checker returns early on fewer than two arms |
+| `branch` with a single gated arm | accept — nothing to order |
+| `branch` with no arm | cannot reach here — the outward-shape checker refuses it first, and this checker returns early on no arms |
+| `branch` whose only arm is conditionless | refuse — no gated arm for the `else` to fall back from |
 | arms `order` `0`, `1`, `2`, else last | accept |
 | arms `order` `0`, `2` | accept — a gap, not a fault |
 | arms `order` `1` then `0` | refuse — not ascending |
@@ -203,12 +220,12 @@ changed, and the simple line-level cases happen to share `baseline/`.
   output. A direct writer assertion that each emitted branch is sorted this way
   would guard the other direction.
 - **The conformance corpus** gains the new `readable/` cases, so a port that fails
-  to refuse an out-of-order branch fails conformance. The README's "caught by"
-  table and its "Eight of the twelve refusals" count grow with the new
-  reader-only refusals, and its `baseline` paragraph is narrowed per
-  [decision 5](#5-a-richer-conformance-case-ships-its-own-accepted-source).
-- **`schema/playbook-0.schema.json`** gains the else cap, so a two-else document
-  fails the schema as well as the reader.
+  to refuse an out-of-order branch fails conformance. The corpus now holds
+  seventeen refusals, eleven of them reader-only, and its README's "caught by"
+  table and `baseline` paragraph are updated to match
+  ([decision 5](#5-a-richer-conformance-case-ships-its-own-accepted-source)).
+- **`schema/playbook-0.schema.json`** gains the two clauses, so a lone else and a
+  two-else document fail the schema as well as the reader.
 
 ## Testability
 
@@ -217,14 +234,10 @@ changed, and the simple line-level cases happen to share `baseline/`.
 | Unit | `BranchArmOrderCheckerTests` — an accept and a refuse for each row of the rule; each refusal starts from a well-ordered branch and breaks one thing. Nodes are built through the shared test factory. |
 | Ignore | A non-`branch` node carrying edges in any order is left alone, and a `succession` sitting among the arms is accepted. |
 | Property | Wired into the round-trip property: every compiled script's playbook passes the checker. |
-| Cross-runtime | The new `readable/` cases — an out-of-order branch, an else not last, a repeated order, and a two-else branch. |
-| Schema | CI validates every golden and every accepted conformance playbook against the schema; the goldens' else-less branches are what protect `minContains: 0`, and a two-else document is what the reader refuses. |
+| Cross-runtime | The five `readable/` cases — arms out of order, arms sharing an order, an else not last, a second else, and an else alone. |
+| Schema | CI validates every golden and every accepted conformance playbook against the schema; the goldens' else-less branches are what protect `minContains: 0`. |
 
 ## Open questions
 
-1. **Should `order` be dense?** The rule allows gaps (`0`, `2`), taking strictly
-   ascending as the invariant. Requiring `0..n-1` would make the field a
-   restatement of the array index; a document with gaps is unambiguous either way,
-   so it is accepted. Flagged in case a future reader wants the stronger form.
-2. **Does the runner sort, or trust the array?** Since the rule forces the two to
+1. **Does the runner sort, or trust the array?** Since the rule forces the two to
    agree, either works. Which one the runner does belongs to its own note.

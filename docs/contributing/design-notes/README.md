@@ -111,7 +111,7 @@ flowchart LR
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
 | 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
 | 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
-| 5 | [Branch Arm Order](./runtime/Branch%20Arm%20Order.md) | A `branch`'s arms in ascending `order` with the `else` last, stated in the reader and mirrored in the schema | Proposed |
+| 5 | [Branch Arm Order](./runtime/Branch%20Arm%20Order.md) | A `branch`'s arms in ascending `order` with the `else` last, stated in the reader and mirrored in the schema | Implemented |
 
 ### Language constructs
 

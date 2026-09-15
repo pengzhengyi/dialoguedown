@@ -17,6 +17,12 @@ changes easy to categorize.
   between two conformant runtimes. See
   [Node outward shape](docs/contributing/design-notes/runtime/Node%20Outward%20Shape.md).
 
+- **A branch's arms are checked for order when a playbook loads** — the reader refuses a branch whose
+  arms do not ascend by `order`, whose `else` is not the last arm, or that carries no gated arm, and
+  the schema requires at least one gated arm and allows at most one `else`. This keeps a reordered or
+  hand-edited if/elseif/else from telling a different story to two conformant runtimes. See
+  [Branch arm order](docs/contributing/design-notes/runtime/Branch%20Arm%20Order.md).
+
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
