@@ -36,9 +36,11 @@
   // "Zero tests ran" exit.
   //
   // Where the two disagree, these follow the repository rather than the task:
-  // `/docs-lint` runs `markdownlint-cli2` as the committed
-  // `.markdownlint-cli2.yaml` documents, and the test commands send you to the
-  // project matching the code under test rather than a fixed list.
+  // `/docs-lint` runs the same `markdownlint-cli2` that CONTRIBUTING.md and
+  // CI's Docs job run, not the older six-file `markdownlint` invocation still
+  // in tasks.json; and the targeted test commands send you to the project
+  // matching the code under test, since tasks.json offers a fixed list that has
+  // already fallen behind the solution.
   "command": {
     "build": {
       "description": "Build the solution (Release)",
@@ -82,7 +84,7 @@
     },
     "docs-lint": {
       "description": "Lint the authored Markdown, and link-check the open-source files",
-      "template": "Lint the repository's authored Markdown, from the repository root with no arguments:\n\n```sh\nmarkdownlint-cli2\n```\n\n`.markdownlint-cli2.yaml` already sets the globs, skips generated output and `.dialogue.md` scripts — whose `#` headings are scenes, not titles — and turns off the rules this project violates by intent. So it should run clean, and every remaining finding is real: fix the Markdown rather than suppressing a rule.\n\nNeither tool is a repository dependency, so on a machine that lacks them use `npx markdownlint-cli2` instead. Link checking is optional and needs `lychee` installed separately:\n\n```sh\nlychee --no-progress --timeout 10 README.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md CHANGELOG.md .github/pull_request_template.md\n```"
+      "template": "Lint the repository's authored Markdown, from the repository root with no arguments:\n\n```sh\nnpx --yes markdownlint-cli2\n```\n\nThis is exactly what CI's **Docs** job runs. `.markdownlint-cli2.yaml` carries the globs and ignores, skipping generated output, the web client, and `.dialogue.md` scripts — whose `#` headings are scenes, not titles — and turns off the rules this project violates by intent. So it should run clean, and every remaining finding is real: fix the Markdown rather than suppressing a rule, and pass `--fix` to apply what it can fix itself.\n\nThe **Docs** job is advisory rather than blocking, because a markdownlint release that adds a rule should open a reviewable PR instead of breaking the build — so a finding here is worth fixing, not a red build.\n\nLink checking is separate and optional, and needs `lychee` installed:\n\n```sh\nlychee --no-progress --timeout 10 README.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md CHANGELOG.md .github/pull_request_template.md\n```"
     }
   },
 
