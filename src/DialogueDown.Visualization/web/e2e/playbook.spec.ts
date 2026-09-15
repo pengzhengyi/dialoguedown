@@ -64,6 +64,31 @@ const compiled: Report = {
             },
             { default: true, tags: [] },
         ],
+        nodes: [
+            { id: 0, kind: "line", category: "speech", summary: "Alice: Which way?", targets: [1] },
+            {
+                id: 1,
+                kind: "choice",
+                category: "structure",
+                summary: "Go left || Go right",
+                targets: [2, 9],
+            },
+            {
+                id: 2,
+                kind: "control",
+                category: "call",
+                summary: "ShowBackground(tavern, firelit)",
+                targets: [9],
+            },
+            {
+                id: 9,
+                kind: "branch",
+                category: "structure",
+                summary: "IF Hero.IsBrave THEN 10 ELSE 11",
+                targets: [10, 11],
+            },
+            { id: 10, kind: "end", category: "terminal", summary: "END", targets: [] },
+        ],
     },
 };
 
@@ -75,6 +100,7 @@ const halted: Report = {
     playbook: {
         anchors: [],
         speakers: [],
+        nodes: [],
         unavailable: "A playbook is written only for a script that compiles without errors.",
     },
 };
@@ -142,6 +168,7 @@ test.describe("Playbook tab — a compiled script", () => {
             "Playbook",
             "Speakers",
             "Anchors",
+            "Nodes",
         ]);
         await expect(panel(page, "Playbook")).toContainText("scene.dialogue.md");
         await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(2);
@@ -417,6 +444,7 @@ const linkable: Report = {
             { name: "Guide", default: false, tags: [] },
             { name: "Bob", default: false, tags: [] },
         ],
+        nodes: [],
     },
 };
 
@@ -531,6 +559,7 @@ const tagged: Report = {
             },
             { name: "Ghost", default: false, tags: [] },
         ],
+        nodes: [],
     },
 };
 
@@ -578,5 +607,127 @@ test.describe("Playbook tab — the Speakers tag facet", () => {
         await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(1);
 
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
+});
+
+test.describe("Playbook tab — the Nodes table", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(writeReport(compiled));
+        await page.click(playbookTab);
+    });
+
+    const kindFacet = (page: Page) =>
+        panel(page, "Nodes").locator('th:has(.th-sort:text-is("Kind")) .th-facet');
+
+    test("gives every node in the playbook a row", async ({ page }) => {
+        const nodes = panel(page, "Nodes");
+
+        await expect(nodes).toBeVisible();
+        await expect(nodes.locator("tbody tr")).toHaveCount(5);
+    });
+
+    test("filters the table down to a single kind, and back again", async ({ page }) => {
+        const rows = panel(page, "Nodes").locator("tbody tr");
+
+        await kindFacet(page).click();
+        await page.locator('.facet-popover input[value="choice"]').click();
+        await expect(rows).toHaveCount(1);
+        await expect(rows.locator("td").first()).toHaveText("1");
+
+        await kindFacet(page).click();
+        await page.locator('.facet-popover input[value=""]').click();
+        await expect(rows).toHaveCount(5);
+    });
+
+    test("reveals a node when the cell naming it as a target is clicked", async ({ page }) => {
+        // Node 0 has a single way out, so its Leads to cell is a link to node 1.
+        await panel(page, "Nodes").locator("tbody tr").first().locator("td").nth(3).click();
+
+        const cursorLine = await page.evaluate(() => {
+            const editor = document.querySelector(".playbook-source .cm-editor");
+            const active = editor?.querySelector(".cm-activeLine");
+            return active?.textContent ?? null;
+        });
+        expect(cursorLine).toBe("    {");
+
+        // The line two below the opener is the node's own declaration, the one the target named.
+        const below = await page.evaluate(() => {
+            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
+            return lines[at + 2]?.textContent ?? null;
+        });
+        expect(below).toContain('"id": 1');
+    });
+
+    test("follows whichever way out is pressed when a node leads several", async ({ page }) => {
+        // Node 1 leads to 2 and 9. Pressing the second must land on 9, not on whichever came
+        // first: a cell that names two places and delivers one would be worse than plain text.
+        const ways = panel(page, "Nodes")
+            .locator("tbody tr")
+            .nth(1)
+            .locator("td")
+            .nth(3)
+            .locator("[data-jump]");
+        await expect(ways).toHaveCount(2);
+        await ways.nth(1).click();
+
+        const below = await page.evaluate(() => {
+            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
+            return lines[at + 2]?.textContent ?? null;
+        });
+        expect(below).toContain('"id": 9');
+    });
+
+    test("reaches every way out from the keyboard, not only the mouse", async ({ page }) => {
+        const ways = panel(page, "Nodes")
+            .locator("tbody tr")
+            .nth(1)
+            .locator("td")
+            .nth(3)
+            .locator("[data-jump]");
+
+        // A real button is what makes a destination reachable without a mouse.
+        expect(await ways.nth(0).evaluate((node) => node.tagName)).toBe("BUTTON");
+        expect(await ways.nth(1).evaluate((node) => node.tagName)).toBe("BUTTON");
+    });
+
+    test("lights the row a hovered way out leads to", async ({ page }) => {
+        // Node 1 leads to 2 and 9. Hovering the second must light row 9 and leave row 2 alone,
+        // so a reader sees where a way out goes without leaving the row they are reading.
+        const rows = panel(page, "Nodes").locator("tbody tr");
+        await rows.nth(1).locator("td").nth(3).locator("[data-jump]").nth(1).hover();
+
+        // The fixture's ids run 0, 1, 2, 9, 10, so node 9 is the fourth row.
+        await expect(rows.nth(3)).toHaveClass(/entity-highlight/);
+        await expect(rows.nth(2)).not.toHaveClass(/entity-highlight/);
+    });
+
+    test("tints the row under the pointer apart from the row it leads to", async ({ page }) => {
+        // The two must not read alike: one is where the reader is, the other where they would go.
+        const rows = panel(page, "Nodes").locator("tbody tr");
+        await rows.nth(1).locator("td").nth(3).locator("[data-jump]").nth(1).hover();
+
+        const background = (row: number, cell: number) =>
+            rows
+                .nth(row)
+                .locator("td")
+                .nth(cell)
+                .evaluate((node) => getComputedStyle(node).backgroundColor);
+
+        expect(await background(1, 0)).not.toBe(await background(3, 0));
+    });
+
+    test("keeps its three short columns on one line in a narrow viewport", async ({ page }) => {
+        await page.setViewportSize({ width: 480, height: 800 });
+
+        const cells = panel(page, "Nodes").locator("tbody tr").first().locator("td");
+        const whiteSpace = (index: number) =>
+            cells.nth(index).evaluate((node) => getComputedStyle(node).whiteSpace);
+
+        expect(await whiteSpace(0)).toBe("nowrap");
+        expect(await whiteSpace(1)).toBe("nowrap");
+        expect(await whiteSpace(3)).toBe("nowrap");
+        expect(await whiteSpace(2)).not.toBe("nowrap");
     });
 });

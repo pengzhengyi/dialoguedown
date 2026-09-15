@@ -16,18 +16,33 @@ namespace DialogueDown.Visualization.Playbook;
 /// <param name="Metadata">The document's header facts, for the summary table.</param>
 /// <param name="Speakers">Every speaker the playbook declares.</param>
 /// <param name="Anchors">Every anchor a jump may name, with the node it lands on.</param>
+/// <param name="Nodes">Every node the playbook holds, in document order.</param>
 /// <param name="Unavailable">Why there is no playbook, or null when there is one.</param>
 internal sealed record PlaybookReport(
     string? Json,
     PlaybookMetadataView? Metadata,
     IReadOnlyList<PlaybookSpeakerView> Speakers,
     IReadOnlyList<PlaybookAnchorView> Anchors,
+    IReadOnlyList<PlaybookNodeView> Nodes,
     string? Unavailable);
 
 /// <summary>One anchor a jump may name, and where it lands.</summary>
 /// <param name="Name">The anchor's slug, as a jump writes it.</param>
 /// <param name="Node">The node position the anchor resolves to.</param>
 internal sealed record PlaybookAnchorView(string Name, int Node);
+
+/// <summary>One node as the table shows it.</summary>
+/// <param name="Id">The node's own position in the playbook.</param>
+/// <param name="Kind">The kind the document names the node by.</param>
+/// <param name="Category">The category that decides what color the node draws in.</param>
+/// <param name="Summary">The one line saying what the node holds.</param>
+/// <param name="Targets">The nodes this one leads to, in the order they appear.</param>
+internal sealed record PlaybookNodeView(
+    int Id,
+    string Kind,
+    string Category,
+    string Summary,
+    IReadOnlyList<int> Targets);
 
 /// <summary>The playbook's header facts, as the report's summary table shows them.</summary>
 /// <param name="Script">The script the playbook was compiled from.</param>

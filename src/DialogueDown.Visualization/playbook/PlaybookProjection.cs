@@ -1,7 +1,9 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using DialogueDown.Compilation;
 using DialogueDown.Emission;
 using DialogueDown.Playbook;
+using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 
 using DialogueDown.Visualization.Display;
@@ -23,6 +25,12 @@ internal static class PlaybookProjection
     internal const string UnavailableReason =
         "A playbook is written only for a script that compiles without errors.";
 
+    // The categories are the Dialogue Graph's, so a kind keeps one color across both tabs.
+    private const string SpeechCategory = "speech";
+    private const string CallCategory = "call";
+    private const string StructureCategory = "structure";
+    private const string TerminalCategory = "terminal";
+
     // The report shows the playbook to be read, not to be diffed byte-for-byte against a file, so
     // it is indented here. `ddown compile --emit playbook` writes the same document compactly.
     private static readonly JsonSerializerOptions _readable = Readable();
@@ -42,7 +50,7 @@ internal static class PlaybookProjection
 
         if (result is not CompilationSuccess success)
         {
-            return new PlaybookReport(null, null, [], [], UnavailableReason);
+            return new PlaybookReport(null, null, [], [], [], UnavailableReason);
         }
 
         var playbook = writer.Write(success, script);
@@ -51,6 +59,7 @@ internal static class PlaybookProjection
             MetadataOf(playbook, script),
             [.. playbook.Speakers.Select(ToView)],
             [.. playbook.Anchors.Select(anchor => new PlaybookAnchorView(anchor.Key, anchor.Value))],
+            [.. playbook.Nodes.Select(node => ToView(node, playbook.Speakers))],
             null);
     }
 
@@ -73,6 +82,32 @@ internal static class PlaybookProjection
             speaker.Name,
             speaker.Default,
             [.. speaker.Tags.Select(tag => new TagView(tag.Name, tag.Value, tag.Reserved))]);
+
+    // The wire tag and the color category are read together so the correspondence between them
+    // stays in one place rather than spread across two matches over the same types.
+    private static PlaybookNodeView ToView(
+        Node node, ImmutableArray<PlaybookSpeaker> speakers)
+    {
+        var (kind, category) = node switch
+        {
+            LineNode => (NodeKinds.Line, SpeechCategory),
+            ChoiceNode => (NodeKinds.Choice, StructureCategory),
+            RandomChoiceNode => (NodeKinds.RandomChoice, StructureCategory),
+            BranchNode => (NodeKinds.Branch, StructureCategory),
+            ControlNode => (NodeKinds.Control, CallCategory),
+            EndNode => (NodeKinds.End, TerminalCategory),
+            // A kind nobody has accounted for still gets a row, named by its type and grouped
+            // with the structural nodes, which is what the Dialogue Graph does with one too.
+            _ => (node.GetType().Name, StructureCategory),
+        };
+
+        return new PlaybookNodeView(
+            node.Id,
+            kind,
+            category,
+            PlaybookNodeSummary.Of(node, speakers),
+            [.. node.Out.Select(edge => edge.Target)]);
+    }
 
     private static JsonSerializerOptions Readable()
     {
