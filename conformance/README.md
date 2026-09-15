@@ -50,23 +50,25 @@ its own language, and pinning English here would make the corpus untranslatable.
 
 ### Why one case is `baseline`
 
-`baseline/` is accepted and nothing is wrong with it. **Every refusal is that same
-document with exactly one field changed.** So a diff between any case and the
-baseline is the single line that case is about — and because the baseline passes,
-a refusal can only be caused by the field its case touched. That pins the *reason*
-for each refusal without asserting a word of any message.
+`baseline/` is accepted and nothing is wrong with it. **A refusal is an accepted
+document with exactly one field changed.** The line-level cases all share
+`baseline/`, so a diff between one of them and it is the single line that case is
+about; a case built on a richer construct ships its own accepted source beside its
+playbook, and its `because` names the edit. Either way, because the accepted
+document passes, a refusal can only be caused by the field its case touched, which
+pins the *reason* for each refusal without asserting a word of any message.
 
 ### The schema is not enough
 
-Eight of the twelve refusals under `readable/` are **valid by the JSON Schema**. A
-schema describes shape: it can say `entry` is a non-negative integer, but not
-that there are only two nodes to point at; it can say `version` is an integer,
-but not which versions a build reads.
+Eleven of the seventeen refusals under `readable/` are **valid by the JSON
+Schema**. A schema describes shape: it can say `entry` is a non-negative integer,
+but not that there are only two nodes to point at; it can say `version` is an
+integer, but not which versions a build reads.
 
 | Refusal | Caught by |
 | --- | --- |
-| A target written as text; a truncated file; a foreign arm kind; two successions on one node | the schema |
-| A version too new, an unknown capability, a node out of position, all four kinds of dangling reference, and a node with no way out | only a reader |
+| A target written as text; a truncated file; a foreign arm kind; two successions on one node; a lone else; a second else | the schema |
+| A version too new, an unknown capability, a node out of position, all four kinds of dangling reference, a node with no way out, and branch arms out of order, sharing an order, or led by the else | only a reader |
 
 So validating against the schema is necessary but not sufficient, and that gap is
 a large part of why this corpus exists.

@@ -30,6 +30,8 @@
     href: runtime/Conformance Corpus.md
   - name: Node Outward Shape
     href: runtime/Node Outward Shape.md
+  - name: Branch Arm Order
+    href: runtime/Branch Arm Order.md
   - name: Speech as Plain Text
     href: runtime/Speech as Plain Text.md
   - name: Runtime Core
