@@ -44,6 +44,18 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_AConditionalLine_RefusesRatherThanSpeakingItAnyway()
+    {
+        // Nobody can answer the world yet, and a line spoken without asking is worse than one
+        // refused: it reads as played correctly while the condition it carries went unread.
+        var context = Playbooks.Of(
+            [Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"), new EndNode(1)],
+            ["Alice"]);
+
+        AssertRefused(Arrival.At(context, 0), "Alice.HasKey");
+    }
+
+    [Fact]
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather

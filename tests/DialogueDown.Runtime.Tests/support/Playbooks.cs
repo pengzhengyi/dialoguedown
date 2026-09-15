@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook;
+using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
@@ -84,6 +85,16 @@ internal static class Playbooks
     /// <returns>The node.</returns>
     public static LineNode Line(int id, int speaker, string text, int next) =>
         new(id, speaker, [new TextFragment(text)], Condition: null, [new SuccessionEdge(next)]);
+
+    /// <summary>A line node that only plays when the world says so.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="speaker">Who says it, by index.</param>
+    /// <param name="text">What is said.</param>
+    /// <param name="next">Where succession leads.</param>
+    /// <param name="key">What the world is asked before the line plays.</param>
+    /// <returns>The node.</returns>
+    public static LineNode ConditionalLine(int id, int speaker, string text, int next, string key) =>
+        new(id, speaker, [new TextFragment(text)], new KeyCondition(key), [new SuccessionEdge(next)]);
 
     /// <summary>A line node nothing leads on from.</summary>
     /// <param name="id">Its position in the playbook.</param>
