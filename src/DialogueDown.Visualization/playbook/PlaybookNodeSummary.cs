@@ -184,13 +184,9 @@ internal static class PlaybookNodeSummary
     private static string ConditionSuffix(Condition? condition) =>
         condition is KeyCondition key ? $" IF {key.Key}" : string.Empty;
 
-    // A condition lives on the kinds that can carry one, so it is read here rather than repeated
-    // in each kind's own summary.
+    // A condition lives on the kinds that can carry one, which the playbook names through
+    // IConditional, so a kind that gains one later is summarized without a change here. Only a key
+    // condition has anything to show; another kind reads as unguarded until it does.
     private static KeyCondition? ConditionOf(Node node) =>
-        node switch
-        {
-            LineNode line => line.Condition as KeyCondition,
-            ControlNode control => control.Condition as KeyCondition,
-            _ => null,
-        };
+        (node as IConditional)?.Condition as KeyCondition;
 }
