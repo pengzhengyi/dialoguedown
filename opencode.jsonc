@@ -1,0 +1,148 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Project-level opencode configuration for DialogueDown.
+  //
+  // This file deliberately carries only what is true of *this repository*: the
+  // instruction files, the dev-loop commands, and the generated trees a watcher
+  // should skip. Model, provider, and MCP choices are left to each
+  // contributor's own `~/.config/opencode/opencode.json`, which opencode merges
+  // underneath this one — so nothing here pins a model or carries an API key,
+  // and the file still works for a contributor who has no global config at all.
+  //
+  // Merge behavior differs per key, which is why the sections below are shaped
+  // the way they are: `instructions` concatenates and de-duplicates,
+  // `permission.bash` deep-merges rule by rule, objects like `formatter.*`
+  // merge field by field, and a nested array replaces what it inherits.
+
+  // The knowledge an agent needs before it can act. AGENTS.md covers what the
+  // project is and how to build it; copilot-instructions.md is the canonical
+  // conventions file; the path-specific rules under .github/instructions apply
+  // to C#, the web client, and the docs tree; and the contributing index is the
+  // map of the architecture and design notes.
+  "instructions": [
+    "AGENTS.md",
+    ".github/copilot-instructions.md",
+    ".github/instructions/*.md",
+    "docs/contributing/index.md"
+  ],
+
+  // The dev loop, following the commands AGENTS.md documents and the tasks in
+  // .vscode/tasks.json. Each template gives the exact command line, because two
+  // flags are load-bearing and an agent that "simplifies" them gets a green run
+  // that proves nothing: `--verify-no-changes` is a separate gate since
+  // code-style rules do not run during `dotnet build`, and
+  // `--minimum-expected-tests` catches the Microsoft Testing Platform's silent
+  // "Zero tests ran" exit.
+  //
+  // Where the two disagree, these follow the repository rather than the task:
+  // `/docs-lint` runs the same `markdownlint-cli2` that CONTRIBUTING.md and
+  // CI's Docs job run, not the older six-file `markdownlint` invocation still
+  // in tasks.json; and the targeted test commands send you to the project
+  // matching the code under test, since tasks.json offers a fixed list that has
+  // already fallen behind the solution.
+  "command": {
+    "build": {
+      "description": "Build the solution (Release)",
+      "template": "Build the .NET solution and report any errors or analyzer warnings:\n\n```sh\ndotnet build DialogueDown.sln --configuration Release --no-restore\n```\n\nIf the build fails because packages are missing, run `dotnet restore DialogueDown.sln` first and build again."
+    },
+    "verify-format": {
+      "description": "Run the formatting and code-style gate CI runs",
+      "template": "Run the formatting and code-style gate:\n\n```sh\ndotnet format DialogueDown.sln --verify-no-changes --no-restore\n```\n\nThis is a separate gate on purpose: code-style rules do not run during `dotnet build`, so a green build is not a green CI. If it reports changes, apply them with `dotnet format DialogueDown.sln --no-restore` and summarize what was reformatted."
+    },
+    "test": {
+      "description": "Run the full test suite",
+      "template": "Run the full test suite:\n\n```sh\ndotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000\n```\n\nKeep `--minimum-expected-tests` — without it an unrecognized argument makes the run report \"Zero tests ran\" with exit code 5, which reads like success. Report the pass/fail counts, and for any failure show the assertion and the test's name before proposing a fix."
+    },
+    "test-class": {
+      "description": "Run one test class by name — /test-class *ParserTests",
+      "template": "Run the test class matching `$ARGUMENTS`, stopping at the first failure:\n\n```sh\ndotnet test tests/DialogueDown.Tests/DialogueDown.Tests.csproj --configuration Release --no-build --no-restore --stop-on-fail on --filter-class \"$ARGUMENTS\"\n```\n\n`--filter-class` is xUnit's own filter rather than VSTest's, and `*` is allowed at either end.\n\nFirst pick the right project: `tests/` holds one per area — the compiler core, the playbook, the runtime, conformance, the CLI, the configuration loader, the visualization, its live server, and the architecture rules — and the command above defaults to the core. Run `ls tests/` and substitute the project that matches the code under test, rather than assuming the default."
+    },
+    "test-filter": {
+      "description": "Run tests matching a filter — /test-filter FullyQualifiedName~Playbook",
+      "template": "Run the tests matching `$ARGUMENTS`, stopping at the first failure:\n\n```sh\ndotnet test tests/DialogueDown.Tests/DialogueDown.Tests.csproj --configuration Release --no-build --no-restore --stop-on-fail on --filter \"$ARGUMENTS\"\n```\n\nThe command above defaults to the compiler core. `tests/` holds one project per area, so run `ls tests/` and substitute the one that matches the code under test rather than assuming the default."
+    },
+    "coverage": {
+      "description": "Run tests with source-focused coverage and build the report",
+      "template": "Run the tests with coverage and generate the report:\n\n```sh\ndotnet tool restore\ndotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include \"[DialogueDown*]*\" --minimum-expected-tests 3000\ndotnet reportgenerator \"-reports:TestResults/coverage.cobertura.*.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"\n```\n\nCI fails below 90% line or 85% branch coverage and warns below 100% line. Report the line and branch numbers, then name the specific uncovered paths that matter rather than only the percentage."
+    },
+    "verify": {
+      "description": "Run every check, the way CI does",
+      "template": "Run the full verification sequence, in this order, and stop at the first failure:\n\n1. `dotnet format DialogueDown.sln --verify-no-changes --no-restore`\n2. `dotnet build DialogueDown.sln --configuration Release --no-restore --no-incremental`\n3. `dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000`\n4. `cd src/DialogueDown.Visualization/web && npm run check`\n\nStep 2 is deliberately `--no-incremental`: an up-to-date build reports no warnings even when analyzer violations exist. Skip step 4 when nothing under `src/DialogueDown.Visualization/web` changed. Report which steps passed and where it stopped."
+    },
+    "web-check": {
+      "description": "Typecheck, lint, style, format, and unit-test the web client",
+      "template": "Run the visualization client's full check from `src/DialogueDown.Visualization/web`:\n\n```sh\nnpm run check\n```\n\nThat covers typecheck, ESLint, Stylelint, Prettier, Vitest, and the e2e-live infrastructure tests. If dependencies are missing, run `npm ci` first. Report each sub-check that failed rather than only the final exit code."
+    },
+    "web-e2e": {
+      "description": "Run the web client's Playwright end-to-end and accessibility tests",
+      "template": "Run the Playwright end-to-end and accessibility tests from `src/DialogueDown.Visualization/web`:\n\n```sh\nnpm run build\nnpm run e2e\n```\n\nFor the live suite — which builds the CLI once and drives the real server — use `npm run e2e:live` instead. Narrow a run with `npm run e2e -- --grep \"<title>\"` when chasing one failure."
+    },
+    "compile-script": {
+      "description": "Compile a .dialogue.md script with the CLI — /compile-script examples/…",
+      "template": "Compile `$ARGUMENTS` with the CLI, running it from source:\n\n```sh\ndotnet run --project src/DialogueDown.Cli -- compile $ARGUMENTS\n```\n\nAdd `--mode best-effort` to see what a script still produces when it has errors, or `-o <path>` to write the playbook. Use `visualize` in place of `compile` to produce the interactive report instead. Sample scripts live under `examples/`."
+    },
+    "docs-lint": {
+      "description": "Lint the authored Markdown, and link-check the open-source files",
+      "template": "Lint the repository's authored Markdown, from the repository root with no arguments:\n\n```sh\nnpx --yes markdownlint-cli2\n```\n\nThis is exactly what CI's **Docs** job runs. `.markdownlint-cli2.yaml` carries the globs and ignores, skipping generated output, the web client, and `.dialogue.md` scripts — whose `#` headings are scenes, not titles — and turns off the rules this project violates by intent. So it should run clean, and every remaining finding is real: fix the Markdown rather than suppressing a rule, and pass `--fix` to apply what it can fix itself.\n\nThe **Docs** job is advisory rather than blocking, because a markdownlint release that adds a rule should open a reviewable PR instead of breaking the build — so a finding here is worth fixing, not a red build.\n\nLink checking is separate and optional, and needs `lychee` installed:\n\n```sh\nlychee --no-progress --timeout 10 README.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md CHANGELOG.md .github/pull_request_template.md\n```"
+    }
+  },
+
+  // No formatter runs on files opencode writes, because this repository already
+  // has exactly two formatting authorities and neither of them is a root-level
+  // Prettier: C# is formatted by `dotnet format` (its own CI gate, available
+  // here as `/verify-format`), and the web client by its own `npm run format`
+  // inside `src/DialogueDown.Visualization/web` (part of `/web-check`).
+  //
+  // A third path would not just duplicate those — it would be actively unsafe.
+  // There is no Prettier configuration at the repository root, so a Prettier
+  // invoked from here would reformat `docs/` Markdown against markdownlint and
+  // the docs conventions, and rewrite root JSON and YAML that no gate formats.
+  // Worse, `src/DialogueDown.Visualization/web/dist/` commits generated
+  // `report.html`, `report.js`, `report.css`, and `mermaid.js`; the web
+  // project's `.prettierignore` excludes `dist/` only for runs started inside
+  // `web/`, so a root-level run would reformat committed build output.
+  "formatter": {
+    "prettier": { "disabled": true }
+  },
+
+  // Narrow, read-only or dev-loop additions. These merge into whatever bash
+  // rules a contributor already has; nothing here touches git, gh, or any
+  // other irreversible or remote-mutating command. `npm install` is left out
+  // on purpose — `npm ci` is the documented install, and adding a dependency
+  // should stay a deliberate act. The `cd *` variants are here because the
+  // frontend commands run from the web directory, and a rule is matched
+  // against the whole command line.
+  "permission": {
+    "bash": {
+      "dotnet tool restore": "allow",
+      "dotnet reportgenerator*": "allow",
+      "dotnet run --project src/DialogueDown.Cli*": "allow",
+      "npm ci": "allow",
+      "npm run*": "allow",
+      "cd * && npm ci": "allow",
+      "cd * && npm run*": "allow",
+      "markdownlint*": "allow",
+      "lychee*": "allow"
+    }
+  },
+
+  // Build output, test results, generated documentation, and installed
+  // packages. Everything listed here is already ignored by .gitignore.
+  "watcher": {
+    "ignore": [
+      "**/bin/**",
+      "**/obj/**",
+      "**/node_modules/**",
+      "**/.cache/**",
+      "artifacts/**",
+      "TestResults/**",
+      "coverage-report/**",
+      "docs/_site/**",
+      "docs/api/**",
+      "**/playwright-report/**",
+      "**/test-results/**",
+      ".playwright-mcp/**"
+    ]
+  }
+}
