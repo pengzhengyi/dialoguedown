@@ -14,38 +14,16 @@ namespace DialogueDown.Playbook.Tests.Conformance;
 /// </remarks>
 public sealed class CorpusEqualityTests
 {
-    public static TheoryData<string> ReadableAccepted()
-    {
-        var cases = new TheoryData<string>();
+    public static TheoryData<ReadableCase> ReadableAccepted() =>
+        [.. Corpora.Readable.Cases().Where(aCase => aCase.WillAccept)];
 
-        foreach (var caseName in Corpora.Readable.Cases())
-        {
-            if (Corpora.Readable.Read(caseName).Fixture.Verdict == Verdict.Accept)
-            {
-                cases.Add(caseName);
-            }
-        }
-
-        return cases;
-    }
-
-    public static TheoryData<string> Playable()
-    {
-        var cases = new TheoryData<string>();
-
-        foreach (var caseName in Corpora.PlayableFolder.Cases())
-        {
-            cases.Add(caseName);
-        }
-
-        return cases;
-    }
+    public static TheoryData<string> Playable() =>
+        [.. Corpora.PlayableFolder.Cases()];
 
     [Theory]
     [MemberData(nameof(ReadableAccepted))]
-    public void AReadableCaseTheCorpusAccepts_ReadTwice_IsOneValue(string caseName) =>
-        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(
-            Corpora.Readable.Read(caseName).Playbook);
+    public void AReadableCaseTheCorpusAccepts_ReadTwice_IsOneValue(ReadableCase aCase) =>
+        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(aCase.Playbook);
 
     [Theory]
     [MemberData(nameof(Playable))]

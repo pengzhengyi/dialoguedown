@@ -8,16 +8,16 @@ public sealed class ReadableConformanceTests
 {
     private static ReadableCorpus Corpus => Corpora.Readable;
 
-    public static TheoryData<string> Accepted() => Cases(Verdict.Accept);
+    public static TheoryData<ReadableCase> Accepted() =>
+        [.. Corpus.Cases().Where(aCase => aCase.WillAccept)];
 
-    public static TheoryData<string> Refused() => Cases(Verdict.Refuse);
+    public static TheoryData<ReadableCase> Refused() =>
+        [.. Corpus.Cases().Where(aCase => aCase.WillRefuse)];
 
     [Theory]
     [MemberData(nameof(Accepted))]
-    public void ACaseTheCorpusAccepts_IsRead(string caseName)
+    public void ACaseTheCorpusAccepts_IsRead(ReadableCase aCase)
     {
-        var aCase = Corpus.Read(caseName);
-
         var playbook = PlaybookReader.Default.Read(aCase.Playbook);
 
         Assert.NotEmpty(playbook.Nodes);
@@ -25,12 +25,8 @@ public sealed class ReadableConformanceTests
 
     [Theory]
     [MemberData(nameof(Refused))]
-    public void ACaseTheCorpusRefuses_IsNotRead(string caseName)
-    {
-        var aCase = Corpus.Read(caseName);
-
+    public void ACaseTheCorpusRefuses_IsNotRead(ReadableCase aCase) =>
         Assert.Throws<InvalidPlaybookException>(() => PlaybookReader.Default.Read(aCase.Playbook));
-    }
 
     [Fact]
     public void TheCorpus_CoversBothVerdicts()
@@ -39,21 +35,5 @@ public sealed class ReadableConformanceTests
         // a suite that reports green because it asked nothing.
         Assert.NotEmpty(Accepted());
         Assert.NotEmpty(Refused());
-    }
-
-
-    private static TheoryData<string> Cases(Verdict verdict)
-    {
-        var cases = new TheoryData<string>();
-
-        foreach (var caseName in Corpus.Cases())
-        {
-            if (Corpus.Read(caseName).Fixture.Verdict == verdict)
-            {
-                cases.Add(caseName);
-            }
-        }
-
-        return cases;
     }
 }
