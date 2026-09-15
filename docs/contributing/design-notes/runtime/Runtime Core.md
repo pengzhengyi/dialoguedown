@@ -134,7 +134,7 @@ flowchart LR
     AT -->|"Next"| AT2["AtNode(j)"]
     AT2 -->|"Next"| ENDED["AtEnd"]
     ENDED -->|"Start"| AT
-    AT -. "C2c" .-> ASK["AwaitingAnswers(i, keys)"]
+    AT -. "C2c" .-> ASK["AwaitingSupply(i, keys)"]
     ASK -. "Supply" .-> AT
 ```
 

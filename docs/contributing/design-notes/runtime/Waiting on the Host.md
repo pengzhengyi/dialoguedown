@@ -53,18 +53,18 @@ Out of scope, each with the pass that owns it: conditions and the world seam
 
 ## Functionality checklist
 
-- [ ] A step runs on only while the run has handed the host nothing to do.
-- [ ] Arriving at a control node asks the host to perform each of its effects, in
+- [x] A step runs on only while the run has handed the host nothing to do.
+- [x] Arriving at a control node asks the host to perform each of its effects, in
       the order written, and the run waits for `Done`.
-- [ ] A control node with no effects concerns nobody, says nothing, and the run
+- [x] A control node with no effects concerns nobody, says nothing, and the run
       carries on — which is what a jump on its own line compiles to.
-- [ ] `Next` is refused where the run waits on the world, so fast-forwarding
+- [x] `Next` is refused where the run waits on the world, so fast-forwarding
       cannot skip past an effect.
-- [ ] A divert is the way onward when a node carries one; succession is the
+- [x] A divert is the way onward when a node carries one; succession is the
       fall-through.
-- [ ] A node or edge carrying a condition is refused by name, not played as though
+- [x] A node or edge carrying a condition is refused by name, not played as though
       the condition held.
-- [ ] A ring of nodes that concern nobody is refused, so `Step` stays total.
+- [x] A ring of nodes that concern nobody is refused, so `Step` stays total.
 - [ ] `perform` and `done` are settled in the fixture schema, written into
       `an-effect`, and matched by the harness.
 - [ ] `a-jump` and `an-effect` play, and join the named conforming list.
@@ -81,7 +81,7 @@ next.
 | --- | --- | --- |
 | `LineNode` | `Said` | waits on the **player** — `Next` |
 | `ChoiceNode` | `Asked` *(C2b)* | waits on the **player** — `Choose` |
-| `ControlNode` with effects | `Perform`, once per effect | waits on the **world** — `Done` |
+| `ControlNode` with effects | `Perform`, once per effect | waits on the **world** — `Done` moves it on |
 | `ControlNode` with no effects | nothing | carries on |
 | `EndNode` | `Ended` | waits on nobody |
 | `BranchNode` | nothing *(later)* | carries on |
@@ -182,21 +182,27 @@ one twice is in a ring, because nothing the walk reads changes as it goes. So th
 guard is a counter against `Nodes.Length`: no false refusal, no missed ring, no
 allocation, and no number anybody has to pick.
 
-### W6 — The position still says what may be sent
+### W6 — Waiting is a stage of the run, so the position carries it
 
-`Done` is legal only where the run waits on the world, so something must record
-that. Nothing new has to: the position already names a node, and the node's kind
-says which party the run is waiting on. A control node the run is *standing* at
-always has effects, because one without them is walked straight past.
+Waiting for the host is something the *run* is doing, not something the playbook
+says. `AwaitingDone` stands at the same node `AtNode` would, at a different stage,
+which is the shape the position union exists for: a run is not always simply *at*
+a node, and holding the stage in the position rather than beside it means the two
+can never disagree.
 
-`PlayState` therefore gains no field, which matters because it is also the save —
-every field in it is a compatibility promise. The protocol's matrix grows by
-consulting the node at the position rather than by widening the state.
+That keeps the protocol a relation between a position and a command. `Next`
+advances from `AtNode`, `Done` advances from `AwaitingDone`, and neither arm has
+to look at the playbook to work out which stage the run is in.
 
-It follows that `Next` is **refused** where the run waits on the world. That is
-the point rather than a side effect: a host fast-forwarding through dialogue must
-be able to collapse the waits that are only presentation, and must not be able to
-collapse the one that is causal.
+`Next` sent while the host is still working is refused, and nothing has to say so:
+it falls to the arm that already reports what a run at a given stage cannot take.
+The refusal matters rather than being incidental — a host fast-forwarding through
+dialogue must be able to collapse the waits that are only presentation, and must
+not be able to collapse the one that is causal.
+
+The same shape serves the pass that reads the world: a run paused for an answer is
+another stage at a node it has already reached, and the keys it is waiting on have
+nowhere else to live.
 
 ### W7 — A condition is refused, not ignored
 
@@ -230,8 +236,9 @@ as played correctly by luck.
 | --- | --- |
 | `Arrival` | Becomes a walk that carries on while the node has asked the host for nothing |
 | `NodeTraversalExtensions` | Reads the way onward — the divert when it applies, else the succession |
-| `protocol` | `Perform` carrying one effect; `Done` answering it |
-| `Runner.Step` | One arm per party: `Next` where the run waits on the player, `Done` where it waits on the world |
+| `protocol` | `Request`, the kind of event an answer is owed to; `Perform` carrying one effect; `Done` answering it |
+| `positions` | `AwaitingDone`, the stage a run is at once it has asked and not yet heard back |
+| `Runner.Step` | One arm per stage: `Next` advances from `AtNode`, `Done` from `AwaitingDone` |
 | `schema/fixture-0.schema.json` | `performed` becomes `perform` and gains its shape; `done` joins the sends |
 | `conformance/playable/an-effect` | Gains the send, and a `because` that states the ordering it now proves |
 | Harness | A `PerformMatcher` by key, and `done` among the commands a session can send |
@@ -246,7 +253,7 @@ as played correctly by luck.
 | --- | --- |
 | Unit — arrival | Each node kind: what it asks for, and which party the run then waits on |
 | Unit — traversal | Divert taken, succession fallen through to, neither available |
-| Unit — the protocol | `Next` refused where the world is awaited, and `Done` where the player is |
+| Unit — the protocol | `Next` refused where the host is still working, and `Done` where nothing was asked |
 | Unit — the guard | A ring refuses rather than hangs, and a walk the length of the playbook does not |
 | Conformance | `a-jump` and `an-effect` play end to end |
 | Property | The existing walk holds, over a generator that now draws control nodes and diverts |
