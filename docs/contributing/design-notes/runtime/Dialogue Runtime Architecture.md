@@ -333,12 +333,13 @@ client/server game an HTTP call the driver makes. LSP and DAP both solve this by
 naming the message **direction** rather than inventing a third party, and so do
 we.
 
-| Direction       | Kind                | Examples                                                        |
-|-----------------|---------------------|-----------------------------------------------------------------|
-| driver → runner | **command**         | `Next`, `Choose(i)`, `Restore(state)`                           |
-| runner → driver | **event**           | `Said`, `Asked`, `Performed`, `Invalidated`, `Ended`, `Refused` |
-| runner → driver | **reverse request** | `Resolve(keys)`, answered by `Supply(answers)`                  |
-| driver → runner | **query**           | `Describe()`, answered with the current location                |
+| Direction         | Kind                  | Examples                                                          |
+|-------------------|-----------------------|-------------------------------------------------------------------|
+| driver → runner   | **command**           | `Next`, `Choose(i)`, `Restore(state)`                             |
+| runner → driver   | **event**             | `Said`, `Asked`, `Invalidated`, `Ended`, `Refused`                |
+| runner → driver   | **reverse request**   | `Resolve(keys)`, answered by `Supply(answers)`                    |
+| runner → driver   | **reverse request**   | `Perform(effect)`, answered by `Done()`                           |
+| driver → runner   | **query**             | `Describe()`, answered with the current location                  |
 
 `Resolve` is exactly LSP's `workspace/configuration`: *the server knows what it
 needs; the client knows where to find it.*
@@ -353,9 +354,9 @@ sequenceDiagram
     D->>R: Supply({ "Alice.FavoriteColor": "red" })
     R-->>D: Said(Alice, "My favorite color is red.")
     D->>R: Next()
-    R-->>D: Performed(JoinClub("Alice", "Kung Fu"))
+    R-->>D: Perform(JoinClub("Alice", "Kung Fu"))
     Note over D: plays a 3s animation
-    D->>R: Next()
+    D->>R: Done()
     R-->>D: Asked([Ask about the inn, Say nothing])
     D->>R: Choose(1)
     R-->>D: Ended
@@ -387,9 +388,9 @@ CLI and simple Godot hosts use a driver and never see the protocol.
 
 ### The world seam
 
-Because effects are events, the world seam only **reads**. Three questions with
-three answers cannot share one stringly method — a guard needs a `bool`, a weight
-a number, and interpolation text:
+Because effects travel the protocol rather than this interface, the world seam
+only **reads**. Three questions with three answers cannot share one stringly
+method — a guard needs a `bool`, a weight a number, and interpolation text:
 
 ```csharp
 public interface IGameWorld
@@ -428,7 +429,10 @@ database vocabulary applies. A per-node `needs` batch is a **snapshot**:
 - **within** one node's evaluation — repeatable read, so a menu is internally
   consistent;
 - **between** nodes — read committed, so the world may change as the story
-  progresses, which is correct and desired.
+  progresses, which is correct and desired;
+- **across the runner's own effects** — read your own writes, so a guard that
+  follows an effect sees it. This is the one the protocol has to buy: `Perform`
+  is answered by `Done`, and the run does not go on until it is.
 
 Honestly stated: this is **snapshot isolation**, which prevents dirty and
 non-repeatable reads but permits **write skew**. Serializability is not available
@@ -665,17 +669,23 @@ world, or sit with the server and stream events to a thin client.
 Command–query separation at the world boundary, and it settles several questions at
 once:
 
-|                      | **Query** (read)             | **Effect** (write)              |
-|----------------------|------------------------------|---------------------------------|
-| Purity               | must not change the world    | changes the world               |
-| Cardinality          | may be asked 0..n times      | **exactly once**                |
-| Ordering             | order-independent, batchable | strictly ordered                |
-| On restore           | re-ask freely                | must not re-run                 |
-| On transport failure | retry is safe                | needs an ack or idempotency key |
+|                        | **Query** (read)               | **Effect** (write)                          |
+|------------------------|--------------------------------|---------------------------------------------|
+| Purity                 | must not change the world      | changes the world                           |
+| Cardinality            | may be asked 0..n times        | **exactly once**                            |
+| Ordering               | order-independent, batchable   | strictly ordered                            |
+| On restore             | re-ask freely                  | must not re-run                             |
+| On transport failure   | retry is safe                  | the effect ordinal makes retry idempotent   |
+| Before the next read   | nothing to wait for            | must have landed, which `Done` acknowledges |
 
-Batching reads is therefore legitimate and batching effects would not be. A world
-that implements a query by mutating breaks the runner's guarantees; that contract
-can be documented and conformance-tested, not enforced.
+Batching reads is therefore legitimate and batching effects would not be. The
+last two rows are separate problems that look alike: the ordinal stops a
+*retried* effect running twice, and the acknowledgement stops a *pending* effect
+being read past. An idempotency key cannot do the second job, because the
+trouble there is order, not repetition.
+
+A world that implements a query by mutating breaks the runner's guarantees; that
+contract can be documented and conformance-tested, not enforced.
 
 ### D7 — Options carry a compiled label
 

@@ -52,6 +52,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **An effect is asked for, and the run waits until it is done** — a runtime no longer reports
+  an effect and carries straight on. It asks the host to perform one and stands still until the
+  driver answers, so a guard that follows an effect reads a world the effect has already
+  changed. In the fixture schema the expectation is spelled `perform` rather than `performed`,
+  and a session answers it with `done`; a fixture written against the old spelling no longer
+  validates. See
+  [Waiting on the host](docs/contributing/design-notes/runtime/Waiting%20on%20the%20Host.md).
+
 - **A fixture advances a run with `next`, not `continue`** — the command a driver sends to move
   past what was just said is spelled `next` in the fixture schema, in every playable fixture, and
   in the corpus README. In a debugger `continue` means *run until something stops you*, which is

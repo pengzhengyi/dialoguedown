@@ -34,6 +34,8 @@
     href: runtime/Speech as Plain Text.md
   - name: Runtime Core
     href: runtime/Runtime Core.md
+  - name: Waiting on the Host
+    href: runtime/Waiting on the Host.md
 - name: Language constructs
   items:
   - name: Progression Order
