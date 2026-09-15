@@ -68,6 +68,8 @@ playbook being a designed contract rather than a dump of the compiler's graph.
       compiled playbooks.
 - [x] Readable fixtures covering every refusal the reader makes, and the
       acceptances it must not refuse.
+- [x] A refused source that opens with a `broken:` block naming and showing the
+      edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
 - [x] A C# harness that runs the readable fixtures today.
