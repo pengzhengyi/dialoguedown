@@ -15,7 +15,8 @@ namespace DialogueDown.Playbook.Edges;
 /// <param name="Condition">What must hold for the option to be available, or <c>null</c>.</param>
 [Equatable]
 public sealed partial record OptionEdge(
-    int Target, ImmutableArray<SpeechFragment> Label, Condition? Condition) : Edge(Target)
+    int Target, ImmutableArray<SpeechFragment> Label, Condition? Condition)
+    : Edge(Target), IConditional
 {
     /// <summary>
     /// Gets the speech the menu shows for this option.

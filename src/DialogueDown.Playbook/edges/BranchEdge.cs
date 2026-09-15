@@ -10,7 +10,8 @@ namespace DialogueDown.Playbook.Edges;
 /// <param name="Target">The node this arm leads to.</param>
 /// <param name="Order">Where this arm sits in the order tried, counting from zero.</param>
 /// <param name="Condition">What must hold for the arm to be taken, or <c>null</c> for an else.</param>
-public sealed record BranchEdge(int Target, int Order, Condition? Condition) : Edge(Target)
+public sealed record BranchEdge(int Target, int Order, Condition? Condition)
+    : Edge(Target), IConditional
 {
     /// <summary>
     /// Gets where this arm sits in the order the arms are tried.

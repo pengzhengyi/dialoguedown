@@ -22,7 +22,7 @@ public sealed partial record LineNode(
     int Speaker,
     ImmutableArray<SpeechFragment> Speech,
     Condition? Condition,
-    ImmutableArray<Edge> Out) : Node(Id, Out)
+    ImmutableArray<Edge> Out) : Node(Id, Out), IConditional
 {
     /// <summary>
     /// Gets who says the line, by index into the playbook's speakers.
