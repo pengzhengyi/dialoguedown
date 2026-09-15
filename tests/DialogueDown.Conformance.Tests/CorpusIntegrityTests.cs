@@ -1,3 +1,5 @@
+using DialogueDown.Conformance.Authoring;
+
 namespace DialogueDown.Conformance;
 
 /// <summary>
@@ -10,8 +12,10 @@ namespace DialogueDown.Conformance;
 /// </remarks>
 public sealed class CorpusIntegrityTests
 {
+    private const string SourceFile = "source.dialogue.md";
+
     private static readonly string[] _everyCaseShips =
-        ["fixture.json", "playbook.json", "source.dialogue.md"];
+        ["fixture.json", "playbook.json", SourceFile];
 
     public static TheoryData<string, string> EveryCase()
     {
@@ -27,6 +31,12 @@ public sealed class CorpusIntegrityTests
 
         return cases;
     }
+
+    public static TheoryData<ReadableCase> Refusals() =>
+        [.. Corpora.Readable.Cases().Where(aCase => aCase.WillRefuse)];
+
+    public static TheoryData<ReadableCase> Acceptances() =>
+        [.. Corpora.Readable.Cases().Where(aCase => aCase.WillAccept)];
 
     [Theory]
     [MemberData(nameof(EveryCase))]
@@ -46,5 +56,25 @@ public sealed class CorpusIntegrityTests
         // Without this, emptying a half would leave its share of the theory above passing on
         // nothing at all.
         Assert.All(Corpora.Halves(), half => Assert.NotEmpty(half.Cases()));
+    }
+
+    [Theory]
+    [MemberData(nameof(Refusals))]
+    public void ARefusalsSource_OpensWithAWellFormedBrokenBlock(ReadableCase aCase)
+    {
+        var source = Corpora.ReadableFolder.Read(aCase.Name, SourceFile);
+
+        var block = BrokenBlock.Parse(source);
+
+        Assert.NotEmpty(block.Note);
+    }
+
+    [Theory]
+    [MemberData(nameof(Acceptances))]
+    public void AnAcceptancesSource_CarriesNoBrokenBlock(ReadableCase aCase)
+    {
+        var source = Corpora.ReadableFolder.Read(aCase.Name, SourceFile);
+
+        Assert.DoesNotContain(BrokenBlock.Marker, source, StringComparison.Ordinal);
     }
 }

@@ -37,6 +37,11 @@
     <None Include="..\..\conformance\playable\**\*"
           Link="conformance\playable\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
+    <!-- The readable conformance cases, so a test can strip a refusal's `broken:` block and check
+         the source below it compiles to a valid playbook other than the case's own. -->
+    <None Include="..\..\conformance\readable\**\*"
+          Link="conformance\readable\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\examples\*.dialogue.md"
           Link="examples\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
@@ -44,6 +49,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown\DialogueDown.csproj" />
+    <ProjectReference Include="..\DialogueDown.Conformance\DialogueDown.Conformance.csproj" />
   </ItemGroup>
 
 </Project>
