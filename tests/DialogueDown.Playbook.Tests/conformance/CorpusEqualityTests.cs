@@ -1,4 +1,4 @@
-using System.Text.Json;
+using DialogueDown.Conformance;
 using DialogueDown.Playbook.Tests.Support;
 
 namespace DialogueDown.Playbook.Tests.Conformance;
@@ -18,7 +18,7 @@ public sealed class CorpusEqualityTests
         [.. Corpora.Readable.Cases().Where(aCase => aCase.WillAccept)];
 
     public static TheoryData<string> Playable() =>
-        [.. Corpora.PlayableFolder.Cases()];
+        [.. Corpora.Playable.Cases()];
 
     [Theory]
     [MemberData(nameof(ReadableAccepted))]
@@ -28,7 +28,8 @@ public sealed class CorpusEqualityTests
     [Theory]
     [MemberData(nameof(Playable))]
     public void APlayableCase_ReadTwice_IsOneValue(string caseName) =>
-        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(ReadPlaybook(caseName));
+        PlaybookJsonAssert.AssertReadsTwiceAsOneValue<PlaybookDocument>(
+            Corpora.Playable.Read(caseName).Playbook);
 
     [Fact]
     public void TheCorpus_OffersPlaybooksToCompare()
@@ -36,13 +37,5 @@ public sealed class CorpusEqualityTests
         // Without this, a corpus that went empty would turn every theory into a silent pass.
         Assert.NotEmpty(ReadableAccepted());
         Assert.NotEmpty(Playable());
-    }
-
-    private static string ReadPlaybook(string caseName)
-    {
-        var fixture = JsonDocument.Parse(Corpora.PlayableFolder.Read(caseName, "fixture.json"));
-        var playbook = fixture.RootElement.GetProperty("playbook").GetString()!;
-
-        return Corpora.PlayableFolder.Read(caseName, playbook);
     }
 }
