@@ -56,6 +56,22 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_ALineWhoseJumpAsksTheWorld_RefusesRatherThanFallingThrough()
+    {
+        // The jump might have been the way out, so falling through to succession would be a
+        // decision nobody made -- and it would read as an ordinary line playing correctly.
+        var context = Playbooks.Of(
+            [
+                Playbooks.LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
+                Playbooks.Line(1, speaker: 0, "Here.", next: 2),
+                new EndNode(2),
+            ],
+            ["Alice"]);
+
+        AssertRefused(Arrival.At(context, 0), "Alice.HasKey");
+    }
+
+    [Fact]
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather

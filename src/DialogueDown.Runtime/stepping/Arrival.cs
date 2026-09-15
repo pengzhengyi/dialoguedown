@@ -33,12 +33,12 @@ internal static class Arrival
     // kind it is.
     private static bool TryFindCondition(Node node, [NotNullWhen(true)] out Condition? condition)
     {
-        condition = node switch
-        {
-            LineNode line => line.Condition,
-            ControlNode control => control.Condition,
-            _ => null,
-        };
+        // A node's own condition decides whether it plays at all; an arm's decides whether that
+        // way out is taken. Nobody can answer either yet, so either one makes the node unplayable.
+        condition = (node as IConditional)?.Condition
+            ?? node.Out.OfType<IConditional>()
+                .Select(arm => arm.Condition)
+                .FirstOrDefault(found => found is not null);
 
         return condition is not null;
     }

@@ -96,6 +96,23 @@ internal static class Playbooks
     public static LineNode ConditionalLine(int id, int speaker, string text, int next, string key) =>
         new(id, speaker, [new TextFragment(text)], new KeyCondition(key), [new SuccessionEdge(next)]);
 
+    /// <summary>A line carrying a jump the world must allow, and a succession to fall through to.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="speaker">Who says it, by index.</param>
+    /// <param name="text">What is said.</param>
+    /// <param name="jumpTo">Where the jump leads when the world allows it.</param>
+    /// <param name="next">Where succession leads when it does not.</param>
+    /// <param name="key">What the world is asked before the jump fires.</param>
+    /// <returns>The node.</returns>
+    public static LineNode LineWithConditionalJump(
+        int id, int speaker, string text, int jumpTo, int next, string key) =>
+        new(
+            id,
+            speaker,
+            [new TextFragment(text)],
+            Condition: null,
+            [new DivertEdge(jumpTo, [], new KeyCondition(key)), new SuccessionEdge(next)]);
+
     /// <summary>A line node nothing leads on from.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="text">What is said.</param>
