@@ -218,6 +218,20 @@ you can build, test, and clean without memorising commands: `build` / `test`
 run the normal analyzer-enabled build/test and full frontend gates before
 pushing.
 
+### Agent commands (opencode)
+
+The same dev loop is wired up for [opencode](https://opencode.ai) in
+`opencode.jsonc`, so an agent session gets `/build`, `/verify-format`, `/test`,
+`/test-class`, `/test-filter`, `/coverage`, `/verify`, `/web-check`,
+`/web-e2e`, `/compile-script`, and `/docs-lint` without re-deriving the command
+lines — including the two flags that are easy to drop and load-bearing to keep.
+The config also points opencode at this repository's instruction files, and
+reformats nothing on its own — `dotnet format` and the web client's
+`npm run format` stay the only formatting authorities, so an agent cannot
+rewrite `docs/` prose or the committed report in `web/dist/` as a side effect
+of an edit. It deliberately sets no model, provider, or API key, so your own
+`~/.config/opencode/opencode.json` still decides those.
+
 ### Local schema validation while a schema is mid-change
 
 Every fixture and playbook JSON file points `$schema` at the **published** copy
