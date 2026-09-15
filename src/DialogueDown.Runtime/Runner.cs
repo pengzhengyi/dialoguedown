@@ -29,17 +29,18 @@ public static class Runner
         return (state.Position, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
-            (AtNode at, Next) => Advance(context, state, at),
+            (AtNode at, Next) => Advance(context, state, at.Node),
+            (AwaitingDone waiting, Done) => Advance(context, state, waiting.Node),
             (AtEnd, Next) => Refuse(state, "The run is over, so there is nothing to advance to."),
             (NotStarted, Next) => Refuse(state, "The run has not started, so there is nothing to advance from."),
             _ => Refuse(state, $"A run at {Where(state.Position)} cannot take {command.GetType().Name}."),
         };
     }
 
-    private static StepResult Advance(PlayContext context, PlayState state, AtNode at) =>
-        context.NodeAt(at.Node).OnwardTarget() is int onward
+    private static StepResult Advance(PlayContext context, PlayState state, int from) =>
+        context.NodeAt(from).OnwardTarget() is int onward
             ? Arrival.At(context, onward)
-            : Refuse(state, $"Node {at.Node} leads nowhere.");
+            : Refuse(state, $"Node {from} leads nowhere.");
 
     private static StepResult Refuse(PlayState state, string because) =>
         new(state, [new Refused(because)]);
@@ -48,6 +49,7 @@ public static class Runner
         position switch
         {
             AtNode at => $"node {at.Node}",
+            AwaitingDone waiting => $"node {waiting.Node}, waiting for the host",
             NotStarted => "no position, before the run has started",
             _ => "the end",
         };

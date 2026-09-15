@@ -123,7 +123,7 @@ internal static class Playbooks
     /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
     /// <code>
-    /// 0 => 1 => 2 => ... => length-1 => 0
+    /// node 0 -> node 1 -> node 2 -> ... -> node length-1 -> node 0
     /// </code>
     /// Nothing in it ever hands the host anything, so a walk with no bound never comes out.
     /// </remarks>
@@ -135,7 +135,7 @@ internal static class Playbooks
     /// <summary>A chain of jumps ending at the end.</summary>
     /// <remarks>
     /// <code>
-    /// 0 => 1 => 2 => ... => jumps-1 => jumps(end)
+    /// node 0 -> node 1 -> node 2 -> ... -> node jumps-1 -> node jumps, the end
     /// </code>
     /// The walk passes every node the playbook has, exactly once. One node further along and it
     /// would be passing one of them twice, which is the case a bound must not confuse this with.
@@ -144,6 +144,32 @@ internal static class Playbooks
     /// <returns>A context whose walk passes every node exactly once.</returns>
     public static PlayContext ChainOfJumps(int jumps) =>
         Of([.. Enumerable.Range(0, jumps).Select(at => (Node)Jump(at, at + 1)), new EndNode(jumps)]);
+
+    /// <summary>An effect, then a line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// `("fade in")`
+    ///
+    /// Alice: Hello.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose run waits on the host before it says anything.</returns>
+    public static PlayContext AnEffectThenALine() =>
+        Of(
+            [Effects(0, next: 1, "fade in"), Line(1, speaker: 0, "Hello.", next: 2), new EndNode(2)],
+            ["Alice"]);
+
+    /// <summary>A control node carrying effects for the host to carry out.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="next">Where succession leads once the host is done.</param>
+    /// <param name="actions">What the host is asked to carry out, in the order written.</param>
+    /// <returns>The node.</returns>
+    public static ControlNode Effects(int id, int next, params string[] actions) =>
+        new(
+            id,
+            [.. actions.Select(SpeechFragment (action) => new DefaultCommandFragment(action))],
+            Condition: null,
+            [new SuccessionEdge(next)]);
 
     /// <summary>A line node nothing leads on from.</summary>
     /// <param name="id">Its position in the playbook.</param>

@@ -100,6 +100,9 @@ internal static class Arrival
             LineNode line => new StepResult(
                 new PlayState(new AtNode(node)),
                 [new Said(context.SpeakerName(line.Speaker), line.Speech)]),
+            ControlNode control => new StepResult(
+                new PlayState(new AwaitingDone(node)),
+                [.. control.Effects.Select(Event (effect) => new Perform(effect))]),
             EndNode => new StepResult(new PlayState(new AtEnd()), [new Ended()]),
             var unplayable => Refuse(node, $"This build cannot play a {unplayable.GetType().Name} yet."),
         };

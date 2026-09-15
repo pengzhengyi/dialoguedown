@@ -105,6 +105,30 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten()
+    {
+        var context = Playbooks.Of(
+            [
+                Playbooks.Effects(0, next: 1, "fade in", "play a chime"),
+                Playbooks.Line(1, speaker: 0, "Hello.", next: 2),
+                new EndNode(2),
+            ],
+            ["Alice"]);
+
+        AssertPerformed(Arrival.At(context, 0), "fade in", "play a chime");
+    }
+
+    [Fact]
+    public void At_AControlNodeCarryingEffects_StopsThereRatherThanReadingOn()
+    {
+        // The line after it must not be reached until the host says the effects were carried out,
+        // or a guard further on would read a world the effects had not changed yet.
+        var context = Playbooks.AnEffectThenALine();
+
+        AssertAwaitingDone(Arrival.At(context, 0), 0);
+    }
+
+    [Fact]
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather

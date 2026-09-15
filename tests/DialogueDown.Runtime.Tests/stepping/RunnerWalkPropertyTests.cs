@@ -79,9 +79,18 @@ public sealed class RunnerWalkPropertyTests
 
     private static void AssertAddressable(PlayContext context, Position position)
     {
-        if (position is AtNode at)
+        // Two stages name a node, and a walk standing outside the document at either of them is
+        // the same defect.
+        var node = position switch
         {
-            Assert.InRange(at.Node, 0, context.Playbook.Nodes.Length - 1);
+            AtNode at => at.Node,
+            AwaitingDone waiting => waiting.Node,
+            _ => (int?)null,
+        };
+
+        if (node is { } addressable)
+        {
+            Assert.InRange(addressable, 0, context.Playbook.Nodes.Length - 1);
         }
     }
 }
