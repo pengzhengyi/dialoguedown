@@ -291,3 +291,21 @@ jobs:
           test "$QUALITY_RESULT" = "success"
           test "$STATIC_RESULT" = "success"
           test "$LIVE_RESULT" = "success"
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Advisory, not a required check: markdownlint gains rules between releases and
+      # this action tag is Dependabot's to bump, so a new rule arrives as a reviewable
+      # PR. A red Docs job flags drift without blocking a merge. Rules and ignores still
+      # come from .markdownlint-cli2.yaml; only the glob is passed, because the action's
+      # default covers the base directory alone.
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v24
+        with:
+          globs: "**/*.md"
