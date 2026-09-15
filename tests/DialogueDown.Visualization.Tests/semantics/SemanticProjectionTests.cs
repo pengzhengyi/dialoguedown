@@ -44,6 +44,21 @@ public sealed class SemanticProjectionTests
         Assert.Contains(graph.Nodes, node => node.EntityKey == "scene:the-forest" && node.Label == "The Forest");
     }
 
+    // A heading is a run of speech too, so a query in a scene's name is named the same way a query
+    // in a line is, and the scene reads as the writer wrote it.
+    [Fact]
+    public void Project_ASceneHeadingHoldingAQuery_NamesItInTheLabel()
+    {
+        var graph = Project(
+            """
+            # The `"Region"` Inn
+
+            Alice: Hi.
+            """);
+
+        Assert.Contains(graph.Nodes, node => node.Label == "The {Region} Inn");
+    }
+
     [Fact]
     public void Project_SceneTree_IncludesEachScenesScriptBlocks()
     {

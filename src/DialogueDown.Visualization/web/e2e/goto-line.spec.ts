@@ -206,6 +206,7 @@ test("is offered in the Playbook editor too, which is read-only but still naviga
                 json: '{\n  "a": 1,\n  "b": 2,\n  "c": 3,\n  "d": 4\n}',
                 anchors: [],
                 speakers: [],
+                nodes: [],
             },
         }),
     );

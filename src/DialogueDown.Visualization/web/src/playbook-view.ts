@@ -25,9 +25,11 @@ import type {
     PlaybookMetadataView,
     PlaybookSpeakerView,
     PlaybookAnchorView,
+    PlaybookNodeView,
     SemanticTable,
     SemanticCell,
 } from "./model";
+import { createEntityHighlighter } from "./entity-highlight";
 import { createTablePanel } from "./semantic-table";
 import { initSplitDivider } from "./source-view";
 import { initCollapsiblePanel } from "./collapse-toggle";
@@ -38,6 +40,7 @@ import { escapeHtml } from "./text";
 import { tagLabel } from "./tag-chip";
 import { lineOf, revealLine, type PlaybookTarget } from "./playbook-jump";
 import { playbookReferences, playbookReferenceKeymap } from "./playbook-references";
+import { summaryRuns, type SummaryRole } from "./summary-runs";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -88,6 +91,11 @@ export function createPlaybookView(playbook: PlaybookReport): HTMLElement {
 
     container.append(pane, divider, side);
     initSplitDivider(container, divider, "--playbook-split", "playbook-collapsed");
+
+    // Hovering a node's row or any way out that names it relates the two: the row carries the
+    // node's entity key and each way out references it, so the highlighter lights up whichever
+    // else is on screen.
+    createEntityHighlighter(container);
 
     // The right (tables) panel can be hidden to give the JSON the full width, the same way the
     // Config tab hides its speakers. The toggle lives on the divider and doubles as the
@@ -188,12 +196,16 @@ function wireJumps(root: HTMLElement, editor: EditorView): void {
     });
 }
 
-/** The three tables, in the order the format itself reads: what it is, who speaks, where jumps land. */
+/**
+ * The four tables, in the order the format itself reads: what it is, who speaks, where jumps
+ * land, and the nodes themselves.
+ */
 function tablesOf(playbook: PlaybookReport): SemanticTable[] {
     return [
         headerTable(playbook.metadata),
         speakerTable(playbook.speakers),
         anchorTable(playbook.anchors),
+        nodeTable(playbook.nodes),
     ];
 }
 
@@ -276,6 +288,92 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
         })),
         emptyText: "No scene in this playbook can be jumped to by name.",
     };
+}
+
+/**
+ * The class each summary role wears in the Nodes table. A writer's own words (`plain`) carry
+ * none, so they keep the cell's own colour while the report's scaffolding steps back.
+ */
+const SUMMARY_RUN_CLASS: Record<SummaryRole, string | undefined> = {
+    speaker: "dd-sum-speaker",
+    keyword: "dd-sum-keyword",
+    separator: "dd-sum-separator",
+    command: "dd-sum-command",
+    query: "dd-sum-query",
+    absent: "dd-sum-absent",
+    plain: undefined,
+};
+
+/** The node's summary as text plus the styled runs its kind's grammar splits it into. */
+function summaryCell(node: PlaybookNodeView): SemanticCell {
+    return {
+        text: node.summary,
+        runs: summaryRuns(node.summary, node.kind).map((run) => {
+            const className = SUMMARY_RUN_CLASS[run.role];
+            return className === undefined ? { text: run.text } : { text: run.text, className };
+        }),
+    };
+}
+
+/**
+ * The nodes themselves: each one's position, the tag the document names it by, what it holds,
+ * and where it leads — the table that answers "show me every choice", which the Kind column
+ * makes a filter rather than a reading exercise.
+ */
+function nodeTable(nodes: readonly PlaybookNodeView[]): SemanticTable {
+    return {
+        title: "Nodes",
+        columns: ["#", "Kind", "Summary", "Leads to"],
+        rows: nodes.map((node) => {
+            return {
+                entityKey: `node:${node.id}`,
+                cells: [
+                    // The node's own position, so the cell takes the reader to that node in the
+                    // JSON beside the table.
+                    { text: String(node.id), jump: { kind: "node", id: node.id } },
+                    // The kind wears the color the Dialogue Graph gives it, so the table and the
+                    // drawing name a node the same way.
+                    { text: node.kind, category: node.category },
+                    // The words a writer wrote keep the plain colour while the report's own
+                    // scaffolding steps back, so the speech is what the eye lands on.
+                    summaryCell(node),
+                    waysOut(node.targets),
+                ],
+            };
+        }),
+        emptyText: "This playbook holds no nodes.",
+        // "Show me every choice" is the question this table makes answerable, and it is a
+        // question about the node's kind.
+        facetColumns: ["Kind"],
+    };
+}
+
+/**
+ * Where a node leads.
+ *
+ * One way out makes the whole cell the target. Several offer each one on its own, so a reader can
+ * follow any of them rather than being handed whichever came first. None leaves the cell empty,
+ * which the table never makes a link. The joined text is kept in every case, because that is what
+ * the table's search and sort read. A way out also names the node it reaches, so hovering it lights
+ * up that node's row.
+ */
+function waysOut(targets: readonly number[]): SemanticCell {
+    const text = targets.join(", ");
+    const [only] = targets;
+    if (targets.length === 1 && only !== undefined) {
+        return { text, refKey: `node:${only}`, jump: { kind: "node", id: only } };
+    }
+    if (targets.length > 1) {
+        return {
+            text,
+            jumps: targets.map((target) => ({
+                text: String(target),
+                refKey: `node:${target}`,
+                target: { kind: "node", id: target },
+            })),
+        };
+    }
+    return { text };
 }
 
 /**

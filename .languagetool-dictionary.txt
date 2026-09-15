@@ -13,18 +13,39 @@ desugarer
 subgraph
 
 # Generic technical prose LanguageTool's dictionary lacks.
+bytecode
+debuggee
+eval
+FCIS
+gdb
 hardcodes
+lookahead
+passthrough
+recomputable
+reentrancy
+serializability
+stringly
 
 # Prior art named in the design notes.
 Inkle
 Articy
 QuikGraph
+inkjs
+
+# Formats and registries named in the design notes.
+glTF
+GraphML
+SchemaStore
 
 # .NET vocabulary and the test libraries.
 LINQ
 NetArchTest
 CsCheck
 Stryker
+enums
+POCOs
+serializer
+Tomlyn
 
 # Dialogue engines named in the prior-art sections.
 Ren

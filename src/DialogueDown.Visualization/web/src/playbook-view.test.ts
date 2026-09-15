@@ -51,6 +51,31 @@ function compiled(): PlaybookReport {
             },
             { default: true, tags: [] },
         ],
+        nodes: [
+            { id: 0, kind: "line", category: "speech", summary: "Alice: Which way?", targets: [1] },
+            {
+                id: 1,
+                kind: "choice",
+                category: "structure",
+                summary: "Go left || Go right",
+                targets: [2, 9],
+            },
+            {
+                id: 2,
+                kind: "control",
+                category: "call",
+                summary: "ShowBackground(tavern, firelit)",
+                targets: [9],
+            },
+            {
+                id: 9,
+                kind: "branch",
+                category: "structure",
+                summary: "IF Hero.IsBrave THEN 10 ELSE 11",
+                targets: [10, 11],
+            },
+            { id: 10, kind: "end", category: "terminal", summary: "END", targets: [] },
+        ],
     };
 }
 
@@ -242,6 +267,7 @@ describe("createPlaybookView", () => {
             "Playbook",
             "Speakers",
             "Anchors",
+            "Nodes",
         ]);
         expect(panel(view, "Speakers")?.querySelector(".table-panel-count")?.textContent).toBe("2");
         expect(panel(view, "Speakers")?.querySelector(".table-panel-search")).not.toBeNull();
@@ -252,6 +278,7 @@ describe("createPlaybookView", () => {
         const view = createPlaybookView({
             anchors: [],
             speakers: [],
+            nodes: [],
             unavailable: "The compile did not reach a playbook.",
         });
 
@@ -268,5 +295,96 @@ describe("createPlaybookView", () => {
 
         expect(view.querySelector(".playbook-divider .collapse-toggle")).not.toBeNull();
         expect(view.querySelector(".playbook-side")).not.toBeNull();
+    });
+});
+
+describe("createPlaybookView Nodes table", () => {
+    /** The header cell of a named column, where its sort button and any facet control live. */
+    function headerCell(view: HTMLElement, column: string): HTMLTableCellElement {
+        const headers = panel(view, "Nodes")?.querySelectorAll<HTMLTableCellElement>("thead th");
+        return [...(headers ?? [])].find(
+            (th) => th.querySelector(".th-sort")?.textContent === column,
+        )!;
+    }
+
+    it("is titled Nodes, with the columns a reader follows a playbook by", () => {
+        const view = createPlaybookView(compiled());
+        const table = panel(view, "Nodes");
+
+        expect(table).toBeDefined();
+        expect([...table!.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual([
+            "#",
+            "Kind",
+            "Summary",
+            "Leads to",
+        ]);
+    });
+
+    it("gives every node a row, and reads its own id rather than its place in the list", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Nodes");
+
+        // Node 9 is the fourth entry but holds a sparse id, so a table that counted positions
+        // would mislabel it.
+        expect(rows).toHaveLength(5);
+        expect(rows.map((row) => row.cells[0]?.textContent)).toEqual(["0", "1", "2", "9", "10"]);
+    });
+
+    it("shows what each node holds", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Nodes");
+
+        expect(rows[0].cells[2]?.textContent).toBe("Alice: Which way?");
+        expect(rows[3].cells[2]?.textContent).toBe("IF Hero.IsBrave THEN 10 ELSE 11");
+    });
+
+    it("colors a node's Kind with the category the Dialogue Graph gives it", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Nodes");
+
+        expect(rows.map((row) => row.cells[1]?.dataset.category)).toEqual([
+            "speech",
+            "structure",
+            "call",
+            "structure",
+            "terminal",
+        ]);
+    });
+
+    it("makes the whole cell the target when a node leads only one way", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Nodes");
+
+        expect(rows[0].cells[3]?.dataset.jump).toBe('{"kind":"node","id":1}');
+    });
+
+    it("offers each of several ways out on its own, rather than picking one", () => {
+        const cell = bodyRows(createPlaybookView(compiled()), "Nodes")[3].cells[3];
+
+        // The cell as a whole is not the target: it names two places, and a single link would
+        // announce both and deliver one.
+        expect(cell?.dataset.jump).toBeUndefined();
+        expect(cell?.textContent).toBe("10, 11");
+
+        const ways = [...(cell?.querySelectorAll<HTMLElement>("[data-jump]") ?? [])];
+        expect(ways.map((way) => way.dataset.jump)).toEqual([
+            '{"kind":"node","id":10}',
+            '{"kind":"node","id":11}',
+        ]);
+        // Each is a real button, so a keyboard reaches every destination the cell names.
+        expect(ways.map((way) => way.tagName)).toEqual(["BUTTON", "BUTTON"]);
+    });
+
+    it("leaves the way-out column empty for a node that ends the run", () => {
+        const rows = bodyRows(createPlaybookView(compiled()), "Nodes");
+
+        expect(rows[4].cells[3]?.textContent).toBe("");
+        expect(rows[4].cells[3]?.dataset.jump).toBeUndefined();
+    });
+
+    it("offers a faceted filter on Kind, the question this table makes answerable", () => {
+        const view = createPlaybookView(compiled());
+
+        const facet = headerCell(view, "Kind").querySelector(".th-facet");
+        expect(facet).not.toBeNull();
+        expect(facet?.getAttribute("aria-label")).toBe("Filter by Kind");
+        // Only a categorical column carries a funnel; a free-text column is the search box's.
+        expect(headerCell(view, "Summary").querySelector(".th-facet")).toBeNull();
     });
 });

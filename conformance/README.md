@@ -77,7 +77,7 @@ a large part of why this corpus exists.
 the messages a driver sends, interleaved with the replies a runner must give.
 
 ```json
-{ "send": "continue" },
+{ "send": "next" },
 { "expect": { "said": { "speaker": "Alice", "speech": "Hello." } } }
 ```
 

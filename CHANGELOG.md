@@ -10,6 +10,29 @@ changes easy to categorize.
 
 ### Added
 
+- **A compiled script can be played** — `DialogueDown.Runtime` is a new package that walks a
+  playbook: `Runner.Step` takes where a run stands and one command, and returns where it now
+  stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
+  keeps the loop, the world, and the save; a command the run cannot take comes back as a refusal
+  rather than an exception, because a driver may sit across a transport an exception cannot cross.
+  This first pass speaks a script's lines and ends a run. See
+  [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
+
+- **The conformance corpus is played by the C# runtime** — every playable fixture is now run
+  against the runner and held to the conversation it records, so the corpus specifies a port
+  rather than describing one. Two cases play end to end; each of the rest is named for the
+  construct nobody has taught the runner yet, so a case that starts passing and a case that stops
+  are both noticed.
+
+- **`SpeechText` reads a line's speech as plain text** — a new public helper in the playbook
+  library flattens a run of speech fragments to one line of words, dropping styling and markup.
+  Several places want the same lossy rendering and must agree on it: a conformance fixture
+  asserting what was said, a report listing a script's lines, a host with no renderer of its own.
+  It takes what the world says a query is worth, so a host passes the method it already
+  implements to answer one, and names a query nobody answered as
+  [its key in braces](docs/guide/game-state.md#where-a-query-has-no-answer-yet). See
+  [Speech as plain text](docs/contributing/design-notes/runtime/Speech%20as%20Plain%20Text.md).
+
 - **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
   node carries an edge kind it cannot act on, more than one succession, no arm where one is
   required, or no way onward at all; the schema and the conformance corpus enforce the same as far
@@ -28,6 +51,12 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **A fixture advances a run with `next`, not `continue`** — the command a driver sends to move
+  past what was just said is spelled `next` in the fixture schema, in every playable fixture, and
+  in the corpus README. In a debugger `continue` means *run until something stops you*, which is
+  the word a driver will want for that policy, and one word cannot carry both meanings at two
+  layers. A fixture written against the old spelling no longer validates.
 
 - **Click an identifier to copy it** — a speaker's `@id`, a scene's anchor, and a jump's target
   now copy on click in every table that shows one, not only in the Config tab, so a writer can
@@ -68,6 +97,14 @@ changes easy to categorize.
   playbook to an expected one reported differences that were not there. Every record now
   compares by value, its collections included. See
   [Playbook Format](docs/contributing/design-notes/runtime/Playbook%20Format.md).
+
+- **A query is drawn where its value will go, instead of a gap** — flattening a line's words had
+  no case for a query, so every surface that shows a line without running the game quietly dropped
+  it: the Dialogue Graph, the Semantic Model, and the Desugared AST tab all drew
+  `You are , and your purse holds  gold` for a line written with two queries in it. Each now
+  appears as its key in braces — `You are {HeroName}, and your purse holds {Gold} gold` — which
+  also shows a writer which parts of a line change at play time. See
+  [Where a query has no answer yet](docs/guide/game-state.md#where-a-query-has-no-answer-yet).
 
 - **A link reference definition is no longer spoken** — `[the market]: #b` and similar CommonMark
   reference definitions used to leak into the playbook as a spurious line, its text sliced from
