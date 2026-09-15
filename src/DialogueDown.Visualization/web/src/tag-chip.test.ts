@@ -56,6 +56,23 @@ describe("renderTag", () => {
     });
 });
 
+describe("renderTag — reaching the copy without a mouse", () => {
+    it("is a button, so it takes focus and answers Enter and Space", () => {
+        // Copying is an act. A `<span>` that answers only a click leaves a keyboard with no way
+        // to perform it; a real button is focusable and activates on its own.
+        const chip = renderTag({ name: "wise", reserved: false });
+
+        expect(chip.tagName).toBe("BUTTON");
+        expect((chip as HTMLButtonElement).type).toBe("button");
+    });
+
+    it("names the act, not the value, so a screen reader says what pressing it does", () => {
+        const chip = renderTag({ name: "wise", reserved: false });
+
+        expect(chip.getAttribute("aria-label")).toBe("Copy #wise");
+    });
+});
+
 describe("renderTags", () => {
     it("draws one capsule per tag", () => {
         const wrap = renderTags([

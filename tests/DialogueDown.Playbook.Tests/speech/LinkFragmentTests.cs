@@ -29,4 +29,22 @@ public sealed class LinkFragmentTests
     {
         Assert.Throws<ArgumentNullException>(() => new LinkFragment(null!, []));
     }
+
+    [Fact]
+    public void Equality_EqualLabels_AreEqual()
+    {
+        var left = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
+        var right = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentLabels_AreNotEqual()
+    {
+        var left = new LinkFragment("https://example.com", [new TextFragment("one")]);
+        var right = new LinkFragment("https://example.com", [new TextFragment("another")]);
+
+        EqualityAssert.AssertValueUnequal(left, right);
+    }
 }

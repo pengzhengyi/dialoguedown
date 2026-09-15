@@ -48,6 +48,16 @@ internal static class PlaybookJsonAssert
         where TActual : TDeclared =>
         Assert.IsType<TActual>(AssertRoundTrip<TDeclared>(json));
 
+    /// <summary>
+    /// Asserts a document read twice is one value both times — equal and hashing alike. Two
+    /// separate reads are what prove value equality rather than a shared reference.
+    /// </summary>
+    /// <typeparam name="T">The document's type.</typeparam>
+    /// <param name="json">The document to read twice.</param>
+    public static void AssertReadsTwiceAsOneValue<T>(string json)
+        where T : notnull =>
+        EqualityAssert.AssertValueEqual(AssertDeserialize<T>(json), AssertDeserialize<T>(json));
+
     /// <summary>Asserts the reader refuses a document, and returns why.</summary>
     public static JsonException AssertRefuses<T>(string json) =>
         Assert.Throws<JsonException>(

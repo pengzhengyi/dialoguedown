@@ -21,7 +21,7 @@
       }
     },
     {
-      "send": "continue"
+      "send": "next"
     },
     {
       "expect": {

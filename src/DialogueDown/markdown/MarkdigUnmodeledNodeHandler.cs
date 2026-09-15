@@ -81,6 +81,7 @@ internal sealed class MarkdigUnmodeledNodeHandler
         UnmodeledNodeKind.Table => "table",
         UnmodeledNodeKind.RawHtml => "raw HTML",
         UnmodeledNodeKind.Autolink => "autolink",
+        UnmodeledNodeKind.LinkReferenceDefinition => "link reference definition",
         _ => "piece of Markdown",
     };
 

@@ -16,6 +16,7 @@ public static class UnmodeledMarkdownNames
             [UnmodeledNodeKind.Table] = "table",
             [UnmodeledNodeKind.RawHtml] = "raw-html",
             [UnmodeledNodeKind.Autolink] = "autolink",
+            [UnmodeledNodeKind.LinkReferenceDefinition] = "link-reference-definition",
             [UnmodeledNodeKind.Other] = "other",
         };
 

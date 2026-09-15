@@ -49,12 +49,16 @@ export function tagLabel(tag: TagView): string {
 /**
  * One capsule. It carries `data-copy`, which is what the Config tab's delegated copy handler
  * looks for, so a reader can lift the tag straight into a script exactly as it is written.
+ *
+ * The capsule is a button because copying is an act, and an act must be reachable without a mouse.
  */
 export function renderTag(tag: TagView): HTMLElement {
-    const chip = document.createElement("span");
+    const chip = document.createElement("button");
+    chip.type = "button";
     chip.className = `dd-tag ${tag.reserved ? "dd-tag-reserved" : "dd-tag-custom"}`;
     chip.dataset.copy = tagLabel(tag);
     chip.title = tagLabel(tag);
+    chip.setAttribute("aria-label", `Copy ${tagLabel(tag)}`);
 
     // A reserved name is one of a closed set, so its violet already identifies it; only a
     // writer's own tag needs the dot to tell it from the next one.

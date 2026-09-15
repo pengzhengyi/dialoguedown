@@ -20,6 +20,7 @@ import {
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings";
 import { renderTags, tagLabel } from "./tag-chip";
 import { wireClickToCopy } from "./copy-on-click";
+import { cellAction } from "./cell-action";
 
 // The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
 // rather than bundling every feature: sorting, per-column (facet) filtering, and the global
@@ -489,15 +490,18 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
     // A cell that stands for a place in a document offers to take the reader there. It is
     // marked rather than wired here: the table does not know what document, so the surface that
     // built the cell listens for the click.
+    let action: string | undefined;
     if (cell.jump && cell.text !== "") {
         td.classList.add("dd-jump");
         td.dataset.jump = JSON.stringify(cell.jump);
         td.title = "Click to reveal in the playbook";
+        action = `Reveal ${cell.text} in the playbook`;
     }
     if (cell.copyable && cell.text !== "") {
         td.dataset.copy = cell.text;
         td.classList.add("dd-copy");
         td.title = "Click to copy";
+        action = `Copy ${cell.text}`;
     }
     if (cell.entityKey) td.setAttribute("data-entity-key", cell.entityKey);
     if (cell.refKey) td.setAttribute("data-ref-key", cell.refKey);
@@ -505,6 +509,33 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         td.dataset.category = cell.category;
         td.style.setProperty("--cell-accent", colorOf(cell.category));
     }
+    // A cell naming several destinations offers each one rather than picking one for the reader.
+    // The delegated listener finds whichever control was pressed, because it looks for the
+    // nearest element carrying the jump data.
+    if (cell.jumps && cell.jumps.length > 0) {
+        cell.jumps.forEach((jump, index) => {
+            if (index > 0) {
+                td.appendChild(document.createTextNode(", "));
+            }
+            const control = cellAction(`Reveal ${jump.text} in the playbook`);
+            control.dataset.jump = JSON.stringify(jump.target);
+            if (jump.refKey) control.setAttribute("data-ref-key", jump.refKey);
+            control.classList.add("dd-jump");
+            control.title = "Click to reveal in the playbook";
+            control.textContent = jump.text;
+            td.appendChild(control);
+        });
+        return td;
+    }
+
+    // A cell drawn in styled runs. The split is only for drawing: the highlight is still found in
+    // the cell's own text and then laid across the runs, so searching keeps marking a cell that
+    // has gained colour.
+    if (cell.runs && cell.runs.length > 0) {
+        drawRuns(td, cell, query);
+        return td;
+    }
+
     // A tag cell is drawn as capsules. Its `text` stays the plain rendering, so search and sort
     // still read the cell; only the drawing differs.
     if (cell.tags) {
@@ -512,12 +543,17 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         return td;
     }
 
+    // A cell that acts when pressed puts its text inside a button, so a keyboard can reach the
+    // act. The cell keeps `data-copy`/`data-jump`, so the whole cell stays the mouse's target and
+    // the button's own click bubbles to the same listener.
+    const host = action ? cellAction(action) : td;
     const ranges = query ? findMatches(cell.text, query.query, query) : [];
     if (ranges.length === 0) {
-        td.textContent = cell.text;
+        host.textContent = cell.text;
     } else {
-        highlightInto(td, cell.text, ranges);
+        highlightInto(host, cell.text, ranges);
     }
+    if (host !== td) td.appendChild(host);
     return td;
 }
 
@@ -536,6 +572,36 @@ function highlightInto(td: HTMLElement, text: string, ranges: MatchRange[]): voi
     }
     if (cursor < text.length) {
         td.appendChild(document.createTextNode(text.slice(cursor)));
+    }
+}
+
+/**
+ * Draws a cell as its styled runs, keeping the search highlight. The match ranges are found once
+ * over the cell's own text and then laid across whichever run covers them; a range that straddles
+ * two runs is drawn as a marked stretch in each.
+ */
+function drawRuns(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
+    const ranges = query ? findMatches(cell.text, query.query, query) : [];
+    let emitted = 0;
+    for (const run of cell.runs ?? []) {
+        const start = emitted;
+        const end = start + run.text.length;
+        emitted = end;
+        // Each global range overlapping this run is translated into the run's own coordinates.
+        const local = ranges
+            .filter((range) => range.start < end && range.end > start)
+            .map((range): MatchRange => ({
+                start: Math.max(range.start, start) - start,
+                end: Math.min(range.end, end) - start,
+            }));
+        if (run.className) {
+            const span = document.createElement("span");
+            span.className = run.className;
+            highlightInto(span, run.text, local);
+            td.appendChild(span);
+        } else {
+            highlightInto(td, run.text, local);
+        }
     }
 }
 

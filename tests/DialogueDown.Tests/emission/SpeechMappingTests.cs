@@ -86,9 +86,9 @@ public sealed class SpeechMappingTests
     [Fact]
     public void Write_EveryFragmentTheAstCanHold_ProducesOne()
     {
-        MappingAssert.AssertCoversEveryMember<Ast.InlineFragment>([.. Speakable(), .. Flow()]);
+        MappingAssert.AssertCoversEveryMember<Ast.InlineFragment>([.. SpeakableFragments(), .. FlowFragments()]);
 
-        Assert.All(Speakable(), fragment => Assert.NotNull(SpeechMapping.Write(fragment)));
+        Assert.All(SpeakableFragments(), fragment => Assert.NotNull(SpeechMapping.Write(fragment)));
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class SpeechMappingTests
         // A jump becomes an edge and a condition becomes a guard. One still in the speech would
         // be read out to the player, so say so instead of showing it.
         Assert.All(
-            Flow(),
+            FlowFragments(),
             fragment => Assert.Throws<InvalidOperationException>(
                 () => SpeechMapping.Write(fragment)));
     }
@@ -130,20 +130,4 @@ public sealed class SpeechMappingTests
     private static SpeechFragment Styled(Ast.SpeechStyle style) =>
         SpeechMapping.Write(StyledText(style));
 
-    private static IReadOnlyList<Ast.InlineFragment> Speakable() =>
-    [
-        Text("plain"),
-        StyledText(Ast.SpeechStyle.Italic),
-        Link("#inn"),
-        Image("inn.png"),
-        LineBreak(),
-        Query("Key"),
-        DefaultCommand("wait"),
-        CustomCommand("shake"),
-        ReservedTag("aside"),
-        CustomTag("mood", "wry"),
-    ];
-
-    private static IReadOnlyList<Ast.InlineFragment> Flow() =>
-        [Condition("IsCurious"), Jump("#the-inn"), JumpIndicator()];
 }

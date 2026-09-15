@@ -329,10 +329,18 @@ function renderSpeakers(speakers: ConfiguredSpeakerView[]): HTMLElement {
     return wrapper;
 }
 
-/** A value cell whose displayed text is exactly what a click copies (name, `@id`, …). */
+/**
+ * A value cell whose displayed text is exactly what a click copies (name, `@id`, …).
+ *
+ * The text sits in a button so the copy is reachable without a mouse; the cell keeps `data-copy`,
+ * so the whole cell stays the mouse's target and the button's click bubbles to the same listener.
+ */
 function copyCell(text: string): string {
     const safe = escapeHtml(text);
-    return `<td class="config-copy" data-copy="${safe}" title="Click to copy">${safe}</td>`;
+    return (
+        `<td class="config-copy" data-copy="${safe}" title="Click to copy">` +
+        `<button type="button" class="cell-action" aria-label="Copy ${safe}">${safe}</button></td>`
+    );
 }
 
 function speakerCells(speaker: ConfiguredSpeakerView): string {

@@ -26,6 +26,7 @@ import {
     type Point,
 } from "./edge-path";
 import { bandsOf, type PlacedNode } from "./region-bands";
+import { rankByRegion } from "./region-layout";
 import { foldRegions, regionNodeIdFor, type FoldedGraph } from "./region-fold";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
@@ -119,6 +120,8 @@ interface CrossLinkTrack {
     lane: number;
     corridor: number;
     port: number;
+    /** The gutter column it drops in — clear of every label, whichever way it is headed. */
+    dropX: number;
 }
 
 /**
@@ -134,6 +137,15 @@ const COLUMN_STEP = 320;
 const CORRIDOR_AIR = 18;
 const CORRIDOR_GUTTER = MAX_CORRIDOR_REACH + CORRIDOR_AIR;
 const LABEL_BUDGET = COLUMN_STEP - LABEL_INSET - CORRIDOR_GUTTER;
+
+/**
+ * Where in a gutter a cross-link drops.
+ *
+ * The gutter is shared: climbs occupy its last {@link MAX_CORRIDOR_REACH} pixels, fanning back
+ * from the column they serve. A drop therefore takes the near end instead, so the two kinds of
+ * vertical never stand in the same place.
+ */
+const DROP_INSET = 6;
 
 /**
  * A scene-tree backbone node — a scene or the implicit document root. The Semantic tab
@@ -738,10 +750,27 @@ export function createTreeView(
                             lane: floor + depth * LANE_STEP,
                             corridor: queued,
                             port: portOffset(queued),
+                            dropX: dropColumn(edge, positionById),
                         },
                     ] as const;
                 }),
         );
+    }
+
+    /**
+     * The column a cross-link drops in, on its way out of its row.
+     *
+     * A label runs rightwards from its dot and is clipped so it stops before the column's gutter,
+     * which leaves that gutter free of words on *every* row — the one place a vertical can pass
+     * a row without striking it. A route headed along the flow takes the gutter at the end of its
+     * source's own column, having first cleared its own words; a route doubling back takes the
+     * gutter before that column, where there is nothing to clear.
+     */
+    function dropColumn(edge: DisplayEdge, positionById: Map<string, TreeNode>): number {
+        const from = positionById.get(edge.fromId)!.y;
+        const to = positionById.get(edge.toId)!.y;
+        const gutterStart = from + (to > from ? COLUMN_STEP : 0) - CORRIDOR_GUTTER;
+        return gutterStart + DROP_INSET;
     }
 
     // Ports fan either side of the target's own row — 0, above, below, further above — so the
@@ -1270,9 +1299,40 @@ export function createTreeView(
 
     /* --- rendering --- */
 
+    /**
+     * Lift each scene onto rows of its own, so the band drawn behind it never crosses another's.
+     *
+     * The tree layout reads only the shape of the hierarchy, so two scenes whose flow crosses come
+     * back interleaved. This rewrites the row each node sits on — never its column — leaving the
+     * drawing's columns and reading direction exactly as the layout arranged them.
+     *
+     * The scenes are stacked in the order the stage names them, which is the order the legend
+     * lists, and that order does not change when a scene is folded away.
+     */
+    function placeRegionTiers(nodes: readonly TreeNode[]): void {
+        if (foldableRegions.length === 0) {
+            return;
+        }
+        const placed = rankByRegion(
+            nodes.map((node) => ({
+                id: node.data.id,
+                region: node.data.region,
+                row: node.x,
+            })),
+            foldableRegions,
+        );
+        for (const node of nodes) {
+            const row = placed.get(node.data.id);
+            if (row !== undefined) {
+                node.x = row;
+            }
+        }
+    }
+
     function update(): void {
         layout(root);
         const nodes = root.descendants() as TreeNode[];
+        placeRegionTiers(nodes);
         const positionById = new Map(nodes.map((node) => [node.data.id, node]));
 
         // Nodes are placed and measured before any line is drawn, because a line's shape depends

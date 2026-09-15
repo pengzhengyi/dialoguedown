@@ -50,4 +50,28 @@ public sealed class StyledTextFragmentTests
 
         Assert.Throws<ArgumentException>(Uninitialized);
     }
+
+    [Fact]
+    public void Equality_EqualNestedChildren_AreEqual()
+    {
+        // Styling nests, so equality has to recurse: equal children make equal styling, all the
+        // way down.
+        var left = new StyledTextFragment(
+            SpeechStyle.Bold,
+            [new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")])]);
+        var right = new StyledTextFragment(
+            SpeechStyle.Bold,
+            [new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")])]);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentChildText_AreNotEqual()
+    {
+        var left = new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")]);
+        var right = new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("quite")]);
+
+        EqualityAssert.AssertValueUnequal(left, right);
+    }
 }

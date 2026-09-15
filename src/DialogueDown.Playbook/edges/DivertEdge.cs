@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Speech;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Edges;
 
@@ -12,7 +13,8 @@ namespace DialogueDown.Playbook.Edges;
 /// <param name="Target">The node control transfers to.</param>
 /// <param name="Label">What the writer called this jump.</param>
 /// <param name="Condition">What must hold for the jump to fire, or <c>null</c>.</param>
-public sealed record DivertEdge(
+[Equatable]
+public sealed partial record DivertEdge(
     int Target, ImmutableArray<SpeechFragment> Label, Condition? Condition) : Edge(Target)
 {
     /// <summary>
@@ -23,6 +25,7 @@ public sealed record DivertEdge(
     /// what that line says, so without this the words are gone. A host may show them, use them as
     /// a hint, or ignore them.
     /// </remarks>
+    [OrderedEquality]
     [JsonPropertyOrder(2)]
     [JsonPropertyName("label")]
     public ImmutableArray<SpeechFragment> Label { get; } = Label.OrEmpty();

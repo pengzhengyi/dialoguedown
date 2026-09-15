@@ -5,16 +5,16 @@
   "because": "the arms converge afterwards, so the only thing that can distinguish them is the line the chosen arm speaks",
   "session": [
     { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "asked": [
         { "label": "Go east", "available": true },
         { "label": "Go west", "available": true }
       ] } },
     { "send": { "choose": 0 } },
     { "expect": { "said": { "speech": "Go east" } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "said": { "speaker": "Alice", "speech": "Onward." } } },
-    { "send": "continue" },
+    { "send": "next" },
     { "expect": { "ended": {} } }
   ]
 }

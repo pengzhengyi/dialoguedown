@@ -88,15 +88,31 @@ public sealed class AssemblyBoundaryTests
     }
 
     [Fact]
-    public void Playbook_DependsOnNothing()
+    public void Runtime_DependsOnlyOn_ThePlaybook()
+    {
+        // A game embeds a playbook and a runner. If the runner reached for the compiler, every
+        // shipped game would carry the Markdown parser with it -- and a runtime in another
+        // language could never be held to the same corpus, because half of what it must
+        // reimplement would be a compiler.
+        Types.InAssembly(Architecture.RuntimeAssembly)
+            .Should()
+            .OnlyHaveDependencyOn("System", Architecture.Playbook, Architecture.Runtime)
+            .GetResult()
+            .ShouldPass();
+    }
+
+    [Fact]
+    public void Playbook_DependsOnlyOn_TheFrameworkAndGenerator()
     {
         // The playbook is the contract between a compiler and a runtime, so it must
         // belong to neither. A game embeds it alongside a runner; if it reached for
         // the compiler, every shipped game would carry the Markdown parser, the TOML
-        // reader, and the diagnostics engine with it.
+        // reader, and the diagnostics engine with it. The equality generator is the one
+        // allowed exception: it writes the records' value equality at build time, and the
+        // generated code calls its small comparer assembly.
         Types.InAssembly(Architecture.PlaybookAssembly)
             .Should()
-            .OnlyHaveDependencyOn("System", Architecture.Playbook)
+            .OnlyHaveDependencyOn("System", Architecture.Playbook, "Generator.Equals")
             .GetResult()
             .ShouldPass();
     }

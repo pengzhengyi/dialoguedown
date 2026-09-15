@@ -32,6 +32,10 @@
     href: runtime/Node Outward Shape.md
   - name: Branch Arm Order
     href: runtime/Branch Arm Order.md
+  - name: Speech as Plain Text
+    href: runtime/Speech as Plain Text.md
+  - name: Runtime Core
+    href: runtime/Runtime Core.md
 - name: Language constructs
   items:
   - name: Progression Order
@@ -126,6 +130,8 @@
       href: visualization/report/Unavailable Stage Tabs.md
     - name: Playbook Tab
       href: visualization/report/Playbook Tab.md
+    - name: Playbook Nodes Table
+      href: visualization/report/Playbook Nodes Table.md
   - name: Source editor
     items:
     - name: Unmodeled Markdown Highlighting
@@ -160,6 +166,8 @@
       href: visualization/graph/Live Visualization - Node Inspector.md
     - name: Live Visualization — Reverse Jump
       href: visualization/graph/Live Visualization - Reverse Jump.md
+    - name: Region-Aware Graph Layout
+      href: visualization/graph/Region-Aware Graph Layout.md
   - name: Live session
     items:
     - name: Live Visualization — Explorer Toggle

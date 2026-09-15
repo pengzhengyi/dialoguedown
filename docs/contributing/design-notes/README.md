@@ -102,7 +102,9 @@ flowchart LR
     PF --> CC["3. Conformance Corpus"]
     CC --> NOS["4. Node Outward Shape"]
     NOS --> BAO["5. Branch Arm Order"]
-    BAO --> RUN(["runner, players,<br/>adapters"])
+    BAO --> SPT["6. Speech as Plain Text"]
+    SPT --> RC["7. Runtime Core"]
+    RC --> RUN(["the rest of the runner,<br/>players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -112,6 +114,8 @@ flowchart LR
 | 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
 | 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
 | 5 | [Branch Arm Order](./runtime/Branch%20Arm%20Order.md) | A `branch`'s arms in ascending `order` with the `else` last, stated in the reader and mirrored in the schema | Implemented |
+| 6 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
+| 7 | [Runtime Core](./runtime/Runtime%20Core.md) | The first pass of the C# runner: the state, the step that advances it, and the harness that holds it to the corpus | Implemented |
 
 ### Language constructs
 
@@ -219,6 +223,7 @@ Configuration tab and the folding contract every surface shares.
 | 45 | [Copyable Identifiers](./visualization/report/Copyable%20Identifiers.md) | An `@id`, an anchor, and a jump target copy on click; prose does not | Implemented |
 | 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
 | 47 | [Following an Index in the Playbook](./visualization/report/Following%20an%20Index%20in%20the%20Playbook.md) | A node or speaker reference in the JSON is a link: click it, or press F12, to reveal the definition it names | Implemented |
+| 49 | [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Proposed |
 
 #### Source editor
 
@@ -250,6 +255,7 @@ and how a scene folds.
 | 13 | [Live Visualization — Node Inspector](./visualization/graph/Live%20Visualization%20-%20Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
 | 30 | [Live Visualization — Reverse Jump](./visualization/graph/Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
 | 37 | [Dialogue Graph — Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through, from a chevron separate from the band's own click | Implemented |
+| 48 | [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows after the tree layout, so no two scene bands can be drawn across each other | Implemented |
 
 #### Live session
 

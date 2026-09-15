@@ -1,4 +1,6 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 namespace DialogueDown.Playbook.Tests.Nodes;
 
@@ -39,5 +41,23 @@ public sealed class LineNodeTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new LineNode(0, -1, [], Condition: null, []));
+    }
+
+    [Fact]
+    public void Equality_EqualSpeech_AreEqual()
+    {
+        var left = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, [new SuccessionEdge(1)]);
+        var right = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, [new SuccessionEdge(1)]);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentSpeech_AreNotEqual()
+    {
+        var left = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, []);
+        var right = new LineNode(0, 0, [new TextFragment("goodbye")], Condition: null, []);
+
+        EqualityAssert.AssertValueUnequal(left, right);
     }
 }

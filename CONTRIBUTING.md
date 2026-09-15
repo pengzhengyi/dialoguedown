@@ -206,6 +206,28 @@ trace, the screenshot, and Playwright's error context. This matters most for a
 failure that will not reproduce locally, where the trace shows what the page
 actually did instead of costing a re-run to observe.
 
+### Markdown
+
+Every Markdown file is linted by
+[markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2), configured by
+[`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). Run it from the repository root
+with no arguments — the config carries the globs and the ignores, so the bare command
+lints exactly what CI's **Docs** job does:
+
+```bash
+npx --yes markdownlint-cli2
+```
+
+The config turns off rules this project violates by intent (design-note prose wrapping,
+the README's HTML banner, a changelog's repeated headings) and skips generated output,
+the web client, and `*.dialogue.md` scripts, whose `#` headings are scenes rather than
+titles. Pass `--fix` to apply the fixes it can.
+
+The **Docs** job runs the same tool through
+[its action](https://github.com/DavidAnson/markdownlint-cli2-action), which Dependabot
+keeps current. That check is advisory — a release that adds a rule opens a PR to adopt
+rather than blocking a merge — so a red **Docs** job is worth fixing, not a broken build.
+
 ### Editor tasks (VS Code)
 
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so
@@ -217,6 +239,56 @@ you can build, test, and clean without memorising commands: `build` / `test`
 `verify: all` (both stacks), and `clean` (remove build/test artifacts). Always
 run the normal analyzer-enabled build/test and full frontend gates before
 pushing.
+
+### Agent commands (opencode)
+
+The same dev loop is wired up for [opencode](https://opencode.ai) in
+`opencode.jsonc`, so an agent session gets `/build`, `/verify-format`, `/test`,
+`/test-class`, `/test-filter`, `/coverage`, `/verify`, `/web-check`,
+`/web-e2e`, `/compile-script`, and `/docs-lint` without re-deriving the command
+lines — including the two flags that are easy to drop and load-bearing to keep.
+The config also points opencode at this repository's instruction files, and
+reformats nothing on its own — `dotnet format` and the web client's
+`npm run format` stay the only formatting authorities, so an agent cannot
+rewrite `docs/` prose or the committed report in `web/dist/` as a side effect
+of an edit. It deliberately sets no model, provider, or API key, so your own
+`~/.config/opencode/opencode.json` still decides those.
+
+### Local schema validation while a schema is mid-change
+
+Every fixture and playbook JSON file points `$schema` at the **published** copy
+under `https://pengzhengyi.github.io/dialoguedown/schema/`, which
+[`pages.yml`](.github/workflows/pages.yml) rebuilds from `main` on deploy. An
+editor that resolves `$schema` over the network (VS Code's built-in JSON
+validation does) therefore validates against whatever is live on `main` — one
+version behind on any branch that is itself changing `schema/*.schema.json`,
+which shows up as a real-looking "value not accepted" error for a value the
+branch's own local schema already allows.
+
+`.vscode/settings.json` is intentionally untracked (see `.gitignore`), so
+there is no shared fix to commit for this. If it bites you while iterating on
+a schema, add a local override to your own `.vscode/settings.json`:
+
+```json
+"json.schemas": [
+  {
+    "fileMatch": ["conformance/**/fixture.json"],
+    "url": "./schema/fixture-0.schema.json"
+  },
+  {
+    "fileMatch": [
+      "conformance/**/playbook.json",
+      "tests/DialogueDown.Tests/emission/goldens/*.verified.json"
+    ],
+    "url": "./schema/playbook-0.schema.json"
+  }
+]
+```
+
+This points your editor at the workspace copy instead of the published one, so
+validation matches what the branch actually ships. It is a no-op once the
+published schema catches up after merge, so there is no need to remove it
+afterward.
 
 ## Commit style
 

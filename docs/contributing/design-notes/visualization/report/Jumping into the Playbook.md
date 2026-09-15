@@ -99,5 +99,7 @@ clicks the anchor's node and asserts both the line landed on **and that it is on
 - **Jumping the other way.** Clicking a node in the JSON could highlight its row in the tables.
   The Semantic Model already cross-links on hover, so the seam exists, but the reverse direction
   has not been asked for.
-- **Keyboard reach.** A jump is a click, and a table cell is not focusable — the same gap
-  [Copyable Identifiers](./Copyable%20Identifiers.md) records, and worth one pass covering both.
+- **Keyboard reach.** Resolved: a jumping cell puts its text in a real button, so Tab reaches it
+  and Enter takes it — see
+  [Reaching a cell's act](./Copyable%20Identifiers.md#reaching-a-cells-act), which covers the
+  copying cells in the same pass.

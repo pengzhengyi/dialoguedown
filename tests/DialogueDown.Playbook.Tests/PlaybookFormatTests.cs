@@ -44,4 +44,22 @@ public sealed class PlaybookFormatTests
         var error = Assert.Throws<ArgumentOutOfRangeException>(NegativeVersion);
         Assert.Contains("-1", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Equality_EqualCapabilities_AreEqual()
+    {
+        var left = new PlaybookFormat(0, [Capabilities.Core], ["source-map"]);
+        var right = new PlaybookFormat(0, [Capabilities.Core], ["source-map"]);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentCapabilities_AreNotEqual()
+    {
+        var left = new PlaybookFormat(0, [Capabilities.Core], []);
+        var right = new PlaybookFormat(0, [Capabilities.Core, "cross-file-jump"], []);
+
+        EqualityAssert.AssertValueUnequal(left, right);
+    }
 }

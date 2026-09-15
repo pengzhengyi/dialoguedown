@@ -29,8 +29,14 @@ export interface Band {
 /** How far a band reaches beyond the nodes it holds. Room above for the band's own name. */
 const PAD_LEFT = 16;
 const PAD_RIGHT = 16;
-const PAD_TOP = 26;
-const PAD_BOTTOM = 18;
+
+/**
+ * How far a band reaches above and below its nodes. Exported because the layout that separates
+ * two regions has to clear both — a gap that only parts the node rows still leaves the padded
+ * bands touching.
+ */
+export const PAD_TOP = 26;
+export const PAD_BOTTOM = 18;
 
 /** How many tints the bands cycle through before repeating. */
 export const REGION_TINTS = 5;

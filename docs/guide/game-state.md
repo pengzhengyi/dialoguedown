@@ -9,6 +9,7 @@ Part of the [script language specification](script-language.md).
 ## Table of contents
 
 - [Queries](#queries)
+  - [Where a query has no answer yet](#where-a-query-has-no-answer-yet)
 - [Commands](#commands)
 - [Quoting a key](#quoting-a-key)
 
@@ -72,6 +73,23 @@ Alice: My favorite color is red.
 > [!TIP]
 > A query can also drive a random choice's odds — see
 > [Dynamic weights](structure-and-flow.md#dynamic-weights).
+
+### Where a query has no answer yet
+
+Only a running game can say what a query is worth. Tools that show your script
+without running it — the compilation report's graph and its tables — write the
+query's key in braces instead:
+
+```markdown
+Alice: My favorite color is {Alice.FavoriteColor}.
+```
+
+Read that as "a value goes here." It tells you which parts of a line change at
+play time, which is exactly what you cannot see by reading the words alone.
+
+The braces are how a tool shows you an unanswered query. They are not script
+syntax, so typing `{Alice.FavoriteColor}` into a script writes those characters
+and nothing more — write the query as a code span to ask the game a question.
 
 ## Commands
 

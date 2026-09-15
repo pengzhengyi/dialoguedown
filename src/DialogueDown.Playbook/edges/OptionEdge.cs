@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Common;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Speech;
+using Generator.Equals;
 
 namespace DialogueDown.Playbook.Edges;
 
@@ -12,7 +13,8 @@ namespace DialogueDown.Playbook.Edges;
 /// <param name="Target">The node this option leads to.</param>
 /// <param name="Label">The speech the menu shows for this option.</param>
 /// <param name="Condition">What must hold for the option to be available, or <c>null</c>.</param>
-public sealed record OptionEdge(
+[Equatable]
+public sealed partial record OptionEdge(
     int Target, ImmutableArray<SpeechFragment> Label, Condition? Condition) : Edge(Target)
 {
     /// <summary>
@@ -22,6 +24,7 @@ public sealed record OptionEdge(
     /// Compiled in rather than discovered, so presenting a menu never reads the target node —
     /// which keeps a menu free of the side effects a peek could trigger.
     /// </remarks>
+    [OrderedEquality]
     [JsonPropertyOrder(2)]
     [JsonPropertyName("label")]
     public ImmutableArray<SpeechFragment> Label { get; } = Label.OrEmpty();

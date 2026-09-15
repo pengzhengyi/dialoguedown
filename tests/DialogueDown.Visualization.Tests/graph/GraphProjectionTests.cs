@@ -51,6 +51,23 @@ public sealed class GraphProjectionTests
         Assert.Equal("speech", graph.Nodes[0].Category);
     }
 
+    // Only a running game can answer a query, so every place the drawing shows the words names the
+    // query instead, and a reader sees which parts of the script the game fills in.
+    [Fact]
+    public void Project_AQueryInALineOrASceneName_IsNamed()
+    {
+        var graph = Project(
+            """
+            # The `"Region"` Inn
+
+            Alice: You are `"HeroName"`.
+            """);
+
+        Assert.Equal("Alice: You are {HeroName}.", graph.Nodes[0].Label);
+        Assert.Equal("The {Region} Inn", graph.Nodes[0].Region);
+        Assert.Equal("The {Region} Inn", Assert.Single(graph.Regions).Name);
+    }
+
     [Fact]
     public void Project_TheEndSentinel_IsLabeledEnd()
     {

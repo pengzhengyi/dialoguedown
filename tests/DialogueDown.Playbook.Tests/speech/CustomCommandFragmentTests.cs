@@ -42,4 +42,22 @@ public sealed class CustomCommandFragmentTests
     {
         Assert.Throws<ArgumentNullException>(() => new CustomCommandFragment(null!, []));
     }
+
+    [Fact]
+    public void Equality_EqualArguments_AreEqual()
+    {
+        var left = new CustomCommandFragment("JoinClub", ["Alice", "Kung Fu"]);
+        var right = new CustomCommandFragment("JoinClub", ["Alice", "Kung Fu"]);
+
+        EqualityAssert.AssertValueEqual(left, right);
+    }
+
+    [Fact]
+    public void Equality_DifferentArguments_AreNotEqual()
+    {
+        var left = new CustomCommandFragment("JoinClub", ["Alice", "Kung Fu"]);
+        var right = new CustomCommandFragment("JoinClub", ["Bob", "Kung Fu"]);
+
+        EqualityAssert.AssertValueUnequal(left, right);
+    }
 }

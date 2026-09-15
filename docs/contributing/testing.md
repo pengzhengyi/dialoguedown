@@ -24,13 +24,14 @@ This page covers *which* test to write; that one covers *how* to run it.
   - [Browser tests](#browser-tests)
   - [Repository infrastructure tests](#repository-infrastructure-tests)
 - [Which kind should I write?](#which-kind-should-i-write)
+- [Coverage that grows with the feature](#coverage-that-grows-with-the-feature)
 - [Under consideration](#under-consideration)
 
 ## The shape of the suite
 
-Roughly **3,900 .NET tests** and **900 frontend tests**, weighted heavily toward
-fast unit tests, with a thin layer of **32 browser spec files** at the top. The
-whole .NET suite runs in about 20 seconds, which is deliberate: it is meant to be
+Roughly **4,500 .NET tests** and **1,100 frontend tests**, weighted heavily toward
+fast unit tests, with a thin layer of **36 browser spec files** at the top. The
+whole .NET suite runs in under 20 seconds, which is deliberate: it is meant to be
 run constantly.
 
 Most of that count is ordinary example-based unit tests. The interesting part is
@@ -47,7 +48,10 @@ are the reason this page exists.
 | `DialogueDown.Visualization.Live.Tests` | The served report — the file watcher, the session, and saving back to disk. |
 | `DialogueDown.Cli.Tests` | The `ddown` commands, their options, and their exit codes. |
 | `DialogueDown.ConfigurationLoader.Tests` | Reading `dialogue.toml`. |
-| `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the conformance harness that runs the corpus. |
+| `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the readable half of the corpus. |
+| `DialogueDown.Runtime.Tests` | The runner — stepping, positions, the protocol — and the harness that plays the corpus against it. |
+| `DialogueDown.Conformance` | Not tests: the reader both halves of the corpus load their cases with. |
+| `DialogueDown.Conformance.Tests` | That reader, and the corpus's own integrity. |
 | `DialogueDown.Architecture.Tests` | The boundaries between all of the above. |
 | `src/DialogueDown.Visualization/web` | The report client: unit tests beside the source, browser tests under `e2e/` and `e2e-live/`. |
 
@@ -97,11 +101,12 @@ every generated script that compiles, `PlaybookRoundTripTests` writes a playbook
 reads it with `PlaybookReader`, and writes it again: the two renderings must
 match.
 
-Equality is taken over the serialized JSON, not over the document. A
-`PlaybookDocument` holds its nodes in `ImmutableArray`, whose record equality
-compares the underlying array **by reference**, so two structurally identical
-documents are never equal. Re-serializing compares what a file would actually
-hold.
+A round trip compares the two serialized JSON renderings, not the document objects:
+`PlaybookRoundTripTests` writes a playbook, reads it back, and writes it again, and
+the JSON text must match. Comparing the text is deliberate — it also catches a change
+in how a field is spelled or ordered, which comparing objects would hide. The
+playbook records compare by value as well, so a test asking a question about the
+model can compare objects directly.
 
 A round trip needs no oracle beyond the input itself, and a counterexample is
 directly a bug report: either the reader lost something the writer emitted, or
@@ -150,8 +155,8 @@ it happens to and the source that playbook was compiled from.
 
 | Half | Asks | Run by |
 | --- | --- | --- |
-| `readable/` | Can a reader load this document at all? | `ReadableConformanceTests`, today |
-| `playable/` | Does a runner hold the same conversation? | the runtime, when it lands |
+| `readable/` | Can a reader load this document at all? | `ReadableConformanceTests` |
+| `playable/` | Does a runner hold the same conversation? | `PlayableConformanceTests` |
 
 The fixtures are **hand-authored from the design**. That is the whole point: a
 corpus recorded from an implementation can only prove that implementation agrees
@@ -219,14 +224,47 @@ Start from what would go wrong, not from the list:
 When two kinds both fit, prefer the faster one. The suite is run constantly;
 every second added is paid many times.
 
+## Coverage that grows with the feature
+
+A few tests here cover less than they eventually will, on purpose. The generator
+behind the runtime's walk property draws only the node kinds the runner can play
+today; the playable half of the conformance corpus ships ten cases and plays two.
+Both are correct, and both are unfinished by design — the runtime arrives one pass
+at a time, and a test that waited for all of it would test nothing until the end.
+
+The risk is not the gap. It is a gap that closes quietly: a later pass teaches the
+runner to play choices, the generator that should now draw them carries on drawing
+lines, and the property stays green while covering less than it claims. Nothing is
+red, so nothing asks to be revisited.
+
+So a test in this shape **names what it covers rather than counting it**, and
+fails when that list stops being true in either direction. A case that starts
+passing matters as much as one that stops, because the first is the moment the
+list should have grown.
+
+| Test | Covers today | Widens when | Tells you when to widen |
+| --- | --- | --- | --- |
+| `PlayableConformanceTests` | `linear-speech` and `styled-speech` | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
+| `PlaybookGen` | Lines that carry on, and ends | Each runtime pass teaches the runner a node or edge kind | Not yet — nothing fails when the runner outgrows what it draws |
+
+`PlaybookGen` is the one still to fix, and `ExampleConstructCoverageTests` is the
+pattern to copy: it enumerates the constructs the compiler models by reflection,
+then fails naming any that no example uses. A generator can be held to the node
+kinds the playbook format defines the same way, so teaching the runner a kind the
+generator does not draw would fail until the generator draws it.
+
+Both lists come out when the runtime is complete. Until then, they are an honest
+statement of how far the suite reaches, and they stay honest by failing when they
+stop being true.
+
 ## Under consideration
 
 Tracked, not yet adopted, each with a reason it is waiting:
 
 | Kind | Would catch | Status |
 | --- | --- | --- |
-| **Mutation testing** | Tests that execute code without meaningfully asserting on it — coverage's blind spot. | Waiting on Stryker.NET support for xUnit v3 on the Microsoft Testing Platform. Mutating the *format* rather than the code needs no such support, and the conformance corpus already does it by hand ([#336](https://github.com/pengzhengyi/dialoguedown/issues/336)). |
-| **A Law of Demeter fitness test** | Code reaching through one object to talk to another. | Deferred until the runtime introduces stateful object graphs ([#217](https://github.com/pengzhengyi/dialoguedown/issues/217)). |
+| **Mutation testing** | Tests that execute code without meaningfully asserting on it — coverage's blind spot. | Waiting on Stryker.NET support for xUnit v3 on the Microsoft Testing Platform. Mutating the *format* rather than the code needs no such support, and the conformance corpus already does it by hand. |
+| **A Law of Demeter fitness test** | Code reaching through one object to talk to another. | Deferred until the runtime introduces stateful object graphs. |
 
 Two kinds are deliberately **absent** rather than pending. Benchmarks wait for a
 performance requirement worth defending — the compiler is fast enough that a
