@@ -120,10 +120,10 @@ layers, and leaving the document, its header, and the reader at the root.
 
 Two architecture tests guard the shape:
 
-| Test                           | Asserts                                                                          |
-|--------------------------------|----------------------------------------------------------------------------------|
+| Test                                              | Asserts                                                                                                |
+|---------------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | `Playbook_DependsOnlyOn_TheFrameworkAndGenerator` | `DialogueDown.Playbook` references no other project and, outside `System`, only the equality generator |
-| `Runtime_DoesNotDependOn_Core` | reserved for C2; stated here because this layout is what makes it possible       |
+| `Runtime_DoesNotDependOn_Core`                    | reserved for C2; stated here because this layout is what makes it possible                             |
 
 ## The document
 

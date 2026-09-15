@@ -206,6 +206,28 @@ trace, the screenshot, and Playwright's error context. This matters most for a
 failure that will not reproduce locally, where the trace shows what the page
 actually did instead of costing a re-run to observe.
 
+### Markdown
+
+Every Markdown file is linted by
+[markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2), configured by
+[`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). Run it from the repository root
+with no arguments — the config carries the globs and the ignores, so the bare command
+lints exactly what CI's **Docs** job does:
+
+```bash
+npx --yes markdownlint-cli2
+```
+
+The config turns off rules this project violates by intent (design-note prose wrapping,
+the README's HTML banner, a changelog's repeated headings) and skips generated output,
+the web client, and `*.dialogue.md` scripts, whose `#` headings are scenes rather than
+titles. Pass `--fix` to apply the fixes it can.
+
+The **Docs** job runs the same tool through
+[its action](https://github.com/DavidAnson/markdownlint-cli2-action), which Dependabot
+keeps current. That check is advisory — a release that adds a rule opens a PR to adopt
+rather than blocking a merge — so a red **Docs** job is worth fixing, not a broken build.
+
 ### Editor tasks (VS Code)
 
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so
