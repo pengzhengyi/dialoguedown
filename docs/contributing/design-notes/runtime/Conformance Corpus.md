@@ -175,6 +175,7 @@ so a fixture reads as the conversation it replays:
 | `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
 | `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
 | `"done"` | `Done()` — the effect just asked for has been carried out |
+| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
 | `"describe"` | `Describe()` — ask where the run stands |
 
@@ -356,6 +357,7 @@ make good regression material, but a failure in one says little about what broke
 | A conditional block | Are the arms tried in the order written? |
 | A jump | Does a divert transfer without returning? |
 | An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
+| A failed effect | Does the run stand still, so a retry can land and an advance cannot? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
 | A command the run cannot take | Is it refused, for the reason the session names, rather than thrown or quietly ignored? |

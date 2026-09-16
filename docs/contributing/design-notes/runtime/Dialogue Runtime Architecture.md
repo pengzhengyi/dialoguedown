@@ -338,7 +338,7 @@ we.
 | driver → runner   | **command**           | `Next`, `Choose(i)`, `Restore(state)`                             |
 | runner → driver   | **event**             | `Said`, `Asked`, `Invalidated`, `Ended`, `Refused`                |
 | runner → driver   | **reverse request**   | `Resolve(keys)`, answered by `Supply(answers)`                    |
-| runner → driver   | **reverse request**   | `Perform(effect)`, answered by `Done()`                           |
+| runner → driver   | **reverse request**   | `Perform(effect)`, answered by `Done()` or `Failed(explanation)`  |
 | driver → runner   | **query**             | `Describe()`, answered with the current location                  |
 
 `Resolve` is exactly LSP's `workspace/configuration`: *the server knows what it
@@ -432,7 +432,8 @@ database vocabulary applies. A per-node `needs` batch is a **snapshot**:
   progresses, which is correct and desired;
 - **across the runner's own effects** — read your own writes, so a guard that
   follows an effect sees it. This is the one the protocol has to buy: `Perform`
-  is answered by `Done`, and the run does not go on until it is.
+  is answered by `Done`, or by `Failed`, which holds the run, and the run does not
+  go on until it is.
 
 Honestly stated: this is **snapshot isolation**, which prevents dirty and
 non-repeatable reads but permits **write skew**. Serializability is not available
@@ -686,6 +687,10 @@ trouble there is order, not repetition.
 
 A world that implements a query by mutating breaks the runner's guarantees; that
 contract can be documented and conformance-tested, not enforced.
+
+A world that cannot make an effect land is reported with `Failed(explanation)` rather
+than `Done`, and the run stands where it is: it does not read a world it does not have,
+and the driver may retry or give up.
 
 ### D7 — Options carry a compiled label
 

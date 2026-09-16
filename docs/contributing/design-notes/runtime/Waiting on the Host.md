@@ -44,8 +44,9 @@ In scope:
 - `ControlNode` — its effects are asked for, and the run waits until they are
   done;
 - `DivertEdge` — a way onward beside succession;
-- `Perform(effect)`, answered by `Done()`: the protocol's second reverse request,
-  and `AwaitingDone`, the stage a run is at between the two;
+- `Perform(effect)`, answered by `Done()` or `Failed(explanation)`: the protocol's
+  second reverse request, and `AwaitingDone`, the stage a run is at between the ask
+  and its answer;
 - refusing a construct that carries a condition, rather than playing past it;
 - a guard so a ring of nodes that concern nobody is refused rather than hung.
 
@@ -82,7 +83,7 @@ next.
 | --- | --- | --- |
 | `LineNode` | `Said` | waits on the **player** — `Next` |
 | `ChoiceNode` | `Asked` *(C2b)* | waits on the **player** — `Choose` |
-| `ControlNode` with effects | `Perform`, once per effect | waits on the **world** — `Done` moves it on |
+| `ControlNode` with effects | `Perform`, once per effect | waits on the **world** — `Done` moves it on, `Failed` says it could not |
 | `ControlNode` with no effects | nothing | carries on |
 | `EndNode` | `Ended` | waits on nobody |
 | `BranchNode` | nothing *(later)* | carries on |
@@ -95,6 +96,7 @@ flowchart TD
     Kind -->|End| Over["Ask for Ended"] --> Nobody(["Waits on nobody"])
     Kind -->|"Control, with effects"| Ask["Ask for Perform,<br/>once per effect"] --> World(["Waits on the world"])
     World -.->|Done| Onward
+    World -.->|Failed| World
     Kind -->|"Control, no effects"| Onward{"Where does it lead?"}
     Onward -->|"a divert"| Arrive
     Onward -->|"a succession"| Arrive
@@ -143,9 +145,10 @@ run along a different arm. Host timing would be rewriting the dialogue's control
 flow, and determinism is the one thing a functional core exists to provide.
 
 So an effect joins `Resolve` as a reverse request. `Perform(effect)` is answered
-by `Done()`, and the run does not go past it until it is. In the isolation
-vocabulary the architecture note already uses, this is **read your own writes**,
-and it is the guarantee the protocol has to buy.
+by `Done()`, or by `Failed(explanation)` when it could not be carried out (W8) —
+and the run does not go past it until a `Done` lands. In the isolation vocabulary
+the architecture note already uses, this is **read your own writes**, and it is
+the guarantee the protocol has to buy.
 
 The wait costs a careless host nothing: a driver that does not care about `fade
 in` answers at once, and one awaiting a database awaits it. What the wait buys is
@@ -217,6 +220,40 @@ unplayable node kind is refused. Refusing is what keeps the not-yet-runnable lis
 honest — a construct nobody has taught the runner should read as untaught, never
 as played correctly by luck.
 
+### W8 — A host that could not carry an effect out says so, and the run stands still
+
+`Done` can only say the world changed. A host whose write was refused — an unreachable
+database, a denied permission, a full disk — has nothing honest to send: `Done` would
+be a lie the run then reads past, and silence is a hang indistinguishable from a slow
+effect.
+
+So the reverse request gains a second answer. `Failed(explanation)` is legal exactly
+where `Done` is, and it carries the host's own words: why a host refuses is the host's
+business, and a closed set would have to guess at every host's failures. No fixture
+asserts those words — the runner never emits them, so the driver's message is their
+only record.
+
+The run does not move, and it reports nothing. It cannot read on: the guarantee W3 buys
+is that the next read sees a settled world, and a failure settles nothing — a host may
+report one after a partial write, so waiting is the only safe answer. No event is
+emitted, because the driver's own message is the record; an event would be the runner
+narrating the driver's words back to it, one fact in two places. A `PlayLog` replays the
+command, so a replay reaches the position the live run did, and a transcript folded from
+events alone ends at the effect that failed.
+
+That leaves the driver two moves. A host that recovers answers `Done` on the retry, and
+the run carries on from where it stood — the same session, nothing restarted; the retry
+is the same effect, so it keeps its ordinal, and a host that already committed can answer
+`Done` without writing twice. A host that cannot recover is the driver's to give up on:
+`Start` begins again at the entry, `Restore` arrives with saves (C2f), and a driver that
+simply stops answering has ended the session — nothing times out. The runner offers no
+third move, because it cannot know whether the effect mattered: skipping it is the silent
+wrong story the format refuses to tell, and a branch on it is a construct the language
+does not have — what a writer gets to say about a failure is deferred, below.
+
+`Failed` where nothing was asked of the host is refused as `misplaced`, exactly as `Done`
+is: both are answers, and there is no question to answer.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -224,6 +261,8 @@ as played correctly by luck.
 | A control node with no effects | Concerns nobody; the run carries on. This is a jump on its own line |
 | `Next` while the host is still working | Refused, so fast-forwarding cannot skip an effect |
 | `Done` where nothing was asked of the host | Refused: there is nothing to report done |
+| `Failed` where nothing was asked of the host | Refused, for the same reason as `Done`: there is no request to answer |
+| A host that could not carry the effect out | `Failed(explanation)`: the run stands still, and the driver retries or gives up (W8) |
 | A control node whose divert applies | The divert is the way onward; any succession beside it is dead |
 | A node carrying neither a divert that applies nor a succession | Refused: it leads nowhere |
 | A ring of nodes that concern nobody | Refused after passing more nodes than the playbook has |
@@ -273,15 +312,11 @@ somebody has to remember.
 
 ## Open questions and deferred work
 
-- **Nothing validates a fixture against the fixture schema.** The schema is
-  published and referenced by every fixture's `$schema`, but no test reads it, so
-  a fixture and the schema can disagree in silence. Worth closing separately from
-  this pass.
-- **Can an effect fail?** `Done` says it was carried out. A host whose database
-  refused has no way to say so, and what a dialogue should do about it is a real
-  question — skip the line, end the run, take a branch — that no construct
-  currently asks. The seam is reserved by leaving `Done` an answer rather than a
-  bare acknowledgement.
+- **A writer cannot react to a failed effect.** W8 lets the protocol carry the
+  failure and gives the driver a retry or a way out; it gives the script nothing.
+  Whether a control block gains a failure arm — a skip, a branch, or an escape to
+  another scene — is a language question with its own note, and the held position
+  is the seam it would attach to.
 - **Conditions are refused, not evaluated.** Every construct in the playbook format
   except a choice node, a branch node, and a random choice node can carry one, so
   the pass that brings the world seam unlocks more than its own constructs.
