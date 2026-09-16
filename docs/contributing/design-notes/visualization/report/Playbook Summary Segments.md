@@ -260,13 +260,17 @@ The algorithm, which is the fiddliest part of the change:
 ```text
 capped(segments):
     budget = 200 characters, counted over the whole line — including the leading
-             "IF key THEN " when the node carries a condition, as the string counts it today
-    walk the segments, spending each one's length against the budget
-    the segment that crosses the budget:
-        cut it at its last space inside the budget; if it holds none, drop it whole
-    stop there; append separator("…")
-    every kept segment's text is unchanged, so the partition still holds
+             "IF key THEN " when the node carries a condition, as the line counts it today
+    line = the segments' text joined
+    if the line fits the budget, keep every segment whole
+    cut = the last space in the line within the budget, or the budget when it holds none
+    keep = the line's first `cut` characters, with trailing spaces trimmed
+    re-slice the segments to `keep`, then append separator("…")
+    every kept segment keeps its text and its role, so the partition still holds
 ```
+
+The cut reads the joined line rather than walking the segments, because the boundary a reader sees
+is a property of the words, not of where one role happens to end.
 
 ### DD6 — Delete the splitter rather than keep it as a fallback
 

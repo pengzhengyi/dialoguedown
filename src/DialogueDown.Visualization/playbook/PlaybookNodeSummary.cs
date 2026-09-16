@@ -10,13 +10,15 @@ using DialogueDown.Playbook.Weights;
 namespace DialogueDown.Visualization.Playbook;
 
 /// <summary>
-/// Writes the one plain line a report shows for a playbook node.
+/// Writes the one plain line a report shows for a playbook node, as the labeled pieces the table
+/// draws.
 /// </summary>
 /// <remarks>
 /// The report reads a node without the reader having to parse its JSON, so each kind is reduced to
-/// the shortest run of pseudocode that still says what the node holds. Words in capitals are the
-/// table's own, a name in angle brackets stands where a value is missing, round brackets always
-/// mean a command, and anything else came from the script.
+/// the shortest run of pseudocode that still says what the node holds. Every piece also says what
+/// it is — a speaker, a writer's words, the table's own grammar, a command, a query, or a marker
+/// standing where a value is missing — so the client draws the piece by the role it was given
+/// rather than re-reading the line and guessing where the writer's words stop.
 /// </remarks>
 internal static class PlaybookNodeSummary
 {
@@ -41,6 +43,23 @@ internal static class PlaybookNodeSummary
     /// <summary>How an arm of a random choice reads when its share is left to the other arms.</summary>
     private const string Evenly = "evenly";
 
+    /// <summary>What a summary cut at the cap trails.</summary>
+    private const string Ellipsis = "…";
+
+    // A separator carries the spaces that join it to its neighbours, so the pieces partition the
+    // line exactly and the table's grammar is never a space that came from the script.
+    private const string SpeakerDivider = ": ";
+    private const string NodeCondition = "IF ";
+    private const string NodeConsequence = " THEN ";
+    private const string OptionSeparator = " || ";
+    private const string Guard = " IF ";
+    private const string CommandSeparator = "; ";
+    private const string DivertArrow = "⇒ ";
+    private const string BranchElse = " ELSE ";
+    private const string BranchElseIf = " ELSE IF ";
+    private const string DrawPrefix = "DRAW 1 FROM ";
+    private const string OddsDivider = ": ";
+
     /// <summary>How many characters a finished summary keeps before it is cut.</summary>
     /// <remarks>
     /// One enormous paragraph would otherwise travel in the report payload and wrap a single row
@@ -48,13 +67,23 @@ internal static class PlaybookNodeSummary
     /// </remarks>
     private const int SummaryCap = 200;
 
+    private const string SpeakerRole = "speaker";
+    private const string PlainRole = "plain";
+    private const string KeywordRole = "keyword";
+    private const string SeparatorRole = "separator";
+    private const string CommandRole = "command";
+    private const string QueryRole = "query";
+    private const string AbsentRole = "absent";
+
     /// <summary>
-    /// Summarizes one node, leading with the node's own condition when it carries one.
+    /// Writes one node's line as the labeled pieces the table draws, leading with the node's own
+    /// condition when it carries one.
     /// </summary>
     /// <param name="node">The node to summarize.</param>
     /// <param name="speakers">The playbook's speakers, which a line addresses by index.</param>
-    /// <returns>One line of plain text, or the empty string for a kind not yet covered.</returns>
-    public static string Of(Node node, ImmutableArray<PlaybookSpeaker> speakers)
+    /// <returns>The pieces, in the order they read, or none for a kind not yet covered.</returns>
+    public static ImmutableArray<PlaybookSegmentView> SegmentsOf(
+        Node node, ImmutableArray<PlaybookSpeaker> speakers)
     {
         ArgumentNullException.ThrowIfNull(node);
 
@@ -64,38 +93,44 @@ internal static class PlaybookNodeSummary
             return Capped(body);
         }
 
-        return Capped($"IF {condition.Key} THEN {body}");
+        return Capped(
+        [
+            Keyword(NodeCondition),
+            Plain(condition.Key),
+            Keyword(NodeConsequence),
+            .. body,
+        ]);
     }
 
-    // The cut respects a word boundary so no word is left half-written.
-    private static string Capped(string summary)
-    {
-        if (summary.Length <= SummaryCap)
-        {
-            return summary;
-        }
+    /// <summary>
+    /// Writes one node's line as plain text, which is its pieces joined end to end.
+    /// </summary>
+    /// <param name="node">The node to summarize.</param>
+    /// <param name="speakers">The playbook's speakers, which a line addresses by index.</param>
+    /// <returns>One line of plain text, or the empty string for a kind not yet covered.</returns>
+    public static string Of(Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
+        string.Concat(SegmentsOf(node, speakers).Select(segment => segment.Text));
 
-        var boundary = summary.LastIndexOf(' ', SummaryCap);
-        var kept = boundary >= 0 ? summary[..boundary] : summary[..SummaryCap];
-        return $"{kept.TrimEnd()}…";
-    }
-
-    private static string BodyOf(Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
+    private static ImmutableArray<PlaybookSegmentView> BodyOf(
+        Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
         node switch
         {
             LineNode line => Line(line, speakers),
-            EndNode => EndOfScript,
+            EndNode => [Keyword(EndOfScript)],
             BranchNode branch => Branch(branch),
             ControlNode control => Control(control),
             ChoiceNode choice => Choice(choice),
             RandomChoiceNode random => RandomChoice(random),
-            _ => string.Empty,
+            _ => [],
         };
 
-    private static string Line(LineNode line, ImmutableArray<PlaybookSpeaker> speakers)
+    private static ImmutableArray<PlaybookSegmentView> Line(
+        LineNode line, ImmutableArray<PlaybookSpeaker> speakers)
     {
-        var speech = SpeechText.Of(line.Speech).Trim();
-        return $"{NameOf(line.Speaker, speakers)}: {(speech.Length > 0 ? speech : NoSpeech)}";
+        var speech = Speech(line.Speech);
+        ImmutableArray<PlaybookSegmentView> said = speech.Length > 0 ? speech : [Absent(NoSpeech)];
+
+        return [Speaker(NameOf(line.Speaker, speakers)), Separator(SpeakerDivider), .. said];
     }
 
     // A line addresses its speaker by index, so an index the playbook does not carry means the
@@ -105,35 +140,72 @@ internal static class PlaybookNodeSummary
             ? speakers[speaker].Name ?? AnonymousSpeaker
             : UnknownSpeaker;
 
-    private static string Branch(BranchNode branch) =>
-        string.Join(
-            " ",
-            branch.Out
-                .OfType<BranchEdge>()
-                .OrderBy(arm => arm.Order)
-                .Select((arm, index) => Arm(arm, index == 0)));
+    private static ImmutableArray<PlaybookSegmentView> Branch(BranchNode branch)
+    {
+        var arms = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+        var ordered = branch.Out.OfType<BranchEdge>().OrderBy(arm => arm.Order);
+
+        foreach (var (arm, index) in ordered.Select((arm, index) => (arm, index)))
+        {
+            arms.AddRange(Arm(arm, index == 0));
+        }
+
+        return arms.ToImmutable();
+    }
 
     // The first arm is read as a plain IF and every arm after it is introduced by ELSE. An
     // unguarded arm has no IF of its own, so that introduction is all it carries.
-    private static string Arm(BranchEdge arm, bool isFirst) =>
+    private static ImmutableArray<PlaybookSegmentView> Arm(BranchEdge arm, bool isFirst) =>
         (isFirst, arm.Condition) switch
         {
-            (true, KeyCondition key) => $"IF {key.Key} THEN {arm.Target}",
-            (false, KeyCondition key) => $"ELSE IF {key.Key} THEN {arm.Target}",
-            _ => $"ELSE {arm.Target}",
+            (true, KeyCondition key) =>
+            [
+                Keyword(NodeCondition),
+                Plain(key.Key),
+                Keyword(NodeConsequence),
+                Plain(Target(arm.Target)),
+            ],
+            (false, KeyCondition key) =>
+            [
+                Keyword(BranchElseIf),
+                Plain(key.Key),
+                Keyword(NodeConsequence),
+                Plain(Target(arm.Target)),
+            ],
+            _ => [Keyword(BranchElse), Plain(Target(arm.Target))],
         };
 
     // A host only performs commands, so the other speech kinds render as nothing and drop out of
     // the joined line.
-    private static string Control(ControlNode control) =>
-        Commands(control.Effects) is { Length: > 0 } commands
-            ? commands
-            : WhereItGoes(control);
+    private static ImmutableArray<PlaybookSegmentView> Control(ControlNode control)
+    {
+        var commands = Commands(control.Effects);
+        return commands.Length > 0 ? commands : WhereItGoes(control);
+    }
 
-    private static string Commands(ImmutableArray<SpeechFragment> effects) =>
-        string.Join("; ", effects.Select(Effect).Where(text => text.Length > 0));
+    private static ImmutableArray<PlaybookSegmentView> Commands(ImmutableArray<SpeechFragment> effects)
+    {
+        var commands = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
 
-    private static string Effect(SpeechFragment fragment) =>
+        foreach (var effect in effects)
+        {
+            if (CommandText(effect) is not { Length: > 0 } text)
+            {
+                continue;
+            }
+
+            if (commands.Count > 0)
+            {
+                commands.Add(Separator(CommandSeparator));
+            }
+
+            commands.Add(Command(text));
+        }
+
+        return commands.ToImmutable();
+    }
+
+    private static string CommandText(SpeechFragment fragment) =>
         fragment switch
         {
             DefaultCommandFragment command => $"({command.Action})",
@@ -143,8 +215,10 @@ internal static class PlaybookNodeSummary
 
     // A control node with nothing to perform moves straight on, and the only words left are the
     // ones a divert was named with.
-    private static string WhereItGoes(ControlNode control) =>
-        FirstDivertWords(control.Out) is { } words ? $"⇒ {words}" : CarriesOn;
+    private static ImmutableArray<PlaybookSegmentView> WhereItGoes(ControlNode control) =>
+        FirstDivertWords(control.Out) is { } words
+            ? [Separator(DivertArrow), Plain(words)]
+            : [Keyword(CarriesOn)];
 
     private static string? FirstDivertWords(ImmutableArray<Edge> edges) =>
         edges
@@ -152,37 +226,69 @@ internal static class PlaybookNodeSummary
             .Select(divert => SpeechText.Of(divert.Label).Trim())
             .FirstOrDefault(words => words.Length > 0);
 
-    private static string Choice(ChoiceNode choice) =>
-        string.Join(" || ", choice.Out.OfType<OptionEdge>().Select(Option));
-
-    private static string Option(OptionEdge option)
+    private static ImmutableArray<PlaybookSegmentView> Choice(ChoiceNode choice)
     {
-        var label = SpeechText.Of(option.Label).Trim();
-        return $"{(label.Length > 0 ? label : NoLabel)}{ConditionSuffix(option.Condition)}";
+        var options = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+
+        foreach (var option in choice.Out.OfType<OptionEdge>())
+        {
+            if (options.Count > 0)
+            {
+                options.Add(Separator(OptionSeparator));
+            }
+
+            options.AddRange(Option(option));
+        }
+
+        return options.ToImmutable();
     }
 
-    private static string RandomChoice(RandomChoiceNode random)
+    private static ImmutableArray<PlaybookSegmentView> Option(OptionEdge option)
+    {
+        var label = Speech(option.Label);
+        ImmutableArray<PlaybookSegmentView> words = label.Length > 0 ? label : [Absent(NoLabel)];
+
+        return [.. words, .. Guarded(option.Condition)];
+    }
+
+    private static ImmutableArray<PlaybookSegmentView> RandomChoice(RandomChoiceNode random)
     {
         var arms = random.Out.OfType<RandomOptionEdge>().ToImmutableArray();
-        return $"DRAW 1 FROM {arms.Length}: {string.Join(" || ", arms.Select(Odds))}";
+        var pieces = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+
+        pieces.Add(Keyword($"{DrawPrefix}{arms.Length.ToString(CultureInfo.InvariantCulture)}"));
+        pieces.Add(Separator(OddsDivider));
+
+        for (var index = 0; index < arms.Length; index++)
+        {
+            if (index > 0)
+            {
+                pieces.Add(Separator(OptionSeparator));
+            }
+
+            pieces.AddRange(Odds(arms[index]));
+        }
+
+        return pieces.ToImmutable();
     }
 
-    private static string Odds(RandomOptionEdge arm) =>
-        $"{Share(arm.Weight)}{ConditionSuffix(arm.Condition)}";
+    private static ImmutableArray<PlaybookSegmentView> Odds(RandomOptionEdge arm) =>
+        [.. Share(arm.Weight), .. Guarded(arm.Condition)];
 
-    private static string Share(ChoiceWeight weight) =>
+    private static ImmutableArray<PlaybookSegmentView> Share(ChoiceWeight weight) =>
         weight switch
         {
-            NumberWeight number => $"{number.Percentage.ToString(CultureInfo.InvariantCulture)}%",
-            QueryWeight query => $"{{{query.Key}}}",
-            AutoWeight => Evenly,
-            _ => string.Empty,
+            NumberWeight number =>
+                [Plain($"{number.Percentage.ToString(CultureInfo.InvariantCulture)}%")],
+            QueryWeight query => [Query(SpeechText.PlaceholderFor(query.Key))],
+            AutoWeight => [Plain(Evenly)],
+            _ => [],
         };
 
     // An option and a random arm both carry their condition after their own text, so the shape is
     // written once.
-    private static string ConditionSuffix(Condition? condition) =>
-        condition is KeyCondition key ? $" IF {key.Key}" : string.Empty;
+    private static ImmutableArray<PlaybookSegmentView> Guarded(Condition? condition) =>
+        condition is KeyCondition key ? [Keyword(Guard), Plain(key.Key)] : [];
 
     // A condition lives on the kinds that can carry one, so it is read here rather than repeated
     // in each kind's own summary.
@@ -193,4 +299,115 @@ internal static class PlaybookNodeSummary
             ControlNode control => control.Condition as KeyCondition,
             _ => null,
         };
+
+    // A writer's own words, read from the fragments: a real query is a query, and everything else
+    // that came from the script is plain text. Reading the fragments rather than the flattened
+    // line is what keeps the braces a writer typed from being mistaken for a query.
+    private static ImmutableArray<PlaybookSegmentView> Speech(ImmutableArray<SpeechFragment> speech) =>
+        Trim(Merge(Walk(speech)));
+
+    private static ImmutableArray<PlaybookSegmentView> Walk(ImmutableArray<SpeechFragment> speech) =>
+        [.. speech.SelectMany(fragment => Fragment(fragment))];
+
+    private static ImmutableArray<PlaybookSegmentView> Fragment(SpeechFragment fragment) =>
+        fragment switch
+        {
+            TextFragment text => PlainParts(text.Text),
+            StyledTextFragment styled => Walk(styled.Children),
+            LinkFragment link => Walk(link.Label),
+            ImageFragment image => Walk(image.Alt),
+            LineBreakFragment => [Plain(" ")],
+            QueryFragment query => [Query(SpeechText.PlaceholderFor(query.Key))],
+            _ => [],
+        };
+
+    private static ImmutableArray<PlaybookSegmentView> Merge(ImmutableArray<PlaybookSegmentView> pieces)
+    {
+        var merged = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+
+        foreach (var piece in pieces)
+        {
+            if (merged.Count > 0 && merged[^1].Role == piece.Role)
+            {
+                merged[^1] = merged[^1] with { Text = merged[^1].Text + piece.Text };
+            }
+            else
+            {
+                merged.Add(piece);
+            }
+        }
+
+        return merged.ToImmutable();
+    }
+
+    private static ImmutableArray<PlaybookSegmentView> Trim(ImmutableArray<PlaybookSegmentView> pieces)
+    {
+        if (pieces.Length == 0)
+        {
+            return pieces;
+        }
+
+        var trimmed = pieces
+            .SetItem(0, pieces[0] with { Text = pieces[0].Text.TrimStart() });
+        trimmed = trimmed.SetItem(
+            trimmed.Length - 1, trimmed[^1] with { Text = trimmed[^1].Text.TrimEnd() });
+
+        return [.. trimmed.Where(piece => piece.Text.Length > 0)];
+    }
+
+    // The cut respects a word boundary so no word is left half-written. A piece the boundary lands
+    // inside keeps its role for the part that survived, so a cut row stays colored.
+    private static ImmutableArray<PlaybookSegmentView> Capped(ImmutableArray<PlaybookSegmentView> pieces)
+    {
+        var line = string.Concat(pieces.Select(piece => piece.Text));
+        if (line.Length <= SummaryCap)
+        {
+            return pieces;
+        }
+
+        var boundary = line.LastIndexOf(' ', SummaryCap);
+        var kept = (boundary >= 0 ? line[..boundary] : line[..SummaryCap]).TrimEnd();
+
+        return [.. Take(pieces, kept.Length), Separator(Ellipsis)];
+    }
+
+    private static ImmutableArray<PlaybookSegmentView> Take(
+        ImmutableArray<PlaybookSegmentView> pieces, int length)
+    {
+        var taken = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+        var remaining = length;
+
+        foreach (var piece in pieces)
+        {
+            if (remaining <= 0)
+            {
+                break;
+            }
+
+            var text = piece.Text.Length <= remaining ? piece.Text : piece.Text[..remaining];
+            taken.Add(piece with { Text = text });
+            remaining -= text.Length;
+        }
+
+        return taken.ToImmutable();
+    }
+
+    private static string Target(int target) => target.ToString(CultureInfo.InvariantCulture);
+
+    private static ImmutableArray<PlaybookSegmentView> PlainParts(string text) =>
+        text.Length == 0 ? [] : [Plain(text)];
+
+    private static PlaybookSegmentView Speaker(string text) => new(text, SpeakerRole);
+
+    private static PlaybookSegmentView Plain(string text) => new(text, PlainRole);
+
+    private static PlaybookSegmentView Keyword(string text) => new(text, KeywordRole);
+
+    private static PlaybookSegmentView Separator(string text) => new(text, SeparatorRole);
+
+    private static PlaybookSegmentView Command(string text) => new(text, CommandRole);
+
+    private static PlaybookSegmentView Query(string text) => new(text, QueryRole);
+
+    private static PlaybookSegmentView Absent(string text) => new(text, AbsentRole);
 }
