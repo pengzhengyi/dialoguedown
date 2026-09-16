@@ -190,14 +190,16 @@ public sealed class PlaybookNodeSummarySegmentTests
             ],
             [null]);
 
+    // The cell's text is its pieces joined, so the line a reader sees is their spelling — there is
+    // no second rendering that could disagree with the drawing.
     [Fact]
-    public void SegmentsOf_ThePieces_JoinBackToTheLineTheySummarize()
+    public void SegmentsOf_ThePieces_JoinBackToTheLineTheTableShows()
     {
-        var node = Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18));
+        var branch = Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18));
 
         Assert.Equal(
-            SummaryOf(node, Speakers()),
-            string.Concat(Pieces(node).Select(piece => piece.Text)));
+            "IF Alice.HasMap THEN 16 ELSE 18",
+            string.Concat(Pieces(branch).Select(piece => piece.Text)));
     }
 
     [Fact]
