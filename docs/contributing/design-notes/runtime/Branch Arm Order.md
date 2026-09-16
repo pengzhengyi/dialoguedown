@@ -185,7 +185,7 @@ absent — while the gated clause requires the property:
 `readable/baseline/` holds only a `line` and an `end`, so no field edit of it can
 produce a branch. The ordering refusals therefore ship their own compiled
 `source.dialogue.md` — an accepted branch document whose `out` is then edited —
-exactly as the corpus's [Adding a case](../../../../conformance/README.md) process
+exactly as the corpus's [Adding a case](https://github.com/pengzhengyi/dialoguedown/blob/main/conformance/README.md#adding-a-case) process
 already describes. That narrowing is written into the corpus README: a refusal is
 *an accepted document* with one field changed, and the simple line-level cases
 happen to share `baseline/`.
