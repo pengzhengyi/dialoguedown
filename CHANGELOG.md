@@ -10,6 +10,14 @@ changes easy to categorize.
 
 ### Added
 
+- **A host can report that an effect failed** — `Failed(explanation)` joins `Done` as the answer
+  to a `Perform`, so a world whose write was refused says so instead of lying with `Done` or
+  hanging. The run stands still — the same position, nothing emitted, the driver's own message as
+  the record — and the driver retries with `Done` (the same effect, so it keeps its ordinal) or
+  gives up. The fixture schema gained the `failed` send, and `a-failed-effect` holds a port to the
+  hold. See
+  [Waiting on the host](docs/contributing/design-notes/runtime/Waiting%20on%20the%20Host.md).
+
 - **A compiled script can be played** — `DialogueDown.Runtime` is a new package that walks a
   playbook: `Runner.Step` takes where a run stands and one command, and returns where it now
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host

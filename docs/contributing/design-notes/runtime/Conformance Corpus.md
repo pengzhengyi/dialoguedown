@@ -71,7 +71,7 @@ playbook being a designed contract rather than a dump of the compiler's graph.
 - [x] A refused source that opens with a `broken:` block naming and showing the
       edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
-      branches, jumps, effects, and queries.
+      branches, jumps, effects, effect failures, and queries.
 - [x] A refused command a session can assert, by reason rather than by wording.
 - [x] A C# harness that runs the readable fixtures today.
 - [x] A documented shape for the playable harness, so C2 has an acceptance suite

@@ -72,6 +72,8 @@ Out of scope, each with the pass that owns it: conditions and the world seam
 - [x] `a-jump` and `an-effect` play, and join the named conforming list.
 - [x] The walk property's generator draws control nodes and diverts, so the
       property keeps covering what a run can meet.
+- [x] A host that could not carry an effect out says so, and the run stands still
+      until a retry lands or the driver gives up.
 
 ## What waits, and what does not
 
@@ -276,13 +278,14 @@ is: both are answers, and there is no question to answer.
 | --- | --- |
 | `Arrival` | A walk that carries on while the node has asked the host for nothing |
 | `NodeTraversalExtensions` | Reads the way onward — the divert when it applies, else the succession |
-| `protocol` | `Request`, the kind of event an answer is owed to; `Perform` carrying one effect; `Done` answering it |
+| `protocol` | `Request`, the kind of event an answer is owed to; `Perform` carrying one effect; `Done` and `Failed` answering it |
 | `positions` | `AwaitingDone`, the stage a run is at once it has asked and not yet heard back |
-| `Runner.Step` | One arm per stage: `Next` advances from `AtNode`, `Done` from `AwaitingDone` |
-| `schema/fixture-0.schema.json` | `performed` becomes `perform` and gains its shape; `done` joins the sends |
+| `Runner.Step` | One arm per stage: `Next` advances from `AtNode`, `Done` from `AwaitingDone`, `Failed` holds where it stands |
+| `schema/fixture-0.schema.json` | `performed` becomes `perform` and gains its shape; `done` and `failed` join the sends |
 | `conformance/playable/an-effect` | Gains the send, and a `because` that states the ordering it now proves |
-| Harness | A `PerformMatcher` by key, and `done` among the commands a session can send |
-| `PlayableConformanceTests` | `a-jump` and `an-effect` join the named conforming list |
+| Harness | A `PerformMatcher` by key, and `done` and `failed` among the commands a session can send |
+| `conformance/playable/a-failed-effect` | A failure, the `next` it still refuses, and the retry that lands |
+| `PlayableConformanceTests` | Every case the runner has been taught joins the named conforming list |
 | `PlaybookGen` | Draws control nodes and diverts, so the walk property keeps pace |
 | Architecture note | `Perform` sits with `Resolve` as a reverse request; read-your-own-writes joins the isolation levels |
 | Runtime core note | Its node-kind table and not-yet-runnable list move on by two |
@@ -293,9 +296,9 @@ is: both are answers, and there is no question to answer.
 | --- | --- |
 | Unit — arrival | Each node kind: what it asks for, and which party the run then waits on |
 | Unit — traversal | Divert taken, succession fallen through to, neither available |
-| Unit — the protocol | `Next` refused where the host is still working, and `Done` where nothing was asked |
+| Unit — the protocol | `Next` refused where the host is still working; `Done` or `Failed` where nothing was asked; `Failed` holding the run, and a later `Done` carrying it on |
 | Unit — the guard | A ring refuses rather than hangs, and a walk the length of the playbook does not |
-| Conformance | `a-jump` and `an-effect` play end to end |
+| Conformance | Every case the runner has been taught plays end to end |
 | Property | The walk holds over a generator drawing every kind the runner plays, answering each stage as it reaches it |
 
 Three tests are worth naming because they are easy to leave out. A walk that
