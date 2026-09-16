@@ -217,9 +217,9 @@ expects:
 ```
 
 `reason` is one of the protocol's closed set, named in
-[Runtime core](./Runtime%20Core.md) as `R11`. The prose a refusal also carries is
-written for a contributor, so the corpus asserts the reason rather than the words
-— the same rule the readable half applies to a reader's message, argued in F5.
+[Runtime core](./Runtime%20Core.md) as `R11`: a stable value two runtimes can
+compare. The explanation a refusal also carries is the run's own, the same rule the
+readable half applies to a reader's message, argued in F5.
 
 ### Speech and labels are fragments
 
@@ -437,8 +437,8 @@ reader.
 The session half needs the same rule and cannot use the baseline: a runtime refuses
 a **command**, not a document, so there is no second file to diff against — the
 reason has to travel on the refusal itself. `Refused` therefore carries a reason
-from a closed set beside its prose, and an `expect` asserts the reason rather than
-the words, exactly as the readable half asserts a verdict rather than a message
+from a closed set beside the explanation it words for itself, and an `expect`
+asserts the reason, exactly as the readable half asserts a verdict rather than a message
 (the reason set is stated in [Runtime core](./Runtime%20Core.md) as `R11`).
 
 ### F6 — Minimal fixtures over realistic ones

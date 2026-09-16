@@ -1,4 +1,5 @@
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.StepAssert;
 
@@ -52,7 +53,7 @@ public sealed class ArrivalTests
             [Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"), new EndNode(1)],
             ["Alice"]);
 
-        AssertRefused(Arrival.At(context, 0), "Alice.HasKey");
+        AssertRefused(Arrival.At(context, 0), RefusalReason.UnansweredCondition, "Alice.HasKey");
     }
 
     [Fact]
@@ -68,7 +69,7 @@ public sealed class ArrivalTests
             ],
             ["Alice"]);
 
-        AssertRefused(Arrival.At(context, 0), "Alice.HasKey");
+        AssertRefused(Arrival.At(context, 0), RefusalReason.UnansweredCondition, "Alice.HasKey");
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public sealed class ArrivalTests
     {
         // Nothing in the ring ever hands the host anything, so a walk with no bound would never
         // return and a total step would become a hang.
-        AssertRefused(Arrival.At(Playbooks.RingOfJumps(3), 0), "ring");
+        AssertRefused(Arrival.At(Playbooks.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
     }
 
     [Fact]
@@ -135,6 +136,6 @@ public sealed class ArrivalTests
         // than as a construct nobody has taught the runner yet.
         var context = Playbooks.NotYetPlayable();
 
-        AssertRefused(Arrival.At(context, 0), "ChoiceNode");
+        AssertRefused(Arrival.At(context, 0), RefusalReason.UnplayableNode, "ChoiceNode");
     }
 }

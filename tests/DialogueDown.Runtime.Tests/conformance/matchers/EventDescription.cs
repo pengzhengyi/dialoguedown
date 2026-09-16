@@ -13,7 +13,7 @@ internal static class EventDescription
         {
             Said spoke => $"heard {SpeakerNames.Of(spoke.Speaker)} speak",
             Ended => "ended",
-            Refused refused => $"refused: {refused.Because}",
+            Refused refused => $"refused: {refused.Explanation}",
             _ => happened.GetType().Name,
         };
 }

@@ -108,9 +108,9 @@ A session may send a command the run cannot take, and assert the refusal:
 { "expect": { "refused": { "reason": "already-ended" } } }
 ```
 
-`reason` is one of the protocol's closed set. The prose a refusal also carries is
-written for a contributor, so the corpus asserts the reason rather than the words —
-the same rule the readable half applies to a reader's message.
+`reason` is one of the protocol's closed set, and it is what a fixture compares: the
+explanation a run words for itself is its own, the same rule the readable half applies
+to a reader's message.
 
 ## Adding a case
 

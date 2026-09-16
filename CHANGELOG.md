@@ -60,11 +60,11 @@ changes easy to categorize.
 ### Changed
 
 - **A refusal names its reason, and a fixture can assert one** — the `Refused` event
-  carries a reason from a closed set (`not-started`, `already-ended`, `misplaced`, and
-  so on) beside its prose, and the fixture schema gained a `refused` expectation, so a
-  corpus can require that a command the run cannot take be refused rather than only
-  that nothing threw. `Refused` gained a parameter: a host that constructs one must
-  pass a reason. See
+  carries a `Reason` from a closed set (`not-started`, `already-ended`, `misplaced`, and
+  so on) beside its `Explanation`, and the fixture schema gained a `refused`
+  expectation, so a corpus can require that a command the run cannot take be refused
+  rather than only that nothing threw. `Refused` gained a `Reason` and renamed its
+  message to `Explanation`: a host that constructs one must pass both. See
   [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
 
 - **An effect is asked for, and the run waits until it is done** — a runtime no longer reports

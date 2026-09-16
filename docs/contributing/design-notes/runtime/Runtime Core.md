@@ -322,11 +322,11 @@ the fixtures that light up rather than by argument.
 
 ### R11 — A refusal names a reason, from a closed set
 
-`Refused` carries prose for a contributor to read and a reason from a **closed set**
-for a fixture to assert. The prose names what was sent and why it did not fit; the
-reason says the same thing in a portable form. A corpus that asserted the prose
-would make every port reproduce one implementation's English, which is the rule the
-readable half already applies to a reader's message (F5 in the
+A refusal says two things. `Reason`, from a **closed set**, is what a fixture
+compares: it is the same in every runtime, so two either agree or they do not.
+`Explanation` is the sentence a person reads, naming what was sent and why it did
+not fit, and it stays free to differ in wording and language — the rule the readable
+half already applies to a reader's message (F5 in the
 [corpus note](./Conformance%20Corpus.md)).
 
 | Reason | The run refuses when |
@@ -337,7 +337,7 @@ readable half already applies to a reader's message (F5 in the
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
 | `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
-| `unanswered-condition` | a node or edge plays only on an answer nobody can give yet |
+| `unanswered-condition` | a node or edge plays only on an answer nobody can give yet — temporary, until the run can ask the world |
 | `unplayable-node` | the node kind is one this build has not learned to play |
 
 `misplaced` is the one worth naming twice: the protocol knows the command, and only
@@ -347,6 +347,11 @@ rather than taken — which is what stops a fast-forward from skipping an effect
 The reason is a **message, not a diagnosis**. It says what the driver did wrong, or
 what the document cannot do, and carries no node index: a position is an encoding
 detail, and the corpus asserts meaning rather than numbering.
+
+Where a reason is **spelled** is the fixture format's business rather than this
+enum's: the schema declares the names and the fixtures that use them pin them, so
+the runtime carries no serialization attribute. It depends on the playbook and the
+framework and nothing else, and an architecture test holds it that way.
 
 Two members are not reachable from a fixture — a session that does not open with
 `start` is begun for it, and a harness sends only commands it knows — and they stay
