@@ -259,6 +259,29 @@
           "description": "The run finished.",
           "additionalProperties": false
         },
+        "refused": {
+          "type": "object",
+          "description": "The command could not be taken. The reason is from the protocol's closed set, so a fixture asserts why a run refused without asserting how a refusal is worded.",
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "enum": [
+                "not-started",
+                "already-ended",
+                "misplaced",
+                "unknown-command",
+                "leads-nowhere",
+                "endless-ring",
+                "unanswered-condition",
+                "unplayable-node"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
         "at": {
           "description": "Where the run stands, in reply to describe. Left loose until the runtime settles the shape."
         },

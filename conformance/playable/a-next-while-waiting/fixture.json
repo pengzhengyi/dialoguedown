@@ -1,0 +1,45 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a run waiting on the host refuses to be advanced",
+  "playbook": "playbook.json",
+  "because": "an effect is settled in the world before the run reads past it, so a driver may collapse a wait that is only presentation and must not collapse the one that is causal -- skipping it is caught only because the command is refused",
+  "session": [
+    {
+      "expect": {
+        "perform": {
+          "kind": "default-command",
+          "action": "fade in"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "refused": {
+          "reason": "misplaced"
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Hello."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}
