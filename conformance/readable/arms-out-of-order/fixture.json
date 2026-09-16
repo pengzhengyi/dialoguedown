@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "arms out of order is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "the two gated arms are listed in descending order (1 before 0), so a reader that sorts by order takes a different arm than one that walks the array"
+}

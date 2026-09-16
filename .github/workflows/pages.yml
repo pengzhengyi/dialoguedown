@@ -45,8 +45,10 @@ jobs:
         run: dotnet build src/DialogueDown.Cli/DialogueDown.Cli.csproj -c Release
 
       # DocFX renders the conceptual docs and the C# API reference into docs/_site.
+      # Warnings fail the build: this is the site that gets published, and a broken
+      # link or a missing cross-reference would otherwise ship silently.
       - name: Build the docs site (DocFX)
-        run: dotnet tool run docfx docs/docfx.json
+        run: dotnet tool run docfx docs/docfx.json --warningsAsErrors
 
       - name: Assemble the Pages site
         run: |

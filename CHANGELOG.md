@@ -15,7 +15,8 @@ changes easy to categorize.
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
   keeps the loop, the world, and the save; a command the run cannot take comes back as a refusal
   rather than an exception, because a driver may sit across a transport an exception cannot cross.
-  This first pass speaks a script's lines and ends a run. See
+  It speaks a script's lines, follows a jump, asks the host to carry out an effect and waits
+  until that is done, and ends a run. See
   [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
 
 - **The conformance corpus is played by the C# runtime** — every playable fixture is now run
@@ -40,6 +41,12 @@ changes easy to categorize.
   between two conformant runtimes. See
   [Node outward shape](docs/contributing/design-notes/runtime/Node%20Outward%20Shape.md).
 
+- **A branch's arms are checked for order when a playbook loads** — the reader refuses a branch whose
+  arms do not ascend by `order`, whose `else` is not the last arm, or that carries no gated arm, and
+  the schema requires at least one gated arm and allows at most one `else`. This keeps a reordered or
+  hand-edited if/elseif/else from telling a different story to two conformant runtimes. See
+  [Branch arm order](docs/contributing/design-notes/runtime/Branch%20Arm%20Order.md).
+
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
@@ -51,6 +58,28 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **The docs site is built on every pull request, and a docfx warning fails it** — the docs
+  build used to run only when the site deployed, so a broken link or a missing
+  cross-reference reached `main` without ever failing a check. It now runs in CI with
+  warnings treated as errors, and the Pages deploy treats them the same way, so the
+  published site is only ever built from a clean one.
+
+- **A refusal names its reason, and a fixture can assert one** — the `Refused` event
+  carries a `Reason` from a closed set (`not-started`, `already-ended`, `misplaced`, and
+  so on) beside its `Explanation`, and the fixture schema gained a `refused`
+  expectation, so a corpus can require that a command the run cannot take be refused
+  rather than only that nothing threw. `Refused` gained a `Reason` and renamed its
+  message to `Explanation`: a host that constructs one must pass both. See
+  [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
+
+- **An effect is asked for, and the run waits until it is done** — a runtime no longer reports
+  an effect and carries straight on. It asks the host to perform one and stands still until the
+  driver answers, so a guard that follows an effect reads a world the effect has already
+  changed. In the fixture schema the expectation is spelled `perform` rather than `performed`,
+  and a session answers it with `done`; a fixture written against the old spelling no longer
+  validates. See
+  [Waiting on the host](docs/contributing/design-notes/runtime/Waiting%20on%20the%20Host.md).
 
 - **A fixture advances a run with `next`, not `continue`** — the command a driver sends to move
   past what was just said is spelled `next` in the fixture schema, in every playable fixture, and

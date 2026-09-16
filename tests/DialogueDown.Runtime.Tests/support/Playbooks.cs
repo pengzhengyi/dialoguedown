@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook;
+using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
@@ -84,6 +85,91 @@ internal static class Playbooks
     /// <returns>The node.</returns>
     public static LineNode Line(int id, int speaker, string text, int next) =>
         new(id, speaker, [new TextFragment(text)], Condition: null, [new SuccessionEdge(next)]);
+
+    /// <summary>A line node that only plays when the world says so.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="speaker">Who says it, by index.</param>
+    /// <param name="text">What is said.</param>
+    /// <param name="next">Where succession leads.</param>
+    /// <param name="key">What the world is asked before the line plays.</param>
+    /// <returns>The node.</returns>
+    public static LineNode ConditionalLine(int id, int speaker, string text, int next, string key) =>
+        new(id, speaker, [new TextFragment(text)], new KeyCondition(key), [new SuccessionEdge(next)]);
+
+    /// <summary>A line carrying a jump the world must allow, and a succession to fall through to.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="speaker">Who says it, by index.</param>
+    /// <param name="text">What is said.</param>
+    /// <param name="jumpTo">Where the jump leads when the world allows it.</param>
+    /// <param name="next">Where succession leads when it does not.</param>
+    /// <param name="key">What the world is asked before the jump fires.</param>
+    /// <returns>The node.</returns>
+    public static LineNode LineWithConditionalJump(
+        int id, int speaker, string text, int jumpTo, int next, string key) =>
+        new(
+            id,
+            speaker,
+            [new TextFragment(text)],
+            Condition: null,
+            [new DivertEdge(jumpTo, [], new KeyCondition(key)), new SuccessionEdge(next)]);
+
+    /// <summary>A jump on its own line: nothing said, nothing performed, one way out.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="jumpTo">Where the jump leads.</param>
+    /// <returns>The node.</returns>
+    public static ControlNode Jump(int id, int jumpTo) =>
+        new(id, [], Condition: null, [new DivertEdge(jumpTo, [], Condition: null)]);
+
+    /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
+    /// <remarks>
+    /// <code>
+    /// node 0 -> node 1 -> node 2 -> ... -> node length-1 -> node 0
+    /// </code>
+    /// Nothing in it ever hands the host anything, so a walk with no bound never comes out.
+    /// </remarks>
+    /// <param name="length">How many jumps the ring holds.</param>
+    /// <returns>A context whose entry walks forever unless something stops it.</returns>
+    public static PlayContext RingOfJumps(int length) =>
+        Of([.. Enumerable.Range(0, length).Select(at => Jump(at, (at + 1) % length))]);
+
+    /// <summary>A chain of jumps ending at the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// node 0 -> node 1 -> node 2 -> ... -> node jumps-1 -> node jumps, the end
+    /// </code>
+    /// The walk passes every node the playbook has, exactly once. One node further along and it
+    /// would be passing one of them twice, which is the case a bound must not confuse this with.
+    /// </remarks>
+    /// <param name="jumps">How many jumps precede the end.</param>
+    /// <returns>A context whose walk passes every node exactly once.</returns>
+    public static PlayContext ChainOfJumps(int jumps) =>
+        Of([.. Enumerable.Range(0, jumps).Select(at => (Node)Jump(at, at + 1)), new EndNode(jumps)]);
+
+    /// <summary>An effect, then a line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// `("fade in")`
+    ///
+    /// Alice: Hello.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose run waits on the host before it says anything.</returns>
+    public static PlayContext AnEffectThenALine() =>
+        Of(
+            [Effects(0, next: 1, "fade in"), Line(1, speaker: 0, "Hello.", next: 2), new EndNode(2)],
+            ["Alice"]);
+
+    /// <summary>A control node carrying effects for the host to carry out.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="next">Where succession leads once the host is done.</param>
+    /// <param name="actions">What the host is asked to carry out, in the order written.</param>
+    /// <returns>The node.</returns>
+    public static ControlNode Effects(int id, int next, params string[] actions) =>
+        new(
+            id,
+            [.. actions.Select(SpeechFragment (action) => new DefaultCommandFragment(action))],
+            Condition: null,
+            [new SuccessionEdge(next)]);
 
     /// <summary>A line node nothing leads on from.</summary>
     /// <param name="id">Its position in the playbook.</param>

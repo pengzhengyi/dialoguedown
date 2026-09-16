@@ -309,7 +309,7 @@ for the two failure modes that recur:
 ```sh
 markdownlint-cli2                                     # expect 0 issues
 lychee --offline --include-fragments 'docs/**/*.md'   # expect 0 errors
-dotnet tool run docfx docs/docfx.json                 # expect the known warning baseline
+dotnet tool run docfx docs/docfx.json --warningsAsErrors   # expect 0 warnings
 ```
 
 > [!IMPORTANT]
@@ -319,8 +319,8 @@ dotnet tool run docfx docs/docfx.json                 # expect the known warning
 > pattern to `lychee`, which recurses. A link check that quietly covers 9% of the
 > library is worse than none, because it reports success.
 
-Record the docfx warning baseline in the release notes if it changed, so the next
-release can tell a new warning from an inherited one.
+The docs build fails on a warning, so there is no baseline to carry between releases:
+a warning is fixed, and CI builds the same site on every pull request.
 
 ### H. The demo gallery reflects current features and constructs
 

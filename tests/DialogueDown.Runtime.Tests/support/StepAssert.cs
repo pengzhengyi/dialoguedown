@@ -25,6 +25,17 @@ internal static class StepAssert
         Assert.Equal(text, SpeechText.Of(said.Speech));
     }
 
+    /// <summary>Asserts a step asked the host to carry things out, in order, and nothing else.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="actions">What should have been asked for, in the order written.</param>
+    public static void AssertPerformed(StepResult result, params string[] actions)
+    {
+        Assert.Equal(
+            actions,
+            result.Events.Select(happened =>
+                Assert.IsType<DefaultCommandFragment>(Assert.IsType<Perform>(happened).Effect).Action));
+    }
+
     /// <summary>Asserts a step ended the run, and left it standing at the end.</summary>
     /// <param name="result">What the step produced.</param>
     public static void AssertEnded(StepResult result)
@@ -33,14 +44,16 @@ internal static class StepAssert
         Assert.IsType<AtEnd>(result.State.Position);
     }
 
-    /// <summary>Asserts a step refused, saying something in particular.</summary>
+    /// <summary>Asserts a step refused, for a reason, saying something in particular.</summary>
     /// <param name="result">What the step produced.</param>
-    /// <param name="because">A phrase the refusal should name.</param>
-    public static void AssertRefused(StepResult result, string because)
+    /// <param name="reason">Why it should have refused.</param>
+    /// <param name="explanation">A phrase the refusal should name.</param>
+    public static void AssertRefused(StepResult result, RefusalReason reason, string explanation)
     {
         var refused = Assert.IsType<Refused>(Assert.Single(result.Events));
 
-        Assert.Contains(because, refused.Because, StringComparison.Ordinal);
+        Assert.Equal(reason, refused.Reason);
+        Assert.Contains(explanation, refused.Explanation, StringComparison.Ordinal);
     }
 
     /// <summary>Asserts a step left the run standing at a node.</summary>
@@ -53,4 +66,16 @@ internal static class StepAssert
     /// <param name="node">Where it should stand.</param>
     public static void AssertAt(PlayState state, int node) =>
         Assert.Equal(node, Assert.IsType<AtNode>(state.Position).Node);
+
+    /// <summary>Asserts a step left the run waiting on the host at a node.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="node">Where it should be waiting.</param>
+    public static void AssertAwaitingDone(StepResult result, int node) =>
+        AssertAwaitingDone(result.State, node);
+
+    /// <summary>Asserts a run is waiting on the host at a node.</summary>
+    /// <param name="state">Where the run stands.</param>
+    /// <param name="node">Where it should be waiting.</param>
+    public static void AssertAwaitingDone(PlayState state, int node) =>
+        Assert.Equal(node, Assert.IsType<AwaitingDone>(state.Position).Node);
 }

@@ -101,8 +101,9 @@ flowchart LR
     RA["1. Runtime Architecture"] --> PF["2. Playbook Format"]
     PF --> CC["3. Conformance Corpus"]
     CC --> NOS["4. Node Outward Shape"]
-    NOS --> SPT["5. Speech as Plain Text"]
-    SPT --> RC["6. Runtime Core"]
+    NOS --> BAO["5. Branch Arm Order"]
+    BAO --> SPT["6. Speech as Plain Text"]
+    SPT --> RC["7. Runtime Core"]
     RC --> RUN(["the rest of the runner,<br/>players, adapters"])
 ```
 
@@ -112,8 +113,9 @@ flowchart LR
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
 | 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
 | 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
-| 5 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
-| 6 | [Runtime Core](./runtime/Runtime%20Core.md) | The first pass of the C# runner: the state, the step that advances it, and the harness that holds it to the corpus | Implemented |
+| 5 | [Branch Arm Order](./runtime/Branch%20Arm%20Order.md) | A `branch`'s arms in ascending `order` with the `else` last, stated in the reader and mirrored in the schema | Implemented |
+| 6 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
+| 7 | [Runtime Core](./runtime/Runtime%20Core.md) | The first pass of the C# runner: the state, the step that advances it, and the harness that holds it to the corpus | Implemented |
 
 ### Language constructs
 

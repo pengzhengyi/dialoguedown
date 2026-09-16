@@ -309,3 +309,32 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: "**/*.md"
+
+  # The site is built on every pull request, so a broken link or a missing cross-reference is
+  # caught before it reaches main. The build fails on warnings rather than reporting them: the
+  # same site is published by the Pages workflow, and a warning found there is found too late.
+  docs-build:
+    name: Docs site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          # DocFX builds the two shipped libraries to read their API reference out of them, and
+          # they multi-target net8.0, so both versions are installed as they are for the tests.
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore DialogueDown.sln
+
+      - name: Restore local tools (DocFX)
+        run: dotnet tool restore
+
+      - name: Build the docs site (DocFX)
+        run: dotnet tool run docfx docs/docfx.json --warningsAsErrors

@@ -33,9 +33,10 @@ For inner-loop feedback, use the VS Code tasks `web: test file`,
 - **Run `npm run check` before committing.** It must pass — it is the same gate CI
   runs.
 - **Rebuild and commit `web/dist/report.html`** whenever you change anything under
-  `web/src`, so the committed bundle stays in sync with its sources. The
-  **Sync report bundle** workflow rebuilds it for forgotten changes, but committing
-  it yourself keeps CI green on the first run.
+  `web/src`, **or a file it embeds** — the report imports
+  `schema/playbook-0.schema.json` (`src/playbook-schema.ts`), so a schema change
+  moves the bundle too. The **Sync report bundle** workflow rebuilds it for
+  forgotten changes, but committing it yourself keeps CI green on the first run.
 - Let the tooling format and lint: follow `eslint.config.js`, `.stylelintrc.json`,
   and `.prettierrc.json` rather than hand-formatting or overriding rules inline.
 - Frontend quality tools keep content-aware incremental data under ignored

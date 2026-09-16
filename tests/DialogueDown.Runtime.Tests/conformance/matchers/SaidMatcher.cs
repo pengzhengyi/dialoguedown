@@ -11,9 +11,6 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// <summary>Checks a <c>said</c> claim: who spoke, and what they said.</summary>
 internal sealed class SaidMatcher : IExpectationMatcher
 {
-    private static readonly JsonSerializerOptions _compact =
-        new(PlaybookJson.Options) { WriteIndented = false };
-
     /// <inheritdoc/>
     public string Key => "said";
 
@@ -76,8 +73,8 @@ internal sealed class SaidMatcher : IExpectationMatcher
     // fragments saying the same thing look like, and it stays right as new kinds are added.
     private static SessionOutcome MatchFragment(SpeechFragment spoken, SpeechFragment claimed, int at)
     {
-        var heard = JsonSerializer.Serialize(spoken, _compact);
-        var wanted = JsonSerializer.Serialize(claimed, _compact);
+        var heard = JsonSerializer.Serialize(spoken, FixtureJson.Compact);
+        var wanted = JsonSerializer.Serialize(claimed, FixtureJson.Compact);
 
         return heard == wanted
             ? SessionOutcome.Conformed()

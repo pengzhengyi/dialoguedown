@@ -68,6 +68,7 @@ is far cheaper to learn now than after six components assume it.
 - [x] A line is spoken with its speaker's name, and succession advances.
 - [x] A run ends, and an ended run accepts nothing further.
 - [x] A command the run cannot take is refused as a message, not an exception.
+- [x] A refusal names why, from a closed set a fixture can assert without reading English.
 - [x] `continue` becomes `next` in the fixture schema, every playable fixture, and
       the corpus README.
 - [x] The corpus reader is shared by both halves rather than duplicated.
@@ -84,7 +85,7 @@ src/DialogueDown.Runtime/          the facade: what a consumer calls
     Position.cs  NotStarted.cs  AtNode.cs  AtEnd.cs
   protocol/                        what a run is told, and what it reports
     Command.cs  commands/Start.cs  commands/Next.cs
-    Event.cs    events/Said.cs  events/Ended.cs  events/Refused.cs
+    Event.cs  RefusalReason.cs  events/Said.cs  events/Ended.cs  events/Refused.cs
   stepping/                        the work each construct does
     Arrival.cs                     one arm per node kind
     NodeTraversalExtensions.cs     one reader per edge kind
@@ -134,7 +135,7 @@ flowchart LR
     AT -->|"Next"| AT2["AtNode(j)"]
     AT2 -->|"Next"| ENDED["AtEnd"]
     ENDED -->|"Start"| AT
-    AT -. "C2c" .-> ASK["AwaitingAnswers(i, keys)"]
+    AT -. "C2c" .-> ASK["AwaitingSupply(i, keys)"]
     ASK -. "Supply" .-> AT
 ```
 
@@ -163,10 +164,10 @@ and in later passes the entropy settings and the capabilities a driver declared.
 Without it each of those would change the signature of the one function every
 component calls.
 
-One step may produce **several** events, in order: arriving at a line both says it
-and leaves the run ready to advance, and the corpus's `an-effect` already expects
-a performed effect before the line that follows it. Events are therefore an
-ordered list from the first pass.
+One step may produce **several** events, in order: a control node carrying more
+than one effect asks the host to perform each of them, in the order written,
+before the run waits for them to be done. Events are therefore an ordered list
+from the first pass.
 
 A `Said` event carries the speaker's **name**, not their index. The playbook
 addresses speakers by position because that is cheap to write; a driver should
@@ -319,6 +320,48 @@ edge, and fragment.
 Argued in [Goal and scope](#goal-and-scope): it measures every later component by
 the fixtures that light up rather than by argument.
 
+### R11 — A refusal names a reason, from a closed set
+
+A refusal says two things. `Reason`, from a **closed set**, is what a fixture
+compares: it is the same in every runtime, so two either agree or they do not.
+`Explanation` is the sentence a person reads, naming what was sent and why it did
+not fit, and it stays free to differ in wording and language — the rule the readable
+half already applies to a reader's message (F5 in the
+[corpus note](./Conformance%20Corpus.md)).
+
+| Reason | The run refuses when |
+| --- | --- |
+| `not-started` | `Next` arrives before `Start`, so there is nothing to advance from |
+| `already-ended` | `Next` arrives after the run has ended |
+| `misplaced` | a command the runner knows arrives where it cannot be taken — `Next` while the run waits on the host, or `Done` when nothing was asked |
+| `unknown-command` | the command is one the runner does not define |
+| `leads-nowhere` | the node the run stands at has no way onward |
+| `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
+| `unanswered-condition` | a node or edge plays only on an answer nobody can give yet — temporary, until the run can ask the world |
+| `unplayable-node` | the node kind is one this build has not learned to play |
+
+`misplaced` is the one worth naming twice: the protocol knows the command, and only
+the position is wrong, so a `Next` offered while the run waits on the host is refused
+rather than taken — which is what stops a fast-forward from skipping an effect.
+
+The reason is a **message, not a diagnosis**. It says what the driver did wrong, or
+what the document cannot do, and carries no node index: a position is an encoding
+detail, and the corpus asserts meaning rather than numbering.
+
+Where a reason is **spelled** is the fixture format's business rather than this
+enum's: the schema declares the names and the fixtures that use them pin them, so
+the runtime carries no serialization attribute. It depends on the playbook and the
+framework and nothing else, and an architecture test holds it that way.
+
+Two members are not reachable from a fixture — a session that does not open with
+`start` is begun for it, and a harness sends only commands it knows — and they stay
+in the set because it covers every site that fires a `Refused`, not only the sites
+the corpus can reach. `unknown-command` is out of a test's reach as well: `Command`
+is a closed union, so only this assembly can define one, and the member is the guard
+for the command a later pass adds. A reason is **added**, never renamed or reused: a
+fixture may assert any member, so the set grows compatibly and changes only with a
+break.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -352,7 +395,7 @@ the fixtures that light up rather than by argument.
 | --- | --- |
 | Unit — `Step` | One test per transition: a run started and restarted, a line spoken, succession taken, a run ended, a command refused |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a whole session |
-| Conformance | `linear-speech` and `styled-speech` play; the rest are named as not yet runnable |
+| Conformance | Every case the runner has been taught plays; the rest are named as not yet runnable |
 | Architecture | The runtime references neither the compiler nor a host |
 | Property | A walk over any playbook the reader accepts only ever stands at a node that playbook has |
 

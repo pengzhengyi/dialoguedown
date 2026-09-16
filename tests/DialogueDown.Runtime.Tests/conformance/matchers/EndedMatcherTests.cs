@@ -25,7 +25,7 @@ public sealed class EndedMatcherTests
     [Fact]
     public void ARefusalDiverges()
     {
-        AssertDiverged(Match(new Refused("no step")), "expected the run to end", "refused: no step");
+        AssertDiverged(Match(new Refused(RefusalReason.LeadsNowhere, "no step")), "expected the run to end", "refused: no step");
     }
 
     [Fact]

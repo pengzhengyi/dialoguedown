@@ -68,8 +68,11 @@ playbook being a designed contract rather than a dump of the compiler's graph.
       compiled playbooks.
 - [x] Readable fixtures covering every refusal the reader makes, and the
       acceptances it must not refuse.
+- [x] A refused source that opens with a `broken:` block naming and showing the
+      edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
+- [x] A refused command a session can assert, by reason rather than by wording.
 - [x] A C# harness that runs the readable fixtures today.
 - [x] A documented shape for the playable harness, so C2 has an acceptance suite
       waiting rather than a corpus to write afterward.
@@ -83,7 +86,7 @@ conformance/
   README.md                     what a port is expected to do with this
   readable/                     can a reader load this document at all
     unknown-requires/
-      source.dialogue.md        what the document was compiled from
+      source.dialogue.md        the compile, opening with a broken: comment
       playbook.json             that compile, then broken in one deliberate way
       fixture.json              the claim: which verdict, and why
     …
@@ -104,6 +107,21 @@ its playbook is that compile with one deliberate edit, because no script compile
 to a broken playbook — a compiler will not emit an unknown capability or a
 dangling node reference. The source is there so a reviewer reads a dialogue
 rather than a hundred lines of JSON, and `because` names the edit.
+
+Every refusal's source opens with a **`broken:` block** — an HTML comment whose
+first line names the deliberate edit after `broken:`, a blank line, then the
+evidence: the invalid script where the language can express the break (a lone
+`else`, an `else` before its `if`, a second `else`), otherwise the part of the
+playbook that was changed (a branch's `out`, an `entry`, a `version`), or prose
+alone when there is no run of JSON to quote (a truncated file). The comment is
+inert — the front end ignores it — so the valid script below still compiles to the
+accepted document the case derives from. A block must hold neither `-->` nor
+`<!--`, or it would close early and leak into the script.
+
+The block is **repository authoring, not part of the portable corpus contract**: a
+port reads a fixture and the document it names, never the source. It is there so a
+reviewer of this repository sees, in one place, how the source and the broken
+playbook differ.
 
 The two directories name the **dimension a fixture probes** — can it be read, and
 does it play the same way — so each holds both verdicts. `readable/` covers both
@@ -156,6 +174,7 @@ so a fixture reads as the conversation it replays:
 | `"next"` | `Next` — proceed past what was just said |
 | `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
 | `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
+| `"done"` | `Done()` — the effect just asked for has been carried out |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
 | `"describe"` | `Describe()` — ask where the run stands |
 
@@ -176,10 +195,11 @@ Each `expect` is one message the runtime must produce next.
 | --- | --- |
 | `said` | `speaker` (the name, never the index) and the `speech` — see below |
 | `asked` | the options offered, each a `label` and whether it was `available` |
-| `performed` | the effect, as the playbook names it |
+| `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asked the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
+| `refused` | why the command could not be taken, from the protocol's closed set |
 
 A speaker is named, not numbered: the speaker table's order is an encoding detail,
 and the anonymous default speaker simply has no name.
@@ -187,6 +207,19 @@ and the anonymous default speaker simply has no name.
 Interleaving removes a redundancy the earlier two-list sketch carried. An `asked`
 entry no longer records which option was taken, because the very next `send` says
 so. One fact, one place.
+
+A session may also send a command the run cannot take, and say which refusal it
+expects:
+
+```json
+{ "send": "next" },
+{ "expect": { "refused": { "reason": "already-ended" } } }
+```
+
+`reason` is one of the protocol's closed set, named in
+[Runtime core](./Runtime%20Core.md) as `R11`: a stable value two runtimes can
+compare. The explanation a refusal also carries is the run's own, the same rule the
+readable half applies to a reader's message, argued in F5.
 
 ### Speech and labels are fragments
 
@@ -263,13 +296,14 @@ runtime should explain itself in its own language, and pinning English would mak
 the corpus untranslatable. `because` documents the fixture for a human reading it.
 
 This half is not made redundant by `schema/playbook-0.schema.json`, and measuring
-that was worth the trouble: **eight of the twelve refusals shipped are valid by
-the schema.** A schema constrains shape — `entry` is a non-negative integer — but
-not meaning, so it cannot know there are only two nodes to point at, which
+that was worth the trouble: **eleven of the seventeen refusals shipped are valid
+by the schema.** A schema constrains shape — `entry` is a non-negative integer —
+but not meaning, so it cannot know there are only two nodes to point at, which
 versions a build reads, or that a node's id must equal its position. Only the
-type error, the truncated file, a foreign arm kind, and two successions on one
-node are its to catch. Conversely, every case the corpus *accepts* must also
-validate, or the format's two specifications disagree; CI checks that.
+type error, the truncated file, a foreign arm kind, two successions on one node, a
+lone `else`, and a second `else` are its to catch. Conversely, every case the
+corpus *accepts* must also validate, or the format's two specifications disagree;
+CI checks that.
 
 ### Running a session
 
@@ -321,9 +355,10 @@ make good regression material, but a failure in one says little about what broke
 | A conditional line | Is a line skipped without ending the run? |
 | A conditional block | Are the arms tried in the order written? |
 | A jump | Does a divert transfer without returning? |
-| An effect | Is a control block's effect performed, and reported? |
+| An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
+| A command the run cannot take | Is it refused, for the reason the session names, rather than thrown or quietly ignored? |
 | Ordered and unordered choices | Is a menu's stated order honored where it is stated? |
 
 The unavailable-option fixture matters more than its size suggests: showing a
@@ -392,11 +427,19 @@ the two can never be supplied together, and keeps `label` named `label`.
 A runtime must refuse the same documents. It need not refuse them in English.
 
 That leaves a hole: a document refused for an *accidental* reason still passes.
-The readable half closes it with a **baseline**: one accepted case that nothing is
-wrong with, and every refusal is that same document with exactly one field
-changed. The baseline passing proves the rest is sound, so a refusal can only be
-about the field its case changed. The reason is pinned without a word of any
-message being asserted, and `because` names the change for a reader.
+The readable half closes it with an **accepted document one edit away**: the
+line-level cases all share `baseline/`, and a case built on a richer construct
+ships its own accepted source. The accepted document passing proves the rest is
+sound, so a refusal can only be about the edit its case made. The reason is pinned
+without a word of any message being asserted, and `because` names the edit for a
+reader.
+
+The session half needs the same rule and cannot use the baseline: a runtime refuses
+a **command**, not a document, so there is no second file to diff against — the
+reason has to travel on the refusal itself. `Refused` therefore carries a reason
+from a closed set beside the explanation it words for itself, and an `expect`
+asserts the reason, exactly as the readable half asserts a verdict rather than a message
+(the reason set is stated in [Runtime core](./Runtime%20Core.md) as `R11`).
 
 ### F6 — Minimal fixtures over realistic ones
 
@@ -413,6 +456,7 @@ harness and arrive with it in
 | --- | --- | --- |
 | A fixture's playbook does not load | Fail as a fixture bug, naming the case and the file, distinct from a conformance failure | shipped |
 | A fixture is malformed | Fail naming the case, so nobody opens files hunting for it | shipped |
+| A `refused` names a reason the protocol does not give | Fail as a fixture bug: the schema closes the set, so the fixture and the harness have drifted apart | shipped |
 | A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why | shipped |
 | A case missing a fixture, a playbook, or a source | Fail: the corpus is incomplete, in either half | shipped |
 | The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | with C2 |
@@ -442,7 +486,7 @@ The corpus is itself test material, so the question is what tests *it*.
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture, a fixture naming a document that is not there |
 | Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
 | Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together until C2 can run it. Every case in **either** half ships a fixture, a playbook, and a source |
-| Source integrity | Every `playable/` case is recompiled from its source and compared to the committed playbook. A `readable/` case is exempt by design: its document is that compile with one field broken |
+| Source integrity | Every `playable/` case is recompiled from its source and compared to the committed playbook. Every `readable/` refusal's source opens with a well-formed `broken:` block; the script below it compiles and is accepted by the reader, yet differs from the committed playbook, so the case is really broken |
 
 The last two are the guard against a corpus rotting. A committed playbook that no
 longer matches its source is a fixture asserting yesterday's format, and a case

@@ -107,9 +107,10 @@
         {
           "enum": [
             "next",
+            "done",
             "describe"
           ],
-          "description": "Advance one step, or ask where the run stands."
+          "description": "Advance one step, report that the effect just asked for has been carried out, or ask where the run stands."
         },
         {
           "type": "object",
@@ -196,8 +197,51 @@
             "additionalProperties": false
           }
         },
-        "performed": {
-          "description": "The effect, as the playbook names it. Left loose until the runtime settles the shape."
+        "perform": {
+          "description": "The effect the runtime asks the host to carry out, as the playbook names it. The run does not go past it until the driver sends `done`, so an effect is settled in the world before anything reads it.",
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "kind",
+                "action"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "default-command"
+                },
+                "action": {
+                  "type": "string",
+                  "description": "The phrase the writer wrote."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "kind",
+                "name"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "custom-command"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The command's name, as the host binds it."
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The arguments the writer supplied. May be empty."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
         },
         "resolve": {
           "type": "array",
@@ -213,6 +257,29 @@
         "ended": {
           "type": "object",
           "description": "The run finished.",
+          "additionalProperties": false
+        },
+        "refused": {
+          "type": "object",
+          "description": "The command could not be taken. The reason is from the protocol's closed set, so a fixture asserts why a run refused without asserting how a refusal is worded.",
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "enum": [
+                "not-started",
+                "already-ended",
+                "misplaced",
+                "unknown-command",
+                "leads-nowhere",
+                "endless-ring",
+                "unanswered-condition",
+                "unplayable-node"
+              ]
+            }
+          },
           "additionalProperties": false
         },
         "at": {
