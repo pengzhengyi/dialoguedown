@@ -134,6 +134,8 @@
       href: visualization/report/Playbook Tab.md
     - name: Playbook Nodes Table
       href: visualization/report/Playbook Nodes Table.md
+    - name: Playbook Summary Segments
+      href: visualization/report/Playbook Summary Segments.md
   - name: Source editor
     items:
     - name: Unmodeled Markdown Highlighting

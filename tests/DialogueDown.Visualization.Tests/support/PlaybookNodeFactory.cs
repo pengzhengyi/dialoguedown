@@ -5,6 +5,7 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Weights;
+using DialogueDown.Visualization.Playbook;
 
 namespace DialogueDown.Visualization.Tests.Support;
 
@@ -105,6 +106,30 @@ internal static class PlaybookNodeFactory
     /// </summary>
     public static ImmutableArray<PlaybookSpeaker> Speakers(params string?[] names) =>
         [.. names.Select(name => new PlaybookSpeaker(null, name, false, []))];
+
+    /// <summary>
+    /// The line a node's pieces read as — the cell's text, and the summary the projection used to
+    /// return as one string.
+    /// </summary>
+    public static string SummaryOf(Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
+        string.Concat(PlaybookNodeSummary.SegmentsOf(node, speakers).Select(segment => segment.Text));
+
+    /// <summary>
+    /// A line whose speech is the fragments a test composed, so it can hold a query, a tag, or
+    /// styling rather than plain words.
+    /// </summary>
+    public static LineNode LineOf(ImmutableArray<SpeechFragment> speech, int speaker = 0, int id = 0) =>
+        new(id, speaker, speech, null, []);
+
+    /// <summary>Words a writer typed, including any braces they meant literally.</summary>
+    public static SpeechFragment Words(string text) => new TextFragment(text);
+
+    /// <summary>A question the game answers at play time.</summary>
+    public static SpeechFragment Query(string key) => new QueryFragment(key);
+
+    /// <summary>Words emphasized a certain way, which a summary reads for their words alone.</summary>
+    public static SpeechFragment Emphasized(params SpeechFragment[] children) =>
+        new StyledTextFragment(SpeechStyle.Italic, [.. children]);
 
     private static ImmutableArray<SpeechFragment> Speech(string words) =>
         [new TextFragment(words)];

@@ -56,7 +56,10 @@ public sealed class PlaybookNodeProjectionTests
     {
         var report = Project(Source);
 
-        Assert.Contains(report.Nodes, node => node.Summary == "Alice: Which way?");
+        Assert.Contains(
+            report.Nodes,
+            node => string.Concat(node.Segments.Select(segment => segment.Text))
+                == "Alice: Which way?");
     }
 
     [Fact]

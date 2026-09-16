@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Visualization.Playbook;
 using static DialogueDown.Visualization.Tests.Support.PlaybookNodeFactory;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
@@ -42,7 +41,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
         Assert.All(
             _everyKind,
             kind => Assert.False(
-                string.IsNullOrWhiteSpace(PlaybookNodeSummary.Of(kind.Node, Speakers("Alice"))),
+                string.IsNullOrWhiteSpace(SummaryOf(kind.Node, Speakers("Alice"))),
                 $"A {kind.Kind} node produced no summary."));
     }
 
@@ -52,7 +51,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
         var words = string.Join(" ", Enumerable.Repeat("word", 20));
 
         Assert.Equal(
-            $"Alice: {words}", PlaybookNodeSummary.Of(Line(words), Speakers("Alice")));
+            $"Alice: {words}", SummaryOf(Line(words), Speakers("Alice")));
     }
 
     // One enormous paragraph would otherwise travel in the payload and then wrap a single row into
@@ -60,7 +59,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
     [Fact]
     public void Of_ASummaryLongerThanTheCap_IsCutBetweenWordsAndTrailsAnEllipsis()
     {
-        var summary = PlaybookNodeSummary.Of(
+        var summary = SummaryOf(
             Line(string.Join(" ", Enumerable.Repeat("word", 200))), Speakers("Alice"));
 
         Assert.EndsWith("word…", summary, StringComparison.Ordinal);
@@ -73,7 +72,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
     [Fact]
     public void Of_AChoiceOfManyOptions_IsCutLikeAnyOtherSummary()
     {
-        var summary = PlaybookNodeSummary.Of(
+        var summary = SummaryOf(
             Choice([.. Enumerable.Range(0, 40).Select(n => Option($"Take the {n} road"))]),
             Speakers());
 
