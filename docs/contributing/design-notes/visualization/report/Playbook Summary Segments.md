@@ -1,18 +1,16 @@
 # Playbook Summary Segments
 
 > [!NOTE]
-> Status: **proposed**. The Nodes table draws each node's **summary** by splitting one
-> flattened line back apart in the client, using delimiters a writer can also type. This
-> note has the projection send the summary as labeled **segments**, so the client draws what
-> it is told instead of guessing where a writer's words stop and the table's grammar
-> begins.
+> Status: **implemented**. A node's **summary** travels as labeled **segments** — each piece
+> says what it is — so the Nodes table draws what the projection wrote instead of splitting
+> one flattened line back apart on delimiters a writer can also type.
 
 ## Table of contents
 
 - [Goal and scope](#goal-and-scope)
 - [Ubiquitous language](#ubiquitous-language)
 - [Functionality checklist](#functionality-checklist)
-- [How it reads today](#how-it-reads-today)
+- [Why a role is needed](#why-a-role-is-needed)
 - [Design](#design)
 - [Interfaces and abstractions](#interfaces-and-abstractions)
 - [Key design decisions](#key-design-decisions)
@@ -78,23 +76,25 @@ own words — `span` (source), `fragment` (speech), or `token` (highlighting).
 
 ## Functionality checklist
 
-- [ ] A node's summary is sent as an ordered list of segments.
-- [ ] Each segment carries a role the client can draw without reading its text.
-- [ ] The segments partition the summary: every character belongs to exactly one segment, and
+- [x] A node's summary is sent as an ordered list of segments.
+- [x] Each segment carries a role the client can draw without reading its text.
+- [x] The segments partition the summary: every character belongs to exactly one segment, and
       joining them rebuilds the line.
-- [ ] A writer's punctuation never changes a role: a label holding an option separator,
+- [x] A writer's punctuation never changes a role: a label holding an option separator,
       a semicolon, a colon, a keyword, a brace, or a marker is one segment of the writer's
       words.
-- [ ] A real query is a `query` segment and a writer's literal braces are `plain`, because the
+- [x] A real query is a `query` segment and a writer's literal braces are `plain`, because the
       projection reads the fragments rather than scanning the flattened text.
-- [ ] Every role draws with the class it draws today, except a truncated row, which now
+- [x] Every role draws with the class it draws today, except a truncated row, which now
       keeps the colors of the part it kept.
-- [ ] The cap still bounds a summary.
-- [ ] The client no longer splits a summary; `summary-runs.ts` and its tests are deleted.
+- [x] The cap still bounds a summary.
+- [x] The client no longer splits a summary; `summary-runs.ts` and its tests are deleted.
 
-## How it reads today
+## Why a role is needed
 
-A choice whose second option is written `Go left || right`:
+A choice whose second option is written `Go left || right` cannot be told from a choice with
+three options by reading the line: the characters a writer typed are the same ones the table
+uses to separate options.
 
 ```text
 | # | Kind   | Summary                              | Leads to |
@@ -102,10 +102,9 @@ A choice whose second option is written `Go left || right`:
 | 4 | choice | Take the road \|\| Go left \|\| right | 30, 31   |
 ```
 
-The client splits the summary on `" || "` and colors three options where the script has
-two, because the writer's separator is read as the table's. The same happens at every
-joint: a command argument holding a semicolon, a speaker name holding a colon, a label
-holding a keyword, or an option written `<no label>`.
+The same holds at every joint — a command argument holding a semicolon, a speaker name
+holding a colon, a label holding a keyword, an option written `<no label>` — which is why the
+projection labels each piece instead of the client reading the line back.
 
 ## Design
 
@@ -139,6 +138,12 @@ it knows the part's job; nothing is inferred from characters.
 
 The set is exactly today's `SummaryRole` union, so `SUMMARY_SEGMENT_CLASS` and `styles.css`
 keep their selectors.
+
+The roles stay coarse on purpose. Naming an option or a condition apart from the writer's
+words would push structure into the summary, rebuilding the dialogue graph's shape inside a
+payload whose job is to be read as one line. A client that wants the complete structure should
+read the playbook itself; the summary stays a summary, and a future list rendering can consume
+a `separator` segment as its item boundary instead of drawing it.
 
 ### Writing a summary as segments
 
@@ -301,8 +306,9 @@ so a mismatch is a development-time accident, not a shipped one.)
 - **`PlaybookReport.cs`** — `PlaybookNodeView` gains `Segments`. `PlaybookSegmentView` and
   `SummaryRoles` are files of their own, so a reader finds the shape and the vocabulary without
   scrolling the writer that uses them.
-- **`PlaybookNodeSummary.cs`** — `Of` becomes `SegmentsOf`, returning segments; the speech walk and
-  the cap live here.
+- **`PlaybookNodeSummary.cs`** — `Of` is replaced by `SegmentsOf`, which returns the pieces; the
+  speech walk and the cap live here. No string-returning form survives, because the cell's text is
+  its pieces joined.
 - **`PlaybookProjection.cs`** — passes `SegmentsOf(...)` into the view.
 - **`model.ts`** — gains `PlaybookSegmentView` and the `SummaryRole` union, and `segments` on
   `PlaybookNodeView`.
@@ -323,11 +329,11 @@ so a mismatch is a development-time accident, not a shipped one.)
 | --- | --- |
 | xUnit — `PlaybookNodeSummary` | One test per node kind, asserting the segments' text *and* roles; a writer's separator, semicolon, colon, keyword, and marker each stay one `plain` segment; the stand-ins; the cap. |
 | xUnit — queries | A real `QueryFragment` is a `query` segment, including inside styled and linked words; a writer's literal `{hello}` is `plain`. |
-| xUnit — the partition | The segments' text joined equals the line the old `Of` produced, for every kind (the invariant `SemanticCell` documents, pinned where the segments are built). |
+| xUnit — the line | A node's pieces join to the exact pseudocode line the table shows, asserted per kind, so the joined text is pinned where the pieces are built. |
 | xUnit — the cap | A cut inside the crossing segment, a cut at a segment boundary, a crossing segment with no space, and the leading condition counting against the budget. |
 | xUnit — union coverage | Reflecting over the node union, every registered kind yields segments; and over the fragment union, the speech walk handles every kind. |
 | Vitest — `playbook-view` | A cell joins its segments to its text and draws each role in its class; a label holding a separator stays one plain segment; every role in `SummaryRole` is a key of `SUMMARY_SEGMENT_CLASS`. |
-| Playwright | The Nodes table still renders and colors a real playbook; a choice written with a separator in a label shows one option boundary, not two. |
+| Playwright | The Nodes table renders for a real playbook, its summary cells included, and the tab keeps its accessibility checks green. |
 
 Moving the cases off `summary-runs.test.ts` and onto `PlaybookNodeSummaryTests` is the
 point: they are asserted against real nodes and fragments rather than against strings the
@@ -335,20 +341,6 @@ test itself composed.
 
 ## Open questions
 
-1. **Drop the joined `Summary` field?** This note says yes (DD4) — the client joins the
-   segments, so the field can only add a way to drift, and `SemanticCell` already requires the
-   segments to concatenate to the text. The issue's draft kept the field. The alternative is to
-   send both and have the projection derive the text from the segments with a test pinning it;
-   that is safe but redundant for the one consumer. **I recommend dropping it**; say the
-   word if you would rather keep the field on the wire for readability.
-2. **Walk the fragments, or add a `SpeechText` seam?** This note walks in the projection
-   (DD2), guarded by a union-coverage test, to keep the published format library unchanged.
-   A seam there would remove the duplication at the cost of public API. I lean to the walk;
-   it is the smaller commitment, and it is reversible if a second consumer appears.
-3. **Keep `separator` beside `keyword`?** They draw the same muted color today, so they
-   could collapse into one `grammar` role. Keeping both costs nothing and leaves room to
-   differentiate punctuation from words. This note keeps both.
-4. **Is `keyword` the right name for the words?** The issue calls this "the report's own
-   grammar". `grammar` would name the family (`keyword` plus `separator`) better than
-   `keyword` names the words; renaming touches `styles.css`. This note keeps `keyword` to
-   hold the colors still, and raises `grammar` as the alternative.
+None outstanding. The wire carries the pieces alone — the client joins them for the cell's
+text — and the walk over the speech fragments lives in the projection, guarded by a
+union-coverage test.

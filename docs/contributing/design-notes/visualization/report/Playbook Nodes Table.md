@@ -194,15 +194,15 @@ shown a menu, and the odds are the whole of what the arm holds.
 
 ## Interfaces and abstractions
 
-| Type                                                                                    | Responsibility                                                                                           | Collaborators                                     |
-| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `PlaybookNodeView(int Id, string Kind, string Category, string Summary, int[] Targets)` | One node as the table shows it. New record in `PlaybookReport.cs`.                                       | `PlaybookProjection`                              |
-| `PlaybookProjection.NodesOf(PlaybookDocument)`                                          | Projects every node to a view, in document order.                                                        | `PlaybookNodeSummary`                             |
-| `PlaybookNodeSummary`                                                                   | Writes one node's summary. New internal static class.                                                    | the playbook's node and edge models, `SpeechText` |
-| `nodeTable(nodes)` in `playbook-view.ts`                                                | Shapes the views into a `SemanticTable`.                                                                 | `createTablePanel`                                |
-| `summaryRuns(summary, kind)` in `summary-runs.ts`                                       | Splits a summary into styled runs using the grammar of the node's kind.                                  | `nodeTable`                                       |
-| `createTablePanel`                                                                      | Draws it, with sorting, filtering, faceting, and collapse. Gains styled runs and a link per destination. | `summaryRuns`                                     |
-| `styles.css`                                                                            | The column widths, the sideways scroll, the hover tint, and the summary's colors.                        | —                                                 |
+| Type                                                                                        | Responsibility                                                                                                                                                      | Collaborators                                     |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `PlaybookNodeView(int Id, string Kind, string Category, Segment[] Segments, int[] Targets)` | One node as the table shows it. New record in `PlaybookReport.cs`.                                                                                                  | `PlaybookProjection`                              |
+| `PlaybookProjection.NodesOf(PlaybookDocument)`                                              | Projects every node to a view, in document order.                                                                                                                   | `PlaybookNodeSummary`                             |
+| `PlaybookNodeSummary`                                                                       | Writes one node's summary. New internal static class.                                                                                                               | the playbook's node and edge models, `SpeechText` |
+| `nodeTable(nodes)` in `playbook-view.ts`                                                    | Shapes the views into a `SemanticTable`.                                                                                                                            | `createTablePanel`                                |
+| `summaryCell(node)` in `playbook-view.ts`                                                   | Joins a node's segments for the cell's text and draws each piece in the class its role wears — see [Playbook Summary Segments](./Playbook%20Summary%20Segments.md). | `SUMMARY_SEGMENT_CLASS`                           |
+| `createTablePanel`                                                                          | Draws it, with sorting, filtering, faceting, and collapse. Gains styled segments and a link per destination.                                                        | `summaryCell`                                     |
+| `styles.css`                                                                                | The column widths, the sideways scroll, the hover tint, and the summary's colors.                                                                                   | —                                                 |
 
 ## Key design decisions
 
@@ -361,25 +361,18 @@ Only three distinctions take a color because keywords and speaker names always s
 adjacent in a summary. Coloring the grammar as well puts neighboring hues side by
 side, and the row then reads as a stripe rather than a sentence.
 
-The split into runs happens in the client, and the node's kind is what scopes it:
-each kind has a small grammar of its own, and the pieces holding a writer's own
-words are handed back whole rather than scanned. The split is total — the runs
-concatenate back to the summary for any input, including one the cap cut short
-mid-construct — which is what lets a search match still be found in the cell's text
-and then laid back across the runs.
+The pieces arrive already labeled. The projection writes each node's summary as
+ordered segments, each carrying the role it plays, and the client maps a role to the
+class it wears — see
+[Playbook Summary Segments](./Playbook%20Summary%20Segments.md), the note that owns
+the summary's shape. A piece holding a writer's own words is never scanned, and the
+segments concatenate back to the cell's text, which is what lets a search match
+still be found in the text and then laid back across the pieces.
 
-That split reads back a line the projection wrote, so it can only ever be a good
-guess. The characters it looks for are ones a writer can also type: an option label
-holding the option separator, or a command argument holding the argument separator,
-is read as two pieces where the script has one. The consequence is confined to
-color, because the drawing stays one flowing line and asserts nothing about
-structure.
-
-This is why the column does not draw a choice as a list of options, which would
-otherwise suit it. A list asserts how many options there are, and an assertion has
-to come from the side that holds the real edges. Having the projection label the
-parts it already has, so the client only draws what it is told, is worth doing and
-is tracked as its own work.
+The column still does not draw a choice as a list of options, which would otherwise
+suit it. A list asserts how many options there are, and the boundaries that
+assertion needs are the separator segments the projection placed; a rendering that
+draws them as item breaks rather than glyphs is its own change.
 
 ## Error and boundary cases
 
@@ -408,13 +401,14 @@ is tracked as its own work.
   flattening, and the only thing this component needs from outside the
   visualization assembly.
 - **`model.ts`** — gains `PlaybookNodeView` and `nodes` on `PlaybookReport`, and
-  the two shapes a cell needs to draw itself: a run carrying a class, and a link
+  the two shapes a cell needs to draw itself: a segment carrying a class, and a link
   per destination.
-- **`summary-runs.ts`** — new: splits a summary into styled runs using the grammar
-  of the node's kind.
-- **`semantic-table.ts`** — a cell can now be drawn in styled runs, and can carry
-  one link per destination instead of one for the whole cell. Both are general to
-  the component rather than particular to this table.
+- **The summary's pieces** — the projection now writes them as labeled segments and
+  the client draws each by role; the splitter this note introduced was deleted. See
+  [Playbook Summary Segments](./Playbook%20Summary%20Segments.md).
+- **`semantic-table.ts`** — a cell can now be drawn in styled segments, and can
+  carry one link per destination instead of one for the whole cell. Both are general
+  to the component rather than particular to this table.
 - **`playbook-view.ts`** — gains `nodeTable`, added to `tablesOf` after the
   anchors, so the tab reads header, speakers, anchors, then the nodes themselves.
 - **`styles.css`** — pins this table's `#`, `Kind`, and `Leads to` columns to a
@@ -431,9 +425,9 @@ is tracked as its own work.
 | xUnit — union coverage          | Reflecting over the node union's registered members, every kind produces a non-empty summary — so a seventh kind fails a test instead of silently falling through a discard arm.                                                                                                       |
 | xUnit — `PlaybookProjection`    | Every node projects to exactly one view, in document order, with its kind, its category, and its targets; an unavailable compile projects none.                                                                                                                                        |
 | xUnit — colors follow the graph | The kind-to-category mapping equals the Dialogue Graph's, so the two surfaces cannot drift apart silently.                                                                                                                                                                             |
-| Vitest — `summary-runs`         | Every real summary splits and rejoins exactly, including one the cap cut short; a writer's brackets are never read as a command, and a writer's own separator never splits their words.                                                                                                |
+| Vitest — the summary cell       | A cell joins its segments to its text and draws each role in its class, and a label holding a separator stays one plain piece; the splitter's cases moved to xUnit, against real nodes.                                                                                                |
 | Vitest — `playbook-view`        | The table's columns, its kind categories, its facet, and that every target in a cell carries a link of its own.                                                                                                                                                                        |
-| Vitest — `semantic-table`       | A cell drawn in runs shows each run in its own class, and a search match is still marked inside a colored run and across a run boundary.                                                                                                                                               |
+| Vitest — `semantic-table`       | A cell drawn in segments shows each in its own class, and a search match is still marked inside a colored segment and across a segment boundary.                                                                                                                                       |
 | Playwright                      | The Nodes table renders for a real playbook, facets to a single kind, and each target reveals that node in the JSON beside it. Hovering a target lights the row it leads to, tinted apart from the row under the pointer. A narrow viewport keeps the three short columns on one line. |
 
 A summary is a pure function of a node and the speaker list, so its tests need no
