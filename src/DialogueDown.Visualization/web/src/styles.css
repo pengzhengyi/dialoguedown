@@ -1220,7 +1220,7 @@ section.stage.empty-shell {
     white-space: nowrap;
 }
 
-/* The Summary cell's styled runs. Only the three distinctions worth finding carry a colour — who
+/* The Summary cell's styled segments. Only the three distinctions worth finding carry a colour — who
    speaks, what the host is asked to perform, and a value only a running game can supply — drawn
    from the Source editor's own syntax tokens, already defined for both themes. The grammar around
    them is muted, so the words a writer wrote stay the most legible thing in the row. */

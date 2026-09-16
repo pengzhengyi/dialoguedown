@@ -26,8 +26,11 @@ import type {
     PlaybookSpeakerView,
     PlaybookAnchorView,
     PlaybookNodeView,
+    PlaybookSegmentView,
+    SummaryRole,
     SemanticTable,
     SemanticCell,
+    SemanticSegment,
 } from "./model";
 import { createEntityHighlighter } from "./entity-highlight";
 import { createTablePanel } from "./semantic-table";
@@ -40,7 +43,6 @@ import { escapeHtml } from "./text";
 import { tagLabel } from "./tag-chip";
 import { lineOf, revealLine, type PlaybookTarget } from "./playbook-jump";
 import { playbookReferences, playbookReferenceKeymap } from "./playbook-references";
-import { summaryRuns, type SummaryRole } from "./summary-runs";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -294,7 +296,7 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
  * The class each summary role wears in the Nodes table. A writer's own words (`plain`) carry
  * none, so they keep the cell's own colour while the report's scaffolding steps back.
  */
-const SUMMARY_RUN_CLASS: Record<SummaryRole, string | undefined> = {
+const SUMMARY_SEGMENT_CLASS: Record<SummaryRole, string | undefined> = {
     speaker: "dd-sum-speaker",
     keyword: "dd-sum-keyword",
     separator: "dd-sum-separator",
@@ -304,14 +306,21 @@ const SUMMARY_RUN_CLASS: Record<SummaryRole, string | undefined> = {
     plain: undefined,
 };
 
-/** The node's summary as text plus the styled runs its kind's grammar splits it into. */
+/** One drawn piece: a segment the projection sent, with the class its role wears. */
+function drawnSegment(segment: PlaybookSegmentView): SemanticSegment {
+    const className = SUMMARY_SEGMENT_CLASS[segment.role];
+    return className === undefined ? { text: segment.text } : { text: segment.text, className };
+}
+
+/**
+ * The node's summary: the pieces the projection sent, joined for the cell's text and drawn by
+ * role. Nothing is split here — a writer's own characters are never part of the grammar.
+ */
 function summaryCell(node: PlaybookNodeView): SemanticCell {
+    const segments = node.segments.map(drawnSegment);
     return {
-        text: node.summary,
-        runs: summaryRuns(node.summary, node.kind).map((run) => {
-            const className = SUMMARY_RUN_CLASS[run.role];
-            return className === undefined ? { text: run.text } : { text: run.text, className };
-        }),
+        text: segments.map((segment) => segment.text).join(""),
+        segments,
     };
 }
 

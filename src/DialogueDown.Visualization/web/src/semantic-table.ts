@@ -528,11 +528,11 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         return td;
     }
 
-    // A cell drawn in styled runs. The split is only for drawing: the highlight is still found in
-    // the cell's own text and then laid across the runs, so searching keeps marking a cell that
-    // has gained colour.
-    if (cell.runs && cell.runs.length > 0) {
-        drawRuns(td, cell, query);
+    // A cell drawn in styled segments. The styling is only for drawing: the highlight is still
+    // found in the cell's own text and then laid across the segments, so searching keeps marking
+    // a cell that has gained colour.
+    if (cell.segments && cell.segments.length > 0) {
+        drawSegments(td, cell, query);
         return td;
     }
 
@@ -576,31 +576,31 @@ function highlightInto(td: HTMLElement, text: string, ranges: MatchRange[]): voi
 }
 
 /**
- * Draws a cell as its styled runs, keeping the search highlight. The match ranges are found once
- * over the cell's own text and then laid across whichever run covers them; a range that straddles
- * two runs is drawn as a marked stretch in each.
+ * Draws a cell as its styled segments, keeping the search highlight. The match ranges are found
+ * once over the cell's own text and then laid across whichever segment covers them; a range that
+ * straddles two segments is drawn as a marked stretch in each.
  */
-function drawRuns(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
+function drawSegments(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
     const ranges = query ? findMatches(cell.text, query.query, query) : [];
     let emitted = 0;
-    for (const run of cell.runs ?? []) {
+    for (const segment of cell.segments ?? []) {
         const start = emitted;
-        const end = start + run.text.length;
+        const end = start + segment.text.length;
         emitted = end;
-        // Each global range overlapping this run is translated into the run's own coordinates.
+        // Each global range overlapping this segment is translated into its own coordinates.
         const local = ranges
             .filter((range) => range.start < end && range.end > start)
             .map((range): MatchRange => ({
                 start: Math.max(range.start, start) - start,
                 end: Math.min(range.end, end) - start,
             }));
-        if (run.className) {
+        if (segment.className) {
             const span = document.createElement("span");
-            span.className = run.className;
-            highlightInto(span, run.text, local);
+            span.className = segment.className;
+            highlightInto(span, segment.text, local);
             td.appendChild(span);
         } else {
-            highlightInto(td, run.text, local);
+            highlightInto(td, segment.text, local);
         }
     }
 }

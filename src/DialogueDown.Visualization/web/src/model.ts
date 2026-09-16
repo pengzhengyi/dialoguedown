@@ -84,7 +84,7 @@ export interface SemanticJump {
 }
 
 /** One styled stretch of a cell's text. */
-export interface SemanticRun {
+export interface SemanticSegment {
     text: string;
     className?: string;
 }
@@ -103,10 +103,11 @@ export interface SemanticCell {
     /**
      * Set when the cell's text is drawn in styled stretches rather than as one run of prose.
      * `text` stays the plain rendering, so search and sort still read the cell and only the
-     * drawing differs — the same arrangement {@link tags} uses. The runs' texts must concatenate
-     * back to `text`, because the search highlight is found in `text` and drawn across the runs.
+     * drawing differs — the same arrangement {@link tags} uses. The segments' texts must
+     * concatenate back to `text`, because the search highlight is found in `text` and drawn across
+     * the segments.
      */
-    runs?: SemanticRun[];
+    segments?: SemanticSegment[];
     /**
      * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
      * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
@@ -238,6 +239,18 @@ export interface PlaybookAnchorView {
     node: number;
 }
 
+/** What one labeled piece of a node's summary is. */
+export type SummaryRole =
+    "speaker" | "keyword" | "separator" | "command" | "query" | "absent" | "plain";
+
+/** One labeled piece of a node's summary, as the projection writes it. */
+export interface PlaybookSegmentView {
+    /** The piece's text. Joining every piece's text rebuilds the summary. */
+    text: string;
+    /** What the piece is, which decides the class the table draws it in. */
+    role: SummaryRole;
+}
+
 /** One row of the playbook's node table. */
 export interface PlaybookNodeView {
     /** The node's own position. */
@@ -246,8 +259,8 @@ export interface PlaybookNodeView {
     kind: string;
     /** The cross-stage color group the node's kind belongs to. */
     category: string;
-    /** The one line saying what the node holds. */
-    summary: string;
+    /** The node's summary, as the labeled pieces the table draws. */
+    segments: PlaybookSegmentView[];
     /** The nodes this node leads to. */
     targets: number[];
 }

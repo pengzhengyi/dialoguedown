@@ -52,29 +52,56 @@ function compiled(): PlaybookReport {
             { default: true, tags: [] },
         ],
         nodes: [
-            { id: 0, kind: "line", category: "speech", summary: "Alice: Which way?", targets: [1] },
+            {
+                id: 0,
+                kind: "line",
+                category: "speech",
+                segments: [
+                    { text: "Alice", role: "speaker" },
+                    { text: ": ", role: "separator" },
+                    { text: "Which way?", role: "plain" },
+                ],
+                targets: [1],
+            },
             {
                 id: 1,
                 kind: "choice",
                 category: "structure",
-                summary: "Go left || Go right",
+                segments: [
+                    { text: "Go left", role: "plain" },
+                    { text: " || ", role: "separator" },
+                    { text: "Go right", role: "plain" },
+                ],
                 targets: [2, 9],
             },
             {
                 id: 2,
                 kind: "control",
                 category: "call",
-                summary: "ShowBackground(tavern, firelit)",
+                segments: [{ text: "ShowBackground(tavern, firelit)", role: "command" }],
                 targets: [9],
             },
             {
                 id: 9,
                 kind: "branch",
                 category: "structure",
-                summary: "IF Hero.IsBrave THEN 10 ELSE 11",
+                segments: [
+                    { text: "IF ", role: "keyword" },
+                    { text: "Hero.IsBrave", role: "plain" },
+                    { text: " THEN ", role: "keyword" },
+                    { text: "10", role: "plain" },
+                    { text: " ELSE ", role: "keyword" },
+                    { text: "11", role: "plain" },
+                ],
                 targets: [10, 11],
             },
-            { id: 10, kind: "end", category: "terminal", summary: "END", targets: [] },
+            {
+                id: 10,
+                kind: "end",
+                category: "terminal",
+                segments: [{ text: "END", role: "keyword" }],
+                targets: [],
+            },
         ],
     };
 }
@@ -386,5 +413,49 @@ describe("createPlaybookView Nodes table", () => {
         expect(facet?.getAttribute("aria-label")).toBe("Filter by Kind");
         // Only a categorical column carries a funnel; a free-text column is the search box's.
         expect(headerCell(view, "Summary").querySelector(".th-facet")).toBeNull();
+    });
+
+    it("draws each role in its own class, and a writer's words in none", () => {
+        const report = compiled();
+        report.nodes[4].segments = [
+            { text: "Spoke", role: "speaker" },
+            { text: "IF ", role: "keyword" },
+            { text: ": ", role: "separator" },
+            { text: "(fade)", role: "command" },
+            { text: "{Key}", role: "query" },
+            { text: "<no label>", role: "absent" },
+            { text: "plain words", role: "plain" },
+        ];
+
+        const cell = bodyRows(createPlaybookView(report), "Nodes")[4].cells[2];
+
+        expect(cell?.textContent).toBe("SpokeIF : (fade){Key}<no label>plain words");
+        // A role with no class would draw uncoloured here rather than fail anywhere else.
+        expect([...cell!.querySelectorAll("span")].map((span) => span.className)).toEqual([
+            "dd-sum-speaker",
+            "dd-sum-keyword",
+            "dd-sum-separator",
+            "dd-sum-command",
+            "dd-sum-query",
+            "dd-sum-absent",
+        ]);
+    });
+
+    it("draws exactly the segments it was sent, reading nothing back out of the text", () => {
+        // The bug this change removes: a writer's own separator used to be split as grammar. The
+        // client can no longer do that — it draws the roles it was handed and nothing else.
+        const report = compiled();
+        report.nodes[1].segments = [
+            { text: "Go left || right", role: "plain" },
+            { text: " || ", role: "separator" },
+            { text: "Go right", role: "plain" },
+        ];
+
+        const cell = bodyRows(createPlaybookView(report), "Nodes")[1].cells[2];
+
+        expect(cell?.textContent).toBe("Go left || right || Go right");
+        expect(
+            [...cell!.querySelectorAll(".dd-sum-separator")].map((piece) => piece.textContent),
+        ).toEqual([" || "]);
     });
 });
