@@ -180,7 +180,8 @@ speechSegments(fragments):
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `PlaybookSegmentView(string Text, string Role)` | One segment: a text and the role it plays. New record beside `PlaybookNodeView`. | `PlaybookNodeSummary` |
+| `PlaybookSegmentView(string Text, string Role)` | One segment: a text and the role it plays, with a factory per role. Its own file. | `PlaybookNodeSummary`, `SummaryRoles` |
+| `SummaryRoles` | The role names the wire carries, kept apart from the writing that uses them. | `PlaybookSegmentView` |
 | `PlaybookNodeView(…, Segments)` | One node as the table shows it; gains the segments. | `PlaybookProjection` |
 | `PlaybookNodeSummary.SegmentsOf(node, speakers)` | Writes a node's segments. Replaces the string-returning `Of`. | the playbook's node and edge models, `SpeechText.PlaceholderFor` |
 | `PlaybookProjection.ToView` | Projects each node's segments. | `PlaybookNodeSummary` |
@@ -297,7 +298,9 @@ so a mismatch is a development-time accident, not a shipped one.)
 
 ## Integration
 
-- **`PlaybookReport.cs`** — gains `PlaybookSegmentView`; `PlaybookNodeView` gains `Segments`.
+- **`PlaybookReport.cs`** — `PlaybookNodeView` gains `Segments`. `PlaybookSegmentView` and
+  `SummaryRoles` are files of their own, so a reader finds the shape and the vocabulary without
+  scrolling the writer that uses them.
 - **`PlaybookNodeSummary.cs`** — `Of` becomes `SegmentsOf`, returning segments; the speech walk and
   the cap live here.
 - **`PlaybookProjection.cs`** — passes `SegmentsOf(...)` into the view.

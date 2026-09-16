@@ -46,14 +46,6 @@ internal sealed record PlaybookNodeView(
     IReadOnlyList<PlaybookSegmentView> Segments,
     IReadOnlyList<int> Targets);
 
-/// <summary>One labeled piece of a node's summary.</summary>
-/// <param name="Text">The piece's text. Joining every piece's text rebuilds the summary.</param>
-/// <param name="Role">
-/// What the piece is — a speaker, a writer's words, the table's grammar, a command, a query, or an
-/// absent marker — named by <see cref="PlaybookNodeSummary"/> as it writes the piece.
-/// </param>
-internal sealed record PlaybookSegmentView(string Text, string Role);
-
 /// <summary>The playbook's header facts, as the report's summary table shows them.</summary>
 /// <param name="Script">The script the playbook was compiled from.</param>
 /// <param name="FormatVersion">The playbook format's version.</param>

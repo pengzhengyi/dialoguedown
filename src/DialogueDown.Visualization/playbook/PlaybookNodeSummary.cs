@@ -67,13 +67,6 @@ internal static class PlaybookNodeSummary
     /// </remarks>
     private const int SummaryCap = 200;
 
-    private const string SpeakerRole = "speaker";
-    private const string PlainRole = "plain";
-    private const string KeywordRole = "keyword";
-    private const string SeparatorRole = "separator";
-    private const string CommandRole = "command";
-    private const string QueryRole = "query";
-    private const string AbsentRole = "absent";
 
     /// <summary>
     /// Writes one node's line as the labeled pieces the table draws, leading with the node's own
@@ -95,9 +88,9 @@ internal static class PlaybookNodeSummary
 
         return Capped(
         [
-            Keyword(NodeCondition),
-            Plain(condition.Key),
-            Keyword(NodeConsequence),
+            PlaybookSegmentView.Keyword(NodeCondition),
+            PlaybookSegmentView.Plain(condition.Key),
+            PlaybookSegmentView.Keyword(NodeConsequence),
             .. body,
         ]);
     }
@@ -116,7 +109,7 @@ internal static class PlaybookNodeSummary
         node switch
         {
             LineNode line => Line(line, speakers),
-            EndNode => [Keyword(EndOfScript)],
+            EndNode => [PlaybookSegmentView.Keyword(EndOfScript)],
             BranchNode branch => Branch(branch),
             ControlNode control => Control(control),
             ChoiceNode choice => Choice(choice),
@@ -128,9 +121,9 @@ internal static class PlaybookNodeSummary
         LineNode line, ImmutableArray<PlaybookSpeaker> speakers)
     {
         var speech = Speech(line.Speech);
-        ImmutableArray<PlaybookSegmentView> said = speech.Length > 0 ? speech : [Absent(NoSpeech)];
+        ImmutableArray<PlaybookSegmentView> said = speech.Length > 0 ? speech : [PlaybookSegmentView.Absent(NoSpeech)];
 
-        return [Speaker(NameOf(line.Speaker, speakers)), Separator(SpeakerDivider), .. said];
+        return [PlaybookSegmentView.Speaker(NameOf(line.Speaker, speakers)), PlaybookSegmentView.Separator(SpeakerDivider), .. said];
     }
 
     // A line addresses its speaker by index, so an index the playbook does not carry means the
@@ -160,19 +153,19 @@ internal static class PlaybookNodeSummary
         {
             (true, KeyCondition key) =>
             [
-                Keyword(NodeCondition),
-                Plain(key.Key),
-                Keyword(NodeConsequence),
-                Plain(Target(arm.Target)),
+                PlaybookSegmentView.Keyword(NodeCondition),
+                PlaybookSegmentView.Plain(key.Key),
+                PlaybookSegmentView.Keyword(NodeConsequence),
+                PlaybookSegmentView.Plain(Target(arm.Target)),
             ],
             (false, KeyCondition key) =>
             [
-                Keyword(BranchElseIf),
-                Plain(key.Key),
-                Keyword(NodeConsequence),
-                Plain(Target(arm.Target)),
+                PlaybookSegmentView.Keyword(BranchElseIf),
+                PlaybookSegmentView.Plain(key.Key),
+                PlaybookSegmentView.Keyword(NodeConsequence),
+                PlaybookSegmentView.Plain(Target(arm.Target)),
             ],
-            _ => [Keyword(BranchElse), Plain(Target(arm.Target))],
+            _ => [PlaybookSegmentView.Keyword(BranchElse), PlaybookSegmentView.Plain(Target(arm.Target))],
         };
 
     // A host only performs commands, so the other speech kinds render as nothing and drop out of
@@ -196,10 +189,10 @@ internal static class PlaybookNodeSummary
 
             if (commands.Count > 0)
             {
-                commands.Add(Separator(CommandSeparator));
+                commands.Add(PlaybookSegmentView.Separator(CommandSeparator));
             }
 
-            commands.Add(Command(text));
+            commands.Add(PlaybookSegmentView.Command(text));
         }
 
         return commands.ToImmutable();
@@ -217,8 +210,8 @@ internal static class PlaybookNodeSummary
     // ones a divert was named with.
     private static ImmutableArray<PlaybookSegmentView> WhereItGoes(ControlNode control) =>
         FirstDivertWords(control.Out) is { } words
-            ? [Separator(DivertArrow), Plain(words)]
-            : [Keyword(CarriesOn)];
+            ? [PlaybookSegmentView.Separator(DivertArrow), PlaybookSegmentView.Plain(words)]
+            : [PlaybookSegmentView.Keyword(CarriesOn)];
 
     private static string? FirstDivertWords(ImmutableArray<Edge> edges) =>
         edges
@@ -234,7 +227,7 @@ internal static class PlaybookNodeSummary
         {
             if (options.Count > 0)
             {
-                options.Add(Separator(OptionSeparator));
+                options.Add(PlaybookSegmentView.Separator(OptionSeparator));
             }
 
             options.AddRange(Option(option));
@@ -246,7 +239,7 @@ internal static class PlaybookNodeSummary
     private static ImmutableArray<PlaybookSegmentView> Option(OptionEdge option)
     {
         var label = Speech(option.Label);
-        ImmutableArray<PlaybookSegmentView> words = label.Length > 0 ? label : [Absent(NoLabel)];
+        ImmutableArray<PlaybookSegmentView> words = label.Length > 0 ? label : [PlaybookSegmentView.Absent(NoLabel)];
 
         return [.. words, .. Guarded(option.Condition)];
     }
@@ -256,14 +249,14 @@ internal static class PlaybookNodeSummary
         var arms = random.Out.OfType<RandomOptionEdge>().ToImmutableArray();
         var pieces = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
 
-        pieces.Add(Keyword($"{DrawPrefix}{arms.Length.ToString(CultureInfo.InvariantCulture)}"));
-        pieces.Add(Separator(OddsDivider));
+        pieces.Add(PlaybookSegmentView.Keyword($"{DrawPrefix}{arms.Length.ToString(CultureInfo.InvariantCulture)}"));
+        pieces.Add(PlaybookSegmentView.Separator(OddsDivider));
 
         for (var index = 0; index < arms.Length; index++)
         {
             if (index > 0)
             {
-                pieces.Add(Separator(OptionSeparator));
+                pieces.Add(PlaybookSegmentView.Separator(OptionSeparator));
             }
 
             pieces.AddRange(Odds(arms[index]));
@@ -279,16 +272,16 @@ internal static class PlaybookNodeSummary
         weight switch
         {
             NumberWeight number =>
-                [Plain($"{number.Percentage.ToString(CultureInfo.InvariantCulture)}%")],
-            QueryWeight query => [Query(SpeechText.PlaceholderFor(query.Key))],
-            AutoWeight => [Plain(Evenly)],
+                [PlaybookSegmentView.Plain($"{number.Percentage.ToString(CultureInfo.InvariantCulture)}%")],
+            QueryWeight query => [PlaybookSegmentView.Query(SpeechText.PlaceholderFor(query.Key))],
+            AutoWeight => [PlaybookSegmentView.Plain(Evenly)],
             _ => [],
         };
 
     // An option and a random arm both carry their condition after their own text, so the shape is
     // written once.
     private static ImmutableArray<PlaybookSegmentView> Guarded(Condition? condition) =>
-        condition is KeyCondition key ? [Keyword(Guard), Plain(key.Key)] : [];
+        condition is KeyCondition key ? [PlaybookSegmentView.Keyword(Guard), PlaybookSegmentView.Plain(key.Key)] : [];
 
     // A condition lives on the kinds that can carry one, so it is read here rather than repeated
     // in each kind's own summary.
@@ -316,8 +309,8 @@ internal static class PlaybookNodeSummary
             StyledTextFragment styled => Walk(styled.Children),
             LinkFragment link => Walk(link.Label),
             ImageFragment image => Walk(image.Alt),
-            LineBreakFragment => [Plain(" ")],
-            QueryFragment query => [Query(SpeechText.PlaceholderFor(query.Key))],
+            LineBreakFragment => [PlaybookSegmentView.Plain(" ")],
+            QueryFragment query => [PlaybookSegmentView.Query(SpeechText.PlaceholderFor(query.Key))],
             _ => [],
         };
 
@@ -368,7 +361,7 @@ internal static class PlaybookNodeSummary
         var boundary = line.LastIndexOf(' ', SummaryCap);
         var kept = (boundary >= 0 ? line[..boundary] : line[..SummaryCap]).TrimEnd();
 
-        return [.. Take(pieces, kept.Length), Separator(Ellipsis)];
+        return [.. Take(pieces, kept.Length), PlaybookSegmentView.Separator(Ellipsis)];
     }
 
     private static ImmutableArray<PlaybookSegmentView> Take(
@@ -395,19 +388,12 @@ internal static class PlaybookNodeSummary
     private static string Target(int target) => target.ToString(CultureInfo.InvariantCulture);
 
     private static ImmutableArray<PlaybookSegmentView> PlainParts(string text) =>
-        text.Length == 0 ? [] : [Plain(text)];
+        text.Length == 0 ? [] : [PlaybookSegmentView.Plain(text)];
 
-    private static PlaybookSegmentView Speaker(string text) => new(text, SpeakerRole);
 
-    private static PlaybookSegmentView Plain(string text) => new(text, PlainRole);
 
-    private static PlaybookSegmentView Keyword(string text) => new(text, KeywordRole);
 
-    private static PlaybookSegmentView Separator(string text) => new(text, SeparatorRole);
 
-    private static PlaybookSegmentView Command(string text) => new(text, CommandRole);
 
-    private static PlaybookSegmentView Query(string text) => new(text, QueryRole);
 
-    private static PlaybookSegmentView Absent(string text) => new(text, AbsentRole);
 }
