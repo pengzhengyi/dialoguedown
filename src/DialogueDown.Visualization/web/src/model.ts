@@ -87,6 +87,35 @@ export interface SemanticJump {
 export interface SemanticSegment {
     text: string;
     className?: string;
+    /**
+     * What this piece means, for a piece whose meaning its own words do not carry — a query, a
+     * command, a stand-in, a destination. Shown as a tooltip beside the piece.
+     */
+    tip?: string;
+    /**
+     * Set when the piece names a place in an accompanying document, so clicking it takes the reader
+     * there. As with {@link SemanticCell.jump}, it is bound where the cell is built rather than
+     * looked up when it is drawn.
+     */
+    target?: PlaybookTarget;
+    /**
+     * Set when the piece references a keyed entity, so hovering it highlights that entity wherever
+     * else it appears.
+     */
+    refKey?: string;
+}
+
+/** A cell drawn as a list: what introduces it, what it holds, and whether its order means. */
+export interface SemanticList {
+    /**
+     * The pieces that read before the items — the condition a list is subject to, the header a draw
+     * announces — or none when the list opens the cell.
+     */
+    lead: SemanticSegment[];
+    /** The items, each the pieces that read on its own line. */
+    items: SemanticSegment[][];
+    /** Whether the items are steps taken in order rather than alternatives to pick between. */
+    ordered: boolean;
 }
 
 /** One cell of a {@link SemanticTable}. */
@@ -108,6 +137,12 @@ export interface SemanticCell {
      * the segments.
      */
     segments?: SemanticSegment[];
+    /**
+     * Set when the cell is drawn as a list rather than as one line. `text` joins the introduction
+     * and the items with newlines, so the highlight found in it still belongs to the item that
+     * holds the match.
+     */
+    list?: SemanticList;
     /**
      * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
      * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
@@ -241,7 +276,15 @@ export interface PlaybookAnchorView {
 
 /** What one labeled piece of a node's summary is. */
 export type SummaryRole =
-    "speaker" | "keyword" | "separator" | "command" | "query" | "absent" | "plain";
+    | "speaker"
+    | "keyword"
+    | "separator"
+    | "boundary"
+    | "command"
+    | "query"
+    | "absent"
+    | "target"
+    | "plain";
 
 /** One labeled piece of a node's summary, as the projection writes it. */
 export interface PlaybookSegmentView {
@@ -249,6 +292,11 @@ export interface PlaybookSegmentView {
     text: string;
     /** What the piece is, which decides the class the table draws it in. */
     role: SummaryRole;
+    /**
+     * The node this piece names, for a piece that says where control can go. A piece carrying one
+     * can be followed, so the reader reaches the node rather than a number that stands for it.
+     */
+    target?: number;
 }
 
 /** One row of the playbook's node table. */

@@ -1,5 +1,5 @@
 import tippy from "tippy.js";
-import type { SemanticTable, SemanticCell, SemanticRow } from "./model";
+import type { SemanticTable, SemanticCell, SemanticRow, SemanticSegment } from "./model";
 import { escapeHtml } from "./text";
 import { colorOf } from "./palette";
 import { initCollapsiblePanel } from "./collapse-toggle";
@@ -528,6 +528,13 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         return td;
     }
 
+    // A cell drawn as a list, one item per line. The breaks are the list's own structure rather
+    // than characters, but they are still counted where the cell's text carries them.
+    if (cell.list) {
+        drawList(td, cell, query);
+        return td;
+    }
+
     // A cell drawn in styled segments. The styling is only for drawing: the highlight is still
     // found in the cell's own text and then laid across the segments, so searching keeps marking
     // a cell that has gained colour.
@@ -581,28 +588,111 @@ function highlightInto(td: HTMLElement, text: string, ranges: MatchRange[]): voi
  * straddles two segments is drawn as a marked stretch in each.
  */
 function drawSegments(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
-    const ranges = query ? findMatches(cell.text, query.query, query) : [];
+    const ranges = searchRanges(cell, query);
     let emitted = 0;
     for (const segment of cell.segments ?? []) {
         const start = emitted;
-        const end = start + segment.text.length;
-        emitted = end;
-        // Each global range overlapping this segment is translated into its own coordinates.
-        const local = ranges
-            .filter((range) => range.start < end && range.end > start)
-            .map((range): MatchRange => ({
-                start: Math.max(range.start, start) - start,
-                end: Math.min(range.end, end) - start,
-            }));
-        if (segment.className) {
-            const span = document.createElement("span");
-            span.className = segment.className;
-            highlightInto(span, segment.text, local);
-            td.appendChild(span);
-        } else {
-            highlightInto(td, segment.text, local);
-        }
+        emitted += segment.text.length;
+        drawPiece(td, segment, inside(ranges, start, emitted));
     }
+}
+
+/**
+ * Draws a cell as a list, one item per line. The cell's text joins the introduction and the items
+ * with a newline, so a match still belongs to the line that holds it: the breaks are counted among
+ * the offsets and drawn as the list's own marker rather than as characters. The introduction reads
+ * on the cell's first line, where the pieces that come before a break read anywhere else.
+ */
+function drawList(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
+    const list = cell.list;
+    if (!list) return;
+
+    const ranges = searchRanges(cell, query);
+    let emitted = 0;
+
+    if (list.lead.length > 0) {
+        for (const segment of list.lead) {
+            const start = emitted;
+            emitted += segment.text.length;
+            drawPiece(td, segment, inside(ranges, start, emitted));
+        }
+        emitted += 1;
+        td.appendChild(document.createTextNode("\n"));
+    }
+
+    const drawn = document.createElement(list.ordered ? "ol" : "ul");
+    drawn.className = "dd-sum-list";
+    list.items.forEach((item, index) => {
+        if (index > 0) {
+            emitted += 1;
+            // The break the cell's text carries is drawn too, as the whitespace between items, so
+            // the cell reads the way it searches.
+            drawn.appendChild(document.createTextNode("\n"));
+        }
+        const line = document.createElement("li");
+        for (const segment of item) {
+            const start = emitted;
+            emitted += segment.text.length;
+            drawPiece(line, segment, inside(ranges, start, emitted));
+        }
+        drawn.appendChild(line);
+    });
+
+    td.appendChild(drawn);
+}
+
+/** The matches a search found in the cell, or none. */
+function searchRanges(cell: SemanticCell, query: SearchQuery | undefined): MatchRange[] {
+    return query ? findMatches(cell.text, query.query, query) : [];
+}
+
+/** Draws one piece into `host`, marking whichever parts of a match fall inside it. */
+function drawPiece(host: HTMLElement, segment: SemanticSegment, ranges: MatchRange[]): void {
+    const piece = pieceElement(segment);
+    if (piece === null) {
+        highlightInto(host, segment.text, ranges);
+        return;
+    }
+
+    highlightInto(piece, segment.text, ranges);
+    host.appendChild(piece);
+}
+
+/**
+ * The element a piece is drawn in, or null for a bare piece that needs no element of its own.
+ *
+ * A piece that names a place in a document is a control rather than a stretch of text, so it is
+ * built the way a cell's own jump is: a button a keyboard can reach, carrying the jump and the
+ * keys the highlighter and the tooltip read. A piece that only has something to explain wears a
+ * span instead.
+ */
+function pieceElement(segment: SemanticSegment): HTMLElement | null {
+    if (segment.target) {
+        const control = cellAction(`Reveal ${segment.text} in the playbook`);
+        control.dataset.jump = JSON.stringify(segment.target);
+        control.classList.add("dd-jump");
+        if (segment.className) control.classList.add(segment.className);
+        if (segment.refKey) control.setAttribute("data-ref-key", segment.refKey);
+        if (segment.tip) control.dataset.tip = segment.tip;
+        return control;
+    }
+
+    if (!segment.className && !segment.tip) return null;
+
+    const span = document.createElement("span");
+    if (segment.className) span.className = segment.className;
+    if (segment.tip) span.dataset.tip = segment.tip;
+    return span;
+}
+
+/** The parts of each match that fall inside `[start, end)`, in that stretch's own coordinates. */
+function inside(ranges: MatchRange[], start: number, end: number): MatchRange[] {
+    return ranges
+        .filter((range) => range.start < end && range.end > start)
+        .map((range) => ({
+            start: Math.max(range.start, start) - start,
+            end: Math.min(range.end, end) - start,
+        }));
 }
 
 /** A 15px stroked Lucide-style icon from its inner paths. */

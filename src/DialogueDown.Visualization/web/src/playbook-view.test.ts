@@ -68,9 +68,10 @@ function compiled(): PlaybookReport {
                 kind: "choice",
                 category: "structure",
                 segments: [
-                    { text: "Go left", role: "plain" },
-                    { text: " || ", role: "separator" },
-                    { text: "Go right", role: "plain" },
+                    { text: "", role: "boundary" },
+                    { text: "Go left", role: "plain", target: 2 },
+                    { text: " || ", role: "boundary" },
+                    { text: "Go right", role: "plain", target: 9 },
                 ],
                 targets: [2, 9],
             },
@@ -445,17 +446,177 @@ describe("createPlaybookView Nodes table", () => {
         // The bug this change removes: a writer's own separator used to be split as grammar. The
         // client can no longer do that — it draws the roles it was handed and nothing else.
         const report = compiled();
-        report.nodes[1].segments = [
+        report.nodes[4].segments = [
             { text: "Go left || right", role: "plain" },
             { text: " || ", role: "separator" },
             { text: "Go right", role: "plain" },
         ];
 
-        const cell = bodyRows(createPlaybookView(report), "Nodes")[1].cells[2];
+        const cell = bodyRows(createPlaybookView(report), "Nodes")[4].cells[2];
 
         expect(cell?.textContent).toBe("Go left || right || Go right");
         expect(
             [...cell!.querySelectorAll(".dd-sum-separator")].map((piece) => piece.textContent),
         ).toEqual([" || "]);
+    });
+
+    // A menu is a list of options, and the boundaries the projection placed are where one ends and
+    // the next begins. The client draws that structure with the list's own marker instead of the
+    // punctuation — which is the freedom the roles bought.
+    it("draws a choice as a list, one option to a line", () => {
+        const cell = bodyRows(createPlaybookView(compiled()), "Nodes")[1].cells[2];
+
+        expect([...cell!.querySelectorAll("li")].map((item) => item.textContent)).toEqual([
+            "Go left",
+            "Go right",
+        ]);
+        // Nothing draws the punctuation: it is the boundary, not a glyph.
+        expect(cell?.querySelector(".dd-sum-separator")).toBeNull();
+        // The cell's text is its lines, so search, sort, and a copy still read both options.
+        expect(cell?.textContent).toBe("Go left\nGo right");
+    });
+
+    // A menu's options are the picks on offer, so each one is a way to where it leads, and its tip
+    // says which pick it is rather than leaving the reader to match it against the Leads to column.
+    it("offers a menu's options as jumps to where they lead", () => {
+        const cell = bodyRows(createPlaybookView(compiled()), "Nodes")[1].cells[2];
+        const options = [...cell!.querySelectorAll<HTMLElement>("button.dd-jump")];
+
+        expect(options.map((option) => option.textContent)).toEqual(["Go left", "Go right"]);
+        expect(options.map((option) => JSON.parse(option.dataset.jump ?? "null"))).toEqual([
+            { kind: "node", id: 2 },
+            { kind: "node", id: 9 },
+        ]);
+        expect(options[0]?.getAttribute("data-tip")).toContain("Choice");
+        expect(options[0]?.getAttribute("data-tip")).toContain("Click to reveal");
+    });
+
+    // A piece whose own role means something keeps saying it, and adds only that it can be followed:
+    // a query inside an option's words is still a question for the game.
+    it("keeps a query's own meaning when the option it sits in leads somewhere", () => {
+        const report = compiled();
+        report.nodes[1].segments = [
+            { text: "", role: "boundary" },
+            { text: "Spend ", role: "plain", target: 2 },
+            { text: "{Gold}", role: "query", target: 2 },
+            { text: " || ", role: "boundary" },
+            { text: "Wait", role: "plain", target: 9 },
+        ];
+
+        const query = bodyRows(createPlaybookView(report), "Nodes")[1].cells[2].querySelector(
+            ".dd-sum-query",
+        );
+
+        expect(query?.getAttribute("data-tip")).toContain("Query");
+        expect(query?.getAttribute("data-tip")).toContain("Click to reveal");
+    });
+
+    it("draws a menu of one as a line, because one option is not a list", () => {
+        const report = compiled();
+        report.nodes[1].segments = [{ text: "Only way on", role: "plain" }];
+
+        const cell = bodyRows(createPlaybookView(report), "Nodes")[1].cells[2];
+
+        expect(cell?.querySelector("li")).toBeNull();
+        expect(cell?.textContent).toBe("Only way on");
+    });
+
+    // A control's items are the steps it takes, so their order is meaning: the list is numbered,
+    // and the boundaries the projection placed become the numbers.
+    it("draws a control's commands as an ordered list", () => {
+        const report = compiled();
+        report.nodes[2].segments = [
+            { text: "", role: "boundary" },
+            { text: "ShowBackground(tavern, firelit)", role: "command" },
+            { text: "; ", role: "boundary" },
+            { text: "PlaySound(fire)", role: "command" },
+        ];
+
+        const cell = bodyRows(createPlaybookView(report), "Nodes")[2].cells[2];
+
+        expect(cell?.querySelector("ol")).not.toBeNull();
+        expect([...cell!.querySelectorAll("li")].map((item) => item.textContent)).toEqual([
+            "ShowBackground(tavern, firelit)",
+            "PlaySound(fire)",
+        ]);
+        // The cell's text is its lines, so search, sort, and a copy still read every command.
+        expect(cell?.textContent).toBe("ShowBackground(tavern, firelit)\nPlaySound(fire)");
+    });
+
+    // A list can be subject to a condition, and the condition introduces the list rather than
+    // becoming its first item: it reads on the cell's first line.
+    it("reads a conditional command list's condition before the list", () => {
+        const report = compiled();
+        report.nodes[2].segments = [
+            { text: "IF ", role: "keyword" },
+            { text: "Hero.IsBrave", role: "plain" },
+            { text: " THEN ", role: "keyword" },
+            { text: "", role: "boundary" },
+            { text: "(fade)", role: "command" },
+            { text: "; ", role: "boundary" },
+            { text: "(wait)", role: "command" },
+        ];
+
+        const cell = bodyRows(createPlaybookView(report), "Nodes")[2].cells[2];
+
+        expect(cell?.textContent).toBe("IF Hero.IsBrave THEN \n(fade)\n(wait)");
+        expect([...cell!.querySelectorAll("li")].map((item) => item.textContent)).toEqual([
+            "(fade)",
+            "(wait)",
+        ]);
+    });
+
+    // A reader who has not learned the script language cannot tell a query from braces a writer
+    // typed, so the piece says which it is on hover — the way the graph's routes explain themselves.
+    it("explains a query on hover", () => {
+        const report = compiled();
+        report.nodes[4].segments = [{ text: "{Gold}", role: "query" }];
+
+        const piece = bodyRows(createPlaybookView(report), "Nodes")[4].cells[2].querySelector(
+            ".dd-sum-query",
+        );
+
+        expect(piece?.getAttribute("data-tip")).toContain("Query");
+        expect(piece?.getAttribute("data-tip")).toContain("Answered while the game runs");
+    });
+
+    // A piece that names a node is a way to reach it, so it is a control rather than a stretch of
+    // text: it carries the jump, the key that lights the node up elsewhere, and what it means.
+    it("offers a branch arm's target as a jump", () => {
+        const report = compiled();
+        report.nodes[3].segments = [
+            { text: "IF ", role: "keyword" },
+            { text: "DoorIsHot", role: "plain" },
+            { text: " THEN ", role: "keyword" },
+            { text: "10", role: "target", target: 10 },
+        ];
+
+        const piece = bodyRows(createPlaybookView(report), "Nodes")[3].cells[2].querySelector(
+            "button",
+        );
+
+        expect(piece?.tagName).toBe("BUTTON");
+        expect(piece?.textContent).toBe("10");
+        expect(JSON.parse(piece?.dataset.jump ?? "null")).toEqual({ kind: "node", id: 10 });
+        expect(piece?.getAttribute("data-ref-key")).toBe("node:10");
+        expect(piece?.getAttribute("data-tip")).toContain("Conditional");
+        expect(piece?.getAttribute("aria-label")).toBe("Reveal 10 in the playbook");
+    });
+
+    it("offers a divert's own words as a jump", () => {
+        const report = compiled();
+        report.nodes[2].segments = [
+            { text: "⇒ ", role: "separator" },
+            { text: "The Mountain Road", role: "target", target: 7 },
+        ];
+
+        const piece = bodyRows(createPlaybookView(report), "Nodes")[2].cells[2].querySelector(
+            "button",
+        );
+
+        expect(piece?.textContent).toBe("The Mountain Road");
+        expect(JSON.parse(piece?.dataset.jump ?? "null")).toEqual({ kind: "node", id: 7 });
+        expect(piece?.getAttribute("data-tip")).toContain("Jump");
+        expect(piece?.getAttribute("data-tip")).toContain("Click to reveal");
     });
 });

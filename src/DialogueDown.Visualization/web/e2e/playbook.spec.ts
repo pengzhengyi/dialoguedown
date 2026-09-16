@@ -72,7 +72,9 @@ const compiled: Report = {
                 segments: [
                     { text: "Alice", role: "speaker" },
                     { text: ": ", role: "separator" },
-                    { text: "Which way?", role: "plain" },
+                    { text: "You hold ", role: "plain" },
+                    { text: "{Gold}", role: "query" },
+                    { text: " gold.", role: "plain" },
                 ],
                 targets: [1],
             },
@@ -81,9 +83,10 @@ const compiled: Report = {
                 kind: "choice",
                 category: "structure",
                 segments: [
-                    { text: "Go left", role: "plain" },
-                    { text: " || ", role: "separator" },
-                    { text: "Go right", role: "plain" },
+                    { text: "", role: "boundary" },
+                    { text: "Go left", role: "plain", target: 2 },
+                    { text: " || ", role: "boundary" },
+                    { text: "Go right", role: "plain", target: 9 },
                 ],
                 targets: [2, 9],
             },
@@ -91,7 +94,12 @@ const compiled: Report = {
                 id: 2,
                 kind: "control",
                 category: "call",
-                segments: [{ text: "ShowBackground(tavern, firelit)", role: "command" }],
+                segments: [
+                    { text: "", role: "boundary" },
+                    { text: "ShowBackground(tavern, firelit)", role: "command" },
+                    { text: "; ", role: "boundary" },
+                    { text: "PlaySound(fire)", role: "command" },
+                ],
                 targets: [9],
             },
             {
@@ -102,11 +110,11 @@ const compiled: Report = {
                     { text: "IF ", role: "keyword" },
                     { text: "Hero.IsBrave", role: "plain" },
                     { text: " THEN ", role: "keyword" },
-                    { text: "10", role: "plain" },
+                    { text: "8", role: "target", target: 8 },
                     { text: " ELSE ", role: "keyword" },
-                    { text: "11", role: "plain" },
+                    { text: "9", role: "target", target: 9 },
                 ],
-                targets: [10, 11],
+                targets: [8, 9],
             },
             {
                 id: 10,
@@ -200,6 +208,69 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(panel(page, "Playbook")).toContainText("scene.dialogue.md");
         await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(2);
         await expect(panel(page, "Anchors")).toContainText("#the-tavern");
+    });
+
+    // A menu's options are a list, and the separators the projection placed are its boundaries: the
+    // table draws the list's own marker rather than the separators a writer would have to read past.
+    test("draws a choice's options as a list, one to a line", async ({ page }) => {
+        await page.click(playbookTab);
+
+        const choice = panel(page, "Nodes").locator("tbody tr").nth(1);
+        await expect(choice.locator("li")).toHaveText(["Go left", "Go right"]);
+        await expect(choice.locator(".dd-sum-separator")).toHaveCount(0);
+        // Each option is also the pick it offers: pressing it reveals where that pick leads.
+        await expect(choice.locator("li button.dd-jump")).toHaveText(["Go left", "Go right"]);
+    });
+
+    // A control's commands are the steps it takes, so their order is meaning: the table numbers
+    // them, and the `; ` boundaries the projection placed become the numbers.
+    test("draws a control's commands as an ordered list", async ({ page }) => {
+        await page.click(playbookTab);
+
+        const control = panel(page, "Nodes").locator("tbody tr").nth(2);
+        await expect(control.locator("ol li")).toHaveText([
+            "ShowBackground(tavern, firelit)",
+            "PlaySound(fire)",
+        ]);
+    });
+
+    // A reader who has not learned the script language cannot tell a query from braces a writer
+    // typed, so the piece says which it is — the pointer shape and the tooltip the graph's routes
+    // already taught.
+    test("explains a query beside the piece on hover", async ({ page }) => {
+        await page.click(playbookTab);
+
+        const piece = panel(page, "Nodes").locator("tbody tr").first().locator(".dd-sum-query");
+        await expect(piece).toHaveCSS("cursor", "help");
+        await piece.hover();
+
+        const tooltip = page.locator(".tippy-box");
+        await expect(tooltip).toBeVisible();
+        await expect(tooltip).toContainText("Answered while the game runs");
+    });
+
+    // A branch arm's number is the node it reaches, so pressing it goes there rather than leaving
+    // the reader to hunt for that id in the JSON beside the table.
+    test("follows a branch arm's number to the node it names", async ({ page }) => {
+        await page.click(playbookTab);
+
+        const arm = panel(page, "Nodes")
+            .locator("tbody tr")
+            .nth(3)
+            .locator("td")
+            .nth(2)
+            .locator("button.dd-jump")
+            // Both arms are reachable, and this test follows the one the THEN names.
+            .first();
+        await expect(arm).toHaveAttribute("data-ref-key", "node:8");
+        await arm.click();
+
+        const below = await page.evaluate(() => {
+            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
+            return lines[at + 2]?.textContent ?? null;
+        });
+        expect(below).toContain('"id": 8');
     });
 
     test("reveals the node an anchor lands on, found by id and not by position", async ({

@@ -32,6 +32,21 @@ export function initTooltips(parent: Element): void {
 }
 
 /**
+ * Hover tooltips (Tippy.js) over the labeled pieces of a table's cells, showing what each piece
+ * means (from its `data-tip`). Opened beside the piece, because a piece is a word or two rather
+ * than a line the reader is following. Delegation covers a table rebuilt on a search or a sort.
+ */
+export function initPieceTooltips(parent: Element): void {
+    delegate(parent, {
+        target: "[data-tip]",
+        allowHTML: true,
+        maxWidth: 340,
+        delay: [120, 0],
+        content: (reference) => reference.getAttribute("data-tip") ?? "",
+    });
+}
+
+/**
  * Hover tooltips (Tippy.js) over the stage tabs, showing each stage's description
  * (from its `data-tip`). Delegation covers tabs rebuilt on a live re-render.
  */
