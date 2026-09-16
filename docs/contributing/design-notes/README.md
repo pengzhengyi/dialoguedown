@@ -222,6 +222,7 @@ Configuration tab and the folding contract every surface shares.
 | 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
 | 47 | [Following an Index in the Playbook](./visualization/report/Following%20an%20Index%20in%20the%20Playbook.md) | A node or speaker reference in the JSON is a link: click it, or press F12, to reveal the definition it names | Implemented |
 | 49 | [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Proposed |
+| 50 | [Playbook Summary Segments](./visualization/report/Playbook%20Summary%20Segments.md) | A node's summary sent as labeled segments, so the client draws each part by its role instead of re-parsing delimiters a writer can also type | Proposed |
 
 #### Source editor
 
