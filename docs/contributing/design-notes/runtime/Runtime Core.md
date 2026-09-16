@@ -350,8 +350,8 @@ detail, and the corpus asserts meaning rather than numbering.
 
 Where a reason is **spelled** is the fixture format's business rather than this
 enum's: the schema declares the names and the fixtures that use them pin them, so
-the runtime carries no serialization attribute. It depends on the playbook and the
-framework and nothing else, and an architecture test holds it that way.
+the runtime carries no serialization attribute. One fact, one place: the runner's
+types are about playing a playbook, not about how a message is written down.
 
 Two members are not reachable from a fixture — a session that does not open with
 `start` is begun for it, and a harness sends only commands it knows — and they stay
