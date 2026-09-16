@@ -95,15 +95,6 @@ internal static class PlaybookNodeSummary
         ]);
     }
 
-    /// <summary>
-    /// Writes one node's line as plain text, which is its pieces joined end to end.
-    /// </summary>
-    /// <param name="node">The node to summarize.</param>
-    /// <param name="speakers">The playbook's speakers, which a line addresses by index.</param>
-    /// <returns>One line of plain text, or the empty string for a kind not yet covered.</returns>
-    public static string Of(Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
-        string.Concat(SegmentsOf(node, speakers).Select(segment => segment.Text));
-
     private static ImmutableArray<PlaybookSegmentView> BodyOf(
         Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
         node switch

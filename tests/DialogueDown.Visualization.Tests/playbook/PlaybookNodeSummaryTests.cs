@@ -1,4 +1,3 @@
-using DialogueDown.Visualization.Playbook;
 using static DialogueDown.Visualization.Tests.Support.PlaybookNodeFactory;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
@@ -18,13 +17,13 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "Keeper: Take a torch.",
-            PlaybookNodeSummary.Of(Line("Take a torch.", speaker: 1), Speakers("Alice", "Keeper")));
+            SummaryOf(Line("Take a torch.", speaker: 1), Speakers("Alice", "Keeper")));
     }
 
     [Fact]
     public void Of_AnEnd_SaysOnlyThatItEnds()
     {
-        Assert.Equal("END", PlaybookNodeSummary.Of(End(), Speakers()));
+        Assert.Equal("END", SummaryOf(End(), Speakers()));
     }
 
     // The Leads to column lists a branch's targets but cannot say which condition reaches which, so
@@ -34,7 +33,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "IF Alice.HasMap THEN 16 ELSE 18",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
                 Speakers()));
     }
@@ -44,7 +43,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "IF Hero.IsBrave THEN 5 ELSE IF Hero.HasMap THEN 9 ELSE 14",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Branch(
                     Arm("Hero.IsBrave", target: 5),
                     Arm("Hero.HasMap", order: 1, target: 9),
@@ -59,7 +58,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "IF Hero.IsBrave THEN 5 ELSE 14",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Branch(Arm(null, order: 1, target: 14), Arm("Hero.IsBrave", target: 5)),
                 Speakers()));
     }
@@ -70,7 +69,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "IF Hero.IsBrave THEN 5 ELSE IF Hero.HasMap THEN 9",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", order: 1, target: 9)),
                 Speakers()));
     }
@@ -82,7 +81,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "IF Hero.IsBrave THEN Keeper: Take a torch.",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Line("Take a torch.", speaker: 1, condition: If("Hero.IsBrave")),
                 Speakers("Alice", "Keeper")));
     }
@@ -92,7 +91,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "<anonymous>: The room is quiet.",
-            PlaybookNodeSummary.Of(Line("The room is quiet."), Speakers([null])));
+            SummaryOf(Line("The room is quiet."), Speakers([null])));
     }
 
     // Cannot occur in a playbook the compiler wrote, but a report that renders nothing is worse
@@ -102,14 +101,14 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "<unknown>: Hello.",
-            PlaybookNodeSummary.Of(Line("Hello.", speaker: 7), Speakers("Alice")));
+            SummaryOf(Line("Hello.", speaker: 7), Speakers("Alice")));
     }
 
     [Fact]
     public void Of_ALineWithNoSpeech_StandsInForTheWordsItLacks()
     {
         Assert.Equal(
-            "Alice: <no speech>", PlaybookNodeSummary.Of(SilentLine(), Speakers("Alice")));
+            "Alice: <no speech>", SummaryOf(SilentLine(), Speakers("Alice")));
     }
 
     // Speech arrives exactly as it was composed, and a jump lifted out of a line can leave a space
@@ -119,7 +118,7 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "Alice: The keeper hands a shield across the bar.",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Line("  The keeper hands a shield across the bar. "), Speakers("Alice")));
     }
 
@@ -128,6 +127,6 @@ public sealed class PlaybookNodeSummaryTests
     {
         Assert.Equal(
             "Alice: <no speech>",
-            PlaybookNodeSummary.Of(Line("   "), Speakers("Alice")));
+            SummaryOf(Line("   "), Speakers("Alice")));
     }
 }

@@ -1,4 +1,3 @@
-using DialogueDown.Visualization.Playbook;
 using static DialogueDown.Visualization.Tests.Support.PlaybookNodeFactory;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
@@ -14,7 +13,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "ShowSprite(yuki, left); PlaySound(fire_alarm)",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Control(CustomCommand("ShowSprite", "yuki", "left"), CustomCommand("PlaySound", "fire_alarm")),
                 Speakers()));
     }
@@ -25,14 +24,14 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_ACommandTheHostAlreadyKnows_WearsBracketsAroundItsAction()
     {
         Assert.Equal(
-            "(fade in)", PlaybookNodeSummary.Of(Control(DefaultCommand("fade in")), Speakers()));
+            "(fade in)", SummaryOf(Control(DefaultCommand("fade in")), Speakers()));
     }
 
     [Fact]
     public void Of_ACustomCommandWithoutArguments_StillShowsItsBrackets()
     {
         Assert.Equal(
-            "Save()", PlaybookNodeSummary.Of(Control(CustomCommand("Save")), Speakers()));
+            "Save()", SummaryOf(Control(CustomCommand("Save")), Speakers()));
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "(crossfade); PlayMusic(battle)",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Control(DefaultCommand("crossfade"), CustomCommand("PlayMusic", "battle")),
                 Speakers()));
     }
@@ -52,7 +51,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "⇒ The Mountain Road",
-            PlaybookNodeSummary.Of(Diverting("The Mountain Road"), Speakers()));
+            SummaryOf(Diverting("The Mountain Road"), Speakers()));
     }
 
     [Fact]
@@ -60,13 +59,13 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "⇒ The Mountain Road",
-            PlaybookNodeSummary.Of(Diverting("  The Mountain Road "), Speakers()));
+            SummaryOf(Diverting("  The Mountain Road "), Speakers()));
     }
 
     [Fact]
     public void Of_AControlThatNeitherPerformsNorNamesWhereItGoes_SaysItCarriesOn()
     {
-        Assert.Equal("CONTINUE", PlaybookNodeSummary.Of(DivertingUnlabeled(), Speakers()));
+        Assert.Equal("CONTINUE", SummaryOf(DivertingUnlabeled(), Speakers()));
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "Turn back to the crossroads || Follow the moonlight ahead",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Choice(Option("Turn back to the crossroads"), Option("Follow the moonlight ahead")),
                 Speakers()));
     }
@@ -86,7 +85,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "Brave the west road IF Alice.HasMap || Stay put",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Choice(Option("Brave the west road", condition: "Alice.HasMap"), Option("Stay put")),
                 Speakers()));
     }
@@ -96,7 +95,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "Go left || <no label>",
-            PlaybookNodeSummary.Of(Choice(Option("Go left"), UnlabeledOption()), Speakers()));
+            SummaryOf(Choice(Option("Go left"), UnlabeledOption()), Speakers()));
     }
 
     [Fact]
@@ -104,7 +103,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "Ask the guide for advice first || Go left",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 Choice(Option("Ask the guide for advice first "), Option("Go left")), Speakers()));
     }
 
@@ -115,7 +114,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "DRAW 1 FROM 3: 50% || 25% || 25%",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 RandomChoice(Chance(50), Chance(25), Chance(25)), Speakers()));
     }
 
@@ -124,7 +123,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "DRAW 1 FROM 2: {Hero.Attack} || {Dragon.Fury}",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 RandomChoice(Chance("Hero.Attack"), Chance("Dragon.Fury")), Speakers()));
     }
 
@@ -133,7 +132,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "DRAW 1 FROM 2: 50% || evenly",
-            PlaybookNodeSummary.Of(RandomChoice(Chance(50), EvenChance()), Speakers()));
+            SummaryOf(RandomChoice(Chance(50), EvenChance()), Speakers()));
     }
 
     [Fact]
@@ -141,7 +140,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "DRAW 1 FROM 2: 50% IF Hero.HasMap || 50%",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 RandomChoice(Chance(50, condition: "Hero.HasMap"), Chance(50)), Speakers()));
     }
 
@@ -150,7 +149,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "DRAW 1 FROM 2: 12.5% || 87.5%",
-            PlaybookNodeSummary.Of(RandomChoice(Chance(12.5), Chance(87.5)), Speakers()));
+            SummaryOf(RandomChoice(Chance(12.5), Chance(87.5)), Speakers()));
     }
 
     [Fact]
@@ -158,7 +157,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     {
         Assert.Equal(
             "IF Hero.IsBrave THEN (fade out)",
-            PlaybookNodeSummary.Of(
+            SummaryOf(
                 ConditionalControl("Hero.IsBrave", DefaultCommand("fade out")), Speakers()));
     }
 }

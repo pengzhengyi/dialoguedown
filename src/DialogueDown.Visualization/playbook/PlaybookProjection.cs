@@ -101,14 +101,11 @@ internal static class PlaybookProjection
             _ => (node.GetType().Name, StructureCategory),
         };
 
-        var segments = PlaybookNodeSummary.SegmentsOf(node, speakers);
-
         return new PlaybookNodeView(
             node.Id,
             kind,
             category,
-            string.Concat(segments.Select(segment => segment.Text)),
-            [.. segments],
+            PlaybookNodeSummary.SegmentsOf(node, speakers),
             [.. node.Out.Select(edge => edge.Target)]);
     }
 

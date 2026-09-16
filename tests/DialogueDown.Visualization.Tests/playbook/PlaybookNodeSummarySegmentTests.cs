@@ -196,7 +196,7 @@ public sealed class PlaybookNodeSummarySegmentTests
         var node = Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18));
 
         Assert.Equal(
-            PlaybookNodeSummary.Of(node, Speakers()),
+            SummaryOf(node, Speakers()),
             string.Concat(Pieces(node).Select(piece => piece.Text)));
     }
 
