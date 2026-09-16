@@ -40,7 +40,7 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, Started(context), new Next());
 
-        AssertRefused(result, "waiting for the host");
+        AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
         AssertAwaitingDone(result, 0);
     }
 
@@ -62,7 +62,7 @@ public sealed class RunnerTests
         // a driver advance a line by answering a question the run never put.
         var context = Playbooks.TwoLines();
 
-        AssertRefused(Runner.Step(context, Started(context), new Done()), "cannot take Done");
+        AssertRefused(Runner.Step(context, Started(context), new Done()), RefusalReason.Misplaced, "cannot take Done");
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class RunnerTests
     {
         var context = Playbooks.OneLine();
 
-        AssertRefused(Runner.Step(context, PlayState.Initial, new Next()), "has not started");
+        AssertRefused(Runner.Step(context, PlayState.Initial, new Next()), RefusalReason.NotStarted, "has not started");
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, ended, new Next());
 
-        AssertRefused(result, "run is over");
+        AssertRefused(result, RefusalReason.AlreadyEnded, "run is over");
         Assert.Equal(ended, result.State);
     }
 
@@ -118,7 +118,7 @@ public sealed class RunnerTests
     {
         var context = Playbooks.Of([Playbooks.Dead(0, "Alone.")], ["Alice"]);
 
-        AssertRefused(Runner.Step(context, Started(context), new Next()), "leads nowhere");
+        AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
     }
 
     private static PlayState Started(PlayContext context) =>

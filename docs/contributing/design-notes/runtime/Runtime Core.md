@@ -68,6 +68,7 @@ is far cheaper to learn now than after six components assume it.
 - [x] A line is spoken with its speaker's name, and succession advances.
 - [x] A run ends, and an ended run accepts nothing further.
 - [x] A command the run cannot take is refused as a message, not an exception.
+- [x] A refusal names why, from a closed set a fixture can assert without reading English.
 - [x] `continue` becomes `next` in the fixture schema, every playable fixture, and
       the corpus README.
 - [x] The corpus reader is shared by both halves rather than duplicated.
@@ -84,7 +85,7 @@ src/DialogueDown.Runtime/          the facade: what a consumer calls
     Position.cs  NotStarted.cs  AtNode.cs  AtEnd.cs
   protocol/                        what a run is told, and what it reports
     Command.cs  commands/Start.cs  commands/Next.cs
-    Event.cs    events/Said.cs  events/Ended.cs  events/Refused.cs
+    Event.cs  RefusalReason.cs  events/Said.cs  events/Ended.cs  events/Refused.cs
   stepping/                        the work each construct does
     Arrival.cs                     one arm per node kind
     NodeTraversalExtensions.cs     one reader per edge kind
@@ -318,6 +319,48 @@ edge, and fragment.
 
 Argued in [Goal and scope](#goal-and-scope): it measures every later component by
 the fixtures that light up rather than by argument.
+
+### R11 — A refusal names a reason, from a closed set
+
+A refusal says two things. `Reason`, from a **closed set**, is what a fixture
+compares: it is the same in every runtime, so two either agree or they do not.
+`Explanation` is the sentence a person reads, naming what was sent and why it did
+not fit, and it stays free to differ in wording and language — the rule the readable
+half already applies to a reader's message (F5 in the
+[corpus note](./Conformance%20Corpus.md)).
+
+| Reason | The run refuses when |
+| --- | --- |
+| `not-started` | `Next` arrives before `Start`, so there is nothing to advance from |
+| `already-ended` | `Next` arrives after the run has ended |
+| `misplaced` | a command the runner knows arrives where it cannot be taken — `Next` while the run waits on the host, or `Done` when nothing was asked |
+| `unknown-command` | the command is one the runner does not define |
+| `leads-nowhere` | the node the run stands at has no way onward |
+| `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
+| `unanswered-condition` | a node or edge plays only on an answer nobody can give yet — temporary, until the run can ask the world |
+| `unplayable-node` | the node kind is one this build has not learned to play |
+
+`misplaced` is the one worth naming twice: the protocol knows the command, and only
+the position is wrong, so a `Next` offered while the run waits on the host is refused
+rather than taken — which is what stops a fast-forward from skipping an effect.
+
+The reason is a **message, not a diagnosis**. It says what the driver did wrong, or
+what the document cannot do, and carries no node index: a position is an encoding
+detail, and the corpus asserts meaning rather than numbering.
+
+Where a reason is **spelled** is the fixture format's business rather than this
+enum's: the schema declares the names and the fixtures that use them pin them, so
+the runtime carries no serialization attribute. It depends on the playbook and the
+framework and nothing else, and an architecture test holds it that way.
+
+Two members are not reachable from a fixture — a session that does not open with
+`start` is begun for it, and a harness sends only commands it knows — and they stay
+in the set because it covers every site that fires a `Refused`, not only the sites
+the corpus can reach. `unknown-command` is out of a test's reach as well: `Command`
+is a closed union, so only this assembly can define one, and the member is the guard
+for the command a later pass adds. A reason is **added**, never renamed or reused: a
+fixture may assert any member, so the set grows compatibly and changes only with a
+break.
 
 ## Error and boundary cases
 

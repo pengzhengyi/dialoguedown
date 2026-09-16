@@ -58,7 +58,7 @@ internal static class Arrival
 
         return arrived.OnwardTarget() is int onward
             ? Visited.CarryingOn(onward)
-            : Visited.Stopping(Refuse(node, $"Node {node} leads nowhere."));
+            : Visited.Stopping(Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));
     }
 
     // A node that hands the host nothing is walked past rather than stood at. A jump written on
@@ -69,6 +69,7 @@ internal static class Arrival
     private static StepResult RefuseRing(int node) =>
         Refuse(
             node,
+            RefusalReason.EndlessRing,
             $"Node {node} sits in a ring of nodes that hand the host nothing, "
                 + "so a run entering it would never come out.");
 
@@ -91,6 +92,7 @@ internal static class Arrival
     private static StepResult RefuseUnanswered(int node, Condition condition) =>
         Refuse(
             node,
+            RefusalReason.UnansweredCondition,
             $"Node {node} plays only when the world answers {Describe(condition)}, "
                 + "and nobody answers the world yet.");
 
@@ -104,7 +106,10 @@ internal static class Arrival
                 new PlayState(new AwaitingDone(node)),
                 [.. control.Effects.Select(Event (effect) => new Perform(effect))]),
             EndNode => new StepResult(new PlayState(new AtEnd()), [new Ended()]),
-            var unplayable => Refuse(node, $"This build cannot play a {unplayable.GetType().Name} yet."),
+            var unplayable => Refuse(
+                node,
+                RefusalReason.UnplayableNode,
+                $"This build cannot play a {unplayable.GetType().Name} yet."),
         };
 
     private static string Describe(Condition condition) => condition switch
@@ -113,8 +118,8 @@ internal static class Arrival
         _ => condition.GetType().Name,
     };
 
-    private static StepResult Refuse(int node, string because) =>
-        new(new PlayState(new AtNode(node)), [new Refused(because)]);
+    private static StepResult Refuse(int node, RefusalReason reason, string explanation) =>
+        new(new PlayState(new AtNode(node)), [new Refused(reason, explanation)]);
 
     /// <summary>What one node means to a walk: where the run stops, or the node it carries on to.</summary>
     /// <param name="Stopped">What the step produced, or <see langword="null"/> when the walk goes on.</param>

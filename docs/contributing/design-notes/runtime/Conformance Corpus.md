@@ -72,6 +72,7 @@ playbook being a designed contract rather than a dump of the compiler's graph.
       edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
+- [x] A refused command a session can assert, by reason rather than by wording.
 - [x] A C# harness that runs the readable fixtures today.
 - [x] A documented shape for the playable harness, so C2 has an acceptance suite
       waiting rather than a corpus to write afterward.
@@ -198,6 +199,7 @@ Each `expect` is one message the runtime must produce next.
 | `resolve` | the keys the runtime asked the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
+| `refused` | why the command could not be taken, from the protocol's closed set |
 
 A speaker is named, not numbered: the speaker table's order is an encoding detail,
 and the anonymous default speaker simply has no name.
@@ -205,6 +207,19 @@ and the anonymous default speaker simply has no name.
 Interleaving removes a redundancy the earlier two-list sketch carried. An `asked`
 entry no longer records which option was taken, because the very next `send` says
 so. One fact, one place.
+
+A session may also send a command the run cannot take, and say which refusal it
+expects:
+
+```json
+{ "send": "next" },
+{ "expect": { "refused": { "reason": "already-ended" } } }
+```
+
+`reason` is one of the protocol's closed set, named in
+[Runtime core](./Runtime%20Core.md) as `R11`: a stable value two runtimes can
+compare. The explanation a refusal also carries is the run's own, the same rule the
+readable half applies to a reader's message, argued in F5.
 
 ### Speech and labels are fragments
 
@@ -343,6 +358,7 @@ make good regression material, but a failure in one says little about what broke
 | An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
+| A command the run cannot take | Is it refused, for the reason the session names, rather than thrown or quietly ignored? |
 | Ordered and unordered choices | Is a menu's stated order honored where it is stated? |
 
 The unavailable-option fixture matters more than its size suggests: showing a
@@ -418,6 +434,13 @@ sound, so a refusal can only be about the edit its case made. The reason is pinn
 without a word of any message being asserted, and `because` names the edit for a
 reader.
 
+The session half needs the same rule and cannot use the baseline: a runtime refuses
+a **command**, not a document, so there is no second file to diff against — the
+reason has to travel on the refusal itself. `Refused` therefore carries a reason
+from a closed set beside the explanation it words for itself, and an `expect`
+asserts the reason, exactly as the readable half asserts a verdict rather than a message
+(the reason set is stated in [Runtime core](./Runtime%20Core.md) as `R11`).
+
 ### F6 — Minimal fixtures over realistic ones
 
 One construct per fixture. Realistic scripts belong in `examples/`, and their
@@ -433,6 +456,7 @@ harness and arrive with it in
 | --- | --- | --- |
 | A fixture's playbook does not load | Fail as a fixture bug, naming the case and the file, distinct from a conformance failure | shipped |
 | A fixture is malformed | Fail naming the case, so nobody opens files hunting for it | shipped |
+| A `refused` names a reason the protocol does not give | Fail as a fixture bug: the schema closes the set, so the fixture and the harness have drifted apart | shipped |
 | A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why | shipped |
 | A case missing a fixture, a playbook, or a source | Fail: the corpus is incomplete, in either half | shipped |
 | The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | with C2 |
