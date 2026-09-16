@@ -31,9 +31,7 @@ public static class Runner
             (_, Start) => Arrival.At(context, context.Entry),
             (AtNode at, Next) => Advance(context, state, at.Node),
             (AwaitingDone waiting, Done) => Advance(context, state, waiting.Node),
-            // The world did not change, so the run cannot read on: it stands where it is
-            // and reports nothing, and the driver's own message is the record of why.
-            (AwaitingDone, Failed) => new StepResult(state, []),
+            (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(
                 state,
                 RefusalReason.AlreadyEnded,
@@ -53,6 +51,10 @@ public static class Runner
         context.NodeAt(from).OnwardTarget() is int onward
             ? Arrival.At(context, onward)
             : Refuse(state, RefusalReason.LeadsNowhere, $"Node {from} leads nowhere.");
+
+    // The world did not change, so the run cannot read on: it stands where it is and says nothing,
+    // and the driver's own message is the record of why.
+    private static StepResult Hold(PlayState state) => new(state, []);
 
     // A command the protocol defines, offered where it cannot be taken, is misplaced; anything
     // else is a command this runner has never been taught. The distinction is the protocol's,
