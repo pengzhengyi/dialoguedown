@@ -333,7 +333,7 @@ half already applies to a reader's message (F5 in the
 | --- | --- |
 | `not-started` | `Next` arrives before `Start`, so there is nothing to advance from |
 | `already-ended` | `Next` arrives after the run has ended |
-| `misplaced` | a command the runner knows arrives where it cannot be taken — `Next` while the run waits on the host, or `Done` when nothing was asked |
+| `misplaced` | a command the runner knows arrives where it cannot be taken — `Next` while the run waits on the host, or `Done`/`Failed` when nothing was asked |
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
 | `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
