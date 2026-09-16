@@ -45,8 +45,8 @@ resolving anything by hand.
 
 - A `PlaybookNodeView` projection: one view per node, carrying the node's id, its
   kind, its summary, and its targets.
-- A **summary** — one line of plain text saying what the node holds — derived from
-  the typed playbook model.
+- A **summary** — the text saying what the node holds — derived from the typed
+  playbook model.
 - A fourth table in the tab, built from the same component the other three use.
 
 **Out of scope:**
@@ -67,14 +67,14 @@ resolving anything by hand.
 
 One concept, one name — here, in the code, and in the tests.
 
-| Term           | Meaning                                                                                                                                            |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node**       | One step of a playthrough, as the playbook records it: a `line`, `choice`, `random-choice`, `branch`, `control`, or `end`.                         |
-| **Summary**    | The single line of plain text that says what a node holds — a speaker and their words, the options on offer, a condition, a command. One per node. |
-| **Kind**       | Which of the six sorts of node it is, as the document's own `kind` field names it.                                                                 |
-| **Target**     | The node an edge leads to, as an index into the playbook's node list.                                                                              |
-| **Way out**    | One edge leaving a node. A node has zero or more.                                                                                                  |
-| **Plain text** | What the flattening of a fragment list yields: the words, without styling, nesting, or markup. The preceding component owns it.                    |
+| Term           | Meaning                                                                                                                                                                                      |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node**       | One step of a playthrough, as the playbook records it: a `line`, `choice`, `random-choice`, `branch`, `control`, or `end`.                                                                   |
+| **Summary**    | The plain text that says what a node holds — a speaker and their words, the options on offer, a condition, a command. One per node; a menu or a command sequence is drawn as the list it is. |
+| **Kind**       | Which of the six sorts of node it is, as the document's own `kind` field names it.                                                                                                           |
+| **Target**     | The node an edge leads to, as an index into the playbook's node list.                                                                                                                        |
+| **Way out**    | One edge leaving a node. A node has zero or more.                                                                                                                                            |
+| **Plain text** | What the flattening of a fragment list yields: the words, without styling, nesting, or markup. The preceding component owns it.                                                              |
 
 Every term here is the playbook's own word, or — for *summary* and *plain text* —
 the word the rest of the repository already uses for the same idea. This note
@@ -100,7 +100,10 @@ invents none.
 - [x] Hovering a way out lights the row it leads to, so a reader sees where it
       goes without leaving the row they are reading.
 - [x] A summary is drawn in the report's own syntax colors, so the words a writer
-      wrote stand apart from the table's grammar.
+      wrote stand apart from the table's grammar — and a condition wears the query
+      color, because the running game answers it rather than the report.
+- [x] A piece of the summary that names a node goes there when it is pressed, and a
+      piece whose words do not carry its meaning explains itself on hover.
 - [x] The table can be faceted by kind.
 - [x] Narrowing the panel wraps the summary and keeps every number on one line,
       scrolling the table sideways rather than dropping a column out of sight.
@@ -278,7 +281,8 @@ most: they are the script's scene changes, named as the writer named them.
 
 The Dialogue Graph already reached this conclusion and labels a bare jump the same
 way, down to the rendered `⇒` rather than the `=>` a writer types. The table
-follows it rather than inventing a second treatment.
+follows it rather than inventing a second treatment — and the words are a way to the
+node they land on, so a row's scene change is one press from the scene it changes to.
 
 ### DD5 — Three columns hold their line; the summary wraps; the panel scrolls
 
@@ -369,10 +373,11 @@ the summary's shape. A piece holding a writer's own words is never scanned, and 
 segments concatenate back to the cell's text, which is what lets a search match
 still be found in the text and then laid back across the pieces.
 
-The column still does not draw a choice as a list of options, which would otherwise
-suit it. A list asserts how many options there are, and the boundaries that
-assertion needs are the separator segments the projection placed; a rendering that
-draws them as item breaks rather than glyphs is its own change.
+The column does draw a choice as a list of options, which suits it: a list asserts
+how many options there are, and the boundaries that assertion needs are the
+separator segments the projection placed. There the separator is drawn as the
+item's break rather than as a glyph — see
+[Playbook Summary Segments](./Playbook%20Summary%20Segments.md).
 
 ## Error and boundary cases
 
