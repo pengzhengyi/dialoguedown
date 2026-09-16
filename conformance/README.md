@@ -101,6 +101,17 @@ Comparison is ordinary equality, with the two exceptions above: `speech` and
 written as a string, and an absent `speaker` means the anonymous default speaker
 rather than "any speaker".
 
+A session may send a command the run cannot take, and assert the refusal:
+
+```json
+{ "send": "next" },
+{ "expect": { "refused": { "reason": "already-ended" } } }
+```
+
+`reason` is one of the protocol's closed set. The prose a refusal also carries is
+written for a contributor, so the corpus asserts the reason rather than the words —
+the same rule the readable half applies to a reader's message.
+
 ## Adding a case
 
 1. Write `source.dialogue.md`, as small as it can be while showing the one thing

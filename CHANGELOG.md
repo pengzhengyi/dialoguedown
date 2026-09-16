@@ -59,6 +59,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **A refusal names its reason, and a fixture can assert one** — the `Refused` event
+  carries a reason from a closed set (`not-started`, `already-ended`, `misplaced`, and
+  so on) beside its prose, and the fixture schema gained a `refused` expectation, so a
+  corpus can require that a command the run cannot take be refused rather than only
+  that nothing threw. `Refused` gained a parameter: a host that constructs one must
+  pass a reason. See
+  [Runtime core](docs/contributing/design-notes/runtime/Runtime%20Core.md).
+
 - **An effect is asked for, and the run waits until it is done** — a runtime no longer reports
   an effect and carries straight on. It asks the host to perform one and stands still until the
   driver answers, so a guard that follows an effect reads a world the effect has already

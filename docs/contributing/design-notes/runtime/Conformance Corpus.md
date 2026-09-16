@@ -72,6 +72,7 @@ playbook being a designed contract rather than a dump of the compiler's graph.
       edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, and queries.
+- [x] A refused command a session can assert, by reason rather than by wording.
 - [x] A C# harness that runs the readable fixtures today.
 - [x] A documented shape for the playable harness, so C2 has an acceptance suite
       waiting rather than a corpus to write afterward.
@@ -198,6 +199,7 @@ Each `expect` is one message the runtime must produce next.
 | `resolve` | the keys the runtime asked the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
+| `refused` | why the command could not be taken, from the protocol's closed set |
 
 A speaker is named, not numbered: the speaker table's order is an encoding detail,
 and the anonymous default speaker simply has no name.
@@ -205,6 +207,19 @@ and the anonymous default speaker simply has no name.
 Interleaving removes a redundancy the earlier two-list sketch carried. An `asked`
 entry no longer records which option was taken, because the very next `send` says
 so. One fact, one place.
+
+A session may also send a command the run cannot take, and say which refusal it
+expects:
+
+```json
+{ "send": "next" },
+{ "expect": { "refused": { "reason": "already-ended" } } }
+```
+
+`reason` is one of the protocol's closed set, named in
+[Runtime core](./Runtime%20Core.md) as `R11`. The prose a refusal also carries is
+written for a contributor, so the corpus asserts the reason rather than the words
+— the same rule the readable half applies to a reader's message, argued in F5.
 
 ### Speech and labels are fragments
 
@@ -343,6 +358,7 @@ make good regression material, but a failure in one says little about what broke
 | An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
+| A command after the end | Is a command the run cannot take refused, rather than thrown or quietly ignored? |
 | Ordered and unordered choices | Is a menu's stated order honored where it is stated? |
 
 The unavailable-option fixture matters more than its size suggests: showing a
@@ -417,6 +433,13 @@ ships its own accepted source. The accepted document passing proves the rest is
 sound, so a refusal can only be about the edit its case made. The reason is pinned
 without a word of any message being asserted, and `because` names the edit for a
 reader.
+
+The session half needs the same rule and cannot use the baseline: a runtime refuses
+a **command**, not a document, so there is no second file to diff against — the
+reason has to travel on the refusal itself. `Refused` therefore carries a reason
+from a closed set beside its prose, and an `expect` asserts the reason rather than
+the words, exactly as the readable half asserts a verdict rather than a message
+(the reason set is stated in [Runtime core](./Runtime%20Core.md) as `R11`).
 
 ### F6 — Minimal fixtures over realistic ones
 
