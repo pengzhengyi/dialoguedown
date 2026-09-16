@@ -20,17 +20,19 @@ internal static class Commands
     {
         var message = send.Message;
 
-        if (message.GetValueKind() != JsonValueKind.String)
+        if (message.GetValueKind() == JsonValueKind.String)
         {
-            return null;
+            return message.GetValue<string>() switch
+            {
+                "next" => new Next(),
+                "done" => new Done(),
+                _ => null,
+            };
         }
 
-        return message.GetValue<string>() switch
-        {
-            "next" => new Next(),
-            "done" => new Done(),
-            _ => null,
-        };
+        return message is JsonObject claims && claims["failed"] is JsonNode explanation
+            ? new Failed(ReadExplanation(explanation))
+            : null;
     }
 
     /// <summary>Whether a send is the one that opens the run.</summary>
@@ -38,4 +40,11 @@ internal static class Commands
     /// <returns><see langword="true"/> when the send opens the run.</returns>
     public static bool IsStart(Send send) =>
         send.Message is JsonObject message && message.ContainsKey("start");
+
+    // A failure carries the host's own words, so a fixture writes them; anything but a string
+    // there is a fixture bug rather than a construct nobody has taught the harness.
+    private static string ReadExplanation(JsonNode explanation) =>
+        explanation.GetValueKind() == JsonValueKind.String
+            ? explanation.GetValue<string>()
+            : throw new InvalidFixtureException("A failed send carries the host's explanation, as a string.");
 }

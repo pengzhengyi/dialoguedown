@@ -151,6 +151,20 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "failed"
+          ],
+          "properties": {
+            "failed": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why the host could not carry the effect out, in its own words. The run stands still, so the driver may answer `done` on a retry or give up."
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
