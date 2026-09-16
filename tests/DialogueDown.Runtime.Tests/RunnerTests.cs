@@ -66,6 +66,44 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_FailedWhileTheHostHasSomethingToCarryOut_StandsStill()
+    {
+        // The world did not change, so the run cannot read on -- and it says nothing, because the
+        // driver's own message is the record of why.
+        var context = Playbooks.AnEffectThenALine();
+
+        var result = Runner.Step(context, Started(context), new Failed("the database refused"));
+
+        Assert.Empty(result.Events);
+        AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void Step_DoneAfterAFailure_CarriesOnFromWhereItStood()
+    {
+        // A retry is the same effect, so it keeps its ordinal and the same session carries on.
+        var context = Playbooks.AnEffectThenALine();
+        var failed = Runner.Step(context, Started(context), new Failed("the database refused")).State;
+
+        var result = Runner.Step(context, failed, new Done());
+
+        AssertAt(result, 1);
+        AssertSaid(result, "Alice", "Hello.");
+    }
+
+    [Fact]
+    public void Step_FailedWhereNothingWasAskedOfTheHost_IsRefused()
+    {
+        // An answer with no question is out of place, exactly as `Done` there is.
+        var context = Playbooks.TwoLines();
+
+        AssertRefused(
+            Runner.Step(context, Started(context), new Failed("nothing to fail")),
+            RefusalReason.Misplaced,
+            "cannot take Failed");
+    }
+
+    [Fact]
     public void Step_NextPastTheLastLine_EndsTheRun()
     {
         var context = Playbooks.OneLine();
