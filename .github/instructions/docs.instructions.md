@@ -46,7 +46,10 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 
    ```bash
    dotnet tool restore
-   dotnet tool run docfx docs/docfx.json           # add --serve to preview locally
+   dotnet tool run docfx docs/docfx.json --warningsAsErrors   # add --serve to preview locally
    ```
+
+   The build fails on a warning, and CI builds the site on every pull request, so a broken
+   link or a missing cross-reference is a failure to fix rather than a note to leave.
 
 The generated `docs/_site/` and `docs/api/*.yml` are ignored — never commit them.

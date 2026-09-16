@@ -59,6 +59,12 @@ changes easy to categorize.
 
 ### Changed
 
+- **The docs site is built on every pull request, and a docfx warning fails it** — the docs
+  build used to run only when the site deployed, so a broken link or a missing
+  cross-reference reached `main` without ever failing a check. It now runs in CI with
+  warnings treated as errors, and the Pages deploy treats them the same way, so the
+  published site is only ever built from a clean one.
+
 - **A refusal names its reason, and a fixture can assert one** — the `Refused` event
   carries a `Reason` from a closed set (`not-started`, `already-ended`, `misplaced`, and
   so on) beside its `Explanation`, and the fixture schema gained a `refused`
