@@ -84,7 +84,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_AnOptionOfferedOnlyOnACondition_MarksItAfterTheWords()
     {
         Assert.Equal(
-            "Brave the west road IF Alice.HasMap || Stay put",
+            "Brave the west road IF Alice.HasMap? || Stay put",
             SummaryOf(
                 Choice(Option("Brave the west road", condition: "Alice.HasMap"), Option("Stay put")),
                 Speakers()));
@@ -139,7 +139,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_ARandomChoiceArmInThePoolOnlyOnACondition_MarksItAfterTheOdds()
     {
         Assert.Equal(
-            "DRAW 1 FROM 2: 50% IF Hero.HasMap || 50%",
+            "DRAW 1 FROM 2: 50% IF Hero.HasMap? || 50%",
             SummaryOf(
                 RandomChoice(Chance(50, condition: "Hero.HasMap"), Chance(50)), Speakers()));
     }
@@ -156,7 +156,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     public void Of_AConditionalControl_StillLeadsWithTheNodesOwnCondition()
     {
         Assert.Equal(
-            "IF Hero.IsBrave THEN (fade out)",
+            "IF Hero.IsBrave? THEN (fade out)",
             SummaryOf(
                 ConditionalControl("Hero.IsBrave", DefaultCommand("fade out")), Speakers()));
     }

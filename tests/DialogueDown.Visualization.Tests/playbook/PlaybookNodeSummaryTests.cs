@@ -32,7 +32,7 @@ public sealed class PlaybookNodeSummaryTests
     public void Of_ABranch_PairsEachConditionWithTheNodeItReaches()
     {
         Assert.Equal(
-            "IF Alice.HasMap THEN 16 ELSE 18",
+            "IF Alice.HasMap? THEN 16 ELSE 18",
             SummaryOf(
                 Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
                 Speakers()));
@@ -42,7 +42,7 @@ public sealed class PlaybookNodeSummaryTests
     public void Of_ABranchOfSeveralArms_ChainsThemAsWrittenAndEndsWithTheElse()
     {
         Assert.Equal(
-            "IF Hero.IsBrave THEN 5 ELSE IF Hero.HasMap THEN 9 ELSE 14",
+            "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9 ELSE 14",
             SummaryOf(
                 Branch(
                     Arm("Hero.IsBrave", target: 5),
@@ -57,7 +57,7 @@ public sealed class PlaybookNodeSummaryTests
     public void Of_ABranchWhoseArmsArriveOutOfOrder_ReadsTheOrderTheyDeclare()
     {
         Assert.Equal(
-            "IF Hero.IsBrave THEN 5 ELSE 14",
+            "IF Hero.IsBrave? THEN 5 ELSE 14",
             SummaryOf(
                 Branch(Arm(null, order: 1, target: 14), Arm("Hero.IsBrave", target: 5)),
                 Speakers()));
@@ -68,7 +68,7 @@ public sealed class PlaybookNodeSummaryTests
     public void Of_ABranchWithNoElseArm_EndsOnItsLastCondition()
     {
         Assert.Equal(
-            "IF Hero.IsBrave THEN 5 ELSE IF Hero.HasMap THEN 9",
+            "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9",
             SummaryOf(
                 Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", order: 1, target: 9)),
                 Speakers()));
@@ -80,7 +80,7 @@ public sealed class PlaybookNodeSummaryTests
     public void Of_ALineThatIsItselfConditional_LeadsWithTheCondition()
     {
         Assert.Equal(
-            "IF Hero.IsBrave THEN Keeper: Take a torch.",
+            "IF Hero.IsBrave? THEN Keeper: Take a torch.",
             SummaryOf(
                 Line("Take a torch.", speaker: 1, condition: If("Hero.IsBrave")),
                 Speakers("Alice", "Keeper")));

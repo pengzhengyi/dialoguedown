@@ -22,6 +22,9 @@ namespace DialogueDown.Visualization.Playbook;
 /// </remarks>
 internal static class PlaybookNodeSummary
 {
+    /// <summary>Marks a query as the boolean member of the family, as the script writes it.</summary>
+    private const string BooleanQuery = "?";
+
     /// <summary>Stands in for a speaker the playbook's speaker list does not hold.</summary>
     private const string UnknownSpeaker = "<unknown>";
 
@@ -89,7 +92,7 @@ internal static class PlaybookNodeSummary
         return Capped(
         [
             PlaybookSegmentView.Keyword(NodeCondition),
-            PlaybookSegmentView.Plain(condition.Key),
+            Condition(condition.Key),
             PlaybookSegmentView.Keyword(NodeConsequence),
             .. body,
         ]);
@@ -145,18 +148,18 @@ internal static class PlaybookNodeSummary
             (true, KeyCondition key) =>
             [
                 PlaybookSegmentView.Keyword(NodeCondition),
-                PlaybookSegmentView.Plain(key.Key),
+                Condition(key.Key),
                 PlaybookSegmentView.Keyword(NodeConsequence),
-                PlaybookSegmentView.Plain(Target(arm.Target)),
+                Reaches(arm.Target),
             ],
             (false, KeyCondition key) =>
             [
                 PlaybookSegmentView.Keyword(BranchElseIf),
-                PlaybookSegmentView.Plain(key.Key),
+                Condition(key.Key),
                 PlaybookSegmentView.Keyword(NodeConsequence),
-                PlaybookSegmentView.Plain(Target(arm.Target)),
+                Reaches(arm.Target),
             ],
-            _ => [PlaybookSegmentView.Keyword(BranchElse), PlaybookSegmentView.Plain(Target(arm.Target))],
+            _ => [PlaybookSegmentView.Keyword(BranchElse), Reaches(arm.Target)],
         };
 
     // A host only performs commands, so the other speech kinds render as nothing and drop out of
@@ -167,27 +170,15 @@ internal static class PlaybookNodeSummary
         return commands.Length > 0 ? commands : WhereItGoes(control);
     }
 
-    private static ImmutableArray<PlaybookSegmentView> Commands(ImmutableArray<SpeechFragment> effects)
-    {
-        var commands = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
-
-        foreach (var effect in effects)
-        {
-            if (CommandText(effect) is not { Length: > 0 } text)
-            {
-                continue;
-            }
-
-            if (commands.Count > 0)
-            {
-                commands.Add(PlaybookSegmentView.Separator(CommandSeparator));
-            }
-
-            commands.Add(PlaybookSegmentView.Command(text));
-        }
-
-        return commands.ToImmutable();
-    }
+    private static ImmutableArray<PlaybookSegmentView> Commands(ImmutableArray<SpeechFragment> effects) =>
+        Items(
+            [
+                .. effects
+                    .Select(CommandText)
+                    .Where(text => text.Length > 0)
+                    .Select(text => ImmutableArray.Create(PlaybookSegmentView.Command(text))),
+            ],
+            CommandSeparator);
 
     private static string CommandText(SpeechFragment fragment) =>
         fragment switch
@@ -197,34 +188,61 @@ internal static class PlaybookNodeSummary
             _ => string.Empty,
         };
 
+    // An arm's words are what the reader picks, or what the dice fall on, so every piece of them
+    // names the node the arm leads to: where a label goes is part of what the label says. The
+    // arm's guard is left alone — it is a question about the arm, not a way to its target.
+    private static ImmutableArray<PlaybookSegmentView> Reaching(
+        ImmutableArray<PlaybookSegmentView> pieces, int target) =>
+        [.. pieces.Select(piece => piece with { Target = target })];
+
     // A control node with nothing to perform moves straight on, and the only words left are the
-    // ones a divert was named with.
+    // ones a divert was named with. The words and the node they lead to are read from the same
+    // edge, so what the reader follows is what they read.
     private static ImmutableArray<PlaybookSegmentView> WhereItGoes(ControlNode control) =>
-        FirstDivertWords(control.Out) is { } words
-            ? [PlaybookSegmentView.Separator(DivertArrow), PlaybookSegmentView.Plain(words)]
+        NamedDivert(control.Out) is { } divert
+            ? [
+                PlaybookSegmentView.Separator(DivertArrow),
+                PlaybookSegmentView.LinkedTo(SpeechText.Of(divert.Label).Trim(), divert.Target),
+            ]
             : [PlaybookSegmentView.Keyword(CarriesOn)];
 
-    private static string? FirstDivertWords(ImmutableArray<Edge> edges) =>
+    private static DivertEdge? NamedDivert(ImmutableArray<Edge> edges) =>
         edges
             .OfType<DivertEdge>()
-            .Select(divert => SpeechText.Of(divert.Label).Trim())
-            .FirstOrDefault(words => words.Length > 0);
+            .FirstOrDefault(divert => SpeechText.Of(divert.Label).Trim().Length > 0);
 
-    private static ImmutableArray<PlaybookSegmentView> Choice(ChoiceNode choice)
+    private static ImmutableArray<PlaybookSegmentView> Choice(ChoiceNode choice) =>
+        Items([.. choice.Out.OfType<OptionEdge>().Select(Option)], OptionSeparator);
+
+    // A list reads as its items, one to a boundary. The boundary opening the list carries nothing:
+    // what comes before it introduces the list — a condition, a draw's header — rather than being
+    // an item of it. A lone item is not a list, so no boundary is written and it reads as the line
+    // it is.
+    private static ImmutableArray<PlaybookSegmentView> Items(
+        IReadOnlyList<ImmutableArray<PlaybookSegmentView>> items, string between)
     {
-        var options = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
-
-        foreach (var option in choice.Out.OfType<OptionEdge>())
+        if (items.Count == 0)
         {
-            if (options.Count > 0)
-            {
-                options.Add(PlaybookSegmentView.Separator(OptionSeparator));
-            }
-
-            options.AddRange(Option(option));
+            return [];
         }
 
-        return options.ToImmutable();
+        var pieces = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+        if (items.Count > 1)
+        {
+            pieces.Add(PlaybookSegmentView.Opening());
+        }
+
+        for (var index = 0; index < items.Count; index++)
+        {
+            if (index > 0)
+            {
+                pieces.Add(PlaybookSegmentView.Boundary(between));
+            }
+
+            pieces.AddRange(items[index]);
+        }
+
+        return pieces.ToImmutable();
     }
 
     private static ImmutableArray<PlaybookSegmentView> Option(OptionEdge option)
@@ -232,32 +250,24 @@ internal static class PlaybookNodeSummary
         var label = Speech(option.Label);
         ImmutableArray<PlaybookSegmentView> words = label.Length > 0 ? label : [PlaybookSegmentView.Absent(NoLabel)];
 
-        return [.. words, .. Guarded(option.Condition)];
+        return [.. Reaching(words, option.Target), .. Guarded(option.Condition)];
     }
 
     private static ImmutableArray<PlaybookSegmentView> RandomChoice(RandomChoiceNode random)
     {
         var arms = random.Out.OfType<RandomOptionEdge>().ToImmutableArray();
-        var pieces = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
 
-        pieces.Add(PlaybookSegmentView.Keyword($"{DrawPrefix}{arms.Length.ToString(CultureInfo.InvariantCulture)}"));
-        pieces.Add(PlaybookSegmentView.Separator(OddsDivider));
-
-        for (var index = 0; index < arms.Length; index++)
-        {
-            if (index > 0)
-            {
-                pieces.Add(PlaybookSegmentView.Separator(OptionSeparator));
-            }
-
-            pieces.AddRange(Odds(arms[index]));
-        }
-
-        return pieces.ToImmutable();
+        return
+        [
+            PlaybookSegmentView.Keyword(
+                $"{DrawPrefix}{arms.Length.ToString(CultureInfo.InvariantCulture)}"),
+            PlaybookSegmentView.Separator(OddsDivider),
+            .. Items([.. arms.Select(Odds)], OptionSeparator),
+        ];
     }
 
     private static ImmutableArray<PlaybookSegmentView> Odds(RandomOptionEdge arm) =>
-        [.. Share(arm.Weight), .. Guarded(arm.Condition)];
+        [.. Reaching(Share(arm.Weight), arm.Target), .. Guarded(arm.Condition)];
 
     private static ImmutableArray<PlaybookSegmentView> Share(ChoiceWeight weight) =>
         weight switch
@@ -272,7 +282,7 @@ internal static class PlaybookNodeSummary
     // An option and a random arm both carry their condition after their own text, so the shape is
     // written once.
     private static ImmutableArray<PlaybookSegmentView> Guarded(Condition? condition) =>
-        condition is KeyCondition key ? [PlaybookSegmentView.Keyword(Guard), PlaybookSegmentView.Plain(key.Key)] : [];
+        condition is KeyCondition key ? [PlaybookSegmentView.Keyword(Guard), Condition(key.Key)] : [];
 
     // A condition lives on the kinds that can carry one, so it is read here rather than repeated
     // in each kind's own summary.
@@ -311,7 +321,9 @@ internal static class PlaybookNodeSummary
 
         foreach (var piece in pieces)
         {
-            if (merged.Count > 0 && merged[^1].Role == piece.Role)
+            // Pieces that lead to different nodes stay apart however alike their roles, so a
+            // merged piece can never answer for a node it does not name.
+            if (merged.Count > 0 && merged[^1].Role == piece.Role && merged[^1].Target == piece.Target)
             {
                 merged[^1] = merged[^1] with { Text = merged[^1].Text + piece.Text };
             }
@@ -376,7 +388,16 @@ internal static class PlaybookNodeSummary
         return taken.ToImmutable();
     }
 
+    // A condition is a query like any other — the boolean member of the family — so it wears the
+    // query's role and the `?` the script marks it with. The reader then sees a question only the
+    // running game can answer, rather than a name the report happens to know.
+    private static PlaybookSegmentView Condition(string key) => PlaybookSegmentView.Query($"{key}{BooleanQuery}");
+
     private static string Target(int target) => target.ToString(CultureInfo.InvariantCulture);
+
+    // A node's number stands for the node itself, so the piece that shows it also carries it.
+    private static PlaybookSegmentView Reaches(int target) =>
+        PlaybookSegmentView.LinkedTo(Target(target), target);
 
     private static ImmutableArray<PlaybookSegmentView> PlainParts(string text) =>
         text.Length == 0 ? [] : [PlaybookSegmentView.Plain(text)];

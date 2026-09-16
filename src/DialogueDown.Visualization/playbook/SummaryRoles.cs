@@ -23,10 +23,22 @@ internal static class SummaryRoles
     /// <summary>The table's own punctuation, and the ellipsis a cut summary trails.</summary>
     public const string Separator = "separator";
 
+    /// <summary>
+    /// The punctuation dividing one item of a summary from the next, or the place a list begins
+    /// when the list has an introduction.
+    /// </summary>
+    public const string Boundary = "boundary";
+
+    /// <summary>A node a piece names, so the reader can go to the node rather than read its number.</summary>
+    public const string Target = "target";
+
     /// <summary>A command the host performs, written in round brackets.</summary>
     public const string Command = "command";
 
-    /// <summary>A placeholder only a running game can answer.</summary>
+    /// <summary>
+    /// A question only a running game can answer: a `{Value}` to insert, or a `Key?` the game reads
+    /// true or false.
+    /// </summary>
     public const string Query = "query";
 
     /// <summary>A marker standing where a value is missing: &lt;no speech&gt;, &lt;no label&gt;.</summary>
