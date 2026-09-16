@@ -120,6 +120,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **A flaky slug-hint case no longer fails a full test run** — the cases asserted a heading's slug
+  against however far the editor's first parse had reached, so a heading past that point read as
+  absent: green alone, red in the full run. They now read a document parsed to its end, and a case
+  pins the stopped parse itself.
+
 - **Two playbooks that say the same thing are now equal** — the records a playbook is built
   from compared their collections by reference, so decoding the same file twice produced two
   values that were never equal even though every field matched, and comparing a decoded
