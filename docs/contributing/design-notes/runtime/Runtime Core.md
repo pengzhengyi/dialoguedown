@@ -356,8 +356,11 @@ framework and nothing else, and an architecture test holds it that way.
 Two members are not reachable from a fixture — a session that does not open with
 `start` is begun for it, and a harness sends only commands it knows — and they stay
 in the set because it covers every site that fires a `Refused`, not only the sites
-the corpus can reach. A reason is **added**, never renamed or reused: a fixture may
-assert any member, so the set grows compatibly and changes only with a break.
+the corpus can reach. `unknown-command` is out of a test's reach as well: `Command`
+is a closed union, so only this assembly can define one, and the member is the guard
+for the command a later pass adds. A reason is **added**, never renamed or reused: a
+fixture may assert any member, so the set grows compatibly and changes only with a
+break.
 
 ## Error and boundary cases
 
