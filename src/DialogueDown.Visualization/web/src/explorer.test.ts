@@ -140,6 +140,28 @@ describe("initExplorer", () => {
         expect(active?.textContent).toBe("prologue.dialogue.md");
     });
 
+    // The writing actions belong to one mode: a View reader is browsing, so creating and renaming
+    // are grayed with a tip rather than gone, and the reading actions are untouched.
+    it("gates the writing actions on the mode it is given", async () => {
+        const container = document.createElement("aside");
+        const explorer = initExplorer(container, atRoot, ports());
+        await settle();
+        const actions = [...container.querySelectorAll<HTMLButtonElement>(".explorer-action")];
+
+        explorer.setEditable(false);
+        expect(actions[0].disabled).toBe(true);
+        expect(actions[1].disabled).toBe(true);
+        expect(actions[0].title).toContain("switch to Edit");
+        expect(actions[1].title).toContain("switch to Edit");
+        expect(actions[2].disabled).toBe(false); // Refresh reads.
+        expect(actions[3].disabled).toBe(false); // So does collapsing.
+
+        explorer.setEditable(true);
+        expect(actions[0].disabled).toBe(false);
+        expect(actions[0].title).toBe("New file");
+        expect(actions[1].title).toBe("New folder");
+    });
+
     it("re-marks the active script when the reader switches to a visible one", async () => {
         const container = document.createElement("aside");
         const explorerPorts = ports();

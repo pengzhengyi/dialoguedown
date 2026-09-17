@@ -59,6 +59,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **The file selector offers the View/Edit toggle and drops the Problems panel** — before a script
+  is open there is nothing to diagnose and no editor to jump into, so the shell no longer carries a
+  panel, a drawer tab, and counts for it. It offers the mode choice instead, remembers it across
+  reloads, and opens the script the reader picks in it. Writing belongs to Edit: in View the
+  Explorer's New file, New folder, and rename are grayed with a tip that says so, and the call to
+  action is too.
+
 - **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
   and a control's commands are lists now, numbered when their order is meaning; a piece that names
   a node (a branch arm's number, a jump's own words, an option's label) is a button that reveals
@@ -127,6 +134,11 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **The Files tab's icon sits inside its own highlight** — the icon rode half outside the bed the
+  open state paints, because the bed hung from the control's top edge while the icon sat on the
+  row's icon line, and the control's height follows the row. The bed takes the icon's own box now,
+  in a bare row and in one holding the stage tabs.
 
 - **A flaky slug-hint case no longer fails a full test run** — the cases asserted a heading's slug
   against however far the editor's first parse had reached, so a heading past that point read as

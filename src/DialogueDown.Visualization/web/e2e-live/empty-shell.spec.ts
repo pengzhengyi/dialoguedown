@@ -53,6 +53,8 @@ const createdInTest = join(SHELL_TREE, "created-in-test.dialogue.md");
 test.afterEach(() => rmSync(createdInTest, { force: true }));
 
 test("creates a new script from the call to action and opens it in Edit", async ({ page }) => {
+    // Creating is Edit's half of the shell, so the reader says so first.
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator(".empty-shell-create").click();
     const name = page.locator(".explorer-create-name");
     await name.fill("created-in-test");
@@ -69,6 +71,7 @@ test("creates a new script from the call to action and opens it in Edit", async 
 
 test("an existing name offers to open it instead of overwriting", async ({ page }) => {
     page.once("dialog", (dialog) => void dialog.accept()); // "open it instead?"
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click(); // creating is Edit's
     await page.locator(".empty-shell-create").click();
     const name = page.locator(".explorer-create-name");
     await name.fill("top"); // top.dialogue.md already exists
@@ -76,4 +79,77 @@ test("an existing name offers to open it instead of overwriting", async ({ page 
 
     await expect(page).toHaveURL(/\/r\//);
     await expect(page.locator(".source-pane .cm-editor")).toContainText("Top Scene");
+});
+
+// A file selector has nothing to diagnose, so the Problems panel and its counts stay out of the
+// reader's way until a script is open. Help stays: it describes the Explorer, which is the one
+// thing to do here.
+test("shows no Problems panel until a script is open", async ({ page }) => {
+    const tabs = page.locator("#footer-drawer .drawer-tab");
+    await expect(tabs).toHaveCount(1);
+    await expect(tabs.first()).toHaveText("Help");
+    await expect(page.locator(".status-bar .diagnostic-summary")).toHaveCount(0);
+});
+
+// The Files tab is the Explorer's own control, and its highlight is what says the panel is
+// showing. A glyph riding half outside the bed the state paints around it reads as a control
+// that is only half pressed, so the two have to be one box.
+test("draws the Files tab's glyph inside its own highlight", async ({ page }) => {
+    const box = await page.locator(".tabbar-explorer").evaluate((el) => {
+        const glyph = el.querySelector(".tab-icon")!.getBoundingClientRect();
+        const bed = getComputedStyle(el, "::before");
+        const frame = el.getBoundingClientRect();
+        // The bed is measured from the bottom it is anchored to, not from an inset at the top:
+        // the button's height follows the row, and the bed follows the glyph.
+        const bedBottom = frame.bottom - Number.parseFloat(bed.bottom);
+        return {
+            glyphTop: glyph.top,
+            glyphBottom: glyph.bottom,
+            bedTop: bedBottom - Number.parseFloat(bed.height),
+            bedBottom,
+        };
+    });
+
+    expect(box.glyphTop).toBeGreaterThanOrEqual(box.bedTop - 1);
+    expect(box.glyphBottom).toBeLessThanOrEqual(box.bedBottom + 1);
+});
+
+// Writing is Edit's half of the selector: a View reader is browsing, so the actions that make a
+// file or a folder stay in place but inert, with a tip saying what to do instead.
+test("lets only Edit write in the file selector", async ({ page }) => {
+    const newFile = page.locator('.explorer-action[data-action="new-file"]');
+    const newFolder = page.locator('.explorer-action[data-action="new-folder"]');
+    const callToAction = page.locator(".empty-shell-create");
+
+    await expect(newFile).toBeDisabled();
+    await expect(newFolder).toBeDisabled();
+    await expect(newFile).toHaveAttribute("title", /switch to Edit/);
+    await expect(callToAction).toBeDisabled();
+
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
+
+    await expect(newFile).toBeEnabled();
+    await expect(newFolder).toBeEnabled();
+    await expect(newFile).toHaveAttribute("title", "New file");
+    await expect(callToAction).toBeEnabled();
+});
+
+// The View/Edit choice is the reader's, not a document's: the shell offers it before anything is
+// open, remembers it, and opens the script they pick in it.
+test("offers the View/Edit toggle and opens a script in the chosen mode", async ({ page }) => {
+    const edit = page.locator('.mode-toggle-option[data-mode="edit"]');
+    await expect(page.locator('.mode-toggle-option[data-mode="view"]')).toHaveAttribute(
+        "aria-pressed",
+        "true",
+    );
+
+    await edit.click();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".explorer-script-row", { hasText: "top.dialogue.md" }).click();
+    await expect(page).toHaveURL(/\/r\//);
+    await expect(page.locator('.mode-toggle-option[data-mode="edit"]')).toHaveAttribute(
+        "aria-pressed",
+        "true",
+    );
 });

@@ -271,7 +271,11 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0;
+
+    /* Air under the mark before the tab row. The row's leading control paints its highlight on the
+       glyph's own box rather than on the taller target around it, so without this the highlight
+       would run flush to the brand above it. */
+    margin-bottom: 0.4rem;
     padding-right: 8.5rem; /* keep the brand clear of the top-right controls */
 }
 
@@ -708,6 +712,16 @@ section.stage.empty-shell {
 .explorer-action:hover {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
     color: var(--pico-color);
+}
+
+/* An action this mode cannot take — creating a file or folder in View. Grayed and inert like a
+   stage tab whose artifact was not produced, with its tip saying what to do instead. */
+.explorer-action:disabled,
+.explorer-action:disabled:hover {
+    background: transparent;
+    color: var(--pico-muted-color);
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .explorer-action-icon {
@@ -3644,7 +3658,9 @@ body.maximized .maximize-button .icon-compress {
     display: inline-flex;
 
     /* Seated, not centered: the box is taller than the row's other icon buttons, so centering
-       the glyph inside it would float the glyph above their line. */
+       the glyph inside it would float the glyph above their line. The bed below takes the glyph's
+       own box for the same reason the glyph sits where it does — a highlight that hangs half a
+       glyph below the thing it highlights reads as a half-pressed control. */
     align-items: flex-end;
     justify-content: center;
     width: auto;
@@ -3657,15 +3673,20 @@ body.maximized .maximize-button .icon-compress {
     cursor: pointer;
 }
 
-/* The painted bed: a chip inset inside the button's taller box, centered on the glyph rather
-   than on the box, and leaving air under the brand mark above and short of the divider below.
+/* The painted bed: the glyph as a chip rather than an outline drawn around the glyph itself.
+   The button stretches to whatever height the row has — a bare row is shorter than one holding
+   the stage tabs — while the glyph stays a glyph, so the bed is measured from the bottom the
+   glyph is seated on: a hair past the padding that seats it, and 24px tall, which leaves the
+   16px glyph 4px of air above and below. An outline tracing the glyph's own box reads as a
+   smaller glyph, not as a highlight around one.
    Barely rounded — enough to soften the corners of the outline it wears when open, not so much
    that the mark reads as a pill. Transparent until the control is touched, so one element
    carries the resting, hovered, and open looks without three boxes to keep in step. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
-    inset: 0.4rem 0 0;
+    inset: auto 0 0.2rem;
+    height: 24px;
     background: transparent;
     border-radius: 3px;
     transition: background 0.12s ease;
