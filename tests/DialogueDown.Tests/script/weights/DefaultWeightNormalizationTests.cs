@@ -107,6 +107,24 @@ public sealed class DefaultWeightNormalizationTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => _normalizer.Normalize([NumberWeight(-10), NumberWeight(50)]));
 
+    [Fact]
+    public void AQueryWeight_IsRejected_AsACallerError()
+    {
+        // A query weight has no compile-time value; resolving one is the runtime's job, and
+        // normalizing it anyway would produce a probability nobody chose.
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => _normalizer.Normalize([QueryWeight("Luck"), NumberWeight(50)]));
+    }
+
+    [Fact]
+    public void NoWeights_NormalizeToNothing()
+    {
+        var result = _normalizer.Normalize([]);
+
+        Assert.Empty(result.Probabilities);
+        NumericAssert.Equal(0, result.RawTotal);
+    }
+
     private static void AssertProbabilities(WeightDistribution result, params double[] expected)
     {
         Assert.Equal(expected.Length, result.Probabilities.Count);

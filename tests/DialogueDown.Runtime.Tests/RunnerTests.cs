@@ -66,6 +66,31 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_DoneBeforeTheRunHasStarted_IsRefused()
+    {
+        // An answer before the run asked anything: the refusal names where the run stands, so a
+        // driver reading it knows the position rather than only the command.
+        var context = Playbooks.OneLine();
+
+        AssertRefused(
+            Runner.Step(context, PlayState.Initial, new Done()),
+            RefusalReason.Misplaced,
+            "no position, before the run has started");
+    }
+
+    [Fact]
+    public void Step_FailedAtAnEndedRun_IsRefused()
+    {
+        var context = Playbooks.OneLine();
+        var ended = Runner.Step(context, Started(context), new Next()).State;
+
+        AssertRefused(
+            Runner.Step(context, ended, new Failed("nothing left to fail")),
+            RefusalReason.Misplaced,
+            "the end");
+    }
+
+    [Fact]
     public void Step_FailedWhileTheHostHasSomethingToCarryOut_StandsStill()
     {
         // The world did not change, so the run cannot read on -- and it says nothing, because the
