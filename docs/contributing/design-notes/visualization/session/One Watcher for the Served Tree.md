@@ -33,9 +33,8 @@ In scope: how the live server learns that the active document or its
 configuration changed.
 
 Out of scope: how the client navigates once the server has switched — the browser
-still performs a full page load. That is
-[#327](https://github.com/pengzhengyi/dialoguedown/issues/327), deliberately kept
-separate so this change stays small and its benefit is measurable on its own.
+still performs a full page load. That is deliberately kept separate so this change
+stays small and its benefit is measurable on its own.
 
 ## Measured baseline
 
@@ -209,10 +208,9 @@ tests need not sleep for the real 150 ms.
 ## What this does not do
 
 The full page load remains. After this change an open is roughly 180 ms, almost
-all of it the browser loading the report again. Removing that is
-[#327](https://github.com/pengzhengyi/dialoguedown/issues/327); measurements
-suggest the two together would bring an open to about 30 ms, but they are
-independent and are kept apart deliberately.
+all of it the browser loading the report again. Removing that is a separate
+change; measurements suggest the two together would bring an open to about 30 ms,
+but they are independent and are kept apart deliberately.
 
 ## Questions the build settled
 

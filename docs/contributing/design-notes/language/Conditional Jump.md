@@ -3,7 +3,7 @@
 > [!NOTE]
 > Status: **implemented**. A **conditional jump** fires only when its condition is
 > true. Gating the edge at play time is part of the planned
-> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+> runtime.
 
 Assumes [Conditions](./Conditions.md) — the primitive, its grammar, resolution, and decisions — and covers only what is specific to guarding a **jump**.
 

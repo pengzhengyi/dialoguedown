@@ -35,9 +35,8 @@ This component projects a `DialogueGraph` into the report's existing
 `DisplayGraph` payload and adds it as a fifth tab. It is a **projection**: the
 graph, the compiler, and the report shell are unchanged.
 
-**Out of scope:** playing the graph (that is the
-[runtime](https://github.com/pengzhengyi/dialoguedown/issues/45)), new client
-rendering modes, and graph-analysis diagnostics such as reachability warnings.
+**Out of scope:** playing the graph (that is the runtime), new client rendering
+modes, and graph-analysis diagnostics such as reachability warnings.
 
 ## Ubiquitous language
 
@@ -279,14 +278,12 @@ caught by a number rather than by a reader.
 ## Open questions and deferred work
 
 - **Automatically folding the legend when a fit would fail.** The legend already
-  folds by hand and a stage reserves its measured width when it frames
-  ([#258](https://github.com/pengzhengyi/dialoguedown/pull/258)), and folding
-  every scene at once now exists
-  ([#291](https://github.com/pengzhengyi/dialoguedown/pull/291)). What remains is
+  folds by hand and a stage reserves its measured width when it frames, and folding
+  every scene at once now exists. What remains is
   doing it *automatically* — folding the legend, or collapsing scenes — when a fit
   would otherwise fall back to anchoring the root.
 - **Playing the graph from the tab.** Stepping through the flow belongs to the
-  [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
+  runtime and its debugger.
 - **Cross-linking a divert to its scene.** Hovering a jump could highlight its
   target scene in the Semantic tab's tables, as the earlier stages already do.
 - **A cross-link that must double back overshoots its target to climb.** Climbing

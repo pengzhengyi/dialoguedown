@@ -454,7 +454,7 @@ playbooks are already pinned by C1's goldens.
 
 The readable half's failures are implemented; the rest describe the session
 harness and arrive with it in
-[C2](https://github.com/pengzhengyi/dialoguedown/issues/297).
+C2.
 
 | Case | Behavior | |
 | --- | --- | --- |
@@ -524,7 +524,7 @@ already keeps the golden playbooks; the rest lives beside the reader it exercise
 - **A menu written as a divert has no fixture yet.** `- => [Label](#anchor)` is
   the ordinary way to write a branching menu, but its option edge currently
   compiles to an empty label
-  ([#369](https://github.com/pengzhengyi/dialoguedown/issues/369)) — found by
+  — found by
   writing the first playable fixture, before any runner existed to trip over it.
   A fixture written now would enshrine the bug in the specification, so it lands
   with the fix.

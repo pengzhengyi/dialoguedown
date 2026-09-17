@@ -277,8 +277,7 @@ model into a compatibility promise.
 No placeholder exporter interface is added here. Yarn Spinner, Mermaid, JSON, or
 other outputs should consume the future stable serialized dialogue/runtime IR,
 not the interactive report's `DisplayGraph`. That work gets its own design
-component when the IR exists; [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)
-tracks it.
+component when the IR exists.
 
 ## Error and boundary cases
 
@@ -318,9 +317,8 @@ tracks it.
   arm; keep DOT and the temporary migration error.
 - **Docs** — update the README, CLI guide, authoring-aids guide, compilation
   visualization note, CLI emit note, design-note index, and changelog.
-- **Future work** — [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)
-  tracks the stable-IR/exporter design rather than preserving the current
-  renderer as a speculative seam.
+- **Future work** — the stable-IR/exporter design is tracked separately rather than
+  preserving the current renderer as a speculative seam.
 
 ## Testability
 

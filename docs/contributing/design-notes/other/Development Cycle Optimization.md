@@ -810,9 +810,9 @@ The live E2E suite also fell from about 2.5 to about 1.7 minutes, as a side
 effect rather than a goal.
 
 **Still open:** the remaining cost is dominated by tearing down the old page and
-starting a new one (152–622 ms), which only [#327](https://github.com/pengzhengyi/dialoguedown/issues/327)
-(open a script in place) can remove. [#326](https://github.com/pengzhengyi/dialoguedown/issues/326)
-can now shrink the first load, because a lazy chunk is finally possible.
+starting a new one (152–622 ms), which only opening a script in place can remove.
+A separate change can then shrink the first load, because a lazy chunk is finally
+possible.
 
 ### 16. Fetch Mermaid on demand instead of bundling it
 

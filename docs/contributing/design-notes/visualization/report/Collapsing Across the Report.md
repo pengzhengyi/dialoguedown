@@ -3,10 +3,8 @@
 > [!IMPORTANT]
 > Status: **implemented**. Every surface folds with the same glyph, the Dialogue Graph can fold or
 > open every scene at once, and the Source editor now folds the ignored region — the same unit the
-> Preview folds — from its own state. Reconciles [#285](https://github.com/pengzhengyi/dialoguedown/issues/285)
-> (fold every scene at once) and [#286](https://github.com/pengzhengyi/dialoguedown/issues/286)
-> (teach the Source editor about ignored regions) into one model, then sequences them as two
-> components.
+> Preview folds — from its own state. It reconciles folding every scene at once and teaching the
+> Source editor about ignored regions into one model, then sequences them as two components.
 
 ## Table of contents
 
@@ -157,14 +155,13 @@ whole address in its tooltip — the reader can see what was set aside, and stil
 
 ## Component 1 — One language, and all-commands for scenes
 
-Closes [#285](https://github.com/pengzhengyi/dialoguedown/issues/285) and lands the design language
-everywhere at once, so no surface spends a release speaking the old one.
+Lands the design language everywhere at once, so no surface spends a release speaking the old one.
 
 The all-commands themselves are small: the per-scene chevron already exists, and the projection
 already takes a *set* of collapsed region names, so this fills or empties that set rather than
 adding fold machinery.
 
-The contract answers the issue's three open questions:
+The contract answers three open questions:
 
 | Open question | Answer |
 | --- | --- |

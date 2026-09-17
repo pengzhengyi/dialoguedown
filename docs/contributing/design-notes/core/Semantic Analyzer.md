@@ -51,8 +51,8 @@ It does four things:
 **In scope:** the `SemanticModel`, the four sub-passes, the shared traversal index,
 and the `ISemanticAnalyzer` seam. **Out of scope, deferred to later components:**
 the **flow graph** (succession/choice/jump *edges* — the "compile to nodes and
-edges" step is its own builder), **cross-file** jump resolution (tracked as
-issue #59), and **collect-and-continue diagnostics** (this stage throws for now;
+edges" step is its own builder), **cross-file** jump resolution
+and **collect-and-continue diagnostics** (this stage throws for now;
 see [DD8](#dd8--errors-throw-now-diagnostic-seams-are-marked)). No **semantic
 lint rules** yet — those run over this model in a later pass.
 
@@ -314,7 +314,7 @@ an optional anchor part (split at the first `#`):
   a `FileScopedJump`, left unresolved — **not** an error. Because this stage has no
   cross-file support yet, *any* target that names a file is treated as file-scoped,
   even one that names the current document; a future multi-file component owns
-  resolving targets across documents (tracked as issue #59).
+  resolving targets across documents.
 
 The resolver returns a **`JumpResolutionTable`** — a node-keyed map from each
 `Jump` to its `JumpResolution` (`SceneJump` / `FileScopedJump` / `UnresolvedJump`).
@@ -357,7 +357,7 @@ component, in progress on its own branch).
 | Anchor collision (duplicate slug)             | `DialogueSemanticError` (TODO: diagnostic).                                              |
 | Heading that slugs to empty (`## !!!`)        | `DialogueSemanticError` — never a valid jump target (TODO: diagnostic).                  |
 | Local-anchor jump to a missing anchor         | `DialogueSemanticError` (TODO: diagnostic).                                              |
-| File-scoped jump (target names a file)        | resolved as a `FileScopedJump`, not an error (deferred, #59).                            |
+| File-scoped jump (target names a file)        | resolved as a `FileScopedJump`, not an error (deferred).                                 |
 | Unknown reserved tag (`##unknown`)            | `DialogueSemanticError` (TODO: diagnostic).                                              |
 | Jump target with an empty anchor              | treated as unresolved (TODO: diagnostic).                                                |
 | `null` document/source                        | `ArgumentNullException` (usage error, not a diagnostic).                                 |
