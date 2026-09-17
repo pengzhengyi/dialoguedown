@@ -1,9 +1,12 @@
 import { runApp } from "./app";
-import { initExplorer } from "./explorer";
+import { initExplorer, type ExplorerHandle } from "./explorer";
+import { codicon } from "./codicon";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { createExplorerToggle, EXPLORER_PANEL_NAME } from "./explorer-toggle";
+import { createModeToggle } from "./mode-toggle";
+import { readPreferredMode, writePreferredMode } from "./preferred-mode";
 import { setHelp } from "./help";
-import type { Report } from "./model";
+import type { Report, ServedMode } from "./model";
 import type { BrowseListing, CreateOutcome } from "./project-fs";
 
 /**
@@ -23,6 +26,39 @@ export function initEmptyShell(report: Report): void {
     // There is no active tab to explain, so the footer help describes the Explorer instead.
     setHelp("explorer");
 
+    // The View/Edit choice is the reader's and it outlives this page: the shell offers the mode
+    // they last chose, remembers the next one, and opens the script they pick in it. It is the
+    // session's own toggle, mounted where the badge sits, so the choice reads the same in both.
+    let chosen = readPreferredMode() ?? (report.mode === "edit" ? "edit" : "view");
+    // Writing is Edit's half of the shell: the Explorer's create actions and the card's call to
+    // action follow the switch rather than promising something this mode will not do.
+    const createHint = "Switch to Edit to create files and folders.";
+    let explorer: ExplorerHandle | null = null;
+    let createButton: HTMLButtonElement | null = null;
+    let hint: HTMLElement | null = null;
+    const applyMode = (mode: ServedMode): void => {
+        chosen = mode;
+        writePreferredMode(mode);
+        document.documentElement.dataset.servedMode = mode;
+        toggle.reflect(mode);
+        explorer?.setEditable(mode === "edit");
+        const editable = mode === "edit";
+        if (createButton) {
+            createButton.disabled = !editable;
+            createButton.title = editable ? "" : createHint;
+        }
+        // The hint keeps its welcome in Edit and points at the switch in View, rather than being
+        // cleared: the call to action sits right below it either way.
+        if (hint) {
+            hint.textContent = editable
+                ? "Pick a script from the Explorer on the left, or start a new one below."
+                : "Switch to Edit to create a new script.";
+        }
+    };
+    const toggle = createModeToggle(chosen, applyMode);
+    document.getElementById("mode-badge")?.replaceWith(toggle.element);
+    document.documentElement.dataset.servedMode = chosen;
+
     const explorerEl = document.getElementById("explorer");
     const appEl = document.getElementById("app");
     const stagesEl = document.getElementById("stages");
@@ -31,13 +67,13 @@ export function initEmptyShell(report: Report): void {
     appEl.classList.add("has-explorer", "no-detail");
 
     // Opening or creating starts a session on the server and follows the 303 to that document's
-    // report. With nothing open there is no save-safe step — the navigation is a fresh start.
-    const mode = report.mode === "edit" ? "edit" : "view";
+    // report, in the mode the reader chose above. With nothing open there is no save-safe step —
+    // the navigation is a fresh start.
     const openScriptSession = async (source: string): Promise<void> => {
         const response = await fetch("/api/open", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ source, mode }),
+            body: JSON.stringify({ source, mode: chosen }),
         });
         if (response.redirected) window.location.assign(response.url);
     };
@@ -59,7 +95,7 @@ export function initEmptyShell(report: Report): void {
         return { kind: "error", message: body.message ?? "Could not create the file." };
     };
 
-    initExplorer(explorerEl, project, {
+    explorer = initExplorer(explorerEl, project, {
         browse: async (path) => {
             const response = await fetch(`/api/browse?path=${encodeURIComponent(path)}`);
             return response.ok ? ((await response.json()) as BrowseListing) : null;
@@ -113,14 +149,21 @@ export function initEmptyShell(report: Report): void {
     card.innerHTML =
         `<div class="empty-shell-card">` +
         `<h2 class="empty-shell-title">No script open</h2>` +
-        `<p class="empty-shell-hint">Pick a script from the Explorer on the left, or create your ` +
-        `first dialogue file.</p>` +
-        `<button type="button" class="empty-shell-create">New dialogue file</button>` +
+        `<p class="empty-shell-hint">Pick a script from the Explorer on the left, or start a new ` +
+        `one below.</p>` +
+        `<button type="button" class="empty-shell-create"></button>` +
         `</div>`;
     stagesEl.appendChild(card);
-    card.querySelector<HTMLButtonElement>(".empty-shell-create")?.addEventListener("click", () => {
-        explorerEl
-            .querySelector<HTMLButtonElement>('.explorer-action[aria-label="New file"]')
-            ?.click();
+    createButton = card.querySelector<HTMLButtonElement>(".empty-shell-create");
+    hint = card.querySelector<HTMLElement>(".empty-shell-hint");
+    // A start-page row rather than a button: the mark the Explorer's own New file action wears,
+    // its words at the report's own size, and the ellipsis that says a name is asked for next.
+    const createLabel = document.createElement("span");
+    createLabel.textContent = "New dialogue file…";
+    createButton?.append(codicon("new-file", "empty-shell-create-icon"), createLabel);
+    createButton?.addEventListener("click", () => {
+        explorerEl.querySelector<HTMLButtonElement>('[data-action="new-file"]')?.click();
     });
+    // The card is built after the switch above, so it starts in whatever mode the reader is in.
+    applyMode(chosen);
 }

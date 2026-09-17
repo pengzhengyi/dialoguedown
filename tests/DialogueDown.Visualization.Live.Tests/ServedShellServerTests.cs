@@ -23,6 +23,20 @@ public sealed class ServedShellServerTests
         Assert.Equal(LandingHtml, html);
     }
 
+    // The shell's own door, which a session's back link points at: a run that pinned a document
+    // redirects `/` to its report, so the way back needs a path that is always the shell.
+    [Fact]
+    public async Task BrowseShell_ServesTheLandingHtml()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var html = await client.GetStringAsync("/browse", TestContext.Current.CancellationToken);
+
+        Assert.Equal(LandingHtml, html);
+    }
+
     [Fact]
     public async Task Browse_ListsSubdirectoriesAndDialogueSources()
     {

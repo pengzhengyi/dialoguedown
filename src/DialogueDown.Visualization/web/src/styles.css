@@ -271,7 +271,11 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0;
+
+    /* Air under the mark before the tab row. The row's leading control paints its highlight on the
+       glyph's own box rather than on the taller target around it, so without this the highlight
+       would run flush to the brand above it. */
+    margin-bottom: 0.4rem;
     padding-right: 8.5rem; /* keep the brand clear of the top-right controls */
 }
 
@@ -362,6 +366,13 @@ body {
     display: flex;
     align-items: flex-end;
     gap: 0.5rem;
+
+    /* The row stands as tall as the stage tabs make it, whether or not it holds any. The shell
+       that opens before a script has no tabs, and its leading Files control — seated against the
+       row's bottom — would otherwise sit a whole tab-row higher than the same control in a
+       session. 2.25rem is that height: the tab's paddings, line box, and underline, plus the
+       margin that seats it in the row. */
+    min-height: 2.25rem;
 }
 
 /* Pinned beside the scrolling tabs, and never squeezed by them. */
@@ -614,19 +625,50 @@ section.stage.empty-shell {
     color: var(--pico-muted-color);
 }
 
-/* The empty state's create action always opens the new file in Edit, so it wears the Edit-mode
-   green regardless of the shell's current View/Edit accent. */
+/* The empty state's call to action: a start page's row rather than a page-filling button — the
+   new file mark the Explorer's own action wears, its words at the report's own size, and the
+   ellipsis promising the name the Explorer's inline field then asks for. */
 .empty-shell-create {
+    /* Pico paints a button through `--pico-*` and re-sets them from a `:hover` rule more specific
+       than a plain class; both are reset here so the row keeps the report's own colors. */
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     width: auto;
     margin: 0;
-    border: 1px solid var(--edit-accent);
-    background: var(--edit-accent);
-    color: #fff;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    box-shadow: none;
+    color: var(--pico-color);
+    font-size: 0.9rem;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.empty-shell-create-icon {
+    font-size: 15px;
 }
 
 .empty-shell-create:hover {
-    border-color: var(--edit-accent-hover);
-    background: var(--edit-accent-hover);
+    --pico-color: inherit;
+
+    border-color: var(--pico-muted-border-color);
+    background: var(--pico-card-background-color);
+}
+
+/* In View there is no file to make, so the row says so rather than offering. */
+.empty-shell-create:disabled,
+.empty-shell-create:disabled:hover {
+    border-color: transparent;
+    background: transparent;
+    color: var(--pico-muted-color);
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 /* The Source tab has no node-detail panel: hide it and let the split fill. */
@@ -708,6 +750,16 @@ section.stage.empty-shell {
 .explorer-action:hover {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
     color: var(--pico-color);
+}
+
+/* An action this mode cannot take — creating a file or folder in View. Grayed and inert like a
+   stage tab whose artifact was not produced, with its tip saying what to do instead. */
+.explorer-action:disabled,
+.explorer-action:disabled:hover {
+    background: transparent;
+    color: var(--pico-muted-color);
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .explorer-action-icon {
@@ -3644,7 +3696,9 @@ body.maximized .maximize-button .icon-compress {
     display: inline-flex;
 
     /* Seated, not centered: the box is taller than the row's other icon buttons, so centering
-       the glyph inside it would float the glyph above their line. */
+       the glyph inside it would float the glyph above their line. The bed below takes the glyph's
+       own box for the same reason the glyph sits where it does — a highlight that hangs half a
+       glyph below the thing it highlights reads as a half-pressed control. */
     align-items: flex-end;
     justify-content: center;
     width: auto;
@@ -3657,15 +3711,20 @@ body.maximized .maximize-button .icon-compress {
     cursor: pointer;
 }
 
-/* The painted bed: a chip inset inside the button's taller box, centered on the glyph rather
-   than on the box, and leaving air under the brand mark above and short of the divider below.
+/* The painted bed: the glyph as a chip rather than an outline drawn around the glyph itself.
+   The button stretches to whatever height the row has — a bare row is shorter than one holding
+   the stage tabs — while the glyph stays a glyph, so the bed is measured from the bottom the
+   glyph is seated on: a hair past the padding that seats it, and 24px tall, which leaves the
+   16px glyph 4px of air above and below. An outline tracing the glyph's own box reads as a
+   smaller glyph, not as a highlight around one.
    Barely rounded — enough to soften the corners of the outline it wears when open, not so much
    that the mark reads as a pill. Transparent until the control is touched, so one element
    carries the resting, hovered, and open looks without three boxes to keep in step. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
-    inset: 0.4rem 0 0;
+    inset: auto 0 0.2rem;
+    height: 24px;
     background: transparent;
     border-radius: 3px;
     transition: background 0.12s ease;
@@ -4588,6 +4647,24 @@ body.zen .playbook-view > .playbook-source {
 }
 
 /* The document path: filename always visible, the directory middle ellipsised. */
+
+/* The way back to the file selector, sitting beside the path it leaves. Quiet and small like the
+   path chip it neighbors: it is a door out of the document rather than a control of the report. */
+.shell-back {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 0.1rem 0.25rem;
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-muted-color);
+    text-decoration: none;
+}
+
+.shell-back:hover {
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
 .doc-path {
     /* Pico redefines --pico-color to its inverse (white) on buttons; reset it so
        the hover text uses the normal foreground instead of white-on-white

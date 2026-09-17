@@ -9,6 +9,7 @@ import { createLiveEdit, type LiveEditController } from "./live-edit";
 import { initLiveEditUi, type DocumentBinding } from "./live-edit-ui";
 import { createSaveModeStore } from "./save-mode";
 import { createModeToggle } from "./mode-toggle";
+import { writePreferredMode } from "./preferred-mode";
 import { createModeController } from "./view-edit";
 import { createConfig, browserConfigCreatePorts } from "./config-create";
 import { resolveDocumentForNavigation } from "./navigation";
@@ -83,7 +84,16 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     // editable in Edit. The wiring closures reference the controllers only when invoked
     // (after they are created below).
     const initialMode: ServedMode = report.mode;
-    const toggle = createModeToggle(initialMode, (mode) => controller.switchTo(mode));
+    // The Explorer's handle, so opening a script can move the tree's highlight and a mode change
+    // can reach its writing actions. Assigned when the sidebar mounts (a served, browsable
+    // report); absent otherwise. Declared before the controller, whose callback may reflect the
+    // starting mode while this is still being wired.
+    let explorer: ExplorerHandle | null = null;
+    const toggle = createModeToggle(initialMode, (mode) => {
+        // The reader picked it, so it is what the shell offers next time a script is opened there.
+        writePreferredMode(mode);
+        controller.switchTo(mode);
+    });
     // The semantic analyzer's resolved symbols, refreshed on each hot-reload. The editor's
     // completion source reads this holder every call, so a reload updates completions in place.
     let currentSymbols: DialogueSymbols = report.symbols ?? EMPTY_SYMBOLS;
@@ -242,14 +252,31 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             // Drive the blue (View) / green (Edit) accent, then the toggle's pressed state.
             document.documentElement.dataset.servedMode = mode;
             toggle.reflect(mode);
+            // A View session's sidebar reads; an Edit session's writes.
+            explorer?.setEditable(mode === "edit");
         },
         resolveDocument,
     });
     document.getElementById("mode-badge")?.replaceWith(toggle.element);
-    // The Explorer's handle, so opening a script can move the tree's highlight. Assigned when the
-    // sidebar mounts (a served, browsable report); absent otherwise.
-    let explorer: ExplorerHandle | null = null;
-    // The stream is bound to one document — the one this tab is showing — so the watch is held:
+
+    // A way back to the file selector, beside the path it leaves. The shell is a page of its own
+    // (`/browse`), so this is an ordinary link — the browser's middle-click and open-in-new-tab
+    // work — and it is offered only in a served report, where a shell exists to go back to. A run
+    // that pinned a document redirects `/` to that document, which is why the link names the
+    // shell's own door rather than the landing.
+    const statusBar = document.querySelector(".status-bar");
+    if (report.project != null && statusBar) {
+        const back = document.createElement("a");
+        back.className = "shell-back";
+        back.href = "/browse";
+        back.title = "Back to the file selector";
+        back.setAttribute("aria-label", "Back to the file selector");
+        back.innerHTML =
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"' +
+            ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<polyline points="15 18 9 12 15 6"/></svg>';
+        statusBar.insertBefore(back, document.getElementById("doc-path"));
+    } // The stream is bound to one document — the one this tab is showing — so the watch is held:
     // a switch has to reconnect it against the newly opened script, and the server tells a tab
     // whose script stopped being served rather than leaving it waiting.
     const serverEvents = watchServerEvents(
@@ -405,6 +432,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                 },
                 configExplorerEntry(report.configuration),
             );
+            // The controller reflected the starting mode before this handle existed, so the sidebar
+            // takes it now: the report's own state is the truth both read.
+            explorer.setEditable(document.documentElement.dataset.servedMode === "edit");
             // Shut on arrival: the reader asked for this script, so the tree is a detour. The
             // Files control in the tab bar summons it, and an explicit choice outranks this.
             const explorerPanel = initCollapsiblePanel({

@@ -10,6 +10,10 @@ changes easy to categorize.
 
 ### Added
 
+- **A way back to the file selector** — a session's status line carries a small back link beside
+  the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
+  shell answers at `/browse`, since a run that pins a document redirects `/` to that document.
+
 - **A host can report that an effect failed** — `Failed(explanation)` joins `Done` as the answer
   to a `Perform`, so a world whose write was refused says so instead of lying with `Done` or
   hanging. The run stands still — the same position, nothing emitted, the driver's own message as
@@ -66,6 +70,14 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **The file selector offers the View/Edit toggle and drops the Problems panel** — before a script
+  is open there is nothing to diagnose and no editor to jump into, so the shell no longer carries a
+  panel, a drawer tab, and counts for it. It offers the mode choice instead, remembers it across
+  reloads, and opens the script the reader picks in it. Writing belongs to Edit: in View the
+  Explorer's New file, New folder, and rename are grayed with a tip that says so, and the call to
+  action is too — which is a start-page row now, a new file mark and its words rather than a
+  page-filling button.
 
 - **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
   and a control's commands are lists now, numbered when their order is meaning; a piece that names
@@ -135,6 +147,11 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **The Files tab's icon sits inside its own highlight** — the icon rode half outside the bed the
+  open state paints, because the bed hung from the control's top edge while the icon sat on the
+  row's icon line, and the control's height follows the row. The bed takes the icon's own box now,
+  in a bare row and in one holding the stage tabs.
 
 - **A flaky slug-hint case no longer fails a full test run** — the cases asserted a heading's slug
   against however far the editor's first parse had reached, so a heading past that point read as

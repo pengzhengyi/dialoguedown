@@ -173,6 +173,10 @@ internal sealed class ServedShellServer : IAsyncDisposable
         app.UseRouting();
 
         app.MapGet("/", Root);
+        // The shell on its own path, for a reader already inside a report: the landing may be
+        // redirected to a pinned document, so "back to the files" needs a door that is always the
+        // shell rather than whatever this run landed on.
+        app.MapGet("/browse", BrowseShell);
         app.MapGet(AssetMount + "/{name}", (HttpContext context, string name) => Asset(context, name));
         app.MapGet("/api/browse", (string? path) => Browse(path ?? string.Empty));
         app.MapPost("/api/open", (OpenRequest request, HttpContext context) => Open(request, context));
@@ -210,6 +214,9 @@ internal sealed class ServedShellServer : IAsyncDisposable
 
         return NoStoreHtml(context, _emptyShellHtml);
     }
+
+    // The file selector, however this run started and whatever it landed on.
+    private IResult BrowseShell(HttpContext context) => NoStoreHtml(context, _emptyShellHtml);
 
     private IResult Open(OpenRequest request, HttpContext context)
     {

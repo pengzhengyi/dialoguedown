@@ -166,6 +166,10 @@ navigates to `/` still lands on it. A browse-only run (`visualize` with no scrip
 leaves `/` on the empty state even after a script is opened from the tree, so
 returning to `/` browses again rather than bouncing to the last-opened report.
 
+The shell also answers at **`/browse`**, which is the door a report uses to get back to it: a run
+that pinned a document redirects `/` to that document, so "back to the files" has to name a path
+that is always the shell.
+
 `LiveVisualizationServer`, `ServeMode`, and `IVisualizeRunner.RunServedAsync` are
 retired; the unified server absorbs their single-document responsibilities (session
 creation, watchers, config-create, browser open), all of which it already performed

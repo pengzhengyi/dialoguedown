@@ -25,7 +25,9 @@ function mountDom(): void {
             <span id="help-summary"></span>
             <button id="help-toggle" aria-expanded="false" aria-controls="help-content"></button>
             <div id="help-content" hidden></div>
+            <div id="footer-drawer"></div>
         </footer>
+        <div class="status-bar"></div>
     `;
 }
 
@@ -208,5 +210,30 @@ describe("runApp Playbook help", () => {
 
         expect(document.getElementById("help-content")?.innerHTML).toContain("read-only");
         expect(document.getElementById("help-content")?.innerHTML).toContain("playbook");
+    });
+});
+
+describe("runApp — what the footer offers", () => {
+    beforeEach(() => {
+        mountDom();
+    });
+
+    const drawerTabs = () => [...document.querySelectorAll("#footer-drawer .drawer-tab")];
+
+    // The file selector is a report with no source: there is nothing to diagnose and no editor to
+    // jump into, so the Problems panel, its drawer tab, and its counts stay out of the way. Help
+    // stays — it describes the Explorer, which is the one thing to do here.
+    it("leaves the Problems panel out of a report with no script", () => {
+        runApp({ stages: [] });
+
+        expect(drawerTabs().map((tab) => tab.textContent)).not.toContain("Problems");
+        expect(document.querySelector(".status-bar .diagnostic-summary")).toBeNull();
+    });
+
+    it("offers the Problems panel once the report has a script", () => {
+        runApp(reportWith("alpha"));
+
+        expect(drawerTabs().map((tab) => tab.textContent)).toContain("Problems");
+        expect(document.querySelector(".status-bar .diagnostic-summary")).not.toBeNull();
     });
 });
