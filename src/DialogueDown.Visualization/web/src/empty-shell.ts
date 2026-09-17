@@ -1,5 +1,6 @@
 import { runApp } from "./app";
 import { initExplorer, type ExplorerHandle } from "./explorer";
+import { codicon } from "./codicon";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { createExplorerToggle, EXPLORER_PANEL_NAME } from "./explorer-toggle";
 import { createModeToggle } from "./mode-toggle";
@@ -46,7 +47,13 @@ export function initEmptyShell(report: Report): void {
             createButton.disabled = !editable;
             createButton.title = editable ? "" : createHint;
         }
-        if (hint) hint.textContent = editable ? "" : "Switch to Edit to create a new script.";
+        // The hint keeps its welcome in Edit and points at the switch in View, rather than being
+        // cleared: the call to action sits right below it either way.
+        if (hint) {
+            hint.textContent = editable
+                ? "Pick a script from the Explorer on the left, or start a new one below."
+                : "Switch to Edit to create a new script.";
+        }
     };
     const toggle = createModeToggle(chosen, applyMode);
     document.getElementById("mode-badge")?.replaceWith(toggle.element);
@@ -142,13 +149,18 @@ export function initEmptyShell(report: Report): void {
     card.innerHTML =
         `<div class="empty-shell-card">` +
         `<h2 class="empty-shell-title">No script open</h2>` +
-        `<p class="empty-shell-hint">Pick a script from the Explorer on the left, or create your ` +
-        `first dialogue file.</p>` +
-        `<button type="button" class="empty-shell-create">New dialogue file</button>` +
+        `<p class="empty-shell-hint">Pick a script from the Explorer on the left, or start a new ` +
+        `one below.</p>` +
+        `<button type="button" class="empty-shell-create"></button>` +
         `</div>`;
     stagesEl.appendChild(card);
     createButton = card.querySelector<HTMLButtonElement>(".empty-shell-create");
     hint = card.querySelector<HTMLElement>(".empty-shell-hint");
+    // A start-page row rather than a button: the mark the Explorer's own New file action wears,
+    // its words at the report's own size, and the ellipsis that says a name is asked for next.
+    const createLabel = document.createElement("span");
+    createLabel.textContent = "New dialogue file…";
+    createButton?.append(codicon("new-file", "empty-shell-create-icon"), createLabel);
     createButton?.addEventListener("click", () => {
         explorerEl.querySelector<HTMLButtonElement>('[data-action="new-file"]')?.click();
     });

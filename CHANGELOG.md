@@ -68,7 +68,8 @@ changes easy to categorize.
   panel, a drawer tab, and counts for it. It offers the mode choice instead, remembers it across
   reloads, and opens the script the reader picks in it. Writing belongs to Edit: in View the
   Explorer's New file, New folder, and rename are grayed with a tip that says so, and the call to
-  action is too.
+  action is too — which is a start-page row now, a new file mark and its words rather than a
+  page-filling button.
 
 - **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
   and a control's commands are lists now, numbered when their order is meaning; a piece that names

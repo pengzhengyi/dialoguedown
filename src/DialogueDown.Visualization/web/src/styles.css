@@ -625,19 +625,50 @@ section.stage.empty-shell {
     color: var(--pico-muted-color);
 }
 
-/* The empty state's create action always opens the new file in Edit, so it wears the Edit-mode
-   green regardless of the shell's current View/Edit accent. */
+/* The empty state's call to action: a start page's row rather than a page-filling button — the
+   new file mark the Explorer's own action wears, its words at the report's own size, and the
+   ellipsis promising the name the Explorer's inline field then asks for. */
 .empty-shell-create {
+    /* Pico paints a button through `--pico-*` and re-sets them from a `:hover` rule more specific
+       than a plain class; both are reset here so the row keeps the report's own colors. */
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     width: auto;
     margin: 0;
-    border: 1px solid var(--edit-accent);
-    background: var(--edit-accent);
-    color: #fff;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    box-shadow: none;
+    color: var(--pico-color);
+    font-size: 0.9rem;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.empty-shell-create-icon {
+    font-size: 15px;
 }
 
 .empty-shell-create:hover {
-    border-color: var(--edit-accent-hover);
-    background: var(--edit-accent-hover);
+    --pico-color: inherit;
+
+    border-color: var(--pico-muted-border-color);
+    background: var(--pico-card-background-color);
+}
+
+/* In View there is no file to make, so the row says so rather than offering. */
+.empty-shell-create:disabled,
+.empty-shell-create:disabled:hover {
+    border-color: transparent;
+    background: transparent;
+    color: var(--pico-muted-color);
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 /* The Source tab has no node-detail panel: hide it and let the split fill. */
