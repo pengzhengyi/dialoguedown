@@ -28,7 +28,7 @@ Guide: What will you do, `"playerName"`?
 
 `("crossfade")`
 
-Merchant @merchant: Fresh apples! Warm bread! Come, see my wares.
+Merchant @merchant: Fresh apples! Warm bread! \#marketday — come, see my wares.
 
 Alice: This place is *wonderful*.
 

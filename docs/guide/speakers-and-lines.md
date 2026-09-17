@@ -186,7 +186,9 @@ Alice: That plan is ~~canceled~~.
 - `*text*` or `_text_` is **italic**; `**text**` or `__text__` is **bold**;
   `~~text~~` is **strikethrough**. Combine emphasis (`***text***`) for bold italic.
 - To type a **literal** asterisk, underscore, or tilde, escape it (`\*`, `\_`,
-  `\~`). Underscores inside a word (`snake_case_name`) are never emphasis, and a
+  `\~`) — and the same backslash writes a literal tag sigil (`\#word`) or arrow
+  (`\=>`); see [Literal punctuation](script-language.md#literal-punctuation).
+  Underscores inside a word (`snake_case_name`) are never emphasis, and a
   single `~` is not strikethrough — only `~~...~~` is.
 
 Styling can wrap other speech constructs — a query inside bold still resolves:
@@ -235,7 +237,9 @@ set. A tag that carries a value (`#name=value`) is a **tag group**.
 Tags may appear wherever they attach to content: in a **speaker declaration**, in
 a **link or image label**, and **anywhere within speech text**. A custom or
 reserved tag must never start a line at block scope — a tag always rides along
-with the element it annotates, never standing alone as a line.
+with the element it annotates, never standing alone as a line. A `#word` meant as
+ordinary text is escaped (`\#word`); see
+[Literal punctuation](script-language.md#literal-punctuation).
 
 Currently, the only supported reserved tag is `##default`, which marks a speaker
 as the default speaker.

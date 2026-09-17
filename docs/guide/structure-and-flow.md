@@ -219,7 +219,10 @@ dialogue.
 An arrow with no link after it is not a jump at all: it is read literally and
 stays on the page as the two characters. Because an intended jump would
 otherwise vanish without a trace, the compiler warns about it — including the
-line-break case above, where the arrow and its link are split apart.
+line-break case above, where the arrow and its link are split apart. To write the
+characters deliberately, escape the arrow (`\=>`); the warning is for the arrow
+you did not escape. See
+[Literal punctuation](script-language.md#literal-punctuation).
 
 ```markdown
 => The market
