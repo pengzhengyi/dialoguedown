@@ -62,6 +62,17 @@ its status: **dormant** means built and tested, but not wired into the product).
 > [Error model](./core/Error%20Model.md). That is enough to understand and change the
 > compiler.
 
+Two overlaps in this corpus are on purpose. A guide page and a design note may
+share an example — the [guide](../../guide/index.md) teaches the syntax, and a
+note repeats an example only where a decision turns on its exact shape. And the
+agent instruction files
+([`AGENTS.md`](https://github.com/pengzhengyi/dialoguedown/blob/main/AGENTS.md),
+[`.github/copilot-instructions.md`](https://github.com/pengzhengyi/dialoguedown/blob/main/.github/copilot-instructions.md))
+repeat the build commands so an agent can act without following links. Keep the
+overlap and the *claims* single-homed: a number two documents must agree on (a
+coverage floor, a threshold) belongs in one of them, with the others pointing at
+it.
+
 ### Core: the compiler pipeline
 
 **Essential — read in full.** These trace a script through the compiler, one

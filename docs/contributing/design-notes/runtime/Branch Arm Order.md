@@ -108,9 +108,8 @@ also means a second conditionless arm is refused.
 | `schema/playbook-0.schema.json` | `branchOut` requires at least one gated `branch` arm and caps conditionless arms at one — `minContains: 0`, `maxContains: 1`. | `check-jsonschema` in CI |
 | `conformance/readable/<case>/` | One refusal each: an accepted compiled source and its `playbook.json` with the `out` edited, verdict `refuse`. | the readable harness |
 
-The checker follows the house contract: it refuses at the first fault with a
-message naming the offending node and what was expected — a playbook is compiler
-output, so there is no list for a reader to work through.
+The checker follows the [reader's contract](./Playbook%20Format.md#reading-a-playbook):
+it refuses at the first fault, naming the offending arm and the expectation.
 
 ## Key design decisions
 
