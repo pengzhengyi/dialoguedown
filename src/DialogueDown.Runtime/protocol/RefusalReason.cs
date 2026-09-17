@@ -17,7 +17,7 @@ public enum RefusalReason
 
     /// <summary>
     /// A command the protocol defines arrived where the run cannot take it — <c>Next</c> while the
-    /// run waits on the host, or <c>Done</c> when nothing was asked of it.
+    /// run waits on the host, or <c>Done</c> or <c>Failed</c> when nothing was asked of it.
     /// </summary>
     Misplaced,
 

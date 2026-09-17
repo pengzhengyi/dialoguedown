@@ -71,7 +71,7 @@ playbook being a designed contract rather than a dump of the compiler's graph.
 - [x] A refused source that opens with a `broken:` block naming and showing the
       edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
-      branches, jumps, effects, and queries.
+      branches, jumps, effects, effect failures, and queries.
 - [x] A refused command a session can assert, by reason rather than by wording.
 - [x] A C# harness that runs the readable fixtures today.
 - [x] A documented shape for the playable harness, so C2 has an acceptance suite
@@ -175,6 +175,7 @@ so a fixture reads as the conversation it replays:
 | `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
 | `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
 | `"done"` | `Done()` — the effect just asked for has been carried out |
+| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
 | `"describe"` | `Describe()` — ask where the run stands |
 
@@ -356,6 +357,7 @@ make good regression material, but a failure in one says little about what broke
 | A conditional block | Are the arms tried in the order written? |
 | A jump | Does a divert transfer without returning? |
 | An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
+| A failed effect | Does the run stand still, so a retry can land and an advance cannot? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
 | A command the run cannot take | Is it refused, for the reason the session names, rather than thrown or quietly ignored? |

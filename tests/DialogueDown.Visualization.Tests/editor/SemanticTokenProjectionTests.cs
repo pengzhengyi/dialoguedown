@@ -183,6 +183,43 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_MarkerShapedParagraphInAQuoteInsideAListItem_IsAControlKeyword()
+    {
+        // A choice's body is written as a quote inside the option's list item, so the marker is
+        // reached through the list rather than through the document's own blocks.
+        var source =
+            """
+            - Ask about the inn
+              > `if` `IsCurious?`
+              >
+              > Alice: Tell me more.
+            """;
+
+        var keywords = Project(source)
+            .Where(token => token.Kind == TokenKind.ControlKeyword)
+            .Select(token => token.TextIn(source));
+
+        Assert.Equal(["`if`"], keywords);
+    }
+
+    [Fact]
+    public void Project_MarkerShapedParagraphInANestedQuote_IsAControlKeyword()
+    {
+        var source =
+            """
+            > > `if` `Rainy?`
+            > >
+            > > Alice: Bring an umbrella.
+            """;
+
+        var keywords = Project(source)
+            .Where(token => token.Kind == TokenKind.ControlKeyword)
+            .Select(token => token.TextIn(source));
+
+        Assert.Equal(["`if`"], keywords);
+    }
+
+    [Fact]
     public void Project_MarkerShapedTopLevelParagraph_IsNotAControlKeyword()
     {
         var tokens = Project("`if` `Rich?`");
