@@ -1,0 +1,26 @@
+# lychee link checking for the documentation corpus.
+#
+# Run from the repository root:
+#   lychee --offline docs README.md CONTRIBUTING.md AGENTS.md SECURITY.md CODE_OF_CONDUCT.md .github
+#
+# Anchor fragments are checked too, so a renamed heading fails even though the file still
+# exists (`anchor-only`; `full` would also check text fragments). `--offline` skips external
+# links, which is what CI does: an external page can fail without the repository changing.
+# Run without it to check those on demand.
+#
+# The paths are directories rather than `docs/**/*.md` on purpose: a glob passed through a
+# shell expands to one level unless `globstar` is set, which would silently check a fraction
+# of the corpus. Non-documentation files that a directory walk reaches are excluded below.
+
+include_fragments = "anchor-only"
+
+# These exclusions are regular expressions, not globs.
+exclude_path = [
+  "\\.dialogue\\.md$", # dialogue scripts are not documentation: `#END` is a script anchor
+  "^docs/_site/",      # docfx build output
+  "^docs/api/",        # generated API reference
+  "^docs/demo/",       # generated demo bundle; pages.yml builds it
+  "^docs/template/",   # docfx template assets, resolved by the site build, not by relative path
+  "^coverage-report/",
+  "node_modules/",
+]
