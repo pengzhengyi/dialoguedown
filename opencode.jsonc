@@ -64,7 +64,7 @@
     },
     "coverage": {
       "description": "Run tests with source-focused coverage and build the report",
-      "template": "Run the tests with coverage and generate the report:\n\n```sh\ndotnet tool restore\ndotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include \"[DialogueDown*]*\" --minimum-expected-tests 3000\ndotnet reportgenerator \"-reports:TestResults/coverage.cobertura.*.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"\n```\n\nCI fails below 90% line or 85% branch coverage and warns below 100% line. Report the line and branch numbers, then name the specific uncovered paths that matter rather than only the percentage."
+      "template": "Run the tests with coverage and generate the report:\n\n```sh\ndotnet tool restore\ndotnet test DialogueDown.sln --coverlet --coverlet-output-format cobertura --coverlet-include \"[DialogueDown*]*\" --minimum-expected-tests 3000\ndotnet reportgenerator \"-reports:TestResults/coverage.cobertura.*.xml\" \"-targetdir:coverage-report\" \"-reporttypes:Html;MarkdownSummary;Cobertura\"\n```\n\nCI fails below 90% line or 85% branch coverage and warns below 95% line. Report the line and branch numbers, then name the specific uncovered paths that matter rather than only the percentage."
     },
     "verify": {
       "description": "Run every check, the way CI does",
