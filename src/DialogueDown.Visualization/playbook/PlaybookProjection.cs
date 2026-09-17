@@ -105,7 +105,7 @@ internal static class PlaybookProjection
             node.Id,
             kind,
             category,
-            PlaybookNodeSummary.Of(node, speakers),
+            PlaybookNodeSummary.SegmentsOf(node, speakers),
             [.. node.Out.Select(edge => edge.Target)]);
     }
 

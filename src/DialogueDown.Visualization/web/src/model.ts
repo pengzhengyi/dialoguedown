@@ -84,9 +84,38 @@ export interface SemanticJump {
 }
 
 /** One styled stretch of a cell's text. */
-export interface SemanticRun {
+export interface SemanticSegment {
     text: string;
     className?: string;
+    /**
+     * What this piece means, for a piece whose meaning its own words do not carry — a query, a
+     * command, a stand-in, a destination. Shown as a tooltip beside the piece.
+     */
+    tip?: string;
+    /**
+     * Set when the piece names a place in an accompanying document, so clicking it takes the reader
+     * there. As with {@link SemanticCell.jump}, it is bound where the cell is built rather than
+     * looked up when it is drawn.
+     */
+    target?: PlaybookTarget;
+    /**
+     * Set when the piece references a keyed entity, so hovering it highlights that entity wherever
+     * else it appears.
+     */
+    refKey?: string;
+}
+
+/** A cell drawn as a list: what introduces it, what it holds, and whether its order means. */
+export interface SemanticList {
+    /**
+     * The pieces that read before the items — the condition a list is subject to, the header a draw
+     * announces — or none when the list opens the cell.
+     */
+    lead: SemanticSegment[];
+    /** The items, each the pieces that read on its own line. */
+    items: SemanticSegment[][];
+    /** Whether the items are steps taken in order rather than alternatives to pick between. */
+    ordered: boolean;
 }
 
 /** One cell of a {@link SemanticTable}. */
@@ -103,10 +132,17 @@ export interface SemanticCell {
     /**
      * Set when the cell's text is drawn in styled stretches rather than as one run of prose.
      * `text` stays the plain rendering, so search and sort still read the cell and only the
-     * drawing differs — the same arrangement {@link tags} uses. The runs' texts must concatenate
-     * back to `text`, because the search highlight is found in `text` and drawn across the runs.
+     * drawing differs — the same arrangement {@link tags} uses. The segments' texts must
+     * concatenate back to `text`, because the search highlight is found in `text` and drawn across
+     * the segments.
      */
-    runs?: SemanticRun[];
+    segments?: SemanticSegment[];
+    /**
+     * Set when the cell is drawn as a list rather than as one line. `text` joins the introduction
+     * and the items with newlines, so the highlight found in it still belongs to the item that
+     * holds the match.
+     */
+    list?: SemanticList;
     /**
      * Set when the cell is an identifier a writer would paste into a script — an `@id`, an
      * anchor, a jump target. Such a cell copies its text on click; prose cells do not.
@@ -238,6 +274,31 @@ export interface PlaybookAnchorView {
     node: number;
 }
 
+/** What one labeled piece of a node's summary is. */
+export type SummaryRole =
+    | "speaker"
+    | "keyword"
+    | "separator"
+    | "boundary"
+    | "command"
+    | "query"
+    | "absent"
+    | "target"
+    | "plain";
+
+/** One labeled piece of a node's summary, as the projection writes it. */
+export interface PlaybookSegmentView {
+    /** The piece's text. Joining every piece's text rebuilds the summary. */
+    text: string;
+    /** What the piece is, which decides the class the table draws it in. */
+    role: SummaryRole;
+    /**
+     * The node this piece names, for a piece that says where control can go. A piece carrying one
+     * can be followed, so the reader reaches the node rather than a number that stands for it.
+     */
+    target?: number;
+}
+
 /** One row of the playbook's node table. */
 export interface PlaybookNodeView {
     /** The node's own position. */
@@ -246,8 +307,8 @@ export interface PlaybookNodeView {
     kind: string;
     /** The cross-stage color group the node's kind belongs to. */
     category: string;
-    /** The one line saying what the node holds. */
-    summary: string;
+    /** The node's summary, as the labeled pieces the table draws. */
+    segments: PlaybookSegmentView[];
     /** The nodes this node leads to. */
     targets: number[];
 }

@@ -35,13 +35,13 @@ internal sealed record PlaybookAnchorView(string Name, int Node);
 /// <param name="Id">The node's own position in the playbook.</param>
 /// <param name="Kind">The kind the document names the node by.</param>
 /// <param name="Category">The category that decides what color the node draws in.</param>
-/// <param name="Summary">The one line saying what the node holds.</param>
+/// <param name="Segments">The node's summary, as the labeled pieces the table draws.</param>
 /// <param name="Targets">The nodes this one leads to, in the order they appear.</param>
 internal sealed record PlaybookNodeView(
     int Id,
     string Kind,
     string Category,
-    string Summary,
+    IReadOnlyList<PlaybookSegmentView> Segments,
     IReadOnlyList<int> Targets);
 
 /// <summary>The playbook's header facts, as the report's summary table shows them.</summary>

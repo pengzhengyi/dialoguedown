@@ -165,18 +165,20 @@ run instead of after an automatic follow-up commit.
 
 ### The `visualize` CLI and live server
 
-`src/DialogueDown.Visualization.Live` is a small console app (and loopback server)
-for viewing a script's compilation:
+The `visualize` command renders a script's compilation and, by default, serves it from a
+`127.0.0.1`-only loopback server that pushes each recompile to the browser over
+Server-Sent Events as you edit. It is a development tool, not a hosted service; the
+[CLI guide](docs/guide/cli.md) documents its flags, options, and run modes. Run it from
+source with:
 
 ```bash
-cd src/DialogueDown.Visualization.Live
-dotnet run -- path/to/scene.dialogue.md            # render + open a static report
-dotnet run -- path/to/scene.dialogue.md --watch    # serve + hot-reload on file changes
-dotnet run -- path/to/scene.dialogue.md -o out.html --no-open   # write, don't open
+dotnet run --project src/DialogueDown.Cli -- visualize path/to/scene.dialogue.md
 ```
 
-Watch mode starts a `127.0.0.1`-only server that pushes recompiled stages to the
-browser over Server-Sent Events; it is a development tool, not a hosted service.
+`src/DialogueDown.Visualization.Live` is the library behind the command: the loopback
+server, the file watcher, and the served Explorer. It has no entry point of its own — the
+CLI hosts it, and `DialogueDown.Visualization.Live.Tests` drives it directly.
+
 The live end-to-end tests run with `npm run e2e:live` in `web/`. The command
 builds the CLI once, then launches each loopback server from that Release DLL
 without repeating project builds.

@@ -1220,7 +1220,7 @@ section.stage.empty-shell {
     white-space: nowrap;
 }
 
-/* The Summary cell's styled runs. Only the three distinctions worth finding carry a colour — who
+/* The Summary cell's styled segments. Only the three distinctions worth finding carry a colour — who
    speaks, what the host is asked to perform, and a value only a running game can supply — drawn
    from the Source editor's own syntax tokens, already defined for both themes. The grammar around
    them is muted, so the words a writer wrote stay the most legible thing in the row. */
@@ -1246,6 +1246,34 @@ section.stage.empty-shell {
 .dd-sum-absent {
     color: var(--pico-muted-color);
     font-style: italic;
+}
+
+/* A cell drawn as a list — a choice's options — rather than as one line. Pico gives a bare list
+   a bottom margin, so the reset keeps the cell's own rhythm; the marker wears the muted grammar
+   colour so the bullets step back the way the separators they replaced did. */
+.dd-sum-list {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.dd-sum-list li::marker {
+    color: var(--pico-muted-color);
+}
+
+/* Numbers are wider than a bullet, so a numbered list needs a little more room for its markers. */
+ol.dd-sum-list {
+    padding-left: 1.4rem;
+}
+
+/* A piece that explains itself on hover — who speaks, what the host performs, a value only the
+   game can answer, the report's own stand-in — wears the graph's ask-me pointer, so the shape
+   says there is something to ask before the tooltip arrives. A piece that names a place wears the
+   pointer of the jump it is instead, which the shared `.dd-jump` rule already sets. */
+.dd-sum-speaker,
+.dd-sum-command,
+.dd-sum-query,
+.dd-sum-absent {
+    cursor: help;
 }
 
 /* The revealed search box: a slim, horizontally inset row above the table (not edge-to-edge),

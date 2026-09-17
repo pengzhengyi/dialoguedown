@@ -591,8 +591,8 @@ describe("createTablePanel — copying an identifier", () => {
     });
 });
 
-describe("createTablePanel — a cell drawn in styled runs", () => {
-    function runsTable(): SemanticTable {
+describe("createTablePanel — a cell drawn in styled segments", () => {
+    function segmentsTable(): SemanticTable {
         return {
             title: "Nodes",
             columns: ["#", "Summary"],
@@ -603,10 +603,10 @@ describe("createTablePanel — a cell drawn in styled runs", () => {
                         { text: "2" },
                         {
                             text: "Keeper: Take a torch and go north.",
-                            runs: [
+                            segments: [
                                 { text: "Keeper", className: "dd-sum-speaker" },
-                                { text: ":", className: "dd-sum-separator" },
-                                { text: " Take a torch and go north." },
+                                { text: ": ", className: "dd-sum-separator" },
+                                { text: "Take a torch and go north." },
                             ],
                         },
                     ],
@@ -619,27 +619,27 @@ describe("createTablePanel — a cell drawn in styled runs", () => {
         return panel.querySelectorAll<HTMLElement>("tbody td")[1]!;
     }
 
-    it("draws each run in its own class and leaves a plain run unwrapped", () => {
-        const panel = createTablePanel(runsTable());
+    it("draws each segment in its own class and leaves a plain segment unwrapped", () => {
+        const panel = createTablePanel(segmentsTable());
         const cell = summaryCell(panel);
 
         expect(cell.querySelector(".dd-sum-speaker")?.textContent).toBe("Keeper");
-        expect(cell.querySelector(".dd-sum-separator")?.textContent).toBe(":");
+        expect(cell.querySelector(".dd-sum-separator")?.textContent).toBe(": ");
         expect(cell.textContent).toBe("Keeper: Take a torch and go north.");
     });
 
-    // The split is only for drawing. If the highlight were not laid back across the runs, a cell
+    // The split is only for drawing. If the highlight were not laid back across the segments, a cell
     // would stop marking its matches the moment it gained colour.
-    it("still marks a search match inside a coloured run", () => {
-        const panel = createTablePanel(runsTable());
+    it("still marks a search match inside a coloured segment", () => {
+        const panel = createTablePanel(segmentsTable());
         setFilter(panel, "torch");
 
         const marks = [...summaryCell(panel).querySelectorAll(".table-mark")];
         expect(marks.map((mark) => mark.textContent)).toEqual(["torch"]);
     });
 
-    it("marks a match that falls inside a run carrying a class", () => {
-        const panel = createTablePanel(runsTable());
+    it("marks a match that falls inside a segment carrying a class", () => {
+        const panel = createTablePanel(segmentsTable());
         setFilter(panel, "Keep");
 
         const speaker = summaryCell(panel).querySelector(".dd-sum-speaker");
@@ -647,11 +647,182 @@ describe("createTablePanel — a cell drawn in styled runs", () => {
     });
 
     // A reader searching for something spanning the boundary should still see both halves marked.
-    it("marks both halves of a match that straddles two runs", () => {
-        const panel = createTablePanel(runsTable());
+    it("marks both halves of a match that straddles two segments", () => {
+        const panel = createTablePanel(segmentsTable());
         setFilter(panel, "Keeper:");
 
         const marks = [...summaryCell(panel).querySelectorAll(".table-mark")];
         expect(marks.map((mark) => mark.textContent).join("")).toBe("Keeper:");
+    });
+});
+
+describe("createTablePanel — a cell drawn as a list", () => {
+    const TEXT = "Feel the hallway door\nCall the lift";
+
+    function listTable(): SemanticTable {
+        return {
+            title: "Nodes",
+            columns: ["#", "Summary"],
+            emptyText: "No nodes.",
+            rows: [
+                {
+                    cells: [
+                        { text: "1" },
+                        {
+                            text: TEXT,
+                            list: {
+                                lead: [],
+                                ordered: false,
+                                items: [
+                                    [{ text: "Feel the hallway door" }],
+                                    [{ text: "Call the lift", className: "dd-sum-query" }],
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ],
+        };
+    }
+
+    function cellOf(panel: HTMLElement): HTMLElement {
+        return panel.querySelectorAll<HTMLElement>("tbody td")[1]!;
+    }
+
+    it("draws each item as an item, with the break standing where the text has it", () => {
+        const cell = cellOf(createTablePanel(listTable()));
+
+        expect([...cell.querySelectorAll("li")].map((item) => item.textContent)).toEqual([
+            "Feel the hallway door",
+            "Call the lift",
+        ]);
+        // The break is drawn as the whitespace between items, so the cell reads as it searches.
+        expect(cell.textContent).toBe(TEXT);
+        expect(cell.querySelector(".dd-sum-query")?.textContent).toBe("Call the lift");
+    });
+
+    it("still marks a search match inside an item", () => {
+        const panel = createTablePanel(listTable());
+        setFilter(panel, "lift");
+
+        const marks = [...cellOf(panel).querySelectorAll(".table-mark")];
+        expect(marks.map((mark) => mark.textContent)).toEqual(["lift"]);
+    });
+
+    it("marks a match that falls inside a later item, past the break", () => {
+        const panel = createTablePanel(listTable());
+        setFilter(panel, "hallway");
+
+        const marks = [...cellOf(panel).querySelectorAll("li:first-child .table-mark")];
+        expect(marks.map((mark) => mark.textContent)).toEqual(["hallway"]);
+    });
+
+    function stepTable(): SemanticTable {
+        return {
+            title: "Nodes",
+            columns: ["#", "Summary"],
+            emptyText: "No nodes.",
+            rows: [
+                {
+                    cells: [
+                        { text: "3" },
+                        {
+                            text: "IF brave THEN \nfade\nwait",
+                            list: {
+                                lead: [
+                                    { text: "IF brave", className: "dd-sum-keyword" },
+                                    { text: " THEN " },
+                                ],
+                                ordered: true,
+                                items: [[{ text: "fade" }], [{ text: "wait" }]],
+                            },
+                        },
+                    ],
+                },
+            ],
+        };
+    }
+
+    // A list whose order is meaning is numbered; one whose items are alternatives is bulleted. The
+    // introduction reads on the cell's first line rather than becoming the first item.
+    it("numbers a cell whose order is meaning, reading its introduction first", () => {
+        const cell = cellOf(createTablePanel(stepTable()));
+
+        expect(cell.querySelector("ol")).not.toBeNull();
+        expect([...cell.querySelectorAll("li")].map((item) => item.textContent)).toEqual([
+            "fade",
+            "wait",
+        ]);
+        expect(cell.textContent).toBe("IF brave THEN \nfade\nwait");
+    });
+
+    it("marks a search match in the introduction the way it marks one in an item", () => {
+        const panel = createTablePanel(stepTable());
+        setFilter(panel, "brave");
+
+        const marks = [...cellOf(panel).querySelectorAll(".table-mark")];
+        expect(marks.map((mark) => mark.textContent)).toEqual(["brave"]);
+        expect(cellOf(panel).querySelector("ol .table-mark")).toBeNull();
+    });
+
+    // A piece that names a place is a control that goes there, which is how the whole-cell jump is
+    // drawn — so it is reachable without a mouse and carries the keys the highlighter reads.
+    it("draws a piece that names a place as a control that goes there", () => {
+        const table: SemanticTable = {
+            title: "Nodes",
+            columns: ["#", "Summary"],
+            emptyText: "No nodes.",
+            rows: [
+                {
+                    cells: [
+                        { text: "3" },
+                        {
+                            text: "IF DoorIsHot THEN 10",
+                            segments: [
+                                { text: "IF DoorIsHot THEN ", className: "dd-sum-keyword" },
+                                {
+                                    text: "10",
+                                    target: { kind: "node", id: 10 },
+                                    refKey: "node:10",
+                                    tip: "<strong>Conditional</strong><div>Taken only while it holds.</div>",
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+
+        const piece = cellOf(createTablePanel(table)).querySelector<HTMLElement>("button.dd-jump");
+
+        expect(piece?.textContent).toBe("10");
+        expect(JSON.parse(piece?.dataset.jump ?? "null")).toEqual({ kind: "node", id: 10 });
+        expect(piece?.getAttribute("data-ref-key")).toBe("node:10");
+        expect(piece?.getAttribute("data-tip")).toContain("Conditional");
+        expect(piece?.getAttribute("aria-label")).toBe("Reveal 10 in the playbook");
+    });
+
+    it("puts what a piece means where the tooltip reads it", () => {
+        const table: SemanticTable = {
+            title: "Nodes",
+            columns: ["#", "Summary"],
+            emptyText: "No nodes.",
+            rows: [
+                {
+                    cells: [
+                        { text: "1" },
+                        {
+                            text: "{Gold}",
+                            segments: [{ text: "{Gold}", className: "dd-sum-query", tip: "Query" }],
+                        },
+                    ],
+                },
+            ],
+        };
+
+        const piece = cellOf(createTablePanel(table)).querySelector(".dd-sum-query");
+
+        expect(piece?.getAttribute("data-tip")).toBe("Query");
+        expect(cellOf(createTablePanel(table)).textContent).toBe("{Gold}");
     });
 });
