@@ -54,6 +54,10 @@ Dialogue content moves through three representations:
    loads and plays. See the
    [playbook format](../contributing/design-notes/runtime/Playbook%20Format.md).
 
+The words for the playing side: the **runtime** loads a playbook and plays it, the
+**runner** is the part that steps through it, and the **host** is the game that
+answers its queries and performs its effects.
+
 ## What is implemented
 
 - **Compiler pipeline:** parse → transpile → desugar → analyze, behind

@@ -13,18 +13,12 @@ Part of the [script language specification](script-language.md).
 - [Commands](#commands)
 - [Quoting a key](#quoting-a-key)
 
-The current `IGameSystem` interface exposes two integration points:
-
-```csharp
-public interface IGameSystem
-{
-    string Query(string query);
-
-    void Execute(string command);
-}
-```
-
-The DSL will compile query and command syntax into calls to that adapter.
+Your game answers what a script asks of it and carries out what the script
+commands. The interface a game implements — the runtime's world read and effect
+handling — lands with the runtime, so this page describes what a script asks of
+your game rather than the C# shape of the answer. See the
+[runtime architecture](../contributing/design-notes/runtime/Dialogue%20Runtime%20Architecture.md)
+for the model it is settling on.
 
 ## Queries
 
@@ -34,25 +28,9 @@ A query reads game state and inserts the returned value into speech.
 Query = "`" , QuotedString , "`" ;
 ```
 
-Adapter example:
-
-```csharp
-public sealed class GameSystem : IGameSystem
-{
-    public string Query(string query)
-    {
-        return query switch
-        {
-            "Alice.FavoriteColor" => "red",
-            _ => string.Empty
-        };
-    }
-
-    public void Execute(string command)
-    {
-    }
-}
-```
+A game answers a query by its key: asked for `Alice.FavoriteColor`, it returns
+`red`. A key it does not know may return nothing, which the script reads as an
+empty value.
 
 Script:
 
@@ -93,7 +71,7 @@ and nothing more — write the query as a code span to ask the game a question.
 
 ## Commands
 
-A command changes game state through `IGameSystem.Execute`.
+A command changes something in your game.
 
 ```ebnf
 DefaultCommand = "`" , "(" , QuotedString , ")" , "`" ;
@@ -101,32 +79,8 @@ CustomCommand  = "`" , Identifier , "(" , [ Arguments ] , ")" , "`" ;
 Command        = DefaultCommand | CustomCommand ;
 ```
 
-Adapter example:
-
-```csharp
-public sealed class GameSystem : IGameSystem
-{
-    public string Query(string query)
-    {
-        return string.Empty;
-    }
-
-    public void Execute(string command)
-    {
-        switch (command)
-        {
-            case "JoinClub(\"Alice\", \"Kung Fu\")":
-                JoinClub("Alice", "Kung Fu");
-                return;
-        }
-    }
-
-    private static void JoinClub(string characterName, string clubName)
-    {
-        // Update game state here.
-    }
-}
-```
+Your game recognizes the command's text — `JoinClub("Alice", "Kung Fu")` — and
+carries it out.
 
 Default command:
 
@@ -164,8 +118,9 @@ Under the hood, a silent command is an **effect**, not speech: it compiles to a
 command-only control line that has no speaker, so it is never attributed to a
 character or the default speaker.
 
-The compiler will emit a special node for each game-system call. The node shape
-and runtime execution contract are outside this document's scope.
+Each call compiles to its own node — an **effect** the runtime asks the host to
+perform. The node shape and the execution contract belong to the runtime, not to
+the script.
 
 ## Quoting a key
 

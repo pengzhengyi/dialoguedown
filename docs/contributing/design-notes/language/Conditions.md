@@ -3,8 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. The compiler recognizes and preserves the **condition**
 > primitive (`` `"key"?` ``) and binds it to every construct that can be guarded.
-> Evaluating a condition at play time — the `IGameSystem.Check` read — is part of
-> the planned [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+> Evaluating a condition at play time — the world read that answers its key — is
+> the [runtime](../runtime/Dialogue%20Runtime%20Architecture.md)'s job.
 
 ## Table of contents
 
@@ -19,7 +19,7 @@
   - [D1 — A condition is a query read, not a command](#d1--a-condition-is-a-query-read-not-a-command)
   - [D2 — The `?` sigil joins the query-and-sigil family](#d2--the--sigil-joins-the-query-and-sigil-family)
   - [D3 — Guard-first placement](#d3--guard-first-placement)
-  - [D4 — A dedicated boolean read on `IGameSystem`](#d4--a-dedicated-boolean-read-on-igamesystem)
+  - [D4 — A dedicated boolean read](#d4--a-dedicated-boolean-read)
   - [D5 — A condition is a spanned, reusable node](#d5--a-condition-is-a-spanned-reusable-node)
   - [D6 — Negation is deferred](#d6--negation-is-deferred)
   - [D7 — No in-script expression language](#d7--no-in-script-expression-language)
@@ -51,7 +51,7 @@ writer-facing specification, commits, and the changelog.
 | **Condition**   | A game-state query read as a boolean: `` `"key"?` `` — the query key, delimited by quotes, followed by a `?`.                       |
 | **Guard**       | A condition attached to a construct, controlling whether that construct happens.                                                    |
 | **Guard-first** | The condition is written *before* the thing it guards, so it reads "if … then …" and one placement rule serves every construct.     |
-| **Check**       | The boolean the game answers for a condition's key, through `IGameSystem.Check`; an unknown key is `false`.                         |
+| **Check**       | The boolean the game answers for a condition's key; an unknown key is `false`.                                                      |
 | **Peel**        | Removing a leading guard code span from a block before the rest is parsed, so the condition becomes a property rather than content. |
 
 ## Writer-facing behavior
@@ -120,7 +120,7 @@ reads is unknown until the game runs. The compiler only recognizes and preserves
 the condition; the contract below is what the runtime honors, and it is the same
 for every construct:
 
-1. The runtime reads the key through `IGameSystem.Check`, which returns a boolean.
+1. The runtime reads the key from the world, which answers with a boolean.
 2. A `true` result lets the guarded construct happen; a `false` result applies
    that construct's false behavior from the table above.
 
@@ -152,16 +152,16 @@ The lasting lessons:
   in every case nothing else has to be written for the false case.
 - **Expressions belong to the host, not the script.** Ren'Py leans on Python and
   Yarn/Ink on their own expression languages. DialogueDown delegates the logic to
-  `IGameSystem`: the script names a boolean, the game computes it.
+  the game: the script names a boolean, the game computes it.
 
 ## Key design decisions
 
 ### D1 — A condition is a query read, not a command
 
-A condition reads game state, so it belongs on the **read side** of `IGameSystem`
-(resolved by `Check` — see [D4](#d4--a-dedicated-boolean-read-on-igamesystem)),
-not the command lane (`Execute`, which performs side effects). Syntactically it
-still reuses the quoted-query *form* the writer already knows.
+A condition reads game state, so it belongs on the **read side** (resolved by
+`Check` — see [D4](#d4--a-dedicated-boolean-read)), not the effect lane (which
+performs side effects). Syntactically it still reuses the quoted-query *form* the
+writer already knows.
 
 A reserved command form such as `` `If("Rainy")` `` was rejected: it borrows the
 command grammar (`Name(args)`) for a *read*, would have to reserve `If`/`Unless`
@@ -185,16 +185,17 @@ the line, the choice option, and the block control alike — matching Ink's
 Placing the condition *after* the construct reads naturally in English but hides
 it at the line's end and does not generalize across the four guards.
 
-### D4 — A dedicated boolean read on `IGameSystem`
+### D4 — A dedicated boolean read
 
-A condition resolves through `bool Check(string key)` on `IGameSystem`, beside
-`Query` (a value) and `Execute` (an effect). The game returns a real boolean, so
-the runtime never parses a string into a truth value and there is no truthiness
-ladder — an unknown key is simply the game's default `false`.
+A condition resolves through a `bool` read of its key — `Check` — beside the value
+read and separate from any effect. The game returns a real boolean, so the runtime
+never parses a string into a truth value and there is no truthiness ladder — an
+unknown key is simply the game's default `false`.
 
-Forcing a boolean through the string `Query` (returning `"true"`/`"false"`) was
-rejected as an inelegant second indirection. Dynamic weights still reuse `Query`,
-since a number in a string is natural where a boolean in a string is not.
+Forcing a boolean through the string a value query returns (`"true"`/`"false"`)
+was rejected as an inelegant second indirection. Dynamic weights still read
+through a query, since a number in a string is natural where a boolean in a string
+is not.
 
 ### D5 — A condition is a spanned, reusable node
 
@@ -250,11 +251,11 @@ false.
 - **Runtime evaluation** — the compiler recognizes and preserves a condition, but
   reading the key through `Check` and acting on the result needs the runtime.
   Tracked with the [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
-- **`IGameSystem.Check` as a public-API change** — adding `Check` breaks existing
-  implementers, so whether to ship it as a required method (a clean break,
-  acceptable before the runtime exists) or a default interface method
-  (backward-compatible, falling back to parsing `Query`) is an implementation
-  choice.
+- **The boolean read as a public-API change** — adding a read to the world
+  interface breaks existing implementers, so whether to ship it as a required
+  method (a clean break, acceptable before the runtime exists) or a default
+  interface method (backward-compatible, falling back to parsing a value query) is
+  an implementation choice.
 - **Negation** — a `not` form may follow once writer feedback shows the
   inverse-flag workaround is insufficient ([D6](#d6--negation-is-deferred)).
 - **Expressions** — combining conditions is intentionally excluded for now
