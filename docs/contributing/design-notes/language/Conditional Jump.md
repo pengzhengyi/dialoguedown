@@ -110,7 +110,7 @@ JumpIndicator   = "=>" ;
 
 ## Condition resolution
 
-Resolution runs at runtime, through `IGameSystem.Check` — see
+Resolution runs at runtime, through the world read — see
 [Conditions](./Conditions.md#condition-resolution). For a jump, a `true` result
 fires it; a `false` result skips it and the dialogue continues with the next
 block.
@@ -155,7 +155,7 @@ flowchart LR
 | `Jump`                           | Gains an optional `Condition`; an unconditional jump leaves it absent.                                                                                                                   |
 | `ConditionReader`                | Recognizes a `` `"key"?` `` code span by reusing `GameCallParser.Query` through `TryParseAll`, producing a `Condition`.                                                                  |
 | `JumpAssembler`                  | Folds the condition-first condition into the jump with a small Pidgin grammar over the fragment stream, sharing the `FragmentParsers.OfType<T>()` combinator.                            |
-| `IGameSystem.Check` *(deferred)* | The `bool Check(string key)` the runtime will call to resolve a condition (an unknown key is `false`); not added yet — it lands with the runtime.                                        |
+| World read *(deferred)*          | The boolean the runtime reads for a condition's key (an unknown key is `false`); it lands with the runtime.                                                                              |
 | `OrphanConditionRule`            | Reports `DLG1106` for a condition that guards nothing (it is not the condition its parent references).                                                                                   |
 | `DiagnosticCatalog`              | Owns `DLG1106` (a condition does not precede a jump).                                                                                                                                    |
 | Report projection                | Shows a jump's condition (its key) in the Dialogue AST report. A condition is a code span, so the editor colors it through Markdown highlighting; no dedicated semantic token is needed. |
@@ -229,7 +229,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Achieved** | The spanned `Condition` node and `IsConditional` predicate; recognition by `ConditionReader` (reusing `GameCallParser.Query` via a new `TryParseAll`); guard-first binding in `JumpAssembler`; `DLG1106` from `OrphanConditionRule`; the report projection; and the writer spec, gallery, and error-codes entry all match the design.                              |
 | **Changed**  | `JumpAssembler`'s fold became a small **Pidgin** grammar over the fragment stream (Pidgin is a new core dependency), with a shared `FragmentParsers.OfType<T>()` combinator; the orphan-condition diagnostic lives in a structural rule (`OrphanConditionRule`), not in `JumpAssembler`; and `TryParseAll` was extracted and shared with the choice-weight reader. |
-| **Deferred** | `IGameSystem.Check` is not added yet — resolving a condition and gating the edge are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). Conditions on lines and choices, their interaction with random choices, and negation remain follow-up.                                                                                |
+| **Deferred** | The world read is not added yet — resolving a condition and gating the edge are the [runtime](../runtime/Dialogue%20Runtime%20Architecture.md)'s job. Conditions on lines and choices, their interaction with random choices, and negation remain follow-up.                                                                                                       |
 
 ## Alternatives not chosen
 
@@ -245,9 +245,9 @@ for a boolean — are recorded in
 
 ## Open questions and deferred work
 
-Deferred work on the condition itself — runtime evaluation, the
-`IGameSystem.Check` public-API question, negation, and expressions — is tracked in
+Deferred work on the condition itself — runtime evaluation, the boolean-read
+public-API question, negation, and expressions — is tracked in
 [Conditions](./Conditions.md#deferred-work). Nothing further is outstanding for
 the jump: its guard is bound, diagnosed, and projected, and gating the edge at
 play time arrives with the
-[runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+[runtime](../runtime/Dialogue%20Runtime%20Architecture.md).
