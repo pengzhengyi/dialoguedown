@@ -28,6 +28,9 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
   Markdown clean for `markdownlint` and links valid for `lychee`.
 - A design note opens with a status callout (`> [!NOTE]` proposed / in progress /
   implemented) and is written as the current design, not a changelog.
+- **Describe only what ships.** A user-facing page must not advertise a capability
+  the system does not have, and a status callout states what is built now — a
+  feature that is planned, dormant, or superseded says so.
 
 ## How to add a design note
 

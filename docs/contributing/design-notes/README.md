@@ -296,8 +296,8 @@ browsing the project, and the modes the window can take.
 
 ### Other notes
 
-**Optional context.** Exploration spikes and one-off documentation-maintenance
-passes that sit outside the pipeline and its tools.
+**Optional context.** Exploration spikes and project-level notes that sit outside
+the pipeline and its tools.
 
 | Note | What it covers | Status |
 | --- | --- | --- |
@@ -306,4 +306,3 @@ passes that sit outside the pipeline and its tools.
 | [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
 | [Namespace Layout](./other/Namespace%20Layout.md) | Implemented: an architecture rule capping how many types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list | Implemented |
 | [Target Frameworks](./other/Target%20Frameworks.md) | Implemented: multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 LTS | Implemented |
-| [README Shipping-Status Refresh](./other/README%20Shipping-Status%20Refresh.md) | A docs-only pass reconciling the README's visualization section with what actually ships | Implemented |
