@@ -257,7 +257,26 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         },
         resolveDocument,
     });
-    document.getElementById("mode-badge")?.replaceWith(toggle.element); // The stream is bound to one document — the one this tab is showing — so the watch is held:
+    document.getElementById("mode-badge")?.replaceWith(toggle.element);
+
+    // A way back to the file selector, beside the path it leaves. The shell is a page of its own
+    // (`/browse`), so this is an ordinary link — the browser's middle-click and open-in-new-tab
+    // work — and it is offered only in a served report, where a shell exists to go back to. A run
+    // that pinned a document redirects `/` to that document, which is why the link names the
+    // shell's own door rather than the landing.
+    const statusBar = document.querySelector(".status-bar");
+    if (report.project != null && statusBar) {
+        const back = document.createElement("a");
+        back.className = "shell-back";
+        back.href = "/browse";
+        back.title = "Back to the file selector";
+        back.setAttribute("aria-label", "Back to the file selector");
+        back.innerHTML =
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"' +
+            ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<polyline points="15 18 9 12 15 6"/></svg>';
+        statusBar.insertBefore(back, document.getElementById("doc-path"));
+    } // The stream is bound to one document — the one this tab is showing — so the watch is held:
     // a switch has to reconnect it against the newly opened script, and the server tells a tab
     // whose script stopped being served rather than leaving it waiting.
     const serverEvents = watchServerEvents(

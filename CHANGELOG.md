@@ -10,6 +10,10 @@ changes easy to categorize.
 
 ### Added
 
+- **A way back to the file selector** — a session's status line carries a small back link beside
+  the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
+  shell answers at `/browse`, since a run that pins a document redirects `/` to that document.
+
 - **A compiled script can be played** — `DialogueDown.Runtime` is a new package that walks a
   playbook: `Runner.Step` takes where a run stands and one command, and returns where it now
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
-import { SHELL_PORT, SHELL_TREE } from "./fixture.mjs";
+import { LIVE_PORT, SHELL_PORT, SHELL_TREE } from "./fixture.mjs";
 
 // Targets the empty shell (visualize --root <tree>, no source): the served report
 // lands with no document open, showing the Explorer over the project and a "No
@@ -79,6 +79,34 @@ test("an existing name offers to open it instead of overwriting", async ({ page 
 
     await expect(page).toHaveURL(/\/r\//);
     await expect(page.locator(".source-pane .cm-editor")).toContainText("Top Scene");
+});
+
+// The Files control sits in two rows — the shell's, with no tabs, and a session's, with them —
+// and it has to stand at the same height in both: a control that jumps when a script opens reads
+// as a different control. The shell's row is the session's height even while it holds no tabs.
+test("seats the Files control at the same height as a session does", async ({ page }) => {
+    const shellBox = await page.locator(".tabbar-explorer .tab-icon").boundingBox();
+
+    await page.goto(`http://127.0.0.1:${LIVE_PORT}/`);
+    await expect(page.locator(".tab").first()).toBeVisible();
+    const sessionBox = await page.locator(".tabbar-explorer .tab-icon").boundingBox();
+
+    expect(shellBox?.y ?? 0).toBeCloseTo(sessionBox?.y ?? -1, 0);
+});
+
+// A session's status line carries the way back to the file selector, beside the path it leaves.
+// This server pins a document and redirects `/` to it, so the link is also the proof that the
+// shell has a door of its own.
+test("carries a way back to the file selector from a session", async ({ page }) => {
+    await page.goto(`http://127.0.0.1:${LIVE_PORT}/`);
+    await expect(page.locator(".tab").first()).toBeVisible();
+
+    const back = page.locator(".shell-back");
+    await expect(back).toHaveAttribute("title", "Back to the file selector");
+    await back.click();
+
+    await expect(page).toHaveURL(/\/browse$/);
+    await expect(page.locator(".empty-shell-title")).toHaveText("No script open");
 });
 
 // A file selector has nothing to diagnose, so the Problems panel and its counts stay out of the

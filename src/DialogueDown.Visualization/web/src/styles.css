@@ -366,6 +366,13 @@ body {
     display: flex;
     align-items: flex-end;
     gap: 0.5rem;
+
+    /* The row stands as tall as the stage tabs make it, whether or not it holds any. The shell
+       that opens before a script has no tabs, and its leading Files control — seated against the
+       row's bottom — would otherwise sit a whole tab-row higher than the same control in a
+       session. 2.25rem is that height: the tab's paddings, line box, and underline, plus the
+       margin that seats it in the row. */
+    min-height: 2.25rem;
 }
 
 /* Pinned beside the scrolling tabs, and never squeezed by them. */
@@ -4609,6 +4616,24 @@ body.zen .playbook-view > .playbook-source {
 }
 
 /* The document path: filename always visible, the directory middle ellipsised. */
+
+/* The way back to the file selector, sitting beside the path it leaves. Quiet and small like the
+   path chip it neighbors: it is a door out of the document rather than a control of the report. */
+.shell-back {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 0.1rem 0.25rem;
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-muted-color);
+    text-decoration: none;
+}
+
+.shell-back:hover {
+    color: var(--pico-color);
+    background: var(--pico-muted-border-color);
+}
+
 .doc-path {
     /* Pico redefines --pico-color to its inverse (white) on buttons; reset it so
        the hover text uses the normal foreground instead of white-on-white
