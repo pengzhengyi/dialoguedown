@@ -59,6 +59,14 @@ changes easy to categorize.
 
 ### Changed
 
+- **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
+  and a control's commands are lists now, numbered when their order is meaning; a piece that names
+  a node (a branch arm's number, a jump's own words, an option's label) is a button that reveals
+  that node in the JSON beside the table, and hovering it lights the node's row; and a piece whose
+  words do not carry its meaning explains itself on hover. A condition also reads as the query it
+  is: `IF FoundKey? THEN 12`. See
+  [Playbook Summary Segments](docs/contributing/design-notes/visualization/report/Playbook%20Summary%20Segments.md).
+
 - **The docs site is built on every pull request, and a docfx warning fails it** — the docs
   build used to run only when the site deployed, so a broken link or a missing
   cross-reference reached `main` without ever failing a check. It now runs in CI with
@@ -119,6 +127,11 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **A flaky slug-hint case no longer fails a full test run** — the cases asserted a heading's slug
+  against however far the editor's first parse had reached, so a heading past that point read as
+  absent: green alone, red in the full run. They now read a document parsed to its end, and a case
+  pins the stopped parse itself.
 
 - **Two playbooks that say the same thing are now equal** — the records a playbook is built
   from compared their collections by reference, so decoding the same file twice produced two
