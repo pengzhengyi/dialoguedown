@@ -3,7 +3,7 @@
 > [!NOTE]
 > Status: **implemented**. A **conditional line** plays only when its condition is
 > true. Gating the line at play time is part of the planned
-> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+> runtime.
 
 Assumes [Conditions](./Conditions.md) — the primitive, its grammar, resolution, and decisions — and covers only what is specific to guarding a **line**.
 
@@ -349,8 +349,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 
 - **Runtime gating of a conditional line** — the compiler recognizes and
   preserves the condition, but reading the key through `Check` and playing or skipping
-  the line need the runtime. Tracked with the
-  [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
+  the line need the runtime.
 - **Conditions on choices** — the next construct. A condition guarding a player or
   random-choice option, and its interaction with random weights, is designed
   separately and builds on this note's peel and the generalized `DLG1106`.

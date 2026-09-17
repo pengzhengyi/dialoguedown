@@ -36,9 +36,8 @@ absent; removing the blockquote muting; and styling Markdown comments, which the
 parser already recognizes.
 
 **Out of scope:** changing what is kept or ignored — the policy is unchanged and
-this component only *shows* it. `dialogue.toml` handling overrides are loaded by
-[#47](https://github.com/pengzhengyi/dialoguedown/issues/47); because the
-projection follows `DLG1114`, an override changes the highlighting without a
+this component only *shows* it. `dialogue.toml` handling overrides are applied;
+because the projection follows `DLG1114`, an override changes the highlighting without a
 second client-side policy. Front matter is a separate invariant metadata region,
 designed in [Front Matter Source Highlighting](./Front%20Matter%20Source%20Highlighting.md).
 
@@ -138,9 +137,8 @@ flowchart LR
 
 The editor projects a construct's fate from the compiler **only when that fate can vary**.
 
-What the handling policy decides is variable: a project can configure it through
-[#47](https://github.com/pengzhengyi/dialoguedown/issues/47), so the editor cannot know a
-table's fate without asking the compiler. That is projected.
+What the handling policy decides is variable: a project can configure it, so the editor cannot
+know a table's fate without asking the compiler. That is projected.
 
 A Markdown **comment**, by contrast, is always left out, unconditionally — there is nothing to
 learn from the compiler. It is also ordinary CommonMark, which the editor's own parser already
@@ -158,7 +156,7 @@ Markdown the client can already parse correctly.
 An ignored construct leaves nothing behind in the Markdown tree — being left out is what
 `Ignore` means — so it cannot be found by inspecting the tree. It can be found by inspecting
 what the compiler *said*: every ignored construct is reported as `DLG1114` with its exact span,
-the note added for [#227](https://github.com/pengzhengyi/dialoguedown/issues/227).
+the note added for it.
 
 The projection reads those diagnostics. This keeps one authority — the handler decides and
 reports; the editor draws what was reported — and a project that configures the policy colors

@@ -456,5 +456,5 @@ is `ddown compile`'s and is checked against its source.
 - **The playbook format may change.** It stays unstable at `playbookVersion: 0`
   until a runner plays it, precisely so the first runner can fix what it uncovers.
   Writing the corpus already found one such defect before any runner existed
-  ([#369](https://github.com/pengzhengyi/dialoguedown/issues/369), since fixed);
+  (since fixed);
   stepping a playbook is the next thing likely to find one.

@@ -1,11 +1,9 @@
 # Compilation mode configuration
 
 > [!NOTE]
-> **Status: implemented.** This completed the remaining scope of
-> [#110](https://github.com/pengzhengyi/dialoguedown/issues/110): the
-> compilation `mode` is settable in `dialogue.toml` and shown in the
-> visualization's Config tab. The CLI `--mode` option shipped earlier
-> (see [CLI Configuration](./CLI%20Configuration.md)).
+> **Status: implemented.** The compilation `mode` is settable in `dialogue.toml`
+> and shown in the visualization's Config tab. The CLI `--mode` option shipped
+> earlier (see [CLI Configuration](./CLI%20Configuration.md)).
 
 ## Table of contents
 
@@ -26,8 +24,7 @@
 
 `CompilerOptions.Mode` (the `CompilationMode` enum) chooses **how far a compile
 proceeds after an error**. Today it is settable only in code or through the CLI
-`--mode` option. This feature adds the two remaining channels named in
-[#110](https://github.com/pengzhengyi/dialoguedown/issues/110):
+`--mode` option. This feature adds the two remaining channels:
 
 1. **Configuration** — a `dialogue.toml` project can set the mode, so it applies
    to every compile of that project without repeating a CLI flag.
@@ -51,8 +48,7 @@ blurs them:
 | **Visualization mode** | `VisualizationMode` — `static`, `view`, `edit` | How a report is *shown*. Already exists as `report.mode`. Untouched. |
 
 The configured setting keeps **one name — `mode` — across TOML, the CLI, and the
-tab**, as [#110](https://github.com/pengzhengyi/dialoguedown/issues/110)
-requires. In the client payload it lives under `configuration`, so
+tab**. In the client payload it lives under `configuration`, so
 `report.configuration.mode` (compilation) never collides with the top-level
 `report.mode` (visualization).
 

@@ -250,7 +250,6 @@ false.
 
 - **Runtime evaluation** — the compiler recognizes and preserves a condition, but
   reading the key through `Check` and acting on the result needs the runtime.
-  Tracked with the [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
 - **The boolean read as a public-API change** — adding a read to the world
   interface breaks existing implementers, so whether to ship it as a required
   method (a clean break, acceptable before the runtime exists) or a default

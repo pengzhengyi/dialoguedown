@@ -4,7 +4,7 @@
 > Status: **implemented** — every component below has shipped; further ideas are
 > parked under [Later components](#later-components). This note covers the
 > whole diagnostics effort
-> ([#43](https://github.com/pengzhengyi/dialoguedown/issues/43)) as one design, built
+> as one design, built
 > in components. It gives the compiler a single, structured way to **collect** every problem
 > it finds (errors and warnings) instead of throwing at the first one, a **validator** that
 > reports author-facing problems as rules, and a **humanized renderer** so the CLI can show
@@ -357,8 +357,7 @@ stage may hit.
   `HasErrors` is true.
 - **Visualizer:** a stage-boundary halt yields a partial result, and the visualizer projects it
   directly — the produced stages render as graphs while each unproduced stage becomes a disabled
-  tab (see [Unavailable Stage Tabs](../visualization/report/Unavailable%20Stage%20Tabs.md), resolving
-  [#111](https://github.com/pengzhengyi/dialoguedown/issues/111)).
+  tab (see [Unavailable Stage Tabs](../visualization/report/Unavailable%20Stage%20Tabs.md)).
 - **CLI (next component):** with the stages reporting, the CLI can render the collected diagnostics
   and set an exit code — the reason this component comes before CLI notification.
 

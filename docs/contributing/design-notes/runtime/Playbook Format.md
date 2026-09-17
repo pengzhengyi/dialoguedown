@@ -36,11 +36,8 @@ In scope:
 - a hand-written JSON Schema that specifies the format;
 - `ddown compile --output`.
 
-Out of scope, each owned elsewhere: playing a playbook
-([C2](https://github.com/pengzhengyi/dialoguedown/issues/297)), the
-`[compatibility]` and `[features]` configuration
-([C7](https://github.com/pengzhengyi/dialoguedown/issues/303)), exporters
-([C8](https://github.com/pengzhengyi/dialoguedown/issues/304)), source maps, and
+Out of scope, each owned elsewhere: playing a playbook, the
+`[compatibility]` and `[features]` configuration, exporters, source maps, and
 binary encoding.
 
 This note assumes the vocabulary and decisions of the
@@ -96,15 +93,14 @@ what lets the runtime stay small.
 
 The writer still emits only **public** playbook types, so the mapping from
 internal graph to public contract stays explicit and reviewable — the property
-[#269](https://github.com/pengzhengyi/dialoguedown/issues/269) asked for.
+this design asked for.
 
 `DialogueDown.Playbook` is an assembly a **game** ends up referencing, through the
 runner that reads its playbooks. It therefore multi-targets `net8.0;net10.0` like
 the other shipped libraries, so a Godot export keeps loading on Godot's bundled
 runtime — see [Target Frameworks](../other/Target%20Frameworks.md). It carries two
 dependencies. `System.Text.Json`, scoped to `net8.0`, supplies an attribute the
-framework gained in .NET 9; on `net10.0` it costs nothing, and
-[#314](https://github.com/pengzhengyi/dialoguedown/issues/314) drops it when
+framework gained in .NET 9; on `net10.0` it costs nothing, and it is dropped when
 `net8.0` goes. `Generator.Equals.Runtime` is the small comparer assembly the
 generated equality calls, pulled in because the records compare by value (see
 [P12](#p12--records-compare-by-value)); the generator itself is a private,
@@ -299,7 +295,7 @@ stay additive:
 The wire name is **`condition`**, matching the `Condition` AST type and the word
 [the guide](../../../guide/structure-and-flow.md) uses with writers. The graph's
 internal `Guard` property is the same concept under a second name; unifying it is
-a follow-up ([#309](https://github.com/pengzhengyi/dialoguedown/issues/309)) rather
+a follow-up rather
 than part of this component.
 
 ## Reading a playbook
@@ -344,7 +340,7 @@ Version 0 defines exactly two capability names:
 | Capability        | Meaning                                                                                                                                                                                                                                                                                                        |
 |-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `core`            | Everything the compiler emits today. Always present in `requires`                                                                                                                                                                                                                                              |
-| `cross-file-jump` | **Reserved, and neither emitted nor read in version 0.** A node reference is a plain index; a reference into another script waits for [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) to settle what a script identity is. Naming it now keeps it unclaimed and makes the later widening additive |
+| `cross-file-jump` | **Reserved, and neither emitted nor read in version 0.** A node reference is a plain index; a reference into another script waits for the linker to settle what a script identity is. Naming it now keeps it unclaimed and makes the later widening additive                                                   |
 
 ## Key design decisions
 
@@ -354,7 +350,7 @@ The writer maps each internal type onto a public shape by hand. Serializing
 `DialogueGraph` directly would be faster to build and would inherit `SourceSpan`,
 `SpeakerSymbol`, and every future refactor of compiler internals as a breaking
 format change — the coupling
-[#269](https://github.com/pengzhengyi/dialoguedown/issues/269) exists to avoid.
+this design exists to avoid.
 An explicit mapping is also a place to put a test per construct.
 
 ### P2 — `System.Text.Json` polymorphism with a `kind` discriminator
@@ -393,7 +389,7 @@ from a field in the artifact.
 
 The walk is subtler than it looks — a query can hide inside an option's label — and
 that is exactly what the
-[conformance corpus](https://github.com/pengzhengyi/dialoguedown/issues/298)
+conformance corpus
 exists to keep honest across runtimes.
 
 ### P5 — Node ids are dense indices
@@ -453,13 +449,13 @@ generating C# *from* the schema produces mutable POCOs and degrades a
 The two are kept honest by **validating real output**: every golden playbook is
 checked against the schema in CI, so a drift in either direction fails the build.
 TypeScript types are generated *from the schema* when
-[C5b](https://github.com/pengzhengyi/dialoguedown/issues/301) arrives — the payoff
+C5b arrives — the payoff
 that makes a hand-written spec worth writing.
 
 This splits responsibility cleanly:
 
 > **The schema is normative for structure. The
-> [conformance corpus](https://github.com/pengzhengyi/dialoguedown/issues/298) is
+> conformance corpus is
 > normative for behavior.**
 
 ### P8 — No validator ships with the reader
@@ -570,7 +566,7 @@ compile-time check is the stronger guard, and the dependency is small.
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `CompilationSuccess`       | Unchanged. The writer consumes its `internal` graph inside the same assembly                                                                                                                                                                                                                   |
 | `IPlaybookWriter`          | New public seam in `DialogueDown`, registered in `AddDialogueDown` and the CLI composition root, following the `IDialogueGraphBuilder` pattern                                                                                                                                                 |
-| `CompileCommand`           | A playbook is what `compile` emits unless told otherwise: `-o` names where it goes, and `--emit dot` asks for the stage graphs instead. Closes [#46](https://github.com/pengzhengyi/dialoguedown/issues/46)                                                                                    |
+| `CompileCommand`           | A playbook is what `compile` emits unless told otherwise: `-o` names where it goes, and `--emit dot` asks for the stage graphs instead.                                                                                                                                                        |
 | CLI presentation           | **Deferred.** Nothing in the CLI reads a playbook yet, so there is no load-time failure to render. It arrives with whichever command plays one, and stays out of the `DLG` code space when it does, in the style of [CLI Diagnostic Rendering](../diagnostics/CLI%20Diagnostic%20Rendering.md) |
 | `DialogueDown.csproj`      | References `DialogueDown.Playbook`; the package ships both                                                                                                                                                                                                                                     |
 | Central package management | `DialogueDown.Playbook` inherits `Directory.Packages.props`: `System.Text.Json` (net8.0) for a framework attribute, `Generator.Equals` (private, build-time) to generate equality, and the `Generator.Equals.Runtime` it calls                                                                 |
@@ -621,11 +617,9 @@ one.
   playbook lands, but a reader must still know to look. Registering
   `*.playbook.json` with [SchemaStore](https://www.schemastore.org/) would make VS
   Code validate a playbook with no `$schema` key at all — the best experience for a
-  non-developer. Tracked in
-  [#308](https://github.com/pengzhengyi/dialoguedown/issues/308); it needs the URL
+  non-developer. It needs the URL
   to be stable first.
-- **Line identity** stays deferred to
-  [#305](https://github.com/pengzhengyi/dialoguedown/issues/305). Nothing needs
+- **Line identity** stays deferred. Nothing needs
   reserving: the schema allows properties it does not name, and a reader ignores
   them, so adding `lineId` later is a field to populate rather than a shape to
   change.
@@ -635,8 +629,8 @@ one.
   and not a weakened rule. Committed counter-examples would close that.
 - **A divert's label is not drawn** on the graph stage of the report. The words
   survive on the edge and in the Dialogue AST stage, but the graph view would read
-  better with them ([#338](https://github.com/pengzhengyi/dialoguedown/issues/338)).
+  better with them.
 
 Two questions this note once carried are settled. `Guard` and `Condition` became
-one name on main ([#316](https://github.com/pengzhengyi/dialoguedown/pull/316)),
+one name on main,
 and the writer no longer has to translate between them.
