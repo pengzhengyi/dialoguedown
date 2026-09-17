@@ -41,6 +41,16 @@ public sealed class UnmodeledMarkdownNamesTests
                 UnmodeledMarkdownNames.TryParseHandling(
                     UnmodeledMarkdownNames.NameOf(handling))));
 
+    // A name that matches nothing is not an error here: the loader decides whether it is a typo to
+    // report or a name from a newer version to leave alone, so the lookup answers null.
+    [Fact]
+    public void TryParseKind_ANameNoKindHas_IsNull() =>
+        Assert.Null(UnmodeledMarkdownNames.TryParseKind("not-a-kind"));
+
+    [Fact]
+    public void TryParseHandling_ANameNoHandlingHas_IsNull() =>
+        Assert.Null(UnmodeledMarkdownNames.TryParseHandling("not-a-handling"));
+
     [Fact]
     public void KindNamesDescription_ListsEveryKind() =>
         Assert.All(
