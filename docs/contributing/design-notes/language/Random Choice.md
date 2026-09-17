@@ -423,10 +423,9 @@ it so the code span is no longer the option's weight prefix.
 | `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. |
 
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
-game-call diagnostics. `DLG2010` is the next free semantic code; a zero total is
-a meaning-level fault, not a token-level one. `DLG3003` and `DLG3004` are the
-next free style codes after `DLG3002` (`DLG3001` remains unused; ignored
-unmodeled Markdown is the syntax-stage `DLG1114`).
+game-call diagnostics. A zero total is a meaning-level fault, not a token-level
+one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
+(`DLG3xxx`) warnings; ignored unmodeled Markdown is the syntax-stage `DLG1114`.
 
 ## Error and boundary cases
 

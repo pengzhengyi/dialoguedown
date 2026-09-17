@@ -7,9 +7,10 @@ model, reporting precise diagnostics as it goes — with no dependency on any ga
 engine.
 
 > [!NOTE]
-> DialogueDown is in early development. The compiler pipeline is implemented; the
-> **runtime** that plays a compiled script — a dialogue runner and thin engine
-> presentation adapters — is planned, not yet built.
+> DialogueDown is in early development. The compiler pipeline is implemented, and
+> it emits a portable **playbook**; the first passes of the **runtime** that plays
+> one — stepping through it and waiting on the host — ship too. Conditions, world
+> reads, saves, and engine adapters are still in progress.
 
 ## Table of contents
 
@@ -27,7 +28,7 @@ behind one `IScriptCompiler` facade:
 flowchart LR
     Src["Markdown<br/>script"] --> MD["Markdown<br/>AST"] --> DA["Dialogue<br/>AST"]
     DA --> DS["Desugared<br/>AST"] --> SM["Semantic<br/>model"]
-    SM -. planned .-> RT["Runtime"]
+    SM --> GR["Dialogue<br/>graph"] --> PB["Playbook"] --> RT["Runtime<br/>runner"]
 ```
 
 - **Markdown front-end** parses the source into a Markdown AST.
@@ -47,10 +48,11 @@ Dialogue content moves through three representations:
 
 1. **Source** — a Markdown-inspired script an author writes in a text file. See
    the [script language specification](./script-language.md).
-2. **Compiled model** — the ASTs and the validated semantic model the compiler
-   builds along the pipeline above.
-3. **Runtime graph** *(planned)* — a directed graph/state machine a dialogue
-   runner will traverse to play the dialogue.
+2. **Compiled model** — the ASTs, the validated semantic model, and the dialogue
+   graph the compiler builds along the pipeline above.
+3. **Playbook** — the portable JSON artifact one compile emits, which a runtime
+   loads and plays. See the
+   [playbook format](../contributing/design-notes/runtime/Playbook%20Format.md).
 
 ## What is implemented
 
@@ -64,8 +66,11 @@ Dialogue content moves through three representations:
   compilation mode. See [project configuration](./configuration.md).
 - **CLI and visualization:** the `ddown` CLI compiles a script and renders
   every compiler stage as an interactive report.
-- **Planned:** the runtime — a dialogue runner, effects and conditions, and thin
-  engine presentation adapters.
+- **Runtime:** a compile emits a playbook, and the C# runner loads one, steps
+  through it, and waits on its host for effects. A language-neutral conformance
+  corpus pins the sessions a runtime must reproduce.
+- **In progress:** conditions, effects and world reads, saves, and thin engine
+  presentation adapters.
 
 ## Related docs
 

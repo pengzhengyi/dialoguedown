@@ -113,8 +113,8 @@ flowchart TB
     VAL -- report --> BAG
     SA -- report --> BAG
     BAG --> RES["CompilationResult<br/>(Diagnostics + HasErrors)"]
-    RES --> ERR["Errata report<br/>(CLI — planned)"]
-    RES -.-> LSP["LSP diagnostics<br/>(editor/web — planned)"]
+    RES --> ERR["Errata report<br/>(CLI)"]
+    RES -.-> LSP["LSP diagnostics<br/>(editor/web — later)"]
     RES -.-> WEB["Report overlay<br/>(visualizer — planned)"]
     style compile fill:#2d6,stroke:#0a0,color:#000
 ```
@@ -456,8 +456,8 @@ elsewhere — checking how the pipeline actually represents each condition recla
 
 | Candidate | Why it is not a structural rule | Where it belongs |
 | --- | --- | --- |
-| Dangling jump arrow (`DLG1002`) | desugar rewrites a linkless `=>` into plain `Text("=>")` with no provenance, so the desugared tree cannot tell it from ordinary text | **Deferred** — a later desugar reporting site emits it where it degrades the arrow |
-| Tag without a speaker (`DLG1101`) | the transpiler already **throws** `DialogueSyntaxError` for tags naming no speaker; the desugared tree never carries it | **Error reporting and recovery** — migrate that throw to a reported diagnostic |
+| Dangling jump arrow (`DLG1113`) | desugar's jump assembler sees a linkless `=>` before it degrades to plain text, so the fault is reported there rather than by a rule over the tree | **Delivered** — see the [dangling arrow diagnostic](./Dangling%20Arrow%20Diagnostic.md) |
+| Tags without a speaker (`DLG1101`) | the speaker builder recognizes the tags before anything reaches the desugared tree, so no later rule can see them | **Delivered** — the transpiler reports it at the prefix |
 | Ignored unmodeled Markdown (`DLG1114`) | the handler sees the policy decision before the node leaves the front-end AST | **Delivered** — report an `Info` diagnostic at the ignore site |
 
 ### DD5 — The sink threads through the facade via a diagnostics context

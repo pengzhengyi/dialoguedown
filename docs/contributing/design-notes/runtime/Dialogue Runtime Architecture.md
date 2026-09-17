@@ -1,10 +1,12 @@
 # Dialogue runtime architecture
 
 > [!NOTE]
-> Status: **partially implemented** — the umbrella. Its first two components have
-> shipped: the [playbook format and writer](./Playbook%20Format.md) (C1) and the
-> [conformance corpus](./Conformance%20Corpus.md) (C3). The runner and everything
-> that builds on it (C2, C4–C8) remain proposed; see the
+> Status: **partially implemented** — the umbrella. The [playbook format and
+> writer](./Playbook%20Format.md) (C1), the first two passes of the C# runner
+> ([Runtime Core](./Runtime%20Core.md) — the state and the step — and
+> [Waiting on the Host](./Waiting%20on%20the%20Host.md)), and the
+> [conformance corpus](./Conformance%20Corpus.md) (C3) have shipped. The rest of
+> the runner (conditions, world reads, saves) and C4–C8 remain proposed; see the
 > [component table](#components-and-sequencing). This note
 > fixes the cross-cutting shape of everything after the
 > [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook** a compile
@@ -66,7 +68,7 @@ configuration surface for capability targeting (see
 | **Script**             | The authored source, a `*.dialogue.md` file. Unchanged.                                                                                         |
 | **Playbook**           | The compiled, portable artifact for **one script**: nodes, edges, tables, and a compatibility header. What a compile emits and a runtime loads. |
 | **Runner**             | The pure function that advances play: given a playbook, a `PlayState`, and one input, it returns the next state and the events it emitted.      |
-| **`PlayState`**        | An immutable value: where play is — position, call stack, and effect ordinal. It *is* the save.                                                 |
+| **`PlayState`**        | An immutable value: where play is. It *is* the save. The shipped runner carries the position alone; the rest lands with C2.                     |
 | **`PlaySession`**      | The stateful shell around the runner: holds the current `PlayState`, talks to the driver, records the transcript.                               |
 | **Driver**             | The party that drives a session — a CLI, the report, a game, a debugger. It sends commands and answers reverse requests.                        |
 | **World**              | The game state a script asks about. A **role behind the driver**, not a separate protocol party.                                                |
@@ -472,6 +474,9 @@ The position is a **qualified** node reference — the same `number | string` un
 the playbook uses — because once play crosses into another script, a bare index
 cannot say *which* playbook it indexes.
 
+The shipped runner carries the position alone; the rest of this section is the
+design that lands with C2.
+
 The fingerprint turns "loaded a save against a recompiled script" — the classic
 way this class of engine corrupts a playthrough — into a clean, loud failure. The
 save carries its **own** version number, independent of `playbookVersion`, exactly
@@ -755,17 +760,22 @@ flowchart LR
     C2 --> C6["C6 Godot adapter"]
 ```
 
-| #   | Component                            | Delivers                                                            | Issues                                                                                                                                |
-|-----|--------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| C1  | **Playbook format and writer**       | The schema, the compatibility header, and `ddown compile --output`  | [#46](https://github.com/pengzhengyi/dialoguedown/issues/46), part of [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)  |
-| C2  | **C# runner**                        | `Step`, `PlayState`, the protocol, drivers, `IGameWorld`, saves     | [#45](https://github.com/pengzhengyi/dialoguedown/issues/45); unblocks [#217](https://github.com/pengzhengyi/dialoguedown/issues/217) |
-| C3  | **Conformance corpus**               | Fixtures plus a harness, owned as data                              | —                                                                                                                                     |
-| C4  | **`ddown play` and the REPL**        | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) A                                                                    |
-| C5a | **Web proxy Play tab**               | The served report plays through the C# runner (level 1)             | [Interactive Playthrough](../other/Interactive%20Playthrough.md) B, [#63](https://github.com/pengzhengyi/dialoguedown/issues/63)      |
-| C5b | **TypeScript runner**                | The exported report plays a playbook offline (level 3), held to C3  | —                                                                                                                                     |
-| C6  | **Godot adapter and sample**         | BBCode presentation and a demo scene                                | —                                                                                                                                     |
-| C7  | **Compatibility and feature gating** | `[compatibility]` and `[features]`, the registry, diagnostics       | —                                                                                                                                     |
-| C8  | **Exporters**                        | Yarn, DOT, and Mermaid projected from the playbook                  | rest of [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)                                                                |
+| #   | Component                            | Delivers                                                            | Issues                                                                                                                                | Status      |
+|-----|--------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| C1  | **Playbook format and writer**       | The schema, the compatibility header, and `ddown compile --output`  | [#46](https://github.com/pengzhengyi/dialoguedown/issues/46), part of [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)  | Implemented |
+| C2  | **C# runner**                        | `Step`, `PlayState`, the protocol, drivers, `IGameWorld`, saves     | [#45](https://github.com/pengzhengyi/dialoguedown/issues/45); unblocks [#217](https://github.com/pengzhengyi/dialoguedown/issues/217) | In progress |
+| C3  | **Conformance corpus**               | Fixtures plus a harness, owned as data                              | —                                                                                                                                     | Implemented |
+| C4  | **`ddown play` and the REPL**        | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) A                                                                    | Proposed    |
+| C5a | **Web proxy Play tab**               | The served report plays through the C# runner (level 1)             | [Interactive Playthrough](../other/Interactive%20Playthrough.md) B, [#63](https://github.com/pengzhengyi/dialoguedown/issues/63)      | Proposed    |
+| C5b | **TypeScript runner**                | The exported report plays a playbook offline (level 3), held to C3  | —                                                                                                                                     | Proposed    |
+| C6  | **Godot adapter and sample**         | BBCode presentation and a demo scene                                | —                                                                                                                                     | Proposed    |
+| C7  | **Compatibility and feature gating** | `[compatibility]` and `[features]`, the registry, diagnostics       | —                                                                                                                                     | Proposed    |
+| C8  | **Exporters**                        | Yarn, DOT, and Mermaid projected from the playbook                  | rest of [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)                                                                | Proposed    |
+
+C2's first two passes ship — the state and the step ([Runtime
+Core](./Runtime%20Core.md)) and waiting on the host ([Waiting on the
+Host](./Waiting%20on%20the%20Host.md)); conditions, world reads, saves, and the
+drivers are still to come.
 
 `DialogueDown.Runtime` ships as its own package that **must not reference the
 compiler**, guarded by an architecture test — the dependency rule that makes

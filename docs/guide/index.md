@@ -10,9 +10,9 @@ want to *write* branching dialogue — not modify the compiler — start here.
 
 ## In this section
 
-- **[Overview](overview.md)** — the architecture at a glance, the three
-  representations a script passes through (source → compiled model → runtime
-  graph), and the current implementation status.
+- **[Overview](overview.md)** — the architecture at a glance, the representations a
+  script passes through (source → compiled model → playbook → runtime), and the
+  current implementation status.
 - **[Command line](cli.md)** — installing the `ddown` CLI, compiling a script,
   and opening the interactive visualization.
 - **[Script language specification](script-language.md)** — the complete
