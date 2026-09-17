@@ -115,10 +115,13 @@ jobs:
           if failures:
               raise SystemExit("\n".join(failures))
 
-          if line < 100:
+          # Not every line can be reached: a closed union's default arm, a `break` the language
+          # requires after a call that throws, a constructor no subclass calls. The aspirational
+          # target therefore leaves room for them rather than asking for the impossible.
+          if line < 95:
               print(
                   f"::warning::Line coverage is {line:.2f}%; "
-                  "100% is the aspirational target."
+                  "95% is the aspirational target."
               )
           PY
 
