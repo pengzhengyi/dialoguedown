@@ -54,6 +54,8 @@
     href: language/Conditional Choice.md
   - name: Unquoted Keys
     href: language/Unquoted Keys.md
+  - name: Symbol Escape
+    href: language/Symbol Escape.md
   - name: Block Controls
     href: language/Block Controls.md
   - name: Control Line
