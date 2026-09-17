@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented** — every component below has shipped; further ideas are
-> parked under [Later components](#later-components-deferred). This note covers the
+> parked under [Later components](#later-components). This note covers the
 > whole diagnostics effort
 > ([#43](https://github.com/pengzhengyi/dialoguedown/issues/43)) as one design, built
 > in components. It gives the compiler a single, structured way to **collect** every problem
@@ -43,7 +43,7 @@
     - [Pipeline integration](#pipeline-integration)
     - [Testing](#testing)
     - [Deferred and out of scope](#deferred-and-out-of-scope)
-  - [Later components (deferred)](#later-components-deferred)
+  - [Later components](#later-components)
   - [Key design decisions](#key-design-decisions)
     - [DD1 — One offset-based core model, internal for now](#dd1--one-offset-based-core-model-internal-for-now)
     - [DD2 — Three severities; report rather than throw](#dd2--three-severities-report-rather-than-throw)
@@ -375,16 +375,12 @@ stage may hit.
 
 - **Warnings as errors.** Every mode keeps warnings as warnings today; promoting them, so an
   advisory like `DLG1003` can fail a build, is a planned per-run toggle — not built.
-- **Dangling `=>` (`DLG1002`).** DD4 assigns the dangling jump arrow to a desugar producer, but it
-  is a *new detection* (desugar degrades `=>` to text today), not a throw migration — kept out of
-  this component's scope unless folded in.
 
-## Later components (deferred)
+## Later components
 
-- **Desugar producer for a dangling `=>`** — a linkless arrow is degraded to plain text today, so
-  reporting it needs desugar to record that it dropped an arrow (see the corrected
-  [DD4](#dd4--the-validator-is-a-set-of-pluggable-rules)). Deferred; not part of the producers
-  component above.
+- **Dangling `=>` — delivered.** Desugar's jump assembly sees a linkless arrow before it
+  degrades to text, so it reports `DLG1113` there; see the
+  [dangling arrow diagnostic](./Dangling%20Arrow%20Diagnostic.md).
 - **Ignored unmodeled Markdown — delivered.** `MarkdigUnmodeledNodeHandler`
   reports `DLG1114` at the policy decision site before the node leaves the AST.
   The LSP and web-report projections carry that diagnostic range and code.

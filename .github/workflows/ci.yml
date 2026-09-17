@@ -313,6 +313,16 @@ jobs:
         with:
           globs: "**/*.md"
 
+      # Internal links and fragments, which the DocFX build below only catches inside docs/.
+      # Offline: an external page can fail without the repository changing, so those are checked
+      # on demand. The ignores — dialogue scripts, generated output — live in lychee.toml.
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline --no-progress docs README.md CONTRIBUTING.md AGENTS.md
+            SECURITY.md CODE_OF_CONDUCT.md .github
+
   # The site is built on every pull request, so a broken link or a missing cross-reference is
   # caught before it reaches main. The build fails on warnings rather than reporting them: the
   # same site is published by the Pages workflow, and a warning found there is found too late.
