@@ -31,12 +31,50 @@ internal static class InlineLeafTokenizer
     private static readonly IParser<InlineLeaf> _stray = SuperpowerParser.Wrap(
         Character.AnyChar.Select(c => (InlineLeaf)new TextLeaf(c.ToString())));
 
-    public static IReadOnlyList<Spanned<InlineLeaf>> Tokenize(ParseInput input, bool allowJumps)
+    public static IReadOnlyList<Spanned<InlineLeaf>> Tokenize(
+        ParseInput input, bool allowJumps, bool escapedFirstCharacter = false)
     {
         // Tags are recognized in every context; jumps only where the context allows.
         var recognized = allowJumps ? _jump.Or(_tag) : _tag;
+
+        var leaves = new List<Spanned<InlineLeaf>>();
+        var rest = input;
+        if (escapedFirstCharacter)
+        {
+            // An escaped leading character is text: the whole sigil that begins there
+            // goes literal, and a character that begins no sigil is literal alone.
+            leaves.Add(LiteralizeLeadingCharacter(recognized, input, out rest));
+        }
+
+        leaves.AddRange(TokenizeRest(recognized, rest));
+        return Coalesce(leaves);
+    }
+
+    private static IReadOnlyList<Spanned<InlineLeaf>> TokenizeRest(
+        IParser<InlineLeaf> recognized, ParseInput input)
+    {
         var leaves = recognized.Or(_text).Or(_stray).Located().Repeated().ConsumeAll(input);
-        return Coalesce(leaves.MatchedValue);
+        return leaves.MatchedValue;
+    }
+
+    // An escaped leading character is literal. When a sigil begins at that character,
+    // the whole sigil goes literal with it (`\##default` writes "##default"); when no
+    // sigil begins there, only the character itself is (`\=#tag` keeps "#tag" a tag).
+    private static Spanned<InlineLeaf> LiteralizeLeadingCharacter(
+        IParser<InlineLeaf> recognized, ParseInput input, out ParseInput rest)
+    {
+        // Try the sigil parser at the escaped character: on a match it reports how far
+        // the sigil reaches, and on a miss it consumes nothing.
+        var match = recognized.Consume(input);
+
+        // A miss literalizes exactly the one escaped character — the backslash escaped
+        // that character and nothing else. A match literalizes the sigil's whole length,
+        // so a reserved `##default` cannot split into a literal `#` and a custom tag.
+        var length = match.Success ? match.MatchedLength : 1;
+
+        rest = input.Advance(length);
+        return new Spanned<InlineLeaf>(
+            new TextLeaf(input.Text[..length]), new TextRange(input.Position, length));
     }
 
     private static IReadOnlyList<Spanned<InlineLeaf>> Coalesce(
