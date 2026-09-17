@@ -12,9 +12,10 @@
 
 Full-process transparency is a goal of DialogueDown: a reader should be able to
 *see* what the compiler produced at each step. This component renders those
-intermediate representations — the **Markdown AST** today, the **Dialogue AST**
-next, and later the runtime graph — in a format that is readable by developers
-and non-developers alike, and interactive where it helps.
+intermediate representations — from the **Markdown AST** through the **Dialogue
+AST** and the **desugared AST** to the **dialogue graph** and the **playbook** —
+in a format that is readable by developers and non-developers alike, and
+interactive where it helps.
 
 ## Table of contents
 
@@ -133,9 +134,10 @@ record; the components are sequenced by dependency:
 2. **Renderers** — the `IDisplayRenderer` strategy and its concretes:
    `HtmlRenderer` (interactive, bundled JS) and `DotRenderer` (portable graph
    text).
-3. **Compilation report** — the Markdown AST projection (and later the Dialogue
-   AST projection) plus the `CompilationVisualizer` facade that runs the stages
-   and assembles the multi-tab report. This is where the core seam is consumed.
+3. **Compilation report** — the stage projections (Markdown AST, Dialogue AST,
+   desugared AST, graph, playbook) plus the `CompilationVisualizer` facade that
+   runs the stages and assembles the multi-tab report. This is where the core
+   seam is consumed.
 
 ## Architecture
 
@@ -148,10 +150,10 @@ flowchart LR
     Source["Script source"] --> Compiler
     subgraph Compiler["DialogueDown core (unchanged)"]
         MD["Markdown AST"]
-        DA["Dialogue AST (planned)"]
+        DA["Dialogue AST"]
     end
     MD --> MP["Markdown projection"]
-    DA --> DP["Dialogue projection (planned)"]
+    DA --> DP["Dialogue projection"]
     MP --> Walk["Graph-aware walk"]
     DP --> Walk
     Walk --> DG["DisplayGraph"]

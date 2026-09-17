@@ -37,7 +37,7 @@ exactly as before.
 
 ```mermaid
 flowchart LR
-    R["Future dialogue runtime"] --> A["Runtime debug adapter"]
+    R["Dialogue runtime"] --> A["Debug adapter<br/>(future)"]
     A --> C["DebugController"]
     C --> T["Floating debug palette"]
     C --> E["CodeMirror debug extension"]
