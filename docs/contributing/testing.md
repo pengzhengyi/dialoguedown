@@ -29,7 +29,7 @@ This page covers *which* test to write; that one covers *how* to run it.
 
 ## The shape of the suite
 
-Roughly **4,500 .NET tests** and **1,100 frontend tests**, weighted heavily toward
+Roughly **5,000 .NET tests** and **1,100 frontend tests**, weighted heavily toward
 fast unit tests, with a thin layer of **36 browser spec files** at the top. The
 whole .NET suite runs in under 20 seconds, which is deliberate: it is meant to be
 run constantly.
@@ -51,6 +51,7 @@ are the reason this page exists.
 | `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the readable half of the corpus. |
 | `DialogueDown.Runtime.Tests` | The runner — stepping, positions, the protocol — and the harness that plays the corpus against it. |
 | `DialogueDown.Conformance` | Not tests: the reader both halves of the corpus load their cases with. |
+| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, and temporary files and folders. |
 | `DialogueDown.Conformance.Tests` | That reader, and the corpus's own integrity. |
 | `DialogueDown.Architecture.Tests` | The boundaries between all of the above. |
 | `src/DialogueDown.Visualization/web` | The report client: unit tests beside the source, browser tests under `e2e/` and `e2e-live/`. |
@@ -228,9 +229,10 @@ every second added is paid many times.
 
 A few tests here cover less than they eventually will, on purpose. The generator
 behind the runtime's walk property draws only the node kinds the runner can play
-today; the playable half of the conformance corpus ships ten cases and plays two.
-Both are correct, and both are unfinished by design — the runtime arrives one pass
-at a time, and a test that waited for all of it would test nothing until the end.
+today; the playable half of the conformance corpus ships thirteen cases and plays
+seven. Both are correct, and both are unfinished by design — the runtime arrives
+one pass at a time, and a test that waited for all of it would test nothing until
+the end.
 
 The risk is not the gap. It is a gap that closes quietly: a later pass teaches the
 runner to play choices, the generator that should now draw them carries on drawing
@@ -244,14 +246,19 @@ list should have grown.
 
 | Test | Covers today | Widens when | Tells you when to widen |
 | --- | --- | --- | --- |
-| `PlayableConformanceTests` | `linear-speech` and `styled-speech` | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
-| `PlaybookGen` | Lines, ends, jumps, and effects — what the runner can play | Each runtime pass teaches the runner a node or edge kind | Not yet — nothing fails when the runner outgrows what it draws |
+| `PlayableConformanceTests` | Seven of the corpus's thirteen playable cases, named one by one | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
+| `PlaybookGen` | Lines, ends, jumps, effects, and lines that jump | Each runtime pass teaches the runner a node or edge kind | Yes — teaching the runner a kind the generator skips fails a test that names the kind |
 
-`PlaybookGen` is the one still to fix, and `ExampleConstructCoverageTests` is the
-pattern to copy: it enumerates the constructs the compiler models by reflection,
-then fails naming any that no example uses. A generator can be held to the node
-kinds the playbook format defines the same way, so teaching the runner a kind the
-generator does not draw would fail until the generator draws it.
+`PlaybookGen` is held to the format the way `ExampleConstructCoverageTests` is
+held to the compiler: both enumerate what exists by reflection, then fail naming
+what is missing. The generator's check compares the kinds a sample of it actually
+produced against the kinds the playbook format defines, so a list of what it means
+to draw cannot drift from what it draws.
+
+A kind the generator skips is listed with the reason it is skipped, and for a node
+kind that reason is checked rather than believed: the test asserts the runner still
+refuses one. Teaching the runner a kind therefore makes its reason false, and the
+failure names the kind the generator now owes.
 
 Both lists come out when the runtime is complete. Until then, they are an honest
 statement of how far the suite reaches, and they stay honest by failing when they
