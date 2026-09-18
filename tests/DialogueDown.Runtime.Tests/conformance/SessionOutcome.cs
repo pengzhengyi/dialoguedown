@@ -43,6 +43,12 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
     /// <returns>The outcome.</returns>
     public static SessionOutcome NotYetPlayable(string because) => new(SessionVerdict.NotYetPlayable, [because]);
 
+    /// <summary>The session uses several things this build has not learned.</summary>
+    /// <param name="reasons">What is missing, in the order it was found.</param>
+    /// <returns>The outcome.</returns>
+    public static SessionOutcome NotYetPlayable(IEnumerable<string> reasons) =>
+        new(SessionVerdict.NotYetPlayable, [.. reasons]);
+
     /// <summary>The gravest of several partial outcomes, with every reason that reached it.</summary>
     /// <remarks>
     /// A divergence outranks a construct nobody has taught the runner. Reasons gather at the gravest
