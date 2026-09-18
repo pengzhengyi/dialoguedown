@@ -1,4 +1,5 @@
 using System.Text;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Files;
 
 namespace DialogueDown.Visualization.Live.Tests;
@@ -8,7 +9,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ReadsTheCurrentContentUnderTheLock()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "on disk");
 
         var seen = AtomicFile.Transact(path, transaction => transaction.Disk);
@@ -19,7 +20,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_MissingFile_ReportsNullAndLeavesNoFileWhenNotWritten()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "missing.txt");
 
         var seen = AtomicFile.Transact(path, transaction => transaction.Disk);
@@ -31,7 +32,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_Write_CommitsContentWithoutABom()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "created.txt");
 
         AtomicFile.Transact(path, transaction =>
@@ -47,7 +48,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_Write_TruncatesAShorterReplacement()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "a long original line");
 
         AtomicFile.Transact(path, transaction =>
@@ -64,7 +65,7 @@ public sealed class AtomicFileTests
     {
         // The containing directory does not exist: the snapshot read reports a missing file (null)
         // rather than throwing, and a no-write body leaves nothing behind.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "nope", "doc.txt");
 
         var seen = AtomicFile.Transact(path, transaction => transaction.Disk);
@@ -79,7 +80,7 @@ public sealed class AtomicFileTests
         // Simulate the existence race: the target does not exist when the transaction begins, but
         // an external writer creates it while the body runs. A no-write outcome must never delete
         // that externally created file (the old File.Exists placeholder-and-delete bug).
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "raced.txt");
 
         var seen = AtomicFile.Transact(path, transaction =>
@@ -96,7 +97,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_Write_LeavesNoStagingTempBehind()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         AtomicFile.Transact(path, transaction =>
@@ -115,7 +116,7 @@ public sealed class AtomicFileTests
     {
         // The staging temp must be a sibling of the target so the final move stays on one volume
         // (an atomic rename), not a cross-device copy through the system temp folder.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var directory = tree.Dir("nested");
         var path = Path.Combine(directory, "doc.txt");
         File.WriteAllText(path, "original");
@@ -147,7 +148,7 @@ public sealed class AtomicFileTests
         // target into a backup, sees it differs from the expected baseline, rolls back, and reports
         // a conflict. Writing to the path inside the body reproduces the window because the commit
         // runs after the body returns.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteConflictException>(() => AtomicFile.Transact(path, transaction =>
@@ -166,7 +167,7 @@ public sealed class AtomicFileTests
     {
         // A create (the snapshot reports the file absent) must use a no-overwrite move, so an
         // external process that creates the file first wins the race and is never clobbered.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "new.txt");
 
         Assert.Throws<AtomicFile.WriteConflictException>(() => AtomicFile.Transact(path, transaction =>
@@ -185,7 +186,7 @@ public sealed class AtomicFileTests
     {
         // A confirmed overwrite is force: it intentionally replaces whatever is on disk, so it
         // commits over an external edit rather than reporting a conflict.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         AtomicFile.Transact(path, transaction =>
@@ -202,7 +203,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_NoExternalChange_CommitsAndLeavesNoBackup()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         AtomicFile.Transact(path, transaction =>
@@ -220,7 +221,7 @@ public sealed class AtomicFileTests
     {
         // The external write in the window produced the very bytes this save is committing: no data
         // is lost, so it settles as a normal commit rather than a spurious conflict.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         AtomicFile.Transact(path, transaction =>
@@ -239,7 +240,7 @@ public sealed class AtomicFileTests
     {
         // The target is deleted out from under the atomic replace (an external change, not a swap):
         // the write must report a conflict rather than recreate the file the deleter intended gone.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteConflictException>(() => AtomicFile.Transact(path, transaction =>
@@ -262,7 +263,7 @@ public sealed class AtomicFileTests
         // restoring the first backup would overwrite that newer data, so the write must instead
         // preserve the newer target, keep the captured backup safely, and report an uncertain
         // outcome rather than a plain conflict.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteUncertainException>(() => AtomicFile.Transact(
@@ -289,7 +290,7 @@ public sealed class AtomicFileTests
         // The target is deleted between the replace and the rollback. Restoring the backup would
         // recreate a file the deleter intended gone using stale bytes, so the write preserves the
         // captured backup and reports uncertain rather than a plain conflict or a lost update.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteUncertainException>(() => AtomicFile.Transact(
@@ -314,7 +315,7 @@ public sealed class AtomicFileTests
         // holds them: an external process overwrote the file immediately after the swap. The write
         // cannot claim success without possibly masking that newer data, so it reports uncertain
         // and leaves the newer external content in place.
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteUncertainException>(() => AtomicFile.Transact(
@@ -337,7 +338,7 @@ public sealed class AtomicFileTests
             return; // directory permission bits do not block file creation the same way on Windows
         }
 
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var directory = tree.Dir("locked");
         var path = Path.Combine(directory, "doc.txt");
         File.WriteAllText(path, "original");
@@ -366,7 +367,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_Write_ThroughAResolvedSymlink_UpdatesTheTargetAndKeepsTheLink()
     {
-        using var tree = new Support.TempTree();
+        using var tree = new TempTree();
         var real = tree.File("real.dialogue.md", "old");
         var link = Path.Combine(tree.Root, "link.dialogue.md");
         Support.Symlinks.Create(link, real);

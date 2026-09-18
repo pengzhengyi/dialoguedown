@@ -50,8 +50,8 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_WithConfig_BuildsTheCompilerFromTheResolvedOptions()
     {
-        using var dir = new TempDir();
-        var configPath = dir.Write("dialogue.toml", NarratorConfig);
+        using var tree = new TempTree();
+        var configPath = tree.File("dialogue.toml", NarratorConfig);
         using var script = new TempScript("# Scene");
         var compiler = Substitute.For<IScriptCompiler>();
         compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
@@ -115,8 +115,8 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_MalformedConfig_FailsWithALocatedError()
     {
-        using var dir = new TempDir();
-        var configPath = dir.Write("dialogue.toml", "broken =");
+        using var tree = new TempTree();
+        var configPath = tree.File("dialogue.toml", "broken =");
         using var script = new TempScript("# Scene");
         var tester = CliTester.Create();
 
@@ -234,9 +234,9 @@ public sealed class CompileCommandTests
     {
         // A playbook is the compiler's own artifact, so naming a destination is enough to ask
         // for one. The stage graphs are the export that has to say so.
-        using var dir = new TempDir();
+        using var tree = new TempTree();
         using var script = new TempScript("Alice: Hello.");
-        var destination = Path.Combine(dir.Path, "chapter-01.playbook.json");
+        var destination = Path.Combine(tree.Root, "chapter-01.playbook.json");
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
@@ -247,9 +247,9 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_EmitPlaybook_SaysWhichScriptItCameFrom()
     {
-        using var dir = new TempDir();
+        using var tree = new TempTree();
         using var script = new TempScript("Alice: Hello.");
-        var destination = Path.Combine(dir.Path, "out.playbook.json");
+        var destination = Path.Combine(tree.Root, "out.playbook.json");
 
         CliTester.Create().Run("compile", script.Path, "--emit", "playbook", "-o", destination);
 
@@ -262,7 +262,7 @@ public sealed class CompileCommandTests
     public void Compile_EmitPlaybookWithoutOutput_GoesToStandardOutput()
     {
         // Standard output, like the stage graphs beside it, so a playbook can be piped.
-        using var dir = new TempDir();
+        using var tree = new TempTree();
         using var script = new TempScript("Alice: Hello.");
         var standardOutput = new StringWriter();
 
@@ -270,7 +270,7 @@ public sealed class CompileCommandTests
             .Run("compile", script.Path, "--emit", "playbook");
 
         Assert.Equal(ExitCodes.Success, result.ExitCode);
-        Assert.Empty(Directory.EnumerateFiles(dir.Path));
+        Assert.Empty(Directory.EnumerateFiles(tree.Root));
         PlaybookReader.Default.Read(standardOutput.ToString());
     }
 
@@ -313,7 +313,7 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_AScriptWithErrors_LeavesTheOutputAlone()
     {
-        using var dir = new TempDir();
+        using var tree = new TempTree();
         using var script = new TempScript("""
             # Gate
 
@@ -323,7 +323,7 @@ public sealed class CompileCommandTests
 
             Bob: Two.
             """);
-        var destination = Path.Combine(dir.Path, "untouched.playbook.json");
+        var destination = Path.Combine(tree.Root, "untouched.playbook.json");
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
@@ -367,9 +367,9 @@ public sealed class CompileCommandTests
     {
         // `--output` alone used to be an error, when the only thing to emit was the stage graphs.
         // A playbook is the compiler's own artifact, so naming a destination now asks for one.
-        using var dir = new TempDir();
+        using var tree = new TempTree();
         using var script = new TempScript("# Scene");
-        var destination = Path.Combine(dir.Path, "scene.playbook.json");
+        var destination = Path.Combine(tree.Root, "scene.playbook.json");
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
