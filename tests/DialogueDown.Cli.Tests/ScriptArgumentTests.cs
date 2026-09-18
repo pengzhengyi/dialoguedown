@@ -1,5 +1,5 @@
 using DialogueDown.Cli.Commands;
-using DialogueDown.Cli.Tests.Support;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Cli.Tests;
 

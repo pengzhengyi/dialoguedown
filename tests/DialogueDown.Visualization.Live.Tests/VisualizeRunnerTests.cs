@@ -1,4 +1,5 @@
 using DialogueDown.Configuration;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Tests.Support;
 
@@ -9,7 +10,7 @@ public sealed class VisualizeRunnerTests
     [Fact]
     public void RunStatic_WritesReportAndOpensIt()
     {
-        using var doc = new TempDocument("# Scene");
+        using var doc = new TempScript("# Scene");
         var browser = new FakeBrowserLauncher();
         var runner = new VisualizeRunner(browser);
 
@@ -25,7 +26,7 @@ public sealed class VisualizeRunnerTests
     [Fact]
     public void RunStatic_Output_WritesToThePathWithoutOpening()
     {
-        using var doc = new TempDocument("# Scene");
+        using var doc = new TempScript("# Scene");
         var target = Path.Combine(Path.GetTempPath(), $"dd-vr-{Guid.NewGuid():N}.html");
         var browser = new FakeBrowserLauncher();
         var runner = new VisualizeRunner(browser);

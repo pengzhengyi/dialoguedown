@@ -1,4 +1,5 @@
 using DialogueDown.Configuration;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Tests.Support;
 
@@ -9,7 +10,7 @@ public sealed class StaticModeTests
     [Fact]
     public void Run_ValidDocument_WritesReportToOutputAndOpensIt()
     {
-        using var doc = new TempDocument("# Scene\n\nAlice: Hi.");
+        using var doc = new TempScript("# Scene\n\nAlice: Hi.");
         var browser = new FakeBrowserLauncher();
         var output = TempHtmlPath();
 
@@ -35,7 +36,7 @@ public sealed class StaticModeTests
     [Fact]
     public void Run_NoOpen_WritesReportButDoesNotOpen()
     {
-        using var doc = new TempDocument();
+        using var doc = new TempScript("# Scene\n\nAlice: Hi.");
         var browser = new FakeBrowserLauncher();
         var output = TempHtmlPath();
 
@@ -56,7 +57,7 @@ public sealed class StaticModeTests
     [Fact]
     public void Run_NoOutput_WritesATempReportAndOpensIt()
     {
-        using var doc = new TempDocument();
+        using var doc = new TempScript("# Scene\n\nAlice: Hi.");
         var browser = new FakeBrowserLauncher();
 
         var code = StaticMode.Run(doc.Path, output: null, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());

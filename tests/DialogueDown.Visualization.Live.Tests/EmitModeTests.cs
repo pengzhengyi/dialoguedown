@@ -1,5 +1,5 @@
 using DialogueDown.Configuration;
-using DialogueDown.Visualization.Live.Tests.Support;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Render;
 
 namespace DialogueDown.Visualization.Live.Tests;
@@ -9,7 +9,7 @@ public sealed class EmitModeTests
     [Fact]
     public void Run_Dot_WithOutput_WritesDigraphToTheFileNotStdout()
     {
-        using var doc = new TempDocument("# Scene\n\nAlice: Hi.");
+        using var doc = new TempScript("# Scene\n\nAlice: Hi.");
         var writer = new StringWriter();
         var output = Path.Combine(Path.GetTempPath(), $"dd-emit-{Guid.NewGuid():N}.dot");
 

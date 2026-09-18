@@ -2,6 +2,7 @@ using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Playbook;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
