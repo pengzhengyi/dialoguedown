@@ -172,6 +172,8 @@
       href: visualization/graph/Live Visualization - Reverse Jump.md
     - name: Region-Aware Graph Layout
       href: visualization/graph/Region-Aware Graph Layout.md
+    - name: Keyboard Navigation
+      href: visualization/graph/Keyboard Navigation.md
   - name: Live session
     items:
     - name: Live Visualization — Explorer Toggle
