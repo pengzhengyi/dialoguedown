@@ -1,3 +1,5 @@
+using DialogueDown.TestSupport;
+
 namespace DialogueDown.Tests.Support;
 
 /// <summary>
@@ -35,8 +37,5 @@ internal static class MappingAssert
     }
 
     private static IEnumerable<string> ConcreteMembers<TUnion>() =>
-        typeof(TUnion).Assembly.GetTypes()
-            .Where(type => !type.IsAbstract && typeof(TUnion).IsAssignableFrom(type))
-            .Select(type => type.Name)
-            .Order();
+        UnionMembers.NamesOf<TUnion>().Order();
 }

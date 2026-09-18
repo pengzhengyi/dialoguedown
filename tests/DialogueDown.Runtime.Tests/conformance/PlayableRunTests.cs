@@ -1,4 +1,5 @@
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -29,8 +30,7 @@ public sealed class PlayableRunTests
         // Guards the guard: a list that stopped naming kinds would leave the check above agreeing
         // about nothing.
         var named = Playbooks.OneOfEveryNodeKind().Select(node => node.GetType()).ToHashSet();
-        var defined = typeof(Node).Assembly.GetTypes()
-            .Where(type => type.IsAssignableTo(typeof(Node)) && !type.IsAbstract);
+        var defined = UnionMembers.Of<Node>();
 
         Assert.Empty(defined.Where(type => !named.Contains(type)).Select(type => type.Name));
     }

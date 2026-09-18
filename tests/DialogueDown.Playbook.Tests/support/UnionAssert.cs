@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Playbook.Tests.Support;
 
@@ -71,8 +72,5 @@ internal static class UnionAssert
                 attribute => attribute.DerivedType);
 
     private static List<string> ConcreteMembers<TUnion>() =>
-        [.. typeof(TUnion).Assembly.GetTypes()
-            .Where(type => !type.IsAbstract && typeof(TUnion).IsAssignableFrom(type))
-            .Select(type => type.Name)
-            .Order()];
+        [.. UnionMembers.NamesOf<TUnion>().Order()];
 }

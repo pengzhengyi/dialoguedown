@@ -1,6 +1,7 @@
 using CsCheck;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -40,8 +41,8 @@ public sealed class PlaybookGenTests
     public void EveryKindTheFormatDefines_IsDrawnOrLeftOutOnPurpose()
     {
         var drawn = DrawnKinds();
-        var unaccounted = DefinedKinds(typeof(Node))
-            .Concat(DefinedKinds(typeof(Edge)))
+        var unaccounted = UnionMembers.NamesOf<Node>()
+            .Concat(UnionMembers.NamesOf<Edge>())
             .Where(kind => !drawn.Contains(kind) && !_notDrawn.ContainsKey(kind))
             .Order(StringComparer.Ordinal)
             .ToList();
@@ -110,12 +111,4 @@ public sealed class PlaybookGenTests
 
         return seen;
     }
-
-    /// <summary>The type name of every node kind, or every edge kind, the playbook format defines.</summary>
-    /// <param name="baseType">The type every kind of that family derives from.</param>
-    /// <returns>The names, one per kind.</returns>
-    private static IEnumerable<string> DefinedKinds(Type baseType) =>
-        baseType.Assembly.GetTypes()
-            .Where(type => type.IsAssignableTo(baseType) && !type.IsAbstract)
-            .Select(type => type.Name);
 }
