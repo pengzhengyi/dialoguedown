@@ -1,26 +1,25 @@
-using DialogueDown.TestSupport;
-
-namespace DialogueDown.Tests.Support;
+namespace DialogueDown.TestSupport;
 
 /// <summary>
-/// Assertions that a mapping covers the whole of what it maps.
+/// Asserts that a test examining a closed family of types looks at every one of them.
 /// </summary>
 /// <remarks>
-/// A mapper switches over a closed union, and a missing arm fails only when a script happens to
-/// contain that construct — long after the writer shipped. Checking the samples by reflection
-/// turns that into a test failure naming the member nobody mapped.
+/// A test that walks a family one member at a time is only as complete as the list it walks. A
+/// member added later joins the family without joining that list, so the new member goes untested
+/// and nothing says so. Comparing the list against the family itself turns that into a failure
+/// naming the member nobody covered.
 /// </remarks>
-internal static class MappingAssert
+public static class UnionCoverageAssert
 {
     /// <summary>
     /// Asserts the samples include one of every concrete member of the union, apart from those
     /// deliberately left out.
     /// </summary>
-    /// <typeparam name="TUnion">The union being mapped.</typeparam>
-    /// <param name="samples">One value per member, as fed to the mapping's own tests.</param>
+    /// <typeparam name="TUnion">The union's base type.</typeparam>
+    /// <param name="samples">One value per member, as fed to the test doing the examining.</param>
     /// <param name="except">
-    /// Members a mapping deliberately does not accept. Naming them keeps the exclusion a decision
-    /// on the record rather than an omission, and a name that stops being a member fails here.
+    /// Members the test deliberately leaves out. Naming them keeps the exclusion a decision on the
+    /// record rather than an omission, and a name that stops being a member fails here.
     /// </param>
     public static void AssertCoversEveryMember<TUnion>(
         IEnumerable<TUnion> samples, params Type[] except)

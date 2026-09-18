@@ -1,7 +1,7 @@
 using DialogueDown.Emission;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Weights;
-using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 using static DialogueDown.Tests.Support.PlaybookEdgeAssert;
@@ -62,7 +62,7 @@ public sealed class EdgeMappingTests
     [Fact]
     public void Write_EveryEdgeTheGraphHas_HasASample()
     {
-        MappingAssert.AssertCoversEveryMember<GraphEdges.Edge>(Samples());
+        UnionCoverageAssert.AssertCoversEveryMember<GraphEdges.Edge>(Samples());
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 using DialogueDown.Emission;
 using DialogueDown.Playbook.Conditions;
-using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using Ast = DialogueDown.Script.Ast;
 
@@ -27,6 +27,6 @@ public sealed class ConditionMappingTests
     [Fact]
     public void Write_EveryConditionTheAstHas_HasASample()
     {
-        MappingAssert.AssertCoversEveryMember<Ast.Condition>([Condition("IsCurious")]);
+        UnionCoverageAssert.AssertCoversEveryMember<Ast.Condition>([Condition("IsCurious")]);
     }
 }

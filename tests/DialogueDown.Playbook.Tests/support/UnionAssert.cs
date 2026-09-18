@@ -27,36 +27,9 @@ internal static class UnionAssert
         var registrations = Registrations<TUnion>();
 
         Assert.Equal(declaredTags, registrations.Keys.Order().ToList());
-        Assert.Equal(ConcreteMembers<TUnion>(), registrations.Values.Select(type => type.Name).Order().ToList());
-    }
-
-    /// <summary>
-    /// Asserts that <paramref name="samples"/> include one of every concrete member of
-    /// <typeparamref name="TUnion"/>, apart from those deliberately left out.
-    /// </summary>
-    /// <typeparam name="TUnion">The union's base type.</typeparam>
-    /// <param name="samples">One value per member, as fed to the test doing the examining.</param>
-    /// <param name="except">
-    /// Members the examination deliberately leaves out. Naming them keeps the exclusion a decision
-    /// on the record rather than an omission, and a name that stops being a member fails here.
-    /// </param>
-    /// <remarks>
-    /// Reach for this where a test examines the union one member at a time. The examination is only
-    /// as complete as the list it walks, and a member added later joins the union without joining
-    /// that list; this says so at build time instead of leaving the new member untested.
-    /// </remarks>
-    public static void AssertCoversEveryMember<TUnion>(
-        IEnumerable<TUnion> samples, params Type[] except)
-    {
-        ArgumentNullException.ThrowIfNull(samples);
-        ArgumentNullException.ThrowIfNull(except);
-
-        var excluded = except.Select(type => type.Name).Order().ToList();
-        Assert.Equal(excluded, ConcreteMembers<TUnion>().Intersect(excluded).Order());
-
-        var covered = samples.Select(sample => sample!.GetType().Name).Distinct().Order();
-
-        Assert.Equal(ConcreteMembers<TUnion>().Except(excluded), covered);
+        Assert.Equal(
+            UnionMembers.NamesOf<TUnion>().Order().ToList(),
+            registrations.Values.Select(type => type.Name).Order().ToList());
     }
 
     private static List<string> DeclaredTags(Type kinds) =>
@@ -70,7 +43,4 @@ internal static class UnionAssert
             .ToDictionary(
                 attribute => (string)attribute.TypeDiscriminator!,
                 attribute => attribute.DerivedType);
-
-    private static List<string> ConcreteMembers<TUnion>() =>
-        [.. UnionMembers.NamesOf<TUnion>().Order()];
 }

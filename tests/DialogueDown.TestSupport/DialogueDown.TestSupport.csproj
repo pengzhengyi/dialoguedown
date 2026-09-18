@@ -13,4 +13,14 @@
          with it. -->
   </PropertyGroup>
 
+  <!-- Assertions only. The test framework itself belongs to the suites that run tests; this
+       project holds the checks they share. -->
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.assert" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
 </Project>
