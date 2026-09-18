@@ -1,7 +1,7 @@
 using DialogueDown.Emission;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Script.Semantics;
-using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.DialogueGraphFactory;
 using static DialogueDown.Tests.Support.PlaybookEdgeAssert;
@@ -97,7 +97,7 @@ public sealed class NodeMappingTests
     [Fact]
     public void Write_EveryNodeTheGraphHas_HasASample()
     {
-        MappingAssert.AssertCoversEveryMember<GraphNodes.DialogueNode>(Samples());
+        UnionCoverageAssert.AssertCoversEveryMember<GraphNodes.DialogueNode>(Samples());
     }
 
     [Fact]

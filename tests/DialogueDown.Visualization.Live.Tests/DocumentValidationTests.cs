@@ -1,3 +1,4 @@
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Files;
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -6,9 +7,9 @@ public sealed class DocumentValidationTests
     [Fact]
     public void Validate_ExistingDialogueMd_ReturnsNull()
     {
-        using var doc = new Support.TempDocument();
+        using var script = new TempScript("# Scene\n\nAlice: Hi.");
 
-        Assert.Null(DocumentValidation.Validate(doc.Path));
+        Assert.Null(DocumentValidation.Validate(script.Path));
     }
 
     [Fact]
