@@ -188,6 +188,7 @@ function scenedStage(): Stage {
             { name: "The Market", kind: "Scene" },
             { name: "The Forest", kind: "Scene" },
         ],
+        nests: false,
     };
 }
 
@@ -413,6 +414,7 @@ function wovenStage(): Stage {
             { name: "The Forest", kind: "Scene" },
             { name: "The Hollow", kind: "Scene" },
         ],
+        nests: false,
     };
 }
 
@@ -574,5 +576,178 @@ describe("createTreeView — folding a scene from the keyboard", () => {
         view.handleKey(press("Enter"));
 
         expect(view.svg.querySelectorAll("g.node")).toHaveLength(1); // the root, folded as before
+    });
+});
+
+/**
+ * A stage whose last node hangs on a placement link: `orphan` follows `tail` in the document, but
+ * `deferred` says control never arrives — so the line is drawn, and is not flow.
+ */
+function deferredLeafStage(): Stage {
+    return {
+        title: "Dialogue Graph",
+        description: "",
+        nodes: [
+            { id: "root", label: "Document", attributes: [] },
+            { id: "tail", label: "End", attributes: [] },
+            { id: "orphan", label: "Never reached", attributes: [] },
+        ],
+        edges: [
+            { fromId: "root", toId: "tail", kind: "Child", category: "break" },
+            { fromId: "tail", toId: "orphan", kind: "Child", category: "deferred" },
+        ],
+        nests: false,
+    };
+}
+
+/**
+ * A graph with a join: `left` and `right` both lead to `end`, so the ways in are a list of two —
+ * the shape that makes Shift+digit a question only the flow graph can answer.
+ */
+function joinStage(): Stage {
+    return {
+        title: "Dialogue Graph",
+        description: "",
+        nodes: [
+            { id: "start", label: "Document", attributes: [] },
+            { id: "left", label: "Left", attributes: [] },
+            { id: "right", label: "Right", attributes: [] },
+            { id: "end", label: "End", attributes: [] },
+        ],
+        edges: [
+            { fromId: "start", toId: "left", kind: "Child", category: "choice" },
+            { fromId: "start", toId: "right", kind: "Child", category: "choice" },
+            { fromId: "left", toId: "end", kind: "Child", category: "break" },
+            { fromId: "right", toId: "end", kind: "Child", category: "break" },
+        ],
+        nests: false,
+    };
+}
+
+describe("createTreeView — keyboard navigation follows the edges", () => {
+    const press = (key: string, init: KeyboardEventInit = {}) =>
+        new KeyboardEvent("keydown", { key, ...init });
+
+    it("takes the nth child with a digit on a tree stage", () => {
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), (node) => chosen.push(node));
+        view.handleKey(press("ArrowDown")); // selects the root
+
+        view.handleKey(press("2", { code: "Digit2" }));
+
+        expect(chosen.at(-1)!.id).toBe("b"); // root's second child
+    });
+
+    it("leaves Shift+digit to the browser on a tree stage", () => {
+        // Every node but the root arrives by one edge, so there is no list of ways in to number.
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), (node) => chosen.push(node));
+        view.selectById("b");
+        chosen.length = 0;
+        const event = press("@", { code: "Digit1", shiftKey: true, cancelable: true });
+
+        view.handleKey(event);
+
+        expect(chosen).toEqual([]);
+        expect(event.defaultPrevented).toBe(false);
+    });
+
+    it("takes the nth way in with Shift on a stage whose child edges span the flow", () => {
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(joinStage(), (node) => chosen.push(node));
+        view.selectById("end");
+        chosen.length = 0;
+
+        view.handleKey(press("@", { code: "Digit2", shiftKey: true }));
+
+        expect(chosen.at(-1)!.id).toBe("right"); // end's second way in
+    });
+
+    it("leaves Shift+digit to a tree even when its edges wear route colors", () => {
+        // A named route does not make a stage the flow graph: the keyboard reads the stage's own
+        // `nests` declaration, so a colored tree keeps its map.
+        const tree = stageWith({ start: 0, end: 3 });
+        const colored: Stage = {
+            ...tree,
+            edges: tree.edges.map((edge) => ({ ...edge, category: "jump" })),
+        };
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(colored, (node) => chosen.push(node));
+        view.selectById("b");
+        chosen.length = 0;
+        const event = press("@", { code: "Digit1", shiftKey: true, cancelable: true });
+
+        view.handleKey(event);
+
+        expect(chosen).toEqual([]);
+        expect(event.defaultPrevented).toBe(false);
+    });
+
+    it("takes a way in on the flow graph even when no edge names its route", () => {
+        // The declaration is what counts, not the palette: an unnamed route is still a way in.
+        const graph = joinStage();
+        const unnamed: Stage = {
+            ...graph,
+            edges: graph.edges.map(({ fromId, toId, kind }) => ({ fromId, toId, kind })),
+        };
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(unnamed, (node) => chosen.push(node));
+        view.selectById("end");
+        chosen.length = 0;
+
+        view.handleKey(press("@", { code: "Digit2", shiftKey: true }));
+
+        expect(chosen.at(-1)!.id).toBe("right");
+    });
+
+    it("lands on the box of a folded scene the edge flows through", () => {
+        // The Market is gone from the drawing but not from the flow: the route that entered the
+        // scene now enters its box, so → from across the fold lands on the box.
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(scenedStage(), (node) => chosen.push(node), {
+            initialRegionFold: ["The Market"],
+        });
+
+        view.handleKey(press("ArrowDown")); // selects the root
+        view.handleKey(press("ArrowRight"));
+
+        expect(chosen.at(-1)!.id).toBe("region:The Market");
+        expect(view.svg.querySelector("g.node.selected")).not.toBeNull();
+    });
+
+    it("counts a folded scene's box among its siblings in the drawing", () => {
+        // The Forest's box stands where its first node stood: the Market's choice has two arms,
+        // `m2` and the box, so ↓ from one lands on the other like any pair of siblings.
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(wovenStage(), (node) => chosen.push(node), {
+            initialRegionFold: ["The Forest"],
+        });
+
+        view.handleKey(press("ArrowDown")); // selects the root
+        view.handleKey(press("ArrowRight")); // the Market's first node
+        view.handleKey(press("ArrowRight")); // its first way out
+        view.handleKey(press("ArrowDown")); // the next sibling, now drawn as the Forest's box
+
+        expect(chosen.at(-1)!.id).toBe("region:The Forest");
+    });
+
+    it("leaves a leaf where it is when nothing leads to it and it leads nowhere", () => {
+        // The placement link draws the orphan but is not a way in, so ← has nothing to fall back
+        // to: every navigation key is a safe no-op on it.
+        const chosen: DisplayNode[] = [];
+        const view = createTreeView(deferredLeafStage(), (node) => chosen.push(node));
+        view.selectById("orphan");
+        chosen.length = 0;
+
+        expect(() => {
+            view.handleKey(press("ArrowRight"));
+            view.handleKey(press("ArrowLeft"));
+            view.handleKey(press("ArrowUp"));
+            view.handleKey(press("ArrowDown"));
+            view.handleKey(press("1", { code: "Digit1" }));
+            view.handleKey(press("1", { code: "Digit1", shiftKey: true }));
+        }).not.toThrow();
+
+        expect(chosen).toEqual([]);
     });
 });

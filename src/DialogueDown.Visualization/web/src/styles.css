@@ -557,7 +557,10 @@ button.tab.dirty::after {
 }
 
 #app {
-    flex: 1 1 auto;
+    /* A zero basis rather than the content's height: the inspector scrolls inside the shell, so
+       sizing the shell to its contents would let a tall selection push the footer — and the
+       status line it must keep whole — past the bottom of the window. */
+    flex: 1 1 0;
     display: flex;
     min-height: 0;
 
@@ -4133,6 +4136,29 @@ body.zen .playbook-view > .playbook-source {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    color: var(--pico-muted-color);
+}
+
+/* The number column: the digit each row answers to, kept to a narrow gutter so it reads down the
+   panel as one line of numbers rather than as part of the route's name. Pico pads every table cell
+   by a full spacing step on each side, which would spend the whole declared width before a glyph
+   is drawn and leave the `#` header in a zero-width box that ellipsizes to `#…`; the gutter
+   therefore carries its own inline padding — enough to hold a digit off its neighbors, no more.
+   Its overflow is clipped rather than ellipsized, because the `#` header is a promise the column
+   exists, not a word to abbreviate. */
+#detail-body table.neighbors th.neighbor-index,
+#detail-body table.neighbors td.neighbor-index,
+.node-detail-body table.neighbors th.neighbor-index,
+.node-detail-body table.neighbors td.neighbor-index {
+    width: 1.8rem;
+    padding-inline: 0.35rem;
+    text-align: right;
+    text-overflow: clip;
+    font-variant-numeric: tabular-nums;
+}
+
+#detail-body table.neighbors td.neighbor-index,
+.node-detail-body table.neighbors td.neighbor-index {
     color: var(--pico-muted-color);
 }
 

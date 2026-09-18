@@ -189,6 +189,49 @@ test.describe("on a short landscape window", () => {
     });
 });
 
+test.describe("on a short window with a tall graph inspector", () => {
+    // The investigated case: a 1280x640 window, where a tall selection used to push the footer
+    // past the bottom edge.
+    test.use({ viewport: { width: 1280, height: 640 } });
+
+    test("keeps the status bar inside the window when the selected detail is tall", async ({
+        page,
+    }) => {
+        await page.goto(MANY_TABS);
+        await page.locator(".tab", { hasText: "Markdown AST" }).click();
+        await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
+
+        // The Document's inspector is the tallest the static fixture carries — front matter,
+        // source, and preview at once. Overlays can cover the node, so let the click through.
+        await page.addStyleTag({
+            content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
+        });
+        await page.locator("g.node", { hasText: "Document" }).first().click();
+        await expect(page.locator("#detail-title")).toContainText("Document");
+
+        const shell = await page.evaluate(() => {
+            const bar = document.querySelector(".status-bar")!.getBoundingClientRect();
+            const line = document.querySelector(".status-line")!.getBoundingClientRect();
+            const footer = document.querySelector(".app-footer")!.getBoundingClientRect();
+            return {
+                windowHeight: window.innerHeight,
+                barBottom: bar.bottom,
+                barHeight: bar.height,
+                lineHeight: line.height,
+                footerBottom: footer.bottom,
+            };
+        });
+
+        // The inspector's contents scroll inside the shell rather than growing it, so the status
+        // line still ends within the window...
+        expect(shell.barBottom).toBeLessThanOrEqual(shell.windowHeight + 0.5);
+        // ...keeps its full height...
+        expect(shell.barHeight).toBe(shell.lineHeight);
+        // ...and sits inside the footer, not squeezed below its box and clipped away.
+        expect(shell.barBottom).toBeLessThanOrEqual(shell.footerBottom + 0.5);
+    });
+});
+
 test("offers arrows to reach tabs a wheel-only mouse cannot scroll to", async ({ page }) => {
     await page.goto(MANY_TABS);
     const back = page.locator(".tab-arrow", { hasNotText: /x/ }).first();

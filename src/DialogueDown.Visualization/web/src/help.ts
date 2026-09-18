@@ -1,6 +1,6 @@
-/** Which tab's help to show: the Source tab, a stage graph tab, the Semantic tab, or — on the
- *  empty state — the Explorer sidebar. */
-export type HelpContext = "source" | "graph" | "semantic" | "playbook" | "explorer";
+/** Which tab's help to show: the Source tab, a tree stage, the Dialogue Graph, the Semantic tab,
+ *  the Playbook, or — on the empty state — the Explorer sidebar. */
+export type HelpContext = "source" | "tree" | "graph" | "semantic" | "playbook" | "explorer";
 
 const SOURCE_HELP = `
   <p><strong>Source &amp; preview.</strong> The left pane is the document as written;
@@ -61,7 +61,8 @@ const SOURCE_HELP = `
      to leave — your pane and panel choices come back exactly as they were.</p>
 `;
 
-const GRAPH_HELP = `
+/** What every stage tab shares: inspecting a node, panning, zooming, and the legend. */
+const STAGE_HELP = `
   <p><strong>Click a node</strong> (its label or details) to inspect the source it
      was produced from and a rendered preview.</p>
   <p><strong>Jump to source</strong> — the icon beside a node's title (in the details panel)
@@ -81,9 +82,27 @@ const GRAPH_HELP = `
   <p><strong>Hover a legend entry</strong> (top-right) to highlight its nodes;
      <strong>click</strong> it to dim or show that type. The count shows how many
      are present.</p>
-  <p><strong>Arrow keys</strong> move the selection: <kbd>→</kbd> first child,
-     <kbd>←</kbd> parent, <kbd>↑</kbd>/<kbd>↓</kbd> siblings; <kbd>Enter</kbd> or
-     <kbd>Space</kbd> collapses or expands.</p>
+`;
+
+const TREE_HELP =
+    STAGE_HELP +
+    `
+  <p><strong>Arrow keys</strong> follow the tree: <kbd>→</kbd> takes the first child and
+     <kbd>←</kbd> walks back the way you came or, with none, to the parent;
+     <kbd>↑</kbd>/<kbd>↓</kbd> move to the previous or next sibling in the drawing, and
+     <kbd>1</kbd>–<kbd>9</kbd> take the nth child. <kbd>Enter</kbd> or <kbd>Space</kbd> folds or
+     opens the node.</p>
+`;
+
+const GRAPH_HELP =
+    STAGE_HELP +
+    `
+  <p><strong>Arrow keys</strong> follow the flow: <kbd>→</kbd> takes the first way out and
+     <kbd>←</kbd> walks back the way you came or, with none, to the first way in;
+     <kbd>↑</kbd>/<kbd>↓</kbd> move to the previous or next sibling in the drawing. The inspector
+     numbers each node's ways out, so <kbd>1</kbd>–<kbd>9</kbd> take one directly and
+     <kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>9</kbd> take a way in. <kbd>Enter</kbd> or
+     <kbd>Space</kbd> folds or opens the scene you are on.</p>
 `;
 
 const SEMANTIC_HELP = `
@@ -98,6 +117,10 @@ const SEMANTIC_HELP = `
      rendered preview in the <strong>Node details</strong> panel, pinned to the top of the right
      column. The <strong>Jump to source</strong> icon beside a node's title opens the Source tab
      with that node's text selected.</p>
+  <p><strong>Arrow keys</strong> move through the scene tree: <kbd>→</kbd> takes the first child
+     and <kbd>←</kbd> walks back the way you came or, with none, to the parent;
+     <kbd>↑</kbd>/<kbd>↓</kbd> move between siblings, and <kbd>1</kbd>–<kbd>9</kbd> take the nth
+     child. <kbd>Enter</kbd> or <kbd>Space</kbd> folds or opens a node.</p>
   <p><strong>Tables column:</strong> drag the divider to resize it, or use the handle on the
      divider to hide the whole column and give the graph full width. Each table (and the node
      details) also <strong>collapses</strong> to a title strip on its own header bar. The
@@ -150,7 +173,8 @@ const PLAYBOOK_HELP = `
  * is still available without spending status-line width on it. */
 const SUMMARY: Record<HelpContext, string> = {
     source: "Using the Source tab",
-    graph: "Using the graph",
+    tree: "Using a tree stage",
+    graph: "Using the Dialogue Graph",
     semantic: "Using the Semantic tab",
     playbook: "Using the Playbook tab",
     explorer: "Using the Explorer",
@@ -158,6 +182,7 @@ const SUMMARY: Record<HelpContext, string> = {
 
 const CONTENT: Record<HelpContext, string> = {
     source: SOURCE_HELP,
+    tree: TREE_HELP,
     graph: GRAPH_HELP,
     semantic: SEMANTIC_HELP,
     playbook: PLAYBOOK_HELP,

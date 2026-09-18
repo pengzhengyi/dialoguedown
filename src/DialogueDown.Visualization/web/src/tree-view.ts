@@ -28,6 +28,7 @@ import {
 import { bandsOf, type PlacedNode } from "./region-bands";
 import { rankByRegion } from "./region-layout";
 import { foldRegions, regionNodeIdFor, type FoldedGraph } from "./region-fold";
+import { isFlowStage, neighborsByNode, type Neighbors } from "./neighbors";
 import { frameToFit, type Extent, type Insets } from "./fit-view";
 import { colorOf } from "./palette";
 import { edgeTooltipHtml, tooltipHtml } from "./text";
@@ -248,7 +249,14 @@ export interface NodeSelectOptions {
     reveal?: boolean;
 }
 
-const NAVIGATION_KEYS = ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Enter", " "];
+/** The keys that follow the flow along the stage's edges rather than the drawing's layout. */
+const ARROW_KEYS = ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"];
+
+/** The keys that open or shut what the reader is on: a node's fold, or a scene's box. */
+const FOLD_KEYS = ["Enter", " "];
+
+/** The ways in and out of a node the drawing does not hold at all. */
+const NO_NEIGHBORS: Neighbors = { incoming: [], outgoing: [] };
 
 // Default framing: a readable 100% zoom with the root anchored near the left edge and
 // vertically centered, so the reader starts at the root with its subtree filling the
@@ -314,6 +322,10 @@ export function createTreeView(
     const edgeCategoriesPresent = [
         ...new Set(stage.edges.flatMap((edge) => (edge.category ? [edge.category] : []))),
     ];
+    // Whether this stage is the flow graph rather than a tree. Its child edges span the flow, and
+    // a node may be led to from several places — so Shift+digit has a list to address. On a tree
+    // the key is not this view's at all and is left to the browser.
+    const flowStage = isFlowStage(stage);
 
     // The graph as it is currently drawn — the stage's own when nothing is folded, and its
     // quotient when a scene is. Everything downstream reads these rather than the stage.
@@ -323,6 +335,9 @@ export function createTreeView(
     // given node at most once — and the fold merges any pair a contraction would have doubled.
     let edgeCategories = new Map<string, string>();
     let edgeLabels = new Map<string, string>();
+    // The drawn graph's ways in and out of every node, rebuilt with the drawing so a keypress
+    // resolves a route by lookup rather than by scanning the stage.
+    let neighborsById = new Map<string, Neighbors>();
     let root: TreeNode;
     rebuildGraph();
 
@@ -335,6 +350,9 @@ export function createTreeView(
 
     let selected: TreeNode | null = null;
     const dimmed = new Set<string>();
+    // The nodes keyboard navigation has visited, most recent last: ← retraces them. A selection
+    // made any other way clears it, so ← from a clicked node starts at the first way in.
+    let trail: string[] = [];
     // The reader's current object, when it is not a node. Exactly one of these three is set at a
     // time: choosing a route or a region is as much a choice as choosing a node, and the drawing
     // says so by letting the last one go.
@@ -481,6 +499,7 @@ export function createTreeView(
             selected = null;
             selectedEdge = null;
             selectedRegion = null;
+            forgetNavigation();
             applySelection();
         },
         selectById,
@@ -1014,6 +1033,13 @@ export function createTreeView(
         root.each((node) => {
             (node as TreeNode)._children = (node as TreeNode).children;
         });
+        // The ways in and out are read from what the fold left drawn, so a folded scene's box
+        // inherits the routes its interior had. Precomputed here rather than per keypress.
+        neighborsById = neighborsByNode({
+            ...stage,
+            nodes: [...graph.nodes],
+            edges: [...graph.edges],
+        });
     }
 
     /* --- selection, filter, highlight --- */
@@ -1041,6 +1067,9 @@ export function createTreeView(
     // installed node — with its current source spans — rather than the stale node the click
     // captured.
     function selectById(id: string, options: NodeSelectOptions = {}): boolean {
+        // A selection named from elsewhere — a neighbor row, a search hit, a restore — is not a
+        // keyboard step, so ← must not retrace the trail it interrupts.
+        forgetNavigation();
         if (options.reveal) unfoldRegionOver(id);
         const node = findNodeById(id);
         if (node === null) return false;
@@ -1077,12 +1106,6 @@ export function createTreeView(
         return null;
     }
 
-    // Selecting a different node applies immediately: the inspector is read-only, so a selection
-    // can never leave unsaved work behind.
-    function guardSelect(node: TreeNode, options: NodeSelectOptions): void {
-        applyNodeSelection(node, options);
-    }
-
     /**
      * Open the node an element stands for, resolved against the drawing as it is now.
      *
@@ -1107,8 +1130,11 @@ export function createTreeView(
      * border, its size, the text it covers — rather than a node standing in for one.
      */
     function openNode(node: TreeNode, options: NodeSelectOptions): void {
+        // A click is a fresh start, not a step along the flow: ← from here goes to the first way
+        // in rather than back through a walk the reader abandoned.
+        forgetNavigation();
         if (isRegionBox(node.data)) selectRegion(node.data.region!);
-        else guardSelect(node, options);
+        else applyNodeSelection(node, options);
     }
 
     function applySelection(): void {
@@ -1132,6 +1158,7 @@ export function createTreeView(
 
     /** Make this route the reader's current object, letting go of whatever was chosen before. */
     function selectEdge(edge: DisplayEdge): void {
+        forgetNavigation();
         selected = null;
         selectedRegion = null;
         selectedEdge = { fromId: edge.fromId, toId: edge.toId };
@@ -1141,6 +1168,7 @@ export function createTreeView(
 
     /** Make this region the reader's current object, letting go of whatever was chosen before. */
     function selectRegion(region: string): void {
+        forgetNavigation();
         selected = null;
         selectedEdge = null;
         selectedRegion = region;
@@ -1233,22 +1261,26 @@ export function createTreeView(
         onFoldChange?.(collapsedIds());
     }
 
-    function expand(node: TreeNode): void {
-        if (!foldable) return;
-        if (!node.children && node._children) {
-            node.children = node._children;
-            update();
-            onFoldChange?.(collapsedIds());
-        }
-    }
-
     /* --- keyboard navigation --- */
 
+    /**
+     * The graph's keys, and what each does.
+     *
+     * → and ← walk the stage's *edges* — the flow — rather than the drawing's spanning tree, whose
+     * sibling order is an accident of which route happened to reach a node first. ↑/↓ instead move
+     * between siblings in the drawing: a spatial step, so a folded scene's box takes part like any
+     * other node. A digit picks a way out by number, Shift+digit a way in, and Enter/Space folds.
+     */
     function handleKey(event: KeyboardEvent): void {
-        if (!NAVIGATION_KEYS.includes(event.key)) return;
+        const digit = digitOf(event);
+        const folds = FOLD_KEYS.includes(event.key);
+        if (!folds && !ARROW_KEYS.includes(event.key) && digit === null) return;
+        // The ways in are only a question on the graph; on a tree, Shift+digit is not consumed so
+        // nothing claims it as a shortcut a reader did not ask for.
+        if (digit?.incoming && !flowStage) return;
         event.preventDefault();
 
-        if (event.key === "Enter" || event.key === " ") {
+        if (folds) {
             // A scene is the graph's foldable thing, so the fold key acts on the scene the reader
             // is on — the one under the pointer, else the one chosen. Reaching a folded scene's
             // box and pressing Enter should open it, which is the whole point of the box.
@@ -1259,19 +1291,54 @@ export function createTreeView(
             }
         }
         if (!selected) {
-            select(root);
-            scheduleDefaultView(++viewToken);
+            // Nothing chosen yet: an arrow — or, as before, a fold key — starts at the root. A
+            // digit has no ways out to count until a node is chosen.
+            if (digit === null) {
+                forgetNavigation();
+                select(root);
+                scheduleDefaultView(++viewToken);
+            }
             return;
         }
-        if (event.key === "Enter" || event.key === " ") {
+        if (folds) {
             toggle(selected);
             applySelection();
             return;
         }
-        const next = nextNode(event.key, selected);
-        if (next) {
-            guardSelect(next, { center: true });
+        if (digit !== null) {
+            if (digit.incoming) followIncoming(selected, digit.index);
+            else followOutgoing(selected, digit.index);
+            return;
         }
+        if (event.key === "ArrowRight") followOutgoing(selected, 0);
+        else if (event.key === "ArrowLeft") followBack(selected);
+        else moveSibling(selected, event.key === "ArrowDown" ? 1 : -1);
+    }
+
+    /**
+     * The edge a digit names, or `null` for a key that names none.
+     *
+     * Read from `event.code`, never `event.key`: Shift turns `2` into `@`, and the digit is what
+     * the reader pressed. Only the number row counts (`Digit1`–`Digit9`); a numpad key reports
+     * `Numpad2`, which the drawing's numbering does not promise. Ctrl and Cmd are left to the
+     * browser, which switches tabs with them.
+     */
+    function digitOf(event: KeyboardEvent): { index: number; incoming: boolean } | null {
+        if (event.ctrlKey || event.metaKey) return null;
+        const match = /^Digit([1-9])$/.exec(event.code);
+        if (match === null) return null;
+        return { index: Number(match[1]) - 1, incoming: event.shiftKey };
+    }
+
+    /**
+     * Forget the keyboard's trail.
+     *
+     * A selection made any other way — a click, a row in the inspector, a selection restored
+     * after a rebuild — is not a step along the flow, so ← starts over at the first way in rather
+     * than retracing a walk the reader has since left.
+     */
+    function forgetNavigation(): void {
+        trail = [];
     }
 
     /** The scene a fold key acts on: the box under the pointer, else the chosen scene. */
@@ -1280,21 +1347,68 @@ export function createTreeView(
         return selectedRegion;
     }
 
-    function nextNode(key: string, node: TreeNode): TreeNode | null {
-        if (key === "ArrowRight") {
-            expand(node);
-            return node.children ? node.children[0] : null;
-        }
-        if (key === "ArrowLeft") return (node.parent as TreeNode | null) ?? null;
-        if (key === "ArrowDown") return sibling(node, 1);
-        if (key === "ArrowUp") return sibling(node, -1);
-        return null;
+    /** The drawn graph's ways in and out of a node, as they were when the drawing was rebuilt. */
+    function waysOf(id: string): Neighbors {
+        return neighborsById.get(id) ?? NO_NEIGHBORS;
     }
 
-    function sibling(node: TreeNode, offset: number): TreeNode | null {
-        const siblings = node.parent?.children as TreeNode[] | undefined;
-        if (!siblings) return null;
-        return siblings[siblings.indexOf(node) + offset] ?? null;
+    /** Take a route out of `from`, leaving the step on the trail so ← can walk it back. */
+    function takeRoute(from: TreeNode, targetId: string): void {
+        const target = findNodeById(targetId);
+        // A route back to where the reader already is moves nothing, so it leaves no trail.
+        if (target === null || target === from) return;
+        trail.push(from.data.id);
+        applyNodeSelection(target, { center: true });
+    }
+
+    /** Follow the nth way out of a node, in the order the stage lists its outgoing edges. */
+    function followOutgoing(from: TreeNode, index: number): void {
+        const ways = waysOf(from.data.id).outgoing;
+        if (index < 0 || index >= ways.length) return;
+        takeRoute(from, ways[index].id);
+    }
+
+    /**
+     * Move to the previous or next sibling in the drawing, wrapping at the ends.
+     *
+     * Siblings are a fact about the drawing, not the flow: the layout gives a node its row among
+     * them, and a folded scene's box takes its place like any other node. Leaving the flow forgets
+     * the keyboard's trail, so ← from here starts at the first way in rather than a walk left behind.
+     */
+    function moveSibling(from: TreeNode, step: 1 | -1): void {
+        const siblings = (from.parent as TreeNode | null)?.children as TreeNode[] | undefined;
+        const index = siblings?.indexOf(from) ?? -1;
+        if (!siblings || index < 0 || siblings.length < 2) return;
+        forgetNavigation();
+        applyNodeSelection(siblings[(index + step + siblings.length) % siblings.length], {
+            center: true,
+        });
+    }
+
+    /** Follow the nth way in, chosen by number because a node may be led to from many. */
+    function followIncoming(from: TreeNode, index: number): void {
+        const ways = waysOf(from.data.id).incoming;
+        if (index < 0 || index >= ways.length) return;
+        takeRoute(from, ways[index].id);
+    }
+
+    /**
+     * Walk back along the routes the keyboard took, or, with no trail left, to the first node
+     * that leads here.
+     *
+     * A graph is a DAG, so a node may be reached several ways: "back" is the way the reader came
+     * when the trail remembers it, and otherwise the first way in — never a single parent.
+     */
+    function followBack(from: TreeNode): void {
+        while (trail.length > 0) {
+            const previous = findNodeById(trail.pop()!);
+            if (previous === null) continue; // a fold or a rebuild may have taken it away
+            applyNodeSelection(previous, { center: true });
+            return;
+        }
+        const ways = waysOf(from.data.id).incoming;
+        if (ways.length === 0) return;
+        takeRoute(from, ways[0].id);
     }
 
     /* --- rendering --- */

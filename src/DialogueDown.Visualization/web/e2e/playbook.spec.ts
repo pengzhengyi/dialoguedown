@@ -790,6 +790,35 @@ test.describe("Playbook tab — the Nodes table", () => {
         expect(await ways.nth(1).evaluate((node) => node.tagName)).toBe("BUTTON");
     });
 
+    test("follows a way out when Enter or Space is pressed on it", async ({ page }) => {
+        // Node 1 leads to 2 and 9. A focused jump control must answer the keyboard the same way
+        // it answers a click — the editor reveals the node, and the line below the active one
+        // names it.
+        const ways = () =>
+            panel(page, "Nodes")
+                .locator("tbody tr")
+                .nth(1)
+                .locator("td")
+                .nth(3)
+                .locator("[data-jump]");
+        const revealed = () =>
+            page.evaluate(() => {
+                const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+                const at = lines.indexOf(
+                    document.querySelector(".playbook-source .cm-activeLine")!,
+                );
+                return lines[at + 2]?.textContent ?? null;
+            });
+
+        await ways().nth(1).focus();
+        await page.keyboard.press("Enter");
+        expect(await revealed()).toContain('"id": 9');
+
+        await ways().nth(0).focus();
+        await page.keyboard.press(" ");
+        expect(await revealed()).toContain('"id": 2');
+    });
+
     test("lights the row a hovered way out leads to", async ({ page }) => {
         // Node 1 leads to 2 and 9. Hovering the second must light row 9 and leave row 2 alone,
         // so a reader sees where a way out goes without leaving the row they are reading.
