@@ -71,6 +71,13 @@ changes easy to categorize.
 
 ### Changed
 
+- **The report's graph tabs are navigated by their edges** — the arrow keys used to move through
+  the drawing's tree, so a jump — a reference edge rather than a child — could not be reached at
+  all. Right takes the first way out, left walks back along the way taken, up/down move between the
+  nodes drawn beside this one, and the digits address the numbered ways out (with Shift, the ways
+  in on the Dialogue Graph, whose tables carry the numbers). Each tab's help describes its own map.
+
+
 - **The file selector offers the View/Edit toggle and drops the Problems panel** — before a script
   is open there is nothing to diagnose and no editor to jump into, so the shell no longer carries a
   panel, a drawer tab, and counts for it. It offers the mode choice instead, remembers it across
@@ -147,6 +154,11 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **The status line no longer leaves the viewport when a selection fills the inspector** — a
+  content-based flex basis let the scrollable inspector inflate the shell, shrinking the footer
+  below its own status line; the shell's height no longer follows a pane's content.
+
 
 - **The Files tab's icon sits inside its own highlight** — the icon rode half outside the bed the
   open state paints, because the bed hung from the control's top edge while the icon sat on the
