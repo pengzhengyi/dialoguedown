@@ -205,17 +205,50 @@ describe("createDetailPanel", () => {
             [...body.querySelectorAll("table.neighbors thead th")].map((t) => t.textContent),
             // Each table reads in the direction control travels: *that node, along this edge, to
             // here* on the way in; *from here, along this edge, to that node* on the way out.
-        ).toEqual(["Source", "Edge", "Edge", "Destination"]);
+        ).toEqual(["#", "Source", "Edge", "#", "Edge", "Destination"]);
         expect([...body.querySelectorAll("button.route")].map((t) => t.textContent)).toEqual([
             "Choice",
             "Succession",
             "Succession",
         ]);
+        // Each list is numbered from 1 in its own order: two ways in, then one way out.
+        expect(
+            [...body.querySelectorAll("tbody td.neighbor-index")].map((t) => t.textContent),
+        ).toEqual(["1", "2", "1"]);
         expect([...body.querySelectorAll("button.neighbor")].map((b) => b.textContent)).toEqual([
             "Alice: Left.",
             "Alice: Right.",
             "End",
         ]);
+    });
+
+    it("numbers both lists, so the digits the graph takes are readable from the panel", () => {
+        panel.show(
+            { id: "n1", label: "Which way?", attributes: [] },
+            {
+                neighbors: {
+                    incoming: [
+                        { id: "before", ownerId: "n1", label: "Before", edgeCategory: "break" },
+                    ],
+                    outgoing: [
+                        { id: "left", ownerId: "n1", label: "Left", edgeCategory: "choice" },
+                        { id: "right", ownerId: "n1", label: "Right", edgeCategory: "choice" },
+                        { id: "away", ownerId: "n1", label: "Away", edgeCategory: "jump" },
+                    ],
+                },
+            },
+        );
+
+        expect([...body.querySelectorAll("button.route")].map((t) => t.textContent)).toEqual([
+            "Succession",
+            "Choice",
+            "Choice",
+            "Jump",
+        ]);
+        // The way in is Shift+1 and the ways out are 1, 2, 3: the two lists number themselves.
+        expect(
+            [...body.querySelectorAll("tbody td.neighbor-index")].map((t) => t.textContent),
+        ).toEqual(["1", "1", "2", "3"]);
     });
 
     it("says so plainly when nothing leads to a node", () => {

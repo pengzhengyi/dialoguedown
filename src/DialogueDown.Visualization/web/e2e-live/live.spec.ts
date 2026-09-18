@@ -754,7 +754,7 @@ test("lists a node's routes in and out, and walks them", async ({ page }) => {
 
     await expect(page.locator("#detail-body h4").first()).toHaveText("Incoming");
     const incoming = page.locator("#detail-body table.neighbors").first();
-    await expect(incoming.locator("thead th")).toHaveText(["Source", "Edge"]);
+    await expect(incoming.locator("thead th")).toHaveText(["#", "Source", "Edge"]);
     await expect(incoming.locator("button.neighbor")).toHaveText(["Alice: Left.", "Alice: Right."]);
     await expect(incoming.locator("button.route")).toHaveText(["Succession", "Succession"]);
 
