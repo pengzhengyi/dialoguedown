@@ -3,6 +3,7 @@ using DialogueDown.Conformance;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.Conformance.PlayabilityAssert;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
@@ -13,20 +14,20 @@ public sealed class PlayabilityTests
     [Fact]
     public void CanPlay_ASendSomeReaderOwns_Is()
     {
-        Assert.True(Playability.CanPlay(SentCommand("next")));
+        AssertPlayable(SentCommand("next"));
     }
 
     [Fact]
     public void CanPlay_ASendNoReaderOwns_IsNot()
     {
-        Assert.False(Playability.CanPlay(Sent("""{ "choose": 0 }""")));
+        AssertNotPlayable(Sent("""{ "choose": 0 }"""));
     }
 
     [Fact]
     public void CanPlay_AnExpectation_Is()
     {
         // Its claims are checked where they are read, so the entry itself is always takeable.
-        Assert.True(Playability.CanPlay(Expected("""{ "ended": true }""")));
+        AssertPlayable(Expected("""{ "ended": true }"""));
     }
 
     [Fact]
@@ -36,24 +37,20 @@ public sealed class PlayabilityTests
             [Choice(0, leadsTo: 3), Choice(1, leadsTo: 3), Branch(2, leadsTo: 3), End(3)],
             ["Alice"]);
 
-        Assert.Equal(
-            new[] { "nothing plays a ChoiceNode yet", "nothing plays a BranchNode yet" },
-            Playability.WhyNotPlayable(context));
+        AssertNotPlayable(context, "nothing plays a ChoiceNode yet", "nothing plays a BranchNode yet");
     }
 
     [Fact]
     public void WhyNotPlayable_OfASendNoReaderOwns_NamesItsMessage()
     {
-        Assert.Equal(
-            new[] { """nothing sends {"choose":0} yet""" },
-            Playability.WhyNotPlayable(Sent("""{ "choose": 0 }""")));
+        AssertNotPlayable(Sent("""{ "choose": 0 }"""), """nothing sends {"choose":0} yet""");
     }
 
     [Fact]
     public void WhyNotPlayable_OfWhatCanBeTaken_IsEmpty()
     {
-        Assert.Empty(Playability.WhyNotPlayable(SentCommand("next")));
-        Assert.Empty(Playability.WhyNotPlayable(Expected("""{ "ended": true }""")));
+        AssertPlayable(SentCommand("next"));
+        AssertPlayable(Expected("""{ "ended": true }"""));
     }
 
     [Fact]
@@ -65,9 +62,10 @@ public sealed class PlayabilityTests
             SentCommand("frobnicate"),
             Sent("""{ "choose": 0 }"""));
 
-        Assert.Equal(
-            new[] { """nothing sends "frobnicate" yet""", """nothing sends {"choose":0} yet""" },
-            Playability.WhyNotPlayable(session));
+        AssertNotPlayable(
+            session,
+            """nothing sends "frobnicate" yet""",
+            """nothing sends {"choose":0} yet""");
     }
 
     [Fact]

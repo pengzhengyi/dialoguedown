@@ -1,4 +1,5 @@
 using DialogueDown.Conformance;
+using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -7,7 +8,7 @@ public sealed class PlayableRunTests
     [Fact]
     public void Of_ACaseThisBuildPlays_Conforms()
     {
-        Assert.True(PlayableRun.Of(Corpora.Playable.Read("a-jump")).IsConformed);
+        AssertConformed(PlayableRun.Of(Corpora.Playable.Read("a-jump")));
     }
 
     [Fact]
@@ -15,10 +16,9 @@ public sealed class PlayableRunTests
     {
         // The corpus's untaught case, end to end: a menu and the choose that would pick from it,
         // both named before the run starts.
-        var outcome = PlayableRun.Of(Corpora.Playable.Read("a-player-choice"));
-
-        Assert.Equal(SessionVerdict.NotYetPlayable, outcome.Verdict);
-        Assert.Contains(outcome.Reasons, reason => reason.Contains("nothing plays a ChoiceNode yet", StringComparison.Ordinal));
-        Assert.Contains(outcome.Reasons, reason => reason.Contains("nothing sends", StringComparison.Ordinal));
+        AssertNotYetPlayable(
+            PlayableRun.Of(Corpora.Playable.Read("a-player-choice")),
+            "nothing plays a ChoiceNode yet",
+            "nothing sends");
     }
 }
