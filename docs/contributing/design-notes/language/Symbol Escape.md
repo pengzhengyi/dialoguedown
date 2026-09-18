@@ -53,8 +53,9 @@ write literal prose.
 - [ ] `\=>` compiles to the text `=>`, with no jump and no dangling-arrow warning.
 - [ ] A character that begins a sigil is literal whole (`\##default`); one that
       begins no sigil is literal alone (`\=#tag` keeps `#tag` a tag).
-- [ ] A line that begins with an escaped character is never a speaker prefix, and
-      a condition before an escaped arrow still guards the line.
+- [ ] An escaped prefix element breaks the speaker prefix, so `Alice\: Hello`,
+      `\@alice: Hi`, and `Alice \@alice: Hi` are default-speaker speech.
+- [ ] A condition before an escaped arrow still guards the line.
 - [ ] Markdown's escapes are untouched: `\*` stays literal styling punctuation,
       `\\` is a backslash, a trailing `\` is still a hard break, and `\` before a
       non-punctuation character stays a literal backslash.
@@ -98,6 +99,15 @@ backslash is an ordinary character of a game call.
 Escape the leading character of the sigil (D5). An unescaped `=>` with no link
 still warns — escape it when the characters are deliberate.
 
+The same rule reaches the speaker prefix, whose elements are sigils too: a name,
+an `@id`, `#tags`, and the closing `:`. Escaping one of them breaks the prefix
+and the line plays in the default voice — `Alice\: Hello` reads "Alice: Hello",
+`\@alice: Hi` reads "@alice: Hi", and `Alice \@alice: Hi` reads
+"Alice @alice: Hi". An escape **demotes** syntax to text and never promotes text
+to syntax: a name that is not a plain word is quoted (`"@alice": Hi`), and
+`\Alice` is not an escape at all. To keep an escape inside speech, put the
+speaker's colon first (`Alice: \@alice: Hi`).
+
 ## Grammar
 
 ```ebnf
@@ -139,7 +149,7 @@ flowchart LR
 | `TextInline` | Markdown text plus its content span | Carries `IsFirstCharacterEscaped`, copied from Markdig. |
 | `MarkdigToMarkdownAstConverter` | Markdig tree → Markdown AST | Copies `LiteralInline.IsFirstCharacterEscaped`; no span heuristic. |
 | `InlineLeafTokenizer` | Text → `TextLeaf` / `TagLeaf` / `JumpLeaf` | An escaped leading character takes the sigil that begins there — or itself — as text. |
-| `LineBuilder` | Peels a line's speaker prefix | Skips the prefix parse when the leading text starts escaped; `PrecedesAJump` requires `!head.IsFirstCharacterEscaped`. |
+| `LineBuilder` | Peels a line's speaker prefix | Skips the prefix parse when the leading text starts escaped; `PrecedesAJump` asks the tokenizer's `StartsWithJumpIndicator`, which owns the arrow's spelling and escape rule. |
 | Desugar, semantic analysis, graph, playbook | — | **Unchanged.** |
 
 Two Markdig details make the flag exact:
@@ -177,6 +187,11 @@ leading character writes the whole sigil that begins there as text — or the lo
 character, when no sigil begins there. So `\##default` writes `##default` (the
 reserved sigil is taken whole) rather than `#` plus a custom tag. Escaping a
 non-leading character still prevents the sigil, without literalizing the rest.
+
+The speaker prefix follows from the same sentence, because its elements are
+sigils. Escaping one breaks the prefix, and a half-literal prefix is never
+half-recognized: the whole line stays speech rather than consuming the escaped
+element as syntax. Escapes demote; they never promote text into a name.
 
 ### D3 — Keep escape provenance from the front end
 
@@ -239,8 +254,13 @@ example. The error-code reference is then regenerated.
 | `\# Heading` at line start | Text `# Heading`; neither a heading nor a tag. |
 | `\=#tag` | Text `=` followed by a real tag `tag`. |
 | `Alice: \#notatag` | Speech text `#notatag`, no tag, no tag diagnostics. |
-| `\@A: hello` | No speaker prefix; the line speaks `@A: hello`. |
-| `` `Ready?` \=> `` and `` `Ready?`\=> `` | The condition still guards the line; `PrecedesAJump` consults the flag, with or without a space. |
+| `Alice\: Hello` | Default speaker; speech `Alice: Hello` — the escaped colon declines the prefix. |
+| `\Alice: Hello` | Default speaker; speech `\Alice: Hello` — `\A` is not an escape, so the backslash stays. |
+| `\@alice: Hi` | No speaker prefix; the line speaks `@alice: Hi`. |
+| `Alice \@alice: Hi` | Default speaker; speech `Alice @alice: Hi` — the escaped id breaks the prefix. |
+| `Alice: \@alice: Hi` | Speaker Alice; speech `@alice: Hi` — the prefix colon comes before the escape. |
+| `"@alice": Hi` | Speaker named `@alice` — quoting, not escaping, names unusual speakers. |
+| `` `Ready?` \=> `` and `` `Ready?`\=> `` | The condition still guards the line; `PrecedesAJump` asks `StartsWithJumpIndicator`, with or without a space. |
 | `` `\#word` `` (code span) | Still a game call or `DLG1102`; backslashes are literal inside code spans. |
 | `*\#word*` | Styled literal `#word` inside emphasis. |
 | `[\#tag](#x)` in a link label | Label text `#tag`; no tag, matching speech. |
@@ -253,9 +273,10 @@ example. The error-code reference is then regenerated.
 - **Transpiler:** the tokenizer and the line builder honor the flag, per the
   architecture table.
 - **Downstream:** desugar and later are unaffected (D4).
-- **Writer guide:** one *Literal punctuation* section, a syntax-summary row, and
-  pointers from the styling and jump sections; the complete example and the
-  gallery each gain a natural literal. The [Markdown front-end](../core/Markdown%20Front-End.md)
+- **Writer guide:** one *Literal punctuation* section, an *Escaping a speaker
+  prefix* subsection in Speakers and lines, a syntax-summary row, and pointers
+  from the styling and jump sections; the complete example and the gallery each
+  gain a natural literal. The [Markdown front-end](../core/Markdown%20Front-End.md)
   note, the [transpiler](../core/Markdown%20to%20Dialogue%20AST%20Transpiler.md)
   note, and the [dangling-arrow diagnostic](../diagnostics/Dangling%20Arrow%20Diagnostic.md)
   note are reconciled when the code lands.
@@ -296,3 +317,9 @@ example. The error-code reference is then regenerated.
 - **Editor affordance** — highlighting, a literalize transform (context menu and
   shortcut), and suggestions for escaped sigils are deferred to the editor
   surface.
+- **Escaped-prefix warning** — a diagnostic for the ambiguous shapes: the leading
+  text would parse as a speaker prefix if the escape were absent, and the escaped
+  run starts a prefix element (`@`, `#`, or a quoted name) rather than the colon.
+  It points at the better spelling (`"@alice": Hi`, or `Alice: \@alice: Hi`).
+  `Alice\: Hello`, `\Alice: Hello`, `Alice: \@alice: Hi`, and `"@alice": Hi` are
+  deliberate and stay quiet. Tracked as a separate follow-up.
