@@ -1,7 +1,4 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
-using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
@@ -35,11 +32,7 @@ public sealed class PlayableRunTests
         // Two kinds the runner cannot play and a send no reader owns: one run names all three,
         // where stopping at the first would take three runs to learn the same thing.
         var context = Playbooks.Of(
-            [
-                new ChoiceNode(0, Ordered: false, [new OptionEdge(2, [new TextFragment("Go east")], Condition: null)]),
-                new BranchNode(1, [new BranchEdge(2, Order: 0, Condition: null)]),
-                new EndNode(2),
-            ],
+            [Playbooks.Choice(0, leadsTo: 2), Playbooks.Branch(1, leadsTo: 2), Playbooks.End(2)],
             ["Alice"]);
 
         var reasons = PlayableRun.ReasonsNotYetRunnable(context, [Sent("""{ "choose": 0 }""")]);
@@ -58,11 +51,7 @@ public sealed class PlayableRunTests
     public void ReasonsNotYetRunnable_NamesAKindOnce()
     {
         var context = Playbooks.Of(
-            [
-                new ChoiceNode(0, Ordered: false, [new OptionEdge(2, [new TextFragment("Go east")], Condition: null)]),
-                new ChoiceNode(1, Ordered: false, [new OptionEdge(2, [new TextFragment("Go west")], Condition: null)]),
-                new EndNode(2),
-            ],
+            [Playbooks.Choice(0, leadsTo: 2), Playbooks.Choice(1, leadsTo: 2), Playbooks.End(2)],
             ["Alice"]);
 
         Assert.Equal(new[] { "nothing plays a ChoiceNode yet" }, PlayableRun.ReasonsNotYetRunnable(context, []));
@@ -71,10 +60,11 @@ public sealed class PlayableRunTests
     [Fact]
     public void ReasonsNotYetRunnable_OfWhatTheBuildCanPlay_IsEmpty()
     {
-        var context = Playbooks.Of([new EndNode(0)], ["Alice"]);
+        var context = Playbooks.Of([Playbooks.End(0)], ["Alice"]);
 
         Assert.Empty(PlayableRun.ReasonsNotYetRunnable(context, [SentCommand("next")]));
     }
+
     [Fact]
     public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
     {
@@ -82,9 +72,9 @@ public sealed class PlayableRunTests
         // as untaught rather than as a divergence. That screen states what this build can play a
         // second time, and the two must agree: a case would otherwise be reported as untaught
         // while it plays, or as a divergence when nobody had taught it.
-        foreach (var node in EveryKind())
+        foreach (var node in Playbooks.OneOfEachKind())
         {
-            var context = Playbooks.Of([node, new EndNode(1)], ["Alice"]);
+            var context = Playbooks.Of([node, Playbooks.End(1)], ["Alice"]);
             var refused = Arrival.At(context, 0).Events.OfType<Refused>().Any();
 
             Assert.True(
@@ -100,22 +90,10 @@ public sealed class PlayableRunTests
     {
         // Guards the guard: a list that stopped naming kinds would leave the check above agreeing
         // about nothing.
-        var named = EveryKind().Select(node => node.GetType()).ToHashSet();
+        var named = Playbooks.OneOfEachKind().Select(node => node.GetType()).ToHashSet();
         var defined = typeof(Node).Assembly.GetTypes()
             .Where(type => type.IsAssignableTo(typeof(Node)) && !type.IsAbstract);
 
         Assert.Empty(defined.Where(type => !named.Contains(type)).Select(type => type.Name));
     }
-
-    /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
-    private static IEnumerable<Node> EveryKind() =>
-    [
-        new LineNode(0, 0, [new TextFragment("Hello.")], Condition: null, [new SuccessionEdge(1)]),
-        new EndNode(0),
-        new ControlNode(0, [], Condition: null, [new SuccessionEdge(1)]),
-        new ControlNode(0, [new DefaultCommandFragment("fade in")], Condition: null, [new SuccessionEdge(1)]),
-        new ChoiceNode(0, Ordered: false, [new OptionEdge(1, [new TextFragment("Go east")], Condition: null)]),
-        new BranchNode(0, [new BranchEdge(1, Order: 0, Condition: null)]),
-        new RandomChoiceNode(0, [new RandomOptionEdge(1, new AutoWeight(), Condition: null)]),
-    ];
 }

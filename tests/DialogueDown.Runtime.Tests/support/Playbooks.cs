@@ -5,6 +5,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Weights;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -85,6 +86,52 @@ internal static class Playbooks
     /// <returns>The node.</returns>
     public static LineNode Line(int id, int speaker, string text, int next) =>
         new(id, speaker, [new TextFragment(text)], Condition: null, [new SuccessionEdge(next)]);
+
+    /// <summary>An end node: a playthrough that reaches it is over.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <returns>The node.</returns>
+    public static EndNode End(int id) => new(id);
+
+    /// <summary>A choice node offering one option — a kind this pass cannot play.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="leadsTo">Where the option leads.</param>
+    /// <param name="label">What the option offers, as the writer would read it.</param>
+    /// <param name="ordered">Whether the options are a fixed order rather than a menu.</param>
+    /// <returns>The node.</returns>
+    public static ChoiceNode Choice(int id, int leadsTo, string label = "Go east", bool ordered = false) =>
+        new(id, Ordered: ordered, [new OptionEdge(leadsTo, [new TextFragment(label)], Condition: null)]);
+
+    /// <summary>A branch node with one gated arm — a kind this pass cannot play.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="leadsTo">Where the arm leads.</param>
+    /// <param name="order">Where the arm sits in the branch's order.</param>
+    /// <returns>The node.</returns>
+    public static BranchNode Branch(int id, int leadsTo, int order = 0) =>
+        new(id, [new BranchEdge(leadsTo, Order: order, Condition: null)]);
+
+    /// <summary>A random choice with one auto-weighted option — a kind this pass cannot play.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="leadsTo">Where the option leads.</param>
+    /// <returns>The node.</returns>
+    public static RandomChoiceNode RandomChoice(int id, int leadsTo) =>
+        new(id, [new RandomOptionEdge(leadsTo, new AutoWeight(), Condition: null)]);
+
+    /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
+    /// <remarks>
+    /// The one list of the kinds, so a test that walks them and a test that checks the list is
+    /// complete cannot disagree about what "every kind" means.
+    /// </remarks>
+    /// <returns>The nodes, one per kind.</returns>
+    public static ImmutableArray<Node> OneOfEachKind() =>
+    [
+        Line(0, speaker: 0, "Hello.", next: 1),
+        End(0),
+        new ControlNode(0, [], Condition: null, [new SuccessionEdge(1)]),
+        Effects(0, next: 1, "fade in"),
+        Choice(0, leadsTo: 1),
+        Branch(0, leadsTo: 1),
+        RandomChoice(0, leadsTo: 1),
+    ];
 
     /// <summary>A line node that only plays when the world says so.</summary>
     /// <param name="id">Its position in the playbook.</param>
