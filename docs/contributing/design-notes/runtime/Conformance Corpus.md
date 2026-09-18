@@ -450,11 +450,31 @@ asserts the reason, exactly as the readable half asserts a verdict rather than a
 One construct per fixture. Realistic scripts belong in `examples/`, and their
 playbooks are already pinned by C1's goldens.
 
+### F7 — A verdict gathers every reason it carries
+
+One reason per case was the first shape, and it made a contributor fix one
+divergence, re-run, and meet the next — the experience of a compiler that stops
+at the first error, which this project deliberately avoids.
+
+So an outcome carries a **list** of reasons. The verdict lattice is unchanged:
+the gravest verdict still wins, and reasons gather at that gravestness, in the
+order the checks ran. A reason a graver verdict outranks is dropped, because
+reporting a construct nobody has taught the harness beside a real failure would
+only dilute the failure.
+
+The list is flat rather than nested under the claim that found it: a reason is
+written to stand alone — the speaker check names the speaker it expected, a
+fragment check names the fragment's place — so nesting would restate what the
+words already say, and cost a type to do it.
+
+The **run** still stops at the first session entry that does not conform: a send
+advances the run, so carrying on would judge later entries against a state the
+fixture never described. Gathering is for the checks within one entry, where
+nothing has moved.
+
 ## Error and boundary cases
 
-The readable half's failures are implemented; the rest describe the session
-harness and arrive with it in
-C2.
+Both halves' failures are implemented; the harness reports what each one found.
 
 | Case | Behavior | |
 | --- | --- | --- |
@@ -463,11 +483,11 @@ C2.
 | A `refused` names a reason the protocol does not give | Fail as a fixture bug: the schema closes the set, so the fixture and the harness have drifted apart | shipped |
 | A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why | shipped |
 | A case missing a fixture, a playbook, or a source | Fail: the corpus is incomplete, in either half | shipped |
-| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | with C2 |
-| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it | with C2 |
-| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing | with C2 |
-| The run ends before the session does | Fail, for the same reason | with C2 |
-| A `said` differs in one field | Fail, reporting the entry and the field rather than the whole document | with C2 |
+| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | shipped |
+| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it | shipped |
+| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing | shipped |
+| The run ends before the session does | Fail, for the same reason | shipped |
+| A `said` differs in several fields | Fail, reporting every field that differs rather than the whole document, or only the first | shipped |
 
 ## Integration
 

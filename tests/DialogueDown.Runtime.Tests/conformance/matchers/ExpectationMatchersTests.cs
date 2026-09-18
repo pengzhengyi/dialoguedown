@@ -59,6 +59,28 @@ public sealed class ExpectationMatchersTests
     }
 
     [Fact]
+    public void TwoClaimsThatBothFail_AreBothReported()
+    {
+        // The event is speech, so the refused claim fails too; one run names both.
+        var outcome = Match(
+            _hello,
+            """{ "said": { "speaker": "Bob", "speech": "Hi" }, "refused": { "reason": "already-ended" } }""");
+
+        AssertDiverged(outcome, "expected Bob to speak", "expected the run to refuse");
+        Assert.Equal(2, outcome.Reasons.Length);
+    }
+
+    [Fact]
+    public void TwoUncheckedClaims_AreBothNamed()
+    {
+        // What lets one run list every claim the harness has yet to learn.
+        var outcome = Match(_hello, """{ "resolve": [ "Alice.HasKey" ], "describe": true }""");
+
+        AssertNotYetRunnable(outcome, "resolve", "describe");
+        Assert.Equal(2, outcome.Reasons.Length);
+    }
+
+    [Fact]
     public void AnExpectationClaimingNothingIsAnInvalidFixture()
     {
         Assert.Throws<InvalidFixtureException>(() => Match(_hello, "{}"));

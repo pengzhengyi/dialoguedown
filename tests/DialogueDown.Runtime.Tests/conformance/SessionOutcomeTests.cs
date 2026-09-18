@@ -51,24 +51,48 @@ public sealed class SessionOutcomeTests
     }
 
     [Fact]
-    public void Combine_OfTwoDivergences_ReportsTheFirst()
+    public void Combine_OfTwoDivergences_GathersBoth()
     {
+        // A contributor fixes one divergence and re-runs; gathering means meeting both at once.
         var combined = SessionOutcome.Combine([
             SessionOutcome.Diverged("the speaker"),
             SessionOutcome.Diverged("the speech")]);
 
-        Assert.Equal("the speaker", combined.Because);
+        Assert.Equal(["the speaker", "the speech"], combined.Reasons);
     }
 
     [Fact]
-    public void Combine_StopsReadingAtTheFirstDivergence()
+    public void Combine_OfTwoUnrunnableClaims_GathersBoth()
+    {
+        // What lets one run name every construct this build has yet to learn.
+        var combined = SessionOutcome.Combine([
+            SessionOutcome.NotYetRunnable("nothing checks resolve yet"),
+            SessionOutcome.NotYetRunnable("nothing checks asked yet")]);
+
+        Assert.Equal(SessionVerdict.NotYetRunnable, combined.Verdict);
+        Assert.Equal(["nothing checks resolve yet", "nothing checks asked yet"], combined.Reasons);
+    }
+
+    [Fact]
+    public void Combine_DropsTheReasonsOfAVerdictItOutranks()
+    {
+        var combined = SessionOutcome.Combine([
+            SessionOutcome.NotYetRunnable("nothing checks resolve yet"),
+            SessionOutcome.Diverged("the speaker"),
+            SessionOutcome.Diverged("the speech")]);
+
+        Assert.Equal(["the speaker", "the speech"], combined.Reasons);
+    }
+
+    [Fact]
+    public void Combine_ReadsEveryPartial()
     {
         var read = 0;
 
         var combined = SessionOutcome.Combine(Counted());
 
         Assert.Equal(SessionVerdict.Diverged, combined.Verdict);
-        Assert.Equal(2, read);
+        Assert.Equal(3, read);
 
         IEnumerable<SessionOutcome> Counted()
         {
@@ -76,7 +100,7 @@ public sealed class SessionOutcomeTests
             {
                 SessionOutcome.Conformed(),
                 SessionOutcome.Diverged("said the wrong thing"),
-                SessionOutcome.Diverged("never read"),
+                SessionOutcome.Diverged("never read before"),
             })
             {
                 read++;
@@ -103,5 +127,29 @@ public sealed class SessionOutcomeTests
         Assert.True(SessionOutcome.Conformed().IsConformed);
         Assert.False(SessionOutcome.Diverged("nope").IsConformed);
         Assert.False(SessionOutcome.NotYetRunnable("not yet").IsConformed);
+    }
+
+    [Fact]
+    public void Because_OfNothing_SaysNothingDiverged()
+    {
+        Assert.Equal("nothing diverged", SessionOutcome.Conformed().Because);
+    }
+
+    [Fact]
+    public void Because_OfOneReason_IsThatReason()
+    {
+        Assert.Equal("the speaker", SessionOutcome.Diverged("the speaker").Because);
+    }
+
+    [Fact]
+    public void Because_OfSeveralReasons_CountsAndListsThem()
+    {
+        var combined = SessionOutcome.Combine([
+            SessionOutcome.Diverged("the speaker"),
+            SessionOutcome.Diverged("the speech")]);
+
+        Assert.Equal(
+            $"2 reasons:{Environment.NewLine}  - the speaker{Environment.NewLine}  - the speech",
+            combined.Because);
     }
 }
