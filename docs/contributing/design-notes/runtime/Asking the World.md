@@ -93,7 +93,8 @@ holds — `false` for a guard, `"Robin"` for a query.
 | --- | --- | --- |
 | `Resolve(keys)` | A reverse request: the keys this node needs answered | `Request`, alongside `Perform` |
 | `Supply(answers)` | The command answering it | `Command` |
-| `Answer` | What the world said about one key, as a closed union | `AnswerKinds`, the fixture reader |
+| `Answer` | What the world said about one key, as a closed union | `AnswerJsonConverter` |
+| `AnswerJsonConverter` | Reads and writes an answer as the bare JSON value it is | Every reader of a supply |
 | `AwaitingSupply(node, keys)` | Where a run is between the ask and its answer | `Situation`, alongside `AwaitingDone` |
 | `Questions` | Reads every key one node needs, in one place | `Arrival` |
 | `Answers` | Holds what came back, once it matches what was asked, and reads a key as a truth or as text | `Questions`, `Evaluation` |
@@ -129,10 +130,9 @@ bought by `Perform` being answered before the run goes on.
 answers: a guard needs a truth, a weight a number, and interpolation text. The
 wire agrees — `supply` carries `false` for one and `"Robin"` for another.
 
-So `Answer` is a tagged union in the manner of every other union in the format,
-with an `AnswerKinds` class of wire tags beside it. The members take the format's
-own `<Qualifier><Base>` shape, as `TextFragment` and `KeyCondition` already do.
-This pass needs two:
+So `Answer` is a closed union in the manner of every other union in the format,
+and its members take the same `<Qualifier><Base>` shape as `TextFragment` and
+`KeyCondition` do. This pass needs two:
 
 | Member | Wire | Used by |
 | --- | --- | --- |
@@ -140,8 +140,21 @@ This pass needs two:
 | `TextAnswer(string)` | a JSON string | A query in speech |
 
 A third member, for numbers, joins them when dynamic weights arrive. Adding a
-member to a tagged union is additive here, and a member nothing produces would be
+member to a closed union is additive here, and a member nothing produces would be
 dead code today.
+
+Unlike the format's unions, this one needs no class of wire tags. A supplied
+answer carries no discriminator, because the JSON value already is one:
+
+```json
+{ "Alice.HasKey": false, "playerName": "Robin" }
+```
+
+`AnswerJsonConverter` is where that rule lives — a boolean is a truth, a string is
+words, and anything else is refused rather than guessed at, since a number could
+be a weight or a count and nothing on the wire says which. Keeping it in the
+package rather than in each reader is what stops a fixture, a recorded session,
+and a driver on the far side of a socket from each inventing their own.
 
 ### A4 — The runner checks the answers against its own questions
 
@@ -239,7 +252,7 @@ keep testing for no one.
 
 | Seam | Change |
 | --- | --- |
-| `protocol` | `Resolve` joins `Perform` as a request; `Supply` joins the commands; `Answer` and `AnswerKinds` are new |
+| `protocol` | `Resolve` joins `Perform` as a request; `Supply` joins the commands; `Answer` and its JSON converter are new |
 | `situations` | `AwaitingSupply` joins `AwaitingDone` |
 | `Arrival` | Asks before it plays; steps over a node whose condition fails |
 | `Questions`, `Answers`, `Evaluation` | New, and each testable without a playbook |
@@ -260,6 +273,7 @@ makes two lists fail by name, which is the reminder this pass is owed.
 | --- | --- |
 | Unit — questions | Every source of a key: a node's own condition, its arms', and its speech; one node needing all three |
 | Unit — answers | The set matching; a key missing; a key nobody asked about; a key read as the wrong kind |
+| Unit — reading a supply | Each kind read and written back; a number, a null, and a structure all refused |
 | Unit — evaluation | A condition that holds, and one that fails |
 | Unit — arrival | A failing node stepped over; a failing arm not taken; a branch taking its first holding arm and its `else` |
 | Unit — speech | A query substituted; a line with text and a query together; a query whose answer is empty |
