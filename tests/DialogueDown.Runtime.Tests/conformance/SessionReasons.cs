@@ -7,12 +7,12 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 internal static class SessionReasons
 {
     /// <summary>A node kind this build cannot play.</summary>
-    /// <param name="construct">The kind's name, as the type gives it.</param>
+    /// <param name="kind">The kind's name, as the type gives it.</param>
     /// <returns>The reason.</returns>
-    public static string NothingPlays(string construct) => $"nothing plays a {construct} yet";
+    public static string UnplayableNodeKind(string kind) => $"nothing plays a {kind} yet";
 
     /// <summary>A message nothing knows how to send.</summary>
     /// <param name="message">What the session sends, as the fixture writes it.</param>
     /// <returns>The reason.</returns>
-    public static string NothingSends(string message) => $"nothing sends {message} yet";
+    public static string UnsendableMessage(string message) => $"nothing sends {message} yet";
 }

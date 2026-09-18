@@ -46,14 +46,14 @@ internal static class Playability
             .Where(node => !CanPlay(node))
             .Select(node => node.GetType().Name)
             .Distinct(StringComparer.Ordinal)
-            .Select(SessionReasons.NothingPlays);
+            .Select(SessionReasons.UnplayableNodeKind);
 
     /// <summary>Why a session entry cannot be taken, or nothing when it can.</summary>
     /// <param name="entry">The entry to ask about.</param>
     /// <returns>The reason, or an empty sequence.</returns>
     public static IEnumerable<string> WhyNotPlayable(SessionEntry entry) =>
         entry is Send send && !CanPlay(send)
-            ? [SessionReasons.NothingSends(send.Message.ToJsonString())]
+            ? [SessionReasons.UnsendableMessage(send.Message.ToJsonString())]
             : [];
 
     /// <summary>Why a session is not playable yet: one reason per send no reader owns.</summary>
