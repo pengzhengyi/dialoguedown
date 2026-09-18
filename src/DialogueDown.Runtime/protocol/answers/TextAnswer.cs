@@ -13,5 +13,5 @@ namespace DialogueDown.Runtime.Protocol;
 /// rendering it, a log replaying it, a fixture comparing it — sees that same sentence.
 /// </para>
 /// </remarks>
-/// <param name="Value">The words the world gave.</param>
-public sealed record TextAnswer(string Value) : Answer;
+/// <param name="Text">The words the world gave.</param>
+public sealed record TextAnswer(string Text) : Answer;

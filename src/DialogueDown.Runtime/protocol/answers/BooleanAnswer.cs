@@ -14,4 +14,4 @@ namespace DialogueDown.Runtime.Protocol;
 /// </para>
 /// </remarks>
 /// <param name="Holds">Whether the world says it is so.</param>
-public sealed record TruthAnswer(bool Holds) : Answer;
+public sealed record BooleanAnswer(bool Holds) : Answer;

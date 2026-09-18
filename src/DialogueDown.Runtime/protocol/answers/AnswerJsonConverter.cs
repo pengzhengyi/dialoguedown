@@ -36,7 +36,7 @@ public sealed class AnswerJsonConverter : JsonConverter<Answer>
     public override Answer Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
         reader.TokenType switch
         {
-            JsonTokenType.True or JsonTokenType.False => new TruthAnswer(reader.GetBoolean()),
+            JsonTokenType.True or JsonTokenType.False => new BooleanAnswer(reader.GetBoolean()),
             JsonTokenType.String => new TextAnswer(reader.GetString()!),
             var other => throw new JsonException(
                 $"An answer is written as the value it is, so it must be a boolean or a string. "
@@ -50,11 +50,11 @@ public sealed class AnswerJsonConverter : JsonConverter<Answer>
 
         switch (value)
         {
-            case TruthAnswer truth:
+            case BooleanAnswer truth:
                 writer.WriteBooleanValue(truth.Holds);
                 break;
-            case TextAnswer text:
-                writer.WriteStringValue(text.Value);
+            case TextAnswer words:
+                writer.WriteStringValue(words.Text);
                 break;
             default:
                 throw new JsonException(

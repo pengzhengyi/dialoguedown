@@ -20,13 +20,13 @@ public sealed class AnswerJsonConverterTests
     [InlineData("true", true)]
     [InlineData("false", false)]
     public void ABoolean_ReadsAsATruth(string json, bool holds) =>
-        Assert.Equal(holds, Assert.IsType<TruthAnswer>(Read(json)).Holds);
+        Assert.Equal(holds, Assert.IsType<BooleanAnswer>(Read(json)).Holds);
 
     [Theory]
     [InlineData("\"Robin\"", "Robin")]
     [InlineData("\"\"", "")]
-    public void AString_ReadsAsWords(string json, string value) =>
-        Assert.Equal(value, Assert.IsType<TextAnswer>(Read(json)).Value);
+    public void AString_ReadsAsWords(string json, string text) =>
+        Assert.Equal(text, Assert.IsType<TextAnswer>(Read(json)).Text);
 
     [Theory]
     [InlineData("4")]
@@ -39,7 +39,7 @@ public sealed class AnswerJsonConverterTests
     [Fact]
     public void AnAnswer_WritesBackAsTheValueItCameFrom()
     {
-        Assert.Equal("true", JsonSerializer.Serialize<Answer>(new TruthAnswer(true), _options));
+        Assert.Equal("true", JsonSerializer.Serialize<Answer>(new BooleanAnswer(true), _options));
         Assert.Equal("\"Robin\"", JsonSerializer.Serialize<Answer>(new TextAnswer("Robin"), _options));
     }
 
@@ -50,8 +50,8 @@ public sealed class AnswerJsonConverterTests
         var answers = JsonSerializer.Deserialize<Dictionary<string, Answer>>(
             """{ "Alice.HasKey": false, "playerName": "Robin" }""", _options)!;
 
-        Assert.False(Assert.IsType<TruthAnswer>(answers["Alice.HasKey"]).Holds);
-        Assert.Equal("Robin", Assert.IsType<TextAnswer>(answers["playerName"]).Value);
+        Assert.False(Assert.IsType<BooleanAnswer>(answers["Alice.HasKey"]).Holds);
+        Assert.Equal("Robin", Assert.IsType<TextAnswer>(answers["playerName"]).Text);
     }
 
     private static Answer? Read(string json) => JsonSerializer.Deserialize<Answer>(json, _options);

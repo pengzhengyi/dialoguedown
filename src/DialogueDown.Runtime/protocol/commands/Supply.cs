@@ -8,7 +8,7 @@ namespace DialogueDown.Runtime.Protocol;
 /// <remarks>
 /// The answer to a <see cref="Resolve"/>, carrying one answer for every key it asked about and
 /// none it did not — a run asked about <c>Alice.HasKey</c> is answered
-/// <c>{ "Alice.HasKey": TruthAnswer(false) }</c>, and anything else is refused.
+/// <c>{ "Alice.HasKey": BooleanAnswer(false) }</c>, and anything else is refused.
 /// <para>
 /// Where the driver found the answers is its own business. A live game, a saved reading, and a
 /// table of defaults all arrive here looking the same, which is what lets the same script run

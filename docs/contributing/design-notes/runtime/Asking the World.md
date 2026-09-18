@@ -136,8 +136,8 @@ and its members take the same `<Qualifier><Base>` shape as `TextFragment` and
 
 | Member | Wire | Used by |
 | --- | --- | --- |
-| `TruthAnswer(bool)` | `true` / `false` | A condition on a node or an edge |
-| `TextAnswer(string)` | a JSON string | A query in speech |
+| `BooleanAnswer(bool Holds)` | `true` / `false` | A condition on a node or an edge |
+| `TextAnswer(string Text)` | a JSON string | A query in speech |
 
 A third member, for numbers, joins them when dynamic weights arrive. Adding a
 member to a closed union is additive here, and a member nothing produces would be
