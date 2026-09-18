@@ -2,6 +2,7 @@ using System.Reflection;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Playbook.Tests.Conditions;
 
@@ -52,9 +53,8 @@ public sealed class IConditionalTests
 
     /// <summary>Every node and edge the format defines that declares a condition of its own.</summary>
     private static List<Type> ConditionCarryingKinds() =>
-        typeof(Node).Assembly.GetTypes()
-            .Where(type => type.IsAssignableTo(typeof(Node)) || type.IsAssignableTo(typeof(Edge)))
-            .Where(type => !type.IsAbstract)
+        UnionMembers.Of<Node>()
+            .Concat(UnionMembers.Of<Edge>())
             .Where(type => type.GetProperty(nameof(IConditional.Condition), BindingFlags.Public | BindingFlags.Instance) is not null)
             .ToList();
 }

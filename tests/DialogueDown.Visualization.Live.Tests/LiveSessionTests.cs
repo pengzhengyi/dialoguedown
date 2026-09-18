@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DialogueDown.ConfigurationLoader;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Configuration;
 using DialogueDown.Visualization.Live.Files;
@@ -14,8 +15,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void RenderInitialHtml_MarksThePayloadWithTheSessionMode()
     {
-        using var doc = new TempDocument("# Scene");
-        var session = new LiveSession(doc.Path);
+        using var script = new TempScript("# Scene");
+        var session = new LiveSession(script.Path);
 
         var html = session.RenderInitialHtml();
 
@@ -26,9 +27,9 @@ public sealed class LiveSessionTests
     [Fact]
     public void Mode_Explicit_IsCarriedIntoThePayload()
     {
-        using var doc = new TempDocument("# Scene");
+        using var script = new TempScript("# Scene");
 
-        var session = new LiveSession(doc.Path, "edit");
+        var session = new LiveSession(script.Path, "edit");
 
         Assert.Equal("edit", session.Mode);
         Assert.Contains("\"mode\":\"edit\"", session.CurrentDocumentJson());
@@ -37,8 +38,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void CurrentDocumentJson_CarriesPathSourceAndStages()
     {
-        using var doc = new TempDocument("# Scene");
-        var session = new LiveSession(doc.Path);
+        using var script = new TempScript("# Scene");
+        var session = new LiveSession(script.Path);
 
         var json = session.CurrentDocumentJson();
 
@@ -50,10 +51,10 @@ public sealed class LiveSessionTests
     [Fact]
     public void Refresh_BroadcastsAReloadWithTheCurrentContent()
     {
-        using var doc = new TempDocument("# First");
-        var session = new LiveSession(doc.Path);
+        using var script = new TempScript("# First");
+        var session = new LiveSession(script.Path);
         using var subscription = session.Broadcaster.Subscribe(out var reader);
-        File.WriteAllText(doc.Path, "# Second");
+        File.WriteAllText(script.Path, "# Second");
 
         session.Refresh();
 
@@ -100,12 +101,12 @@ public sealed class LiveSessionTests
     [Fact]
     public void Save_MatchingBaseline_WritesTheBufferAndReturnsSaved()
     {
-        using var doc = new TempDocument("# Old");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Old");
+        var session = new LiveSession(script.Path, "edit");
 
         var json = session.Save(new SaveInput("# New\n\nAlice: Hi", ExpectedBaseline: "# Old"));
 
-        Assert.Equal("# New\n\nAlice: Hi", File.ReadAllText(doc.Path));
+        Assert.Equal("# New\n\nAlice: Hi", File.ReadAllText(script.Path));
         Assert.Contains("\"outcome\":\"saved\"", json);
         Assert.Contains("\"source\":\"# New", json);
         Assert.Contains("\"stages\":[", json);
@@ -150,13 +151,13 @@ public sealed class LiveSessionTests
     [Fact]
     public void Save_BaselineMismatch_ReturnsConflictAndWritesNothing()
     {
-        using var doc = new TempDocument("# External");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# External");
+        var session = new LiveSession(script.Path, "edit");
 
         var json = session.Save(new SaveInput("# Mine", ExpectedBaseline: "# Old"));
 
         Assert.Contains("\"outcome\":\"conflict\"", json);
-        Assert.Equal("# External", File.ReadAllText(doc.Path)); // untouched
+        Assert.Equal("# External", File.ReadAllText(script.Path)); // untouched
     }
 
     [Fact]
@@ -165,15 +166,15 @@ public sealed class LiveSessionTests
         // A newer external write races the commit so AtomicFile cannot establish a safe state: the
         // save must surface an explicit uncertain outcome (not an ordinary no-write failure) and
         // must never clobber the newer external data.
-        using var doc = new TempDocument("# Old");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Old");
+        var session = new LiveSession(script.Path, "edit");
 
         var json = session.Save(
             new SaveInput("# Mine", ExpectedBaseline: "# Old"),
-            afterReplace: () => File.WriteAllText(doc.Path, "# Newer external"));
+            afterReplace: () => File.WriteAllText(script.Path, "# Newer external"));
 
         Assert.Contains("\"outcome\":\"uncertain\"", json);
-        Assert.Equal("# Newer external", File.ReadAllText(doc.Path)); // the newer data stands
+        Assert.Equal("# Newer external", File.ReadAllText(script.Path)); // the newer data stands
     }
 
     [Fact]
@@ -197,35 +198,35 @@ public sealed class LiveSessionTests
     [Fact]
     public void Save_ConfirmedOverwrite_BypassesTheBaselineCheck()
     {
-        using var doc = new TempDocument("# External");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# External");
+        var session = new LiveSession(script.Path, "edit");
 
         var json = session.Save(
             new SaveInput("# Mine", ExpectedBaseline: "# Old", Conflict: "overwrite"));
 
         Assert.Contains("\"outcome\":\"saved\"", json);
-        Assert.Equal("# Mine", File.ReadAllText(doc.Path));
+        Assert.Equal("# Mine", File.ReadAllText(script.Path));
     }
 
     [Fact]
     public void Save_DiskAlreadyEqualsTheRequest_ReturnsIdempotentSaved()
     {
-        using var doc = new TempDocument("# Same");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Same");
+        var session = new LiveSession(script.Path, "edit");
 
         // The disk already equals the requested source (a lost response), so a retry with a
         // different expected baseline still succeeds without a conflict.
         var json = session.Save(new SaveInput("# Same", ExpectedBaseline: "# Stale"));
 
         Assert.Contains("\"outcome\":\"saved\"", json);
-        Assert.Equal("# Same", File.ReadAllText(doc.Path));
+        Assert.Equal("# Same", File.ReadAllText(script.Path));
     }
 
     [Fact]
     public async Task Save_ConcurrentSavesFromTheSameBaseline_ExactlyOneWinsTheOtherConflicts()
     {
-        using var doc = new TempDocument("# Base");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Base");
+        var session = new LiveSession(script.Path, "edit");
         var ready = new Barrier(2);
 
         string SaveFrom(string source)
@@ -245,7 +246,7 @@ public sealed class LiveSessionTests
         Assert.Single(results, json => json.Contains("\"outcome\":\"conflict\""));
 
         var winner = results[0].Contains("\"outcome\":\"saved\"") ? "# First" : "# Second";
-        Assert.Equal(winner, File.ReadAllText(doc.Path));
+        Assert.Equal(winner, File.ReadAllText(script.Path));
     }
 
     [Fact]
@@ -275,22 +276,22 @@ public sealed class LiveSessionTests
     [Fact]
     public void Refresh_ExternalChangeBackToSelfWrittenContent_StillBroadcasts()
     {
-        using var doc = new TempDocument("# Old");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Old");
+        var session = new LiveSession(script.Path, "edit");
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
         session.Save(new SaveInput("# B", ExpectedBaseline: "# Old"));
         session.Refresh(); // the browser's own write is suppressed once, consuming the token
         Assert.False(reader.TryRead(out _));
 
-        File.WriteAllText(doc.Path, "# A");
+        File.WriteAllText(script.Path, "# A");
         session.Refresh();
         Assert.True(reader.TryRead(out var toA));
         Assert.Contains("# A", toA!.Data);
 
         // An external change back to the earlier self-written content is a real external edit now,
         // not a stale self-write: one-shot suppression means it still reloads.
-        File.WriteAllText(doc.Path, "# B");
+        File.WriteAllText(script.Path, "# B");
         session.Refresh();
         Assert.True(reader.TryRead(out var backToB));
         Assert.Contains("# B", backToB!.Data);
@@ -299,8 +300,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void Refresh_AfterSave_SuppressesTheSelfTriggeredReload()
     {
-        using var doc = new TempDocument("# Old");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Old");
+        var session = new LiveSession(script.Path, "edit");
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
         session.Save(new SaveInput("# Saved", ExpectedBaseline: "# Old"));
@@ -312,12 +313,12 @@ public sealed class LiveSessionTests
     [Fact]
     public void Refresh_ExternalChangeAfterSave_StillBroadcasts()
     {
-        using var doc = new TempDocument("# Old");
-        var session = new LiveSession(doc.Path, "edit");
+        using var script = new TempScript("# Old");
+        var session = new LiveSession(script.Path, "edit");
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
         session.Save(new SaveInput("# Saved", ExpectedBaseline: "# Old"));
-        File.WriteAllText(doc.Path, "# External");
+        File.WriteAllText(script.Path, "# External");
         session.Refresh();
 
         Assert.True(reader.TryRead(out var received));
@@ -430,8 +431,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void SaveConfig_WithoutAConfigFile_Throws()
     {
-        using var doc = new TempDocument("# Scene");
-        var session = new LiveSession(doc.Path, VisualizationMode.Edit);
+        using var script = new TempScript("# Scene");
+        var session = new LiveSession(script.Path, VisualizationMode.Edit);
 
         Assert.Throws<InvalidOperationException>(
             () => session.Save(new SaveInput(Speaker("Bob", "B"), "config")));
@@ -440,9 +441,9 @@ public sealed class LiveSessionTests
     [Fact]
     public void Reload_Document_ReturnsLoadedWithTheDiskContent()
     {
-        using var doc = new TempDocument("# Old");
-        var session = new LiveSession(doc.Path, "edit");
-        File.WriteAllText(doc.Path, "# External");
+        using var script = new TempScript("# Old");
+        var session = new LiveSession(script.Path, "edit");
+        File.WriteAllText(script.Path, "# External");
 
         var json = session.Reload(null);
 
@@ -810,8 +811,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void RefreshConfig_WithoutAConfigFile_DoesNothing()
     {
-        using var doc = new TempDocument("# Scene");
-        var session = new LiveSession(doc.Path, VisualizationMode.Edit);
+        using var script = new TempScript("# Scene");
+        var session = new LiveSession(script.Path, VisualizationMode.Edit);
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
         session.RefreshConfig();

@@ -1,5 +1,5 @@
 using DialogueDown.Cli.Commands;
-using DialogueDown.Cli.Tests.Support;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -32,8 +32,8 @@ public sealed class ConfigArgumentTests
     [Fact]
     public void Validate_ExistingFile_Succeeds()
     {
-        using var dir = new TempDir();
-        var configPath = dir.Write("dialogue.toml", "");
+        using var tree = new TempTree();
+        var configPath = tree.File("dialogue.toml", "");
 
         Assert.True(ConfigArgument.Validate(configPath).Successful);
     }

@@ -4,6 +4,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Tests.Support;
 using DialogueDown.Playbook.Weights;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Playbook.Tests.Checking;
 
@@ -225,9 +226,7 @@ public sealed class OutwardShapeCheckerTests
     [Fact]
     public void EveryConcreteNodeKind_HasARowInTheShapeRule()
     {
-        var kinds = typeof(Node).Assembly.GetTypes()
-            .Where(type => type.IsSubclassOf(typeof(Node)) && !type.IsAbstract)
-            .ToArray();
+        var kinds = UnionMembers.Of<Node>().ToArray();
 
         // If this fails, a node kind was added: give it a row in OutwardShapeChecker.ShapeOf and
         // accept/refuse cases here.

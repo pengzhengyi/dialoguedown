@@ -309,9 +309,9 @@ stands today. And a node with two effects must produce two requests and **one**
 wait, which is the half of W4 a single-effect fixture cannot show.
 
 Two lists shadow what the runner can play — the harness's screen, and the walk
-property's generator. The first is held to the runner by a test, for every node
-kind the format defines. The second is not, and widening it is still something
-somebody has to remember.
+property's generator. Each is held to the runner by a test of its own, for every
+node kind the format defines, so a kind the runner learns is a kind both lists are
+made to account for.
 
 ## Open questions and deferred work
 

@@ -1,6 +1,6 @@
 using DialogueDown.Emission;
 using DialogueDown.Playbook.Speech;
-using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.SpeechAssert;
 using Ast = DialogueDown.Script.Ast;
@@ -86,7 +86,7 @@ public sealed class SpeechMappingTests
     [Fact]
     public void Write_EveryFragmentTheAstCanHold_ProducesOne()
     {
-        MappingAssert.AssertCoversEveryMember<Ast.InlineFragment>([.. SpeakableFragments(), .. FlowFragments()]);
+        UnionCoverageAssert.AssertCoversEveryMember<Ast.InlineFragment>([.. SpeakableFragments(), .. FlowFragments()]);
 
         Assert.All(SpeakableFragments(), fragment => Assert.NotNull(SpeechMapping.Write(fragment)));
     }

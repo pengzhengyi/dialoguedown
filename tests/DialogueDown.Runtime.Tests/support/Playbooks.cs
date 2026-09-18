@@ -5,6 +5,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Weights;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -170,6 +171,25 @@ internal static class Playbooks
             [.. actions.Select(SpeechFragment (action) => new DefaultCommandFragment(action))],
             Condition: null,
             [new SuccessionEdge(next)]);
+
+    /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
+    /// <remarks>
+    /// Written out rather than reflected over, because a kind has to be built before it can be
+    /// asked anything, and only a person knows what the simplest one of each looks like. A test
+    /// guards the list against the format, so a kind added to the format and not to this reads as
+    /// a failure rather than as a quiet gap.
+    /// </remarks>
+    /// <returns>The nodes, each standing at position 0 and leading to position 1.</returns>
+    public static IEnumerable<Node> OneOfEveryNodeKind() =>
+    [
+        new LineNode(0, 0, [new TextFragment("Hello.")], Condition: null, [new SuccessionEdge(1)]),
+        new EndNode(0),
+        new ControlNode(0, [], Condition: null, [new SuccessionEdge(1)]),
+        new ControlNode(0, [new DefaultCommandFragment("fade in")], Condition: null, [new SuccessionEdge(1)]),
+        new ChoiceNode(0, Ordered: false, [new OptionEdge(1, [new TextFragment("Go east")], Condition: null)]),
+        new BranchNode(0, [new BranchEdge(1, Order: 0, Condition: null)]),
+        new RandomChoiceNode(0, [new RandomOptionEdge(1, new AutoWeight(), Condition: null)]),
+    ];
 
     /// <summary>A line node nothing leads on from.</summary>
     /// <param name="id">Its position in the playbook.</param>

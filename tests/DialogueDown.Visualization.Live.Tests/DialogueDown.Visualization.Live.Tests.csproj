@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown.Visualization.Live\DialogueDown.Visualization.Live.csproj" />
+    <ProjectReference Include="..\DialogueDown.TestSupport\DialogueDown.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>
