@@ -1,12 +1,18 @@
 namespace DialogueDown.Runtime.Positions;
 
 /// <summary>
-/// Where a run stands, and at what stage.
+/// Which node a run has reached, and what it is doing there.
 /// </summary>
 /// <remarks>
-/// A run is not always simply <em>at</em> a node: later it will pause at a line it has already
-/// reached, waiting for the world to answer a question that line asks. One value carries both
-/// where the run is and what stage it is at, so the two can never disagree.
+/// Two facts travel as one value. The first is where the run is. The second is what is happening
+/// at that node: the run may have said a line and be waiting for the player to read on, or have
+/// asked the host to carry out an effect, or have asked the world a question the node depends on.
+/// <para>
+/// Both are needed to know what may be sent next, and neither is enough alone. A run at node 4
+/// that has just said a line takes <c>Next</c>. The same run at node 4, having asked the world
+/// about <c>Alice.HasKey</c>, takes <c>Supply</c> and refuses <c>Next</c>. Carrying the two
+/// together is what stops them disagreeing.
+/// </para>
 /// </remarks>
 public abstract record Position
 {
