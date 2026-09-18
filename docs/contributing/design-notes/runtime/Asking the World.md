@@ -82,8 +82,9 @@ holds — `false` for a guard, `"Robin"` for a query.
 - [ ] A branch node with no satisfied arm and no `else` leads nowhere, and says so.
 - [ ] Every key one node needs is asked for in a single `Resolve`.
 - [ ] A query in speech is replaced by what the world said before the line is said.
-- [ ] `Supply` answering something nobody asked, or missing something that was
-      asked, is refused.
+- [ ] A key asked and left unanswered is refused, and so is a key answered that
+      nobody asked about.
+- [ ] An answer of the wrong kind for the question is refused.
 - [ ] `UnansweredCondition` is gone, and nothing produces it.
 
 ## Interfaces and abstractions
@@ -94,8 +95,9 @@ holds — `false` for a guard, `"Robin"` for a query.
 | `Supply(answers)` | The command answering it | `Command` |
 | `Answer` | What the world said about one key, as a closed union | `AnswerKinds`, the fixture reader |
 | `AwaitingSupply(node, keys)` | The stage between the ask and its answer | `Position`, alongside `AwaitingDone` |
-| `Needs` | Reads every key one node requires, in one place | `Arrival` |
-| `Evaluation` | Answers whether a condition holds, given what was supplied | `Arrival`, `NodeTraversalExtensions` |
+| `Questions` | Reads every key one node needs, in one place | `Arrival` |
+| `Answers` | Holds what came back, once it matches what was asked, and reads a key as a truth or as text | `Questions`, `Evaluation` |
+| `Evaluation` | Answers whether a condition holds, given what came back | `Arrival`, `NodeTraversalExtensions` |
 
 ## Key design decisions
 
@@ -128,18 +130,44 @@ answers: a guard needs a truth, a weight a number, and interpolation text. The
 wire agrees — `supply` carries `false` for one and `"Robin"` for another.
 
 So `Answer` is a tagged union in the manner of every other union in the format,
-with an `AnswerKinds` class of wire tags beside it. This pass needs two members:
+with an `AnswerKinds` class of wire tags beside it. The members take the format's
+own `<Qualifier><Base>` shape, as `TextFragment` and `KeyCondition` already do.
+This pass needs two:
 
 | Member | Wire | Used by |
 | --- | --- | --- |
-| `Truth(bool)` | `true` / `false` | A condition on a node or an edge |
-| `Text(string)` | a JSON string | A query in speech |
+| `TruthAnswer(bool)` | `true` / `false` | A condition on a node or an edge |
+| `TextAnswer(string)` | a JSON string | A query in speech |
 
 A third member, for numbers, joins them when dynamic weights arrive. Adding a
 member to a tagged union is additive here, and a member nothing produces would be
 dead code today.
 
-### A4 — A failing condition routes; it does not refuse
+### A4 — The runner checks the answers against its own questions
+
+A driver may answer something nobody asked, or leave something asked unanswered.
+Both are refused, and the check needs no memory to make: the keys the run asked
+about are carried in the position, so the comparison is set equality between what
+was asked and what came back.
+
+That makes it a function of two collections and nothing else, which is why it
+lives in `Answers` rather than inside arrival. `Questions` builds the set going
+out, `Answers` checks the set coming back, and each can be tested without a
+playbook in sight.
+
+### A5 — The runner is the mechanism; the driver is the policy
+
+A driver may answer from a live world, a cache, a recorded session, or a table of
+defaults, and may have its own rules for a key nobody bound. None of that reaches
+the runner, which asks a question and reads an answer.
+
+The separation is worth stating because the architecture note's permissive default
+— a script plays with no bindings at all — is easy to mistake for something the
+runner does. It is not: by the time a key arrives in `Supply`, the driver has
+already applied whatever policy it has. This is the same line A2 draws for
+caching, seen from the other side.
+
+### A6 — A failing condition routes; it does not refuse
 
 `a-conditional-line` fixes this: with `Alice.HasKey` false, the next thing the run
 says is the *following* line. So a node whose own condition fails is stepped over
@@ -151,7 +179,7 @@ An edge's condition is a different question with a different answer: an arm whos
 condition fails is simply not among the ways out. `OnwardTarget` grows a filter
 rather than a new concept.
 
-### A5 — The stage lives in the position
+### A7 — The stage lives in the position
 
 `AwaitingSupply(node, keys)` holds both the node the run is standing at and the
 keys it asked about, exactly as the runtime core note's state diagram drew it.
@@ -161,7 +189,7 @@ question it asked. Carrying the node is what lets the step that receives `Supply
 finish the arrival it started — because nothing was remembered, that step
 re-reads the node and evaluates it with the answers in hand.
 
-### A6 — A branch node is walked past, not stood at
+### A8 — A branch node is walked past, not stood at
 
 A branch says nothing and asks the host for nothing. It exists to choose an arm.
 So it belongs to the same family as the empty control node: the walk resolves its
@@ -172,7 +200,7 @@ The arms' order is not this pass's to decide. The reader already guarantees that
 branch's arms appear in strictly ascending `order`, that at least one is gated, and
 that a conditionless `else` comes last, so the runner tries them as it finds them.
 
-### A7 — A query is substituted before the line is said
+### A9 — A query is substituted before the line is said
 
 `Said` carries speech as fragments, and `QueryFragment` carries a key. When the
 answers are in hand, each query fragment becomes a `TextFragment` holding what the
@@ -189,13 +217,19 @@ replays. It also leaves `SpeechText` with nothing new to know.
 | --- | --- |
 | `Supply` when nothing was asked | Refused as misplaced, as `Done` already is |
 | `Next` while the run awaits a supply | Refused as misplaced |
-| A key that was asked and not answered | Refused, naming the key |
-| A key answered that was not asked | Refused, naming the key |
-| An answer of the wrong kind for its use — text where a guard needs a truth | Refused, naming the key and both kinds |
+| A key that was asked and not answered | `UnansweredKey`, naming the key |
+| A key answered that was not asked | `UnaskedKey`, naming the key |
+| An answer of the wrong kind for its use — text where a guard needs a truth | `WrongAnswerKind`, naming the key and both kinds |
 | A branch whose arms all fail, with no `else` | Leads nowhere, which the existing reason already covers |
 | A skipped node whose succession leads nowhere | Leads nowhere |
 | A ring of nodes whose conditions all fail | The existing ring bound refuses it |
 | A node with a condition **and** a query in its speech | One ask carrying both keys |
+
+The three refusals divide one driver mistake three ways on purpose. A reason is
+what a fixture compares, so a port that answers the wrong question and a port that
+answers with the wrong type disagree with us for reasons a reader can tell apart.
+The first two are caught by `Answers` checking the set; the third by `Answers`
+reading a key as the kind its use requires.
 
 `UnansweredCondition` is removed rather than left unused. It is a published
 refusal reason, and a reason nothing can produce is a promise the corpus would
@@ -208,6 +242,7 @@ keep testing for no one.
 | `protocol` | `Resolve` joins `Perform` as a request; `Supply` joins the commands; `Answer` and `AnswerKinds` are new |
 | `positions` | `AwaitingSupply` joins `AwaitingDone` |
 | `Arrival` | Asks before it plays; steps over a node whose condition fails |
+| `Questions`, `Answers`, `Evaluation` | New, and each testable without a playbook |
 | `NodeTraversalExtensions` | Reads the way onward from the arms whose conditions hold |
 | `Runner.Step` | One more arm: `Supply` advances from `AwaitingSupply` |
 | Harness | A `ResolveMatcher`, and `supply` among the commands a session can send |
@@ -223,11 +258,12 @@ makes two lists fail by name, which is the reminder this pass is owed.
 
 | Level | What it covers |
 | --- | --- |
-| Unit — needs | Every source of a key: a node's own condition, its arms', and its speech; one node needing all three |
-| Unit — evaluation | A condition that holds, one that fails, and an answer of the wrong kind |
+| Unit — questions | Every source of a key: a node's own condition, its arms', and its speech; one node needing all three |
+| Unit — answers | The set matching; a key missing; a key nobody asked about; a key read as the wrong kind |
+| Unit — evaluation | A condition that holds, and one that fails |
 | Unit — arrival | A failing node stepped over; a failing arm not taken; a branch taking its first holding arm and its `else` |
 | Unit — speech | A query substituted; a line with text and a query together; a query whose answer is empty |
-| Unit — the protocol | `Supply` where nothing was asked; `Next` while awaiting; a missing key; an extra key |
+| Unit — the protocol | `Supply` where nothing was asked; `Next` while awaiting a supply |
 | Property | The walk property, widened: a run still only ever stands where the playbook has a node |
 | Conformance | `a-conditional-line`, `a-conditional-block`, and `a-query-in-speech` conform |
 
@@ -240,15 +276,6 @@ for empty control nodes, and this pass gives it a second kind of walker.
 
 ## Open questions and deferred work
 
-- **Should an unasked key in `Supply` be refused or ignored?** Refusing is stated
-  above because a driver answering a question nobody asked has a bug worth
-  hearing about. A permissive reading would let a driver over-answer from a cache.
-  The corpus does not settle it.
-- **The unbound-key policy is not the runner's.** The architecture note's
-  permissive default — a script plays with no bindings at all — lives in
-  `GameBindings`, above the protocol. By the time a key reaches `Supply` the
-  driver has already decided. Nothing here changes that, but the two are easy to
-  confuse.
 - **`an-unavailable-option` needs choices as well.** It is the one corpus case
   this pass touches without finishing; it stays named as not yet runnable until
   C2b lands.
