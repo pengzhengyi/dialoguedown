@@ -469,8 +469,14 @@ words already say, and cost a type to do it.
 
 The **run** still stops at the first session entry that does not conform: a send
 advances the run, so carrying on would judge later entries against a state the
-fixture never described. Gathering is for the checks within one entry, where
-nothing has moved.
+fixture never described. Gathering within an entry is safe for the same reason
+in reverse — nothing has moved between one check and the next.
+
+What the build has **yet to learn** gathers further out still. The harness asks
+that of the fixture before running it — every node kind it cannot play, every
+send no reader owns — so one run of a case names everything it needs instead of
+one construct per run. Asking rather than stepping is what keeps it safe: the
+run never moves past a message that was never sent.
 
 ## Error and boundary cases
 

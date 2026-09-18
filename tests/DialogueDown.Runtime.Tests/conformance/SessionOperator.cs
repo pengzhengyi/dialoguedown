@@ -38,7 +38,7 @@ internal sealed class SessionOperator
     {
         if (Commands.Read(send) is not { } command)
         {
-            return SessionOutcome.NotYetRunnable($"nothing sends {send.Message.ToJsonString()} yet");
+            return SessionOutcome.NotYetRunnable(SessionReasons.NothingSends(send.Message.ToJsonString()));
         }
 
         Act(command);

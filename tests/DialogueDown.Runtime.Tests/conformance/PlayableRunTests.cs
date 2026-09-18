@@ -4,11 +4,77 @@ using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
 public sealed class PlayableRunTests
 {
+    [Fact]
+    public void IsPlayable_ASendSomeReaderOwns_Is()
+    {
+        Assert.True(PlayableRun.IsPlayable(SentCommand("next")));
+    }
+
+    [Fact]
+    public void IsPlayable_ASendNoReaderOwns_IsNot()
+    {
+        Assert.False(PlayableRun.IsPlayable(Sent("""{ "choose": 0 }""")));
+    }
+
+    [Fact]
+    public void IsPlayable_AnExpectation_Is()
+    {
+        // Its claims are checked where they are read, so the entry itself is always takeable.
+        Assert.True(PlayableRun.IsPlayable(Expected("""{ "ended": true }""")));
+    }
+
+    [Fact]
+    public void ReasonsNotYetRunnable_NamesEverythingTheBuildHasNotLearned()
+    {
+        // Two kinds the runner cannot play and a send no reader owns: one run names all three,
+        // where stopping at the first would take three runs to learn the same thing.
+        var context = Playbooks.Of(
+            [
+                new ChoiceNode(0, Ordered: false, [new OptionEdge(2, [new TextFragment("Go east")], Condition: null)]),
+                new BranchNode(1, [new BranchEdge(2, Order: 0, Condition: null)]),
+                new EndNode(2),
+            ],
+            ["Alice"]);
+
+        var reasons = PlayableRun.ReasonsNotYetRunnable(context, [Sent("""{ "choose": 0 }""")]);
+
+        Assert.Equal(
+            new[]
+            {
+                "nothing plays a ChoiceNode yet",
+                "nothing plays a BranchNode yet",
+                """nothing sends {"choose":0} yet""",
+            },
+            reasons);
+    }
+
+    [Fact]
+    public void ReasonsNotYetRunnable_NamesAKindOnce()
+    {
+        var context = Playbooks.Of(
+            [
+                new ChoiceNode(0, Ordered: false, [new OptionEdge(2, [new TextFragment("Go east")], Condition: null)]),
+                new ChoiceNode(1, Ordered: false, [new OptionEdge(2, [new TextFragment("Go west")], Condition: null)]),
+                new EndNode(2),
+            ],
+            ["Alice"]);
+
+        Assert.Equal(new[] { "nothing plays a ChoiceNode yet" }, PlayableRun.ReasonsNotYetRunnable(context, []));
+    }
+
+    [Fact]
+    public void ReasonsNotYetRunnable_OfWhatTheBuildCanPlay_IsEmpty()
+    {
+        var context = Playbooks.Of([new EndNode(0)], ["Alice"]);
+
+        Assert.Empty(PlayableRun.ReasonsNotYetRunnable(context, [SentCommand("next")]));
+    }
     [Fact]
     public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
     {
