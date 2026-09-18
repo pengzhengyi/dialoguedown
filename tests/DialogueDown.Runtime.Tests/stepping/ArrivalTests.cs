@@ -1,6 +1,6 @@
-using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
@@ -13,7 +13,7 @@ public sealed class ArrivalTests
     [Fact]
     public void At_ALine_SaysItWithItsSpeakersName()
     {
-        var context = Playbooks.Of([Playbooks.Line(0, speaker: 0, "Hello.", next: 1), new EndNode(1)], ["Alice"]);
+        var context = PlayContextFactory.Of([Line(0, speaker: 0, "Hello.", next: 1), End(1)], ["Alice"]);
 
         AssertSaid(Arrival.At(context, 0), speaker: "Alice", text: "Hello.");
     }
@@ -21,7 +21,7 @@ public sealed class ArrivalTests
     [Fact]
     public void At_ALine_StandsThere()
     {
-        var context = Playbooks.Of([Playbooks.Line(0, speaker: 0, "Hello.", next: 1), new EndNode(1)], ["Alice"]);
+        var context = PlayContextFactory.Of([Line(0, speaker: 0, "Hello.", next: 1), End(1)], ["Alice"]);
 
         AssertAt(Arrival.At(context, 0), 0);
     }
@@ -31,7 +31,7 @@ public sealed class ArrivalTests
     {
         // The anonymous speaker has no name, which is why a said carries none rather than an
         // empty one: there is a difference between nobody and somebody called "".
-        var context = Playbooks.Of([Playbooks.Line(0, speaker: 0, "Nobody said this.", next: 1), new EndNode(1)], [null]);
+        var context = PlayContextFactory.Of([Line(0, speaker: 0, "Nobody said this.", next: 1), End(1)], [null]);
 
         AssertSaid(Arrival.At(context, 0), speaker: null, text: "Nobody said this.");
     }
@@ -39,7 +39,7 @@ public sealed class ArrivalTests
     [Fact]
     public void At_TheEnd_EndsTheRun()
     {
-        var context = Playbooks.Of([new EndNode(0)]);
+        var context = PlayContextFactory.Of([End(0)]);
 
         AssertEnded(Arrival.At(context, 0));
     }
@@ -49,8 +49,8 @@ public sealed class ArrivalTests
     {
         // Nobody can answer the world yet, and a line spoken without asking is worse than one
         // refused: it reads as played correctly while the condition it carries went unread.
-        var context = Playbooks.Of(
-            [Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"), new EndNode(1)],
+        var context = PlayContextFactory.Of(
+            [ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"), End(1)],
             ["Alice"]);
 
         AssertRefused(Arrival.At(context, 0), RefusalReason.UnansweredCondition, "Alice.HasKey");
@@ -61,11 +61,11 @@ public sealed class ArrivalTests
     {
         // The jump might have been the way out, so falling through to succession would be a
         // decision nobody made -- and it would read as an ordinary line playing correctly.
-        var context = Playbooks.Of(
+        var context = PlayContextFactory.Of(
             [
-                Playbooks.LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
-                Playbooks.Line(1, speaker: 0, "Here.", next: 2),
-                new EndNode(2),
+                LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
+                Line(1, speaker: 0, "Here.", next: 2),
+                End(2),
             ],
             ["Alice"]);
 
@@ -77,12 +77,12 @@ public sealed class ArrivalTests
     {
         // Such a node has nothing to say and nothing for the host to do. Stopping would ask the
         // player to advance past something they were never shown.
-        var context = Playbooks.Of(
+        var context = PlayContextFactory.Of(
             [
-                Playbooks.Jump(0, jumpTo: 2),
-                Playbooks.Line(1, speaker: 0, "Never spoken.", next: 2),
-                Playbooks.Line(2, speaker: 0, "Here.", next: 3),
-                new EndNode(3),
+                Jump(0, jumpTo: 2),
+                Line(1, speaker: 0, "Never spoken.", next: 2),
+                Line(2, speaker: 0, "Here.", next: 3),
+                End(3),
             ],
             ["Alice"]);
 
@@ -94,7 +94,7 @@ public sealed class ArrivalTests
     {
         // Nothing in the ring ever hands the host anything, so a walk with no bound would never
         // return and a total step would become a hang.
-        AssertRefused(Arrival.At(Playbooks.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
+        AssertRefused(Arrival.At(PlayContextFactory.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
     }
 
     [Fact]
@@ -102,17 +102,17 @@ public sealed class ArrivalTests
     {
         // The bound counts nodes passed, so a chain touching every node is the case it must not
         // refuse -- one node further and it would be a repeat.
-        AssertEnded(Arrival.At(Playbooks.ChainOfJumps(jumps: 5), 0));
+        AssertEnded(Arrival.At(PlayContextFactory.ChainOfJumps(jumps: 5), 0));
     }
 
     [Fact]
     public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten()
     {
-        var context = Playbooks.Of(
+        var context = PlayContextFactory.Of(
             [
-                Playbooks.Effects(0, next: 1, "fade in", "play a chime"),
-                Playbooks.Line(1, speaker: 0, "Hello.", next: 2),
-                new EndNode(2),
+                Effects(0, next: 1, "fade in", "play a chime"),
+                Line(1, speaker: 0, "Hello.", next: 2),
+                End(2),
             ],
             ["Alice"]);
 
@@ -124,7 +124,7 @@ public sealed class ArrivalTests
     {
         // The line after it must not be reached until the host says the effects were carried out,
         // or a guard further on would read a world the effects had not changed yet.
-        var context = Playbooks.AnEffectThenALine();
+        var context = PlayContextFactory.AnEffectThenALine();
 
         AssertAwaitingDone(Arrival.At(context, 0), 0);
     }
@@ -134,7 +134,7 @@ public sealed class ArrivalTests
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
         // than as a construct nobody has taught the runner yet.
-        var context = Playbooks.NotYetPlayable();
+        var context = PlayContextFactory.NotYetPlayable();
 
         AssertRefused(Arrival.At(context, 0), RefusalReason.UnplayableNode, "ChoiceNode");
     }

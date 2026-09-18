@@ -10,7 +10,7 @@ public sealed class SessionMatcherTests
     public void ASessionTheRunnerAnswersInFullConforms()
     {
         AssertConformed(Match(
-            Playbooks.TwoLines(),
+            PlayContextFactory.TwoLines(),
             Expected("""{ "said": { "speaker": "Alice", "speech": "Hello." } }"""),
             SentCommand("next"),
             Expected("""{ "said": { "speaker": "Bob", "speech": "Goodbye." } }"""),
@@ -22,7 +22,7 @@ public sealed class SessionMatcherTests
     public void AnExpectationTheRunnerDoesNotMeetDiverges()
     {
         AssertDiverged(
-            Match(Playbooks.TwoLines(), Expected("""{ "said": { "speaker": "Bob", "speech": "Hello." } }""")),
+            Match(PlayContextFactory.TwoLines(), Expected("""{ "said": { "speaker": "Bob", "speech": "Hello." } }""")),
             "expected Bob to speak, but Alice did");
     }
 
@@ -31,7 +31,7 @@ public sealed class SessionMatcherTests
     {
         AssertDiverged(
             Match(
-                Playbooks.OneLine(),
+                PlayContextFactory.OneLine(),
                 Expected("""{ "said": { "speaker": "Alice", "speech": "Hello." } }"""),
                 Expected("""{ "ended": true }""")),
             "the run fell silent",
@@ -42,19 +42,19 @@ public sealed class SessionMatcherTests
     public void EventsTheSessionNeverReadsDiverge()
     {
         // The session stops early, leaving the opening line unread.
-        AssertDiverged(Match(Playbooks.OneLine()), "the session ended, but the run still has 1 event unmatched");
+        AssertDiverged(Match(PlayContextFactory.OneLine()), "the session ended, but the run still has 1 event unmatched");
     }
 
     [Fact]
     public void ASendNothingPlaysYetIsNotYetRunnable()
     {
-        AssertNotYetRunnable(Match(Playbooks.OneLine(), SentCommand("frobnicate")), "frobnicate");
+        AssertNotYetRunnable(Match(PlayContextFactory.OneLine(), SentCommand("frobnicate")), "frobnicate");
     }
 
     [Fact]
     public void ASessionThatBeginsItselfIsNotStartedForIt()
     {
-        var op = new SessionOperator(Playbooks.OneLine());
+        var op = new SessionOperator(PlayContextFactory.OneLine());
 
         SessionMatcher.Match(op, [Sent("""{ "start": {} }""")]);
 
