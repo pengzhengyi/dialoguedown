@@ -36,16 +36,16 @@ public sealed class ExpectationMatchersTests
     }
 
     [Fact]
-    public void AClaimNobodyOwnsIsNotYetRunnable()
+    public void AClaimNobodyOwnsIsNotYetPlayable()
     {
-        AssertNotYetRunnable(Match(_hello, """{ "resolve": [ "Alice.HasKey" ] }"""), "resolve");
+        AssertNotYetPlayable(Match(_hello, """{ "resolve": [ "Alice.HasKey" ] }"""), "resolve");
     }
 
     [Fact]
     public void AnUncheckedClaimBesideOneThatHoldsDoesNotRideAlong()
     {
         // Stopping at the first claim recognized would report this as held, having read half of it.
-        AssertNotYetRunnable(
+        AssertNotYetPlayable(
             Match(_hello, """{ "said": { "speaker": "Alice", "speech": "Hi" }, "resolve": [ "Alice.HasKey" ] }"""),
             "resolve");
     }
@@ -76,7 +76,7 @@ public sealed class ExpectationMatchersTests
         // What lets one run list every claim the harness has yet to learn.
         var outcome = Match(_hello, """{ "resolve": [ "Alice.HasKey" ], "describe": true }""");
 
-        AssertNotYetRunnable(outcome, "resolve", "describe");
+        AssertNotYetPlayable(outcome, "resolve", "describe");
         Assert.Equal(2, outcome.Reasons.Length);
     }
 

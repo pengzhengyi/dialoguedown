@@ -46,9 +46,9 @@ public sealed class SessionMatcherTests
     }
 
     [Fact]
-    public void ASendNothingPlaysYetIsNotYetRunnable()
+    public void ASendNothingPlaysYetIsNotYetPlayable()
     {
-        AssertNotYetRunnable(Match(PlayContextFactory.OneLine(), SentCommand("frobnicate")), "frobnicate");
+        AssertNotYetPlayable(Match(PlayContextFactory.OneLine(), SentCommand("frobnicate")), "frobnicate");
     }
 
     [Fact]

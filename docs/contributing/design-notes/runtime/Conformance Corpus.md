@@ -5,7 +5,7 @@
 > runtime honest, the format they are written in, and the harness that runs both
 > halves — the readable fixtures against the reader, the playable ones against the
 > reference runner. A playable fixture whose session sends a command the runner
-> does not take yet is reported as not-yet-runnable rather than skipped. It
+> does not take yet is reported as not-yet-playable rather than skipped. It
 > implements the conformance half of the
 > [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
 > owns the cross-cutting decisions this note applies.
@@ -39,7 +39,7 @@ In scope:
 
 The harness runs both halves: the readable fixtures against the reader, and the
 playable ones against the reference runner. A fixture whose session needs a
-command the runner does not take yet is reported as not-yet-runnable, so adding
+command the runner does not take yet is reported as not-yet-playable, so adding
 the command turns it on without touching the fixture.
 
 This note assumes the vocabulary of the
@@ -478,6 +478,14 @@ send no reader owns — so one run of a case names everything it needs instead o
 one construct per run. Asking rather than stepping is what keeps it safe: the
 run never moves past a message that was never sent.
 
+The verdict is called **not yet playable**, not "not yet runnable", because the
+product already says so: a node kind the runner cannot take is a
+`RefusalReason.UnplayableNode`, and the corpus folder and its fixtures have been
+*playable* since the format's first pass. One adjective serves the playing side —
+*playable* — and one verb, *play*; **run** stays the noun for one playthrough,
+which is `Runner` and `PlayState`'s word. The harness's own vocabulary held the
+only "runnable" the repository had.
+
 ## Error and boundary cases
 
 Both halves' failures are implemented; the harness reports what each one found.
@@ -561,5 +569,5 @@ already keeps the golden playbooks; the rest lives beside the reader it exercise
   session as prose — would give human readability with no parser in any port,
   since it is generated and never authored. Worth doing once fixtures exist.
 - **The playable harness landed with the reference runner.** A fixture that needs
-  a command the runner does not take yet is reported as not-yet-runnable, so the
+  a command the runner does not take yet is reported as not-yet-playable, so the
   gap is visible instead of silently green.

@@ -24,7 +24,7 @@ public sealed class PlayableConformanceTests
 
         var expected = _conforming.Contains(aCase.Name)
             ? SessionVerdict.Conformed
-            : SessionVerdict.NotYetRunnable;
+            : SessionVerdict.NotYetPlayable;
 
         Assert.True(
             expected == outcome.Verdict,

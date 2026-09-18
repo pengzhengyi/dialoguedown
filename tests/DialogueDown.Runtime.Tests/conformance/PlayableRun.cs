@@ -14,10 +14,10 @@ internal static class PlayableRun
     public static SessionOutcome Of(PlayableCase playable)
     {
         var context = PlayContext.Of(PlaybookReader.Default.Read(playable.Playbook));
-        var untaught = ReasonsNotYetRunnable(context, playable.Fixture.Session);
+        var untaught = ReasonsNotYetPlayable(context, playable.Fixture.Session);
 
         return untaught.Length > 0
-            ? SessionOutcome.Combine(untaught.Select(SessionOutcome.NotYetRunnable))
+            ? SessionOutcome.Combine(untaught.Select(SessionOutcome.NotYetPlayable))
             : SessionMatcher.Match(new SessionOperator(context), playable.Fixture.Session);
     }
 
@@ -55,7 +55,7 @@ internal static class PlayableRun
     /// <param name="context">The playbook the case loads.</param>
     /// <param name="session">What the case sends and expects.</param>
     /// <returns>The reasons, in the order the playbook and the session name them.</returns>
-    internal static ImmutableArray<string> ReasonsNotYetRunnable(
+    internal static ImmutableArray<string> ReasonsNotYetPlayable(
         PlayContext context, ImmutableArray<SessionEntry> session) =>
     [
         .. context.Playbook.Nodes

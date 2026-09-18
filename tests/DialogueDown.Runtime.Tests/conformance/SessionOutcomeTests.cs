@@ -29,21 +29,21 @@ public sealed class SessionOutcomeTests
     }
 
     [Fact]
-    public void Combine_WithOneUnrunnableClaim_IsNotYetRunnable()
+    public void Combine_WithOneUnplayableClaim_IsNotYetPlayable()
     {
         var combined = SessionOutcome.Combine([
             SessionOutcome.Conformed(),
-            SessionOutcome.NotYetRunnable("nothing checks resolve yet")]);
+            SessionOutcome.NotYetPlayable("nothing checks resolve yet")]);
 
-        Assert.Equal(SessionVerdict.NotYetRunnable, combined.Verdict);
+        Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
     }
 
     [Fact]
-    public void Combine_ADivergenceOutranksAnUnrunnableClaim()
+    public void Combine_ADivergenceOutranksAnUnplayableClaim()
     {
         // Otherwise a real failure hides behind an unrelated check nobody has taught the harness.
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetRunnable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
             SessionOutcome.Diverged("said the wrong thing")]);
 
         Assert.Equal(SessionVerdict.Diverged, combined.Verdict);
@@ -62,14 +62,14 @@ public sealed class SessionOutcomeTests
     }
 
     [Fact]
-    public void Combine_OfTwoUnrunnableClaims_GathersBoth()
+    public void Combine_OfTwoUnplayableClaims_GathersBoth()
     {
         // What lets one run name every construct this build has yet to learn.
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetRunnable("nothing checks resolve yet"),
-            SessionOutcome.NotYetRunnable("nothing checks asked yet")]);
+            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks asked yet")]);
 
-        Assert.Equal(SessionVerdict.NotYetRunnable, combined.Verdict);
+        Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
         Assert.Equal(["nothing checks resolve yet", "nothing checks asked yet"], combined.Reasons);
     }
 
@@ -77,7 +77,7 @@ public sealed class SessionOutcomeTests
     public void Combine_DropsTheReasonsOfAVerdictItOutranks()
     {
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetRunnable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
             SessionOutcome.Diverged("the speaker"),
             SessionOutcome.Diverged("the speech")]);
 
@@ -114,7 +114,7 @@ public sealed class SessionOutcomeTests
     {
         // A divergence outranks one, so reading carries on until it is known there is none.
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetRunnable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
             SessionOutcome.Conformed(),
             SessionOutcome.Diverged("said the wrong thing")]);
 
@@ -126,7 +126,7 @@ public sealed class SessionOutcomeTests
     {
         Assert.True(SessionOutcome.Conformed().IsConformed);
         Assert.False(SessionOutcome.Diverged("nope").IsConformed);
-        Assert.False(SessionOutcome.NotYetRunnable("not yet").IsConformed);
+        Assert.False(SessionOutcome.NotYetPlayable("not yet").IsConformed);
     }
 
     [Fact]

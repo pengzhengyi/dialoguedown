@@ -41,7 +41,7 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
     /// <summary>The session uses something this build has not learned.</summary>
     /// <param name="because">What is missing.</param>
     /// <returns>The outcome.</returns>
-    public static SessionOutcome NotYetRunnable(string because) => new(SessionVerdict.NotYetRunnable, [because]);
+    public static SessionOutcome NotYetPlayable(string because) => new(SessionVerdict.NotYetPlayable, [because]);
 
     /// <summary>The gravest of several partial outcomes, with every reason that reached it.</summary>
     /// <remarks>
@@ -81,7 +81,7 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
         verdict switch
         {
             SessionVerdict.Diverged => 2,
-            SessionVerdict.NotYetRunnable => 1,
+            SessionVerdict.NotYetPlayable => 1,
             _ => 0,
         };
 }

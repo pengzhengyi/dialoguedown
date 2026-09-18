@@ -28,7 +28,7 @@ public sealed class PlayableRunTests
     }
 
     [Fact]
-    public void ReasonsNotYetRunnable_NamesEverythingTheBuildHasNotLearned()
+    public void ReasonsNotYetPlayable_NamesEverythingTheBuildHasNotLearned()
     {
         // Two kinds the runner cannot play and a send no reader owns: one run names all three,
         // where stopping at the first would take three runs to learn the same thing.
@@ -36,7 +36,7 @@ public sealed class PlayableRunTests
             [Choice(0, leadsTo: 2), Branch(1, leadsTo: 2), End(2)],
             ["Alice"]);
 
-        var reasons = PlayableRun.ReasonsNotYetRunnable(context, [Sent("""{ "choose": 0 }""")]);
+        var reasons = PlayableRun.ReasonsNotYetPlayable(context, [Sent("""{ "choose": 0 }""")]);
 
         Assert.Equal(
             new[]
@@ -49,21 +49,21 @@ public sealed class PlayableRunTests
     }
 
     [Fact]
-    public void ReasonsNotYetRunnable_NamesAKindOnce()
+    public void ReasonsNotYetPlayable_NamesAKindOnce()
     {
         var context = PlayContextFactory.Of(
             [Choice(0, leadsTo: 2), Choice(1, leadsTo: 2), End(2)],
             ["Alice"]);
 
-        Assert.Equal(new[] { "nothing plays a ChoiceNode yet" }, PlayableRun.ReasonsNotYetRunnable(context, []));
+        Assert.Equal(new[] { "nothing plays a ChoiceNode yet" }, PlayableRun.ReasonsNotYetPlayable(context, []));
     }
 
     [Fact]
-    public void ReasonsNotYetRunnable_OfWhatTheBuildCanPlay_IsEmpty()
+    public void ReasonsNotYetPlayable_OfWhatTheBuildCanPlay_IsEmpty()
     {
         var context = PlayContextFactory.Of([End(0)], ["Alice"]);
 
-        Assert.Empty(PlayableRun.ReasonsNotYetRunnable(context, [SentCommand("next")]));
+        Assert.Empty(PlayableRun.ReasonsNotYetPlayable(context, [SentCommand("next")]));
     }
 
     [Fact]

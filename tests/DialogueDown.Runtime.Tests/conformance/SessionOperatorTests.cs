@@ -60,12 +60,12 @@ public sealed class SessionOperatorTests
     }
 
     [Fact]
-    public void Send_UnknownMessage_ReturnsNotYetRunnableWithoutAdvancing()
+    public void Send_UnknownMessage_ReturnsNotYetPlayableWithoutAdvancing()
     {
         var op = new SessionOperator(PlayContextFactory.OneLine());
         var stateBefore = op.State;
 
-        AssertNotYetRunnable(op.SendCommand("frobnicate"), "frobnicate");
+        AssertNotYetPlayable(op.SendCommand("frobnicate"), "frobnicate");
 
         Assert.Equal(stateBefore, op.State);
         AssertNoUnreadEvents(op);

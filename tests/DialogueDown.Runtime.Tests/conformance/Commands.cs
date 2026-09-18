@@ -12,7 +12,7 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// A separate, testable concern from operating the runner. Each command has a reader of its own,
 /// keyed so two claiming one key is a startup failure; <see cref="TryRead"/> answers
 /// <see langword="false"/> for a send no reader owns, which the caller reports as not yet
-/// runnable, and a send that names a command but shapes it wrongly is a fixture bug.
+/// playable, and a send that names a command but shapes it wrongly is a fixture bug.
 /// </remarks>
 internal static class Commands
 {
