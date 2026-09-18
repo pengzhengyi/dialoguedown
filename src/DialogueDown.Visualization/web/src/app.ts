@@ -12,7 +12,7 @@ import type {
     PlaybookReport,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
-import { neighborsOf } from "./neighbors";
+import { isFlowStage, neighborsOf } from "./neighbors";
 import { regionDetailOf } from "./region-detail";
 import { regionOfBoxId } from "./region-fold";
 import { tintsOf } from "./region-bands";
@@ -48,7 +48,7 @@ import { hideArrivalNote, showArrivalNote } from "./arrival-note";
  * adds — has interpreted nothing, so it is left as plain text.
  */
 const recognizesJumps = (stage: Stage): boolean => stage.readsDialogueMeaning ?? false;
-import { setHelp, helpBody } from "./help";
+import { setHelp, helpBody, type HelpContext } from "./help";
 import { createProblemsPanel } from "./problems-panel";
 import { createDiagnosticSummary } from "./diagnostic-summary";
 import { orderDiagnostics } from "./diagnostic-order";
@@ -377,7 +377,7 @@ export function runApp(
         shownStage = stage ?? null;
         // Only a stage whose edges carry a meaning lists a node's neighbors: in a tree, a node's
         // parent and children are already plain from the drawing.
-        const flow = stage?.edges.some((edge) => edge.category);
+        const flow = stage !== undefined && isFlowStage(stage);
         panel.show(node, {
             recognizeJumps,
             ...(flow && stage ? { neighbors: neighborsOf(stage, node.id) } : {}),
@@ -654,7 +654,7 @@ export function runApp(
                     ...treeOptions,
                     // A graph's "children" are an accident of which route reached them first, so
                     // folding one would hide nodes other routes still lead to.
-                    foldable: !stage.edges.some((edge) => edge.category),
+                    foldable: !isFlowStage(stage),
                     onSelectEdge: (edge) => showEdge(stage, edge),
                     onSelectRegion: (region) => showRegion(stage, region),
                 });
@@ -749,9 +749,8 @@ export function runApp(
         const isSource = views[index] === null;
         const section = stagesEl.children[index] as HTMLElement | undefined;
         const isSemantic = section?.classList.contains("semantic-stage") ?? false;
-        const isPlaybook = section?.classList.contains("playbook-stage") ?? false;
         appEl.classList.toggle("no-detail", isSource || isSemantic);
-        setHelp(isPlaybook ? "playbook" : isSource ? "source" : isSemantic ? "semantic" : "graph");
+        setHelp(helpContextFor(index));
         // Frame the tab now that it is visible (a tree built while hidden had a
         // zero-size container). Applying its remembered position — instead of always
         // re-framing — keeps a stage spatially stable as the reader moves between tabs.
@@ -760,6 +759,24 @@ export function runApp(
         panel.clear();
         selectedNodeId = null;
         source?.onActiveTabChange?.();
+    }
+
+    /**
+     * Which help the active tab shows.
+     *
+     * The help follows the stage's shape rather than its tab name: the flow graph is the one whose
+     * digits answer ways in with Shift, so it gets the full map, while the syntax and semantic
+     * trees get the map their edges actually support — ways out only. The Source tab and the
+     * Config tab share the source's explanation; a playbook has its own.
+     */
+    function helpContextFor(index: number): HelpContext {
+        const section = stagesEl.children[index] as HTMLElement | undefined;
+        if (section?.classList.contains("playbook-stage")) return "playbook";
+        // Source and Config have no graph; Config borrows the source's explanation.
+        if (views[index] === null) return "source";
+        if (section?.classList.contains("semantic-stage")) return "semantic";
+        const stage = currentStages.find((candidate) => candidate.title === titles[index]);
+        return stage !== undefined && isFlowStage(stage) ? "graph" : "tree";
     }
 
     /**

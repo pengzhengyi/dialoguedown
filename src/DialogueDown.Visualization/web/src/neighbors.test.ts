@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { neighborsOf } from "./neighbors";
+import { isFlowStage, neighborsOf } from "./neighbors";
 import type { DisplayNode, Stage } from "./model";
 
 function node(id: string, label: string, category?: string): DisplayNode {
@@ -23,6 +23,8 @@ const stage: Stage = {
         { fromId: "left", toId: "inside", kind: "Child", category: "break" },
         { fromId: "right", toId: "inside", kind: "Reference", category: "break" },
     ],
+    // The graph's child edges span the flow; a tree's nest. The stage says which it is.
+    nests: false,
 };
 
 describe("neighborsOf", () => {
@@ -93,5 +95,39 @@ describe("neighborsOf", () => {
         };
 
         expect(neighborsOf(placed, "inside").outgoing.map((n) => n.id)).not.toContain("orphan");
+    });
+});
+
+describe("isFlowStage", () => {
+    it("recognizes the stage whose child edges are the flow rather than containment", () => {
+        expect(isFlowStage(stage)).toBe(true);
+    });
+
+    it("does not mistake a nesting tree for the flow graph", () => {
+        const tree: Stage = {
+            ...stage,
+            title: "Markdown AST",
+            nests: true,
+            edges: stage.edges.map(({ fromId, toId, kind }) => ({ fromId, toId, kind })),
+        };
+
+        expect(isFlowStage(tree)).toBe(false);
+    });
+
+    it("reads the stage's declaration, not the colors of its edges", () => {
+        // A named route does not make a stage the flow graph: a tree may color an edge and stay a
+        // tree. `nests` is the stage's own statement of what a `Child` edge means.
+        const coloredTree: Stage = { ...stage, title: "Dialogue AST", nests: true };
+
+        expect(isFlowStage(coloredTree)).toBe(false);
+    });
+
+    it("stays the flow graph even when no edge names its route", () => {
+        const unnamed: Stage = {
+            ...stage,
+            edges: stage.edges.map(({ fromId, toId, kind }) => ({ fromId, toId, kind })),
+        };
+
+        expect(isFlowStage(unnamed)).toBe(true);
     });
 });
