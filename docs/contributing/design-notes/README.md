@@ -53,13 +53,25 @@ The notes below are grouped by area and ordered for reading. Start with
 Read **Command-line interface** or **Visualization** only when you work on that
 surface: both document tools built *on top of* the core, so they are optional
 for understanding the compiler. Each note keeps a one-line summary and a status
-(**Implemented**, **Partially implemented**, **In progress**, **Explored**, or
-**Proposed**).
+(**Implemented**, **Partially implemented**, **In progress**, **Explored**,
+**Proposed**, or **Superseded** — a shape later work replaced. A note may qualify
+its status: **dormant** means built and tested, but not wired into the product).
 
 > [!TIP]
 > New here? Read the Core notes in order, then the
 > [Error model](./core/Error%20Model.md). That is enough to understand and change the
 > compiler.
+
+Two overlaps in this corpus are on purpose. A guide page and a design note may
+share an example — the [guide](../../guide/index.md) teaches the syntax, and a
+note repeats an example only where a decision turns on its exact shape. And the
+agent instruction files
+([`AGENTS.md`](https://github.com/pengzhengyi/dialoguedown/blob/main/AGENTS.md),
+[`.github/copilot-instructions.md`](https://github.com/pengzhengyi/dialoguedown/blob/main/.github/copilot-instructions.md))
+repeat the build commands so an agent can act without following links. Keep the
+overlap and the *claims* single-homed: a number two documents must agree on (a
+coverage floor, a threshold) belongs in one of them, with the others pointing at
+it.
 
 ### Core: the compiler pipeline
 
@@ -85,10 +97,10 @@ flowchart LR
 | 5a | [Compilation Outcome](./core/Compilation%20Outcome.md) | A facade detail: what one compile produces — a success carrying every artifact, or a failure carrying how far it got | Implemented |
 | 6 | [Dialogue Graph](./core/Dialogue%20Graph.md) | Semantic model → the immutable flow graph a runtime walks | Implemented |
 
-| 6 | [Error model](./core/Error%20Model.md) | The cross-cutting convention: collect a diagnostic, throw only when a stage cannot continue | Implemented |
+| — | [Error model](./core/Error%20Model.md) | The cross-cutting convention: collect a diagnostic, throw only when a stage cannot continue | Implemented |
 
 The Error model is a convention every stage adopts rather than a stage itself —
-read it alongside the five above.
+read it alongside the six pipeline stages above.
 
 ### Runtime: playing a compiled script
 
@@ -112,7 +124,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 1 | [Dialogue Runtime Architecture](./runtime/Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Partially implemented |
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
-| 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, written before the runner so they specify it | Implemented |
+| 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, and the harness that runs them against the reference reader and runner | Implemented |
 | 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
 | 5 | [Branch Arm Order](./runtime/Branch%20Arm%20Order.md) | A `branch`'s arms in ascending `order` with the `else` last, stated in the reader and mirrored in the schema | Implemented |
 | 6 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
@@ -225,7 +237,7 @@ Configuration tab and the folding contract every surface shares.
 | 45 | [Copyable Identifiers](./visualization/report/Copyable%20Identifiers.md) | An `@id`, an anchor, and a jump target copy on click; prose does not | Implemented |
 | 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
 | 47 | [Following an Index in the Playbook](./visualization/report/Following%20an%20Index%20in%20the%20Playbook.md) | A node or speaker reference in the JSON is a link: click it, or press F12, to reveal the definition it names | Implemented |
-| 49 | [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Proposed |
+| 49 | [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Implemented |
 | 50 | [Playbook Summary Segments](./visualization/report/Playbook%20Summary%20Segments.md) | A node's summary sent as labeled segments, so the client draws each part by its role instead of re-parsing delimiters a writer can also type | Implemented |
 
 #### Source editor
@@ -284,8 +296,8 @@ browsing the project, and the modes the window can take.
 
 ### Other notes
 
-**Optional context.** Exploration spikes and one-off documentation-maintenance
-passes that sit outside the pipeline and its tools.
+**Optional context.** Exploration spikes and project-level notes that sit outside
+the pipeline and its tools.
 
 | Note | What it covers | Status |
 | --- | --- | --- |
@@ -294,4 +306,3 @@ passes that sit outside the pipeline and its tools.
 | [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
 | [Namespace Layout](./other/Namespace%20Layout.md) | Implemented: an architecture rule capping how many types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list | Implemented |
 | [Target Frameworks](./other/Target%20Frameworks.md) | Implemented: multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 LTS | Implemented |
-| [README Shipping-Status Refresh](./other/README%20Shipping-Status%20Refresh.md) | A docs-only pass reconciling the README's visualization section with what actually ships | Implemented |

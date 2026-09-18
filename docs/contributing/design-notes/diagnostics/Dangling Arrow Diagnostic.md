@@ -1,8 +1,7 @@
 # Dangling arrow diagnostic
 
 > [!NOTE]
-> Status: **implemented**
-> ([issue #227](https://github.com/pengzhengyi/dialoguedown/issues/227)).
+> Status: **implemented**.
 > Warns when a `=>` has no link after it, so the jump the writer intended is
 > silently degraded to the literal characters `=>`.
 
@@ -42,10 +41,9 @@ learns their jump did not become a jump.
 writer-facing guidance, and the generated error-code entry.
 
 **Out of scope:** changing how a dangling arrow *behaves* (it still degrades to
-text — we warn, we do not fail the compile or invent a jump target); the second
-half of [#227](https://github.com/pengzhengyi/dialoguedown/issues/227) (a
-front-end diagnostic for ignored unmodeled Markdown), which is a separate component
-and the prerequisite for [#47](https://github.com/pengzhengyi/dialoguedown/issues/47).
+text — we warn, we do not fail the compile or invent a jump target); the
+front-end diagnostic for ignored unmodeled Markdown, which is a separate component
+and the prerequisite for reading the policy from `dialogue.toml`.
 
 ## Functionality checklist
 

@@ -1,12 +1,11 @@
 # Random choice
 
 > [!NOTE]
-> Status: **implemented**. The static construct shipped in
-> [issue #141](https://github.com/pengzhengyi/dialoguedown/issues/141), and
+> Status: **implemented**. The static construct shipped, and
 > the compiler now recognizes a game-state query as a runtime-calculated weight
 > under the same random-choice syntax and normalization policy. Executing a random
 > choice — static or dynamic — awaits the
-> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+> runtime.
 
 ## Table of contents
 
@@ -45,8 +44,7 @@ no menu.
 This note covers the construct's complete writer contract: static, auto, and
 dynamic query weights; compile-time modeling and diagnostics; and the runtime
 resolution policy. The compiler extension accepts and preserves query weights
-now. Executing a random choice remains part of the planned runtime
-([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
+now. Executing a random choice remains part of the planned runtime.
 
 ## Functionality checklist
 
@@ -423,10 +421,9 @@ it so the code span is no longer the option's weight prefix.
 | `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. |
 
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
-game-call diagnostics. `DLG2010` is the next free semantic code; a zero total is
-a meaning-level fault, not a token-level one. `DLG3003` and `DLG3004` are the
-next free style codes after `DLG3002` (`DLG3001` remains unused; ignored
-unmodeled Markdown is the syntax-stage `DLG1114`).
+game-call diagnostics. A zero total is a meaning-level fault, not a token-level
+one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
+(`DLG3xxx`) warnings; ignored unmodeled Markdown is the syntax-stage `DLG1114`.
 
 ## Error and boundary cases
 
@@ -488,7 +485,7 @@ and preserves a dynamic query weight; executing it awaits the runtime.
 | --- | --- |
 | **Achieved (static)** | Recognition (`RandomChoices`/`RandomOption`, weight peeling, the `ChoiceGroup` base), the `NumberWeight`/`AutoWeight` model, the injectable normalization strategy, the five static diagnostics (`DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, `DLG3004`), the ≈100 tolerance, the single-option warning, nesting-depth counting, the report AST projection, and the writer spec + gallery all match the design. |
 | **Changed (static)** | `DLG3003` shows the actual total and uses a 0.5 tolerance (the note originally said only "approximately 100"). A single-option group became its own `DLG3004` warning rather than "no diagnostic". The two group records gained a shared `ChoiceGroup` base so the nesting rule can query one type. |
-| **Achieved (dynamic recognition)** | `ChoiceWeight` is a spanned `ScriptNode`; a `QueryWeight` reuses the query grammar; static total checks skip a group containing a query weight; and the report renders the query weight. Resolving, validating, and normalizing query values at selection time awaits the [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45). |
+| **Achieved (dynamic recognition)** | `ChoiceWeight` is a spanned `ScriptNode`; a `QueryWeight` reuses the query grammar; static total checks skip a group containing a query weight; and the report renders the query weight. Resolving, validating, and normalizing query values at selection time awaits the runtime. |
 
 ## Alternatives not chosen
 
@@ -510,7 +507,6 @@ and preserves a dynamic query weight; executing it awaits the runtime.
 - **Runtime execution of query weights** — the compiler accepts and preserves a
   `QueryWeight`, but resolving its query to a number, validating that the value is
   finite and non-negative, and drawing the weighted sample all need the runtime.
-  Tracked with the [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
 - **Weighted player menu** — weights that bias a *shown* menu (for previews or
   autoplay) are explicitly out of scope; this construct always resolves to one
   option with no menu.

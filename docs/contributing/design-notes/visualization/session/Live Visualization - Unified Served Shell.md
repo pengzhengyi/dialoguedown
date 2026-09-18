@@ -53,8 +53,7 @@ The work landed as two components, in sequence:
 Out of scope: the graceful Ctrl+C shutdown of the SSE stream — a **pre-existing**
 server issue owned by the `fix/visualize-ctrl-c` branch (see
 [Integration](#integration)); and any new Explorer capability. (The in-place
-document swap this note left for later shipped in
-[#347](https://github.com/pengzhengyi/dialoguedown/pull/347) — see
+document swap this note left for later shipped — see
 [Opening a Script Without Reloading the Page](./Opening%20a%20Script%20Without%20Reloading%20the%20Page.md).)
 
 ## Ubiquitous language
@@ -248,7 +247,7 @@ are untouched.
   a script and is the browse root for the empty shell.
 - **`fix/visualize-ctrl-c` (integrated).** That branch fixed a **pre-existing**
   graceful-shutdown bug (the SSE stream held Ctrl+C shutdown open) on *both* servers
-  and the runners, and merged first as #185. This convergence deliberately **does not
+  and the runners, and merged first. This convergence deliberately **does not
   touch shutdown**, so integrating `main` was mechanical: its edits to the retired
   `LiveVisualizationServer`/`ServeMode` are moot (this branch deletes them), while its
   `WaitForShutdownAsync` and SSE `ApplicationStopping` handling on the surviving
@@ -288,7 +287,7 @@ Settled in review and confirmed at crosscheck:
    the [File Launcher](./Live%20Visualization%20-%20File%20Launcher.md) note is
    superseded as a *page* while its browse/open/create *behavior* lives on in the
    Explorer.
-2. **Shutdown was out of scope.** Fixed separately by #185 and integrated here; see
+2. **Shutdown was out of scope.** Fixed separately and integrated here; see
    [Integration](#integration).
 3. **One branch, A's commits then B's.** Reviewed at merge-ready as one pull
    request; B stayed cohesive enough not to warrant splitting.

@@ -152,10 +152,10 @@ The rival spots you across the courtyard.
 - `Christina.Affection%` Christina: Oh — hello.
 ```
 
-The engine reads each query through `IGameSystem.Query`, treats the result as a
-percentage, and picks one line by weight — so the character most fond of the
-player is the most likely to greet them. Static, auto, and dynamic weights mix
-freely in one list:
+The engine reads each query from your game, treats the result as a percentage,
+and picks one line by weight — so the character most fond of the player is the
+most likely to greet them. Static, auto, and dynamic weights mix freely in one
+list:
 
 ```markdown
 - `50%`              Guard: Halt!

@@ -1,7 +1,7 @@
 # Front Matter Source Highlighting
 
 > [!NOTE]
-> Status: **implemented** ([issue #264](https://github.com/pengzhengyi/dialoguedown/issues/264)).
+> Status: **implemented**.
 > Teach the Source editor that a script may begin with YAML front matter, so metadata no longer
 > reads as dialogue-shaped Markdown.
 

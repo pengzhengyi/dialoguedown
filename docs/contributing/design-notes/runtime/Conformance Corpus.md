@@ -1,13 +1,14 @@
 # Conformance corpus
 
 > [!NOTE]
-> Status: **implemented**, except the harness that runs the playable half, which
-> belongs to the runtime that can execute it
-> ([C2](https://github.com/pengzhengyi/dialoguedown/issues/297)) and whose shape
-> is settled below. This note records the fixtures that keep more than one runtime
-> honest, and the format they are written in. It implements the conformance half
-> of the [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md),
-> which owns the cross-cutting decisions this note applies.
+> Status: **implemented**. This note records the fixtures that keep more than one
+> runtime honest, the format they are written in, and the harness that runs both
+> halves — the readable fixtures against the reader, the playable ones against the
+> reference runner. A playable fixture whose session sends a command the runner
+> does not take yet is reported as not-yet-runnable rather than skipped. It
+> implements the conformance half of the
+> [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
+> owns the cross-cutting decisions this note applies.
 
 ## Table of contents
 
@@ -36,9 +37,10 @@ In scope:
 - **playable fixtures** — a session a runner must reproduce;
 - the C# harness for the readable half, which runs against today's reader.
 
-Out of scope, and deferred with reason: the harness for the playable half, which
-needs a runner to run anything at all
-([C2](https://github.com/pengzhengyi/dialoguedown/issues/297)).
+The harness runs both halves: the readable fixtures against the reader, and the
+playable ones against the reference runner. A fixture whose session needs a
+command the runner does not take yet is reported as not-yet-runnable, so adding
+the command turns it on without touching the fixture.
 
 This note assumes the vocabulary of the
 [architecture note](./Dialogue%20Runtime%20Architecture.md) — *playbook*,
@@ -172,12 +174,12 @@ so a fixture reads as the conversation it replays:
 | `send` | Means |
 | --- | --- |
 | `"next"` | `Next` — proceed past what was just said |
-| `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
-| `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
+| `{ "choose": n }` | `Choose(n)` — take the option at position `n` *(not taken by the reference runner yet)* |
+| `{ "supply": { … } }` | `Supply(answers)` — here is what the world says *(not taken yet)* |
 | `"done"` | `Done()` — the effect just asked for has been carried out |
 | `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
-| `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
-| `"describe"` | `Describe()` — ask where the run stands |
+| `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top *(the runner always begins at `entry` today)* |
+| `"describe"` | `Describe()` — ask where the run stands *(not taken yet)* |
 
 A session with no `start` begins at the playbook's `entry`.
 
@@ -452,7 +454,7 @@ playbooks are already pinned by C1's goldens.
 
 The readable half's failures are implemented; the rest describe the session
 harness and arrive with it in
-[C2](https://github.com/pengzhengyi/dialoguedown/issues/297).
+C2.
 
 | Case | Behavior | |
 | --- | --- | --- |
@@ -522,7 +524,7 @@ already keeps the golden playbooks; the rest lives beside the reader it exercise
 - **A menu written as a divert has no fixture yet.** `- => [Label](#anchor)` is
   the ordinary way to write a branching menu, but its option edge currently
   compiles to an empty label
-  ([#369](https://github.com/pengzhengyi/dialoguedown/issues/369)) — found by
+  — found by
   writing the first playable fixture, before any runner existed to trip over it.
   A fixture written now would enshrine the bug in the specification, so it lands
   with the fix.
@@ -532,5 +534,6 @@ already keeps the golden playbooks; the rest lives beside the reader it exercise
 - **A rendered view of a session** — `ddown conformance show <fixture>` printing a
   session as prose — would give human readability with no parser in any port,
   since it is generated and never authored. Worth doing once fixtures exist.
-- **The playable harness is deferred to C2**, which is the only component that can
-  run it.
+- **The playable harness landed with the reference runner.** A fixture that needs
+  a command the runner does not take yet is reported as not-yet-runnable, so the
+  gap is visible instead of silently green.

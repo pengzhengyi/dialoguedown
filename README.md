@@ -14,8 +14,10 @@ Markdown-first dialogue script through distinct compiler stages into a validated
 **semantic model**, reporting precise diagnostics as it goes, and keeps the core
 free of any Godot dependency so it stays **reusable** and **unit-testable**. The
 `ddown` CLI compiles scripts and renders every stage as an interactive
-report. The runtime that *plays* a compiled script — a dialogue runner and thin
-engine presentation adapters — is **planned**, not yet built.
+report. A compile also emits a portable **playbook**, and the runtime that
+*plays* one — a runner, plus the thin engine presentation adapters above it —
+has its first passes: conditions, world reads, saves, and adapters are still in
+progress.
 
 > [!NOTE]
 > DialogueDown is a work-in-progress open-source project. The public API,
@@ -44,11 +46,14 @@ engine presentation adapters — is **planned**, not yet built.
   [Target Frameworks](docs/contributing/design-notes/other/Target%20Frameworks.md) note.
 - **Engine dependency:** none in the core library.
 - **Primary consumer:** Godot/C# game projects through `ProjectReference`.
-- **Built today:** the compiler pipeline (Markdown → semantic model), collected
-  diagnostics, the `ddown` CLI (`compile`, `visualize`), and `dialogue.toml`
-  configuration.
-- **Planned:** the runtime — a dialogue runner, effects and conditions, and thin
-  engine presentation adapters.
+- **Built today:** the compiler pipeline (Markdown → semantic model → dialogue
+  graph), collected diagnostics, the portable **playbook** a compile emits, the
+  `ddown` CLI (`compile`, `visualize`), `dialogue.toml` configuration, and the
+  first passes of the C# **runner** with the conformance corpus that keeps
+  runtimes honest.
+- **In progress:** the rest of the runtime — conditions, effects and world reads,
+  saves, and thin engine presentation adapters. See the
+  [runtime architecture](docs/contributing/design-notes/runtime/Dialogue%20Runtime%20Architecture.md).
 
 ## How it works
 
@@ -60,18 +65,22 @@ it up with `AddDialogueDown()` for DI, or `ScriptCompilerFactory.CreateDefault()
 flowchart LR
     Src["Markdown<br/>script"] --> MD["Markdown<br/>AST"] --> DA["Dialogue<br/>AST"]
     DA --> DS["Desugared<br/>AST"] --> SM["Semantic<br/>model"]
+    SM --> GR["Dialogue<br/>graph"] --> PB["Playbook"] --> RT["Runtime<br/>runner"]
 ```
 
-- **Stages.** Parse → transpile → desugar → analyze, each a documented stage.
-  Read them in pipeline order in the [design notes](docs/contributing/design-notes/README.md).
+- **Stages.** Parse → transpile → desugar → analyze → build the graph, each a
+  documented stage. Read them in pipeline order in the
+  [design notes](docs/contributing/design-notes/README.md).
 - **Diagnostics.** Every problem is a located diagnostic with a stable `DLG####`
   code and a severity; the compiler collects them and continues where it safely
   can, rather than stopping at the first. See the [error codes](docs/guide/error-codes.md).
 - **Configuration.** A project's `dialogue.toml` declares its speakers and the
   compilation mode, and the CLI finds it automatically. See
   [project configuration](docs/guide/configuration.md).
-- **Planned runtime.** Playing a compiled script — a runner, effects and
-  conditions, and thin engine adapters — is design intent, not yet implemented.
+- **Runtime.** A compile emits a playbook; the runner loads one, steps through it,
+  and waits on its host for effects. Conditions, world reads, saves, and engine
+  adapters are still design intent — see the
+  [runtime architecture](docs/contributing/design-notes/runtime/Dialogue%20Runtime%20Architecture.md).
 
 Install the `ddown` command ([setup guide](docs/guide/cli.md)), then compile a
 script and see its diagnostics:

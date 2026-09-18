@@ -1,8 +1,7 @@
 # Choice nesting diagnostic
 
 > [!NOTE]
-> Status: **implemented**
-> ([issue #132](https://github.com/pengzhengyi/dialoguedown/issues/132)).
+> Status: **implemented**.
 > Add a style warning when a choice branch becomes difficult to scan, while
 > keeping nested choices valid.
 

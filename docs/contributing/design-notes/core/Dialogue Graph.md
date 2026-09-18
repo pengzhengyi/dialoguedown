@@ -11,7 +11,7 @@
 >
 > This note covers **building** the graph, and stops there. Walking it — evaluating a
 > condition, picking an edge, keeping a detour's call stack — belongs to the
-> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which owns those
+> runtime, which owns those
 > shapes so the code that needs them can settle them.
 
 ## Table of contents
@@ -93,7 +93,7 @@ plugs into the compiler facade as the stage after semantic analysis.
 
 - **Everything at play time** — walking the graph, evaluating a condition or a weight,
   running effects, picking an edge, and the returning detour's call stack. That is the
-  [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which shapes its own
+  runtime, which shapes its own
   hooks and edge kinds against a consumer rather than inheriting a guess from here.
 - **Block controls** (`if`/`elseif`/`else`) — lowered here to a **Branch** node whose
   conditional, ordered **Branch** edges the first satisfied one wins among; the construct
@@ -393,7 +393,7 @@ flowchart LR
 | Leading content before the first heading | Ordinary nodes that belong to no region; the root scene has no heading, so it is not itself a region. |
 | Content after a divert | An unconditional divert is the node's only outgoing edge; the unreachable content already drew `DLG1003` at analysis, so the builder simply does not wire it. |
 | `UnresolvedJump` (empty target, or a missing scene) | The semantic analyzer already reported it; the builder emits no divert (a dead end), never throwing on a resolution the analyzer admitted. |
-| `FileScopedJump` (another file, or a URL) | Analysis reports `DLG2016` and the builder wires no divert, so the line reads on. Cross-file resolution is [#59](https://github.com/pengzhengyi/dialoguedown/issues/59). |
+| `FileScopedJump` (another file, or a URL) | Analysis reports `DLG2016` and the builder wires no divert, so the line reads on. Cross-file resolution is the [Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md) note. |
 | A `SceneHeading` nested in a branch or an option body | Already reported (`DLG2015`) and left among the blocks, so the builder passes over it rather than failing on a script analysis admitted. |
 | A construct not yet lowered | The builder throws, so an unimplemented lowering is loud rather than a silently wrong graph. Every construct the language has today is lowered, so this guards the next one. |
 | A script with any error | No graph at all: the compile is a `CompilationFailure`, since a model analysis had to recover no longer describes what the writer wrote. |
@@ -445,14 +445,13 @@ part of this component.
 | **Achieved** | Every construct the language has lowers to nodes and typed edges: lines, control lines, player and random choices, block conditionals, jumps, and the End sentinel. Conditions, weights, effects, source spans, and the scene overlay all ride along, and the stage runs inside the compiler so a clean compile carries its graph. |
 | **Changed** | Three shapes moved once the code pushed back. A condition on a **block** belongs on the node, not on an edge — an edge withholds a route, a node withholds content — which needed `IConditionalNode` beside the planned `IConditionalEdge`. Choice arms weave back through the **block walk's continuations**, not through a region's `Exit`, which made nesting fall out for free and left regions purely descriptive. And a `BranchRegion` was designed but never built: a region groups what can be **addressed**, and nothing can name a branch. |
 | **Also built** | Two things the design did not anticipate. Every node carries its **source span**, since the graph was otherwise a closed artifact a debugger could not map back to the script. And `DLG2016` warns that a jump outside the script leads nowhere — without it, wiring the stage in would have turned a documented cross-file jump into a compiler crash. |
-| **Scope returned** | An earlier draft reserved runtime shapes here — an edge-selector hook and `Detour`/`Return` edge kinds. None were built, because none had a producer or a consumer; this component deleted an unused `BranchRegion` for the same reason. They now belong to the [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45), which will shape them against real use. |
+| **Scope returned** | An earlier draft reserved runtime shapes here — an edge-selector hook and `Detour`/`Return` edge kinds. None were built, because none had a producer or a consumer; this component deleted an unused `BranchRegion` for the same reason. They now belong to the runtime, which will shape them against real use. |
 
 ## Open questions and deferred work
 
 - **Reachability and cycle diagnostics.** A graph makes "no path reaches this scene" and
   "a cycle with no exit" detectable, as a graph-analysis pass over the built graph
-  (optionally through a QuikGraph adapter). Both are more valuable alongside the runtime
-  and are tracked with it ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45));
+  (optionally through a QuikGraph adapter). Both are more valuable alongside the runtime;
   the line-level unreachable-after-divert warning already ships.
 - **`#START` / entry point.** The canonical entry is the document top; a reserved start
   sentinel and cross-file entry semantics are deferred.

@@ -3,8 +3,7 @@
 > [!NOTE]
 > Status: **implemented**. Refines the coarse `Speaker` token from
 > [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) into precise,
-> non-overlapping sub-tokens (name, `@id`, separator), resolving
-> [#142](https://github.com/pengzhengyi/dialoguedown/issues/142). The core AST gains the
+> non-overlapping sub-tokens (name, `@id`, separator), resolving it. The core AST gains the
 > sub-spans the parser already computes; the editor projection emits a token per part.
 
 ## Goal and scope
@@ -67,7 +66,7 @@ Superpower already tracks each element's position; the tag parser keeps them via
 (which is why tags render precisely today), while the name, id, and colon are parsed as bare
 values and their positions dropped. The fix is symmetry: `.Located()` the name, id, and colon too.
 This keeps the AST the single source of truth for token ranges and avoids the fragile source
-re-scanning [#115](https://github.com/pengzhengyi/dialoguedown/issues/115) rejected.
+re-scanning rejected.
 
 The optional `@id` needs one piece of care: `.Optional()` on a value type yields `default(T)`,
 which a located id (a struct) cannot tell from absence, so a small `OptionalValue` combinator lifts
@@ -149,7 +148,7 @@ so the wire change needs no compatibility shim.
   `.dd-tok-separator`; the coarse-overlap precedence in `semantic-tokens.ts` is removed. The
   committed `web/dist/report.html` is rebuilt.
 - **Docs:** [Compiler-Projected Editor Semantics](./Compiler-Projected%20Editor%20Semantics.md) is
-  reconciled — its coarse-speaker decision and its `#142`-deferred references flip to "precise
+  reconciled — its coarse-speaker decision and the references it deferred flip to "precise
   tokens shipped", pointing here.
 
 ## Testability

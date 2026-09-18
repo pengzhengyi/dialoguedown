@@ -1,10 +1,12 @@
 # Dialogue runtime architecture
 
 > [!NOTE]
-> Status: **partially implemented** — the umbrella. Its first two components have
-> shipped: the [playbook format and writer](./Playbook%20Format.md) (C1) and the
-> [conformance corpus](./Conformance%20Corpus.md) (C3). The runner and everything
-> that builds on it (C2, C4–C8) remain proposed; see the
+> Status: **partially implemented** — the umbrella. The [playbook format and
+> writer](./Playbook%20Format.md) (C1), the first two passes of the C# runner
+> ([Runtime Core](./Runtime%20Core.md) — the state and the step — and
+> [Waiting on the Host](./Waiting%20on%20the%20Host.md)), and the
+> [conformance corpus](./Conformance%20Corpus.md) (C3) have shipped. The rest of
+> the runner (conditions, world reads, saves) and C4–C8 remain proposed; see the
 > [component table](#components-and-sequencing). This note
 > fixes the cross-cutting shape of everything after the
 > [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook** a compile
@@ -53,7 +55,7 @@ model and protocol, read consistency against external state, what a save holds,
 and how many runtimes exist.
 
 Out of scope, each with its own note: every component's internals, exporters to
-other engines ([#269](https://github.com/pengzhengyi/dialoguedown/issues/269)),
+other engines,
 the compile-time linker
 ([Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md)), and the
 configuration surface for capability targeting (see
@@ -66,7 +68,7 @@ configuration surface for capability targeting (see
 | **Script**             | The authored source, a `*.dialogue.md` file. Unchanged.                                                                                         |
 | **Playbook**           | The compiled, portable artifact for **one script**: nodes, edges, tables, and a compatibility header. What a compile emits and a runtime loads. |
 | **Runner**             | The pure function that advances play: given a playbook, a `PlayState`, and one input, it returns the next state and the events it emitted.      |
-| **`PlayState`**        | An immutable value: where play is — position, call stack, and effect ordinal. It *is* the save.                                                 |
+| **`PlayState`**        | An immutable value: where play is. It *is* the save. The shipped runner carries the position alone; the rest lands with C2.                     |
 | **`PlaySession`**      | The stateful shell around the runner: holds the current `PlayState`, talks to the driver, records the transcript.                               |
 | **Driver**             | The party that drives a session — a CLI, the report, a game, a debugger. It sends commands and answers reverse requests.                        |
 | **World**              | The game state a script asks about. A **role behind the driver**, not a separate protocol party.                                                |
@@ -418,8 +420,9 @@ makes a preview useful before any game exists, and the same idea as ink's
 fallback functions.
 
 `IGameWorld` replaces the placeholder `IGameSystem`, whose `Query`/`Execute` pair
-implied it performed work it no longer does. The rename lands with C2 and updates
-[game state](../../../guide/game-state.md), which documents the placeholder today.
+implied it performed work it no longer does. The rename lands with C2; the
+[game-state page](../../../guide/game-state.md) describes what a script asks of
+the world and does not name the interface until it settles.
 
 ### Read consistency
 
@@ -471,6 +474,9 @@ stack**, an **effect ordinal**, and the **playbook fingerprint** it belongs to.
 The position is a **qualified** node reference — the same `number | string` union
 the playbook uses — because once play crosses into another script, a bare index
 cannot say *which* playbook it indexes.
+
+The shipped runner carries the position alone; the rest of this section is the
+design that lands with C2.
 
 The fingerprint turns "loaded a save against a recompiled script" — the classic
 way this class of engine corrupts a playthrough — into a clean, loud failure. The
@@ -728,16 +734,16 @@ while a standard `Transcript` shape still lets conformance fixtures assert it.
 Everything the notes and issues already promise, and the insurance each needs in
 version 0. The cost column is what a retrofit would break.
 
-| Expansion                     | Source                                                       | Retrofit cost                   | Insurance in v0                                                                                                          |
-|-------------------------------|--------------------------------------------------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Cross-file jumps              | [#59](https://github.com/pengzhengyi/dialoguedown/issues/59) | None — the widening is additive | A playbook using them declares `cross-file-jump`, so an older runner refuses it whole rather than misreading a reference |
-| Negation, expressions         | [Conditional Jump](../language/Conditional%20Jump.md) D5     | Every playbook                  | A guard is an object with a `kind`, never a bare string, so `not` and `and` are additive                                 |
-| Detour and return             | [Progression Order](../language/Progression%20Order.md)      | Every save file                 | `PlayState` carries a **call stack** from v0, though nothing pushes to it yet                                            |
-| `#START`, cross-file entry    | [Progression Order](../language/Progression%20Order.md)      | None — a new field is additive  | `anchors` already names every scene a host may start at; `entry` states only the default                                 |
-| Hide versus disable an option | [Conditional Choice](../language/Conditional%20Choice.md)    | The host API                    | [D8](#d8--a-menu-shows-unavailable-options)                                                                              |
-| Weight re-rolls on replay     | [Random Choice](../language/Random%20Choice.md)              | Saves and conformance           | Entropy is a seam; the draw cursor lives in `PlayState`                                                                  |
-| Localization                  | —                                                            | Every script                    | An optional `lineId` is reserved in the schema and left unpopulated; the identity scheme gets its own note               |
-| Binary encoding               | —                                                            | Nothing                         | The writer is a seam; text and binary differ only in encoding                                                            |
+| Expansion                     | Source                                                                      | Retrofit cost                   | Insurance in v0                                                                                                          |
+|-------------------------------|-----------------------------------------------------------------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Cross-file jumps              | [Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md) | None — the widening is additive | A playbook using them declares `cross-file-jump`, so an older runner refuses it whole rather than misreading a reference |
+| Negation, expressions         | [Conditional Jump](../language/Conditional%20Jump.md) D5                    | Every playbook                  | A guard is an object with a `kind`, never a bare string, so `not` and `and` are additive                                 |
+| Detour and return             | [Progression Order](../language/Progression%20Order.md)                     | Every save file                 | `PlayState` carries a **call stack** from v0, though nothing pushes to it yet                                            |
+| `#START`, cross-file entry    | [Progression Order](../language/Progression%20Order.md)                     | None — a new field is additive  | `anchors` already names every scene a host may start at; `entry` states only the default                                 |
+| Hide versus disable an option | [Conditional Choice](../language/Conditional%20Choice.md)                   | The host API                    | [D8](#d8--a-menu-shows-unavailable-options)                                                                              |
+| Weight re-rolls on replay     | [Random Choice](../language/Random%20Choice.md)                             | Saves and conformance           | Entropy is a seam; the draw cursor lives in `PlayState`                                                                  |
+| Localization                  | —                                                                           | Every script                    | An optional `lineId` is reserved in the schema and left unpopulated; the identity scheme gets its own note               |
+| Binary encoding               | —                                                                           | Nothing                         | The writer is a seam; text and binary differ only in encoding                                                            |
 
 Anything this table misses is still recoverable through
 [capabilities](#compatibility) — an old runner refuses rather than misplays. That
@@ -755,21 +761,25 @@ flowchart LR
     C2 --> C6["C6 Godot adapter"]
 ```
 
-| #   | Component                            | Delivers                                                            | Issues                                                                                                                                |
-|-----|--------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| C1  | **Playbook format and writer**       | The schema, the compatibility header, and `ddown compile --output`  | [#46](https://github.com/pengzhengyi/dialoguedown/issues/46), part of [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)  |
-| C2  | **C# runner**                        | `Step`, `PlayState`, the protocol, drivers, `IGameWorld`, saves     | [#45](https://github.com/pengzhengyi/dialoguedown/issues/45); unblocks [#217](https://github.com/pengzhengyi/dialoguedown/issues/217) |
-| C3  | **Conformance corpus**               | Fixtures plus a harness, owned as data                              | —                                                                                                                                     |
-| C4  | **`ddown play` and the REPL**        | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) A                                                                    |
-| C5a | **Web proxy Play tab**               | The served report plays through the C# runner (level 1)             | [Interactive Playthrough](../other/Interactive%20Playthrough.md) B, [#63](https://github.com/pengzhengyi/dialoguedown/issues/63)      |
-| C5b | **TypeScript runner**                | The exported report plays a playbook offline (level 3), held to C3  | —                                                                                                                                     |
-| C6  | **Godot adapter and sample**         | BBCode presentation and a demo scene                                | —                                                                                                                                     |
-| C7  | **Compatibility and feature gating** | `[compatibility]` and `[features]`, the registry, diagnostics       | —                                                                                                                                     |
-| C8  | **Exporters**                        | Yarn, DOT, and Mermaid projected from the playbook                  | rest of [#269](https://github.com/pengzhengyi/dialoguedown/issues/269)                                                                |
+| #   | Component                            | Delivers                                                            | Note                                                               | Status      |
+|-----|--------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------|-------------|
+| C1  | **Playbook format and writer**       | The schema, the compatibility header, and `ddown compile --output`  | [Playbook Format](./Playbook%20Format.md)                          | Implemented |
+| C2  | **C# runner**                        | `Step`, `PlayState`, the protocol, drivers, `IGameWorld`, saves     | [Runtime Core](./Runtime%20Core.md)                                | In progress |
+| C3  | **Conformance corpus**               | Fixtures plus a harness, owned as data                              | [Conformance Corpus](./Conformance%20Corpus.md)                    | Implemented |
+| C4  | **`ddown play` and the REPL**        | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) A | Proposed    |
+| C5a | **Web proxy Play tab**               | The served report plays through the C# runner (level 1)             | [Interactive Playthrough](../other/Interactive%20Playthrough.md) B | Proposed    |
+| C5b | **TypeScript runner**                | The exported report plays a playbook offline (level 3), held to C3  | —                                                                  | Proposed    |
+| C6  | **Godot adapter and sample**         | BBCode presentation and a demo scene                                | [BBCode Rendering](../other/BBCode%20Rendering.md)                 | Proposed    |
+| C7  | **Compatibility and feature gating** | `[compatibility]` and `[features]`, the registry, diagnostics       | [Playbook Format](./Playbook%20Format.md)                          | Proposed    |
+| C8  | **Exporters**                        | Yarn, DOT, and Mermaid projected from the playbook                  | —                                                                  | Proposed    |
+
+C2's first two passes ship — the state and the step ([Runtime
+Core](./Runtime%20Core.md)) and waiting on the host ([Waiting on the
+Host](./Waiting%20on%20the%20Host.md)); conditions, world reads, saves, and the
+drivers are still to come.
 
 `DialogueDown.Runtime` ships as its own package that **must not reference the
-compiler**, guarded by an architecture test — the dependency rule that makes
-[#217](https://github.com/pengzhengyi/dialoguedown/issues/217) worth adopting.
+compiler**, guarded by an architecture test.
 
 > [!IMPORTANT]
 > The format stays **unstable at `playbookVersion: 0`** until a runner actually
@@ -799,8 +809,7 @@ never quietly drift from what the runtimes do.
 ## Alternatives not chosen
 
 - **Serialize `DialogueGraph` directly.** Fastest to build, and exactly the
-  coupling [#269](https://github.com/pengzhengyi/dialoguedown/issues/269) warns
-  against: the format would inherit `SourceSpan`, `SpeakerSymbol`, and every future
+  coupling the portability rule warns against: the format would inherit `SourceSpan`, `SpeakerSymbol`, and every future
   refactor of compiler internals as a breaking change.
 - **One merged bundle per project.** Contradicts the linker's settled
   link-by-reference model, loops on legal reference cycles, and destroys
