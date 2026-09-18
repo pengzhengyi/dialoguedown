@@ -129,6 +129,9 @@ That line reads as *The tag is #main, and the rule is x => y.* — no tag, no ju
   (`\#\#default`) works just as well.
 - Only ASCII punctuation escapes; before anything else the backslash stays
   literal (`\A` stays `\A`).
+- **A speaker prefix obeys the same rule.** Escaping its `:`, `@`, or `#` breaks
+  the prefix, so the line plays in the default voice — see
+  [Escaping a speaker prefix](speakers-and-lines.md#escaping-a-speaker-prefix).
 - A backslash at the end of a line is a hard break, not an escape. Write `\\`
   for a literal backslash there.
 - Code spans are not escaped: inside backticks a backslash is an ordinary

@@ -13,6 +13,7 @@ Part of the [script language specification](script-language.md).
   - [Speaker reference](#speaker-reference)
   - [Partial declaration](#partial-declaration)
   - [Default speaker](#default-speaker)
+  - [Escaping a speaker prefix](#escaping-a-speaker-prefix)
 - [Whitespace around the colon](#whitespace-around-the-colon)
 - [Styling](#styling)
 - [Tags](#tags)
@@ -143,6 +144,27 @@ Narrator @narrator ##default: The story begins.
 
 This line is also spoken by Narrator.
 ```
+
+### Escaping a speaker prefix
+
+An escape makes punctuation text, so an escaped prefix element breaks the prefix
+and the line plays in the default voice:
+
+| Written (source)     | Display (preview)   | Interpreted (runtime)                                |
+| -------------------- | ------------------- | ---------------------------------------------------- |
+| `Alice\: Hello`      | `Alice: Hello`      | Speaker: default speaker<br>Speech: Alice: Hello     |
+| `\Alice: Hello`      | `\Alice: Hello`     | Speaker: default speaker<br>Speech: \Alice: Hello    |
+| `\@alice: Hi`        | `@alice: Hi`        | Speaker: default speaker<br>Speech: @alice: Hi       |
+| `\#tag: hi`          | `#tag: hi`          | Speaker: default speaker<br>Speech: #tag: hi         |
+| `Alice \@alice: Hi`  | `Alice @alice: Hi`  | Speaker: default speaker<br>Speech: Alice @alice: Hi |
+| `Alice: \@alice: Hi` | `Alice: @alice: Hi` | Speaker: Alice<br>Speech: @alice: Hi                 |
+| `"@alice": Hi`       | `"@alice": Hi`      | Speaker: @alice<br>Speech: Hi                        |
+
+To keep an escape inside speech, put the speaker's colon first — `Alice: \@alice: Hi`
+is Alice saying "@alice: Hi". A name that is not a plain word is quoted
+(`"@alice": Hi`), and a backslash before a letter escapes nothing, so
+`\Alice: Hello` keeps its backslash. See
+[Literal punctuation](script-language.md#literal-punctuation).
 
 ## Whitespace around the colon
 
