@@ -1,6 +1,4 @@
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Runtime.Protocol;
-using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -15,8 +13,7 @@ public sealed class PlayableRunTests
         // while it plays, or as a divergence when nobody had taught it.
         foreach (var node in Playbooks.OneOfEveryNodeKind())
         {
-            var context = Playbooks.Of([node, new EndNode(1)], ["Alice"]);
-            var refused = Arrival.At(context, 0).Events.OfType<Refused>().Any();
+            var refused = node.RefusalOnArrival() is not null;
 
             Assert.True(
                 PlayableRun.IsPlayable(node) == !refused,
