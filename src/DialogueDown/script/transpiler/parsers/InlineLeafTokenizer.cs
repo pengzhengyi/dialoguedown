@@ -1,3 +1,4 @@
+using DialogueDown.Markdown;
 using DialogueDown.Script.Transpiler.Parsed;
 using DialogueDown.Script.Transpiler.Parsing;
 using Superpower;
@@ -16,13 +17,17 @@ namespace DialogueDown.Script.Transpiler.Parsers;
 /// </summary>
 internal static class InlineLeafTokenizer
 {
+    // The arrow the writer types; shared by the parser and StartsWithJumpIndicator so the
+    // arrow's spelling and its escape rule cannot drift apart.
+    private const string Arrow = "=>";
+
     // As many characters as possible that start neither a tag ('#') nor a jump ('=').
     private static readonly IParser<InlineLeaf> _text = SuperpowerParser.Wrap(
         Character.ExceptIn('#', '=').AtLeastOnce()
             .Select(chars => (InlineLeaf)new TextLeaf(new string(chars))));
 
     private static readonly IParser<InlineLeaf> _jump = SuperpowerParser.Wrap(
-        Span.EqualTo("=>").Value((InlineLeaf)new JumpLeaf()));
+        Span.EqualTo(Arrow).Value((InlineLeaf)new JumpLeaf()));
 
     private static readonly IParser<InlineLeaf> _tag =
         TagParser.Token.Select(tag => (InlineLeaf)new TagLeaf(tag));
@@ -49,6 +54,14 @@ internal static class InlineLeafTokenizer
         leaves.AddRange(TokenizeRest(recognized, rest));
         return Coalesce(leaves);
     }
+
+    /// <summary>
+    /// Whether this text opens with the jump indicator (<c>=&gt;</c>) written unescaped. A
+    /// stage that must decide before tokenizing — whether a condition guards a jump, say —
+    /// asks here, so the arrow's spelling and its escape rule stay in one place.
+    /// </summary>
+    public static bool StartsWithJumpIndicator(this TextInline text) =>
+        !text.IsFirstCharacterEscaped && text.Text.StartsWith(Arrow, StringComparison.Ordinal);
 
     private static IReadOnlyList<Spanned<InlineLeaf>> TokenizeRest(
         IParser<InlineLeaf> recognized, ParseInput input)
