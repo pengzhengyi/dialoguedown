@@ -40,7 +40,7 @@ internal static class PlayableRun
     /// <param name="entry">The entry to ask about.</param>
     /// <returns><see langword="true"/> when the harness can take this entry.</returns>
     internal static bool IsPlayable(SessionEntry entry) =>
-        entry is not Send send || Commands.Read(send) is not null;
+        entry is not Send send || Commands.TryRead(send, out _);
 
     /// <summary>
     /// Everything the case needs that this build has not learned, each named once: a node kind it

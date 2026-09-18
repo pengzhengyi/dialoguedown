@@ -10,9 +10,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// <summary>Reads what a session sends.</summary>
 /// <remarks>
 /// A separate, testable concern from operating the runner. Each command has a reader of its own,
-/// keyed so two claiming one key is a startup failure; a send no reader owns reads as
-/// <see langword="null"/>, which the caller reports as not yet runnable, and a send that names a
-/// command but shapes it wrongly is a fixture bug.
+/// keyed so two claiming one key is a startup failure; <see cref="TryRead"/> answers
+/// <see langword="false"/> for a send no reader owns, which the caller reports as not yet
+/// runnable, and a send that names a command but shapes it wrongly is a fixture bug.
 /// </remarks>
 internal static class Commands
 {
@@ -25,16 +25,26 @@ internal static class Commands
 
     /// <summary>Reads the command a send names.</summary>
     /// <param name="send">What the session sends, in the corpus's own words.</param>
-    /// <returns>The command, or <see langword="null"/> when nothing plays it yet.</returns>
+    /// <param name="command">The command, or <see langword="null"/> when no reader owns the send.</param>
+    /// <returns><see langword="true"/> when a reader owns the send and the shape it gives it is one it can take.</returns>
     /// <exception cref="InvalidFixtureException">The send gives a command a shape it cannot take.</exception>
-    public static Command? Read(Send send)
+    public static bool TryRead(Send send, [NotNullWhen(true)] out Command? command)
     {
+        command = null;
+
         if (!TryReadKeyAndPayload(send.Message, out var key, out var payload))
         {
-            return null;
+            return false;
         }
 
-        return _byKey.TryGetValue(key, out var reader) ? reader.Read(payload) : null;
+        if (!_byKey.TryGetValue(key, out var reader))
+        {
+            return false;
+        }
+
+        command = reader.Read(payload);
+
+        return true;
     }
 
     /// <summary>Whether a send is the one that opens the run.</summary>
