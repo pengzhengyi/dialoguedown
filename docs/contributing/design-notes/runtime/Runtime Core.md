@@ -40,8 +40,9 @@ In scope:
   readable half.
 
 Out of scope, each with the pass that owns it: choices (C2b), the world seam and
-conditions (C2c), effects and jumps (C2d), `Describe` (C2e), saves (C2f), and
-`PlaySession` with its drivers (C2g).
+conditions (C2c), `Describe` (C2e), saves (C2f), and `PlaySession` with its
+drivers (C2g). Effects and jumps were C2d, and
+[waiting on the host](./Waiting%20on%20the%20Host.md) has since delivered them.
 
 This note assumes the vocabulary of the
 [architecture note](./Dialogue%20Runtime%20Architecture.md) — *driver*, *runner*,
