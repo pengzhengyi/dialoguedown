@@ -188,15 +188,15 @@ one twice is in a ring, because nothing the walk reads changes as it goes. So th
 guard is a counter against `Nodes.Length`: no false refusal, no missed ring, no
 allocation, and no number anybody has to pick.
 
-### W6 — Waiting is a stage of the run, so the position carries it
+### W6 — Waiting is something the run is doing, so the situation carries it
 
 Waiting for the host is something the *run* is doing, not something the playbook
-says. `AwaitingDone` stands at the same node `AtNode` would, at a different stage,
-which is the shape the position union exists for: a run is not always simply *at*
-a node, and holding the stage in the position rather than beside it means the two
-can never disagree.
+says. `AwaitingDone` stands at the same node `AtNode` would, doing something else
+there, which is the shape the situation union exists for: a run is not always
+simply *at* a node, and holding what it is doing in the situation rather than
+beside the node means the two can never disagree.
 
-That keeps the protocol a relation between a position and a command. `Next`
+That keeps the protocol a relation between a situation and a command. `Next`
 advances from `AtNode`, `Done` advances from `AwaitingDone`, and neither arm has
 to look at the playbook to work out which stage the run is in.
 
@@ -279,7 +279,7 @@ is: both are answers, and there is no question to answer.
 | `Arrival` | A walk that carries on while the node has asked the host for nothing |
 | `NodeTraversalExtensions` | Reads the way onward — the divert when it applies, else the succession |
 | `protocol` | `Request`, the kind of event an answer is owed to; `Perform` carrying one effect; `Done` and `Failed` answering it |
-| `positions` | `AwaitingDone`, the stage a run is at once it has asked and not yet heard back |
+| `situations` | `AwaitingDone`, where a run is once it has asked and not yet heard back |
 | `Runner.Step` | One arm per stage: `Next` advances from `AtNode`, `Done` from `AwaitingDone`, `Failed` holds where it stands |
 | `schema/fixture-0.schema.json` | `performed` becomes `perform` and gains its shape; `done` and `failed` join the sends |
 | `conformance/playable/an-effect` | Gains the send, and a `because` that states the ordering it now proves |

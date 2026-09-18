@@ -94,7 +94,7 @@ holds — `false` for a guard, `"Robin"` for a query.
 | `Resolve(keys)` | A reverse request: the keys this node needs answered | `Request`, alongside `Perform` |
 | `Supply(answers)` | The command answering it | `Command` |
 | `Answer` | What the world said about one key, as a closed union | `AnswerKinds`, the fixture reader |
-| `AwaitingSupply(node, keys)` | The stage between the ask and its answer | `Position`, alongside `AwaitingDone` |
+| `AwaitingSupply(node, keys)` | Where a run is between the ask and its answer | `Situation`, alongside `AwaitingDone` |
 | `Questions` | Reads every key one node needs, in one place | `Arrival` |
 | `Answers` | Holds what came back, once it matches what was asked, and reads a key as a truth or as text | `Questions`, `Evaluation` |
 | `Evaluation` | Answers whether a condition holds, given what came back | `Arrival`, `NodeTraversalExtensions` |
@@ -147,7 +147,7 @@ dead code today.
 
 A driver may answer something nobody asked, or leave something asked unanswered.
 Both are refused, and the check needs no memory to make: the keys the run asked
-about are carried in the position, so the comparison is set equality between what
+about are carried in the situation, so the comparison is set equality between what
 was asked and what came back.
 
 That makes it a function of two collections and nothing else, which is why it
@@ -179,7 +179,7 @@ An edge's condition is a different question with a different answer: an arm whos
 condition fails is simply not among the ways out. `OnwardTarget` grows a filter
 rather than a new concept.
 
-### A7 — The stage lives in the position
+### A7 — What the run is doing lives in the situation
 
 `AwaitingSupply(node, keys)` holds both the node the run is standing at and the
 keys it asked about, exactly as the runtime core note's state diagram drew it.
@@ -240,7 +240,7 @@ keep testing for no one.
 | Seam | Change |
 | --- | --- |
 | `protocol` | `Resolve` joins `Perform` as a request; `Supply` joins the commands; `Answer` and `AnswerKinds` are new |
-| `positions` | `AwaitingSupply` joins `AwaitingDone` |
+| `situations` | `AwaitingSupply` joins `AwaitingDone` |
 | `Arrival` | Asks before it plays; steps over a node whose condition fails |
 | `Questions`, `Answers`, `Evaluation` | New, and each testable without a playbook |
 | `NodeTraversalExtensions` | Reads the way onward from the arms whose conditions hold |

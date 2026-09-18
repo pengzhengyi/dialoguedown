@@ -1,4 +1,4 @@
-using DialogueDown.Runtime.Positions;
+using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime;
 
@@ -9,8 +9,8 @@ namespace DialogueDown.Runtime;
 /// Small on purpose, because the host owns the game. A host that wants "only once" answers a
 /// query it owns, so visit counts belong to the world.
 /// </remarks>
-/// <param name="Position">Where the run stands, and at what stage.</param>
-public sealed record PlayState(Position Position)
+/// <param name="Situation">Which node the run has reached, and what it is doing there.</param>
+public sealed record PlayState(Situation Situation)
 {
     /// <summary>Gets the state a run has before it begins.</summary>
     public static PlayState Initial { get; } = new(new NotStarted());

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace DialogueDown.Runtime.Positions;
+namespace DialogueDown.Runtime.Situations;
 
 /// <summary>
 /// Standing at a node, waiting for the world to answer what it was asked.
@@ -16,4 +16,4 @@ namespace DialogueDown.Runtime.Positions;
 /// </remarks>
 /// <param name="Node">The node's position in the playbook.</param>
 /// <param name="Keys">The keys the run asked the world about.</param>
-public sealed record AwaitingSupply(int Node, ImmutableArray<string> Keys) : Position;
+public sealed record AwaitingSupply(int Node, ImmutableArray<string> Keys) : Situation;

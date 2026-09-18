@@ -314,7 +314,8 @@ public static StepResult Step(Playbook playbook, PlayState state, DriverCommand 
 public sealed record StepResult(PlayState State, IReadOnlyList<RunnerEvent> Events);
 ```
 
-The position carries the stage a run is at, so a state cannot contradict itself and
+The situation carries what a run is doing as well as where it is, so a state cannot
+contradict itself and
 `Step` stays total. What may be sent next is read from the event the runner just
 produced. `PlaySession` is the imperative shell: it holds the current state,
 performs transport, and records the transcript.

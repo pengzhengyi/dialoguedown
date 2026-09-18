@@ -62,7 +62,7 @@ is far cheaper to learn now than after six components assume it.
 
 - [x] `DialogueDown.Runtime`, referencing `DialogueDown.Playbook` and nothing else,
       with an architecture test that fails if it ever reaches for the compiler.
-- [x] `PlayState` — a position, and nothing else it has no use for yet.
+- [x] `PlayState` — a situation, and nothing else it has no use for yet.
 - [x] `Step` — total and deterministic, with no I/O and no mutation.
 - [x] `Start` begins a run at the entry, from wherever it stood, so starting over needs no
       way to abort what was already running.
@@ -82,8 +82,8 @@ is far cheaper to learn now than after six components assume it.
 ```text
 src/DialogueDown.Runtime/          the facade: what a consumer calls
   PlayContext.cs  PlayState.cs  Runner.cs  StepResult.cs
-  positions/                       where a run stands, as a closed union
-    Position.cs  NotStarted.cs  AtNode.cs  AtEnd.cs
+  situations/                      where a run is and what it is doing, as a closed union
+    Situation.cs  NotStarted.cs  AtNode.cs  AtEnd.cs
   protocol/                        what a run is told, and what it reports
     Command.cs  commands/Start.cs  commands/Next.cs
     Event.cs  RefusalReason.cs  events/Said.cs  events/Ended.cs  events/Refused.cs
@@ -95,8 +95,8 @@ src/DialogueDown.Runtime/          the facade: what a consumer calls
 Each member of a union gets its own file, as the playbook's nodes and edges do,
 and each family gets a folder so the tree reads as the vocabulary it is.
 
-The root namespace keeps only the façade, so `Position` and its cases live in
-`DialogueDown.Runtime.Positions`. The protocol's folders are for reading: commands
+The root namespace keeps only the façade, so `Situation` and its cases live in
+`DialogueDown.Runtime.Situations`. The protocol's folders are for reading: commands
 and events are used together, so both stay in one namespace a consumer imports
 once.
 
@@ -110,7 +110,7 @@ is the point: an event reports something that already happened.
 
 | Carries | Why |
 | --- | --- |
-| `Position` | Where the run stands, and at what stage |
+| `Situation` | Which node the run has reached, and what it is doing there |
 
 That is the whole of it in this pass. The architecture note also gives `PlayState`
 a **call stack**, an **effect ordinal**, and the **playbook fingerprint** it
@@ -124,11 +124,12 @@ serialized until C2f, so nothing is frozen by waiting.
 "only once" answers a query it owns, and a counter in the core would grow every
 save and duplicate the world's job.
 
-### The position carries the stage
+### One value for where and what
 
 A run is not always simply *at* a node. In C2c it pauses at a line it has already
 reached, waiting for the world to answer a question the line asks — the same node,
-a different stage. So the position is a closed union rather than an index:
+a different thing being done there. So the situation is a closed union rather than
+an index:
 
 ```mermaid
 flowchart LR
@@ -140,8 +141,8 @@ flowchart LR
     ASK -. "Supply" .-> AT
 ```
 
-Holding the stage *in* the position, rather than in a flag beside it, means the
-two can never disagree. It also keeps the state free of a "what may I send next"
+Holding what the run is doing *in* the situation, rather than in a flag beside the
+node, means the two can never disagree. It also keeps the state free of a "what may I send next"
 declaration: the runner has just said what it wants — `Said` means advance,
 `Asked` will mean choose — and a driver that reads state instead of reacting to the
 message it received is coupled to the state model for nothing. Asking a run to
@@ -232,9 +233,9 @@ There is no runner *instance* to hold, because there is no state to hold outside
 `PlayState`. A class would invite a field, and a field is the thing that makes
 replay stop working.
 
-### R3 — The position carries the stage; nothing declares what it awaits
+### R3 — The situation says where and what; nothing declares what it awaits
 
-Argued in [the state](#the-position-carries-the-stage). A driver reacts to the
+Argued in [the state](#one-value-for-where-and-what). A driver reacts to the
 event it just received rather than reading the state, so the state needs no
 declaration of what may be sent next.
 
@@ -289,7 +290,7 @@ of that applies here, so restart arrives without being designed.
 A command checks its own invariants where it is built, as the playbook's records
 do with `AssertNotNegative`: `Choose(-1)` should be impossible to construct. What
 it cannot check there is legality — whether the index addresses an option that was
-offered needs the playbook and the position, so it belongs to the step, where both
+offered needs the playbook and the situation, so it belongs to the step, where both
 are in view. The line is *what only the command can know* against *what needs the
 world*.
 
@@ -306,7 +307,7 @@ that need them.
 ### R9 — The protocol is a matrix; the constructs are a list
 
 `Step` keeps the whole of *what may be sent where* as one switch, because that is
-a **relation** between a position and a command: split it by either axis and
+a **relation** between a situation and a command: split it by either axis and
 answering "what can I send here?" means reading several files. It stays small —
 about seven arms once every command exists, since `Start` and `Restore` are legal
 everywhere and the rest in one place each.
@@ -342,7 +343,7 @@ half already applies to a reader's message (F5 in the
 | `unplayable-node` | the node kind is one this build has not learned to play |
 
 `misplaced` is the one worth naming twice: the protocol knows the command, and only
-the position is wrong, so a `Next` offered while the run waits on the host is refused
+the situation is wrong, so a `Next` offered while the run waits on the host is refused
 rather than taken — which is what stops a fast-forward from skipping an effect.
 
 The reason is a **message, not a diagnosis**. It says what the driver did wrong, or
@@ -367,10 +368,10 @@ break.
 
 | Case | Behavior |
 | --- | --- |
-| A command the run cannot take here | A `Refused` event; the position does not move |
+| A command the run cannot take here | A `Refused` event; the run does not move |
 | `Next` at an ended run | Refused, for the same reason — an ended run goes nowhere |
 | `Next` before a run has started | Refused: there is nothing to advance from |
-| `Start` at any position | Accepted, and begins again at the entry |
+| `Start` in any situation | Accepted, and begins again at the entry |
 | A state whose fingerprint is not this playbook's | Refused: a state from another script is not a state at all |
 | A playbook whose entry leads nowhere | Cannot occur; `PlaybookReader` refuses it before a runner sees it |
 | A line whose speaker index is out of range | Cannot occur; refused by the reader |
@@ -387,7 +388,7 @@ break.
 | `DialogueDown.Playbook.Tests` | Keeps the readable harness, now reading the corpus through the shared library |
 | `conformance/` and `schema/fixture-0.schema.json` | `continue` becomes `next`, in the fixtures, the schema, and the README |
 | Architecture note | `PlayState` no longer declares what it awaits, and the commands and events are named as the corpus names them |
-| C2b–C2g | Each adds commands, events, and position cases to what this pass establishes |
+| C2b–C2g | Each adds commands, events, and situation cases to what this pass establishes |
 | CI | Nothing new is scheduled; the harness runs with the existing suite |
 
 ## Testability
@@ -432,7 +433,7 @@ is `ddown compile`'s and is checked against its source.
   reads as that. The list comes out when the last fixture runs, or it becomes a
   ceiling nobody revisits.
 - **Undo is replay, not compensation.** Two undos exist, and only one is the
-  runner's: rewinding the *position* is free because state is a value, while
+  runner's: rewinding the *situation* is free because state is a value, while
   rewinding the *world* is the host's and is often impossible — a transferred item
   does not come back. The architecture note settles the second as
   [D9](./Dialogue%20Runtime%20Architecture.md), and a saga of host-declared

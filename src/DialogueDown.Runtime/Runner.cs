@@ -1,5 +1,5 @@
-using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime;
@@ -26,7 +26,7 @@ public static class Runner
 
         // What may be sent where, as one matrix. The work each construct does lives in Arrival
         // and Traversal, which is the axis this grows along.
-        return (state.Position, command) switch
+        return (state.Situation, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
             (AtNode at, Next) => Advance(context, state, at.Node),
@@ -43,7 +43,7 @@ public static class Runner
             _ => Refuse(
                 state,
                 ReasonFor(command),
-                $"A run at {Where(state.Position)} cannot take {command.GetType().Name}."),
+                $"A run at {Where(state.Situation)} cannot take {command.GetType().Name}."),
         };
     }
 
@@ -65,8 +65,8 @@ public static class Runner
     private static StepResult Refuse(PlayState state, RefusalReason reason, string explanation) =>
         new(state, [new Refused(reason, explanation)]);
 
-    private static string Where(Position position) =>
-        position switch
+    private static string Where(Situation situation) =>
+        situation switch
         {
             AtNode at => $"node {at.Node}",
             AwaitingDone waiting => $"node {waiting.Node}, waiting for the host",

@@ -1,7 +1,7 @@
 using CsCheck;
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -42,12 +42,12 @@ public sealed class RunnerWalkPropertyTests
             {
                 var state = Step(context, PlayState.Initial, new Start());
 
-                for (var taken = 0; taken < MostSteps && MovesOnFrom(state.Position) is { } command; taken++)
+                for (var taken = 0; taken < MostSteps && MovesOnFrom(state.Situation) is { } command; taken++)
                 {
                     state = Step(context, state, command);
                 }
 
-                AssertAddressable(context, state.Position);
+                AssertAddressable(context, state.Situation);
             });
 
     /// <summary>
@@ -72,25 +72,25 @@ public sealed class RunnerWalkPropertyTests
     {
         var stepped = Runner.Step(context, state, command).State;
 
-        AssertAddressable(context, stepped.Position);
+        AssertAddressable(context, stepped.Situation);
 
         return stepped;
     }
 
     // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
     // host work carries on rather than ending the walk where the first effect is drawn.
-    private static Command? MovesOnFrom(Position position) => position switch
+    private static Command? MovesOnFrom(Situation situation) => situation switch
     {
         AtNode => new Next(),
         AwaitingDone => new Done(),
         _ => null,
     };
 
-    private static void AssertAddressable(PlayContext context, Position position)
+    private static void AssertAddressable(PlayContext context, Situation situation)
     {
         // Two stages name a node, and a walk standing outside the document at either of them is
         // the same defect.
-        var node = position switch
+        var node = situation switch
         {
             AtNode at => at.Node,
             AwaitingDone waiting => waiting.Node,

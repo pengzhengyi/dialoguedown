@@ -1,4 +1,4 @@
-namespace DialogueDown.Runtime.Positions;
+namespace DialogueDown.Runtime.Situations;
 
 /// <summary>
 /// Which node a run has reached, and what it is doing there.
@@ -14,9 +14,9 @@ namespace DialogueDown.Runtime.Positions;
 /// together is what stops them disagreeing.
 /// </para>
 /// </remarks>
-public abstract record Position
+public abstract record Situation
 {
-    private protected Position()
+    private protected Situation()
     {
     }
 }

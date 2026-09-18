@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime.Stepping;
 
