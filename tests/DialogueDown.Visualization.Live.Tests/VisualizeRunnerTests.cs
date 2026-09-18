@@ -10,11 +10,11 @@ public sealed class VisualizeRunnerTests
     [Fact]
     public void RunStatic_WritesReportAndOpensIt()
     {
-        using var doc = new TempScript("# Scene");
+        using var script = new TempScript("# Scene");
         var browser = new FakeBrowserLauncher();
         var runner = new VisualizeRunner(browser);
 
-        var code = runner.RunStatic(doc.Path, output: null, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
+        var code = runner.RunStatic(script.Path, output: null, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
 
         Assert.Equal(0, code);
         var opened = Assert.Single(browser.Opened);
@@ -26,14 +26,14 @@ public sealed class VisualizeRunnerTests
     [Fact]
     public void RunStatic_Output_WritesToThePathWithoutOpening()
     {
-        using var doc = new TempScript("# Scene");
+        using var script = new TempScript("# Scene");
         var target = Path.Combine(Path.GetTempPath(), $"dd-vr-{Guid.NewGuid():N}.html");
         var browser = new FakeBrowserLauncher();
         var runner = new VisualizeRunner(browser);
 
         try
         {
-            var code = runner.RunStatic(doc.Path, target, noOpen: true, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
+            var code = runner.RunStatic(script.Path, target, noOpen: true, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
 
             Assert.Equal(0, code);
             Assert.True(File.Exists(target));

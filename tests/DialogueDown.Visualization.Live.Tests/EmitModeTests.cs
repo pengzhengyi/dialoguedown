@@ -9,13 +9,13 @@ public sealed class EmitModeTests
     [Fact]
     public void Run_Dot_WithOutput_WritesDigraphToTheFileNotStdout()
     {
-        using var doc = new TempScript("# Scene\n\nAlice: Hi.");
+        using var script = new TempScript("# Scene\n\nAlice: Hi.");
         var writer = new StringWriter();
         var output = Path.Combine(Path.GetTempPath(), $"dd-emit-{Guid.NewGuid():N}.dot");
 
         try
         {
-            var code = EmitMode.Run(doc.Path, EmitFormat.Dot, output, CompilerOptions.Default, writer, new StringWriter());
+            var code = EmitMode.Run(script.Path, EmitFormat.Dot, output, CompilerOptions.Default, writer, new StringWriter());
 
             Assert.Equal(0, code);
             Assert.True(File.Exists(output));
