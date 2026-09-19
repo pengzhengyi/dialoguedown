@@ -235,7 +235,7 @@ rather than blocking a merge — so a red **Docs** job is worth fixing, not a br
 ### Editor tasks (VS Code)
 
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so
-you can build, test, and clean without memorising commands: `build` / `test`
+you can build, test, and clean without memorizing commands: `build` / `test`
 (.NET), `build: fast` (inner-loop compile without analyzers), `test: project` /
 `test: filter` / `test: class` (one already-built .NET test scope), `web: build` / `web: check` /
 `web: e2e` (frontend), targeted `web: test file` / `web: test watch` /

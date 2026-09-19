@@ -81,7 +81,7 @@ export const SAMPLE_STAGES: Stage[] = [
                 attributes: [
                     {
                         name: "text",
-                        value: "Alice: Look at this very long line that should be ellipsised on the node",
+                        value: "Alice: Look at this very long line that should be ellipsized on the node",
                     },
                     { name: "span", value: "[9, 21)" },
                 ],

@@ -56,7 +56,7 @@ public sealed class SceneExtensionsTests
     }
 
     [Fact]
-    public void EntryBlocks_AHeadingWithOnlyChildScenes_EntersTheFirstChildsBlock()
+    public void EntryBlocks_AHeadingWithOnlyChildScenes_EntersTheFirstChildBlock()
     {
         var model = Pipeline.UntilAnalyzed("""
             # Parent

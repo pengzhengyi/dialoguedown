@@ -5,7 +5,7 @@ import { foldGlyphName } from "./fold-glyph";
 import type { DisplayNode, Span } from "./model";
 import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
 
-/** Longest inline label/attribute drawn on a node before it is ellipsised. */
+/** Longest inline label/attribute drawn on a node before it is ellipsized. */
 export const MAX_INLINE_TEXT = 30;
 
 /** Escape a value for safe insertion into HTML. */
