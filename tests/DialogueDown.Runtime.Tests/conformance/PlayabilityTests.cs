@@ -1,8 +1,7 @@
 using System.Collections.Immutable;
 using DialogueDown.Conformance;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Runtime.Protocol;
-using DialogueDown.Runtime.Stepping;
+using DialogueDown.TestSupport;
 using static DialogueDown.Runtime.Tests.Conformance.PlayabilityAssert;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
@@ -77,8 +76,7 @@ public sealed class PlayabilityTests
         // while it plays, or as a divergence when nobody had taught it.
         foreach (var node in OneOfEveryNodeKind())
         {
-            var context = PlayContextFactory.Of([node, End(1)], ["Alice"]);
-            var refused = Arrival.At(context, 0).Events.OfType<Refused>().Any();
+            var refused = node.RefusalOnArrival() is not null;
 
             Assert.True(
                 Playability.CanPlay(node) == !refused,
@@ -93,10 +91,6 @@ public sealed class PlayabilityTests
     {
         // Guards the guard: a list that stopped naming kinds would leave the check above agreeing
         // about nothing.
-        var named = OneOfEveryNodeKind().Select(node => node.GetType()).ToHashSet();
-        var defined = typeof(Node).Assembly.GetTypes()
-            .Where(type => type.IsAssignableTo(typeof(Node)) && !type.IsAbstract);
-
-        Assert.Empty(defined.Where(type => !named.Contains(type)).Select(type => type.Name));
+        UnionCoverageAssert.AssertCoversEveryMember<Node>(OneOfEveryNodeKind());
     }
 }
