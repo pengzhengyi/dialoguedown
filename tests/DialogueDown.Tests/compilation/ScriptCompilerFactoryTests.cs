@@ -194,6 +194,22 @@ public sealed class ScriptCompilerFactoryTests
     }
 
     [Fact]
+    public void CreateDefault_AnEscapedArrow_ReadsLiterallyWithNoWarning()
+    {
+        // "\=>" is prose: no jump indicator is built, so the dangling-arrow warning cannot fire.
+        var source =
+            """
+            # Crossroads
+            Alice: The rule is x \=> y.
+            """;
+
+        var result = ScriptCompilerFactory.CreateDefault().Compile(source);
+
+        AssertNotReported(result.Diagnostics, DiagnosticCatalog.DanglingJumpArrow);
+        Assert.False(result.HasErrors);
+    }
+
+    [Fact]
     public void CreateDefault_ATableInAScript_SurfacesTheFrontEndNote()
     {
         // The front end reports before any other stage runs, so its note rides along with the
