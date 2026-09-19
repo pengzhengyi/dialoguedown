@@ -330,7 +330,7 @@ jobs:
       # flag files nobody edited, and the default changed-files scope would check nothing at all.
       # Pin the action only if a release starts failing on words this repository has not changed.
       - name: Check spelling
-        uses: streetsidesoftware/cspell-action@v8
+        uses: streetsidesoftware/cspell-action@v9
         with:
           config: cspell.json
           files: "**"
