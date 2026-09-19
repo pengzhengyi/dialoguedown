@@ -261,7 +261,7 @@ public sealed class ConfiguredSpeakerReaderTests
         Assert.Throws<DialogueConfigurationException>(() => Read("""
             [[speakers]]
             name = "Alice"
-            colour = "red"
+            color = "red"
             """));
     }
 

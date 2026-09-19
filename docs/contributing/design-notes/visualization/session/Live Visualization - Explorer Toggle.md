@@ -119,7 +119,7 @@ read off the control.
 
 The row's trailing controls — Zen and maximize — share a single style rule rather than
 a copy each. Held apart they drift, and drift here is not cosmetic: the row aligns to
-its **bottom** edge, so a control that ends up taller than its neighbours grows
+its **bottom** edge, so a control that ends up taller than its neighbors grows
 *upward*, into the brand mark above it.
 
 Centering their glyph with flex is what makes that class of fault impossible. The glyph

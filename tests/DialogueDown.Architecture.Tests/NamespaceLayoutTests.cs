@@ -5,7 +5,7 @@ namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
 /// Group E — namespace layout. An assembly's root namespace should carry its
-/// façade, the entry points a consumer calls, while everything else lives in a
+/// facade, the entry points a consumer calls, while everything else lives in a
 /// sub-namespace that names its role. A crowded root namespace is where types
 /// land when nobody decided where they belong, so this caps it.
 /// </summary>

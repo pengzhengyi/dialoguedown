@@ -3,7 +3,7 @@ import type { Report } from "../src/model";
 import { SAMPLE_SOURCE, SAMPLE_STAGES, writeReport } from "./report";
 
 // A deliberately long absolute path (long directory, ordinary filename) so the
-// directory must ellipsise and the layout must cope on a narrow screen.
+// directory must ellipsize and the layout must cope on a narrow screen.
 const LONG_PATH =
     "/Users/pengzhengyi/Documents/Dev/PersonalProjects/Game/DialogueDown/very/deep/nested/folders/scene.dialogue.md";
 
@@ -61,7 +61,7 @@ test("the help expands full-width above the status line, clear of it", async ({ 
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
 });
 
-test("the document path is a compact ellipsised chip, not a full-width block", async ({ page }) => {
+test("the document path is a compact ellipsized chip, not a full-width block", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(writeReport(REPORT_WITH_PATH));
 
@@ -71,7 +71,7 @@ test("the document path is a compact ellipsised chip, not a full-width block", a
     const footerWidth = (await page.locator(".app-footer").boundingBox())!.width;
     expect(box.width).toBeLessThan(footerWidth * 0.5);
 
-    // The directory head is actually ellipsised: its content overflows its box.
+    // The directory head is actually ellipsized: its content overflows its box.
     const headTruncated = await page
         .locator("#doc-path .path-head")
         .evaluate((el) => el.scrollWidth > el.clientWidth);

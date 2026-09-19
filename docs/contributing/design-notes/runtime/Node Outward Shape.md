@@ -196,7 +196,7 @@ has to guess whether a dangling edge is also a shape error.
 
 ## Error and boundary cases
 
-| Case | Behaviour |
+| Case | Behavior |
 | --- | --- |
 | `end` with any edge | cannot occur — the `EndNode` record takes no edges and the reader drops an `out` it reads on one; the schema's `maxItems: 0` is the backstop |
 | `line` / `control` with two or more `divert` edges | refuse |

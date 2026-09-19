@@ -94,7 +94,7 @@ src/DialogueDown.Runtime/          the facade: what a consumer calls
 Each member of a union gets its own file, as the playbook's nodes and edges do,
 and each family gets a folder so the tree reads as the vocabulary it is.
 
-The root namespace keeps only the façade, so `Position` and its cases live in
+The root namespace keeps only the facade, so `Position` and its cases live in
 `DialogueDown.Runtime.Positions`. The protocol's folders are for reading: commands
 and events are used together, so both stay in one namespace a consumer imports
 once.

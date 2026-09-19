@@ -172,7 +172,7 @@ for (const width of [420, 600, 760, 900, 1280]) {
             const boxes = controls.map((el) => el.getBoundingClientRect());
             const tops = boxes.map((b) => b.y).sort((a, b) => a - b);
             // Fitting on one row is not enough on its own: a control that cannot shrink stays
-            // on the row and simply overlaps its neighbour instead of wrapping. Compare only
+            // on the row and simply overlaps its neighbor instead of wrapping. Compare only
             // siblings of the same container — the status bar scrolls when it is overfull, so
             // its children legitimately extend past it and would read as false overlaps.
             const overlapsWithin = (parent: Element): boolean => {
@@ -227,7 +227,7 @@ test("leaves no underline on the tab you switched away from", async ({ page }) =
 
     await page.locator('.drawer-tab[data-panel="problems"]').click();
 
-    // The framework animates border colours on buttons, so the tab just left kept a fading
+    // The framework animates border colors on buttons, so the tab just left kept a fading
     // underline that read as a second selected tab.
     const help = page.locator('.drawer-tab[data-panel="help"]');
     await expect(help).toHaveCSS("border-bottom-color", "rgba(0, 0, 0, 0)");

@@ -312,10 +312,10 @@ test("hovering a node shows a Tippy tooltip with the full attribute text", async
     });
     // Hover the circle: it is a solid, filled hit target (unlike the node's
     // pointer-events:none labels), so the delegated Tippy fires deterministically.
-    await page.locator('g.node[data-tip*="ellipsised"] circle').hover();
+    await page.locator('g.node[data-tip*="ellipsized"] circle').hover();
     const tooltip = page.locator(".tippy-box");
     await expect(tooltip).toBeVisible();
-    await expect(tooltip).toContainText("should be ellipsised");
+    await expect(tooltip).toContainText("should be ellipsized");
 });
 
 test("hovering a node spotlights its lineage and dims the rest", async ({ page }) => {

@@ -74,7 +74,7 @@ describe("createLegend", () => {
     it("renders one row per present category, in palette order", () => {
         const legend = createLegend(stage, handlers);
         const labels = [...legend.querySelectorAll(".legend-label")].map((el) => el.textContent);
-        // "structure" precedes "call" in CATEGORY_COLORS, and the uncategorised node is skipped.
+        // "structure" precedes "call" in CATEGORY_COLORS, and the uncategorized node is skipped.
         expect(Object.keys(CATEGORY_COLORS).indexOf("structure")).toBeLessThan(
             Object.keys(CATEGORY_COLORS).indexOf("call"),
         );

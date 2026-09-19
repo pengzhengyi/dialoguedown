@@ -11,7 +11,7 @@ const MAX_TITLE_LABEL = 40;
 /**
  * How much of a node's words a table cell keeps.
  *
- * The visible clipping is the stylesheet's — one line, ellipsised to whatever width the column
+ * The visible clipping is the stylesheet's — one line, ellipsized to whatever width the column
  * has — because a character count cannot know how wide a panel the reader has dragged. This is
  * only a bound on how much text is written into the document at all.
  */
