@@ -232,6 +232,23 @@ The **Docs** job runs the same tool through
 keeps current. That check is advisory — a release that adds a rule opens a PR to adopt
 rather than blocking a merge — so a red **Docs** job is worth fixing, not a broken build.
 
+### Spelling
+
+Every file is spell-checked by [cspell](https://cspell.org), configured by
+[`cspell.json`](cspell.json), whose `words` list carries the project's own vocabulary and
+the tools and formats the docs cite. Run it from the repository root, where the config's
+globs and ignores apply:
+
+```bash
+npx --yes cspell@8.19.4 lint --no-progress --config cspell.json .
+```
+
+A real misspelling belongs in the text, not the dictionary: only genuine vocabulary — a
+cited tool, a proper noun, a coinage the code uses — earns a `words` entry, and
+`ignoreWords` is reserved for test data that has to stay wrong to be useful. The **Docs**
+job runs the same pinned command, and like Markdown it is advisory, so a red spell check
+is worth fixing rather than a broken build.
+
 ### Editor tasks (VS Code)
 
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so
