@@ -20,11 +20,11 @@ public sealed class PlayableConformanceTests
     [MemberData(nameof(EveryCase))]
     public void ACaseThisBuildCanPlay_ConformsToTheWholeConversation(PlayableCase aCase)
     {
-        var outcome = PlayableRun.Of(aCase);
+        var outcome = PlayableRun.Match(aCase);
 
         var expected = _conforming.Contains(aCase.Name)
             ? SessionVerdict.Conformed
-            : SessionVerdict.NotYetRunnable;
+            : SessionVerdict.NotYetPlayable;
 
         Assert.True(
             expected == outcome.Verdict,
@@ -37,7 +37,7 @@ public sealed class PlayableConformanceTests
         // A divergence is the failure the corpus exists to catch, so it is reported apart from a
         // construct the runner has simply not learned yet.
         var diverged = Corpora.Playable.Cases()
-            .Select(aCase => (Case: aCase.Name, Outcome: PlayableRun.Of(aCase)))
+            .Select(aCase => (Case: aCase.Name, Outcome: PlayableRun.Match(aCase)))
             .Where(run => run.Outcome.Verdict == SessionVerdict.Diverged)
             .Select(run => $"{run.Case}: {run.Outcome.Because}")
             .ToList();

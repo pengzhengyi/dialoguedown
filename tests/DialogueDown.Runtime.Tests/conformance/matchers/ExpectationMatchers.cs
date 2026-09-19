@@ -45,7 +45,7 @@ internal static class ExpectationMatchers
     {
         if (!_byKey.TryGetValue(claim.Key, out var matcher))
         {
-            return SessionOutcome.NotYetRunnable($"nothing checks {claim.Key} yet");
+            return SessionOutcome.NotYetPlayable($"nothing checks {claim.Key} yet");
         }
 
         var claimed = claim.Value

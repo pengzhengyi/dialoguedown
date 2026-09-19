@@ -74,13 +74,16 @@ public sealed class SaidMatcherTests
     }
 
     [Fact]
-    public void WhenBothTheSpeakerAndTheSpeechDiffer_TheSpeakerIsReported()
+    public void WhenBothTheSpeakerAndTheSpeechDiffer_BothAreReported()
     {
-        // Combining keeps the earliest of equally grave outcomes, so the speaker is what surfaces.
+        // Combining gathers reasons of the same graveness, so one run names both faults.
         var outcome = Match(Spoke("Alice", "Hello"), """{ "speaker": "Bob", "speech": "Hi" }""");
 
-        AssertDiverged(outcome, "expected Bob to speak, but Alice did");
-        Assert.DoesNotContain("Hello", outcome.Because, StringComparison.Ordinal);
+        AssertDiverged(
+            outcome,
+            "expected Bob to speak, but Alice did",
+            "expected \"Hi\", but heard \"Hello\"");
+        Assert.Equal(2, outcome.Reasons.Length);
     }
 
     [Fact]
@@ -125,6 +128,18 @@ public sealed class SaidMatcherTests
             "fragment 1",
             "friend",
             "there");
+    }
+
+    [Fact]
+    public void TwoDifferingFragments_AreBothReported()
+    {
+        // The counts agree, so every fragment is compared and every mismatch is named.
+        var outcome = Match(
+            new Said("Alice", [new TextFragment("Hi"), new TextFragment("there")]),
+            """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hey" }, { "kind": "text", "text": "friend" } ] }""");
+
+        AssertDiverged(outcome, "fragment 0", "Hey", "fragment 1", "friend");
+        Assert.Equal(2, outcome.Reasons.Length);
     }
 
     [Fact]

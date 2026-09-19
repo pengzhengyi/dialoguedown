@@ -1,4 +1,5 @@
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 
 namespace DialogueDown.Runtime.Tests;
@@ -12,7 +13,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_Start_StandsAtTheEntryAndSaysWhatIsThere()
     {
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
 
         var result = Runner.Step(context, PlayState.Initial, new Start());
 
@@ -23,7 +24,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_Next_MovesOnToWhatFollows()
     {
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
 
         var result = Runner.Step(context, Started(context), new Next());
 
@@ -36,7 +37,7 @@ public sealed class RunnerTests
     {
         // The wait a fast-forward must not collapse: advancing here would read past an effect the
         // world has not applied, and the next thing read might depend on it.
-        var context = Playbooks.AnEffectThenALine();
+        var context = PlayContextFactory.AnEffectThenALine();
 
         var result = Runner.Step(context, Started(context), new Next());
 
@@ -47,7 +48,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_DoneOnceTheHostHasCarriedItOut_MovesOnToWhatFollows()
     {
-        var context = Playbooks.AnEffectThenALine();
+        var context = PlayContextFactory.AnEffectThenALine();
 
         var result = Runner.Step(context, Started(context), new Done());
 
@@ -60,7 +61,7 @@ public sealed class RunnerTests
     {
         // Nothing was asked here, so there is nothing to report done -- and accepting it would let
         // a driver advance a line by answering a question the run never put.
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
 
         AssertRefused(Runner.Step(context, Started(context), new Done()), RefusalReason.Misplaced, "cannot take Done");
     }
@@ -70,7 +71,7 @@ public sealed class RunnerTests
     {
         // An answer before the run asked anything: the refusal names where the run stands, so a
         // driver reading it knows the position rather than only the command.
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
 
         AssertRefused(
             Runner.Step(context, PlayState.Initial, new Done()),
@@ -81,7 +82,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_FailedAtAnEndedRun_IsRefused()
     {
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
         var ended = Runner.Step(context, Started(context), new Next()).State;
 
         AssertRefused(
@@ -95,7 +96,7 @@ public sealed class RunnerTests
     {
         // The world did not change, so the run cannot read on -- and it says nothing, because the
         // driver's own message is the record of why.
-        var context = Playbooks.AnEffectThenALine();
+        var context = PlayContextFactory.AnEffectThenALine();
 
         var result = Runner.Step(context, Started(context), new Failed("the database refused"));
 
@@ -107,7 +108,7 @@ public sealed class RunnerTests
     public void Step_DoneAfterAFailure_CarriesOnFromWhereItStood()
     {
         // A retry is the same effect, so it keeps its ordinal and the same session carries on.
-        var context = Playbooks.AnEffectThenALine();
+        var context = PlayContextFactory.AnEffectThenALine();
         var failed = Runner.Step(context, Started(context), new Failed("the database refused")).State;
 
         var result = Runner.Step(context, failed, new Done());
@@ -120,7 +121,7 @@ public sealed class RunnerTests
     public void Step_FailedWhereNothingWasAskedOfTheHost_IsRefused()
     {
         // An answer with no question is out of place, exactly as `Done` there is.
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
 
         AssertRefused(
             Runner.Step(context, Started(context), new Failed("nothing to fail")),
@@ -131,7 +132,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextPastTheLastLine_EndsTheRun()
     {
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
 
         AssertEnded(Runner.Step(context, Started(context), new Next()));
     }
@@ -141,7 +142,7 @@ public sealed class RunnerTests
     {
         // State is a value, so a fresh one costs nothing to make: starting over needs no way to
         // abort what is already running.
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
         var onward = Runner.Step(context, Started(context), new Next()).State;
 
         AssertAt(Runner.Step(context, onward, new Start()), 0);
@@ -150,7 +151,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_StartAtAnEndedRun_BeginsOver()
     {
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
         var ended = Runner.Step(context, Started(context), new Next()).State;
 
         AssertAt(Runner.Step(context, ended, new Start()), 0);
@@ -159,7 +160,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextBeforeTheRunHasStarted_IsRefused()
     {
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
 
         AssertRefused(Runner.Step(context, PlayState.Initial, new Next()), RefusalReason.NotStarted, "has not started");
     }
@@ -167,7 +168,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextAtAnEndedRun_IsRefusedAndGoesNowhere()
     {
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
         var ended = Runner.Step(context, Started(context), new Next()).State;
 
         var result = Runner.Step(context, ended, new Next());
@@ -179,7 +180,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextAtANodeLeadingNowhere_IsRefused()
     {
-        var context = Playbooks.Of([Playbooks.Dead(0, "Alone.")], ["Alice"]);
+        var context = PlayContextFactory.Of([Dead(0, "Alone.")], ["Alice"]);
 
         AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
     }
