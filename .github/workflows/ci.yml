@@ -325,11 +325,11 @@ jobs:
 
       # Advisory like the two steps above, and for the same reason: a word cspell has not met
       # yet — a newly cited tool, a proper noun — arrives as a reviewable dictionary diff rather
-      # than a blocked merge. Pinned to an exact release because cspell's dictionary grows
-      # between versions, so an unpinned run would change its verdict without this repository
-      # changing. CONTRIBUTING.md's Spelling section carries the same command for a local run.
+      # than a blocked merge. The 8 range rather than an exact release: cspell's dictionary grows
+      # between versions, and an advisory check is allowed to drift, so pin it only if a release
+      # starts failing. CONTRIBUTING.md's Spelling section carries the same command.
       - name: Check spelling
-        run: npx --yes cspell@8.19.4 lint --no-progress --config cspell.json .
+        run: npx --yes cspell@8 lint --no-progress --config cspell.json .
 
   # The site is built on every pull request, so a broken link or a missing cross-reference is
   # caught before it reaches main. The build fails on warnings rather than reporting them: the
