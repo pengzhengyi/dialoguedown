@@ -6,10 +6,10 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// <summary>Runs one corpus case: reads its playbook, screens it, then holds its session against a runner.</summary>
 internal static class PlayableRun
 {
-    /// <summary>Runs a case.</summary>
+    /// <summary>Holds a case against the runner: reads its playbook, screens it, then matches.</summary>
     /// <param name="playable">The case to run.</param>
     /// <returns>What became of it.</returns>
-    public static SessionOutcome Of(PlayableCase playable)
+    public static SessionOutcome Match(PlayableCase playable)
     {
         var session = playable.Fixture.Session;
         var context = PlayContext.Of(PlaybookReader.Default.Read(playable.Playbook));
