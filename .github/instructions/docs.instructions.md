@@ -18,6 +18,8 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 
 - **American English**; keep prose tight; use sentence-style headings and a table
   of contents on longer notes.
+- **Write loanwords unaccented** — `facade`, not `façade` — so the ASCII text
+  matches the code and the spell checker.
 - **Link to the authoritative doc** rather than restating build steps, conventions,
   or API details — point at `CONTRIBUTING.md`, the design notes, or the API
   reference so the docs never drift.
