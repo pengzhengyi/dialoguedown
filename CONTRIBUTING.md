@@ -248,7 +248,9 @@ cited tool, a proper noun, a coinage the code uses — earns a `words` entry, an
 `ignoreWords` is reserved for test data that has to stay wrong to be useful. The **Docs** job runs the same tool through
 [its action](https://github.com/streetsidesoftware/cspell-action), which Dependabot keeps
 current, and sweeps the whole tree rather than only the files a pull request touches, so a
-release that shifts the dictionary flags files nobody edited. Like Markdown the check is
+release that shifts the dictionary flags files nobody edited. The action bundles its own copy of cspell, which can trail the one `npx`
+resolves, so a word the local run accepts may still be flagged in CI — that is the stricter
+gate, and the answer is a `words` entry. Like Markdown the check is
 advisory: a red spell check is worth fixing rather than a broken build.
 
 ### Editor tasks (VS Code)
