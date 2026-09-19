@@ -1,4 +1,5 @@
 using DialogueDown.Configuration;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Tests.Support;
 
@@ -9,13 +10,13 @@ public sealed class StaticModeTests
     [Fact]
     public void Run_ValidDocument_WritesReportToOutputAndOpensIt()
     {
-        using var doc = new TempDocument("# Scene\n\nAlice: Hi.");
+        using var script = new TempScript("# Scene\n\nAlice: Hi.");
         var browser = new FakeBrowserLauncher();
         var output = TempHtmlPath();
 
         try
         {
-            var code = StaticMode.Run(doc.Path, output, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());
+            var code = StaticMode.Run(script.Path, output, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());
 
             Assert.Equal(0, code);
             Assert.True(File.Exists(output));
@@ -35,13 +36,13 @@ public sealed class StaticModeTests
     [Fact]
     public void Run_NoOpen_WritesReportButDoesNotOpen()
     {
-        using var doc = new TempDocument();
+        using var script = new TempScript("# Scene\n\nAlice: Hi.");
         var browser = new FakeBrowserLauncher();
         var output = TempHtmlPath();
 
         try
         {
-            var code = StaticMode.Run(doc.Path, output, noOpen: true, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());
+            var code = StaticMode.Run(script.Path, output, noOpen: true, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());
 
             Assert.Equal(0, code);
             Assert.True(File.Exists(output));
@@ -56,10 +57,10 @@ public sealed class StaticModeTests
     [Fact]
     public void Run_NoOutput_WritesATempReportAndOpensIt()
     {
-        using var doc = new TempDocument();
+        using var script = new TempScript("# Scene\n\nAlice: Hi.");
         var browser = new FakeBrowserLauncher();
 
-        var code = StaticMode.Run(doc.Path, output: null, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());
+        var code = StaticMode.Run(script.Path, output: null, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default), browser, new StringWriter());
 
         var opened = Assert.Single(browser.Opened);
         try

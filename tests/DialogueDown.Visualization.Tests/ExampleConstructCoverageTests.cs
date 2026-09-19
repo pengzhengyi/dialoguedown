@@ -1,6 +1,7 @@
 using System.Reflection;
 using DialogueDown.Compilation;
 using DialogueDown.Script.Ast;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Tests.Support;
 
 namespace DialogueDown.Visualization.Tests;
@@ -51,10 +52,7 @@ public sealed class ExampleConstructCoverageTests
 
     /// <summary>Every construct the compiler can put in an AST, by type name.</summary>
     private static IEnumerable<string> ModeledConstructs() =>
-        typeof(ScriptNode).Assembly.GetTypes()
-            .Where(type => type.IsAssignableTo(typeof(ScriptNode)))
-            .Where(type => !type.IsAbstract)
-            .Select(type => type.Name)
+        UnionMembers.NamesOf<ScriptNode>()
             .Where(name => !_notAuthored.Contains(name))
             .Distinct(StringComparer.Ordinal);
 

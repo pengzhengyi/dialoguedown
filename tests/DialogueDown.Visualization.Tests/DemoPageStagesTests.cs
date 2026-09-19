@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using DialogueDown.Visualization.Tests.Support;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Visualization.Tests;
 

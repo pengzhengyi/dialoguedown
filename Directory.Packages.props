@@ -51,6 +51,8 @@
   <ItemGroup>
     <PackageVersion Include="Verify.XunitV3"                            Version="32.0.1" />
     <PackageVersion Include="xunit.v3"                                  Version="4.0.0" />
+    <!-- Assertions without the test framework, for the shared helper library. -->
+    <PackageVersion Include="xunit.v3.assert"                           Version="4.0.0" />
     <PackageVersion Include="coverlet.MTP"                              Version="10.0.1" />
     <PackageVersion Include="NSubstitute"                               Version="6.2.0" />
     <PackageVersion Include="Bogus"                                     Version="35.6.5" />

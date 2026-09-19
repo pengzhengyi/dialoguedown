@@ -1,6 +1,6 @@
 using DialogueDown.Emission;
 using DialogueDown.Playbook.Weights;
-using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using Ast = DialogueDown.Script.Ast;
 
@@ -35,7 +35,7 @@ public sealed class WeightMappingTests
     [Fact]
     public void Write_EveryWeightTheAstHas_HasASample()
     {
-        MappingAssert.AssertCoversEveryMember<Ast.ChoiceWeight>(Samples());
+        UnionCoverageAssert.AssertCoversEveryMember<Ast.ChoiceWeight>(Samples());
     }
 
     [Fact]

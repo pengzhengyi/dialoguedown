@@ -1,5 +1,5 @@
 using DialogueDown.Playbook.Speech;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Playbook.Tests.Support.PlaybookFactory;
 
 namespace DialogueDown.Playbook.Tests.Speech;
@@ -35,7 +35,7 @@ public sealed class SpeechTextTests
     {
         // A kind nobody taught it to read would say nothing at all, which looks like a line that
         // happens to be quiet rather than a reading that was never written.
-        UnionAssert.AssertCoversEveryMember<SpeechFragment>(
+        UnionCoverageAssert.AssertCoversEveryMember<SpeechFragment>(
             _everyKind.Select(kind => kind.Fragment));
     }
 

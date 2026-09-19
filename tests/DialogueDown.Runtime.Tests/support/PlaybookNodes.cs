@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
@@ -111,11 +110,13 @@ internal static class PlaybookNodes
 
     /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
     /// <remarks>
-    /// The one list of the kinds, so a test that walks them and a test that checks the list is
+    /// Written out rather than reflected over, because a kind has to be built before it can be
+    /// asked anything, and only a person knows what the simplest one of each looks like. The one
+    /// list of the kinds, so the test that walks them and the test that asks whether the list is
     /// complete cannot disagree about what "every kind" means.
     /// </remarks>
-    /// <returns>The nodes, one per kind.</returns>
-    public static ImmutableArray<Node> OneOfEachKind() =>
+    /// <returns>The nodes, each standing at position 0 and leading to position 1.</returns>
+    public static IEnumerable<Node> OneOfEveryNodeKind() =>
     [
         Line(0, speaker: 0, "Hello.", next: 1),
         End(0),

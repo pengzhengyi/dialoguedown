@@ -36,6 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown.Visualization\DialogueDown.Visualization.csproj" />
     <ProjectReference Include="..\..\src\DialogueDown\DialogueDown.csproj" />
+    <ProjectReference Include="..\DialogueDown.TestSupport\DialogueDown.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

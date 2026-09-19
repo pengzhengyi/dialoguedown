@@ -75,7 +75,7 @@ public sealed class PlayabilityTests
         // as untaught rather than as a divergence. That screen states what this build can play a
         // second time, and the two must agree: a case would otherwise be reported as untaught
         // while it plays, or as a divergence when nobody had taught it.
-        foreach (var node in OneOfEachKind())
+        foreach (var node in OneOfEveryNodeKind())
         {
             var context = PlayContextFactory.Of([node, End(1)], ["Alice"]);
             var refused = Arrival.At(context, 0).Events.OfType<Refused>().Any();
@@ -93,7 +93,7 @@ public sealed class PlayabilityTests
     {
         // Guards the guard: a list that stopped naming kinds would leave the check above agreeing
         // about nothing.
-        var named = OneOfEachKind().Select(node => node.GetType()).ToHashSet();
+        var named = OneOfEveryNodeKind().Select(node => node.GetType()).ToHashSet();
         var defined = typeof(Node).Assembly.GetTypes()
             .Where(type => type.IsAssignableTo(typeof(Node)) && !type.IsAbstract);
 

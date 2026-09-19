@@ -1,5 +1,5 @@
 using DialogueDown.Emission;
-using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.SpeechAssert;
 using Ast = DialogueDown.Script.Ast;
@@ -46,7 +46,7 @@ public sealed class EffectMappingTests
     [Fact]
     public void Write_EveryCallTheAstCanMake_HasASample()
     {
-        MappingAssert.AssertCoversEveryMember<Ast.GameCall>(Samples());
+        UnionCoverageAssert.AssertCoversEveryMember<Ast.GameCall>(Samples());
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Configuration;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Live.Serving;
@@ -48,9 +49,9 @@ public sealed class VisualizeCommandTests
     [Fact]
     public void Visualize_WithADiscoveredConfig_PassesTheConfiguredOptionsToTheRunner()
     {
-        using var dir = new TempDir();
-        var scriptPath = dir.Write("scene.dialogue.md", "# Scene");
-        dir.Write("dialogue.toml", NarratorConfig);
+        using var tree = new TempTree();
+        var scriptPath = tree.File("scene.dialogue.md", "# Scene");
+        tree.File("dialogue.toml", NarratorConfig);
         var shell = ShellRunner();
         var tester = CliTester.Create(shell: shell);
 

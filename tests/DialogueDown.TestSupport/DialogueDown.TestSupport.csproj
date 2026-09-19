@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DialogueDown.TestSupport</RootNamespace>
+    <AssemblyName>DialogueDown.TestSupport</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <!-- Helpers the test suites share. It references no project of its own: every question it
+         answers is asked about a type the caller already has, so the caller brings the assembly
+         with it. -->
+  </PropertyGroup>
+
+  <!-- Assertions only. The test framework itself belongs to the suites that run tests; this
+       project holds the checks they share. -->
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.assert" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
