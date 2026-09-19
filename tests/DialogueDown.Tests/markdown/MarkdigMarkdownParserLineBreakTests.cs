@@ -47,7 +47,12 @@ public sealed class MarkdigMarkdownParserLineBreakTests : MarkdigMarkdownParserT
         // LiteralInline's Content.Start is relative to that buffer (0), not the source. The
         // ContentSpan must still be the absolute source position (taken from the reliable
         // Span), or a speaker or tokenizer anchored at ContentSpan lands at the top of the file.
-        var document = Parse("# Heading\n\nAlice: the first line\nsoftwraps onto a second.");
+        var document = Parse("""
+            # Heading
+
+            Alice: the first line
+            softwraps onto a second.
+            """);
 
         var paragraph = document.Blocks.OfType<Paragraph>().Single();
         var firstText = paragraph.Inlines.OfType<TextInline>().First();
