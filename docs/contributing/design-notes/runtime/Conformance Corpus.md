@@ -75,9 +75,9 @@ playbook being a designed contract rather than a dump of the compiler's graph.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
       branches, jumps, effects, effect failures, and queries.
 - [x] A refused command a session can assert, by reason rather than by wording.
-- [x] A C# harness that runs the readable fixtures today.
-- [x] A documented shape for the playable harness, so C2 has an acceptance suite
-      waiting rather than a corpus to write afterward.
+- [x] A C# harness that runs the readable fixtures.
+- [x] A harness that runs the playable fixtures against the reference runner,
+      reporting a case the build cannot play yet rather than failing it.
 
 ## Where the corpus lives
 
@@ -310,9 +310,9 @@ CI checks that.
 
 ### Running a session
 
-The playable harness belongs to C2, which is the only component that can execute
-anything. Its **shape** is settled here, so that component inherits an acceptance
-suite rather than a corpus to interpret.
+The playable harness lives with the reference runner, which is the only
+component that can execute anything. Its **shape** is settled here, so that
+component inherits an acceptance suite rather than a corpus to interpret.
 
 ```mermaid
 flowchart TD
@@ -509,8 +509,8 @@ Both halves' failures are implemented; the harness reports what each one found.
 | --- | --- |
 | `conformance/` | New root folder, alongside `schema/`, with a `README.md` a port starts from |
 | `schema/fixture-0.schema.json` | The fixture format's own schema, published beside the playbook's, so a fixture is checked in an editor as it is hand-authored |
-| C# harness | Two types in `DialogueDown.Playbook.Tests`: `CorpusFolder` finds cases and reads their files, naming the case in every failure; `ReadableCorpus` says what a readable case *means*. `Corpora` is the only place that knows where the corpus sits. No new dependency |
-| C2 | Inherits the playable fixtures as its acceptance suite, and implements the harness that runs them |
+| C# harness | `DialogueDown.Conformance` finds cases and reads their files, naming the case in every failure (`CorpusFolder`), and says what a readable case *means* (`ReadableCorpus`); `Corpora` is the only place that knows where the corpus sits. The playable half runs in `DialogueDown.Runtime.Tests`, on the shared `DialogueDown.TestSupport` helpers |
+| C2 | Inherits the playable fixtures as its acceptance suite and runs them; a case it cannot play yet is reported as not yet playable rather than failed |
 | C4 | The `ddown play` REPL sends and receives the same messages, so a session and a REPL transcript are one shape — `--replay <fixture>` makes the REPL a harness |
 | C5b | The TypeScript runner is held to the same corpus, which is the whole reason the fixtures are language-neutral |
 | CI | The readable harness runs with the existing suite; every case the corpus accepts is also validated against the schema, so the format's two specifications cannot drift apart |
@@ -523,7 +523,7 @@ The corpus is itself test material, so the question is what tests *it*.
 | --- | --- |
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture, a fixture naming a document that is not there |
 | Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
-| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together until C2 can run it. Every case in **either** half ships a fixture, a playbook, and a source |
+| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together. Every case in **either** half ships a fixture, a playbook, and a source |
 | Source integrity | Every `playable/` case is recompiled from its source and compared to the committed playbook. Every `readable/` refusal's source opens with a well-formed `broken:` block; the script below it compiles and is accepted by the reader, yet differs from the committed playbook, so the case is really broken |
 
 The last two are the guard against a corpus rotting. A committed playbook that no
@@ -555,13 +555,10 @@ already keeps the golden playbooks; the rest lives beside the reader it exercise
   belongs to the runner or to the shell is C2's to settle. Under functional core
   and imperative shell the answer is likely the shell, in which case `asked` is
   always in document order and carries the menu's stated kind alongside it.
-- **A menu written as a divert has no fixture yet.** `- => [Label](#anchor)` is
-  the ordinary way to write a branching menu, but its option edge currently
-  compiles to an empty label
-  — found by
-  writing the first playable fixture, before any runner existed to trip over it.
-  A fixture written now would enshrine the bug in the specification, so it lands
-  with the fix.
+- **A menu written as a divert waits on the runner.** `- => [Label](#anchor)` is
+  the ordinary way to write a branching menu, and `a-divert-option` writes one.
+  What this build cannot do yet is pick from it: the session sends `choose`, and
+  no reader owns that command.
 - **Random choice has no fixture yet.** Pinning a draw needs the entropy decision
   C2 owns — a specified generator, or values the host supplies. Deferred until
   that is settled, and called out here rather than quietly omitted.
