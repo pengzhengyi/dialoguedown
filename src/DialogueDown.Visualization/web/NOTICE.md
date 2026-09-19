@@ -13,9 +13,10 @@ the DialogueDown packages — they ship only inside generated report HTML.
 | [CodeMirror](https://codemirror.net/)                                      | 6.x packages | MIT        |
 | [D3.js](https://d3js.org)                                                  | 7.9.0        | ISC        |
 | [DOMPurify](https://github.com/cure53/DOMPurify)                           | 3.4.13       | Apache-2.0 |
+| [ELK](https://github.com/kieler/elkjs) (bundled by Mermaid)                | 0.9.3        | EPL-2.0    |
 | [GitHub Slugger](https://github.com/Flet/github-slugger)                   | 2.0.0        | ISC        |
 | [Lezer Highlight](https://github.com/lezer-parser/highlight)               | 1.2.3        | MIT        |
-| [Mermaid](https://mermaid.js.org)                                          | 11.16.1      | MIT        |
+| [Mermaid](https://mermaid.js.org)                                          | 12.0.0       | MIT        |
 | [Pico.css](https://picocss.com)                                            | 2.1.1        | MIT        |
 | [TanStack Table Core](https://tanstack.com/table/)                         | 9.1.2        | MIT        |
 | [VS Code Codicons](https://github.com/microsoft/vscode-codicons)           | 0.0.46-24    | CC-BY-4.0  |
@@ -63,7 +64,24 @@ These libraries and their directly listed companion packages are distributed
 under the MIT License. The MIT License permits use, copy, modification, and
 distribution provided the copyright and permission notice are retained; the
 full notices are preserved in each package's distribution and at the projects'
-repositories.
+repositories. Mermaid's own license is MIT; ELK, which Mermaid 12 bundles inside
+it, is not, and is covered separately below.
+
+### ELK — EPL-2.0
+
+Mermaid 12 bundles the [Eclipse Layout Kernel](https://www.eclipse.org/elk/)
+through its `elkjs` port and inlines it into the single-file build
+(`mermaid.min.js`) that the report copies to `dist/mermaid.js`; ELK is now
+Mermaid's default diagram layout. That bundled ELK code is therefore part of
+what DialogueDown redistributes, and `elkjs` is licensed under the **Eclipse
+Public License 2.0** (EPL-2.0), not Mermaid's MIT. The complete license is
+preserved in [`ELK_LICENSE.txt`](ELK_LICENSE.txt).
+
+EPL-2.0 requires that a copy of the license accompany the program, that its
+copyright and attribution notices be retained, and that the source code remain
+available under the same license. The bundled version is `elkjs` 0.9.3, pinned
+by `web/package-lock.json`, and its source is the
+[`kieler/elkjs`](https://github.com/kieler/elkjs) repository.
 
 ### VS Code Codicons — CC-BY-4.0
 
