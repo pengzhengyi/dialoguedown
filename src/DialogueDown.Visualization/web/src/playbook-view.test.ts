@@ -431,7 +431,7 @@ describe("createPlaybookView Nodes table", () => {
         const cell = bodyRows(createPlaybookView(report), "Nodes")[4].cells[2];
 
         expect(cell?.textContent).toBe("SpokeIF : (fade){Key}<no label>plain words");
-        // A role with no class would draw uncoloured here rather than fail anywhere else.
+        // A role with no class would draw uncolored here rather than fail anywhere else.
         expect([...cell!.querySelectorAll("span")].map((span) => span.className)).toEqual([
             "dd-sum-speaker",
             "dd-sum-keyword",

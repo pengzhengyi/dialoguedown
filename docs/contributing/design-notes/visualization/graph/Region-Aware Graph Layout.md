@@ -230,7 +230,7 @@ legend read: `The Alarm, The Door, The Stairwell, The Elevator, Shelter in Place
 Outside, Rescued`. Both orders remove every overlap; only one of them is
 readable.
 
-### DD3 — Order is preserved within a tier; spacing is normalised
+### DD3 — Order is preserved within a tier; spacing is normalized
 
 The pass keeps the relative order of a scene's distinct rows, and keeps nodes
 that shared a row together. It does **not** keep the tree's *spacing*: rows are
@@ -315,7 +315,7 @@ and against one rendered in a browser, each checked to fail without the pass.
 
 ## Error and boundary cases
 
-| Case | Behaviour |
+| Case | Behavior |
 | --- | --- |
 | Stage has no regions (every AST tab) | The pass is not applied; the tree layout stands. |
 | A scene whose nodes all share one row (a straight run of lines) | A one-row tier — the run stays horizontal, as it is drawn today. |

@@ -291,7 +291,7 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
 });
 
 test("seats the Files control in the tab row, clear of the brand mark", async ({ page }) => {
-    // The row aligns to its bottom edge, so a control that is taller than its neighbours grows
+    // The row aligns to its bottom edge, so a control that is taller than its neighbors grows
     // *upward* into the brand mark above. That is what a copied style block that missed one
     // property did: the control stood half a row taller and touched the logo.
     //

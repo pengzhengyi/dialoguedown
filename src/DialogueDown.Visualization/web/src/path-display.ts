@@ -35,7 +35,7 @@ export interface PathDisplay {
 
 /**
  * Show the document path in the status bar: the filename always shows while the
- * middle of the directory is ellipsised (CSS), the full path is a hover tooltip,
+ * middle of the directory is ellipsized (CSS), the full path is a hover tooltip,
  * and clicking copies the path. Hidden when there is no path (e.g. a library
  * render with no file). The element defaults to the dialogue document's path chip;
  * pass another id to reuse it (the config path).

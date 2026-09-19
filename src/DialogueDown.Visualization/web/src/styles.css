@@ -1275,7 +1275,7 @@ section.stage.empty-shell {
     white-space: nowrap;
 }
 
-/* The Summary cell's styled segments. Only the three distinctions worth finding carry a colour — who
+/* The Summary cell's styled segments. Only the three distinctions worth finding carry a color — who
    speaks, what the host is asked to perform, and a value only a running game can supply — drawn
    from the Source editor's own syntax tokens, already defined for both themes. The grammar around
    them is muted, so the words a writer wrote stay the most legible thing in the row. */
@@ -1305,7 +1305,7 @@ section.stage.empty-shell {
 
 /* A cell drawn as a list — a choice's options — rather than as one line. Pico gives a bare list
    a bottom margin, so the reset keeps the cell's own rhythm; the marker wears the muted grammar
-   colour so the bullets step back the way the separators they replaced did. */
+   color so the bullets step back the way the separators they replaced did. */
 .dd-sum-list {
     margin: 0;
     padding-left: 1.1rem;
@@ -3874,7 +3874,7 @@ body.zen .tabbar-explorer {
     display: none;
 }
 
-/* With its neighbour gone the primary pane takes the whole row, overriding the drag-set
+/* With its neighbor gone the primary pane takes the whole row, overriding the drag-set
    split variable the same way each panel's collapsed class does. */
 body.zen .source-view > .source-pane,
 body.zen .config-view > .config-source,
@@ -4422,10 +4422,10 @@ body.zen .playbook-view > .playbook-source {
     /* In Edit mode the row carries nine controls — the mode toggle, both paths, the counts,
        the save-mode capsule, its status, and three buttons — and on a small window they
        genuinely do not fit. Scrolling is the honest outcome: a control that cannot shrink
-       otherwise overlaps its neighbour, which is worse than being one gesture away. */
+       otherwise overlaps its neighbor, which is worse than being one gesture away. */
     overflow-x: auto;
     scrollbar-width: none;
-    min-width: 0; /* allow the path to shrink and ellipsise */
+    min-width: 0; /* allow the path to shrink and ellipsize */
     flex: 1 1 auto;
 }
 
@@ -4672,7 +4672,7 @@ body.zen .playbook-view > .playbook-source {
     cursor: not-allowed;
 }
 
-/* The document path: filename always visible, the directory middle ellipsised. */
+/* The document path: filename always visible, the directory middle ellipsized. */
 
 /* The way back to the file selector, sitting beside the path it leaves. Quiet and small like the
    path chip it neighbors: it is a door out of the document rather than a control of the report. */
@@ -4699,7 +4699,7 @@ body.zen .playbook-view > .playbook-source {
     --pico-background-color: transparent;
 
     /* An inline, content-sized chip — not a full-width block button. The max-width
-       caps it so a long path is middle-ellipsised (below) instead of stretching
+       caps it so a long path is middle-ellipsized (below) instead of stretching
        across the row. */
     display: inline-flex;
     align-items: center;
@@ -5226,7 +5226,7 @@ body.zen .playbook-view > .playbook-source {
         cursor: default;
     }
 
-    /* One row at every width. The document path ellipsises, so it yields space before
+    /* One row at every width. The document path ellipsizes, so it yields space before
        anything wraps; below 720px the paths drop to their icons entirely (see the rule at the
        end of this file). Stacking the line into a column here — the previous answer — is what
        produced a three-row status line. */
@@ -5717,7 +5717,7 @@ button.dd-tag:focus-visible {
 }
 
 /* Both path chips must be able to give up width. A chip that cannot shrink does not wrap when
-   the row runs out of room — it simply overlaps its neighbour, which is what the config label
+   the row runs out of room — it simply overlaps its neighbor, which is what the config label
    did once Edit mode added the save controls beside it. */
 #doc-path,
 #config-path {

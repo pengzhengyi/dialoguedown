@@ -23,7 +23,7 @@
 
 Add **Group E — namespace layout** to the architecture suite: a rule that fails
 when an assembly's **root namespace** holds more than a handful of types. A root
-namespace should carry the assembly's façade — the entry points a consumer calls
+namespace should carry the assembly's facade — the entry points a consumer calls
 — while everything else lives in a sub-namespace that names its role.
 
 The suite already guards dependency *direction* (Groups A and B) and type
@@ -43,7 +43,7 @@ and coupling or cohesion metrics.
 | **Root namespace** | An assembly's own namespace — the one equal to its assembly name, such as `DialogueDown.Visualization`. |
 | **Sub-namespace** | Any namespace beneath a root, such as `DialogueDown.Visualization.Semantics`. |
 | **Authored type** | A non-nested type the project wrote, as opposed to one the compiler generated. |
-| **Façade** | The small set of entry points a consumer of an assembly actually calls. |
+| **Facade** | The small set of entry points a consumer of an assembly actually calls. |
 
 ## What the rule found, and what it changed
 
@@ -198,11 +198,11 @@ each refactoring step, where the fixed assembly dropped out of the message.
 
 ## How each assembly was split
 
-Each root namespace kept its façade and gave the rest a name.
+Each root namespace kept its facade and gave the rest a name.
 
 | Assembly | Root keeps | Sub-namespaces |
 | --- | --- | --- |
-| `DialogueDown.Visualization` | The façade (`CompilationVisualizer`, `ReportProject`, `ConfigStatusOverlay`) and the projection seam (`INodeProjection`, `GraphWalk`, `NodeProjectionExtensions`) | `Display`, `Render`, `Markdown`, `Script` — the folders that already existed, now carrying namespaces |
+| `DialogueDown.Visualization` | The facade (`CompilationVisualizer`, `ReportProject`, `ConfigStatusOverlay`) and the projection seam (`INodeProjection`, `GraphWalk`, `NodeProjectionExtensions`) | `Display`, `Render`, `Markdown`, `Script` — the folders that already existed, now carrying namespaces |
 | `DialogueDown.Visualization.Live` | The `visualize` command's entry points (`IVisualizeRunner`, `VisualizeRunner`, `StaticMode`, `EmitMode`) and the browser seam every mode uses (`IBrowserLauncher`, `BrowserLauncher`) | `Browsing` (the browsable root and its listings), `Serving` (the served shell, its server, and the live session), `Files` (atomic writes, symlinks, watching), `Configuration` (creating a `dialogue.toml`) |
 | `DialogueDown.ConfigurationLoader` | `TomlConfigurationLoader` and the `ConfigurationSourceLocation` a caller reads off an error | `Readers`, `Toml`, `Errors` |
 
