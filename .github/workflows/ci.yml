@@ -325,11 +325,16 @@ jobs:
 
       # Advisory like the two steps above, and for the same reason: a word cspell has not met
       # yet — a newly cited tool, a proper noun — arrives as a reviewable dictionary diff rather
-      # than a blocked merge. The 8 range rather than an exact release: cspell's dictionary grows
-      # between versions, and an advisory check is allowed to drift, so pin it only if a release
-      # starts failing. CONTRIBUTING.md's Spelling section carries the same command.
+      # than a blocked merge. The whole tree is swept rather than the files a pull request
+      # touched, because that is the case a version bump creates: a new cspell dictionary can
+      # flag files nobody edited, and the default changed-files scope would check nothing at all.
+      # Pin the action only if a release starts failing on words this repository has not changed.
       - name: Check spelling
-        run: npx --yes cspell@8 lint --no-progress --config cspell.json .
+        uses: streetsidesoftware/cspell-action@v8
+        with:
+          config: cspell.json
+          files: "**"
+          incremental_files_only: false
 
   # The site is built on every pull request, so a broken link or a missing cross-reference is
   # caught before it reaches main. The build fails on warnings rather than reporting them: the

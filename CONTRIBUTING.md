@@ -245,11 +245,11 @@ npx --yes cspell@8 lint --no-progress --config cspell.json .
 
 A real misspelling belongs in the text, not the dictionary: only genuine vocabulary — a
 cited tool, a proper noun, a coinage the code uses — earns a `words` entry, and
-`ignoreWords` is reserved for test data that has to stay wrong to be useful. The **Docs**
-job runs the same command, and like Markdown it is advisory, so a red spell check is worth
-fixing rather than a broken build. The version is the `8` range rather than an exact
-release: cspell's dictionary grows between versions, and an advisory check is allowed to
-drift, so pin it only if a release starts failing.
+`ignoreWords` is reserved for test data that has to stay wrong to be useful. The **Docs** job runs the same tool through
+[its action](https://github.com/streetsidesoftware/cspell-action), which Dependabot keeps
+current, and sweeps the whole tree rather than only the files a pull request touches, so a
+release that shifts the dictionary flags files nobody edited. Like Markdown the check is
+advisory: a red spell check is worth fixing rather than a broken build.
 
 ### Editor tasks (VS Code)
 
