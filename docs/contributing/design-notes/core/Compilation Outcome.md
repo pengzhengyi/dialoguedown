@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > **Status: implemented.** Splits `CompilationResult` into a success/failure
-> pair so a compile that produced a runnable graph is a different type from one
+> pair so a compile that produced a playable graph is a different type from one
 > that did not. Prompted by the [Dialogue Graph](./Dialogue%20Graph.md) stage,
 > whose artifact exposed the strain in the single-class model.
 
@@ -160,7 +160,7 @@ rather than the outcome.
   nullable artifacts. The factory is the place that knows which artifacts exist,
   so it is the place that should enforce it.
 - **A warning never fails a compile.** Failure means an error, so a script that
-  compiles with advice still produces a runnable graph.
+  compiles with advice still produces a playable graph.
 
 ## Error and boundary cases
 

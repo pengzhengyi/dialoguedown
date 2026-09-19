@@ -21,8 +21,8 @@ internal static class SessionOutcomeAssert
     /// <summary>Asserts a check named something this build cannot run yet.</summary>
     /// <param name="outcome">What the check made of it.</param>
     /// <param name="saying">Phrases the reason should carry.</param>
-    public static void AssertNotYetRunnable(SessionOutcome outcome, params string[] saying) =>
-        AssertVerdict(outcome, SessionVerdict.NotYetRunnable, saying);
+    public static void AssertNotYetPlayable(SessionOutcome outcome, params string[] saying) =>
+        AssertVerdict(outcome, SessionVerdict.NotYetPlayable, saying);
 
     private static void AssertVerdict(SessionOutcome outcome, SessionVerdict verdict, string[] saying)
     {

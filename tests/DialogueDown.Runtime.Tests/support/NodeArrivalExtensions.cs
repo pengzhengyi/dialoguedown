@@ -1,6 +1,7 @@
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -19,7 +20,7 @@ internal static class NodeArrivalExtensions
     /// <param name="node">The node to arrive at.</param>
     /// <returns>The refusal, or <see langword="null"/> when this build plays such a node.</returns>
     public static Refused? RefusalOnArrival(this Node node) =>
-        Arrival.At(Playbooks.Of([node, new EndNode(1)], ["Alice"]), 0)
+        Arrival.At(PlayContextFactory.Of([node, End(1)], ["Alice"]), 0)
             .Events.OfType<Refused>()
             .FirstOrDefault();
 

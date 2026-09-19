@@ -71,6 +71,10 @@ changes easy to categorize.
 
 ### Changed
 
+- **The conformance harness reports every divergence a case has** — an outcome carries a list of
+  reasons rather than only the first, so a contributor meets every fault a fixture found in one run
+  instead of fixing one and re-running to meet the next. The verdict each case gets is unchanged.
+
 - **The report's graph tabs are navigated by their edges** — the arrow keys used to move through
   the drawing's tree, so a jump — a reference edge rather than a child — could not be reached at
   all. Right takes the first way out, left walks back along the way taken, up/down move between the
