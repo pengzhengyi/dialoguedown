@@ -151,10 +151,12 @@ compiler continues to omit it from speech.
 
 ### D2 — Bundle the official Mermaid package
 
-Use the official MIT-licensed `mermaid` package, pinned by `package-lock.json`.
-It is the reference implementation and supports the full Mermaid language. A
-six-diagram subset would make a `mermaid` fence mean something narrower in
-DialogueDown than it means in GitHub, editors, and Mermaid's own tooling.
+Use the official `mermaid` package, pinned by `package-lock.json`. Mermaid is
+MIT-licensed, but bundles the EPL-2.0 ELK layout engine, which `web/NOTICE.md`
+accounts for separately. It is the reference implementation and supports the
+full Mermaid language. A six-diagram subset would make a `mermaid` fence mean
+something narrower in DialogueDown than it means in GitHub, editors, and
+Mermaid's own tooling.
 
 The cost is deliberate and measured against the current report:
 
@@ -177,6 +179,25 @@ The existing report-bundle verification also gains a 5 MB raw size limit. The
 implemented 4,742,002-byte report leaves about 258 KB of headroom. Crossing the limit
 requires an explicit dependency or threshold review rather than silently making
 every report heavier.
+
+Mermaid's default layout is **ELK**, which the package bundles and registers in
+place of the separate `@mermaid-js/layout-elk` package, and its default
+appearance is the **`neo`** look. DialogueDown takes both defaults rather than
+pinning `layout: dagre` and `look: classic`, so a diagram can lay out and recolor
+differently than it did under Mermaid 11. The report's `theme: 'base'` and theme
+variables are unchanged; on `base`, `neo` paints node strokes with a gradient.
+On the single-file build Mermaid inlines ELK, which grew the copied
+`dist/mermaid.js` from about 3.6 MB to about 5.6 MB, so the report-bundle guard's
+separate Mermaid ceiling moved to 6 MB. That 6 MB ceiling governs the separately
+fetched Mermaid asset; the 5 MB limit above governs the client every reader
+loads, and Mermaid stays outside it.
+
+Mermaid requires **ES2024** and Safari 17.4+ / iOS 17.4+ (current Firefox and
+Chrome). Because the Mermaid build is copied verbatim rather than transpiled by
+Vite, its floor is independent of the client's: a report that draws a diagram
+needs those browsers, while the rest of the report keeps its ES2022 floor. The
+Vite target stays at ES2022 on purpose — raising it would not transpile the
+copied asset and would only widen the unsupported set for the client script.
 
 ### D3 — Recognize an explicit fence on every preview surface
 
