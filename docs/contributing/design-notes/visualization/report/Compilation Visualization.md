@@ -440,5 +440,11 @@ test pyramid and quality gates run locally (`npm run check`) and in CI (the
   committed `web/dist/report.html` is stale (`git diff --exit-code`), so the
   embedded UI can never drift from its sources.
 
-The Vite build targets **ES2022**, so the report runs on current evergreen
-browsers without legacy transpilation.
+The Vite build targets **ES2022**, so the report's own client runs on current
+evergreen browsers without legacy transpilation. The Mermaid build is the one
+exception: it is copied verbatim from the `mermaid` package rather than
+transpiled by Vite, and Mermaid 12 targets **ES2024** (Safari 17.4+ / iOS 17.4+,
+current Firefox and Chrome), so a report that draws a diagram needs that newer
+floor while the rest of the report keeps the ES2022 floor. The Vite target stays
+at ES2022 on purpose — raising it would not transpile the copied asset and would
+only widen the unsupported set for the client script.
