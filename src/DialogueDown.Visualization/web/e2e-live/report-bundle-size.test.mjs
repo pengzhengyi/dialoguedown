@@ -5,12 +5,8 @@ import test from "node:test";
 // What a reader downloads is the page plus the client and its stylesheet; Mermaid rides along
 // only for a script that draws a diagram, so it is measured on its own. Both budgets are raw
 // bytes, and both are approved limits rather than targets.
-//
-// Mermaid 12 inlines ELK on the single-file build (mermaid.min.js) now that ELK is the default
-// layout engine, which grew the copied asset from about 3.6 MB to about 5.6 MB, so the Mermaid
-// ceiling moved from 5,000,000 to 6,000,000 bytes to leave deliberate headroom rather than none.
 const MAX_CLIENT_BYTES = 2_000_000;
-const MAX_MERMAID_BYTES = 6_000_000;
+const MAX_MERMAID_BYTES = 5_000_000;
 const shipped = ["report.html", "report.js", "report.css"];
 
 function sizeOf(name) {
