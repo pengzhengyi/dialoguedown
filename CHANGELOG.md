@@ -10,6 +10,12 @@ changes easy to categorize.
 
 ### Added
 
+- **Literal punctuation** — a backslash writes the next ASCII punctuation character
+  literally, so a script can spell a literal tag (`\#word`, `\##default`) or arrow (`\=>`)
+  in prose, and escaping a speaker-prefix element keeps the line in the default voice. The
+  dangling-arrow warning now offers the escape as the deliberate spelling. See
+  [Symbol Escape](docs/contributing/design-notes/language/Symbol%20Escape.md).
+
 - **A compiled script can be played** — `DialogueDown.Runtime` is a new package that walks a
   playbook: `Runner.Step` takes where a run stands and one command, and returns where it now
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
