@@ -92,3 +92,9 @@ export const SWITCH_FIRST_DOC = join(SWITCH_TREE, "first.dialogue.md");
 export const SWITCH_SECOND_DOC = join(SWITCH_TREE, "act", "second.dialogue.md");
 export const SWITCH_FIRST_SOURCE = "# First Scene\n\nAlice: The script at the root.\n";
 export const SWITCH_SECOND_SOURCE = "# Second Scene\n\nBob: The script in a sub-folder.\n";
+
+// A quick-fix server: a script whose dangling arrow (DLG1113) carries the compiler's
+// "Escape as literal text" fix, so the live e2e can offer and apply it in the editor.
+export const QUICK_FIX_PORT = 5187;
+export const QUICK_FIX_DOC = join(here, ".quick-fix-doc.dialogue.md");
+export const QUICK_FIX_SOURCE = "# Scene\n\nAlice: The rule is x => y.\n";

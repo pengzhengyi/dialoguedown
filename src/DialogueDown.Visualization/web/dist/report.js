@@ -115,6 +115,11 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
   <p><strong>Syntax colors.</strong> The compiler distinguishes commands, value queries,
      conditions, static and dynamic random weights, control keywords, and the reserved
      <kbd>#END</kbd> target; ordinary code spans keep the Markdown code color.</p>
+  <p><strong>Diagnostics.</strong> The compiler's problems underline the source and mark the
+     gutter; hover one for its message and a link to its code's reference. When the compiler
+     knows the repair, the tip offers it as an action — for a dangling <kbd>=&gt;</kbd>,
+     <strong>Escape as literal text</strong> inserts the backslash. Fix actions appear in
+     Edit mode only.</p>
   <p><strong>Jump ligature.</strong> In the rendered preview, <kbd>=&gt;</kbd> before a
      link uses a bundled Fira Code ligature. The Source editor and saved script still keep
      the literal <kbd>=</kbd> and <kbd>&gt;</kbd> characters.</p>

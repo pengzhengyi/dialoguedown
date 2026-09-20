@@ -38,3 +38,6 @@ e2e-live/.config-adopt-invalid-tree/
 
 # Script-switch e2e temp tree
 e2e-live/.switch-tree/
+
+# Quick-fix e2e temp document
+e2e-live/.quick-fix-doc.dialogue.md
