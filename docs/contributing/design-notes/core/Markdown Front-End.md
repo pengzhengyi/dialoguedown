@@ -83,6 +83,9 @@ Grouping headings into sections, splitting `Speaker: Speech`, and interpreting
       presentation layer can render an image inline in a chat.
 - [x] Expose **inline code spans** (`` `...` ``) with their raw inner text
       (queries/commands are parsed later).
+- [x] Decode **HTML entity references** (`&nbsp;`, `&#32;`) to the character they
+      name, as CommonMark specifies, so a preview and a game agree on a named
+      space rather than one showing the character and the other its spelling.
 - [x] **Recognize and strip HTML comments** (`<!-- ... -->`) so they never leak
       into speech; they are discarded, not modeled (D5).
 - [x] **Recognize and discard leading front matter** (a `---`-fenced metadata
