@@ -1,10 +1,10 @@
 # Diagnostic quick fixes
 
 > [!NOTE]
-> Status: **proposed**. A diagnostic may carry a **fix** — a title and literal
-> text edits — and the Source editor offers it as an action in the diagnostic
-> tooltip. The first producer is the dangling jump arrow, whose fix inserts the
-> escape its message already recommends.
+> Status: **implemented**. A diagnostic may carry a **fix** — a title and literal
+> text edits — and the Source editor offers it in the diagnostic tooltip and the
+> Problems panel. The first producer is the dangling jump arrow, whose fix
+> inserts the escape its message already recommends.
 
 ## Table of contents
 
@@ -25,6 +25,7 @@
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Integration](#integration)
   - [Testability](#testability)
+  - [Implementation crosscheck](#implementation-crosscheck)
   - [Alternatives not chosen](#alternatives-not-chosen)
   - [Open questions and deferred work](#open-questions-and-deferred-work)
 
@@ -36,9 +37,9 @@ arrow with no link is read literally and to escape it (`\=>`); a fix turns that
 advice into one click, at the moment the warning appears.
 
 This note adds a **fix channel** to the diagnostic model, projects it to the
-editor, and offers each fix as an action in the diagnostic tooltip. Applying a
-fix is an ordinary buffer edit, so undo, dirty state, autosave, and recompilation
-all inherit.
+editor, and offers each fix in the diagnostic tooltip and the Problems panel.
+Applying a fix is an ordinary buffer edit, so undo, dirty state, autosave, and
+recompilation all inherit.
 
 **In scope:** the fix model, the dangling-arrow producer, the projection into the
 report payload, and the editor action.
@@ -50,19 +51,22 @@ deliberately not needed for this seam.
 
 ## Functionality checklist
 
-- [ ] `Diagnostic` carries an ordered list of fixes, empty by default.
-- [ ] A fix has a writer-facing title and one or more text edits.
-- [ ] `DLG1113` attaches *"Escape as literal text"*, inserting `\` at the arrow's
+- [x] `Diagnostic` carries an ordered list of fixes, empty by default.
+- [x] A fix has a writer-facing title and one or more text edits.
+- [x] `DLG1113` attaches *"Escape as literal text"*, inserting `\` at the arrow's
       start.
-- [ ] The projection carries the fixes on the LSP-shaped diagnostic, with edit
+- [x] The projection carries the fixes on the LSP-shaped diagnostic, with edit
       ranges relative to the diagnostic's own span.
-- [ ] The editor shows one action per fix in the diagnostic tooltip and applies
+- [x] The editor shows one action per fix in the diagnostic tooltip and applies
       its edits as a single undoable transaction.
-- [ ] A diagnostic with no fixes is unchanged in payload and UI.
-- [ ] A read-only report offers no actions.
-- [ ] An action whose diagnostic range has collapsed (the text is gone) is a
+- [x] The Problems panel offers each fix as a leading lightbulb whose hover help
+      names the repair.
+- [x] A diagnostic with no fixes is unchanged in payload and UI, and its row still
+      reserves the fix slot so rows align.
+- [x] A read-only report offers no actions and no lightbulbs.
+- [x] An action whose diagnostic range has collapsed (the text is gone) is a
       no-op.
-- [ ] Applying a fix marks the document dirty and lets autosave and the live
+- [x] Applying a fix marks the document dirty and lets autosave and the live
       recompile clear the warning.
 
 ## Ubiquitous language
@@ -87,6 +91,10 @@ Activating it inserts the backslash before the arrow — the buffer reads
 `\=>` — and the next compile is quiet, because an escaped arrow is prose and no
 longer a dangling indicator.
 
+The same fix leads the diagnostic's row in the **Problems** panel: a lightbulb
+whose hover help names the repair, in a slot every row reserves so rows with and
+without one align. Both surfaces appear only while editing.
+
 ## Architecture
 
 A fix is born with its diagnostic, travels with it through the store and the
@@ -100,18 +108,23 @@ flowchart LR
     L --> J["report JSON\n(omitted when empty)"]
     J --> M["TS model"]
     M --> O["diagnostics-overlay\ntoEditorDiagnostic"]
-    O --> A["lint action\none transaction"]
+    M --> N["Problems panel\nlightbulb per fix"]
+    O --> A["lint action"]
+    N --> H["SourceViewHandle\napplyDiagnosticFix"]
+    A --> H
+    H --> E["one edit transaction"]
 ```
 
-| Type                                                         | Responsibility                                 | Change                                                                     |
-| ------------------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------- |
-| `Diagnostic`                                                 | One located problem                            | Carries an ordered list of fixes; empty by default.                        |
-| `DiagnosticFix`, `DiagnosticEdit`                            | New core value types                           | A title plus the edits that apply it; a span plus its replacement text.    |
-| `JumpAssembler`                                              | Reports the dangling arrow as it degrades it   | Attaches the escape fix.                                                   |
-| `DiagnosticProjection`, `LspDiagnostic`, `LspFix`, `LspEdit` | Locate a diagnostic and its fixes in LSP terms | Projects fixes with ranges relative to the diagnostic span.                |
-| `DisplayGraphJson`                                           | The report payload                             | Serializes `fixes`; an empty list is omitted like the other absent fields. |
-| `model.ts` (`LspDiagnostic`)                                 | The client's view of a diagnostic              | Gains the optional fixes.                                                  |
-| `diagnostics-overlay.ts`                                     | Renders diagnostics into CodeMirror            | Maps each fix to a lint action; applies the edits on activation.           |
+| Type                                                            | Responsibility                                 | Change                                                                     |
+| --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `Diagnostic`                                                    | One located problem                            | Carries an ordered list of fixes; empty by default.                        |
+| `DiagnosticFix`, `DiagnosticEdit`                               | New core value types                           | A title plus the edits that apply it; a span plus its replacement text.    |
+| `JumpAssembler`                                                 | Reports the dangling arrow as it degrades it   | Attaches the escape fix.                                                   |
+| `DiagnosticProjection`, `LspDiagnostic`, `LspFix`, `LspEdit`    | Locate a diagnostic and its fixes in LSP terms | Projects fixes with ranges relative to the diagnostic span.                |
+| `DisplayGraphJson`                                              | The report payload                             | Serializes `fixes`; an empty list is omitted like the other absent fields. |
+| `model.ts` (`LspDiagnostic`)                                    | The client's view of a diagnostic              | Gains the optional fixes.                                                  |
+| `diagnostics-overlay.ts`, `SourceViewHandle.applyDiagnosticFix` | The editor's fix entry points                  | Maps each fix to a lint action, and applies one for the panel.             |
+| `problems-panel.ts`, `app.ts`                                   | The Problems list and its wiring               | Leads a fixable row with a lightbulb, in a slot every row reserves.        |
 
 ## Key design decisions
 
@@ -166,20 +179,24 @@ first.
 ### D6 — Fixes are an edit-mode affordance
 
 The exported report and the View mode are read-only, so they render the
-diagnostic and no action. The quick fix is part of authoring, alongside typing,
-and needs the live loop to save and recompile.
+diagnostic and no action anywhere: the tooltip drops its actions and the Problems
+panel re-renders without lightbulbs, leaving its fix slot empty. The quick fix is
+part of authoring, alongside typing, and needs the live loop to save and
+recompile.
 
 ## Error and boundary cases
 
-| Case                                                     | Behavior                                                               |
-| -------------------------------------------------------- | ---------------------------------------------------------------------- |
-| A diagnostic with no fixes                               | Unchanged: no `fixes` field in the payload, no action in the tooltip.  |
-| Several diagnostics, one with a fix                      | Only that diagnostic offers an action; there is no fix-all.            |
-| A collapsed diagnostic range (the text it named is gone) | The action is a no-op; the warning refreshes on the next compile.      |
-| The report lags the buffer (mid-debounce typing)         | Edits stay anchored to the remapped diagnostic range (D3).             |
-| A read-only report or View mode                          | Diagnostics render; actions are not offered (D6).                      |
-| An arrow in a choice body or control branch              | The diagnostic is reported there today; its fix rides along unchanged. |
-| A fix with several edits                                 | Applied in order within one transaction (D4).                          |
+| Case                                                     | Behavior                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| A diagnostic with no fixes                               | Unchanged: no `fixes` field, no tooltip action, and an empty fix slot in the panel.  |
+| Several diagnostics, one with a fix                      | Only that diagnostic offers an action or a lightbulb; there is no fix-all.           |
+| A collapsed diagnostic range (the text it named is gone) | The action and the panel's lightbulb are no-ops; the warning refreshes next compile. |
+| The report lags the buffer (mid-debounce typing)         | Edits stay anchored to the remapped diagnostic range (D3).                           |
+| A read-only report or View mode                          | Diagnostics render; the tooltip offers no actions and the panel no lightbulbs (D6).  |
+| The mode flips while diagnostics are listed              | Both surfaces recompute from the same list, so an Edit-mode action cannot linger.    |
+| A fixable row beside a fix-less row                      | Both reserve the leading fix slot, so the messages align.                            |
+| An arrow in a choice body or control branch              | The diagnostic is reported there today; its fix rides along unchanged.               |
+| A fix with several edits                                 | Applied in order within one transaction (D4).                                        |
 
 ## Integration
 
@@ -187,8 +204,11 @@ and needs the live loop to save and recompile.
   like the other absent fields, so nothing changes for diagnostics without a fix.
 - **Live loop:** applying a fix dirties the buffer and inherits autosave and the
   generation-safe save (see the Autosave note).
-- **Editor:** `toEditorDiagnostic` gains the action mapping; semantic tokens and
-  completions are untouched.
+- **Editor:** `toEditorDiagnostic` maps a fix to a lint action;
+  `SourceViewHandle.applyDiagnosticFix` resolves a diagnostic's range for the
+  Problems panel. Semantic tokens and completions are untouched.
+- **Problems panel:** `app.ts` wires the panel's `applyFix` to the handle, and the
+  panel re-renders when the editor's editability flips.
 - **Help:** the editor's help text gains one line for the action.
 
 ## Testability
@@ -199,7 +219,10 @@ and needs the live loop to save and recompile.
   the diagnostic span, including a multi-edit fix.
 - **Serialization:** the payload carries `fixes`, and omits the field when empty.
 - **Web unit:** an action is created per fix; activating it dispatches one
-  transaction with the expected edit; a collapsed range is a no-op.
+  transaction with the expected edit; a read-only editor drops the actions when
+  the mode flips; the panel leads a fixable row with a lightbulb whose hover help
+  names the repair, offers it only while editable, and routes the click through
+  the handle without navigating.
 - **Web live e2e:** the served session offers the action on a dangling arrow;
   activating it inserts `\`, saves, and the recompile clears the warning.
 - **Coverage:** the new core, projection, and overlay paths at 100% line and
@@ -214,6 +237,21 @@ and needs the live loop to save and recompile.
 | Callbacks instead of data                             | Not serializable, not testable without an editor, not portable to a server (D2).                                |
 | A client-side "Make literal" command for valid sigils | A valid tag or jump carries no diagnostic, and the escape is one typed character; deferred, tracked separately. |
 | Attaching fixes to the descriptor                     | A descriptor is shared by every instance; a fix needs a span.                                                   |
+
+## Implementation crosscheck
+
+Built as designed, with these notes:
+
+- **Achieved.** The producer attaches fixes; the located view and the projection
+  carry them with relative ranges; the tooltip action and the Problems panel's
+  lightbulb both apply through the source-view handle as one transaction; the
+  live e2e proves the save-and-clear loop; every checklist item is covered.
+- **Changed.** Preview review added the Problems-panel surface and editability
+  gating: the panel re-renders when the mode flips, the source view re-applies
+  its diagnostics, and a read-only report offers nothing. The panel also gained
+  the leading slot every row reserves, so rows with and without a fix align.
+- **Not implemented.** The CLI `--fix` mode stays queued; more producers and a
+  "fix all" stay unbuilt until a consumer asks.
 
 ## Open questions and deferred work
 
