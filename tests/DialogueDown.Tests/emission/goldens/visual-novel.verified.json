@@ -20,8 +20,13 @@
       "tags": []
     },
     {
+      "id": "yuki",
       "name": "Yuki",
-      "tags": []
+      "tags": [
+        {
+          "name": "heroine"
+        }
+      ]
     }
   ],
   "nodes": [
@@ -102,7 +107,7 @@
     {
       "kind": "line",
       "id": 2,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "custom-command",
@@ -114,15 +119,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki @yuki "
-        },
-        {
-          "kind": "tag",
-          "name": "heroine"
-        },
-        {
-          "kind": "text",
-          "text": ": You did not have to wait with me,"
+          "text": "You did not have to wait with me,"
         },
         {
           "kind": "break"
@@ -250,10 +247,6 @@
               ]
             },
             {
-              "kind": "text",
-              "text": " Yuki: "
-            },
-            {
               "kind": "default-command",
               "action": "Yuki hides a smile behind her sleeve"
             },
@@ -281,7 +274,7 @@
     {
       "kind": "line",
       "id": 7,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "custom-command",
@@ -290,10 +283,6 @@
             "yuki",
             "warm"
           ]
-        },
-        {
-          "kind": "text",
-          "text": " Yuki: "
         },
         {
           "kind": "default-command",
@@ -366,7 +355,7 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: That is very like you. Careful, and kind"
+              "text": "That is very like you. Careful, and kind"
             },
             {
               "kind": "break"
@@ -392,7 +381,7 @@
     {
       "kind": "line",
       "id": 11,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "custom-command",
@@ -404,7 +393,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: That is very like you. Careful, and kind"
+          "text": "That is very like you. Careful, and kind"
         },
         {
           "kind": "break"
@@ -688,7 +677,7 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: You\u2014 you cannot just "
+              "text": "You\u2014 you cannot just "
             },
             {
               "kind": "styled",
@@ -728,7 +717,7 @@
     {
       "kind": "line",
       "id": 23,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "custom-command",
@@ -740,7 +729,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: You\u2014 you cannot just "
+          "text": "You\u2014 you cannot just "
         },
         {
           "kind": "styled",
@@ -823,7 +812,7 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: Mm. Eventually."
+              "text": "Mm. Eventually."
             }
           ]
         },
@@ -842,7 +831,7 @@
     {
       "kind": "line",
       "id": 27,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "custom-command",
@@ -854,7 +843,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: Mm. Eventually."
+          "text": "Mm. Eventually."
         }
       ],
       "out": [
@@ -1032,7 +1021,7 @@
     {
       "kind": "line",
       "id": 35,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "custom-command",
@@ -1044,7 +1033,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: Before it gets here \u2014 "
+          "text": "Before it gets here \u2014 "
         },
         {
           "kind": "query",

@@ -44,11 +44,12 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         public Line Build()
         {
             var condition = PeelCondition();
-            var speaker = PeelSpeaker();
+            var speaker = PeelSpeaker(out var prefixStart);
             if (speaker is null)
             {
                 // The peel failed: warn when a styled leading run would have been a speaker prefix.
-                StyledSpeakerPrefixDetector.Report(_remaining, diagnostics);
+                // The detector starts where recognition did, seeing past any skipped game calls.
+                StyledSpeakerPrefixDetector.Report(_remaining.Skip(prefixStart).ToList(), diagnostics);
             }
 
             return new Line(speaker, inlineBuilder.Build(_remaining, diagnostics), _span, condition);
@@ -58,6 +59,12 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         // tokenized later). Such a condition guards the jump, not the line, so it is not peeled.
         private static bool PrecedesAJump(IReadOnlyList<MarkdownInline> content) =>
             content is [TextInline head, ..] && head.StartsWithJumpIndicator();
+
+        // Whether this inline may sit before a speaker prefix: a game-call code span, or the
+        // whitespace-only text between two of them. Anything else stops the scan.
+        private static bool CanPrecedeASpeaker(MarkdownInline inline) =>
+            inline is CodeSpanInline
+            || (inline is TextInline text && string.IsNullOrWhiteSpace(text.Text));
 
         // A leading `"key"?` condition code span is the line's condition — but only when non-jump
         // content follows it to guard. A condition that directly precedes a jump guards the jump
@@ -74,13 +81,20 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
             return condition;
         }
 
-        // Splits an optional speaker prefix off the leading text. A prefix that binds tags but
-        // names no speaker reports through the speaker builder and recovers to a default speaker.
-        private Speaker? PeelSpeaker()
+        // Splits an optional speaker prefix off the first text-bearing inline. A leading run of
+        // game calls (code spans) and the whitespace between them is skipped, so the prefix may
+        // follow them; those inlines stay in the speech. The index the scan stopped at is reported
+        // so the styled-prefix detector can start where recognition did. A prefix that binds tags
+        // but names no speaker reports through the speaker builder and recovers to a default speaker.
+        private Speaker? PeelSpeaker(out int prefixStart)
         {
-            // An escaped leading character is literal, so it cannot start a speaker prefix:
-            // `\#tag: hi` is speech, not a tag-only prefix.
-            if (_remaining[0] is not TextInline leading || leading.IsFirstCharacterEscaped)
+            prefixStart = IndexOfPrefixStart();
+
+            // A speaker prefix is plain, unescaped text: an escaped leading character is literal,
+            // so `\#tag: hi` is speech, not a tag-only prefix.
+            if (prefixStart >= _remaining.Count
+                || _remaining[prefixStart] is not TextInline leading
+                || leading.IsFirstCharacterEscaped)
             {
                 return null;
             }
@@ -94,22 +108,39 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
                 return null;
             }
 
-            RemoveSpeakerPrefix(input.Advance(result.MatchedLength));
+            RemoveSpeakerPrefix(input.Advance(result.MatchedLength), prefixStart);
             return result.MatchedValue;
         }
 
-        // Drops the parsed speaker prefix from the leading text: the re-anchored leftover replaces
-        // the leading text when part of it remains, otherwise the leading text is removed.
-        private void RemoveSpeakerPrefix(ParseInput leftover)
+        // The index of the first inline a speaker prefix can start at: the first text inline that
+        // carries non-whitespace text, stepping over any leading game-call code spans and the
+        // whitespace between them. Anything else — a link, image, autolink, raw HTML, or emphasis
+        // — stops the scan, so only a game call may precede the speaker and the line stays
+        // unattributed. Returns _remaining.Count when nothing but calls and whitespace remains.
+        private int IndexOfPrefixStart()
+        {
+            var index = 0;
+            while (index < _remaining.Count && CanPrecedeASpeaker(_remaining[index]))
+            {
+                index++;
+            }
+
+            return index;
+        }
+
+        // Drops the parsed speaker prefix from the text at <paramref name="index"/>: the
+        // re-anchored leftover replaces that text when part of it remains, otherwise the text is
+        // removed. The inlines before it — the skipped game calls and whitespace — stay.
+        private void RemoveSpeakerPrefix(ParseInput leftover, int index)
         {
             if (leftover.Text.Length > 0)
             {
-                _remaining[0] = new TextInline(
+                _remaining[index] = new TextInline(
                     leftover.Text, new SourceSpan(leftover.Position, leftover.Text.Length));
             }
             else
             {
-                _remaining.RemoveAt(0);
+                _remaining.RemoveAt(index);
             }
         }
     }
