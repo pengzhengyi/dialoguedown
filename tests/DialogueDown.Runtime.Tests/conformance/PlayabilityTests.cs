@@ -30,6 +30,14 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
+    public void CanPlay_AnExpectationNobodyCanCheck_IsNot()
+    {
+        // An entry is only as takeable as the claims in it: a key no matcher owns ends the run
+        // where it is read, so the validation detects before the run starts.
+        AssertNotPlayable(Expected("""{ "asked": [] }"""));
+    }
+
+    [Fact]
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
         var context = PlayContextFactory.Of(
@@ -50,6 +58,15 @@ public sealed class PlayabilityTests
     {
         AssertPlayable(SentCommand("next"));
         AssertPlayable(Expected("""{ "ended": true }"""));
+    }
+
+    [Fact]
+    public void WhyNotPlayable_OfAnExpectation_NamesEachClaimNobodyChecks()
+    {
+        var session = ImmutableArray.Create<SessionEntry>(
+            Expected("""{ "asked": [ { "label": "Go east" } ], "resolve": [ "Alice.HasKey" ] }"""));
+
+        AssertNotPlayable(session, "nothing checks asked yet", "nothing checks resolve yet");
     }
 
     [Fact]
