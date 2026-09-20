@@ -1,8 +1,13 @@
-import { lintGutter, setDiagnostics, type Diagnostic as EditorDiagnostic } from "@codemirror/lint";
+import {
+    lintGutter,
+    setDiagnostics,
+    type Action,
+    type Diagnostic as EditorDiagnostic,
+} from "@codemirror/lint";
 import type { EditorState, Extension } from "@codemirror/state";
 import { tooltips, type EditorView } from "@codemirror/view";
 import { positionToOffset } from "./lsp-position";
-import type { LspDiagnostic, LspSeverity } from "./model";
+import type { LspDiagnostic, LspFix, LspSeverity } from "./model";
 import { orderDiagnostics, orderGutterDiagnostics } from "./diagnostic-order";
 
 /** The docs page whose per-code anchors the tooltip links to (mirrors the CLI's doc links). */
@@ -54,8 +59,8 @@ export function toEditorDiagnostics(
 
 /**
  * Convert one LSP-shaped diagnostic to a CodeMirror lint diagnostic: its range resolved to
- * offsets, its severity mapped to a lint kind, and a tooltip that links to the code's docs.
- * Exported for unit testing.
+ * offsets, its severity mapped to a lint kind, a tooltip that links to the code's docs, and an
+ * action per suggested fix. Exported for unit testing.
  */
 export function toEditorDiagnostic(
     state: EditorState,
@@ -69,7 +74,43 @@ export function toEditorDiagnostic(
         severity: SEVERITY_KIND[diagnostic.severity] ?? "error",
         message: diagnostic.message,
         renderMessage: () => renderDiagnosticTooltip(diagnostic),
+        actions: toActions(state, diagnostic),
     };
+}
+
+// A fix is an edit, so a read-only editor (View mode, an exported report) offers no actions.
+function toActions(state: EditorState, diagnostic: LspDiagnostic): Action[] {
+    if (state.readOnly || !diagnostic.fixes?.length) {
+        return [];
+    }
+
+    return diagnostic.fixes.map((fix) => ({
+        name: fix.title,
+        apply: (view, from, to) => applyFix(view, fix, from, to),
+    }));
+}
+
+/**
+ * Apply one fix's edits to the document. Offsets are relative to the diagnostic's start, and the
+ * `from`/`to` CodeMirror passes are the range it currently maps the diagnostic to, so a fix stays
+ * anchored to its text while the writer edits above it. A collapsed range means the text the fix
+ * targets is gone, and a read-only editor takes no edits at all, so both are no-ops. Exported for
+ * unit testing.
+ */
+export function applyFix(view: EditorView, fix: LspFix, from: number, to: number): void {
+    if (from === to || view.state.readOnly) {
+        return;
+    }
+
+    view.dispatch({
+        changes: fix.edits.map((edit) => ({
+            from: from + edit.start,
+            to: from + edit.end,
+            insert: edit.newText,
+        })),
+        userEvent: "input",
+        scrollIntoView: true,
+    });
 }
 
 /** The docs URL for a diagnostic code — the error-codes page anchored at its lowercase slug. */

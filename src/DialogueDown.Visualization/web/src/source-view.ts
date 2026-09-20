@@ -57,7 +57,7 @@ import {
 import { openContextMenu, type ContextMenuItem } from "./context-menu";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
-import { diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
+import { applyFix, diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
 import { positionToOffset } from "./lsp-position";
 import { annotateHeadingAnchors, wireHeadingAnchorCopy } from "./heading-anchors";
 import { headingSlugHints } from "./heading-slug-hints";
@@ -71,6 +71,7 @@ import {
     type DialogueSymbolProvider,
     EMPTY_SYMBOLS,
     type LspDiagnostic,
+    type LspFix,
     type LspRange,
     type ReservedTarget,
     type SemanticToken,
@@ -424,6 +425,11 @@ export interface SourceViewHandle {
      */
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /**
+     * Apply one of a diagnostic's fixes, resolving its range against the current document. The
+     * Problems panel's fix button routes here, so the panel itself needs no editor.
+     */
+    applyDiagnosticFix(diagnostic: LspDiagnostic, fix: LspFix): void;
+    /**
      * Replace the compiler's semantic tokens shown as dialogue highlighting. An empty list
      * clears the highlighting — called on load, a hot-reload, or a save.
      */
@@ -729,6 +735,10 @@ export function createSourceView(
     });
     divider.appendChild(previewPanel.button);
 
+    // The last diagnostics the compiler pushed. A mode flip re-applies them, because the overlay
+    // depends on editability: only an editable editor offers fix actions.
+    let lastDiagnostics: readonly LspDiagnostic[] = [];
+
     return {
         element: container,
         destroy: () => {
@@ -740,12 +750,22 @@ export function createSourceView(
             mermaidPreviews.dispose(preview);
             view.destroy();
         },
-        setEditable: (next) =>
-            view.dispatch({ effects: editability.reconfigure(editableConfig(next, [completion])) }),
+        setEditable: (next) => {
+            view.dispatch({ effects: editability.reconfigure(editableConfig(next, [completion])) });
+            setEditorDiagnostics(view, lastDiagnostics);
+        },
         setContent: (next) => setDocumentContent(view, next),
         setDocument: (next) => openDocument(view, next),
         getContent: () => view.state.doc.toString(),
-        setDiagnostics: (diagnostics) => setEditorDiagnostics(view, diagnostics),
+        setDiagnostics: (diagnostics) => {
+            lastDiagnostics = diagnostics;
+            setEditorDiagnostics(view, diagnostics);
+        },
+        applyDiagnosticFix: (diagnostic, fix) => {
+            const from = positionToOffset(view.state, diagnostic.range.start);
+            const to = Math.max(from, positionToOffset(view.state, diagnostic.range.end));
+            applyFix(view, fix, from, to);
+        },
         setSemanticTokens: (tokens) => {
             setEditorSemanticTokens(view, tokens);
             const ranges = decoratedRanges(view.state, tokens);

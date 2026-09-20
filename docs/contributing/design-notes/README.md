@@ -259,7 +259,8 @@ projected from the compiler rather than a client-side grammar.
 | 34 | [Mermaid Authoring Diagrams](./visualization/editor/Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
 | 35 | [Ignored Markdown Preview Toggle](./visualization/editor/Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, under two footer commands that override every region at once | Implemented |
 | 36 | [Co-located Diagnostics Presentation](./visualization/editor/Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
-| 43 | [Construct Marks in the Source Preview](./visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md) | The rendered preview marks the compiler's constructs in the editor's own vocabulary — tags as capsules, commands and queries tinted, a jump's arrow revealing its line | Implemented |
+| 51 | [Diagnostic Quick Fixes](./visualization/editor/Diagnostic%20Quick%20Fixes.md) | A diagnostic's suggested repair offered as an editor action, starting with escaping a dangling arrow | Implemented |
+| 52 | [Construct Marks in the Source Preview](./visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md) | The rendered preview marks the compiler's constructs in the editor's own vocabulary — tags as capsules, commands and queries tinted | Implemented |
 
 #### Graph interaction
 

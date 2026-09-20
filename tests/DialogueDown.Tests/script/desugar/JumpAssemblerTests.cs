@@ -200,6 +200,13 @@ public sealed class JumpAssemblerTests
         Assert.Equal(DiagnosticSeverity.Warning, diagnostic.Severity);
         Assert.Equal(DiagnosticCategory.Syntax, diagnostic.Descriptor.Category);
         Assert.Equal(indicator.Span, diagnostic.Span);
+
+        // The message recommends escaping the arrow; the fix is that remedy as an insertion.
+        var fix = Assert.Single(diagnostic.Fixes);
+        Assert.Equal("Escape as literal text", fix.Title);
+        var edit = Assert.Single(fix.Edits);
+        Assert.Equal(new SourceSpan(indicator.Span.Start, 0), edit.Span);
+        Assert.Equal("\\", edit.NewText);
     }
 
     [Fact]

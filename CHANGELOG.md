@@ -18,6 +18,10 @@ changes easy to categorize.
   itself on hover and a tag copies on click; ignored Markdown, front matter, and link text stay
   plain. See
   [Construct Marks in the Source Preview](docs/contributing/design-notes/visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md).
+- **Quick fixes** — a diagnostic whose repair the compiler knows now carries it, and the Source
+  editor offers it while editing: a lightbulb action in the warning's tooltip and a lightbulb on
+  its row in the Problems panel. The dangling-arrow warning's fix escapes the arrow. See
+  [Diagnostic quick fixes](docs/contributing/design-notes/visualization/editor/Diagnostic%20Quick%20Fixes.md).
 
 - **Literal punctuation** — a backslash writes the next ASCII punctuation character
   literally, so a script can spell a literal tag (`\#word`, `\##default`) or arrow (`\=>`)

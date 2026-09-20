@@ -150,6 +150,8 @@
       href: visualization/editor/Ignored Markdown Preview Toggle.md
     - name: Co-located Diagnostics Presentation
       href: visualization/editor/Co-located Diagnostics Presentation.md
+    - name: Diagnostic Quick Fixes
+      href: visualization/editor/Diagnostic Quick Fixes.md
     - name: Source Editor Autocompletion
       href: visualization/editor/Source Editor Autocompletion.md
     - name: Diagnostics Overlay

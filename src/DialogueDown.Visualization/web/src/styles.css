@@ -2114,6 +2114,41 @@ g.node.entity-highlight text.label {
     text-decoration: underline;
 }
 
+/* A fix action reads as a VS Code quick fix — a lightbulb and a quiet, text-sized row. The
+   selector out-specifies CodeMirror's own action theme (a filled white-on-dark button) and
+   Pico's <button> rules, and the reset drops whatever either left behind. */
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    margin: 0.15rem 0 0;
+    padding: 0.1rem 0.35rem;
+    border-radius: var(--pico-border-radius);
+    color: inherit;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction::before {
+    font-family: codicon, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1;
+    content: "\ea61"; /* codicon-lightbulb */
+}
+
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction:hover,
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction:focus-visible {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+}
+
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction:focus-visible {
+    outline: 2px solid var(--pico-primary);
+    outline-offset: 1px;
+}
+
 /* The compact find/replace panel floats over the top-right of the editor, VS Code-style, rather
    than sitting in a full-width bar. The panels container is made transparent and absolute so the
    card styling lives on `.dd-search` itself. */
@@ -4979,6 +5014,43 @@ body.zen .playbook-view > .playbook-source {
 .problem-jump:hover {
     color: var(--problem-text);
     background: transparent;
+}
+
+/* A diagnostic's fix, offered where the writer browses problems: a lightbulb whose hover help
+   names the repair, leading a slot every row reserves so rows with and without one align. */
+.problem-fix-slot {
+    display: flex;
+    flex: 0 0 auto;
+    align-self: center;
+    justify-content: center;
+    width: 1.5rem;
+}
+
+.problem-fix {
+    --pico-background-color: transparent;
+
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    margin: 0;
+    padding: 0.2rem;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--problem-text);
+    line-height: 1;
+    cursor: pointer;
+}
+
+.problem-fix:hover {
+    color: var(--problem-text);
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+}
+
+.problem-fix-icon {
+    font-size: 13px;
 }
 
 .problem-icon {

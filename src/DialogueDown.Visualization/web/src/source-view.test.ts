@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { forEachDiagnostic } from "@codemirror/lint";
 import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import {
     createFakeDebugController,
     type FakeDebugProgram,
 } from "./test-support/fake-debug-controller";
-import type { ReservedTarget, SemanticToken } from "./model";
+import type { LspDiagnostic, ReservedTarget, SemanticToken } from "./model";
 import {
     createSourceView,
     initSplitDivider,
@@ -440,5 +442,51 @@ describe("createSourceView construct marks", () => {
         source.setSemanticTokens([]);
 
         expect(source.element.querySelector(".source-preview .dd-tag")).toBeNull();
+describe("createSourceView quick-fix actions", () => {
+    const DIAGNOSTIC: LspDiagnostic = {
+        range: { start: { line: 0, character: 2 }, end: { line: 0, character: 4 } },
+        severity: 2,
+        code: "DLG1113",
+        message: "Dangling arrow.",
+        source: "dialoguedown",
+        fixes: [
+            {
+                title: "Escape as literal text",
+                edits: [{ start: 0, end: 0, newText: "\\" }],
+            },
+        ],
+    };
+
+    /** How many fix actions the overlay currently carries in the editor's state. */
+    function actionCount(source: SourceViewHandle): number {
+        const view = EditorView.findFromDOM(source.element.querySelector(".cm-editor")!);
+        let count = 0;
+        forEachDiagnostic(view!.state, (diagnostic) => {
+            count += diagnostic.actions?.length ?? 0;
+        });
+        return count;
+    }
+
+    it("drops the fix actions in View mode and brings them back in Edit", () => {
+        const source = mountSource("x => y", { editable: true });
+
+        source.setDiagnostics([DIAGNOSTIC]);
+        expect(actionCount(source)).toBe(1);
+
+        source.setEditable(false);
+        expect(actionCount(source)).toBe(0);
+
+        source.setEditable(true);
+        expect(actionCount(source)).toBe(1);
+    });
+
+    it("applies a diagnostic's fix through the handle", () => {
+        const source = mountSource("x => y", { editable: true });
+
+        source.applyDiagnosticFix(DIAGNOSTIC, DIAGNOSTIC.fixes![0]);
+
+        expect(source.getContent()).toBe("x \\=> y");
+    });
+});
     });
 });

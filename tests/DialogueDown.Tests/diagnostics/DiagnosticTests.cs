@@ -11,7 +11,7 @@ public sealed class DiagnosticTests
         var descriptor = DiagnosticsFactory.Descriptor();
         var span = SourceSpanFactory.Span(3, 5);
 
-        var diagnostic = new Diagnostic(descriptor, span, ["Alice"]);
+        var diagnostic = DiagnosticsFactory.Diagnostic(descriptor, span, ["Alice"]);
 
         Assert.Equal(descriptor, diagnostic.Descriptor);
         Assert.Equal(span, diagnostic.Span);
@@ -21,9 +21,8 @@ public sealed class DiagnosticTests
     [Fact]
     public void Severity_DefaultsToDescriptorDefault_WhenNotOverridden()
     {
-        var descriptor = DiagnosticsFactory.Descriptor(defaultSeverity: DiagnosticSeverity.Warning);
-
-        var diagnostic = new Diagnostic(descriptor, SourceSpanFactory.Span(), []);
+        var diagnostic = DiagnosticsFactory.Diagnostic(
+            descriptor: DiagnosticsFactory.Descriptor(defaultSeverity: DiagnosticSeverity.Warning));
 
         Assert.Equal(DiagnosticSeverity.Warning, diagnostic.Severity);
     }
@@ -31,37 +30,41 @@ public sealed class DiagnosticTests
     [Fact]
     public void Severity_UsesOverride_WhenProvided()
     {
-        var descriptor = DiagnosticsFactory.Descriptor(defaultSeverity: DiagnosticSeverity.Error);
-
-        var diagnostic = new Diagnostic(
-            descriptor, SourceSpanFactory.Span(), [], DiagnosticSeverity.Info);
+        var diagnostic = DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Info);
 
         Assert.Equal(DiagnosticSeverity.Info, diagnostic.Severity);
     }
 
     [Fact]
     public void IsError_IsTrueForAnError() =>
-        Assert.True(new Diagnostic(
-            DiagnosticsFactory.Descriptor(), SourceSpanFactory.Span(), [], DiagnosticSeverity.Error)
-            .IsError);
+        Assert.True(DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Error).IsError);
 
     [Fact]
     public void IsError_IsFalseForAWarningOrInfo()
     {
-        var descriptor = DiagnosticsFactory.Descriptor();
+        Assert.False(DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Warning).IsError);
+        Assert.False(DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Info).IsError);
+    }
 
-        Assert.False(
-            new Diagnostic(descriptor, SourceSpanFactory.Span(), [], DiagnosticSeverity.Warning).IsError);
-        Assert.False(
-            new Diagnostic(descriptor, SourceSpanFactory.Span(), [], DiagnosticSeverity.Info).IsError);
+    [Fact]
+    public void Fixes_DefaultToEmpty() =>
+        Assert.Empty(DiagnosticsFactory.Diagnostic().Fixes);
+
+    [Fact]
+    public void Fixes_AreExposedWhenProvided()
+    {
+        var fix = DiagnosticsFactory.Fix();
+
+        var diagnostic = DiagnosticsFactory.Diagnostic(fixes: [fix]);
+
+        Assert.Same(fix, Assert.Single(diagnostic.Fixes));
     }
 
     [Fact]
     public void Equality_SameValuesIncludingEmptyArguments_AreEqual()
     {
-        var descriptor = DiagnosticsFactory.Descriptor();
-        var one = new Diagnostic(descriptor, SourceSpanFactory.Span(2, 3), []);
-        var two = new Diagnostic(descriptor, SourceSpanFactory.Span(2, 3), []);
+        var one = DiagnosticsFactory.Diagnostic(span: SourceSpanFactory.Span(2, 3));
+        var two = DiagnosticsFactory.Diagnostic(span: SourceSpanFactory.Span(2, 3));
 
         Assert.Equal(one, two);
         Assert.Equal(one.GetHashCode(), two.GetHashCode());
@@ -70,9 +73,8 @@ public sealed class DiagnosticTests
     [Fact]
     public void Equality_EqualArgumentContentInSeparateLists_AreEqual()
     {
-        var descriptor = DiagnosticsFactory.Descriptor();
-        var one = new Diagnostic(descriptor, SourceSpanFactory.Span(), ["Alice"]);
-        var two = new Diagnostic(descriptor, SourceSpanFactory.Span(), ["Alice"]);
+        var one = DiagnosticsFactory.Diagnostic(messageArguments: ["Alice"]);
+        var two = DiagnosticsFactory.Diagnostic(messageArguments: ["Alice"]);
 
         Assert.Equal(one, two);
         Assert.Equal(one.GetHashCode(), two.GetHashCode());
@@ -81,9 +83,8 @@ public sealed class DiagnosticTests
     [Fact]
     public void Equality_DifferentArguments_AreNotEqual()
     {
-        var descriptor = DiagnosticsFactory.Descriptor();
-        var one = new Diagnostic(descriptor, SourceSpanFactory.Span(), ["Alice"]);
-        var two = new Diagnostic(descriptor, SourceSpanFactory.Span(), ["Bob"]);
+        var one = DiagnosticsFactory.Diagnostic(messageArguments: ["Alice"]);
+        var two = DiagnosticsFactory.Diagnostic(messageArguments: ["Bob"]);
 
         Assert.NotEqual(one, two);
     }
@@ -91,11 +92,22 @@ public sealed class DiagnosticTests
     [Fact]
     public void Equality_DifferentSeverity_AreNotEqual()
     {
-        var descriptor = DiagnosticsFactory.Descriptor(defaultSeverity: DiagnosticSeverity.Error);
-        var error = new Diagnostic(descriptor, SourceSpanFactory.Span(), []);
-        var warning = new Diagnostic(
-            descriptor, SourceSpanFactory.Span(), [], DiagnosticSeverity.Warning);
+        var error = DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Error);
+        var warning = DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Warning);
 
         Assert.NotEqual(error, warning);
+    }
+
+    [Fact]
+    public void Equality_IgnoresFixes_BecauseTheProblemIsTheIdentity()
+    {
+        // A consumer comparing an expected diagnostic (written without a fix) to a produced one
+        // (carrying one) should still see the same problem.
+        var span = SourceSpanFactory.Span(2, 2);
+        var withoutFix = DiagnosticsFactory.Diagnostic(span: span);
+        var withFix = DiagnosticsFactory.Diagnostic(span: span, fixes: [DiagnosticsFactory.Fix()]);
+
+        Assert.Equal(withoutFix, withFix);
+        Assert.Equal(withoutFix.GetHashCode(), withFix.GetHashCode());
     }
 }
