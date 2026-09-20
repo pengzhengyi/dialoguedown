@@ -398,10 +398,13 @@ A later stage pairs the pattern `JumpIndicator` · *(optional whitespace)* · `L
 into a `Jump`. The whitespace an author writes between `=>` and the link is kept
 as plain text here and **folded into the `Jump`** during pairing — a boundary case
 handled downstream, not special-cased in the transpiler. A **dangling
-`JumpIndicator`** — a `=>` with no link after it — **degrades to plain text**, so a
-prose arrow like `the => arrow` reads literally with no escaping needed and the
-neighboring text coalesces back around it. A **bare `Link`** (no preceding `=>`)
-stays a meaningful inline link, its dialogue meaning left to the semantic analyzer.
+`JumpIndicator`** — a `=>` with no link after it — **degrades to plain text** and
+reports `DLG1113`, so an intended jump never vanishes unseen; the neighboring text
+coalesces back around it. A writer who means the characters escapes the arrow
+(`\=>`), which never becomes a `JumpIndicator` at all — see the
+[Symbol Escape](../language/Symbol%20Escape.md) note. A **bare `Link`** (no
+preceding `=>`) stays a meaningful inline link, its dialogue meaning left to the
+semantic analyzer.
 
 ### D9 — Tags: a dedicated pluggable parser
 
@@ -585,8 +588,14 @@ line is (a) **re-tokenizing a `TextInline`'s string**, since Markdown treats
 **`InlineLeafTokenizer`** owns (a): a consume-all parser **built dynamically from
 the allowed leaf elements** — `Repeated(Or(text, tag, jump)).ConsumeAll()` —
 dropping `jump` when the context forbids it. It yields `InlineLeaf`s (`TextLeaf`,
-`TagLeaf`, `JumpLeaf`), the terminal inlines that hold no nested children.
-`GameCallParser` owns (b).
+`TagLeaf`, `JumpLeaf`), the terminal inlines that hold no nested children. It also
+takes the `TextInline` escape flag: an escaped leading character is literal, and
+when a sigil begins there the whole sigil is taken as text, so `\#word`,
+`\##default`, and `\=>` never become a `Tag` or `JumpIndicator` (see the
+[Symbol Escape](../language/Symbol%20Escape.md) note). The tokenizer exposes
+`StartsWithJumpIndicator` from the same rule, so a caller deciding before
+tokenization — the line builder asking whether a condition guards a jump — does
+not re-derive the arrow's spelling or its escape. `GameCallParser` owns (b).
 
 The **`InlineBuilder`** does the structural walk and construction: it maps each
 inline to a fragment, calls the tokenizer for text (building each leaf via
@@ -720,9 +729,9 @@ buildSpeech(inlines, policy):         # InlineBuilder, gated by the context poli
 | Empty paragraph or line group (only filtered/ignored inlines)       | dropped upstream so no `Line` is emitted; `LineBuilder` still asserts a non-empty group, failing explicitly if one slips through                                                                      |
 | Code span that is neither query nor command                         | **`DialogueSyntaxError`** — "code spans are only for game calls…"                                                                                                                                     |
 | Malformed tag (e.g. `#` with no name)                               | **`DialogueSyntaxError`** with the expected form                                                                                                                                                      |
-| Prose `=>` not before a link (`the => arrow`)                       | emitted as a `JumpIndicator`; downstream degrades the dangling one back to plain text, so it reads literally (D8)                                                                                     |
+| Prose `=>` not before a link (`the => arrow`)                       | emitted as a `JumpIndicator`; downstream degrades the dangling one back to plain text and warns `DLG1113` (D8). An escaped `\=>` never becomes an indicator (D14).                                    |
 | Whitespace between `=>` and its link                                | kept as plain text here; folded into the `Jump` when a later stage pairs `JumpIndicator` + `Link` (D8)                                                                                                |
-| Literal `#word` in speech                                           | recognized as a `Tag` (D9); a literal `#word` is not yet expressible — planned: a `` `#` `` symbol-escape at desugar                                                                                  |
+| Literal `#word` in speech                                           | recognized as a `Tag` (D9) unless the `#` is escaped: `\#word` is literal text (D14).                                                                                                                 |
 | Empty document                                                      | a `ScriptDocument` with an empty body                                                                                                                                                                 |
 | Content before the first heading                                    | attaches to the `ScriptDocument` root                                                                                                                                                                 |
 | Irregular heading order (an `H1` after an `H2`, or a skipped level) | handled without error by relative nesting (D5); a dedicated test covers `H2` then `H1`                                                                                                                |
@@ -731,7 +740,7 @@ buildSpeech(inlines, policy):         # InlineBuilder, gated by the context poli
 | Speaker prefix on a choice item (`- Alice: Hi`)                     | honored — the choice body runs the same `Build`, so it becomes `Choice([Line(Alice, "Hi")])`; omitting the prefix defaults the speaker (D6)                                                           |
 | Empty emphasis (`****`)                                             | the source degrades it to plain text, so `StyledText` never has empty children                                                                                                                        |
 | A game call / nested link inside a label or alt                     | not admitted there; the default policy restores it to literal text, a strict policy raises a `DialogueSyntaxError` (D14)                                                                              |
-| A backslash escape Markdig strips (`\*`, `\#`)                      | a sub-token's span may drift ≤1 char **within** that literal; it does not accumulate across the document (each literal is re-anchored). Accepted for now; skipped tests track the fix                 |
+| A backslash escape Markdig strips (`\*`, `\#`)                      | the run stays literal and records the escape (front-end D10); an escaped sigil never becomes a `Tag` or `JumpIndicator` (D14). Spans anchor at `ContentSpan`, so they do not drift.                   |
 | A node dropped by the front-end policy                              | never reaches the transpiler                                                                                                                                                                          |
 
 ## Integration

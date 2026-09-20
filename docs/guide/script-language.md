@@ -14,13 +14,16 @@ back here for the details.
 
 ## Table of contents
 
-- [The specification in detail](#the-specification-in-detail)
-- [Why Markdown](#why-markdown)
-- [Goals](#goals)
-- [Processing model](#processing-model)
-- [Syntax summary](#syntax-summary)
-- [Complete example](#complete-example)
-- [File format](#file-format)
+- [Script language specification](#script-language-specification)
+  - [Table of contents](#table-of-contents)
+  - [The specification in detail](#the-specification-in-detail)
+  - [Why Markdown](#why-markdown)
+  - [Goals](#goals)
+  - [Processing model](#processing-model)
+  - [Syntax summary](#syntax-summary)
+  - [Literal punctuation](#literal-punctuation)
+  - [Complete example](#complete-example)
+  - [File format](#file-format)
 
 ## The specification in detail
 
@@ -65,11 +68,16 @@ precise runtime graph.
 
 ```mermaid
 flowchart TD
-    Source[".dialogue.md source"] --> Parse["Parse syntax"]
-    Parse --> Validate["Validate references"]
-    Validate --> Compile["Compile to nodes and edges"]
-    Compile --> Runtime["Run as a dialogue graph/state machine"]
+    Source[".dialogue.md source"] --> Markdown["Markdown AST"]
+    Markdown --> Dialogue["Dialogue AST"]
+    Dialogue --> Desugar["Desugared AST"]
+    Desugar --> Semantic["Semantic model"]
+    Semantic --> Graph["Dialogue graph"]
+    Graph --> Runtime["Runtime / playbook"]
 ```
+
+Each stage is documented in the compiler's
+[design notes](../contributing/index.md#the-compiler-pipeline).
 
 ## Syntax summary
 
@@ -82,6 +90,7 @@ flowchart TD
 | Partial declaration | `@A #excited: Hi!` | Reference a speaker and add tags. |
 | Tag | `#main` | Attach custom metadata. |
 | Reserved tag | `##default` | Mark built-in behavior. |
+| Literal sigil | `\#word`, `\=>` | Write tag or jump punctuation as plain text. |
 | Choice | `- Bob: Really?` | Offer a selectable response. |
 | Random choice | ``- `50%` Bob: Really?`` | Let the engine pick one option by weight. |
 | Jump | `=> [Play tennis](#play-tennis)` | Connect to another section. |
@@ -93,6 +102,43 @@ flowchart TD
 | Query | `` `"Alice.FavoriteColor"` `` | Read a value from your game. |
 | Default command | `` `("Alice joins Art")` `` | Perform an action in your game. |
 | Custom command | `` `JoinClub("Alice", "Art")` `` | Execute with arguments. |
+
+## Literal punctuation
+
+A backslash `\` before an ASCII punctuation character writes that character
+**literally**: the backslash disappears from the spoken text, and any sigil that
+begins at the escaped character is read as text instead. This is standard
+Markdown escaping, extended to cover the script's own sigils.
+
+| To write    | Escape it as   | Otherwise it becomes   |
+| ----------- | -------------- | ---------------------- |
+| `#word`     | `\#word`       | a tag                  |
+| `##default` | `\##default`   | a reserved tag         |
+| `=>`        | `\=>`          | a jump                 |
+| `\`         | `\\`           | the start of an escape |
+| `*` `_` `~` | `\*` `\_` `\~` | Markdown styling       |
+
+```markdown
+Alice: The tag is \#main, and the rule is x \=> y.
+```
+
+That line reads as *The tag is #main, and the rule is x => y.* — no tag, no jump.
+
+- Escape the **first character** of the sigil: the whole sigil is then read as
+  text, so `\##default` writes `##default`. Escaping each character
+  (`\#\#default`) works just as well.
+- Only ASCII punctuation escapes; before anything else the backslash stays
+  literal (`\A` stays `\A`).
+- **A speaker prefix obeys the same rule.** Escaping its `:`, `@`, or `#` breaks
+  the prefix, so the line plays in the default voice — see
+  [Escaping a speaker prefix](speakers-and-lines.md#escaping-a-speaker-prefix).
+- A backslash at the end of a line is a hard break, not an escape. Write `\\`
+  for a literal backslash there.
+- Code spans are not escaped: inside backticks a backslash is an ordinary
+  character of a [game call](game-state.md).
+
+An unescaped `=>` with no link still warns; escape it when the characters are
+deliberate.
 
 ## Complete example
 
@@ -115,7 +161,7 @@ Narrator @narrator ##default: Alice visits Bob's photography gallery.
 
 ## Discuss Bob's photo
 
-Bob @B #mood=happy: Thank you. I'm glad you like it. `IncreaseAffection("Bob", "Alice")`
+Bob @B #mood=happy: Thank you. I'm glad you like it. Composition is simple \=> the eye should know where to go. `IncreaseAffection("Bob", "Alice")`
 
 Alice: My favorite color is `"Alice.FavoriteColor"`. May I join the Photography Club?
 

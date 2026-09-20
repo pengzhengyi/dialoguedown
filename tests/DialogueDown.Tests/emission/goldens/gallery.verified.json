@@ -343,7 +343,11 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Fresh apples! Warm bread! Come, see my wares."
+          "text": "Fresh apples! Warm bread! "
+        },
+        {
+          "kind": "text",
+          "text": "#marketday \u2014 come, see my wares."
         }
       ],
       "out": [

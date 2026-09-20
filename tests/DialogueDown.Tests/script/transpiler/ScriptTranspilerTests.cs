@@ -1,3 +1,4 @@
+using DialogueDown.Script.Ast;
 using DialogueDown.Script.Transpiler;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
@@ -53,9 +54,7 @@ public sealed class ScriptTranspilerTests
             - Go left
             - Go right
             """;
-        var document = MarkdownParserFactory.Parse(source);
-
-        var script = _transpiler.Transpile(document, DiagnosticsContextFactory.Context(source));
+        var script = Transpile(source);
 
         Assert.Equal(3, script.Body.Count);
         AssertSceneHeading(script.Body[0], "The Cave", 1);
@@ -75,13 +74,44 @@ public sealed class ScriptTranspilerTests
         // speech into "x " and "* y"; the second fragment must anchor at the star's real
         // position (index 6), not drift onto the backslash.
         var source = @"A: x \* y";
-        var document = MarkdownParserFactory.Parse(source);
 
-        var script = _transpiler.Transpile(document, DiagnosticsContextFactory.Context(source));
+        var script = Transpile(source);
 
         var speech = AssertLine(Assert.Single(script.Body)).Speech;
         var star = AssertText(speech[^1], "* y");
         Assert.Equal(source.IndexOf('*'), star.Span.Start);
         Assert.Equal('*', source[star.Span.Start]);
     }
+
+    [Fact]
+    public void Transpile_EscapedTag_ReadsAsPlainText()
+    {
+        // "\#notatag" — the front end records the escape, so the tag stays text.
+        var script = Transpile(@"Alice: \#notatag");
+
+        AssertSingleText(AssertSingleLine(script.Body).Speech, "#notatag");
+    }
+
+    [Fact]
+    public void Transpile_EscapedReservedTag_ReadsAsPlainText()
+    {
+        var script = Transpile(@"Alice: \##default");
+
+        AssertSingleText(AssertSingleLine(script.Body).Speech, "##default");
+    }
+
+    [Fact]
+    public void Transpile_EscapedArrow_ReadsAsPlainText()
+    {
+        var script = Transpile(@"Alice: x \=> y");
+
+        Assert.Collection(
+            AssertSingleLine(script.Body).Speech,
+            fragment => AssertText(fragment, "x "),
+            fragment => AssertText(fragment, "=> y"));
+    }
+
+    private ScriptDocument Transpile(string source) =>
+        _transpiler.Transpile(
+            MarkdownParserFactory.Parse(source), DiagnosticsContextFactory.Context(source));
 }

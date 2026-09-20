@@ -2,6 +2,7 @@ using DialogueDown.Common;
 using DialogueDown.Diagnostics;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
+using DialogueDown.Script.Transpiler.Parsers;
 using DialogueDown.Script.Transpiler.Parsing;
 
 namespace DialogueDown.Script.Transpiler.Builders;
@@ -56,8 +57,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         // Whether the content begins with the jump indicator `=>` (still raw text at this stage,
         // tokenized later). Such a condition guards the jump, not the line, so it is not peeled.
         private static bool PrecedesAJump(IReadOnlyList<MarkdownInline> content) =>
-            content is [TextInline head, ..]
-            && head.Text.StartsWith("=>", StringComparison.Ordinal);
+            content is [TextInline head, ..] && head.StartsWithJumpIndicator();
 
         // A leading `"key"?` condition code span is the line's condition — but only when non-jump
         // content follows it to guard. A condition that directly precedes a jump guards the jump
@@ -78,7 +78,9 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         // names no speaker reports through the speaker builder and recovers to a default speaker.
         private Speaker? PeelSpeaker()
         {
-            if (_remaining[0] is not TextInline leading)
+            // An escaped leading character is literal, so it cannot start a speaker prefix:
+            // `\#tag: hi` is speech, not a tag-only prefix.
+            if (_remaining[0] is not TextInline leading || leading.IsFirstCharacterEscaped)
             {
                 return null;
             }

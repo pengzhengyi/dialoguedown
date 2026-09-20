@@ -91,9 +91,12 @@ internal sealed class InlineBuilder(
     private void AppendText(TextInline text, IInlinePolicy policy, List<InlineFragment> fragments)
     {
         // Anchor at ContentSpan: the tokenizer walks the unescaped Text, whose source
-        // position sits past any stripped leading backslash.
+        // position sits past any stripped leading backslash. The escape flag keeps an
+        // escaped leading character — and a sigil it begins — literal.
         var input = new ParseInput(text.Text, text.ContentSpan.Start);
-        var leaves = InlineLeafTokenizer.Tokenize(input, allowJumps: policy.SupportsJumps);
+        var leaves = InlineLeafTokenizer.Tokenize(
+            input, allowJumps: policy.SupportsJumps,
+            escapedFirstCharacter: text.IsFirstCharacterEscaped);
         foreach (var leaf in leaves)
         {
             fragments.Add(leafBuilder.Build(leaf));

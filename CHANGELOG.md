@@ -10,6 +10,12 @@ changes easy to categorize.
 
 ### Added
 
+- **Literal punctuation** — a backslash writes the next ASCII punctuation character
+  literally, so a script can spell a literal tag (`\#word`, `\##default`) or arrow (`\=>`)
+  in prose, and escaping a speaker-prefix element keeps the line in the default voice. The
+  dangling-arrow warning now offers the escape as the deliberate spelling. See
+  [Symbol Escape](docs/contributing/design-notes/language/Symbol%20Escape.md).
+
 - **A way back to the file selector** — a session's status line carries a small back link beside
   the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
   shell answers at `/browse`, since a run that pins a document redirects `/` to that document.

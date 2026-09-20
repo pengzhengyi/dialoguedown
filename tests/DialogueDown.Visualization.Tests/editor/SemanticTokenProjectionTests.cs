@@ -132,6 +132,28 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_EscapedTags_ProjectNoTagTokens()
+    {
+        // "\#notatag" and "\##default" are prose: the escape keeps them out of the tag
+        // grammar, so the editor highlights them as text, not as tags.
+        var source = @"Alice: \#notatag and \##default";
+        var tokens = Project(source);
+
+        AssertToken(tokens, TokenKind.SpeakerName, "Alice", source);
+        Assert.DoesNotContain(tokens, token =>
+            token.Kind is TokenKind.CustomTag or TokenKind.ReservedTag);
+    }
+
+    [Fact]
+    public void Project_EscapedArrow_ProjectsNoJumpIndicatorToken()
+    {
+        // "\=>" is prose: no JumpIndicator is built, so no arrow token is projected.
+        var tokens = Project(@"Alice: The rule is x \=> y.");
+
+        Assert.DoesNotContain(tokens, token => token.Kind == TokenKind.JumpIndicator);
+    }
+
+    [Fact]
     public void Project_ControlBlock_ProjectsEachMarkerKeyword()
     {
         var source =

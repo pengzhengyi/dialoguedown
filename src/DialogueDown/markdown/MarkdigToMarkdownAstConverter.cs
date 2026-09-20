@@ -143,7 +143,8 @@ internal sealed class MarkdigToMarkdownAstConverter
     private MarkdownInline? ConvertInline(MarkdigInline inline) => inline switch
     {
         MarkdigLiteralInline literal => new TextInline(
-            literal.Content.ToString(), ConvertSpan(literal.Span), ContentSpanOf(literal)),
+            literal.Content.ToString(), ConvertSpan(literal.Span), ContentSpanOf(literal),
+            literal.IsFirstCharacterEscaped),
         MarkdigEmphasisInline emphasis => ConvertEmphasis(emphasis),
         MarkdigLinkInline link when !link.IsImage => ConvertLink(link),
         MarkdigLinkInline image => ConvertImage(image),
