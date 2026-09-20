@@ -63,6 +63,7 @@ import { annotateHeadingAnchors, wireHeadingAnchorCopy } from "./heading-anchors
 import { headingSlugHints } from "./heading-slug-hints";
 import { createIgnoredPreviewController } from "./ignored-preview";
 import {
+    decoratedRanges,
     semanticTokens as semanticTokensExtension,
     setEditorSemanticTokens,
 } from "./semantic-tokens";
@@ -78,6 +79,14 @@ import {
 } from "./model";
 import { initScrollSync } from "./scroll-sync";
 import { renderDocument, type PreviewSemantics } from "./text";
+import {
+    annotatePreviewConstructs,
+    PREVIEW_CONSTRUCT_KINDS,
+    type PositionedConstruct,
+    type PreviewConstruct,
+} from "./construct-highlight";
+import { initPieceTooltips } from "./tooltips";
+import { wireClickToCopy } from "./copy-on-click";
 import { mountPreviewHtml } from "./preview-html";
 import { mermaidPreviews } from "./mermaid-preview";
 import type { DebugController } from "./debug-controller";
@@ -270,6 +279,19 @@ export function mapPreviewSpans(spans: readonly Span[], changes: ChangeDesc): Sp
             end: changes.mapPos(span.end, -1),
         }))
         .filter((span) => span.end > span.start);
+}
+
+/** Carry the constructs' spans through an edit the way the other preview spans are carried. */
+function mapConstructs(
+    constructs: readonly PositionedConstruct[],
+    changes: ChangeDesc,
+): PositionedConstruct[] {
+    return constructs
+        .map((construct) => ({
+            kind: construct.kind,
+            span: mapPreviewSpans([construct.span], changes)[0],
+        }))
+        .filter((construct): construct is PositionedConstruct => construct.span !== undefined);
 }
 
 function annotatePreviewControlRegions(preview: HTMLElement): void {
@@ -516,16 +538,35 @@ export function createSourceView(
     let previewSemantics: PreviewSemantics = {
         ignored: [],
         controlKeywords: [],
+        constructs: [],
     };
     const ignoredPreview = createIgnoredPreviewController(preview);
+
+    /**
+     * The Preview's marks for the buffer as it stands. The compiler positions a construct once;
+     * its text is read back out of the buffer, so an edit moves the mark with its span.
+     */
+    const constructMarks = (value: string): PreviewConstruct[] =>
+        previewSemantics.constructs.map((construct) => ({
+            ...construct,
+            text: value.slice(construct.span.start, construct.span.end),
+        }));
+
     const renderPreview = (value: string, delay = 0): void => {
         mountPreviewHtml(preview, renderDocument(value, previewSemantics));
         annotatePreviewControlRegions(preview);
         annotateHeadingAnchors(preview);
+        annotatePreviewConstructs(preview, constructMarks(value));
         ignoredPreview.refresh();
         mermaidPreviews.schedule(preview, delay);
     };
     renderPreview(source);
+    // Delegated once on the stable preview element, so a re-render keeps them: the marks behave
+    // the way the report's tables do. A tag copies itself and an ask-me mark explains what it is
+    // on hover. Nothing in the preview moves the editor: the two panes already scroll together,
+    // and a click that reached across the split would be a mapping no other mark has.
+    initPieceTooltips(preview);
+    wireClickToCopy(preview);
     // Delegated once on the stable preview element; each render re-annotates its headings.
     wireHeadingAnchorCopy(preview);
 
@@ -537,6 +578,7 @@ export function createSourceView(
             previewSemantics = {
                 ignored: mapPreviewSpans(previewSemantics.ignored, update.changes),
                 controlKeywords: mapPreviewSpans(previewSemantics.controlKeywords, update.changes),
+                constructs: mapConstructs(previewSemantics.constructs, update.changes),
             };
             renderPreview(value, 200);
             onChange?.(value);
@@ -726,20 +768,24 @@ export function createSourceView(
         },
         setSemanticTokens: (tokens) => {
             setEditorSemanticTokens(view, tokens);
+            const ranges = decoratedRanges(view.state, tokens);
             const spansOf = (kind: SemanticToken["kind"]): Span[] =>
-                tokens
-                    .filter((token) => token.kind === kind)
-                    .map((token) => ({
-                        start: positionToOffset(view.state, token.range.start),
-                        end: positionToOffset(view.state, token.range.end),
-                    }));
-            const ignored = spansOf("IgnoredMarkdown");
+                ranges
+                    .filter((range) => range.kind === kind)
+                    .map((range) => ({ start: range.from, end: range.to }));
+            // The Preview marks the construct kinds, and folds the same regions the editor does.
             previewSemantics = {
-                ignored,
+                ignored: spansOf("IgnoredMarkdown"),
                 controlKeywords: spansOf("ControlKeyword"),
+                constructs: ranges
+                    .filter((range) => PREVIEW_CONSTRUCT_KINDS.includes(range.kind))
+                    .map((range) => ({
+                        kind: range.kind,
+                        span: { start: range.from, end: range.to },
+                    })),
             };
             // The editor folds the same regions the Preview does, from its own state.
-            view.dispatch({ effects: setIgnoredSpans.of(ignored) });
+            view.dispatch({ effects: setIgnoredSpans.of(previewSemantics.ignored) });
             renderPreview(view.state.doc.toString());
         },
         setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
@@ -747,19 +793,26 @@ export function createSourceView(
             const start = positionToOffset(view.state, range.start);
             return { start, end: Math.max(start, positionToOffset(view.state, range.end)) };
         },
-        selectRange: (from, to) => {
-            // Clamp to the document and order the pair, so a stale span can only ever land the
-            // cursor in-bounds rather than throw. A zero-width range collapses to a caret.
-            const max = view.state.doc.length;
-            const start = Math.max(0, Math.min(from, max));
-            const end = Math.max(start, Math.min(to, max));
-            view.dispatch({
-                selection: EditorSelection.single(start, end),
-                scrollIntoView: true,
-            });
-            view.focus();
-        },
+        selectRange: (from, to) => revealInEditor(view, from, to),
     };
+}
+
+/**
+ * Put the editor's selection on a source range and bring it into view, for a selection a reader
+ * asked for outside the editor — a stage tab revealing where a node came from.
+ *
+ * Clamp to the document and order the pair, so a stale span can only ever land the cursor
+ * in-bounds rather than throw. A zero-width range collapses to a caret.
+ */
+function revealInEditor(view: EditorView, from: number, to: number): void {
+    const max = view.state.doc.length;
+    const start = Math.max(0, Math.min(from, max));
+    const end = Math.max(start, Math.min(to, max));
+    view.dispatch({
+        selection: EditorSelection.single(start, end),
+        scrollIntoView: true,
+    });
+    view.focus();
 }
 
 /** Wire the divider so dragging it re-proportions the source pane (via a CSS split variable). */

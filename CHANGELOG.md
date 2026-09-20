@@ -10,6 +10,14 @@ changes easy to categorize.
 
 ### Added
 
+- **The Source preview speaks the script's own language** — the rendered half of the Source tab now
+  marks every dialogue construct the compiler found, in the vocabulary the editor beside it already
+  uses: `#wise` as the tag capsule the rest of the report shows, `Guide` and `@guide` in the
+  speaker colors, `` `playSound("wind")` `` and `` `"playerName"` `` as command and query, a
+  condition and a weight in their own hues, and a jump's `=>` in the jump color. A mark explains
+  itself on hover and a tag copies on click; ignored Markdown, front matter, and link text stay
+  plain. See
+  [Construct Marks in the Source Preview](docs/contributing/design-notes/visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md).
 - **Quick fixes** — a diagnostic whose repair the compiler knows now carries it, and the Source
   editor offers it while editing: a lightbulb action in the warning's tooltip and a lightbulb on
   its row in the Problems panel. The dangling-arrow warning's fix escapes the arrow. See

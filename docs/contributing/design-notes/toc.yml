@@ -164,6 +164,8 @@
       href: visualization/editor/Live Visualization - Heading Anchors.md
     - name: Jump-Target Completion
       href: visualization/editor/Jump-Target Completion.md
+    - name: Construct Marks in the Source Preview
+      href: visualization/editor/Construct Marks in the Source Preview.md
   - name: Graph
     items:
     - name: Dialogue Graph — Region Fold
