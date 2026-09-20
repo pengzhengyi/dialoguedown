@@ -152,6 +152,184 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
+    public void LeadingGameCall_ThenNamePrefix_IsANameReference()
+    {
+        var line = Build([CodeSpan("Wave()"), Text(" Alice: Hi.")]);
+
+        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "Wave"),
+            fragment => AssertText(fragment, "Hi."));
+    }
+
+    [Fact]
+    public void LeadingGameCall_ThenIdPrefix_IsAnIdReference()
+    {
+        var line = Build([CodeSpan("Wave()"), Text(" @alice: Hi.")]);
+
+        AssertSpeakerIdReference(line.Speaker!, "alice");
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "Wave"),
+            fragment => AssertText(fragment, "Hi."));
+    }
+
+    [Fact]
+    public void LeadingGameCall_ThenDeclaration_CarriesIdAndTags()
+    {
+        var line = Build([CodeSpan("ShowSprite()"), Text(" Yuki @yuki #heroine: Hi.")]);
+
+        AssertSpeakerDeclaration(
+            line.Speaker!, "Yuki", "yuki", DialogueAstFactory.CustomTag("heroine"));
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "ShowSprite"),
+            fragment => AssertText(fragment, "Hi."));
+    }
+
+    [Fact]
+    public void LeadingQuery_ThenNamePrefix_IsANameReference()
+    {
+        var line = Build([CodeSpan("\"Name\""), Text(" Alice: Hi.")]);
+
+        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertQuery(fragment, "Name"),
+            fragment => AssertText(fragment, "Hi."));
+    }
+
+    [Fact]
+    public void TwoLeadingGameCalls_ThenNamePrefix_StepsOverTheWhitespaceBetweenThem()
+    {
+        // Markdig splits two adjacent calls with a whitespace-only text inline between
+        // them: [CodeSpan, Text(" "), CodeSpan, Text(" Alice: …")]. The scan steps over
+        // the whitespace and both calls, so the name after the second call is the prefix.
+        var line = Build(
+            [CodeSpan("A()"), Text(" "), CodeSpan("B()"), Text(" Alice: Hi.")]);
+
+        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "A"),
+            fragment => AssertText(fragment, " "),
+            fragment => AssertCustomCommand(fragment, "B"),
+            fragment => AssertText(fragment, "Hi."));
+    }
+
+    [Fact]
+    public void LeadingGameCall_ThenNonPrefixText_StaysUnattributed()
+    {
+        // The first text-bearing inline is plain, so a prefix there would have been
+        // recognized; its absence means the colon is ordinary punctuation, not a speaker.
+        var line = Build([CodeSpan("Wave()"), Text(" She said hello: then left.")]);
+
+        Assert.Null(line.Speaker);
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "Wave"),
+            fragment => AssertText(fragment, " She said hello: then left."));
+    }
+
+    [Fact]
+    public void LeadingLink_ThenNamePrefix_StaysUnattributed()
+    {
+        // Only a game-call code span may precede the speaker; a link stops the scan, so its
+        // following text is speech, not a prefix.
+        var line = Build([Link("#here", Text("x")), Text(" Alice: Hi.")]);
+
+        Assert.Null(line.Speaker);
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertLink(fragment, "#here"),
+            fragment => AssertText(fragment, " Alice: Hi."));
+    }
+
+    [Fact]
+    public void LeadingImage_ThenNamePrefix_StaysUnattributed()
+    {
+        var line = Build([Image("y.png", Text("x")), Text(" Alice: Hi.")]);
+
+        Assert.Null(line.Speaker);
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertImage(fragment, "y.png"),
+            fragment => AssertText(fragment, " Alice: Hi."));
+    }
+
+    [Fact]
+    public void LeadingGameCall_ThenTagOnlyPrefix_ReportsTagsWithoutASpeaker()
+    {
+        var diagnostics = new DiagnosticBag();
+
+        var line = _builder.Build([CodeSpan("Wave()"), Text(" #tag: Hi.")], diagnostics);
+
+        AssertDefaultSpeaker(line.Speaker);
+        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "Wave"),
+            fragment => AssertText(fragment, "Hi."));
+    }
+
+    [Fact]
+    public void StyledLeadingText_StillReportsStyledSpeakerPrefix()
+    {
+        var diagnostics = new DiagnosticBag();
+
+        var line = _builder.Build(
+            [Emphasis(EmphasisKind.Italic, Text("Alice")), Text(": Hi.")], diagnostics);
+
+        Assert.Null(line.Speaker);
+        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.StyledSpeakerPrefix);
+    }
+
+    [Fact]
+    public void StyledLeadingTextAfterAGameCall_ReportsStyledSpeakerPrefix()
+    {
+        // The detector sees past the skipped game call, so a styled prefix after one
+        // warns exactly as `*Alice*: Hi` does at the start of a line.
+        var diagnostics = new DiagnosticBag();
+
+        var line = _builder.Build(
+            [CodeSpan("Wave()"), Text(" "), Emphasis(EmphasisKind.Italic, Text("Alice")), Text(": Hi.")],
+            diagnostics);
+
+        Assert.Null(line.Speaker);
+        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.StyledSpeakerPrefix);
+    }
+
+    [Fact]
+    public void StyledNonPrefixAfterAGameCall_DoesNotWarn()
+    {
+        // A styled run that is not a speaker prefix still names no speaker — the detector
+        // must not start firing just because a game call was skipped.
+        var diagnostics = new DiagnosticBag();
+
+        var line = _builder.Build(
+            [CodeSpan("Wave()"), Text(" "), Emphasis(EmphasisKind.Italic, Text("the great")), Text(": hi.")],
+            diagnostics);
+
+        Assert.Null(line.Speaker);
+        AssertNotReported(diagnostics.Diagnostics, DiagnosticCatalog.StyledSpeakerPrefix);
+    }
+
+    [Fact]
+    public void LeadingConditionBeforeAGameCall_StillPeelsConditionAndSpeaker()
+    {
+        var line = Build(
+            [CodeSpan("\"Angry\"?"), CodeSpan("Wave()"), Text(" Guard: You again?")]);
+
+        AssertCondition(line.Condition!, "Angry");
+        AssertSpeakerNameReference(line.Speaker!, "Guard");
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertCustomCommand(fragment, "Wave"),
+            fragment => AssertText(fragment, "You again?"));
+    }
+
+    [Fact]
     public void EscapedLeadingText_AnchorsSpeakerAndSpeechAtTheContentSpan()
     {
         // Mimics a leading literal whose backslash was stripped: the raw span starts at 0

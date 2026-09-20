@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Nodes;
 using DialogueDown.Tests.Support;
 using DialogueDown.TestSupport;
 
@@ -36,5 +37,25 @@ public sealed class PlaybookGoldenTests
         return Verify(Playbooks.Serialize(playbook), extension: "json")
             .UseDirectory("goldens")
             .UseFileName(example.Replace(".dialogue.md", string.Empty, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void VisualNovel_TheLinesThatOpenWithAGameCall_BindToYuki()
+    {
+        var playbook = Playbooks.Of(
+            ExampleScripts.Read("visual-novel.dialogue.md"), "visual-novel.dialogue.md");
+
+        var yuki = playbook.Speakers[1];
+        Assert.Equal("yuki", yuki.Id);
+        Assert.Equal("Yuki", yuki.Name);
+        Assert.Equal(["heroine"], yuki.Tags.Select(tag => tag.Name));
+
+        int[] lines = [2, 7, 11, 23, 27, 35];
+        foreach (var id in lines)
+        {
+            var line = Assert.IsType<LineNode>(
+                Assert.Single(playbook.Nodes, node => node.Id == id));
+            Assert.Equal(1, line.Speaker);
+        }
     }
 }
