@@ -68,7 +68,7 @@ updates:
     # Held back: mermaid 12 inlines elkjs, which is EPL-2.0 rather than MIT, so adopting it
     # would put a copy of that licence and a source-availability statement into the shipped
     # package and into every exported report. The range stops the major and nothing else, so a
-    # patch on 11.x still arrives. See #492 for the experiment and what would let 12+ through.
+    # patch on 11.x still arrives. See #496 for the experiment and what would let 12+ through.
     ignore:
       - dependency-name: "mermaid"
         versions:
