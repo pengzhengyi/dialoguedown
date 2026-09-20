@@ -474,8 +474,9 @@ in reverse — nothing has moved between one check and the next.
 
 What the build has **yet to learn** gathers further out still. The harness asks
 that of the fixture before running it — every node kind it cannot play, every
-send no reader owns — so one run of a case names everything it needs instead of
-one construct per run. Asking rather than stepping is what keeps it safe: the
+send no reader owns, every claim in an expectation nothing knows how to check —
+so one run of a case names everything it needs instead of one construct per
+run. Asking rather than stepping is what keeps it safe: the
 run never moves past a message that was never sent.
 
 The verdict is called **not yet playable**, not "not yet runnable", because the

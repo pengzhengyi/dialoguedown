@@ -30,6 +30,14 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
+    public void CanPlay_AnExpectationNobodyCanCheck_IsNot()
+    {
+        // An entry is only as takeable as the claims in it: a key no matcher owns ends the run
+        // where it is read, so the validation detects before the run starts.
+        AssertNotPlayable(Expected("""{ "asked": [] }"""));
+    }
+
+    [Fact]
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
         var context = PlayContextFactory.Of(
@@ -40,9 +48,9 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
-    public void WhyNotPlayable_OfASendNoReaderOwns_NamesItsMessage()
+    public void WhyNotPlayable_OfASendNoReaderOwns_NamesItsCommand()
     {
-        AssertNotPlayable(Sent("""{ "choose": 0 }"""), """nothing sends {"choose":0} yet""");
+        AssertNotPlayable(Sent("""{ "choose": 0 }"""), "nothing sends choose yet");
     }
 
     [Fact]
@@ -53,18 +61,25 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
+    public void WhyNotPlayable_OfAnExpectation_NamesEachClaimNobodyChecks()
+    {
+        var session = ImmutableArray.Create<SessionEntry>(
+            Expected("""{ "asked": [ { "label": "Go east" } ], "resolve": [ "Alice.HasKey" ] }"""));
+
+        AssertNotPlayable(session, "nothing checks asked yet", "nothing checks resolve yet");
+    }
+
+    [Fact]
     public void WhyNotPlayable_OfASession_NamesEachUnreadSendOnce()
     {
         var session = ImmutableArray.Create<SessionEntry>(
             SentCommand("next"),
             SentCommand("frobnicate"),
             SentCommand("frobnicate"),
-            Sent("""{ "choose": 0 }"""));
+            Sent("""{ "choose": 0 }"""),
+            Sent("""{ "choose": 1 }"""));
 
-        AssertNotPlayable(
-            session,
-            """nothing sends "frobnicate" yet""",
-            """nothing sends {"choose":0} yet""");
+        AssertNotPlayable(session, "nothing sends frobnicate yet", "nothing sends choose yet");
     }
 
     [Fact]

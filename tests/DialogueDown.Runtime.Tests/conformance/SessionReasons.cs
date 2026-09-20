@@ -11,8 +11,13 @@ internal static class SessionReasons
     /// <returns>The reason.</returns>
     public static string UnplayableNodeKind(string kind) => $"nothing plays a {kind} yet";
 
-    /// <summary>A message nothing knows how to send.</summary>
-    /// <param name="message">What the session sends, as the fixture writes it.</param>
+    /// <summary>A claim in an expectation nothing knows how to check.</summary>
+    /// <param name="claim">The claim's key, as a fixture writes it.</param>
     /// <returns>The reason.</returns>
-    public static string UnsendableMessage(string message) => $"nothing sends {message} yet";
+    public static string UncheckableClaim(string claim) => $"nothing checks {claim} yet";
+
+    /// <summary>A command no reader owns.</summary>
+    /// <param name="command">The command a send names, or its message when it names none.</param>
+    /// <returns>The reason.</returns>
+    public static string UnsendableCommand(string command) => $"nothing sends {command} yet";
 }
