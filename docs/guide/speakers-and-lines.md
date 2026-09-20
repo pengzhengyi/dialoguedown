@@ -22,7 +22,7 @@ Part of the [script language specification](script-language.md).
 A text line is the basic unit of spoken dialogue.
 
 ```ebnf
-TextLine = [ Speaker , ":" ] , Speech ;
+TextLine = { GameCall , Whitespace } , [ Speaker , ":" ] , Speech ;
 ```
 
 Canonical form:
@@ -37,6 +37,12 @@ A line may name who speaks before the colon. A speaker prefix is either a
 **declaration** (which binds a name, an optional id, and tags) or a **reference**
 (which only points at a known speaker); omitting the prefix uses the default
 speaker.
+
+A line may open with one or more **game calls** — presentation such as
+`` `ShowSprite("yuki", "shy")` `` — before the speaker. The calls play in order,
+then the speaker names who talks: `` `ShowSprite("yuki", "shy")` Yuki: Hello. ``
+is Yuki speaking *Hello.*, not an unattributed line. Only game-call code spans may
+precede the speaker; a link, image, or styled name before the colon stays speech.
 
 > [!NOTE]
 > A speaker's name must be **plain text**. If you style it — `*Alice*:`,
