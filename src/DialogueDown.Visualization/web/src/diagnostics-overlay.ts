@@ -94,10 +94,11 @@ function toActions(state: EditorState, diagnostic: LspDiagnostic): Action[] {
  * Apply one fix's edits to the document. Offsets are relative to the diagnostic's start, and the
  * `from`/`to` CodeMirror passes are the range it currently maps the diagnostic to, so a fix stays
  * anchored to its text while the writer edits above it. A collapsed range means the text the fix
- * targets is gone, so the action does nothing. Exported for unit testing.
+ * targets is gone, and a read-only editor takes no edits at all, so both are no-ops. Exported for
+ * unit testing.
  */
 export function applyFix(view: EditorView, fix: LspFix, from: number, to: number): void {
-    if (from === to) {
+    if (from === to || view.state.readOnly) {
         return;
     }
 

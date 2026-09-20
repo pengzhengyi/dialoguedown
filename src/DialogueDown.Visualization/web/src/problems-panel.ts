@@ -1,7 +1,7 @@
 import { codicon } from "./codicon";
 import { errorCodeUrl } from "./diagnostics-overlay";
 import { orderDiagnostics } from "./diagnostic-order";
-import type { LspDiagnostic, LspSeverity } from "./model";
+import type { LspDiagnostic, LspFix, LspSeverity } from "./model";
 
 /**
  * The Problems panel: every diagnostic the compiler reported for the document, as a list whose
@@ -40,6 +40,11 @@ export interface ProblemsPanelOptions {
      * job, which keeps the panel testable without a laid-out document.
      */
     goTo(diagnostic: LspDiagnostic): void;
+    /**
+     * Apply one of a diagnostic's fixes. Like {@link goTo}, the panel hands over the values and
+     * the caller routes them to the editor.
+     */
+    applyFix(diagnostic: LspDiagnostic, fix: LspFix): void;
 }
 
 export interface ProblemsPanel {
@@ -47,6 +52,8 @@ export interface ProblemsPanel {
     readonly element: HTMLElement;
     /** Replace the listed diagnostics. An empty list renders the clean-compile state. */
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
+    /** Whether the editor is editable: only then are a diagnostic's fixes offered. */
+    setEditable(editable: boolean): void;
     /** The current per-severity totals, for the status-line summary. */
     counts(): DiagnosticCounts;
 }
@@ -57,7 +64,23 @@ function locationLabel(diagnostic: LspDiagnostic): string {
     return `Ln ${line + 1}, Col ${character + 1}`;
 }
 
-function buildRow(diagnostic: LspDiagnostic, onActivate: () => void): HTMLElement {
+function buildFix(fix: LspFix, onApply: () => void): HTMLElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "problem-fix";
+    button.title = fix.title;
+    button.setAttribute("aria-label", `Quick fix: ${fix.title}`);
+    button.appendChild(codicon("lightbulb", "problem-fix-icon"));
+    button.addEventListener("click", onApply);
+    return button;
+}
+
+function buildRow(
+    diagnostic: LspDiagnostic,
+    onActivate: () => void,
+    onApplyFix: (fix: LspFix) => void,
+    offerFixes: boolean,
+): HTMLElement {
     const severity = SEVERITY_NAME[diagnostic.severity];
     const row = document.createElement("div");
     row.className = "problem-row";
@@ -87,6 +110,18 @@ function buildRow(diagnostic: LspDiagnostic, onActivate: () => void): HTMLElemen
         `${severity}: ${diagnostic.message} at ${locationLabel(diagnostic)} — go to the problem`,
     );
     jump.addEventListener("click", onActivate);
+
+    // The fix slot is always present, so a row with a repair aligns with one without; the
+    // lightbulb leads the row, before the problem itself.
+    const fixSlot = document.createElement("span");
+    fixSlot.className = "problem-fix-slot";
+    if (offerFixes) {
+        for (const fix of diagnostic.fixes ?? []) {
+            fixSlot.appendChild(buildFix(fix, () => onApplyFix(fix)));
+        }
+    }
+
+    row.appendChild(fixSlot);
     row.appendChild(jump);
 
     // The code explains *what the rule is*, which is a different question from *where the
@@ -117,21 +152,45 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
     element.appendChild(empty);
 
     let current: DiagnosticCounts = { error: 0, warning: 0, info: 0 };
+    let listed: readonly LspDiagnostic[] = [];
+    let editable = false;
 
-    function setDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
+    function render(): void {
         list.replaceChildren(
-            ...orderDiagnostics(diagnostics).map((d) => buildRow(d, () => options.goTo(d))),
+            ...orderDiagnostics(listed).map((d) =>
+                buildRow(
+                    d,
+                    () => options.goTo(d),
+                    (fix) => options.applyFix(d, fix),
+                    editable,
+                ),
+            ),
         );
 
         const tally = { error: 0, warning: 0, info: 0 };
-        for (const d of diagnostics) tally[SEVERITY_NAME[d.severity]] += 1;
+        for (const d of listed) tally[SEVERITY_NAME[d.severity]] += 1;
         current = tally;
 
-        const clean = diagnostics.length === 0;
+        const clean = listed.length === 0;
         empty.hidden = !clean;
         list.hidden = clean;
     }
 
-    setDiagnostics([]);
-    return { element, setDiagnostics, counts: () => current };
+    setDiagnostics.undo = undefined;
+    function setDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
+        listed = diagnostics;
+        render();
+    }
+
+    function setEditable(next: boolean): void {
+        if (next === editable) {
+            return;
+        }
+
+        editable = next;
+        render();
+    }
+
+    render();
+    return { element, setDiagnostics, setEditable, counts: () => current };
 }

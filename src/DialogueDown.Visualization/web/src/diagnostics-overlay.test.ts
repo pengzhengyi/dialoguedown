@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {
+    applyFix,
     toEditorDiagnostic,
     toEditorDiagnostics,
     renderDiagnosticTooltip,
@@ -185,6 +186,20 @@ describe("fixes", () => {
         converted.actions![0].apply(view, converted.from, converted.from);
 
         expect(view.state.doc.toString()).toBe("x y");
+        view.destroy();
+    });
+
+    it("does nothing in a read-only editor", () => {
+        const view = new EditorView({
+            state: EditorState.create({
+                doc: "x => y",
+                extensions: [EditorState.readOnly.of(true)],
+            }),
+        });
+
+        applyFix(view, escapeFix(), 2, 4);
+
+        expect(view.state.doc.toString()).toBe("x => y");
         view.destroy();
     });
 
