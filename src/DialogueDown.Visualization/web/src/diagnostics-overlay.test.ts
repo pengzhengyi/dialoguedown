@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import {
     toEditorDiagnostic,
     toEditorDiagnostics,
     renderDiagnosticTooltip,
     errorCodeUrl,
 } from "./diagnostics-overlay";
-import type { LspDiagnostic } from "./model";
+import type { LspDiagnostic, LspFix } from "./model";
 
 const ERROR_CODES_PAGE = "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
 
@@ -18,6 +19,15 @@ function diagnostic(overrides: Partial<LspDiagnostic> = {}): LspDiagnostic {
         code: "DLG0001",
         message: "Something went wrong.",
         source: "dialoguedown",
+        ...overrides,
+    };
+}
+
+/** A fix whose default edit inserts the escape's backslash at the diagnostic's start. */
+function escapeFix(overrides: Partial<LspFix> = {}): LspFix {
+    return {
+        title: "Escape as literal text",
+        edits: [{ start: 0, end: 0, newText: "\\" }],
         ...overrides,
     };
 }
@@ -111,6 +121,90 @@ describe("toEditorDiagnostic", () => {
 
         expect(converted.from).toBe(2);
         expect(converted.to).toBe(2);
+    });
+});
+
+describe("fixes", () => {
+    it("offers one action per fix, labelled with its title", () => {
+        const state = EditorState.create({ doc: "x => y" });
+
+        const converted = toEditorDiagnostic(
+            state,
+            diagnostic({
+                range: { start: { line: 0, character: 2 }, end: { line: 0, character: 4 } },
+                fixes: [escapeFix()],
+            }),
+        );
+
+        expect(converted.actions?.map((action) => action.name)).toEqual(["Escape as literal text"]);
+    });
+
+    it("applies a fix's edit relative to the diagnostic's mapped start", () => {
+        const view = new EditorView({ state: EditorState.create({ doc: "x => y" }) });
+        const converted = toEditorDiagnostic(
+            view.state,
+            diagnostic({
+                range: { start: { line: 0, character: 2 }, end: { line: 0, character: 4 } },
+                fixes: [escapeFix()],
+            }),
+        );
+
+        converted.actions![0].apply(view, converted.from, converted.to);
+
+        expect(view.state.doc.toString()).toBe("x \\=> y");
+        view.destroy();
+    });
+
+    it("applies every edit of a fix in one change", () => {
+        const view = new EditorView({ state: EditorState.create({ doc: "#a #b" }) });
+        const converted = toEditorDiagnostic(
+            view.state,
+            diagnostic({
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 2 } },
+                fixes: [
+                    escapeFix({
+                        edits: [
+                            { start: 0, end: 0, newText: "\\" },
+                            { start: 3, end: 3, newText: "\\" },
+                        ],
+                    }),
+                ],
+            }),
+        );
+
+        converted.actions![0].apply(view, converted.from, converted.to);
+
+        expect(view.state.doc.toString()).toBe("\\#a \\#b");
+        view.destroy();
+    });
+
+    it("does nothing when the diagnostic's range has collapsed", () => {
+        const view = new EditorView({ state: EditorState.create({ doc: "x y" }) });
+        const converted = toEditorDiagnostic(view.state, diagnostic({ fixes: [escapeFix()] }));
+
+        converted.actions![0].apply(view, converted.from, converted.from);
+
+        expect(view.state.doc.toString()).toBe("x y");
+        view.destroy();
+    });
+
+    it("offers no actions in a read-only editor", () => {
+        const state = EditorState.create({
+            doc: "x => y",
+            extensions: [EditorState.readOnly.of(true)],
+        });
+
+        const converted = toEditorDiagnostic(state, diagnostic({ fixes: [escapeFix()] }));
+
+        expect(converted.actions ?? []).toEqual([]);
+    });
+
+    it("offers no actions when the diagnostic carries no fixes", () => {
+        const state = EditorState.create({ doc: "x" });
+
+        const converted = toEditorDiagnostic(state, diagnostic());
+
+        expect(converted.actions ?? []).toEqual([]);
     });
 });
 
