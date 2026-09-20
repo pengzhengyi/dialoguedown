@@ -87,8 +87,8 @@ const CODE_SPAN_KINDS: readonly TokenKind[] = [
 /** The text a mark looks for: the span's content for a code span, the text as written otherwise. */
 function markText(construct: PreviewConstruct): string {
     const text = construct.text;
-    const backticked = text.startsWith("`") && text.endsWith("`") && text.length > 1;
-    return backticked && CODE_SPAN_KINDS.includes(construct.kind) ? text.slice(1, -1) : text;
+    const fenced = text.startsWith("`") && text.endsWith("`") && text.length > 1;
+    return fenced && CODE_SPAN_KINDS.includes(construct.kind) ? text.slice(1, -1) : text;
 }
 
 /**
@@ -192,15 +192,13 @@ function markAt(
     at: number,
     marks: readonly ResolvedMark[],
 ): ResolvedMark | undefined {
-    return marks.find(
-        (mark) => text.startsWith(mark.text, at) && readsAsConstruct(text, at, mark),
-    );
+    return marks.find((mark) => text.startsWith(mark.text, at) && readsAsConstruct(text, at, mark));
 }
 
 /**
  * Whether the text at `at` reads as the construct rather than as part of a longer word or prose.
  *
- * A tag or a speaker id stands alone: `#happy` is not the `#happy` inside `#happyish`, and one glued
+ * A tag or a speaker id stands alone: `#happy` is not the `#happy` inside `#happiness`, and one glued
  * to the word before it belongs to that word. A jump indicator is a line's arrow, not an arrow in a
  * sentence. A speaker's name is marked only where it opens a prefix — the occurrence a `:` or an
  * `@id` follows — because the same name appears in prose without being anybody's line.

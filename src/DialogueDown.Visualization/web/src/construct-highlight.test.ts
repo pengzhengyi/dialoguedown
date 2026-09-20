@@ -131,12 +131,12 @@ describe("annotatePreviewConstructs", () => {
     });
 
     it("does not mark part of a longer word or an already marked word", () => {
-        const root = preview("<p>a#happy and #happyish and #happy</p>", [
+        const root = preview("<p>a#happy and #happiness and #happy</p>", [
             construct("CustomTag", "#happy"),
         ]);
 
         expect(root.querySelectorAll(".dd-tag")).toHaveLength(1);
-        expect(root.querySelector("p")?.textContent).toBe("a#happy and #happyish and #happy");
+        expect(root.querySelector("p")?.textContent).toBe("a#happy and #happiness and #happy");
     });
 
     it("marks each construct in a speaker prefix once", () => {
