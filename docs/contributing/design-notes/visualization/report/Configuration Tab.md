@@ -219,7 +219,7 @@ and community grammars are less maintained. This is the one new web dependency.
 The footer today shows one document path (`#doc-path`). Config adds a **second**
 path entry for the `dialogue.toml`, built from the same `path-display` helper, so
 both paths read and behave identically: each leads with an **icon** (a document for
-the dialogue file, a gear for the config), ellipsises the directory while always
+the dialogue file, a gear for the config), ellipsizes the directory while always
 showing the filename, and — on click — copies the full path, confirmed by the shared
 toast ([DD8](#dd8--speaker-values-and-paths-are-click-to-copy-panels-fold-and-maximize)).
 A hover tooltip still shows the full path. When there is no config file, the config

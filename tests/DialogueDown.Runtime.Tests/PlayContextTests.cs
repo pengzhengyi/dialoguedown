@@ -1,4 +1,5 @@
 using DialogueDown.Playbook.Nodes;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -16,8 +17,8 @@ public sealed class PlayContextTests
     [Fact]
     public void Entry_APlaybook_IsWhereItSaysToBegin()
     {
-        var context = Playbooks.Of(
-            [new EndNode(0), Playbooks.Line(1, speaker: 0, "Hello.", next: 0)],
+        var context = PlayContextFactory.Of(
+            [End(0), Line(1, speaker: 0, "Hello.", next: 0)],
             ["Alice"],
             entry: 1);
 
@@ -27,7 +28,7 @@ public sealed class PlayContextTests
     [Fact]
     public void NodeAt_APosition_IsTheNodeStandingThere()
     {
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
 
         Assert.Equal(1, Assert.IsType<LineNode>(context.NodeAt(1)).Id);
     }
@@ -35,7 +36,7 @@ public sealed class PlayContextTests
     [Fact]
     public void SpeakerName_ANamedSpeaker_IsWhatTheyAreCalled()
     {
-        var context = Playbooks.TwoLines();
+        var context = PlayContextFactory.TwoLines();
 
         Assert.Equal("Bob", context.SpeakerName(1));
     }
@@ -44,7 +45,7 @@ public sealed class PlayContextTests
     public void SpeakerName_TheAnonymousSpeaker_IsNobody()
     {
         // The default speaker has no name, which is not the same as being called nothing.
-        var context = Playbooks.Of([new EndNode(0)], [null]);
+        var context = PlayContextFactory.Of([End(0)], [null]);
 
         Assert.Null(context.SpeakerName(0));
     }
@@ -52,7 +53,7 @@ public sealed class PlayContextTests
     [Fact]
     public void Playbook_AContext_IsTheOneItWasMadeFrom()
     {
-        var context = Playbooks.OneLine();
+        var context = PlayContextFactory.OneLine();
 
         Assert.Equal("a-script.dialogue.md", context.Playbook.Script);
     }

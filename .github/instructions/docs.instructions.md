@@ -18,6 +18,8 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 
 - **American English**; keep prose tight; use sentence-style headings and a table
   of contents on longer notes.
+- **Write loanwords unaccented** — `facade`, not `façade` — so the ASCII text
+  matches the code and the spell checker.
 - **Link to the authoritative doc** rather than restating build steps, conventions,
   or API details — point at `CONTRIBUTING.md`, the design notes, or the API
   reference so the docs never drift.
@@ -28,6 +30,9 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
   Markdown clean for `markdownlint` and links valid for `lychee`.
 - A design note opens with a status callout (`> [!NOTE]` proposed / in progress /
   implemented) and is written as the current design, not a changelog.
+- **Describe only what ships.** A user-facing page must not advertise a capability
+  the system does not have, and a status callout states what is built now — a
+  feature that is planned, dormant, or superseded says so.
 
 ## How to add a design note
 

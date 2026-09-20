@@ -1,16 +1,13 @@
 # Development Cycle Optimization
 
 > [!NOTE]
-> Status: **implemented; the August 2026 .NET test follow-up is accepted for
-> local contributor commands and rejected for CI**. Increments 1 and 3–12 are built and
-> measured. Increment 2 was
-> deliberately skipped because Release coverage changed the sequence-point
-> denominator; Increment 13 was measured and rejected because it broke file
-> isolation. Increment 14 re-measured the suite on the Microsoft Testing Platform:
-> its speed options were rejected as unmeasurable, and its safety options adopted.
-> Increment 15 made opening a served script about four times faster by linking the
-> client instead of inlining it into every page, and increment 16 cut the first load by
-> 70% by fetching Mermaid only when a script draws a diagram.
+> Status: **implemented**. Sixteen measured increments to the local and CI
+> verification cycle, each kept only where it improved feedback time without
+> weakening a gate; the results table and the increment notes below record each
+> one with its measurement, and what was rejected and why. The
+> commands a contributor types live in
+> [CONTRIBUTING.md](https://github.com/pengzhengyi/dialoguedown/blob/main/CONTRIBUTING.md);
+> this note records why they are shaped that way.
 
 DialogueDown's verification remains comprehensive, but avoidable orchestration
 work delays feedback: repeated project evaluation, duplicate test execution,
@@ -813,9 +810,9 @@ The live E2E suite also fell from about 2.5 to about 1.7 minutes, as a side
 effect rather than a goal.
 
 **Still open:** the remaining cost is dominated by tearing down the old page and
-starting a new one (152–622 ms), which only [#327](https://github.com/pengzhengyi/dialoguedown/issues/327)
-(open a script in place) can remove. [#326](https://github.com/pengzhengyi/dialoguedown/issues/326)
-can now shrink the first load, because a lazy chunk is finally possible.
+starting a new one (152–622 ms), which only opening a script in place can remove.
+A separate change can then shrink the first load, because a lazy chunk is finally
+possible.
 
 ### 16. Fetch Mermaid on demand instead of bundling it
 

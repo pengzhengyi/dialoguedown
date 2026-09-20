@@ -95,7 +95,7 @@ describe("laneRoute", () => {
         expect(route.drop.x).toBeLessThan(route.start.x);
     });
 
-    it("climbs before its target whichever way it travelled, never past it", () => {
+    it("climbs before its target whichever way it traveled, never past it", () => {
         // Right of a dot is where its words are, and a column's words sit on every row. A climb
         // on that side is a line drawn through the text of rows the route has no business in, so
         // both directions climb on the left — in the gutter no label may enter.

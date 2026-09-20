@@ -230,7 +230,7 @@ legend read: `The Alarm, The Door, The Stairwell, The Elevator, Shelter in Place
 Outside, Rescued`. Both orders remove every overlap; only one of them is
 readable.
 
-### DD3 — Order is preserved within a tier; spacing is normalised
+### DD3 — Order is preserved within a tier; spacing is normalized
 
 The pass keeps the relative order of a scene's distinct rows, and keeps nodes
 that shared a row together. It does **not** keep the tree's *spacing*: rows are
@@ -315,7 +315,7 @@ and against one rendered in a browser, each checked to fail without the pass.
 
 ## Error and boundary cases
 
-| Case | Behaviour |
+| Case | Behavior |
 | --- | --- |
 | Stage has no regions (every AST tab) | The pass is not applied; the tree layout stands. |
 | A scene whose nodes all share one row (a straight run of lines) | A one-row tier — the run stays horizontal, as it is drawn today. |
@@ -346,11 +346,11 @@ and against one rendered in a browser, each checked to fail without the pass.
 - **Cross-link corridors** — `assignLanes` puts its first corridor below the
   deepest row, so the corridor stack moves down with the taller drawing. No
   change needed.
-- **Keyboard navigation** — arrow keys move between *siblings in the hierarchy*,
-  which today reads as up/down because siblings are ordered by row. Siblings in
-  different regions now land in different tiers, so an arrow can move the
-  selection against its apparent direction. Accepted for now; noted so it is not
-  a surprise.
+- **Keyboard navigation** — → and ← follow the stage's *edges* — a node's ways
+  in and out — rather than rows or tiers, so the re-ranking cannot move the
+  selection against its apparent direction. ↑/↓ move between siblings in the
+  drawing, read after the tiers are assigned, so they always step where the
+  drawing shows the siblings to be. No change needed.
 - **No compiler change.** `DisplayNode.Region` already carries what the pass needs.
 - **Design notes** — this note joins `design-notes/toc.yml`. The Dialogue Graph
   tab note no longer has the overlap to describe, and carries the follow-on

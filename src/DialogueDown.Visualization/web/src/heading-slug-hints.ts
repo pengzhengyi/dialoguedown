@@ -18,10 +18,12 @@ function headingText(lineText: string): string {
 
 /**
  * The GitHub-style slug of the heading on the active (main-cursor) line, or null when the cursor
- * is not on a heading line or that heading has no sluggable text. Every heading is slugged in
- * document order with one {@link GithubSlugger}, so a duplicate heading suffixes (`-1`, `-2`)
- * exactly as the preview's `gfmHeadingId` does, and a `#` inside a fenced code block is not a
- * heading node so it is skipped. Exported for testing.
+ * is not on a heading line, that heading has no sluggable text, or the tree does not hold it yet —
+ * a bounded first parse can still be catching up on a later heading, which is why the hint field
+ * rebuilds when the parse lands (see {@link needsRebuild}). Every heading is slugged in document
+ * order with one {@link GithubSlugger}, so a duplicate heading suffixes (`-1`, `-2`) exactly as
+ * the preview's `gfmHeadingId` does, and a `#` inside a fenced code block is not a heading node so
+ * it is skipped. Exported for testing.
  */
 export function activeHeadingSlug(state: EditorState): string | null {
     const activeLine = state.doc.lineAt(state.selection.main.head).number;

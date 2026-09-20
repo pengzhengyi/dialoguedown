@@ -5,7 +5,7 @@
 > presentation layer and a transport/runtime-neutral `DebugController` seam. Production
 > reports do not supply a controller, so no debugger controls, breakpoint gutters, or
 > execution markers render. A test-only fake exercises the contract until the dialogue graph
-> and runtime from [#45](https://github.com/pengzhengyi/dialoguedown/issues/45) can drive it.
+> and runtime can drive it.
 
 ## Table of contents
 
@@ -37,7 +37,7 @@ exactly as before.
 
 ```mermaid
 flowchart LR
-    R["Future dialogue runtime"] --> A["Runtime debug adapter"]
+    R["Dialogue runtime"] --> A["Debug adapter<br/>(future)"]
     A --> C["DebugController"]
     C --> T["Floating debug palette"]
     C --> E["CodeMirror debug extension"]
@@ -255,7 +255,7 @@ createSourceView(source, { debug: runtimeDebugController });
 runApp(report, sourceOptions, runtimeDebugController);
 ```
 
-Two source TODO comments point future work at issue #45:
+Two source TODO comments point future work at the deferred runtime:
 
 - `debug-controller.ts` — implement the server-backed runtime adapter;
 - `app.ts` — inject that adapter after the dialogue graph/runtime can publish source-mapped
@@ -286,7 +286,7 @@ gate passes **81** static and **55** live Playwright tests.
 
 ## Deferred runtime work
 
-Issue [#45](https://github.com/pengzhengyi/dialoguedown/issues/45) must provide or enable:
+The runtime must provide or enable:
 
 - source-mapped dialogue graph nodes;
 - Start/Continue/Step Over/Stop semantics;

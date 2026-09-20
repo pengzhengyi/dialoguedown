@@ -35,9 +35,8 @@ This component projects a `DialogueGraph` into the report's existing
 `DisplayGraph` payload and adds it as a fifth tab. It is a **projection**: the
 graph, the compiler, and the report shell are unchanged.
 
-**Out of scope:** playing the graph (that is the
-[runtime](https://github.com/pengzhengyi/dialoguedown/issues/45)), new client
-rendering modes, and graph-analysis diagnostics such as reachability warnings.
+**Out of scope:** playing the graph (that is the runtime), new client rendering
+modes, and graph-analysis diagnostics such as reachability warnings.
 
 ## Ubiquitous language
 
@@ -248,13 +247,13 @@ The rule is therefore one line:
 
 Two corollaries do the actual work, and both were once wrong:
 
-- **A climb goes on the target's left, whichever way the route travelled.** Right
+- **A climb goes on the target's left, whichever way the route traveled.** Right
   of a dot is where its words are. A route doubling back used to mirror and climb
   on the right, straight through the text of every row in that column; it now
   overshoots and climbs on the left like every other route. Arriving from the left
   is also what every other edge does, so the drawing reads the same either way.
 - **A drop goes in a gutter, not beside the source's dot.** It used to drop a
-  fixed step from the dot, which is inside its own column's words. Travelling
+  fixed step from the dot, which is inside its own column's words. Traveling
   along the flow it now clears its own label and drops in the gutter that ends its
   column; doubling back it drops in the gutter before that column, where a label —
   which only ever runs rightwards — cannot reach.
@@ -279,14 +278,12 @@ caught by a number rather than by a reader.
 ## Open questions and deferred work
 
 - **Automatically folding the legend when a fit would fail.** The legend already
-  folds by hand and a stage reserves its measured width when it frames
-  ([#258](https://github.com/pengzhengyi/dialoguedown/pull/258)), and folding
-  every scene at once now exists
-  ([#291](https://github.com/pengzhengyi/dialoguedown/pull/291)). What remains is
+  folds by hand and a stage reserves its measured width when it frames, and folding
+  every scene at once now exists. What remains is
   doing it *automatically* — folding the legend, or collapsing scenes — when a fit
   would otherwise fall back to anchoring the root.
 - **Playing the graph from the tab.** Stepping through the flow belongs to the
-  [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45) and its debugger.
+  runtime and its debugger.
 - **Cross-linking a divert to its scene.** Hovering a jump could highlight its
   target scene in the Semantic tab's tables, as the earlier stages already do.
 - **A cross-link that must double back overshoots its target to climb.** Climbing

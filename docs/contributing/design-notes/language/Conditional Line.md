@@ -3,7 +3,7 @@
 > [!NOTE]
 > Status: **implemented**. A **conditional line** plays only when its condition is
 > true. Gating the line at play time is part of the planned
-> [runtime](https://github.com/pengzhengyi/dialoguedown/issues/45).
+> runtime.
 
 Assumes [Conditions](./Conditions.md) — the primitive, its grammar, resolution, and decisions — and covers only what is specific to guarding a **line**.
 
@@ -202,7 +202,7 @@ flowchart LR
 | `OrphanConditionRule`            | Renamed from `ConditionWithoutJumpRule`; reports `DLG1106` for a condition that guards neither a jump nor a line, detecting a condition by identity.      |
 | `DiagnosticCatalog`              | `DLG1106` generalizes from "a condition does not precede a jump" to "a condition guards nothing."                                                         |
 | Report projection                | Shows a conditional line's condition (its key) as the line's first child, mirroring how a conditional jump shows its condition.                           |
-| `IGameSystem.Check` *(deferred)* | Unchanged — the `bool Check(string key)` the runtime will call to resolve a condition; lands with the runtime.                                            |
+| World read *(deferred)*          | Unchanged — the boolean the runtime reads for a condition; lands with the runtime.                                                                        |
 
 ## Key design decisions
 
@@ -334,7 +334,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Achieved** | `Line` gained an optional `Condition` and an `IsConditional` predicate; `LineBuilder` peels a leading condition before the speaker, only when content follows it; the orphan-condition rule generalized to `OrphanConditionRule`, detecting a bound condition by identity across a jump or a line; a line's condition is traversed guard-first; and the report projection, writer spec, gallery, and `DLG1106` docs all match the design (D1–D6). |
 | **Changed**  | `LineBuilder` was restructured into a thin wrapper over a single-use `Assembler` that consumes the front of the line's inlines, and a shared `ISpanned` interface with a `SourceSpan.Covering` overload replaced the repeated first-and-last-span idiom — refinements beyond the note. The `DLG1106` fix example now moves the condition to the line's start rather than dropping the `?`, preserving the writer's intent.                        |
-| **Deferred** | Reading the condition through `IGameSystem.Check` and playing or skipping the line are the runtime's job ([issue #45](https://github.com/pengzhengyi/dialoguedown/issues/45)). Conditions on choices are the next construct; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                       |
+| **Deferred** | Reading the condition and playing or skipping the line are the [runtime](../runtime/Dialogue%20Runtime%20Architecture.md)'s job. Conditions on choices are the next construct; consolidating the condition notes, negation, and expressions remain follow-up.                                                                                                                                                                                     |
 
 ## Alternatives not chosen
 
@@ -349,8 +349,7 @@ The construct shipped as designed; the runtime read and gating remain deferred.
 
 - **Runtime gating of a conditional line** — the compiler recognizes and
   preserves the condition, but reading the key through `Check` and playing or skipping
-  the line need the runtime. Tracked with the
-  [runtime work](https://github.com/pengzhengyi/dialoguedown/issues/45).
+  the line need the runtime.
 - **Conditions on choices** — the next construct. A condition guarding a player or
   random-choice option, and its interaction with random weights, is designed
   separately and builds on this note's peel and the generalized `DLG1106`.

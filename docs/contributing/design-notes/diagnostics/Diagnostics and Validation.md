@@ -2,9 +2,9 @@
 
 > [!NOTE]
 > Status: **implemented** — every component below has shipped; further ideas are
-> parked under [Later components](#later-components-deferred). This note covers the
+> parked under [Later components](#later-components). This note covers the
 > whole diagnostics effort
-> ([#43](https://github.com/pengzhengyi/dialoguedown/issues/43)) as one design, built
+> as one design, built
 > in components. It gives the compiler a single, structured way to **collect** every problem
 > it finds (errors and warnings) instead of throwing at the first one, a **validator** that
 > reports author-facing problems as rules, and a **humanized renderer** so the CLI can show
@@ -43,7 +43,7 @@
     - [Pipeline integration](#pipeline-integration)
     - [Testing](#testing)
     - [Deferred and out of scope](#deferred-and-out-of-scope)
-  - [Later components (deferred)](#later-components-deferred)
+  - [Later components](#later-components)
   - [Key design decisions](#key-design-decisions)
     - [DD1 — One offset-based core model, internal for now](#dd1--one-offset-based-core-model-internal-for-now)
     - [DD2 — Three severities; report rather than throw](#dd2--three-severities-report-rather-than-throw)
@@ -113,8 +113,8 @@ flowchart TB
     VAL -- report --> BAG
     SA -- report --> BAG
     BAG --> RES["CompilationResult<br/>(Diagnostics + HasErrors)"]
-    RES --> ERR["Errata report<br/>(CLI — planned)"]
-    RES -.-> LSP["LSP diagnostics<br/>(editor/web — planned)"]
+    RES --> ERR["Errata report<br/>(CLI)"]
+    RES -.-> LSP["LSP diagnostics<br/>(editor/web — later)"]
     RES -.-> WEB["Report overlay<br/>(visualizer — planned)"]
     style compile fill:#2d6,stroke:#0a0,color:#000
 ```
@@ -357,8 +357,7 @@ stage may hit.
   `HasErrors` is true.
 - **Visualizer:** a stage-boundary halt yields a partial result, and the visualizer projects it
   directly — the produced stages render as graphs while each unproduced stage becomes a disabled
-  tab (see [Unavailable Stage Tabs](../visualization/report/Unavailable%20Stage%20Tabs.md), resolving
-  [#111](https://github.com/pengzhengyi/dialoguedown/issues/111)).
+  tab (see [Unavailable Stage Tabs](../visualization/report/Unavailable%20Stage%20Tabs.md)).
 - **CLI (next component):** with the stages reporting, the CLI can render the collected diagnostics
   and set an exit code — the reason this component comes before CLI notification.
 
@@ -375,16 +374,12 @@ stage may hit.
 
 - **Warnings as errors.** Every mode keeps warnings as warnings today; promoting them, so an
   advisory like `DLG1003` can fail a build, is a planned per-run toggle — not built.
-- **Dangling `=>` (`DLG1002`).** DD4 assigns the dangling jump arrow to a desugar producer, but it
-  is a *new detection* (desugar degrades `=>` to text today), not a throw migration — kept out of
-  this component's scope unless folded in.
 
-## Later components (deferred)
+## Later components
 
-- **Desugar producer for a dangling `=>`** — a linkless arrow is degraded to plain text today, so
-  reporting it needs desugar to record that it dropped an arrow (see the corrected
-  [DD4](#dd4--the-validator-is-a-set-of-pluggable-rules)). Deferred; not part of the producers
-  component above.
+- **Dangling `=>` — delivered.** Desugar's jump assembly sees a linkless arrow before it
+  degrades to text, so it reports `DLG1113` there; see the
+  [dangling arrow diagnostic](./Dangling%20Arrow%20Diagnostic.md).
 - **Ignored unmodeled Markdown — delivered.** `MarkdigUnmodeledNodeHandler`
   reports `DLG1114` at the policy decision site before the node leaves the AST.
   The LSP and web-report projections carry that diagnostic range and code.
@@ -456,8 +451,8 @@ elsewhere — checking how the pipeline actually represents each condition recla
 
 | Candidate | Why it is not a structural rule | Where it belongs |
 | --- | --- | --- |
-| Dangling jump arrow (`DLG1002`) | desugar rewrites a linkless `=>` into plain `Text("=>")` with no provenance, so the desugared tree cannot tell it from ordinary text | **Deferred** — a later desugar reporting site emits it where it degrades the arrow |
-| Tag without a speaker (`DLG1101`) | the transpiler already **throws** `DialogueSyntaxError` for tags naming no speaker; the desugared tree never carries it | **Error reporting and recovery** — migrate that throw to a reported diagnostic |
+| Dangling jump arrow (`DLG1113`) | desugar's jump assembler sees a linkless `=>` before it degrades to plain text, so the fault is reported there rather than by a rule over the tree | **Delivered** — see the [dangling arrow diagnostic](./Dangling%20Arrow%20Diagnostic.md) |
+| Tags without a speaker (`DLG1101`) | the speaker builder recognizes the tags before anything reaches the desugared tree, so no later rule can see them | **Delivered** — the transpiler reports it at the prefix |
 | Ignored unmodeled Markdown (`DLG1114`) | the handler sees the policy decision before the node leaves the front-end AST | **Delivered** — report an `Info` diagnostic at the ignore site |
 
 ### DD5 — The sink threads through the facade via a diagnostics context

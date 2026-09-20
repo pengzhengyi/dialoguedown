@@ -99,8 +99,8 @@ Each stage is documented in the compiler's
 | Conditional choice | ``- `HasKey?` Use the key.`` | Offer an option only when a query reads as true. |
 | Conditional block | `` `if` `` `` `Rich?` `` in a `>` block | Guard a group with `if` / `elseif` / `else`. |
 | End of run | `=> [The end](#END)` | Stop the dialogue at the reserved endpoint. |
-| Query | `` `"Alice.FavoriteColor"` `` | Call `IGameSystem.Query`. |
-| Default command | `` `("Alice joins Art")` `` | Call `IGameSystem.Execute`. |
+| Query | `` `"Alice.FavoriteColor"` `` | Read a value from your game. |
+| Default command | `` `("Alice joins Art")` `` | Perform an action in your game. |
 | Custom command | `` `JoinClub("Alice", "Art")` `` | Execute with arguments. |
 
 ## Literal punctuation

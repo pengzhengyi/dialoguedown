@@ -49,7 +49,7 @@ internal static class PlaybookNodeSummary
     /// <summary>What a summary cut at the cap trails.</summary>
     private const string Ellipsis = "…";
 
-    // A separator carries the spaces that join it to its neighbours, so the pieces partition the
+    // A separator carries the spaces that join it to its neighbors, so the pieces partition the
     // line exactly and the table's grammar is never a space that came from the script.
     private const string SpeakerDivider = ": ";
     private const string NodeCondition = "IF ";

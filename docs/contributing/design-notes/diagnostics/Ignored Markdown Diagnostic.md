@@ -1,8 +1,7 @@
 # Ignored Markdown diagnostic
 
 > [!NOTE]
-> Status: **implemented**
-> ([issue #227](https://github.com/pengzhengyi/dialoguedown/issues/227)).
+> Status: **implemented**.
 > Notes each Markdown construct the front end ignores, so a table or divider that
 > never reaches the script does not disappear without a word.
 
@@ -41,8 +40,7 @@ ignored construct, naming the kind and pointing at it.
 the parser seam so it can report, and the reference entry.
 
 **Out of scope:** changing *what* is ignored (the default policy is unchanged);
-reading the policy from `dialogue.toml`, which is
-[#47](https://github.com/pengzhengyi/dialoguedown/issues/47); and the dangling
+reading the policy from `dialogue.toml`; and the dangling
 arrow, which shipped as
 [Dangling Arrow Diagnostic](./Dangling%20Arrow%20Diagnostic.md).
 
@@ -196,7 +194,7 @@ judgment to the writer. Nothing about the compile changes — `Info` never affec
 
 The converter ignores inlines as well as blocks, though the default policy keeps
 every inline kind as raw text. Reporting both sites means a project that
-configures the policy through [#47](https://github.com/pengzhengyi/dialoguedown/issues/47)
+configures the policy
 gets the same account of its ignored inlines, with no second pass over this code.
 
 ### DD5 — `Syntax`, with the category summary widened

@@ -129,9 +129,8 @@ fall-through.
 | `schema/playbook-0.schema.json` | Per-kind `out` definitions: `items` restricts the edge kinds, a `contains` sets the arm minimum, `minContains` / `maxContains` bound the succession count. `end` keeps `maxItems: 0`. | `check-jsonschema` in CI |
 | `conformance/readable/<case>/` | One refusal each: `playbook.json` is `baseline` with one field changed, `fixture.json` verdict `refuse`. | the readable harness |
 
-The checker follows the house contract: it refuses at the first fault with a
-message naming the offending node and what was expected — a playbook is compiler
-output, so there is no list for a reader to work through.
+The checker follows the [reader's contract](./Playbook%20Format.md#reading-a-playbook):
+it refuses at the first fault, naming the offending node and the expectation.
 
 ## Key design decisions
 
@@ -197,7 +196,7 @@ has to guess whether a dangling edge is also a shape error.
 
 ## Error and boundary cases
 
-| Case | Behaviour |
+| Case | Behavior |
 | --- | --- |
 | `end` with any edge | cannot occur — the `EndNode` record takes no edges and the reader drops an `out` it reads on one; the schema's `maxItems: 0` is the backstop |
 | `line` / `control` with two or more `divert` edges | refuse |

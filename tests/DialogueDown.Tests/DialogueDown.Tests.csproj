@@ -50,6 +50,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown\DialogueDown.csproj" />
     <ProjectReference Include="..\DialogueDown.Conformance\DialogueDown.Conformance.csproj" />
+    <ProjectReference Include="..\DialogueDown.TestSupport\DialogueDown.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

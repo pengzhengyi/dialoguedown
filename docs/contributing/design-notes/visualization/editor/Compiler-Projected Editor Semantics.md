@@ -2,11 +2,10 @@
 
 > [!NOTE]
 > Status: **implemented** — the `visualize` source editor highlights dialogue and completes
-> from the compiler's projected semantics. Unifies syntax highlighting
-> ([#115](https://github.com/pengzhengyi/dialoguedown/issues/115)) and completion
-> alignment ([#118](https://github.com/pengzhengyi/dialoguedown/issues/118)) under one
-> principle: the **compiler is the single source of truth** for the dialogue grammar, and the
-> editor *renders* what the compiler projects rather than re-lexing the language itself.
+> from the compiler's projected semantics. Unifies syntax highlighting and completion
+> alignment under one principle: the **compiler is the single source of truth** for the
+> dialogue grammar, and the editor *renders* what the compiler projects rather than
+> re-lexing the language itself.
 
 ## Goal and scope
 
@@ -16,10 +15,10 @@ lexical grammar in TypeScript. Both are driven by **projections of the compiler'
 carried in the report payload beside the diagnostics and symbols already there, and rendered by
 the browser. One grammar, in C#; the client only draws.
 
-This is the same pattern the diagnostics overlay established
-([#134](https://github.com/pengzhengyi/dialoguedown/pull/134)): a pure `.NET` projection
-into an editor-shaped artifact, a payload transport today, and an LSP transport later — the
-projection and the rendering are reused unchanged when the language server arrives.
+This is the same pattern the diagnostics overlay established:
+a pure `.NET` projection into an editor-shaped artifact, a payload transport today, and an
+LSP transport later — the projection and the rendering are reused unchanged when the
+language server arrives.
 
 **In scope:**
 
@@ -30,14 +29,13 @@ projection and the rendering are reused unchanged when the language server arriv
   existing Markdown highlighting and themed for light and dark.
 - **Completions from compiler symbols**: source the editor's completion list from the payload's
   compiler-resolved `SymbolSet`, and **retire the client-side symbol scanner and its
-  grammar-shaped triggers** — resolving #118's "ghost completions" at the root.
+  grammar-shaped triggers** — resolving the "ghost completions" at the root.
 
 **Out of scope (deferred, seams left open):**
 
-- **Instant, per-keystroke highlighting** via a client lexer
-  ([#139](https://github.com/pengzhengyi/dialoguedown/issues/139)). Projected highlighting
-  refreshes on recompile (save and hot-reload); zero-latency coloring is a later UX layer, and
-  the `feat/source-syntax-highlighting` worktree is its prior attempt.
+- **Instant, per-keystroke highlighting** via a client lexer.
+  Projected highlighting refreshes on recompile (save and hot-reload); zero-latency coloring
+  is a later UX layer, and the `feat/source-syntax-highlighting` worktree is its prior attempt.
 - **A real language server.** The projections are LSP-shaped so a future
   `textDocument/semanticTokens` and `textDocument/completion` server publishes the same data;
   that server ships with the VS Code extension.
@@ -203,11 +201,11 @@ when the language server arrives; the projection and the CodeMirror rendering st
 ### D5 — Completions from compiler symbols, not a client scan
 
 The payload already carries the compiler's resolved `SymbolSet` (speakers, ids, tags, jump
-targets — issue #71). The completion sources read **only** that. The old client scanner offered
+targets). The completion sources read **only** that. The old client scanner offered
 token shapes the compiler rejects (unquoted `Marie-Claire`) and missed valid ones (leading
 underscores) because it re-implemented the grammar loosely; sourcing the list from the compiler's
-own symbols makes those mismatches impossible **by construction**, which is exactly what #118
-asks for.
+own symbols makes those mismatches impossible **by construction**, which is exactly what
+completion alignment asks for.
 
 The completion **triggers** (`matchBefore` for `@`, `#`, `](#`, and a line-leading speaker) stay,
 but only as **cursor-context detectors** — they decide *where* a completion is offered, not
@@ -218,10 +216,9 @@ cannot produce a ghost, so the triggers no longer carry a grammar contract.
 
 `dialogue-symbols.ts`'s `scanDialogueSymbols` (and the semantic-source merge that layered a live
 scan over the payload symbols) is removed: its sole purpose was the client grammar this replaces.
-The **instant per-keystroke lexer** (#139) and its cross-language conformance corpus are deferred
+The **instant per-keystroke lexer** and its cross-language conformance corpus are deferred
 — once highlighting is compiler-projected, maintaining a second TypeScript grammar is low value,
-and autosave-on-idle ([#140](https://github.com/pengzhengyi/dialoguedown/issues/140)) will
-shrink the recompile gap further.
+and autosave-on-idle will shrink the recompile gap further.
 
 ### D7 — Highlight compiler parse artifacts, not the Desugared AST
 
@@ -242,8 +239,7 @@ encode directly. Because the tokens no longer overlap the separate tag tokens, t
 decoration precedence — it simply orders tokens by start.
 
 The parser records each part's sub-span on the speaker AST node; the mechanics live in
-[Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md)
-([#142](https://github.com/pengzhengyi/dialoguedown/issues/142)).
+[Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md).
 
 ## Error and boundary cases
 
@@ -292,5 +288,4 @@ The parser records each part's sub-span on the speaker AST node; the mechanics l
 None outstanding — the approach (AST-projected tokens, Dialogue AST, drop the client scan) is
 agreed and shipped. The speaker's parts are highlighted as precise, non-overlapping
 `SpeakerName`/`SpeakerId`/`Separator` tokens from AST sub-spans; the mechanics live in
-[Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md)
-([#142](https://github.com/pengzhengyi/dialoguedown/issues/142)).
+[Precise Speaker Tokens](./Precise%20Speaker%20Tokens.md).

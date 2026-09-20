@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Serving;
-using DialogueDown.Visualization.Live.Tests.Support;
 using DialogueDown.Visualization.Render;
 
 namespace DialogueDown.Visualization.Live.Tests;
@@ -19,6 +19,20 @@ public sealed class ServedShellServerTests
         using var client = Client(server);
 
         var html = await client.GetStringAsync("/", TestContext.Current.CancellationToken);
+
+        Assert.Equal(LandingHtml, html);
+    }
+
+    // The shell's own door, which a session's back link points at: a run that pinned a document
+    // redirects `/` to its report, so the way back needs a path that is always the shell.
+    [Fact]
+    public async Task BrowseShell_ServesTheLandingHtml()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var html = await client.GetStringAsync("/browse", TestContext.Current.CancellationToken);
 
         Assert.Equal(LandingHtml, html);
     }
@@ -561,6 +575,180 @@ public sealed class ServedShellServerTests
         File.WriteAllText(document, "# A changed");
 
         Assert.Equal("event: reload", await NextEventAsync(reader));
+    }
+
+    [Fact]
+    public async Task Open_AnUnsupportedMode_BadRequest()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/open",
+            new { source = "scene.dialogue.md", mode = "sideways" },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateFolder_InAMissingFolder_BadRequest()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/create-folder", new { path = "missing/child" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateFolder_OntoAnExistingName_Conflict()
+    {
+        using var tree = new TempTree();
+        tree.Dir("root/proj");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/create-folder", new { path = "proj" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Rename_ASourceThatIsGone_BadRequest()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/rename",
+            new { from = "gone.dialogue.md", to = "moved.dialogue.md" },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Rename_ToANameWithoutTheExtension_BadRequest()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/rename",
+            new { from = "scene.dialogue.md", to = "notes.md" },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Rename_ToAMissingFolder_BadRequest()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/rename",
+            new { from = "scene.dialogue.md", to = "missing/moved.dialogue.md" },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Document_BeforeOpeningAnything_NotFound()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.GetAsync("/api/document", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Document_AfterOpening_ReturnsTheDocumentJson()
+    {
+        using var tree = new TempTree();
+        tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server, followRedirects: false);
+        await client.PostAsJsonAsync(
+            "/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+
+        var json = await client.GetStringAsync("/api/document", TestContext.Current.CancellationToken);
+
+        Assert.Contains("Scene", json);
+    }
+
+    [Fact]
+    public async Task Reload_BeforeOpeningAnything_NotFound()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/reload", new { }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Reload_AfterOpening_ReReadsTheDocumentFromDisk()
+    {
+        using var tree = new TempTree();
+        var path = tree.File("root/scene.dialogue.md", "# Scene");
+        await using var server = await Started(tree);
+        using var client = Client(server, followRedirects: false);
+        await client.PostAsJsonAsync(
+            "/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(path, "# Changed on disk", TestContext.Current.CancellationToken);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/reload", new { }, TestContext.Current.CancellationToken);
+
+        Assert.True(response.IsSuccessStatusCode);
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("Changed on disk", json);
+    }
+
+    [Fact]
+    public async Task CreateConfig_BeforeOpeningAnything_NotFound()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.PostAsync("/api/create-config", null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Events_WithNoActiveDocument_NotFound()
+    {
+        using var tree = new TempTree();
+        await using var server = await Started(tree);
+        using var client = Client(server);
+
+        var response = await client.GetAsync("/api/events", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private static async Task Open(HttpClient client, string source) =>

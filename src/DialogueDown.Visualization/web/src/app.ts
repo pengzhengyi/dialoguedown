@@ -12,7 +12,7 @@ import type {
     PlaybookReport,
 } from "./model";
 import { createDetailPanel } from "./detail-panel";
-import { neighborsOf } from "./neighbors";
+import { isFlowStage, neighborsOf } from "./neighbors";
 import { regionDetailOf } from "./region-detail";
 import { regionOfBoxId } from "./region-fold";
 import { tintsOf } from "./region-bands";
@@ -48,7 +48,7 @@ import { hideArrivalNote, showArrivalNote } from "./arrival-note";
  * adds — has interpreted nothing, so it is left as plain text.
  */
 const recognizesJumps = (stage: Stage): boolean => stage.readsDialogueMeaning ?? false;
-import { setHelp, helpBody } from "./help";
+import { setHelp, helpBody, type HelpContext } from "./help";
 import { createProblemsPanel } from "./problems-panel";
 import { createDiagnosticSummary } from "./diagnostic-summary";
 import { orderDiagnostics } from "./diagnostic-order";
@@ -249,16 +249,25 @@ export function runApp(
     }
 
     // The Problems panel and its status-line summary. Both live here rather than in the page
-    // chrome because this is where the diagnostics and the save-safe jump already are.
-    const problems = createProblemsPanel({
-        goTo: (diagnostic) => {
-            // The source view resolves the range, so a row and its squiggle can never
-            // disagree about where the problem is.
-            const span = sourceHandle?.resolveRange(diagnostic.range);
-            if (span) jumpToSource(span);
-        },
-    });
-    const summary = createDiagnosticSummary(() => drawer?.open("problems", summary.element));
+    // chrome because this is where the diagnostics and the save-safe jump already are. A report
+    // with no source has nothing to diagnose and no editor to jump into — the file selector is
+    // that report — so the panel, its drawer tab, and its counts stay out of the reader's way.
+    const diagnosing = report.source != null;
+    const problems = diagnosing
+        ? createProblemsPanel({
+              goTo: (diagnostic) => {
+                  // The source view resolves the range, so a row and its squiggle can never
+                  // disagree about where the problem is.
+                  const span = sourceHandle?.resolveRange(diagnostic.range);
+                  if (span) jumpToSource(span);
+              },
+          })
+        : null;
+    const summary = diagnosing
+        ? createDiagnosticSummary(() => {
+              if (summary) drawer?.open("problems", summary.element);
+          })
+        : null;
     const helpToggle = document.getElementById("help-toggle");
     const help = helpBody();
     const drawerHost = document.getElementById("footer-drawer");
@@ -268,17 +277,19 @@ export function runApp(
         ? createFooterDrawer({
               host: drawerHost,
               panels: [
-                  { id: "problems", label: "Problems", body: problems.element },
+                  ...(problems
+                      ? [{ id: "problems", label: "Problems", body: problems.element }]
+                      : []),
                   ...(help ? [{ id: "help", label: "Help", body: help }] : []),
               ],
               onToggle: (open) => {
-                  summary.setOpen(open);
+                  summary?.setOpen(open);
                   helpToggle?.setAttribute("aria-expanded", String(open));
               },
           })
         : null;
     if (drawer) helpToggle?.addEventListener("click", () => drawer.open("help", helpToggle));
-    document.querySelector(".status-bar")?.appendChild(summary.element);
+    if (summary) document.querySelector(".status-bar")?.appendChild(summary.element);
 
     /**
      * The one place diagnostics fan out. Updating the editor overlay, the list, and the counts
@@ -288,8 +299,10 @@ export function runApp(
     function applyDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
         const ordered = orderDiagnostics(diagnostics);
         sourceHandle?.setDiagnostics(ordered);
-        problems.setDiagnostics(ordered);
-        summary.setCounts(problems.counts());
+        if (problems && summary) {
+            problems.setDiagnostics(ordered);
+            summary.setCounts(problems.counts());
+        }
     }
 
     // Reverse of `jumpToSource`: from a Source selection, reveal the enclosing node in a stage.
@@ -364,7 +377,7 @@ export function runApp(
         shownStage = stage ?? null;
         // Only a stage whose edges carry a meaning lists a node's neighbors: in a tree, a node's
         // parent and children are already plain from the drawing.
-        const flow = stage?.edges.some((edge) => edge.category);
+        const flow = stage !== undefined && isFlowStage(stage);
         panel.show(node, {
             recognizeJumps,
             ...(flow && stage ? { neighbors: neighborsOf(stage, node.id) } : {}),
@@ -402,8 +415,9 @@ export function runApp(
         if (isTextEntryTarget(target) || (target instanceof Element && target.closest("button"))) {
             return;
         }
-        // `p` opens the Problems panel, joining `f` for full screen and `z` for Zen.
-        if (event.key === "p" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        // `p` opens the Problems panel, joining `f` for full screen and `z` for Zen — where the
+        // report has one: a file selector has no problems to open.
+        if (summary && event.key === "p" && !event.metaKey && !event.ctrlKey && !event.altKey) {
             event.preventDefault();
             drawer?.open("problems", summary.element);
             return;
@@ -640,7 +654,7 @@ export function runApp(
                     ...treeOptions,
                     // A graph's "children" are an accident of which route reached them first, so
                     // folding one would hide nodes other routes still lead to.
-                    foldable: !stage.edges.some((edge) => edge.category),
+                    foldable: !isFlowStage(stage),
                     onSelectEdge: (edge) => showEdge(stage, edge),
                     onSelectRegion: (region) => showRegion(stage, region),
                 });
@@ -735,9 +749,8 @@ export function runApp(
         const isSource = views[index] === null;
         const section = stagesEl.children[index] as HTMLElement | undefined;
         const isSemantic = section?.classList.contains("semantic-stage") ?? false;
-        const isPlaybook = section?.classList.contains("playbook-stage") ?? false;
         appEl.classList.toggle("no-detail", isSource || isSemantic);
-        setHelp(isPlaybook ? "playbook" : isSource ? "source" : isSemantic ? "semantic" : "graph");
+        setHelp(helpContextFor(index));
         // Frame the tab now that it is visible (a tree built while hidden had a
         // zero-size container). Applying its remembered position — instead of always
         // re-framing — keeps a stage spatially stable as the reader moves between tabs.
@@ -746,6 +759,24 @@ export function runApp(
         panel.clear();
         selectedNodeId = null;
         source?.onActiveTabChange?.();
+    }
+
+    /**
+     * Which help the active tab shows.
+     *
+     * The help follows the stage's shape rather than its tab name: the flow graph is the one whose
+     * digits answer ways in with Shift, so it gets the full map, while the syntax and semantic
+     * trees get the map their edges actually support — ways out only. The Source tab and the
+     * Config tab share the source's explanation; a playbook has its own.
+     */
+    function helpContextFor(index: number): HelpContext {
+        const section = stagesEl.children[index] as HTMLElement | undefined;
+        if (section?.classList.contains("playbook-stage")) return "playbook";
+        // Source and Config have no graph; Config borrows the source's explanation.
+        if (views[index] === null) return "source";
+        if (section?.classList.contains("semantic-stage")) return "semantic";
+        const stage = currentStages.find((candidate) => candidate.title === titles[index]);
+        return stage !== undefined && isFlowStage(stage) ? "graph" : "tree";
     }
 
     /**

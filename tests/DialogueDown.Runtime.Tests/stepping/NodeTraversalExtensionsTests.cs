@@ -1,6 +1,7 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -12,7 +13,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeThatCarriesOn_IsWhereItCarriesOnTo()
     {
-        var node = Playbooks.Line(0, speaker: 0, "Hello.", next: 7);
+        var node = Line(0, speaker: 0, "Hello.", next: 7);
 
         Assert.Equal(7, node.SuccessionTarget());
     }
@@ -32,7 +33,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ANodeWithOnlyAFallThrough_LeadsWhereItFallsThrough()
     {
-        var node = Playbooks.Line(0, speaker: 0, "Hello.", next: 7);
+        var node = Line(0, speaker: 0, "Hello.", next: 7);
 
         Assert.Equal(7, node.OnwardTarget());
     }

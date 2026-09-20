@@ -247,7 +247,7 @@ const SCROLL_DOC =
  * Nudge a pane so the block nearest its top sits exactly at the top.
  *
  * `blocksAtTop` reports the *nearest* block to each pane's top, so a scroll that happens to stop
- * between two blocks lets the panes round to different neighbours -- a one-block disagreement that
+ * between two blocks lets the panes round to different neighbors -- a one-block disagreement that
  * says nothing about whether they are in sync. Landing squarely on a block removes that luck, and
  * the assertion then means what it says.
  */

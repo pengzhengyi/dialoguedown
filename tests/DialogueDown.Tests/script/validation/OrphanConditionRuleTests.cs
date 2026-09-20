@@ -88,6 +88,18 @@ public sealed class OrphanConditionRuleTests
         Assert.Empty(Check(control));
     }
 
+    [Fact]
+    public void Check_AConditionInsideAHeading_ReportsAtTheConditionSpan()
+    {
+        // A heading cannot hold a condition, so one in its title guards nothing.
+        var condition = new Condition("Rainy", SourceSpanFactory.Span());
+        var heading = new SceneHeading([condition], 1, SourceSpanFactory.Span());
+
+        var diagnostic = AssertReported(Check(heading), DiagnosticCatalog.OrphanCondition);
+
+        Assert.Equal(condition.Span, diagnostic.Span);
+    }
+
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();

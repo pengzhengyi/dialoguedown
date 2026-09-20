@@ -221,8 +221,7 @@ the browser `createSemanticSymbolSource` wraps those resolved symbols as a
 `DialogueSymbolSource`, **merging** them with a live document scan so names typed
 since the last compile still complete; `main.ts` passes it to `createSourceView`
 and refreshes the resolved half on each hot-reload. The completion sources are
-unchanged — the whole feature rides the existing seam. Delivered in
-[issue #71](https://github.com/pengzhengyi/dialoguedown/issues/71).
+unchanged — the whole feature rides the existing seam. Delivered.
 
 ## Implementation checklist
 
@@ -235,7 +234,7 @@ unchanged — the whole feature rides the existing seam. Delivered in
       committed `dist/report.html`.
 - [x] Help text + `CHANGELOG` + README touch-ups; Playwright coverage.
 - [x] File the **semantic symbol source** follow-up issue and add it to the board.
-- [x] Semantic source (issue #71): `.NET` `SymbolProjection` → `SymbolSet` in the
+- [x] Semantic source: `.NET` `SymbolProjection` → `SymbolSet` in the
       report payload; `createSemanticSymbolSource` merges it with the scan and
       `main.ts` refreshes it on hot-reload; unit + Playwright (static payload and
       live server) coverage.

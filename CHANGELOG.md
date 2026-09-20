@@ -16,6 +16,18 @@ changes easy to categorize.
   dangling-arrow warning now offers the escape as the deliberate spelling. See
   [Symbol Escape](docs/contributing/design-notes/language/Symbol%20Escape.md).
 
+- **A way back to the file selector** — a session's status line carries a small back link beside
+  the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
+  shell answers at `/browse`, since a run that pins a document redirects `/` to that document.
+
+- **A host can report that an effect failed** — `Failed(explanation)` joins `Done` as the answer
+  to a `Perform`, so a world whose write was refused says so instead of lying with `Done` or
+  hanging. The run stands still — the same position, nothing emitted, the driver's own message as
+  the record — and the driver retries with `Done` (the same effect, so it keeps its ordinal) or
+  gives up. The fixture schema gained the `failed` send, and `a-failed-effect` holds a port to the
+  hold. See
+  [Waiting on the host](docs/contributing/design-notes/runtime/Waiting%20on%20the%20Host.md).
+
 - **A compiled script can be played** — `DialogueDown.Runtime` is a new package that walks a
   playbook: `Runner.Step` takes where a run stands and one command, and returns where it now
   stands and what it has to say. It is a pure function over an immutable `PlayState`, so a host
@@ -64,6 +76,32 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **The conformance harness reports every divergence a case has** — an outcome carries a list of
+  reasons rather than only the first, so a contributor meets every fault a fixture found in one run
+  instead of fixing one and re-running to meet the next. The verdict each case gets is unchanged.
+
+- **The report's graph tabs are navigated by their edges** — the arrow keys used to move through
+  the drawing's tree, so a jump — a reference edge rather than a child — could not be reached at
+  all. Right takes the first way out, left walks back along the way taken, up/down move between the
+  nodes drawn beside this one, and the digits address the numbered ways out (with Shift, the ways
+  in on the Dialogue Graph, whose tables carry the numbers). Each tab's help describes its own map.
+
+- **The file selector offers the View/Edit toggle and drops the Problems panel** — before a script
+  is open there is nothing to diagnose and no editor to jump into, so the shell no longer carries a
+  panel, a drawer tab, and counts for it. It offers the mode choice instead, remembers it across
+  reloads, and opens the script the reader picks in it. Writing belongs to Edit: in View the
+  Explorer's New file, New folder, and rename are grayed with a tip that says so, and the call to
+  action is too — which is a start-page row now, a new file mark and its words rather than a
+  page-filling button.
+
+- **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
+  and a control's commands are lists now, numbered when their order is meaning; a piece that names
+  a node (a branch arm's number, a jump's own words, an option's label) is a button that reveals
+  that node in the JSON beside the table, and hovering it lights the node's row; and a piece whose
+  words do not carry its meaning explains itself on hover. A condition also reads as the query it
+  is: `IF FoundKey? THEN 12`. See
+  [Playbook Summary Segments](docs/contributing/design-notes/visualization/report/Playbook%20Summary%20Segments.md).
 
 - **The docs site is built on every pull request, and a docfx warning fails it** — the docs
   build used to run only when the site deployed, so a broken link or a missing
@@ -125,6 +163,20 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **The status line no longer leaves the viewport when a selection fills the inspector** — a
+  content-based flex basis let the scrollable inspector inflate the shell, shrinking the footer
+  below its own status line; the shell's height no longer follows a pane's content.
+
+- **The Files tab's icon sits inside its own highlight** — the icon rode half outside the bed the
+  open state paints, because the bed hung from the control's top edge while the icon sat on the
+  row's icon line, and the control's height follows the row. The bed takes the icon's own box now,
+  in a bare row and in one holding the stage tabs.
+
+- **A flaky slug-hint case no longer fails a full test run** — the cases asserted a heading's slug
+  against however far the editor's first parse had reached, so a heading past that point read as
+  absent: green alone, red in the full run. They now read a document parsed to its end, and a case
+  pins the stopped parse itself.
 
 - **Two playbooks that say the same thing are now equal** — the records a playbook is built
   from compared their collections by reference, so decoding the same file twice produced two

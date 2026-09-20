@@ -299,7 +299,7 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
 
 /**
  * The class each summary role wears in the Nodes table. A writer's own words (`plain`) carry
- * none, so they keep the cell's own colour while the report's scaffolding steps back; so do the
+ * none, so they keep the cell's own color while the report's scaffolding steps back; so do the
  * roles whose meaning is drawn rather than painted — a boundary is a break and a target is a link.
  */
 const SUMMARY_SEGMENT_CLASS: Record<SummaryRole, string | undefined> = {
@@ -490,7 +490,7 @@ function nodeTable(nodes: readonly PlaybookNodeView[]): SemanticTable {
                     // The kind wears the color the Dialogue Graph gives it, so the table and the
                     // drawing name a node the same way.
                     { text: node.kind, category: node.category },
-                    // The words a writer wrote keep the plain colour while the report's own
+                    // The words a writer wrote keep the plain color while the report's own
                     // scaffolding steps back, so the speech is what the eye lands on.
                     summaryCell(node),
                     waysOut(node.targets),

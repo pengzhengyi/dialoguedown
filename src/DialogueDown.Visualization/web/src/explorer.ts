@@ -57,6 +57,13 @@ export interface ExplorerHandle {
      * one inside a collapsed folder is revealed first.
      */
     setActiveScript(path: string): void;
+
+    /**
+     * Whether the Explorer may write: creating a file or folder, and renaming one. A reader in
+     * View is browsing, so the actions stay in place — grayed, with a tip saying what to do —
+     * rather than vanishing, and a row's menu holds nothing else, so none opens.
+     */
+    setEditable(editable: boolean): void;
 }
 
 /**
@@ -75,6 +82,10 @@ export function initExplorer(
     // The script the report is showing. It moves as the reader opens another one, so the tree is
     // built against this rather than the project's load-time value.
     let activePath = project.activePath;
+
+    // Whether this Explorer may write. The create actions are wired below, so the switch that
+    // flips them is defined with them; the row menus read the flag directly.
+    let editable = true;
 
     const tree = element("ul", "explorer-tree");
     tree.setAttribute("role", "tree");
@@ -151,7 +162,9 @@ export function initExplorer(
             row.setAttribute("aria-current", "true");
         }
         row.addEventListener("click", () => ports.openScript(path));
-        row.addEventListener("contextmenu", (event) =>
+        // Every item a script's menu holds is a write, so in View there is nothing to offer.
+        row.addEventListener("contextmenu", (event) => {
+            if (!editable) return;
             openContextMenu(event, [
                 {
                     icon: "edit",
@@ -160,8 +173,8 @@ export function initExplorer(
                         startInlineRename(path, row, "file");
                     },
                 },
-            ]),
-        );
+            ]);
+        });
         item.append(row);
         return item;
     };
@@ -320,6 +333,7 @@ export function initExplorer(
         expand: (expanded: boolean) => Promise<unknown>,
         row: HTMLElement,
     ): void => {
+        if (!editable) return;
         openContextMenu(event, [
             {
                 icon: "new-file",
@@ -409,13 +423,31 @@ export function initExplorer(
         else if (outcome.kind === "error" && outcome.message !== "") showError(outcome.message);
     };
 
+    const newFile = actionButton("new-file", "New file", () => startInlineCreate("file", "", tree));
+    const newFolder = actionButton("new-folder", "New folder", () =>
+        startInlineCreate("folder", "", tree),
+    );
     const toolbar = element("div", "explorer-actions");
     toolbar.append(
-        actionButton("new-file", "New file", () => startInlineCreate("file", "", tree)),
-        actionButton("new-folder", "New folder", () => startInlineCreate("folder", "", tree)),
+        newFile,
+        newFolder,
         actionButton("refresh", "Refresh", refresh),
         actionButton("collapse-all", "Collapse folders", collapseAll),
     );
+
+    // The two writing actions, kept together so one switch flips both and neither tip drifts.
+    const setEditable = (next: boolean): void => {
+        editable = next;
+        for (const [button, label] of [
+            [newFile, "New file"],
+            [newFolder, "New folder"],
+        ] as const) {
+            button.disabled = !editable;
+            const tip = editable ? label : `${label} — switch to Edit to create files and folders.`;
+            button.title = tip;
+            button.setAttribute("aria-label", tip);
+        }
+    };
     const heading = element("header", "explorer-header");
     heading.append(withText("span", "explorer-title", "Explorer"), toolbar);
     const root = withText("p", "explorer-root", project.root);
@@ -433,6 +465,7 @@ export function initExplorer(
     reveal();
 
     return {
+        setEditable,
         setActiveScript(path) {
             activePath = path;
             // A script the reader clicked is already on screen, so moving the highlight is enough.
@@ -513,6 +546,8 @@ function treeRow(
 function actionButton(iconName: string, title: string, onClick: () => void): HTMLButtonElement {
     const button = element("button", "explorer-action") as HTMLButtonElement;
     button.type = "button";
+    // A stable handle for the callers that press an action rather than build one.
+    button.dataset.action = iconName;
     button.title = title;
     button.setAttribute("aria-label", title);
     button.append(codicon(iconName, "explorer-action-icon"));

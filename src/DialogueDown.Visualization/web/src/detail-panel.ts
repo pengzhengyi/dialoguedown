@@ -11,7 +11,7 @@ const MAX_TITLE_LABEL = 40;
 /**
  * How much of a node's words a table cell keeps.
  *
- * The visible clipping is the stylesheet's — one line, ellipsised to whatever width the column
+ * The visible clipping is the stylesheet's — one line, ellipsized to whatever width the column
  * has — because a character count cannot know how wide a panel the reader has dragged. This is
  * only a bound on how much text is written into the document at all.
  */
@@ -279,7 +279,9 @@ function attributesTable(attributes: DisplayNode["attributes"]): string {
  *
  * The drawing shows the same edges but cannot name them all at once; here the one node the reader
  * asked about says it in words. Every cell is a button, so reading the flow and walking it are the
- * same gesture: the node column takes you to that node, the edge column to that route.
+ * same gesture: the node column takes you to that node, the edge column to that route. Each list
+ * is numbered from 1 in its own order — the graph's digits address the ways out and, with Shift,
+ * the ways in.
  */
 function neighborSections(neighbors: Neighbors | undefined): string {
     if (!neighbors) return "";
@@ -296,15 +298,15 @@ function neighborSection(
     neighbors: Neighbor[],
 ): string {
     const rows = neighbors.length
-        ? neighbors.map((neighbor) => neighborRow(incoming, neighbor)).join("")
-        : `<tr><td class="neighbor-empty" colspan="2">None</td></tr>`;
+        ? neighbors.map((neighbor, index) => neighborRow(incoming, neighbor, index)).join("")
+        : `<tr><td class="neighbor-empty" colspan="3">None</td></tr>`;
+    const index = `<th scope="col" class="neighbor-index">#</th>`;
+    const ends = incoming
+        ? `${index}<th scope="col">${escapeHtml(endColumn)}</th><th scope="col">Edge</th>`
+        : `${index}<th scope="col">Edge</th><th scope="col">${escapeHtml(endColumn)}</th>`;
     return (
         `<h4>${escapeHtml(heading)}</h4>` +
-        `<table class="neighbors"><thead><tr>` +
-        (incoming
-            ? `<th scope="col">${escapeHtml(endColumn)}</th><th scope="col">Edge</th>`
-            : `<th scope="col">Edge</th><th scope="col">${escapeHtml(endColumn)}</th>`) +
-        `</tr></thead><tbody>${rows}</tbody></table>`
+        `<table class="neighbors"><thead><tr>${ends}</tr></thead><tbody>${rows}</tbody></table>`
     );
 }
 
@@ -341,16 +343,23 @@ function endCell(end: CrossingEnd): string {
     );
 }
 
-function neighborRow(incoming: boolean, neighbor: Neighbor): string {
+/**
+ * A row of a neighbor table: its 1-based place in the list, then the row itself.
+ *
+ * The number is its own cell so the two lists line up down the panel; it is the digit the graph's
+ * keyboard takes this route by, in the order the stage lists its edges.
+ */
+function neighborRow(incoming: boolean, neighbor: Neighbor, index: number): string {
     // An edge is named by the pair it joins, so a row can point at the same edge the drawing does.
     const [fromId, toId] = incoming
         ? [neighbor.id, neighbor.ownerId]
         : [neighbor.ownerId, neighbor.id];
     // Each row reads in the direction control travels: *that node, along this edge, to here* on
     // the way in; *from here, along this edge, to that node* on the way out.
+    const number = `<td class="neighbor-index">${index + 1}</td>`;
     const node = `<td>${nodeCell(neighbor)}</td>`;
     const edge = `<td>${edgeCell(fromId, toId, neighbor.edgeCategory)}</td>`;
-    return `<tr>${incoming ? node + edge : edge + node}</tr>`;
+    return `<tr>${number}${incoming ? node + edge : edge + node}</tr>`;
 }
 
 function nodeCell(neighbor: Neighbor): string {
@@ -360,6 +369,9 @@ function nodeCell(neighbor: Neighbor): string {
     );
 }
 
+/**
+ * The edge column: the route's name as a button, or nothing for a route the stage did not name.
+ */
 function edgeCell(fromId: string, toId: string, category: string | undefined): string {
     const route = edgeStyle(category);
     if (!route || !category) return "";

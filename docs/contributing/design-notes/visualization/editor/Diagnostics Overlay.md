@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > Status: **implemented**. This is the web-report half of
-> [Component 6 — Editor seams](../../diagnostics/Diagnostics%20and%20Validation.md) ([#121](https://github.com/pengzhengyi/dialoguedown/issues/121)):
+> [Component 6 — Editor seams](../../diagnostics/Diagnostics%20and%20Validation.md):
 > it renders the compiler's diagnostics in the `visualize` report's source editor,
 > built on an **LSP-shaped diagnostic projection** so a future language server and
 > VS Code extension reuse the same seam. The language server itself is deferred.
@@ -215,8 +215,7 @@ The visualizer compiles **stage-boundary** (per
 grays out the later tabs. The overlay shows the diagnostics from the produced stages —
 exactly the errors that halted compilation. Compiling **best-effort** to surface *every*
 stage's problems at once (more linter-like) is deferred: it would re-enable the grayed
-tabs and belongs with user-selectable mode
-([#110](https://github.com/pengzhengyi/dialoguedown/issues/110)).
+tabs and belongs with user-selectable mode.
 
 ## Error and boundary cases
 

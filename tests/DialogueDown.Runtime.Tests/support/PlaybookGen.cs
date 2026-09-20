@@ -68,7 +68,7 @@ internal static class PlaybookGen
                 new NodeDraft(draws, speaker, onward, elsewhere));
 
     private static PlaybookDocument Document(NodeDraft[] drafts, int speakers, int entry) =>
-        Playbooks.Document(
+        PlayContextFactory.Document(
             [.. drafts.Select((draft, id) => draft.At(id))], Speakers(speakers), entry);
 
     // The first speaker is the anonymous default, so a drawn line can be said by nobody in

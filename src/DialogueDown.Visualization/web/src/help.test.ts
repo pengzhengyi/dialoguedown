@@ -20,10 +20,27 @@ describe("setHelp", () => {
         expect(html).not.toContain("Arrow keys"); // graph-only guidance is absent
     });
 
-    it("shows graph help on a graph tab", () => {
+    it("shows the full keymap on the Dialogue Graph, ways in included", () => {
         setHelp("graph");
+        expect(document.querySelector("button")!.getAttribute("title")).toContain("Dialogue Graph");
         const html = document.getElementById("help-content")!.innerHTML;
         expect(html).toContain("Arrow keys");
+        expect(html).toContain("first way out");
+        expect(html).toContain("first way in");
+        expect(html).toContain("Shift");
+        expect(html).toContain("collapse or expand");
+    });
+
+    it("shows a tree stage its own keymap, without the graph's ways in", () => {
+        setHelp("tree");
+        expect(document.querySelector("button")!.getAttribute("title")).toContain("tree stage");
+        const html = document.getElementById("help-content")!.innerHTML;
+        expect(html).toContain("Arrow keys");
+        expect(html).toContain("first child");
+        expect(html).toContain("nth child");
+        expect(html).not.toContain("Shift");
+        expect(html).not.toContain("way in");
+        // The stage paragraphs are shared, so a tree tab keeps the inspection guidance too.
         expect(html).toContain("collapse or expand");
     });
 

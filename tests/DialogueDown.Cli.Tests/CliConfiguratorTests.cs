@@ -1,5 +1,6 @@
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
+using DialogueDown.TestSupport;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Spectre.Console.Cli;

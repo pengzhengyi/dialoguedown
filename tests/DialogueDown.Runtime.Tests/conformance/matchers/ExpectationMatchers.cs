@@ -16,6 +16,11 @@ internal static class ExpectationMatchers
         new IExpectationMatcher[] { new SaidMatcher(), new EndedMatcher(), new PerformMatcher(), new RefusedMatcher() }
             .ToDictionary(matcher => matcher.Key, StringComparer.Ordinal);
 
+    /// <summary>Whether a matcher owns this key in an expectation.</summary>
+    /// <param name="key">The claim's key, as a fixture writes it.</param>
+    /// <returns><see langword="true"/> when something knows how to check this claim.</returns>
+    public static bool CanCheck(string key) => _byKey.ContainsKey(key);
+
     /// <summary>Checks what the run said next against what the session expected.</summary>
     /// <param name="happened">What the runner said, or <see langword="null"/> if it has fallen silent.</param>
     /// <param name="expect">What the session expected.</param>
@@ -45,7 +50,7 @@ internal static class ExpectationMatchers
     {
         if (!_byKey.TryGetValue(claim.Key, out var matcher))
         {
-            return SessionOutcome.NotYetRunnable($"nothing checks {claim.Key} yet");
+            return SessionOutcome.NotYetPlayable(SessionReasons.UncheckableClaim(claim.Key));
         }
 
         var claimed = claim.Value

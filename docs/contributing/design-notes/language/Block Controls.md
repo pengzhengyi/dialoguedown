@@ -1,8 +1,7 @@
 # Block controls
 
 > [!NOTE]
-> Status: **implemented**. Runtime evaluation is deferred to the graph/runtime
-> ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
+> Status: **implemented**. Runtime evaluation is deferred to the graph/runtime.
 
 ## Table of contents
 
@@ -50,7 +49,7 @@ In scope: the surface **shape** (marker spelling and grouping), the **grammar**,
 **spans**.
 
 Out of scope: **runtime evaluation** — choosing and playing a branch belongs to the
-graph/runtime ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)) — and
+graph/runtime — and
 **negation / in-script expressions**, unchanged from the condition primitive (a
 writer composes logic behind a single game-defined key).
 
@@ -437,9 +436,8 @@ checks recurse into branch bodies.
 | --- | --- |
 | **Achieved** | Connected and nested blockquotes build semantic `ControlBlock` / `Branch` nodes; grammar and placement diagnostics recover without polluting the AST; traversal, desugaring, validation, visualization, and editor highlighting cover the construct. |
 | **Changed** | Control construction moved from `BlockBuilder` into a dedicated `ControlBlockBuilder`; malformed marker shapes use five focused transpile diagnostics; marker highlighting combines the Markdown AST's keyword spans with the semantic Dialogue AST rather than retaining marker kinds on `Branch`. Empty and effect-only branch bodies remain valid. |
-| **Not implemented** | Runtime branch selection remains deferred to [#45](https://github.com/pengzhengyi/dialoguedown/issues/45). |
+| **Not implemented** | Runtime branch selection remains deferred to the runtime. |
 
 ## Open questions and deferred work
 
-- **Runtime evaluation** — selecting and playing a branch belongs to the graph/runtime
-  ([#45](https://github.com/pengzhengyi/dialoguedown/issues/45)).
+- **Runtime evaluation** — selecting and playing a branch belongs to the graph/runtime.

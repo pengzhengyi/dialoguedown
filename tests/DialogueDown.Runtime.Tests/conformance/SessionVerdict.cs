@@ -10,5 +10,5 @@ internal enum SessionVerdict
     Diverged,
 
     /// <summary>The session uses something this build has not learned.</summary>
-    NotYetRunnable,
+    NotYetPlayable,
 }

@@ -1,13 +1,14 @@
 # Conformance corpus
 
 > [!NOTE]
-> Status: **implemented**, except the harness that runs the playable half, which
-> belongs to the runtime that can execute it
-> ([C2](https://github.com/pengzhengyi/dialoguedown/issues/297)) and whose shape
-> is settled below. This note records the fixtures that keep more than one runtime
-> honest, and the format they are written in. It implements the conformance half
-> of the [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md),
-> which owns the cross-cutting decisions this note applies.
+> Status: **implemented**. This note records the fixtures that keep more than one
+> runtime honest, the format they are written in, and the harness that runs both
+> halves — the readable fixtures against the reader, the playable ones against the
+> reference runner. A playable fixture whose session sends a command the runner
+> does not take yet is reported as not-yet-playable rather than skipped. It
+> implements the conformance half of the
+> [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
+> owns the cross-cutting decisions this note applies.
 
 ## Table of contents
 
@@ -36,9 +37,10 @@ In scope:
 - **playable fixtures** — a session a runner must reproduce;
 - the C# harness for the readable half, which runs against today's reader.
 
-Out of scope, and deferred with reason: the harness for the playable half, which
-needs a runner to run anything at all
-([C2](https://github.com/pengzhengyi/dialoguedown/issues/297)).
+The harness runs both halves: the readable fixtures against the reader, and the
+playable ones against the reference runner. A fixture whose session needs a
+command the runner does not take yet is reported as not-yet-playable, so adding
+the command turns it on without touching the fixture.
 
 This note assumes the vocabulary of the
 [architecture note](./Dialogue%20Runtime%20Architecture.md) — *playbook*,
@@ -71,11 +73,11 @@ playbook being a designed contract rather than a dump of the compiler's graph.
 - [x] A refused source that opens with a `broken:` block naming and showing the
       edit, checked for shape and compiled to prove the case is otherwise sound.
 - [x] Playable fixtures covering speech, succession, choices, conditions,
-      branches, jumps, effects, and queries.
+      branches, jumps, effects, effect failures, and queries.
 - [x] A refused command a session can assert, by reason rather than by wording.
-- [x] A C# harness that runs the readable fixtures today.
-- [x] A documented shape for the playable harness, so C2 has an acceptance suite
-      waiting rather than a corpus to write afterward.
+- [x] A C# harness that runs the readable fixtures.
+- [x] A harness that runs the playable fixtures against the reference runner,
+      reporting a case the build cannot play yet rather than failing it.
 
 ## Where the corpus lives
 
@@ -172,11 +174,12 @@ so a fixture reads as the conversation it replays:
 | `send` | Means |
 | --- | --- |
 | `"next"` | `Next` — proceed past what was just said |
-| `{ "choose": n }` | `Choose(n)` — take the option at position `n` |
-| `{ "supply": { … } }` | `Supply(answers)` — here is what the world says |
+| `{ "choose": n }` | `Choose(n)` — take the option at position `n` *(not taken by the reference runner yet)* |
+| `{ "supply": { … } }` | `Supply(answers)` — here is what the world says *(not taken yet)* |
 | `"done"` | `Done()` — the effect just asked for has been carried out |
-| `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top |
-| `"describe"` | `Describe()` — ask where the run stands |
+| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
+| `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top *(the runner always begins at `entry` today)* |
+| `"describe"` | `Describe()` — ask where the run stands *(not taken yet)* |
 
 A session with no `start` begins at the playbook's `entry`.
 
@@ -307,9 +310,9 @@ CI checks that.
 
 ### Running a session
 
-The playable harness belongs to C2, which is the only component that can execute
-anything. Its **shape** is settled here, so that component inherits an acceptance
-suite rather than a corpus to interpret.
+The playable harness lives with the reference runner, which is the only
+component that can execute anything. Its **shape** is settled here, so that
+component inherits an acceptance suite rather than a corpus to interpret.
 
 ```mermaid
 flowchart TD
@@ -356,6 +359,7 @@ make good regression material, but a failure in one says little about what broke
 | A conditional block | Are the arms tried in the order written? |
 | A jump | Does a divert transfer without returning? |
 | An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
+| A failed effect | Does the run stand still, so a retry can land and an advance cannot? |
 | A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
 | Styled speech | Do fragment boundaries and styles survive intact? |
 | A command the run cannot take | Is it refused, for the reason the session names, rather than thrown or quietly ignored? |
@@ -446,11 +450,46 @@ asserts the reason, exactly as the readable half asserts a verdict rather than a
 One construct per fixture. Realistic scripts belong in `examples/`, and their
 playbooks are already pinned by C1's goldens.
 
+### F7 — A verdict gathers every reason it carries
+
+One reason per case was the first shape, and it made a contributor fix one
+divergence, re-run, and meet the next — the experience of a compiler that stops
+at the first error, which this project deliberately avoids.
+
+So an outcome carries a **list** of reasons. The verdict lattice is unchanged:
+the gravest verdict still wins, and reasons gather at that gravestness, in the
+order the checks ran. A reason a graver verdict outranks is dropped, because
+reporting a construct nobody has taught the harness beside a real failure would
+only dilute the failure.
+
+The list is flat rather than nested under the claim that found it: a reason is
+written to stand alone — the speaker check names the speaker it expected, a
+fragment check names the fragment's place — so nesting would restate what the
+words already say, and cost a type to do it.
+
+The **run** still stops at the first session entry that does not conform: a send
+advances the run, so carrying on would judge later entries against a state the
+fixture never described. Gathering within an entry is safe for the same reason
+in reverse — nothing has moved between one check and the next.
+
+What the build has **yet to learn** gathers further out still. The harness asks
+that of the fixture before running it — every node kind it cannot play, every
+send no reader owns, every claim in an expectation nothing knows how to check —
+so one run of a case names everything it needs instead of one construct per
+run. Asking rather than stepping is what keeps it safe: the
+run never moves past a message that was never sent.
+
+The verdict is called **not yet playable**, not "not yet runnable", because the
+product already says so: a node kind the runner cannot take is a
+`RefusalReason.UnplayableNode`, and the corpus folder and its fixtures have been
+*playable* since the format's first pass. One adjective serves the playing side —
+*playable* — and one verb, *play*; **run** stays the noun for one playthrough,
+which is `Runner` and `PlayState`'s word. The harness's own vocabulary held the
+only "runnable" the repository had.
+
 ## Error and boundary cases
 
-The readable half's failures are implemented; the rest describe the session
-harness and arrive with it in
-[C2](https://github.com/pengzhengyi/dialoguedown/issues/297).
+Both halves' failures are implemented; the harness reports what each one found.
 
 | Case | Behavior | |
 | --- | --- | --- |
@@ -459,11 +498,11 @@ harness and arrive with it in
 | A `refused` names a reason the protocol does not give | Fail as a fixture bug: the schema closes the set, so the fixture and the harness have drifted apart | shipped |
 | A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why | shipped |
 | A case missing a fixture, a playbook, or a source | Fail: the corpus is incomplete, in either half | shipped |
-| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | with C2 |
-| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it | with C2 |
-| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing | with C2 |
-| The run ends before the session does | Fail, for the same reason | with C2 |
-| A `said` differs in one field | Fail, reporting the entry and the field rather than the whole document | with C2 |
+| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | shipped |
+| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it | shipped |
+| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing | shipped |
+| The run ends before the session does | Fail, for the same reason | shipped |
+| A `said` differs in several fields | Fail, reporting every field that differs rather than the whole document, or only the first | shipped |
 
 ## Integration
 
@@ -471,8 +510,8 @@ harness and arrive with it in
 | --- | --- |
 | `conformance/` | New root folder, alongside `schema/`, with a `README.md` a port starts from |
 | `schema/fixture-0.schema.json` | The fixture format's own schema, published beside the playbook's, so a fixture is checked in an editor as it is hand-authored |
-| C# harness | Two types in `DialogueDown.Playbook.Tests`: `CorpusFolder` finds cases and reads their files, naming the case in every failure; `ReadableCorpus` says what a readable case *means*. `Corpora` is the only place that knows where the corpus sits. No new dependency |
-| C2 | Inherits the playable fixtures as its acceptance suite, and implements the harness that runs them |
+| C# harness | `DialogueDown.Conformance` finds cases and reads their files, naming the case in every failure (`CorpusFolder`), and says what a readable case *means* (`ReadableCorpus`); `Corpora` is the only place that knows where the corpus sits. The playable half runs in `DialogueDown.Runtime.Tests`, on the shared `DialogueDown.TestSupport` helpers |
+| C2 | Inherits the playable fixtures as its acceptance suite and runs them; a case it cannot play yet is reported as not yet playable rather than failed |
 | C4 | The `ddown play` REPL sends and receives the same messages, so a session and a REPL transcript are one shape — `--replay <fixture>` makes the REPL a harness |
 | C5b | The TypeScript runner is held to the same corpus, which is the whole reason the fixtures are language-neutral |
 | CI | The readable harness runs with the existing suite; every case the corpus accepts is also validated against the schema, so the format's two specifications cannot drift apart |
@@ -485,7 +524,7 @@ The corpus is itself test material, so the question is what tests *it*.
 | --- | --- |
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture, a fixture naming a document that is not there |
 | Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
-| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together until C2 can run it. Every case in **either** half ships a fixture, a playbook, and a source |
+| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together. Every case in **either** half ships a fixture, a playbook, and a source |
 | Source integrity | Every `playable/` case is recompiled from its source and compared to the committed playbook. Every `readable/` refusal's source opens with a well-formed `broken:` block; the script below it compiles and is accepted by the reader, yet differs from the committed playbook, so the case is really broken |
 
 The last two are the guard against a corpus rotting. A committed playbook that no
@@ -517,18 +556,16 @@ already keeps the golden playbooks; the rest lives beside the reader it exercise
   belongs to the runner or to the shell is C2's to settle. Under functional core
   and imperative shell the answer is likely the shell, in which case `asked` is
   always in document order and carries the menu's stated kind alongside it.
-- **A menu written as a divert has no fixture yet.** `- => [Label](#anchor)` is
-  the ordinary way to write a branching menu, but its option edge currently
-  compiles to an empty label
-  ([#369](https://github.com/pengzhengyi/dialoguedown/issues/369)) — found by
-  writing the first playable fixture, before any runner existed to trip over it.
-  A fixture written now would enshrine the bug in the specification, so it lands
-  with the fix.
+- **A menu written as a divert waits on the runner.** `- => [Label](#anchor)` is
+  the ordinary way to write a branching menu, and `a-divert-option` writes one.
+  What this build cannot do yet is pick from it: the session sends `choose`, and
+  no reader owns that command.
 - **Random choice has no fixture yet.** Pinning a draw needs the entropy decision
   C2 owns — a specified generator, or values the host supplies. Deferred until
   that is settled, and called out here rather than quietly omitted.
 - **A rendered view of a session** — `ddown conformance show <fixture>` printing a
   session as prose — would give human readability with no parser in any port,
   since it is generated and never authored. Worth doing once fixtures exist.
-- **The playable harness is deferred to C2**, which is the only component that can
-  run it.
+- **The playable harness landed with the reference runner.** A fixture that needs
+  a command the runner does not take yet is reported as not-yet-playable, so the
+  gap is visible instead of silently green.

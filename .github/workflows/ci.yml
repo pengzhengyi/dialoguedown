@@ -115,10 +115,13 @@ jobs:
           if failures:
               raise SystemExit("\n".join(failures))
 
-          if line < 100:
+          # Not every line can be reached: a closed union's default arm, a `break` the language
+          # requires after a call that throws, a constructor no subclass calls. The aspirational
+          # target therefore leaves room for them rather than asking for the impossible.
+          if line < 95:
               print(
                   f"::warning::Line coverage is {line:.2f}%; "
-                  "100% is the aspirational target."
+                  "95% is the aspirational target."
               )
           PY
 
@@ -309,6 +312,29 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: "**/*.md"
+
+      # Internal links and fragments, which the DocFX build below only catches inside docs/.
+      # Offline: an external page can fail without the repository changing, so those are checked
+      # on demand. The ignores — dialogue scripts, generated output — live in lychee.toml.
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline --no-progress docs README.md CONTRIBUTING.md AGENTS.md
+            SECURITY.md CODE_OF_CONDUCT.md .github
+
+      # Advisory like the two steps above, and for the same reason: a word cspell has not met
+      # yet — a newly cited tool, a proper noun — arrives as a reviewable dictionary diff rather
+      # than a blocked merge. The whole tree is swept rather than the files a pull request
+      # touched, because that is the case a version bump creates: a new cspell dictionary can
+      # flag files nobody edited, and the default changed-files scope would check nothing at all.
+      # Pin the action only if a release starts failing on words this repository has not changed.
+      - name: Check spelling
+        uses: streetsidesoftware/cspell-action@v9
+        with:
+          config: cspell.json
+          files: "**"
+          incremental_files_only: false
 
   # The site is built on every pull request, so a broken link or a missing cross-reference is
   # caught before it reaches main. The build fails on warnings rather than reporting them: the
