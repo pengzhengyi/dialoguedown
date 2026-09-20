@@ -58,7 +58,7 @@ internal static class Playability
     /// <returns>The reasons, in the order the entry names them, each named once.</returns>
     public static IEnumerable<string> WhyNotPlayable(SessionEntry entry) => entry switch
     {
-        Send send when !CanPlay(send) => [SessionReasons.UnsendableMessage(send.Message.ToJsonString())],
+        Send send when !CanPlay(send) => [SessionReasons.UnsendableCommand(Commands.NameOf(send))],
         Expect expect => expect.Message.AsObject()
             .Select(claim => claim.Key)
             .Where(claim => !ExpectationMatchers.CanCheck(claim))
