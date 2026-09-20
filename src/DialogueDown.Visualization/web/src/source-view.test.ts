@@ -441,13 +441,4 @@ describe("createSourceView construct marks", () => {
 
         expect(source.element.querySelector(".source-preview .dd-tag")).toBeNull();
     });
-
-    it("reveals the line a jump was written on when its arrow is clicked", () => {
-        const source = mountSource("=> #scene-2\nAlice: Hi.\n");
-        source.setSemanticTokens([{ kind: "JumpIndicator", range: lsp(0, 0, 2) }]);
-
-        source.element.querySelector<HTMLElement>(".source-preview .dd-tok-jump")!.click();
-
-        expect(document.activeElement?.closest(".source-pane")).not.toBeNull();
-    });
 });

@@ -24,8 +24,8 @@ found**, wearing the vocabulary the rest of the report established for them.
   every token kind the preview can mark, at every occurrence in the document.
 - The **tag capsule** in running prose, tightened so it hugs the punctuation that follows a
   speaker prefix.
-- The **affordances** the report's tables already have: an ask-me tooltip on hover, copy on a
-  tag, and one acting mark — a jump's arrow reveals the line it was written on.
+- The **affordances** the report's tables already have: an ask-me tooltip on hover and copy on a
+  tag.
 
 **Out of scope (deliberate, see D7):**
 
@@ -46,7 +46,7 @@ found**, wearing the vocabulary the rest of the report established for them.
 | **Capsule** | The tag chip the report draws everywhere it shows a tag — a capsule with an identity dot. |
 | **Token vocabulary** | `dd-tok-*` classes mapped from token kinds, shared by both text surfaces. |
 | **Ask-me mark** | A mark that explains itself on hover (help cursor + tooltip) rather than acting. |
-| **Acting mark** | A mark with a click: a capsule copies, the jump's arrow reveals its line in the editor. |
+| **Acting mark** | A mark with a click: a capsule copies. |
 
 ## Functionality checklist
 
@@ -54,8 +54,9 @@ found**, wearing the vocabulary the rest of the report established for them.
 - [x] A tag renders as the shared capsule, with its identity dot and its copy affordance.
 - [x] The marks wear the same classes as the editor, so one construct is one color in both panes.
 - [x] Ask-me marks carry a help cursor and a tooltip; a capsule copies and shows no tooltip.
-- [x] The jump's arrow reveals the line it was written on in the editor.
-- [x] The capsule hugs the colon that closes a speaker prefix.
+- [x] The capsule is drawn with even sides, snug against the punctuation that closes a speaker
+      prefix.
+- [x] A tag in prose leaves off the identity dot that tells tags apart in a table.
 - [x] Ignored Markdown, front matter, link text, and a code span that merely contains a
       construct's words stay unmarked.
 - [x] Edits move the marks with their spans until the next compile replaces them.
@@ -70,8 +71,7 @@ found**, wearing the vocabulary the rest of the report established for them.
 | `PreviewConstruct` | A positioned construct resolved against the buffer: kind, span, and the text as written. | `annotatePreviewConstructs` |
 | `annotatePreviewConstructs` | Walk the rendered preview and mark every construct occurrence. | `construct-highlight.ts` |
 | `TOKEN_CLASS` | The one mapping from token kind to class, shared by the editor's decorations and the preview's marks. | `semantic-tokens.ts`, `construct-highlight.ts` |
-| `renderTag` | The one capsule every surface draws a tag with. | `tag-chip.ts`, the Config tab, the tables |
-| `revealInEditor` | Put the editor's selection on a source range and bring it into view. | The jump mark, the stage tabs |
+| `renderTag` | The one capsule every surface draws a tag with; `identityDot` is off for prose. | `tag-chip.ts`, the Config tab, the tables |
 
 ```mermaid
 flowchart LR
@@ -83,7 +83,6 @@ flowchart LR
     Marks --> Preview["preview marks"]
     Preview -->|hover| Tip["ask-me tooltip"]
     Preview -->|click a capsule| Copy["copy the tag"]
-    Preview -->|click the arrow| Reveal["reveal in the editor"]
 ```
 
 ## Key design decisions
@@ -107,9 +106,14 @@ for the editor, a second surface for the preview, one place to change a color. A
 
 Every other construct is a word inside a sentence and takes a color. A tag is an object the
 report shows as a capsule in the Config tab, the Semantic Model, and the Playbook, so the preview
-draws the same capsule — the same component, hues, dot, and copy affordance. It deliberately does
-*not* also wear `dd-tok-custom-tag`: the capsule's own two-hue design (pink for custom, violet
-for reserved) is what identifies it, and a token tint on top would fight it.
+draws the same capsule — the same component, hues, and copy affordance. It deliberately does *not*
+also wear `dd-tok-custom-tag`: the capsule's own two-hue design (pink for custom, violet for
+reserved) is what identifies it, and a token tint on top would fight it.
+
+The capsule's **identity dot** is left off in prose. The dot answers "which tag is this?" — worth
+asking when several tags compete for the eye in one table cell, and worth little in a sentence
+where the tag's own text stands in plain sight. The capsule keeps the canonical tag hue, which is
+the part that says "this is a tag"; the dot, and its hash of the name, stay a table's aid.
 
 ### D4 — A DOM pass after rendering, not a Marked extension
 
@@ -143,14 +147,18 @@ already has a region annotation (`dd-preview-control-region`) and the keyword it
 token's color through its existing class. `IgnoredMarkdown` is what the preview renders plain, by
 definition. The pass skips all three rather than inventing a mark for them.
 
-### D8 — Three affordances, borrowed from the tables
+### D8 — Two affordances, borrowed from the tables
 
-A mark that names something the reader may need explained — who speaks, what the host performs, a
-value only the running game can supply, a weight — takes the graph's help pointer and a tooltip
+A mark that names something the reader may need explained — who speaks, what the game performs, a
+value only the running game can answer, a weight — takes the graph's help pointer and a tooltip
 through the same delegated Tippy instance the tables use. A capsule copies, through the same
-delegated handler the tables use. The jump's arrow is the one mark that acts on a source position:
-it reveals the line it was written on in the editor, which is what a reader wants when the arrow is
-the thing they are pointing at.
+delegated handler the tables use.
+
+The preview deliberately offers **no reveal-in-editor click**. The two panes already scroll
+together, so the reader is looking at the line in question, and a click that reached across the
+split would be a reverse mapping no other mark has — a stray affordance rather than a rule. The
+editor stays reachable from the stage tabs, which is where a reader asks "where did this come
+from?".
 
 ## Error and boundary cases
 
@@ -162,7 +170,6 @@ the thing they are pointing at.
 | A construct inside ignored Markdown, front matter, or a link | Left alone: those regions are spoken for. |
 | A code span that contains a construct's words but is not one | Left alone: a code-span mark requires the whole span to be the construct. |
 | An edit between compiles | Spans map through the change; the text is read back out of the buffer, so a mark follows its construct. A construct typed but not yet compiled is unmarked until the next compile. |
-| A stale span after a large edit | Clamped by `revealInEditor`; a zero-width range collapses to a caret rather than throwing. |
 | A second pass over the same DOM | Already-marked elements are skipped, so the pass is idempotent. |
 
 ## Integration
@@ -170,7 +177,7 @@ the thing they are pointing at.
 - **Data**: `report.semanticTokens` (unchanged) and `report.symbols` — no compiler or payload
   change; the marks are a client-side rendering of what the report already carried.
 - **Wiring**: `createSourceView` builds the positioned constructs in `setSemanticTokens`, resolves
-  them to marks on every preview render, and installs the tooltip, copy, and reveal handlers once
+  them to marks on every preview render, and installs the tooltip and copy handlers once
   on the stable preview element so a re-render keeps them.
 - **Styles**: the promoted token rules and the preview interaction layer live together in
   `src/styles.css`; the build output the report embeds (`report.js`, `report.css`) changes with
@@ -181,8 +188,8 @@ the thing they are pointing at.
 - **Unit** — `construct-highlight.test.ts`: every kind, the capsule's DOM, the code-span shape,
   the placement guards, precedence, idempotence, and the plain kinds. The tests carry the
   compiler's real token text, backticks included.
-- **View** — `source-view.test.ts`: the marks appear from pushed tokens, clear when tokens empty,
-  and the arrow's click lands the editor's focus.
+- **View** — `source-view.test.ts`: the marks appear from pushed tokens and clear when tokens empty.
+- **Capsule** — `tag-chip.test.ts`: the identity-dot option leaves the capsule otherwise unchanged.
 - **End to end** — `e2e/highlight.spec.ts`: the editor's marks (scoped to the editor pane), the
   preview's marks for a prefix and for every code-span kind, and the capsule's copy attribute.
   `semantic-tokens.test.ts` pins the shared class mapping.
@@ -192,9 +199,9 @@ the thing they are pointing at.
 - **Marks between compiles.** The pass only knows what the last compile projected. Projecting
   tokens in the browser would remove that lag at the cost of a second grammar; the sibling note
   defers the same idea, and the marks inherit the decision.
-- **Reveal beyond the arrow.** Only the jump carries `data-span` today. Every mark knows its span,
-  so extending reveal-on-click to the rest is a small step — worth doing only if the caret
-  jumping out of the preview on any click proves welcome.
+- **A condition's guard.** The tooltip says what follows is gated, without naming whether that is
+  a line, a choice, a jump, or a block: the token does not carry the construct it guards, so a
+  sharper tooltip needs more of the parse in the payload. Worth it only if writers ask.
 - **The editor's own hover.** The editor could carry the same tooltips through a CodeMirror hover
   source. Deferred: the editor's colors already say what a construct is, and its tooltips would
   compete with the diagnostics overlay for the same hover.

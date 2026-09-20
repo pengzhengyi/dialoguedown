@@ -383,7 +383,8 @@ test("marks the same constructs in the rendered preview, in the editor's vocabul
     const chip = preview.locator(".dd-tag");
     await expect(chip).toHaveText("#happy");
     await expect(chip).toHaveAttribute("data-copy", "#happy");
-    await expect(chip.locator(".dd-tag-dot")).toHaveCount(1);
+    // No identity dot here: the dot is a table's aid for telling tags apart in one cell.
+    await expect(chip.locator(".dd-tag-dot")).toHaveCount(0);
 
     // The marks resolve to the token colors the editor beside them paints the same words in.
     const colors = await preview.evaluate((root) => {

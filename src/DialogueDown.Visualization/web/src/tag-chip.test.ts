@@ -36,6 +36,15 @@ describe("renderTag", () => {
         expect(chip.textContent).toBe("#role=guide");
     });
 
+    it("leaves the identity dot off when a surface shows the tag in passing", () => {
+        const chip = renderTag({ name: "wise", reserved: false }, { identityDot: false });
+
+        expect(chip.querySelector(".dd-tag-dot")).toBeNull();
+        // The capsule is otherwise unchanged: same kind, same copy, same label.
+        expect(chip.classList.contains("dd-tag-custom")).toBe(true);
+        expect(chip.dataset.copy).toBe("#wise");
+    });
+
     it("gives a writer's own tag an identity dot and a reserved name none", () => {
         // A reserved name is one of a closed set, so its violet already identifies it; only a
         // custom tag needs the dot to tell it from the next one.

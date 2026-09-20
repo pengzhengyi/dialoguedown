@@ -556,17 +556,11 @@ export function createSourceView(
     };
     renderPreview(source);
     // Delegated once on the stable preview element, so a re-render keeps them: the marks behave
-    // the way the report's tables do. A tag copies itself, an ask-me mark explains what it is on
-    // hover, and a jump's arrow reveals the line it was written on.
+    // the way the report's tables do. A tag copies itself and an ask-me mark explains what it is
+    // on hover. Nothing in the preview moves the editor: the two panes already scroll together,
+    // and a click that reached across the split would be a mapping no other mark has.
     initPieceTooltips(preview);
     wireClickToCopy(preview);
-    preview.addEventListener("click", (event) => {
-        const mark = (event.target as Element | null)?.closest<HTMLElement>("[data-span]");
-        const [from, to] = (mark?.dataset.span ?? "").split(":").map(Number);
-        if (from === undefined || to === undefined || Number.isNaN(from) || Number.isNaN(to))
-            return;
-        revealRange(from, to);
-    });
     // Delegated once on the stable preview element; each render re-annotates its headings.
     wireHeadingAnchorCopy(preview);
 
@@ -735,9 +729,6 @@ export function createSourceView(
     });
     divider.appendChild(previewPanel.button);
 
-    /** Put the editor's selection on a source range the reader asked for from the Preview. */
-    const revealRange = (from: number, to: number): void => revealInEditor(view, from, to);
-
     return {
         element: container,
         destroy: () => {
@@ -782,13 +773,13 @@ export function createSourceView(
             const start = positionToOffset(view.state, range.start);
             return { start, end: Math.max(start, positionToOffset(view.state, range.end)) };
         },
-        selectRange: revealRange,
+        selectRange: (from, to) => revealInEditor(view, from, to),
     };
 }
 
 /**
- * Put the editor's selection on a source range and bring it into view, for a selection the reader
- * asked for — a jump picked in the Preview, or a stage tab revealing where it came from.
+ * Put the editor's selection on a source range and bring it into view, for a selection a reader
+ * asked for outside the editor — a stage tab revealing where a node came from.
  *
  * Clamp to the document and order the pair, so a stale span can only ever land the cursor
  * in-bounds rather than throw. A zero-width range collapses to a caret.

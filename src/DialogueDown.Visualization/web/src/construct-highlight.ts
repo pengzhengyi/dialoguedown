@@ -48,15 +48,17 @@ export interface PreviewConstruct extends PositionedConstruct {
  * of its own region, and the ignored Markdown is what the Preview deliberately renders plain.
  */
 const CONSTRUCT_TIP: Partial<Record<TokenKind, string>> = {
-    SpeakerName: "Who speaks this line.",
-    SpeakerId: "A speaker id — the stable name for this speaker.",
-    Command: "A command — the host is asked to perform this.",
-    Query: "A query — a value only the running game can supply.",
-    Condition: "A condition — this plays only when the query reads true.",
-    StaticWeight: "A weight — this option's share of the draw.",
-    DynamicWeight: "A weight — this option's share of the draw.",
-    ReservedAnchor: "A reserved target — DialogueDown owns this anchor.",
-    JumpIndicator: "A jump — click to reveal it in the source.",
+    SpeakerName: "The speaker — who says this line.",
+    SpeakerId:
+        "A speaker id — the name the script uses, stable even when the displayed name changes.",
+    Command: "A command — your game performs this action when the line plays.",
+    Query: "A query — asks your game for a value and uses the answer here.",
+    Condition: "A condition — what follows plays, is offered, or is taken only when it reads true.",
+    StaticWeight:
+        "A weight — this choice's chance of being picked, set by the number written here.",
+    DynamicWeight: "A weight — this choice's chance of being picked, set by your game each time.",
+    ReservedAnchor: "The reserved endpoint — a jump to it ends the run.",
+    JumpIndicator: "A jump — takes the run to another section of the script.",
 };
 
 /** Elements that are already spoken for: a link is navigable, a fence is not prose, a capsule is a tag. */
@@ -224,12 +226,12 @@ function isWordChar(value: string | undefined): boolean {
 }
 
 function markElement(mark: ResolvedMark): HTMLElement {
-    const element = mark.tag === null ? constructSpan(mark) : renderTag(mark.tag);
+    // A tag wears the capsule the rest of the report shows, minus the identity dot: that dot tells
+    // several tags apart in one table cell, and a tag standing in a sentence names itself.
+    const element =
+        mark.tag === null ? constructSpan(mark) : renderTag(mark.tag, { identityDot: false });
     element.dataset.construct = "";
     if (mark.tip !== null) element.dataset.tip = mark.tip;
-    if (mark.construct.kind === "JumpIndicator") {
-        element.dataset.span = `${mark.construct.span.start}:${mark.construct.span.end}`;
-    }
     return element;
 }
 

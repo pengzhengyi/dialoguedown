@@ -2039,9 +2039,11 @@ g.node.entity-highlight text.label {
 }
 
 /* The capsule reads a little larger here than in a table cell, because it sits in running prose,
-   and only its trailing side tightens: the leading room is the identity dot's, not padding. */
+   and it is drawn with even sides and a snug fit. A tag in a line is followed by the punctuation
+   that closes a speaker prefix — `#wise: Welcome` — so padding loose enough for a table cell would
+   leave the colon floating away from the tag it belongs to. */
 .source-preview .dd-tag {
-    padding: 0.05rem 0.25rem 0.05rem 0.45rem;
+    padding: 0.05rem 0.3rem;
     font-size: 0.78rem;
     vertical-align: baseline;
 }

@@ -14,9 +14,9 @@ changes easy to categorize.
   marks every dialogue construct the compiler found, in the vocabulary the editor beside it already
   uses: `#wise` as the tag capsule the rest of the report shows, `Guide` and `@guide` in the
   speaker colors, `` `playSound("wind")` `` and `` `"playerName"` `` as command and query, a
-  condition and a weight in their own hues, and a jump's `=>` that reveals the line it was written
-  on when clicked. A mark explains itself on hover and a tag copies on click; ignored Markdown,
-  front matter, and link text stay plain. See
+  condition and a weight in their own hues, and a jump's `=>` in the jump color. A mark explains
+  itself on hover and a tag copies on click; ignored Markdown, front matter, and link text stay
+  plain. See
   [Construct Marks in the Source Preview](docs/contributing/design-notes/visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md).
 
 - **Literal punctuation** — a backslash writes the next ASCII punctuation character

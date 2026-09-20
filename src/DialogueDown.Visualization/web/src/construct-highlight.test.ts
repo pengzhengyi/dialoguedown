@@ -17,7 +17,7 @@ function preview(html: string, constructs: readonly PreviewConstruct[]): HTMLEle
 }
 
 describe("annotatePreviewConstructs", () => {
-    it("renders a custom tag as the shared capsule, dot and copy affordance included", () => {
+    it("renders a custom tag as the shared capsule, without the table's identity dot", () => {
         const root = preview("<p>Alice #happy is here.</p>", [construct("CustomTag", "#happy", 6)]);
 
         const chip = root.querySelector(".dd-tag");
@@ -25,7 +25,8 @@ describe("annotatePreviewConstructs", () => {
         expect(chip?.classList.contains("dd-tag-custom")).toBe(true);
         expect(chip?.textContent).toBe("#happy");
         expect(chip?.getAttribute("data-copy")).toBe("#happy");
-        expect(chip?.querySelector(".dd-tag-dot")?.getAttribute("style")).toContain("--dd-tag-hue");
+        // The dot tells several tags apart in one table cell; in a sentence the tag names itself.
+        expect(chip?.querySelector(".dd-tag-dot")).toBeNull();
         expect(root.querySelector("p")?.textContent).toBe("Alice #happy is here.");
     });
 
@@ -84,11 +85,11 @@ describe("annotatePreviewConstructs", () => {
         ]);
 
         expect(root.querySelector(".dd-tok-command")?.getAttribute("data-tip")).toBe(
-            "A command — the host is asked to perform this.",
+            "A command — your game performs this action when the line plays.",
         );
     });
 
-    it("marks the jump indicator and lets it reveal its own line", () => {
+    it("marks the jump indicator and explains where it goes", () => {
         const root = preview('<p>=> <a href="#the-market">The market</a></p>', [
             construct("JumpIndicator", "=>", 0),
         ]);
@@ -96,7 +97,9 @@ describe("annotatePreviewConstructs", () => {
         const jump = root.querySelector(".dd-tok-jump");
 
         expect(jump?.textContent).toBe("=>");
-        expect(jump?.getAttribute("data-span")).toBe("0:2");
+        expect(jump?.getAttribute("data-tip")).toBe(
+            "A jump — takes the run to another section of the script.",
+        );
     });
 
     it("marks a whole code span, but not one that merely contains the construct", () => {
