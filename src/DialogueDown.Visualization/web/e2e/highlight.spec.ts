@@ -401,4 +401,12 @@ test("marks the same constructs in the rendered preview, in the editor's vocabul
     // An ask-me mark says what it is on hover; the tag says nothing and copies instead.
     await expect(preview.locator(".dd-tok-speaker-id")).toHaveAttribute("data-tip");
     await expect(chip).not.toHaveAttribute("data-tip");
+
+    // Nothing in the preview is clickable, so no mark promises a click: the arrow that once
+    // revealed its line wears the same ask-me pointer as the marks beside it.
+    const [jumpCursor, speakerCursor] = await preview.evaluate((root) => [
+        getComputedStyle(root.querySelector(".dd-tok-jump") as Element).cursor,
+        getComputedStyle(root.querySelector(".dd-tok-speaker-name") as Element).cursor,
+    ]);
+    expect(jumpCursor).toBe(speakerCursor);
 });

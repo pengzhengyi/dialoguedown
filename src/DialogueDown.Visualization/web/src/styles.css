@@ -2019,10 +2019,10 @@ g.node.entity-highlight text.label {
     color: var(--md-muted);
 }
 
-/* The Preview's own interaction layer, on top of the shared vocabulary above. An ask-me mark says
-   so with the graph's help pointer; the jump's arrow is the one mark that acts — clicking reveals
-   the line it was written on; and the tag capsule tightens on its trailing side, so the colon that
-   closes a speaker prefix follows the capsule closely instead of floating a space away from it. */
+/* The Preview's own interaction layer, on top of the shared vocabulary above. Every mark that
+   explains itself on hover wears the graph's help pointer, the jump's arrow included — nothing in
+   the Preview is clickable, so nothing there promises a click. The capsule, which does act,
+   keeps the pointer its class already sets. */
 .source-preview .dd-tok-speaker-name,
 .source-preview .dd-tok-speaker-id,
 .source-preview .dd-tok-command,
@@ -2030,12 +2030,9 @@ g.node.entity-highlight text.label {
 .source-preview .dd-tok-condition,
 .source-preview .dd-tok-static-weight,
 .source-preview .dd-tok-dynamic-weight,
-.source-preview .dd-tok-reserved-anchor {
-    cursor: help;
-}
-
+.source-preview .dd-tok-reserved-anchor,
 .source-preview .dd-tok-jump {
-    cursor: pointer;
+    cursor: help;
 }
 
 /* The capsule reads a little larger here than in a table cell, because it sits in running prose,

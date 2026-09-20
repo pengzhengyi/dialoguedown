@@ -150,15 +150,16 @@ definition. The pass skips all three rather than inventing a mark for them.
 ### D8 — Two affordances, borrowed from the tables
 
 A mark that names something the reader may need explained — who speaks, what the game performs, a
-value only the running game can answer, a weight — takes the graph's help pointer and a tooltip
-through the same delegated Tippy instance the tables use. A capsule copies, through the same
-delegated handler the tables use.
+value only the running game can answer, a weight, where a jump goes — takes the graph's help
+pointer and a tooltip through the same delegated Tippy instance the tables use. A capsule copies,
+through the same delegated handler the tables use.
 
 The preview deliberately offers **no reveal-in-editor click**. The two panes already scroll
 together, so the reader is looking at the line in question, and a click that reached across the
 split would be a reverse mapping no other mark has — a stray affordance rather than a rule. The
 editor stays reachable from the stage tabs, which is where a reader asks "where did this come
-from?".
+from?" Its arrow therefore wears the same ask-me pointer as every other mark, because nothing in
+the preview should promise a click it cannot keep.
 
 ## Error and boundary cases
 
