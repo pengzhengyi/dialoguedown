@@ -10,6 +10,15 @@ changes easy to categorize.
 
 ### Added
 
+- **The Source preview speaks the script's own language** — the rendered half of the Source tab now
+  marks every dialogue construct the compiler found, in the vocabulary the editor beside it already
+  uses: `#wise` as the tag capsule the rest of the report shows, `Guide` and `@guide` in the
+  speaker colors, `` `playSound("wind")` `` and `` `"playerName"` `` as command and query, a
+  condition and a weight in their own hues, and a jump's `=>` that reveals the line it was written
+  on when clicked. A mark explains itself on hover and a tag copies on click; ignored Markdown,
+  front matter, and link text stay plain. See
+  [Construct Marks in the Source Preview](docs/contributing/design-notes/visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md).
+
 - **Literal punctuation** — a backslash writes the next ASCII punctuation character
   literally, so a script can spell a literal tag (`\#word`, `\##default`) or arrow (`\=>`)
   in prose, and escaping a speaker-prefix element keeps the line in the default voice. The

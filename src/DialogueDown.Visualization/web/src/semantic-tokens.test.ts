@@ -20,7 +20,9 @@ describe("decoratedRanges", () => {
 
         const ranges = decoratedRanges(state, [token("SpeakerName", 0, 0, 5)]);
 
-        expect(ranges).toEqual([{ from: 0, to: 5, className: "dd-tok-speaker-name" }]);
+        expect(ranges).toEqual([
+            { from: 0, to: 5, kind: "SpeakerName", className: "dd-tok-speaker-name" },
+        ]);
     });
 
     it("maps each kind to its own class", () => {
@@ -69,7 +71,9 @@ describe("decoratedRanges", () => {
         // Line 1 (zero-based) starts at offset 11; "Bob" is characters 0..3 there.
         const ranges = decoratedRanges(state, [token("SpeakerName", 1, 0, 3)]);
 
-        expect(ranges).toEqual([{ from: 11, to: 14, className: "dd-tok-speaker-name" }]);
+        expect(ranges).toEqual([
+            { from: 11, to: 14, kind: "SpeakerName", className: "dd-tok-speaker-name" },
+        ]);
     });
 
     it("orders the disjoint speaker parts by start", () => {

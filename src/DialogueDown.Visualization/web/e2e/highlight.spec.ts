@@ -41,22 +41,22 @@ test.beforeEach(async ({ page }) => {
 test("colors the speaker's name, id, separator, tag, and jump distinctly", async ({ page }) => {
     const active = page.locator("section.stage.active");
 
-    await expect(active.locator(".dd-tok-speaker-name")).toHaveText("Alice");
-    await expect(active.locator(".dd-tok-speaker-id")).toHaveText("@alice");
-    await expect(active.locator(".dd-tok-custom-tag")).toHaveText("#happy");
-    await expect(active.locator(".dd-tok-separator")).toHaveText(":");
-    await expect(active.locator(".dd-tok-jump")).toHaveText("=>");
+    await expect(active.locator(".source-pane .dd-tok-speaker-name")).toHaveText("Alice");
+    await expect(active.locator(".source-pane .dd-tok-speaker-id")).toHaveText("@alice");
+    await expect(active.locator(".source-pane .dd-tok-custom-tag")).toHaveText("#happy");
+    await expect(active.locator(".source-pane .dd-tok-separator")).toHaveText(":");
+    await expect(active.locator(".source-pane .dd-tok-jump")).toHaveText("=>");
 
     // Each kind resolves to its own color (the theme's token variables) — five distinct.
     const colors = await active.evaluate((root) => {
         const colorOf = (selector: string) =>
             getComputedStyle(root.querySelector(selector) as Element).color;
         return [
-            colorOf(".dd-tok-speaker-name"),
-            colorOf(".dd-tok-speaker-id"),
-            colorOf(".dd-tok-separator"),
-            colorOf(".dd-tok-custom-tag"),
-            colorOf(".dd-tok-jump"),
+            colorOf(".source-pane .dd-tok-speaker-name"),
+            colorOf(".source-pane .dd-tok-speaker-id"),
+            colorOf(".source-pane .dd-tok-separator"),
+            colorOf(".source-pane .dd-tok-custom-tag"),
+            colorOf(".source-pane .dd-tok-jump"),
         ];
     });
     expect(new Set(colors).size).toBe(5);
@@ -81,13 +81,13 @@ test("colors the reserved #END terminator as its own token", async ({ page }) =>
     await expect(page.locator(".tab")).toHaveCount(2);
 
     const active = page.locator("section.stage.active");
-    await expect(active.locator(".dd-tok-reserved-anchor")).toHaveText("#END");
+    await expect(active.locator(".source-pane .dd-tok-reserved-anchor")).toHaveText("#END");
 
     // The reader sees the innermost element's color. Because #END sits in a Markdown link
     // destination, CodeMirror nests a link-url highlight span inside the token decoration; that
     // leaf must still show the reserved-anchor color, not the Markdown link color.
     const colors = await active.evaluate((root) => {
-        const mark = root.querySelector(".dd-tok-reserved-anchor") as Element;
+        const mark = root.querySelector(".source-pane .dd-tok-reserved-anchor") as Element;
         const leafColor = (element: Element): string => {
             let node: Element = element;
             while (node.firstElementChild != null) node = node.firstElementChild;
@@ -98,7 +98,7 @@ test("colors the reserved #END terminator as its own token", async ({ page }) =>
         return {
             mark: getComputedStyle(mark).color,
             leaf: leafColor(mark),
-            jump: colorOf(".dd-tok-jump"),
+            jump: colorOf(".source-pane .dd-tok-jump"),
         };
     });
     expect(colors.leaf).toBe(colors.mark);
@@ -121,13 +121,13 @@ test("colors a control keyword over its nested Markdown code-span highlight", as
     await expect(page.locator(".tab")).toHaveCount(2);
 
     const active = page.locator("section.stage.active");
-    await expect(active.locator(".dd-tok-control-keyword")).toHaveText("`if`");
+    await expect(active.locator(".source-pane .dd-tok-control-keyword")).toHaveText("`if`");
 
     // A code span nests Markdown syntax elements inside the semantic-token decoration. The
     // innermost element is what the reader sees, so it must inherit the control-keyword color
     // instead of retaining the generic inline-code color used by the neighboring condition.
     const colors = await active.evaluate((root) => {
-        const mark = root.querySelector(".dd-tok-control-keyword") as Element;
+        const mark = root.querySelector(".source-pane .dd-tok-control-keyword") as Element;
         let leaf: Element = mark;
         while (leaf.firstElementChild != null) leaf = leaf.firstElementChild;
         const condition = [...root.querySelectorAll(".cm-content *")].find(
@@ -196,7 +196,7 @@ test("gives quoted code-span forms distinct semantic colors in light and dark", 
     const visibleColors = async () =>
         page.locator("section.stage.active").evaluate((root, tokenSelectors) => {
             return tokenSelectors.map((selector) => {
-                const mark = root.querySelector(selector) as Element;
+                const mark = root.querySelector(`.source-pane ${selector}`) as Element;
                 let leaf: Element = mark;
                 while (leaf.firstElementChild != null) leaf = leaf.firstElementChild;
                 return {
@@ -218,13 +218,73 @@ test("gives quoted code-span forms distinct semantic colors in light and dark", 
     expect(new Set(dark.map(({ mark }) => mark)).size).toBe(selectors.length);
 });
 
+test("marks the code-span kinds in the rendered preview too", async ({ page }) => {
+    const source = [
+        "> `if` `Rainy?`",
+        '> `"playerName"`',
+        '> `playSound("wind")`',
+        "> `60%`",
+        "> `Luck%`",
+    ].join("\n");
+    const token = (kind: TokenKind, text: string) => {
+        const offset = source.indexOf(text);
+        const before = source.slice(0, offset).split("\n");
+        const line = before.length - 1;
+        const character = before.at(-1)!.length;
+        return {
+            kind,
+            range: {
+                start: { line, character },
+                end: { line, character: character + text.length },
+            },
+        };
+    };
+    await page.goto(
+        writeReport({
+            source,
+            stages: SAMPLE_STAGES,
+            semanticTokens: [
+                token("ControlKeyword", "`if`"),
+                token("Condition", "`Rainy?`"),
+                token("Query", '`"playerName"`'),
+                token("Command", '`playSound("wind")`'),
+                token("StaticWeight", "`60%`"),
+                token("DynamicWeight", "`Luck%`"),
+            ],
+        }),
+    );
+    await expect(page.locator(".tab")).toHaveCount(2);
+
+    const preview = page.locator("section.stage.active .source-preview");
+    // The token covers the backticks, the rendered code span holds the text between them, so the
+    // mark must land on the code's own text — this is the shape the compiler actually projects.
+    await expect(preview.locator(".dd-tok-condition")).toHaveText("Rainy?");
+    await expect(preview.locator(".dd-tok-query")).toHaveText('"playerName"');
+    await expect(preview.locator(".dd-tok-command")).toHaveText('playSound("wind")');
+    await expect(preview.locator(".dd-tok-static-weight")).toHaveText("60%");
+    await expect(preview.locator(".dd-tok-dynamic-weight")).toHaveText("Luck%");
+
+    // The control keyword keeps its own preview class and wears the token's color.
+    const keyword = preview.locator(".dd-preview-control-keyword");
+    await expect(keyword).toHaveText("if");
+    const [keywordColor, conditionColor] = await preview.evaluate((root) => [
+        getComputedStyle(root.querySelector(".dd-preview-control-keyword") as Element).color,
+        getComputedStyle(root.querySelector(".dd-tok-condition") as Element).color,
+    ]);
+    expect(keywordColor).not.toBe(conditionColor);
+});
+
 test("keeps the tag a separate token, not nested inside a speaker token", async ({ page }) => {
     const active = page.locator("section.stage.active");
 
     // Precise tokens are disjoint: the tag is its own decoration, not a child of a speaker one.
-    await expect(active.locator(".dd-tok-speaker-name .dd-tok-custom-tag")).toHaveCount(0);
-    await expect(active.locator(".dd-tok-speaker-id .dd-tok-custom-tag")).toHaveCount(0);
-    await expect(active.locator(".dd-tok-custom-tag")).toHaveText("#happy");
+    await expect(
+        active.locator(".source-pane .dd-tok-speaker-name .dd-tok-custom-tag"),
+    ).toHaveCount(0);
+    await expect(active.locator(".source-pane .dd-tok-speaker-id .dd-tok-custom-tag")).toHaveCount(
+        0,
+    );
+    await expect(active.locator(".source-pane .dd-tok-custom-tag")).toHaveText("#happy");
 });
 
 // A jump indicator, a custom tag, and a code span, each appearing once at the top level and
@@ -259,8 +319,8 @@ test("keeps dialogue tokens and code spans colored when nested inside a choice l
     await page.goto(writeReport(NESTED_REPORT));
     await expect(page.locator(".tab")).toHaveCount(2);
     const active = page.locator("section.stage.active");
-    await expect(active.locator(".dd-tok-jump")).toHaveCount(2);
-    await expect(active.locator(".dd-tok-custom-tag")).toHaveCount(2);
+    await expect(active.locator(".source-pane .dd-tok-jump")).toHaveCount(2);
+    await expect(active.locator(".source-pane .dd-tok-custom-tag")).toHaveCount(2);
 
     // The color the reader actually sees is the innermost element's — a Markdown highlight
     // span nested inside the token decoration would override it, which is the bug this guards.
@@ -275,8 +335,8 @@ test("keeps dialogue tokens and code spans colored when nested inside a choice l
             [...root.querySelectorAll(".cm-content *")].find(
                 (element) => element.childElementCount === 0 && element.textContent === text,
             ) ?? null;
-        const jumps = [...root.querySelectorAll(".dd-tok-jump")];
-        const customTags = [...root.querySelectorAll(".dd-tok-custom-tag")];
+        const jumps = [...root.querySelectorAll(".source-pane .dd-tok-jump")];
+        const customTags = [...root.querySelectorAll(".source-pane .dd-tok-custom-tag")];
         return {
             jumpTop: effectiveColor(jumps[0]),
             jumpNested: effectiveColor(jumps[1]),
@@ -303,6 +363,41 @@ test("a report with no semantic tokens shows no dialogue highlighting", async ({
     await expect(page.locator(".tab")).toHaveCount(2);
 
     const active = page.locator("section.stage.active");
-    await expect(active.locator(".dd-tok-speaker-name")).toHaveCount(0);
-    await expect(active.locator(".dd-tok-custom-tag")).toHaveCount(0);
+    await expect(active.locator(".source-pane .dd-tok-speaker-name")).toHaveCount(0);
+    await expect(active.locator(".source-pane .dd-tok-custom-tag")).toHaveCount(0);
+});
+
+test("marks the same constructs in the rendered preview, in the editor's vocabulary", async ({
+    page,
+}) => {
+    await page.goto(url);
+    await expect(page.locator(".tab")).toHaveCount(2);
+
+    const preview = page.locator("section.stage.active .source-preview");
+    await expect(preview.locator(".dd-tok-speaker-name")).toHaveText("Alice");
+    await expect(preview.locator(".dd-tok-speaker-id")).toHaveText("@alice");
+    await expect(preview.locator(".dd-tok-jump")).toHaveText("=>");
+
+    // A tag is the shared capsule the rest of the report shows, not a tinted word: same shape,
+    // same hues, and the copy affordance every other tag capsule carries.
+    const chip = preview.locator(".dd-tag");
+    await expect(chip).toHaveText("#happy");
+    await expect(chip).toHaveAttribute("data-copy", "#happy");
+    await expect(chip.locator(".dd-tag-dot")).toHaveCount(1);
+
+    // The marks resolve to the token colors the editor beside them paints the same words in.
+    const colors = await preview.evaluate((root) => {
+        const colorOf = (selector: string) =>
+            getComputedStyle(root.querySelector(selector) as Element).color;
+        return [
+            colorOf(".dd-tok-speaker-name"),
+            colorOf(".dd-tok-speaker-id"),
+            colorOf(".dd-tok-jump"),
+        ];
+    });
+    expect(new Set(colors).size).toBe(3);
+
+    // An ask-me mark says what it is on hover; the tag says nothing and copies instead.
+    await expect(preview.locator(".dd-tok-speaker-id")).toHaveAttribute("data-tip");
+    await expect(chip).not.toHaveAttribute("data-tip");
 });

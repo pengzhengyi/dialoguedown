@@ -409,3 +409,45 @@ describe("createSourceView document replacement", () => {
         expect(source.getContent()).toBe("second\n");
     });
 });
+
+describe("createSourceView construct marks", () => {
+    /** A zero-based LSP range on one line, from character `start` to `end`. */
+    function lsp(line: number, start: number, end: number) {
+        return { start: { line, character: start }, end: { line, character: end } };
+    }
+
+    const prefix = "Alice @alice #happy: Hi.\n";
+
+    it("marks the compiler's constructs in the rendered preview", () => {
+        const source = mountSource(prefix);
+
+        source.setSemanticTokens([
+            { kind: "SpeakerName", range: lsp(0, 0, 5) },
+            { kind: "SpeakerId", range: lsp(0, 6, 12) },
+            { kind: "CustomTag", range: lsp(0, 13, 19) },
+        ]);
+
+        const preview = source.element.querySelector(".source-preview")!;
+        expect(preview.querySelector(".dd-tok-speaker-name")?.textContent).toBe("Alice");
+        expect(preview.querySelector(".dd-tok-speaker-id")?.textContent).toBe("@alice");
+        expect(preview.querySelector(".dd-tag")?.textContent).toBe("#happy");
+    });
+
+    it("clears the marks when the compiler reports no constructs", () => {
+        const source = mountSource(prefix);
+        source.setSemanticTokens([{ kind: "CustomTag", range: lsp(0, 13, 19) }]);
+
+        source.setSemanticTokens([]);
+
+        expect(source.element.querySelector(".source-preview .dd-tag")).toBeNull();
+    });
+
+    it("reveals the line a jump was written on when its arrow is clicked", () => {
+        const source = mountSource("=> #scene-2\nAlice: Hi.\n");
+        source.setSemanticTokens([{ kind: "JumpIndicator", range: lsp(0, 0, 2) }]);
+
+        source.element.querySelector<HTMLElement>(".source-preview .dd-tok-jump")!.click();
+
+        expect(document.activeElement?.closest(".source-pane")).not.toBeNull();
+    });
+});

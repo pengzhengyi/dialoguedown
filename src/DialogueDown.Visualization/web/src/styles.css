@@ -1941,66 +1941,71 @@ g.node.entity-highlight text.label {
 /* Dialogue semantic-token highlighting: the compiler-projected tokens, painted over the
    Markdown syntax colors. The tokens are disjoint — the speaker's name, @id, and : separator,
    plus tags and the jump arrow — so each simply colors its own range. No lexer runs in the
-   browser; these classes decorate the ranges the compiler projected into the report payload. */
-.source-pane .cm-content .dd-tok-speaker-name {
+   browser; these classes decorate the ranges the compiler projected into the report payload.
+
+   Both text surfaces wear these classes, so one construct is one color wherever it is read.
+   The editor spells out its scope because CodeMirror's own highlight classes would otherwise
+   win the cascade; the Preview needs no such help, but sharing the selector is what keeps the
+   two from drifting. */
+:is(.source-pane .cm-content, .source-preview) .dd-tok-speaker-name {
     color: var(--tok-speaker-name);
 }
 
-.source-pane .cm-content .dd-tok-speaker-id {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-speaker-id {
     color: var(--tok-speaker-id);
 }
 
-.source-pane .cm-content .dd-tok-separator {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-separator {
     color: var(--tok-separator);
 }
 
-.source-pane .cm-content .dd-tok-custom-tag {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-custom-tag {
     color: var(--tok-custom-tag);
 }
 
-.source-pane .cm-content .dd-tok-reserved-tag {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-reserved-tag {
     color: var(--tok-reserved-tag);
 }
 
-.source-pane .cm-content .dd-tok-jump {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-jump {
     color: var(--tok-jump);
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-reserved-anchor,
-.source-pane .cm-content .dd-tok-reserved-anchor * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-reserved-anchor,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-reserved-anchor * {
     color: var(--tok-reserved-anchor);
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-control-keyword,
-.source-pane .cm-content .dd-tok-control-keyword * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-control-keyword,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-control-keyword * {
     color: var(--tok-control-keyword);
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-query,
-.source-pane .cm-content .dd-tok-query * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-query,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-query * {
     color: var(--tok-query);
 }
 
-.source-pane .cm-content .dd-tok-condition,
-.source-pane .cm-content .dd-tok-condition * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-condition,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-condition * {
     color: var(--tok-condition);
 }
 
-.source-pane .cm-content .dd-tok-static-weight,
-.source-pane .cm-content .dd-tok-static-weight * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-static-weight,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-static-weight * {
     color: var(--tok-static-weight);
 }
 
-.source-pane .cm-content .dd-tok-dynamic-weight,
-.source-pane .cm-content .dd-tok-dynamic-weight * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-dynamic-weight,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-dynamic-weight * {
     color: var(--tok-dynamic-weight);
 }
 
-.source-pane .cm-content .dd-tok-command,
-.source-pane .cm-content .dd-tok-command * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-command,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-command * {
     color: var(--tok-command);
 }
 
@@ -2012,6 +2017,33 @@ g.node.entity-highlight text.label {
 .source-pane .cm-content .dd-tok-ignored-markdown,
 .source-pane .cm-content .dd-tok-ignored-markdown * {
     color: var(--md-muted);
+}
+
+/* The Preview's own interaction layer, on top of the shared vocabulary above. An ask-me mark says
+   so with the graph's help pointer; the jump's arrow is the one mark that acts — clicking reveals
+   the line it was written on; and the tag capsule tightens on its trailing side, so the colon that
+   closes a speaker prefix follows the capsule closely instead of floating a space away from it. */
+.source-preview .dd-tok-speaker-name,
+.source-preview .dd-tok-speaker-id,
+.source-preview .dd-tok-command,
+.source-preview .dd-tok-query,
+.source-preview .dd-tok-condition,
+.source-preview .dd-tok-static-weight,
+.source-preview .dd-tok-dynamic-weight,
+.source-preview .dd-tok-reserved-anchor {
+    cursor: help;
+}
+
+.source-preview .dd-tok-jump {
+    cursor: pointer;
+}
+
+/* The capsule reads a little larger here than in a table cell, because it sits in running prose,
+   and only its trailing side tightens: the leading room is the identity dot's, not padding. */
+.source-preview .dd-tag {
+    padding: 0.05rem 0.25rem 0.05rem 0.45rem;
+    font-size: 0.78rem;
+    vertical-align: baseline;
 }
 
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
@@ -2752,6 +2784,13 @@ a.dd-ignored-region-brief {
 
 .source-preview .dd-preview-control-region {
     position: relative;
+}
+
+/* The keyword that opens a conditional block had a hook with no color of its own. It wears the
+   token vocabulary now, so `if` reads in the Preview the way it reads in the editor. */
+.source-preview .dd-preview-control-keyword {
+    color: var(--tok-control-keyword);
+    font-weight: 600;
 }
 
 /* The conditional-dialogue marker states a permanent fact about its blockquote rather than

@@ -6,8 +6,11 @@ import type { SemanticToken, TokenKind } from "./model";
 /**
  * The CSS class each token kind decorates its range with. A future kind is added here and
  * styled in `styles.css`; nothing else in the editor changes.
+ *
+ * The rendered Preview borrows the same classes, so one construct wears one class in both panes
+ * and `styles.css` styles it once for both surfaces.
  */
-const TOKEN_CLASS: Record<TokenKind, string> = {
+export const TOKEN_CLASS: Record<TokenKind, string> = {
     SpeakerName: "dd-tok-speaker-name",
     SpeakerId: "dd-tok-speaker-id",
     Separator: "dd-tok-separator",
@@ -24,17 +27,19 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
     IgnoredMarkdown: "dd-tok-ignored-markdown",
 };
 
-/** One token resolved to editor offsets and its decoration class. */
+/** One token resolved to editor offsets, its kind, and its decoration class. */
 export interface DecoratedRange {
     from: number;
     to: number;
+    kind: TokenKind;
     className: string;
 }
 
 /**
  * Resolve each token's LSP range to editor offsets and its class, dropping zero-width tokens
  * (a synthetic node has no text to color). The compiler's tokens are disjoint, so they only
- * need ordering by start for CodeMirror's sorted decoration set. Exported for testing.
+ * need ordering by start for CodeMirror's sorted decoration set. Exported for testing, and
+ * reused by the rendered Preview, which marks the same tokens the editor colors.
  */
 export function decoratedRanges(
     state: EditorState,
@@ -44,6 +49,7 @@ export function decoratedRanges(
         .map((token) => ({
             from: positionToOffset(state, token.range.start),
             to: positionToOffset(state, token.range.end),
+            kind: token.kind,
             className: TOKEN_CLASS[token.kind],
         }))
         .filter((range) => range.to > range.from && range.className != null)
