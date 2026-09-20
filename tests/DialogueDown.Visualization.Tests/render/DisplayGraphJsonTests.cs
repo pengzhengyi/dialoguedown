@@ -343,7 +343,7 @@ public sealed class DisplayGraphJsonTests
     }
 
     [Fact]
-    public void SerializeReport_IncludesAFixsTitleAndRelativeEdits()
+    public void SerializeReport_IncludesTheFixTitleAndRelativeEdits()
     {
         var graph = MakeGraph("G", [Node("n0", "Document")], []);
         var diagnostics = new List<LspDiagnostic>
