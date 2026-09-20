@@ -63,6 +63,26 @@ public sealed class CommandsTests
     }
 
     [Fact]
+    public void NameOf_ABareCommand_IsTheCommand()
+    {
+        Assert.Equal("frobnicate", Commands.NameOf(SentCommand("frobnicate")));
+    }
+
+    [Fact]
+    public void NameOf_AShapedSend_IsTheKeyItIsSentUnder()
+    {
+        // Two payloads of one untaught command answer to one name, so a screen names one gap.
+        Assert.Equal("choose", Commands.NameOf(Sent("""{ "choose": 0 }""")));
+        Assert.Equal("choose", Commands.NameOf(Sent("""{ "choose": 1 }""")));
+    }
+
+    [Fact]
+    public void NameOf_AMessageNamingNoCommand_IsTheMessage()
+    {
+        Assert.Equal("42", Commands.NameOf(Sent("42")));
+    }
+
+    [Fact]
     public void IsStart_ASendNamingWhereToBegin_OpensTheRun()
     {
         Assert.True(Commands.IsStart(Sent("""{ "start": {} }""")));

@@ -23,6 +23,12 @@ internal static class Commands
         new ICommandReader[] { new NextReader(), new DoneReader(), new FailedReader() }
             .ToDictionary(reader => reader.Key, StringComparer.Ordinal);
 
+    /// <summary>The display name of a send: the command it names, or its message when it names none.</summary>
+    /// <param name="send">What the session sends, in the corpus's own words.</param>
+    /// <returns>The display name.</returns>
+    public static string NameOf(Send send) =>
+        TryReadKeyAndPayload(send.Message, out var key, out _) ? key : send.Message.ToJsonString();
+
     /// <summary>Reads the command a send names.</summary>
     /// <param name="send">What the session sends, in the corpus's own words.</param>
     /// <param name="command">The command, or <see langword="null"/> when no reader owns the send.</param>

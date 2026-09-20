@@ -19,6 +19,7 @@ public sealed class PlayableRunTests
         AssertNotYetPlayable(
             PlayableRun.Match(Corpora.Playable.Read("a-player-choice")),
             "nothing plays a ChoiceNode yet",
-            "nothing sends");
+            "nothing sends",
+            "nothing checks asked yet");
     }
 }

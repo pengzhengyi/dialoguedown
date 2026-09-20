@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using DialogueDown.Conformance;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Runtime.Tests.Conformance.Matchers;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -16,8 +17,8 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// <para>
 /// A node kind is playable or not by kind alone, so the answer is a property of the kind rather
 /// than of the instance. A session entry is playable when the harness can take it: a send needs a
-/// reader, and an expectation is always checkable, since a claim inside it nobody has taught the
-/// harness is reported where it is read.
+/// reader, and an expectation is takeable when every claim in it is one the harness can check —
+/// an unowned claim ends the run where it is read, so it is a gap the screen can name first.
 /// </para>
 /// </remarks>
 internal static class Playability
@@ -31,8 +32,12 @@ internal static class Playability
     /// <summary>Whether this build can take a session entry at all.</summary>
     /// <param name="entry">The entry to ask about.</param>
     /// <returns><see langword="true"/> when the harness can take this entry.</returns>
-    public static bool CanPlay(SessionEntry entry) =>
-        entry is not Send send || Commands.TryRead(send, out _);
+    public static bool CanPlay(SessionEntry entry) => entry switch
+    {
+        Send send => Commands.TryRead(send, out _),
+        Expect expect => !WhyNotPlayable(expect).Any(),
+        _ => true,
+    };
 
     /// <summary>Why a playbook is not playable yet: one reason per kind it cannot play.</summary>
     /// <remarks>
@@ -50,11 +55,17 @@ internal static class Playability
 
     /// <summary>Why a session entry cannot be taken, or nothing when it can.</summary>
     /// <param name="entry">The entry to ask about.</param>
-    /// <returns>The reason, or an empty sequence.</returns>
-    public static IEnumerable<string> WhyNotPlayable(SessionEntry entry) =>
-        entry is Send send && !CanPlay(send)
-            ? [SessionReasons.UnsendableMessage(send.Message.ToJsonString())]
-            : [];
+    /// <returns>The reasons, in the order the entry names them, each named once.</returns>
+    public static IEnumerable<string> WhyNotPlayable(SessionEntry entry) => entry switch
+    {
+        Send send when !CanPlay(send) => [SessionReasons.UnsendableCommand(Commands.NameOf(send))],
+        Expect expect => expect.Message.AsObject()
+            .Select(claim => claim.Key)
+            .Where(claim => !ExpectationMatchers.CanCheck(claim))
+            .Distinct(StringComparer.Ordinal)
+            .Select(SessionReasons.UncheckableClaim),
+        _ => [],
+    };
 
     /// <summary>Why a session is not playable yet: one reason per send no reader owns.</summary>
     /// <remarks>
