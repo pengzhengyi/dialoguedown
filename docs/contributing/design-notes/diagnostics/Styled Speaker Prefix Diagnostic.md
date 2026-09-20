@@ -96,15 +96,20 @@ The line still compiles unchanged — this is advisory, not an error.
 
 ## Why it happens today
 
-Speaker prefixes are peeled in `LineBuilder.PeelSpeaker()`, which only runs when
-the paragraph's first inline is plain text:
+Speaker prefixes are peeled in `LineBuilder.PeelSpeaker()`, which scans for the
+first inline that carries text — stepping over leading game-call code spans and
+whitespace — and recognizes a prefix only there, as a plain, unescaped
+`TextInline`:
 
 ```csharp
-if (_remaining[0] is not TextInline leading) { return null; }
+prefixStart = IndexOfPrefixStart();
+if (prefixStart >= _remaining.Count
+    || _remaining[prefixStart] is not TextInline leading
+    || leading.IsFirstCharacterEscaped) { return null; }
 ```
 
 `*Alice*: Hello` parses to `EmphasisInline("Alice")` + `TextInline(": Hello")`, so
-the first inline is emphasis, the peel bails, and the line has no speaker. The
+the scan stops at the emphasis, the peel bails, and the line has no speaker. The
 `SpeakerPrefixParser` grammar (which needs `name … :` inside one text run) is
 never reached. Nothing downstream flags it.
 
@@ -139,13 +144,14 @@ been thrown away.
 | --- | --- | --- |
 | `StyledSpeakerPrefixDetector` | Reports `DLG1107` when a line's leading Markdown run would be a speaker prefix once unstyled. Called when the speaker peel fails. | `SpeakerPrefixProbe`, `MarkdownInline` |
 | `DiagnosticCatalog.StyledSpeakerPrefix` | The `DLG1107` descriptor (Syntax, Warning). | — |
-| `LineBuilder` | Calls the detector when `PeelSpeaker` returns no speaker. | `StyledSpeakerPrefixDetector` |
+| `LineBuilder` | Calls the detector when `PeelSpeaker` returns no speaker, on the remainder from the matched index so a styled prefix after a leading game call is still seen. | `StyledSpeakerPrefixDetector` |
 | `SpeakerPrefixProbe` | A small probe over `SpeakerPrefixParser.Prefix` that answers "does this plain text begin with a speaker prefix?" — reused by the detector, both in the transpiler layer. | `SpeakerPrefixParser` |
 
 ## Detection
 
 The line builder calls the detector only when `PeelSpeaker` recognizes no
-speaker, so it runs on the leading Markdown inlines of an unattributed line:
+speaker, so it runs on the Markdown inlines of an unattributed line from where
+the prefix scan stopped — past any skipped game-call code spans:
 
 1. **Require styling at the front.** The leading run up to the first `:` must
    contain at least one `EmphasisInline`. No styling means an ordinary

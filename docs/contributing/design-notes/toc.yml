@@ -56,6 +56,8 @@
     href: language/Unquoted Keys.md
   - name: Symbol Escape
     href: language/Symbol Escape.md
+  - name: Speaker Prefix Placement
+    href: language/Speaker Prefix Placement.md
   - name: Block Controls
     href: language/Block Controls.md
   - name: Control Line

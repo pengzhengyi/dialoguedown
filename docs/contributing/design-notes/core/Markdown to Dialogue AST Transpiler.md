@@ -195,7 +195,7 @@ Deferred to **Desugar** (out of scope here): assembling a **Jump**, filling the
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `IScriptTranspiler`               | public seam: `ScriptDocument Transpile(MarkdownDocument, string source)`; `ScriptTranspiler` wraps `BlockBuilder`. `source` is validated and reserved for diagnostics, not read           | Markdown AST, `ScriptDocument`, `BlockBuilder` |
 | `BlockBuilder`                    | block-layer tree walk → Dialogue AST; orchestrates dispatch, delegating each line to `LineBuilder`; one shared, recursive `Build(blocks)` for the document body and each choice body (D4) | `LineBuilder`, `InlineBuilder`                 |
-| `LineBuilder`                     | one group of inlines → a `Line`: split an optional speaker off the leading text, build the remaining speech, span the group                                                               | `SpeakerBuilder`, `InlineBuilder`              |
+| `LineBuilder`                     | one group of inlines → a `Line`: split an optional speaker off the first text-bearing inline (leading game calls are skipped), build the remaining speech, span the group                 | `SpeakerBuilder`, `InlineBuilder`              |
 | `ScriptNode`                      | base for every Dialogue AST node; carries `Span`                                                                                                                                          | `SourceSpan`                                   |
 | `ScriptBlock`                     | base for a script body item: `Line`, `Choices`, `SceneHeading`                                                                                                                            | `ScriptNode`                                   |
 | `IParser<T>`                      | the single non-throwing parser contract: `Consume` a prefix (D12)                                                                                                                         | `ParseInput`, `ParseResult`                    |
@@ -701,23 +701,23 @@ buildSpeech(inlines, policy):         # InlineBuilder, gated by the context poli
 
 ## Markdown AST to Dialogue AST mapping
 
-| Markdown AST            | Dialogue AST                                                            | Notes                                  |
-| ----------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
-| `MarkdownDocument`      | `ScriptDocument`                                                        | root                                   |
-| `Heading`               | `SceneHeading`                                                          | flat marker; nesting deferred (D5)     |
-| `Paragraph`             | one or more `Line`                                                      | split at hard breaks (D4/D7)           |
-| leading text of a Line  | `SpeakerDeclaration` / `SpeakerReference` / `PartialSpeakerDeclaration` | try-parse prefix (D3, D11)             |
-| `TextInline`            | `Text`                                                                  | plain words                            |
-| `EmphasisInline`        | `StyledText`                                                            | style + nested fragments               |
-| `ImageInline`           | `Image`                                                                 | alt is a fragment sequence (D9)        |
-| `LineBreak` (soft)      | `LineBreak`                                                             | kept as display hint (D4)              |
-| `LineBreak` (hard)      | —                                                                       | consumed as a Line boundary (D4)       |
-| `CodeSpanInline`        | `Query` / `DefaultCommand` / `CustomCommand`                            | via `GameCallParser` (D7)              |
-| `TextInline` `=>`       | `JumpIndicator`                                                         | jump assembled in Desugar (D8)         |
-| `LinkInline`            | `Link`                                                                  | fragment label, unresolved target (D8) |
-| tag text (any position) | `Tag`                                                                   | via `TagParser` (D9)                   |
-| `ListBlock`             | `Choices`                                                               | `IsOrdered` kept (D6)                  |
-| `ListItem`              | `Choice`                                                                | keeps nested content                   |
+| Markdown AST                        | Dialogue AST                                                            | Notes                                  |
+| ----------------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
+| `MarkdownDocument`                  | `ScriptDocument`                                                        | root                                   |
+| `Heading`                           | `SceneHeading`                                                          | flat marker; nesting deferred (D5)     |
+| `Paragraph`                         | one or more `Line`                                                      | split at hard breaks (D4/D7)           |
+| first text-bearing inline of a Line | `SpeakerDeclaration` / `SpeakerReference` / `PartialSpeakerDeclaration` | try-parse prefix (D3, D11)             |
+| `TextInline`                        | `Text`                                                                  | plain words                            |
+| `EmphasisInline`                    | `StyledText`                                                            | style + nested fragments               |
+| `ImageInline`                       | `Image`                                                                 | alt is a fragment sequence (D9)        |
+| `LineBreak` (soft)                  | `LineBreak`                                                             | kept as display hint (D4)              |
+| `LineBreak` (hard)                  | —                                                                       | consumed as a Line boundary (D4)       |
+| `CodeSpanInline`                    | `Query` / `DefaultCommand` / `CustomCommand`                            | via `GameCallParser` (D7)              |
+| `TextInline` `=>`                   | `JumpIndicator`                                                         | jump assembled in Desugar (D8)         |
+| `LinkInline`                        | `Link`                                                                  | fragment label, unresolved target (D8) |
+| tag text (any position)             | `Tag`                                                                   | via `TagParser` (D9)                   |
+| `ListBlock`                         | `Choices`                                                               | `IsOrdered` kept (D6)                  |
+| `ListItem`                          | `Choice`                                                                | keeps nested content                   |
 
 ## Error and boundary cases
 

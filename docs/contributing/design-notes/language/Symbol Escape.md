@@ -149,7 +149,7 @@ flowchart LR
 | `TextInline` | Markdown text plus its content span | Carries `IsFirstCharacterEscaped`, copied from Markdig. |
 | `MarkdigToMarkdownAstConverter` | Markdig tree → Markdown AST | Copies `LiteralInline.IsFirstCharacterEscaped`; no span heuristic. |
 | `InlineLeafTokenizer` | Text → `TextLeaf` / `TagLeaf` / `JumpLeaf` | An escaped leading character takes the sigil that begins there — or itself — as text. |
-| `LineBuilder` | Peels a line's speaker prefix | Skips the prefix parse when the leading text starts escaped; `PrecedesAJump` asks the tokenizer's `StartsWithJumpIndicator`, which owns the arrow's spelling and escape rule. |
+| `LineBuilder` | Peels a line's speaker prefix | Skips the prefix parse when the matched text starts escaped; `PrecedesAJump` asks the tokenizer's `StartsWithJumpIndicator`, which owns the arrow's spelling and escape rule. |
 | Desugar, semantic analysis, graph, playbook | — | **Unchanged.** |
 
 Two Markdig details make the flag exact:

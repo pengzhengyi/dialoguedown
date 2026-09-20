@@ -177,7 +177,8 @@ flowchart LR
 ```
 
 - **Transpiler.** `LineBuilder` builds a `Line` from a group of Markdown inlines.
-  Today it splits an optional speaker off the leading text, then builds the
+  Today it splits an optional speaker off the first text-bearing inline (a leading
+  game call is skipped), then builds the
   speech. It gains a first step: if the group's leading inline is a condition code
   span (recognized by the shared `ConditionReader`) *and* content follows it, peel
   the condition onto `Line.Condition` and parse the speaker and speech from the
