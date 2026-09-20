@@ -164,6 +164,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **HTML entities in a script reach the playbook as the character they name** — `&nbsp;` was
+  arriving as its five source characters, so a preview showed a space where a game showed the
+  entity's spelling. CommonMark's decoding is now followed; a name nothing defines stays literal
+  text.
+
 - **The status line no longer leaves the viewport when a selection fills the inspector** — a
   content-based flex basis let the scrollable inspector inflate the shell, shrinking the footer
   below its own status line; the shell's height no longer follows a pane's content.
