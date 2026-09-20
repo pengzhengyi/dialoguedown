@@ -442,6 +442,9 @@ describe("createSourceView construct marks", () => {
         source.setSemanticTokens([]);
 
         expect(source.element.querySelector(".source-preview .dd-tag")).toBeNull();
+    });
+});
+
 describe("createSourceView quick-fix actions", () => {
     const DIAGNOSTIC: LspDiagnostic = {
         range: { start: { line: 0, character: 2 }, end: { line: 0, character: 4 } },
@@ -486,7 +489,5 @@ describe("createSourceView quick-fix actions", () => {
         source.applyDiagnosticFix(DIAGNOSTIC, DIAGNOSTIC.fixes![0]);
 
         expect(source.getContent()).toBe("x \\=> y");
-    });
-});
     });
 });
