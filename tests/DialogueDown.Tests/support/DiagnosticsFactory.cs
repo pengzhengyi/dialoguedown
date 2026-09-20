@@ -14,7 +14,7 @@ internal static class DiagnosticsFactory
         string code = "DLG1001",
         DiagnosticCategory category = DiagnosticCategory.Syntax,
         string title = "Sample diagnostic",
-        string messageFormat = "Sample message '{0}'.",
+        string messageFormat = "Sample message.",
         DiagnosticSeverity defaultSeverity = DiagnosticSeverity.Error) =>
         new(code, title, messageFormat, category, defaultSeverity);
 

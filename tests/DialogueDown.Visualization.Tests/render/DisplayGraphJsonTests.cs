@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using DialogueDown.Visualization.Diagnostics;
 using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Editor;
@@ -339,6 +340,49 @@ public sealed class DisplayGraphJsonTests
 
         Assert.Contains("\"severity\":1", json);
         Assert.DoesNotContain("\"severity\":\"Error\"", json);
+    }
+
+    [Fact]
+    public void SerializeReport_IncludesAFixsTitleAndRelativeEdits()
+    {
+        var graph = MakeGraph("G", [Node("n0", "Document")], []);
+        var diagnostics = new List<LspDiagnostic>
+        {
+            new(
+                new LspRange(new LspPosition(2, 0), new LspPosition(2, 2)),
+                LspSeverity.Warning,
+                "DLG1113",
+                "Dangling arrow.",
+                "dialoguedown",
+                Fixes: [new LspFix("Escape as literal text", [new LspEdit(0, 0, "\\")])]),
+        };
+
+        var json = DisplayGraphJson.SerializeReport(
+            "static", null, "# Hi", [graph], diagnostics: diagnostics);
+
+        var fix = JsonNode.Parse(json)!["diagnostics"]![0]!["fixes"]![0]!;
+        Assert.Equal("Escape as literal text", (string)fix["title"]!);
+        var edit = fix["edits"]![0]!;
+        Assert.Equal(0, (int)edit["start"]!);
+        Assert.Equal(0, (int)edit["end"]!);
+        Assert.Equal("\\", (string)edit["newText"]!);
+    }
+
+    [Fact]
+    public void SerializeReport_OmitsFixesWhenADiagnosticHasNone()
+    {
+        var graph = MakeGraph("G", [Node("n0", "Document")], []);
+        var diagnostics = new List<LspDiagnostic>
+        {
+            new(
+                new LspRange(new LspPosition(0, 0), new LspPosition(0, 1)),
+                LspSeverity.Error, "DLG0001", "Boom.", "dialoguedown"),
+        };
+
+        var json = DisplayGraphJson.SerializeReport(
+            "static", null, "# Hi", [graph], diagnostics: diagnostics);
+
+        Assert.DoesNotContain("\"fixes\"", json);
     }
 
     [Fact]

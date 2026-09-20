@@ -8,7 +8,8 @@ namespace DialogueDown.Visualization.Diagnostics;
 /// transports unchanged: it rides the report payload today and a future language server would
 /// publish it verbatim. It carries a zero-based <see cref="Range"/>, an integer
 /// <see cref="Severity"/>, the diagnostic's <see cref="Code"/> and rendered <see cref="Message"/>,
-/// and the producing <see cref="Source"/> (<c>"dialoguedown"</c>). Projected from the core
+/// the producing <see cref="Source"/> (<c>"dialoguedown"</c>), and the suggested repairs
+/// <see cref="Fixes"/> (absent when the compiler knows none). Projected from the core
 /// <see cref="DialogueDown.Diagnostics.LocatedDiagnostic"/> by <see cref="DiagnosticProjection"/>.
 /// </summary>
 /// <remarks>
@@ -22,4 +23,5 @@ internal sealed record LspDiagnostic(
     [property: JsonConverter(typeof(JsonNumberEnumConverter<LspSeverity>))] LspSeverity Severity,
     string Code,
     string Message,
-    string Source);
+    string Source,
+    IReadOnlyList<LspFix>? Fixes = null);
