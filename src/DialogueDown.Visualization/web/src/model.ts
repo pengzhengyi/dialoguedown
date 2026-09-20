@@ -409,9 +409,10 @@ export type LspSeverity = 1 | 2 | 3 | 4;
 /**
  * One diagnostic in Language Server Protocol shape, as the compiler projects it into the
  * report payload: a zero-based {@link LspRange}, an integer {@link LspSeverity}, the error
- * {@link LspDiagnostic.code}, the rendered {@link LspDiagnostic.message}, and the producing
- * {@link LspDiagnostic.source} (`"dialoguedown"`). A future language server publishes the
- * identical structure, so the editor overlay consumes it unchanged.
+ * {@link LspDiagnostic.code}, the rendered {@link LspDiagnostic.message}, the producing
+ * {@link LspDiagnostic.source} (`"dialoguedown"`), and the suggested repairs
+ * {@link LspDiagnostic.fixes} (absent when the compiler knows none). A future language server
+ * publishes the identical structure, so the editor overlay consumes it unchanged.
  */
 export interface LspDiagnostic {
     range: LspRange;
@@ -419,6 +420,28 @@ export interface LspDiagnostic {
     code: string;
     message: string;
     source: string;
+    fixes?: readonly LspFix[] | null;
+}
+
+/**
+ * A suggested repair for an {@link LspDiagnostic}: a writer-facing title and the edits that
+ * apply it, so the editor can offer and apply the fix without knowing the language.
+ */
+export interface LspFix {
+    title: string;
+    edits: readonly LspEdit[];
+}
+
+/**
+ * One text replacement in an {@link LspFix}, with offsets relative to the diagnostic's own
+ * range start: 0 is the diagnostic's first character. The relative shape keeps a pushed
+ * payload correct while the writer types, because the diagnostic's range is the position the
+ * editor keeps remapping.
+ */
+export interface LspEdit {
+    start: number;
+    end: number;
+    newText: string;
 }
 
 /** The legend of dialogue-specific token kinds the compiler projects for highlighting. */

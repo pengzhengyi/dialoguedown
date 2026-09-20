@@ -1,4 +1,5 @@
 using System.Globalization;
+using Generator.Equals;
 
 namespace DialogueDown.Diagnostics;
 
@@ -15,7 +16,8 @@ namespace DialogueDown.Diagnostics;
 /// culture) and the offsets are resolved to line/column, so every consumer shares identical text
 /// and locations.
 /// </summary>
-public sealed record LocatedDiagnostic(
+[Equatable]
+public sealed partial record LocatedDiagnostic(
     string Code,
     DiagnosticSeverity Severity,
     DiagnosticCategory Category,
@@ -25,6 +27,14 @@ public sealed record LocatedDiagnostic(
     int StartOffset,
     int EndOffset)
 {
+    /// <summary>
+    /// Suggested repairs for this problem, with absolute source offsets — empty when the compiler
+    /// knows none. Excluded from equality for the same reason it is on the core diagnostic: the
+    /// located view is identified by the problem it locates.
+    /// </summary>
+    [IgnoreEquality]
+    public IReadOnlyList<LocatedFix> Fixes { get; init; } = [];
+
     internal static LocatedDiagnostic Project(Diagnostic diagnostic, LineMap map)
     {
         object?[] arguments = [.. diagnostic.MessageArguments];
@@ -40,6 +50,14 @@ public sealed record LocatedDiagnostic(
             map.Locate(span.Start),
             map.Locate(span.End),
             span.Start,
-            span.End);
+            span.End)
+        {
+            Fixes = [.. diagnostic.Fixes.Select(ToLocatedFix)],
+        };
     }
+
+    private static LocatedFix ToLocatedFix(DiagnosticFix fix) =>
+        new(
+            fix.Title,
+            [.. fix.Edits.Select(edit => new LocatedEdit(edit.Span.Start, edit.Span.End, edit.NewText))]);
 }

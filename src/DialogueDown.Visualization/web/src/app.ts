@@ -261,6 +261,7 @@ export function runApp(
                   const span = sourceHandle?.resolveRange(diagnostic.range);
                   if (span) jumpToSource(span);
               },
+              applyFix: (diagnostic, fix) => sourceHandle?.applyDiagnosticFix(diagnostic, fix),
           })
         : null;
     const summary = diagnosing
@@ -445,6 +446,7 @@ export function runApp(
         updateStages,
         setEditable: (next) => {
             sourceHandle?.setEditable(next);
+            problems?.setEditable(next);
         },
         setContent: (next) => sourceHandle?.setContent(next),
         setDocument: (next) => sourceHandle?.setDocument(next),

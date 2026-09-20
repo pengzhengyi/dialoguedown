@@ -11,6 +11,7 @@ import {
     CONFIG_ADOPT_INVALID_PORT,
     SEMANTIC_AUTOCOMPLETE_PORT,
     SWITCH_PORT,
+    QUICK_FIX_PORT,
 } from "./fixture.mjs";
 
 /**
@@ -37,6 +38,7 @@ const PORTS = [
     CONFIG_ADOPT_INVALID_PORT,
     SEMANTIC_AUTOCOMPLETE_PORT,
     SWITCH_PORT,
+    QUICK_FIX_PORT,
 ];
 
 async function servedBody(port) {
