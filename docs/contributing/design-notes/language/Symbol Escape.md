@@ -1,7 +1,7 @@
 # Symbol escape
 
 > [!NOTE]
-> Status: **proposed**. The language's literal-punctuation rule: a backslash
+> Status: **implemented**. The language's literal-punctuation rule: a backslash
 > escapes the next punctuation character, so a DialogueDown sigil (`#tag`, `=>`)
 > can be written as ordinary prose.
 
@@ -47,24 +47,24 @@ write literal prose.
 
 ## Functionality checklist
 
-- [ ] `\#word` compiles to the text `#word`, not a tag.
-- [ ] `\##default` (or `\#\#default`) compiles to the text `##default`, not a
+- [x] `\#word` compiles to the text `#word`, not a tag.
+- [x] `\##default` (or `\#\#default`) compiles to the text `##default`, not a
       reserved tag.
-- [ ] `\=>` compiles to the text `=>`, with no jump and no dangling-arrow warning.
-- [ ] A character that begins a sigil is literal whole (`\##default`); one that
+- [x] `\=>` compiles to the text `=>`, with no jump and no dangling-arrow warning.
+- [x] A character that begins a sigil is literal whole (`\##default`); one that
       begins no sigil is literal alone (`\=#tag` keeps `#tag` a tag).
-- [ ] An escaped prefix element breaks the speaker prefix, so `Alice\: Hello`,
+- [x] An escaped prefix element breaks the speaker prefix, so `Alice\: Hello`,
       `\@alice: Hi`, and `Alice \@alice: Hi` are default-speaker speech.
-- [ ] A condition before an escaped arrow still guards the line.
-- [ ] Markdown's escapes are untouched: `\*` stays literal styling punctuation,
+- [x] A condition before an escaped arrow still guards the line.
+- [x] Markdown's escapes are untouched: `\*` stays literal styling punctuation,
       `\\` is a backslash, a trailing `\` is still a hard break, and `\` before a
       non-punctuation character stays a literal backslash.
-- [ ] An escape inside a code span keeps CommonMark semantics (no escape; the
+- [x] An escape inside a code span keeps CommonMark semantics (no escape; the
       span is still a game call or `DLG1102`).
-- [ ] No new diagnostic code, and the `DLG1113` message offers `\=>` as the
+- [x] No new diagnostic code, and the `DLG1113` message offers `\=>` as the
       deliberate spelling.
-- [ ] The writer guide states the rule once, and the gallery demonstrates it.
-- [ ] Escaped sigils reach the report and the editor as plain text.
+- [x] The writer guide states the rule once, and the gallery demonstrates it.
+- [x] Escaped sigils reach the report and the editor as plain text.
 
 ## Ubiquitous language
 
@@ -311,6 +311,23 @@ example. The error-code reference is then regenerated.
 | HTML entities (`&#35;`, `&#61;`) | Not writer-facing, and the front end keeps entities as source text rather than decoding them. |
 | Carrying the escape to desugar | More model state for no benefit once the tokenizer writes the sigil as text. |
 | Demoting `DLG1113` by configuration | Silences the evidence instead of expressing intent; the requirement is a writer spelling, not a quieter report. |
+
+## Implementation crosscheck
+
+Built as designed, with these notes:
+
+- **Achieved.** Escape provenance rides from Markdig onto `TextInline`; the
+  tokenizer takes an escaped leading character — and the sigil it begins — as
+  text; the line builder skips an escaped speaker prefix and asks
+  `StartsWithJumpIndicator` for jump precedence; the guide, complete example, and
+  gallery demonstrate the rule; `DLG1113` and the error-code reference offer the
+  escape as the deliberate spelling; the editor projection carries no tag or jump
+  token for an escaped sigil.
+- **Changed.** The review rounds added the speaker-prefix rule (an escaped prefix
+  element makes the line default-speaker speech) and moved the arrow's spelling
+  and its escape rule behind `StartsWithJumpIndicator`; both are recorded above.
+- **Not implemented.** Two follow-ups stay deferred: the escaped-prefix warning
+  and the editor affordance (literalizing and suggestions). Both are tracked.
 
 ## Open questions and deferred work
 
