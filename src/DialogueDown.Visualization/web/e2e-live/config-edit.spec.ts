@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { audit } from "../e2e/audit";
 import {
     CONFIG_EDIT_PORT,
     CONFIG_EDIT_TREE,
@@ -151,9 +151,7 @@ test("shows and hides configured ignored block and inline Preview regions", asyn
     await expect(block.locator(".dd-preview-ignored")).toBeHidden();
     await expect(inline.locator(".dd-preview-ignored")).toBeHidden();
     await expect(page.locator(".source-pane .dd-tok-ignored-markdown")).not.toHaveCount(0);
-    expect(
-        (await new AxeBuilder({ page }).include(".source-preview-shell").analyze()).violations,
-    ).toEqual([]);
+    expect((await audit(page, { include: ".source-preview-shell" })).violations).toEqual([]);
 
     // The baseline is report-wide, not tied to one DOM instance; per-region choices are not.
     await page.reload();

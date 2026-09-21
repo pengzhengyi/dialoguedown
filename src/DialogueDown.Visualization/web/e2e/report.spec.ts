@@ -1,6 +1,6 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { SAMPLE_REPORT, writeReport } from "./report";
+import { audit } from "./audit";
 
 const url = writeReport(SAMPLE_REPORT);
 const nodeCount = SAMPLE_REPORT.stages[0].nodes.length;
@@ -475,7 +475,7 @@ test("arrow keys move the selection", async ({ page }) => {
 test("has no accessibility violations (both tabs, real browser incl. color contrast)", async ({
     page,
 }) => {
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]); // Source tab
+    expect((await audit(page)).violations).toEqual([]); // Source tab
     await showAst(page);
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]); // Markdown AST tab
+    expect((await audit(page)).violations).toEqual([]); // Markdown AST tab
 });

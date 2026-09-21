@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { writeReport } from "./report";
+import { audit } from "./audit";
 import type { Report } from "../src/model";
 
 /**
@@ -151,6 +151,6 @@ test("says what pressing the control does, not merely what it shows", async ({ p
 test("has no accessibility violations with the tables shown", async ({ page }) => {
     await showTables(page);
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await audit(page);
     expect(results.violations).toEqual([]);
 });

@@ -1,6 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
 import type { Report } from "../src/model";
+import { audit } from "./audit";
 import { writeReport } from "./report";
 import { selectTheme } from "./theme";
 
@@ -336,7 +336,7 @@ test("has no accessibility violations in a mixed view", async ({ page }) => {
     await regions(page).first().locator(".dd-ignored-region-toggle").click();
     await expect(footer(page)).toContainText("2 of 3 shown in Preview");
 
-    const analyze = () => new AxeBuilder({ page }).include(".source-preview-shell").analyze();
+    const analyze = () => audit(page, { include: ".source-preview-shell" });
     expect((await analyze()).violations).toEqual([]);
 
     await selectTheme(page, "dark");

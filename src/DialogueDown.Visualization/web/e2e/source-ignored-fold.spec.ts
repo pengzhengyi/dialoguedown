@@ -1,6 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
 import type { Report } from "../src/model";
+import { audit } from "./audit";
 import { writeReport } from "./report";
 import { selectTheme } from "./theme";
 
@@ -159,7 +159,7 @@ test("has no accessibility violations with ignored runs folded", async ({ page }
     await page.keyboard.press("Alt+i");
     await expect(page.locator(".source-pane .cm-foldPlaceholder")).toHaveCount(1);
 
-    const analyze = () => new AxeBuilder({ page }).include(".source-pane").analyze();
+    const analyze = () => audit(page, { include: ".source-pane" });
     expect((await analyze()).violations).toEqual([]);
 
     await selectTheme(page, "dark");
