@@ -202,24 +202,23 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
             console.MarkupLineInterpolated($"[grey]Fixed {written} ({FixesCount(applied)}{Remaining(fix.Remaining)})[/]");
         }
 
-        var first = true;
-        foreach (var outcome in fix.Outcomes)
+        for (var index = 0; index < fix.Outcomes.Count; index++)
         {
-            if (!first)
+            if (index > 0)
             {
                 console.WriteLine();
             }
 
-            first = false;
+            var outcome = fix.Outcomes[index];
             if (outcome.Applied)
             {
-                console.WriteLine($"NOTE: Fix applied: {outcome.Fix.Title}");
+                console.WriteLine($"{index + 1}. Applied Fix: {outcome.Fix.Title}");
                 FixDiff.Render(console, FixDiff.Rows(source, outcome.Fix));
             }
             else
             {
                 console.WriteLine(
-                    $"NOTE: Fix skipped: {outcome.Fix.Title} ({PhraseOf(outcome.SkipReason!.Value)})");
+                    $"{index + 1}. Skipped Fix: {outcome.Fix.Title} ({PhraseOf(outcome.SkipReason!.Value)})");
             }
         }
 

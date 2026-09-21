@@ -51,35 +51,44 @@ internal static class FixDiff
             var newLine = model.NewText.Lines[row];
             if (oldLine.Type == ChangeType.Unchanged && newLine.Type == ChangeType.Unchanged)
             {
-                hunk.Add(new HunkRow(' ', [new HunkSegment(newLine.Text, Changed: false)]));
+                hunk.Add(new HunkRow(LineNumber(newLine, oldLine), ' ', [new HunkSegment(newLine.Text, false)]));
                 continue;
             }
 
             if (oldLine.Type is not (ChangeType.Inserted or ChangeType.Imaginary))
             {
-                hunk.Add(new HunkRow('-', Segments(oldLine, removed: true)));
+                hunk.Add(new HunkRow(LineNumber(oldLine), '-', Segments(oldLine, removed: true)));
             }
 
             if (newLine.Type is not (ChangeType.Deleted or ChangeType.Imaginary))
             {
-                hunk.Add(new HunkRow('+', Segments(newLine, removed: false)));
+                hunk.Add(new HunkRow(LineNumber(newLine), '+', Segments(newLine, removed: false)));
             }
         }
 
         return hunk;
     }
 
-    /// <summary>Writes the hunk: colored and with the changed words emphasized on a terminal, plain otherwise.</summary>
+    /// <summary>
+    /// Writes the hunk with a line-number gutter, colored and with the changed words emphasized on
+    /// a terminal and plain otherwise.
+    /// </summary>
     public static void Render(IAnsiConsole console, IReadOnlyList<HunkRow> rows)
     {
         ArgumentNullException.ThrowIfNull(console);
         ArgumentNullException.ThrowIfNull(rows);
+        if (rows.Count == 0)
+        {
+            return;
+        }
 
+        var width = rows.Max(row => row.LineNumber).ToString().Length;
         foreach (var row in rows)
         {
+            var number = row.LineNumber.ToString().PadLeft(width);
             if (!console.Profile.Capabilities.Interactive)
             {
-                console.WriteLine(row.Marker + row.Text);
+                console.WriteLine($"{number} | {row.Marker}{row.Text}");
                 continue;
             }
 
@@ -88,7 +97,7 @@ internal static class FixDiff
                 segment.Changed
                     ? $"[bold {color}]{Markup.Escape(segment.Text)}[/]"
                     : $"[{color}]{Markup.Escape(segment.Text)}[/]"));
-            console.MarkupLine($"[{color}]{row.Marker}[/]{body}");
+            console.MarkupLine($"[grey]{number} │ [/][{color}]{row.Marker}[/]{body}");
         }
     }
 
@@ -109,6 +118,11 @@ internal static class FixDiff
                 .Select(sub => new HunkSegment(sub.Text, Changed: sub.Type != ChangeType.Unchanged)),
         ];
     }
+
+    // The number of the side the row belongs to: the direct piece when there is one, else the
+    // pane that has a line at this row (an insertion's old side, a deletion's new side).
+    private static int LineNumber(DiffPiece primary, DiffPiece? fallback = null) =>
+        primary.Position ?? fallback?.Position ?? 0;
 
     private static string ColorOf(char marker) => marker switch
     {

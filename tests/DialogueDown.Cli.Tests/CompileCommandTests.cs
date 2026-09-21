@@ -227,7 +227,7 @@ public sealed class CompileCommandTests
         Assert.Contains("1 fixable with --fix", result.Output, StringComparison.Ordinal);
         // Then the fix section: the write notice, the note, and the hunk.
         Assert.Contains("(1 fix)", result.Output, StringComparison.Ordinal);
-        Assert.Contains("NOTE: Fix applied: Escape as literal text", result.Output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", result.Output, StringComparison.Ordinal);
         Assert.Contains("-Alice: The rule is simple => the lever opens the door.", result.Output, StringComparison.Ordinal);
         Assert.Contains("+Alice: The rule is simple \\=> the lever opens the door.", result.Output, StringComparison.Ordinal);
         Assert.DoesNotContain("  fix applied", result.Output, StringComparison.Ordinal);
@@ -247,8 +247,8 @@ public sealed class CompileCommandTests
         var result = tester.Run("compile", script.Path, "--fix");
 
         Assert.Equal(ExitCodes.Success, result.ExitCode);
-        Assert.Equal(2, result.Output.Split("NOTE: Fix applied: Escape as literal text").Length - 1);
-        Assert.Equal(2, result.Output.Split("\n+").Length - 1);
+        Assert.Equal(2, result.Output.Split("Applied Fix: Escape as literal text").Length - 1);
+        Assert.Equal(2, result.Output.Split("| +Alice: Go").Length - 1);
         Assert.Contains("(2 fixes)", result.Output, StringComparison.Ordinal);
     }
 
@@ -294,7 +294,7 @@ public sealed class CompileCommandTests
         Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
         Assert.Contains("1 error, 1 warning", result.Output, StringComparison.Ordinal);
         Assert.Contains("(1 fix; 1 error remains)", result.Output, StringComparison.Ordinal);
-        Assert.Contains("NOTE: Fix applied: Escape as literal text", result.Output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", result.Output, StringComparison.Ordinal);
     }
 
     [Fact]

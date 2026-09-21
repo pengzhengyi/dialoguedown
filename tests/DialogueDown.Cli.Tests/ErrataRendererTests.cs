@@ -223,7 +223,7 @@ public sealed class ErrataRendererTests
         Assert.Contains("1 warning", output, StringComparison.Ordinal);
         Assert.Contains("1 fixable with --fix", output, StringComparison.Ordinal);
         Assert.Contains("Fixed s.dialogue.md (1 fix; 1 warning remains)", output, StringComparison.Ordinal);
-        Assert.Contains("NOTE: Fix applied: Escape as literal text", output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", output, StringComparison.Ordinal);
         Assert.Contains("-say => now", output, StringComparison.Ordinal);
         Assert.Contains("+say \\=> now", output, StringComparison.Ordinal);
         // No inline outcome continuation rides the diagnostic anymore.
@@ -284,7 +284,7 @@ public sealed class ErrataRendererTests
 
         var output = console.Output;
         Assert.Contains(
-            "NOTE: Fix skipped: Escape as literal text (overlaps an applied fix)",
+            "1. Skipped Fix: Escape as literal text (overlaps an applied fix)",
             output,
             StringComparison.Ordinal);
         Assert.DoesNotContain("Fixed ", output, StringComparison.Ordinal);
@@ -377,9 +377,9 @@ public sealed class ErrataRendererTests
 
         var output = console.Output;
         Assert.Contains("Alice: say", output, StringComparison.Ordinal); // the rich path ran
-        Assert.Contains("NOTE: Fix applied: Escape as literal text", output, StringComparison.Ordinal);
-        Assert.Contains("-Alice: say => now", output, StringComparison.Ordinal);
-        Assert.Contains("+Alice: say \\=> now", output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", output, StringComparison.Ordinal);
+        Assert.Contains("│ -Alice: say => now", output, StringComparison.Ordinal);
+        Assert.Contains("│ +Alice: say \\=> now", output, StringComparison.Ordinal);
         Assert.Contains("Fixed s.dialogue.md (1 fix)", output, StringComparison.Ordinal);
     }
 

@@ -198,11 +198,11 @@ my-scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link 
 1 fixable with --fix
 
 Fixed my-scene.dialogue.md (1 fix)
-NOTE: Fix applied: Escape as literal text
- 
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
- 
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: The rule is simple => the lever opens the door.
+3 | +Alice: The rule is simple \=> the lever opens the door.
+4 |  
 ```
 
 A run with nothing to fix prints exactly what a plain compile prints and touches

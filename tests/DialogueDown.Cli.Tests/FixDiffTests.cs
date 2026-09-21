@@ -18,6 +18,8 @@ public sealed class FixDiffTests
         Assert.Equal([' ', '-', '+', ' '], rows.Select(row => row.Marker));
         Assert.Equal("Alice: The rule is simple => the lever opens the door.", rows[1].Text);
         Assert.Equal("Alice: The rule is simple \\=> the lever opens the door.", rows[2].Text);
+        // Every row carries the line number of its own side.
+        Assert.Equal([2, 3, 3, 4], rows.Select(row => row.LineNumber));
     }
 
     [Fact]

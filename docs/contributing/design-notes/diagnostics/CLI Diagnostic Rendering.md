@@ -91,9 +91,10 @@ The work splits into two cleanly bounded passes; 5a has no CLI dependency and 5b
 - [x] When a diagnostic still carries an unapplied fix, add the discovery hint
       `N fixable with --fix` after the summary.
 - [x] Describe a fix run in a section after the diagnostics: the write notice
-      (`Fixed <script> (1 fix; 1 warning remains)`), then `NOTE: Fix applied: <title>` and a hunk
-      per repair, `NOTE: Fix skipped: <title> (<reason>)` for a skipped one, and anything new
-      after fixing under an `after fixing:` lead-in — see the
+      (`Fixed <script> (1 fix; 1 warning remains)`), then a numbered item per repair —
+      `1. Applied Fix: <title>` with a line-numbered hunk, or
+      `2. Skipped Fix: <title> (<reason>)` — and anything new after fixing under an
+      `after fixing:` lead-in. See the
       [fix mode note](../cli/Compile%20CLI%20-%20Fix%20Mode.md).
 - [x] Return `Success` for no errors (warnings/info still succeed), `DataError` when errors exist;
       align malformed-config errors to `DataError` too.

@@ -85,9 +85,9 @@ derived), a dry-run or patch mode, and the CI postures.
 - [x] The diagnostics print exactly as a plain compile prints them, with no fix
       narration among them.
 - [x] A fix run appends a separate section: the write notice
-      `Fixed <script> (<N> fix; <state>)`, then one
-      `NOTE: Fix applied: <title>` and a git-style hunk per repair, or
-      `NOTE: Fix skipped: <title> (<reason>)` for a skipped one.
+      `Fixed <script> (<N> fix; <state>)`, then a numbered item per repair —
+      `1. Applied Fix: <title>` with a line-numbered hunk, or
+      `2. Skipped Fix: <title> (<reason>)`.
 - [x] The hunk is computed with DiffPlex over the script with and without that
       one fix, with one line of context either side and the changed words
       emphasized on a terminal.
@@ -184,11 +184,11 @@ scene.dialogue.md(5,1): warning DLG1107: This line looks like a speaker prefix �
 1 fixable with --fix
 
 Fixed scene.dialogue.md (1 fix; 1 warning remains)
-NOTE: Fix applied: Escape as literal text
- 
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
- 
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: The rule is simple => the lever opens the door.
+3 | +Alice: The rule is simple \=> the lever opens the door.
+4 |  
 ```
 
 - The fix section opens with the write notice,
@@ -196,14 +196,15 @@ NOTE: Fix applied: Escape as literal text
   anything remains: `; 1 warning remains`, `; 1 error, 1 warning remain`. It
   prints only after the write returns, so the report can never claim a repair
   the run did not make; a run that wrote nothing has no notice.
-- Each applied fix gets `NOTE: Fix applied: <title>` followed by its hunk: the
-  changed line as git-style `-` and `+` rows with one line of context either
-  side, so the rows stay greppable. On a terminal the rows are red and green,
-  and the changed words are emphasized; the emphasis comes from DiffPlex's
-  word-level sub-pieces.
-- A skipped fix gets `NOTE: Fix skipped: <title> (<reason>)` and no hunk. The
-  wording mirrors clang-tidy's `note: this fix will not be applied because it
-  overlaps with another fix`.
+- Each repair is a numbered item, `1. Applied Fix: <title>`, followed by its
+  hunk: the changed line as git-style `-` and `+` rows with one line of context
+  either side, every row carrying the line number of its own side in a gutter
+  (`3 | -…` on a plain console, `3 │ -…` on a terminal), so the rows stay
+  greppable. On a terminal the rows are red and green, and the changed words are
+  emphasized from DiffPlex's word-level sub-pieces.
+- A skipped fix is `2. Skipped Fix: <title> (<reason>)` in the same numbering,
+  with no hunk. The reason wording mirrors clang-tidy's `note: this fix will not
+  be applied because it overlaps with another fix`.
 - Nothing applicable: the section is absent and the run prints exactly what a
   plain compile prints, on both streams and in exit code. A clean script stays
   silent, as it already is; a script whose diagnostics carry no fix keeps its
@@ -239,9 +240,9 @@ even when the compile ends in an error.
 
 > [!NOTE]
 > Captured from the CLI on this branch, in a directory of throwaway scripts.
-> Long messages are elided with `…`; the terminal wraps them to its width. The
-> single-space rows in a hunk are context lines, and H strips the color from
-> the pseudo-terminal capture.
+> Long messages are elided with `…`; the terminal wraps them to its width. A
+> hunk row's leading number is its line number, a single-space row is context,
+> and H strips the color from the pseudo-terminal capture.
 
 ### A — fix in place: one warning fixed, one remains
 
@@ -255,11 +256,11 @@ workshop.dialogue.md(5,1): warning DLG1107: This line looks like a speaker prefi
 1 fixable with --fix
 
 Fixed workshop.dialogue.md (1 fix; 1 warning remains)
-NOTE: Fix applied: Escape as literal text
- 
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
- 
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: The rule is simple => the lever opens the door.
+3 | +Alice: The rule is simple \=> the lever opens the door.
+4 |  
 $ echo $?
 0
 ```
@@ -307,11 +308,11 @@ broken.dialogue.md(5,1): error DLG2001: Two scenes resolve to the same anchor '#
 1 fixable with --fix
 
 Fixed broken.dialogue.md (1 fix; 1 error remains)
-NOTE: Fix applied: Escape as literal text
- 
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
- 
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: The rule is simple => the lever opens the door.
+3 | +Alice: The rule is simple \=> the lever opens the door.
+4 |  
 $ echo $?
 65
 ```
@@ -355,11 +356,11 @@ bom.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follo
 1 fixable with --fix
 
 Fixed bom.dialogue.md (1 fix)
-NOTE: Fix applied: Escape as literal text
- 
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
- 
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: The rule is simple => the lever opens the door.
+3 | +Alice: The rule is simple \=> the lever opens the door.
+4 |  
 $ xxd -l 12 bom.dialogue.md
 00000000: efbb bf23 2054 6865 2057 6f72            ...# The Wor
 ```
@@ -383,12 +384,38 @@ NOTE: for more information, see …#dlg1113
 1 fixable with --fix
 
 Fixed rich.dialogue.md (1 fix; 1 warning remains)
-NOTE: Fix applied: Escape as literal text
- 
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
- 
+1. Applied Fix: Escape as literal text
+2 │  
+3 │ -Alice: The rule is simple => the lever opens the door.
+3 │ +Alice: The rule is simple \=> the lever opens the door.
+4 │  
 ```
+
+### I — two fixes: a numbered note and hunk each
+
+```console
+$ ddown compile two-arrows.dialogue.md --fix
+two-arrows.dialogue.md(3,11): warning DLG1113: `=>` makes a jump only when a link follows it. …
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
+two-arrows.dialogue.md(3,25): warning DLG1113: `=>` makes a jump only when a link follows it. …
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
+2 warnings
+2 fixable with --fix
+
+Fixed two-arrows.dialogue.md (2 fixes)
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: Go => left, then => right.
+3 | +Alice: Go \=> left, then => right.
+
+2. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: Go => left, then => right.
+3 | +Alice: Go => left, then \=> right.
+```
+
+Each numbered fix is diffed against the script as read, so a hunk shows that
+one repair's change and nothing else.
 
 ## Key design decisions
 
