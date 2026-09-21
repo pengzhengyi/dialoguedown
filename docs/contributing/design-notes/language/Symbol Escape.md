@@ -326,14 +326,19 @@ Built as designed, with these notes:
 - **Changed.** The review rounds added the speaker-prefix rule (an escaped prefix
   element makes the line default-speaker speech) and moved the arrow's spelling
   and its escape rule behind `StartsWithJumpIndicator`; both are recorded above.
-- **Not implemented.** Two follow-ups stay deferred: the escaped-prefix warning
-  and the editor affordance (literalizing and suggestions). Both are tracked.
+- **Not implemented.** The escaped-prefix warning stays deferred and tracked.
+  The editor affordance resolved: highlighting follows from the token model and
+  is covered by tests, while literalizing and suggestions are not planned — the
+  [Diagnostic Quick Fixes](../visualization/editor/Diagnostic%20Quick%20Fixes.md)
+  note records why.
 
 ## Open questions and deferred work
 
-- **Editor affordance** — highlighting, a literalize transform (context menu and
-  shortcut), and suggestions for escaped sigils are deferred to the editor
-  surface.
+- **Editor affordance** — highlighting follows from the token model: an escaped
+  sigil is text, so no tag or jump token is projected. A literalize transform
+  and typing suggestions are not planned, with the reasoning in the
+  [Diagnostic Quick Fixes](../visualization/editor/Diagnostic%20Quick%20Fixes.md)
+  note.
 - **Escaped-prefix warning** — a diagnostic for the ambiguous shapes: the leading
   text would parse as a speaker prefix if the escape were absent, and the escaped
   run starts a prefix element (`@`, `#`, or a quoted name) rather than the colon.
