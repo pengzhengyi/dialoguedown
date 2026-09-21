@@ -191,6 +191,7 @@ Spectre.Console.Cli; they are not needed to understand the compiler.
 flowchart LR
     CLI["1. Command-Line Interface"] --> VZ["2. Visualize on the CLI"]
     VZ --> DOT["3. Emit DOT"]
+    DOT --> FIX["4. Fix mode"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -198,6 +199,7 @@ flowchart LR
 | 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `dialoguedown` CLI: `compile` + `visualize` (Spectre.Console.Cli) | Implemented |
 | 2 | [Visualize on the CLI](./cli/Visualize%20on%20the%20CLI.md) | Wire `ddown visualize` to the engine; retire the hand-rolled CLI | Implemented |
 | 3 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
+| 4 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Proposed |
 
 ### Visualization
 
