@@ -1,6 +1,6 @@
 using DialogueDown.Diagnostics;
 
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>What happened to a diagnostic's preferred fix during a fix run.</summary>
 /// <param name="Fix">The preferred fix the diagnostic offered.</param>

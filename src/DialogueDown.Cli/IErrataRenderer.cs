@@ -1,3 +1,5 @@
+using DialogueDown.Cli.Fixing;
+
 namespace DialogueDown.Cli;
 
 /// <summary>Renders a compile's located diagnostics for the reader.</summary>

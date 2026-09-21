@@ -1,6 +1,6 @@
 using DialogueDown.Diagnostics;
 
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>
 /// Applies a compile's preferred diagnostic fixes to the script text. The text as read and the

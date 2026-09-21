@@ -1,4 +1,5 @@
 using System.Text;
+using DialogueDown.Cli.Fixing;
 using DialogueDown.TestSupport;
 
 namespace DialogueDown.Cli.Tests;

@@ -1,6 +1,6 @@
 using DialogueDown.Diagnostics;
 
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>
 /// One diagnostic as the report lists it, paired with what happened to its preferred fix — or

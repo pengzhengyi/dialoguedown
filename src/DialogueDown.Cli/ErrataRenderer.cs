@@ -1,3 +1,4 @@
+using DialogueDown.Cli.Fixing;
 using DialogueDown.Diagnostics;
 using Errata;
 using Spectre.Console;

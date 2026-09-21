@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DialogueDown.Cli.Fixing;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;

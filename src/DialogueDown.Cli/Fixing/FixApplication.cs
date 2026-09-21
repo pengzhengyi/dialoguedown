@@ -1,4 +1,4 @@
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>
 /// The result of applying a compile's preferred fixes: the corrected text and, in the compile's

@@ -1,6 +1,6 @@
 using DialogueDown.Diagnostics;
 
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>The facts a fix run adds to the report, beyond each diagnostic's own outcome.</summary>
 /// <param name="Remaining">How many diagnostics the corrected script still reports.</param>

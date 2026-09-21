@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>
 /// A script's text as read from disk, remembering whether the file carried a UTF-8 byte order

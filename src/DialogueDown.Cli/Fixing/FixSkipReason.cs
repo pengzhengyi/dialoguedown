@@ -1,4 +1,4 @@
-namespace DialogueDown.Cli;
+namespace DialogueDown.Cli.Fixing;
 
 /// <summary>Why a diagnostic's preferred fix was not applied to the script.</summary>
 internal enum FixSkipReason
