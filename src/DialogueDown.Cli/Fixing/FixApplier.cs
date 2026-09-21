@@ -22,34 +22,47 @@ internal static class FixApplier
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        var outcomes = new Dictionary<LocatedDiagnostic, FixOutcome>(ReferenceEqualityComparer.Instance);
+        var outcomes = new List<FixOutcome>();
         var kept = new List<LocatedFix>();
-        foreach (var (diagnostic, fix) in PreferredFixes(diagnostics))
+        foreach (var fix in PreferredFixes(diagnostics))
         {
             var skipReason = SkipReason(fix, source.Length, kept);
-            outcomes[diagnostic] = skipReason is null
-                ? FixOutcome.Apply(fix)
-                : FixOutcome.Skip(fix, skipReason.Value);
+            outcomes.Add(skipReason is null ? FixOutcome.Apply(fix) : FixOutcome.Skip(fix, skipReason.Value));
             if (skipReason is null)
             {
                 kept.Add(fix);
             }
         }
 
-        var reported = diagnostics
-            .Select(diagnostic => new ReportedDiagnostic(diagnostic, outcomes.GetValueOrDefault(diagnostic)))
-            .ToList();
-        return new FixApplication(Splice(source, kept), reported);
+        return new FixApplication(Splice(source, kept), outcomes);
     }
 
-    private static IEnumerable<(LocatedDiagnostic Diagnostic, LocatedFix Fix)> PreferredFixes(
-        IReadOnlyList<LocatedDiagnostic> diagnostics) =>
+    /// <summary>Splices the given fixes into the text, descending so no offset shifts.</summary>
+    internal static string Splice(string source, IReadOnlyList<LocatedFix> fixes)
+    {
+        var edits = fixes
+            .SelectMany(fix => fix.Edits)
+            .OrderByDescending(edit => edit.StartOffset)
+            .ThenByDescending(edit => edit.EndOffset)
+            .ToList();
+
+        var text = source;
+        foreach (var edit in edits)
+        {
+            text = string.Concat(text.AsSpan(0, edit.StartOffset), edit.NewText, text.AsSpan(edit.EndOffset));
+        }
+
+        return text;
+    }
+
+    private static IEnumerable<LocatedFix> PreferredFixes(IReadOnlyList<LocatedDiagnostic> diagnostics) =>
         diagnostics
             .Where(diagnostic => diagnostic.Fixes.Count > 0)
             .Select(diagnostic => (Diagnostic: diagnostic, Fix: diagnostic.Fixes[0]))
             .OrderBy(candidate => candidate.Fix.Edits[0].StartOffset)
             .ThenBy(candidate => candidate.Diagnostic.Code, StringComparer.Ordinal)
-            .ThenBy(candidate => candidate.Fix.Title, StringComparer.Ordinal);
+            .ThenBy(candidate => candidate.Fix.Title, StringComparer.Ordinal)
+            .Select(candidate => candidate.Fix);
 
     private static FixSkipReason? SkipReason(LocatedFix fix, int length, IReadOnlyList<LocatedFix> kept)
     {
@@ -71,21 +84,4 @@ internal static class FixApplier
         left.StartOffset < EndOf(right) && right.StartOffset < EndOf(left);
 
     private static int EndOf(LocatedEdit edit) => Math.Max(edit.EndOffset, edit.StartOffset + 1);
-
-    private static string Splice(string source, IReadOnlyList<LocatedFix> fixes)
-    {
-        var edits = fixes
-            .SelectMany(fix => fix.Edits)
-            .OrderByDescending(edit => edit.StartOffset)
-            .ThenByDescending(edit => edit.EndOffset)
-            .ToList();
-
-        var text = source;
-        foreach (var edit in edits)
-        {
-            text = string.Concat(text.AsSpan(0, edit.StartOffset), edit.NewText, text.AsSpan(edit.EndOffset));
-        }
-
-        return text;
-    }
 }

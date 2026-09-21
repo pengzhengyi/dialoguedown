@@ -78,10 +78,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
         var source = File.ReadAllText(settings.Script);
         var result = compiler.Compile(source);
 
-        _errata.Render(
-            settings.Script,
-            source,
-            [.. result.LocatedDiagnostics.Select(diagnostic => new ReportedDiagnostic(diagnostic, null))]);
+        _errata.Render(settings.Script, source, result.LocatedDiagnostics);
 
         if (settings.EmitsPlaybook && result is CompilationSuccess compiled)
         {
@@ -110,9 +107,9 @@ internal sealed class CompileCommand : Command<CompileSettings>
         ];
     }
 
-    // Fix mode: correct the script in place, then report the diagnostics as found, each with what
-    // happened to its fix. A run with nothing applicable prints exactly what a plain compile
-    // prints, so silence stays silence.
+    // Fix mode: correct the script in place, then report the diagnostics as found and, after them,
+    // what the run did. A run with nothing applicable prints exactly what a plain compile prints,
+    // so silence stays silence.
     private int RunFix(CompileSettings settings, CompilerOptions options)
     {
         var script = ScriptContents.Read(settings.Script);
@@ -121,7 +118,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
         var application = FixApplier.Apply(script.Text, asFound.LocatedDiagnostics);
         if (!application.HasCandidates)
         {
-            _errata.Render(settings.Script, script.Text, application.Reported);
+            _errata.Render(settings.Script, script.Text, asFound.LocatedDiagnostics);
             return asFound.HasErrors ? ExitCodes.DataError : ExitCodes.Success;
         }
 
@@ -133,12 +130,13 @@ internal sealed class CompileCommand : Command<CompileSettings>
         }
 
         var corrected = compiler.Compile(application.Text);
-        var summary = new FixSummary(
-            corrected.LocatedDiagnostics.Count,
+        var run = new FixRun(
+            application.Outcomes,
             written,
-            application.Text,
-            NewAfterFixing(asFound.LocatedDiagnostics, corrected.LocatedDiagnostics));
-        _errata.Render(settings.Script, script.Text, application.Reported, summary);
+            corrected.LocatedDiagnostics,
+            NewAfterFixing(asFound.LocatedDiagnostics, corrected.LocatedDiagnostics),
+            application.Text);
+        _errata.Render(settings.Script, script.Text, asFound.LocatedDiagnostics, run);
         return corrected.HasErrors ? ExitCodes.DataError : ExitCodes.Success;
     }
 

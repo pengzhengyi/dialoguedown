@@ -34,6 +34,7 @@
 
   <!-- Command-line interface -->
   <ItemGroup>
+    <PackageVersion Include="DiffPlex"            Version="1.9.0" />
     <PackageVersion Include="Errata"              Version="0.16.0" />
     <PackageVersion Include="Spectre.Console"     Version="0.57.2" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />

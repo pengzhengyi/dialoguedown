@@ -17,7 +17,7 @@ public sealed class FixApplierTests
         Assert.Equal("The rule is simple \\=> the lever opens.", application.Text);
         Assert.Equal(1, application.AppliedCount);
         Assert.True(application.HasCandidates);
-        Assert.Null(Assert.Single(application.Reported).Fix!.SkipReason);
+        Assert.Null(Assert.Single(application.Outcomes).SkipReason);
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public sealed class FixApplierTests
         Assert.Equal(Source, application.Text);
         Assert.False(application.HasCandidates);
         Assert.Equal(0, application.AppliedCount);
-        Assert.Null(Assert.Single(application.Reported).Fix);
+        Assert.Empty(application.Outcomes);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class FixApplierTests
 
         Assert.Equal("say \\=> now", application.Text);
         Assert.Equal(1, application.AppliedCount);
-        Assert.Equal(preferred.Title, Assert.Single(application.Reported).Fix!.Fix.Title);
+        Assert.Equal(preferred.Title, Assert.Single(application.Outcomes).Fix.Title);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public sealed class FixApplierTests
         Assert.Equal(1, application.AppliedCount);
         Assert.Equal(
             FixSkipReason.OverlapsAnAppliedFix,
-            application.Reported[1].Fix!.SkipReason);
+            application.Outcomes[1].SkipReason);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class FixApplierTests
         Assert.Equal(1, application.AppliedCount);
         Assert.Equal(
             FixSkipReason.OverlapsAnAppliedFix,
-            application.Reported[0].Fix!.SkipReason);
+            application.Outcomes[1].SkipReason);
     }
 
     [Fact]
@@ -111,8 +111,8 @@ public sealed class FixApplierTests
 
         Assert.Equal("aYb", application.Text);
         Assert.Equal(1, application.AppliedCount);
-        Assert.Equal(FixSkipReason.OutsideTheScript, application.Reported[0].Fix!.SkipReason);
-        Assert.Null(application.Reported[1].Fix!.SkipReason);
+        Assert.Equal(FixSkipReason.OutsideTheScript, application.Outcomes[1].SkipReason);
+        Assert.Null(application.Outcomes[0].SkipReason);
     }
 
     [Fact]
@@ -151,7 +151,8 @@ public sealed class FixApplierTests
 
         var application = FixApplier.Apply(Source, [first, second, third]);
 
-        Assert.Equal(["DLG0001", "DLG0002", "DLG0003"], application.Reported.Select(r => r.Diagnostic.Code));
+        Assert.Equal(3, application.Outcomes.Count);
+        Assert.Equal([true, false, true], application.Outcomes.Select(outcome => outcome.Applied));
         Assert.Equal("aXe!f", application.Text);
     }
 
