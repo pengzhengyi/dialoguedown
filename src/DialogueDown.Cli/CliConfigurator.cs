@@ -29,6 +29,7 @@ internal static class CliConfigurator
         config.AddCommand<CompileCommand>("compile")
             .WithDescription("Compile a DialogueDown script.")
             .WithExample("compile", "scene.dialogue.md")
+            .WithExample("compile", "scene.dialogue.md", "--fix")
             .WithExample("compile", "scene.dialogue.md", "--mode", "best-effort")
             .WithExample("compile", "scene.dialogue.md", "--emit", "dot", "-o", "stages.dot");
         config.AddCommand<VisualizeCommand>("visualize")

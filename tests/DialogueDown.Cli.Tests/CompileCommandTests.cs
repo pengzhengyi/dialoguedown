@@ -180,6 +180,32 @@ public sealed class CompileCommandTests
     }
 
     [Fact]
+    public void Compile_FixWithEmit_FailsWithUsageError()
+    {
+        using var script = new TempScript("# Scene");
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix", "--emit", "dot");
+
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        Assert.Contains("--fix", result.Output, StringComparison.Ordinal);
+        Assert.Contains("--emit", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_FixWithOutput_FailsWithUsageError()
+    {
+        using var script = new TempScript("# Scene");
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix", "-o", "fixed.dialogue.md");
+
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        Assert.Contains("--fix", result.Output, StringComparison.Ordinal);
+        Assert.Contains("-o", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Compile_FailFastMode_IsRejected()
     {
         // Fail-fast throws instead of collecting errata, so it is not offered as a CLI mode.
