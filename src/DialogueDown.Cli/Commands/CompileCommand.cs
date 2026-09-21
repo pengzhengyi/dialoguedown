@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 using DialogueDown.Emission;
 using DialogueDown.Playbook;
 using DialogueDown.Visualization.Live;
@@ -67,6 +68,11 @@ internal sealed class CompileCommand : Command<CompileSettings>
             return _runner.RunEmit(settings.Script, format, settings.Output, options);
         }
 
+        if (settings.Fix)
+        {
+            return RunFix(settings, options);
+        }
+
         var compiler = _compilerFactory(options);
         var source = File.ReadAllText(settings.Script);
         var result = compiler.Compile(source);
@@ -86,6 +92,54 @@ internal sealed class CompileCommand : Command<CompileSettings>
 
     private static string ScriptDirectory(string script) =>
         Path.GetDirectoryName(Path.GetFullPath(script))!;
+
+    // Identity is code plus position, not offset: an applied insertion shifts every offset after
+    // it while a surviving diagnostic keeps its line and column, and those point into the text the
+    // listing describes — the script as read.
+    private static IReadOnlyList<LocatedDiagnostic> NewAfterFixing(
+        IReadOnlyList<LocatedDiagnostic> asFound, IReadOnlyList<LocatedDiagnostic> corrected)
+    {
+        var known = asFound
+            .Select(diagnostic => (diagnostic.Code, diagnostic.Start.Line, diagnostic.Start.Column))
+            .ToHashSet();
+        return
+        [
+            .. corrected.Where(diagnostic =>
+                !known.Contains((diagnostic.Code, diagnostic.Start.Line, diagnostic.Start.Column))),
+        ];
+    }
+
+    // Fix mode: correct the script in place, then report the diagnostics as found, each with what
+    // happened to its fix. A run with nothing applicable prints exactly what a plain compile
+    // prints, so silence stays silence.
+    private int RunFix(CompileSettings settings, CompilerOptions options)
+    {
+        var script = ScriptContents.Read(settings.Script);
+        var compiler = _compilerFactory(options);
+        var asFound = compiler.Compile(script.Text);
+        var application = FixApplier.Apply(script.Text, asFound.LocatedDiagnostics);
+        if (!application.HasCandidates)
+        {
+            _errata.Render(settings.Script, script.Text, application.Reported);
+            return asFound.HasErrors ? ExitCodes.DataError : ExitCodes.Success;
+        }
+
+        string? written = null;
+        if (application.AppliedCount > 0)
+        {
+            (script with { Text = application.Text }).Write(settings.Script);
+            written = settings.Script;
+        }
+
+        var corrected = compiler.Compile(application.Text);
+        var summary = new FixSummary(
+            corrected.LocatedDiagnostics.Count,
+            written,
+            application.Text,
+            NewAfterFixing(asFound.LocatedDiagnostics, corrected.LocatedDiagnostics));
+        _errata.Render(settings.Script, script.Text, application.Reported, summary);
+        return corrected.HasErrors ? ExitCodes.DataError : ExitCodes.Success;
+    }
 
     // Only a successful compile has a graph, so a script with errors leaves the destination as it
     // was. Warnings still write: a warning is a smell the compiler tolerates, and anything it
