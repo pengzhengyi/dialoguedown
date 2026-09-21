@@ -44,10 +44,11 @@ recompilation all inherit.
 **In scope:** the fix model, the dangling-arrow producer, the projection into the
 report payload, and the editor action.
 
-**Out of scope:** general refactors, "fix all", a CLI mode that applies fixes
-(queued as separate follow-up work), fixes in the published reference, and a
-"Make literal" command for valid sigils — deferred, tracked separately, and
-deliberately not needed for this seam.
+**Out of scope:** general refactors, "fix all", fixes in the published
+reference, and a "Make literal" command for valid sigils — not planned, because
+a valid tag or jump carries no diagnostic and the escape is one typed character.
+The CLI mode that applies fixes shipped later, in
+[Compile CLI — fix mode](../../cli/Compile%20CLI%20-%20Fix%20Mode.md).
 
 ## Functionality checklist
 
@@ -132,9 +133,10 @@ flowchart LR
 
 The stage that knows the repair attaches it where the diagnostic is made
 (`JumpAssembler`, at the moment it degrades the arrow). Consumers then only
-forward or ignore it: the CLI and the published reference keep rendering the
-message alone, the projection carries the fix, and a future language server
-serves it without moving knowledge around.
+forward or ignore it: the CLI renders the message and applies the fix on
+request, the published reference keeps rendering the message alone, the
+projection carries the fix, and a future language server serves it without
+moving knowledge around.
 
 Deriving fixes in the visualization from a diagnostic's code and span was
 rejected: it would re-derive what the producer already knew, and the fix would
@@ -230,13 +232,13 @@ recompile.
 
 ## Alternatives not chosen
 
-| Alternative                                           | Why not                                                                                                         |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Derive fixes in the visualization from code and span  | Re-derives producer knowledge and gives the fix a second home (D1).                                             |
-| Absolute edit offsets                                 | Stale within the live-edit window; a misplaced insert corrupts text (D3).                                       |
-| Callbacks instead of data                             | Not serializable, not testable without an editor, not portable to a server (D2).                                |
-| A client-side "Make literal" command for valid sigils | A valid tag or jump carries no diagnostic, and the escape is one typed character; deferred, tracked separately. |
-| Attaching fixes to the descriptor                     | A descriptor is shared by every instance; a fix needs a span.                                                   |
+| Alternative                                           | Why not                                                                                                                                                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Derive fixes in the visualization from code and span  | Re-derives producer knowledge and gives the fix a second home (D1).                                                                                                                              |
+| Absolute edit offsets                                 | Stale within the live-edit window; a misplaced insert corrupts text (D3).                                                                                                                        |
+| Callbacks instead of data                             | Not serializable, not testable without an editor, not portable to a server (D2).                                                                                                                 |
+| A client-side "Make literal" command for valid sigils | A valid tag or jump carries no diagnostic, and the escape is one typed character; not planned — issue [#461](https://github.com/pengzhengyi/dialoguedown/issues/461) closed with that reasoning. |
+| Attaching fixes to the descriptor                     | A descriptor is shared by every instance; a fix needs a span.                                                                                                                                    |
 
 ## Implementation crosscheck
 
@@ -250,14 +252,17 @@ Built as designed, with these notes:
   gating: the panel re-renders when the mode flips, the source view re-applies
   its diagnostics, and a read-only report offers nothing. The panel also gained
   the leading slot every row reserves, so rows with and without a fix align.
-- **Not implemented.** The CLI `--fix` mode stays queued; more producers and a
-  "fix all" stay unbuilt until a consumer asks.
+- **Not implemented.** More producers and a "fix all" stay unbuilt until a
+  consumer asks.
+- **Shipped since.** The CLI `--fix` mode, this note's out-of-scope follow-up,
+  landed in [Compile CLI — fix mode](../../cli/Compile%20CLI%20-%20Fix%20Mode.md).
 
 ## Open questions and deferred work
 
-- **The literalize command and suggestions** remain deferred, tracked separately;
-  the shortlist of agreed behavior (shortcut, selection semantics) lives there.
+- **The literalize command and suggestions** are not planned: a valid sigil
+  carries no diagnostic and the escape is one typed character, and suggestions
+  for tag-like prose risk noise. Issue
+  [#461](https://github.com/pengzhengyi/dialoguedown/issues/461) tracked this and
+  closed with that reasoning.
 - **More producers** may follow; the seam is one attach call, and each new fix
   should arrive with its message already naming the remedy (D5).
-- **CLI `--fix`** — a compile mode that applies a document's fixes and writes the
-  result is queued as separate follow-up work; this seam only carries them.
