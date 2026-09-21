@@ -290,6 +290,8 @@
                 "leads-nowhere",
                 "endless-ring",
                 "unanswered-condition",
+                "unanswered-key",
+                "unasked-key",
                 "unplayable-node"
               ]
             }
