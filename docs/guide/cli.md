@@ -188,15 +188,21 @@ writes the corrected script in place:
 ddown compile my-scene.dialogue.md --fix
 ```
 
-The report lists the diagnostics as found, each repaired one carrying what
-happened to it, and ends with the tally and the file it corrected:
+The report shows the diagnostics first, exactly as a plain compile prints them,
+then a fix section that names the repair and shows what changed:
 
 ```text
 my-scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  fix applied: Escape as literal text
   for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
-1 warning (1 fixed, 0 remaining)
+1 warning
+1 fixable with --fix
+
 Fixed my-scene.dialogue.md (1 fix)
+NOTE: Fix applied: Escape as literal text
+ 
+-Alice: The rule is simple => the lever opens the door.
++Alice: The rule is simple \=> the lever opens the door.
+ 
 ```
 
 A run with nothing to fix prints exactly what a plain compile prints and touches

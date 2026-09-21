@@ -38,8 +38,9 @@ In scope:
   carries one, and correct the script in place.
 - The applier: preferred-fix selection, ascending candidate order, descending
   application, whole-fix atomicity, overlap skip.
-- The report: the diagnostics as found, each fixed one annotated; a tally of
-  fixed versus remaining; a write notice naming the corrected file.
+- The report: the diagnostics exactly as a plain compile prints them, then a fix
+  section with a note and diff hunk per repair and a write notice naming the
+  corrected file and what remains.
 - The fixability hint on plain compiles: `N fixable with --fix` (the feature's
   discovery path, and the precondition for silence).
 - Exit codes, BOM and line-ending preservation, and a help example.
@@ -65,13 +66,14 @@ this design follows most closely:
 | dotnet format | every formatting diagnostic | `--diagnostics <IDs>`, `--severity` | none | changed-file summary; `--verify-no-changes` for CI |
 | clang-tidy | fixes of enabled checks | by check (`-checks=`) | `--fix-errors` extends | as found, `note: FIX-IT applied suggested code changes`; `applied N of M suggested fixes.` |
 
-Adopted: the as-found diagnostic listing with the repair noted in place
-(clang-tidy), the file-level `Fixed <file> (N fix)` notice (cargo fix), the
-tally suffix naming fixed versus remaining (Ruff), silence when there is
-nothing to do (ESLint and this CLI already), and the fixability hint on
-non-fix runs (ESLint and Ruff). Skipped for now: per-code selection (always a
-separate filter option, never a `--fix` value), safety tiers (the only fix is
-mechanically derived), a dry-run or patch mode, and the CI postures.
+Adopted: the diagnostics as found, unchanged from a plain compile; a separate
+fix section carrying a note and a diff hunk per repair (clang-tidy's as-found
+diagnostics and attached fix notes); the file-level `Fixed <file> (N fix)`
+notice (cargo fix) with the remaining count rolled in; silence when there is
+nothing to do (ESLint and this CLI already); and the fixability hint on non-fix
+runs (ESLint and Ruff). Skipped: per-code selection (always a separate filter
+option, never a `--fix` value), safety tiers (the only fix is mechanically
+derived), a dry-run or patch mode, and the CI postures.
 
 ## Functionality checklist
 
@@ -80,13 +82,15 @@ mechanically derived), a dry-run or patch mode, and the CI postures.
 - [x] `--fix` with nothing applicable is byte-identical to a plain compile on
       both streams, writes nothing, and leaves the file's modification time
       unchanged.
-- [x] The listing shows the diagnostics as found; a fixed diagnostic gains an
-      indented `fix applied: <title>` continuation, a skipped one an indented
-      `fix skipped: <title> (overlaps an applied fix)`.
-- [x] The fix-mode tally suffixes the existing summary, e.g.
-      `2 warnings (1 fixed, 1 remaining)`.
-- [x] A write prints `Fixed <script> (<N> fix)` after the tally, and only
-      after the write returns.
+- [x] The diagnostics print exactly as a plain compile prints them, with no fix
+      narration among them.
+- [x] A fix run appends a separate section: the write notice
+      `Fixed <script> (<N> fix; <state>)`, then one
+      `NOTE: Fix applied: <title>` and a git-style hunk per repair, or
+      `NOTE: Fix skipped: <title> (<reason>)` for a skipped one.
+- [x] The hunk is computed with DiffPlex over the script with and without that
+      one fix, with one line of context either side and the changed words
+      emphasized on a terminal.
 - [x] A plain compile prints `N fixable with --fix` when any diagnostic
       carries a fix.
 - [x] Candidates are selected in ascending position with a deterministic
@@ -94,8 +98,8 @@ mechanically derived), a dry-run or patch mode, and the CI postures.
       wins.
 - [x] The recompiled script sets the exit code; a diagnostic that appears only
       after fixing prints under an `after fixing:` lead-in.
-- [x] A second `--fix` run applies nothing, writes nothing, and says nothing
-      about fixes while the remaining errata print as usual.
+- [x] A second `--fix` run applies nothing, writes nothing, and shows no fix
+      section while the remaining errata print as usual.
 - [x] A leading UTF-8 BOM survives the rewrite.
 - [x] `--fix` with `--emit` or `-o` is a usage error (64).
 - [x] `--help` carries a `--fix` example and describes the flag.
@@ -129,7 +133,7 @@ flowchart TD
     C -- "yes" --> E["apply the preferred fix<br/>of each, ascending pick,<br/>descending splice"]
     E --> F["write corrected script"]
     F --> G["recompile to verify"]
-    G --> H["print the as-found listing<br/>with outcomes, tally, write notice<br/>exit by the recompiled result"]
+    G --> H["print the diagnostics as found,<br/>then the fix section:<br/>notice, note and hunk per fix<br/>exit by the recompiled result"]
 ```
 
 ## Applying fixes
@@ -167,48 +171,52 @@ the editor applies one chosen fix at a time, so no ordering exists there yet.
 ## Report and exit codes
 
 The report is the errata stream: same console, same style, same destination
-(stderr). It lists the diagnostics **as found**, so every line and column
-refers to the script as read, and annotates what happened to each
-fix:
+(stderr). It prints two things in order: the diagnostics **exactly as a plain
+compile prints them** — so every line and column refers to the script as read,
+and the fixability hint is already there — then a separate fix section.
 
 ```text
 scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  fix applied: Escape as literal text
   for more information, see https://…/error-codes.html#dlg1113
 scene.dialogue.md(5,1): warning DLG1107: This line looks like a speaker prefix …
   for more information, see https://…/error-codes.html#dlg1107
-2 warnings (1 fixed, 1 remaining)
-Fixed scene.dialogue.md (1 fix)
+2 warnings
+1 fixable with --fix
+
+Fixed scene.dialogue.md (1 fix; 1 warning remains)
+NOTE: Fix applied: Escape as literal text
+ 
+-Alice: The rule is simple => the lever opens the door.
++Alice: The rule is simple \=> the lever opens the door.
+ 
 ```
 
-- An indented `fix applied: <title>` continuation comes next, above the existing
-  `for more information, see …` line; a skipped fix is an indented
-  `fix skipped: <title> (overlaps an applied fix)`. The wording mirrors
-  clang-tidy's `note: FIX-IT applied suggested code changes` and its
-  `note: this fix will not be applied because it overlaps with another fix`.
-- The tally is the existing severity summary with a fix-mode suffix:
-  `2 warnings (1 fixed, 1 remaining)`, `1 error, 1 warning (1 fixed, 1 remaining)`.
-  The suffix is load-bearing: the listing above is the pre-fix set, so without
-  it the tally would contradict what a re-run prints.
-- `Fixed <script> (<N> fix)` is the write notice, printed only when a write
-  happened and only after it returns, so the report can never claim a repair
-  the run did not make. An all-fixed run shows `(1 fixed, 0 remaining)` and
-  the same notice.
-- Nothing applicable: the run prints exactly what a plain compile prints, on
-  both streams and in exit code — no extra line, no write. A clean script
-  stays silent, as it already is; a script whose diagnostics carry no fix
-  keeps its ordinary errata. Silence is for the no-write case only.
+- The fix section opens with the write notice,
+  `Fixed <script> (<N> fix)`, suffixed with the corrected script's state when
+  anything remains: `; 1 warning remains`, `; 1 error, 1 warning remain`. It
+  prints only after the write returns, so the report can never claim a repair
+  the run did not make; a run that wrote nothing has no notice.
+- Each applied fix gets `NOTE: Fix applied: <title>` followed by its hunk: the
+  changed line as git-style `-` and `+` rows with one line of context either
+  side, so the rows stay greppable. On a terminal the rows are red and green,
+  and the changed words are emphasized; the emphasis comes from DiffPlex's
+  word-level sub-pieces.
+- A skipped fix gets `NOTE: Fix skipped: <title> (<reason>)` and no hunk. The
+  wording mirrors clang-tidy's `note: this fix will not be applied because it
+  overlaps with another fix`.
+- Nothing applicable: the section is absent and the run prints exactly what a
+  plain compile prints, on both streams and in exit code. A clean script stays
+  silent, as it already is; a script whose diagnostics carry no fix keeps its
+  ordinary errata. Silence is for the no-write case only.
 - After the tally, whenever a diagnostic still carries an unapplied fix, the
   report appends `N fixable with --fix`: every such diagnostic on a plain
-  compile, and whatever was skipped or left uncleared after a fix run. The
-  wording follows ESLint's `potentially fixable with the --fix option` and
-  Ruff's `[*] 1 fixable with the --fix option`, without Ruff's inline `[*]`
-  marker, which would break the greppable `file(line,col):` line. This is the
-  discovery path that makes fix mode's silence safe.
-- On an interactive terminal the same content renders as rich blocks, and the
-  outcome joins the diagnostic's note as its first line above the reference:
-  `NOTE: fix applied: Escape as literal text` on one line, `for more
-  information, see …` on the next.
+  compile, and whatever was skipped after a fix run. The wording follows
+  ESLint's `potentially fixable with the --fix option` and Ruff's
+  `[*] 1 fixable with the --fix option`, without Ruff's inline `[*]` marker,
+  which would break the greppable `file(line,col):` line. This is the discovery
+  path that makes fix mode's silence safe.
+- On an interactive terminal the diagnostics render as rich blocks and the fix
+  section follows them unchanged; the hunk rows are colored, not boxed.
 
 | Outcome | Exit |
 | --- | --- |
@@ -232,29 +240,32 @@ even when the compile ends in an error.
 > [!NOTE]
 > Captured from the CLI on this branch, in a directory of throwaway scripts.
 > Long messages are elided with `…`; the terminal wraps them to its width. The
-> rich excerpt under H was captured under a pseudo-terminal.
+> single-space rows in a hunk are context lines, and H strips the color from
+> the pseudo-terminal capture.
 
 ### A — fix in place: one warning fixed, one remains
 
 ```console
 $ ddown compile workshop.dialogue.md --fix
 workshop.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. With no link here it is read literally, staying as the characters "=>". If you meant to jump, add a target: `=> [The market](#the-market)`. If you meant the characters, escape the arrow: `\=>`.
-  fix applied: Escape as literal text
   for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
 workshop.dialogue.md(5,1): warning DLG1107: This line looks like a speaker prefix ("Bob:") but the name is styled, so it is not recognized and the line has no speaker. Remove the styling to declare the speaker.
   for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1107
-2 warnings (1 fixed, 1 remaining)
-Fixed workshop.dialogue.md (1 fix)
+2 warnings
+1 fixable with --fix
+
+Fixed workshop.dialogue.md (1 fix; 1 warning remains)
+NOTE: Fix applied: Escape as literal text
+ 
+-Alice: The rule is simple => the lever opens the door.
++Alice: The rule is simple \=> the lever opens the door.
+ 
 $ echo $?
 0
 ```
 
-The script changed by exactly one character:
-
-```diff
--Alice: The rule is simple => the lever opens the door.
-+Alice: The rule is simple \=> the lever opens the door.
-```
+The diagnostics are exactly what `ddown compile workshop.dialogue.md` prints;
+the fix section then names the repair and shows the change as a hunk.
 
 ### B — discovery: the hint on a plain compile
 
@@ -289,19 +300,24 @@ nothing. Neither writes a file nor changes a modification time.
 ```console
 $ ddown compile broken.dialogue.md --fix
 broken.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  fix applied: Escape as literal text
   for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
 broken.dialogue.md(5,1): error DLG2001: Two scenes resolve to the same anchor '#the-workshop'. Rename one heading so each jump target is unambiguous.
   for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg2001
-1 error, 1 warning (1 fixed, 1 remaining)
-Fixed broken.dialogue.md (1 fix)
+1 error, 1 warning
+1 fixable with --fix
+
+Fixed broken.dialogue.md (1 fix; 1 error remains)
+NOTE: Fix applied: Escape as literal text
+ 
+-Alice: The rule is simple => the lever opens the door.
++Alice: The rule is simple \=> the lever opens the door.
+ 
 $ echo $?
 65
 ```
 
-Before the fix the same compile reported `1 error, 1 warning`; afterward the
-warning is gone from the script and the tally says so, while the duplicated
-scene still fails the compile.
+The warning is gone from the script and the write notice says the error
+remains, while the duplicated scene still fails the compile.
 
 ### E — a second run: nothing to apply
 
@@ -315,8 +331,8 @@ $ echo $?
 ```
 
 Run after A, the escape is already in place, so the only diagnostic left is
-unfixable: no `fix applied:` line, no tally suffix, no write, exit 0. The
-report is what a plain compile of the corrected script prints.
+unfixable: no fix section, no write, exit 0. The report is what a plain compile
+of the corrected script prints.
 
 ### F — `--fix` with an emission option
 
@@ -334,22 +350,28 @@ $ echo $?
 ```console
 $ ddown compile bom.dialogue.md --fix
 bom.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  fix applied: Escape as literal text
   for more information, see …#dlg1113
-1 warning (1 fixed, 0 remaining)
+1 warning
+1 fixable with --fix
+
 Fixed bom.dialogue.md (1 fix)
+NOTE: Fix applied: Escape as literal text
+ 
+-Alice: The rule is simple => the lever opens the door.
++Alice: The rule is simple \=> the lever opens the door.
+ 
 $ xxd -l 12 bom.dialogue.md
 00000000: efbb bf23 2054 6865 2057 6f72            ...# The Wor
 ```
 
 ### H — rich rendering on a terminal
 
-Colors stripped; the outcome rides the diagnostic's note as its first line.
+Colors stripped; the diagnostics keep their rich blocks and the fix section
+follows unchanged.
 
 ```text
 syntax warning [DLG1113]: `=>` makes a jump only when a link follows it. …
-NOTE: fix applied: Escape as literal text
-for more information, see …#dlg1113
+NOTE: for more information, see …#dlg1113
    ┌─[rich.dialogue.md]
    │
  3 │ Alice: The rule is simple => the lever opens the door.
@@ -357,6 +379,15 @@ for more information, see …#dlg1113
    ·                            ╰────────────────────────── DLG1113
    │
    └─
+2 warnings
+1 fixable with --fix
+
+Fixed rich.dialogue.md (1 fix; 1 warning remains)
+NOTE: Fix applied: Escape as literal text
+ 
+-Alice: The rule is simple => the lever opens the door.
++Alice: The rule is simple \=> the lever opens the door.
+ 
 ```
 
 ## Key design decisions
@@ -403,13 +434,15 @@ producing a report that names two files. `--emit` and `-o` therefore conflict
 with `--fix`. When a non-destructive mode is wanted, the mature analog is a
 dry run or a patch, not a second destination.
 
-### D6 — The listing is as found, annotated; tallies and write notice last
+### D6 — Diagnostics as found, then the fix section
 
-Positions stay valid against the script as read, and the diagnostic
-message — the thing worth teaching — stays attached to its code, which the
-editor's one-click affordance does not need but a terminal reader does. Each
-tally goes last, as ESLint, Ruff, cargo fix, and clang-tidy all do. The
-`Fixed <script> (N fix)` notice is the signal that something on disk changed.
+The diagnostics stay exactly what a plain compile prints, so a terminal reader
+never has to separate "what the compiler found" from "what the fixer did", and
+every position stays valid against the file the writer has open. The fix
+narration gets its own room rather than a continuation line squeezed under a
+diagnostic — which is where the hunk showing the change can live. The write
+notice is the signal that something on disk changed, and it carries the
+corrected state because the diagnostics above describe the script as read.
 
 ### D7 — The recompile verifies; the exit code follows the corrected script
 
@@ -444,6 +477,18 @@ With one fix producer there is no user choice to express; both features are
 additive later. Recording their shapes now keeps the surface from ossifying
 around a value-taking `--fix`.
 
+### D11 — DiffPlex computes the hunk
+
+The hunk is a real diff of the script with and without that one fix, computed by
+[DiffPlex](https://github.com/mmanela/DiffPlex) — Apache-2.0, no transitive
+dependencies, a 33 KB assembly, 42.7M downloads, and actively maintained. The
+vetting spike ran 13 shared cases against a hand-written line renderer; DiffPlex
+came out shorter and adds word-level sub-pieces for the emphasis inside a
+changed line. One API trap is worth recording: `InlineDiffBuilder` returns a
+token stream, not lines — the line-structured model is `SideBySideDiffBuilder`.
+A single CLI-local renderer, `FixDiff`, touches the package, so a future swap
+stays local.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -452,6 +497,7 @@ around a value-taking `--fix`.
 | `--fix` with `--emit` or `-o` | usage error naming the option, exit 64, nothing written |
 | No diagnostic carries a fix | byte-identical to a plain compile, no write, exit as that compile |
 | A fix's edit falls outside the text (defensive) | that fix is skipped and reported; the rest apply |
+| A fix that changes no line | its note still prints, with no hunk |
 | Overlapping fixes | the later candidate is skipped whole and reported |
 | Two insertions at the same offset | fixed by the ascending tie-break: code, then title |
 | Script read-only, or the write fails | I/O error surfaces, exit 1, and no `fix applied:` line was printed |
@@ -469,15 +515,18 @@ around a value-taking `--fix`.
 - `CompileCommand` branches to fix mode before emission: read, compile,
   select, apply, write, recompile, report.
 - `DialogueDown.Cli.Fixing` owns the pure splice: `FixApplier.Apply` returns a
-  `FixApplication` holding the corrected text and a `ReportedDiagnostic` per
-  diagnostic, each with an optional `FixOutcome` — applied, or skipped for a
-  `FixSkipReason`. `FixSummary` carries the corrected-state count, the written
-  file, and anything new after fixing; `ScriptContents` reads and writes the
-  script with its BOM frame. The architecture guard's root-namespace cap is
-  what puts these in `Fixing` rather than in `DialogueDown.Cli`.
-- `IErrataRenderer.Render` takes the reported list plus an optional
-  `FixSummary`, so the plain and rich paths stay one code path and the
-  `N fixable with --fix` hint is computed from the same list.
+  `FixApplication` holding the corrected text and a `FixOutcome` per candidate —
+  applied, or skipped for a `FixSkipReason`. `FixRun` carries the corrected
+  script's diagnostics, the written file, and anything new after fixing;
+  `FixDiff` turns one applied fix into `HunkRow`s with `HunkSegment`s and
+  renders them; `ScriptContents` reads and writes the script with its BOM frame.
+  The architecture guard's root-namespace cap is what puts these in `Fixing`
+  rather than in `DialogueDown.Cli`.
+- `IErrataRenderer.Render` takes the diagnostics as found plus an optional
+  `FixRun`, so the plain and rich paths stay one code path, the diagnostics are
+  identical to a plain compile, and the hint comes from the same list.
+- `DiffPlex` is pinned in `Directory.Packages.props` and referenced only by the
+  CLI; nothing outside `Fixing.FixDiff` names it.
 - `Diagnostic.Fixes` and `LocatedDiagnostic.Fixes` document the preference
   order, so the model itself carries the contract an automatic fixer relies on.
 - `docs/guide/cli.md` documents `--fix`, including the warning that a fix run
@@ -489,17 +538,20 @@ around a value-taking `--fix`.
 diagnostic offers alternatives, ascending selection with the tie-break,
 descending application, overlap skip, an atomic multi-edit fix, an insertion at
 the text's end, an out-of-range span, and the no-op when nothing is fixable.
-`ScriptContentsTests` pins the BOM round-trip on both presence and absence.
-Renderer tests cover the applied and skipped continuations, the tally suffix,
-the write notice, the `after fixing:` block, the hint, and the two-line rich
-note. Command tests cover in-place fixing; the byte-for-byte identity of a
+`FixDiffTests` covers the hunk: context rows, the trailing-newline rule, CRLF,
+a change on the first or last line, the changed-word emphasis, and the no-hunk
+case. `ScriptContentsTests` pins the BOM round-trip on both presence and
+absence. Renderer tests cover the separated shape (the diagnostics byte for
+byte, then the fix section), the write notice with and without a remaining
+clause, the skipped note, the `after fixing:` block, the hint, and the rich
+path. Command tests cover in-place fixing; the byte-for-byte identity of a
 no-fix run with a plain compile; idempotence, where a second run writes nothing
 and leaves the modification time; a surviving error exiting 65 while still
-writing; BOM preservation; BOM-less writing; and the `--emit` and `-o`
-conflicts exiting 64. The recompile invariant shows up as the corrected-state
-counts — `(1 fixed, 0 remaining)` when a fix clears its diagnostic,
-`(1 fixed, 1 remaining)` when an error survives — and the `after fixing:` path
-is unit-tested because no shipped producer can trigger it.
+writing; one note and hunk per fix; BOM preservation; BOM-less writing; and the
+`--emit` and `-o` conflicts exiting 64. The recompile invariant shows up as the
+corrected-state clause — `(1 fix)` when a fix clears its diagnostic,
+`(1 fix; 1 error remains)` when an error survives — and the `after fixing:`
+path is unit-tested because no shipped producer can trigger it.
 
 ## Deferred work
 
