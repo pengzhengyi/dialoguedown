@@ -41,8 +41,8 @@ In scope:
 - The report: the diagnostics exactly as a plain compile prints them, then a fix
   section with a note and diff hunk per repair and a write notice naming the
   corrected file and what remains.
-- The fixability hint on plain compiles: `N fixable with --fix` (the feature's
-  discovery path, and the precondition for silence).
+- The plain-compile hint `N fixable with --fix` (the feature's discovery path,
+  and the precondition for silence).
 - Exit codes, BOM and line-ending preservation, and a help example.
 
 Out of scope (see [Deferred work](#deferred-work)):
@@ -70,8 +70,8 @@ Adopted: the diagnostics as found, unchanged from a plain compile; a separate
 fix section carrying a note and a diff hunk per repair (clang-tidy's as-found
 diagnostics and attached fix notes); the file-level `Fixed <file> (N fix)`
 notice (cargo fix) with the remaining count rolled in; silence when there is
-nothing to do (ESLint and this CLI already); and the fixability hint on non-fix
-runs (ESLint and Ruff). Skipped: per-code selection (always a separate filter
+nothing to do (ESLint and this CLI already); and the fixable-count hint on
+non-fix runs (ESLint and Ruff). Skipped: per-code selection (always a separate filter
 option, never a `--fix` value), safety tiers (the only fix is mechanically
 derived), a dry-run or patch mode, and the CI postures.
 
@@ -173,7 +173,7 @@ the editor applies one chosen fix at a time, so no ordering exists there yet.
 The report is the errata stream: same console, same style, same destination
 (stderr). It prints two things in order: the diagnostics **exactly as a plain
 compile prints them** — so every line and column refers to the script as read,
-and the fixability hint is already there — then a separate fix section.
+and the fixable-count hint is already there — then a separate fix section.
 
 ```text
 scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
@@ -361,8 +361,8 @@ Fixed bom.dialogue.md (1 fix)
 3 | -Alice: The rule is simple => the lever opens the door.
 3 | +Alice: The rule is simple \=> the lever opens the door.
 4 |  
-$ xxd -l 12 bom.dialogue.md
-00000000: efbb bf23 2054 6865 2057 6f72            ...# The Wor
+$ file bom.dialogue.md
+bom.dialogue.md: Unicode text, UTF-8 (with BOM) text
 ```
 
 ### H — rich rendering on a terminal
@@ -487,7 +487,7 @@ is absent from the recompiled diagnostics.
 to match — the existing renderer already prints nothing when the script is
 clean, and a no-fix run adds nothing. Silence is safe only because the plain
 compile advertises the feature with `N fixable with --fix`, in the spirit of
-ESLint's and Ruff's fixability hints. Silence never crosses the write: a run
+ESLint's and Ruff's fixable-count hints. Silence never crosses the write: a run
 that changed a file says so.
 
 ### D9 — `--mode` still bounds which fixes are discovered

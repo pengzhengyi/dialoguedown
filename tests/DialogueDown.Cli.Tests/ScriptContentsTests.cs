@@ -7,7 +7,7 @@ namespace DialogueDown.Cli.Tests;
 public sealed class ScriptContentsTests
 {
     [Fact]
-    public void Read_BomlessText_KeepsTheTextAndReportsNoBom()
+    public void Read_TextWithoutABom_KeepsTheTextAndReportsNoBom()
     {
         using var tree = new TempTree();
         var path = tree.File("script.dialogue.md", "Alice: Hi.");

@@ -42,7 +42,7 @@ authoring against DialogueDown gives real feedback.
 
 **In scope:** offset→line/column mapping; a public diagnostic view carrying the rendered message
 and location; the CLI errata renderer and its data-error exit code; a `compile --mode` option; the
-fix channel the errata carries after the diagnostics — the fixability hint, and a fix run's note
+fix channel the errata carries after the diagnostics — the fixable-count hint, and a fix run's note
 and hunk per repair plus its write notice, whose grammar the
 [fix mode note](../cli/Compile%20CLI%20-%20Fix%20Mode.md) owns.
 
@@ -109,7 +109,7 @@ The work splits into two cleanly bounded passes; 5a has no CLI dependency and 5b
 | `LinePosition` (public readonly struct) | a one-based `(Line, Column)`; `ToString()` → `line,column` | — |
 | `LocatedDiagnostic` (public record) | one located diagnostic: `Code`, `Severity`, `Category`, `Message`, `Start`, `End` (line/column), and the half-open character range `StartOffset`/`EndOffset` | `LinePosition`, `DiagnosticSeverity`, `DiagnosticCategory` (public) |
 | `CompilationResult.LocatedDiagnostics` (public) | the located diagnostics for the compile, projected once (cached) from the internal bag | `LineMap`, `LocatedDiagnostic` |
-| `ErrataRenderer` (CLI) | render the diagnostics as found to an `IAnsiConsole` — Errata blocks with source context when interactive, else the one-line fallback, plus the summary and the fixability hint — then a fix run's section: write notice, note and hunk per repair, and anything new after fixing; each diagnostic carries a doc link | `IAnsiConsole`, Errata, `FixRun`, `FixDiff`, `DiagnosticDocumentation`, the source text |
+| `ErrataRenderer` (CLI) | render the diagnostics as found to an `IAnsiConsole` — Errata blocks with source context when interactive, else the one-line fallback, plus the summary and the fixable-count hint — then a fix run's section: write notice, note and hunk per repair, and anything new after fixing; each diagnostic carries a doc link | `IAnsiConsole`, Errata, `FixRun`, `FixDiff`, `DiagnosticDocumentation`, the source text |
 | `DiagnosticDocumentation` (CLI) | map a `DLG####` code to its hosted Error codes deep link (`…/error-codes.html#dlg<code>`) | — |
 | `CompileCommand` (CLI) | compile, render errata, choose the exit code; parse `--mode` | `ErrataRenderer`, `CompilerOptions` |
 
