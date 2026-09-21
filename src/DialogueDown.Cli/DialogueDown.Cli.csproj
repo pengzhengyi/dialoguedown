@@ -52,6 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DiffPlex" />
     <PackageReference Include="Errata" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Spectre.Console" />

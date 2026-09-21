@@ -1,3 +1,4 @@
+using System.Text;
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
@@ -177,6 +178,166 @@ public sealed class CompileCommandTests
 
         Assert.Equal(ExitCodes.UsageError, result.ExitCode);
         Assert.Contains("--mode", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_FixWithEmit_FailsWithUsageError()
+    {
+        using var script = new TempScript("# Scene");
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix", "--emit", "dot");
+
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        Assert.Contains("--fix", result.Output, StringComparison.Ordinal);
+        Assert.Contains("--emit", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_FixWithOutput_FailsWithUsageError()
+    {
+        using var script = new TempScript("# Scene");
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix", "-o", "fixed.dialogue.md");
+
+        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        Assert.Contains("--fix", result.Output, StringComparison.Ordinal);
+        Assert.Contains("-o", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_Fix_AppliesThePreferredFixInPlace()
+    {
+        var source = """
+            # The Workshop
+
+            Alice: The rule is simple => the lever opens the door.
+            """;
+        using var script = new TempScript(source);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix");
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        // The diagnostics are exactly what a plain compile prints, hint included.
+        Assert.Contains("warning DLG1113", result.Output, StringComparison.Ordinal);
+        Assert.Contains("1 warning", result.Output, StringComparison.Ordinal);
+        Assert.Contains("1 fixable with --fix", result.Output, StringComparison.Ordinal);
+        // Then the fix section: the write notice, the note, and the hunk.
+        Assert.Contains("(1 fix)", result.Output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", result.Output, StringComparison.Ordinal);
+        Assert.Contains("-Alice: The rule is simple => the lever opens the door.", result.Output, StringComparison.Ordinal);
+        Assert.Contains("+Alice: The rule is simple \\=> the lever opens the door.", result.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("  fix applied", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_Fix_WithTwoFixes_ShowsANoteAndHunkPerFix()
+    {
+        var source = """
+            # The Workshop
+
+            Alice: Go => left, then => right.
+            """;
+        using var script = new TempScript(source);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix");
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        Assert.Equal(2, result.Output.Split("Applied Fix: Escape as literal text").Length - 1);
+        Assert.Equal(2, result.Output.Split("| +Alice: Go").Length - 1);
+        Assert.Contains("(2 fixes)", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_Fix_WithNothingToFix_PrintsWhatAPlainCompilePrints()
+    {
+        var source = """
+            # The Workshop
+
+            *Bob*: Did you read the manual?
+            """;
+        using var script = new TempScript(source);
+        var written = File.GetLastWriteTimeUtc(script.Path);
+
+        var plain = CliTester.Create().Run("compile", script.Path);
+        var fix = CliTester.Create().Run("compile", script.Path, "--fix");
+
+        Assert.Contains("DLG1107", plain.Output, StringComparison.Ordinal);
+        Assert.Equal(plain.Output, fix.Output);
+        Assert.Equal(ExitCodes.Success, fix.ExitCode);
+        Assert.Equal(source, File.ReadAllText(script.Path));
+        Assert.Equal(written, File.GetLastWriteTimeUtc(script.Path));
+    }
+
+    [Fact]
+    public void Compile_Fix_WithASurvivingError_WritesTheCorrectionAndKeepsTheDataError()
+    {
+        var source = """
+            # The Workshop
+
+            Alice: The rule is simple => the lever opens the door.
+
+            # The Workshop
+
+            Alice: Again, then.
+            """;
+        using var script = new TempScript(source);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix");
+
+        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Contains("1 error, 1 warning", result.Output, StringComparison.Ordinal);
+        Assert.Contains("(1 fix; 1 error remains)", result.Output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_Fix_PreservesALeadingBom()
+    {
+        using var tree = new TempTree();
+        var path = tree.File("scene.dialogue.md");
+        File.WriteAllBytes(
+            path,
+            [
+                0xEF,
+                0xBB,
+                0xBF,
+                .. Encoding.UTF8.GetBytes("# The Workshop\n\nAlice: The rule is simple => the lever opens.\n"),
+            ]);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", path, "--fix");
+
+        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        var bytes = File.ReadAllBytes(path);
+        Assert.Equal([0xEF, 0xBB, 0xBF], bytes[..3]);
+        Assert.Contains("\\=>", Encoding.UTF8.GetString(bytes[3..]), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_Fix_IsIdempotent()
+    {
+        using var script = new TempScript("""
+            # The Workshop
+
+            Alice: The rule is simple => the lever opens the door.
+            """);
+        Assert.Equal(ExitCodes.Success, CliTester.Create().Run("compile", script.Path, "--fix").ExitCode);
+        var corrected = File.ReadAllText(script.Path);
+        var written = File.GetLastWriteTimeUtc(script.Path);
+
+        var second = CliTester.Create().Run("compile", script.Path, "--fix");
+
+        Assert.Equal(ExitCodes.Success, second.ExitCode);
+        Assert.Equal(string.Empty, second.Output);
+        Assert.Equal(corrected, File.ReadAllText(script.Path));
+        Assert.Equal(written, File.GetLastWriteTimeUtc(script.Path));
     }
 
     [Fact]

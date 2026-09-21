@@ -28,9 +28,11 @@ public sealed partial record LocatedDiagnostic(
     int EndOffset)
 {
     /// <summary>
-    /// Suggested repairs for this problem, with absolute source offsets — empty when the compiler
-    /// knows none. Excluded from equality for the same reason it is on the core diagnostic: the
-    /// located view is identified by the problem it locates.
+    /// Suggested repairs for this problem, with absolute source offsets, in preference order —
+    /// empty when the compiler knows none. The first is the preferred, auto-applicable repair an
+    /// automatic fixer applies; the rest are alternatives a writer chooses between. Excluded from
+    /// equality for the same reason it is on the core diagnostic: the located view is identified
+    /// by the problem it locates.
     /// </summary>
     [IgnoreEquality]
     public IReadOnlyList<LocatedFix> Fixes { get; init; } = [];

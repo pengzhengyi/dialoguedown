@@ -10,6 +10,13 @@ changes easy to categorize.
 
 ### Added
 
+- **`ddown compile --fix`** — the CLI applies the compiler's own repairs. A fixable diagnostic says
+  so (`1 fixable with --fix`), and `--fix` applies its preferred repair, writes the corrected
+  script in place, and recompiles it. The diagnostics print exactly as a plain compile prints them;
+  after them, a fix section numbers each repair (`1. Applied Fix: …`) and shows the change as a
+  line-numbered diff hunk, then the write notice. A run with nothing to fix prints exactly what a plain compile
+  prints and touches nothing. See
+  [Compile CLI — Fix Mode](docs/contributing/design-notes/cli/Compile%20CLI%20-%20Fix%20Mode.md).
 - **The Source preview speaks the script's own language** — the rendered half of the Source tab now
   marks every dialogue construct the compiler found, in the vocabulary the editor beside it already
   uses: `#wise` as the tag capsule the rest of the report shows, `Guide` and `@guide` in the
