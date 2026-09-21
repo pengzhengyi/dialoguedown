@@ -71,7 +71,10 @@ internal sealed class CompileCommand : Command<CompileSettings>
         var source = File.ReadAllText(settings.Script);
         var result = compiler.Compile(source);
 
-        _errata.Render(settings.Script, source, result.LocatedDiagnostics);
+        _errata.Render(
+            settings.Script,
+            source,
+            [.. result.LocatedDiagnostics.Select(diagnostic => new ReportedDiagnostic(diagnostic, null))]);
 
         if (settings.EmitsPlaybook && result is CompilationSuccess compiled)
         {
