@@ -19,6 +19,28 @@ namespace DialogueDown.Playbook.Speech;
 /// </remarks>
 public static class SpeechTemplate
 {
+    /// <summary>Breaks a run of speech into the segments a host works through in turn.</summary>
+    /// <param name="speech">The speech to break up.</param>
+    /// <returns>
+    /// The segments, in written order. Always at least one, so speech that says nothing still
+    /// reads as a single silent segment.
+    /// </returns>
+    /// <remarks>
+    /// A command is the boundary. The words before it are said, then it is performed, then the
+    /// rest of the line carries on, which is what keeps a stage direction written mid-sentence
+    /// firing mid-sentence. <c>Alice: Here you go. `GiveQuest("EmberCrown")` Take care.</c> reads
+    /// as two segments: the first says <c>Here you go.</c> and gives the quest, the second says
+    /// <c>Take care.</c>
+    /// <para>
+    /// Emphasis written around a command divides with it, and is re-applied to the words on each
+    /// side, so <c>*polished `Shine()` bright*</c> keeps both halves emphasized. A command inside
+    /// a link's label or an image's alt text stays among the words there, because a link and an
+    /// image are each one thing and dividing one would make two of it.
+    /// </para>
+    /// </remarks>
+    public static ImmutableArray<SpeechSegment> Segments(ImmutableArray<SpeechFragment> speech) =>
+        SegmentBuilder.Of(speech).Freeze();
+
     /// <summary>The keys a run of speech asks the world about, in the order they first appear.</summary>
     /// <param name="speech">The speech to read.</param>
     /// <returns>The keys, each named once.</returns>
