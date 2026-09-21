@@ -43,6 +43,9 @@ public enum RefusalReason
     /// <summary>The world answered a key that nothing had asked about.</summary>
     UnaskedKey,
 
+    /// <summary>The world answered a key with something other than the kind its use needs.</summary>
+    WrongAnswerKind,
+
     /// <summary>The node kind is one this build has not learned to play.</summary>
     UnplayableNode,
 }

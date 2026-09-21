@@ -292,6 +292,7 @@
                 "unanswered-condition",
                 "unanswered-key",
                 "unasked-key",
+                "wrong-answer-kind",
                 "unplayable-node"
               ]
             }
