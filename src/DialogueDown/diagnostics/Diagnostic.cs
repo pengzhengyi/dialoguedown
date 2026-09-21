@@ -52,7 +52,9 @@ internal sealed partial record Diagnostic
     public DiagnosticSeverity Severity { get; }
 
     /// <summary>
-    /// Suggested repairs for this problem, if the producer knows one — empty for most diagnostics.
+    /// Suggested repairs for this problem in preference order — empty for most diagnostics. The
+    /// first is the preferred, auto-applicable repair an automatic fixer applies; the rest are
+    /// alternatives a writer chooses between, each shown as its own action in the editor.
     /// Excluded from equality because a diagnostic is identified by the problem it reports, not by
     /// the repair a consumer may offer for it.
     /// </summary>
