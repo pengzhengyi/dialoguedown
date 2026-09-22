@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.StepAssert;
 
@@ -63,6 +64,22 @@ public sealed class RunnerTests
         var context = Playbooks.TwoLines();
 
         AssertRefused(Runner.Step(context, Started(context), new Done()), RefusalReason.Misplaced, "cannot take Done");
+    }
+
+    [Fact]
+    public void Step_ASupplyWhereNothingWasAsked_IsMisplacedRatherThanUnknown()
+    {
+        // Supply is a command the protocol defines, so offering it in the wrong place is a
+        // misplacement rather than a command this runner has never heard of.
+        var context = Playbooks.OneLine();
+
+        AssertRefused(
+            Runner.Step(
+                context,
+                Started(context),
+                new Supply(ImmutableDictionary<string, Answer>.Empty)),
+            RefusalReason.Misplaced,
+            "cannot take Supply");
     }
 
     [Fact]

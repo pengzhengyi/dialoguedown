@@ -7,12 +7,18 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What arriving at a node does.
+/// What a run does at a node: walking to one, playing it, and reading on once the world has
+/// answered what the node asked.
 /// </summary>
 /// <remarks>
-/// One arm per node kind, which is the axis a runner grows along: every construct the language
-/// gains lands here, and each brings work of its own. Keeping it apart from the protocol guard
-/// leaves that guard the small, readable matrix of what may be sent where.
+/// A node's condition is asked on the way in, so the work comes in two halves: the run stops to
+/// ask, then picks up from that same point when the answers arrive. Both halves are here because
+/// a change to where one stops is a change to where the other resumes.
+/// <para>
+/// This is the axis a runner grows along: every construct the language gains has to be played
+/// here, and each brings work of its own. Keeping it apart from the protocol guard leaves that
+/// guard the small, readable matrix of what may be sent where.
+/// </para>
 /// </remarks>
 internal static class Arrival
 {
@@ -41,12 +47,58 @@ internal static class Arrival
         return RefuseRing(node);
     }
 
+    /// <summary>Takes what the world said, and reads on from the node that asked.</summary>
+    /// <param name="context">What the run needs and never changes.</param>
+    /// <param name="waiting">The node that asked, and the keys it asked about.</param>
+    /// <param name="supply">What the world said.</param>
+    /// <returns>Where the run now stands, and what it has to say.</returns>
+    /// <remarks>
+    /// A condition that fails routes rather than refuses: the node is stepped over and the walk
+    /// carries on, so a line the world withheld is simply not spoken and the run reads the next
+    /// one. Refusing would end a conversation the writer meant to continue.
+    /// </remarks>
+    public static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(waiting);
+        ArgumentNullException.ThrowIfNull(supply);
+
+        var arrived = context.NodeAt(waiting.Node);
+
+        if (AnswerCheck.Disagrees(
+            Questions.Asked(arrived.KeysToPlay(), []), supply.Answers, out var refusal))
+        {
+            // The run stays where it asked, so a driver that misread the request can answer it
+            // again rather than losing the conversation over a mistake it can still fix.
+            return new StepResult(new PlayState(waiting), [refusal]);
+        }
+
+        if (arrived is IConditional { Condition: { } guard } && !guard.Holds(supply))
+        {
+            return arrived.OnwardTarget() is int onward
+                ? At(context, onward)
+                : Refuse(
+                    waiting.Node,
+                    RefusalReason.LeadsNowhere,
+                    $"Node {waiting.Node} leads nowhere.");
+        }
+
+        return Play(context, waiting.Node, arrived);
+    }
+
     // What being at one node means, with no regard for how many the walk passed to get here.
     private static Visited Visit(PlayContext context, int node)
     {
         var arrived = context.NodeAt(node);
 
-        if (TryFindCondition(arrived, out var unanswered))
+        // Asked before the kind is dispatched on, because a condition decides whether the node
+        // plays at all, whatever kind it is.
+        if (arrived is IConditional { Condition: not null })
+        {
+            return Visited.Stopping(Ask(node, arrived));
+        }
+
+        if (TryFindArmCondition(arrived, out var unanswered))
         {
             return Visited.Stopping(RefuseUnanswered(node, unanswered));
         }
@@ -73,28 +125,34 @@ internal static class Arrival
             $"Node {node} sits in a ring of nodes that hand the host nothing, "
                 + "so a run entering it would never come out.");
 
-    // Asked before the kind is dispatched on, because a condition makes a node unplayable whatever
-    // kind it is.
-    private static bool TryFindCondition(Node node, [NotNullWhen(true)] out Condition? condition)
+    // An arm's condition decides whether that way out is taken, and a run is not yet able to ask
+    // about one, so a node carrying one still cannot be played.
+    private static bool TryFindArmCondition(Node node, [NotNullWhen(true)] out Condition? condition)
     {
-        // A node's own condition decides whether it plays at all; an arm's decides whether that
-        // way out is taken. Nobody can answer either yet, so either one makes the node unplayable.
-        condition = (node as IConditional)?.Condition
-            ?? node.Out.OfType<IConditional>()
-                .Select(arm => arm.Condition)
-                .FirstOrDefault(found => found is not null);
+        condition = node.Out.OfType<IConditional>()
+            .Select(arm => arm.Condition)
+            .FirstOrDefault(found => found is not null);
 
         return condition is not null;
     }
 
-    // Speaking a line whose condition went unread is worse than refusing it: it reads as played
-    // correctly, and only the world could have said otherwise.
+    // Taking a way out whose condition went unread is worse than refusing: the run would read as
+    // having gone the way the writer meant, when only the world could have said so.
     private static StepResult RefuseUnanswered(int node, Condition condition) =>
         Refuse(
             node,
             RefusalReason.UnansweredCondition,
-            $"Node {node} plays only when the world answers {Describe(condition)}, "
-                + "and nobody answers the world yet.");
+            $"A way out of node {node} is taken only when the world answers "
+                + $"{Describe(condition)}, and nobody answers the world about a way out yet.");
+
+    // The keys go out as the request and stay in the situation, because nowhere else remembers
+    // what was asked by the time the answers arrive.
+    private static StepResult Ask(int node, Node arrived)
+    {
+        var keys = arrived.KeysToPlay();
+
+        return new StepResult(new PlayState(new AwaitingSupply(node, keys)), [new Resolve(keys)]);
+    }
 
     private static StepResult Play(PlayContext context, int node, Node arrived) =>
         arrived switch
