@@ -30,7 +30,7 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void At_TheEnd_EndsTheRun() => AssertEnded(Arrival.At(Playbooks.Of([new EndNode(0)]), 0));
+    public void At_TheEnd_EndsTheRun() => AssertEnded(Arrival.At(Playbooks.Context([new EndNode(0)]), 0));
 
     [Fact]
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
@@ -153,7 +153,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose only line is said by the anonymous default speaker.</returns>
     private static PlayContext ALineNobodyClaims() =>
-        Playbooks.Of([Playbooks.Line(0, speaker: 0, "Nobody said this.", next: 1), new EndNode(1)], [null]);
+        Playbooks.Context([Playbooks.Line(0, speaker: 0, "Nobody said this.", next: 1), new EndNode(1)], [null]);
 
     /// <summary>A line the world must allow before it is spoken, then the end.</summary>
     /// <remarks>
@@ -163,7 +163,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context that asks about <c>Alice.HasKey</c> before it says anything.</returns>
     private static PlayContext AConditionalLine() =>
-        Playbooks.Of(
+        Playbooks.Context(
             [
                 Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
                 new EndNode(1),
@@ -180,7 +180,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context with a line to read on to when the first one is not spoken.</returns>
     private static PlayContext AConditionalLineThenAnother() =>
-        Playbooks.Of(
+        Playbooks.Context(
             [
                 Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
                 Playbooks.Line(1, speaker: 0, "Onward.", next: 2),
@@ -195,7 +195,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose only line leads nowhere.</returns>
     private static PlayContext AConditionalLineLeadingNowhere() =>
-        Playbooks.Of(
+        Playbooks.Context(
             [new LineNode(0, Speaker: 0, [new TextFragment("I have the key.")], new KeyCondition("Alice.HasKey"), [])],
             ["Alice"]);
 
@@ -207,7 +207,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context where falling through would be a decision nobody made.</returns>
     private static PlayContext ALineWhoseJumpAsksTheWorld() =>
-        Playbooks.Of(
+        Playbooks.Context(
             [
                 Playbooks.LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
                 Playbooks.Line(1, speaker: 0, "Here.", next: 2),
@@ -223,7 +223,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose entry says nothing until the walk reaches node 2.</returns>
     private static PlayContext AJumpPastALine() =>
-        Playbooks.Of(
+        Playbooks.Context(
             [
                 Playbooks.Jump(0, jumpTo: 2),
                 Playbooks.Line(1, speaker: 0, "Never spoken.", next: 2),
@@ -242,7 +242,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose run asks the host for both effects before it says anything.</returns>
     private static PlayContext TwoEffectsThenALine() =>
-        Playbooks.Of(
+        Playbooks.Context(
             [
                 Playbooks.Effects(0, next: 1, "fade in", "play a chime"),
                 Playbooks.Line(1, speaker: 0, "Hello.", next: 2),

@@ -25,7 +25,7 @@ internal static class Playbooks
     /// <param name="speakers">Everybody who speaks, by the name they speak under; a null name is the anonymous default speaker.</param>
     /// <param name="entry">Where a playthrough begins.</param>
     /// <returns>A context ready to step.</returns>
-    public static PlayContext Of(
+    public static PlayContext Context(
         ImmutableArray<Node> nodes, IEnumerable<string?>? speakers = null, int entry = 0) =>
         PlayContext.Of(Document(nodes, [.. (speakers ?? []).Select(Speaker)], entry));
 
@@ -52,7 +52,7 @@ internal static class Playbooks
     /// </remarks>
     /// <returns>A context a single <c>Next</c> finishes.</returns>
     public static PlayContext OneLine() =>
-        Of([Line(0, speaker: 0, "Hello.", next: 1), new EndNode(1)], ["Alice"]);
+        Context([Line(0, speaker: 0, "Hello.", next: 1), new EndNode(1)], ["Alice"]);
 
     /// <summary>Two lines, then the end.</summary>
     /// <remarks>
@@ -64,7 +64,7 @@ internal static class Playbooks
     /// </remarks>
     /// <returns>A context that shows succession going somewhere.</returns>
     public static PlayContext TwoLines() =>
-        Of(
+        Context(
             [Line(0, speaker: 0, "Hello.", next: 1), Line(1, speaker: 1, "Goodbye.", next: 2), new EndNode(2)],
             ["Alice", "Bob"]);
 
@@ -76,7 +76,7 @@ internal static class Playbooks
     /// </remarks>
     /// <returns>A context that begins at a choice.</returns>
     public static PlayContext NotYetPlayable() =>
-        Of([new ChoiceNode(0, Ordered: true, [new OptionEdge(1, [new TextFragment("Go east")], null)]), new EndNode(1)], ["Alice"]);
+        Context([new ChoiceNode(0, Ordered: true, [new OptionEdge(1, [new TextFragment("Go east")], null)]), new EndNode(1)], ["Alice"]);
 
     /// <summary>A line node, said by a speaker and leading onward.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -131,7 +131,7 @@ internal static class Playbooks
     /// <param name="length">How many jumps the ring holds.</param>
     /// <returns>A context whose entry walks forever unless something stops it.</returns>
     public static PlayContext RingOfJumps(int length) =>
-        Of([.. Enumerable.Range(0, length).Select(at => Jump(at, (at + 1) % length))]);
+        Context([.. Enumerable.Range(0, length).Select(at => Jump(at, (at + 1) % length))]);
 
     /// <summary>A chain of jumps ending at the end.</summary>
     /// <remarks>
@@ -144,7 +144,7 @@ internal static class Playbooks
     /// <param name="jumps">How many jumps precede the end.</param>
     /// <returns>A context whose walk passes every node exactly once.</returns>
     public static PlayContext ChainOfJumps(int jumps) =>
-        Of([.. Enumerable.Range(0, jumps).Select(at => (Node)Jump(at, at + 1)), new EndNode(jumps)]);
+        Context([.. Enumerable.Range(0, jumps).Select(at => (Node)Jump(at, at + 1)), new EndNode(jumps)]);
 
     /// <summary>An effect, then a line, then the end.</summary>
     /// <remarks>
@@ -156,7 +156,7 @@ internal static class Playbooks
     /// </remarks>
     /// <returns>A context whose run waits on the host before it says anything.</returns>
     public static PlayContext AnEffectThenALine() =>
-        Of(
+        Context(
             [Effects(0, next: 1, "fade in"), Line(1, speaker: 0, "Hello.", next: 2), new EndNode(2)],
             ["Alice"]);
 

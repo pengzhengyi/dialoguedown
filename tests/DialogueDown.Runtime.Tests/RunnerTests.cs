@@ -196,7 +196,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextAtANodeLeadingNowhere_IsRefused()
     {
-        var context = Playbooks.Of([Playbooks.Dead(0, "Alone.")], ["Alice"]);
+        var context = Playbooks.Context([Playbooks.Dead(0, "Alone.")], ["Alice"]);
 
         AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
     }

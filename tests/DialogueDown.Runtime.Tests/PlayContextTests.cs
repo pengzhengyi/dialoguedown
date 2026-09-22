@@ -16,7 +16,7 @@ public sealed class PlayContextTests
     [Fact]
     public void Entry_APlaybook_IsWhereItSaysToBegin()
     {
-        var context = Playbooks.Of(
+        var context = Playbooks.Context(
             [new EndNode(0), Playbooks.Line(1, speaker: 0, "Hello.", next: 0)],
             ["Alice"],
             entry: 1);
@@ -44,7 +44,7 @@ public sealed class PlayContextTests
     public void SpeakerName_TheAnonymousSpeaker_IsNobody()
     {
         // The default speaker has no name, which is not the same as being called nothing.
-        var context = Playbooks.Of([new EndNode(0)], [null]);
+        var context = Playbooks.Context([new EndNode(0)], [null]);
 
         Assert.Null(context.SpeakerName(0));
     }
