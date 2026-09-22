@@ -44,7 +44,7 @@ public static class Runner
             _ => Refuse(
                 state,
                 ReasonFor(command),
-                $"A run at {Where(state.Situation)} cannot take {command.GetType().Name}."),
+                $"A run at {state.Situation.Describe()} cannot take {command.GetType().Name}."),
         };
     }
 
@@ -67,14 +67,4 @@ public static class Runner
 
     private static StepResult Refuse(PlayState state, RefusalReason reason, string explanation) =>
         new(state, [new Refused(reason, explanation)]);
-
-    private static string Where(Situation situation) =>
-        situation switch
-        {
-            AtNode at => $"node {at.Node}",
-            AwaitingDone waiting => $"node {waiting.Node}, waiting for the host",
-            AwaitingSupply waiting => $"node {waiting.Node}, waiting for the world",
-            NotStarted => "no position, before the run has started",
-            _ => "the end",
-        };
 }
