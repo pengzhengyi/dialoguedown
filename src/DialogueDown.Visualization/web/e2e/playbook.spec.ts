@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { writeReport, SAMPLE_STAGES } from "./report";
+import { audit } from "./audit";
 import type { Report } from "../src/model";
 
 /**
@@ -141,20 +141,6 @@ const halted: Report = {
 };
 
 const playbookTab = "#tabs .tab:last-child";
-
-/**
- * Runs the accessibility audit on the page's settled state. Axe reads whatever is rendered, and a
- * transition between two states is neither: sampling one mid-flight reads blended colors that meet
- * no contrast rule. Switching transitions off settles the current state instantly, so the audit
- * sees what a reader would.
- */
-const audit = async (page: Page) => {
-    await page.addStyleTag({
-        content:
-            "*, *::before, *::after { transition: none !important; animation: none !important; }",
-    });
-    return new AxeBuilder({ page }).analyze();
-};
 
 /** One named table panel in the Playbook tab's right pane. */
 const panel = (page: Page, title: string) =>
