@@ -12,7 +12,7 @@ public sealed class SituationExtensionsTests
         new NotStarted(),
         new AtNode(4),
         new AwaitingDone(4),
-        new AwaitingSupply(4, ["Alice.HasKey"]),
+        new AwaitingSupply(4, ["Alice.HasKey"], Moment.ToPlay),
         new AtEnd(),
     ];
 
@@ -23,9 +23,18 @@ public sealed class SituationExtensionsTests
         Assert.Equal("node 4", new AtNode(4).Describe());
         Assert.Equal("node 4, waiting for the host", new AwaitingDone(4).Describe());
         Assert.Equal(
-            "node 4, waiting for the world", new AwaitingSupply(4, ["Alice.HasKey"]).Describe());
+            "node 4, waiting for the world before it plays",
+            new AwaitingSupply(4, ["Alice.HasKey"], Moment.ToPlay).Describe());
         Assert.Equal("the end", new AtEnd().Describe());
     }
+
+    [Fact]
+    public void Describe_TellsTheTwoWaitsOnTheWorldApart() =>
+        // A node can ask about one key on the way in and again on the way out, so the keys alone
+        // would read as the same wait twice.
+        Assert.Equal(
+            "node 4, waiting for the world before it leaves",
+            new AwaitingSupply(4, ["Alice.HasKey"], Moment.ToLeave).Describe());
 
     [Fact]
     public void Describe_WordsEverySituationARunCanStandIn()

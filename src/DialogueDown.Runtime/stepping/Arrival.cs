@@ -177,7 +177,7 @@ internal static class Arrival
     // The keys go out as the request and stay in the situation, because nowhere else remembers
     // what was asked by the time the answers arrive.
     private static StepResult Ask(int node, ImmutableArray<string> keys) =>
-        new(new PlayState(new AwaitingSupply(node, keys)), [new Resolve(keys)]);
+        new(new PlayState(new AwaitingSupply(node, keys, Moment.ToPlay)), [new Resolve(keys)]);
 
     private static StepResult RefuseBothWays(int node, IReadOnlyList<string> bothWays) =>
         Refuse(

@@ -11,9 +11,12 @@ namespace DialogueDown.Runtime.Situations;
 /// <para>
 /// The keys are kept here because nowhere else remembers them. The runner holds nothing between
 /// steps, so when the answers arrive this is what they are held to: exactly these keys, no more
-/// and no fewer.
+/// and no fewer. The moment is kept for the same reason: it says which of the node's two
+/// readings the answers belong to.
 /// </para>
 /// </remarks>
 /// <param name="Node">The node's position in the playbook.</param>
 /// <param name="Keys">The keys the run asked the world about.</param>
-public sealed record AwaitingSupply(int Node, ImmutableArray<string> Keys) : Situation;
+/// <param name="Moment">Which of the node's two readings of the world was asked for.</param>
+public sealed record AwaitingSupply(
+    int Node, ImmutableArray<string> Keys, Moment Moment) : Situation;

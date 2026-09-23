@@ -38,7 +38,7 @@ public sealed class ArrivalTests
     {
         // Speaking it without asking would read as played correctly while the condition it carries
         // went unread, and only the world could have said otherwise.
-        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, "Alice.HasKey");
+        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.ToPlay, "Alice.HasKey");
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed class ArrivalTests
 
     [Fact]
     public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
-        AssertAsked(Arrival.At(ALineWithAQuery(), 0), node: 0, "playerName");
+        AssertAsked(Arrival.At(ALineWithAQuery(), 0), node: 0, Moment.ToPlay, "playerName");
 
     [Fact]
     public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
@@ -103,7 +103,7 @@ public sealed class ArrivalTests
     [Fact]
     public void At_ALineGuardedAndCarryingAQuery_AsksAboutBothInOneRequest() =>
         // The whole node is judged against a single reading of the world, so it stops once.
-        AssertAsked(Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, "Alice.HasKey", "playerName");
+        AssertAsked(Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, Moment.ToPlay, "Alice.HasKey", "playerName");
 
     [Fact]
     public void Supplied_WithATruthAndWordsTogether_SaysTheLineTheWorldAllowed()
@@ -145,7 +145,7 @@ public sealed class ArrivalTests
             AConditionalLine(), Waiting(0, "Alice.HasKey"), Saying(("Bob.HasRope", true)));
 
         AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
-        AssertAwaitingSupply(result.State, node: 0, "Alice.HasKey");
+        AssertAwaitingSupply(result.State, node: 0, Moment.ToPlay, "Alice.HasKey");
     }
 
     [Fact]
@@ -406,8 +406,10 @@ public sealed class ArrivalTests
             ],
             ["Alice"]);
 
-    /// <summary>Where a run stands after asking the world about these keys.</summary>
-    private static AwaitingSupply Waiting(int node, params string[] keys) => new(node, [.. keys]);
+    /// <summary>Where a run stands after asking, on the way in, about these keys.</summary>
+    /// <remarks>Arrival is what this class is about, so every wait here is one to play.</remarks>
+    private static AwaitingSupply Waiting(int node, params string[] keys) =>
+        new(node, [.. keys], Moment.ToPlay);
 
     /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
     private static Supply Saying(params (string Key, bool Holds)[] answers) =>

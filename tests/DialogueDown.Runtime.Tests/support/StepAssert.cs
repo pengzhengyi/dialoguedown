@@ -82,24 +82,28 @@ internal static class StepAssert
     /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>
+    /// <param name="moment">Which reading of the world it should be waiting on.</param>
     /// <param name="keys">What it should have asked about, in the order written.</param>
-    public static void AssertAsked(StepResult result, int node, params string[] keys)
+    public static void AssertAsked(StepResult result, int node, Moment moment, params string[] keys)
     {
         var resolve = Assert.IsType<Resolve>(Assert.Single(result.Events));
 
         Assert.Equal(keys, resolve.Keys);
-        AssertAwaitingSupply(result.State, node, keys);
+        AssertAwaitingSupply(result.State, node, moment, keys);
     }
 
     /// <summary>Asserts a run is waiting on the world at a node, over the keys it asked about.</summary>
     /// <param name="state">Where the run stands.</param>
     /// <param name="node">Where it should be waiting.</param>
+    /// <param name="moment">Which reading of the world it should be waiting on.</param>
     /// <param name="keys">What it should be waiting to hear about.</param>
-    public static void AssertAwaitingSupply(PlayState state, int node, params string[] keys)
+    public static void AssertAwaitingSupply(
+        PlayState state, int node, Moment moment, params string[] keys)
     {
         var waiting = Assert.IsType<AwaitingSupply>(state.Situation);
 
         Assert.Equal(node, waiting.Node);
+        Assert.Equal(moment, waiting.Moment);
         Assert.Equal(keys, waiting.Keys);
     }
 }
