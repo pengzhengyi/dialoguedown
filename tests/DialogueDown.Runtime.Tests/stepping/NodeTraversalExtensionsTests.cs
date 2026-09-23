@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
@@ -26,8 +25,7 @@ public sealed class NodeTraversalExtensionsTests
         // The jump is the way out the writer asked for. The succession beside it is where the run
         // would have landed had the jump not applied, so taking it here would be reading past the
         // jump rather than through it.
-        var node = new ControlNode(
-            0, [], Condition: null, [new DivertEdge(9, [], Condition: null), new SuccessionEdge(4)]);
+        var node = Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4));
 
         Assert.Equal(9, node.OnwardTarget());
     }
@@ -53,14 +51,14 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_AJumpTheWorldWithholdsAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            new ControlNode(0, [], Condition: null, [AJump(9, "Alice.HasKey")])
+            Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"))
                 .OnwardTarget(Saying(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldSaid() =>
         Assert.Equal(
             9,
-            new ControlNode(0, [], Condition: null, [new DivertEdge(9, [], null), new SuccessionEdge(4)])
+            Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4))
                 .OnwardTarget(Saying(("Alice.HasKey", false))));
 
     [Fact]
@@ -90,7 +88,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeAmongOtherWaysOut_IsTheOneThatCarriesOn()
     {
-        var node = new ControlNode(0, [], Condition: null, [new DivertEdge(9, [], null), new SuccessionEdge(4)]);
+        var node = Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4));
 
         Assert.Equal(4, node.SuccessionTarget());
     }
@@ -100,7 +98,7 @@ public sealed class NodeTraversalExtensionsTests
     {
         // A reader refuses such a node, so a run never meets one. Reading the single succession
         // rather than the first of however many is what keeps that guarantee load-bearing.
-        var node = new ControlNode(0, [], Condition: null, [new SuccessionEdge(4), new SuccessionEdge(9)]);
+        var node = Playbooks.Bare(0, new SuccessionEdge(4), new SuccessionEdge(9));
 
         Assert.Throws<InvalidOperationException>(() => node.SuccessionTarget());
     }
@@ -119,11 +117,7 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static ControlNode AJumpTheWorldMustAllow() =>
-        new(0, [], Condition: null, [AJump(9, "Alice.HasKey"), new SuccessionEdge(4)]);
-
-    /// <summary>A jump taken only while the world says the key holds.</summary>
-    private static DivertEdge AJump(int target, string key) =>
-        new(target, [], new KeyCondition(key));
+        Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"), new SuccessionEdge(4));
 
     /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
     private static Supply Saying(params (string Key, bool Holds)[] answers) =>

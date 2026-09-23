@@ -53,7 +53,7 @@ public sealed class ConditionEvaluationExtensionsTests
         // A jump a writer left unguarded, so asking whether it is allowed does not mean first
         // asking whether anybody guarded it.
         Assert.True(
-            new DivertEdge(1, [], Condition: null).IsAllowed(Answering("Hero.HasSword", false)));
+            Playbooks.Divert(1).IsAllowed(Answering("Hero.HasSword", false)));
 
     [Theory]
     [InlineData(true)]
@@ -61,7 +61,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void IsAllowed_AGuardedWayOut_IsWhatItsGuardReadsTo(bool said) =>
         Assert.Equal(
             said,
-            AGuarded(new DivertEdge(1, [], new KeyCondition("Hero.HasSword")), said));
+            AGuarded(Playbooks.Divert(1, "Hero.HasSword"), said));
 
     [Theory]
     [InlineData(true)]
@@ -83,7 +83,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void IsAllowed_IsNotReadWithoutWhatTheWorldSaid() =>
         // Refused even for something nobody guarded, so the contract does not depend on the answer.
         Assert.Throws<ArgumentNullException>(
-            () => new DivertEdge(1, [], Condition: null).IsAllowed(null!));
+            () => Playbooks.Divert(1).IsAllowed(null!));
 
     private static bool AGuarded(IConditional guarded, bool said) =>
         guarded.IsAllowed(Answering("Hero.HasSword", said));

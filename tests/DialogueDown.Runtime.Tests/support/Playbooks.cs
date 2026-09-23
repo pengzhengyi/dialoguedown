@@ -126,14 +126,36 @@ internal static class Playbooks
             speaker,
             [new TextFragment(text)],
             Condition: null,
-            [new DivertEdge(jumpTo, [], new KeyCondition(key)), new SuccessionEdge(next)]);
+            [Divert(jumpTo, key), new SuccessionEdge(next)]);
 
     /// <summary>A jump on its own line: nothing said, nothing performed, one way out.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="jumpTo">Where the jump leads.</param>
     /// <returns>The node.</returns>
-    public static ControlNode Jump(int id, int jumpTo) =>
-        new(id, [], Condition: null, [new DivertEdge(jumpTo, [], Condition: null)]);
+    public static ControlNode Jump(int id, int jumpTo) => Bare(id, Divert(jumpTo));
+
+    /// <summary>A node that says nothing and performs nothing, leaving only by the ways given.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="ways">The ways out, in the order written.</param>
+    /// <returns>The node.</returns>
+    /// <remarks>
+    /// For a test about which way out a run takes, where what the node itself does is beside the
+    /// point.
+    /// </remarks>
+    public static ControlNode Bare(int id, params Edge[] ways) =>
+        new(id, [], Condition: null, [.. ways]);
+
+    /// <summary>A jump, taken whenever a run leaves the node carrying it.</summary>
+    /// <param name="target">Where the jump leads.</param>
+    /// <returns>The edge.</returns>
+    public static DivertEdge Divert(int target) => new(target, [], Condition: null);
+
+    /// <summary>A jump taken only while the world says the key holds.</summary>
+    /// <param name="target">Where the jump leads.</param>
+    /// <param name="key">What the world is asked before the jump fires.</param>
+    /// <returns>The edge.</returns>
+    public static DivertEdge Divert(int target, string key) =>
+        new(target, [], new KeyCondition(key));
 
     /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
