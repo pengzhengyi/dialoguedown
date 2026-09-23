@@ -1,5 +1,6 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Runtime.Protocol;
 
 namespace DialogueDown.Runtime.Stepping;
 
@@ -44,5 +45,24 @@ internal static class NodeTraversalExtensions
         ArgumentNullException.ThrowIfNull(node);
 
         return node.Out.OfType<DivertEdge>().SingleOrDefault()?.Target ?? node.SuccessionTarget();
+    }
+
+    /// <summary>Where a node leads on to, once the world has answered its ways out.</summary>
+    /// <remarks>
+    /// A jump the world allows is the way out the writer asked for. A jump it withholds is not a
+    /// way out at all, so the run falls through to the succession written beneath it, which is the
+    /// pair a writer means when they write both.
+    /// </remarks>
+    /// <param name="node">The node being left.</param>
+    /// <param name="supply">What the world said about the keys its ways out asked about.</param>
+    /// <returns>The node to arrive at, or <see langword="null"/> when nothing leads onward.</returns>
+    public static int? OnwardTarget(this Node node, Supply supply)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(supply);
+
+        return node.Out.OfType<DivertEdge>().SingleOrDefault() is { } jump && jump.IsAllowed(supply)
+            ? jump.Target
+            : node.SuccessionTarget();
     }
 }

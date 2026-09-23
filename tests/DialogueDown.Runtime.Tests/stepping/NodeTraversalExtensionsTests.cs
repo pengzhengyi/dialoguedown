@@ -1,5 +1,8 @@
+using System.Collections.Immutable;
+using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
@@ -36,6 +39,38 @@ public sealed class NodeTraversalExtensionsTests
 
         Assert.Equal(7, node.OnwardTarget());
     }
+
+    [Fact]
+    public void OnwardTarget_AJumpTheWorldAllows_IsTheWayOutTaken() =>
+        Assert.Equal(9, AJumpTheWorldMustAllow().OnwardTarget(Saying(("Alice.HasKey", true))));
+
+    [Fact]
+    public void OnwardTarget_AJumpTheWorldWithholds_FallsThroughBeneathIt() =>
+        // A jump nobody allowed is not a way out, so the succession written beneath it is what the
+        // writer left the run to land on.
+        Assert.Equal(4, AJumpTheWorldMustAllow().OnwardTarget(Saying(("Alice.HasKey", false))));
+
+    [Fact]
+    public void OnwardTarget_AJumpTheWorldWithholdsAndNothingBeneathIt_IsNowhere() =>
+        Assert.Null(
+            new ControlNode(0, [], Condition: null, [AJump(9, "Alice.HasKey")])
+                .OnwardTarget(Saying(("Alice.HasKey", false))));
+
+    [Fact]
+    public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldSaid() =>
+        Assert.Equal(
+            9,
+            new ControlNode(0, [], Condition: null, [new DivertEdge(9, [], null), new SuccessionEdge(4)])
+                .OnwardTarget(Saying(("Alice.HasKey", false))));
+
+    [Fact]
+    public void OnwardTarget_WithAnswersInHand_IsNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(
+            () => ((Node)null!).OnwardTarget(Saying(("Alice.HasKey", true))));
+
+    [Fact]
+    public void OnwardTarget_IsNotReadWithoutAnswers() =>
+        Assert.Throws<ArgumentNullException>(() => new EndNode(0).OnwardTarget(null!));
 
     [Fact]
     public void SuccessionTarget_ANodeWithNoWayOut_IsNowhere()
@@ -75,4 +110,23 @@ public sealed class NodeTraversalExtensionsTests
     {
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).SuccessionTarget());
     }
+
+    /// <summary>A node whose jump the world must allow, with a fall-through beneath it.</summary>
+    /// <remarks>
+    /// <code>
+    /// node 0 -- jumps to node 9 when Alice.HasKey, falls through to node 4 when it does not
+    /// </code>
+    /// </remarks>
+    /// <returns>The node.</returns>
+    private static ControlNode AJumpTheWorldMustAllow() =>
+        new(0, [], Condition: null, [AJump(9, "Alice.HasKey"), new SuccessionEdge(4)]);
+
+    /// <summary>A jump taken only while the world says the key holds.</summary>
+    private static DivertEdge AJump(int target, string key) =>
+        new(target, [], new KeyCondition(key));
+
+    /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
+    private static Supply Saying(params (string Key, bool Holds)[] answers) =>
+        new(answers.ToImmutableDictionary(
+            answer => answer.Key, Answer (answer) => new BooleanAnswer(answer.Holds), StringComparer.Ordinal));
 }

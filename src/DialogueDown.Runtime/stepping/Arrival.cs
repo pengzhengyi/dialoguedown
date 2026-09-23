@@ -86,7 +86,7 @@ internal static class Arrival
             return new StepResult(new PlayState(waiting), [refusal]);
         }
 
-        if (arrived is IConditional { Condition: { } guard } && !guard.Holds(supply))
+        if (arrived is IConditional guarded && !guarded.IsAllowed(supply))
         {
             return arrived.OnwardTarget() is int onward
                 ? At(context, onward)

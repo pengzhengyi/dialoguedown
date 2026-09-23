@@ -41,4 +41,21 @@ internal static class ConditionEvaluationExtensions
                 $"No reading is defined for {condition.GetType().Name}."),
         };
     }
+
+    /// <summary>Whether what a guard stands in front of may go ahead, by what the world said.</summary>
+    /// <remarks>
+    /// A line, a jump, an option, and a branch arm are each written with a guard or without one.
+    /// Reading the two the same way here is what lets a caller ask whether a thing is allowed
+    /// without first asking whether anybody guarded it.
+    /// </remarks>
+    /// <param name="guarded">The thing a guard may stand in front of.</param>
+    /// <param name="supply">What the world said.</param>
+    /// <returns><see langword="true"/> when nothing guards it, or its guard holds.</returns>
+    public static bool IsAllowed(this IConditional guarded, Supply supply)
+    {
+        ArgumentNullException.ThrowIfNull(guarded);
+        ArgumentNullException.ThrowIfNull(supply);
+
+        return guarded.Condition is null || guarded.Condition.Holds(supply);
+    }
 }
