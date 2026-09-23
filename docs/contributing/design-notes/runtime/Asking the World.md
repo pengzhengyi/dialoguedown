@@ -1,10 +1,15 @@
 # Asking the world
 
-> [!NOTE]
-> Status: **proposed**. The pass that lets a run ask the world a question and use
-> the answer, so a condition is evaluated instead of refused. It builds on the
-> [runtime core](./Runtime%20Core.md), whose protocol and harness it extends, and
-> on [waiting on the host](./Waiting%20on%20the%20Host.md), whose reverse-request
+> [!IMPORTANT]
+> Status: **in progress**. The pass that lets a run ask the world a question and
+> use the answer, so a condition is evaluated instead of refused. A node's own
+> condition and the queries standing in its speech are asked and answered; an
+> edge's condition, branch nodes, and retiring `UnansweredCondition` are still to
+> come.
+>
+> It builds on the [runtime core](./Runtime%20Core.md), whose protocol and
+> harness it extends, and on
+> [waiting on the host](./Waiting%20on%20the%20Host.md), whose reverse-request
 > shape it follows. It applies the
 > [dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
 > owns the cross-cutting decisions this note uses, and does not restate them.
@@ -75,16 +80,19 @@ holds — `false` for a guard, `"Robin"` for a query.
 
 ## Functionality checklist
 
-- [ ] A node carrying a condition asks the world about it rather than refusing.
-- [ ] A node whose condition fails is stepped over, and the run carries on.
+- [x] A node carrying a condition asks the world about it rather than refusing.
+- [x] A node whose condition fails is stepped over, and the run carries on.
 - [ ] An edge whose condition fails is not taken; one whose condition holds is.
 - [ ] A branch node takes the first arm, in `order`, whose condition holds.
 - [ ] A branch node with no satisfied arm and no `else` leads nowhere, and says so.
-- [ ] Every key one node needs is asked for in a single `Resolve`.
-- [ ] A query in speech is replaced by what the world said before the line is said.
-- [ ] A key asked and left unanswered is refused, and so is a key answered that
+- [x] Every key a moment needs is asked for in a single `Resolve`: one on the way
+      in, and one on the way out.
+- [x] A query in speech is replaced by what the world said before the line is said.
+- [x] A key asked and left unanswered is refused, and so is a key answered that
       nobody asked about.
-- [ ] An answer of the wrong kind for the question is refused.
+- [x] An answer of the wrong kind for the question is refused.
+- [x] A key one node needs as a truth and as words both is refused, because a
+      single answer can only be one of those.
 - [ ] `UnansweredCondition` is gone, and nothing produces it.
 
 ## Interfaces and abstractions
@@ -96,21 +104,37 @@ holds — `false` for a guard, `"Robin"` for a query.
 | `Answer` | What the world said about one key, as a closed union | `AnswerJsonConverter` |
 | `AnswerJsonConverter` | Reads and writes an answer as the bare JSON value it is | Every reader of a supply |
 | `AwaitingSupply(node, keys)` | Where a run is between the ask and its answer | `Situation`, alongside `AwaitingDone` |
-| `Questions` | Reads every key one node needs, in one place | `Arrival` |
-| `Answers` | Holds what came back, once it matches what was asked, and reads a key as a truth or as text | `Questions`, `Evaluation` |
-| `Evaluation` | Answers whether a condition holds, given what came back | `Arrival`, `NodeTraversalExtensions` |
+| `NodeQuestionExtensions` | Reads a node's keys, one reader per moment and per kind of answer | `NodeQuestions` |
+| `Questions` | Turns a moment's two sets of keys into what goes out and what comes back is held to | `NodeQuestions` |
+| `NodeQuestions` | One moment's keys, read together so the two kinds cannot drift apart | `Arrival` |
+| `AnswerCheck` | Holds what came back to what was asked, and names every way they disagree | `Arrival` |
+| `SupplyExtensions` | Reads a key from a supply as a truth or as words | `ConditionEvaluationExtensions`, `Arrival` |
+| `ConditionEvaluationExtensions` | Answers whether a condition holds, given what came back | `Arrival`, `NodeTraversalExtensions` |
 
 ## Key design decisions
 
-### A1 — One ask per node, not one per condition
+### A1 — One ask per moment, and a node has two of them
 
-A node's arrival gathers every key it needs — its own condition, its outgoing
-edges' conditions, and the queries in its speech — and asks for them together.
+A run reads the world twice at a node, and each reading gathers every key that
+moment needs and asks for them together.
 
-The architecture note already settles why: a per-node batch is a **snapshot**, so
-evaluation within one node is a repeatable read. A menu whose options are guarded
-by the same key cannot offer one and refuse another. It also means a run stops at
-most once per node, which is what keeps the protocol readable.
+**Arriving** asks what decides whether the node plays and what it says: the
+node's own condition, answered with a truth, and the queries standing in its
+speech, answered with words. **Leaving** asks what decides which way out is
+taken: the conditions on the node's arms.
+
+The two are kept apart because the node changes the world between them. A node
+that performs an effect has that effect carried out after it is played and before
+the run reads on, so an arm guarded by a key the effect touches must be judged
+against the world the effect left behind. Asking on the way in would read the
+world as it was before, and the run would take a way out the writer did not mean.
+This is the same read-your-own-writes guarantee `Perform` already buys, applied
+to the keys that decide succession.
+
+Within one moment the batch is a **snapshot**, so evaluation is a repeatable
+read: a menu whose options are guarded by the same key cannot offer one and
+refuse another. A run therefore stops at most once on the way in and at most once
+on the way out, which is what keeps the protocol readable.
 
 ### A2 — The runner does not remember an answer
 
@@ -164,9 +188,9 @@ about are carried in the situation, so the comparison is set equality between wh
 was asked and what came back.
 
 That makes it a function of two collections and nothing else, which is why it
-lives in `Answers` rather than inside arrival. `Questions` builds the set going
-out, `Answers` checks the set coming back, and each can be tested without a
-playbook in sight.
+lives in `AnswerCheck` rather than inside arrival. `NodeQuestions` builds the set
+going out, `AnswerCheck` holds the set coming back to it, and each can be tested
+without a playbook in sight.
 
 ### A5 — The runner is the mechanism; the driver is the policy
 
@@ -237,12 +261,18 @@ replays. It also leaves `SpeechText` with nothing new to know.
 | A skipped node whose succession leads nowhere | Leads nowhere |
 | A ring of nodes whose conditions all fail | The existing ring bound refuses it |
 | A node with a condition **and** a query in its speech | One ask carrying both keys |
+| A node naming one key as its condition **and** as a query | `KeyNeededBothWays`, naming the key, refused before anything is asked |
 
 The three refusals divide one driver mistake three ways on purpose. A reason is
 what a fixture compares, so a port that answers the wrong question and a port that
 answers with the wrong type disagree with us for reasons a reader can tell apart.
-The first two are caught by `Answers` checking the set; the third by `Answers`
-reading a key as the kind its use requires.
+The first two are caught by `AnswerCheck` holding the set to what was asked; the
+third by the kind each key was asked under.
+
+A key a node needs as a truth and as words both is a fourth reason, and not a
+driver mistake at all: the playbook asks one key two ways, and a single answer
+can only be one of those. It is refused on the way in, before a request goes out
+that nothing could read back.
 
 `UnansweredCondition` is removed rather than left unused. It is a published
 refusal reason, and a reason nothing can produce is a promise the corpus would
@@ -255,11 +285,11 @@ keep testing for no one.
 | `protocol` | `Resolve` joins `Perform` as a request; `Supply` joins the commands; `Answer` and its JSON converter are new |
 | `situations` | `AwaitingSupply` joins `AwaitingDone` |
 | `Arrival` | Asks before it plays; steps over a node whose condition fails |
-| `Questions`, `Answers`, `Evaluation` | New, and each testable without a playbook |
+| `NodeQuestions`, `Questions`, `AnswerCheck`, `ConditionEvaluationExtensions` | New, and each testable without a playbook |
 | `NodeTraversalExtensions` | Reads the way onward from the arms whose conditions hold |
 | `Runner.Step` | One more arm: `Supply` advances from `AwaitingSupply` |
 | Harness | A `ResolveMatcher`, and `supply` among the commands a session can send |
-| `PlayableConformanceTests` | Three cases join the conforming list |
+| `PlayableConformanceTests` | `a-conditional-line` and `a-query-in-speech` join the conforming list, and `a-conditional-block` joins once branches play |
 | `PlayableRun.IsPlayable` | Learns `BranchNode`, and its agreement test holds it to the runner |
 | `PlaybookGen` | Draws conditions, branches, and queries, and its coverage test **fails until it does** |
 | Runtime core note | Its state diagram's dotted C2c edge becomes a solid one |
