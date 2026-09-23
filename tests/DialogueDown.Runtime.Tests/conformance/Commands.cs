@@ -20,7 +20,7 @@ internal static class Commands
     // a silent win for whichever was registered first. A bare command names itself, a shaped one is
     // the single key wrapping its payload, and both kinds answer to one key space.
     private static readonly Dictionary<string, ICommandReader> _byKey =
-        new ICommandReader[] { new NextReader(), new DoneReader(), new FailedReader() }
+        new ICommandReader[] { new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader() }
             .ToDictionary(reader => reader.Key, StringComparer.Ordinal);
 
     /// <summary>Reads the command a send names.</summary>

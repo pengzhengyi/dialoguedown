@@ -38,7 +38,7 @@ public sealed class ExpectationMatchersTests
     [Fact]
     public void AClaimNobodyOwnsIsNotYetRunnable()
     {
-        AssertNotYetRunnable(Match(_hello, """{ "resolve": [ "Alice.HasKey" ] }"""), "resolve");
+        AssertNotYetRunnable(Match(_hello, """{ "frobnicate": true }"""), "frobnicate");
     }
 
     [Fact]
@@ -46,15 +46,15 @@ public sealed class ExpectationMatchersTests
     {
         // Stopping at the first claim recognized would report this as held, having read half of it.
         AssertNotYetRunnable(
-            Match(_hello, """{ "said": { "speaker": "Alice", "speech": "Hi" }, "resolve": [ "Alice.HasKey" ] }"""),
-            "resolve");
+            Match(_hello, """{ "said": { "speaker": "Alice", "speech": "Hi" }, "frobnicate": true }"""),
+            "frobnicate");
     }
 
     [Fact]
     public void ARealDivergenceBesideAnUncheckedClaimStillDiverges()
     {
         AssertDiverged(
-            Match(_hello, """{ "said": { "speaker": "Bob", "speech": "Hi" }, "resolve": [ "Alice.HasKey" ] }"""),
+            Match(_hello, """{ "said": { "speaker": "Bob", "speech": "Hi" }, "frobnicate": true }"""),
             "expected Bob to speak");
     }
 
