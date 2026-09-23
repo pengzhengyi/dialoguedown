@@ -28,6 +28,19 @@ internal readonly record struct NodeQuestions(
         return new NodeQuestions(node.FindTruthsForPlaying(), node.FindWordsForPlaying());
     }
 
+    /// <summary>What a node needs answered before a run can tell which way out it takes.</summary>
+    /// <param name="node">The node being left.</param>
+    /// <returns>Its questions, all of them truths.</returns>
+    /// <remarks>
+    /// A way out is guarded rather than spoken, so nothing here is answered with words.
+    /// </remarks>
+    public static NodeQuestions ToLeave(Node node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+
+        return new NodeQuestions(node.FindTruthsForLeaving(), []);
+    }
+
     /// <summary>The keys to ask about, in the order the playbook names them.</summary>
     /// <returns>The keys, each named once. Empty when the node asks nothing.</returns>
     public ImmutableArray<string> Keys() => Questions.Keys(Truths, Words);

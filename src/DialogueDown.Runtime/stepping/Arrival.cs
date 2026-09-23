@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
@@ -98,7 +97,7 @@ internal static class Arrival
             // jump either. The run lands on the succession the writer wrote beneath it.
             return arrived.SuccessionTarget() is int onward
                 ? At(context, onward)
-                : Refuse(
+                : StepResults.Refuse(
                     waiting.Node,
                     RefusalReason.LeadsNowhere,
                     $"Node {waiting.Node} leads nowhere.");
@@ -124,12 +123,7 @@ internal static class Arrival
         // node plays and what its words say, whatever kind it is.
         if (needs.Keys() is { IsEmpty: false } asking)
         {
-            return Visited.Stopping(Ask(node, asking));
-        }
-
-        if (TryFindArmCondition(arrived, out var unanswered))
-        {
-            return Visited.Stopping(RefuseUnanswered(node, unanswered));
+            return Visited.Stopping(StepResults.Ask(node, asking, Moment.ToPlay));
         }
 
         if (!WalksOn(arrived))
@@ -139,7 +133,7 @@ internal static class Arrival
 
         return arrived.OnwardTarget() is int onward
             ? Visited.CarryingOn(onward)
-            : Visited.Stopping(Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));
+            : Visited.Stopping(StepResults.Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));
     }
 
     // A node that hands the host nothing is walked past rather than stood at. A jump written on
@@ -148,39 +142,14 @@ internal static class Arrival
     private static bool WalksOn(Node node) => node is ControlNode { Effects.IsEmpty: true };
 
     private static StepResult RefuseRing(int node) =>
-        Refuse(
+        StepResults.Refuse(
             node,
             RefusalReason.EndlessRing,
             $"Node {node} sits in a ring of nodes that hand the host nothing, "
                 + "so a run entering it would never come out.");
 
-    // An arm's condition decides whether that way out is taken, and a run is not yet able to ask
-    // about one, so a node carrying one still cannot be played.
-    private static bool TryFindArmCondition(Node node, [NotNullWhen(true)] out Condition? condition)
-    {
-        condition = node.Out.OfType<IConditional>()
-            .Select(arm => arm.Condition)
-            .FirstOrDefault(found => found is not null);
-
-        return condition is not null;
-    }
-
-    // Taking a way out whose condition went unread is worse than refusing: the run would read as
-    // having gone the way the writer meant, when only the world could have said so.
-    private static StepResult RefuseUnanswered(int node, Condition condition) =>
-        Refuse(
-            node,
-            RefusalReason.UnansweredCondition,
-            $"A way out of node {node} is taken only when the world answers "
-                + $"{Describe(condition)}, and nobody answers the world about a way out yet.");
-
-    // The keys go out as the request and stay in the situation, because nowhere else remembers
-    // what was asked by the time the answers arrive.
-    private static StepResult Ask(int node, ImmutableArray<string> keys) =>
-        new(new PlayState(new AwaitingSupply(node, keys, Moment.ToPlay)), [new Resolve(keys)]);
-
     private static StepResult RefuseBothWays(int node, IReadOnlyList<string> bothWays) =>
-        Refuse(
+        StepResults.Refuse(
             node,
             RefusalReason.KeyNeededBothWays,
             $"Node {node} needs {string.Join(", ", bothWays)} as a truth and as words both, "
@@ -196,7 +165,7 @@ internal static class Arrival
                 new PlayState(new AwaitingDone(node)),
                 [.. control.Effects.Select(Event (effect) => new Perform(effect))]),
             EndNode => new StepResult(new PlayState(new AtEnd()), [new Ended()]),
-            var unplayable => Refuse(
+            var unplayable => StepResults.Refuse(
                 node,
                 RefusalReason.UnplayableNode,
                 $"This build cannot play a {unplayable.GetType().Name} yet."),
@@ -207,15 +176,6 @@ internal static class Arrival
     private static ImmutableArray<SpeechFragment> AsSpoken(
         ImmutableArray<SpeechFragment> speech, Supply? supply) =>
         supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
-
-    private static string Describe(Condition condition) => condition switch
-    {
-        KeyCondition key => key.Key,
-        _ => condition.GetType().Name,
-    };
-
-    private static StepResult Refuse(int node, RefusalReason reason, string explanation) =>
-        new(new PlayState(new AtNode(node)), [new Refused(reason, explanation)]);
 
     /// <summary>What one node means to a walk: where the run stops, or the node it carries on to.</summary>
     /// <param name="Stopped">What the step produced, or <see langword="null"/> when the walk goes on.</param>

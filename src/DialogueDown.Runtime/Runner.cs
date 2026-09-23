@@ -29,9 +29,9 @@ public static class Runner
         return (state.Situation, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
-            (AtNode at, Next) => Advance(context, state, at.Node),
-            (AwaitingDone waiting, Done) => Advance(context, state, waiting.Node),
-            (AwaitingSupply waiting, Supply supply) => Arrival.Supplied(context, waiting, supply),
+            (AtNode at, Next) => Departure.From(context, at.Node),
+            (AwaitingDone waiting, Done) => Departure.From(context, waiting.Node),
+            (AwaitingSupply waiting, Supply supply) => Supplied(context, waiting, supply),
             (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(
                 state,
@@ -48,10 +48,15 @@ public static class Runner
         };
     }
 
-    private static StepResult Advance(PlayContext context, PlayState state, int from) =>
-        context.NodeAt(from).OnwardTarget() is int onward
-            ? Arrival.At(context, onward)
-            : Refuse(state, RefusalReason.LeadsNowhere, $"Node {from} leads nowhere.");
+    // Which of the node's two readings of the world the answers belong to is the situation's to
+    // say, and it decides which construct finishes the step it started.
+    private static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply) =>
+        waiting.Moment switch
+        {
+            Moment.ToPlay => Arrival.Supplied(context, waiting, supply),
+            Moment.ToLeave => Departure.Supplied(context, waiting, supply),
+            _ => throw new NotSupportedException($"No step is defined for {waiting.Moment}."),
+        };
 
     // The world did not change, so the run cannot read on: it stands where it is and says nothing,
     // and the driver's own message is the record of why.

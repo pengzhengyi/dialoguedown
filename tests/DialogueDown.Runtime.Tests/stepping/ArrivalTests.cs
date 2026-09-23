@@ -149,15 +149,10 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void At_ALineWhoseJumpAsksTheWorld_RefusesRatherThanFallingThrough()
-    {
-        // The jump might have been the way out, so falling through to succession would be a
-        // decision nobody made -- and it would read as an ordinary line playing correctly.
-        AssertRefused(
-            Arrival.At(ALineWhoseJumpAsksTheWorld(), 0),
-            RefusalReason.UnansweredCondition,
-            "Alice.HasKey");
-    }
+    public void At_ALineWhoseJumpAsksTheWorld_SaysItWithoutAskingAboutTheJump() =>
+        // Where the jump leads is asked on the way out instead, by which time whatever the node
+        // performs has been performed and the world may have moved.
+        AssertSaid(Arrival.At(ALineWhoseJumpAsksTheWorld(), 0), speaker: "Alice", text: "Away.");
 
     [Fact]
     public void At_AJumpOnItsOwnLine_WalksStraightPastIt()
@@ -267,7 +262,7 @@ public sealed class ArrivalTests
     /// node 0, a line -- jumps to node 2 when Alice.HasKey, falls through to node 1 when it does not
     /// </code>
     /// </remarks>
-    /// <returns>A context where falling through would be a decision nobody made.</returns>
+    /// <returns>A context whose first line carries a question for the way out.</returns>
     private static PlayContext ALineWhoseJumpAsksTheWorld() =>
         Playbooks.Context(
             [
