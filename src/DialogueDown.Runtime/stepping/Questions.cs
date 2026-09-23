@@ -33,6 +33,18 @@ internal static class Questions
         ImmutableArray<string> truths, ImmutableArray<string> words) =>
         [.. truths.Intersect(words, StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
+    /// <summary>The keys a moment asks about, in the order the playbook names them.</summary>
+    /// <param name="truths">The keys a guard reads.</param>
+    /// <param name="words">The keys a query reads.</param>
+    /// <returns>The keys, each named once. Empty when the moment asks nothing.</returns>
+    /// <remarks>
+    /// Truths come first because a guard is written before the line it guards, so a request lists
+    /// the keys in the order a reader meets them in the script.
+    /// </remarks>
+    public static ImmutableArray<string> Keys(
+        ImmutableArray<string> truths, ImmutableArray<string> words) =>
+        [.. truths.Concat(words).Distinct(StringComparer.Ordinal)];
+
     /// <summary>The questions a moment puts, each key with the kind its use needs.</summary>
     /// <param name="truths">The keys a guard reads, each needing a truth.</param>
     /// <param name="words">The keys a query reads, each needing words.</param>

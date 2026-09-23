@@ -97,6 +97,20 @@ internal static class Playbooks
     public static LineNode ConditionalLine(int id, int speaker, string text, int next, string key) =>
         new(id, speaker, [new TextFragment(text)], new KeyCondition(key), [new SuccessionEdge(next)]);
 
+    /// <summary>A line whose speech is written out fragment by fragment.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="speaker">Who says it, by index.</param>
+    /// <param name="next">Where succession leads.</param>
+    /// <param name="condition">What must hold for the line to play, or <see langword="null"/>.</param>
+    /// <param name="speech">What is said, in the order written.</param>
+    /// <returns>The node.</returns>
+    /// <remarks>
+    /// For a line a query stands in, which plain text cannot spell.
+    /// </remarks>
+    public static LineNode LineSaying(
+        int id, int speaker, int next, Condition? condition, params SpeechFragment[] speech) =>
+        new(id, speaker, [.. speech], condition, [new SuccessionEdge(next)]);
+
     /// <summary>A line carrying a jump the world must allow, and a succession to fall through to.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="speaker">Who says it, by index.</param>

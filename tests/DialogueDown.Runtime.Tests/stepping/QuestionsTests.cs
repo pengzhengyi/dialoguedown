@@ -34,6 +34,21 @@ public sealed class QuestionsTests
             Assert.Single(Questions.Asked(["Hero.HasSword", "Hero.HasSword"], [])).Value);
 
     [Fact]
+    public void Keys_WhenTheMomentAsksNothing_AreNone() =>
+        Assert.Empty(Questions.Keys([], []));
+
+    [Fact]
+    public void Keys_NameTheTruthsFirst_BecauseAGuardIsWrittenFirst() =>
+        Assert.Equal(
+            ["Hero.HasSword", "HeroName"], Questions.Keys(["Hero.HasSword"], ["HeroName"]));
+
+    [Fact]
+    public void Keys_NameARepeatedKeyOnce() =>
+        Assert.Equal(
+            ["Hero.HasSword", "Hero.HasShield"],
+            Questions.Keys(["Hero.HasSword", "Hero.HasShield", "Hero.HasSword"], []));
+
+    [Fact]
     public void NeededBothWays_WhenNoKeyIsNamedTwiceOver_AreNone() =>
         Assert.Empty(Questions.NeededBothWays(["Hero.HasSword"], ["HeroName"]));
 

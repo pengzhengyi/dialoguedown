@@ -46,6 +46,13 @@ public enum RefusalReason
     /// <summary>The world answered a key with something other than the kind its use needs.</summary>
     WrongAnswerKind,
 
+    /// <summary>One key on a node is needed as a truth and as words both.</summary>
+    /// <remarks>
+    /// A key is asked about once, so a key that both guards a node and stands in what it says has
+    /// one answer to serve two uses, and whichever kind comes back leaves the other unreadable.
+    /// </remarks>
+    KeyNeededBothWays,
+
     /// <summary>The node kind is one this build has not learned to play.</summary>
     UnplayableNode,
 }

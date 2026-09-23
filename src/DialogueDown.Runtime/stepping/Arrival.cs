@@ -1,6 +1,8 @@
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 
@@ -56,6 +58,10 @@ internal static class Arrival
     /// A condition that fails routes rather than refuses: the node is stepped over and the walk
     /// carries on, so a line the world withheld is simply not spoken and the run reads the next
     /// one. Refusing would end a conversation the writer meant to continue.
+    /// <para>
+    /// A node the world allows is played with the answers in it, so a query standing in a line is
+    /// said as the words that answered it.
+    /// </para>
     /// </remarks>
     public static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply)
     {
@@ -64,9 +70,16 @@ internal static class Arrival
         ArgumentNullException.ThrowIfNull(supply);
 
         var arrived = context.NodeAt(waiting.Node);
+        var needs = NodeQuestions.ToPlay(arrived);
 
-        if (AnswerCheck.Disagrees(
-            Questions.Asked(arrived.KeysToPlay(), []), supply.Answers, out var refusal))
+        // Asked again here, because a run can be restored into this situation rather than walked
+        // into it, and one answer cannot serve a key that needs two kinds of answer.
+        if (needs.NeededBothWays() is { Count: > 0 } bothWays)
+        {
+            return RefuseBothWays(waiting.Node, bothWays);
+        }
+
+        if (AnswerCheck.Disagrees(needs.Asked(), supply.Answers, out var refusal))
         {
             // The run stays where it asked, so a driver that misread the request can answer it
             // again rather than losing the conversation over a mistake it can still fix.
@@ -83,19 +96,27 @@ internal static class Arrival
                     $"Node {waiting.Node} leads nowhere.");
         }
 
-        return Play(context, waiting.Node, arrived);
+        return Play(context, waiting.Node, arrived, supply);
     }
 
     // What being at one node means, with no regard for how many the walk passed to get here.
     private static Visited Visit(PlayContext context, int node)
     {
         var arrived = context.NodeAt(node);
+        var needs = NodeQuestions.ToPlay(arrived);
 
-        // Asked before the kind is dispatched on, because a condition decides whether the node
-        // plays at all, whatever kind it is.
-        if (arrived is IConditional { Condition: not null })
+        // Refused before anything is asked, because the request that would go out is one the run
+        // could not read back whichever kind it was answered with.
+        if (needs.NeededBothWays() is { Count: > 0 } bothWays)
         {
-            return Visited.Stopping(Ask(node, arrived));
+            return Visited.Stopping(RefuseBothWays(node, bothWays));
+        }
+
+        // Asked before the kind is dispatched on, because what the world says decides whether the
+        // node plays and what its words say, whatever kind it is.
+        if (needs.Keys() is { IsEmpty: false } asking)
+        {
+            return Visited.Stopping(Ask(node, asking));
         }
 
         if (TryFindArmCondition(arrived, out var unanswered))
@@ -147,19 +168,22 @@ internal static class Arrival
 
     // The keys go out as the request and stay in the situation, because nowhere else remembers
     // what was asked by the time the answers arrive.
-    private static StepResult Ask(int node, Node arrived)
-    {
-        var keys = arrived.KeysToPlay();
+    private static StepResult Ask(int node, ImmutableArray<string> keys) =>
+        new(new PlayState(new AwaitingSupply(node, keys)), [new Resolve(keys)]);
 
-        return new StepResult(new PlayState(new AwaitingSupply(node, keys)), [new Resolve(keys)]);
-    }
+    private static StepResult RefuseBothWays(int node, IReadOnlyList<string> bothWays) =>
+        Refuse(
+            node,
+            RefusalReason.KeyNeededBothWays,
+            $"Node {node} needs {string.Join(", ", bothWays)} as a truth and as words both, "
+                + "and a single answer can only be one of those.");
 
-    private static StepResult Play(PlayContext context, int node, Node arrived) =>
+    private static StepResult Play(PlayContext context, int node, Node arrived, Supply? supply = null) =>
         arrived switch
         {
             LineNode line => new StepResult(
                 new PlayState(new AtNode(node)),
-                [new Said(context.SpeakerName(line.Speaker), line.Speech)]),
+                [new Said(context.SpeakerName(line.Speaker), AsSpoken(line.Speech, supply))]),
             ControlNode control => new StepResult(
                 new PlayState(new AwaitingDone(node)),
                 [.. control.Effects.Select(Event (effect) => new Perform(effect))]),
@@ -169,6 +193,12 @@ internal static class Arrival
                 RefusalReason.UnplayableNode,
                 $"This build cannot play a {unplayable.GetType().Name} yet."),
         };
+
+    // A line nobody had to ask about is spoken as written. One with queries standing in it is
+    // spoken with the words the world put in their place.
+    private static ImmutableArray<SpeechFragment> AsSpoken(
+        ImmutableArray<SpeechFragment> speech, Supply? supply) =>
+        supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
 
     private static string Describe(Condition condition) => condition switch
     {

@@ -75,6 +75,56 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
+        AssertAsked(Arrival.At(ALineWithAQuery(), 0), node: 0, "playerName");
+
+    [Fact]
+    public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
+    {
+        var result = Arrival.Supplied(
+            ALineWithAQuery(), Waiting(0, "playerName"), Saying(("playerName", "Robin")));
+
+        AssertSaid(result, "Alice", "Hello, Robin.");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void At_ALineGuardedAndCarryingAQuery_AsksAboutBothInOneRequest() =>
+        // The whole node is judged against a single reading of the world, so it stops once.
+        AssertAsked(Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, "Alice.HasKey", "playerName");
+
+    [Fact]
+    public void Supplied_WithATruthAndWordsTogether_SaysTheLineTheWorldAllowed()
+    {
+        var result = Arrival.Supplied(
+            AGuardedLineWithAQuery(),
+            Waiting(0, "Alice.HasKey", "playerName"),
+            Saying(("Alice.HasKey", new BooleanAnswer(true)), ("playerName", new TextAnswer("Robin"))));
+
+        AssertSaid(result, "Alice", "You are Robin.");
+    }
+
+    [Fact]
+    public void At_ALineNeedingOneKeyBothWays_RefusesBeforeAskingAnything() =>
+        // One answer comes back, so whichever kind it is leaves the other use unable to read it.
+        AssertRefused(
+            Arrival.At(ALineNeedingOneKeyBothWays(), 0),
+            RefusalReason.KeyNeededBothWays,
+            "Alice.HasKey");
+
+    [Fact]
+    public void Supplied_ToALineNeedingOneKeyBothWays_RefusesRatherThanReadingTheWrongKind() =>
+        // A walk refuses such a node before asking, so getting here means the run was restored
+        // into the wait rather than walked into it. The step must stay total either way.
+        AssertRefused(
+            Arrival.Supplied(
+                ALineNeedingOneKeyBothWays(),
+                Waiting(0, "Alice.HasKey"),
+                Saying(("Alice.HasKey", "yes"))),
+            RefusalReason.KeyNeededBothWays,
+            "Alice.HasKey");
+
+    [Fact]
     public void Supplied_WithAnAnswerNobodyAskedFor_RefusesAndStaysWhereItAsked()
     {
         // Staying put leaves the driver able to answer again rather than losing the conversation
@@ -250,11 +300,85 @@ public sealed class ArrivalTests
             ],
             ["Alice"]);
 
+    /// <summary>A line with a query standing in what it says, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello, `"playerName"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that cannot say its only line until the world names the player.</returns>
+    private static PlayContext ALineWithAQuery() =>
+        Playbooks.Context(
+            [
+                Playbooks.LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    condition: null,
+                    new TextFragment("Hello, "),
+                    new QueryFragment("playerName"),
+                    new TextFragment(".")),
+                new EndNode(1),
+            ],
+            ["Alice"]);
+
+    /// <summary>A line the world must allow, with a query standing in what it says.</summary>
+    /// <remarks>
+    /// <code>
+    /// `Alice.HasKey?` Alice: You are `"playerName"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context needing a truth and words both before its only line is said.</returns>
+    private static PlayContext AGuardedLineWithAQuery() =>
+        Playbooks.Context(
+            [
+                Playbooks.LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    new KeyCondition("Alice.HasKey"),
+                    new TextFragment("You are "),
+                    new QueryFragment("playerName"),
+                    new TextFragment(".")),
+                new EndNode(1),
+            ],
+            ["Alice"]);
+
+    /// <summary>A line naming one key as its guard and again as a query.</summary>
+    /// <remarks>
+    /// <code>
+    /// `Alice.HasKey?` Alice: You have `"Alice.HasKey"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line needs one key answered two ways.</returns>
+    private static PlayContext ALineNeedingOneKeyBothWays() =>
+        Playbooks.Context(
+            [
+                Playbooks.LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    new KeyCondition("Alice.HasKey"),
+                    new TextFragment("You have "),
+                    new QueryFragment("Alice.HasKey"),
+                    new TextFragment(".")),
+                new EndNode(1),
+            ],
+            ["Alice"]);
+
     /// <summary>Where a run stands after asking the world about these keys.</summary>
     private static AwaitingSupply Waiting(int node, params string[] keys) => new(node, [.. keys]);
 
     /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
     private static Supply Saying(params (string Key, bool Holds)[] answers) =>
+        Saying([.. answers.Select(answer => (answer.Key, Answer: (Answer)new BooleanAnswer(answer.Holds)))]);
+
+    /// <summary>What the world says, as words for each key it was asked about.</summary>
+    private static Supply Saying(params (string Key, string Words)[] answers) =>
+        Saying([.. answers.Select(answer => (answer.Key, Answer: (Answer)new TextAnswer(answer.Words)))]);
+
+    /// <summary>What the world says, when the keys it was asked about need answers of both kinds.</summary>
+    private static Supply Saying(params (string Key, Answer Answer)[] answers) =>
         new(answers.ToImmutableDictionary(
-            answer => answer.Key, Answer (answer) => new BooleanAnswer(answer.Holds), StringComparer.Ordinal));
+            answer => answer.Key, answer => answer.Answer, StringComparer.Ordinal));
 }
