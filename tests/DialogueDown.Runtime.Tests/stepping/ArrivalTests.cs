@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
@@ -62,6 +63,17 @@ public sealed class ArrivalTests
 
         AssertSaid(result, "Alice", "Onward.");
         AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsALineCarryingAJump_DoesNotTakeTheJump()
+    {
+        // The jump belongs to the line. A line nobody spoke did not jump either, so the reader is
+        // not sent through the door it opens.
+        var result = Arrival.Supplied(
+            AGuardedLineCarryingAJump(), Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", false)));
+
+        AssertSaid(result, "Alice", "The door is locked.");
     }
 
     [Fact]
@@ -363,6 +375,34 @@ public sealed class ArrivalTests
                     new QueryFragment("Alice.HasKey"),
                     new TextFragment(".")),
                 new EndNode(1),
+            ],
+            ["Alice"]);
+
+    /// <summary>A line the world must allow, carrying a jump, with an alternative beneath it.</summary>
+    /// <remarks>
+    /// <code>
+    /// `Alice.HasKey?` Alice: I unlock it. =&gt; [Inside](#inside)
+    ///
+    /// Alice: The door is locked.
+    ///
+    /// # Inside
+    ///
+    /// Alice: Inside.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context where taking the jump and stepping over the line say different things.</returns>
+    private static PlayContext AGuardedLineCarryingAJump() =>
+        Playbooks.Context(
+            [
+                new LineNode(
+                    0,
+                    Speaker: 0,
+                    [new TextFragment("I unlock it.")],
+                    new KeyCondition("Alice.HasKey"),
+                    [Playbooks.Divert(2), new SuccessionEdge(1)]),
+                Playbooks.Line(1, speaker: 0, "The door is locked.", next: 2),
+                Playbooks.Line(2, speaker: 0, "Inside.", next: 3),
+                new EndNode(3),
             ],
             ["Alice"]);
 

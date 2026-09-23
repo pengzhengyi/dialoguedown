@@ -59,6 +59,12 @@ internal static class Arrival
     /// carries on, so a line the world withheld is simply not spoken and the run reads the next
     /// one. Refusing would end a conversation the writer meant to continue.
     /// <para>
+    /// Stepping over takes the succession alone. A line written
+    /// <c>`Alice.HasKey?` Alice: I unlock it. =&gt; [Inside](#inside)</c> carries that jump as part
+    /// of itself, so a reader the world withheld the line from is not sent through the door it
+    /// opens; they read the line the writer wrote beneath it.
+    /// </para>
+    /// <para>
     /// A node the world allows is played with the answers in it, so a query standing in a line is
     /// said as the words that answered it.
     /// </para>
@@ -88,7 +94,9 @@ internal static class Arrival
 
         if (arrived is IConditional guarded && !guarded.IsAllowed(supply))
         {
-            return arrived.OnwardTarget() is int onward
+            // A jump belongs to the node that carries it, so a node the world withheld did not
+            // jump either. The run lands on the succession the writer wrote beneath it.
+            return arrived.SuccessionTarget() is int onward
                 ? At(context, onward)
                 : Refuse(
                     waiting.Node,
