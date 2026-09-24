@@ -219,6 +219,29 @@ internal static class Playbooks
             ],
             ["Alice"]);
 
+    /// <summary>A jump on its own line that the world must allow, with a line to fall through to.</summary>
+    /// <remarks>
+    /// <code>
+    /// `Rainy?` =&gt; [Inn](#inn)
+    ///
+    /// Alice: Onward in the sun.
+    ///
+    /// # Inn
+    ///
+    /// Alice: Inside, out of the rain.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose entry says nothing and cannot be left without asking.</returns>
+    public static PlayContext AGuardedJumpOnItsOwnLine() =>
+        Context(
+            [
+                Bare(0, Divert(2, "Rainy"), new SuccessionEdge(1)),
+                Line(1, speaker: 0, "Onward in the sun.", next: 2),
+                Line(2, speaker: 0, "Inside, out of the rain.", next: 3),
+                new EndNode(3),
+            ],
+            ["Alice"]);
+
     /// <summary>A control node carrying effects for the host to carry out.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="next">Where succession leads once the host is done.</param>

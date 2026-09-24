@@ -131,6 +131,14 @@ internal static class Arrival
             return Visited.Stopping(Play(context, node, arrived));
         }
 
+        // Passing a node is leaving it, so a way out only the world can allow is asked about here.
+        // The walk carries on in this loop rather than by leaving through departure, which is what
+        // keeps a ring of such nodes inside the bound.
+        if (NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } leaving)
+        {
+            return Visited.Stopping(StepResults.Ask(node, leaving, Moment.ToLeave));
+        }
+
         return arrived.OnwardTarget() is int onward
             ? Visited.CarryingOn(onward)
             : Visited.Stopping(StepResults.Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));

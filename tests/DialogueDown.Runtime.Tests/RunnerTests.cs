@@ -217,6 +217,20 @@ public sealed class RunnerTests
         AssertSaid(left, "Alice", "Inside.");
     }
 
+    [Fact]
+    public void Step_StartAtAGuardedJumpThenASupply_LeavesByTheWayTheWorldAllowed()
+    {
+        // A node the walk passes can still stop it, and the answer that comes back finishes that
+        // leaving rather than starting the walk over.
+        var context = Playbooks.AGuardedJumpOnItsOwnLine();
+
+        var asked = Runner.Step(context, PlayState.Initial, new Start());
+        var left = Runner.Step(context, asked.State, Answering(("Rainy", false)));
+
+        AssertAsked(asked, node: 0, Moment.ToLeave, "Rainy");
+        AssertSaid(left, "Alice", "Onward in the sun.");
+    }
+
     private static PlayState Started(PlayContext context) =>
         Runner.Step(context, PlayState.Initial, new Start()).State;
 }

@@ -163,6 +163,12 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_AGuardedJumpOnItsOwnLine_AsksTheWorldWhichWayToGo() =>
+        // The walk passes a node that hands the host nothing, but it cannot pass one whose way out
+        // only the world can choose.
+        AssertAsked(Arrival.At(Playbooks.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.ToLeave, "Rainy");
+
+    [Fact]
     public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
     {
         // Nothing in the ring ever hands the host anything, so a walk with no bound would never
