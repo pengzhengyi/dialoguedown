@@ -18,7 +18,7 @@ public sealed class ConditionEvaluationExtensionsTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Holds_OfAKeyCondition_IsWhatTheWorldSaidAboutThatKey(bool holds) =>
+    public void Holds_OfAKeyCondition_IsWhatTheWorldAnsweredAboutThatKey(bool holds) =>
         Assert.Equal(
             holds, new KeyCondition("Hero.HasSword").Holds(Answering(("Hero.HasSword", holds))));
 
@@ -45,7 +45,7 @@ public sealed class ConditionEvaluationExtensionsTests
             () => ((Condition)null!).Holds(Answering(("Hero.HasSword", true))));
 
     [Fact]
-    public void Holds_IsNotReadWithoutWhatTheWorldSaid() =>
+    public void Holds_IsNotReadWithoutWhatTheWorldAnswered() =>
         Assert.Throws<ArgumentNullException>(
             () => new KeyCondition("Hero.HasSword").Holds(null!));
 
@@ -81,7 +81,7 @@ public sealed class ConditionEvaluationExtensionsTests
             () => ((IConditional)null!).IsAllowed(Answering(("Hero.HasSword", true))));
 
     [Fact]
-    public void IsAllowed_IsNotReadWithoutWhatTheWorldSaid() =>
+    public void IsAllowed_IsNotReadWithoutWhatTheWorldAnswered() =>
         // Refused even for something nobody guarded, so the contract does not depend on the answer.
         Assert.Throws<ArgumentNullException>(
             () => Playbooks.Divert(1).IsAllowed(null!));

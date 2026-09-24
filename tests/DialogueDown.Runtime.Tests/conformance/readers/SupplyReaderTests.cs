@@ -36,7 +36,7 @@ public sealed class SupplyReaderTests
 
     [Fact]
     public void Read_TheBareNameWithNothingBesideIt_IsAFixtureBug() =>
-        // A supply always carries what the world said, so there is no bare form of it.
+        // A supply always carries what the world answered, so there is no bare form of it.
         Assert.Throws<InvalidFixtureException>(() => _reader.Read(null));
 
     /// <summary>Asserts a supply send reads as exactly these answers, and no others.</summary>

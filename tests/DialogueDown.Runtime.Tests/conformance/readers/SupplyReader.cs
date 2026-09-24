@@ -6,7 +6,7 @@ using DialogueDown.Runtime.Protocol;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Readers;
 
-/// <summary>Reads <c>supply</c>, which carries what the world says by the key it was asked about.</summary>
+/// <summary>Reads <c>supply</c>, which carries what the world answered, by the key it was asked about.</summary>
 /// <remarks>
 /// A truth is written as <c>true</c> or <c>false</c> and words are written as a string, so the
 /// kind of answer a fixture gives is the kind JSON already wrote it as.
@@ -23,7 +23,7 @@ internal sealed class SupplyReader : ICommandReader
                 answer => answer.Key,
                 answer => ReadAnswer(answer.Key, answer.Value),
                 StringComparer.Ordinal))
-            : throw new InvalidFixtureException("A supply send carries what the world says, by key.");
+            : throw new InvalidFixtureException("A supply send carries what the world answered, by key.");
 
     private static Answer ReadAnswer(string key, JsonNode? written) =>
         written?.GetValueKind() switch

@@ -87,7 +87,7 @@ internal static class Playbooks
     public static LineNode Line(int id, int speaker, string text, int next) =>
         new(id, speaker, [new TextFragment(text)], Condition: null, [new SuccessionEdge(next)]);
 
-    /// <summary>A line node that only plays when the world says so.</summary>
+    /// <summary>A line node that only plays when the world allows it.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="speaker">Who says it, by index.</param>
     /// <param name="text">What is said.</param>
@@ -150,7 +150,7 @@ internal static class Playbooks
     /// <returns>The edge.</returns>
     public static DivertEdge Divert(int target) => new(target, [], Condition: null);
 
-    /// <summary>A jump taken only while the world says the key holds.</summary>
+    /// <summary>A jump taken only while the world answers that the key holds.</summary>
     /// <param name="target">Where the jump leads.</param>
     /// <param name="key">What the world is asked before the jump fires.</param>
     /// <returns>The edge.</returns>

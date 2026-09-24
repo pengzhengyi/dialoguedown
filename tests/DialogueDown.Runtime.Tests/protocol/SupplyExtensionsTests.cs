@@ -20,7 +20,7 @@ public sealed class SupplyExtensionsTests
         Assert.Equal(string.Empty, Answering(("HeroName", new TextAnswer(string.Empty))).Words("HeroName"));
 
     [Fact]
-    public void Holds_WhenNothingWasSaidAboutTheKey_IsAFaultInTheRun() =>
+    public void Holds_WhenTheKeyWentUnanswered_IsAFaultInTheRun() =>
         // Not a refusal: a supply is held to the keys it answers before it is read, so a gap here
         // means that holding was skipped rather than that the driver did anything wrong.
         Assert.Throws<InvalidOperationException>(() => Answering().Holds("Hero.HasSword"));

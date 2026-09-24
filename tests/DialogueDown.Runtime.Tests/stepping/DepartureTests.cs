@@ -61,7 +61,7 @@ public sealed class DepartureTests
         Assert.Throws<ArgumentNullException>(() => Departure.From(null!, 0));
 
     [Fact]
-    public void Supplied_IsNotTakenWithoutWhatTheWorldSaid() =>
+    public void Supplied_IsNotTakenWithoutWhatTheWorldAnswered() =>
         Assert.Throws<ArgumentNullException>(
             () => Departure.Supplied(Playbooks.TwoLines(), Waiting(0, "Alice.HasKey"), null!));
 

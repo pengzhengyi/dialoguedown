@@ -37,12 +37,12 @@ public sealed class ArrivalTests
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
     {
         // Speaking it without asking would read as played correctly while the condition it carries
-        // went unread, and only the world could have said otherwise.
+        // went unread, and only the world's answer could have shown otherwise.
         AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.ToPlay, "Alice.HasKey");
     }
 
     [Fact]
-    public void Supplied_WhenTheWorldSaysTheConditionHolds_SpeaksTheLine()
+    public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
 
@@ -53,7 +53,7 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void Supplied_WhenTheWorldSaysItDoesNot_StepsOverTheLineAndReadsTheNext()
+    public void Supplied_WhenTheWorldWithholdsTheLine_StepsOverItAndReadsTheNext()
     {
         // A failing condition routes rather than refusing. The line is simply not spoken, and the
         // run carries on, because refusing would end a conversation the writer meant to continue.

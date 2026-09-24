@@ -54,7 +54,7 @@ public sealed class NodeTraversalExtensionsTests
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
-    public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldSaid() =>
+    public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldAnswered() =>
         Assert.Equal(
             9,
             Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4))
