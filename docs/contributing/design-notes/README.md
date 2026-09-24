@@ -309,6 +309,7 @@ the pipeline and its tools.
 | --- | --- | --- |
 | [BBCode Rendering](./other/BBCode%20Rendering.md) | Surveyed: render a line's styled speech as BBCode (Godot), terminal, and web — the `ISpeechFormatter` seam and library options | Explored |
 | [Development Cycle Optimization](./other/Development%20Cycle%20Optimization.md) | Implemented: reduce local and CI feedback time through measured, behavior-preserving increments | Implemented |
+| [Enum Wire Names](./other/Enum%20Wire%20Names.md) | In progress: pin every JSON enum wire name with a hand-written converter, so no shipped build needs a .NET 9+ package | In progress |
 | [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
 | [Namespace Layout](./other/Namespace%20Layout.md) | Implemented: an architecture rule capping how many types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list | Implemented |
 | [Target Frameworks](./other/Target%20Frameworks.md) | Implemented: multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 LTS | Implemented |
