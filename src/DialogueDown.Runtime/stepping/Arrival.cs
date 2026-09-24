@@ -121,9 +121,9 @@ internal static class Arrival
 
         // Asked before the kind is dispatched on, because what the world says decides whether the
         // node plays and what its words say, whatever kind it is.
-        if (needs.Keys() is { IsEmpty: false } asking)
+        if (needs.Keys() is { IsEmpty: false } neededForPlaying)
         {
-            return Visited.Stopping(StepResults.Ask(node, asking, Moment.ToPlay));
+            return Visited.Stopping(StepResults.Ask(node, neededForPlaying, Moment.ToPlay));
         }
 
         if (!WalksOn(arrived))
@@ -134,9 +134,9 @@ internal static class Arrival
         // Passing a node is leaving it, so a way out only the world can allow is asked about here.
         // The walk carries on in this loop rather than by leaving through departure, which is what
         // keeps a ring of such nodes inside the bound.
-        if (NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } leaving)
+        if (NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving)
         {
-            return Visited.Stopping(StepResults.Ask(node, leaving, Moment.ToLeave));
+            return Visited.Stopping(StepResults.Ask(node, neededForLeaving, Moment.ToLeave));
         }
 
         return arrived.OnwardTarget() is int onward

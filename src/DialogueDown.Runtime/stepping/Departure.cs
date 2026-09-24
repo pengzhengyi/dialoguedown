@@ -24,8 +24,8 @@ internal static class Departure
 
         var leaving = context.NodeAt(node);
 
-        return NodeQuestions.ToLeave(leaving).Keys() is { IsEmpty: false } asking
-            ? StepResults.Ask(node, asking, Moment.ToLeave)
+        return NodeQuestions.ToLeave(leaving).Keys() is { IsEmpty: false } neededForLeaving
+            ? StepResults.Ask(node, neededForLeaving, Moment.ToLeave)
             : Onward(context, node, leaving.OnwardTarget());
     }
 
