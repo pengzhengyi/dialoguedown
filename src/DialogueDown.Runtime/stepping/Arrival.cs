@@ -35,14 +35,16 @@ internal static class Arrival
         // all this does; what a node means is Visit's to say.
         for (var passed = 0; passed <= context.Playbook.Nodes.Length; passed++)
         {
-            var visited = Visit(context, node);
-
-            if (visited.Stood is { } result)
+            switch (Visit(context, node))
             {
-                return result;
+                case Visited.Standing standing:
+                    return standing.Result;
+                case Visited.WalkingOn walkingOn:
+                    node = walkingOn.Onward;
+                    break;
+                default:
+                    throw new NotSupportedException("A visit either stands at a node or walks on from it.");
             }
-
-            node = visited.Onward;
         }
 
         return RefuseRing(node);
@@ -136,31 +138,31 @@ internal static class Arrival
     // not read back whichever kind it was answered with.
     private static Visited? RefuseIfAKeyIsNeededBothWays(int node, NodeQuestions needs) =>
         needs.NeededBothWays() is { Count: > 0 } bothWays
-            ? Visited.Standing(RefuseBothWays(node, bothWays))
+            ? new Visited.Standing(RefuseBothWays(node, bothWays))
             : null;
 
     // Asked before the kind is dispatched on, because what the world says decides whether the node
     // plays and what its words say, whatever kind it is.
     private static Visited? AskIfPlayingNeedsAnswers(int node, NodeQuestions needs) =>
         needs.Keys() is { IsEmpty: false } neededForPlaying
-            ? Visited.Standing(StepResults.Ask(node, neededForPlaying, Moment.ToPlay))
+            ? new Visited.Standing(StepResults.Ask(node, neededForPlaying, Moment.ToPlay))
             : null;
 
     private static Visited? PlayIfNotWalkedPast(PlayContext context, int node, Node arrived) =>
-        IsWalkedPast(arrived) ? null : Visited.Standing(Play(context, node, arrived));
+        IsWalkedPast(arrived) ? null : new Visited.Standing(Play(context, node, arrived));
 
     // Only a node being walked past reaches this, and passing a node is leaving it, so a way out
     // only the world can allow is asked about here. The walk carries on in its own loop rather than
     // by leaving through departure, which is what keeps a ring of such nodes inside the bound.
     private static Visited? AskIfLeavingNeedsAnswers(int node, Node arrived) =>
         NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving
-            ? Visited.Standing(StepResults.Ask(node, neededForLeaving, Moment.ToLeave))
+            ? new Visited.Standing(StepResults.Ask(node, neededForLeaving, Moment.ToLeave))
             : null;
 
     private static Visited WalkOn(int node, Node arrived) =>
         arrived.OnwardTarget() is int onward
-            ? Visited.WalkingOn(onward)
-            : Visited.Standing(
+            ? new Visited.WalkingOn(onward)
+            : new Visited.Standing(
                 StepResults.Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));
 
     // A node that hands the host nothing is walked past rather than stood at. A jump written on
@@ -204,21 +206,20 @@ internal static class Arrival
         ImmutableArray<SpeechFragment> speech, Supply? supply) =>
         supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
 
-    /// <summary>What one node means to a walk: where the run stands, or the node it walks on to.</summary>
-    /// <param name="Stood">What the step produced, or <see langword="null"/> when the walk goes on.</param>
-    /// <param name="Onward">Where the walk goes on to, or <see cref="Nowhere"/> when the run stood.</param>
-    private readonly record struct Visited(StepResult? Stood, int Onward)
+    /// <summary>What one node means to a walk: the run stands there, or the walk goes on.</summary>
+    private abstract record Visited
     {
-        /// <summary>
-        /// No node, for a run that stood. Every real target is not negative, so a reader that took
-        /// this for a node would fail at once.
-        /// </summary>
-        public const int Nowhere = -1;
+        // Private, so the two kinds nested here are the only ones there can be.
+        private Visited()
+        {
+        }
 
         /// <summary>The run stands at this node, with this to report.</summary>
-        public static Visited Standing(StepResult result) => new(result, Nowhere);
+        /// <param name="Result">What the step produced.</param>
+        public sealed record Standing(StepResult Result) : Visited;
 
         /// <summary>The node was walked past, so the walk goes on to the next.</summary>
-        public static Visited WalkingOn(int onward) => new(Stood: null, onward);
+        /// <param name="Onward">The node the walk goes on to.</param>
+        public sealed record WalkingOn(int Onward) : Visited;
     }
 }
