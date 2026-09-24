@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
-using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using static DialogueDown.Runtime.Tests.StepAssert;
+using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -208,7 +208,7 @@ public sealed class RunnerTests
     {
         // The two waits on the world look alike from the outside, so this is what proves a supply
         // answering the way out is finished by leaving rather than by arriving all over again.
-        var context = ALineWhoseJumpAsksTheWorld();
+        var context = Playbooks.ALineWhoseJumpAsksTheWorld();
 
         var asked = Runner.Step(context, Started(context), new Next());
         var left = Runner.Step(context, asked.State, Saying(("Alice.HasKey", true)));
@@ -216,35 +216,6 @@ public sealed class RunnerTests
         AssertAsked(asked, node: 0, Moment.ToLeave, "Alice.HasKey");
         AssertSaid(left, "Alice", "Inside.");
     }
-
-    /// <summary>A line whose jump the world must allow, with a line to fall through to.</summary>
-    /// <remarks>
-    /// <code>
-    /// Alice: Away. `Alice.HasKey?` =&gt; [Inside](#inside)
-    ///
-    /// Alice: Here.
-    ///
-    /// # Inside
-    ///
-    /// Alice: Inside.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context whose run stops twice: once to be read, once to ask the way out.</returns>
-    private static PlayContext ALineWhoseJumpAsksTheWorld() =>
-        Playbooks.Context(
-            [
-                Playbooks.LineWithConditionalJump(
-                    0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
-                Playbooks.Line(1, speaker: 0, "Here.", next: 2),
-                Playbooks.Line(2, speaker: 0, "Inside.", next: 3),
-                new EndNode(3),
-            ],
-            ["Alice"]);
-
-    /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
-    private static Supply Saying(params (string Key, bool Holds)[] answers) =>
-        new(answers.ToImmutableDictionary(
-            answer => answer.Key, Answer (answer) => new BooleanAnswer(answer.Holds), StringComparer.Ordinal));
 
     private static PlayState Started(PlayContext context) =>
         Runner.Step(context, PlayState.Initial, new Start()).State;

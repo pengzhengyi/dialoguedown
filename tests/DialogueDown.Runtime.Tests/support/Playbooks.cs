@@ -196,6 +196,29 @@ internal static class Playbooks
             [Effects(0, next: 1, "fade in"), Line(1, speaker: 0, "Hello.", next: 2), new EndNode(2)],
             ["Alice"]);
 
+    /// <summary>A line whose jump the world must allow, with a line to fall through to.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Away. `Alice.HasKey?` =&gt; [Inside](#inside)
+    ///
+    /// Alice: Here.
+    ///
+    /// # Inside
+    ///
+    /// Alice: Inside.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context where the world decides which line is said after the first.</returns>
+    public static PlayContext ALineWhoseJumpAsksTheWorld() =>
+        Context(
+            [
+                LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
+                Line(1, speaker: 0, "Here.", next: 2),
+                Line(2, speaker: 0, "Inside.", next: 3),
+                new EndNode(3),
+            ],
+            ["Alice"]);
+
     /// <summary>A control node carrying effects for the host to carry out.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="next">Where succession leads once the host is done.</param>

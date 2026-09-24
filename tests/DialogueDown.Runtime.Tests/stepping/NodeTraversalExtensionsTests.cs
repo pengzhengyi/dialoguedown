@@ -1,8 +1,7 @@
-using System.Collections.Immutable;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -118,9 +117,4 @@ public sealed class NodeTraversalExtensionsTests
     /// <returns>The node.</returns>
     private static ControlNode AJumpTheWorldMustAllow() =>
         Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"), new SuccessionEdge(4));
-
-    /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
-    private static Supply Saying(params (string Key, bool Holds)[] answers) =>
-        new(answers.ToImmutableDictionary(
-            answer => answer.Key, Answer (answer) => new BooleanAnswer(answer.Holds), StringComparer.Ordinal));
 }

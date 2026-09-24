@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
@@ -7,6 +6,7 @@ using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.StepAssert;
+using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -152,7 +152,7 @@ public sealed class ArrivalTests
     public void At_ALineWhoseJumpAsksTheWorld_SaysItWithoutAskingAboutTheJump() =>
         // Where the jump leads is asked on the way out instead, by which time whatever the node
         // performs has been performed and the world may have moved.
-        AssertSaid(Arrival.At(ALineWhoseJumpAsksTheWorld(), 0), speaker: "Alice", text: "Away.");
+        AssertSaid(Arrival.At(Playbooks.ALineWhoseJumpAsksTheWorld(), 0), speaker: "Alice", text: "Away.");
 
     [Fact]
     public void At_AJumpOnItsOwnLine_WalksStraightPastIt()
@@ -254,22 +254,6 @@ public sealed class ArrivalTests
     private static PlayContext AConditionalLineLeadingNowhere() =>
         Playbooks.Context(
             [new LineNode(0, Speaker: 0, [new TextFragment("I have the key.")], new KeyCondition("Alice.HasKey"), [])],
-            ["Alice"]);
-
-    /// <summary>A line carrying a jump the world must allow, and a plain line after it.</summary>
-    /// <remarks>
-    /// <code>
-    /// node 0, a line -- jumps to node 2 when Alice.HasKey, falls through to node 1 when it does not
-    /// </code>
-    /// </remarks>
-    /// <returns>A context whose first line carries a question for the way out.</returns>
-    private static PlayContext ALineWhoseJumpAsksTheWorld() =>
-        Playbooks.Context(
-            [
-                Playbooks.LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
-                Playbooks.Line(1, speaker: 0, "Here.", next: 2),
-                new EndNode(2),
-            ],
             ["Alice"]);
 
     /// <summary>A jump on its own line, over the line that follows it.</summary>
@@ -405,17 +389,4 @@ public sealed class ArrivalTests
     /// <remarks>Arrival is what this class is about, so every wait here is one to play.</remarks>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
         new(node, [.. keys], Moment.ToPlay);
-
-    /// <summary>What the world says, as a yes or no for each key it was asked about.</summary>
-    private static Supply Saying(params (string Key, bool Holds)[] answers) =>
-        Saying([.. answers.Select(answer => (answer.Key, Answer: (Answer)new BooleanAnswer(answer.Holds)))]);
-
-    /// <summary>What the world says, as words for each key it was asked about.</summary>
-    private static Supply Saying(params (string Key, string Words)[] answers) =>
-        Saying([.. answers.Select(answer => (answer.Key, Answer: (Answer)new TextAnswer(answer.Words)))]);
-
-    /// <summary>What the world says, when the keys it was asked about need answers of both kinds.</summary>
-    private static Supply Saying(params (string Key, Answer Answer)[] answers) =>
-        new(answers.ToImmutableDictionary(
-            answer => answer.Key, answer => answer.Answer, StringComparer.Ordinal));
 }
