@@ -5,6 +5,7 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using DialogueDown.TestSupport;
+using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -17,9 +18,9 @@ public sealed class ConditionEvaluationExtensionsTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Holds_OfAKeyCondition_IsWhatTheWorldSaidAboutThatKey(bool said) =>
+    public void Holds_OfAKeyCondition_IsWhatTheWorldSaidAboutThatKey(bool holds) =>
         Assert.Equal(
-            said, new KeyCondition("Hero.HasSword").Holds(Answering("Hero.HasSword", said)));
+            holds, new KeyCondition("Hero.HasSword").Holds(Answering(("Hero.HasSword", holds))));
 
     [Fact]
     public void Holds_IsReadForEveryConditionKind()
@@ -41,7 +42,7 @@ public sealed class ConditionEvaluationExtensionsTests
     [Fact]
     public void Holds_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(
-            () => ((Condition)null!).Holds(Answering("Hero.HasSword", true)));
+            () => ((Condition)null!).Holds(Answering(("Hero.HasSword", true))));
 
     [Fact]
     public void Holds_IsNotReadWithoutWhatTheWorldSaid() =>
@@ -53,31 +54,31 @@ public sealed class ConditionEvaluationExtensionsTests
         // A jump a writer left unguarded, so asking whether it is allowed does not mean first
         // asking whether anybody guarded it.
         Assert.True(
-            Playbooks.Divert(1).IsAllowed(Answering("Hero.HasSword", false)));
+            Playbooks.Divert(1).IsAllowed(Answering(("Hero.HasSword", false))));
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void IsAllowed_AGuardedWayOut_IsWhatItsGuardReadsTo(bool said) =>
+    public void IsAllowed_AGuardedWayOut_IsWhatItsGuardReadsTo(bool holds) =>
         Assert.Equal(
-            said,
-            AGuarded(Playbooks.Divert(1, "Hero.HasSword"), said));
+            holds,
+            AGuarded(Playbooks.Divert(1, "Hero.HasSword"), holds));
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void IsAllowed_AGuardedNode_IsWhatItsGuardReadsTo(bool said) =>
+    public void IsAllowed_AGuardedNode_IsWhatItsGuardReadsTo(bool holds) =>
         // A node and an edge are read the same way, which is what lets one reader serve both.
         Assert.Equal(
-            said,
+            holds,
             AGuarded(
                 new LineNode(0, 0, [], new KeyCondition("Hero.HasSword"), [new SuccessionEdge(1)]),
-                said));
+                holds));
 
     [Fact]
     public void IsAllowed_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(
-            () => ((IConditional)null!).IsAllowed(Answering("Hero.HasSword", true)));
+            () => ((IConditional)null!).IsAllowed(Answering(("Hero.HasSword", true))));
 
     [Fact]
     public void IsAllowed_IsNotReadWithoutWhatTheWorldSaid() =>
@@ -85,12 +86,8 @@ public sealed class ConditionEvaluationExtensionsTests
         Assert.Throws<ArgumentNullException>(
             () => Playbooks.Divert(1).IsAllowed(null!));
 
-    private static bool AGuarded(IConditional guarded, bool said) =>
-        guarded.IsAllowed(Answering("Hero.HasSword", said));
-
-    private static Supply Answering(string key, bool said) =>
-        new(ImmutableDictionary.Create<string, Answer>(StringComparer.Ordinal)
-            .Add(key, new BooleanAnswer(said)));
+    private static bool AGuarded(IConditional guarded, bool holds) =>
+        guarded.IsAllowed(Answering(("Hero.HasSword", holds)));
 
     private static Supply AnsweringEvery(Condition condition) =>
         new(condition.Keys().ToImmutableDictionary(

@@ -39,31 +39,31 @@ public sealed class NodeTraversalExtensionsTests
 
     [Fact]
     public void OnwardTarget_AJumpTheWorldAllows_IsTheWayOutTaken() =>
-        Assert.Equal(9, AJumpTheWorldMustAllow().OnwardTarget(Saying(("Alice.HasKey", true))));
+        Assert.Equal(9, AJumpTheWorldMustAllow().OnwardTarget(Answering(("Alice.HasKey", true))));
 
     [Fact]
     public void OnwardTarget_AJumpTheWorldWithholds_FallsThroughBeneathIt() =>
         // A jump nobody allowed is not a way out, so the succession written beneath it is what the
         // writer left the run to land on.
-        Assert.Equal(4, AJumpTheWorldMustAllow().OnwardTarget(Saying(("Alice.HasKey", false))));
+        Assert.Equal(4, AJumpTheWorldMustAllow().OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_AJumpTheWorldWithholdsAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
             Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"))
-                .OnwardTarget(Saying(("Alice.HasKey", false))));
+                .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldSaid() =>
         Assert.Equal(
             9,
             Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4))
-                .OnwardTarget(Saying(("Alice.HasKey", false))));
+                .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_WithAnswersInHand_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(
-            () => ((Node)null!).OnwardTarget(Saying(("Alice.HasKey", true))));
+            () => ((Node)null!).OnwardTarget(Answering(("Alice.HasKey", true))));
 
     [Fact]
     public void OnwardTarget_IsNotReadWithoutAnswers() =>

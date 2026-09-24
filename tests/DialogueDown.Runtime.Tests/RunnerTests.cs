@@ -211,7 +211,7 @@ public sealed class RunnerTests
         var context = Playbooks.ALineWhoseJumpAsksTheWorld();
 
         var asked = Runner.Step(context, Started(context), new Next());
-        var left = Runner.Step(context, asked.State, Saying(("Alice.HasKey", true)));
+        var left = Runner.Step(context, asked.State, Answering(("Alice.HasKey", true)));
 
         AssertAsked(asked, node: 0, Moment.ToLeave, "Alice.HasKey");
         AssertSaid(left, "Alice", "Inside.");

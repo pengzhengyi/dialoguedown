@@ -46,7 +46,7 @@ public sealed class ArrivalTests
     {
         var context = AConditionalLine();
 
-        var result = Arrival.Supplied(context, Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", true)));
+        var result = Arrival.Supplied(context, Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", true)));
 
         AssertSaid(result, "Alice", "I have the key.");
         AssertAt(result, 0);
@@ -59,7 +59,7 @@ public sealed class ArrivalTests
         // run carries on, because refusing would end a conversation the writer meant to continue.
         var context = AConditionalLineThenAnother();
 
-        var result = Arrival.Supplied(context, Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", false)));
+        var result = Arrival.Supplied(context, Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false)));
 
         AssertSaid(result, "Alice", "Onward.");
         AssertAt(result, 1);
@@ -71,7 +71,7 @@ public sealed class ArrivalTests
         // The jump belongs to the line. A line nobody spoke did not jump either, so the reader is
         // not sent through the door it opens.
         var result = Arrival.Supplied(
-            AGuardedLineCarryingAJump(), Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", false)));
+            AGuardedLineCarryingAJump(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false)));
 
         AssertSaid(result, "Alice", "The door is locked.");
     }
@@ -81,7 +81,7 @@ public sealed class ArrivalTests
     {
         AssertRefused(
             Arrival.Supplied(
-                AConditionalLineLeadingNowhere(), Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", false))),
+                AConditionalLineLeadingNowhere(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false))),
             RefusalReason.LeadsNowhere,
             "leads nowhere");
     }
@@ -94,7 +94,7 @@ public sealed class ArrivalTests
     public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
     {
         var result = Arrival.Supplied(
-            ALineWithAQuery(), Waiting(0, "playerName"), Saying(("playerName", "Robin")));
+            ALineWithAQuery(), Waiting(0, "playerName"), Answering(("playerName", "Robin")));
 
         AssertSaid(result, "Alice", "Hello, Robin.");
         AssertAt(result, 0);
@@ -111,7 +111,7 @@ public sealed class ArrivalTests
         var result = Arrival.Supplied(
             AGuardedLineWithAQuery(),
             Waiting(0, "Alice.HasKey", "playerName"),
-            Saying(("Alice.HasKey", new BooleanAnswer(true)), ("playerName", new TextAnswer("Robin"))));
+            Answering(("Alice.HasKey", new BooleanAnswer(true)), ("playerName", new TextAnswer("Robin"))));
 
         AssertSaid(result, "Alice", "You are Robin.");
     }
@@ -132,7 +132,7 @@ public sealed class ArrivalTests
             Arrival.Supplied(
                 ALineNeedingOneKeyBothWays(),
                 Waiting(0, "Alice.HasKey"),
-                Saying(("Alice.HasKey", "yes"))),
+                Answering(("Alice.HasKey", "yes"))),
             RefusalReason.KeyNeededBothWays,
             "Alice.HasKey");
 
@@ -142,7 +142,7 @@ public sealed class ArrivalTests
         // Staying put leaves the driver able to answer again rather than losing the conversation
         // over a mistake it can still fix.
         var result = Arrival.Supplied(
-            AConditionalLine(), Waiting(0, "Alice.HasKey"), Saying(("Bob.HasRope", true)));
+            AConditionalLine(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
         AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
         AssertAwaitingSupply(result.State, node: 0, Moment.ToPlay, "Alice.HasKey");

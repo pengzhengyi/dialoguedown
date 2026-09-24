@@ -32,7 +32,7 @@ public sealed class DepartureTests
     public void Supplied_WhenTheWorldAllowsTheJump_ArrivesWhereItLeads() =>
         AssertSaid(
             Departure.Supplied(
-                Playbooks.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", true))),
+                Playbooks.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", true))),
             speaker: "Alice",
             text: "Inside.");
 
@@ -40,7 +40,7 @@ public sealed class DepartureTests
     public void Supplied_WhenTheWorldWithholdsTheJump_FallsThroughBeneathIt() =>
         AssertSaid(
             Departure.Supplied(
-                Playbooks.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Saying(("Alice.HasKey", false))),
+                Playbooks.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false))),
             speaker: "Alice",
             text: "Here.");
 
@@ -50,7 +50,7 @@ public sealed class DepartureTests
         // Staying put leaves the driver able to answer again rather than losing the conversation
         // over a mistake it can still fix.
         var result = Departure.Supplied(
-            Playbooks.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Saying(("Bob.HasRope", true)));
+            Playbooks.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
         AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
         AssertAwaitingSupply(result.State, node: 0, Moment.ToLeave, "Alice.HasKey");
