@@ -1,0 +1,87 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "inn": 2
+  },
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "control",
+      "id": 0,
+      "effects": [],
+      "out": [
+        {
+          "kind": "divert",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Inn"
+            }
+          ],
+          "condition": {
+            "kind": "key",
+            "key": "Rainy"
+          }
+        },
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "We press on."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 2
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "We wait out the storm."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 3,
+      "out": []
+    }
+  ]
+}

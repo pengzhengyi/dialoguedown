@@ -63,13 +63,14 @@ a random choice.
 ## What the corpus already fixes
 
 Unusually for a first pass, the contract is not open. The published fixture
-schema already defines `resolve`, `supply`, and `asked`, and four corpus cases
+schema already defines `resolve`, `supply`, and `asked`, and five corpus cases
 pin the exchanges. This note is therefore about how the runner meets a contract
 that exists, not about choosing one.
 
 | Case | What it fixes |
 | --- | --- |
 | `a-conditional-line` | One `resolve` naming one key, a `supply` of `false`, and then the **next** line is said — a failing condition steps over the node rather than stopping at it |
+| `a-conditional-jump` | A jump with nothing to say still stops to ask: one `resolve` before the run walks past it, and a `supply` of `true` takes the jump, so the line after it is never said |
 | `a-conditional-block` | The arms are tried in the order written, and a satisfied first arm means the `else` is never reached |
 | `a-query-in-speech` | The supplied answer appears in the flattened speech: `Hello, Robin.` |
 | `an-unavailable-option` | A failing option is offered **unavailable** rather than hidden. Needs choices too, so it still will not play after this pass |
@@ -289,7 +290,7 @@ keep testing for no one.
 | `NodeTraversalExtensions` | Reads the way onward from the arms whose conditions hold |
 | `Runner.Step` | One more arm: `Supply` advances from `AwaitingSupply` |
 | Harness | A `ResolveMatcher`, and `supply` among the commands a session can send |
-| `PlayableConformanceTests` | `a-conditional-line` and `a-query-in-speech` join the conforming list, and `a-conditional-block` joins once branches play |
+| `PlayableConformanceTests` | `a-conditional-line`, `a-conditional-jump`, and `a-query-in-speech` join the conforming list, and `a-conditional-block` joins once branches play |
 | `PlayableRun.IsPlayable` | Learns `BranchNode`, and its agreement test holds it to the runner |
 | `PlaybookGen` | Draws conditions, branches, and queries, and its coverage test **fails until it does** |
 | Runtime core note | Its state diagram's dotted C2c edge becomes a solid one |
@@ -309,7 +310,7 @@ makes two lists fail by name, which is the reminder this pass is owed.
 | Unit — speech | A query substituted; a line with text and a query together; a query whose answer is empty |
 | Unit — the protocol | `Supply` where nothing was asked; `Next` while awaiting a supply |
 | Property | The walk property, widened: a run still only ever stands where the playbook has a node |
-| Conformance | `a-conditional-line`, `a-conditional-block`, and `a-query-in-speech` conform |
+| Conformance | `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` conform |
 
 Three are worth naming because they are easy to leave out. A node with a condition
 **and** a query must produce **one** `Resolve` carrying both keys, which is the
