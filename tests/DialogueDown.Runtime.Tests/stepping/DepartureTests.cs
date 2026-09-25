@@ -1,3 +1,5 @@
+using DialogueDown.Playbook.Edges;
+using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
@@ -45,6 +47,24 @@ public sealed class DepartureTests
             text: "Here.");
 
     [Fact]
+    public void Supplied_AtABlockWhoseFirstArmIsWithheld_ArrivesWhereTheNextLeads() =>
+        AssertSaid(
+            Departure.Supplied(
+                Playbooks.AConditionalBlock(),
+                Waiting(0, "Alice.HasKey", "Alice.HasPick"),
+                Answering(("Alice.HasKey", false), ("Alice.HasPick", true))),
+            speaker: "Alice",
+            text: "The pick clicks.");
+
+    [Fact]
+    public void Supplied_AtABlockWithoutAnElseWhoseArmIsWithheld_ReadsOnPastTheBlock() =>
+        AssertSaid(
+            Departure.Supplied(
+                AConditionalBlockWithoutAnElse(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false))),
+            speaker: "Alice",
+            text: "Onward.");
+
+    [Fact]
     public void Supplied_WithAnAnswerNobodyAskedFor_RefusesAndStaysWhereItAsked()
     {
         // Staying put leaves the driver able to answer again rather than losing the conversation
@@ -73,6 +93,27 @@ public sealed class DepartureTests
     /// <returns>A context whose only line leads nowhere.</returns>
     private static PlayContext ALineLeadingNowhere() =>
         Playbooks.Context([Playbooks.Dead(0, "Away.")], ["Alice"]);
+
+    /// <summary>A block condition with an if and no else, then a line after the block.</summary>
+    /// <remarks>
+    /// <code>
+    /// &gt; `if` `Alice.HasKey?`
+    /// &gt;
+    /// &gt; Alice: The key turns.
+    ///
+    /// Alice: Onward.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose block is skipped when its one arm is withheld.</returns>
+    private static PlayContext AConditionalBlockWithoutAnElse() =>
+        Playbooks.Context(
+            [
+                Playbooks.Branch(0, Playbooks.Arm(1, order: 0, "Alice.HasKey"), new SuccessionEdge(2)),
+                Playbooks.Line(1, speaker: 0, "The key turns.", next: 2),
+                Playbooks.Line(2, speaker: 0, "Onward.", next: 3),
+                new EndNode(3),
+            ],
+            ["Alice"]);
 
     /// <summary>Where a run stands after asking, on the way out, about these keys.</summary>
     /// <remarks>Leaving is what this class is about, so every wait here is one to leave.</remarks>

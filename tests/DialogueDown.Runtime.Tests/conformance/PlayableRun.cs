@@ -32,7 +32,7 @@ internal static class PlayableRun
     /// <param name="node">The node to ask about.</param>
     /// <returns><see langword="true"/> when arriving at such a node is something this build does.</returns>
     internal static bool IsPlayable(Node node) =>
-        node is LineNode or EndNode or ControlNode;
+        node is LineNode or EndNode or ControlNode or BranchNode;
 
     // Asked before a step is taken, so a construct nobody has taught the runner is reported as that.
     private static bool TryFindUnplayable(

@@ -157,6 +157,26 @@ internal static class Playbooks
     public static DivertEdge Divert(int target, string key) =>
         new(target, [], new KeyCondition(key));
 
+    /// <summary>A block condition, which says nothing and performs nothing and goes on by an arm.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="ways">Its arms in the order they are tried, and a succession when it has no else.</param>
+    /// <returns>The node.</returns>
+    public static BranchNode Branch(int id, params Edge[] ways) => new(id, [.. ways]);
+
+    /// <summary>An arm of a block condition, taken when the world answers that the key holds.</summary>
+    /// <param name="target">Where the arm leads.</param>
+    /// <param name="order">Where it sits in the order the arms are tried, counting from zero.</param>
+    /// <param name="key">What the world is asked before the arm is taken.</param>
+    /// <returns>The edge.</returns>
+    public static BranchEdge Arm(int target, int order, string key) =>
+        new(target, order, new KeyCondition(key));
+
+    /// <summary>The else of a block condition, taken when no arm before it is.</summary>
+    /// <param name="target">Where it leads.</param>
+    /// <param name="order">Where it sits in the order the arms are tried, which is last.</param>
+    /// <returns>The edge.</returns>
+    public static BranchEdge Else(int target, int order) => new(target, order, Condition: null);
+
     /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
     /// <code>
@@ -239,6 +259,34 @@ internal static class Playbooks
                 Line(1, speaker: 0, "Onward in the sun.", next: 2),
                 Line(2, speaker: 0, "Inside, out of the rain.", next: 3),
                 new EndNode(3),
+            ],
+            ["Alice"]);
+
+    /// <summary>A block condition with an if, an elseif, and an else.</summary>
+    /// <remarks>
+    /// <code>
+    /// &gt; `if` `Alice.HasKey?`
+    /// &gt;
+    /// &gt; Alice: The key turns.
+    /// &gt;
+    /// &gt; `elseif` `Alice.HasPick?`
+    /// &gt;
+    /// &gt; Alice: The pick clicks.
+    /// &gt;
+    /// &gt; `else`
+    /// &gt;
+    /// &gt; Alice: The door stays shut.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose entry says nothing, and whose every arm says a different line.</returns>
+    public static PlayContext AConditionalBlock() =>
+        Context(
+            [
+                Branch(0, Arm(1, order: 0, "Alice.HasKey"), Arm(2, order: 1, "Alice.HasPick"), Else(3, order: 2)),
+                Line(1, speaker: 0, "The key turns.", next: 4),
+                Line(2, speaker: 0, "The pick clicks.", next: 4),
+                Line(3, speaker: 0, "The door stays shut.", next: 4),
+                new EndNode(4),
             ],
             ["Alice"]);
 

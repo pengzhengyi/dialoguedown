@@ -3,9 +3,9 @@
 > [!IMPORTANT]
 > Status: **in progress**. The pass that lets a run ask the world a question and
 > use the answer, so a condition is evaluated instead of refused. A node's own
-> condition and the queries standing in its speech are asked and answered; an
-> edge's condition, branch nodes, and retiring `UnansweredCondition` are still to
-> come.
+> condition, the queries standing in its speech, a jump's condition, and a block
+> condition's arms are asked and answered; retiring `UnansweredCondition` is still
+> to come.
 >
 > It builds on the [runtime core](./Runtime%20Core.md), whose protocol and
 > harness it extends, and on
@@ -84,8 +84,10 @@ holds — `false` for a guard, `"Robin"` for a query.
 - [x] A node carrying a condition asks the world about it rather than refusing.
 - [x] A node whose condition fails is stepped over, and the run carries on.
 - [ ] An edge whose condition fails is not taken; one whose condition holds is.
-- [ ] A branch node takes the first arm, in `order`, whose condition holds.
-- [ ] A branch node with no satisfied arm and no `else` leads nowhere, and says so.
+- [x] A branch node takes the first arm, in `order`, whose condition holds.
+- [x] A branch node with no satisfied arm and no `else` falls through to the
+      succession beneath the block, so the block is skipped; one with no
+      succession either leads nowhere, and says so.
 - [x] Every key a moment needs is asked for in a single `Resolve`: one on the way
       in, and one on the way out.
 - [x] A query in speech is replaced by what the world said before the line is said.
@@ -238,6 +240,11 @@ The arms' order is not this pass's to decide. The reader already guarantees that
 branch's arms appear in strictly ascending `order`, that at least one is gated, and
 that a conditionless `else` comes last, so the runner tries them as it finds them.
 
+A branch has nothing to ask on the way in, so all of its reading happens on the way
+out: one ask carrying every arm's key, then the first arm the answers allow. When
+none holds and there is no `else`, the run falls through to the succession the
+compiler writes beneath the block, so the block is skipped, as the guide describes.
+
 ### A9 — A query is substituted before the line is said
 
 `Said` carries speech as fragments, and `QueryFragment` carries a key. When the
@@ -258,7 +265,7 @@ replays. It also leaves `SpeechText` with nothing new to know.
 | A key that was asked and not answered | `UnansweredKey`, naming the key |
 | A key answered that was not asked | `UnaskedKey`, naming the key |
 | An answer of the wrong kind for its use — text where a guard needs a truth | `WrongAnswerKind`, naming the key and both kinds |
-| A branch whose arms all fail, with no `else` | Leads nowhere, which the existing reason already covers |
+| A branch whose arms all fail, with no `else` | Falls through to the succession beneath the block, so the block is skipped. Leads nowhere only when there is no succession either, which no script compiles to |
 | A skipped node whose succession leads nowhere | Leads nowhere |
 | A guarded node with nothing to say or perform, once the world allows it | Walked past, as an unguarded one is. No script compiles to this, but a reader accepts it |
 | A ring of nodes whose conditions all fail | The existing ring bound refuses it |
@@ -291,7 +298,7 @@ keep testing for no one.
 | `NodeTraversalExtensions` | Reads the way onward from the arms whose conditions hold |
 | `Runner.Step` | One more arm: `Supply` advances from `AwaitingSupply` |
 | Harness | A `ResolveMatcher`, and `supply` among the commands a session can send |
-| `PlayableConformanceTests` | `a-conditional-line`, `a-conditional-jump`, and `a-query-in-speech` join the conforming list, and `a-conditional-block` joins once branches play |
+| `PlayableConformanceTests` | `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` join the conforming list |
 | `PlayableRun.IsPlayable` | Learns `BranchNode`, and its agreement test holds it to the runner |
 | `PlaybookGen` | Draws conditions, branches, and queries, and its coverage test **fails until it does** |
 | Runtime core note | Its state diagram's dotted C2c edge becomes a solid one |
@@ -316,7 +323,7 @@ makes two lists fail by name, which is the reminder this pass is owed.
 Three are worth naming because they are easy to leave out. A node with a condition
 **and** a query must produce **one** `Resolve` carrying both keys, which is the
 half of A1 a single-key fixture cannot show. A branch whose arms all fail with no
-`else` must say it leads nowhere rather than hanging. And a ring of nodes whose
+`else` must skip the block rather than hang. And a ring of nodes whose
 conditions all fail must be refused by the existing bound — the guard was written
 for empty control nodes, and this pass gives it a second kind of walker.
 

@@ -193,6 +193,13 @@ public sealed class ArrivalTests
         AssertAsked(Arrival.At(Playbooks.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.ToLeave, "Rainy");
 
     [Fact]
+    public void At_AConditionalBlock_AsksTheWorldWhichArmToTake() =>
+        // A block says nothing, so the run walks into it and on to choosing an arm, asking about
+        // every arm at once.
+        AssertAsked(
+            Arrival.At(Playbooks.AConditionalBlock(), 0), node: 0, Moment.ToLeave, "Alice.HasKey", "Alice.HasPick");
+
+    [Fact]
     public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
     {
         // Nothing in the ring ever hands the host anything, so a walk with no bound would never

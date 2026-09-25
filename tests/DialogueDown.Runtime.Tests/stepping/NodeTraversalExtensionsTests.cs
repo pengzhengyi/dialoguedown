@@ -61,6 +61,42 @@ public sealed class NodeTraversalExtensionsTests
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
+    public void OnwardTarget_ABranchWhoseArmsBothHold_TakesTheFirst() =>
+        // The arms are tried in the order written, so a later arm that also holds is never reached.
+        Assert.Equal(
+            7, ABranchWithAnElse().OnwardTarget(Answering(("Alice.HasKey", true), ("Alice.HasPick", true))));
+
+    [Fact]
+    public void OnwardTarget_ABranchWhoseFirstArmIsWithheld_TakesTheNextTheWorldAllows() =>
+        Assert.Equal(
+            8, ABranchWithAnElse().OnwardTarget(Answering(("Alice.HasKey", false), ("Alice.HasPick", true))));
+
+    [Fact]
+    public void OnwardTarget_ABranchWhoseArmsAreAllWithheld_TakesItsElse() =>
+        Assert.Equal(
+            9, ABranchWithAnElse().OnwardTarget(Answering(("Alice.HasKey", false), ("Alice.HasPick", false))));
+
+    [Fact]
+    public void OnwardTarget_ABranchWithoutAnElseWhoseArmIsWithheld_FallsThroughBeneathIt() =>
+        // The succession beneath a block leads past it, so a block with no arm taken is skipped.
+        Assert.Equal(4, ABranchWithoutAnElse().OnwardTarget(Answering(("Alice.HasKey", false))));
+
+    [Fact]
+    public void OnwardTarget_ABranchWhoseArmIsWithheldAndNothingBeneathIt_IsNowhere() =>
+        Assert.Null(
+            Playbooks.Branch(0, Playbooks.Arm(7, order: 0, "Alice.HasKey"))
+                .OnwardTarget(Answering(("Alice.HasKey", false))));
+
+    [Fact]
+    public void OnwardTarget_WithoutAnswers_TakesAnArmNothingGuards() =>
+        Assert.Equal(9, Playbooks.Branch(0, Playbooks.Else(9, order: 0)).OnwardTarget());
+
+    [Fact]
+    public void OnwardTarget_WithoutAnswers_PassesOverAJumpTheWorldMustAllow() =>
+        // Nobody asked the world about the jump, so nothing says it fires.
+        Assert.Equal(4, AJumpTheWorldMustAllow().OnwardTarget());
+
+    [Fact]
     public void OnwardTarget_WithAnswersInHand_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(
             () => ((Node)null!).OnwardTarget(Answering(("Alice.HasKey", true))));
@@ -117,4 +153,28 @@ public sealed class NodeTraversalExtensionsTests
     /// <returns>The node.</returns>
     private static ControlNode AJumpTheWorldMustAllow() =>
         Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"), new SuccessionEdge(4));
+
+    /// <summary>A block condition with an if, an elseif, and an else.</summary>
+    /// <remarks>
+    /// <code>
+    /// node 0 -- to node 7 when Alice.HasKey, else to node 8 when Alice.HasPick, else to node 9
+    /// </code>
+    /// </remarks>
+    /// <returns>The node.</returns>
+    private static BranchNode ABranchWithAnElse() =>
+        Playbooks.Branch(
+            0,
+            Playbooks.Arm(7, order: 0, "Alice.HasKey"),
+            Playbooks.Arm(8, order: 1, "Alice.HasPick"),
+            Playbooks.Else(9, order: 2));
+
+    /// <summary>A block condition with an if and no else, and a succession beneath it.</summary>
+    /// <remarks>
+    /// <code>
+    /// node 0 -- to node 7 when Alice.HasKey, falls through to node 4 when it does not
+    /// </code>
+    /// </remarks>
+    /// <returns>The node.</returns>
+    private static BranchNode ABranchWithoutAnElse() =>
+        Playbooks.Branch(0, Playbooks.Arm(7, order: 0, "Alice.HasKey"), new SuccessionEdge(4));
 }

@@ -13,14 +13,15 @@ namespace DialogueDown.Runtime.Tests;
 /// Playbooks a reader accepts, generated rather than written out by hand.
 /// </summary>
 /// <remarks>
-/// Only what the runner plays is drawn: a line, an end, a jump, and a line or a control block
-/// that asks the host to carry something out. A later pass adds its node and edge kinds here as
-/// it teaches the runner to play them, so a walk keeps covering everything a run can meet.
+/// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
+/// asks the host to carry something out, and a block condition. A later pass adds its node and
+/// edge kinds here as it teaches the runner to play them, so a walk keeps covering everything a
+/// run can meet.
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
-/// fire only when the world allows it, and a line may have a query in what it says. A guard and a
-/// query never read the same key, so a world drawn beside the playbook can answer each key in the
-/// kind it needs.
+/// fire only when the world allows it, a block condition's first arm is always guarded, and a line
+/// may have a query in what it says. A guard and a query never read the same key, so a world drawn
+/// beside the playbook can answer each key in the kind it needs.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -56,6 +57,12 @@ internal static class PlaybookGen
 
         /// <summary>A line carrying a jump, with a succession beside it to fall through to.</summary>
         LineThatJumps,
+
+        /// <summary>A block condition with one arm, skipped when the world withholds it.</summary>
+        Block,
+
+        /// <summary>A block condition with one arm and an else.</summary>
+        BlockWithAnElse,
     }
 
     /// <summary>Playbooks the default reader accepts.</summary>
@@ -82,15 +89,23 @@ internal static class PlaybookGen
     // built once its place among the others is known.
     private static Gen<NodeDraft> Draft(int nodes, int speakers) =>
         Gen.Select(
-            Gen.OneOfConst(Draws.Line, Draws.End, Draws.Jump, Draws.Effects, Draws.LineThatJumps),
+            Gen.OneOfConst(
+                Draws.Line,
+                Draws.End,
+                Draws.Jump,
+                Draws.Effects,
+                Draws.LineThatJumps,
+                Draws.Block,
+                Draws.BlockWithAnElse),
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
             Guard(),
             Guard(),
+            Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]),
             Gen.Bool,
-            (draws, speaker, onward, elsewhere, guard, jumpGuard, asks) =>
-                new NodeDraft(draws, speaker, onward, elsewhere, guard, jumpGuard, asks));
+            (draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, asks) =>
+                new NodeDraft(draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, asks));
 
     // Nothing guards it as often as each key does, so a walk still meets plenty of nodes it can
     // pass without asking.
@@ -116,6 +131,7 @@ internal static class PlaybookGen
     /// <param name="Elsewhere">Where a jump leads, when the node carries one.</param>
     /// <param name="Guard">What the world must allow for a line or control block to play.</param>
     /// <param name="JumpGuard">What the world must allow for a jump to fire.</param>
+    /// <param name="ArmGuard">What the world must allow for a block condition's arm to be taken.</param>
     /// <param name="Asks">Whether a line has a query in what it says.</param>
     private readonly record struct NodeDraft(
         Draws Draws,
@@ -124,6 +140,7 @@ internal static class PlaybookGen
         int Elsewhere,
         Condition? Guard,
         Condition? JumpGuard,
+        Condition ArmGuard,
         bool Asks)
     {
         /// <summary>The node, standing at a position.</summary>
@@ -139,6 +156,8 @@ internal static class PlaybookGen
                 Guard,
                 [new SuccessionEdge(Onward)]),
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
+            Draws.Block => new BranchNode(id, [Arm(), new SuccessionEdge(Onward)]),
+            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Order: 1, Condition: null)]),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
@@ -156,5 +175,7 @@ internal static class PlaybookGen
                 : [new TextFragment("Something.")];
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
+
+        private BranchEdge Arm() => new(Elsewhere, Order: 0, ArmGuard);
     }
 }
