@@ -222,6 +222,9 @@ unplayable node kind is refused. Refusing is what keeps the not-yet-playable lis
 honest — a construct nobody has taught the runner should read as untaught, never
 as played correctly by luck.
 
+[Asking the world](./Asking%20the%20World.md) replaces this refusal: a condition is
+now asked about and answered, and the refusal reason it used is retired.
+
 ### W8 — A host that could not carry an effect out says so, and the run stands still
 
 `Done` can only say the world changed. A host whose write was refused — an unreachable
@@ -323,6 +326,7 @@ made to account for.
 - **Conditions are refused, not evaluated.** Every construct in the playbook format
   except a choice node, a branch node, and a random choice node can carry one, so
   the pass that brings the world seam unlocks more than its own constructs.
+  [Asking the world](./Asking%20the%20World.md) is that pass.
 - **Entropy stays open.** Whether a random choice draws from a specified generator
   or from host-supplied values is left to the pass that plays one; nothing here
   reads a weight.
