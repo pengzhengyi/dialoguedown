@@ -421,7 +421,8 @@ makes a preview useful before any game exists, and the same idea as ink's
 fallback functions.
 
 `IGameWorld` replaces the placeholder `IGameSystem`, whose `Query`/`Execute` pair
-implied it performed work it no longer does. The rename lands with C2; the
+implied it performed work it no longer does. The rename lands with C2g, where a
+driver answers the runner's questions from a world; the
 [game-state page](../../../guide/game-state.md) describes what a script asks of
 the world and does not name the interface until it settles.
 

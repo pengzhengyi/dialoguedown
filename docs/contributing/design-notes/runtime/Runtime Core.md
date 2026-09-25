@@ -126,8 +126,8 @@ save and duplicate the world's job.
 
 ### One value for where and what
 
-A run is not always simply *at* a node. In C2c it pauses at a line it has already
-reached, waiting for the world to answer a question the line asks — the same node,
+A run is not always simply *at* a node. It can pause at a node it has already
+reached, waiting for the world to answer a question the node asks — the same node,
 a different thing being done there. So the situation is a closed union rather than
 an index:
 
@@ -137,8 +137,8 @@ flowchart LR
     AT -->|"Next"| AT2["AtNode(j)"]
     AT2 -->|"Next"| ENDED["AtEnd"]
     ENDED -->|"Start"| AT
-    AT -. "C2c" .-> ASK["AwaitingSupply(i, keys)"]
-    ASK -. "Supply" .-> AT
+    AT -->|"Next"| ASK["AwaitingSupply(i, keys, moment)"]
+    ASK -->|"Supply"| AT
 ```
 
 Holding what the run is doing *in* the situation, rather than in a flag beside the
@@ -451,9 +451,6 @@ is `ddown compile`'s and is checked against its source.
   land, so it arrives with them. **Note for that pass:** the architecture note
   carries the fingerprint both on `PlayState` and in the save envelope, and once
   the state has it the envelope's copy is the same field written twice.
-- **Does `Said` carry resolved fragments or the playbook's own?** They are the
-  same until C2c introduces queries, so this pass cannot answer it and should not
-  pretend to.
 - **The playbook format may change.** It stays unstable at `playbookVersion: 0`
   until a runner plays it, precisely so the first runner can fix what it uncovers.
   Writing the corpus already found one such defect before any runner existed
