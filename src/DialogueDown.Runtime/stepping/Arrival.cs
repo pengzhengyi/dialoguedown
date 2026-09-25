@@ -66,8 +66,9 @@ internal static class Arrival
     /// opens; they read the line the writer wrote beneath it.
     /// </para>
     /// <para>
-    /// A node the world allows is played with the answers in it, so a query standing in a line is
-    /// said as the words that answered it.
+    /// A node the world allows is entered as if it had needed no answers. It is played with the
+    /// answers in it, so a query standing in a line is said as the words that answered it, or it is
+    /// walked past when it hands the host nothing.
     /// </para>
     /// </remarks>
     public static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply)
@@ -105,7 +106,12 @@ internal static class Arrival
                     $"Node {waiting.Node} leads nowhere.");
         }
 
-        return Play(context, waiting.Node, arrived, supply);
+        return Enter(context, waiting.Node, arrived, supply) switch
+        {
+            Visited.Standing standing => standing.Result,
+            Visited.WalkingOn walkingOn => At(context, walkingOn.Onward),
+            _ => throw new NotSupportedException("A visit either stands at a node or walks on from it."),
+        };
     }
 
     /// <summary>
@@ -117,10 +123,12 @@ internal static class Arrival
     /// arrive at the node
     ///  1 ├─ it needs one key as a truth and as words both ─► refuse
     ///  2 ├─ it needs answers before it can play ───────────► ask what playing needs
-    ///  3 ├─ it hands the host something ───────────────────► play it
-    ///  4 ├─ its way out needs answers ─────────────────────► ask which way out to take
-    ///  5 └─ otherwise ─────────────────────────────────────► walk on, or refuse if it leads nowhere
+    ///    └─ otherwise, enter it
+    ///  3    ├─ it hands the host something ────────────────► play it
+    ///  4    ├─ its way out needs answers ──────────────────► ask which way out to take
+    ///  5    └─ otherwise ──────────────────────────────────► walk on, or refuse if it leads nowhere
     /// </code>
+    /// A node the world allows once asked is entered at 3.
     /// </remarks>
     private static Visited Visit(PlayContext context, int node)
     {
@@ -129,10 +137,19 @@ internal static class Arrival
 
         return RefuseIfAKeyIsNeededBothWays(node, needs)
             ?? AskIfPlayingNeedsAnswers(node, needs)
-            ?? PlayIfNotWalkedPast(context, node, arrived)
+            ?? Enter(context, node, arrived);
+    }
+
+    /// <summary>What a node means to a walk once nothing is left to ask before playing it.</summary>
+    /// <param name="context">What the run needs and never changes.</param>
+    /// <param name="node">The node's position in the playbook.</param>
+    /// <param name="arrived">The node itself.</param>
+    /// <param name="supply">What the world said, when playing the node needed answers.</param>
+    /// <returns>Whether the run stands at the node or walks on from it.</returns>
+    private static Visited Enter(PlayContext context, int node, Node arrived, Supply? supply = null) =>
+        PlayIfNotWalkedPast(context, node, arrived, supply)
             ?? AskIfLeavingNeedsAnswers(node, arrived)
             ?? WalkOn(node, arrived);
-    }
 
     // Refused before anything is asked, because the request that would go out is one the run could
     // not read back whichever kind it was answered with.
@@ -148,8 +165,8 @@ internal static class Arrival
             ? new Visited.Standing(StepResults.Ask(node, neededForPlaying, Moment.ToPlay))
             : null;
 
-    private static Visited? PlayIfNotWalkedPast(PlayContext context, int node, Node arrived) =>
-        IsWalkedPast(arrived) ? null : new Visited.Standing(Play(context, node, arrived));
+    private static Visited? PlayIfNotWalkedPast(PlayContext context, int node, Node arrived, Supply? supply) =>
+        IsWalkedPast(arrived) ? null : new Visited.Standing(Play(context, node, arrived, supply));
 
     // Only a node being walked past reaches this, and passing a node is leaving it, so a way out
     // only the world can allow is asked about here. The walk carries on in its own loop rather than
@@ -184,7 +201,7 @@ internal static class Arrival
             $"Node {node} needs {string.Join(", ", bothWays)} as a truth and as words both, "
                 + "and a single answer can only be one of those.");
 
-    private static StepResult Play(PlayContext context, int node, Node arrived, Supply? supply = null) =>
+    private static StepResult Play(PlayContext context, int node, Node arrived, Supply? supply) =>
         arrived switch
         {
             LineNode line => new StepResult(

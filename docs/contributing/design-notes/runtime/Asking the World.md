@@ -260,6 +260,7 @@ replays. It also leaves `SpeechText` with nothing new to know.
 | An answer of the wrong kind for its use — text where a guard needs a truth | `WrongAnswerKind`, naming the key and both kinds |
 | A branch whose arms all fail, with no `else` | Leads nowhere, which the existing reason already covers |
 | A skipped node whose succession leads nowhere | Leads nowhere |
+| A guarded node with nothing to say or perform, once the world allows it | Walked past, as an unguarded one is. No script compiles to this, but a reader accepts it |
 | A ring of nodes whose conditions all fail | The existing ring bound refuses it |
 | A node with a condition **and** a query in its speech | One ask carrying both keys |
 | A node naming one key as its condition **and** as a query | `KeyNeededBothWays`, naming the key, refused before anything is asked |

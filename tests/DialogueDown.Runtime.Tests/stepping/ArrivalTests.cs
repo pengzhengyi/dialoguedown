@@ -87,6 +87,30 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void Supplied_WhenTheWorldAllowsANodeWithNothingToHandTheHost_WalksPastIt()
+    {
+        // Allowing the node gives it nothing to hand the host, so the run walks past it as it would
+        // an unguarded one, rather than waiting on the host for work it was never given.
+        var result = Arrival.Supplied(
+            AGuardedNodeWithNothingToHandTheHost(), Waiting(0, "Rainy"), Answering(("Rainy", true)));
+
+        AssertSaid(result, "Alice", "Onward.");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void Supplied_WhenTheWorldAllowsANodeWhoseJumpItMustAlsoAllow_AsksWhichWayToGo()
+    {
+        // Passing the node is leaving it, so the jump's own condition is asked about next.
+        var result = Arrival.Supplied(
+            AGuardedNodeWithNothingToHandTheHostButAGuardedJump(),
+            Waiting(0, "Rainy"),
+            Answering(("Rainy", true)));
+
+        AssertAsked(result, node: 0, Moment.ToLeave, "Late");
+    }
+
+    [Fact]
     public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
         AssertAsked(Arrival.At(ALineWithAQuery(), 0), node: 0, Moment.ToPlay, "playerName");
 
@@ -387,6 +411,40 @@ public sealed class ArrivalTests
                     [Playbooks.Divert(2), new SuccessionEdge(1)]),
                 Playbooks.Line(1, speaker: 0, "The door is locked.", next: 2),
                 Playbooks.Line(2, speaker: 0, "Inside.", next: 3),
+                new EndNode(3),
+            ],
+            ["Alice"]);
+
+    /// <summary>A node the world must allow, with nothing to say or perform, then a line.</summary>
+    /// <remarks>
+    /// Built by hand rather than written, because a script cannot write a condition that guards
+    /// nothing. A reader still accepts one.
+    /// </remarks>
+    /// <returns>A context whose first node hands the host nothing, whether or not it is allowed.</returns>
+    private static PlayContext AGuardedNodeWithNothingToHandTheHost() =>
+        Playbooks.Context(
+            [
+                new ControlNode(0, [], new KeyCondition("Rainy"), [new SuccessionEdge(1)]),
+                Playbooks.Line(1, speaker: 0, "Onward.", next: 2),
+                new EndNode(2),
+            ],
+            ["Alice"]);
+
+    /// <summary>
+    /// A node the world must allow, with nothing to say or perform, carrying a jump the world must
+    /// also allow.
+    /// </summary>
+    /// <remarks>
+    /// Built by hand rather than written, because a script cannot write a condition that guards
+    /// nothing. A reader still accepts one.
+    /// </remarks>
+    /// <returns>A context whose first node asks one thing to play and another to leave.</returns>
+    private static PlayContext AGuardedNodeWithNothingToHandTheHostButAGuardedJump() =>
+        Playbooks.Context(
+            [
+                new ControlNode(0, [], new KeyCondition("Rainy"), [Playbooks.Divert(2, "Late"), new SuccessionEdge(1)]),
+                Playbooks.Line(1, speaker: 0, "We press on.", next: 2),
+                Playbooks.Line(2, speaker: 0, "We wait out the storm.", next: 3),
                 new EndNode(3),
             ],
             ["Alice"]);
