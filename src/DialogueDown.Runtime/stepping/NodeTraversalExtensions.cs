@@ -33,9 +33,8 @@ internal static class NodeTraversalExtensions
     /// lands when there is no jump to take. So a node carrying a jump to 9 beside a succession to
     /// 4 leads to 9, and the 4 is unreachable.
     /// <para>
-    /// Every jump that gets this far is one that always fires. A jump can also be written to fire
-    /// only when the world allows it, and answering that needs a world this pass does not have —
-    /// so a node carrying one is refused on arrival, and none reaches this read.
+    /// This is read only when no way out needs the world's answer. A node whose jump the world must
+    /// allow is asked about before it is left, and read on with the answers in hand.
     /// </para>
     /// </remarks>
     /// <param name="node">The node being left.</param>
