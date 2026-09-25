@@ -87,6 +87,16 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void Supplied_WhenTheWorldWithholdsTheOnlyLineOfALoop_AsksAboutItAgain()
+    {
+        // The walk comes back round to a line it has to ask about, and asking stops it there, so
+        // the ring bound is never reached. The world may answer differently the next time round.
+        var result = Arrival.Supplied(ALoopOfOneGuardedLine(), Waiting(0, "Rainy"), Answering(("Rainy", false)));
+
+        AssertAsked(result, node: 0, Moment.ToPlay, "Rainy");
+    }
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsANodeWithNothingToHandTheHost_WalksPastIt()
     {
         // Allowing the node gives it nothing to hand the host, so the run walks past it as it would
@@ -419,6 +429,26 @@ public sealed class ArrivalTests
                 Playbooks.Line(1, speaker: 0, "The door is locked.", next: 2),
                 Playbooks.Line(2, speaker: 0, "Inside.", next: 3),
                 new EndNode(3),
+            ],
+            ["Alice"]);
+
+    /// <summary>A loop whose only line the world must allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// # Waiting
+    ///
+    /// `Rainy?` Alice: Still raining.
+    ///
+    /// =&gt; [Waiting](#waiting)
+    /// </code>
+    /// </remarks>
+    /// <returns>A context where stepping over the line leads straight back to it.</returns>
+    private static PlayContext ALoopOfOneGuardedLine() =>
+        Playbooks.Context(
+            [
+                Playbooks.ConditionalLine(0, speaker: 0, "Still raining.", next: 1, key: "Rainy"),
+                Playbooks.Jump(1, jumpTo: 0),
+                new EndNode(2),
             ],
             ["Alice"]);
 
