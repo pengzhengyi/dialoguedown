@@ -30,13 +30,6 @@ public enum RefusalReason
     /// <summary>A walk entered a ring of nodes that hand the host nothing.</summary>
     EndlessRing,
 
-    /// <summary>A node or edge plays only on an answer nobody can give yet.</summary>
-    /// <remarks>
-    /// Temporary: this reason goes when the run can ask the world, and a condition is answered
-    /// rather than refused.
-    /// </remarks>
-    UnansweredCondition,
-
     /// <summary>The world was asked about a key and did not answer it.</summary>
     UnansweredKey,
 

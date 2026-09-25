@@ -25,7 +25,6 @@ internal static class RefusalReasonExtensions
         RefusalReason.UnknownCommand => "unknown-command",
         RefusalReason.LeadsNowhere => "leads-nowhere",
         RefusalReason.EndlessRing => "endless-ring",
-        RefusalReason.UnansweredCondition => "unanswered-condition",
         RefusalReason.UnansweredKey => "unanswered-key",
         RefusalReason.UnaskedKey => "unasked-key",
         RefusalReason.WrongAnswerKind => "wrong-answer-kind",

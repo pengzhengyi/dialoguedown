@@ -4,8 +4,7 @@
 > Status: **in progress**. The pass that lets a run ask the world a question and
 > use the answer, so a condition is evaluated instead of refused. A node's own
 > condition, the queries standing in its speech, a jump's condition, and a block
-> condition's arms are asked and answered; retiring `UnansweredCondition` is still
-> to come.
+> condition's arms are asked and answered, and `UnansweredCondition` is retired.
 >
 > It builds on the [runtime core](./Runtime%20Core.md), whose protocol and
 > harness it extends, and on
@@ -96,7 +95,7 @@ holds — `false` for a guard, `"Robin"` for a query.
 - [x] An answer of the wrong kind for the question is refused.
 - [x] A key one node needs as a truth and as words both is refused, because a
       single answer can only be one of those.
-- [ ] `UnansweredCondition` is gone, and nothing produces it.
+- [x] `UnansweredCondition` is gone, and nothing produces it.
 
 ## Interfaces and abstractions
 

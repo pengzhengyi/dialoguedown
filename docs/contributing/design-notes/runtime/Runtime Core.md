@@ -339,7 +339,6 @@ half already applies to a reader's message (F5 in the
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
 | `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
-| `unanswered-condition` | a node or edge plays only on an answer nobody can give yet — temporary, until the run can ask the world |
 | `unplayable-node` | the node kind is one this build has not learned to play |
 
 `misplaced` is the one worth naming twice: the protocol knows the command, and only
