@@ -1,6 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
 import type { LspDiagnostic, Report } from "../src/model";
+import { audit } from "./audit";
 import { writeReport } from "./report";
 import { selectTheme } from "./theme";
 
@@ -139,7 +139,7 @@ test("keeps the same presentation when payload order reverses", async ({ page })
 test("passes accessibility checks in light and dark themes", async ({ page }) => {
     await page.locator(".diagnostic-summary").click();
     const analyzeDiagnostics = () =>
-        new AxeBuilder({ page }).include(".diagnostic-summary").include("#footer-drawer").analyze();
+        audit(page, { include: [".diagnostic-summary", "#footer-drawer"] });
     expect((await analyzeDiagnostics()).violations).toEqual([]);
 
     await selectTheme(page, "dark");

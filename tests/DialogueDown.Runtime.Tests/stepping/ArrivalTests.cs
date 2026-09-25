@@ -5,6 +5,7 @@ using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
 
@@ -17,10 +18,10 @@ public sealed class ArrivalTests
 {
     [Fact]
     public void At_ALine_SaysItWithItsSpeakersName() =>
-        AssertSaid(Arrival.At(Playbooks.OneLine(), 0), speaker: "Alice", text: "Hello.");
+        AssertSaid(Arrival.At(PlayContextFactory.OneLine(), 0), speaker: "Alice", text: "Hello.");
 
     [Fact]
-    public void At_ALine_StandsThere() => AssertAt(Arrival.At(Playbooks.OneLine(), 0), 0);
+    public void At_ALine_StandsThere() => AssertAt(Arrival.At(PlayContextFactory.OneLine(), 0), 0);
 
     [Fact]
     public void At_ALineSaidByTheDefaultSpeaker_NamesNobody()
@@ -31,7 +32,7 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void At_TheEnd_EndsTheRun() => AssertEnded(Arrival.At(Playbooks.Context([new EndNode(0)]), 0));
+    public void At_TheEnd_EndsTheRun() => AssertEnded(Arrival.At(PlayContextFactory.Of([End(0)]), 0));
 
     [Fact]
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
@@ -186,7 +187,7 @@ public sealed class ArrivalTests
     public void At_ALineWhoseJumpAsksTheWorld_SaysItWithoutAskingAboutTheJump() =>
         // Where the jump leads is asked on the way out instead, by which time whatever the node
         // performs has been performed and the world may have moved.
-        AssertSaid(Arrival.At(Playbooks.ALineWhoseJumpAsksTheWorld(), 0), speaker: "Alice", text: "Away.");
+        AssertSaid(Arrival.At(PlayContextFactory.ALineWhoseJumpAsksTheWorld(), 0), speaker: "Alice", text: "Away.");
 
     [Fact]
     public void At_AJumpOnItsOwnLine_WalksStraightPastIt()
@@ -200,21 +201,21 @@ public sealed class ArrivalTests
     public void At_AGuardedJumpOnItsOwnLine_AsksTheWorldWhichWayToGo() =>
         // The walk passes a node that hands the host nothing, but it cannot pass one whose way out
         // only the world can choose.
-        AssertAsked(Arrival.At(Playbooks.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.ToLeave, "Rainy");
+        AssertAsked(Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.ToLeave, "Rainy");
 
     [Fact]
     public void At_AConditionalBlock_AsksTheWorldWhichArmToTake() =>
         // A block says nothing, so the run walks into it and on to choosing an arm, asking about
         // every arm at once.
         AssertAsked(
-            Arrival.At(Playbooks.AConditionalBlock(), 0), node: 0, Moment.ToLeave, "Alice.HasKey", "Alice.HasPick");
+            Arrival.At(PlayContextFactory.AConditionalBlock(), 0), node: 0, Moment.ToLeave, "Alice.HasKey", "Alice.HasPick");
 
     [Fact]
     public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
     {
         // Nothing in the ring ever hands the host anything, so a walk with no bound would never
         // return and a total step would become a hang.
-        AssertRefused(Arrival.At(Playbooks.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
+        AssertRefused(Arrival.At(PlayContextFactory.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
     }
 
     [Fact]
@@ -222,7 +223,7 @@ public sealed class ArrivalTests
     {
         // The bound counts nodes passed, so a chain touching every node is the case it must not
         // refuse -- one node further and it would be a repeat.
-        AssertEnded(Arrival.At(Playbooks.ChainOfJumps(jumps: 5), 0));
+        AssertEnded(Arrival.At(PlayContextFactory.ChainOfJumps(jumps: 5), 0));
     }
 
     [Fact]
@@ -234,7 +235,7 @@ public sealed class ArrivalTests
     {
         // The line after it must not be reached until the host says the effects were carried out,
         // or a guard further on would read a world the effects had not changed yet.
-        var context = Playbooks.AnEffectThenALine();
+        var context = PlayContextFactory.AnEffectThenALine();
 
         AssertAwaitingDone(Arrival.At(context, 0), 0);
     }
@@ -244,7 +245,7 @@ public sealed class ArrivalTests
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
         // than as a construct nobody has taught the runner yet.
-        var context = Playbooks.NotYetPlayable();
+        var context = PlayContextFactory.NotYetPlayable();
 
         AssertRefused(Arrival.At(context, 0), RefusalReason.UnplayableNode, "ChoiceNode");
     }
@@ -257,7 +258,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose only line is said by the anonymous default speaker.</returns>
     private static PlayContext ALineNobodyClaims() =>
-        Playbooks.Context([Playbooks.Line(0, speaker: 0, "Nobody said this.", next: 1), new EndNode(1)], [null]);
+        PlayContextFactory.Of([Line(0, speaker: 0, "Nobody said this.", next: 1), End(1)], [null]);
 
     /// <summary>A line the world must allow before it is spoken, then the end.</summary>
     /// <remarks>
@@ -267,10 +268,10 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context that asks about <c>Alice.HasKey</c> before it says anything.</returns>
     private static PlayContext AConditionalLine() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
-                new EndNode(1),
+                ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
+                End(1),
             ],
             ["Alice"]);
 
@@ -284,11 +285,11 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context with a line to read on to when the first one is not spoken.</returns>
     private static PlayContext AConditionalLineThenAnother() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
-                Playbooks.Line(1, speaker: 0, "Onward.", next: 2),
-                new EndNode(2),
+                ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
+                Line(1, speaker: 0, "Onward.", next: 2),
+                End(2),
             ],
             ["Alice"]);
 
@@ -299,7 +300,7 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose only line leads nowhere.</returns>
     private static PlayContext AConditionalLineLeadingNowhere() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [new LineNode(0, Speaker: 0, [new TextFragment("I have the key.")], new KeyCondition("Alice.HasKey"), [])],
             ["Alice"]);
 
@@ -311,12 +312,12 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose entry says nothing until the walk reaches node 2.</returns>
     private static PlayContext AJumpPastALine() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.Jump(0, jumpTo: 2),
-                Playbooks.Line(1, speaker: 0, "Never spoken.", next: 2),
-                Playbooks.Line(2, speaker: 0, "Here.", next: 3),
-                new EndNode(3),
+                Jump(0, jumpTo: 2),
+                Line(1, speaker: 0, "Never spoken.", next: 2),
+                Line(2, speaker: 0, "Here.", next: 3),
+                End(3),
             ],
             ["Alice"]);
 
@@ -330,11 +331,11 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose run asks the host for both effects before it says anything.</returns>
     private static PlayContext TwoEffectsThenALine() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.Effects(0, next: 1, "fade in", "play a chime"),
-                Playbooks.Line(1, speaker: 0, "Hello.", next: 2),
-                new EndNode(2),
+                Effects(0, next: 1, "fade in", "play a chime"),
+                Line(1, speaker: 0, "Hello.", next: 2),
+                End(2),
             ],
             ["Alice"]);
 
@@ -346,9 +347,9 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context that cannot say its only line until the world names the player.</returns>
     private static PlayContext ALineWithAQuery() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.LineSaying(
+                LineSaying(
                     0,
                     speaker: 0,
                     next: 1,
@@ -356,7 +357,7 @@ public sealed class ArrivalTests
                     new TextFragment("Hello, "),
                     new QueryFragment("playerName"),
                     new TextFragment(".")),
-                new EndNode(1),
+                End(1),
             ],
             ["Alice"]);
 
@@ -368,9 +369,9 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context needing a truth and words both before its only line is said.</returns>
     private static PlayContext AGuardedLineWithAQuery() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.LineSaying(
+                LineSaying(
                     0,
                     speaker: 0,
                     next: 1,
@@ -378,7 +379,7 @@ public sealed class ArrivalTests
                     new TextFragment("You are "),
                     new QueryFragment("playerName"),
                     new TextFragment(".")),
-                new EndNode(1),
+                End(1),
             ],
             ["Alice"]);
 
@@ -390,9 +391,9 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose only line needs one key answered two ways.</returns>
     private static PlayContext ALineNeedingOneKeyBothWays() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.LineSaying(
+                LineSaying(
                     0,
                     speaker: 0,
                     next: 1,
@@ -400,7 +401,7 @@ public sealed class ArrivalTests
                     new TextFragment("You have "),
                     new QueryFragment("Alice.HasKey"),
                     new TextFragment(".")),
-                new EndNode(1),
+                End(1),
             ],
             ["Alice"]);
 
@@ -418,17 +419,17 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context where taking the jump and stepping over the line say different things.</returns>
     private static PlayContext AGuardedLineCarryingAJump() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
                 new LineNode(
                     0,
                     Speaker: 0,
                     [new TextFragment("I unlock it.")],
                     new KeyCondition("Alice.HasKey"),
-                    [Playbooks.Divert(2), new SuccessionEdge(1)]),
-                Playbooks.Line(1, speaker: 0, "The door is locked.", next: 2),
-                Playbooks.Line(2, speaker: 0, "Inside.", next: 3),
-                new EndNode(3),
+                    [Divert(2), new SuccessionEdge(1)]),
+                Line(1, speaker: 0, "The door is locked.", next: 2),
+                Line(2, speaker: 0, "Inside.", next: 3),
+                End(3),
             ],
             ["Alice"]);
 
@@ -444,11 +445,11 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context where stepping over the line leads straight back to it.</returns>
     private static PlayContext ALoopOfOneGuardedLine() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                Playbooks.ConditionalLine(0, speaker: 0, "Still raining.", next: 1, key: "Rainy"),
-                Playbooks.Jump(1, jumpTo: 0),
-                new EndNode(2),
+                ConditionalLine(0, speaker: 0, "Still raining.", next: 1, key: "Rainy"),
+                Jump(1, jumpTo: 0),
+                End(2),
             ],
             ["Alice"]);
 
@@ -459,11 +460,11 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose first node hands the host nothing, whether or not it is allowed.</returns>
     private static PlayContext AGuardedNodeWithNothingToHandTheHost() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
                 new ControlNode(0, [], new KeyCondition("Rainy"), [new SuccessionEdge(1)]),
-                Playbooks.Line(1, speaker: 0, "Onward.", next: 2),
-                new EndNode(2),
+                Line(1, speaker: 0, "Onward.", next: 2),
+                End(2),
             ],
             ["Alice"]);
 
@@ -477,12 +478,12 @@ public sealed class ArrivalTests
     /// </remarks>
     /// <returns>A context whose first node asks one thing to play and another to leave.</returns>
     private static PlayContext AGuardedNodeWithNothingToHandTheHostButAGuardedJump() =>
-        Playbooks.Context(
+        PlayContextFactory.Of(
             [
-                new ControlNode(0, [], new KeyCondition("Rainy"), [Playbooks.Divert(2, "Late"), new SuccessionEdge(1)]),
-                Playbooks.Line(1, speaker: 0, "We press on.", next: 2),
-                Playbooks.Line(2, speaker: 0, "We wait out the storm.", next: 3),
-                new EndNode(3),
+                new ControlNode(0, [], new KeyCondition("Rainy"), [Divert(2, "Late"), new SuccessionEdge(1)]),
+                Line(1, speaker: 0, "We press on.", next: 2),
+                Line(2, speaker: 0, "We wait out the storm.", next: 3),
+                End(3),
             ],
             ["Alice"]);
 

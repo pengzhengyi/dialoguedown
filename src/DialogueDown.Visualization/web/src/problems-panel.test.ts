@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { createProblemsPanel } from "./problems-panel";
+import { createProblemsPanel, type ProblemsPanelOptions } from "./problems-panel";
 import type { LspDiagnostic } from "./model";
+
+/** The panel with inert callbacks unless a test supplies its own — navigation and fixes are the
+ *  caller's job, so most tests only care about what the rows render. */
+function createPanel(options: Partial<ProblemsPanelOptions> = {}) {
+    return createProblemsPanel({ goTo: vi.fn(), applyFix: vi.fn(), ...options });
+}
 
 /** A diagnostic at a zero-based line/character, with a one-character range by default. */
 function diagnostic(
@@ -25,7 +31,7 @@ const INFO = diagnostic(9, 0, 3, "DLG2010", "A cross-file target is not resolved
 
 describe("createProblemsPanel", () => {
     it("renders one row per diagnostic with its code and location", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([ERROR, WARNING]);
 
@@ -39,7 +45,7 @@ describe("createProblemsPanel", () => {
     });
 
     it("orders the list by position, not by the order the compiler reported them", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([INFO, ERROR, WARNING]);
 
@@ -51,7 +57,7 @@ describe("createProblemsPanel", () => {
     });
 
     it("orders diagnostics at one position by severity", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
         const info = diagnostic(4, 2, 3, "DLG3001", "Info");
         const warning = diagnostic(4, 2, 2, "DLG2001", "Warning");
         const error = diagnostic(4, 2, 1, "DLG1001", "Error");
@@ -65,7 +71,7 @@ describe("createProblemsPanel", () => {
     });
 
     it("marks each row with its severity so one error among many infos still stands out", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([ERROR, WARNING, INFO]);
 
@@ -76,7 +82,7 @@ describe("createProblemsPanel", () => {
     });
 
     it("says the document is clean rather than showing an empty box", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
         panel.setDiagnostics([ERROR]);
 
         panel.setDiagnostics([]);
@@ -87,7 +93,7 @@ describe("createProblemsPanel", () => {
 
     it("navigates to the diagnostic a row describes", () => {
         const goTo = vi.fn();
-        const panel = createProblemsPanel({ goTo });
+        const panel = createPanel({ goTo });
         panel.setDiagnostics([ERROR, WARNING]);
 
         (panel.element.querySelectorAll(".problem-jump")[1] as HTMLElement).click();
@@ -98,7 +104,7 @@ describe("createProblemsPanel", () => {
     });
 
     it("links each code to its entry in the error-code reference", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([ERROR]);
 
@@ -111,18 +117,29 @@ describe("createProblemsPanel", () => {
     });
 
     it("keeps the docs link and the jump as separate controls", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([ERROR]);
 
         const row = panel.element.querySelector(".problem-row")!;
         // An anchor nested inside a button is invalid and unreachable for assistive tech.
         expect(row.querySelector(".problem-jump a")).toBeNull();
-        expect(row.querySelectorAll(":scope > *")).toHaveLength(2);
+        // The fix slot (always reserved), the jump control, and the docs link.
+        expect(row.querySelectorAll(":scope > *")).toHaveLength(3);
+    });
+
+    it("reserves the fix slot in every row so rows with and without a fix align", () => {
+        const panel = createPanel();
+        panel.setDiagnostics([ERROR]);
+
+        const row = panel.element.querySelector(".problem-row")!;
+
+        expect(row.firstElementChild?.className).toBe("problem-fix-slot");
+        expect(row.querySelector(".problem-fix")).toBeNull();
     });
 
     it("counts each severity for the status-line summary", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([ERROR, WARNING, INFO, INFO]);
 
@@ -130,7 +147,7 @@ describe("createProblemsPanel", () => {
     });
 
     it("reports zero counts for a clean compile", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
 
         panel.setDiagnostics([]);
 
@@ -138,12 +155,67 @@ describe("createProblemsPanel", () => {
     });
 
     it("replaces the previous list instead of appending to it", () => {
-        const panel = createProblemsPanel({ goTo: vi.fn() });
+        const panel = createPanel();
         panel.setDiagnostics([ERROR, WARNING, INFO]);
 
         panel.setDiagnostics([WARNING]);
 
         expect(panel.element.querySelectorAll(".problem-row")).toHaveLength(1);
         expect(panel.counts()).toEqual({ error: 0, warning: 1, info: 0 });
+    });
+
+    it("offers a fix as a lightbulb whose hover help names the repair", () => {
+        const applyFix = vi.fn();
+        const goTo = vi.fn();
+        const fix = {
+            title: "Escape as literal text",
+            edits: [{ start: 0, end: 0, newText: "\\" }],
+        };
+        const fixed = { ...ERROR, fixes: [fix] };
+        const panel = createPanel({ applyFix, goTo });
+        panel.setEditable(true);
+        panel.setDiagnostics([fixed]);
+
+        const button = panel.element.querySelector<HTMLButtonElement>(".problem-fix")!;
+        expect(button.title).toBe("Escape as literal text");
+        expect(button.getAttribute("aria-label")).toContain("Escape as literal text");
+        expect(button.querySelector(".problem-fix-icon")).not.toBeNull();
+        // The lightbulb leads the row, in the reserved slot.
+        expect(button.parentElement?.className).toBe("problem-fix-slot");
+        expect(button.parentElement?.parentElement?.firstElementChild).toBe(button.parentElement);
+
+        button.click();
+
+        expect(applyFix).toHaveBeenCalledWith(fixed, fix);
+        // Applying a fix is not navigating: the row's own jump must not also fire.
+        expect(goTo).not.toHaveBeenCalled();
+    });
+
+    it("offers fixes only while the editor is editable", () => {
+        const fixed = {
+            ...ERROR,
+            fixes: [
+                { title: "Escape as literal text", edits: [{ start: 0, end: 0, newText: "\\" }] },
+            ],
+        };
+        const panel = createPanel();
+        panel.setDiagnostics([fixed]);
+
+        // A read-only editor (View mode, an exported report) offers no edit.
+        expect(panel.element.querySelector(".problem-fix")).toBeNull();
+
+        panel.setEditable(true);
+        expect(panel.element.querySelector(".problem-fix")).not.toBeNull();
+
+        panel.setEditable(false);
+        expect(panel.element.querySelector(".problem-fix")).toBeNull();
+    });
+
+    it("offers no fix button when the compiler knows no repair", () => {
+        const panel = createPanel();
+        panel.setEditable(true);
+        panel.setDiagnostics([ERROR]);
+
+        expect(panel.element.querySelector(".problem-fix")).toBeNull();
     });
 });

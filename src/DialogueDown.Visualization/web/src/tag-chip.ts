@@ -51,8 +51,12 @@ export function tagLabel(tag: TagView): string {
  * looks for, so a reader can lift the tag straight into a script exactly as it is written.
  *
  * The capsule is a button because copying is an act, and an act must be reachable without a mouse.
+ *
+ * `identityDot` can be turned off by a surface that shows a tag in running prose. The dot answers
+ * "which tag is this?" — a question worth asking where several tags compete for the eye in one
+ * cell, and noise where the tag's own text stands alone in a sentence.
  */
-export function renderTag(tag: TagView): HTMLElement {
+export function renderTag(tag: TagView, options: { identityDot?: boolean } = {}): HTMLElement {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = `dd-tag ${tag.reserved ? "dd-tag-reserved" : "dd-tag-custom"}`;
@@ -62,7 +66,7 @@ export function renderTag(tag: TagView): HTMLElement {
 
     // A reserved name is one of a closed set, so its violet already identifies it; only a
     // writer's own tag needs the dot to tell it from the next one.
-    if (!tag.reserved) {
+    if (!tag.reserved && options.identityDot !== false) {
         const dot = document.createElement("span");
         dot.className = "dd-tag-dot";
         dot.style.setProperty("--dd-tag-hue", tagHue(tag.name));

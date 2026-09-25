@@ -15,7 +15,7 @@ the DialogueDown packages — they ship only inside generated report HTML.
 | [DOMPurify](https://github.com/cure53/DOMPurify)                           | 3.4.13       | Apache-2.0 |
 | [GitHub Slugger](https://github.com/Flet/github-slugger)                   | 2.0.0        | ISC        |
 | [Lezer Highlight](https://github.com/lezer-parser/highlight)               | 1.2.3        | MIT        |
-| [Mermaid](https://mermaid.js.org)                                          | 11.16.1      | MIT        |
+| [Mermaid](https://mermaid.js.org)                                          | 11.17.2      | MIT        |
 | [Pico.css](https://picocss.com)                                            | 2.1.1        | MIT        |
 | [TanStack Table Core](https://tanstack.com/table/)                         | 9.1.2        | MIT        |
 | [VS Code Codicons](https://github.com/microsoft/vscode-codicons)           | 0.0.46-24    | CC-BY-4.0  |

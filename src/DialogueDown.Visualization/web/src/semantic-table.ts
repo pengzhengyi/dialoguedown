@@ -537,7 +537,7 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
 
     // A cell drawn in styled segments. The styling is only for drawing: the highlight is still
     // found in the cell's own text and then laid across the segments, so searching keeps marking
-    // a cell that has gained colour.
+    // a cell that has gained color.
     if (cell.segments && cell.segments.length > 0) {
         drawSegments(td, cell, query);
         return td;

@@ -84,7 +84,7 @@ The compiler reports `DLG1113` — title **Dangling jump arrow**, category
 ```text
 scene.dialogue.md(3,1): warning DLG1113: `=>` makes a jump only when a link
 follows it. With no link here it is read literally, staying as the characters
-"=>". If you meant to jump, add a target: `=> [The market](#the-market)`.
+"=>". If you meant to jump, add a target: `=> [The market](#the-market)`. If you meant the characters, escape the arrow: `\=>`.
 ```
 
 The line still renders as `=> The market`; the warning explains why.
@@ -213,7 +213,7 @@ the writer must act.
 | Two dangling arrows in one document | Two warnings, one per arrow. |
 | A literal `=>` typed in prose | Warned, like any other dangling arrow — the two are indistinguishable by the time desugar runs. |
 | `` `=>` `` in a code span | Read as a game call, so `DLG1102` is reported instead of this diagnostic. |
-| `\=>` | Still warned: Markdown consumes the backslash before DialogueDown tokenizes, so the arrow survives. Only the entity `&#61;>` stays quiet. |
+| `\=>` | **No warning**: the escape makes the arrow literal, so no `JumpIndicator` is built (see the [Symbol Escape](../language/Symbol%20Escape.md) note). An entity like `&#61;>` is quiet only because the front end keeps it as source text, not because it spells `=>`. |
 | `=>` inside a heading | Never reaches desugar, so nothing is reported; the arrow stays heading text. |
 | Arrow inside a choice option or control branch | Reported — the rewriter reaches nested sequences. |
 | `=>` followed by a link on the **next line** | Already dangling today (a jump is single-line); now warned. |

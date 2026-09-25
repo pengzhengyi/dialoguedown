@@ -133,7 +133,8 @@ internal static class DiagnosticCatalog
         "Dangling jump arrow",
         "`=>` makes a jump only when a link follows it. With no link here it is read literally, "
             + "staying as the characters \"=>\". If you meant to jump, add a target: "
-            + "`=> [The market](#the-market)`.",
+            + "`=> [The market](#the-market)`. If you meant the characters, escape the arrow: "
+            + "`\\=>`.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Warning);
 

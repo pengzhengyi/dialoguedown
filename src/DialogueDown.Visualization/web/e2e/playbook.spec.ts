@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { writeReport, SAMPLE_STAGES } from "./report";
+import { audit } from "./audit";
 import type { Report } from "../src/model";
 
 /**
@@ -444,7 +444,7 @@ test.describe("Playbook tab — a compiled script", () => {
         await page.click(playbookTab);
         await expect(page.locator(".playbook-source .cm-editor")).toBeVisible();
 
-        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        expect((await audit(page)).violations).toEqual([]);
     });
 
     test("explains the playbook rather than the Source editor in the help panel", async ({
@@ -616,7 +616,7 @@ test.describe("Playbook tab — following an index", () => {
     test("has no accessibility violations with the marks present", async ({ page }) => {
         await expect(refOnLine(page, '"target": 9')).toBeVisible();
 
-        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        expect((await audit(page)).violations).toEqual([]);
     });
 });
 
@@ -704,7 +704,11 @@ test.describe("Playbook tab — the Speakers tag facet", () => {
         await page.locator('.facet-popover input[value="#role=merchant"]').click();
         await expect(panel(page, "Speakers").locator("tbody tr")).toHaveCount(1);
 
-        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        // The facet click leaves the pointer on a panel header, and axe audits whatever is hovered.
+        // Park it, then audit the settled state (see `audit`).
+        await page.mouse.move(0, 0);
+
+        expect((await audit(page)).violations).toEqual([]);
     });
 });
 
@@ -842,7 +846,11 @@ test.describe("Playbook tab — the Nodes table", () => {
                 .nth(cell)
                 .evaluate((node) => getComputedStyle(node).backgroundColor);
 
-        expect(await background(1, 0)).not.toBe(await background(3, 0));
+        // Polled rather than read once: the highlight follows the pointer and is cleared while a
+        // table re-renders, so a single read can catch both rows before the tint returns.
+        await expect
+            .poll(async () => (await background(1, 0)) !== (await background(3, 0)))
+            .toBe(true);
     });
 
     test("keeps its three short columns on one line in a narrow viewport", async ({ page }) => {

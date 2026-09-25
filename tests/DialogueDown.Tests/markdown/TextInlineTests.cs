@@ -15,6 +15,7 @@ public sealed class TextInlineTests
 
         Assert.Equal("hello", inline.Text);
         Assert.Equal(span, inline.Span);
+        Assert.False(inline.IsFirstCharacterEscaped);
         Assert.IsAssignableFrom<MarkdownInline>(inline);
     }
 
@@ -36,6 +37,15 @@ public sealed class TextInlineTests
 
         Assert.Equal(new SourceSpan(2, 4), inline.Span);
         Assert.Equal(new SourceSpan(3, 3), inline.ContentSpan);
+    }
+
+    [Fact]
+    public void Constructor_EscapedFirstCharacter_IsExposedWhenSet()
+    {
+        var inline = new TextInline(
+            "* b", new SourceSpan(2, 4), new SourceSpan(3, 3), isFirstCharacterEscaped: true);
+
+        Assert.True(inline.IsFirstCharacterEscaped);
     }
 
     [Fact]

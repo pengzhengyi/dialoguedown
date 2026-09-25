@@ -55,7 +55,7 @@ component's acceptance suite.
 The corpus was written before the runner precisely so it could specify one. If the
 harness arrived last, every pass before it would be measured by argument; with it
 first, each later pass is measured by fixtures that light up. It also front-loads
-the risk: if a hand-authored session turns out to be unrunnable as written, that
+the risk: if a hand-authored session turns out to be unplayable as written, that
 is far cheaper to learn now than after six components assume it.
 
 ## Functionality checklist
@@ -75,7 +75,7 @@ is far cheaper to learn now than after six components assume it.
 - [x] The corpus reader is shared by both halves rather than duplicated.
 - [x] A playable harness that runs a session and reports the first divergence.
 - [x] `linear-speech` and `styled-speech` pass; every other playable case is
-      named as not yet runnable rather than skipped in silence.
+      named as not yet playable rather than skipped in silence.
 
 ## Where the types live
 
@@ -95,7 +95,7 @@ src/DialogueDown.Runtime/          the facade: what a consumer calls
 Each member of a union gets its own file, as the playbook's nodes and edges do,
 and each family gets a folder so the tree reads as the vocabulary it is.
 
-The root namespace keeps only the façade, so `Situation` and its cases live in
+The root namespace keeps only the facade, so `Situation` and its cases live in
 `DialogueDown.Runtime.Situations`. The protocol's folders are for reading: commands
 and events are used together, so both stay in one namespace a consumer imports
 once.
@@ -204,7 +204,7 @@ its own:
 | `ExpectationMatchers` | Checks every claim an `expect` makes, one matcher per claim |
 
 Each reports a `SessionOutcome`: **conformed**, **diverged** with what disagreed,
-or **not yet runnable** with what nobody has taught the harness. A divergence
+or **not yet playable** with what nobody has taught the harness. A divergence
 outranks a construct nobody has taught the runner, so a session that turns up
 both is reported as diverged.
 
@@ -375,7 +375,7 @@ break.
 | A playbook whose entry leads nowhere | Cannot occur; `PlaybookReader` refuses it before a runner sees it |
 | A line whose speaker index is out of range | Cannot occur; refused by the reader |
 | A node kind this pass cannot play | A `Refused` event naming the kind, so an unteachable construct reads as such rather than as a hang |
-| A fixture the runner cannot yet play | Reported as not yet runnable, naming the case and what nobody plays yet |
+| A fixture the runner cannot yet play | Reported as not yet playable, naming the case and what nobody plays yet |
 
 ## Integration
 
@@ -396,7 +396,7 @@ break.
 | --- | --- |
 | Unit — `Step` | One test per transition: a run started and restarted, a line spoken, succession taken, a run ended, a command refused |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a whole session |
-| Conformance | Every case the runner has been taught plays; the rest are named as not yet runnable |
+| Conformance | Every case the runner has been taught plays; the rest are named as not yet playable |
 | Architecture | The runtime references neither the compiler nor a host |
 | Property | A walk over any playbook the reader accepts only ever stands at a node that playbook has |
 
@@ -425,8 +425,8 @@ is `ddown compile`'s and is checked against its source.
 
 ## Open questions and deferred work
 
-- **The not-yet-runnable list is temporary.** Each case is *named* as conforming
-  or not yet runnable rather than counted, so a case that starts passing and a
+- **The not-yet-playable list is temporary.** Each case is *named* as conforming
+  or not yet playable rather than counted, so a case that starts passing and a
   case that stops are both noticed. Whether a case can run is asked of the
   playbook before a step is taken, so a construct the runner has not learned
   reads as that. The list comes out when the last fixture runs, or it becomes a

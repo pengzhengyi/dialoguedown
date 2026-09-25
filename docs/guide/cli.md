@@ -180,6 +180,42 @@ Diagnostics go to standard error, so a warning never lands in the middle of a
 playbook being piped. A script with errors writes nothing, so a broken compile
 never leaves a half-believable file behind.
 
+**Let the compiler repair what it can.** A diagnostic whose repair the compiler
+knows says so — `1 fixable with --fix` — and `--fix` applies that repair and
+writes the corrected script in place:
+
+```sh
+ddown compile my-scene.dialogue.md --fix
+```
+
+The report shows the diagnostics first, exactly as a plain compile prints them,
+then a fix section that names the repair and shows what changed:
+
+```text
+my-scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
+1 warning
+1 fixable with --fix
+
+Fixed my-scene.dialogue.md (1 fix)
+1. Applied Fix: Escape as literal text
+2 |  
+3 | -Alice: The rule is simple => the lever opens the door.
+3 | +Alice: The rule is simple \=> the lever opens the door.
+4 |  
+```
+
+A run with nothing to fix prints exactly what a plain compile prints and touches
+nothing. `--fix` writes no playbook, so it cannot be combined with `--emit` or
+`-o`; run a plain compile afterward when the playbook is next, and use
+`--mode best-effort --fix` to surface more repairs in one run.
+
+> [!WARNING]
+> `--fix` rewrites the script, and it exits 0 once the corrected script
+> compiles — even though a file on disk just changed. Keep the script under
+> version control, and use a plain `ddown compile` as the check in continuous
+> integration.
+
 ### Options
 
 | Option | What it does |
@@ -187,6 +223,7 @@ never leaves a half-believable file behind.
 | `-o`, `--output <path>` | Where to write. Default: standard output. |
 | `--emit <format>` | What to write: `playbook` (the default) or `dot` for the compiler's stage graphs. |
 | `--mode <mode>` | How far to compile after an error: `stage-boundary` (default) or `best-effort`. |
+| `--fix` | Apply each diagnostic's preferred fix, write the corrected script in place, and recompile it. |
 | `--config <path>` | Use a specific `dialogue.toml`. Default: the nearest one above the script. |
 
 `--emit dot` writes the compiler's internal stage graphs instead, for feeding into

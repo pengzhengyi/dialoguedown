@@ -1,6 +1,6 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { SAMPLE_REPORT, writeReport } from "./report";
+import { audit } from "./audit";
 
 const url = writeReport(SAMPLE_REPORT);
 const nodeCount = SAMPLE_REPORT.stages[0].nodes.length;
@@ -312,10 +312,10 @@ test("hovering a node shows a Tippy tooltip with the full attribute text", async
     });
     // Hover the circle: it is a solid, filled hit target (unlike the node's
     // pointer-events:none labels), so the delegated Tippy fires deterministically.
-    await page.locator('g.node[data-tip*="ellipsised"] circle').hover();
+    await page.locator('g.node[data-tip*="ellipsized"] circle').hover();
     const tooltip = page.locator(".tippy-box");
     await expect(tooltip).toBeVisible();
-    await expect(tooltip).toContainText("should be ellipsised");
+    await expect(tooltip).toContainText("should be ellipsized");
 });
 
 test("hovering a node spotlights its lineage and dims the rest", async ({ page }) => {
@@ -475,7 +475,7 @@ test("arrow keys move the selection", async ({ page }) => {
 test("has no accessibility violations (both tabs, real browser incl. color contrast)", async ({
     page,
 }) => {
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]); // Source tab
+    expect((await audit(page)).violations).toEqual([]); // Source tab
     await showAst(page);
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]); // Markdown AST tab
+    expect((await audit(page)).violations).toEqual([]); // Markdown AST tab
 });

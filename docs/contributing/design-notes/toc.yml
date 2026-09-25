@@ -56,6 +56,8 @@
     href: language/Conditional Choice.md
   - name: Unquoted Keys
     href: language/Unquoted Keys.md
+  - name: Symbol Escape
+    href: language/Symbol Escape.md
   - name: Block Controls
     href: language/Block Controls.md
   - name: Control Line
@@ -94,6 +96,8 @@
     href: cli/Visualize on the CLI.md
   - name: Compile CLI — Emit DOT
     href: cli/Compile CLI - Emit DOT.md
+  - name: Compile CLI — Fix Mode
+    href: cli/Compile CLI - Fix Mode.md
 - name: Visualization
   items:
   - name: Report and stage tabs
@@ -150,6 +154,8 @@
       href: visualization/editor/Ignored Markdown Preview Toggle.md
     - name: Co-located Diagnostics Presentation
       href: visualization/editor/Co-located Diagnostics Presentation.md
+    - name: Diagnostic Quick Fixes
+      href: visualization/editor/Diagnostic Quick Fixes.md
     - name: Source Editor Autocompletion
       href: visualization/editor/Source Editor Autocompletion.md
     - name: Diagnostics Overlay
@@ -162,6 +168,8 @@
       href: visualization/editor/Live Visualization - Heading Anchors.md
     - name: Jump-Target Completion
       href: visualization/editor/Jump-Target Completion.md
+    - name: Construct Marks in the Source Preview
+      href: visualization/editor/Construct Marks in the Source Preview.md
   - name: Graph
     items:
     - name: Dialogue Graph — Region Fold
@@ -174,6 +182,8 @@
       href: visualization/graph/Live Visualization - Reverse Jump.md
     - name: Region-Aware Graph Layout
       href: visualization/graph/Region-Aware Graph Layout.md
+    - name: Keyboard Navigation
+      href: visualization/graph/Keyboard Navigation.md
   - name: Live session
     items:
     - name: Live Visualization — Explorer Toggle

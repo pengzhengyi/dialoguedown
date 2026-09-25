@@ -1,27 +1,38 @@
 using DialogueDown.Common;
+using Generator.Equals;
 
 namespace DialogueDown.Diagnostics;
 
 /// <summary>
+/// <para>
 /// One located report found during compilation: the <see cref="Descriptor"/> defining its kind,
 /// the <see cref="Span"/> in the source it points at, the <see cref="MessageArguments"/> that fill
 /// the descriptor's message format, and a <see cref="Severity"/> that defaults to the descriptor's
 /// <see cref="DiagnosticDescriptor.DefaultSeverity"/> unless a producer overrides it (so a later
-/// configuration pass can promote or demote one). Two diagnostics are equal when they report the
-/// same problem — the same descriptor, span, severity, and message arguments by value.
+/// configuration pass can promote or demote one).
+/// </para>
+/// <para>
+/// Two diagnostics are equal when they report the same problem — the same descriptor, span,
+/// severity, and message arguments by value. A suggested repair is not part of that identity, so an
+/// expected diagnostic equals a produced one even when only the latter carries a
+/// <see cref="Fixes">fix</see>.
+/// </para>
 /// </summary>
-internal sealed record Diagnostic
+[Equatable]
+internal sealed partial record Diagnostic
 {
     public Diagnostic(
         DiagnosticDescriptor descriptor,
         SourceSpan span,
         IReadOnlyList<object> messageArguments,
-        DiagnosticSeverity? severity = null)
+        DiagnosticSeverity? severity = null,
+        IReadOnlyList<DiagnosticFix>? fixes = null)
     {
         Descriptor = descriptor;
         Span = span;
         MessageArguments = messageArguments;
         Severity = severity ?? descriptor.DefaultSeverity;
+        Fixes = fixes ?? [];
     }
 
     /// <summary>The stable definition of this diagnostic's kind.</summary>
@@ -34,36 +45,23 @@ internal sealed record Diagnostic
     /// The values that fill the descriptor's message format, kept structured (not pre-formatted)
     /// so composing the final text stays a rendering concern.
     /// </summary>
+    [OrderedEquality]
     public IReadOnlyList<object> MessageArguments { get; }
 
     /// <summary>This diagnostic's severity: the descriptor's default unless a producer overrode it.</summary>
     public DiagnosticSeverity Severity { get; }
 
+    /// <summary>
+    /// Suggested repairs for this problem in preference order — empty for most diagnostics. The
+    /// first is the preferred, auto-applicable repair an automatic fixer applies; the rest are
+    /// alternatives a writer chooses between, each shown as its own action in the editor.
+    /// Excluded from equality because a diagnostic is identified by the problem it reports, not by
+    /// the repair a consumer may offer for it.
+    /// </summary>
+    [IgnoreEquality]
+    public IReadOnlyList<DiagnosticFix> Fixes { get; }
+
     /// <summary>Whether this diagnostic is an <see cref="DiagnosticSeverity.Error"/> — the severity
     /// that fails a compile.</summary>
     public bool IsError => Severity == DiagnosticSeverity.Error;
-
-    // The message arguments are compared by value (element-wise), so two diagnostics reporting the
-    // same problem are equal even when built with separate argument lists — the record default
-    // would compare the list by reference.
-    public bool Equals(Diagnostic? other) =>
-        other is not null
-        && Descriptor == other.Descriptor
-        && Span.Equals(other.Span)
-        && Severity == other.Severity
-        && MessageArguments.SequenceEqual(other.MessageArguments);
-
-    public override int GetHashCode()
-    {
-        var hash = default(HashCode);
-        hash.Add(Descriptor);
-        hash.Add(Span);
-        hash.Add(Severity);
-        foreach (var argument in MessageArguments)
-        {
-            hash.Add(argument);
-        }
-
-        return hash.ToHashCode();
-    }
 }

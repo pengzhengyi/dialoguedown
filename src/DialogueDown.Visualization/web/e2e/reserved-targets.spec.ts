@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { SAMPLE_SOURCE, SAMPLE_STAGES, writeReport } from "./report";
+import { audit } from "./audit";
 
 const url = writeReport({
     source: SAMPLE_SOURCE,
@@ -88,9 +88,7 @@ test("shows a fixed, copyable End sentinel without changing source lines", async
     await expect(panel).toContainText("∞");
     await expect(panel).toContainText("End");
     await expect(panel).toContainText("#END");
-    expect(
-        (await new AxeBuilder({ page }).include(".dd-reserved-targets").analyze()).violations,
-    ).toEqual([]);
+    expect((await audit(page, { include: ".dd-reserved-targets" })).violations).toEqual([]);
     await expect(page.locator(".source-stage .cm-line", { hasText: /^End$/ })).toHaveCount(0);
 
     const [panelBefore, scrollerBefore, gutter, marker] = await Promise.all([

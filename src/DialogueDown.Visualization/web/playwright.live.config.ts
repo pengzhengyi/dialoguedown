@@ -10,6 +10,7 @@ import {
     CONFIG_ADOPT_INVALID_PORT,
     SEMANTIC_AUTOCOMPLETE_PORT,
     SWITCH_PORT,
+    QUICK_FIX_PORT,
 } from "./e2e-live/fixture.mjs";
 
 // Live e2e: exercises the real .NET live server end-to-end in a browser — hot
@@ -99,6 +100,12 @@ export default defineConfig({
         {
             command: "node ./e2e-live/serve-switch.mjs",
             url: `http://127.0.0.1:${SWITCH_PORT}`,
+            reuseExistingServer: !process.env.CI,
+            timeout: 180_000,
+        },
+        {
+            command: "node ./e2e-live/serve-quick-fix.mjs",
+            url: `http://127.0.0.1:${QUICK_FIX_PORT}`,
             reuseExistingServer: !process.env.CI,
             timeout: 180_000,
         },

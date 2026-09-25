@@ -14,3 +14,13 @@ ID_CASING
 # LanguageTool's A_INFINITIVE reads `compile` as a verb and objects to the
 # article; the noun is standard usage in this domain.
 A_INFINITIVE
+
+# The relative possessive — "a plan whose owner is named" — is ordinary prose in these notes,
+# and this rule reads every "whose" as the contraction "who's". It has never once been right on
+# this corpus, so the suggestion is noise rather than a check.
+WHOSE_DT
+
+# The notes read "The source is there so a reviewer sees it" — an independent clause joined
+# without a comma, which is this documentation's established voice. The rule itself allows the
+# omission when the clauses are closely connected; on this corpus it never agrees.
+COMMA_COMPOUND_SENTENCE_2

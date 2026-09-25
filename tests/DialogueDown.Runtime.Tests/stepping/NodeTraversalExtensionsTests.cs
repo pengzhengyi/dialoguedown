@@ -1,6 +1,7 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
@@ -13,7 +14,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeThatCarriesOn_IsWhereItCarriesOnTo()
     {
-        var node = Playbooks.Line(0, speaker: 0, "Hello.", next: 7);
+        var node = Line(0, speaker: 0, "Hello.", next: 7);
 
         Assert.Equal(7, node.SuccessionTarget());
     }
@@ -24,7 +25,7 @@ public sealed class NodeTraversalExtensionsTests
         // The jump is the way out the writer asked for. The succession beside it is where the run
         // would have landed had the jump not applied, so taking it here would be reading past the
         // jump rather than through it.
-        var node = Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4));
+        var node = Bare(0, Divert(9), new SuccessionEdge(4));
 
         Assert.Equal(9, node.OnwardTarget());
     }
@@ -32,7 +33,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ANodeWithOnlyAFallThrough_LeadsWhereItFallsThrough()
     {
-        var node = Playbooks.Line(0, speaker: 0, "Hello.", next: 7);
+        var node = Line(0, speaker: 0, "Hello.", next: 7);
 
         Assert.Equal(7, node.OnwardTarget());
     }
@@ -50,14 +51,14 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_AJumpTheWorldWithholdsAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"))
+            Bare(0, Divert(9, "Alice.HasKey"))
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldAnswered() =>
         Assert.Equal(
             9,
-            Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4))
+            Bare(0, Divert(9), new SuccessionEdge(4))
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
@@ -84,12 +85,12 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ABranchWhoseArmIsWithheldAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            Playbooks.Branch(0, Playbooks.Arm(7, order: 0, "Alice.HasKey"))
+            Branch(0, Arm(7, order: 0, "Alice.HasKey"))
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_WithoutAnswers_TakesAnArmNothingGuards() =>
-        Assert.Equal(9, Playbooks.Branch(0, Playbooks.Else(9, order: 0)).OnwardTarget());
+        Assert.Equal(9, Branch(0, Else(9, order: 0)).OnwardTarget());
 
     [Fact]
     public void OnwardTarget_WithoutAnswers_PassesOverAJumpTheWorldMustAllow() =>
@@ -103,12 +104,12 @@ public sealed class NodeTraversalExtensionsTests
 
     [Fact]
     public void OnwardTarget_IsNotReadWithoutAnswers() =>
-        Assert.Throws<ArgumentNullException>(() => new EndNode(0).OnwardTarget(null!));
+        Assert.Throws<ArgumentNullException>(() => End(0).OnwardTarget(null!));
 
     [Fact]
     public void SuccessionTarget_ANodeWithNoWayOut_IsNowhere()
     {
-        Assert.Null(new EndNode(0).SuccessionTarget());
+        Assert.Null(End(0).SuccessionTarget());
     }
 
     [Fact]
@@ -123,7 +124,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeAmongOtherWaysOut_IsTheOneThatCarriesOn()
     {
-        var node = Playbooks.Bare(0, Playbooks.Divert(9), new SuccessionEdge(4));
+        var node = Bare(0, Divert(9), new SuccessionEdge(4));
 
         Assert.Equal(4, node.SuccessionTarget());
     }
@@ -133,7 +134,7 @@ public sealed class NodeTraversalExtensionsTests
     {
         // A reader refuses such a node, so a run never meets one. Reading the single succession
         // rather than the first of however many is what keeps that guarantee load-bearing.
-        var node = Playbooks.Bare(0, new SuccessionEdge(4), new SuccessionEdge(9));
+        var node = Bare(0, new SuccessionEdge(4), new SuccessionEdge(9));
 
         Assert.Throws<InvalidOperationException>(() => node.SuccessionTarget());
     }
@@ -152,7 +153,7 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static ControlNode AJumpTheWorldMustAllow() =>
-        Playbooks.Bare(0, Playbooks.Divert(9, "Alice.HasKey"), new SuccessionEdge(4));
+        Bare(0, Divert(9, "Alice.HasKey"), new SuccessionEdge(4));
 
     /// <summary>A block condition with an if, an elseif, and an else.</summary>
     /// <remarks>
@@ -162,11 +163,11 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithAnElse() =>
-        Playbooks.Branch(
+        Branch(
             0,
-            Playbooks.Arm(7, order: 0, "Alice.HasKey"),
-            Playbooks.Arm(8, order: 1, "Alice.HasPick"),
-            Playbooks.Else(9, order: 2));
+            Arm(7, order: 0, "Alice.HasKey"),
+            Arm(8, order: 1, "Alice.HasPick"),
+            Else(9, order: 2));
 
     /// <summary>A block condition with an if and no else, and a succession beneath it.</summary>
     /// <remarks>
@@ -176,5 +177,5 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithoutAnElse() =>
-        Playbooks.Branch(0, Playbooks.Arm(7, order: 0, "Alice.HasKey"), new SuccessionEdge(4));
+        Branch(0, Arm(7, order: 0, "Alice.HasKey"), new SuccessionEdge(4));
 }

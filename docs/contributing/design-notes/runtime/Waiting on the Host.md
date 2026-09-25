@@ -214,11 +214,11 @@ nowhere else to live.
 
 Arriving at a line today says it without reading `line.Condition`. A conditional
 line therefore speaks regardless of its condition, and the corpus does not catch
-it: `a-conditional-line` reads as not yet runnable because its session sends
+it: `a-conditional-line` reads as not yet playable because its session sends
 `supply`, not because the runner declined to guess.
 
 This pass refuses any node or edge carrying a condition, naming it, exactly as an
-unplayable node kind is refused. Refusing is what keeps the not-yet-runnable list
+unplayable node kind is refused. Refusing is what keeps the not-yet-playable list
 honest — a construct nobody has taught the runner should read as untaught, never
 as played correctly by luck.
 
@@ -288,7 +288,7 @@ is: both are answers, and there is no question to answer.
 | `PlayableConformanceTests` | Every case the runner has been taught joins the named conforming list |
 | `PlaybookGen` | Draws control nodes and diverts, so the walk property keeps pace |
 | Architecture note | `Perform` sits with `Resolve` as a reverse request; read-your-own-writes joins the isolation levels |
-| Runtime core note | Its node-kind table and not-yet-runnable list move on by two |
+| Runtime core note | Its node-kind table and not-yet-playable list move on by two |
 
 ## Testability
 

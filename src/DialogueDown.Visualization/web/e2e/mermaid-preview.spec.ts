@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import type { Report, Stage } from "../src/model";
+import { audit } from "./audit";
 import { writeReport } from "./report";
 import { selectTheme } from "./theme";
 
@@ -76,7 +76,7 @@ test("re-renders diagrams when the effective theme changes", async ({ page }) =>
     await selectTheme(page, "dark");
 
     await expect.poll(() => svg.getAttribute("id")).not.toBe(firstId);
-    const accessibility = await new AxeBuilder({ page }).include(".source-preview").analyze();
+    const accessibility = await audit(page, { include: ".source-preview" });
     expect(accessibility.violations).toEqual([]);
 });
 

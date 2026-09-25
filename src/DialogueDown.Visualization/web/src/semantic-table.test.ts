@@ -629,8 +629,8 @@ describe("createTablePanel — a cell drawn in styled segments", () => {
     });
 
     // The split is only for drawing. If the highlight were not laid back across the segments, a cell
-    // would stop marking its matches the moment it gained colour.
-    it("still marks a search match inside a coloured segment", () => {
+    // would stop marking its matches the moment it gained color.
+    it("still marks a search match inside a colored segment", () => {
         const panel = createTablePanel(segmentsTable());
         setFilter(panel, "torch");
 

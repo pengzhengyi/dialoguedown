@@ -323,6 +323,19 @@ jobs:
             --offline --no-progress docs README.md CONTRIBUTING.md AGENTS.md
             SECURITY.md CODE_OF_CONDUCT.md .github
 
+      # Advisory like the two steps above, and for the same reason: a word cspell has not met
+      # yet — a newly cited tool, a proper noun — arrives as a reviewable dictionary diff rather
+      # than a blocked merge. The whole tree is swept rather than the files a pull request
+      # touched, because that is the case a version bump creates: a new cspell dictionary can
+      # flag files nobody edited, and the default changed-files scope would check nothing at all.
+      # Pin the action only if a release starts failing on words this repository has not changed.
+      - name: Check spelling
+        uses: streetsidesoftware/cspell-action@v9
+        with:
+          config: cspell.json
+          files: "**"
+          incremental_files_only: false
+
   # The site is built on every pull request, so a broken link or a missing cross-reference is
   # caught before it reaches main. The build fails on warnings rather than reporting them: the
   # same site is published by the Pages workflow, and a warning found there is found too late.

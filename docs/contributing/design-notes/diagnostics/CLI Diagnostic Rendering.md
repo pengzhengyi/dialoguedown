@@ -22,6 +22,7 @@
   - [DR5 — Exit codes follow sysexits](#dr5--exit-codes-follow-sysexits)
   - [DR6 — `--mode` selects a collecting compilation mode](#dr6----mode-selects-a-collecting-compilation-mode)
   - [DR7 — Rich rendering via the Errata library](#dr7--rich-rendering-via-the-errata-library)
+  - [DR8 — A fix run describes itself after the diagnostics](#dr8--a-fix-run-describes-itself-after-the-diagnostics)
 - [Dependencies](#dependencies)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Integration](#integration)
@@ -40,7 +41,10 @@ jump or a duplicate anchor still exited `0` and printed nothing. This component 
 authoring against DialogueDown gives real feedback.
 
 **In scope:** offset→line/column mapping; a public diagnostic view carrying the rendered message
-and location; the CLI errata renderer and its data-error exit code; a `compile --mode` option.
+and location; the CLI errata renderer and its data-error exit code; a `compile --mode` option; the
+fix channel the errata carries after the diagnostics — the fixable-count hint, and a fix run's note
+and hunk per repair plus its write notice, whose grammar the
+[fix mode note](../cli/Compile%20CLI%20-%20Fix%20Mode.md) owns.
 
 **Out of scope (deferred):** the LSP and web-report projections (Component 6);
 the config-file `mode`
@@ -83,6 +87,15 @@ The work splits into two cleanly bounded passes; 5a has no CLI dependency and 5b
       [Error codes](../../../guide/error-codes.md) page (`#dlg<code>`) — a per-diagnostic note in the
       Errata block, or an inline line after the one-liner — clickable where the terminal supports it
       and plain, copy-pasteable text otherwise.
+- [x] Print the diagnostics exactly as a plain compile does, with no fix narration among them.
+- [x] When a diagnostic still carries an unapplied fix, add the discovery hint
+      `N fixable with --fix` after the summary.
+- [x] Describe a fix run in a section after the diagnostics: the write notice
+      (`Fixed <script> (1 fix; 1 warning remains)`), then a numbered item per repair —
+      `1. Applied Fix: <title>` with a line-numbered hunk, or
+      `2. Skipped Fix: <title> (<reason>)` — and anything new after fixing under an
+      `after fixing:` lead-in. See the
+      [fix mode note](../cli/Compile%20CLI%20-%20Fix%20Mode.md).
 - [x] Return `Success` for no errors (warnings/info still succeed), `DataError` when errors exist;
       align malformed-config errors to `DataError` too.
 - [x] `compile --mode <stage-boundary|best-effort>` overrides `CompilerOptions.Mode` only when
@@ -96,7 +109,7 @@ The work splits into two cleanly bounded passes; 5a has no CLI dependency and 5b
 | `LinePosition` (public readonly struct) | a one-based `(Line, Column)`; `ToString()` → `line,column` | — |
 | `LocatedDiagnostic` (public record) | one located diagnostic: `Code`, `Severity`, `Category`, `Message`, `Start`, `End` (line/column), and the half-open character range `StartOffset`/`EndOffset` | `LinePosition`, `DiagnosticSeverity`, `DiagnosticCategory` (public) |
 | `CompilationResult.LocatedDiagnostics` (public) | the located diagnostics for the compile, projected once (cached) from the internal bag | `LineMap`, `LocatedDiagnostic` |
-| `ErrataRenderer` (CLI) | render the located diagnostics to an `IAnsiConsole`: Errata blocks with source context when interactive, else the one-line fallback, plus a summary; each diagnostic carries a doc link | `IAnsiConsole`, Errata, `LocatedDiagnostic`, `DiagnosticDocumentation`, the source text |
+| `ErrataRenderer` (CLI) | render the diagnostics as found to an `IAnsiConsole` — Errata blocks with source context when interactive, else the one-line fallback, plus the summary and the fixable-count hint — then a fix run's section: write notice, note and hunk per repair, and anything new after fixing; each diagnostic carries a doc link | `IAnsiConsole`, Errata, `FixRun`, `FixDiff`, `DiagnosticDocumentation`, the source text |
 | `DiagnosticDocumentation` (CLI) | map a `DLG####` code to its hosted Error codes deep link (`…/error-codes.html#dlg<code>`) | — |
 | `CompileCommand` (CLI) | compile, render errata, choose the exit code; parse `--mode` | `ErrataRenderer`, `CompilerOptions` |
 
@@ -238,6 +251,15 @@ A survey of how compilers format a located diagnostic informs the fallback:
   CLI's `0.57.2`, so there is no version conflict. The fallback one-liner still exists on its own
   merits (CI/greppable output), so the design does not hard-depend on Errata.
 
+### DR8 — A fix run describes itself after the diagnostics
+
+The report is the one place a compile describes itself, so a fix run reports through the same
+stream — but in its own section, after the diagnostics, which stay exactly what a plain compile
+prints. The section opens with the write notice and then gives each repair a note and a hunk: the
+diagnostics keep their greppable shape and valid positions, and the change gets room to show
+itself. A diagnostic that still carries an unapplied fix adds the discovery hint. The grammar and
+its reasoning live in the [fix mode note](../cli/Compile%20CLI%20-%20Fix%20Mode.md).
+
 ## Dependencies
 
 | Package | Scope | Why | License |
@@ -271,6 +293,9 @@ Spectre.Console requirement (`>= 0.55.0`) is satisfied by the CLI's `0.57.2` (ve
   `DataError` when `HasErrors`, else `Success` — replacing today's unconditional `Success`.
 - **`CompileSettings`** gains `--mode`; `CompileCommand` maps it onto `CompilerOptions.Mode`.
 - **`CliServices`** registers `ErrataRenderer` (or it is a static writer over `IAnsiConsole`).
+- **`IErrataRenderer.Render`** takes the diagnostics as found plus an optional `FixRun`, so the
+  fixable hint and the fix run's section stay on the same code path as the diagnostics; the
+  [fix mode note](../cli/Compile%20CLI%20-%20Fix%20Mode.md) owns the shape.
 
 ## Testability
 
@@ -281,9 +306,11 @@ Spectre.Console requirement (`>= 0.55.0`) is satisfied by the CLI's `0.57.2` (ve
   the descriptors' formats filled with their arguments (invariant culture), at the right positions.
 - **`ErrataRenderer`** (unit, Spectre `TestConsole`): the fallback one-liner renders sorted
   `file(line,column): severity CODE: message` lines with the right colors and a correct summary; a
-  message containing `[`/`]` is escaped, not interpreted; an empty report writes nothing. The rich
-  Errata path is smoke-tested (it renders a source snippet without throwing); its exact glyphs are
-  the library's concern, not ours.
+  message containing `[`/`]` is escaped, not interpreted; an empty report writes nothing; a fix run
+  prints its section — the write notice, a note and hunk per repair, the skipped note, the
+  `after fixing:` block — after diagnostics that stay byte-identical to a plain compile; the
+  `N fixable with --fix` hint appears exactly when it should. The rich path's exact glyphs are the
+  library's concern, not ours.
 - **`CompileCommand`** (integration, `CommandAppTester`): a clean script → `Success`, no errata; an
   error script → errata plus `DataError`; a warning-only script → errata plus `Success`; `--mode`
   threads to the compile and, when omitted, inherits the resolved mode; an invalid mode → usage

@@ -57,12 +57,22 @@ internal sealed class JumpAssembler
         return new Jump(link.Target, link.Label, SourceSpan.Covering(from, link.Span), condition);
     }
 
+    // The message recommends escaping the arrow; the fix is that remedy as an insertion before it.
+    private static DiagnosticFix EscapeFix(JumpIndicator indicator) =>
+        new(
+            "Escape as literal text",
+            [new DiagnosticEdit(new SourceSpan(indicator.Span.Start, 0), "\\")]);
+
     // A => with no link after it is not a jump, so it degrades to the characters "=>" and the
     // script still compiles. The writer meant a jump, so the loss is reported rather than silent —
     // and it is reported here, the only place that still knows the arrow was an arrow.
     private InlineFragment ReportAndDegrade(JumpIndicator indicator)
     {
-        _diagnostics.Report(new Diagnostic(DiagnosticCatalog.DanglingJumpArrow, indicator.Span, []));
+        _diagnostics.Report(new Diagnostic(
+            DiagnosticCatalog.DanglingJumpArrow,
+            indicator.Span,
+            [],
+            fixes: [EscapeFix(indicator)]));
         return new Text("=>", indicator.Span);
     }
 }

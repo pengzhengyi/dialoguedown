@@ -175,6 +175,21 @@ public sealed class InlineBuilderTests
     }
 
     [Fact]
+    public void Build_TextRunWithAnEscapedFirstCharacter_KeepsItsSigilAsText()
+    {
+        // Source "\#happy": the run is "#happy" with the escape recorded, so the tag is
+        // read as plain text rather than metadata.
+        var text = new DialogueDown.Markdown.TextInline(
+            "#happy", SourceSpanFactory.Span(0, 7), SourceSpanFactory.Span(1, 6),
+            isFirstCharacterEscaped: true);
+
+        var speech = Build([text]);
+
+        var fragment = AssertSingleText(speech, "#happy");
+        Assert.Equal(1, fragment.Span.Start);
+    }
+
+    [Fact]
     public void Build_UnknownEmphasisKind_Throws() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Build([Md.Emphasis((MdEmphasisKind)99, Md.Text("x"))]));

@@ -114,7 +114,7 @@ the reader all the way back, which is what someone pressing a key to escape actu
 The graph keeps its legend and zoom cluster; the editor keeps its gutter and diagnostics.
 Those are instruments *for reading the primary content*, not competing panels — hiding them
 would make Zen a worse graph rather than a more focused one. The rule is "remove the
-neighbours, keep the tools."
+neighbors, keep the tools."
 
 ### D4 — A control beside maximize, plus the keyboard
 

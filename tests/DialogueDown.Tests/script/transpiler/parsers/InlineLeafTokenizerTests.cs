@@ -1,8 +1,10 @@
+using DialogueDown.Markdown;
 using DialogueDown.Script.Transpiler.Parsed;
 using DialogueDown.Script.Transpiler.Parsers;
 using DialogueDown.Script.Transpiler.Parsing;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.InlineLeafAssert;
+using static DialogueDown.Tests.Support.MarkdownAstFactory;
 
 namespace DialogueDown.Tests.Script.Transpiler.Parsers;
 
@@ -108,6 +110,54 @@ public sealed class InlineLeafTokenizerTests
             AssertJumpLeaf,
             leaf => AssertTextLeaf(leaf, " go"));
     }
+
+    [Fact]
+    public void Tokenize_EscapedLeadingCharacter_BeforeATag_LeavesTheWholeTagAsText()
+    {
+        var leaves = TokenizeEscaped("#happy");
+
+        var leaf = Assert.Single(leaves);
+        AssertTextLeaf(leaf, "#happy");
+        AssertRange(leaf, start: 0, length: 6);
+    }
+
+    [Fact]
+    public void Tokenize_EscapedLeadingCharacter_BeforeAJump_LeavesTheArrowAsText()
+    {
+        var leaves = TokenizeEscaped("=> go");
+
+        AssertTextLeaf(Assert.Single(leaves), "=> go");
+    }
+
+    [Fact]
+    public void Tokenize_EscapedLeadingCharacter_ThatStartsNoSigil_IsLiteralAlone()
+    {
+        // "=" begins no sigil, so only it is escaped; the following tag is real.
+        var leaves = TokenizeEscaped("=#happy");
+
+        Assert.Collection(
+            leaves,
+            leaf => AssertTextLeaf(leaf, "="),
+            leaf => Assert.Equal("happy", AssertTagLeaf(leaf).Name));
+    }
+
+    [Fact]
+    public void StartsWithJumpIndicator_TrueForTheUnescapedArrow() =>
+        Assert.True(Text("=> go").StartsWithJumpIndicator());
+
+    [Fact]
+    public void StartsWithJumpIndicator_FalseForAnEscapedArrowOrOtherText()
+    {
+        var escaped = new TextInline(
+            "=> go", Span(0, 6), Span(1, 5), isFirstCharacterEscaped: true);
+
+        Assert.False(escaped.StartsWithJumpIndicator());
+        Assert.False(Text("= go").StartsWithJumpIndicator());
+    }
+
+    private static IReadOnlyList<Spanned<InlineLeaf>> TokenizeEscaped(string text) =>
+        InlineLeafTokenizer.Tokenize(
+            ParseInputFactory.Input(text), allowJumps: true, escapedFirstCharacter: true);
 
     private static IReadOnlyList<Spanned<InlineLeaf>> Tokenize(string text) =>
         InlineLeafTokenizer.Tokenize(ParseInputFactory.Input(text), allowJumps: true);

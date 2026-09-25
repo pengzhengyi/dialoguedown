@@ -232,10 +232,31 @@ The **Docs** job runs the same tool through
 keeps current. That check is advisory — a release that adds a rule opens a PR to adopt
 rather than blocking a merge — so a red **Docs** job is worth fixing, not a broken build.
 
+### Spelling
+
+Every file is spell-checked by [cspell](https://cspell.org), configured by
+[`cspell.json`](cspell.json), whose `words` list carries the project's own vocabulary and
+the tools and formats the docs cite. Run it from the repository root, where the config's
+globs and ignores apply:
+
+```bash
+npx --yes cspell@8 lint --no-progress --config cspell.json .
+```
+
+A real misspelling belongs in the text, not the dictionary: only genuine vocabulary — a
+cited tool, a proper noun, a coinage the code uses — earns a `words` entry, and
+`ignoreWords` is reserved for test data that has to stay wrong to be useful. The **Docs** job runs the same tool through
+[its action](https://github.com/streetsidesoftware/cspell-action), which Dependabot keeps
+current, and sweeps the whole tree rather than only the files a pull request touches, so a
+release that shifts the dictionary flags files nobody edited. The action bundles its own copy of cspell, which can trail the one `npx`
+resolves, so a word the local run accepts may still be flagged in CI — that is the stricter
+gate, and the answer is a `words` entry. Like Markdown the check is
+advisory: a red spell check is worth fixing rather than a broken build.
+
 ### Editor tasks (VS Code)
 
 Common tasks are wired up in `.vscode/tasks.json` (**Terminal → Run Task**), so
-you can build, test, and clean without memorising commands: `build` / `test`
+you can build, test, and clean without memorizing commands: `build` / `test`
 (.NET), `build: fast` (inner-loop compile without analyzers), `test: project` /
 `test: filter` / `test: class` (one already-built .NET test scope), `web: build` / `web: check` /
 `web: e2e` (frontend), targeted `web: test file` / `web: test watch` /

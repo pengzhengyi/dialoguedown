@@ -10,6 +10,32 @@ changes easy to categorize.
 
 ### Added
 
+- **`ddown compile --fix`** — the CLI applies the compiler's own repairs. A fixable diagnostic says
+  so (`1 fixable with --fix`), and `--fix` applies its preferred repair, writes the corrected
+  script in place, and recompiles it. The diagnostics print exactly as a plain compile prints them;
+  after them, a fix section numbers each repair (`1. Applied Fix: …`) and shows the change as a
+  line-numbered diff hunk, then the write notice. A run with nothing to fix prints exactly what a plain compile
+  prints and touches nothing. See
+  [Compile CLI — Fix Mode](docs/contributing/design-notes/cli/Compile%20CLI%20-%20Fix%20Mode.md).
+- **The Source preview speaks the script's own language** — the rendered half of the Source tab now
+  marks every dialogue construct the compiler found, in the vocabulary the editor beside it already
+  uses: `#wise` as the tag capsule the rest of the report shows, `Guide` and `@guide` in the
+  speaker colors, `` `playSound("wind")` `` and `` `"playerName"` `` as command and query, a
+  condition and a weight in their own hues, and a jump's `=>` in the jump color. A mark explains
+  itself on hover and a tag copies on click; ignored Markdown, front matter, and link text stay
+  plain. See
+  [Construct Marks in the Source Preview](docs/contributing/design-notes/visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md).
+- **Quick fixes** — a diagnostic whose repair the compiler knows now carries it, and the Source
+  editor offers it while editing: a lightbulb action in the warning's tooltip and a lightbulb on
+  its row in the Problems panel. The dangling-arrow warning's fix escapes the arrow. See
+  [Diagnostic quick fixes](docs/contributing/design-notes/visualization/editor/Diagnostic%20Quick%20Fixes.md).
+
+- **Literal punctuation** — a backslash writes the next ASCII punctuation character
+  literally, so a script can spell a literal tag (`\#word`, `\##default`) or arrow (`\=>`)
+  in prose, and escaping a speaker-prefix element keeps the line in the default voice. The
+  dangling-arrow warning now offers the escape as the deliberate spelling. See
+  [Symbol Escape](docs/contributing/design-notes/language/Symbol%20Escape.md).
+
 - **A way back to the file selector** — a session's status line carries a small back link beside
   the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
   shell answers at `/browse`, since a run that pins a document redirects `/` to that document.
@@ -70,6 +96,10 @@ changes easy to categorize.
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 ### Changed
+
+- **The conformance harness reports every divergence a case has** — an outcome carries a list of
+  reasons rather than only the first, so a contributor meets every fault a fixture found in one run
+  instead of fixing one and re-running to meet the next. The verdict each case gets is unchanged.
 
 - **The report's graph tabs are navigated by their edges** — the arrow keys used to move through
   the drawing's tree, so a jump — a reference edge rather than a child — could not be reached at
@@ -153,6 +183,16 @@ changes easy to categorize.
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Saying%20Nothing%20Across%20the%20Report.md).
 
 ### Fixed
+
+- **A disabled action stays readable in the light theme** — the Discard button, and the
+  Explorer's New file and New folder while in View, dimmed their labels to about 2:1 against
+  white, where the text all but vanished. The muted color now carries the label in full, and the
+  state reads from the withdrawn border, the missing hover, and the inert cursor.
+
+- **HTML entities in a script reach the playbook as the character they name** — `&nbsp;` was
+  arriving as its five source characters, so a preview showed a space where a game showed the
+  entity's spelling. CommonMark's decoding is now followed; a name nothing defines stays literal
+  text.
 
 - **The status line no longer leaves the viewport when a selection fills the inspector** — a
   content-based flex basis let the scrollable inspector inflate the shell, shrinking the footer

@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { writeFileSync, rmSync, mkdirSync } from "node:fs";
+import { audit } from "../e2e/audit";
 import { dirname, join } from "node:path";
 import { LIVE_DOC, INITIAL_SOURCE } from "./fixture.mjs";
 
@@ -291,7 +291,7 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
 });
 
 test("seats the Files control in the tab row, clear of the brand mark", async ({ page }) => {
-    // The row aligns to its bottom edge, so a control that is taller than its neighbours grows
+    // The row aligns to its bottom edge, so a control that is taller than its neighbors grows
     // *upward* into the brand mark above. That is what a copied style block that missed one
     // property did: the control stood half a row taller and touched the logo.
     //
@@ -432,7 +432,7 @@ test("opens with the Explorer shut, and summons it from the tab bar", async ({ p
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
     // Shut, the divider has nothing to sit between.
     await expect(page.locator("#explorer-resizer")).toBeHidden();
-    expect((await new AxeBuilder({ page }).include(".tabbar").analyze()).violations).toEqual([]);
+    expect((await audit(page, { include: ".tabbar" })).violations).toEqual([]);
 
     await toggle.click();
 
@@ -440,7 +440,7 @@ test("opens with the Explorer shut, and summons it from the tab bar", async ({ p
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
     await expect(page.locator("#explorer-resizer")).toBeVisible();
     // A new interactive control belongs in the accessibility pass in both of its states.
-    expect((await new AxeBuilder({ page }).include(".tabbar").analyze()).violations).toEqual([]);
+    expect((await audit(page, { include: ".tabbar" })).violations).toEqual([]);
 
     await toggle.click();
 

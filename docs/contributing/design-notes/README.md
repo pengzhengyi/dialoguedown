@@ -149,6 +149,7 @@ first, since a construct threads through them.
 | [Conditional Line](./language/Conditional%20Line.md) | A condition fronting a line, so the line plays only when the query is true | Implemented |
 | [Conditional Choice](./language/Conditional%20Choice.md) | A condition guarding a choice option, so a player or random option is offered only when the query is true | Implemented |
 | [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
+| [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./language/Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
 | [Cross-File Jump Resolution](./language/Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.md#meet-bob`) across a project, via a linker | Explored |
@@ -192,6 +193,7 @@ Spectre.Console.Cli; they are not needed to understand the compiler.
 flowchart LR
     CLI["1. Command-Line Interface"] --> VZ["2. Visualize on the CLI"]
     VZ --> DOT["3. Emit DOT"]
+    DOT --> FIX["4. Fix mode"]
 ```
 
 | Order | Note | What it covers | Status |
@@ -199,6 +201,7 @@ flowchart LR
 | 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `dialoguedown` CLI: `compile` + `visualize` (Spectre.Console.Cli) | Implemented |
 | 2 | [Visualize on the CLI](./cli/Visualize%20on%20the%20CLI.md) | Wire `ddown visualize` to the engine; retire the hand-rolled CLI | Implemented |
 | 3 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
+| 4 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Proposed |
 
 ### Visualization
 
@@ -260,6 +263,8 @@ projected from the compiler rather than a client-side grammar.
 | 34 | [Mermaid Authoring Diagrams](./visualization/editor/Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
 | 35 | [Ignored Markdown Preview Toggle](./visualization/editor/Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, under two footer commands that override every region at once | Implemented |
 | 36 | [Co-located Diagnostics Presentation](./visualization/editor/Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
+| 51 | [Diagnostic Quick Fixes](./visualization/editor/Diagnostic%20Quick%20Fixes.md) | A diagnostic's suggested repair offered as an editor action, starting with escaping a dangling arrow | Implemented |
+| 52 | [Construct Marks in the Source Preview](./visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md) | The rendered preview marks the compiler's constructs in the editor's own vocabulary — tags as capsules, commands and queries tinted | Implemented |
 
 #### Graph interaction
 
@@ -273,6 +278,7 @@ and how a scene folds.
 | 30 | [Live Visualization — Reverse Jump](./visualization/graph/Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
 | 37 | [Dialogue Graph — Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through, from a chevron separate from the band's own click | Implemented |
 | 48 | [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows after the tree layout, so no two scene bands can be drawn across each other | Implemented |
+| 51 | [Keyboard Navigation](./visualization/graph/Keyboard%20Navigation.md) | Navigate a graph by its edges: arrows, the numbered ways out and in, folding, and a keymap per tab shape | Implemented |
 
 #### Live session
 

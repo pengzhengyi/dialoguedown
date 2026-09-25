@@ -10,7 +10,7 @@ public sealed class SessionOperatorTests
     [Fact]
     public void Start_OnOneLine_SaysTheOpeningLineAndStandsAtTheEntry()
     {
-        var op = new SessionOperator(Playbooks.OneLine());
+        var op = new SessionOperator(PlayContextFactory.OneLine());
 
         AssertNoUnreadEvents(op);
 
@@ -23,7 +23,7 @@ public sealed class SessionOperatorTests
     [Fact]
     public void NextEvent_PastTheLastOne_ReadsAsNull()
     {
-        var op = new SessionOperator(Playbooks.OneLine());
+        var op = new SessionOperator(PlayContextFactory.OneLine());
 
         op.Start();
         AssertNextEvent<Said>(op);
@@ -35,7 +35,7 @@ public sealed class SessionOperatorTests
     public void UnreadEventCount_TracksWhatIsWaitingToBeRead()
     {
         // The counter's own test, so it counts rather than asking a helper that wraps it.
-        var op = new SessionOperator(Playbooks.OneLine());
+        var op = new SessionOperator(PlayContextFactory.OneLine());
 
         Assert.Equal(0, op.UnreadEventCount);
 
@@ -49,7 +49,7 @@ public sealed class SessionOperatorTests
     [Fact]
     public void Send_NextAfterStart_OnTwoLinesStepsRunnerAndSaysTheNextLine()
     {
-        var op = new SessionOperator(Playbooks.TwoLines());
+        var op = new SessionOperator(PlayContextFactory.TwoLines());
         op.Start();
         AssertNextEvent<Said>(op);
 
@@ -60,12 +60,12 @@ public sealed class SessionOperatorTests
     }
 
     [Fact]
-    public void Send_UnknownMessage_ReturnsNotYetRunnableWithoutAdvancing()
+    public void Send_UnknownMessage_ReturnsNotYetPlayableWithoutAdvancing()
     {
-        var op = new SessionOperator(Playbooks.OneLine());
+        var op = new SessionOperator(PlayContextFactory.OneLine());
         var stateBefore = op.State;
 
-        AssertNotYetRunnable(op.SendCommand("frobnicate"), "frobnicate");
+        AssertNotYetPlayable(op.SendCommand("frobnicate"), "frobnicate");
 
         Assert.Equal(stateBefore, op.State);
         AssertNoUnreadEvents(op);
@@ -74,7 +74,7 @@ public sealed class SessionOperatorTests
     [Fact]
     public void Sequence_DrivesTwoLinesToEnd()
     {
-        var op = new SessionOperator(Playbooks.TwoLines());
+        var op = new SessionOperator(PlayContextFactory.TwoLines());
 
         op.Start();
 

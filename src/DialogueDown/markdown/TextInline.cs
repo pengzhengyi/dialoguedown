@@ -15,12 +15,15 @@ namespace DialogueDown.Markdown;
 /// </remarks>
 internal sealed record TextInline : MarkdownInline
 {
-    public TextInline(string text, SourceSpan span, SourceSpan? contentSpan = null)
+    public TextInline(
+        string text, SourceSpan span, SourceSpan? contentSpan = null,
+        bool isFirstCharacterEscaped = false)
         : base(span)
     {
         ArgumentException.ThrowIfNullOrEmpty(text);
         Text = text;
         ContentSpan = contentSpan ?? span;
+        IsFirstCharacterEscaped = isFirstCharacterEscaped;
     }
 
     public string Text { get; }
@@ -30,4 +33,11 @@ internal sealed record TextInline : MarkdownInline
     /// <see cref="MarkdownInline.Span"/> unless a leading escape was stripped.
     /// </summary>
     public SourceSpan ContentSpan { get; }
+
+    /// <summary>
+    /// Whether the source escaped the first character (<c>\#word</c>). The backslash
+    /// is not part of <see cref="Text"/>, so the stage that recognizes dialogue sigils
+    /// uses this flag to read an escaped sigil as plain text.
+    /// </summary>
+    public bool IsFirstCharacterEscaped { get; }
 }

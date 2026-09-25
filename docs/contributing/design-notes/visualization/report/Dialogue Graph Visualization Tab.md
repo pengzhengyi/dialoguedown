@@ -247,13 +247,13 @@ The rule is therefore one line:
 
 Two corollaries do the actual work, and both were once wrong:
 
-- **A climb goes on the target's left, whichever way the route travelled.** Right
+- **A climb goes on the target's left, whichever way the route traveled.** Right
   of a dot is where its words are. A route doubling back used to mirror and climb
   on the right, straight through the text of every row in that column; it now
   overshoots and climbs on the left like every other route. Arriving from the left
   is also what every other edge does, so the drawing reads the same either way.
 - **A drop goes in a gutter, not beside the source's dot.** It used to drop a
-  fixed step from the dot, which is inside its own column's words. Travelling
+  fixed step from the dot, which is inside its own column's words. Traveling
   along the flow it now clears its own label and drops in the gutter that ends its
   column; doubling back it drops in the gutter before that column, where a label —
   which only ever runs rightwards — cannot reach.

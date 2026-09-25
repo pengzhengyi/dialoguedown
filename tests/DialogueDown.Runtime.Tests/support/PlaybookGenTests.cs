@@ -2,6 +2,7 @@ using CsCheck;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -57,7 +58,7 @@ public sealed class PlaybookGenTests
     {
         // This is what turns a note into a check. Once the runner learns a kind, its note no
         // longer holds, and the failure names the kind the generator now has to draw.
-        foreach (var node in Playbooks.OneOfEveryNodeKind())
+        foreach (var node in OneOfEveryNodeKind())
         {
             var kind = node.GetType().Name;
 

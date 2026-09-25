@@ -1,11 +1,12 @@
 import { Marked, type MarkedExtension, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
 import { createRegionKeys, type RegionKey } from "./region-key";
+import type { PositionedConstruct } from "./construct-highlight";
 import { foldGlyphName } from "./fold-glyph";
 import type { DisplayNode, Span } from "./model";
 import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
 
-/** Longest inline label/attribute drawn on a node before it is ellipsised. */
+/** Longest inline label/attribute drawn on a node before it is ellipsized. */
 export const MAX_INLINE_TEXT = 30;
 
 /** Escape a value for safe insertion into HTML. */
@@ -143,11 +144,17 @@ export function renderNodePreview(source: string, label: string, recognizeJumps 
 export interface PreviewSemantics {
     ignored: readonly Span[];
     controlKeywords: readonly Span[];
+    /**
+     * The dialogue constructs the compiler projected. The Preview marks each one where the
+     * document repeats its text, so a reader meets the same coloring the editor shows beside it.
+     */
+    constructs: readonly PositionedConstruct[];
 }
 
 const EMPTY_PREVIEW_SEMANTICS: PreviewSemantics = {
     ignored: [],
     controlKeywords: [],
+    constructs: [],
 };
 
 export function renderDocument(

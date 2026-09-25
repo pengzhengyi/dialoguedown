@@ -6,9 +6,11 @@ description: Design and add one DialogueDown language construct through comparat
 # Add a DialogueDown language construct
 
 Use this skill for one coherent syntax or semantic construct at a time. Invoke
-and compose `maintain-oss` and `design-review-implement` across the full
-construct loop. Invoke `polish-tech-doc` whenever a design note, specification,
-or related documentation is created or revised.
+and compose `git-pr-flow`, `maintain-oss`, and `design-review-implement` across
+the full construct loop: `git-pr-flow` owns the branch, the commits, and the
+pull request; `maintain-oss` owns the tracked issue and the changelog. Invoke
+`polish-tech-doc` whenever a design note, specification, or related
+documentation is created or revised.
 
 Those skills own their normal approval and execution gates. This skill adds the
 DialogueDown-specific language-design questions and required project surfaces;
@@ -22,9 +24,11 @@ it does not replace or bypass the delegated workflows.
 - Treat the language specification and examples as part of the public interface.
 - Do not implement until the user explicitly approves the design note and
   writer-facing specification.
-- Develop on a feature branch in the primary checkout. Do not use a separate
-  worktree for language constructs. If unrelated work blocks a safe branch
-  switch, stop and ask.
+- Develop with `git-pr-flow`'s **branch-on-main model** — a feature branch in
+  the primary checkout, not a separate worktree. A language construct runs
+  through the whole pipeline and its visualization, so it wants the editor,
+  debugger, and live server the user already has pointed at the repository. If
+  unrelated work blocks a safe branch switch, stop and ask.
 - Confirm the mode for every construct. Default to **procedural** core work and
   **headless** visualization/finalization work.
 - Follow the current repository instructions and `CONTRIBUTING.md` for commands,
@@ -124,11 +128,12 @@ After documentation approval:
 1. At the single mode gate, confirm **procedural core** and **headless
    visualization/finalization**, or record the user's alternatives.
 2. From an up-to-date `main`, create a construct feature branch in the primary
-   checkout, carrying only the approved document drafts.
-3. Use `maintain-oss` to track the work and preserve reviewable history: commit
-   the approved design note separately from the specification and gallery.
+   checkout, carrying only the approved document drafts. `git-pr-flow` covers
+   refreshing `main` first and naming the branch.
+3. Preserve reviewable history: commit the approved design note separately from
+   the specification and gallery. Track the work as an issue per `maintain-oss`.
 
-Obtain the commit approvals required by the selected mode and `maintain-oss`.
+Obtain the commit approvals required by the selected mode and `git-pr-flow`.
 Never commit the drafts directly to `main`.
 
 ## 4. Implement the core
@@ -209,10 +214,12 @@ branch until every intended change is committed, and the working tree is clean.
 
 ## 6. Complete the OSS loop
 
-Push the branch and open a pull request through the repository template. Link
-the tracked issue, summarize the language decision and writer tradeoffs, and
-keep the branch current while CI and review run.
+Push the branch and open a pull request through the repository template, then
+follow `git-pr-flow` through keeping the branch current, merging, resyncing
+local `main`, and deleting the merged branch. Link the tracked issue, and
+summarize the language decision and the writer tradeoffs behind it.
 
-Do not merge until the user has approved the preview and explicitly says
-**"Skill Complete"**. After merge, synchronize local `main`, remove the merged
-branch, and confirm the primary checkout is clean.
+This skill adds one gate on top of that flow: **do not merge until the user has
+approved the preview and explicitly says "Skill Complete"** — the preview is
+where a construct's writer-facing shape is judged, and no amount of green CI
+substitutes for it. Confirm the primary checkout is clean afterwards.

@@ -167,6 +167,88 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
+    public void EscapedLeadingTag_IsSpeechNotASpeakerPrefix()
+    {
+        // "\#tag: hi" — the escape makes the leading '#' literal, so there is no speaker
+        // prefix, and the tag-without-a-speaker diagnostic must not fire.
+        var diagnostics = new DiagnosticBag();
+        var leading = new TextInline(
+            "#tag: hi", Span(0, 9), Span(1, 8), isFirstCharacterEscaped: true);
+
+        var line = _builder.Build([leading], diagnostics);
+
+        Assert.Null(line.Speaker);
+        AssertSingleText(line.Speech, "#tag: hi");
+        AssertNotReported(diagnostics.Diagnostics);
+    }
+
+    [Fact]
+    public void EscapedArrowAfterACondition_StillPeelsTheCondition()
+    {
+        // "`Ready?`\=> go" (no space) — the escaped arrow is prose, not a jump, so the
+        // condition guards the line instead of being left for jump binding.
+        var arrow = new TextInline(
+            "=> go", Span(0, 6), Span(1, 5), isFirstCharacterEscaped: true);
+
+        var line = Build([CodeSpan("\"Ready\"?"), arrow]);
+
+        AssertCondition(line.Condition!, "Ready");
+        AssertSingleText(line.Speech, "=> go");
+    }
+
+    [Fact]
+    public void EscapedLetter_IsNotAnEscape_SoTheBackslashStaysInSpeech()
+    {
+        // "\Alice: Hello" — 'A' is not punctuation, so CommonMark keeps the backslash. The
+        // line is speech (the prefix parse cannot start at '\'), not Alice speaking.
+        var line = Build([Text(@"\Alice: Hello")]);
+
+        Assert.Null(line.Speaker);
+        AssertSpeechText(line, @"\Alice: Hello");
+    }
+
+    [Fact]
+    public void EscapedColon_KeepsAColonInSpeechWithoutASpeaker()
+    {
+        // "Alice\: Hello" — escaping the colon declines the prefix, and Markdig's run split
+        // keeps the prefix parser from ever seeing a colon; the speech reads "Alice: Hello".
+        var line = Build(
+            [Text("Alice"), new TextInline(": Hello", Span(5, 8), Span(6, 7), isFirstCharacterEscaped: true)]);
+
+        Assert.Null(line.Speaker);
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertText(fragment, "Alice"),
+            fragment => AssertText(fragment, ": Hello"));
+    }
+
+    [Fact]
+    public void EscapedId_IsNotASpeakerPrefix()
+    {
+        // "\@alice: Hi" — the escaped '@' is literal, so the id sigil cannot begin here.
+        var line = Build(
+            [new TextInline("@alice: Hi", Span(0, 11), Span(1, 10), isFirstCharacterEscaped: true)]);
+
+        Assert.Null(line.Speaker);
+        AssertSpeechText(line, "@alice: Hi");
+    }
+
+    [Fact]
+    public void EscapedIdAfterAName_IsSpeechNotADeclaration()
+    {
+        // "Alice \@alice: Hi" — the escaped '@' splits the run, so the prefix parser sees
+        // only "Alice ", which is no prefix; the line is speech, not a declaration.
+        var line = Build(
+            [Text("Alice "), new TextInline("@alice: Hi", Span(6, 11), Span(7, 10), isFirstCharacterEscaped: true)]);
+
+        Assert.Null(line.Speaker);
+        Assert.Collection(
+            line.Speech,
+            fragment => AssertText(fragment, "Alice "),
+            fragment => AssertText(fragment, "@alice: Hi"));
+    }
+
+    [Fact]
     public void EmptyGroup_Throws() =>
         Assert.Throws<ArgumentException>(() => Build([]));
 

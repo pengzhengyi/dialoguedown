@@ -290,6 +290,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('class="dd-preview-ignored-region"');
@@ -303,6 +304,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('class="dd-preview-ignored-region"');
@@ -326,12 +328,14 @@ describe("renderDocument", () => {
             renderDocument(table, {
                 ignored: [{ start: 0, end: table.length }],
                 controlKeywords: [],
+                constructs: [],
             }),
         );
         const after = ignoredKeys(
             renderDocument(moved, {
                 ignored: [{ start, end: start + table.length }],
                 controlKeywords: [],
+                constructs: [],
             }),
         );
 
@@ -348,6 +352,7 @@ describe("renderDocument", () => {
                 renderDocument(source, {
                     ignored: [{ start: 0, end: source.length }],
                     controlKeywords: [],
+                    constructs: [],
                 }),
             )[0];
 
@@ -366,6 +371,7 @@ describe("renderDocument", () => {
                     { start: second, end: second + 3 },
                 ],
                 controlKeywords: [],
+                constructs: [],
             }),
         );
 
@@ -383,6 +389,7 @@ describe("renderDocument", () => {
                 { start: autolink, end: source.length },
             ],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html.match(/class="dd-ignored-region-toggle"/g)).toHaveLength(2);
@@ -396,6 +403,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         const control = html.indexOf("dd-ignored-region-toggle-icon");
@@ -412,6 +420,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('class="dd-ignored-region-brief"');
@@ -428,6 +437,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start, end: start + 3 }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('class="dd-ignored-region-brief"');
@@ -439,6 +449,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('<a class="dd-preview-ignored"');
@@ -451,6 +462,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('<a class="dd-preview-ignored"');
@@ -468,6 +480,7 @@ describe("renderDocument", () => {
                 { start: closing, end: closing + "</span>".length },
             ],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html.match(/data-ignored-kind="Raw HTML"/g)).toHaveLength(2);
@@ -483,6 +496,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [],
             controlKeywords: [{ start, end: start + "`if`".length }],
+            constructs: [],
         });
 
         expect(html).toContain('<code class="dd-preview-control-keyword">if</code>');
@@ -495,6 +509,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('data-ignored-summary="Table · 3 lines"');
@@ -507,6 +522,7 @@ describe("renderDocument", () => {
         const html = renderDocument(source, {
             ignored: [{ start, end: source.length }],
             controlKeywords: [],
+            constructs: [],
         });
 
         expect(html).toContain('data-ignored-kind="Code block"');

@@ -5,6 +5,7 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using DialogueDown.TestSupport;
+using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
@@ -54,7 +55,7 @@ public sealed class ConditionEvaluationExtensionsTests
         // A jump a writer left unguarded, so asking whether it is allowed does not mean first
         // asking whether anybody guarded it.
         Assert.True(
-            Playbooks.Divert(1).IsAllowed(Answering(("Hero.HasSword", false))));
+            Divert(1).IsAllowed(Answering(("Hero.HasSword", false))));
 
     [Theory]
     [InlineData(true)]
@@ -62,7 +63,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void IsAllowed_AGuardedWayOut_IsWhatItsGuardReadsTo(bool holds) =>
         Assert.Equal(
             holds,
-            AGuarded(Playbooks.Divert(1, "Hero.HasSword"), holds));
+            AGuarded(Divert(1, "Hero.HasSword"), holds));
 
     [Theory]
     [InlineData(true)]
@@ -84,7 +85,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void IsAllowed_IsNotReadWithoutWhatTheWorldAnswered() =>
         // Refused even for something nobody guarded, so the contract does not depend on the answer.
         Assert.Throws<ArgumentNullException>(
-            () => Playbooks.Divert(1).IsAllowed(null!));
+            () => Divert(1).IsAllowed(null!));
 
     private static bool AGuarded(IConditional guarded, bool holds) =>
         guarded.IsAllowed(Answering(("Hero.HasSword", holds)));

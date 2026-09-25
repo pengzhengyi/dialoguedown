@@ -664,14 +664,15 @@ section.stage.empty-shell {
     background: var(--pico-card-background-color);
 }
 
-/* In View there is no file to make, so the row says so rather than offering. */
+/* In View there is no file to make, so the row says so rather than offering. The label keeps
+   the muted color in full: dimming it by half left it below readable contrast on white. */
 .empty-shell-create:disabled,
 .empty-shell-create:disabled:hover {
     border-color: transparent;
     background: transparent;
     color: var(--pico-muted-color);
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 1;
 }
 
 /* The Source tab has no node-detail panel: hide it and let the split fill. */
@@ -756,13 +757,14 @@ section.stage.empty-shell {
 }
 
 /* An action this mode cannot take — creating a file or folder in View. Grayed and inert like a
-   stage tab whose artifact was not produced, with its tip saying what to do instead. */
+   stage tab whose artifact was not produced, with its tip saying what to do instead. The label
+   keeps the muted color in full, for the reason the Discard button records. */
 .explorer-action:disabled,
 .explorer-action:disabled:hover {
     background: transparent;
     color: var(--pico-muted-color);
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 1;
 }
 
 .explorer-action-icon {
@@ -1275,7 +1277,7 @@ section.stage.empty-shell {
     white-space: nowrap;
 }
 
-/* The Summary cell's styled segments. Only the three distinctions worth finding carry a colour — who
+/* The Summary cell's styled segments. Only the three distinctions worth finding carry a color — who
    speaks, what the host is asked to perform, and a value only a running game can supply — drawn
    from the Source editor's own syntax tokens, already defined for both themes. The grammar around
    them is muted, so the words a writer wrote stay the most legible thing in the row. */
@@ -1305,7 +1307,7 @@ section.stage.empty-shell {
 
 /* A cell drawn as a list — a choice's options — rather than as one line. Pico gives a bare list
    a bottom margin, so the reset keeps the cell's own rhythm; the marker wears the muted grammar
-   colour so the bullets step back the way the separators they replaced did. */
+   color so the bullets step back the way the separators they replaced did. */
 .dd-sum-list {
     margin: 0;
     padding-left: 1.1rem;
@@ -1939,66 +1941,71 @@ g.node.entity-highlight text.label {
 /* Dialogue semantic-token highlighting: the compiler-projected tokens, painted over the
    Markdown syntax colors. The tokens are disjoint — the speaker's name, @id, and : separator,
    plus tags and the jump arrow — so each simply colors its own range. No lexer runs in the
-   browser; these classes decorate the ranges the compiler projected into the report payload. */
-.source-pane .cm-content .dd-tok-speaker-name {
+   browser; these classes decorate the ranges the compiler projected into the report payload.
+
+   Both text surfaces wear these classes, so one construct is one color wherever it is read.
+   The editor spells out its scope because CodeMirror's own highlight classes would otherwise
+   win the cascade; the Preview needs no such help, but sharing the selector is what keeps the
+   two from drifting. */
+:is(.source-pane .cm-content, .source-preview) .dd-tok-speaker-name {
     color: var(--tok-speaker-name);
 }
 
-.source-pane .cm-content .dd-tok-speaker-id {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-speaker-id {
     color: var(--tok-speaker-id);
 }
 
-.source-pane .cm-content .dd-tok-separator {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-separator {
     color: var(--tok-separator);
 }
 
-.source-pane .cm-content .dd-tok-custom-tag {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-custom-tag {
     color: var(--tok-custom-tag);
 }
 
-.source-pane .cm-content .dd-tok-reserved-tag {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-reserved-tag {
     color: var(--tok-reserved-tag);
 }
 
-.source-pane .cm-content .dd-tok-jump {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-jump {
     color: var(--tok-jump);
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-reserved-anchor,
-.source-pane .cm-content .dd-tok-reserved-anchor * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-reserved-anchor,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-reserved-anchor * {
     color: var(--tok-reserved-anchor);
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-control-keyword,
-.source-pane .cm-content .dd-tok-control-keyword * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-control-keyword,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-control-keyword * {
     color: var(--tok-control-keyword);
     font-weight: 600;
 }
 
-.source-pane .cm-content .dd-tok-query,
-.source-pane .cm-content .dd-tok-query * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-query,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-query * {
     color: var(--tok-query);
 }
 
-.source-pane .cm-content .dd-tok-condition,
-.source-pane .cm-content .dd-tok-condition * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-condition,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-condition * {
     color: var(--tok-condition);
 }
 
-.source-pane .cm-content .dd-tok-static-weight,
-.source-pane .cm-content .dd-tok-static-weight * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-static-weight,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-static-weight * {
     color: var(--tok-static-weight);
 }
 
-.source-pane .cm-content .dd-tok-dynamic-weight,
-.source-pane .cm-content .dd-tok-dynamic-weight * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-dynamic-weight,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-dynamic-weight * {
     color: var(--tok-dynamic-weight);
 }
 
-.source-pane .cm-content .dd-tok-command,
-.source-pane .cm-content .dd-tok-command * {
+:is(.source-pane .cm-content, .source-preview) .dd-tok-command,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-command * {
     color: var(--tok-command);
 }
 
@@ -2010,6 +2017,32 @@ g.node.entity-highlight text.label {
 .source-pane .cm-content .dd-tok-ignored-markdown,
 .source-pane .cm-content .dd-tok-ignored-markdown * {
     color: var(--md-muted);
+}
+
+/* The Preview's own interaction layer, on top of the shared vocabulary above. Every mark that
+   explains itself on hover wears the graph's help pointer, the jump's arrow included — nothing in
+   the Preview is clickable, so nothing there promises a click. The capsule, which does act,
+   keeps the pointer its class already sets. */
+.source-preview .dd-tok-speaker-name,
+.source-preview .dd-tok-speaker-id,
+.source-preview .dd-tok-command,
+.source-preview .dd-tok-query,
+.source-preview .dd-tok-condition,
+.source-preview .dd-tok-static-weight,
+.source-preview .dd-tok-dynamic-weight,
+.source-preview .dd-tok-reserved-anchor,
+.source-preview .dd-tok-jump {
+    cursor: help;
+}
+
+/* The capsule reads a little larger here than in a table cell, because it sits in running prose,
+   and it is drawn with even sides and a snug fit. A tag in a line is followed by the punctuation
+   that closes a speaker prefix — `#wise: Welcome` — so padding loose enough for a table cell would
+   leave the colon floating away from the tag it belongs to. */
+.source-preview .dd-tag {
+    padding: 0.05rem 0.3rem;
+    font-size: 0.78rem;
+    vertical-align: baseline;
 }
 
 /* The inline "#slug" hint revealed after the active heading line; clicking copies the anchor.
@@ -2079,6 +2112,41 @@ g.node.entity-highlight text.label {
     color: var(--md-link);
     font-size: 0.72rem;
     text-decoration: underline;
+}
+
+/* A fix action reads as a VS Code quick fix — a lightbulb and a quiet, text-sized row. The
+   selector out-specifies CodeMirror's own action theme (a filled white-on-dark button) and
+   Pico's <button> rules, and the reset drops whatever either left behind. */
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    margin: 0.15rem 0 0;
+    padding: 0.1rem 0.35rem;
+    border-radius: var(--pico-border-radius);
+    color: inherit;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction::before {
+    font-family: codicon, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1;
+    content: "\ea61"; /* codicon-lightbulb */
+}
+
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction:hover,
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction:focus-visible {
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+}
+
+.cm-tooltip-lint .cm-diagnostic .cm-diagnosticAction:focus-visible {
+    outline: 2px solid var(--pico-primary);
+    outline-offset: 1px;
 }
 
 /* The compact find/replace panel floats over the top-right of the editor, VS Code-style, rather
@@ -2750,6 +2818,13 @@ a.dd-ignored-region-brief {
 
 .source-preview .dd-preview-control-region {
     position: relative;
+}
+
+/* The keyword that opens a conditional block had a hook with no color of its own. It wears the
+   token vocabulary now, so `if` reads in the Preview the way it reads in the editor. */
+.source-preview .dd-preview-control-keyword {
+    color: var(--tok-control-keyword);
+    font-weight: 600;
 }
 
 /* The conditional-dialogue marker states a permanent fact about its blockquote rather than
@@ -3874,7 +3949,7 @@ body.zen .tabbar-explorer {
     display: none;
 }
 
-/* With its neighbour gone the primary pane takes the whole row, overriding the drag-set
+/* With its neighbor gone the primary pane takes the whole row, overriding the drag-set
    split variable the same way each panel's collapsed class does. */
 body.zen .source-view > .source-pane,
 body.zen .config-view > .config-source,
@@ -4422,10 +4497,10 @@ body.zen .playbook-view > .playbook-source {
     /* In Edit mode the row carries nine controls — the mode toggle, both paths, the counts,
        the save-mode capsule, its status, and three buttons — and on a small window they
        genuinely do not fit. Scrolling is the honest outcome: a control that cannot shrink
-       otherwise overlaps its neighbour, which is worse than being one gesture away. */
+       otherwise overlaps its neighbor, which is worse than being one gesture away. */
     overflow-x: auto;
     scrollbar-width: none;
-    min-width: 0; /* allow the path to shrink and ellipsise */
+    min-width: 0; /* allow the path to shrink and ellipsize */
     flex: 1 1 auto;
 }
 
@@ -4667,12 +4742,16 @@ body.zen .playbook-view > .playbook-source {
     border-color: var(--dd-reference);
 }
 
+/* An inert label stays legible: the muted color already reads as secondary, and halving its
+   opacity put the text at 2:1 against the light theme's white — the number the live e2e now
+   holds. The withdrawn border, the missing hover, and the inert cursor carry the state. */
 .discard-button:disabled {
-    opacity: 0.5;
+    border-color: transparent;
     cursor: not-allowed;
+    opacity: 1;
 }
 
-/* The document path: filename always visible, the directory middle ellipsised. */
+/* The document path: filename always visible, the directory middle ellipsized. */
 
 /* The way back to the file selector, sitting beside the path it leaves. Quiet and small like the
    path chip it neighbors: it is a door out of the document rather than a control of the report. */
@@ -4699,7 +4778,7 @@ body.zen .playbook-view > .playbook-source {
     --pico-background-color: transparent;
 
     /* An inline, content-sized chip — not a full-width block button. The max-width
-       caps it so a long path is middle-ellipsised (below) instead of stretching
+       caps it so a long path is middle-ellipsized (below) instead of stretching
        across the row. */
     display: inline-flex;
     align-items: center;
@@ -4935,6 +5014,43 @@ body.zen .playbook-view > .playbook-source {
 .problem-jump:hover {
     color: var(--problem-text);
     background: transparent;
+}
+
+/* A diagnostic's fix, offered where the writer browses problems: a lightbulb whose hover help
+   names the repair, leading a slot every row reserves so rows with and without one align. */
+.problem-fix-slot {
+    display: flex;
+    flex: 0 0 auto;
+    align-self: center;
+    justify-content: center;
+    width: 1.5rem;
+}
+
+.problem-fix {
+    --pico-background-color: transparent;
+
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    margin: 0;
+    padding: 0.2rem;
+    border: none;
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--problem-text);
+    line-height: 1;
+    cursor: pointer;
+}
+
+.problem-fix:hover {
+    color: var(--problem-text);
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+}
+
+.problem-fix-icon {
+    font-size: 13px;
 }
 
 .problem-icon {
@@ -5226,7 +5342,7 @@ body.zen .playbook-view > .playbook-source {
         cursor: default;
     }
 
-    /* One row at every width. The document path ellipsises, so it yields space before
+    /* One row at every width. The document path ellipsizes, so it yields space before
        anything wraps; below 720px the paths drop to their icons entirely (see the rule at the
        end of this file). Stacking the line into a column here — the previous answer — is what
        produced a three-row status line. */
@@ -5717,7 +5833,7 @@ button.dd-tag:focus-visible {
 }
 
 /* Both path chips must be able to give up width. A chip that cannot shrink does not wrap when
-   the row runs out of room — it simply overlaps its neighbour, which is what the config label
+   the row runs out of room — it simply overlaps its neighbor, which is what the config label
    did once Edit mode added the save controls beside it. */
 #doc-path,
 #config-path {

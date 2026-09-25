@@ -1,3 +1,4 @@
+using DialogueDown.Cli.Fixing;
 using DialogueDown.Diagnostics;
 using Errata;
 using Spectre.Console;
@@ -5,31 +6,56 @@ using Spectre.Console;
 namespace DialogueDown.Cli;
 
 /// <summary>
-/// Renders a compile's located diagnostics. On an interactive console it uses the
+/// Renders a compile's located diagnostics and, when a fix run had candidates, what it did after
+/// them. On an interactive console it uses the
 /// <see href="https://github.com/spectreconsole/errata">Errata</see> library to draw a rich block
 /// per diagnostic — the source line with a colored caret under the offending range — and otherwise
 /// writes a greppable <c>file(line,column): severity CODE: message</c> one-liner. Both paths end
-/// with a summary, and rendering stays confined to the CLI (the umbrella note's DD7).
+/// with a summary and a fixable-count hint, exactly as a plain compile prints them; the fix section
+/// then follows separately. Rendering stays confined to the CLI (the umbrella note's DD7).
 /// </summary>
 internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
 {
-    public void Render(string file, string source, IReadOnlyList<LocatedDiagnostic> diagnostics)
+    public void Render(
+        string file,
+        string source,
+        IReadOnlyList<LocatedDiagnostic> diagnostics,
+        FixRun? fix = null)
     {
         ArgumentNullException.ThrowIfNull(file);
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(diagnostics);
-        if (diagnostics.Count == 0)
+
+        if (diagnostics.Count > 0)
         {
-            return;
+            RenderDiagnostics(console, file, source, diagnostics);
+            console.MarkupLineInterpolated($"[grey]{Summarize(diagnostics)}[/]");
+            var fixable = diagnostics.Count(diagnostic => diagnostic.Fixes.Count > 0);
+            if (fixable > 0)
+            {
+                console.MarkupLineInterpolated($"[grey]{fixable} fixable with --fix[/]");
+            }
         }
 
+        if (fix is not null)
+        {
+            if (diagnostics.Count > 0)
+            {
+                console.WriteLine(); // separate the diagnostics as found from the fix section
+            }
+
+            RenderFixRun(file, source, fix);
+        }
+    }
+
+    private static void RenderDiagnostics(
+        IAnsiConsole console, string file, string source, IReadOnlyList<LocatedDiagnostic> diagnostics)
+    {
         var ordered = Ordered(diagnostics).ToList();
         if (!console.Profile.Capabilities.Interactive || !TryRenderRich(console, file, source, ordered))
         {
             RenderPlain(console, file, ordered);
         }
-
-        console.MarkupLineInterpolated($"[grey]{Summarize(diagnostics)}[/]");
     }
 
     // The rich, source-context rendering. Returns false (so the caller falls back to the one-liner)
@@ -106,6 +132,20 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
             .WithNote($"for more information, see {DiagnosticDocumentation.UrlFor(diagnostic.Code)}");
     }
 
+    private static string PhraseOf(FixSkipReason reason) => reason switch
+    {
+        FixSkipReason.OverlapsAnAppliedFix => "overlaps an applied fix",
+        FixSkipReason.OutsideTheScript => "falls outside the script",
+        _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Unknown fix skip reason."),
+    };
+
+    private static string Remaining(IReadOnlyList<LocatedDiagnostic> remaining) =>
+        remaining.Count == 0
+            ? string.Empty
+            : $"; {Summarize(remaining)} {(remaining.Count == 1 ? "remains" : "remain")}";
+
+    private static string FixesCount(int applied) => applied == 1 ? "1 fix" : $"{applied} fixes";
+
     private static IEnumerable<LocatedDiagnostic> Ordered(IReadOnlyList<LocatedDiagnostic> diagnostics) =>
         diagnostics
             .OrderBy(diagnostic => diagnostic.Start.Line)
@@ -154,4 +194,40 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
             parts.Add($"{count} {noun}{(count == 1 ? string.Empty : "s")}");
         }
     }
+    private void RenderFixRun(string file, string source, FixRun fix)
+    {
+        if (fix.WrittenFile is { } written)
+        {
+            var applied = fix.Outcomes.Count(outcome => outcome.Applied);
+            console.MarkupLineInterpolated($"[grey]Fixed {written} ({FixesCount(applied)}{Remaining(fix.Remaining)})[/]");
+        }
+
+        for (var index = 0; index < fix.Outcomes.Count; index++)
+        {
+            if (index > 0)
+            {
+                console.WriteLine();
+            }
+
+            var outcome = fix.Outcomes[index];
+            if (outcome.Applied)
+            {
+                console.WriteLine($"{index + 1}. Applied Fix: {outcome.Fix.Title}");
+                FixDiff.Render(console, FixDiff.Rows(source, outcome.Fix));
+            }
+            else
+            {
+                console.WriteLine(
+                    $"{index + 1}. Skipped Fix: {outcome.Fix.Title} ({PhraseOf(outcome.SkipReason!.Value)})");
+            }
+        }
+
+        if (fix.NewAfterFixing.Count > 0)
+        {
+            console.WriteLine();
+            console.WriteLine("after fixing:");
+            RenderDiagnostics(console, file, fix.CorrectedSource, fix.NewAfterFixing);
+        }
+    }
+
 }

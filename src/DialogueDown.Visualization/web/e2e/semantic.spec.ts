@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
 import { writeReport } from "./report";
+import { audit } from "./audit";
 import type { Report } from "../src/model";
 
 // A Semantic Model report: a two-scene tree beside the speaker, anchor, and
@@ -462,7 +462,7 @@ test("emphasizes the scene backbone over content nodes", async ({ page }) => {
 });
 
 test("has no accessibility violations on the Semantic tab", async ({ page }) => {
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    expect((await audit(page)).violations).toEqual([]);
 });
 
 test("Zen mode leaves the scene tree alone by hiding the tables column", async ({ page }) => {

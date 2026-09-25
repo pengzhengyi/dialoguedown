@@ -32,6 +32,10 @@ internal sealed class CompileSettings : CommandSettings
     [Description("Where the emitted text goes, by convention <script>.playbook.json. Default: standard output.")]
     public string? Output { get; init; }
 
+    [CommandOption("--fix")]
+    [Description("Correct the script in place by applying each diagnostic's preferred fix, then recompile it.")]
+    public bool Fix { get; init; }
+
     /// <summary>The compilation mode from <c>--mode</c>, or null to inherit the resolved options'
     /// mode. Only valid after <see cref="Validate"/> succeeds.</summary>
     public CompilationMode? ResolvedMode => Mode is null ? null : CompilationModes.TryParse(Mode);
@@ -88,7 +92,34 @@ internal sealed class CompileSettings : CommandSettings
                 $"Unknown --mode '{Mode}'. Use {CompilationModes.SettableNamesDescription}.");
         }
 
+        var fix = ValidateFix();
+        if (!fix.Successful)
+        {
+            return fix;
+        }
+
         return ValidateEmit();
+    }
+
+    // Fix mode writes the corrected script instead of an emission, so a named emission — either
+    // format or destination — is a contradiction rather than an instruction to prefer one output.
+    private ValidationResult ValidateFix()
+    {
+        if (!Fix)
+        {
+            return ValidationResult.Success();
+        }
+
+        if (Emit is not null)
+        {
+            return ValidationResult.Error(
+                "--fix corrects the script in place and writes no emission. Remove --emit, or drop --fix to emit instead.");
+        }
+
+        return Output is null
+            ? ValidationResult.Success()
+            : ValidationResult.Error(
+                "--fix corrects the script in place and writes no emission. Remove -o, or drop --fix to emit instead.");
     }
 
     // `--output` names where the emitted text goes, so the two are validated together. A

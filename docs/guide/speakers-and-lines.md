@@ -13,6 +13,7 @@ Part of the [script language specification](script-language.md).
   - [Speaker reference](#speaker-reference)
   - [Partial declaration](#partial-declaration)
   - [Default speaker](#default-speaker)
+  - [Escaping a speaker prefix](#escaping-a-speaker-prefix)
 - [Whitespace around the colon](#whitespace-around-the-colon)
 - [Styling](#styling)
 - [Tags](#tags)
@@ -144,6 +145,27 @@ Narrator @narrator ##default: The story begins.
 This line is also spoken by Narrator.
 ```
 
+### Escaping a speaker prefix
+
+An escape makes punctuation text, so an escaped prefix element breaks the prefix
+and the line plays in the default voice:
+
+| Written (source)     | Display (preview)   | Interpreted (runtime)                                |
+| -------------------- | ------------------- | ---------------------------------------------------- |
+| `Alice\: Hello`      | `Alice: Hello`      | Speaker: default speaker<br>Speech: Alice: Hello     |
+| `\Alice: Hello`      | `\Alice: Hello`     | Speaker: default speaker<br>Speech: \Alice: Hello    |
+| `\@alice: Hi`        | `@alice: Hi`        | Speaker: default speaker<br>Speech: @alice: Hi       |
+| `\#tag: hi`          | `#tag: hi`          | Speaker: default speaker<br>Speech: #tag: hi         |
+| `Alice \@alice: Hi`  | `Alice @alice: Hi`  | Speaker: default speaker<br>Speech: Alice @alice: Hi |
+| `Alice: \@alice: Hi` | `Alice: @alice: Hi` | Speaker: Alice<br>Speech: @alice: Hi                 |
+| `"@alice": Hi`       | `"@alice": Hi`      | Speaker: @alice<br>Speech: Hi                        |
+
+To keep an escape inside speech, put the speaker's colon first — `Alice: \@alice: Hi`
+is Alice saying "@alice: Hi". A name that is not a plain word is quoted
+(`"@alice": Hi`), and a backslash before a letter escapes nothing, so
+`\Alice: Hello` keeps its backslash. See
+[Literal punctuation](script-language.md#literal-punctuation).
+
 ## Whitespace around the colon
 
 Whitespace around the colon is flexible for author comfort. Whitespace before
@@ -186,7 +208,9 @@ Alice: That plan is ~~canceled~~.
 - `*text*` or `_text_` is **italic**; `**text**` or `__text__` is **bold**;
   `~~text~~` is **strikethrough**. Combine emphasis (`***text***`) for bold italic.
 - To type a **literal** asterisk, underscore, or tilde, escape it (`\*`, `\_`,
-  `\~`). Underscores inside a word (`snake_case_name`) are never emphasis, and a
+  `\~`) — and the same backslash writes a literal tag sigil (`\#word`) or arrow
+  (`\=>`); see [Literal punctuation](script-language.md#literal-punctuation).
+  Underscores inside a word (`snake_case_name`) are never emphasis, and a
   single `~` is not strikethrough — only `~~...~~` is.
 
 Styling can wrap other speech constructs — a query inside bold still resolves:
@@ -235,7 +259,9 @@ set. A tag that carries a value (`#name=value`) is a **tag group**.
 Tags may appear wherever they attach to content: in a **speaker declaration**, in
 a **link or image label**, and **anywhere within speech text**. A custom or
 reserved tag must never start a line at block scope — a tag always rides along
-with the element it annotates, never standing alone as a line.
+with the element it annotates, never standing alone as a line. A `#word` meant as
+ordinary text is escaped (`\#word`); see
+[Literal punctuation](script-language.md#literal-punctuation).
 
 Currently, the only supported reserved tag is `##default`, which marks a speaker
 as the default speaker.

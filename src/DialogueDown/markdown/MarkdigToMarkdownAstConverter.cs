@@ -7,6 +7,7 @@ using MarkdigEmphasisInline = Markdig.Syntax.Inlines.EmphasisInline;
 using MarkdigHeadingBlock = Markdig.Syntax.HeadingBlock;
 using MarkdigHtmlBlock = Markdig.Syntax.HtmlBlock;
 using MarkdigHtmlBlockType = Markdig.Syntax.HtmlBlockType;
+using MarkdigHtmlEntityInline = Markdig.Syntax.Inlines.HtmlEntityInline;
 using MarkdigHtmlInline = Markdig.Syntax.Inlines.HtmlInline;
 using MarkdigInline = Markdig.Syntax.Inlines.Inline;
 using MarkdigLineBreakInline = Markdig.Syntax.Inlines.LineBreakInline;
@@ -143,7 +144,12 @@ internal sealed class MarkdigToMarkdownAstConverter
     private MarkdownInline? ConvertInline(MarkdigInline inline) => inline switch
     {
         MarkdigLiteralInline literal => new TextInline(
-            literal.Content.ToString(), ConvertSpan(literal.Span), ContentSpanOf(literal)),
+            literal.Content.ToString(), ConvertSpan(literal.Span), ContentSpanOf(literal),
+            literal.IsFirstCharacterEscaped),
+        // Decoded text, raw span: the AST carries the character the author named, and anything
+        // pointing at the inline still points at the source that spelled it out.
+        MarkdigHtmlEntityInline entity => new TextInline(
+            entity.Transcoded.ToString(), ConvertSpan(entity.Span)),
         MarkdigEmphasisInline emphasis => ConvertEmphasis(emphasis),
         MarkdigLinkInline link when !link.IsImage => ConvertLink(link),
         MarkdigLinkInline image => ConvertImage(image),

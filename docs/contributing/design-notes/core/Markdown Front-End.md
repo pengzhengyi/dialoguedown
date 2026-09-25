@@ -23,6 +23,7 @@
     - [D7 — Line breaks preserved with a hard/soft flag](#d7--line-breaks-preserved-with-a-hardsoft-flag)
     - [D8 — Configurable unmodeled-node handling](#d8--configurable-unmodeled-node-handling)
     - [D9 — Discard front matter](#d9--discard-front-matter)
+    - [D10 — Escape provenance on text](#d10--escape-provenance-on-text)
   - [Markdig to AST mapping](#markdig-to-ast-mapping)
   - [Error and boundary cases](#error-and-boundary-cases)
   - [Integration](#integration)
@@ -82,6 +83,9 @@ Grouping headings into sections, splitting `Speaker: Speech`, and interpreting
       presentation layer can render an image inline in a chat.
 - [x] Expose **inline code spans** (`` `...` ``) with their raw inner text
       (queries/commands are parsed later).
+- [x] Decode **HTML entity references** (`&nbsp;`, `&#32;`) to the character they
+      name, as CommonMark specifies, so a preview and a game agree on a named
+      space rather than one showing the character and the other its spelling.
 - [x] **Recognize and strip HTML comments** (`<!-- ... -->`) so they never leak
       into speech; they are discarded, not modeled (D5).
 - [x] **Recognize and discard leading front matter** (a `---`-fenced metadata
@@ -216,7 +220,8 @@ Consequences:
 - **No text coalescing.** Adjacent text runs are left as separate `TextInline`s,
   so an escape (`\*`) or an emphasis boundary can split contiguous text into a few
   runs (e.g. `\*x\*` → `*`, `x`, `*`). This is harmless — downstream concatenates
-  text runs — and keeps the converter simple.
+  text runs — and keeps the converter simple. Each run also records whether its
+  first character was escaped (D10).
 - **Bold-italic falls out of nesting.** `***x***` and `**_x_**` parse as nested
   emphasis, so no separate "bold-italic" kind is needed.
 - **Faithful to Markdown (D3).** Emphasis and strikethrough *are* Markdown
@@ -327,6 +332,24 @@ would make no sense.
 Front matter is only recognized at the very start of the document; a `---` after
 content is an ordinary thematic break (handled per the policy — D8).
 
+### D10 — Escape provenance on text
+
+Markdig resolves a backslash escape before we see the text, but its AST records
+on each literal whether its **first character was escaped**
+(`LiteralInline.IsFirstCharacterEscaped`). We copy that fact onto
+`TextInline.IsFirstCharacterEscaped`.
+
+- **Why:** the escape is Markdown's to resolve, but dialogue sigils (`#tag`,
+  `=>`, a speaker prefix's `@id` and tags) are layered on the resolved text.
+  Without the flag, an escaped `#` or `=` is indistinguishable from a typed one;
+  the only other trace is a span-length delta, which is a coincidence rather
+  than a statement. The front end records *that* a character was escaped, not
+  what it means, so the fact stays DSL-agnostic.
+- **Exact, not approximate:** Markdig opens a new literal at every escape and
+  only extends it forward, so only a literal's first character can ever be
+  escaped. One boolean per `TextInline` suffices, and it agrees with the
+  `ContentSpan` delta the converter already computes.
+
 ## Markdig to AST mapping
 
 | Markdig node                                                         | Our node            | Notes                                                                                      |
@@ -336,7 +359,7 @@ content is an ordinary thematic break (handled per the policy — D8).
 | `ParagraphBlock`                                                     | `Paragraph`         | map inline content                                                                         |
 | `ListBlock`                                                          | `ListBlock`         | copy `IsOrdered`; map items                                                                |
 | `ListItemBlock`                                                      | `ListItem`          | map child blocks (enables nesting)                                                         |
-| `LiteralInline`                                                      | `TextInline`        | text with escapes resolved by Markdig                                                      |
+| `LiteralInline`                                                      | `TextInline`        | text with escapes resolved by Markdig; the escape is kept (D10)                            |
 | `EmphasisInline`                                                     | `EmphasisInline`    | `Kind` = `Italic`/`Bold`/`Strikethrough` from delimiter char + count; **recurse** children |
 | `LinkInline` (link)                                                  | `LinkInline`        | keep `Url` as target; **recurse** the label into inline nodes                              |
 | `LinkInline` (image)                                                 | `ImageInline`       | `IsImage` is set; keep `Url` as source and **recurse** the alt into inline nodes           |
@@ -379,7 +402,7 @@ convertInline(comment) -> (discarded; excluded from surrounding text)
 | Unterminated code span `` `foo ``                   | Follows CommonMark: treated as literal text. Not an error here.                                                                                                          |
 | Deeply nested lists                                 | Represented faithfully; no artificial depth limit at this layer.                                                                                                         |
 | Emphasis `*italic*` / `**bold**` / `~~struck~~`     | Modeled as `EmphasisInline` (Kind + parsed children); a literal `*` or `~` needs escaping (`\*`, `\~`) (D2).                                                             |
-| Escaped `\*` or intraword `keep_the_underscores`    | Stays literal `TextInline` — no emphasis (standard CommonMark).                                                                                                          |
+| Escaped `\*` or intraword `keep_the_underscores`    | Stays literal `TextInline` — no emphasis (standard CommonMark), and the run records the escape (D10).                                                                    |
 | Unbalanced or single tilde (`~x~`, `~~x~`)          | Stays literal — only balanced `~~...~~` is strikethrough.                                                                                                                |
 | `~~~...~~~` at line start                           | A tilde-fenced **code block** (like ```` ``` ````), not strikethrough — handled per the unmodeled-node policy (ignored by default).                                      |
 | Image `![alt](../src)`                              | Modeled as `ImageInline` (source + inline alt), like a link; the transpiler decides inline rendering.                                                                    |
@@ -418,8 +441,9 @@ guard.
   - `#` heading at line start vs a `#` that appears inline (literal text).
   - Every list marker: `-`, `+`, `*`, and ordered `1.` / `1)`.
   - Emphasis: italic/bold/**strikethrough** (`~~x~~`), nested bold-italic
-    (`***x***`), a code-span query and a link **inside** emphasis, an escaped `\*`,
-    a single `~` staying literal, and intraword `keep_the_underscores`.
+    (`***x***`), a code-span query and a link **inside** emphasis, an escaped `\*`
+    (recording the escape, D10), a single `~` staying literal, and intraword
+    `keep_the_underscores`.
   - Deeply **nested lists** (choices within choices, plus succession lines under a
     choice) round-trip to the right block/item nesting.
   - Multiple lines in one paragraph become `LineBreak` nodes; soft breaks (a plain

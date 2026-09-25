@@ -191,7 +191,7 @@ happen to share `baseline/`.
 
 ## Error and boundary cases
 
-| Case | Behaviour |
+| Case | Behavior |
 | --- | --- |
 | `branch` with a single gated arm | accept — nothing to order |
 | `branch` with no arm | cannot reach here — the outward-shape checker refuses it first, and this checker returns early on no arms |

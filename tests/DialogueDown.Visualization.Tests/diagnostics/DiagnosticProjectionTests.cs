@@ -101,12 +101,46 @@ public sealed class DiagnosticProjectionTests
             diagnostic => Assert.Equal("DLG2001", diagnostic.Code));
     }
 
+    [Fact]
+    public void Project_NoFixes_LeavesFixesNull() =>
+        Assert.Null(ProjectOne(Located()).Fixes);
+
+    [Fact]
+    public void Project_CarriesFixesWithOffsetsRelativeToTheDiagnostic()
+    {
+        var projected = ProjectOne(Located(
+            startOffset: 10,
+            fixes: [new LocatedFix("Escape as literal text", [new LocatedEdit(10, 10, "\\")])]));
+
+        var fix = Assert.Single(projected.Fixes!);
+        Assert.Equal("Escape as literal text", fix.Title);
+        var edit = Assert.Single(fix.Edits);
+        Assert.Equal(0, edit.Start);
+        Assert.Equal(0, edit.End);
+        Assert.Equal("\\", edit.NewText);
+    }
+
+    [Fact]
+    public void Project_FixEditsInsideTheDiagnostic_AreOffsetFromItsStart()
+    {
+        var projected = ProjectOne(Located(
+            startOffset: 10,
+            fixes: [new LocatedFix("Replace", [new LocatedEdit(12, 14, "x")])]));
+
+        var edit = Assert.Single(Assert.Single(projected.Fixes!).Edits);
+        Assert.Equal(2, edit.Start);
+        Assert.Equal(4, edit.End);
+    }
+
     private static LocatedDiagnostic Located(
         DiagnosticSeverity severity = DiagnosticSeverity.Error,
         LinePosition? start = null,
         LinePosition? end = null,
         string code = "DLG0001",
-        string message = "Something went wrong.") =>
+        string message = "Something went wrong.",
+        int startOffset = 0,
+        int endOffset = 1,
+        IReadOnlyList<LocatedFix>? fixes = null) =>
         new(
             code,
             severity,
@@ -114,8 +148,11 @@ public sealed class DiagnosticProjectionTests
             message,
             start ?? new LinePosition(1, 1),
             end ?? new LinePosition(1, 2),
-            StartOffset: 0,
-            EndOffset: 1);
+            startOffset,
+            endOffset)
+        {
+            Fixes = fixes ?? [],
+        };
 
     private LspDiagnostic ProjectOne(LocatedDiagnostic diagnostic) =>
         Assert.Single(_projection.Project([diagnostic]));

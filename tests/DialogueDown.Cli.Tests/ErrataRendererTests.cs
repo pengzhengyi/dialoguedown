@@ -1,3 +1,4 @@
+using DialogueDown.Cli.Fixing;
 using DialogueDown.Diagnostics;
 using Spectre.Console.Testing;
 
@@ -35,7 +36,9 @@ public sealed class ErrataRendererTests
         var console = PlainConsole();
 
         new ErrataRenderer(console).Render(
-            "s.dialogue.md", "", [Located("DLG1102", DiagnosticSeverity.Error, "'[x]' is not a game call", 1, 1)]);
+            "s.dialogue.md",
+            "",
+            [Located("DLG1102", DiagnosticSeverity.Error, "'[x]' is not a game call", 1, 1)]);
 
         // The literal brackets survive rather than being parsed as (invalid) Spectre markup.
         Assert.Contains("'[x]' is not a game call", console.Output, StringComparison.Ordinal);
@@ -162,6 +165,229 @@ public sealed class ErrataRendererTests
         Assert.Contains("for more information, see", output, StringComparison.Ordinal);
         Assert.Contains("error-codes.html#dlg1102", output, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Render_Plain_HintsHowManyDiagnosticsRemainFixable()
+    {
+        var console = PlainConsole();
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            "",
+            [
+                Fixable("DLG1113", "dangling arrow", 1, 5),
+                Located("DLG1107", DiagnosticSeverity.Warning, "styled prefix", 2, 1),
+            ]);
+
+        Assert.Contains("2 warnings", console.Output, StringComparison.Ordinal);
+        Assert.Contains("1 fixable with --fix", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_Plain_OmitsTheHintWhenNoDiagnosticCarriesAFix()
+    {
+        var console = PlainConsole();
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            "",
+            [Located("DLG1107", DiagnosticSeverity.Warning, "styled prefix", 1, 1)]);
+
+        Assert.DoesNotContain("fixable with --fix", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_FixRun_KeepsTheDiagnosticsAsFoundThenShowsTheFixSection()
+    {
+        var console = PlainConsole();
+        const string Source = "say => now\n";
+        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(4, 4, "\\")]);
+        var diagnostic = Located("DLG1113", DiagnosticSeverity.Warning, "dangling arrow", 1, 5) with
+        {
+            Fixes = [fix],
+        };
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            Source,
+            [diagnostic],
+            new FixRun(
+                [FixOutcome.Apply(fix)],
+                WrittenFile: "s.dialogue.md",
+                Remaining: [Located("DLG1107", DiagnosticSeverity.Warning, "styled prefix", 2, 1)],
+                NewAfterFixing: [],
+                CorrectedSource: "say \\=> now\n"));
+
+        var output = console.Output;
+        Assert.Contains("s.dialogue.md(1,5): warning DLG1113: dangling arrow", output, StringComparison.Ordinal);
+        Assert.Contains("1 warning", output, StringComparison.Ordinal);
+        Assert.Contains("1 fixable with --fix", output, StringComparison.Ordinal);
+        Assert.Contains("Fixed s.dialogue.md (1 fix; 1 warning remains)", output, StringComparison.Ordinal);
+        Assert.Contains("1. Applied Fix: Escape as literal text", output, StringComparison.Ordinal);
+        Assert.Contains("-say => now", output, StringComparison.Ordinal);
+        Assert.Contains("+say \\=> now", output, StringComparison.Ordinal);
+        // No inline outcome continuation rides the diagnostic anymore.
+        Assert.DoesNotContain("  fix applied", output, StringComparison.Ordinal);
+        // Diagnostics as found, then the fix section.
+        Assert.True(
+            output.IndexOf("for more information", StringComparison.Ordinal)
+            < output.IndexOf("Fixed s.dialogue.md", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Render_FixRun_WithNothingRemaining_OmitsTheRemainingClause()
+    {
+        var console = PlainConsole();
+        const string Source = "say => now\n";
+        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(4, 4, "\\")]);
+        var diagnostic = Located("DLG1113", DiagnosticSeverity.Warning, "dangling arrow", 1, 5) with
+        {
+            Fixes = [fix],
+        };
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            Source,
+            [diagnostic],
+            new FixRun(
+                [FixOutcome.Apply(fix)],
+                WrittenFile: "s.dialogue.md",
+                Remaining: [],
+                NewAfterFixing: [],
+                CorrectedSource: "say \\=> now\n"));
+
+        Assert.Contains("Fixed s.dialogue.md (1 fix)", console.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("remains", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_FixRun_ShowsASkippedFixWithoutAWriteNotice()
+    {
+        var console = PlainConsole();
+        const string Source = "say => now\n";
+        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(4, 4, "\\")]);
+        var diagnostic = Located("DLG1113", DiagnosticSeverity.Warning, "dangling arrow", 1, 5) with
+        {
+            Fixes = [fix],
+        };
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            Source,
+            [diagnostic],
+            new FixRun(
+                [FixOutcome.Skip(fix, FixSkipReason.OverlapsAnAppliedFix)],
+                WrittenFile: null,
+                Remaining: [diagnostic],
+                NewAfterFixing: [],
+                CorrectedSource: Source));
+
+        var output = console.Output;
+        Assert.Contains(
+            "1. Skipped Fix: Escape as literal text (overlaps an applied fix)",
+            output,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("Fixed ", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_FixRun_PluralizesTheNoticeAndTheRemainingClause()
+    {
+        var console = PlainConsole();
+        const string Source = "say => now\n";
+        var first = new LocatedFix("Escape as literal text", [new LocatedEdit(4, 4, "\\")]);
+        var second = new LocatedFix("Mark the line", [new LocatedEdit(0, 0, "# ")]);
+        var diagnostic = Located("DLG1113", DiagnosticSeverity.Warning, "dangling arrow", 1, 5) with
+        {
+            Fixes = [first, second],
+        };
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            Source,
+            [diagnostic],
+            new FixRun(
+                [FixOutcome.Apply(first), FixOutcome.Apply(second)],
+                WrittenFile: "s.dialogue.md",
+                Remaining:
+                [
+                    Located("DLG1107", DiagnosticSeverity.Warning, "styled prefix", 2, 1),
+                    Located("DLG2001", DiagnosticSeverity.Error, "duplicate anchor", 3, 1),
+                ],
+                NewAfterFixing: [],
+                CorrectedSource: "# say \\=> now\n"));
+
+        Assert.Contains(
+            "Fixed s.dialogue.md (2 fixes; 1 error, 1 warning remain)",
+            console.Output,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_FixRun_ReportsWhatAppearedOnlyAfterFixing()
+    {
+        var console = PlainConsole();
+        const string Source = "say => now\n";
+        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(4, 4, "\\")]);
+        var diagnostic = Located("DLG1113", DiagnosticSeverity.Warning, "dangling arrow", 1, 5) with
+        {
+            Fixes = [fix],
+        };
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            Source,
+            [diagnostic],
+            new FixRun(
+                [FixOutcome.Apply(fix)],
+                WrittenFile: "s.dialogue.md",
+                Remaining: [Located("DLG2001", DiagnosticSeverity.Error, "duplicate anchor", 2, 1)],
+                NewAfterFixing: [Located("DLG2001", DiagnosticSeverity.Error, "duplicate anchor", 2, 1)],
+                CorrectedSource: "say \\=> now\n"));
+
+        var output = console.Output;
+        Assert.Contains("after fixing:", output, StringComparison.Ordinal);
+        Assert.Contains("DLG2001", output, StringComparison.Ordinal);
+        Assert.True(
+            output.IndexOf("Fixed s.dialogue.md", StringComparison.Ordinal)
+            < output.IndexOf("after fixing:", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Render_Interactive_ShowsTheFixSectionUnderTheRichBlocks()
+    {
+        var console = InteractiveConsole();
+        const string Source = "Alice: say => now\n";
+        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(11, 11, "\\")]);
+        var diagnostic = Located("DLG1113", DiagnosticSeverity.Warning, "dangling arrow", 1, 12) with
+        {
+            Fixes = [fix],
+        };
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            Source,
+            [diagnostic],
+            new FixRun(
+                [FixOutcome.Apply(fix)],
+                WrittenFile: "s.dialogue.md",
+                Remaining: [],
+                NewAfterFixing: [],
+                CorrectedSource: "Alice: say \\=> now\n"));
+
+        var output = console.Output;
+        Assert.Contains("Alice: say", output, StringComparison.Ordinal); // the rich path ran
+        Assert.Contains("1. Applied Fix: Escape as literal text", output, StringComparison.Ordinal);
+        Assert.Contains("│ -Alice: say => now", output, StringComparison.Ordinal);
+        Assert.Contains("│ +Alice: say \\=> now", output, StringComparison.Ordinal);
+        Assert.Contains("Fixed s.dialogue.md (1 fix)", output, StringComparison.Ordinal);
+    }
+
+    private static LocatedDiagnostic Fixable(string code, string message, int line, int column) =>
+        Located(code, DiagnosticSeverity.Warning, message, line, column) with
+        {
+            Fixes = [new LocatedFix("Escape as literal text", [new LocatedEdit(0, 0, "\\")])],
+        };
 
     private static int CountOccurrences(string haystack, string needle)
     {
