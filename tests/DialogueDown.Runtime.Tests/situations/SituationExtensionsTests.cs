@@ -42,7 +42,8 @@ public sealed class SituationExtensionsTests
         var samples = OneOfEverySituation();
 
         // Checked first, because the walk below is only as complete as the list it walks: a
-        // situation added later and left out here would go unworded with nothing to say so.
+        // situation added later and left out here would go without a description, and nothing
+        // would say so.
         UnionCoverageAssert.AssertCoversEveryMember<Situation>(samples);
 
         Assert.All(
