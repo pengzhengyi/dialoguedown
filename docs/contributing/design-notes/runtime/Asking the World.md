@@ -139,6 +139,13 @@ read: a menu whose options are guarded by the same key cannot offer one and
 refuse another. A run therefore stops at most once on the way in and at most once
 on the way out, which is what keeps the protocol readable.
 
+A moment asks about every key it might need, not only the ones that end up
+deciding. A block's `elseif` is asked about even when its `if` holds and the
+`elseif` is never reached. That is sound because a query is a pure read
+([D6](./Dialogue%20Runtime%20Architecture.md#d6--queries-are-pure-reads-effects-change-the-world)):
+reading a key changes nothing, so reading one more costs only the read, and the
+driver may answer the keys in any order, one at a time or all at once.
+
 ### A2 — The runner does not remember an answer
 
 Two lines that ask the same key produce two `Resolve`s. The runner is a total
