@@ -33,7 +33,7 @@ public sealed class SessionOutcomeTests
     {
         var combined = SessionOutcome.Combine([
             SessionOutcome.Conformed(),
-            SessionOutcome.NotYetPlayable("nothing checks resolve yet")]);
+            SessionOutcome.NotYetPlayable("nothing checks describe yet")]);
 
         Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
     }
@@ -43,7 +43,7 @@ public sealed class SessionOutcomeTests
     {
         // Otherwise a real failure hides behind an unrelated check nobody has taught the harness.
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Diverged("said the wrong thing")]);
 
         Assert.Equal(SessionVerdict.Diverged, combined.Verdict);
@@ -66,18 +66,18 @@ public sealed class SessionOutcomeTests
     {
         // What lets one run name every construct this build has yet to learn.
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.NotYetPlayable("nothing checks asked yet")]);
 
         Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
-        Assert.Equal(["nothing checks resolve yet", "nothing checks asked yet"], combined.Reasons);
+        Assert.Equal(["nothing checks describe yet", "nothing checks asked yet"], combined.Reasons);
     }
 
     [Fact]
     public void Combine_DropsTheReasonsOfAVerdictItOutranks()
     {
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Diverged("the speaker"),
             SessionOutcome.Diverged("the speech")]);
 
@@ -114,7 +114,7 @@ public sealed class SessionOutcomeTests
     {
         // A divergence outranks one, so reading carries on until it is known there is none.
         var combined = SessionOutcome.Combine([
-            SessionOutcome.NotYetPlayable("nothing checks resolve yet"),
+            SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Conformed(),
             SessionOutcome.Diverged("said the wrong thing")]);
 

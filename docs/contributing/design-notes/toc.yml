@@ -38,6 +38,8 @@
     href: runtime/Runtime Core.md
   - name: Waiting on the Host
     href: runtime/Waiting on the Host.md
+  - name: Asking the World
+    href: runtime/Asking the World.md
 - name: Language constructs
   items:
   - name: Progression Order

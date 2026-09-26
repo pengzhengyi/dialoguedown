@@ -26,7 +26,7 @@ internal static class PlaybookNodes
     public static LineNode Line(int id, int speaker, string text, int next) =>
         new(id, speaker, [new TextFragment(text)], Condition: null, [new SuccessionEdge(next)]);
 
-    /// <summary>A line node that only plays when the world says so.</summary>
+    /// <summary>A line node that only plays when the world allows it.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="speaker">Who says it, by index.</param>
     /// <param name="text">What is said.</param>
@@ -35,6 +35,20 @@ internal static class PlaybookNodes
     /// <returns>The node.</returns>
     public static LineNode ConditionalLine(int id, int speaker, string text, int next, string key) =>
         new(id, speaker, [new TextFragment(text)], new KeyCondition(key), [new SuccessionEdge(next)]);
+
+    /// <summary>A line whose speech is written out fragment by fragment.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="speaker">Who says it, by index.</param>
+    /// <param name="next">Where succession leads.</param>
+    /// <param name="condition">What must hold for the line to play, or <see langword="null"/>.</param>
+    /// <param name="speech">What is said, in the order written.</param>
+    /// <returns>The node.</returns>
+    /// <remarks>
+    /// For a line a query stands in, which plain text cannot spell.
+    /// </remarks>
+    public static LineNode LineSaying(
+        int id, int speaker, int next, Condition? condition, params SpeechFragment[] speech) =>
+        new(id, speaker, [.. speech], condition, [new SuccessionEdge(next)]);
 
     /// <summary>A line carrying a jump the world must allow, and a succession to fall through to.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -51,14 +65,36 @@ internal static class PlaybookNodes
             speaker,
             [new TextFragment(text)],
             Condition: null,
-            [new DivertEdge(jumpTo, [], new KeyCondition(key)), new SuccessionEdge(next)]);
+            [Divert(jumpTo, key), new SuccessionEdge(next)]);
 
     /// <summary>A jump on its own line: nothing said, nothing performed, one way out.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="jumpTo">Where the jump leads.</param>
     /// <returns>The node.</returns>
-    public static ControlNode Jump(int id, int jumpTo) =>
-        new(id, [], Condition: null, [new DivertEdge(jumpTo, [], Condition: null)]);
+    public static ControlNode Jump(int id, int jumpTo) => Bare(id, Divert(jumpTo));
+
+    /// <summary>A node that says nothing and performs nothing, leaving only by the ways given.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="ways">The ways out, in the order written.</param>
+    /// <returns>The node.</returns>
+    /// <remarks>
+    /// For a test about which way out a run takes, where what the node itself does is beside the
+    /// point.
+    /// </remarks>
+    public static ControlNode Bare(int id, params Edge[] ways) =>
+        new(id, [], Condition: null, [.. ways]);
+
+    /// <summary>A jump, taken whenever a run leaves the node carrying it.</summary>
+    /// <param name="target">Where the jump leads.</param>
+    /// <returns>The edge.</returns>
+    public static DivertEdge Divert(int target) => new(target, [], Condition: null);
+
+    /// <summary>A jump taken only while the world answers that the key holds.</summary>
+    /// <param name="target">Where the jump leads.</param>
+    /// <param name="key">What the world is asked before the jump fires.</param>
+    /// <returns>The edge.</returns>
+    public static DivertEdge Divert(int target, string key) =>
+        new(target, [], new KeyCondition(key));
 
     /// <summary>A control node carrying effects for the host to carry out.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -88,13 +124,25 @@ internal static class PlaybookNodes
     public static ChoiceNode Choice(int id, int leadsTo, string label = "Go east", bool ordered = false) =>
         new(id, Ordered: ordered, [new OptionEdge(leadsTo, [new TextFragment(label)], Condition: null)]);
 
-    /// <summary>A branch node with one gated arm — a kind this pass cannot play.</summary>
+    /// <summary>A block condition, which says nothing and performs nothing and goes on by an arm.</summary>
     /// <param name="id">Its position in the playbook.</param>
-    /// <param name="leadsTo">Where the arm leads.</param>
-    /// <param name="order">Where the arm sits in the branch's order.</param>
+    /// <param name="ways">Its arms in the order they are tried, and a succession when it has no else.</param>
     /// <returns>The node.</returns>
-    public static BranchNode Branch(int id, int leadsTo, int order = 0) =>
-        new(id, [new BranchEdge(leadsTo, Order: order, Condition: null)]);
+    public static BranchNode Branch(int id, params Edge[] ways) => new(id, [.. ways]);
+
+    /// <summary>An arm of a block condition, taken when the world answers that the key holds.</summary>
+    /// <param name="target">Where the arm leads.</param>
+    /// <param name="order">Where it sits in the order the arms are tried, counting from zero.</param>
+    /// <param name="key">What the world is asked before the arm is taken.</param>
+    /// <returns>The edge.</returns>
+    public static BranchEdge Arm(int target, int order, string key) =>
+        new(target, order, new KeyCondition(key));
+
+    /// <summary>The else of a block condition, taken when no arm before it is.</summary>
+    /// <param name="target">Where it leads.</param>
+    /// <param name="order">Where it sits in the order the arms are tried, which is last.</param>
+    /// <returns>The edge.</returns>
+    public static BranchEdge Else(int target, int order) => new(target, order, Condition: null);
 
     /// <summary>A random choice with one auto-weighted option — a kind this pass cannot play.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -123,7 +171,7 @@ internal static class PlaybookNodes
         new ControlNode(0, [], Condition: null, [new SuccessionEdge(1)]),
         Effects(0, next: 1, "fade in"),
         Choice(0, leadsTo: 1),
-        Branch(0, leadsTo: 1),
+        Branch(0, Else(1, order: 0)),
         RandomChoice(0, leadsTo: 1),
     ];
 }

@@ -41,10 +41,10 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
         var context = PlayContextFactory.Of(
-            [Choice(0, leadsTo: 3), Choice(1, leadsTo: 3), Branch(2, leadsTo: 3), End(3)],
+            [Choice(0, leadsTo: 3), Choice(1, leadsTo: 3), RandomChoice(2, leadsTo: 3), End(3)],
             ["Alice"]);
 
-        AssertNotPlayable(context, "nothing plays a ChoiceNode yet", "nothing plays a BranchNode yet");
+        AssertNotPlayable(context, "nothing plays a ChoiceNode yet", "nothing plays a RandomChoiceNode yet");
     }
 
     [Fact]
@@ -64,9 +64,9 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAnExpectation_NamesEachClaimNobodyChecks()
     {
         var session = ImmutableArray.Create<SessionEntry>(
-            Expected("""{ "asked": [ { "label": "Go east" } ], "resolve": [ "Alice.HasKey" ] }"""));
+            Expected("""{ "asked": [ { "label": "Go east" } ], "frobnicate": true }"""));
 
-        AssertNotPlayable(session, "nothing checks asked yet", "nothing checks resolve yet");
+        AssertNotPlayable(session, "nothing checks asked yet", "nothing checks frobnicate yet");
     }
 
     [Fact]

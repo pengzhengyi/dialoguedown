@@ -188,15 +188,15 @@ one twice is in a ring, because nothing the walk reads changes as it goes. So th
 guard is a counter against `Nodes.Length`: no false refusal, no missed ring, no
 allocation, and no number anybody has to pick.
 
-### W6 — Waiting is a stage of the run, so the position carries it
+### W6 — Waiting is something the run is doing, so the situation carries it
 
 Waiting for the host is something the *run* is doing, not something the playbook
-says. `AwaitingDone` stands at the same node `AtNode` would, at a different stage,
-which is the shape the position union exists for: a run is not always simply *at*
-a node, and holding the stage in the position rather than beside it means the two
-can never disagree.
+says. `AwaitingDone` stands at the same node `AtNode` would, doing something else
+there, which is the shape the situation union exists for: a run is not always
+simply *at* a node, and holding what it is doing in the situation rather than
+beside the node means the two can never disagree.
 
-That keeps the protocol a relation between a position and a command. `Next`
+That keeps the protocol a relation between a situation and a command. `Next`
 advances from `AtNode`, `Done` advances from `AwaitingDone`, and neither arm has
 to look at the playbook to work out which stage the run is in.
 
@@ -221,6 +221,9 @@ This pass refuses any node or edge carrying a condition, naming it, exactly as a
 unplayable node kind is refused. Refusing is what keeps the not-yet-playable list
 honest — a construct nobody has taught the runner should read as untaught, never
 as played correctly by luck.
+
+[Asking the world](./Asking%20the%20World.md) replaces this refusal: a condition is
+now asked about and answered, and the refusal reason it used is retired.
 
 ### W8 — A host that could not carry an effect out says so, and the run stands still
 
@@ -279,7 +282,7 @@ is: both are answers, and there is no question to answer.
 | `Arrival` | A walk that carries on while the node has asked the host for nothing |
 | `NodeTraversalExtensions` | Reads the way onward — the divert when it applies, else the succession |
 | `protocol` | `Request`, the kind of event an answer is owed to; `Perform` carrying one effect; `Done` and `Failed` answering it |
-| `positions` | `AwaitingDone`, the stage a run is at once it has asked and not yet heard back |
+| `situations` | `AwaitingDone`, where a run is once it has asked and not yet heard back |
 | `Runner.Step` | One arm per stage: `Next` advances from `AtNode`, `Done` from `AwaitingDone`, `Failed` holds where it stands |
 | `schema/fixture-0.schema.json` | `performed` becomes `perform` and gains its shape; `done` and `failed` join the sends |
 | `conformance/playable/an-effect` | Gains the send, and a `because` that states the ordering it now proves |
@@ -323,6 +326,7 @@ made to account for.
 - **Conditions are refused, not evaluated.** Every construct in the playbook format
   except a choice node, a branch node, and a random choice node can carry one, so
   the pass that brings the world seam unlocks more than its own constructs.
+  [Asking the world](./Asking%20the%20World.md) is that pass.
 - **Entropy stays open.** Whether a random choice draws from a specified generator
   or from host-supplied values is left to the pass that plays one; nothing here
   reads a weight.
