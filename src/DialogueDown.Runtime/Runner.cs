@@ -1,5 +1,5 @@
-using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime;
@@ -26,11 +26,12 @@ public static class Runner
 
         // What may be sent where, as one matrix. The work each construct does lives in Arrival
         // and Traversal, which is the axis this grows along.
-        return (state.Position, command) switch
+        return (state.Situation, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
-            (AtNode at, Next) => Advance(context, state, at.Node),
-            (AwaitingDone waiting, Done) => Advance(context, state, waiting.Node),
+            (AtNode at, Next) => Departure.From(context, at.Node),
+            (AwaitingDone waiting, Done) => Departure.From(context, waiting.Node),
+            (AwaitingSupply waiting, Supply supply) => Supplied(context, waiting, supply),
             (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(
                 state,
@@ -43,14 +44,19 @@ public static class Runner
             _ => Refuse(
                 state,
                 ReasonFor(command),
-                $"A run at {Where(state.Position)} cannot take {command.GetType().Name}."),
+                $"A run at {state.Situation.Describe()} cannot take {command.GetType().Name}."),
         };
     }
 
-    private static StepResult Advance(PlayContext context, PlayState state, int from) =>
-        context.NodeAt(from).OnwardTarget() is int onward
-            ? Arrival.At(context, onward)
-            : Refuse(state, RefusalReason.LeadsNowhere, $"Node {from} leads nowhere.");
+    // Which of the node's two readings of the world the answers belong to is the situation's to
+    // say, and it decides which construct finishes the step it started.
+    private static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply) =>
+        waiting.Moment switch
+        {
+            Moment.ToPlay => Arrival.Supplied(context, waiting, supply),
+            Moment.ToLeave => Departure.Supplied(context, waiting, supply),
+            _ => throw new NotSupportedException($"No step is defined for {waiting.Moment}."),
+        };
 
     // The world did not change, so the run cannot read on: it stands where it is and says nothing,
     // and the driver's own message is the record of why.
@@ -60,17 +66,10 @@ public static class Runner
     // else is a command this runner has never been taught. The distinction is the protocol's,
     // not the message's: a port asserts the reason, never the wording.
     private static RefusalReason ReasonFor(Command command) =>
-        command is Next or Done or Failed ? RefusalReason.Misplaced : RefusalReason.UnknownCommand;
+        command is Next or Done or Failed or Supply
+            ? RefusalReason.Misplaced
+            : RefusalReason.UnknownCommand;
 
     private static StepResult Refuse(PlayState state, RefusalReason reason, string explanation) =>
         new(state, [new Refused(reason, explanation)]);
-
-    private static string Where(Position position) =>
-        position switch
-        {
-            AtNode at => $"node {at.Node}",
-            AwaitingDone waiting => $"node {waiting.Node}, waiting for the host",
-            NotStarted => "no position, before the run has started",
-            _ => "the end",
-        };
 }

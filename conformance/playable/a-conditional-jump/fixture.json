@@ -1,0 +1,38 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a conditional jump is taken when its condition holds",
+  "playbook": "playbook.json",
+  "because": "the jump has nothing to say, so the run must stop and ask the world before walking past it; and the line after the jump is what a run that ignored the answer would say",
+  "session": [
+    {
+      "expect": {
+        "resolve": [
+          "Rainy"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Rainy": true
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "We wait out the storm."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

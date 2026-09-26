@@ -117,7 +117,8 @@ flowchart LR
     BAO --> SPT["6. Speech as Plain Text"]
     SPT --> RC["7. Runtime Core"]
     RC --> WT["8. Waiting on the Host"]
-    WT --> RUN(["the rest of the runner,<br/>players, adapters"])
+    WT --> AW["9. Asking the World"]
+    AW --> RUN(["the rest of the runner,<br/>players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -130,6 +131,7 @@ flowchart LR
 | 6 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
 | 7 | [Runtime Core](./runtime/Runtime%20Core.md) | The first pass of the C# runner: the state, the step that advances it, and the harness that holds it to the corpus | Implemented |
 | 8 | [Waiting on the Host](./runtime/Waiting%20on%20the%20Host.md) | The pass that waits on the host: `Perform` answered by `Done` or `Failed`, the `AwaitingDone` stage, and when the run carries on | Implemented |
+| 9 | [Asking the World](./runtime/Asking%20the%20World.md) | The pass that asks the world: `Resolve` answered by `Supply`, the `AwaitingSupply` stage, and conditions, block conditions, and queries in speech | Implemented |
 
 ### Language constructs
 

@@ -14,6 +14,7 @@ internal static class EventDescription
             Said spoke => $"heard {SpeakerNames.Of(spoke.Speaker)} speak",
             Ended => "ended",
             Refused refused => $"refused: {refused.Explanation}",
+            Resolve resolve => $"asked the world about {string.Join(", ", resolve.Keys)}",
             _ => happened.GetType().Name,
         };
 }

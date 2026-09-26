@@ -1,6 +1,9 @@
+using System.Collections.Immutable;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
+using static DialogueDown.Runtime.Tests.World;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -64,6 +67,22 @@ public sealed class RunnerTests
         var context = PlayContextFactory.TwoLines();
 
         AssertRefused(Runner.Step(context, Started(context), new Done()), RefusalReason.Misplaced, "cannot take Done");
+    }
+
+    [Fact]
+    public void Step_ASupplyWhereNothingWasAsked_IsMisplacedRatherThanUnknown()
+    {
+        // Supply is a command the protocol defines, so offering it in the wrong place is a
+        // misplacement rather than a command this runner has never heard of.
+        var context = PlayContextFactory.OneLine();
+
+        AssertRefused(
+            Runner.Step(
+                context,
+                Started(context),
+                new Supply(ImmutableDictionary<string, Answer>.Empty)),
+            RefusalReason.Misplaced,
+            "cannot take Supply");
     }
 
     [Fact]
@@ -183,6 +202,34 @@ public sealed class RunnerTests
         var context = PlayContextFactory.Of([Dead(0, "Alone.")], ["Alice"]);
 
         AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
+    }
+
+    [Fact]
+    public void Step_ANextAndThenASupply_AsksOnTheWayOutAndLeavesByTheWayAllowed()
+    {
+        // The two waits on the world look alike from the outside, so this is what proves a supply
+        // answering the way out is finished by leaving rather than by arriving all over again.
+        var context = PlayContextFactory.ALineWhoseJumpAsksTheWorld();
+
+        var asked = Runner.Step(context, Started(context), new Next());
+        var left = Runner.Step(context, asked.State, Answering(("Alice.HasKey", true)));
+
+        AssertAsked(asked, node: 0, Moment.ToLeave, "Alice.HasKey");
+        AssertSaid(left, "Alice", "Inside.");
+    }
+
+    [Fact]
+    public void Step_StartAtAGuardedJumpThenASupply_LeavesByTheWayTheWorldAllowed()
+    {
+        // A node the walk passes can still stop it, and the answer that comes back finishes that
+        // leaving rather than starting the walk over.
+        var context = PlayContextFactory.AGuardedJumpOnItsOwnLine();
+
+        var asked = Runner.Step(context, PlayState.Initial, new Start());
+        var left = Runner.Step(context, asked.State, Answering(("Rainy", false)));
+
+        AssertAsked(asked, node: 0, Moment.ToLeave, "Rainy");
+        AssertSaid(left, "Alice", "Onward in the sun.");
     }
 
     private static PlayState Started(PlayContext context) =>

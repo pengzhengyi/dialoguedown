@@ -1,18 +1,25 @@
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Runtime.Positions;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What arriving at a node does.
+/// What a run does at a node: walking to one, playing it, and reading on once the world has
+/// answered what the node asked.
 /// </summary>
 /// <remarks>
-/// One arm per node kind, which is the axis a runner grows along: every construct the language
-/// gains lands here, and each brings work of its own. Keeping it apart from the protocol guard
-/// leaves that guard the small, readable matrix of what may be sent where.
+/// A node's condition is asked on the way in, so the work comes in two halves: the run stops to
+/// ask, then picks up from that same point when the answers arrive. Both halves are here because
+/// a change to where one stops is a change to where the other resumes.
+/// <para>
+/// This is the axis a runner grows along: every construct the language gains has to be played
+/// here, and each brings work of its own. Keeping it apart from the protocol guard leaves that
+/// guard the small, readable matrix of what may be sent where.
+/// </para>
 /// </remarks>
 internal static class Arrival
 {
@@ -28,114 +35,210 @@ internal static class Arrival
         // all this does; what a node means is Visit's to say.
         for (var passed = 0; passed <= context.Playbook.Nodes.Length; passed++)
         {
-            var visited = Visit(context, node);
-
-            if (visited.Stopped is { } result)
+            switch (Visit(context, node))
             {
-                return result;
+                case Visited.Standing standing:
+                    return standing.Result;
+                case Visited.WalkingOn walkingOn:
+                    node = walkingOn.Onward;
+                    break;
+                default:
+                    throw new NotSupportedException("A visit either stands at a node or walks on from it.");
             }
-
-            node = visited.Onward;
         }
 
         return RefuseRing(node);
     }
 
-    // What being at one node means, with no regard for how many the walk passed to get here.
+    /// <summary>Takes what the world said, and reads on from the node that asked.</summary>
+    /// <param name="context">What the run needs and never changes.</param>
+    /// <param name="waiting">The node that asked, and the keys it asked about.</param>
+    /// <param name="supply">What the world said.</param>
+    /// <returns>Where the run now stands, and what it has to say.</returns>
+    /// <remarks>
+    /// A condition that fails routes rather than refuses: the node is stepped over and the walk
+    /// carries on, so a line the world withheld is simply not spoken and the run reads the next
+    /// one. Refusing would end a conversation the writer meant to continue.
+    /// <para>
+    /// Stepping over takes the succession alone. A line written
+    /// <c>`Alice.HasKey?` Alice: I unlock it. =&gt; [Inside](#inside)</c> carries that jump as part
+    /// of itself, so a reader the world withheld the line from is not sent through the door it
+    /// opens; they read the line the writer wrote beneath it.
+    /// </para>
+    /// <para>
+    /// A node the world allows is entered as if it had needed no answers. It is played with the
+    /// answers in it, so a query standing in a line is said as the words that answered it, or it is
+    /// walked past when it hands the host nothing.
+    /// </para>
+    /// </remarks>
+    public static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(waiting);
+        ArgumentNullException.ThrowIfNull(supply);
+
+        var arrived = context.NodeAt(waiting.Node);
+        var needs = NodeQuestions.ToPlay(arrived);
+
+        // Asked again here, because a run can be restored into this situation rather than walked
+        // into it, and one answer cannot serve a key that needs two kinds of answer.
+        if (needs.NeededBothWays() is { Count: > 0 } bothWays)
+        {
+            return RefuseBothWays(waiting.Node, bothWays);
+        }
+
+        if (AnswerCheck.Disagrees(needs.Asked(), supply.Answers, out var refusal))
+        {
+            // The run stays where it asked, so a driver that misread the request can answer it
+            // again rather than losing the conversation over a mistake it can still fix.
+            return new StepResult(new PlayState(waiting), [refusal]);
+        }
+
+        if (arrived is IConditional guarded && !guarded.IsAllowed(supply))
+        {
+            // A jump belongs to the node that carries it, so a node the world withheld did not
+            // jump either. The run lands on the succession the writer wrote beneath it.
+            return arrived.SuccessionTarget() is int onward
+                ? At(context, onward)
+                : StepResults.Refuse(
+                    waiting.Node,
+                    RefusalReason.LeadsNowhere,
+                    $"Node {waiting.Node} leads nowhere.");
+        }
+
+        return Enter(context, waiting.Node, arrived, supply) switch
+        {
+            Visited.Standing standing => standing.Result,
+            Visited.WalkingOn walkingOn => At(context, walkingOn.Onward),
+            _ => throw new NotSupportedException("A visit either stands at a node or walks on from it."),
+        };
+    }
+
+    /// <summary>
+    /// What arriving at one node means, with no regard for how many the walk passed to get here.
+    /// </summary>
+    /// <remarks>
+    /// Each check either brings the run to stand at this node or leaves the next check to decide:
+    /// <code>
+    /// arrive at the node
+    ///  1 ├─ it needs one key as a truth and as words both ─► refuse
+    ///  2 ├─ it needs answers before it can play ───────────► ask what playing needs
+    ///    └─ otherwise, enter it
+    ///  3    ├─ it hands the host something ────────────────► play it
+    ///  4    ├─ its way out needs answers ──────────────────► ask which way out to take
+    ///  5    └─ otherwise ──────────────────────────────────► walk on, or refuse if it leads nowhere
+    /// </code>
+    /// A node the world allows once asked is entered at 3.
+    /// </remarks>
     private static Visited Visit(PlayContext context, int node)
     {
         var arrived = context.NodeAt(node);
+        var needs = NodeQuestions.ToPlay(arrived);
 
-        if (TryFindCondition(arrived, out var unanswered))
-        {
-            return Visited.Stopping(RefuseUnanswered(node, unanswered));
-        }
-
-        if (!WalksOn(arrived))
-        {
-            return Visited.Stopping(Play(context, node, arrived));
-        }
-
-        return arrived.OnwardTarget() is int onward
-            ? Visited.CarryingOn(onward)
-            : Visited.Stopping(Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));
+        return RefuseIfAKeyIsNeededBothWays(node, needs)
+            ?? AskIfPlayingNeedsAnswers(node, needs)
+            ?? Enter(context, node, arrived);
     }
 
+    /// <summary>What a node means to a walk once nothing is left to ask before playing it.</summary>
+    /// <param name="context">What the run needs and never changes.</param>
+    /// <param name="node">The node's position in the playbook.</param>
+    /// <param name="arrived">The node itself.</param>
+    /// <param name="supply">What the world said, when playing the node needed answers.</param>
+    /// <returns>Whether the run stands at the node or walks on from it.</returns>
+    private static Visited Enter(PlayContext context, int node, Node arrived, Supply? supply = null) =>
+        PlayIfNotWalkedPast(context, node, arrived, supply)
+            ?? AskIfLeavingNeedsAnswers(node, arrived)
+            ?? WalkOn(node, arrived);
+
+    // Refused before anything is asked, because the request that would go out is one the run could
+    // not read back whichever kind it was answered with.
+    private static Visited? RefuseIfAKeyIsNeededBothWays(int node, NodeQuestions needs) =>
+        needs.NeededBothWays() is { Count: > 0 } bothWays
+            ? new Visited.Standing(RefuseBothWays(node, bothWays))
+            : null;
+
+    // Asked before the kind is dispatched on, because what the world says decides whether the node
+    // plays and what its words say, whatever kind it is.
+    private static Visited? AskIfPlayingNeedsAnswers(int node, NodeQuestions needs) =>
+        needs.Keys() is { IsEmpty: false } neededForPlaying
+            ? new Visited.Standing(StepResults.Ask(node, neededForPlaying, Moment.ToPlay))
+            : null;
+
+    private static Visited? PlayIfNotWalkedPast(PlayContext context, int node, Node arrived, Supply? supply) =>
+        IsWalkedPast(arrived) ? null : new Visited.Standing(Play(context, node, arrived, supply));
+
+    // Only a node being walked past reaches this, and passing a node is leaving it, so a way out
+    // only the world can allow is asked about here. The walk carries on in its own loop rather than
+    // by leaving through departure, which is what keeps a ring of such nodes inside the bound.
+    private static Visited? AskIfLeavingNeedsAnswers(int node, Node arrived) =>
+        NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving
+            ? new Visited.Standing(StepResults.Ask(node, neededForLeaving, Moment.ToLeave))
+            : null;
+
+    private static Visited WalkOn(int node, Node arrived) =>
+        arrived.OnwardTarget() is int onward
+            ? new Visited.WalkingOn(onward)
+            : new Visited.Standing(
+                StepResults.Refuse(node, RefusalReason.LeadsNowhere, $"Node {node} leads nowhere."));
+
     // A node that hands the host nothing is walked past rather than stood at. A jump written on
-    // its own line compiles to one of these: nothing said, nothing performed, one way out. Standing
-    // there would ask the player to advance past something they were never shown.
-    private static bool WalksOn(Node node) => node is ControlNode { Effects.IsEmpty: true };
+    // its own line compiles to one of these: nothing said, nothing performed, one way out. A block
+    // condition is another, which only chooses the arm the run goes on by. Standing at either
+    // would ask the player to advance past something they were never shown.
+    private static bool IsWalkedPast(Node node) =>
+        node is ControlNode { Effects.IsEmpty: true } or BranchNode;
 
     private static StepResult RefuseRing(int node) =>
-        Refuse(
+        StepResults.Refuse(
             node,
             RefusalReason.EndlessRing,
             $"Node {node} sits in a ring of nodes that hand the host nothing, "
                 + "so a run entering it would never come out.");
 
-    // Asked before the kind is dispatched on, because a condition makes a node unplayable whatever
-    // kind it is.
-    private static bool TryFindCondition(Node node, [NotNullWhen(true)] out Condition? condition)
-    {
-        // A node's own condition decides whether it plays at all; an arm's decides whether that
-        // way out is taken. Nobody can answer either yet, so either one makes the node unplayable.
-        condition = (node as IConditional)?.Condition
-            ?? node.Out.OfType<IConditional>()
-                .Select(arm => arm.Condition)
-                .FirstOrDefault(found => found is not null);
-
-        return condition is not null;
-    }
-
-    // Speaking a line whose condition went unread is worse than refusing it: it reads as played
-    // correctly, and only the world could have said otherwise.
-    private static StepResult RefuseUnanswered(int node, Condition condition) =>
-        Refuse(
+    private static StepResult RefuseBothWays(int node, IReadOnlyList<string> bothWays) =>
+        StepResults.Refuse(
             node,
-            RefusalReason.UnansweredCondition,
-            $"Node {node} plays only when the world answers {Describe(condition)}, "
-                + "and nobody answers the world yet.");
+            RefusalReason.KeyNeededBothWays,
+            $"Node {node} needs {string.Join(", ", bothWays)} as a truth and as words both, "
+                + "and a single answer can only be one of those.");
 
-    private static StepResult Play(PlayContext context, int node, Node arrived) =>
+    private static StepResult Play(PlayContext context, int node, Node arrived, Supply? supply) =>
         arrived switch
         {
             LineNode line => new StepResult(
                 new PlayState(new AtNode(node)),
-                [new Said(context.SpeakerName(line.Speaker), line.Speech)]),
+                [new Said(context.SpeakerName(line.Speaker), AsSpoken(line.Speech, supply))]),
             ControlNode control => new StepResult(
                 new PlayState(new AwaitingDone(node)),
                 [.. control.Effects.Select(Event (effect) => new Perform(effect))]),
             EndNode => new StepResult(new PlayState(new AtEnd()), [new Ended()]),
-            var unplayable => Refuse(
+            var unplayable => StepResults.Refuse(
                 node,
                 RefusalReason.UnplayableNode,
                 $"This build cannot play a {unplayable.GetType().Name} yet."),
         };
 
-    private static string Describe(Condition condition) => condition switch
+    // A line nobody had to ask about is spoken as written. One with queries standing in it is
+    // spoken with the words the world put in their place.
+    private static ImmutableArray<SpeechFragment> AsSpoken(
+        ImmutableArray<SpeechFragment> speech, Supply? supply) =>
+        supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
+
+    /// <summary>What one node means to a walk: the run stands there, or the walk goes on.</summary>
+    private abstract record Visited
     {
-        KeyCondition key => key.Key,
-        _ => condition.GetType().Name,
-    };
+        // Private, so the two kinds nested here are the only ones there can be.
+        private Visited()
+        {
+        }
 
-    private static StepResult Refuse(int node, RefusalReason reason, string explanation) =>
-        new(new PlayState(new AtNode(node)), [new Refused(reason, explanation)]);
+        /// <summary>The run stands at this node, with this to report.</summary>
+        /// <param name="Result">What the step produced.</param>
+        public sealed record Standing(StepResult Result) : Visited;
 
-    /// <summary>What one node means to a walk: where the run stops, or the node it carries on to.</summary>
-    /// <param name="Stopped">What the step produced, or <see langword="null"/> when the walk goes on.</param>
-    /// <param name="Onward">Where the walk goes on to, or <see cref="Nowhere"/> when it stopped.</param>
-    private readonly record struct Visited(StepResult? Stopped, int Onward)
-    {
-        /// <summary>
-        /// No node, for a walk that stopped. Every real target is not negative, so a reader that
-        /// took this for a node would fail at once.
-        /// </summary>
-        public const int Nowhere = -1;
-
-        /// <summary>The walk ends here, with this to report.</summary>
-        public static Visited Stopping(StepResult result) => new(result, Nowhere);
-
-        /// <summary>The node handed the host nothing, so the walk goes on.</summary>
-        public static Visited CarryingOn(int onward) => new(Stopped: null, onward);
+        /// <summary>The node was walked past, so the walk goes on to the next.</summary>
+        /// <param name="Onward">The node the walk goes on to.</param>
+        public sealed record WalkingOn(int Onward) : Visited;
     }
 }
