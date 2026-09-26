@@ -1,7 +1,7 @@
 # Enum wire names
 
-> [!IMPORTANT]
-> Status: **in progress**. Every enum in a JSON contract pins its wire name with a
+> [!NOTE]
+> Status: **implemented**. Every enum in a JSON contract pins its wire name with a
 > hand-written converter, so no shipped build needs a .NET 9+ package. The
 > `net8.0` target stays — only the out-of-band reference goes. Closes
 > [#314](https://github.com/pengzhengyi/dialoguedown/issues/314); the target
@@ -30,12 +30,12 @@ member cannot silently change a format:
 - `Verdict` — `accept`, `refuse` — in the conformance corpus other runtimes
   read.
 
-Today the pin is the .NET 9 attribute `[JsonStringEnumMemberName]`. On the
-`net8.0` build it comes from the out-of-band `System.Text.Json` package —
-**~800 KB** (660.8 KB `System.Text.Json` + 75.3 KB `System.IO.Pipelines` +
-64.3 KB `System.Text.Encodings.Web`) carried by net8.0 consumers only, per
-[#314](https://github.com/pengzhengyi/dialoguedown/issues/314). This note
-replaces the attribute with one hand-written converter per enum.
+The pin is one hand-written converter per enum. The alternative — the .NET 9
+attribute `[JsonStringEnumMemberName]` — would make the `net8.0` build carry
+an out-of-band `System.Text.Json` package: **~800 KB** (660.8 KB
+`System.Text.Json` + 75.3 KB `System.IO.Pipelines` + 64.3 KB
+`System.Text.Encodings.Web`) for net8.0 consumers only, per
+[#314](https://github.com/pengzhengyi/dialoguedown/issues/314).
 
 **In scope:** the two enums, their converters, the tests that keep the wire
 names and the strictness, the removal of both conditional package references,
@@ -48,19 +48,19 @@ format is identical), and dropping `net8.0` — that waits on Godot 4.8, as
 
 ## Functionality checklist
 
-- [ ] `SpeechStyle` and `Verdict` read and write the exact names `italic`,
+- [x] `SpeechStyle` and `Verdict` read and write the exact names `italic`,
       `bold`, `strikethrough`, `accept`, `refuse`.
-- [ ] One implementation serves both targets; no `[JsonStringEnumMemberName]`
+- [x] One implementation serves both targets; no `[JsonStringEnumMemberName]`
       usage remains.
-- [ ] Both conditional `System.Text.Json` `PackageReference`s and the central
+- [x] Both conditional `System.Text.Json` `PackageReference`s and the central
       `PackageVersion` entry are gone, so no package reference is
       target-conditional.
-- [ ] A number, an unknown name, and a wrong-case name are rejected with a
+- [x] A number, an unknown name, and a wrong-case name are rejected with a
       message naming the valid ones.
-- [ ] An enum member added without a wire name fails loudly, and the
+- [x] An enum member added without a wire name fails loudly, and the
       exhaustiveness test catches it.
-- [ ] `StringOnlyEnumConverter` is deleted — its strictness is inherent now.
-- [ ] Existing JSON assertions pass unchanged, proving the wire format is
+- [x] `StringOnlyEnumConverter` is deleted — its strictness is inherent now.
+- [x] Existing JSON assertions pass unchanged, proving the wire format is
       byte-identical.
 
 ## Prior art
@@ -92,15 +92,22 @@ Each enum gets one converter in the same shape:
 internal sealed class SpeechStyleConverter : JsonConverter<SpeechStyle>
 {
     public override SpeechStyle Read(
-        ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-        reader.GetString() switch
+        ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+        {
+            throw new JsonException($"A speech style is a string, not {reader.TokenType}.");
+        }
+
+        return reader.GetString() switch
         {
             "italic" => SpeechStyle.Italic,
             "bold" => SpeechStyle.Bold,
             "strikethrough" => SpeechStyle.Strikethrough,
             var value => throw new JsonException(
-                $"'{value}' is not a speech style; expected italic, bold, or strikethrough."),
+                $"'{value}' is not a speech style. Use italic, bold, or strikethrough."),
         };
+    }
 
     public override void Write(
         Utf8JsonWriter writer, SpeechStyle value, JsonSerializerOptions options) =>
@@ -109,10 +116,17 @@ internal sealed class SpeechStyleConverter : JsonConverter<SpeechStyle>
             SpeechStyle.Italic => "italic",
             SpeechStyle.Bold => "bold",
             SpeechStyle.Strikethrough => "strikethrough",
-            _ => throw new ArgumentOutOfRangeException(nameof(value), value, null),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(value), value, "No wire name is defined for this speech style."),
         });
 }
 ```
+
+The `Read` checks the token type before switching on the name: `GetString()`
+throws `InvalidOperationException` on a number, and the contract is a
+`JsonException`. `VerdictConverter` is the same shape, in its own file beside
+the enum — StyleCop's file-name rule skips enums when it picks a file's first
+type, so a converter sharing `Verdict.cs` would name the file against itself.
 
 - `SpeechStyle` keeps the converter on the type —
   `[JsonConverter(typeof(SpeechStyleConverter))]` replaces
@@ -143,7 +157,7 @@ or fails the test.
 
 ### D3 — Strictness by construction
 
-The current reader accepts a name and nothing else. The hand-written `Read`
+The reader accepts a name and nothing else. The hand-written `Read`
 only matches the known literals, so a number, a wrong-case name, or an unknown
 name throws with a message naming the valid values. No `allowIntegerValues`
 knob is needed because nothing lenient is reachable.
@@ -181,15 +195,38 @@ as [Target Frameworks](./Target%20Frameworks.md) records.
 
 ## Demonstrable runs
 
-At implementation, capture:
+The out-of-band assemblies on both projects' `net8.0` target, before and after
+(filtered to the three assemblies):
 
-1. `dotnet list src/DialogueDown.Playbook/DialogueDown.Playbook.csproj package
-   --include-transitive --framework net8.0` **before** (carrying
-   `System.Text.Json`, `System.IO.Pipelines`, `System.Text.Encodings.Web`) and
-   **after** (none).
-2. The existing wire-format tests — `StyledTextFragmentTests` asserting
-   `"style": "italic"` and `ReadableFixtureTests` asserting `"verdict":
-   "accept"` — passing unchanged, which is the byte-identical proof.
+```console
+$ dotnet list src/DialogueDown.Playbook/DialogueDown.Playbook.csproj package \
+    --include-transitive --framework net8.0
+   > System.Text.Json              10.0.12
+   > System.IO.Pipelines           10.0.12
+   > System.Text.Encodings.Web     10.0.12
+
+$ dotnet list tests/DialogueDown.Conformance/DialogueDown.Conformance.csproj package \
+    --include-transitive --framework net8.0
+   > System.Text.Json              10.0.12
+   > System.IO.Pipelines           10.0.12
+   > System.Text.Encodings.Web     10.0.12
+
+$ # after the change, both list none of the three
+```
+
+Implementation evidence, in the order it was taken:
+
+1. `SpeechStyleConverterTests` written first, against the attribute
+   implementation: **11 passed on `net8.0` and `net10.0`**.
+2. The mechanism swapped; the same tests: **11 passed on both targets**, and the
+   whole Playbook suite **273 passed on each**.
+3. The references removed; a fresh `--no-incremental` solution build: **0
+   warnings, 0 errors**, and the full suite: **5,189 passed** across both lanes.
+   `ReadableFixtureTests` covered `Verdict` before and after (16 passed each).
+
+The wire format is the same bytes: `StyledTextFragmentTests` (`"style":
+"italic"`) and `ReadableFixtureTests` (`"verdict": "accept"`) pass unchanged
+throughout.
 
 ## Integration
 
@@ -199,7 +236,8 @@ At implementation, capture:
 | `src/DialogueDown.Playbook/speech/SpeechStyle.cs` | Converter attribute swapped; attributes removed; remark updated. |
 | `src/DialogueDown.Playbook/speech/StringOnlyEnumConverter.cs` | Deleted. |
 | `src/DialogueDown.Playbook/DialogueDown.Playbook.csproj` | Conditional `System.Text.Json` reference and its comment removed. |
-| `tests/DialogueDown.Conformance/Verdict.cs` | `VerdictConverter` added beside it; attributes removed. |
+| `tests/DialogueDown.Conformance/Verdict.cs` | Attributes removed; remark points at the converter. |
+| `tests/DialogueDown.Conformance/VerdictConverter.cs` | New (its own file for the SA1649 reason above). |
 | `tests/DialogueDown.Conformance/ReadableFixture.cs` | Converter registration swapped. |
 | `tests/DialogueDown.Conformance/DialogueDown.Conformance.csproj` | Conditional reference and comment removed. |
 | `Directory.Packages.props` | `System.Text.Json` `PackageVersion` removed. |
@@ -211,18 +249,18 @@ API changes.
 
 ## Testability
 
-`SpeechStyleConverterTests` and `VerdictConverterTests`:
+`SpeechStyleConverterTests` covers the shipping enum:
 
-- Every member round-trips through `PlaybookJson.Options` (and the fixture
-  options for `Verdict`).
-- Serialization writes the exact literal names — the rename guard.
-- `"Italic"`, `"cursive"`, `1`, and `null` are rejected (the last by the
-  serializer where nullable).
-- The exhaustiveness test: every `Enum.GetValues<T>()` member maps to a name
-  the converter writes.
+- Every member round-trips through `PlaybookJson.Options`.
+- Serialization writes the exact literal names — the rename guard — and the
+  exhaustive check fails if the enum gains a member without one.
+- `"Italic"`, `"cursive"`, and `1` are refused; `null` is allowed where the
+  position is nullable.
 
-The Conformance suite already asserts the corpus's own names
-(`ReadableFixtureTests`), so a drifted name fails there too.
+`Verdict` has no test file of its own: `ReadableFixtureTests` already pins both
+of its names, the wrong case, an unknown name, and a number through the fixture
+reader — the same public path that covers `SessionEntryJsonConverter`, and the
+reader is the only place a verdict is consumed.
 
 ## Open questions and deferred work
 
@@ -230,7 +268,7 @@ The Conformance suite already asserts the corpus's own names
   in `dev-dotnet-tasks.test.mjs` and the Target Frameworks table cover
   `DialogueDown`, `ConfigurationLoader`, and `Playbook`, but `Runtime` also
   multi-targets. Confirm whether a game references it, and if so add it to both
-  — separately from this change.
+  in a separate follow-up PR.
 - **Drop `net8.0`** when Godot 4.8 ships
   ([#123738](https://github.com/godotengine/godot/pull/123738)); nothing here
   blocks that, and nothing here should anticipate it.
