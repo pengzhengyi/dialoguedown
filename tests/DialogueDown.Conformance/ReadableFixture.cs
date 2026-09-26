@@ -19,7 +19,7 @@ public sealed record ReadableFixture
 
         // Names only, as the playbook format reads its own enums: the default would also accept
         // "verdict": 1, a document the format's own schema rejects.
-        Converters = { new JsonStringEnumConverter<Verdict>(namingPolicy: null, allowIntegerValues: false) },
+        Converters = { new VerdictConverter() },
     };
 
     /// <summary>
