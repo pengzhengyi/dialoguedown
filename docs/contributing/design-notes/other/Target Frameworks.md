@@ -104,4 +104,6 @@ consequence in its message. It lives beside the other repository-manifest guards
 
 Once Godot's bundled runtime reaches .NET 10, `net8.0` can be dropped from both libraries and this
 note revised to record it. That is a one-line change per project plus the guardrail — the work of
-carrying two targets was done here precisely so the eventual move is trivial.
+carrying two targets was done here precisely so the eventual move is trivial. Nothing else waits on
+it: the net8.0 lane already carries no out-of-band package, since the enum wire names moved to
+hand-written converters ([Enum wire names](./Enum%20Wire%20Names.md)).

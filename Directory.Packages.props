@@ -27,7 +27,6 @@
     <PackageVersion Include="Tomlyn"                                                Version="2.10.1" />
     <PackageVersion Include="Generator.Equals"                                      Version="4.1.0" />
     <PackageVersion Include="Generator.Equals.Runtime"                              Version="4.1.0" />
-    <PackageVersion Include="System.Text.Json"                                      Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection"              Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
   </ItemGroup>

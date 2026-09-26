@@ -220,6 +220,8 @@
     href: other/BBCode Rendering.md
   - name: Development Cycle Optimization
     href: other/Development Cycle Optimization.md
+  - name: Enum Wire Names
+    href: other/Enum Wire Names.md
   - name: Interactive Playthrough
     href: other/Interactive Playthrough.md
   - name: Namespace Layout
