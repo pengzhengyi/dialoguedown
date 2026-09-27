@@ -265,6 +265,10 @@ The two command kinds are spelled the way [the guide](../../../guide/game-state.
 names them, rather than shortened to *command* and *call* — the second is a word
 the project does not use with writers, and the pair reads better matched.
 
+A fragment's enum values — `style`'s `italic`, `bold`, and `strikethrough` — are
+pinned by hand-written converters, so a C# rename cannot change what a playbook
+says; see [Enum wire names](../other/Enum%20Wire%20Names.md).
+
 Fragments nest — `StyledText.Children` and a link or image label are themselves
 fragment lists — so the encoding is recursive. Nothing is flattened to a string,
 because a host re-renders it: Godot as BBCode, the report as HTML, the CLI as
