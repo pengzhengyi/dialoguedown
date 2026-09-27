@@ -1,6 +1,7 @@
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Files;
 using DialogueDown.Visualization.Live.Tests.Support;
+using Microsoft.Extensions.Time.Testing;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -8,6 +9,7 @@ public sealed class TreeWatchesTests
 {
     private static readonly TimeSpan _debounce = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan _patience = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan _deliveryProbe = TimeSpan.FromMilliseconds(20);
 
     [Fact]
     public async Task Watch_FiresWhenTheWatchedDocumentIsWritten()
@@ -29,17 +31,14 @@ public sealed class TreeWatchesTests
     {
         using var tree = new TempTree();
         var document = tree.File("scene.dialogue.md", "# First");
+        var time = new FakeTimeProvider();
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
-        using var reported = new SemaphoreSlim(0);
         using var watch = watches.Watch(
             document,
-            () =>
-            {
-                Interlocked.Increment(ref count);
-                reported.Release();
-            },
-            _debounce);
+            () => Interlocked.Increment(ref count),
+            _debounce,
+            time);
         await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
 
         for (var i = 0; i < 5; i++)
@@ -47,15 +46,21 @@ public sealed class TreeWatchesTests
             File.WriteAllText(document, $"# Write {i}");
         }
 
-        // Wait for the report itself rather than for a barrier: which of two files the watcher
-        // reports first is the operating system's business — inotify makes no promise that events
-        // for one path are delivered before another's — so only this watch's own signal says its
-        // quiet period has elapsed. Draining afterwards then gives any second report time to land.
-        Assert.True(await reported.WaitAsync(_patience, TestContext.Current.CancellationToken));
-        await WatchSync.DrainAsync(watches, Path.GetDirectoryName(document)!, _debounce);
+        // The quiet period runs on the injected clock, so a report lands only when the test moves
+        // it — however the operating system decides to split the save, and however long a loaded
+        // runner holds a write back. Advancing doubles as the delivery probe: a write the watcher
+        // has been told about has armed the timer, and the advance fires it once. The loop stops
+        // at the first report, so a straggler delivered later can only re-arm a clock that never
+        // moves again. Exactly one report is therefore the outcome under every delivery timing.
+        var deadline = DateTime.UtcNow + _patience;
+        while (Volatile.Read(ref count) == 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(_deliveryProbe, TestContext.Current.CancellationToken);
+            time.Advance(_debounce + TimeSpan.FromMilliseconds(1));
+        }
 
         // An editor saves by writing several times; that is one reload, not five.
-        Assert.InRange(count, 1, 2);
+        Assert.Equal(1, count);
     }
 
     [Fact]

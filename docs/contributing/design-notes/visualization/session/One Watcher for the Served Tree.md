@@ -202,8 +202,12 @@ the thing under test, so faking it would test nothing.
 - A regression test watches a **dotfile** script, because the first
   implementation hid those and stopped reloading them.
 
-The debounce window stays injectable, as `DocumentWatcher` already allows, so
-tests need not sleep for the real 150 ms.
+The debounce window stays injectable, as `DocumentWatcher` already allows, and the
+clock it is measured on is injectable too. The coalescing case registers its watch
+on a fake clock, waits only for the operating system to deliver a write, and then
+advances the clock itself — so how many reports one save's writes produce is the
+test's decision, not the runner's. A loaded machine delaying a write past any
+window can no longer turn one save into extra quiet periods.
 
 ## What this does not do
 
