@@ -21,7 +21,7 @@ stays an index. The one every component shares is the
     - [Report and stage tabs](#report-and-stage-tabs)
     - [Source editor](#source-editor)
     - [Graph interaction](#graph-interaction)
-    - [Live session](#live-session)
+    - [Served session](#served-session)
   - [Other notes](#other-notes)
 
 ## How the notes are laid out
@@ -42,7 +42,7 @@ design-notes/
 │   ├── report/     the report shell and its stage tabs
 │   ├── editor/     the Source editor's highlighting and completions
 │   ├── graph/      reading and navigating a rendered graph
-│   └── session/    the served shell: watching, editing, browsing
+│   └── session/    the served shell: serving, editing, browsing
 └── other/          spikes and project-level notes
 ```
 
@@ -53,9 +53,8 @@ The notes below are grouped by area and ordered for reading. Start with
 Read **Command-line interface** or **Visualization** only when you work on that
 surface: both document tools built *on top of* the core, so they are optional
 for understanding the compiler. Each note keeps a one-line summary and a status
-(**Implemented**, **Partially implemented**, **In progress**, **Explored**,
-**Proposed**, or **Superseded** — a shape later work replaced. A note may qualify
-its status: **dormant** means built and tested, but not wired into the product).
+(**Implemented**, **Partially implemented**, **Proposed**, or **Explored — not
+adopted**), which matches the status line at the top of the note itself.
 
 > [!TIP]
 > New here? Read the Core notes in order, then the
@@ -91,10 +90,9 @@ flowchart LR
 | 1 | [Markdown Front-End](./core/Markdown%20Front-End.md) | Source text → Markdown AST (Markdig adapter) | Implemented |
 | 1a | [Unmodeled Markdown Handling](./core/Unmodeled%20Markdown%20Handling.md) | A front-end detail: which unmodeled Markdown is ignored or kept as dialogue text | Implemented |
 | 2 | [Markdown to Dialogue AST Transpiler](./core/Markdown%20to%20Dialogue%20AST%20Transpiler.md) | Markdown AST → Dialogue AST | Implemented |
-| 3 | [Desugar](./core/Desugar.md) | Dialogue AST → normalized Dialogue AST (jump assembly, default speaker) | Implemented |
+| 3 | [Desugar](./core/Desugar.md) | Dialogue AST → normalized Dialogue AST (jump assembly, control lines) | Implemented |
 | 4 | [Semantic Analyzer](./core/Semantic%20Analyzer.md) | Desugared AST → semantic model (speakers, scenes, resolved jumps) | Implemented |
-| 5 | [Script Compiler Facade](./core/Script%20Compiler%20Facade.md) | One `IScriptCompiler` seam over the stages + `AddDialogueDown` DI | Implemented |
-| 5a | [Compilation Outcome](./core/Compilation%20Outcome.md) | A facade detail: what one compile produces — a success carrying every artifact, or a failure carrying how far it got | Implemented |
+| 5 | [Script Compiler Facade](./core/Script%20Compiler%20Facade.md) | One `IScriptCompiler` seam over the stages, `AddDialogueDown` DI, and the success-or-failure result of a compile | Implemented |
 | 6 | [Dialogue Graph](./core/Dialogue%20Graph.md) | Semantic model → the immutable flow graph a runtime walks | Implemented |
 
 | — | [Error model](./core/Error%20Model.md) | The cross-cutting convention: collect a diagnostic, throw only when a stage cannot continue | Implemented |
@@ -111,25 +109,21 @@ and each component note applies them to one piece.
 ```mermaid
 flowchart LR
     RA["1. Runtime Architecture"] --> PF["2. Playbook Format"]
-    PF --> CC["3. Conformance Corpus"]
-    CC --> NOS["4. Node Outward Shape"]
-    NOS --> BAO["5. Branch Arm Order"]
-    BAO --> SPT["6. Speech as Plain Text"]
-    SPT --> RC["7. Runtime Core"]
-    RC --> WT["8. Waiting on the Host"]
-    WT --> RUN(["the rest of the runner,<br/>players, adapters"])
+    PF --> RR["3. Playbook Reader Rules"]
+    RR --> CC["4. Conformance Corpus"]
+    CC --> SPT["5. Speech as Plain Text"]
+    SPT --> RN["6. Runner"]
+    RN --> RUN(["players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
 | 1 | [Dialogue Runtime Architecture](./runtime/Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Partially implemented |
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
-| 3 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, and the harness that runs them against the reference reader and runner | Implemented |
-| 4 | [Node Outward Shape](./runtime/Node%20Outward%20Shape.md) | The shape of a node's ways out — which edge kinds, how many, and that it always leads somewhere — stated in the reader and the schema | Implemented |
-| 5 | [Branch Arm Order](./runtime/Branch%20Arm%20Order.md) | A `branch`'s arms in ascending `order` with the `else` last, stated in the reader and mirrored in the schema | Implemented |
-| 6 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
-| 7 | [Runtime Core](./runtime/Runtime%20Core.md) | The first pass of the C# runner: the state, the step that advances it, and the harness that holds it to the corpus | Implemented |
-| 8 | [Waiting on the Host](./runtime/Waiting%20on%20the%20Host.md) | The pass that waits on the host: `Perform` answered by `Done` or `Failed`, the `AwaitingDone` stage, and when the run carries on | Implemented |
+| 3 | [Playbook Reader Rules](./runtime/Playbook%20Reader%20Rules.md) | The reader's structural rules beyond the schema: a node's ways out, and a `branch`'s arm order | Implemented |
+| 4 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, and the harness that runs them against the reference reader and runner | Implemented |
+| 5 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
+| 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |
 
 ### Language constructs
 
@@ -140,17 +134,14 @@ first, since a construct threads through them.
 
 | Note | What it covers | Status |
 | --- | --- | --- |
-| [Progression Order](./language/Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert vs. detour jump roles, and the `#END` terminator | Partially implemented |
+| [Progression Order](./language/Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert and detour jump roles, and the `#END` terminator | Partially implemented |
 | [Random Choice](./language/Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
-| [Conditions](./language/Conditions.md) | The condition primitive (`` `"key"?` ``) every guard shares — its grammar, how it resolves, and the decisions behind it | Implemented |
-| [Conditional Jump](./language/Conditional%20Jump.md) | A condition guarding a jump, so the jump fires only when the query is true | Implemented |
-| [Conditional Line](./language/Conditional%20Line.md) | A condition fronting a line, so the line plays only when the query is true | Implemented |
-| [Conditional Choice](./language/Conditional%20Choice.md) | A condition guarding a choice option, so a player or random option is offered only when the query is true | Implemented |
+| [Conditions](./language/Conditions.md) | The condition (`` `key?` ``) and every place it attaches — a line, a jump, a choice option — with its grammar and how each resolves | Implemented |
 | [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
 | [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./language/Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
-| [Cross-File Jump Resolution](./language/Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.md#meet-bob`) across a project, via a linker | Explored |
+| [Cross-File Jump Resolution](./language/Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.dialogue.md#meet-bob`) across a project, via a linker | Proposed |
 
 ### Configuration
 
@@ -162,8 +153,8 @@ edge, a satellite that reads a `dialogue.toml` into those options.
 | --- | --- | --- | --- |
 | 1 | [Configuration](./configuration/Configuration.md) | The `CompilerOptions` seam: compilation mode, configured speakers, and unmodeled-Markdown handling projected into their stages | Implemented |
 | 2 | [Configuration Loader](./configuration/Configuration%20Loader.md) | The TOML edge: reads `dialogue.toml` into a `CompilerOptions`, validating with located errors, in its own satellite assembly | Implemented |
-| 3 | [CLI Configuration](./configuration/CLI%20Configuration.md) | Threads a project's `dialogue.toml` through the `dialoguedown` CLI into `compile` and `visualize` (and the report's autocompletion) | Implemented |
-| 4 | [Compilation Mode Configuration](./configuration/Compilation%20Mode%20Configuration.md) | Makes the compilation `mode` settable in `dialogue.toml` and shown in the Config tab (CLI `--mode` already ships) | Implemented |
+| 3 | [CLI Configuration](./configuration/CLI%20Configuration.md) | Threads a project's `dialogue.toml` through the `ddown` CLI into `compile` and `visualize` (and the report's autocompletion) | Implemented |
+| 4 | [Compilation Mode Configuration](./configuration/Compilation%20Mode%20Configuration.md) | Makes the compilation `mode` settable in `dialogue.toml` and shown in the Config tab | Implemented |
 
 ### Diagnostics
 
@@ -180,125 +171,96 @@ cover individual rules and the surfaces that render them.
 | 3 | [Styled Speaker Prefix Diagnostic](./diagnostics/Styled%20Speaker%20Prefix%20Diagnostic.md) | A warning when a styled name (`*Alice*:`) looks like a speaker prefix but is not recognized as one | Implemented |
 | 4 | [Dangling Arrow Diagnostic](./diagnostics/Dangling%20Arrow%20Diagnostic.md) | A warning when a `=>` has no link after it, so the intended jump degrades to plain text | Implemented |
 | 5 | [Ignored Markdown Diagnostic](./diagnostics/Ignored%20Markdown%20Diagnostic.md) | A neutral note when the front end ignores unmodeled Markdown, such as a table or a divider | Implemented |
-| 6 | [CLI Diagnostic Rendering](./diagnostics/CLI%20Diagnostic%20Rendering.md) | Renders collected diagnostics on the `dialoguedown` CLI (rich Errata blocks or greppable one-liners), sets the exit code, and exposes `--mode` | Implemented |
+| 6 | [CLI Diagnostic Rendering](./diagnostics/CLI%20Diagnostic%20Rendering.md) | Renders collected diagnostics on the `ddown` CLI (rich Errata blocks or greppable one-liners), sets the exit code, and exposes `--mode` | Implemented |
 
 ### Command-line interface
 
-**Read when you work on the `dialoguedown` CLI.** These build on the core through
+**Read when you work on the `ddown` CLI.** These build on the core through
 Spectre.Console.Cli; they are not needed to understand the compiler.
-
-```mermaid
-flowchart LR
-    CLI["1. Command-Line Interface"] --> VZ["2. Visualize on the CLI"]
-    VZ --> DOT["3. Emit DOT"]
-    DOT --> FIX["4. Fix mode"]
-```
 
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
-| 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `dialoguedown` CLI: `compile` + `visualize` (Spectre.Console.Cli) | Implemented |
-| 2 | [Visualize on the CLI](./cli/Visualize%20on%20the%20CLI.md) | Wire `ddown visualize` to the engine; retire the hand-rolled CLI | Implemented |
-| 3 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
-| 4 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Proposed |
+| 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `ddown` CLI: `compile` and `visualize`, and the Live server as a library | Implemented |
+| 2 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
+| 3 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Implemented |
 
 ### Visualization
 
-**Read when you work on the interactive report or the live/served session.** An
+**Read when you work on the interactive report or the served session.** An
 optional TypeScript client that renders each compiler stage; not needed to
 understand the compiler. This is the largest area, so its notes are split four
-ways — read only the one you are working in.
+ways — read only the one you are working in, starting from its first row.
 
 ```mermaid
 flowchart LR
     RP["Report and stage tabs"] --> ED["Source editor"]
     RP --> GR["Graph interaction"]
-    RP --> LS["Live session"]
+    RP --> SS["Served session"]
 ```
 
 #### Report and stage tabs
 
 The report shell and what each tab shows — one per compiler stage, plus the
-Configuration tab and the folding contract every surface shares.
+Playbook and Config tabs and the conventions every table shares.
 
-| Order | Note | What it covers | Status |
-| --- | --- | --- | --- |
-| 1 | [Compilation Visualization](./visualization/report/Compilation%20Visualization.md) | Compiler-stage IRs → interactive diagrams (the report foundation) | Implemented |
-| 2 | [Compiler Stage Tooltips](./visualization/report/Compiler%20Stage%20Tooltips.md) | Per-stage hover tips on the report tabs | Implemented |
-| 3 | [Dialogue AST Visualization Tab](./visualization/report/Dialogue%20AST%20Visualization%20Tab.md) | The transpiler's Dialogue AST as a second graph tab | Implemented |
-| 4 | [Desugared AST Visualization Tab](./visualization/report/Desugared%20AST%20Visualization%20Tab.md) | The desugarer's normalized AST as a third tab | Implemented |
-| 5 | [Semantic Model Visualization Tab](./visualization/report/Semantic%20Model%20Visualization%20Tab.md) | The semantic model as an analytics tab: scene-tree graph + cross-linked tables | Implemented |
-| 14 | [Configuration Tab](./visualization/report/Configuration%20Tab.md) | The applied `dialogue.toml` as a first tab: TOML source beside its configured speakers (Stage 1, read-only) | Implemented |
-| 15 | [Configuration Tab — Live Edit](./visualization/report/Configuration%20Tab%20-%20Live%20Edit.md) | Edit the `dialogue.toml` in the report; Save recompiles and refreshes the configured speakers (Stage 2a) | Implemented |
-| 16 | [Configuration Tab — Autocompletion](./visualization/report/Configuration%20Tab%20-%20Autocompletion.md) | Schema autocompletion for the editable `dialogue.toml`: the `[[speakers]]` table, its keys, and the reserved tag names (Stage 2b) | Implemented |
-| 17 | [Configuration Tab — Create New](./visualization/report/Configuration%20Tab%20-%20Create%20New.md) | Create a `dialogue.toml` in place when a project has none, then drop into the editable Config tab (Stage 3) | Implemented |
-| 18 | [Unavailable Stage Tabs](./visualization/report/Unavailable%20Stage%20Tabs.md) | A halted compile renders its unproduced stages as disabled tabs, so a broken script still shows what it did produce | Implemented |
-| 31 | [Dialogue Graph Visualization Tab](./visualization/report/Dialogue%20Graph%20Visualization%20Tab.md) | The compiled dialogue graph as a fifth stage tab: every node in graph order, typed edges, and orphans made visible | Implemented |
-| 38 | [Collapsing Across the Report](./visualization/report/Collapsing%20Across%20the%20Report.md) | One contract and one glyph for folding on every surface, with each surface keeping its own unit and its own state | Implemented |
-| 41 | [Playbook Tab](./visualization/report/Playbook%20Tab.md) | The compiled playbook after Dialogue Graph: the JSON a runtime loads, read-only, beside its header and speaker tables | Implemented |
-| 43 | [Saying Nothing Across the Report](./visualization/report/Saying%20Nothing%20Across%20the%20Report.md) | One rule for an absent value in any table cell: an empty cell, and the anonymous speaker named | Implemented |
-| 44 | [Tag Capsules](./visualization/report/Tag%20Capsules.md) | One capsule draws a tag on every surface: kind in the fill, identity in a leading dot | Implemented |
-| 45 | [Copyable Identifiers](./visualization/report/Copyable%20Identifiers.md) | An `@id`, an anchor, and a jump target copy on click; prose does not | Implemented |
-| 46 | [Jumping into the Playbook](./visualization/report/Jumping%20into%20the%20Playbook.md) | A node number, a speaker, and the entry node reveal that place in the JSON | Implemented |
-| 47 | [Following an Index in the Playbook](./visualization/report/Following%20an%20Index%20in%20the%20Playbook.md) | A node or speaker reference in the JSON is a link: click it, or press F12, to reveal the definition it names | Implemented |
-| 49 | [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Implemented |
-| 50 | [Playbook Summary Segments](./visualization/report/Playbook%20Summary%20Segments.md) | A node's summary sent as labeled segments, so the client draws each part by its role instead of re-parsing delimiters a writer can also type | Implemented |
+| Note | What it covers | Status |
+| --- | --- | --- |
+| [Compilation Visualization](./visualization/report/Compilation%20Visualization.md) | The report's architecture: every stage tab, the payload, the projections and renderers, unavailable stages, and stage tooltips | Implemented |
+| [AST Stage Tabs](./visualization/report/AST%20Stage%20Tabs.md) | The Dialogue AST and desugared AST as two graph tabs from one projection | Implemented |
+| [Semantic Model Visualization Tab](./visualization/report/Semantic%20Model%20Visualization%20Tab.md) | The semantic model as an analytics tab: scene-tree graph and cross-linked tables | Implemented |
+| [Dialogue Graph Visualization Tab](./visualization/report/Dialogue%20Graph%20Visualization%20Tab.md) | The compiled dialogue graph: every node in graph order, typed edges, and orphans made visible | Implemented |
+| [Playbook Tab](./visualization/report/Playbook%20Tab.md) | The compiled playbook a runtime loads, read-only, beside its header, speaker, anchor, and node tables | Implemented |
+| [Playbook Nodes Table](./visualization/report/Playbook%20Nodes%20Table.md) | Every node as one row that reads as a sentence: its kind in the graph's color, what it holds, and where it leads | Implemented |
+| [Playbook Summary Segments](./visualization/report/Playbook%20Summary%20Segments.md) | A node's summary sent as labeled segments, so the client draws each part by its role | Implemented |
+| [Navigating the Playbook](./visualization/report/Navigating%20the%20Playbook.md) | From a table into the JSON, and from a reference in the JSON to the definition it names | Implemented |
+| [Configuration Tab](./visualization/report/Configuration%20Tab.md) | The applied `dialogue.toml`: view, edit with autocompletion, and create one in place | Implemented |
+| [Table Cell Conventions](./visualization/report/Table%20Cell%20Conventions.md) | One rule per cell concern across every table: an absent value, a tag capsule, and what copies on click | Implemented |
+| [Collapsing Across the Report](./visualization/report/Collapsing%20Across%20the%20Report.md) | One contract and one glyph for folding on every surface, with each surface keeping its own unit and state | Implemented |
 
 #### Source editor
 
 The authoring surface: what the editor highlights, completes, and marks, all
 projected from the compiler rather than a client-side grammar.
 
-| Order | Note | What it covers | Status |
-| --- | --- | --- | --- |
-| 7 | [Source Editor Autocompletion](./visualization/editor/Source%20Editor%20Autocompletion.md) | Document-aware editor completions behind a symbol-source seam | Implemented |
-| 19 | [Diagnostics Overlay](./visualization/editor/Diagnostics%20Overlay.md) | The compiler's diagnostics as a source-editor overlay — squiggles, gutter markers, and doc-linked tooltips — on a reusable LSP-shaped projection | Implemented |
-| 20 | [Compiler-Projected Editor Semantics](./visualization/editor/Compiler-Projected%20Editor%20Semantics.md) | Source-editor highlighting and completions projected from the compiler's own parse (semantic tokens + resolved symbols), retiring the client-side grammar | Implemented |
-| 21 | [Precise Speaker Tokens](./visualization/editor/Precise%20Speaker%20Tokens.md) | Speaker highlighting split into precise, non-overlapping name, `@id`, and separator tokens, from sub-spans the parser records on the AST | Implemented |
-| 22 | [Live Visualization — Heading Anchors](./visualization/editor/Live%20Visualization%20-%20Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or its bare anchor from an active-line editor hint | Implemented |
-| 23 | [Jump-Target Completion](./visualization/editor/Jump-Target%20Completion.md) | Complete the whole `[Heading](#slug)` jump target from the `=>` indicator, via a snippet with the heading as an editable field | Implemented |
-| 32 | [Unmodeled Markdown Highlighting](./visualization/editor/Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores, stops muting the blockquotes that carry control blocks, and styles comments as writer-only notes | Implemented |
-| 33 | [Front Matter Source Highlighting](./visualization/editor/Front%20Matter%20Source%20Highlighting.md) | Parse canonical leading front matter as YAML in the Source editor instead of ordinary Markdown | Implemented |
-| 34 | [Mermaid Authoring Diagrams](./visualization/editor/Mermaid%20Authoring%20Diagrams.md) | Render fenced Mermaid authoring aids in every Markdown preview and retire compiler-stage Mermaid emission | Implemented |
-| 35 | [Ignored Markdown Preview Toggle](./visualization/editor/Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, under two footer commands that override every region at once | Implemented |
-| 36 | [Co-located Diagnostics Presentation](./visualization/editor/Co-located%20Diagnostics%20Presentation.md) | Show every co-located diagnostic while the severest one controls the compact editor marker | Implemented |
-| 51 | [Diagnostic Quick Fixes](./visualization/editor/Diagnostic%20Quick%20Fixes.md) | A diagnostic's suggested repair offered as an editor action, starting with escaping a dangling arrow | Implemented |
-| 52 | [Construct Marks in the Source Preview](./visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md) | The rendered preview marks the compiler's constructs in the editor's own vocabulary — tags as capsules, commands and queries tinted | Implemented |
+| Note | What it covers | Status |
+| --- | --- | --- |
+| [Compiler-Projected Editor Semantics](./visualization/editor/Compiler-Projected%20Editor%20Semantics.md) | Highlighting tokens and completions projected from the compiler's own parse | Implemented |
+| [Diagnostics Overlay](./visualization/editor/Diagnostics%20Overlay.md) | Diagnostics as squiggles, gutter markers, and tooltips on an LSP-shaped projection, with co-located diagnostics ordered once | Implemented |
+| [Diagnostic Quick Fixes](./visualization/editor/Diagnostic%20Quick%20Fixes.md) | A diagnostic's suggested repair offered as an editor action | Implemented |
+| [Heading Anchors](./visualization/editor/Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or an active-line hint | Implemented |
+| [Unmodeled Markdown Highlighting](./visualization/editor/Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores and styles comments as writer-only notes | Implemented |
+| [Front Matter Source Highlighting](./visualization/editor/Front%20Matter%20Source%20Highlighting.md) | Leading front matter highlighted as YAML | Implemented |
+| [Ignored Markdown Preview Toggle](./visualization/editor/Ignored%20Markdown%20Preview%20Toggle.md) | Show or hide ignored blocks and inline spans per region, or all at once | Implemented |
+| [Construct Marks in the Source Preview](./visualization/editor/Construct%20Marks%20in%20the%20Source%20Preview.md) | The rendered preview marks the compiler's constructs in the editor's own vocabulary | Implemented |
+| [Mermaid Authoring Diagrams](./visualization/editor/Mermaid%20Authoring%20Diagrams.md) | Fenced Mermaid authoring aids rendered in every Markdown preview, loaded on demand | Implemented |
+| [Line Debugger UI](./visualization/editor/Line%20Debugger%20UI.md) | A CodeMirror debugger presentation layer behind a runtime-neutral controller seam; the runtime adapter is not built | Partially implemented |
 
 #### Graph interaction
 
 Reading and navigating a rendered graph: what it remembers, what it reveals,
 and how a scene folds.
 
-| Order | Note | What it covers | Status |
-| --- | --- | --- | --- |
-| 6 | [Graph Position Preservation](./visualization/graph/Graph%20Position%20Preservation.md) | Per-graph zoom/pan/fold memory and a root-centered default | Implemented |
-| 13 | [Live Visualization — Node Inspector](./visualization/graph/Live%20Visualization%20-%20Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
-| 30 | [Live Visualization — Reverse Jump](./visualization/graph/Live%20Visualization%20-%20Reverse%20Jump.md) | Jump from a Source selection to the enclosing node in a later stage — a **Jump to ▸ \<stage\>** submenu that reveals and centers the match | Implemented |
-| 37 | [Dialogue Graph — Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through, from a chevron separate from the band's own click | Implemented |
-| 48 | [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows after the tree layout, so no two scene bands can be drawn across each other | Implemented |
-| 51 | [Keyboard Navigation](./visualization/graph/Keyboard%20Navigation.md) | Navigate a graph by its edges: arrows, the numbered ways out and in, folding, and a keymap per tab shape | Implemented |
+| Note | What it covers | Status |
+| --- | --- | --- |
+| [Graph Position Preservation](./visualization/graph/Graph%20Position%20Preservation.md) | Per-graph zoom, pan, and fold memory, and a root-centered default | Implemented |
+| [Node Inspector](./visualization/graph/Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
+| [Jump to Stage](./visualization/graph/Jump%20to%20Stage.md) | From a Source selection to the enclosing node in a later stage, via **Jump to ▸ \<stage\>** | Implemented |
+| [Dialogue Graph Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through | Implemented |
+| [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows, so no two scene bands cross | Implemented |
+| [Keyboard Navigation](./visualization/graph/Keyboard%20Navigation.md) | Navigate a graph by its edges, with a keymap per tab shape | Implemented |
 
-#### Live session
+#### Served session
 
-The served shell around the report: watching files, editing and saving them,
-browsing the project, and the modes the window can take.
+The served shell around the report: the server, editing and saving, browsing the
+project, and the window's chrome.
 
-| Order | Note | What it covers | Status |
-| --- | --- | --- | --- |
-| 8 | [Live Visualization — Hot Reload](./visualization/session/Live%20Visualization%20-%20Hot%20Reload.md) | Watch a script and hot-reload the report from a local server | Implemented |
-| 9 | [Live Visualization — File Launcher](./visualization/session/Live%20Visualization%20-%20File%20Launcher.md) | Browse and open a script in the launcher (the uniform `visualize` entry point) | Superseded |
-| 10 | [Live Visualization — Live Edit](./visualization/session/Live%20Visualization%20-%20Live%20Edit.md) | Edit the source in the report; compile-as-you-type and save to disk | Implemented |
-| 11 | [Live Visualization — View and Edit Modes](./visualization/session/Live%20Visualization%20-%20View%20and%20Edit%20Modes.md) | The current unified model: a served session with a runtime View⇄Edit toggle; static becomes an export | Implemented |
-| 12 | [Live Visualization — Autosave](./visualization/session/Live%20Visualization%20-%20Autosave.md) | Persisted Auto/Manual save modes with idle saves, conflict safety, and save-before-navigation | Implemented |
-| 24 | [Live Visualization — File Explorer](./visualization/session/Live%20Visualization%20-%20File%20Explorer.md) | Fold the launcher into the served report as a collapsible Explorer sidebar: browse the project tree, open a script by click or cross-file link, and create one | Implemented |
-| 25 | [Live Visualization — Unified Served Shell](./visualization/session/Live%20Visualization%20-%20Unified%20Served%20Shell.md) | Collapse the launcher page and the direct-serve server into one shell: the Explorer is the only navigator, no-document shows an empty-state CTA, and `visualize <script>` serves through the same server | Implemented |
-| 26 | [Live Visualization — Line Debugger UI](./visualization/session/Live%20Visualization%20-%20Line%20Debugger%20UI.md) | Dormant CodeMirror debugger presentation layer behind a runtime-neutral controller seam | Implemented (dormant) |
-| 27 | [Live Visualization — Zen Mode](./visualization/session/Live%20Visualization%20-%20Zen%20Mode.md) | A deeper full screen that also steps the tab's secondary panel aside, leaving the editor or the graph alone | Implemented |
-| 28 | [Live Visualization — Narrow Screen Layout](./visualization/session/Live%20Visualization%20-%20Narrow%20Screen%20Layout.md) | The report on a phone: a one-line scrolling tab strip, a turned Explorer seam, and panels bounded by the viewport so the stage keeps its room | Implemented |
-| 29 | [Live Visualization — Problems Panel](./visualization/session/Live%20Visualization%20-%20Problems%20Panel.md) | Every diagnostic as a navigable list in a tabbed footer drawer, summarized on the status line so problems are visible from every tab | Implemented |
-| 39 | [Live Visualization — Explorer Toggle](./visualization/session/Live%20Visualization%20-%20Explorer%20Toggle.md) | Summon the Explorer from a pinned Files toggle in the tab bar, shut by default when a document is open | Implemented |
-| 40 | [Opening a Script Without Reloading the Page](./visualization/session/Opening%20a%20Script%20Without%20Reloading%20the%20Page.md) | Open a script from the Explorer by replacing the report's contents rather than the page, keeping the reader's zoom and open tab | Implemented |
-| 42 | [One Watcher for the Served Tree](./visualization/session/One%20Watcher%20for%20the%20Served%20Tree.md) | Watch the served tree once instead of once per document, so switching scripts stops paying for a fresh operating-system registration | Implemented |
+| Note | What it covers | Status |
+| --- | --- | --- |
+| [Served Shell](./visualization/session/Served%20Shell.md) | The one loopback server behind `ddown visualize`: its routes, roots, security, View and Edit, and the watcher | Implemented |
+| [Live Edit and Autosave](./visualization/session/Live%20Edit%20and%20Autosave.md) | Editing the source in the report and saving it: Auto and Manual modes, conflicts, and save-before-navigation | Implemented |
+| [Explorer](./visualization/session/Explorer.md) | The project tree, the Files toggle, and opening a script without reloading the page | Implemented |
+| [Chrome and Layout](./visualization/session/Chrome%20and%20Layout.md) | Zen mode, the narrow-screen layout, and the Problems panel | Implemented |
+| [Served Client Packaging](./visualization/session/Served%20Client%20Packaging.md) | How the served page loads its client: hashed assets, and Mermaid fetched on demand | Implemented |
 
 ### Other notes
 
@@ -307,8 +269,8 @@ the pipeline and its tools.
 
 | Note | What it covers | Status |
 | --- | --- | --- |
-| [BBCode Rendering](./other/BBCode%20Rendering.md) | Surveyed: render a line's styled speech as BBCode (Godot), terminal, and web — the `ISpeechFormatter` seam and library options | Explored |
-| [Development Cycle Optimization](./other/Development%20Cycle%20Optimization.md) | Implemented: reduce local and CI feedback time through measured, behavior-preserving increments | Implemented |
-| [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Explored: play the dialogue as a text adventure to validate branching — a terminal player, a web Play tab, and a Yarn export/run | Explored |
-| [Namespace Layout](./other/Namespace%20Layout.md) | Implemented: an architecture rule capping how many types an assembly's root namespace may hold, so a layer cannot flatten into an unnamed list | Implemented |
-| [Target Frameworks](./other/Target%20Frameworks.md) | Implemented: multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 LTS | Implemented |
+| [Target Frameworks](./other/Target%20Frameworks.md) | Multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 | Implemented |
+| [Namespace Layout](./other/Namespace%20Layout.md) | An architecture rule capping how many types an assembly's root namespace may hold | Implemented |
+| [Development Cycle Optimization](./other/Development%20Cycle%20Optimization.md) | Local and CI feedback time, cut through measured, behavior-preserving increments | Implemented |
+| [BBCode Rendering](./other/BBCode%20Rendering.md) | Render a line's speech fragments as BBCode (Godot), terminal, and web text | Proposed |
+| [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Play a script as a text adventure to check its branching; what the exploration found | Explored — not adopted |
