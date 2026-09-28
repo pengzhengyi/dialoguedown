@@ -1,21 +1,16 @@
 # Speech as Plain Text
 
-> [!IMPORTANT]
-> Status: **implemented**. A line's speech is a list of fragments, because a host
-> renders it and every host renders it differently. But several readers want the
-> same lossy rendering: the words, as one line of plain text. `SpeechText.Of` is
-> the public function they share, and the compiler's own flattening was repaired
-> to agree with it.
->
-> One divergence remains by design: the runtime's test helper still keeps a
-> flattening of its own, and adopts this one when that work next rebases.
+> [!NOTE]
+> Status: **implemented**. `SpeechText.Of` is the one public function that reads a
+> playbook's speech fragments as a single line of plain text, for every consumer
+> that wants the words rather than a rendering; the compiler's `InlineText.Of` is
+> held to the same answer.
 
 ## Table of contents
 
 - [Goal and scope](#goal-and-scope)
 - [Ubiquitous language](#ubiquitous-language)
 - [The readings that exist](#the-readings-that-exist)
-- [Functionality checklist](#functionality-checklist)
 - [The flattening](#the-flattening)
 - [Interfaces and abstractions](#interfaces-and-abstractions)
 - [Key design decisions](#key-design-decisions)
@@ -45,8 +40,8 @@ This component is that specification, implemented once as a public function.
 - A defined contribution for each of the nine fragment kinds.
 - Resolving a query fragment, for callers that can answer one, and a documented
   placeholder for callers that cannot.
-- A `Query` case in the compiler's `InlineText.Of`, so the report stops dropping
-  queries from the words it draws.
+- A `Query` case in the compiler's `InlineText.Of`, so the report draws a query in
+  the words it shows.
 
 **Out of scope:**
 
@@ -57,9 +52,6 @@ This component is that specification, implemented once as a public function.
   has no inverse.
 - **Any change to the playbook format, its schema, or the serialized document.**
   This adds a way to read what is already there.
-- **Migrating the runtime's own test helper.** It lives on a branch this work does
-  not touch, and it adopts this function after this lands. See
-  [The readings that exist](#the-readings-that-exist).
 
 ## Ubiquitous language
 
@@ -72,59 +64,25 @@ This component is that specification, implemented once as a public function.
 | **Answer**      | What a caller supplies for a query key.                                                                                        |
 | **Placeholder** | What stands in for a query a caller cannot answer: the key in braces, `{HeroName}`.                                            |
 
-*Flattening* and *plain text* are the repository's existing words, taken from the
-corpus note and from the helper the compiler already has. This note invents no
-vocabulary.
+*Flattening* and *plain text* are the words the conformance corpus and the
+compiler's helper use.
 
 ## The readings that exist
 
-Reading speech as plain text happens in three places, and they have to give the
-same answer.
+Every reading of speech as plain text gives the same answer.
 
-| Where                   | What reads                                                                                                                                      | Agreement                                                           |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `Conformance Corpus.md` | Specifies the reading normatively for every port: "concatenate each fragment's plain text, drop style markers, and substitute resolved queries" | The contract all three answer to                                    |
-| `SpeechText.Of`         | A playbook's speech, after a script ships                                                                                                       | The public one; every kind covered, enforced by a test              |
-| `InlineText.Of`         | The compiler's own fragments, while a script compiles                                                                                           | Held to `SpeechText` fragment by fragment, through the real mapping |
+| Where | What reads | Agreement |
+| --- | --- | --- |
+| The conformance corpus | A fixture's string form of `speech` or `label` is this flattening, for every port | The contract the others answer to |
+| `SpeechText.Of` | A playbook's speech; called by the runtime's `SaidMatcher` and `StepAssert`, and by the Nodes table for a divert's label | The public one; every kind covered, enforced by a test |
+| `InlineText.Of` | The compiler's own fragments, while a script compiles | Held to `SpeechText` fragment by fragment, through the real mapping |
+| The Nodes table | Walks speech into styled segments with the same per-kind rules, and names a query through `SpeechText.PlaceholderFor` | Same rules; not held to `SpeechText` by a test |
 
-The compiler's reading had no arm for a query and ended in a catch-all, so it
-contributed nothing for one. Eight label sites across the graph, the semantic model,
-and the desugared AST share that reading. Four of them can hold a query — a line's
-speech, and a scene's heading wherever the report names it — and those four drew the
-line with its query missing. The other four label a link: a divert, an option, an
-image alt. A query cannot reach them, because a code span inside a label is restored
-to the characters the writer typed rather than read as a call, so a reader there is
-meant to see the backticks. The reading now names a query using this function's own
-wording, so the two cannot disagree about the one fragment whose words are not in the
-fragment.
-
-A fourth reading sits outside this work. The runtime's `StepAssert` test helper
-concatenates only the top-level text fragments, so nested styling vanishes from it:
-the corpus note's own `"My key is **rusty**."` example reads as `"My key is ."`. It
-is latent, because no runtime test uses a styled fragment yet — and it stops being
-latent as soon as a fixture about conditions happens to contain a bold word, which
-the corpus invites by reserving the string form for fixtures whose subject is *not*
-styling. That helper lives on in-flight runtime work rather than on the main line,
-so this component does not reach in and change it. Landing the shared function first
-is what makes the fix available: the playbook library is already referenced there,
-so adoption is a one-call-site change owned by the branch that needs it.
-
-## Functionality checklist
-
-- [x] Every one of the nine fragment kinds has a defined plain text.
-- [x] Styled runs contribute their words and drop their style.
-- [x] Nesting is followed to any depth.
-- [x] A link contributes its label; an image contributes its alt text.
-- [x] A line break contributes a single space, because it records where the writer's source
-      wrapped rather than a break they asked for.
-- [x] A tag and a command contribute nothing — they are not words in the line.
-- [x] A caller that can answer a query gets the answer substituted.
-- [x] A caller with no answers gets the key in braces, `{HeroName}`.
-- [x] An option's label flattens by the same function as a line's speech.
-- [x] The result is returned exactly as composed; trimming is the caller's business.
-- [x] `InlineText.Of` renders a query the same way, so the report stops drawing a
-      line with its queries missing.
-- [x] The placeholder's rough edges are documented where a writer will meet them.
+Eight label sites across the graph, the semantic model, and the desugared AST read
+through `InlineText.Of`. Four can hold a query — a line's speech, and a scene's
+heading wherever the report names it — and draw it as `{Key}`. The other four label
+a link — a divert, an option, an image alt — where a code span is restored to the
+characters the writer typed, so a reader there sees the backticks.
 
 ## The flattening
 
@@ -161,7 +119,7 @@ flowchart LR
 
 ## Key design decisions
 
-### DD1 — It lives in the playbook library, public
+### D1 — It lives in the playbook library, public
 
 The playbook library is the contract between a compiler and a runtime, and its
 project file says what that means: a game embeds this and a runner, never the
@@ -173,7 +131,7 @@ runtime's tests, the Nodes table lives in the visualization assembly, and a host
 fallback lives in somebody else's game. The only assembly all three already
 reference is this one.
 
-### DD2 — A function now, the formatter seam later
+### D2 — A function, not a formatter seam
 
 A surveyed sibling note proposes an `ISpeechFormatter` seam with one `Format`
 method per target — BBCode for Godot, markup for a terminal, HTML for the web —
@@ -182,7 +140,7 @@ and a shared visitor walking the fragment tree while each formatter fills in
 targets, so the question is whether to build the seam now and make plain text its
 first implementation.
 
-The recommendation is **no, not yet** — and the reason is not cost, it is fit.
+It does not, and the reason is fit, not cost.
 Plain text is the **degenerate** formatter: it is the one target that needs no
 `OpenStyle`, no `CloseStyle`, and no escaping, because it throws all of that away.
 Designing the shared visitor against it would shape the abstraction around the one
@@ -190,14 +148,10 @@ case that exercises none of it, and the first real formatter would then be a
 rewrite rather than an addition. An interface extracted from two implementations
 fits both; an interface extracted from the empty case fits neither.
 
-Nothing is lost by waiting. A static `Of` can be wrapped by an implementation of
-the seam whenever the seam arrives, without touching a single caller.
+A static `Of` can be wrapped by an implementation of the seam when one exists,
+without touching a caller.
 
-This is a judgment call about sequencing rather than about whether the abstraction
-is worth having, so it is worth disagreeing with if the seam feels closer than it
-looks from here.
-
-### DD3 — Two implementations coexist, and that is not duplication
+### D3 — Two implementations coexist, and that is not duplication
 
 The compiler already has `InlineText.Of`, and it is correct. It is also on a
 different type: the compiler's `InlineFragment`, which is internal to the compiler
@@ -215,14 +169,10 @@ What they must not do is disagree. A test pairs corresponding fragments of the t
 types and asserts both helpers produce the same string, so a change to one that the
 other does not follow fails a build rather than a port's conformance run.
 
-That test is what pulls the compiler's query bug into this component. `SpeechText`
-renders a query; `InlineText` drops one; the two cannot both be right. Rather than
-exempt the one fragment kind this note is mostly about, `InlineText.Of` gains the
-same `Query` case — one arm before its catch-all, which leaves commands and tags
-contributing nothing as they do today. No existing test flattens a query through it,
-so nothing else moves.
+That test is why `InlineText.Of` has a `Query` case: one arm before its catch-all,
+which leaves commands and tags contributing nothing.
 
-### DD4 — A query is answered by the caller, not by the function
+### D4 — A query is answered by the caller, not by the function
 
 A query is the one fragment whose plain text is not in the fragment. The corpus
 says to substitute **resolved** queries, which is unambiguous there because a
@@ -245,15 +195,15 @@ to admit a null the format never asks for anywhere else.
 
 And it leaves the caller in charge of a key it cannot answer, which is what this
 decision claims to do. A function that took a nullable answer and filled the gap
-itself would be deciding query policy after all — the same overreach DD6 avoids for
+itself would be deciding query policy after all — the same overreach D6 avoids for
 trimming. Total means the braces are a default rather than a rule: a terminal that
 would rather mark an unknown key its own way can.
 
 The alternatives for an unanswerable key were a throw and an empty string. A throw
-would crash a report over a script that is perfectly valid. An empty string is what
-the report does today, and it is the defect this note repairs.
+would crash a report over a valid script, and an empty string drops the word from
+the line.
 
-### DD5 — An unanswered query reads as `{Key}`
+### D5 — An unanswered query reads as `{Key}`
 
 The placeholder is `{HeroName}`: the key, in braces. It is a rendering convention,
 not DialogueDown syntax, and it is deliberately not written the way a writer writes
@@ -301,7 +251,7 @@ The rough edges are real, and are documented rather than designed away:
   a key cannot contain one — but that trade buys safety in a case no real script
   reaches, at the cost of the collision above in the common one.
 
-### DD6 — Nothing is trimmed, and nothing is capped
+### D6 — Nothing is trimmed, and nothing is capped
 
 `Of` returns exactly what the fragments compose. A line's speech often has
 meaningful leading or trailing space — the corpus example's first fragment ends in
@@ -312,17 +262,17 @@ Callers trim when they want to: the Dialogue Graph's label already does, and the
 Nodes table's cap belongs to the table. This follows what `InlineText.Of` already
 established.
 
-### DD7 — Commands and tags are not words
+### D7 — Commands and tags are not words
 
 A tag is metadata a host reads for a portrait or a voice; a command is an effect a
 host performs. Neither is something a speaker says, so neither contributes plain
-text — which is also what `InlineText.Of` does today with its catch-all, and what
+text — which is also what `InlineText.Of` does with its catch-all, and what
 the corpus implies by calling the result the line's plain text.
 
 The consequence worth stating: a line that is *only* a command flattens to the
 empty string. That is correct, and a caller that wants to say something about such
 a line has to say it itself. The Nodes table does exactly this, describing a
-control node by its effects rather than by its speech.
+control node by its effects.
 
 ## Error and boundary cases
 
@@ -339,35 +289,17 @@ control node by its effects rather than by its speech.
 
 ## Integration
 
-- **`speech/SpeechText.cs`** — new, public, in `DialogueDown.Playbook`.
-- **`script/ast/InlineText.cs`** — gained a `Query` arm before its catch-all, which
-  stops the report drawing a line with its queries missing. It calls this component's
-  own placeholder rather than spelling the braces again, so the convention has one
-  definition. The reference is aliased rather than imported, because that namespace
-  has a `SpeechStyle` of its own and importing the other would leave two of that name
-  in scope. Kept rather than merged away; see DD3.
-- **The report's label sites** — unchanged code, changed output: the four places that
-  can hold a query now draw it instead of swallowing it. No existing assertion had to
-  move, because none of them flattened a script carrying a query. Two new tests close
-  that gap, one per affected tab.
-- **`PlaybookNodeSummary`** — the Nodes table's summary consumes it, for a line's
-  speech and for an option's label alike.
-- **The conformance harness** — its speech matcher, still to be written, compares a
-  fixture's string form against this function, so the normative flattening and the
-  implementation are the same thing by construction.
-- **The runtime's `StepAssert`** — not touched here. It adopts this function when the
-  in-flight runtime work next rebases, which retires its own flattening and the
-  nested-styling bug with it.
-- **The writer's guide** — the queries section of the game-state guide gained a
-  short passage on the placeholder: that a surface with no world shows `{Key}`, that braces
-  are a drawing convention rather than script syntax, and that typing them into a
-  script writes literal braces. This is where a writer already goes to learn what a
-  query is, so it is where they should meet what one looks like unresolved.
-- **No format change.** Nothing about the serialized document moves.
-
-The public surface grows by one static class holding three members — two `Of`
-overloads and `PlaceholderFor` — which is worth counting because the library's
-published API is meant to stay small and deliberate.
+- **`speech/SpeechText.cs`** — public, in `DialogueDown.Playbook`: two `Of`
+  overloads and `PlaceholderFor`, the library's whole addition to its public API.
+- **`script/ast/InlineText.cs`** — a `Query` arm that calls `PlaceholderFor`, so the
+  braces have one definition. Kept rather than merged away; see D3.
+- **The conformance harness** — `SaidMatcher` compares a fixture's string form
+  against `SpeechText.Of`, so the normative flattening and the implementation are the
+  same thing by construction.
+- **The writer's guide** — the game-state guide's
+  [queries section](../../../guide/game-state.md#where-a-query-has-no-answer-yet)
+  explains the `{Key}` placeholder.
+- **No format change.** The serialized document is untouched.
 
 ## Testability
 
@@ -379,7 +311,6 @@ published API is meant to stay small and deliberate.
 | xUnit — coverage                    | Reflecting over the fragment union's registered members, every kind is handled deliberately rather than reaching the catch-all. The repository's `UnionAssert` already asserts union completeness this way.                                                                                      |
 | xUnit — agreement with `InlineText` | Corresponding fragment pairs of the two types flatten to the same string, queries included — the assertion that keeps the compiler's helper and this one from drifting apart.                                                                                                                    |
 | xUnit — the report's labels         | Script text compiled through the real pipeline, asserting that a query written in a line and in a scene's name reaches the label a reader sees. One test per affected tab.                                                                                                                       |
-| Generative (optional)               | Flattening never throws and never returns `null`, over randomly generated fragment trees. Worth little for a total function on a closed union, and this test project does not reference Bogus today, though two sibling projects do. Listed so the decision is deliberate rather than forgotten. |
 
 The reading's own tests are pure function calls on hand-built fragments — no
 document, no compile, no playbook. The report's label tests are the deliberate

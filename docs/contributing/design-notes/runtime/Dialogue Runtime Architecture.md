@@ -1,19 +1,13 @@
-# Dialogue runtime architecture
+# Dialogue Runtime Architecture
 
 > [!NOTE]
-> Status: **partially implemented** — the umbrella. The [playbook format and
-> writer](./Playbook%20Format.md) (C1), the first two passes of the C# runner
-> ([Runtime Core](./Runtime%20Core.md) — the state and the step — and
-> [Waiting on the Host](./Waiting%20on%20the%20Host.md)), and the
-> [conformance corpus](./Conformance%20Corpus.md) (C3) have shipped. The rest of
-> the runner (conditions, world reads, saves) and C4–C8 remain proposed; see the
-> [component table](#components-and-sequencing). This note
-> fixes the cross-cutting shape of everything after the
-> [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook** a compile
-> emits, the **runner** that plays one, the **protocol** between a runner and its
-> driver, and the **conformance corpus** that keeps more than one runtime honest.
-> It settles decisions that would otherwise be re-litigated in every component;
-> each component note below then owns its own details.
+> Status: **partially implemented**. The umbrella for everything after the
+> [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook**, the
+> **runner** that plays one, the **protocol** between a runner and its driver, and
+> the **conformance corpus** that keeps runtimes honest. The playbook, the corpus,
+> and a runner that plays lines, jumps, effects, and the end are built; choices,
+> world reads, saves, drivers, and every other host are not (see
+> [components](#components-and-sequencing)).
 
 ## Table of contents
 
@@ -36,68 +30,61 @@
 
 ## Goal and scope
 
-The compiler ends at a `DialogueGraph`, and that graph is `internal`. Nothing can
-yet **ship** a compiled script or **play** one. This note designs the last third
-of the project:
+The compiler ends at an `internal` `DialogueGraph`. This note designs how a
+compiled script is **shipped** and **played**:
 
 1. **Serialize** the graph into a portable, versioned artifact — the *playbook*.
 2. **Play** a playbook through a small runner with clean seams into a host.
 3. **Keep runtimes honest** with a shared, data-driven conformance corpus.
 
-The governing constraint is that one compiler must serve a **CLI**, the **web
-report**, and **Godot**, while each host keeps complete freedom over presentation
-— and the host may sit in **another process**, reachable only over a network.
-That is the Unix split: the compiler produces a text artifact, and anything that
-can read it can play it.
+One compiler serves a **CLI**, the **web report**, and **Godot**, while each host
+keeps complete freedom over presentation — and the host may sit in **another
+process**, reachable only over a network. The compiler produces a text artifact,
+and anything that can read it can play it.
 
-In scope: the artifact's purpose and compatibility policy, the runner's execution
-model and protocol, read consistency against external state, what a save holds,
-and how many runtimes exist.
-
-Out of scope, each with its own note: every component's internals, exporters to
-other engines,
-the compile-time linker
-([Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md)), and the
-configuration surface for capability targeting (see
-[Compatibility](#compatibility)).
+This note owns the cross-cutting decisions: the artifact's purpose and
+compatibility policy, the runner's execution model and protocol, read consistency
+against external state, what a save holds, and how many runtimes exist. Each
+component note owns its own details; the compile-time linker is
+[Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md).
 
 ## Ubiquitous language
 
-| Term                   | Meaning                                                                                                                                         |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Script**             | The authored source, a `*.dialogue.md` file. Unchanged.                                                                                         |
-| **Playbook**           | The compiled, portable artifact for **one script**: nodes, edges, tables, and a compatibility header. What a compile emits and a runtime loads. |
-| **Runner**             | The pure function that advances play: given a playbook, a `PlayState`, and one input, it returns the next state and the events it emitted.      |
-| **`PlayState`**        | An immutable value: where play is. It *is* the save. The shipped runner carries the position alone; the rest lands with C2.                     |
-| **`PlaySession`**      | The stateful shell around the runner: holds the current `PlayState`, talks to the driver, records the transcript.                               |
-| **Driver**             | The party that drives a session — a CLI, the report, a game, a debugger. It sends commands and answers reverse requests.                        |
-| **World**              | The game state a script asks about. A **role behind the driver**, not a separate protocol party.                                                |
-| **Event**              | Something the runner emits: speech, a menu, an effect, the end.                                                                                 |
-| **Effect**             | A game call the host performs. Already the graph's word for a `GameCall`.                                                                       |
-| **Query**              | A pure read of the world — a guard, a weight, or a value spliced into speech.                                                                   |
-| **Transcript**         | The rendered history of a playthrough: what was said, what was offered, what was chosen.                                                        |
-| **Capability**         | A named construct a runtime must understand — the unit of compatibility.                                                                        |
-| **Conformance corpus** | Language-neutral fixtures every runtime must reproduce.                                                                                         |
+| Term | Meaning |
+| --- | --- |
+| **Script** | The authored source, a `*.dialogue.md` file. |
+| **Playbook** | The compiled, portable artifact for **one script**: nodes, edges, tables, and a compatibility header. What a compile emits and a runtime loads. |
+| **Runner** | The pure function that advances play: given a playbook, a `PlayState`, and one command, it returns the next state and the events it reported. |
+| **`PlayState`** | An immutable value: where play is. It *is* the save. |
+| **`PlaySession`** | The stateful shell around the runner: holds the current `PlayState`, talks to the driver, records the transcript. Not built. |
+| **Driver** | The party that drives a session — a CLI, the report, a game, a debugger. It sends commands and answers requests. |
+| **World** | The game state a script asks about. A **role behind the driver**, not a separate protocol party. |
+| **Event** | Something the runner reports: speech, a menu, a request, the end, a refusal. |
+| **Effect** | A game call the host performs. |
+| **Query** | A pure read of the world — a condition, a weight, or a value spliced into speech. |
+| **Transcript** | The rendered history of a playthrough: what was said, offered, and chosen. |
+| **Capability** | A named construct a runtime must understand — the unit of compatibility. |
+| **Conformance corpus** | Language-neutral fixtures every runtime must reproduce. |
 
-Deliberately avoided: *interpreter* and *virtual machine*. Both promise a
-bytecode execution engine, and [D1](#d1--the-playbook-is-declarative-not-bytecode)
-explains why this project needs neither.
+Deliberately avoided: *interpreter* and *virtual machine*. Both promise a bytecode
+engine, and [D1](#d1--the-playbook-is-declarative-not-bytecode) explains why this
+project needs neither.
 
 ## Prior art
 
-| System                                                                                                                    | What we take                                                                                                                                                                                              | What we avoid                                                                                                |
-|---------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| [Ink](https://github.com/inkle/ink)                                                                                       | The pull loop; two independent version lines (`inkVersionCurrent` / `inkVersionMinimumCompatible`, and a separate save-state pair); `StoryState` as one serializable value holding pointer and call stack | Synchronous external functions, and the `lookaheadSafe` flag they force to stop double-invoking side effects |
-| [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)                                                            | The localization split; `[disabled]` options in its test plans; pre-fetch hints (`PrepareForLinesHandler`)                                                                                                | Push-style handlers, which impose reentrancy discipline on every host                                        |
-| [LSP](https://microsoft.github.io/language-server-protocol/) / [DAP](https://microsoft.github.io/debug-adapter-protocol/) | **Reverse requests** as a named concept, capability negotiation at handshake, and DAP's `Invalidated` "your snapshot is stale" event                                                                      | —                                                                                                            |
-| [glTF 2.0](https://registry.khronos.org/glTF/)                                                                            | `extensionsUsed` / `extensionsRequired`: advisory versus **must-understand**; text now, binary later                                                                                                      | —                                                                                                            |
-| [CommonMark](https://spec.commonmark.org/)                                                                                | A data-driven conformance suite every implementation runs                                                                                                                                                 | —                                                                                                            |
-| [Ren'Py](https://www.renpy.org/)                                                                                          | A capped history log as a first-class feature                                                                                                                                                             | Rollback: even its ambitious implementation cannot undo file I/O and needs opt-outs                          |
+| System | What we take | What we avoid |
+| --- | --- | --- |
+| [Ink](https://github.com/inkle/ink) | The pull loop; separate version lines for the story format and the save state; `StoryState` as one serializable value | Synchronous external functions, and the `lookaheadSafe` flag they force |
+| [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner) | The localization split; `[disabled]` options in its test plans | Push-style handlers, which impose reentrancy discipline on every host |
+| [LSP](https://microsoft.github.io/language-server-protocol/) / [DAP](https://microsoft.github.io/debug-adapter-protocol/) | **Reverse requests** as a named concept, capability negotiation at handshake, and DAP's `Invalidated` event | — |
+| [glTF 2.0](https://registry.khronos.org/glTF/) | `extensionsUsed` / `extensionsRequired`: advisory versus **must-understand** | — |
+| [CommonMark](https://spec.commonmark.org/) | A data-driven conformance suite every implementation runs | — |
+| [Ren'Py](https://www.renpy.org/) | A capped history log as a first-class feature | Rollback: it still cannot undo file I/O and needs opt-outs |
 
 The most useful lesson is a negative one. **Neither ink nor Yarn Spinner has a
-cross-language conformance suite.** inkjs tracks the C# runtime by hand, and
-drift surfaces as user bug reports. A project that plans more than one runtime
-should close that gap while there is still only one runtime to make conformant.
+cross-language conformance suite.** inkjs tracks the C# runtime by hand, and drift
+surfaces as user bug reports. A project that plans more than one runtime closes
+that gap while there is still only one runtime to make conformant.
 
 ## The model: compile once, play anywhere
 
@@ -114,151 +101,88 @@ flowchart LR
 Three properties define the model:
 
 - **The playbook is the only contract.** A runtime never references the compiler.
-  A shipped game embeds a small runner and its playbooks — not Markdig, not
-  Tomlyn, not the diagnostics engine.
-- **A playbook is per script, never merged.** The
-  [linker](../language/Cross-File%20Jump%20Resolution.md) already settled this: cross-file
-  links resolve *by reference*, so a project is a **set** of playbooks plus a
-  manifest, and a runner loads the next script on demand. Merging would loop on
-  legal reference cycles and destroy incremental recompiles.
+  A shipped game embeds a small runner and its playbooks — not Markdig, not Tomlyn,
+  not the diagnostics engine.
+- **A playbook is per script, never merged.** Cross-file links resolve *by
+  reference* ([linker](../language/Cross-File%20Jump%20Resolution.md)), so a
+  project is a **set** of playbooks and a runner loads the next script on demand.
+  Merging would loop on legal reference cycles and destroy incremental recompiles.
 - **Presentation belongs to the host.** The playbook carries **structured** speech
   fragments — styled runs, links, images, line breaks — never pre-rendered text.
-  Godot renders [BBCode](../other/BBCode%20Rendering.md), the report renders HTML, the
-  CLI renders ANSI, all from the same artifact.
+  Godot renders [BBCode](../other/BBCode%20Rendering.md), the report renders HTML,
+  and the CLI renders ANSI, all from the same artifact.
 
 ## The playbook
 
-A playbook holds what *playing* needs and nothing else.
+A playbook holds what *playing* needs and nothing else. Its document, field names,
+and reader checks are owned by [Playbook Format](./Playbook%20Format.md); three
+cross-cutting choices shape it:
 
-```json
-{
-  "$schema": "./playbook-0.schema.json",
-  "playbookVersion": 0,
-  "requires": ["core"],
-  "uses": [],
-  "script": "chapter-01.dialogue.md",
-  "entry": 0,
-  "anchors": { "the-inn": 4 },
-  "nodes": [
-    {
-      "id": 0,
-      "kind": "line",
-      "speaker": { "name": "Alice" },
-      "speech": [
-        { "kind": "text", "text": "My favorite color is " },
-        { "kind": "query", "key": "Alice.FavoriteColor" },
-        { "kind": "text", "text": "." }
-      ],
-      "out": [{ "kind": "succession", "to": 1 }]
-    },
-    {
-      "id": 1,
-      "kind": "choice",
-      "ordered": false,
-      "out": [
-        {
-          "kind": "option",
-          "to": 2,
-          "label": [{ "kind": "text", "text": "Ask about the inn" }],
-          "guard": { "kind": "key", "key": "IsCurious" }
-        },
-        {
-          "kind": "option",
-          "to": 3,
-          "label": [{ "kind": "text", "text": "Say nothing" }]
-        }
-      ]
-    }
-  ]
-}
-```
-
-Three fields carry more weight than they look:
-
-- A runner asks **once per node, in one batch**, because it gathers the keys a node
-  needs by walking the node it just arrived at. The artifact does not repeat them:
-  a derivable fact stored twice is a fact that can disagree with itself.
-- **`label`** is the option's menu text, compiled rather than discovered. See
-  [D7](#d7--options-carry-a-compiled-label).
-- **`to`** is a node reference: a **number** for a local node, or a **string** in
-  the authored `script#anchor` notation for a scene in another script. The union
-  exists from version 0 so every reader handles both shapes. A number is an index
-  into `nodes`, validated on load by the invariant `nodes[i].id == i`, which keeps
-  local resolution O(1) while the explicit `id` keeps the file readable.
-
-The string form is deliberate: it is **the notation the writer already wrote** —
-`=> [Meet Bob](../chapter-02.md#meet-bob)` — normalized to a `ScriptId` per the
-[linker](../language/Cross-File%20Jump%20Resolution.md)'s path semantics. One concept keeps
-one spelling from source through artifact to diagnostic to debugger. Numbers stay
-numbers for local edges because nearly every edge is local, and an integer is
-already an index; making those strings would add bytes and a parse to the common
-case, and `#4` would collide with a scene slugged from a heading titled "4".
+- **Nothing derivable is stored.** A runner gathers the query keys a node needs by
+  walking the node it just arrived at, so the artifact does not repeat them.
+- **Options carry a compiled `label`**
+  ([D7](#d7--options-carry-a-compiled-label)).
+- **A node reference is a dense integer index**, checked on load by
+  `nodes[i].id == i`. A reference into another script waits for the linker; a
+  playbook that uses one will declare the `cross-file-jump` capability, so an older
+  runner refuses it whole.
 
 What it deliberately **excludes**:
 
-| Excluded                       | Why                                                                                | Where it goes instead                                 |
-|--------------------------------|------------------------------------------------------------------------------------|-------------------------------------------------------|
-| Source spans                   | They churn on every edit and bloat a shipped artifact                              | An opt-in sidecar source map, on the JavaScript model |
-| Diagnostics                    | A playbook is only emitted for a clean compile                                     | The compile result                                    |
-| Semantic symbols, regions, AST | Compiler internals; welding them to the format makes every refactor a format break | Stay `internal`                                       |
-| History and visit counts       | Derived, unbounded, and the host's business                                        | [Transcript](#state-saves-and-history) and the world  |
+| Excluded | Why | Where it goes instead |
+| --- | --- | --- |
+| Source spans | They churn on every edit and bloat a shipped artifact | An opt-in sidecar source map, on the JavaScript model |
+| Diagnostics | A playbook is only emitted for a script without errors | The compile result |
+| Semantic symbols, regions, AST | Compiler internals; welding them to the format makes every refactor a format break | Stay `internal` |
+| History and visit counts | Derived, unbounded, and the host's business | [Transcript](#state-saves-and-history) and the world |
 
 ## Compatibility
 
 A story that plays *wrongly* is worse than one that refuses to play. Unknown
-constructs therefore cannot be skipped: unlike most formats, **graceful
-degradation is not available to us**, because a dropped guard does not error — it
-silently tells the wrong story. That leaves two honest options: refuse, or catch
-it at compile time. The design does both.
+constructs therefore cannot be skipped: **graceful degradation is not available**,
+because a dropped condition does not error — it silently tells the wrong story. So
+a runtime refuses, and the compiler can catch it earlier.
 
 ### Capabilities carry compatibility, not version numbers
 
-A single monotonic version couples every feature together: add one construct, bump
-the number, and every old runner refuses **every** playbook — including the ones
-that never use it. So capabilities are the primary mechanism.
+A single monotonic version couples every feature together: add one construct and
+every old runner refuses **every** playbook. So capabilities are the primary
+mechanism:
 
 ```text
 Load succeeds  ⟺  playbook.requires ⊆ runner.supported
 ```
 
-Adding detours does not bump the version; it adds the capability `detour`. Old
-runners keep playing every playbook that does not use detours. **Compatibility
-becomes per-playbook rather than per-release.**
-
-| Change                                   | Example                       | Mechanism                  | Effect on an old runner                             |
-|------------------------------------------|-------------------------------|----------------------------|-----------------------------------------------------|
-| New construct                            | `detour`                      | new capability name        | Refuses *only* playbooks that use it                |
-| New optional metadata                    | a source-map link             | unknown fields are ignored | No effect                                           |
-| Changed meaning of an existing construct | fall-through semantics change | `playbookVersion` bump     | Refuses everything — rare, and near-never after 1.0 |
+| Change | Example | Mechanism | Effect on an old runner |
+| --- | --- | --- | --- |
+| New construct | `detour` | new capability name | Refuses *only* playbooks that use it |
+| New optional metadata | a source-map link | unknown fields are ignored | No effect |
+| Changed meaning of an existing construct | fall-through semantics change | `format.version` bump | Refuses everything — rare, and near-never after 1.0 |
 
 Following glTF, the header carries **two** lists: `requires` is must-understand,
-while `uses` is advisory — present, but a runner that ignores it still plays the
-story correctly. Without `uses`, every additive nicety becomes a hard gate.
+while `uses` is advisory. Without `uses`, every additive nicety would be a hard
+gate. Version 0 defines `core` and reserves `cross-file-jump`.
 
 ### Three version coordinates
 
-Semantic versioning versions a package's API; it cannot version a data format,
-because a data file has no callers to break. Ink keeps these separate and so do
-we:
+| Coordinate | Type | Moves when | Who reads it |
+| --- | --- | --- | --- |
+| `format.version` | integer | existing semantics change — near-never | runtime authors |
+| `requires` / `uses` | string set | any new construct | the loader, per playbook |
+| package version | semver | the library API changes | game developers, via NuGet and npm |
 
-| Coordinate          | Type       | Moves when                             | Who reads it                       |
-|---------------------|------------|----------------------------------------|------------------------------------|
-| `playbookVersion`   | integer    | existing semantics change — near-never | runtime authors                    |
-| `requires` / `uses` | string set | any new construct                      | the loader, per playbook           |
-| package version     | semver     | the library API changes                | game developers, via NuGet and npm |
-
-The compiler **writes** one `playbookVersion`; a runner **accepts a range** and
-refuses outside it. Published alongside them is a **compatibility matrix** mapping
-library versions to supported capabilities, so a team with a varied fleet asks the
-useful question — *does my runtime support `detour` yet?* — rather than comparing
-version numbers.
+The compiler **writes** one version; a runner **accepts a range**. A published
+compatibility matrix maps library versions to supported capabilities, so a team
+asks *does my runtime support `detour` yet?* rather than comparing numbers.
 
 ### Compile-time targeting is opt-in
 
-Capabilities fix compatibility at *load* time, but discovering "your shipped
-runtime cannot play chapter 7" inside a released game is still terrible. The fix
-is to move the failure into the writer's editor, exactly as `LangVersion`,
-`--release`, and `browserslist` do.
+> [!NOTE]
+> Proposed; not built.
+
+Discovering "your shipped runtime cannot play chapter 7" inside a released game is
+terrible, so the failure moves into the writer's editor, as `LangVersion`,
+`--release`, and `browserslist` do:
 
 ```toml
 # dialogue.toml — both sections optional
@@ -269,235 +193,177 @@ target = ["core", "conditions"]    # ceiling: refuse anything beyond
 detour = true                      # gate: opt into a preview construct
 ```
 
-These are **inverses** — a target restricts to an older set, a feature flag
-unlocks a newer one — but they resolve into one rule:
+A target restricts to an older set and a feature flag unlocks a newer one; both
+resolve into one rule:
 
 ```text
 available(construct) = (construct is stable OR its feature flag is enabled)
                    AND (no target is set    OR its capability ∈ target)
 ```
 
-Both are **opt-in**, so `ddown` stays plug-and-play: with no configuration the
-compiler emits everything stable and `requires` reports what was actually used.
-Critically, **targeting is never load-bearing for correctness** — the playbook
-always declares `uses`/`requires`, so runtime refusal remains the safety net and
-targeting only moves the failure earlier.
+Both are **opt-in**, so with no configuration the compiler emits everything stable.
+Targeting is **never load-bearing for correctness** — the playbook always declares
+`requires`/`uses`, so runtime refusal stays the safety net. Using a gated or
+out-of-target construct is an **error** that names the construct and the fix.
 
-Using a gated or out-of-target construct is an **error**, never a warning, for the
-same reason degradation is unavailable. It must be a specific, actionable error
-that names the construct and the fix, not a generic parse failure.
-
-Initial guidance for the dedicated note:
+Guidance for the component that builds it:
 
 - **One capability registry** in the core, consumed by the compiler, the target
-  check, the feature gate, the runtime's supported set, and the docs — the same
-  single-source-of-truth pattern as `UnmodeledMarkdownNames`.
-- **`core` is the 1.0 baseline.** Everything shipping at 1.0 is one capability,
-  not fifty; new constructs after 1.0 get their own names.
-- **Name capabilities after the construct a writer recognizes** —
-  `detour`, `random-choice`, `cross-file-jump` — never after a release. Finer
-  granularity means old runners reject less.
-- **A target takes an explicit capability list** at first; a friendlier version
-  alias needs a version-to-capability map that goes stale, so it is deferred.
+  check, the feature gate, the runtime's supported set, and the docs.
+- **`core` is the 1.0 baseline**; constructs after 1.0 get their own names.
+- **Name capabilities after the construct a writer recognizes** — `detour`,
+  `random-choice`, `cross-file-jump` — never after a release.
+- **A target takes an explicit capability list**; a version alias needs a map that
+  goes stale.
 
 ## The runner
 
 ### A functional core and an imperative shell
 
 The runner is a **total transition function over immutable state**. It performs no
-I/O, holds no reference to a host, and never calls out.
-
-```csharp
-// Functional core — total, deterministic, no I/O, no mutation.
-public static StepResult Step(Playbook playbook, PlayState state, DriverCommand command);
-
-public sealed record StepResult(PlayState State, IReadOnlyList<RunnerEvent> Events);
-```
-
-The position carries the stage a run is at, so a state cannot contradict itself and
-`Step` stays total. What may be sent next is read from the event the runner just
-produced. `PlaySession` is the imperative shell: it holds the current state,
-performs transport, and records the transcript.
-
-Dialogue advances at human speed — a few steps per second, not per frame — so
-allocating a small record per step costs nothing measurable. This is the case
-where readability wins outright.
+I/O, holds no reference to a host, and never calls out; its signature, positions,
+and refusals are owned by the [Runner](./Runner.md) note. `PlaySession` is the
+imperative shell: it holds the current state, performs transport, and records the
+transcript. Dialogue advances at human speed, so allocating a small record per
+step costs nothing measurable.
 
 ### The protocol
 
 Because the core never calls out, every interaction is a message, and the runner
-behaves identically whether those messages are method calls, `postMessage` to a
-worker, or HTTP across a network.
+behaves the same whether messages are method calls, `postMessage` to a worker, or
+HTTP. There are **two parties**: the **driver** and the **runner**. The world is a
+role *behind* the driver; LSP and DAP solve this by naming the message
+**direction** rather than inventing a third party, and so does this design.
 
-There are **two parties**: the **driver** (client) and the **runner** (server).
-The world is a role *behind* the driver — in a CLI the same program, in a
-client/server game an HTTP call the driver makes. LSP and DAP both solve this by
-naming the message **direction** rather than inventing a third party, and so do
-we.
+| Direction | Kind | Built | Designed, not built |
+| --- | --- | --- | --- |
+| driver → runner | **command** | `Start`, `Next` | `Choose(i)`, `Restore(state)` |
+| runner → driver | **event** | `Said`, `Ended`, `Refused` | `Asked`, `Invalidated` |
+| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)` | `Resolve(keys)`, answered by `Supply(answers)` |
+| driver → runner | **query** | — | `Describe()`, answered with the current location |
 
-| Direction         | Kind                  | Examples                                                          |
-|-------------------|-----------------------|-------------------------------------------------------------------|
-| driver → runner   | **command**           | `Next`, `Choose(i)`, `Restore(state)`                             |
-| runner → driver   | **event**             | `Said`, `Asked`, `Invalidated`, `Ended`, `Refused`                |
-| runner → driver   | **reverse request**   | `Resolve(keys)`, answered by `Supply(answers)`                    |
-| runner → driver   | **reverse request**   | `Perform(effect)`, answered by `Done()` or `Failed(explanation)`  |
-| driver → runner   | **query**             | `Describe()`, answered with the current location                  |
-
-`Resolve` is exactly LSP's `workspace/configuration`: *the server knows what it
-needs; the client knows where to find it.*
+`Resolve` is LSP's `workspace/configuration`: *the server knows what it needs; the
+client knows where to find it.*
 
 ```mermaid
 sequenceDiagram
     participant D as Driver
     participant R as Runner
-    D->>R: Start("start")
+    D->>R: Start
     R-->>D: Resolve(["Alice.FavoriteColor"])
     Note over D: free to block, await,<br/>or call a remote server
     D->>R: Supply({ "Alice.FavoriteColor": "red" })
     R-->>D: Said(Alice, "My favorite color is red.")
-    D->>R: Next()
+    D->>R: Next
     R-->>D: Perform(JoinClub("Alice", "Kung Fu"))
     Note over D: plays a 3s animation
-    D->>R: Done()
+    D->>R: Done
     R-->>D: Asked([Ask about the inn, Say nothing])
     D->>R: Choose(1)
     R-->>D: Ended
 ```
 
 All waiting — network, animation, a player deliberating — happens *between*
-messages, where it belongs. Drivers declare **capabilities** at session start, as
-in LSP and DAP, so optional behavior stays optional.
+messages. Drivers declare **capabilities** at session start, as in LSP and DAP, so
+optional behavior stays optional.
 
 ### Describe: the query half
 
 `Step` changes; `Describe` explains. `Describe` is pure — a function of playbook
-and state — returning the current node, its properties, and each outgoing edge
-with its guard and whether the last snapshot satisfied it. This is what the
-[Line Debugger](../visualization/session/Live%20Visualization%20-%20Line%20Debugger%20UI.md) needs to
-answer a writer's real question: *why was this edge not taken?*
+and state — returning the current node, its properties, and each outgoing edge with
+its condition and whether the last snapshot satisfied it. The
+[Line Debugger](../visualization/editor/Line%20Debugger%20UI.md)
+needs it to answer *why was this edge not taken?*
 
 ### Ergonomics: drivers
 
-The protocol is the contract, not the API most hosts should write. The runtime
-package ships thin **drivers** that restore an ordinary loop:
-
-- a **synchronous driver** that answers `Resolve` from an in-process world;
-- an **asynchronous driver** that awaits one.
-
-CLI and simple Godot hosts use a driver and never see the protocol.
+The protocol is the contract, not the API most hosts write. The runtime package is
+to ship thin **drivers** — a synchronous one that answers requests from an
+in-process world, and an asynchronous one that awaits one — so a CLI or simple
+Godot host never sees the protocol.
 
 ## Reading the world
 
+> [!NOTE]
+> Proposed; not built. The runner refuses any node that carries a condition until
+> this seam exists.
+
 ### The world seam
 
-Because effects travel the protocol rather than this interface, the world seam
-only **reads**. Three questions with three answers cannot share one stringly
-method — a guard needs a `bool`, a weight a number, and interpolation text:
+Effects travel the protocol, so the world seam only **reads**. Three questions with
+three answer types — a condition needs a boolean, a weight a number, interpolation
+text — want three reads rather than one stringly method. Above that sits a
+registration layer, as ink and Yarn Spinner both settled on, so a host binds keys
+rather than writing a `switch`.
 
-```csharp
-public interface IGameWorld
-{
-    bool IsSatisfied(string key);   // guards
-    double GetWeight(string key);   // dynamic weights
-    string GetValue(string key);    // speech interpolation
-}
-```
+The host interface that exists is `IGameSystem` (`Query(string)` returning a
+string, and `Execute(string)`), and nothing in the compiler or runtime calls it. A
+read-only replacement with a separate boolean read is proposed; its name is not
+settled.
 
-Above it sits the layer hosts actually use — registration rather than a
-hand-written `switch`, as ink and Yarn Spinner both settled on:
-
-```csharp
-var world = new GameBindings()
-    .OnQuery("Alice.FavoriteColor", () => "red")
-    .OnCondition("IsAngry", () => bob.Mood == Mood.Angry);
-```
-
-Unbound keys follow an explicit policy, reusing the **Keep / Ignore** vocabulary
-already established for
+Unbound keys follow an explicit policy, reusing the **Keep / Ignore** vocabulary of
 [unmodeled Markdown](../core/Unmodeled%20Markdown%20Handling.md). The default is
-permissive, so a script plays with **no** bindings at all — the property that
-makes a preview useful before any game exists, and the same idea as ink's
-fallback functions.
-
-`IGameWorld` replaces the placeholder `IGameSystem`, whose `Query`/`Execute` pair
-implied it performed work it no longer does. The rename lands with C2; the
-[game-state page](../../../guide/game-state.md) describes what a script asks of
-the world and does not name the interface until it settles.
+permissive, so a script plays with **no** bindings — the property that makes a
+preview useful before any game exists.
 
 ### Read consistency
 
-The world is a store that other actors may write concurrently, so the standard
-database vocabulary applies. A per-node `needs` batch is a **snapshot**:
+The world is a store other actors may write concurrently, so database vocabulary
+applies. A per-node batch of reads is a **snapshot**:
 
-- **within** one node's evaluation — repeatable read, so a menu is internally
-  consistent;
-- **between** nodes — read committed, so the world may change as the story
-  progresses, which is correct and desired;
-- **across the runner's own effects** — read your own writes, so a guard that
-  follows an effect sees it. This is the one the protocol has to buy: `Perform`
-  is answered by `Done`, or by `Failed`, which holds the run, and the run does not
-  go on until it is.
+- **within** one node — repeatable read, so a menu is internally consistent;
+- **between** nodes — read committed, so the world may change as the story goes;
+- **across the runner's own effects** — read your own writes, so a condition that
+  follows an effect sees it. The protocol buys this one: `Perform` is answered by
+  `Done`, and the run does not go on until it is. This part is built.
 
-Honestly stated: this is **snapshot isolation**, which prevents dirty and
-non-repeatable reads but permits **write skew**. Serializability is not available
-to us and is not worth wanting.
+This is **snapshot isolation**: it prevents dirty and non-repeatable reads but
+permits **write skew**. Serializability is not available and is not worth wanting.
 
 ### Choices and stale truth
 
-A menu is checked when it is shown and acted on when the player picks — seconds
-later. That is **time-of-check to time-of-use**, and real games hit it: *Baldur's
-Gate 3* displays "Dialogue option is no longer valid" because it re-checks the
-predicate on selection. No dialogue middleware offers this as a feature, so it is
-a gap worth filling.
+A menu is checked when shown and acted on when the player picks — seconds later.
+That is **time-of-check to time-of-use**; *Baldur's Gate 3* shows "Dialogue option
+is no longer valid" because it re-checks on selection. The mitigation is the HTTP
+`ETag` / `If-Match` pattern, gated by driver capability:
 
-The mitigation is the HTTP `ETag` / `If-Match` pattern, gated by driver
-capability:
-
-| Driver capability                      | Behavior on `Choose`                                                                |
-|----------------------------------------|-------------------------------------------------------------------------------------|
+| Driver capability | Behavior on `Choose` |
+| --- | --- |
 | supplies a version token with `Supply` | Compare tokens. Match → traverse. Mismatch → `Invalidated`, re-snapshot, re-present |
-| no token                               | **Trust** — traverse on the snapshot                                                |
+| no token | **Trust** — traverse on the snapshot |
 
-Comparing one token is free in the common case, since most games freeze the world
-during dialogue. A world that knows when it changed may instead **push**
-invalidation, as DAP's `Invalidated` event does.
-
-Revalidation narrows the window; it does not close it. Write skew remains
-possible, and that is inherent rather than a defect.
+A world that knows when it changed may instead **push** invalidation, as DAP's
+`Invalidated` does. Revalidation narrows the window; write skew remains possible.
 
 ## State, saves, and history
 
 ### What the runner keeps
 
-`PlayState` is small, because the host owns the game: a **position**, a **call
-stack**, an **effect ordinal**, and the **playbook fingerprint** it belongs to.
-The position is a **qualified** node reference — the same `number | string` union
-the playbook uses — because once play crosses into another script, a bare index
-cannot say *which* playbook it indexes.
+`PlayState` is small, because the host owns the game. It holds only the
+**position**. The design adds three fields, each with the feature that reads it:
 
-The shipped runner carries the position alone; the rest of this section is the
-design that lands with C2.
+| Field | Arrives with | Why |
+| --- | --- | --- |
+| **call stack** | the returning detour | a detour must know where to return |
+| **effect ordinal** | saves over a wire | the idempotency key for a retried effect, and the mismatch detector on load |
+| **playbook fingerprint** | saves | turns "loaded a save against a recompiled script" into a loud failure |
 
-The fingerprint turns "loaded a save against a recompiled script" — the classic
-way this class of engine corrupts a playthrough — into a clean, loud failure. The
-save carries its **own** version number, independent of `playbookVersion`, exactly
-as ink versions `StoryState` separately.
-
-**Visit counts stay out.** A host that wants "only once" answers a query it owns;
-adding a counter to the core would grow the save and duplicate the world's job.
+Once play crosses scripts, a position becomes a qualified reference, because a
+bare index cannot say which playbook it indexes. A save carries its **own** version
+number, independent of the playbook's, as ink versions `StoryState` separately.
+**Visit counts stay out**: a host that wants "only once" answers a query it owns.
 
 ### Two ways to save
 
-| Shape        | Contents                       | Size | History after load        |
-|--------------|--------------------------------|------|---------------------------|
-| **Snapshot** | `PlayState`                    | O(1) | none — position only      |
-| **Journal**  | `PlayLog` — the ordered inputs | O(n) | **regenerated by replay** |
+| Shape | Contents | Size | History after load |
+| --- | --- | --- | --- |
+| **Snapshot** | `PlayState` | O(1) | none — position only |
+| **Journal** | `PlayLog` — the ordered inputs | O(n) | **regenerated by replay** |
 
-Replaying `(playbook, PlayLog)` reproduces the transcript *and* the current state,
-because `Step` is deterministic and supplied answers were recorded. A `PlayLog` is
-therefore also a **perfect bug report**: a player sends their log and it replays
-exactly. Replay is safe because a replaying driver runs in `Simulate`, so no
-effect fires twice.
+Replaying `(playbook, PlayLog)` reproduces the transcript *and* the state, because
+`Step` is deterministic and supplied answers are recorded. A `PlayLog` is therefore
+also a **perfect bug report**. Replay is safe because a replaying driver runs in
+`Simulate`, so no effect fires twice.
 
 ```text
 SaveEnvelope { saveVersion, playbookFingerprint, playState, transcript?, log? }
@@ -505,13 +371,9 @@ SaveEnvelope { saveVersion, playbookFingerprint, playState, transcript?, log? }
 
 ### History is a shell-side fold
 
-A backlog is a standard requirement — Ren'Py ships one, capped by
-`config.history_length` (250 by default). But history is **derived** data, so it
-belongs in the shell, not in `PlayState`, which would otherwise grow without
-bound.
-
-`Transcript` is an optional fold over the event stream, provided by the runtime
-package and bounded by a capacity:
+A backlog is standard — Ren'Py caps one at 250 entries by default — but history is
+**derived**, so it belongs in the shell, not in `PlayState`. `Transcript` is an
+optional fold over the event stream, bounded by a capacity:
 
 ```text
 TranscriptEntry = Said      { speaker, fragments, nodeRef }
@@ -519,14 +381,10 @@ TranscriptEntry = Said      { speaker, fragments, nodeRef }
                 | Performed { effect, nodeRef }
 ```
 
-Three details are easy to get wrong:
-
-- **Store resolved fragments.** A line spoken as "…is red" must be *recorded* that
-  way. Re-resolving at render time would show today's answer for yesterday's line.
+- **Store resolved fragments.** A line spoken as "…is red" is recorded that way.
 - **Record the menu and the selection.** The roads not taken are most of a
-  backlog's value, and all of a writer preview's.
-- **Keep fragments, never flat strings.** A backlog is a re-render, so flattening
-  would lock in one presentation.
+  backlog's value.
+- **Keep fragments, never flat strings.** A backlog is a re-render.
 
 Effects are recorded but filtered at render: a player backlog hides them, the
 debugger shows them.
@@ -534,190 +392,133 @@ debugger shows them.
 ### Effects, restore, and why nothing is compensated
 
 The runner rewinds *itself* for free, because state is a value. Whether the
-**world** rewinds with it is the host's business, and the runner must not pretend
-otherwise. Two words, deliberately distinguished:
+**world** rewinds with it is the host's business:
 
-- **Restore** — state and world return together. Deterministic; the transcript
-  reproduces. This is save/load.
+- **Restore** — state and world return together. This is save/load.
 - **Explore** — state returns but the world did not. Sound only when effects are
-  simulated; non-deterministic against a live world.
+  simulated.
 
-| Need                                      | Mechanism                               |
-|-------------------------------------------|-----------------------------------------|
-| Save and load                             | `PlayState` *is* the save               |
-| Explore another branch                    | keep prior states, restore one          |
-| Do not fire real effects while previewing | `EffectPolicy: Simulate │ Perform`      |
-| Exactly-once effects over a wire          | the **effect ordinal**                  |
-| Detect a state/world mismatch             | compare ordinal and fingerprint on load |
-
-The effect ordinal does three jobs for one integer: it is the idempotency key that
-stops a retrying transport running `JoinClub` twice, the world-clock that makes "at
-effect 47" checkable, and the mismatch detector on load.
+| Need | Mechanism |
+| --- | --- |
+| Save and load | `PlayState` *is* the save |
+| Explore another branch | keep prior states, restore one |
+| Do not fire real effects while previewing | `EffectPolicy: Simulate │ Perform` |
+| Exactly-once effects over a wire | the **effect ordinal** |
+| Detect a state/world mismatch | compare ordinal and fingerprint on load |
 
 **The runner never compensates.** Inverses are usually wrong or meaningless — what
 undoes `PlaySound`, and is the inverse of `JoinClub` really `LeaveClub` if the
-player was already a member? Compensating transactions are correct only when a
-genuine inverse exists, which is a domain property we cannot assume. Ren'Py, the
-most ambitious rollback in this space, still cannot undo file I/O and requires
-opt-outs. A host that genuinely can roll back its world already has the seam it
-needs: restore its own snapshot and hand the runner the matching state and
-ordinal.
+player was already a member? A host that can roll back its world restores its own
+snapshot and hands the runner the matching state and ordinal.
 
 ## Porting
 
 Godot 4 runs .NET, so the C# runner serves **CLI and Godot directly**, the way
-`godot-ink` embeds `Ink.Runtime.dll` — no port, no drift. Everything else is a
-question of *how far* a porter wants to go, and the answer is a ladder rather than
-a binary.
+`godot-ink` embeds `Ink.Runtime.dll`. Everything else is a ladder:
 
-| Level | What a porter does                                                                                                                    | Owner                                          |
-|-------|---------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
-| 0     | **Do not port the compiler.** Use `ddown` as a CLI tool — nobody rewrites a compiler in order to consume it                           | this repo                                      |
-| 1     | **Thin frontend.** Reimplement presentation only; delegate play to the official C# runner over a socket                               | community; cheap                               |
-| 2     | **Subprocess REPL.** Drive the runner over stdio, the way a debugger like `pdb` is driven. **The recommended route for most porters** | this repo ships the REPL                       |
-| 3     | **Full port.** For engines such as Unreal, where a bundled runtime beats subprocess latency. Conform to the specification             | **community-owned; never an official concern** |
+| Level | What a porter does | Owner |
+| --- | --- | --- |
+| 0 | **Do not port the compiler.** Use `ddown` as a CLI tool | this repository |
+| 1 | **Thin frontend.** Reimplement presentation; delegate play to the C# runner over a socket | community; cheap |
+| 2 | **Subprocess REPL.** Drive the runner over stdio, as a debugger like `pdb` is driven. **The recommended route** | this repository ships the REPL |
+| 3 | **Full port.** For engines such as Unreal, where a bundled runtime beats subprocess latency | **community-owned** |
 
-What makes the ladder work is that levels 1 and 2 are **the same message stream
-over different transports** — a socket, or stdin and stdout. Only level 3
-reimplements the state machine, and that is exactly what the conformance corpus
-exists to verify. **The protocol is the portability strategy.**
-
-This repository provides the full C# toolchain as the reference implementation,
-plus the visualization client. Support beyond C# and TypeScript is out of scope
-here.
+Levels 1 and 2 are **the same message stream over different transports**. Only
+level 3 reimplements the state machine, and that is what the conformance corpus
+verifies. **The protocol is the portability strategy.**
 
 ### The web client is staged
 
-The visualization client arrives in two stages rather than as one port:
+| Stage | How it plays | What works |
+| --- | --- | --- |
+| **Proxy** (level 1) | Talks to the C# runner over the live server's transport | The served report, including the [Line Debugger](../visualization/editor/Line%20Debugger%20UI.md) |
+| **TypeScript runner** (level 3) | Plays a playbook in the browser | The **exported** report, which has no server, becomes playable |
 
-| Stage                           | How it plays                                                     | What works                                                                                                                                                               |
-|---------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Proxy** (level 1)             | Talks to the C# runner over the live server's existing transport | The served report — including the [Line Debugger](../visualization/session/Live%20Visualization%20-%20Line%20Debugger%20UI.md), which already assumes a server transport |
-| **TypeScript runner** (level 3) | Plays a playbook in the browser                                  | The **exported** report, which has no server, becomes fully playable                                                                                                     |
-
-The staging matters because the exported single-file report is static: a proxy
-cannot serve it, so the TypeScript runner is what makes a shipped playbook
-playable offline. Until then the exported report simply has no Play tab.
+The exported single-file report is static, so only a TypeScript runner makes it
+playable offline; until then it has no Play tab.
 
 ### Conformance
 
-The insurance against drift is the **conformance corpus**: language-neutral
-fixtures, each pairing a playbook with a **session** — the messages a driver
-sends interleaved with the replies a runner must give, in order. A runtime is
-conformant when it can hold every session in the corpus.
-
-The [Conformance corpus](./Conformance%20Corpus.md) note owns that format and its
-decisions; it is not restated here.
-
-Conformance turns a level-3 port from an act of faith into a bounded, verifiable
-exercise — the gap CommonMark closed and ink never did. With one official runner
-the corpus is still worth its keep as a regression suite and as the format's
-executable specification; the day a community port appears, it becomes the only
-thing standing between that port and silent divergence.
+The [Conformance Corpus](./Conformance%20Corpus.md) pairs each playbook with a
+**session** — the messages a driver sends interleaved with the replies a runner
+must give. A runtime is conformant when it holds every session. With one runner it
+is a regression suite and the format's executable specification; the day a port
+appears, it is what stands between that port and silent divergence.
 
 ## Key design decisions
 
 ### D1 — The playbook is declarative, not bytecode
 
 Ink and Yarn Spinner compile to instruction streams because both embed a scripting
-language with variables, arithmetic, and expressions. **DialogueDown has none.** A
-`Condition` is a key the world answers; a `ChoiceWeight` is a number or a key.
-
-So the artifact is a **declarative node-and-edge document** and the runner is a
-**graph walker with a cursor** — no eval stack, no opcodes, no variable table.
-That single fact makes a second runtime cheap, and it is worth protecting: a future
-construct that would require a stack machine deserves scrutiny first.
+language. **DialogueDown has none**: a `Condition` is a key the world answers, and
+a weight is a number or a key. So the artifact is a **node-and-edge document** and
+the runner is a **graph walker with a cursor** — no eval stack, no opcodes, no
+variable table. That makes a second runtime cheap; a construct that would need a
+stack machine deserves scrutiny first.
 
 ### D2 — JSON, with a formal schema
 
 JSON parses natively in the browser and in Godot, and `System.Text.Json` is in the
-BCL, so the core takes **no new dependency**. `System.Text.Json` polymorphism
-(`[JsonDerivedType]`) round-trips the node and edge unions with no custom
-converters; the discriminator is spelled **`kind`**, because the format is a public
-contract rather than a .NET serialization detail. JSON Schema then gives editor
-autocomplete and CI validation, and `jq` gives shell inspection — neither of which
-any alternative offers.
+BCL. The discriminator is spelled **`kind`**, because the format is a public
+contract rather than a .NET detail. JSON Schema gives editor autocomplete and CI
+validation, and `jq` gives shell inspection.
 
-**KDL is the strongest counterargument**: designed for exactly this shape, more
-readable, better diffs. It loses because there is no KDL schema standard, which
-costs the validation a public contract needs, and its parser ecosystem is weaker in
-both our languages. **proto3** — Yarn Spinner's choice — buys compactness and field-number
-versioning at the price of a `protoc` build dependency and the "any language can
-just parse it" property that keeps future runtimes cheap. Following glTF and Yarn,
-a binary encoding stays available later behind a CLI flag, because the writer is a
-seam.
-
-No graph interchange language fits. DOT, GraphML, GEXF, TGF, GML, and Mermaid are
-**topology-first and payload-minimal**; our playbook is the opposite. Cypher and
-GQL are query languages, not file formats, and RDF is a knowledge model. JSON Graph
-Format is JSON plus a naming convention, so it adds nothing to adopt.
+**KDL** is the strongest counterargument — more readable, better diffs — but has no
+schema standard and a weaker parser ecosystem in both languages. **proto3** buys
+compactness at the price of a `protoc` dependency and the "any language can just
+parse it" property. Graph interchange formats (DOT, GraphML, GEXF) are
+topology-first and payload-minimal, the opposite of a playbook. A binary encoding
+stays available behind a CLI flag, because the writer is a seam.
 
 ### D3 — Capabilities carry compatibility
 
-See [Compatibility](#compatibility). Version numbers gate releases; capabilities
-gate playbooks, which is the granularity that keeps old runtimes useful.
+Version numbers gate releases; capabilities gate playbooks, which keeps old
+runtimes useful. See [Compatibility](#compatibility).
 
 ### D4 — The runner is a functional core
 
-The decisive test is dependency direction: the core must not call the shell. An
-async core that `await`s the world inverts it, entangling every decision with I/O.
-A pure `Step` over immutable state keeps the dependency one-way, and yields save,
-restore, replay, and deterministic tests as consequences rather than features.
+The core must not call the shell. An async core that `await`s the world inverts
+that, entangling every decision with I/O. A pure `Step` over immutable state keeps
+the dependency one-way, and yields save, restore, replay, and deterministic tests
+as consequences.
 
-### D5 — Two parties; `Resolve` is a reverse request
+### D5 — Two parties; the world is reached by reverse request
 
-The driver both sends commands and answers requests. LSP and DAP show this is
-normal and that the fix is to name the **direction**, not invent a third party. It
-also keeps deployment free: the runner may sit with the UI and query a remote
-world, or sit with the server and stream events to a thin client.
+The driver both sends commands and answers requests; LSP and DAP show the fix is to
+name the **direction**, not invent a third party. The runner may sit with the UI
+and query a remote world, or sit with the server and stream events to a thin client.
 
 ### D6 — Queries are pure reads; effects change the world
 
-Command–query separation at the world boundary, and it settles several questions at
-once:
+| | **Query** (read) | **Effect** (write) |
+| --- | --- | --- |
+| Purity | must not change the world | changes the world |
+| Cardinality | may be asked 0..n times | **exactly once** |
+| Ordering | order-independent, batchable | strictly ordered |
+| On restore | re-ask freely | must not re-run |
+| On transport failure | retry is safe | the effect ordinal makes retry idempotent |
+| Before the next read | nothing to wait for | must have landed, which `Done` acknowledges |
 
-|                        | **Query** (read)               | **Effect** (write)                          |
-|------------------------|--------------------------------|---------------------------------------------|
-| Purity                 | must not change the world      | changes the world                           |
-| Cardinality            | may be asked 0..n times        | **exactly once**                            |
-| Ordering               | order-independent, batchable   | strictly ordered                            |
-| On restore             | re-ask freely                  | must not re-run                             |
-| On transport failure   | retry is safe                  | the effect ordinal makes retry idempotent   |
-| Before the next read   | nothing to wait for            | must have landed, which `Done` acknowledges |
-
-Batching reads is therefore legitimate and batching effects would not be. The
-last two rows are separate problems that look alike: the ordinal stops a
-*retried* effect running twice, and the acknowledgement stops a *pending* effect
-being read past. An idempotency key cannot do the second job, because the
-trouble there is order, not repetition.
-
-A world that implements a query by mutating breaks the runner's guarantees; that
-contract can be documented and conformance-tested, not enforced.
-
-A world that cannot make an effect land is reported with `Failed(explanation)` rather
-than `Done`, and the run stands where it is: it does not read a world it does not have,
-and the driver may retry or give up.
+The ordinal stops a *retried* effect running twice; the acknowledgement stops a
+*pending* effect being read past. A world that cannot make an effect land answers
+`Failed(explanation)`, and the run stands where it is. A world that implements a
+query by mutating breaks the runner's guarantees; that contract is documented and
+conformance-tested, not enforced.
 
 ### D7 — Options carry a compiled label
 
-An option's arm is a block body, so a runner could derive its menu label by peeking
-at the option's first node. Ink does exactly that and pays for it: lookahead can
-invoke a side-effecting external function twice, which is why `BindExternalFunction`
-needs `lookaheadSafe`.
-
-The compiler already knows the text, so the playbook carries an explicit `label`
-and the runner never peeks. Combined with [D6](#d6--queries-are-pure-reads-effects-change-the-world),
-presenting a menu is pure by construction even when a label contains a query. This
-restores the `Label` the [Dialogue Graph](../core/Dialogue%20Graph.md) note specified on
-`Option`.
+A runner could derive a menu label by peeking at the option's first node. Ink does
+and pays for it: lookahead can invoke a side-effecting external function twice. The
+compiler already knows the text, so the playbook carries an explicit `label` and
+the runner never peeks. With D6, presenting a menu is pure even when a label holds
+a query.
 
 ### D8 — A menu shows unavailable options
 
-A guarded option that fails its guard is reported **unavailable**, not filtered out.
-Hiding versus disabling is presentation policy, which
-[Conditional Choice](../language/Conditional%20Choice.md) leaves to the runtime — and a runner
-that drops the option removes the host's ability to choose. Yarn Spinner encodes the
-same distinction as `[disabled]` in its test plans.
+An option whose condition is false is reported **unavailable**, not filtered out.
+Hiding versus disabling is presentation policy, and a runner that drops the option
+removes the host's choice. Yarn Spinner encodes the same distinction as
+`[disabled]`; the `an-unavailable-option` conformance case pins it.
 
 ### D9 — The runner restores; it never compensates
 
@@ -725,29 +526,27 @@ See [effects and restore](#effects-restore-and-why-nothing-is-compensated).
 
 ### D10 — History is a shell-side fold
 
-A transcript is derived from the event stream, so it is recomputable and does not
-belong in core state. Keeping it out holds the runner lean and the save bounded,
-while a standard `Transcript` shape still lets conformance fixtures assert it.
+A transcript is derived from the event stream, so it stays out of core state; the
+runner stays lean and the save bounded, while a standard `Transcript` shape still
+lets fixtures assert it.
 
 ## Extension points
 
-Everything the notes and issues already promise, and the insurance each needs in
-version 0. The cost column is what a retrofit would break.
+Everything the notes promise, and the insurance each has in version 0.
 
-| Expansion                     | Source                                                                      | Retrofit cost                   | Insurance in v0                                                                                                          |
-|-------------------------------|-----------------------------------------------------------------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Cross-file jumps              | [Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md) | None — the widening is additive | A playbook using them declares `cross-file-jump`, so an older runner refuses it whole rather than misreading a reference |
-| Negation, expressions         | [Conditional Jump](../language/Conditional%20Jump.md) D5                    | Every playbook                  | A guard is an object with a `kind`, never a bare string, so `not` and `and` are additive                                 |
-| Detour and return             | [Progression Order](../language/Progression%20Order.md)                     | Every save file                 | `PlayState` carries a **call stack** from v0, though nothing pushes to it yet                                            |
-| `#START`, cross-file entry    | [Progression Order](../language/Progression%20Order.md)                     | None — a new field is additive  | `anchors` already names every scene a host may start at; `entry` states only the default                                 |
-| Hide versus disable an option | [Conditional Choice](../language/Conditional%20Choice.md)                   | The host API                    | [D8](#d8--a-menu-shows-unavailable-options)                                                                              |
-| Weight re-rolls on replay     | [Random Choice](../language/Random%20Choice.md)                             | Saves and conformance           | Entropy is a seam; the draw cursor lives in `PlayState`                                                                  |
-| Localization                  | —                                                                           | Every script                    | An optional `lineId` is reserved in the schema and left unpopulated; the identity scheme gets its own note               |
-| Binary encoding               | —                                                                           | Nothing                         | The writer is a seam; text and binary differ only in encoding                                                            |
+| Expansion | Source | Retrofit cost | Insurance in v0 |
+| --- | --- | --- | --- |
+| Cross-file jumps | [Cross-File Jump Resolution](../language/Cross-File%20Jump%20Resolution.md) | None — additive | A playbook using them declares `cross-file-jump`, so an older runner refuses it whole |
+| Negation, expressions | [Conditions](../language/Conditions.md#d10--no-negation-no-expressions) | Every playbook | A condition is an object with a `kind`, never a bare string, so `not` and `and` are additive |
+| Detour and return | [Progression Order](../language/Progression%20Order.md) | Every save file | Saves are not serialized yet, so `PlayState` gains a call stack before any save exists |
+| `#START`, cross-file entry | [Progression Order](../language/Progression%20Order.md) | None — additive | `anchors` names every scene a host may start at; `entry` states only the default |
+| Hide versus disable an option | [Conditions](../language/Conditions.md#d9--a-player-option-is-shown-unavailable-not-removed) | The host API | [D8](#d8--a-menu-shows-unavailable-options) |
+| Weight draws on replay | [Random Choice](../language/Random%20Choice.md) | Saves and conformance | Entropy is a seam; see [open questions](#open-questions-and-deferred-work) |
+| Localization | — | Every script | Unknown properties are ignored, so a `lineId` is a field to populate, not a shape to change |
+| Binary encoding | — | Nothing | The writer is a seam |
 
 Anything this table misses is still recoverable through
-[capabilities](#compatibility) — an old runner refuses rather than misplays. That
-is what the header buys in version 0.
+[capabilities](#compatibility): an old runner refuses rather than misplays.
 
 ## Components and sequencing
 
@@ -761,81 +560,68 @@ flowchart LR
     C2 --> C6["C6 Godot adapter"]
 ```
 
-| #   | Component                            | Delivers                                                            | Note                                                               | Status      |
-|-----|--------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------|-------------|
-| C1  | **Playbook format and writer**       | The schema, the compatibility header, and `ddown compile --output`  | [Playbook Format](./Playbook%20Format.md)                          | Implemented |
-| C2  | **C# runner**                        | `Step`, `PlayState`, the protocol, drivers, `IGameWorld`, saves     | [Runtime Core](./Runtime%20Core.md)                                | In progress |
-| C3  | **Conformance corpus**               | Fixtures plus a harness, owned as data                              | [Conformance Corpus](./Conformance%20Corpus.md)                    | Implemented |
-| C4  | **`ddown play` and the REPL**        | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) A | Proposed    |
-| C5a | **Web proxy Play tab**               | The served report plays through the C# runner (level 1)             | [Interactive Playthrough](../other/Interactive%20Playthrough.md) B | Proposed    |
-| C5b | **TypeScript runner**                | The exported report plays a playbook offline (level 3), held to C3  | —                                                                  | Proposed    |
-| C6  | **Godot adapter and sample**         | BBCode presentation and a demo scene                                | [BBCode Rendering](../other/BBCode%20Rendering.md)                 | Proposed    |
-| C7  | **Compatibility and feature gating** | `[compatibility]` and `[features]`, the registry, diagnostics       | [Playbook Format](./Playbook%20Format.md)                          | Proposed    |
-| C8  | **Exporters**                        | Yarn, DOT, and Mermaid projected from the playbook                  | —                                                                  | Proposed    |
-
-C2's first two passes ship — the state and the step ([Runtime
-Core](./Runtime%20Core.md)) and waiting on the host ([Waiting on the
-Host](./Waiting%20on%20the%20Host.md)); conditions, world reads, saves, and the
-drivers are still to come.
+| # | Component | Delivers | Note | Status |
+| --- | --- | --- | --- | --- |
+| C1 | **Playbook format and writer** | The schema, the header, the reader and its checks, and `ddown compile --output` | [Playbook Format](./Playbook%20Format.md), [Playbook Reader Rules](./Playbook%20Reader%20Rules.md) | Implemented |
+| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines, jumps, effects, the end |
+| C3 | **Conformance corpus** | Fixtures plus a harness, owned as data | [Conformance Corpus](./Conformance%20Corpus.md) | Implemented |
+| C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
+| C5a | **Web proxy Play tab** | The served report plays through the C# runner (level 1) | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
+| C5b | **TypeScript runner** | The exported report plays a playbook offline (level 3), held to C3 | — | Proposed |
+| C6 | **Godot adapter and sample** | BBCode presentation and a demo scene | [BBCode Rendering](../other/BBCode%20Rendering.md) | Proposed |
+| C7 | **Compatibility and feature gating** | `[compatibility]` and `[features]`, the registry, diagnostics | [Compatibility](#compile-time-targeting-is-opt-in) | Proposed |
+| C8 | **Exporters** | Yarn, DOT, and Mermaid projected from the playbook | — | Proposed |
 
 `DialogueDown.Runtime` ships as its own package that **must not reference the
 compiler**, guarded by an architecture test.
 
 > [!IMPORTANT]
-> The format stays **unstable at `playbookVersion: 0`** until a runner actually
-> plays it. Designing a format with no consumer is how formats go wrong; version
-> `1` freezes only once C2 ships, which buys the freedom to fix what the first
-> runner uncovers with no migration story.
+> The format stays **unstable at `version: 0`** until a runner plays every
+> construct. Designing a format with no consumer is how formats go wrong; version
+> `1` freezes only once C2 is complete, which leaves room to fix what the runner
+> uncovers with no migration story.
 
 ## Testability
 
-| Level         | What it covers                                                                                                     |
-|---------------|--------------------------------------------------------------------------------------------------------------------|
-| Unit          | Writer and reader round-trips; one test per node and edge kind; each guard and weight path.                        |
-| Compatibility | **Negative** fixtures: an unknown `requires` must be refused; an unknown `uses` must still play.                   |
-| Golden        | A committed transcript per example script, giving `examples/*.dialogue.md` the regression coverage it lacks today. |
-| Conformance   | The corpus, run by **every** runtime in its own language.                                                          |
-| Property      | With a deterministic core: no input sequence leaves state invalid; every playthrough terminates.                   |
+| Level | What it covers |
+| --- | --- |
+| Unit | Writer and reader round-trips; one test per node and edge kind; each condition and weight path. |
+| Compatibility | **Negative** fixtures: an unknown `requires` is refused; an unknown `uses` still loads. |
+| Golden | A committed playbook per example script; a committed transcript per example once sessions can be recorded. |
+| Conformance | The corpus, run by **every** runtime in its own language. |
+| Property | With a deterministic core: no input sequence leaves state invalid; every walk stays inside the playbook. |
 
-A transcript is the right golden file because it is **semantic**. Renumbering every
-node or restructuring the graph internally leaves it byte-identical unless
-*behavior* changed — unlike a DOT dump, where a one-line edit churns thousands of
-positional lines. Because the core is pure, a failing fixture also *shrinks*: the
-input list can be minimized to the smallest reproduction.
-
-The corpus doubles as the format's executable specification, so C1's prose can
-never quietly drift from what the runtimes do.
+A transcript is the right golden file because it is **semantic**: renumbering every
+node leaves it byte-identical unless *behavior* changed. Because the core is pure, a
+failing fixture also *shrinks* to the smallest reproduction.
 
 ## Alternatives not chosen
 
 - **Serialize `DialogueGraph` directly.** Fastest to build, and exactly the
-  coupling the portability rule warns against: the format would inherit `SourceSpan`, `SpeakerSymbol`, and every future
-  refactor of compiler internals as a breaking change.
-- **One merged bundle per project.** Contradicts the linker's settled
-  link-by-reference model, loops on legal reference cycles, and destroys
-  incremental recompilation.
-- **An async core.** Inverts the FCIS dependency direction, taxes every runtime for
-  a need most hosts do not have, and still fails to decouple the runner from its
-  host.
-- **Push-style handlers (Yarn Spinner).** Impose reentrancy discipline on every
-  host and fight `async` in both JavaScript and Godot.
+  coupling the portability rule warns against: the format would inherit
+  `SourceSpan`, `SpeakerSymbol`, and every refactor of compiler internals.
+- **One merged bundle per project.** Contradicts link-by-reference, loops on legal
+  reference cycles, and destroys incremental recompilation.
+- **An async core.** Inverts the dependency direction and taxes every runtime for a
+  need most hosts do not have.
+- **Push-style handlers (Yarn Spinner).** Impose reentrancy discipline on every host
+  and fight `async` in both JavaScript and Godot.
 - **Effect compensation.** See [D9](#d9--the-runner-restores-it-never-compensates).
 - **One .NET runtime everywhere, via WebAssembly.** Removes the port and all drift,
   but adds megabytes to a single-file report measured in kilobytes.
-- **A GDScript runner.** Unnecessary while Godot targets .NET, and a level-3 port
-  is community-owned by policy; the corpus keeps the door open at a known cost.
+- **A GDScript runner.** Unnecessary while Godot targets .NET; a level-3 port is
+  community-owned by policy.
 
 ## Open questions and deferred work
 
 - **Line identity for localization.** A node reference is positional and therefore
-  *not* a localization key. A scheme stable across edits — Yarn writes `#line:`
-  tags back into the source — is a feature, not a field, and needs its own note.
+  not a localization key. A scheme stable across edits — Yarn writes `#line:` tags
+  back into the source — needs its own note.
 - **Entropy: specified generator or supplied values?** A specified generator costs
   one round trip fewer but must match bit-for-bit across languages; host-supplied
-  values are simpler to conform. Decide in C2.
+  values are simpler to conform. Decided by whichever change teaches the runner to
+  play a random choice.
 - **Detour syntax and return boundary** stay owned by
-  [Progression Order](../language/Progression%20Order.md); this note only reserves the call
-  stack the construct will need.
-- **Consolidating the condition notes** into one *Conditions* note, as
-  [Conditional Choice](../language/Conditional%20Choice.md) suggests, would give C2 a single
-  reference for guard evaluation.
+  [Progression Order](../language/Progression%20Order.md).
+- **The world interface's name.** `IGameSystem` exists; the proposed read-only seam
+  and its boolean read have no settled names.

@@ -1,15 +1,10 @@
-# Cross-file jump resolution
+# Cross-File Jump Resolution
 
 > [!NOTE]
-> Status: **Explored** — a proposed design, not yet implemented. The single-file
-> compiler already parses a cross-file jump
-> target and defers it — `JumpResolver` marks any target that names a file as a
-> `FileScopedJump` rather than resolving or rejecting it.
-> This
-> note designs the **linker** that resolves those targets across a **project** of
-> scripts. Executing a resolved jump still belongs to the planned
-> runtime; this
-> note stops at compile-time resolution and diagnostics.
+> Status: **proposed**. The **linker** that resolves a jump into another script
+> across a **project** of scripts is not built: the single-file compiler marks such a
+> target as a `FileScopedJump` and warns `DLG2016`, and the playbook reserves the
+> `cross-file-jump` capability without emitting it.
 
 ## Table of contents
 
@@ -41,11 +36,11 @@ routes, and jumps between them:
 => [Meet Bob](chapter-02.md#meet-bob)
 ```
 
-Today the compiler *recognizes* that target but cannot *resolve* it. Jump
-resolution runs per script: a same-file anchor resolves against the script's
-`AnchorTable`, a missing local anchor is reported (`DLG2009`), and any target
-that names a file becomes a `FileScopedJump` — deferred, neither resolved nor
-diagnosed. A typo in a cross-file path or anchor therefore ships silently.
+The compiler *recognizes* that target but cannot *resolve* it. Jump resolution
+runs per script: a same-file anchor resolves against the script's `AnchorTable`, a
+missing local anchor is reported (`DLG2009`), and any target that names a file
+becomes a `FileScopedJump` with the warning `DLG2016` — "not resolved yet". A typo
+in a cross-file path or anchor is therefore indistinguishable from a correct one.
 
 This note designs the component that closes that gap: a **linker** that resolves
 each cross-file jump against the target script's exported anchors across a
@@ -56,8 +51,8 @@ anchor with the same rigor as a local one.
 seam, cross-file diagnostics, path and identity semantics, and how a
 compile decides which scripts to load.
 
-**Out of scope (deferred):** *executing* a resolved jump (the planned
-runtime); a
+**Out of scope:** *playing* a resolved jump (see
+[Runtime and visualization](#runtime-and-visualization)); a
 multi-script project view in the visualization; and any change to the jump
 *syntax*, which already ships and is documented in the
 [script language guide](../../../guide/script-language.md).
@@ -93,7 +88,7 @@ relative path with an optional `#anchor`:
 => [Chapter two](chapter-02.md)          # the other script's root scene (see below)
 ```
 
-What changes is that a cross-file target now **resolves or diagnoses**:
+With the linker, a cross-file target **resolves or diagnoses**:
 
 - The path is resolved **relative to the referring script**, within the
   project root.
@@ -176,7 +171,7 @@ Each script already compiles independently into a `SemanticModel` that carries
 both halves a linker needs:
 
 - an **export table** — the `AnchorTable` (slug → scene) it exposes; and
-- its **external references** — the `FileScopedJump`s left deferred today.
+- its **external references** — its `FileScopedJump`s.
 
 So a script *is already* a separately compiled unit with exports and unresolved
 externals. Cross-file support is therefore **additive**: keep per-script
@@ -251,8 +246,8 @@ Proposed seams (names indicative; finalized during implementation):
 | `CrossFileJump` | internal | A `JumpResolution` case: a reference resolved to a `(ScriptId, Scene)` in another script. | `Scene` |
 
 `CrossFileJump` **replaces** the deferred `FileScopedJump` in the sealed
-`JumpResolution` hierarchy (today `SceneJump`, `FileScopedJump`,
-`UnresolvedJump`, `TerminalJump`). The linker resolves a file-part target directly
+`JumpResolution` hierarchy (`SceneJump`, `FileScopedJump`, `UnresolvedJump`,
+`TerminalJump`). The linker resolves a file-part target directly
 to a `CrossFileJump(ScriptId, Scene)` or a diagnostic, so the deferred
 `FileScopedJump` is retired. A file-part jump seen by the per-script compiler
 alone (no project) stays an `UnresolvedJump`, still recognizable by its parsed
@@ -292,7 +287,7 @@ diagnostic), and the project's aggregated `LocatedDiagnostic`s.
 **Architecture boundary:** `IProject` is the seam that keeps the core
 engine-agnostic. The core must never call `File.ReadAllText`; it depends only on
 `IProject`. This is the same discipline the compiler already applies
-to configuration, and it should be conditional by the project's architecture tests.
+to configuration, and the project's architecture tests should enforce it.
 
 ## Script identity and path semantics
 
@@ -310,8 +305,8 @@ Correct linking hinges on turning a written file part into a stable
 - **Confined to the root.** A path that escapes the project root
   (`../../secrets.md`) is a **hard error** (`DLG2013`), not a silent load — the
   root is the project boundary.
-- **A path to the current script links to itself.** The compiler already treats
-  a self-naming path as a file target and defers it; the linker resolves it
+- **A path to the current script links to itself.** The compiler treats a
+  self-naming path as a file target; the linker resolves it
   against the current script's own export table.
 - **Configuration is per project root.** One `dialogue.toml` governs the whole
   project — the linker roots on the same directory configuration discovery
@@ -374,12 +369,13 @@ new escaping story.
 ## Diagnostics
 
 Cross-file resolution failures are meaning-level, so they extend the semantic
-range (`DLG2xxx`; local jump resolution is `DLG2009 MissingScene`):
+range (`DLG2xxx`; local jump resolution is `DLG2009 MissingScene`). They replace
+`DLG2016`, which only says the target is not resolved:
 
 | Code | Severity | When | Notes |
 | --- | --- | --- | --- |
 | `DLG2011` | Error | The target names a script the project cannot find | Message names the resolved path; the span covers the jump's link. |
-| `DLG2012` | Error | The script exists but exports no such anchor | The cross-file sibling of `DLG2009`; may suggest near-miss anchors later. |
+| `DLG2012` | Error | The script exists but exports no such anchor | The cross-file sibling of `DLG2009`. |
 | `DLG2013` | Error | A target path escapes the project root | The root is the project boundary; escaping it is not allowed. |
 | `DLG2014` | Error | A referenced script has its own compile errors | A **pointer** to the target's diagnostics — the referrer does not surface (duplicate) them. |
 
@@ -418,15 +414,16 @@ Architecture tests assert the core takes no filesystem dependency outside the
 
 ## Runtime and visualization
 
-Both are deferred, but the model leaves clean seams:
+Neither is built, but the model leaves clean seams:
 
-- **Runtime**:
-  a `CrossFileJump` is a graph edge into another script. Because linking is by
+- **Runtime**: a `CrossFileJump` is a graph edge into another script, and a
+  playbook using one declares `cross-file-jump`, so an older runner refuses it
+  whole. Because linking is by
   reference, the runtime can follow the edge and **load the next script on
   demand** — the lazy seeding policy, applied at play time. No script is merged
   ahead of time.
-- **Visualization:** the report renders one script today. A project view — a
-  script list, cross-file edges, jump-to-file navigation — is future work, and
+- **Visualization:** the report renders one script. A project view — a
+  script list, cross-file edges, jump-to-file navigation — is not designed, and
   the linker's project model is the data it would project.
 
 ## Alternatives not chosen
@@ -463,6 +460,5 @@ The design's open questions are settled:
    target directly to a `CrossFileJump` or a diagnostic; the deferred
    `FileScopedJump` resolution is retired.
 
-**Still deferred** (out of this note's scope): executing a resolved jump (the
-runtime) and a
-multi-script project view in the visualization.
+**Out of scope:** playing a resolved jump and a multi-script project view in the
+visualization.
