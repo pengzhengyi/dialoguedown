@@ -35,7 +35,7 @@ Then confirm it worked:
 dotnet --version
 ```
 
-You should see a version number (8.0 or higher). If the command isn't found, close
+You should see a version number (10.0 or higher). If the command isn't found, close
 the terminal, open a new one, and try again.
 
 ## Step 2: Install ddown (once)

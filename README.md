@@ -99,47 +99,29 @@ dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
 
 | Path | Purpose |
 | --- | --- |
-| `src/DialogueDown/` | the reusable class library (net8.0 + net10.0, no engine refs) |
-| `src/DialogueDown.Visualization/` | diagnostics-only visualizer of compiler stages (not shipped in the core package) |
-| `src/DialogueDown.Visualization.Live/` | loopback server that serves the report shell (with the Explorer), hot-reloads it on edit, and browses the project |
-| `src/DialogueDown.Cli/` | the `ddown` command-line interface (`compile`, `visualize`) |
-| `tests/DialogueDown.Tests/` | xUnit tests for the pure logic |
-| `tests/DialogueDown.Visualization.Tests/` | xUnit tests for the visualizer |
-| `tests/DialogueDown.Visualization.Live.Tests/` | xUnit tests for the live server |
-| `tests/DialogueDown.Cli.Tests/` | xUnit tests for the CLI |
+| `src/DialogueDown/` | the compiler library (net8.0 + net10.0, no engine references) |
+| `src/DialogueDown.Playbook/` | the playbook format: the compiled document and its reader |
+| `src/DialogueDown.Runtime/` | the runner that plays a playbook |
+| `src/DialogueDown.ConfigurationLoader/` | reads `dialogue.toml` |
+| `src/DialogueDown.Visualization/` | the interactive report of each compiler stage |
+| `src/DialogueDown.Visualization.Live/` | the loopback server behind `ddown visualize` |
+| `src/DialogueDown.Cli/` | the `ddown` command-line tool |
+| `tests/` | one test project per library, plus architecture and conformance tests |
+| `conformance/` | the language-neutral corpus every runtime must pass |
+| `schema/` | JSON schemas for the playbook and the corpus fixtures |
+| `examples/` | sample scripts |
 
 ## Build and test
 
-Restore, build, and test the solution:
-
 ```bash
 dotnet restore DialogueDown.sln
+dotnet format DialogueDown.sln --verify-no-changes --no-restore
 dotnet build DialogueDown.sln --configuration Release --no-restore
 dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 ```
 
-To collect source-focused coverage for the core library:
-
-```bash
-dotnet tool restore
-dotnet test DialogueDown.sln \
-  --coverlet \
-  --coverlet-output-format cobertura \
-  --coverlet-include "[DialogueDown*]*" \
-  --minimum-expected-tests 3000
-dotnet reportgenerator \
-  "-reports:TestResults/coverage.cobertura.*.xml" \
-  "-targetdir:coverage-report" \
-  "-reporttypes:Html;MarkdownSummary;Cobertura"
-```
-
-Coverage is verified against the `DialogueDown` and `DialogueDown.Visualization`
-source assemblies and excludes test files. The collector writes Cobertura XML under
-`TestResults/`, and ReportGenerator writes an interactive HTML report to
-`coverage-report/index.html`. Both output folders are ignored by Git.
-
-CI fails if line coverage drops below 90% or branch coverage below 85%, and
-emits a warning when line coverage is below 100%.
+Coverage, the frontend checks, and the pull-request checklist are in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documentation
 
