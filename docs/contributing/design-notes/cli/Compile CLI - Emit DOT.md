@@ -1,149 +1,77 @@
-# Compile CLI — emit DOT
+# Compile CLI — Emit DOT
 
 > [!NOTE]
-> Status: **implemented**. `ddown compile --emit dot` writes every compiler
-> stage as Graphviz DOT text. It began on `compile` and moved to `compile`,
-> where the other non-interactive exports live.
+> Status: **implemented**. `ddown compile --emit dot` writes every compiler stage's
+> display graph as Graphviz DOT text, to standard output or one `-o` file. It is a
+> diagnostics export, not a dialogue interchange format.
 
-## Table of contents
+## CLI surface
 
-- [Goal and scope](#goal-and-scope)
-- [Functionality checklist](#functionality-checklist)
-- [Design](#design)
-- [CLI surface](#cli-surface)
-- [Key design decisions](#key-design-decisions)
-- [Error and boundary cases](#error-and-boundary-cases)
-- [Integration](#integration)
-- [Testability](#testability)
+```bash
+ddown compile scene.dialogue.md --emit dot            # every stage to standard output
+ddown compile scene.dialogue.md --emit dot -o scene.dot
+```
 
-## Goal and scope
-
-Emit compiler-stage graphs as portable Graphviz DOT text without opening the
-interactive report. The command writes every stage to standard output or one
-requested file, with a comment header that identifies each stage.
-
-This is a diagnostics export over the report's `DisplayGraph`; it is not a
-stable dialogue interchange format. Future exporters such as Yarn Spinner or
-Mermaid belong after a stable serialized dialogue/runtime IR exists.
-
-In scope:
-
-- `--emit dot` on `compile`.
-- Standard-output and `--output` file destinations.
-- A `RenderText` seam that renders every current stage through `DotRenderer`.
-- Helpful validation for missing scripts, unknown formats, and the retired
-  `mermaid` value.
-
-Out of scope:
-
-- Rendering DOT in the browser.
-- One file per stage.
-- Dialogue/runtime serialization or third-party dialogue-language exporters.
-- Mermaid stage graphs. Fenced Mermaid authoring aids render in the report's
-  Markdown previews; see
-  [Mermaid authoring diagrams](../visualization/editor/Mermaid%20Authoring%20Diagrams.md).
-
-## Functionality checklist
-
-- [x] `compile <script> --emit dot` writes every stage as DOT to standard
-      output.
-- [x] `--emit dot -o <file>` writes the same text to a file.
-- [x] Each stage begins with a `// <stage title>` comment.
-- [x] An unknown format fails validation and names `dot` as the valid format.
-- [x] `--emit mermaid` fails with migration guidance and writes no output.
-- [x] A missing or invalid script exits nonzero before emitting partial text.
+The output is one stream of several `digraph` definitions, each preceded by a
+`// <stage title>` comment; a consumer that wants separate files splits on those
+headers.
 
 ## Design
 
 ```mermaid
 flowchart LR
     cli["compile --emit dot"] --> runner["IVisualizeRunner.RunEmit"]
-    runner --> viz["CompilationVisualizer.RenderText"]
-    viz --> stages["BuildStages"]
-    stages --> dot["DotRenderer"]
-    dot --> joined["stage headers + DOT graphs"]
-    joined --> target{"destination"}
-    target --> stdout["standard output"]
-    target --> file["--output file"]
+    runner --> mode["EmitMode"]
+    mode --> viz["CompilationVisualizer.RenderText(source, EmitFormat.Dot)"]
+    viz --> dot["DotRenderer per DisplayGraph"]
+    dot --> target{"-o given?"}
+    target -- no --> stdout["standard output"]
+    target -- yes --> file["the file"]
 ```
 
-`CompilationVisualizer.RenderText(source, EmitFormat.Dot)` builds the same
-stages as the HTML report. It renders each `DisplayGraph` with `DotRenderer` and
-joins them under `//` stage headers. `EmitMode` validates the document before it
-writes anything, then selects standard output or the requested file.
-
-## CLI surface
-
-```bash
-# Emit every stage to standard output
-ddown compile scene.dialogue.md --emit dot
-
-# Write the same multi-stage text to a file
-ddown compile scene.dialogue.md --emit dot -o scene.dot
-```
-
-The output is one stream containing several `digraph` definitions. A consumer
-that needs separate files splits on the stage headers.
-
-For one release, the retired value gives a specific migration message:
-
-```text
-Mermaid stage emission was removed. Use '--emit dot' for compiler graphs;
-fenced `mermaid` blocks render in the HTML report.
-```
+`CompilationVisualizer.RenderText` builds the same stages as the HTML report and
+joins each stage's DOT under its header. `EmitMode` validates the script before
+writing anything.
 
 ## Key design decisions
 
-### D1 — Keep emission non-interactive
+### D1 — Emission is non-interactive and lives on `compile`
 
-`--emit` behaves like static `--output`: it requires a script, returns a process
-exit code, and never starts the launcher or loopback server. The command checks
-emission before HTML export, so `--emit dot -o scene.dot` cannot accidentally
-write a report.
+Like writing a playbook, `--emit dot` needs a script, returns an exit code, and never
+starts a server, so it belongs on `compile` beside the other exports. `CompileCommand`
+routes it before the playbook path. `visualize --emit` is a hidden option that fails
+with a message pointing to `compile`.
 
-### D2 — Keep DOT on the display graph
+### D2 — DOT stays on the display graph
 
-DOT remains useful for diagnostics and external graph-layout tools. It is a thin
-formatter over `DisplayGraph` and does not claim to serialize executable
-dialogue. The boundary stays explicit so future runtime exporters do not inherit
-the report's presentation model.
+DOT is a thin formatter over the report's `DisplayGraph`, useful for external layout
+tools. It does not claim to serialize executable dialogue, so a runtime exporter will
+not inherit the report's presentation model; the executable format is the
+[playbook](../runtime/Playbook%20Format.md).
 
-### D3 — Do not preserve a speculative Mermaid exporter
+### D3 — No Mermaid stage export
 
-The report's D3 stage views already provide the interactive compiler
-visualization. Authors use Mermaid for a different purpose: diagrams written
-inside the dialogue Markdown. If a future stable IR needs a Mermaid exporter, it
-can add one with a concrete consumer and format contract.
+The report's interactive stage views already cover compiler visualization. Authors
+use Mermaid for diagrams inside the script, which render in the report's Markdown
+previews (see [Mermaid Authoring Diagrams](../visualization/editor/Mermaid%20Authoring%20Diagrams.md)).
+`--emit mermaid` is rejected with a pointer to both.
 
 ## Error and boundary cases
 
 | Case | Behavior |
 | --- | --- |
-| Unknown format | Usage error naming `dot` as the valid format. |
-| `--emit mermaid` | Usage error with migration guidance; no output. |
-| No script | Usage error: `--emit` requires a script. |
-| Missing or invalid document | Nonzero exit with the validation message; no partial output. |
-| Empty stage | Emit its header and valid sparse `digraph`. |
-| Output path supplied | Write only to the file, not standard output. |
-| Special characters in labels | Escape them for DOT quoted strings. |
-
-## Integration
-
-- **`VisualizeSettings`** — validates `dot` and the Mermaid migration case.
-- **`VisualizeCommand`** — routes a valid emit before HTML export or served
-  modes.
-- **`IVisualizeRunner` / `VisualizeRunner`** — carry the format and destination
-  to `EmitMode`.
-- **`CompilationVisualizer`** — builds stages and joins rendered text.
-- **`DotRenderer`** — formats one `DisplayGraph`.
-- **README / CLI docs / changelog** — advertise DOT only.
+| `--emit` unknown | Usage error: `Use 'playbook' or 'dot'.` |
+| `--emit mermaid` | Usage error pointing to `--emit dot` for compiler graphs and to the report for fenced Mermaid blocks. |
+| `--emit dot` with `--fix` | Usage error (see [Fix Mode](./Compile%20CLI%20-%20Fix%20Mode.md)). |
+| Missing or invalid script | Nonzero exit; no partial output. |
+| An empty stage | Its header and a valid, empty `digraph`. |
+| `-o` given | Written only to the file. |
+| Special characters in labels | Escaped for DOT quoted strings. |
 
 ## Testability
 
-- **CLI settings/command** — DOT routes to `RunEmit`; Mermaid and unknown values
-  fail without invoking a runner; no-script validation remains.
-- **`CompilationVisualizer`** — every stage has a `//` header and `digraph`
-  body.
-- **`DotRenderer`** — nodes, edges, attributes, and escaping.
-- **`EmitMode`** — standard output versus file output, plus no partial output on
-  validation failure.
+- `CompileSettings` / `CompileCommand`: `dot` routes to `RunEmit`; unknown values and
+  `mermaid` fail without invoking a runner.
+- `CompilationVisualizer.RenderText`: every stage has a header and a `digraph`.
+- `DotRenderer`: nodes, edges, attributes, escaping.
+- `EmitMode`: standard output versus file, and no output on a validation failure.

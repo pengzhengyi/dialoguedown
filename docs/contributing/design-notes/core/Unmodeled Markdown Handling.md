@@ -1,92 +1,70 @@
-# Unmodeled Markdown handling
-
-How the Markdown front-end treats Markdown constructs it does **not** model as
-dialogue — each is either **kept** or **ignored** — and how to override the
-defaults, in code or from a project's `dialogue.toml`.
+# Unmodeled Markdown Handling
 
 > [!NOTE]
-> Status: **implemented**. The policy, its defaults, and the
-> [configuration format](#configuration-format) that overrides them are all in
-> place; `TomlConfigurationLoader` reads the `[markdown.unmodeled]` section into
-> `CompilerOptions`.
-
-## Table of contents
-
-- [Background](#background)
-- [Handling model](#handling-model)
-- [Kinds and defaults](#kinds-and-defaults)
-- [The policy seam](#the-policy-seam)
-- [Custom policy](#custom-policy)
-- [Recognizing tables](#recognizing-tables)
-- [Visualization provenance](#visualization-provenance)
-- [Configuration format](#configuration-format)
-
-## Background
-
-The front-end models only the constructs the DSL uses — headings, paragraphs,
-lists, links, images, code spans, emphasis, and line breaks (see
-[Markdown Front-End](./Markdown%20Front-End.md)). Everything else is *unmodeled*.
-
-By default, an unmodeled construct is **kept** — flattened to its raw source text
-so nothing is silently lost. But some constructs are **authoring aids, not
-dialogue** — a table listing speakers and their moods, or a mermaid diagram
-showing how scenes connect. Leaking those into the dialogue is noise. The
-handling policy lets each unmodeled kind be **ignored** instead.
+> Status: **implemented**. How the
+> [Markdown front end](./Markdown%20Front-End.md) treats a construct it does not
+> model as dialogue — **keep** its text or **ignore** it — and how a project
+> overrides the defaults in code or in `dialogue.toml`.
 
 ## Handling model
 
-Each unmodeled kind resolves to one of two handlings:
+The front end models headings, paragraphs, lists, blockquotes, links, images, code
+spans, emphasis, and line breaks. Everything else is *unmodeled*, and each unmodeled
+kind resolves to one handling:
 
 | Handling | Meaning |
 | --- | --- |
-| `Keep` (default) | The construct's source text becomes dialogue text, flattened from its source span. Its **text** is kept, not its structure. |
-| `Ignore` | The construct is left out of the dialogue entirely, like a comment. |
+| `Keep` | The construct's source text becomes dialogue text, sliced from its span. Its text is kept, not its structure. |
+| `Ignore` | The construct is left out of the script, and the front end reports `DLG1114` (see [Ignored Markdown Diagnostic](../diagnostics/Ignored%20Markdown%20Diagnostic.md)). |
+
+Comments and leading front matter are always discarded and are not part of the
+policy.
 
 ## Kinds and defaults
 
-`DefaultUnmodeledNodeHandlingPolicy` applies these defaults — ignore authoring
-aids, keep ambiguous content:
+The defaults ignore authoring aids and keep content whose intent is unclear:
 
-| Kind (`UnmodeledNodeKind`) | Example | Default | Why |
-| --- | --- | --- | --- |
-| `CodeBlock` | a fenced ` ```mermaid ` block | `Ignore` | Diagrams and code illustrate; they are not dialogue |
-| `ThematicBreak` | `---` | `Ignore` | A visual divider, not words |
-| `Table` | `\| Speaker \| Mood \|` | `Ignore` | Organizes reference data; not dialogue |
-| `RawHtml` | `<div>`, `<br>` | `Keep` | Ambiguous; the author typed it deliberately |
-| `Autolink` | `<https://example.com>` | `Keep` | A URL that is content |
-| `LinkReferenceDefinition` | `[label]: target` | `Ignore` | CommonMark plumbing; no tool renders it |
-| `Other` | any unrecognized unmodeled construct | `Keep` | Fallback; kept rather than silently lost |
+| Kind (`UnmodeledNodeKind`) | TOML name | Example | Default | Why |
+| --- | --- | --- | --- | --- |
+| `CodeBlock` | `code-block` | a fenced ` ```mermaid ` block | `Ignore` | Diagrams and code illustrate; they are not dialogue. |
+| `ThematicBreak` | `thematic-break` | `---` | `Ignore` | A visual divider, not words. |
+| `Table` | `table` | `\| Speaker \| Mood \|` | `Ignore` | Reference data, not dialogue. |
+| `LinkReferenceDefinition` | `link-reference-definition` | `[label]: target` | `Ignore` | CommonMark plumbing that no tool renders. |
+| `RawHtml` | `raw-html` | `<div>`, `<br>` | `Keep` | The writer typed it deliberately. |
+| `Autolink` | `autolink` | `<https://example.com>` | `Keep` | A URL that is content. |
+| `Other` | `other` | anything else unmodeled | `Keep` | Kept rather than silently lost. |
+
+A table is recognized only because the front end enables Markdig's pipe-table
+extension; stray pipes that do not form a table stay literal text.
 
 ## The policy seam
 
 ```csharp
 // DialogueDown.Configuration — the vocabulary a project configures with.
-public enum UnmodeledNodeKind { CodeBlock, ThematicBreak, Table, RawHtml, Autolink, Other }
-
+public enum UnmodeledNodeKind
+{
+    CodeBlock, ThematicBreak, Table, RawHtml, Autolink, LinkReferenceDefinition, Other,
+}
 public enum UnmodeledNodeHandling { Keep, Ignore }
 
-// DialogueDown.Markdown — the seam the front-end reads.
+// DialogueDown.Markdown — the seam the front end reads.
 internal interface IUnmodeledNodeHandlingPolicy
 {
     UnmodeledNodeHandling HandlingFor(UnmodeledNodeKind kind);
 }
 ```
 
-For each unmodeled node the converter asks the policy `HandlingFor(kind)`:
-`Ignore` leaves the node out, `Keep` flattens it to its source text.
-`DefaultUnmodeledNodeHandlingPolicy` is a singleton implementing the defaults
-above. Comments are always ignored and are **not** part of this policy.
+`DefaultUnmodeledNodeHandlingPolicy.Instance` implements the table above.
+`UnmodeledNodeHandlingPolicies.For(overrides)` returns that singleton when there are
+no overrides, and a `ConfiguredUnmodeledNodeHandlingPolicy` layering the overrides
+over it otherwise. The composition roots build it from
+`CompilerOptions.UnmodeledMarkdown`, and `MarkdigMarkdownParser` requires one.
 
-The two enums live in `DialogueDown.Configuration`, not alongside the policy,
-because they are the vocabulary a project writes in `dialogue.toml` — and because
-configuration is a foundation layer that must not depend on the Markdown
-front-end. The policy that reads them stays in `DialogueDown.Markdown`, so the
-dependency runs one way: Markdown → Configuration.
+The enums live in `DialogueDown.Configuration` because they are what a project
+writes, and configuration must not depend on the front end; the policy stays in
+`DialogueDown.Markdown`, so the dependency runs one way.
 
-## Custom policy
-
-Supply a custom `IUnmodeledNodeHandlingPolicy` to override any kind — for example,
-keep tables while leaving the other defaults intact:
+A policy can also be written in code:
 
 ```csharp
 internal sealed class KeepTablesHandlingPolicy : IUnmodeledNodeHandlingPolicy
@@ -99,84 +77,35 @@ internal sealed class KeepTablesHandlingPolicy : IUnmodeledNodeHandlingPolicy
 }
 ```
 
-Pass it when constructing the parser:
+## Configuration
 
-```csharp
-var parser = new MarkdigMarkdownParser(new KeepTablesHandlingPolicy());
-```
-
-## Recognizing tables
-
-To *ignore* a table, Markdig must first recognize it as one, which needs the
-**pipe-table** extension. The front-end enables it, so a valid table becomes a
-`Table` block (ignored by default); stray pipes that do not form a table stay
-literal text. No other GitHub-flavored extensions are enabled.
-
-## Visualization provenance
-
-The report shows the policy's effect without reimplementing it in TypeScript:
-
-- an **ignored** occurrence produces `DLG1114`; the semantic-token projection
-  turns that diagnostic range into `IgnoredMarkdown`, and Source and Preview
-  render it as present in the file but absent from the dialogue;
-- a **kept** occurrence becomes ordinary dialogue text, so it keeps the normal
-  Markdown and dialogue presentation rather than receiving an "unmodeled"
-  style;
-- a project override changes whether `DLG1114` exists, so highlighting follows
-  the configured policy automatically.
-
-This is sufficient to show each construct's fate: ignored or dialogue. The
-report still does not retain a distinct "kept because it was unmodeled"
-provenance after flattening, nor does the Config tab project the resolved
-handling for every kind. A future UI that needs either distinction should
-capture `kind`, `handling`, and `span` at `MarkdigUnmodeledNodeHandler`, the one
-site that knows all three, instead of re-parsing the source client-side. The
-public vocabulary and the single handler leave that extension local.
-
-## Configuration format
-
-A DialogueDown project is configured by a **TOML** file at the project root
-(`dialogue.toml`). Unmodeled-node handling lives under a `[markdown.unmodeled]`
-section, mapping each kind to `"keep"` or `"ignore"`:
+A project overrides handlings under `[markdown.unmodeled]`; omitted kinds keep the
+defaults, so the section lists only exceptions:
 
 ```toml
 # dialogue.toml
-
 [markdown.unmodeled]
-code-block     = "ignore"    # mermaid/code: illustration, not dialogue
-thematic-break = "ignore"
-table          = "ignore"
-raw-html       = "keep"
-autolink       = "keep"
-link-reference-definition = "ignore"
-other          = "keep"
+table      = "keep"
+code-block = "ignore"
 ```
 
-Omitted keys fall back to the built-in defaults, so the section is a list of
-exceptions rather than a full replacement. `UnmodeledMarkdownNames` holds the
-kebab-case names above — the single vocabulary shared by the loader and any tool
-that displays the configuration, so the surfaces cannot drift. An unknown kind or
-handling is rejected with a located error rather than silently falling back.
-Other project concerns (speakers, mode, …) get their own sections in the same
-file; see the [configuration guide](../../../guide/configuration.md).
+`UnmodeledMarkdownNames` holds the kebab-case names, shared by the loader and every
+tool that displays the configuration. An unknown kind or handling is a located
+error. The [Configuration Loader](../configuration/Configuration%20Loader.md) reads the
+section; the user-facing schema is the
+[configuration guide](../../../guide/configuration.md).
 
-### Why TOML
+## Visualization provenance
 
-Considered INI, JSON, YAML, and TOML against **sectioning**, **readability for
-developers and writers**, **editor support**, and being a **standard**:
+The report shows each construct's fate without reimplementing the policy:
 
-- **TOML (chosen):** explicit `[section]` headers (exactly the sectioning we
-  want), INI-like clarity with real types and comments, a published standard
-  (TOML 1.0; used by Cargo and `pyproject.toml`), first-class .NET parsing
-  (Tomlyn, used by the .NET SDK), and schema-aware editor support (Even Better
-  TOML / Taplo).
-- **YAML:** very readable but whitespace-sensitive — a hazard when non-technical
-  writers edit it.
-- **JSON:** ubiquitous but has no comments and is noisy to hand-edit.
-- **INI:** simplest, but has no formal standard, no schema/validation, and no
-  nested sections.
+- an **ignored** construct produces `DLG1114`, and the semantic-token projection
+  turns that range into `IgnoredMarkdown`, so Source and Preview show it as present in
+  the file but absent from the script;
+- a **kept** construct is ordinary dialogue text and renders as such;
+- a project override changes whether `DLG1114` exists, so highlighting follows it.
 
-> [!NOTE]
-> This records the *format* decision only. `TomlConfigurationLoader` reads it —
-> see the [Configuration Loader](../configuration/Configuration%20Loader.md) note for how a
-> `dialogue.toml` becomes `CompilerOptions`.
+The report does not record "kept because unmodeled" after flattening, and the
+Config tab does not list the resolved handling for every kind. If a UI needs either,
+`MarkdigUnmodeledNodeHandler` is the one site that knows the kind, handling, and span
+together.

@@ -1,254 +1,196 @@
-# Implementation note: Script compiler facade
+# Script Compiler Facade
 
 > [!NOTE]
-> Status: **implemented**. A cross-cutting component that gives the compiler a
-> single public entry point (`IScriptCompiler`) and a dependency injection story
-> (`AddDialogueDown` and `ScriptCompilerFactory.CreateDefault`), so other projects
-> and the CLI invoke compilation through one seam instead of hand-wiring stages.
-> Every stage runs through that one call — parse → transpile → desugar → analyze
-> → build the graph.
+> Status: **implemented**. The compiler's single public entry point,
+> `IScriptCompiler.Compile`, which runs every
+> [pipeline stage](../README.md#core-the-compiler-pipeline) in order and returns a
+> `CompilationResult` — a success carrying the dialogue graph, or a failure carrying
+> how far the compile got. Two composition roots build it: `AddDialogueDown` and
+> `ScriptCompilerFactory.CreateDefault`.
 
 ## Table of contents
 
-- [Implementation note: Script compiler facade](#implementation-note-script-compiler-facade)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Where it sits](#where-it-sits)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Functionality checklist](#functionality-checklist)
-  - [Interfaces and abstractions](#interfaces-and-abstractions)
-  - [Composition roots](#composition-roots)
-  - [Key design decisions](#key-design-decisions)
-    - [DD1 — One facade orchestrates the stages](#dd1--one-facade-orchestrates-the-stages)
-    - [DD2 — Public front door, internal internals](#dd2--public-front-door-internal-internals)
-    - [DD3 — DI via Microsoft.Extensions.DependencyInjection](#dd3--di-via-microsoftextensionsdependencyinjection)
-    - [DD4 — Stateless stages are singletons](#dd4--stateless-stages-are-singletons)
-    - [DD5 — Diagnose when a stage can continue, throw when it cannot](#dd5--diagnose-when-a-stage-can-continue-throw-when-it-cannot)
-    - [DD6 — The CLI adopts the facade](#dd6--the-cli-adopts-the-facade)
-    - [DD7 — Visualization consumes the same facade](#dd7--visualization-consumes-the-same-facade)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Integration](#integration)
-  - [Testability](#testability)
-
-## Goal and scope
-
-The compiler runs in stages, from raw source to the runtime dialogue graph (see
-[Where it sits](#where-it-sits)). Today each caller wires those stages by hand:
-the visualizer news up a parser and a transpiler; the CLI holds a placeholder
-compiler. This component introduces one **facade** — `IScriptCompiler` — that runs
-the stages in order and returns their artifacts, plus a **dependency injection**
-story so the facade and its stages are swappable and configurable.
-
-In scope: the facade, its result, a container-free factory, an `AddDialogueDown`
-registration extension (in the core project), and wiring the **CLI** onto it.
-Every stage now runs through the facade, so the seam is what other projects — the
-CLI and the visualization — call instead of hand-wiring stages.
-
-## Where it sits
-
-```mermaid
-flowchart LR
-    A[".dialogue.md"] --> B["Markdown front-end<br/>→ Markdown AST"]
-    B --> C["Transpiler<br/>→ Dialogue AST"]
-    C --> D["Desugar<br/>→ desugared tree"]
-    D --> E["Semantic analysis<br/>→ semantic model"]
-    E --> F["Dialogue graph<br/>→ playbook"]
-    subgraph facade["ScriptCompiler.Compile — this"]
-        B
-        C
-        D
-        E
-        F
-    end
-    style facade fill:#2d6,stroke:#0a0,color:#000
-```
-
-The facade wraps every stage — front-end, transpiler, desugar, semantic analysis,
-and the graph — behind one call, and grows `CompilationResult` as each stage
-contributes its artifact.
+- [Ubiquitous language](#ubiquitous-language)
+- [The seam](#the-seam)
+- [One compile](#one-compile)
+- [The compilation result](#the-compilation-result)
+- [Composition roots](#composition-roots)
+- [Key design decisions](#key-design-decisions)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
 
 ## Ubiquitous language
 
-| Term                 | Meaning                                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Compiler**         | the whole source-to-runtime process; here realized (partially) by the facade.                           |
-| **Compilation**      | one run of the compiler over a source string.                                                           |
-| **Stage**            | one phase of the compiler (parse, transpile, desugar, …).                                               |
-| **Facade**           | `IScriptCompiler`, the single entry point that runs the stages.                                         |
-| **Composition root** | where the object graph is assembled: `AddDialogueDown` (container) or `CreateDefault` (container-free). |
+| Term | Meaning |
+| --- | --- |
+| **Compilation** | One run of the compiler over a source string. |
+| **Stage** | One step of the pipeline: parse, transpile, desugar, validate, analyze, build the graph. |
+| **Facade** | `IScriptCompiler`, the single entry point that runs the stages. |
+| **Compilation success** | A compile that produced a dialogue graph; every stage artifact is present. |
+| **Compilation failure** | A compile that produced no graph, carrying the artifacts it reached. |
+| **Reached** | A stage ran and produced its artifact — independent of whether the compile succeeded. |
+| **Composition root** | Where the object graph is assembled: `AddDialogueDown` (container) or `CreateDefault` (container-free). |
 
-## Functionality checklist
+## The seam
 
-- [x] **Orchestrate** parse → transpile → desugar and return a `CompilationResult`.
-- [x] **Expose each stage artifact** on the result (internal) for tooling to project.
-- [x] **`CreateDefault()`** builds a fully wired facade with no container.
-- [x] **`AddDialogueDown()`** registers the stages and the facade; resolving
-      `IScriptCompiler` from the provider works.
-- [x] **Errors propagate** from a stage (no diagnostics component yet).
-- [x] **CLI `compile`** runs real compilation through the facade.
-- [x] **Deliberately incomplete**: a `TODO` seam marks semantic analysis and the
-      later stages.
+| Type | Visibility | Responsibility |
+| --- | --- | --- |
+| `IScriptCompiler` | public | `CompilationResult Compile(string source)` |
+| `ScriptCompiler` | internal | Runs the six stages under one `CompilationSession`. |
+| `CompilationResult` / `CompilationSuccess` / `CompilationFailure` | public (artifacts internal) | The outcome; see [below](#the-compilation-result). |
+| `ScriptCompilerFactory` | public | `CreateDefault(CompilerOptions? options = null)` |
+| `AddDialogueDown` | public | `AddDialogueDown(this IServiceCollection, CompilerOptions? options = null)` |
 
-## Interfaces and abstractions
+All live in `DialogueDown.Compilation`, except `AddDialogueDown`, which sits in
+`Microsoft.Extensions.DependencyInjection` so it is found wherever that `using`
+already exists.
 
-| Type                          | Visibility                          | Responsibility                                                                                             | Collaborators                                                   |
-| ----------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `IScriptCompiler`             | **public**                          | facade: `CompilationResult Compile(string source)`                                                         | the stages                                                      |
-| `ScriptCompiler`              | internal                            | runs parse → transpile → desugar and assembles the result                                                  | `IMarkdownParser`, `IScriptTranspiler`, `IScriptDesugarer`      |
-| `CompilationResult`           | **public** (internal stage members) | carries each stage's artifact and the original `Source`; a future home for diagnostics and compiled output | `MarkdownDocument`, `ScriptDocument`, `DesugaredScriptDocument` |
-| `ScriptCompilerFactory`       | **public**                          | `CreateDefault()` — a container-free, fully wired facade                                                   | `ScriptCompiler` + default stages                               |
-| `AddDialogueDown` (extension) | **public**                          | registers the stages and the facade into an `IServiceCollection`                                           | `IServiceCollection`                                            |
+## One compile
+
+```text
+Compile(source):
+    session   = CompilationSession.Start(source, mode)     # one sink for every stage
+    markdown  = parser.Parse(source, session.Context)
+    script    = transpiler.Transpile(markdown, session.Context)
+    if session.ShouldHalt:                                  # stage-boundary + an error
+        return CompilationFailure.AtTranspile(...)
+    desugared = desugarer.Desugar(script, session.Context)
+    validator.Validate(desugared, session.Context.Diagnostics)
+    semantics = analyzer.Analyze(desugared, session.Context)
+    if session.HasErrors:
+        return CompilationFailure.AtAnalysis(...)
+    graph     = graphBuilder.Build(semantics, session.Context)
+    return CompilationSuccess(...)
+```
+
+Every stage reports into one sink through its `DiagnosticsContext`; what the mode
+does with an error is in
+[Compilation modes](../diagnostics/Diagnostics%20and%20Validation.md#compilation-modes).
+Writing a playbook is not part of `Compile`: the CLI hands a success's graph to
+`IPlaybookWriter`, which `AddDialogueDown` also registers.
+
+## The compilation result
+
+A closed pair under an abstract base:
+
+```csharp
+public abstract record CompilationResult
+{
+    public string Source { get; }
+    public bool HasErrors { get; }                                 // any diagnostic is an error
+    public IReadOnlyList<LocatedDiagnostic> LocatedDiagnostics { get; }  // projected once, cached
+    internal IReadOnlyList<Diagnostic> Diagnostics { get; }
+    internal MarkdownDocument Markdown { get; }                    // always reached
+    internal ScriptDocument Script { get; }                        // always reached
+}
+
+public sealed record CompilationSuccess : CompilationResult
+{
+    internal DesugaredScriptDocument Desugared { get; }            // never null
+    internal SemanticModel Semantics { get; }
+    internal DialogueGraph Graph { get; }
+}
+
+public sealed record CompilationFailure : CompilationResult
+{
+    internal DesugaredScriptDocument? Desugared { get; }           // null only AtTranspile
+    internal SemanticModel? Semantics { get; }
+
+    internal static CompilationFailure AtTranspile(...);            // halted at the checkpoint
+    internal static CompilationFailure AtAnalysis(...);             // ran every stage, has errors
+}
+```
+
+A caller writes what it means:
+
+```csharp
+if (compiler.Compile(source) is CompilationSuccess success)
+{
+    Run(success.Graph);
+}
+```
+
+Reaching a stage and succeeding are separate questions, because the report exists to
+show what a **broken** script still produced:
+
+| Compile | Outcome | Desugared and semantics |
+| --- | --- | --- |
+| Erroring transpile, `stage-boundary` | failure (`AtTranspile`) | not reached |
+| Ran every stage, has errors | failure (`AtAnalysis`) | reached — and shown by the report |
+| Ran every stage, warnings or clean | success | reached |
 
 ## Composition roots
 
-Two composition roots build the same graph, for two kinds of caller:
-
 ```mermaid
 flowchart TB
-    subgraph container["Container caller (CLI)"]
+    subgraph container["Container caller (the CLI)"]
         SC[IServiceCollection] -->|AddDialogueDown| SP[IServiceProvider]
         SP -->|resolve| C1[IScriptCompiler]
     end
-    subgraph plain["Container-free caller (Visualization, a game, tests)"]
+    subgraph plain["Container-free caller (the report, a game, tests)"]
         F[ScriptCompilerFactory.CreateDefault] --> C2[IScriptCompiler]
     end
 ```
 
+Both roots project the same `CompilerOptions` into the same default stages (see
+[Configuration](../configuration/Configuration.md)), and both register every stage
+as a singleton, since no stage holds per-compilation state.
+
 ## Key design decisions
 
-### DD1 — One facade orchestrates the stages
+### D1 — One facade orchestrates the stages
 
-`ScriptCompiler.Compile(source)` runs the stages in order, collecting what each
-produces, and returns either a success or a failure carrying how far it got:
+Callers never wire stages by hand. Adding a stage changes `ScriptCompiler` and the
+two roots, and no caller.
 
-```text
-Compile(source):
-    markdown  = parser.Parse(source, context)
-    script    = transpiler.Transpile(markdown, context)
-    desugared = desugarer.Desugar(script, context)
-    validator.Validate(desugared, context.Diagnostics)
-    model     = analyzer.Analyze(desugared, context)
-    graph     = graphBuilder.Build(model)     # only when nothing reported an error
-    return CompilationSuccess(...) | CompilationFailure(...)
-```
+### D2 — Public front door, internal artifacts
 
-Each stage takes the compilation's context, so every stage reports into one
-`DiagnosticBag` and carries `source` for its spans. A stage that reports an error
-ends the compile at its checkpoint — in stage-boundary mode the transpiler is the
-first checkpoint — and the failure carries every artifact reached so far, because
-a tool still describes a broken script. Adding a stage changes no caller.
+A game must be able to compile a script, so `IScriptCompiler` and the result are
+public. The stage artifacts are still under active design, so they stay internal:
+`ScriptCompiler` is an internal class behind a public interface, and the result's
+artifact members are internal. The visualization reads them as a friend assembly;
+every other consumer sees `Source`, `HasErrors`, and `LocatedDiagnostics`.
 
-### DD2 — Public front door, internal internals
+### D3 — Dependency injection through `Microsoft.Extensions.DependencyInjection.Abstractions`
 
-The facade is the library's **public entry point**: a game or Godot integration
-must be able to compile a script. So `IScriptCompiler` and `CompilationResult` are
-**public**. The stage artifacts (`MarkdownDocument`, `ScriptDocument`,
-`DesugaredScriptDocument`) are still under active design, so they stay **internal**
-and must not leak into public API.
+Stages are constructor-injected. `AddDialogueDown` registers each with `TryAdd`, so
+a caller that registers its own stage first swaps only that stage. The core
+references only the abstractions package and never builds its own container — that
+would be a service locator. Each app owns its composition root.
 
-This is reconciled with precise visibility, needing **no new `InternalsVisibleTo`**:
+### D4 — A closed pair, not a flag
 
-- `IScriptCompiler` is public; its only method returns the public
-  `CompilationResult` — no internal type appears in a public signature.
-- `ScriptCompiler` is an **internal class implementing a public interface**; its
-  constructor takes the internal stage interfaces. Callers only ever see
-  `IScriptCompiler`.
-- `CompilationResult` is a public record whose **stage members are `internal`**
-  (`Markdown`, `Script`, `Desugared`) and whose constructor is internal (only core
-  builds it). Its one **public** member is `Source` (the original text); the CLI
-  and external embedders see that shell, while Visualization — already a friend via
-  `InternalsVisibleTo` — reads the stage artifacts. Diagnostics and compiled output
-  are planned public additions.
+The two outcomes differ in *what they hold*, so they differ in type: nullable
+artifacts are honest on a failure and dishonest on a success. Named factories keep
+the reachable combinations the only constructible ones — `AtTranspile` cannot carry
+a semantic model.
 
-The facade and its result live in a new `DialogueDown.Compilation` namespace.
+### D5 — A warning never fails a compile
 
-### DD3 — DI via Microsoft.Extensions.DependencyInjection
-
-The stages are **constructor-injected** (the pattern), which makes them swappable
-and testable with or without a container. On top of that, core offers **both**
-composition roots so no caller is forced to adopt a container it does not want:
-
-- **`AddDialogueDown(this IServiceCollection)`** registers the stage interfaces and
-  the facade, for callers that already run a container (the CLI). It lives in the
-  `Microsoft.Extensions.DependencyInjection` namespace so it is discoverable
-  wherever that `using` already exists. Each registration uses **`TryAdd`**, so a
-  caller that registers its own implementation of a stage before calling
-  `AddDialogueDown` swaps just that stage while the rest keep their defaults.
-- **`ScriptCompilerFactory.CreateDefault()`** returns a fully wired facade in one
-  call, for container-free callers (Visualization, a game, tests).
-
-Core references only `Microsoft.Extensions.DependencyInjection.Abstractions`,
-pinned to the `10.0.x` line to match the CLI's transitive version and avoid a
-downgrade. It is a featherweight, first-party package — no container. Core **never
-hosts its own container**: a library that news up a `ServiceProvider` internally is
-the service-locator anti-pattern. Core provides the recipe and the factory; each
-app owns its composition root. This is the seam that later carries configuration
-(`IOptions<>`) and alternate stage implementations.
-
-### DD4 — Stateless stages are singletons
-
-The parser, transpiler, desugarer, and facade hold no per-compilation state, so
-`AddDialogueDown` registers them as **singletons**. `CreateDefault` likewise
-returns one wired instance. Both roots share the same per-stage defaults
-(`MarkdigMarkdownParser`, `ScriptTranspilerFactory.CreateDefault()`,
-`ScriptDesugarer`) so they cannot drift.
-
-### DD5 — Diagnose when a stage can continue, throw when it cannot
-
-A stage reports a diagnostic and carries on where it safely can; it throws only
-when it cannot continue at all. `CompilationResult` is a closed union:
-`CompilationSuccess` carrying every artifact, or `CompilationFailure` carrying how
-far the compile got and the diagnostics it collected. The CLI renders those
-diagnostics and maps a propagated exception to a non-zero exit code.
-
-### DD6 — The CLI adopts the facade
-
-The CLI's own placeholder compiler was built to be replaced, and is gone:
-`CliServices` registers the compilation factory, the playbook writer, and the
-errata renderer, and `CompileCommand` injects the core `IScriptCompiler`. It
-compiles the source, renders the diagnostics, and writes the playbook or a stage
-projection when asked.
-
-### DD7 — Visualization consumes the same facade
-
-`CompilationVisualizer` used to drive the parser and transpiler by hand; it now
-takes an `IScriptCompiler` (defaulting to `ScriptCompilerFactory.CreateDefault`)
-and projects `CompilationResult`'s stage artifacts into its tabs, so a new stage
-reaches the report without the visualizer knowing the pipeline. A core test reads
-the internal stage members to prove the seam can serve it.
+Failure means an error, since only an error means the recovered model no longer
+describes what the writer wrote. A script that compiles with advice still produces
+a playable graph.
 
 ## Error and boundary cases
 
-| Case                   | Behavior                                                                              |
-|------------------------|---------------------------------------------------------------------------------------|
-| `source` is null       | `ArgumentNullException` from the facade (stages also guard).                          |
-| Empty `source`         | flows through as empty artifacts; a success with nothing to report.                   |
-| An error is reported   | the compile stops at its checkpoint and returns the failure carrying what it reached. |
-| A stage swapped via DI | the facade runs the substitute; behavior is the caller's.                             |
-
-## Integration
-
-- **Core**: the facade, result, factory, and `AddDialogueDown`; core takes the
-  `Microsoft.Extensions.DependencyInjection.Abstractions` dependency.
-- **CLI**: `CliServices` registers the compilation factory; `CompileCommand`
-  injects `IScriptCompiler` and renders the result's diagnostics.
-- **Visualization**: `CompilationVisualizer` takes an `IScriptCompiler` and
-  projects the result's stage artifacts.
+| Case | Behavior |
+| --- | --- |
+| `source` is null | `ArgumentNullException`. |
+| Empty source | Success; the graph is the `EndNode` alone. |
+| Warnings only | Success. |
+| Errors, `best-effort` | Failure from `AtAnalysis`; every earlier artifact reached. |
+| Erroring transpile, `stage-boundary` | Failure from `AtTranspile`; no desugared tree, no semantics. |
+| `fail-fast` and an error | No result; the sink throws a `DiagnosticException`. |
+| A stage swapped via DI | The facade runs the substitute. |
 
 ## Testability
 
-- **`ScriptCompiler`** — unit test with NSubstitute stage doubles: assert it calls
-  parse → transpile → desugar → validate → analyze → build in order, threads the
-  compilation context, and assembles the result from each stage's output. Core
-  exposes internals to `DynamicProxyGenAssembly2` so the mock generator can
-  substitute the internal stage interfaces.
-- **`CompilationResult`** — a friend test (in `DialogueDown.Tests`) asserting the
-  internal stage artifacts are exposed.
-- **`ScriptCompilerFactory.CreateDefault()`** — end-to-end on a real script: the
-  result's desugared tree upholds the post-desugar invariants (no `JumpIndicator`
-  survives, no line lacks a speaker).
-- **`AddDialogueDown()`** — build a provider, resolve `IScriptCompiler`, compile a
-  script, confirm it is a working singleton graph, and confirm a stage
-  pre-registered before `AddDialogueDown` is kept (the `TryAdd` swap point).
-- **CLI** — a `compile` smoke test: a real script compiles and returns the success
-  exit code; the retired placeholder's "not implemented" test is removed.
+- **`ScriptCompiler`:** NSubstitute stage doubles assert the stage order, the shared
+  context, and which outcome each halt returns. The core exposes internals to
+  `DynamicProxyGenAssembly2` so the internal stage interfaces can be substituted.
+- **Result:** each outcome is constructed on its own, so a test states the outcome it
+  means.
+- **`CreateDefault`:** end to end on a real script; the desugared tree upholds the
+  post-desugar invariants.
+- **`AddDialogueDown`:** resolve `IScriptCompiler`, compile, and confirm a stage
+  registered first is kept.
