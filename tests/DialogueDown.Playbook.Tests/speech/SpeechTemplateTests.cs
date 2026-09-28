@@ -101,7 +101,7 @@ public sealed class SpeechTemplateTests
     {
         var only = Assert.Single(SpeechTemplate.Segments([]));
 
-        Assert.False(only.Speaks);
+        Assert.False(only.SaysSomething);
         Assert.Null(only.Command);
     }
 
@@ -111,7 +111,7 @@ public sealed class SpeechTemplateTests
         var only = Assert.Single(SpeechTemplate.Segments([Text("Hello, "), Bold("there"), Text(".")]));
 
         AssertSegment(only, "Hello, there.", command: null);
-        Assert.True(only.Speaks);
+        Assert.True(only.SaysSomething);
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public sealed class SpeechTemplateTests
         var only = Assert.Single(SpeechTemplate.Segments([CustomCommand("PlayBgm", "closer")]));
 
         AssertSegment(only, string.Empty, CustomCommand("PlayBgm", "closer"));
-        Assert.False(only.Speaks);
+        Assert.False(only.SaysSomething);
     }
 
     [Fact]
@@ -188,7 +188,7 @@ public sealed class SpeechTemplateTests
             [CustomCommand("ShowBackground", "platform"), CustomCommand("PlayBgm", "crescendo")]);
 
         Assert.Equal(2, segments.Length);
-        Assert.All(segments, segment => Assert.False(segment.Speaks));
+        Assert.All(segments, segment => Assert.False(segment.SaysSomething));
         Assert.Equal(CustomCommand("ShowBackground", "platform"), segments[0].Command);
         Assert.Equal(CustomCommand("PlayBgm", "crescendo"), segments[1].Command);
     }

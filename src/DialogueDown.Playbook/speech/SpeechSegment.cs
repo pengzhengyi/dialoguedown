@@ -35,6 +35,29 @@ public sealed partial record SpeechSegment(
     /// </summary>
     public SpeechFragment? Command { get; } = Command;
 
-    /// <summary>Gets whether anything is said here.</summary>
-    public bool Speaks => !Words.IsEmpty;
+    /// <summary>
+    /// Gets whether these words say something: anything more than whitespace and line breaks.
+    /// </summary>
+    /// <remarks>
+    /// The words are judged as written, before any query is filled, so a query always says
+    /// something and an empty answer never changes whether the segment does. A tag says something
+    /// too, because a host recognizes or acts on it where it stands.
+    /// </remarks>
+    public bool SaysSomething => Words.Any(Says);
+
+    // Every kind is named so that a kind added to the format arrives here as a failure rather than
+    // quietly saying something or nothing.
+    private static bool Says(SpeechFragment fragment) =>
+        fragment switch
+        {
+            TextFragment text => !string.IsNullOrWhiteSpace(text.Text),
+            StyledTextFragment styled => styled.Children.Any(Says),
+            LineBreakFragment => false,
+
+            // A command is something the host does rather than something anybody says.
+            DefaultCommandFragment or CustomCommandFragment => false,
+            QueryFragment or TagFragment or LinkFragment or ImageFragment => true,
+            _ => throw new NotSupportedException(
+                $"No reading is defined for {fragment.GetType().Name}."),
+        };
 }
