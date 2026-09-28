@@ -1,11 +1,11 @@
 # Conditions
 
 > [!NOTE]
-> Status: **implemented** at compile time. The compiler recognizes a condition
-> (`` `key?` ``), binds it to the jump, line, control line, choice option, or
-> control branch it fronts, and carries it into the playbook; the runner does not
-> evaluate one yet and refuses any node that carries one (`unanswered-condition`,
-> see [Runner](../runtime/Runner.md)).
+> Status: **implemented**. The compiler recognizes a condition (`` `key?` ``),
+> binds it to the jump, line, control line, choice option, or control branch it
+> fronts, and carries it into the playbook. The runner asks the world about it
+> (see [Asking the World](../runtime/Asking%20the%20World.md)), except on a choice
+> option, which waits until the runner plays choices.
 
 ## Table of contents
 
@@ -232,6 +232,6 @@ invalid-value diagnostic: a condition always resolves to true or false.
 
 ## Deferred work
 
-- **Runtime evaluation.** The runner refuses a conditional node rather than
-  guessing; asking the world and acting on the answer comes with the world seam.
+- **A condition on a choice option.** It is compiled and carried into the
+  playbook, and the runner evaluates it once it plays choices.
 - **Negation and expressions.** Deferred by [D10](#d10--no-negation-no-expressions).

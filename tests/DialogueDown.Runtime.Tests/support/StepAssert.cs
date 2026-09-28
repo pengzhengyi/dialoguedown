@@ -1,6 +1,6 @@
 using DialogueDown.Playbook.Speech;
-using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -8,7 +8,7 @@ namespace DialogueDown.Runtime.Tests;
 /// What a step produced, asserted in the words a fixture uses.
 /// </summary>
 /// <remarks>
-/// A step reports a list of events and a position, so an unhelped test spends three lines
+/// A step reports a list of events and a situation, so an unhelped test spends three lines
 /// unpacking before it says anything. These name the outcome instead.
 /// </remarks>
 internal static class StepAssert
@@ -41,7 +41,7 @@ internal static class StepAssert
     public static void AssertEnded(StepResult result)
     {
         Assert.IsType<Ended>(Assert.Single(result.Events));
-        Assert.IsType<AtEnd>(result.State.Position);
+        Assert.IsType<AtEnd>(result.State.Situation);
     }
 
     /// <summary>Asserts a step refused, for a reason, saying something in particular.</summary>
@@ -65,7 +65,7 @@ internal static class StepAssert
     /// <param name="state">Where the run stands.</param>
     /// <param name="node">Where it should stand.</param>
     public static void AssertAt(PlayState state, int node) =>
-        Assert.Equal(node, Assert.IsType<AtNode>(state.Position).Node);
+        Assert.Equal(node, Assert.IsType<AtNode>(state.Situation).Node);
 
     /// <summary>Asserts a step left the run waiting on the host at a node.</summary>
     /// <param name="result">What the step produced.</param>
@@ -77,5 +77,33 @@ internal static class StepAssert
     /// <param name="state">Where the run stands.</param>
     /// <param name="node">Where it should be waiting.</param>
     public static void AssertAwaitingDone(PlayState state, int node) =>
-        Assert.Equal(node, Assert.IsType<AwaitingDone>(state.Position).Node);
+        Assert.Equal(node, Assert.IsType<AwaitingDone>(state.Situation).Node);
+
+    /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="node">Where it should be waiting.</param>
+    /// <param name="moment">Which reading of the world it should be waiting on.</param>
+    /// <param name="keys">What it should have asked about, in the order written.</param>
+    public static void AssertAsked(StepResult result, int node, Moment moment, params string[] keys)
+    {
+        var resolve = Assert.IsType<Resolve>(Assert.Single(result.Events));
+
+        Assert.Equal(keys, resolve.Keys);
+        AssertAwaitingSupply(result.State, node, moment, keys);
+    }
+
+    /// <summary>Asserts a run is waiting on the world at a node, over the keys it asked about.</summary>
+    /// <param name="state">Where the run stands.</param>
+    /// <param name="node">Where it should be waiting.</param>
+    /// <param name="moment">Which reading of the world it should be waiting on.</param>
+    /// <param name="keys">What it should be waiting to hear about.</param>
+    public static void AssertAwaitingSupply(
+        PlayState state, int node, Moment moment, params string[] keys)
+    {
+        var waiting = Assert.IsType<AwaitingSupply>(state.Situation);
+
+        Assert.Equal(node, waiting.Node);
+        Assert.Equal(moment, waiting.Moment);
+        Assert.Equal(keys, waiting.Keys);
+    }
 }

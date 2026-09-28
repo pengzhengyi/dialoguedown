@@ -1,4 +1,4 @@
-namespace DialogueDown.Runtime.Positions;
+namespace DialogueDown.Runtime.Situations;
 
 /// <summary>
 /// The run has not begun.
@@ -6,4 +6,4 @@ namespace DialogueDown.Runtime.Positions;
 /// <remarks>
 /// Where every run starts, so that beginning one is an ordinary step rather than a second way in.
 /// </remarks>
-public sealed record NotStarted : Position;
+public sealed record NotStarted : Situation;

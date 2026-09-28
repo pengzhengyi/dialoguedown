@@ -113,7 +113,8 @@ flowchart LR
     RR --> CC["4. Conformance Corpus"]
     CC --> SPT["5. Speech as Plain Text"]
     SPT --> RN["6. Runner"]
-    RN --> RUN(["players, adapters"])
+    RN --> AW["7. Asking the World"]
+    AW --> RUN(["players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -124,6 +125,7 @@ flowchart LR
 | 4 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, and the harness that runs them against the reference reader and runner | Implemented |
 | 5 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
 | 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |
+| 7 | [Asking the World](./runtime/Asking%20the%20World.md) | How the runner asks the world: `Resolve` answered by `Supply`, for conditions, block conditions, and queries in speech | Implemented |
 
 ### Language constructs
 
@@ -271,6 +273,7 @@ the pipeline and its tools.
 | --- | --- | --- |
 | [Target Frameworks](./other/Target%20Frameworks.md) | Multi-target the shipped libraries so a Godot game keeps its runtime while the toolchain moves to .NET 10 | Implemented |
 | [Namespace Layout](./other/Namespace%20Layout.md) | An architecture rule capping how many types an assembly's root namespace may hold | Implemented |
+| [Enum Wire Names](./other/Enum%20Wire%20Names.md) | Every JSON enum wire name pinned by a hand-written converter, so no shipped build needs a .NET 9+ package | Implemented |
 | [Development Cycle Optimization](./other/Development%20Cycle%20Optimization.md) | Local and CI feedback time, cut through measured, behavior-preserving increments | Implemented |
 | [BBCode Rendering](./other/BBCode%20Rendering.md) | Render a line's speech fragments as BBCode (Godot), terminal, and web text | Proposed |
 | [Interactive Playthrough](./other/Interactive%20Playthrough.md) | Play a script as a text adventure to check its branching; what the exploration found | Explored — not adopted |

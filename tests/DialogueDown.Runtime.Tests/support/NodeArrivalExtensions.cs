@@ -26,9 +26,9 @@ internal static class NodeArrivalExtensions
 
     /// <summary>Whether the runner has no code for a node of this kind yet.</summary>
     /// <remarks>
-    /// Narrower than refusing. A node can also be refused for the data it holds, such as a
-    /// condition nobody can answer. Only an untaught kind means nobody has written the code that
-    /// plays it.
+    /// Narrower than refusing. A node can also be refused for the data it holds, such as one key
+    /// it needs as a truth and as words both. Only an untaught kind means nobody has written the
+    /// code that plays it.
     /// </remarks>
     /// <param name="node">The node to arrive at.</param>
     /// <returns><see langword="true"/> when arriving refuses because the kind is untaught.</returns>

@@ -1,11 +1,11 @@
 # Block Controls
 
 > [!NOTE]
-> Status: **implemented** at compile time. A block `if`/`elseif`/`else` —
+> Status: **implemented**. A block `if`/`elseif`/`else` —
 > grouped, mutually exclusive branches with an optional fallback — compiles to a
-> `branch` node whose arms carry conditions; the runner does not evaluate
-> conditions yet and refuses the node (`unanswered-condition`, see
-> [Runner](../runtime/Runner.md)).
+> `branch` node whose arms carry conditions. The runner tries the arms in order and
+> takes the first whose condition holds (see
+> [Asking the World](../runtime/Asking%20the%20World.md)).
 
 ## Table of contents
 

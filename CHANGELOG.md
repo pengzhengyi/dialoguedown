@@ -40,6 +40,15 @@ changes easy to categorize.
   the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
   shell answers at `/browse`, since a run that pins a document redirects `/` to that document.
 
+- **A run asks the world what it needs to know** — `Resolve(keys)` joins `Perform` as a request the
+  run stops for, answered by `Supply(answers)`: a truth for a guard, words for a query. A line or
+  control block the world withholds is stepped over; a jump or a block condition's arm is taken only
+  when the world allows it, and a block with no arm taken and no `else` is skipped; a query in a line
+  is said as the words that answered it. A node is asked about before it plays and again before the
+  run leaves it, so a way out is judged against the world an effect left behind. An answer that does
+  not fit what was asked is refused and the run keeps waiting, so the driver can answer again. See
+  [Asking the world](docs/contributing/design-notes/runtime/Asking%20the%20World.md).
+
 - **A host can report that an effect failed** — `Failed(explanation)` joins `Done` as the answer
   to a `Perform`, so a world whose write was refused says so instead of lying with `Done` or
   hanging. The run stands still — the same position, nothing emitted, the driver's own message as
@@ -207,6 +216,14 @@ changes easy to categorize.
   against however far the editor's first parse had reached, so a heading past that point read as
   absent: green alone, red in the full run. They now read a document parsed to its end, and a case
   pins the stopped parse itself.
+
+- **The watcher's coalescing case no longer depends on disk timing** — the case wrote one save as
+  five rapid writes and asserted one or two reports, but a busy runner can deliver those writes
+  more than a debounce window apart, where several reports are the correct answer to the input:
+  the case was testing the operating system's delivery schedule, not the watcher. The debounce now
+  runs on an injected clock, so the case moves the quiet period itself and one report is the
+  outcome however the writes arrive. See
+  [One Watcher for the Served Tree](docs/contributing/design-notes/visualization/session/Served%20Shell.md).
 
 - **Two playbooks that say the same thing are now equal** — the records a playbook is built
   from compared their collections by reference, so decoding the same file twice produced two

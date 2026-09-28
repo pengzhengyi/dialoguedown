@@ -2,16 +2,17 @@
 
 > [!NOTE]
 > Status: **partially implemented**. The C# runner plays lines, jumps, effects,
-> and the end of a run, waits on the host for each effect, and refuses what it
-> cannot play yet — choices, random choices, and anything that carries a condition.
-> It applies the cross-cutting decisions of the
+> branches, and the end of a run. It waits on the host for each effect, asks the
+> world about conditions and queries (see [Asking the World](./Asking%20the%20World.md)),
+> and refuses what it cannot play yet: choices and random choices. It applies the
+> cross-cutting decisions of the
 > [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md).
 
 ## Table of contents
 
 - [Ubiquitous language](#ubiquitous-language)
 - [Where the types live](#where-the-types-live)
-- [State and position](#state-and-position)
+- [State and situation](#state-and-situation)
 - [Stepping](#stepping)
 - [Arriving at a node](#arriving-at-a-node)
 - [Refusals](#refusals)
@@ -27,13 +28,13 @@
 | --- | --- |
 | **Runner** | The static `Runner.Step`: a total, deterministic transition from a context, a state, and a command. |
 | **Driver** | Whoever sends commands and reads events — a harness, a CLI, a game. |
-| **Command** | What a driver sends: `Start`, `Next`, `Done`, `Failed`. |
+| **Command** | What a driver sends: `Start`, `Next`, `Done`, `Failed`, `Supply`. |
 | **Event** | What a step reports: `Said`, `Ended`, `Refused`, or a request. |
-| **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`. |
-| **Position** | Where a run stands, and at what stage. |
+| **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`; `Resolve`, answered by `Supply`. |
+| **Situation** | Where a run is, and what it is doing there. |
 | **Walk** | What arriving does: visit a node, and carry on only while it hands the host nothing. |
 
-Event names follow the conformance corpus (`said`, `ended`, `perform`), so a
+Event names follow the conformance corpus (`said`, `ended`, `perform`, `resolve`), so a
 fixture, the harness, and the code read in one vocabulary. The past tense marks an
 event as a report of something that already happened; `Perform` is named for what
 it asks, because nothing has happened yet when it is sent.
@@ -43,30 +44,33 @@ it asks, because nothing has happened yet when it is sent.
 ```text
 src/DialogueDown.Runtime/          the facade: what a consumer calls
   PlayContext.cs  PlayState.cs  Runner.cs  StepResult.cs
-  positions/                       Position, NotStarted, AtNode, AwaitingDone, AtEnd
+  situations/                      Situation, NotStarted, AtNode, AwaitingDone,
+                                   AwaitingSupply, AtEnd, Moment
   protocol/                        Command, Event, Request, RefusalReason
-    commands/                      Start, Next, Done, Failed
-    events/                        Said, Ended, Refused, Perform
+    commands/                      Start, Next, Done, Failed, Supply
+    events/                        Said, Ended, Refused, Perform, Resolve
+    answers/                       Answer: what the world said about one key
   stepping/
-    Arrival.cs                     one arm per node kind: the walk
+    Arrival.cs                     arriving at a node: ask, then play or walk past
+    Departure.cs                   leaving a node: ask which way out, then arrive
     NodeTraversalExtensions.cs     one reader per edge kind: the way onward
 ```
 
 Each member of a union gets its own file, as the playbook's nodes and edges do.
-The root namespace keeps only the facade; positions live in
-`DialogueDown.Runtime.Positions`, and commands and events share
+The root namespace keeps only the facade; situations live in
+`DialogueDown.Runtime.Situations`, and commands and events share
 `DialogueDown.Runtime.Protocol` because a consumer uses them together.
 
-## State and position
+## State and situation
 
-`PlayState` holds only a `Position`, because the host owns the game. Visit counts
+`PlayState` holds only a `Situation`, because the host owns the game. Visit counts
 stay out: a host that wants "only once" answers a query it owns. The architecture
 note's call stack, effect ordinal, and playbook fingerprint are not carried; each
 arrives with the feature that reads it (see
 [deferred work](#open-questions-and-deferred-work)).
 
-A position is a closed union that carries the stage, so the state cannot
-contradict itself:
+A situation is a closed union that says where the run is and what it is doing
+there, so the state cannot contradict itself:
 
 ```mermaid
 flowchart LR
@@ -75,12 +79,14 @@ flowchart LR
     AT -->|"Next, arriving at a control node"| AD["AwaitingDone(k)"]
     AD -->|Done| AT2
     AD -->|Failed| AD
+    AT -->|"Next, arriving at a guarded node"| AS["AwaitingSupply(k, keys, moment)"]
+    AS -->|Supply| AT2
     AT2 -->|"Next, arriving at the end"| END["AtEnd"]
     END -->|Start| AT
 ```
 
 `PlayContext` holds what a run needs and never changes — the playbook, and how a
-position addresses a node — so the one signature every caller uses stays put as
+situation addresses a node — so the one signature every caller uses stays put as
 that grows.
 
 ## Stepping
@@ -97,12 +103,13 @@ for both.
 
 What may be sent where is one matrix:
 
-| Position | `Start` | `Next` | `Done` | `Failed` |
-| --- | --- | --- | --- | --- |
-| `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` |
-| `AtNode` | arrive at the entry | arrive at the way onward | refused: `misplaced` | refused: `misplaced` |
-| `AwaitingDone` | arrive at the entry | refused: `misplaced` | arrive at the way onward | stand still, report nothing |
-| `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` |
+| Situation | `Start` | `Next` | `Done` | `Failed` | `Supply` |
+| --- | --- | --- | --- | --- | --- |
+| `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AwaitingDone` | arrive at the entry | refused: `misplaced` | leave by the way onward | stand still, report nothing | refused: `misplaced` |
+| `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment |
+| `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 
 The way onward is the node's `divert` when it carries one, otherwise its
 `succession`; with neither, the step is refused as `leads-nowhere`. A divert
@@ -118,19 +125,28 @@ nothing. The first node that asks for something is where the run stands.
 | `line` | `Said(speaker name, speech)` | waits on the player — `Next` |
 | `control` with effects | one `Perform` per effect, in order | waits on the world — `Done` moves on, `Failed` holds |
 | `control` with no effects | nothing | walks on — this is a jump on its own line |
+| `branch` | nothing | leaves by the first arm, in `order`, whose condition holds |
 | `end` | `Ended` | waits on nobody |
 | `choice`, `random-choice` | `Refused(unplayable-node)` | stands at that node |
-| any node whose own or any out-edge's `condition` is set | `Refused(unanswered-condition)` | stands at that node |
 
-The condition check comes first, so a `branch` node — whose arms always carry a
-condition — is refused as `unanswered-condition`. `Said` carries the speaker's
-**name**, never the index, and `null` for the anonymous default speaker; its speech
-is the playbook's fragments as written.
+Before a node plays, the run asks the world, in one `Resolve`, every key the node
+needs to play: its own condition and the queries in its speech. Before it leaves, it
+asks in one more `Resolve` about the conditions on its ways out. The `Moment` on
+`AwaitingSupply` says which of the two a `Supply` answers. A node whose own
+condition fails is stepped over by its succession; a guarded way out whose
+condition fails is not taken. [Asking the World](./Asking%20the%20World.md) owns
+the details.
+
+`Said` carries the speaker's **name**, never the index, and `null` for the
+anonymous default speaker; its speech is the playbook's fragments with each query
+replaced by what the world said.
 
 ```mermaid
 flowchart TD
-    Arrive["Arrive at a node"] --> Cond{"Carries a condition?"}
-    Cond -->|yes| RefuseC(["Refused: unanswered-condition"])
+    Arrive["Arrive at a node"] --> Cond{"Needs the world?"}
+    Cond -->|yes| Resolve(["Resolve, then wait for Supply"])
+    Resolve -.->|"condition fails"| Onward
+    Resolve -.->|"answered"| Kind
     Cond -->|no| Kind{"Which kind?"}
     Kind -->|Line| Say["Said"] --> Player(["Waits on the player"])
     Kind -->|End| Over["Ended"] --> Nobody(["Waits on nobody"])
@@ -155,12 +171,15 @@ runtimes.
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
 | `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
-| `unanswered-condition` | a node or an out-edge carries a condition, and the run cannot ask the world yet |
+| `unanswered-key` | a `Supply` leaves out a key the run asked about |
+| `unasked-key` | a `Supply` answers a key the run did not ask about |
+| `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |
+| `key-needed-both-ways` | one node needs the same key as a truth and as words, which one answer cannot be |
 | `unplayable-node` | the node kind is one this build does not play |
 
-A refused command leaves the position where it was; a walk refused at a node
+A refused command leaves the situation where it was; a walk refused at a node
 stands at that node (`AtNode`). The reason names what the driver did or what the
-document cannot do, and carries no node index: a position is an encoding detail,
+document cannot do, and carries no node index: a node's position is an encoding detail,
 and the corpus asserts meaning rather than numbering.
 
 `not-started` and `unknown-command` cannot be reached from a fixture — a session
@@ -203,13 +222,14 @@ architecture test `Runtime_DependsOnlyOn_ThePlaybook` enforces it.
 There is no state to hold outside `PlayState`, so there is no runner instance. A
 class would invite a field, and a field is what stops replay from working.
 
-### D3 — The position carries the stage
+### D3 — The situation says where the run is and what it is doing
 
-`AwaitingDone` stands at the same node `AtNode` would, at a different stage.
-Holding the stage in the position rather than beside it means the two cannot
-disagree, and the protocol stays a relation between a position and a command
-without looking at the playbook. No field declares what may be sent next: a driver
-reacts to the event it just received — `Said` means advance, `Perform` means answer.
+`AwaitingDone` and `AwaitingSupply` stand at the same node `AtNode` would, doing
+something else there. Holding that in the situation rather than beside the node
+means the two cannot disagree, and the protocol stays a relation between a
+situation and a command without looking at the playbook. No field declares what
+may be sent next: a driver reacts to the event it just received — `Said` means
+advance, `Perform` and `Resolve` mean answer.
 
 ### D4 — A misplaced command is an event, not an exception
 
@@ -234,20 +254,20 @@ means *run until something stops you*, and a driver wants that word for the poli
 ### D7 — Starting is a command, and therefore also a restart
 
 `Step` is the only way in, so a log can record that the run began. Because state is
-a value, `Start` is legal at every position and begins again at the entry — as
+a value, `Start` is legal in every situation and begins again at the entry — as
 gdb's `run` does.
 
 ### D8 — A command validates itself; it never executes itself
 
 A command checks invariants only it can know where it is built; legality against a
-position belongs to the step. A command is a message — it crosses a transport and
+situation belongs to the step. A command is a message — it crosses a transport and
 is recorded in a log a port reads as data — so it never carries an
 `Apply(context, state)`.
 
 ### D9 — The protocol is a matrix; the constructs are a list
 
 `Runner.Step` keeps *what may be sent where* as one switch, because that is a
-relation between a position and a command. Growth is on the other axis: node kinds
+relation between a situation and a command. Growth is on the other axis: node kinds
 in `Arrival`, edge kinds in `NodeTraversalExtensions`, one reader apiece.
 
 ### D10 — A step runs on only while the host has been handed nothing
@@ -276,11 +296,10 @@ A walk that passes more nodes than the playbook has must have visited one twice,
 and nothing it reads changes as it goes, so it is in a ring. The guard is a counter
 against `Nodes.Length`: exact, allocation-free, and no number anybody picks.
 
-### D14 — A condition is refused, not ignored
+### D14 — An untaught node kind is refused, not guessed
 
-Speaking a conditional line without reading its condition would look like correct
-play. Refusing keeps an untaught construct reading as untaught until the run can ask
-the world.
+Offering a choice by walking past it would look like correct play. Refusing keeps
+an untaught construct reading as untaught until the runner learns it.
 
 ### D15 — A failed effect holds the run
 
@@ -294,7 +313,7 @@ because skipping is the silent wrong story the format refuses to tell.
 
 | Case | Behavior |
 | --- | --- |
-| `Start` at any position | Accepted; begins again at the entry |
+| `Start` in any situation | Accepted; begins again at the entry |
 | A walk that passes exactly as many nodes as the playbook has | Legitimate; not refused |
 | A control node with two effects | Two `Perform` events and one wait |
 | A divert whose target is out of range, or an entry leading nowhere | Cannot occur; `PlaybookReader` refuses the document first |
@@ -323,19 +342,17 @@ runtime tests may not reference the compiler, and a test holds it and the harnes
 
 ## Open questions and deferred work
 
-- **Choices, the world seam, and saves.** `Choose`, `Asked`, `Resolve`/`Supply`,
-  `Describe`, and `Restore` are designed in the
-  [architecture note](./Dialogue%20Runtime%20Architecture.md#the-protocol) and not
-  built; each adds commands, events, and position cases to the matrix above.
-- **Undo is replay.** Rewinding the position is free because state is a value;
+- **Choices and saves.** `Choose`, `Asked`, `Describe`, and `Restore` are designed
+  in the [architecture note](./Dialogue%20Runtime%20Architecture.md#the-protocol)
+  and not built; each adds commands, events, and situations to the matrix above.
+  An option's condition arrives with choices.
+- **Undo is replay.** Rewinding the situation is free because state is a value;
   rewinding the world is the host's. Replaying the log without its last command
   rewinds the runner exactly, with no inverses.
 - **The playbook fingerprint.** A state resumed against a recompiled script would
   address the wrong node. Recording the fingerprint in `PlayState`, so `Step` can
   refuse the pair, arrives with saves.
-- **Resolved or raw fragments in `Said`.** They are the same until queries are
-  answered.
 - **A writer cannot react to a failed effect.** A failure arm on a control block
-  would be a language construct of its own; the held position is where it attaches.
+  would be a language construct of its own; the held situation is where it attaches.
 - **The playbook format may change.** It stays at `version: 0` until a runner plays
   every construct, so this runner can still fix what it uncovers.

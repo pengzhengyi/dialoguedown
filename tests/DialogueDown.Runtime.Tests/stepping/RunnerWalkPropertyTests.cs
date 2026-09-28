@@ -1,7 +1,7 @@
 using CsCheck;
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Runtime.Positions;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -22,9 +22,16 @@ public sealed class RunnerWalkPropertyTests
 {
     private const int Samples = 200;
 
-    // A drawn playbook may loop, so a walk is cut off rather than run to an end. Long enough to
-    // pass through every node a playbook of this size can hold, several times over.
-    private const int MostSteps = 40;
+    // A drawn playbook may loop, so a walk is cut off rather than run to an end. Passing a node can
+    // take three steps: answering what playing it needs, moving on, and answering which way out to
+    // take. So this is long enough to pass through every node a playbook of this size can hold,
+    // several times over.
+    private const int MostSteps = 120;
+
+    // Why a run turns an answer away. An answer can also lead the walk somewhere the run refuses,
+    // such as into a ring, and that refusal is about where the walk went, not about the answer.
+    private static readonly RefusalReason[] _answerRefusals =
+        [RefusalReason.UnansweredKey, RefusalReason.UnaskedKey, RefusalReason.WrongAnswerKind];
 
     /// <summary>
     /// A run only ever stands at a node the playbook has.
@@ -37,17 +44,27 @@ public sealed class RunnerWalkPropertyTests
     /// </remarks>
     [Fact]
     public void AWalkOnlyEverStandsWhereThePlaybookHasANode() =>
-        ForEveryPlaybook(
-            context =>
+        ForEveryWalk((context, stepped) => AssertAddressable(context, stepped.State.Situation));
+
+    /// <summary>
+    /// Every answer a walk gives is one the run accepts.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. A run that turns an answer away keeps waiting
+    /// where it asked, so a walk whose answers were turned away would spend every step there. It
+    /// would cover nothing past the first question, and the walk above would still pass.
+    /// </remarks>
+    [Fact]
+    public void EveryAnswerAWalkGives_IsOneTheRunAccepts() =>
+        ForEveryWalk(
+            (_, stepped) =>
             {
-                var state = Step(context, PlayState.Initial, new Start());
+                var turnedAway = stepped.Events.OfType<Refused>()
+                    .FirstOrDefault(refused => _answerRefusals.Contains(refused.Reason));
 
-                for (var taken = 0; taken < MostSteps && MovesOnFrom(state.Position) is { } command; taken++)
-                {
-                    state = Step(context, state, command);
-                }
-
-                AssertAddressable(context, state.Position);
+                Assert.True(
+                    turnedAway is null,
+                    $"The run turned away what the world answered: {turnedAway?.Explanation}");
             });
 
     /// <summary>
@@ -63,37 +80,47 @@ public sealed class RunnerWalkPropertyTests
         PlaybookGen.Valid().Sample(
             playbook => PlaybookCheckerFactory.CreateDefault().Check(playbook), iter: Samples);
 
-    private static void ForEveryPlaybook(Action<PlayContext> invariantHolds) =>
-        PlaybookGen.Valid().Sample(
-            playbook => invariantHolds(PlayContext.Of(playbook)), iter: Samples);
+    // Walks every drawn playbook from its start, answering its questions from a world drawn beside
+    // it. Every step the walk takes is checked, not only the one it stops at.
+    private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds) =>
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
+            (playbook, world) =>
+            {
+                var context = PlayContext.Of(playbook);
+                var state = PlayState.Initial;
+                Command? command = new Start();
 
-    // Every position a walk passes through is asserted, not only the one it stops at.
-    private static PlayState Step(PlayContext context, PlayState state, Command command)
-    {
-        var stepped = Runner.Step(context, state, command).State;
+                for (var taken = 0; taken < MostSteps && command is not null; taken++)
+                {
+                    var stepped = Runner.Step(context, state, command);
 
-        AssertAddressable(context, stepped.Position);
+                    everyStepHolds(context, stepped);
 
-        return stepped;
-    }
+                    state = stepped.State;
+                    command = MovesOnFrom(state.Situation, world);
+                }
+            },
+            iter: Samples);
 
     // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
-    // host work carries on rather than ending the walk where the first effect is drawn.
-    private static Command? MovesOnFrom(Position position) => position switch
+    // host work, or to ask the world something, carries on rather than ending the walk there.
+    private static Command? MovesOnFrom(Situation situation, DrawnWorld world) => situation switch
     {
         AtNode => new Next(),
         AwaitingDone => new Done(),
+        AwaitingSupply waiting => world.Answering(waiting.Keys),
         _ => null,
     };
 
-    private static void AssertAddressable(PlayContext context, Position position)
+    private static void AssertAddressable(PlayContext context, Situation situation)
     {
-        // Two stages name a node, and a walk standing outside the document at either of them is
-        // the same defect.
-        var node = position switch
+        // Three stages name a node, and a walk standing outside the document at any of them is the
+        // same defect.
+        var node = situation switch
         {
             AtNode at => at.Node,
             AwaitingDone waiting => waiting.Node,
+            AwaitingSupply waiting => waiting.Node,
             _ => (int?)null,
         };
 

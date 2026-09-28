@@ -221,7 +221,7 @@ Guidance for the component that builds it:
 ### A functional core and an imperative shell
 
 The runner is a **total transition function over immutable state**. It performs no
-I/O, holds no reference to a host, and never calls out; its signature, positions,
+I/O, holds no reference to a host, and never calls out; its signature, situations,
 and refusals are owned by the [Runner](./Runner.md) note. `PlaySession` is the
 imperative shell: it holds the current state, performs transport, and records the
 transcript. Dialogue advances at human speed, so allocating a small record per
@@ -299,7 +299,7 @@ rather than writing a `switch`.
 The host interface that exists is `IGameSystem` (`Query(string)` returning a
 string, and `Execute(string)`), and nothing in the compiler or runtime calls it. A
 read-only replacement with a separate boolean read is proposed; its name is not
-settled.
+settled. It arrives with the drivers that answer the runner's questions from a world.
 
 Unbound keys follow an explicit policy, reusing the **Keep / Ignore** vocabulary of
 [unmodeled Markdown](../core/Unmodeled%20Markdown%20Handling.md). The default is

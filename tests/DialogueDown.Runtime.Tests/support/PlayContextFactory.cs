@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
@@ -123,6 +124,80 @@ internal static class PlayContextFactory
                 Effects(0, next: 1, "fade in"),
                 Line(1, speaker: 0, "Hello.", next: 2),
                 End(2),
+            ],
+            ["Alice"]);
+
+    /// <summary>A line whose jump the world must allow, with a line to fall through to.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Away. `Alice.HasKey?` =&gt; [Inside](#inside)
+    ///
+    /// Alice: Here.
+    ///
+    /// # Inside
+    ///
+    /// Alice: Inside.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context where the world decides which line is said after the first.</returns>
+    public static PlayContext ALineWhoseJumpAsksTheWorld() =>
+        Of(
+            [
+                LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
+                Line(1, speaker: 0, "Here.", next: 2),
+                Line(2, speaker: 0, "Inside.", next: 3),
+                End(3),
+            ],
+            ["Alice"]);
+
+    /// <summary>A jump on its own line that the world must allow, with a line to fall through to.</summary>
+    /// <remarks>
+    /// <code>
+    /// `Rainy?` =&gt; [Inn](#inn)
+    ///
+    /// Alice: Onward in the sun.
+    ///
+    /// # Inn
+    ///
+    /// Alice: Inside, out of the rain.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose entry says nothing and cannot be left without asking.</returns>
+    public static PlayContext AGuardedJumpOnItsOwnLine() =>
+        Of(
+            [
+                Bare(0, Divert(2, "Rainy"), new SuccessionEdge(1)),
+                Line(1, speaker: 0, "Onward in the sun.", next: 2),
+                Line(2, speaker: 0, "Inside, out of the rain.", next: 3),
+                End(3),
+            ],
+            ["Alice"]);
+
+    /// <summary>A block condition with an if, an elseif, and an else.</summary>
+    /// <remarks>
+    /// <code>
+    /// &gt; `if` `Alice.HasKey?`
+    /// &gt;
+    /// &gt; Alice: The key turns.
+    /// &gt;
+    /// &gt; `elseif` `Alice.HasPick?`
+    /// &gt;
+    /// &gt; Alice: The pick clicks.
+    /// &gt;
+    /// &gt; `else`
+    /// &gt;
+    /// &gt; Alice: The door stays shut.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose entry says nothing, and whose every arm says a different line.</returns>
+    public static PlayContext AConditionalBlock() =>
+        Of(
+            [
+                Branch(0, Arm(1, order: 0, "Alice.HasKey"), Arm(2, order: 1, "Alice.HasPick"), Else(3, order: 2)),
+                Line(1, speaker: 0, "The key turns.", next: 4),
+                Line(2, speaker: 0, "The pick clicks.", next: 4),
+                Line(3, speaker: 0, "The door stays shut.", next: 4),
+                End(4),
             ],
             ["Alice"]);
 

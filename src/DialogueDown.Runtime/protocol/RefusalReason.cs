@@ -30,12 +30,21 @@ public enum RefusalReason
     /// <summary>A walk entered a ring of nodes that hand the host nothing.</summary>
     EndlessRing,
 
-    /// <summary>A node or edge plays only on an answer nobody can give yet.</summary>
+    /// <summary>The world was asked about a key and did not answer it.</summary>
+    UnansweredKey,
+
+    /// <summary>The world answered a key that nothing had asked about.</summary>
+    UnaskedKey,
+
+    /// <summary>The world answered a key with something other than the kind its use needs.</summary>
+    WrongAnswerKind,
+
+    /// <summary>One key on a node is needed as a truth and as words both.</summary>
     /// <remarks>
-    /// Temporary: this reason goes when the run can ask the world, and a condition is answered
-    /// rather than refused.
+    /// A key is asked about once, so a key that both guards a node and stands in what it says has
+    /// one answer to serve two uses, and whichever kind comes back leaves the other unreadable.
     /// </remarks>
-    UnansweredCondition,
+    KeyNeededBothWays,
 
     /// <summary>The node kind is one this build has not learned to play.</summary>
     UnplayableNode,

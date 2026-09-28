@@ -47,14 +47,26 @@ internal sealed class TreeWatches : IDisposable
     /// Calls <paramref name="onChanged"/> after changes to <paramref name="path"/> go quiet for
     /// <paramref name="debounce"/>. Dispose the result to stop watching.
     /// </summary>
-    public IDisposable Watch(string path, Action onChanged, TimeSpan? debounce = null)
+    /// <param name="path">The file to watch.</param>
+    /// <param name="onChanged">The report, called once per quiet period.</param>
+    /// <param name="debounce">How long the path must go quiet before the report (default 150 ms).</param>
+    /// <param name="timeProvider">
+    /// The clock the quiet period is measured on; the system clock by default. A test injects a
+    /// fake one to drive the debounce deterministically, however the operating system splits the
+    /// events.
+    /// </param>
+    public IDisposable Watch(
+        string path,
+        Action onChanged,
+        TimeSpan? debounce = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(onChanged);
 
         var full = PathComparison.Normalize(Path.GetFullPath(path));
         WatcherFor(PathComparison.Normalize(Path.GetDirectoryName(full)!));
-        return new PathWatch(this, full, onChanged, debounce ?? _defaultDebounce);
+        return new PathWatch(this, full, onChanged, debounce ?? _defaultDebounce, timeProvider);
     }
 
     /// <inheritdoc />
@@ -169,11 +181,16 @@ internal sealed class TreeWatches : IDisposable
         private readonly Debouncer _debouncer;
         private bool _disposed;
 
-        public PathWatch(TreeWatches owner, string path, Action onChanged, TimeSpan debounce)
+        public PathWatch(
+            TreeWatches owner,
+            string path,
+            Action onChanged,
+            TimeSpan debounce,
+            TimeProvider? timeProvider)
         {
             _owner = owner;
             _path = path;
-            _debouncer = new Debouncer(debounce, onChanged);
+            _debouncer = new Debouncer(debounce, onChanged, timeProvider);
             owner.Add(path, this);
         }
 

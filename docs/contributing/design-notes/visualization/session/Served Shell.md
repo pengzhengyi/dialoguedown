@@ -264,7 +264,10 @@ This is a local development tool:
 - **`TreeWatches`:** against a real temporary folder — a watched path fires, an unwatched one does
   not, a burst fires once, several scripts in one folder share one watcher, and a dotfile script
   still reloads.
-- **`Debouncer`:** timing tested apart from the filesystem, with an injectable window.
+- **`Debouncer`:** timing tested apart from the filesystem, with an injectable window
+  and an injectable clock. The coalescing test waits only for the operating system to
+  deliver a write, then advances a fake clock itself, so a slow machine cannot turn one
+  save into several reports.
 - **CLI:** routing of script, `--root`, `--edit`, and `-o` to the right runner.
 - **Browser (Playwright, live):** the CLI's built DLL serves a temp tree; the specs edit and delete
   files on disk, flip View ⇄ Edit with the buffer preserved, and open a script whose images sit

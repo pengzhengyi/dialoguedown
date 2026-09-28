@@ -38,7 +38,7 @@ public sealed class ExpectationMatchersTests
     [Fact]
     public void AClaimNobodyOwnsIsNotYetPlayable()
     {
-        AssertNotYetPlayable(Match(_hello, """{ "resolve": [ "Alice.HasKey" ] }"""), "resolve");
+        AssertNotYetPlayable(Match(_hello, """{ "frobnicate": true }"""), "frobnicate");
     }
 
     [Fact]
@@ -46,15 +46,15 @@ public sealed class ExpectationMatchersTests
     {
         // Stopping at the first claim recognized would report this as held, having read half of it.
         AssertNotYetPlayable(
-            Match(_hello, """{ "said": { "speaker": "Alice", "speech": "Hi" }, "resolve": [ "Alice.HasKey" ] }"""),
-            "resolve");
+            Match(_hello, """{ "said": { "speaker": "Alice", "speech": "Hi" }, "frobnicate": true }"""),
+            "frobnicate");
     }
 
     [Fact]
     public void ARealDivergenceBesideAnUncheckedClaimStillDiverges()
     {
         AssertDiverged(
-            Match(_hello, """{ "said": { "speaker": "Bob", "speech": "Hi" }, "resolve": [ "Alice.HasKey" ] }"""),
+            Match(_hello, """{ "said": { "speaker": "Bob", "speech": "Hi" }, "frobnicate": true }"""),
             "expected Bob to speak");
     }
 
@@ -74,9 +74,9 @@ public sealed class ExpectationMatchersTests
     public void TwoUncheckedClaims_AreBothNamed()
     {
         // What lets one run list every claim the harness has yet to learn.
-        var outcome = Match(_hello, """{ "resolve": [ "Alice.HasKey" ], "describe": true }""");
+        var outcome = Match(_hello, """{ "frobnicate": true, "describe": true }""");
 
-        AssertNotYetPlayable(outcome, "resolve", "describe");
+        AssertNotYetPlayable(outcome, "frobnicate", "describe");
         Assert.Equal(2, outcome.Reasons.Length);
     }
 

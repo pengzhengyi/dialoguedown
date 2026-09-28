@@ -25,7 +25,10 @@ internal static class RefusalReasonExtensions
         RefusalReason.UnknownCommand => "unknown-command",
         RefusalReason.LeadsNowhere => "leads-nowhere",
         RefusalReason.EndlessRing => "endless-ring",
-        RefusalReason.UnansweredCondition => "unanswered-condition",
+        RefusalReason.UnansweredKey => "unanswered-key",
+        RefusalReason.UnaskedKey => "unasked-key",
+        RefusalReason.WrongAnswerKind => "wrong-answer-kind",
+        RefusalReason.KeyNeededBothWays => "key-needed-both-ways",
         RefusalReason.UnplayableNode => "unplayable-node",
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "No name is written for this reason."),
     };
