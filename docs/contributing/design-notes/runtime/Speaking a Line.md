@@ -1,7 +1,8 @@
 # Speaking a line
 
 > [!IMPORTANT]
-> Status: **in progress**. The pass that plays a line whose speech carries commands:
+> Status: **in progress** — M1 is implemented, M2 is not yet. The pass that plays a
+> line whose speech carries commands:
 > its words and its commands reach the host in the order they were written, and
 > the run stops inside the line only before a query written after a command. It
 > builds on [asking the world](./Asking%20the%20World.md) and
@@ -79,16 +80,16 @@ normalized, which the language owns.
 
 M1:
 
-- [ ] A line's words and commands reach the host in written order, in one step.
-- [ ] Every line opens with a `Said` that names its speaker, carrying the words
+- [x] A line's words and commands reach the host in written order, in one step.
+- [x] Every line opens with a `Said` that names its speaker, carrying the words
       before its first command, which may be none.
-- [ ] The words after each command are a `Continued`, with no speaker, sent only
+- [x] The words after each command are a `Continued`, with no speaker, sent only
       when they say something.
-- [ ] Once the host is done, a line waits for the player's `Next`; a control block
+- [x] Once the host is done, a line waits for the player's `Next`; a control block
       moves on.
-- [ ] `Failed` on a command inside a line holds the run, as it does for a control
+- [x] `Failed` on a command inside a line holds the run, as it does for a control
       block, and `Done` then carries on.
-- [ ] The player's turn comes when a step leaves the host nothing to answer.
+- [x] The player's turn comes when a step leaves the host nothing to answer.
 - [ ] An option's label is never performed.
 
 M2:
@@ -169,7 +170,9 @@ sequenceDiagram
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `SpeechTemplate.Segments` | Breaks speech into segments at each command (exists) | `Playing` |
+| `SpeechTemplate.Segments` | Breaks speech into segments at each command | `Playing` |
+| `SpeechSegment.SaysSomething` | Whether a segment's words say something, judged before any query is filled | `LineEventsBuilder` |
+| `LineEventsBuilder` | Gathers the events a line hands the host, one segment at a time: its `Said`, each `Continued`, and each `Perform` | `Playing` |
 | `Continued(speech)` | An event: the words after a command, in the utterance the line's `Said` opened | `Event`, alongside `Said` |
 | `AwaitingDone(node, resume)` | Waiting for the host, and where the node carries on once it is done | `Situation` |
 | `Resume` | A closed union: `From(segment)`, the line carries on from that segment; or `PlayedThrough`, the node has nothing left to play | `AwaitingDone` |

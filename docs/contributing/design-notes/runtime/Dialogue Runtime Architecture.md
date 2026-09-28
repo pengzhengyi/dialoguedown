@@ -339,7 +339,7 @@ we.
 | Direction         | Kind                  | Examples                                                          |
 |-------------------|-----------------------|-------------------------------------------------------------------|
 | driver → runner   | **command**           | `Next`, `Choose(i)`, `Restore(state)`                             |
-| runner → driver   | **event**             | `Said`, `Asked`, `Invalidated`, `Ended`, `Refused`                |
+| runner → driver   | **event**             | `Said`, `Continued`, `Asked`, `Invalidated`, `Ended`, `Refused`   |
 | runner → driver   | **reverse request**   | `Resolve(keys)`, answered by `Supply(answers)`                    |
 | runner → driver   | **reverse request**   | `Perform(effect)`, answered by `Done()` or `Failed(explanation)`  |
 | driver → runner   | **query**             | `Describe()`, answered with the current location                  |
@@ -521,8 +521,11 @@ TranscriptEntry = Said      { speaker, fragments, nodeRef }
                 | Performed { effect, nodeRef }
 ```
 
-Three details are easy to get wrong:
+Four details are easy to get wrong:
 
+- **Join a continuation to its line.** A `Continued` adds its fragments to the
+  `Said` entry before it, so a sentence a command divides still reads as one line.
+  See [speaking a line](./Speaking%20a%20Line.md#s2--every-line-opens-with-its-said-the-words-after-a-command-are-continued).
 - **Store resolved fragments.** A line spoken as "…is red" must be *recorded* that
   way. Re-resolving at render time would show today's answer for yesterday's line.
 - **Record the menu and the selection.** The roads not taken are most of a

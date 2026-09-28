@@ -143,8 +143,10 @@ flowchart LR
 
 Holding what the run is doing *in* the situation, rather than in a flag beside the
 node, means the two can never disagree. It also keeps the state free of a "what may I send next"
-declaration: the runner has just said what it wants — `Said` means advance,
-`Asked` will mean choose — and a driver that reads state instead of reacting to the
+declaration: the runner has just said what it wants — a request wants its answer,
+a step that leaves nothing to answer means advance
+([speaking a line](./Speaking%20a%20Line.md#s4--the-players-turn-comes-when-a-step-leaves-nothing-to-answer)),
+and `Asked` will mean choose — and a driver that reads state instead of reacting to the
 message it received is coupled to the state model for nothing. Asking a run to
 explain itself is [`Describe`](./Dialogue%20Runtime%20Architecture.md)'s job when
 C2e arrives.
@@ -168,7 +170,8 @@ component calls.
 
 One step may produce **several** events, in order: a control node carrying more
 than one effect asks the host to perform each of them, in the order written,
-before the run waits for them to be done. Events are therefore an ordered list
+before the run waits for them to be done, and a line with a command in it says its
+words and asks for the command in the order they were written. Events are therefore an ordered list
 from the first pass.
 
 A `Said` event carries the speaker's **name**, not their index. The playbook

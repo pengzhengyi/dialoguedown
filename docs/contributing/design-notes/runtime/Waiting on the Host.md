@@ -84,6 +84,7 @@ next.
 | Node | Arriving asks for | The run then |
 | --- | --- | --- |
 | `LineNode` | `Said` | waits on the **player** — `Next` |
+| `LineNode` with commands | `Said`, then a `Perform` per command and a `Continued` for the words after it, in the order written | waits on the **world** — `Done` gives the **player** the turn, `Failed` says it could not |
 | `ChoiceNode` | `Asked` *(C2b)* | waits on the **player** — `Choose` |
 | `ControlNode` with effects | `Perform`, once per effect | waits on the **world** — `Done` moves it on, `Failed` says it could not |
 | `ControlNode` with no effects | nothing | carries on |
@@ -95,6 +96,9 @@ next.
 flowchart TD
     Arrive["Arrive at a node"] --> Kind{"Which kind?"}
     Kind -->|Line| Say["Ask for Said"] --> Player(["Waits on the player"])
+    Kind -->|"Line, with commands"| Speak["Ask for Said, then Perform<br/>and Continued in written order"] --> LineWorld(["Waits on the world"])
+    LineWorld -.->|Done| Player
+    LineWorld -.->|Failed| LineWorld
     Kind -->|End| Over["Ask for Ended"] --> Nobody(["Waits on nobody"])
     Kind -->|"Control, with effects"| Ask["Ask for Perform,<br/>once per effect"] --> World(["Waits on the world"])
     World -.->|Done| Onward
@@ -172,6 +176,11 @@ line, so the host applies them in order and answers once. Round trips then stay
 proportional to what somebody wrote rather than to how many commands they fitted
 on a line. Nothing is lost by grouping them: effects only write, so no effect
 needs the world settled before the next one runs.
+
+A line with commands in its speech waits the same way: once, after the words and
+commands it says in one step, as
+[speaking a line](./Speaking%20a%20Line.md#s3--a-step-stops-before-a-query-written-after-a-command)
+describes.
 
 ### W5 — A ring that concerns nobody is refused by counting, not by remembering
 
