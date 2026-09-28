@@ -1,0 +1,43 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a line opening with a command still opens in its speaker's name",
+  "playbook": "playbook.json",
+  "because": "the line opens with a said even though no words come before the command, so the host knows who is acting before the command arrives, and the words after it go on with that line -- a port that skipped the empty said would perform a command nobody is doing, then show words with no speaker",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": ""
+        }
+      }
+    },
+    {
+      "expect": {
+        "perform": {
+          "kind": "custom-command",
+          "name": "Wave",
+          "args": []
+        }
+      }
+    },
+    {
+      "expect": {
+        "continued": {
+          "speech": " Hello."
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}
