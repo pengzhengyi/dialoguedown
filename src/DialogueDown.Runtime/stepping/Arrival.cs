@@ -1,25 +1,18 @@
-using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What a run does at a node: walking to one, playing it, and reading on once the world has
-/// answered what the node asked.
+/// What arriving at a node does: walking to one, deciding whether it plays, and reading on once
+/// the world has answered what the node asked.
 /// </summary>
 /// <remarks>
 /// A node's condition is asked on the way in, so the work comes in two halves: the run stops to
 /// ask, then picks up from that same point when the answers arrive. Both halves are here because
 /// a change to where one stops is a change to where the other resumes.
-/// <para>
-/// This is the axis a runner grows along: every construct the language gains has to be played
-/// here, and each brings work of its own. Keeping it apart from the protocol guard leaves that
-/// guard the small, readable matrix of what may be sent where.
-/// </para>
 /// </remarks>
 internal static class Arrival
 {
@@ -166,7 +159,7 @@ internal static class Arrival
             : null;
 
     private static Visited? PlayIfNotWalkedPast(PlayContext context, int node, Node arrived, Supply? supply) =>
-        IsWalkedPast(arrived) ? null : new Visited.Standing(Play(context, node, arrived, supply));
+        IsWalkedPast(arrived) ? null : new Visited.Standing(Playing.At(context, node, arrived, supply));
 
     // Only a node being walked past reaches this, and passing a node is leaving it, so a way out
     // only the world can allow is asked about here. The walk carries on in its own loop rather than
@@ -202,28 +195,6 @@ internal static class Arrival
             RefusalReason.KeyNeededBothWays,
             $"Node {node} needs {string.Join(", ", bothWays)} as a truth and as words both, "
                 + "and a single answer can only be one of those.");
-
-    private static StepResult Play(PlayContext context, int node, Node arrived, Supply? supply) =>
-        arrived switch
-        {
-            LineNode line => new StepResult(
-                new PlayState(new AtNode(node)),
-                [new Said(context.SpeakerName(line.Speaker), AsSpoken(line.Speech, supply))]),
-            ControlNode control => new StepResult(
-                new PlayState(new AwaitingDone(node)),
-                [.. control.Effects.Select(Event (effect) => new Perform(effect))]),
-            EndNode => new StepResult(new PlayState(new AtEnd()), [new Ended()]),
-            var unplayable => StepResults.Refuse(
-                node,
-                RefusalReason.UnplayableNode,
-                $"This build cannot play a {unplayable.GetType().Name} yet."),
-        };
-
-    // A line nobody had to ask about is spoken as written. One with queries standing in it is
-    // spoken with the words the world put in their place.
-    private static ImmutableArray<SpeechFragment> AsSpoken(
-        ImmutableArray<SpeechFragment> speech, Supply? supply) =>
-        supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
 
     /// <summary>What one node means to a walk: the run stands there, or the walk goes on.</summary>
     private abstract record Visited

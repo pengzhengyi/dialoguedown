@@ -8,8 +8,8 @@ using static DialogueDown.Runtime.Tests.World;
 namespace DialogueDown.Runtime.Tests;
 
 /// <summary>
-/// The protocol matrix: which command a run accepts where. What each construct does when reached
-/// belongs to <c>ArrivalTests</c>, and which way out of a node is taken to <c>TraversalTests</c>.
+/// The protocol matrix: which command a run accepts where. What each construct does when reached,
+/// and which way out of a node is taken, are tested beside the steps that do them.
 /// </summary>
 public sealed class RunnerTests
 {

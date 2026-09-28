@@ -21,20 +21,6 @@ public sealed class ArrivalTests
         AssertSaid(Arrival.At(PlayContextFactory.OneLine(), 0), speaker: "Alice", text: "Hello.");
 
     [Fact]
-    public void At_ALine_StandsThere() => AssertAt(Arrival.At(PlayContextFactory.OneLine(), 0), 0);
-
-    [Fact]
-    public void At_ALineSaidByTheDefaultSpeaker_NamesNobody()
-    {
-        // The anonymous speaker has no name, which is why a said carries none rather than an
-        // empty one: there is a difference between nobody and somebody called "".
-        AssertSaid(Arrival.At(ALineNobodyClaims(), 0), speaker: null, text: "Nobody said this.");
-    }
-
-    [Fact]
-    public void At_TheEnd_EndsTheRun() => AssertEnded(Arrival.At(PlayContextFactory.Of([End(0)]), 0));
-
-    [Fact]
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
     {
         // Speaking it without asking would read as played correctly while the condition it carries
@@ -123,13 +109,13 @@ public sealed class ArrivalTests
 
     [Fact]
     public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
-        AssertAsked(Arrival.At(ALineWithAQuery(), 0), node: 0, Moment.ToPlay, "playerName");
+        AssertAsked(Arrival.At(PlayContextFactory.ALineWithAQuery(), 0), node: 0, Moment.ToPlay, "playerName");
 
     [Fact]
     public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
     {
         var result = Arrival.Supplied(
-            ALineWithAQuery(), Waiting(0, "playerName"), Answering(("playerName", "Robin")));
+            PlayContextFactory.ALineWithAQuery(), Waiting(0, "playerName"), Answering(("playerName", "Robin")));
 
         AssertSaid(result, "Alice", "Hello, Robin.");
         AssertAt(result, 0);
@@ -227,10 +213,6 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten() =>
-        AssertPerformed(Arrival.At(TwoEffectsThenALine(), 0), "fade in", "play a chime");
-
-    [Fact]
     public void At_AControlNodeCarryingEffects_StopsThereRatherThanReadingOn()
     {
         // The line after it must not be reached until the host says the effects were carried out,
@@ -239,26 +221,6 @@ public sealed class ArrivalTests
 
         AssertAwaitingDone(Arrival.At(context, 0), 0);
     }
-
-    [Fact]
-    public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
-    {
-        // Silence here would leave a run standing at a node forever, which reads as a hang rather
-        // than as a construct nobody has taught the runner yet.
-        var context = PlayContextFactory.NotYetPlayable();
-
-        AssertRefused(Arrival.At(context, 0), RefusalReason.UnplayableNode, "ChoiceNode");
-    }
-
-    /// <summary>A line with nobody named in front of it, then the end.</summary>
-    /// <remarks>
-    /// <code>
-    /// Nobody said this.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context whose only line is said by the anonymous default speaker.</returns>
-    private static PlayContext ALineNobodyClaims() =>
-        PlayContextFactory.Of([Line(0, speaker: 0, "Nobody said this.", next: 1), End(1)], [null]);
 
     /// <summary>A line the world must allow before it is spoken, then the end.</summary>
     /// <remarks>
@@ -318,46 +280,6 @@ public sealed class ArrivalTests
                 Line(1, speaker: 0, "Never spoken.", next: 2),
                 Line(2, speaker: 0, "Here.", next: 3),
                 End(3),
-            ],
-            ["Alice"]);
-
-    /// <summary>Two effects in one node, then a line, then the end.</summary>
-    /// <remarks>
-    /// <code>
-    /// `("fade in")` `("play a chime")`
-    ///
-    /// Alice: Hello.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context whose run asks the host for both effects before it says anything.</returns>
-    private static PlayContext TwoEffectsThenALine() =>
-        PlayContextFactory.Of(
-            [
-                Effects(0, next: 1, "fade in", "play a chime"),
-                Line(1, speaker: 0, "Hello.", next: 2),
-                End(2),
-            ],
-            ["Alice"]);
-
-    /// <summary>A line with a query standing in what it says, then the end.</summary>
-    /// <remarks>
-    /// <code>
-    /// Alice: Hello, `"playerName"`.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context that cannot say its only line until the world names the player.</returns>
-    private static PlayContext ALineWithAQuery() =>
-        PlayContextFactory.Of(
-            [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    condition: null,
-                    new TextFragment("Hello, "),
-                    new QueryFragment("playerName"),
-                    new TextFragment(".")),
-                End(1),
             ],
             ["Alice"]);
 

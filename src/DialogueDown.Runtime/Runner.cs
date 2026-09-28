@@ -24,8 +24,8 @@ public static class Runner
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(command);
 
-        // What may be sent where, as one matrix. The work each construct does lives in Arrival
-        // and Traversal, which is the axis this grows along.
+        // What may be sent where, as one matrix. The work each construct does lives in the steps
+        // this hands off to, which is the axis a runner grows along.
         return (state.Situation, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
