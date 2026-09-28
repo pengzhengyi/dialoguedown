@@ -69,7 +69,9 @@ internal static class Playing
     {
         var events = LineEventsBuilder.Of(
             context.SpeakerName(line.Speaker), supply, SpeechTemplate.Segments(line.Speech));
-        Situation after = events.HasCommand ? new AwaitingDone(position) : new AtNode(position);
+        Situation after = events.HasCommand
+            ? new AwaitingDone(position, new Resume.FromFinished())
+            : new AtNode(position);
 
         return new StepResult(new PlayState(after), events.Freeze());
     }
@@ -78,7 +80,7 @@ internal static class Playing
     // waits until the host has carried them out.
     private static StepResult Control(int position, ControlNode control) =>
         new(
-            new PlayState(new AwaitingDone(position)),
+            new PlayState(new AwaitingDone(position, new Resume.FromFinished())),
             [.. control.Effects.Select(Event (effect) => new Perform(effect))]);
 
     private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);

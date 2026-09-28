@@ -114,7 +114,7 @@ public sealed class PlayingTests
     public void Performed_AtALine_StandsThereForThePlayer()
     {
         // A line belongs to its speaker, so once the host is done the player moves on from it.
-        var result = Playing.Performed(PlayContextFactory.OneLine(), new AwaitingDone(0));
+        var result = Playing.Performed(PlayContextFactory.OneLine(), WaitingOnTheHost(0));
 
         Assert.Empty(result.Events);
         AssertAt(result, 0);
@@ -123,7 +123,7 @@ public sealed class PlayingTests
     [Fact]
     public void Performed_AtAControlBlock_LeavesIt()
     {
-        var result = Playing.Performed(PlayContextFactory.AnEffectThenALine(), new AwaitingDone(0));
+        var result = Playing.Performed(PlayContextFactory.AnEffectThenALine(), WaitingOnTheHost(0));
 
         AssertSaid(result, speaker: "Alice", text: "Hello.");
         AssertAt(result, 1);
@@ -133,7 +133,7 @@ public sealed class PlayingTests
     public void Performed_AtAKindThatAsksNothingOfTheHost_IsRefused()
     {
         // A run never waits on the host at the end, so only a state built by hand gets here.
-        var result = Playing.Performed(PlayContextFactory.Of([End(0)]), new AwaitingDone(0));
+        var result = Playing.Performed(PlayContextFactory.Of([End(0)]), WaitingOnTheHost(0));
 
         AssertRefused(result, RefusalReason.Misplaced, "asks nothing of the host");
         AssertAwaitingDone(result, 0);
@@ -145,6 +145,11 @@ public sealed class PlayingTests
     /// <returns>What playing the node produced.</returns>
     private static StepResult PlayTheFirstNode(PlayContext context, Supply? supply = null) =>
         Playing.At(context, 0, context.NodeAt(0), supply);
+
+    /// <summary>Where a run stands once a node has asked the host and has nothing left to play.</summary>
+    /// <param name="node">The node's position in the playbook.</param>
+    /// <returns>The wait.</returns>
+    private static AwaitingDone WaitingOnTheHost(int node) => new(node, new Resume.FromFinished());
 
     /// <summary>A line with nobody named in front of it, then the end.</summary>
     /// <remarks>

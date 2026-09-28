@@ -96,7 +96,7 @@ M2:
 
 - [ ] A step stops after the last command before a query written after it.
 - [ ] Once the host is done, the run asks about the keys of the segment it
-      resumes from, then plays on.
+      resumes from, then continues.
 - [ ] A line's guard and its first segment's keys are asked on arrival in one
       request.
 - [ ] One key asked on both sides of a stop is asked twice.
@@ -135,7 +135,7 @@ sequenceDiagram
     R-->>D: Said Yuki "Then... "
     R-->>D: Perform ("Yuki hides a smile behind her sleeve")
     R-->>D: Continued " I will not argue."
-    Note over R: AwaitingDone, the line played through
+    Note over R: AwaitingDone, the line finished
     D->>R: Done
     Note over R: nothing left to answer — the player's turn
     D->>R: Next
@@ -175,7 +175,7 @@ sequenceDiagram
 | `LineEventsBuilder` | Gathers the events a line hands the host, one segment at a time: its `Said`, each `Continued`, and each `Perform` | `Playing` |
 | `Continued(speech)` | An event: the words after a command, in the utterance the line's `Said` opened | `Event`, alongside `Said` |
 | `AwaitingDone(node, resume)` | Waiting for the host, and where the node carries on once it is done | `Situation` |
-| `Resume` | A closed union: `From(segment)`, the line carries on from that segment; or `PlayedThrough`, the node has nothing left to play | `AwaitingDone` |
+| `Resume` | A closed union: `From(segmentIndex)`, the line continues from that segment; or `FromFinished`, the node has finished playing | `AwaitingDone` |
 | `AwaitingSupply(node, keys, moment)` | Waiting for the world; the moment says where in the node the keys were asked | `Situation` |
 | `Moment` | A closed union: `ToPlay(from)`, asked before playing from a segment; or `ToLeave`, asked before leaving | `AwaitingSupply`, `Runner` |
 | `NodeQuestions.ToPlay(node, from)` | The guard when playing from the start, and the keys of the segment playing resumes from | `Playing` |
@@ -294,10 +294,10 @@ no wait ever holds a value that means nothing for it:
 
 | Wait | Carries | Members |
 | --- | --- | --- |
-| `AwaitingDone` | `Resume` — where the node carries on once the host is done | `From(segment)`: the line plays on from that segment · `PlayedThrough`: nothing is left to play, so S5 decides what follows |
+| `AwaitingDone` | `Resume` — where the node carries on once the host is done | `From(segmentIndex)`: the line continues from that segment · `FromFinished`: the node has finished playing, so S5 decides what follows |
 | `AwaitingSupply` | `Moment` — where in the node the keys were asked | `ToPlay(from)`: before playing from that segment · `ToLeave`: before leaving |
 
-A control block's `Done` is always `PlayedThrough`; so is a line's once its last
+A control block's `Done` is always `FromFinished`; so is a line's once its last
 segment has been played.
 
 A resume place is an index into `SpeechTemplate.Segments`, so how speech is
@@ -347,7 +347,7 @@ and deciding whether it plays) and `Departure` (leaving it):
 | Step type | Owns | Entered from |
 | --- | --- | --- |
 | `Arrival` | The walk, and whether a node plays; the ring bound | `Start`, every way onward, and a `Supply` for playing from the start |
-| `Playing` | What a node hands the host, by kind: a line from a resume place to its next stop, a control block's effects, the end | `Arrival`, a `Supply` for playing on inside a line, and every `Done` |
+| `Playing` | What a node hands the host, by kind: a line from a resume place to its next stop, a control block's effects, the end | `Arrival`, a `Supply` for continuing inside a line, and every `Done` |
 | `Departure` | Leaving a node by the way the world allows | `Next`, `Playing` once a control block is done, and a `Supply` for `ToLeave` |
 
 The walk's loop stays in `Arrival`, which keeps the ring bound counting every node
@@ -379,7 +379,7 @@ decides what follows (S5) sits beside the code that made the host a request.
 | `protocol` | `Continued` joins the events; `Said` carries the words before a line's first command, with queries filled and no commands |
 | `situations` | `AwaitingDone` carries `Resume`; `Moment` becomes a closed union |
 | `stepping` | `Arrival` splits (S10); `Playing` walks segments; `NodeQuestions.ToPlay` takes a starting segment |
-| `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which plays on or stands at a line, and leaves a control block |
+| `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which continues or stands at a line, and leaves a control block |
 | Fixture schema | A `continued` expectation beside `said` |
 | Harness | `ContinuedMatcher`; the screen learns `continued` |
 | Corpus | New cases: a command at the end of a line, one mid-line, one opening a line, a line whose only speech is a command, a query after a command, and a failed command inside a line |

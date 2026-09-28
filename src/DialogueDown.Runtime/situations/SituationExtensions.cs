@@ -21,7 +21,9 @@ internal static class SituationExtensions
         {
             NotStarted => "no position, before the run has started",
             AtNode at => $"node {at.Node}",
-            AwaitingDone waiting => $"node {waiting.Node}, waiting for the host",
+            AwaitingDone { Resume: Resume.From from } waiting =>
+                $"node {waiting.Node}, waiting for the host before continuing from segment {from.SegmentIndex}",
+            AwaitingDone { Resume: Resume.FromFinished } waiting => $"node {waiting.Node}, waiting for the host",
             AwaitingSupply waiting =>
                 $"node {waiting.Node}, waiting for the world {waiting.Moment.Describe()}",
             AtEnd => "the end",
