@@ -1,6 +1,8 @@
+using System.Collections.Immutable;
 using CsCheck;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
@@ -81,6 +83,31 @@ public sealed class PlaybookGenTests
         Assert.True(DrawnKinds().Count >= 5);
     }
 
+    [Fact]
+    public void TheDraw_PutsACommandEverywhereALineCanHoldOne()
+    {
+        // A line reaches the host in parts around each command, so the walk covers every part only
+        // if some drawn line holds its command first, between its words, last, and alone.
+        var places = new HashSet<string>(StringComparer.Ordinal);
+
+        // One thread, because every drawn playbook adds to the same set.
+        PlaybookGen.Valid().Sample(
+            playbook =>
+            {
+                foreach (var line in playbook.Nodes.OfType<LineNode>())
+                {
+                    if (WhereTheCommandStands(line.Speech) is { } place)
+                    {
+                        places.Add(place);
+                    }
+                }
+            },
+            iter: Samples,
+            threads: 1);
+
+        Assert.Equal(["alone", "between", "first", "last"], places.Order(StringComparer.Ordinal));
+    }
+
     /// <summary>
     /// The type name of every node and edge kind a sample of the generator produced.
     /// </summary>
@@ -109,5 +136,25 @@ public sealed class PlaybookGenTests
             threads: 1);
 
         return seen;
+    }
+
+    /// <summary>Where a line's speech holds its first command.</summary>
+    /// <param name="speech">The line's speech.</param>
+    /// <returns>
+    /// <c>first</c>, <c>between</c>, <c>last</c>, or <c>alone</c>, or <see langword="null"/> when the
+    /// speech holds no command.
+    /// </returns>
+    private static string? WhereTheCommandStands(ImmutableArray<SpeechFragment> speech)
+    {
+        var at = speech.ToList().FindIndex(fragment => fragment is CustomCommandFragment or DefaultCommandFragment);
+
+        return (at, speech.Length) switch
+        {
+            (-1, _) => null,
+            (0, 1) => "alone",
+            (0, _) => "first",
+            var (_, length) when at == length - 1 => "last",
+            _ => "between",
+        };
     }
 }
