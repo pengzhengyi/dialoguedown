@@ -85,7 +85,7 @@ internal static class Playing
         StepResults.Refuse(
             position,
             RefusalReason.UnplayableNode,
-            $"This build cannot play a {unplayable.GetType().Name} yet.");
+            $"This build cannot play a node of kind {unplayable.GetType().Name} yet.");
 
     // A line without queries is spoken as written. A line with queries is spoken with the words
     // the world gave for each.
@@ -104,7 +104,7 @@ internal static class Playing
             [
                 new Refused(
                     RefusalReason.Misplaced,
-                    $"Node {waiting.Node}, a {asksNothing.GetType().Name}, asks nothing of the host, "
-                        + "so there is no Done to take there."),
+                    $"Node {waiting.Node}, of kind {asksNothing.GetType().Name}, asks nothing of the "
+                        + "host, so there is no Done to take there."),
             ]);
 }
