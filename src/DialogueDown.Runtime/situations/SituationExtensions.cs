@@ -24,8 +24,12 @@ internal static class SituationExtensions
             AwaitingDone { Resume: Resume.From from } waiting =>
                 $"node {waiting.Node}, waiting for the host before continuing from segment {from.SegmentIndex}",
             AwaitingDone { Resume: Resume.FromFinished } waiting => $"node {waiting.Node}, waiting for the host",
-            AwaitingSupply waiting =>
-                $"node {waiting.Node}, waiting for the world {waiting.Moment.Describe()}",
+            AwaitingSupply { Moment: Moment.ToPlay { SegmentIndex: 0 } } waiting =>
+                $"node {waiting.Node}, waiting for the world before it plays",
+            AwaitingSupply { Moment: Moment.ToPlay play } waiting =>
+                $"node {waiting.Node}, waiting for the world before continuing from segment {play.SegmentIndex}",
+            AwaitingSupply { Moment: Moment.ToLeave } waiting =>
+                $"node {waiting.Node}, waiting for the world before it leaves",
             AtEnd => "the end",
 
             // Every situation is named above, so one added later arrives here as a failure rather

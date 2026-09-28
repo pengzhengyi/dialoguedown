@@ -155,7 +155,7 @@ internal static class Arrival
     // plays and what its words say, whatever kind it is.
     private static Visited? AskIfPlayingNeedsAnswers(int position, NodeQuestions needs) =>
         needs.Keys() is { IsEmpty: false } neededForPlaying
-            ? new Visited.Standing(StepResults.Ask(position, neededForPlaying, Moment.ToPlay))
+            ? new Visited.Standing(StepResults.Ask(position, neededForPlaying, new Moment.ToPlay(0)))
             : null;
 
     private static Visited? PlayIfNotWalkedPast(PlayContext context, int position, Node arrived, Supply? supply) =>
@@ -166,7 +166,7 @@ internal static class Arrival
     // by leaving through departure, which is what keeps a ring of such nodes inside the bound.
     private static Visited? AskIfLeavingNeedsAnswers(int position, Node arrived) =>
         NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving
-            ? new Visited.Standing(StepResults.Ask(position, neededForLeaving, Moment.ToLeave))
+            ? new Visited.Standing(StepResults.Ask(position, neededForLeaving, new Moment.ToLeave()))
             : null;
 
     private static Visited WalkOn(int position, Node arrived) =>

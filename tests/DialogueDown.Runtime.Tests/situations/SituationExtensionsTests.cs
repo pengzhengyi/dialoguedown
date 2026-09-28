@@ -13,7 +13,9 @@ public sealed class SituationExtensionsTests
         new AtNode(4),
         new AwaitingDone(4, new Resume.From(2)),
         new AwaitingDone(4, new Resume.FromFinished()),
-        new AwaitingSupply(4, ["Alice.HasKey"], Moment.ToPlay),
+        new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(0)),
+        new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(2)),
+        new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToLeave()),
         new AtEnd(),
     ];
 
@@ -26,7 +28,7 @@ public sealed class SituationExtensionsTests
             "node 4, waiting for the host", new AwaitingDone(4, new Resume.FromFinished()).Describe());
         Assert.Equal(
             "node 4, waiting for the world before it plays",
-            new AwaitingSupply(4, ["Alice.HasKey"], Moment.ToPlay).Describe());
+            new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(0)).Describe());
         Assert.Equal("the end", new AtEnd().Describe());
     }
 
@@ -36,7 +38,13 @@ public sealed class SituationExtensionsTests
         // would read as the same wait twice.
         Assert.Equal(
             "node 4, waiting for the world before it leaves",
-            new AwaitingSupply(4, ["Alice.HasKey"], Moment.ToLeave).Describe());
+            new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToLeave()).Describe());
+
+    [Fact]
+    public void Describe_SaysWhereALineContinuesOnceTheWorldAnswers() =>
+        Assert.Equal(
+            "node 4, waiting for the world before continuing from segment 2",
+            new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(2)).Describe());
 
     [Fact]
     public void Describe_SaysWhereALineContinuesOnceTheHostIsDone() =>
@@ -50,11 +58,14 @@ public sealed class SituationExtensionsTests
         var samples = OneOfEverySituation();
 
         // Checked first, because the walk below is only as complete as the list it walks: a
-        // situation, or a place a wait on the host resumes from, added later and left out here
-        // would go without a description, and nothing would say so.
+        // situation, a place a wait on the host resumes from, or a moment a wait on the world was
+        // asked at, added later and left out here would go without a description, and nothing
+        // would say so.
         UnionCoverageAssert.AssertCoversEveryMember<Situation>(samples);
         UnionCoverageAssert.AssertCoversEveryMember(
             samples.OfType<AwaitingDone>().Select(waiting => waiting.Resume));
+        UnionCoverageAssert.AssertCoversEveryMember(
+            samples.OfType<AwaitingSupply>().Select(waiting => waiting.Moment));
 
         Assert.All(
             samples, situation => Assert.False(string.IsNullOrWhiteSpace(situation.Describe())));

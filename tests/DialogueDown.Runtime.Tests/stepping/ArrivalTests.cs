@@ -25,7 +25,7 @@ public sealed class ArrivalTests
     {
         // Speaking it without asking would read as played correctly while the condition it carries
         // went unread, and only the world's answer could have shown otherwise.
-        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.ToPlay, "Alice.HasKey");
+        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, new Moment.ToPlay(0), "Alice.HasKey");
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public sealed class ArrivalTests
         // the ring bound is never reached. The world may answer differently the next time round.
         var result = Arrival.Supplied(ALoopOfOneGuardedLine(), Waiting(0, "Rainy"), Answering(("Rainy", false)));
 
-        AssertAsked(result, node: 0, Moment.ToPlay, "Rainy");
+        AssertAsked(result, node: 0, new Moment.ToPlay(0), "Rainy");
     }
 
     [Fact]
@@ -104,12 +104,12 @@ public sealed class ArrivalTests
             Waiting(0, "Rainy"),
             Answering(("Rainy", true)));
 
-        AssertAsked(result, node: 0, Moment.ToLeave, "Late");
+        AssertAsked(result, node: 0, new Moment.ToLeave(), "Late");
     }
 
     [Fact]
     public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
-        AssertAsked(Arrival.At(PlayContextFactory.ALineWithAQuery(), 0), node: 0, Moment.ToPlay, "playerName");
+        AssertAsked(Arrival.At(PlayContextFactory.ALineWithAQuery(), 0), node: 0, new Moment.ToPlay(0), "playerName");
 
     [Fact]
     public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
@@ -124,7 +124,8 @@ public sealed class ArrivalTests
     [Fact]
     public void At_ALineGuardedAndCarryingAQuery_AsksAboutBothInOneRequest() =>
         // The whole node is judged against a single reading of the world, so it stops once.
-        AssertAsked(Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, Moment.ToPlay, "Alice.HasKey", "playerName");
+        AssertAsked(
+            Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, new Moment.ToPlay(0), "Alice.HasKey", "playerName");
 
     [Fact]
     public void Supplied_WithATruthAndWordsTogether_SaysTheLineTheWorldAllowed()
@@ -166,7 +167,7 @@ public sealed class ArrivalTests
             AConditionalLine(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
         AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
-        AssertAwaitingSupply(result.State, node: 0, Moment.ToPlay, "Alice.HasKey");
+        AssertAwaitingSupply(result.State, node: 0, new Moment.ToPlay(0), "Alice.HasKey");
     }
 
     [Fact]
@@ -187,14 +188,19 @@ public sealed class ArrivalTests
     public void At_AGuardedJumpOnItsOwnLine_AsksTheWorldWhichWayToGo() =>
         // The walk passes a node that hands the host nothing, but it cannot pass one whose way out
         // only the world can choose.
-        AssertAsked(Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.ToLeave, "Rainy");
+        AssertAsked(
+            Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, new Moment.ToLeave(), "Rainy");
 
     [Fact]
     public void At_AConditionalBlock_AsksTheWorldWhichArmToTake() =>
         // A block says nothing, so the run walks into it and on to choosing an arm, asking about
         // every arm at once.
         AssertAsked(
-            Arrival.At(PlayContextFactory.AConditionalBlock(), 0), node: 0, Moment.ToLeave, "Alice.HasKey", "Alice.HasPick");
+            Arrival.At(PlayContextFactory.AConditionalBlock(), 0),
+            node: 0,
+            new Moment.ToLeave(),
+            "Alice.HasKey",
+            "Alice.HasPick");
 
     [Fact]
     public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
@@ -412,5 +418,5 @@ public sealed class ArrivalTests
     /// <summary>Where a run stands after asking, on the way in, about these keys.</summary>
     /// <remarks>Arrival is what this class is about, so every wait here is one to play.</remarks>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
-        new(node, [.. keys], Moment.ToPlay);
+        new(node, [.. keys], new Moment.ToPlay(0));
 }

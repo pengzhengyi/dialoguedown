@@ -258,7 +258,7 @@ public sealed class RunnerTests
         var asked = Runner.Step(context, Started(context), new Next());
         var left = Runner.Step(context, asked.State, Answering(("Alice.HasKey", true)));
 
-        AssertAsked(asked, node: 0, Moment.ToLeave, "Alice.HasKey");
+        AssertAsked(asked, node: 0, new Moment.ToLeave(), "Alice.HasKey");
         AssertSaid(left, "Alice", "Inside.");
     }
 
@@ -272,7 +272,7 @@ public sealed class RunnerTests
         var asked = Runner.Step(context, PlayState.Initial, new Start());
         var left = Runner.Step(context, asked.State, Answering(("Rainy", false)));
 
-        AssertAsked(asked, node: 0, Moment.ToLeave, "Rainy");
+        AssertAsked(asked, node: 0, new Moment.ToLeave(), "Rainy");
         AssertSaid(left, "Alice", "Onward in the sun.");
     }
 
