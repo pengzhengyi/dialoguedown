@@ -1,10 +1,9 @@
 # Collapsing Across the Report
 
-> [!IMPORTANT]
-> Status: **implemented**. Every surface folds with the same glyph, the Dialogue Graph can fold or
-> open every scene at once, and the Source editor now folds the ignored region — the same unit the
-> Preview folds — from its own state. It reconciles folding every scene at once and teaching the
-> Source editor about ignored regions into one model, then sequences them as two components.
+> [!NOTE]
+> Status: **implemented**. Every surface that folds follows one contract and one set of glyphs:
+> the Source editor, the Preview, and the Dialogue Graph each fold their own unit, each with a
+> per-item chevron and a pair of all-commands.
 
 ## Table of contents
 
@@ -13,8 +12,8 @@
 - [The problem: one word, three units](#the-problem-one-word-three-units)
 - [The collapse contract](#the-collapse-contract)
 - [The design language](#the-design-language)
-- [Component 1 — One language, and all-commands for scenes](#component-1--one-language-and-all-commands-for-scenes)
-- [Component 2 — Ignored regions in Source](#component-2--ignored-regions-in-source)
+- [All-commands for scenes](#all-commands-for-scenes)
+- [Ignored regions in Source](#ignored-regions-in-source)
 - [Key design decisions](#key-design-decisions)
 - [Boundary cases](#boundary-cases)
 - [Testability](#testability)
@@ -23,18 +22,16 @@
 ## Goal and scope
 
 Three surfaces of the report let a reader put something away: the Source editor folds line
-ranges, the Preview hides ignored regions, and the Dialogue Graph folds scenes. Each arrived on
-its own, so they share a word without sharing a shape — one offers two commands and a stated
-mixed state, another offers no command at all, and a third names the same act differently.
+ranges and ignored regions, the Preview hides ignored regions, and the Dialogue Graph folds scenes.
 
-This note settles **one contract and one design language** for collapsing, then applies them to
-the surfaces that do not yet follow them. It deliberately does **not** synchronize state across
+This note owns **one contract and one design language** for collapsing. It deliberately does
+**not** synchronize state across
 surfaces; the [measurement below](#the-problem-one-word-three-units) shows why that cannot work in
 general, and [D1](#d1--unify-the-language-not-the-state) explains why the panes should differ even
 where it could.
 
-**In scope:** the shared contract and glyph set; the Dialogue Graph's missing all-at-once commands;
-teaching Source the ignored-region unit so Source and Preview finally fold the same thing.
+**In scope:** the shared contract and glyph set; the Dialogue Graph's all-commands; the ignored
+region as a unit Source folds, so Source and Preview fold the same thing.
 
 **Out of scope:** changing what the compiler ignores or which grouping a scene is; folding nested
 scenes; serializing graph fold state across a reload.
@@ -53,8 +50,7 @@ One act, one set of words, on every surface.
 | **Baseline** | The state an item has when the reader has not chosen otherwise. |
 | **Override** | One item's deviation from the baseline. |
 
-The report already says *a static mark states a status, a chevron performs an action*. That rule
-is unchanged and now applies everywhere.
+One rule applies on every surface: *a static mark states a status, a chevron performs an action*.
 
 ## The problem: one word, three units
 
@@ -100,19 +96,13 @@ Every surface that folds anything offers all four of these.
 4. **Folding is not selecting.** A fold changes what is drawn, never what the reader has chosen,
    unless the fold hid the chosen thing.
 
-Points 1–3 are already shipped in the Preview; point 4 is already shipped in the Dialogue Graph.
-The contract simply says both apply everywhere.
-
 Each surface keeps **its own** state and **its own** pair of all-commands. The contract is a shape
 every surface honors, not a state they share — see [D1](#d1--unify-the-language-not-the-state).
 
 ## The design language
 
-One act deserves one look. Today four different things render "fold this": CodeMirror's default
-text characters in the Source gutter, a `circle-slash` codicon in the Preview, a hand-drawn SVG
-path on a scene band, and a different codicon pair on the legend.
-
-The report settles on one set of glyphs, all from the codicon font it already loads:
+One act deserves one look. The report uses one set of glyphs, all from the codicon font it
+already loads:
 
 | Role | Glyph | Where |
 | --- | --- | --- |
@@ -137,64 +127,41 @@ The Dialogue Graph draws SVG rather than HTML, so its chevron becomes an SVG `<t
 codicon font instead of a path — the font is declared for the whole document, so this is the same
 glyph, not a lookalike.
 
-Two surfaces beyond the three named here turned out to fold something too, and both joined the
-language: the legend's own group disclosure, and the file Explorer's folders. A submenu marker
+Two more surfaces fold something and use the same language: the legend's own group disclosure,
+and the file Explorer's folders. A submenu marker
 keeps its own chevron, because it points at a menu opening beside it rather than at content that
 folds away.
 
-**No exceptions.** An inline ignored region was briefly one: too narrow, it was argued, for both a
-status mark and an action mark, so its single glyph was `circle-slash` doing both jobs. In practice
-that made the same glyph mean *press me* inline and *this is ignored* everywhere else, and put it
-on the leading edge inline and the trailing edge on a block. An inline region now takes the same
-chevron on the left and the same `circle-slash` on the right as any block region — one glyph, one
-meaning, one place.
+**No exceptions.** An inline ignored region in the Preview takes the same chevron on the left and
+the same `circle-slash` on the right as a block region, even though it is narrow: one glyph doing
+both jobs would mean *press me* in one place and *this is ignored* in another.
 
 Between those two marks it also keeps a **brief**: a block region collapses to `Table · 4 lines`,
 so an inline one must not collapse to nothing. A link collapses to its host, still a link, with the
 whole address in its tooltip — the reader can see what was set aside, and still follow it.
 
-## Component 1 — One language, and all-commands for scenes
+## All-commands for scenes
 
-Lands the design language everywhere at once, so no surface spends a release speaking the old one.
+The graph's fold takes a *set* of collapsed region names, so the all-commands fill or empty that
+set rather than adding fold machinery.
 
-The all-commands themselves are small: the per-scene chevron already exists, and the projection
-already takes a *set* of collapsed region names, so this fills or empties that set rather than
-adding fold machinery.
-
-The contract answers three open questions:
-
-| Open question | Answer |
+| Question | Answer |
 | --- | --- |
 | Where the control lives | Beside the legend's `Scene regions` group heading — the group that already lists exactly the items being folded, with their counts. |
 | What "all" means in a mixed state | Two commands, per the contract. Neither has to guess. |
 | Framing after the fold | Re-fit the camera on an **all-command** only. A single fold must leave the reader where they were; an all-command is a deliberate whole-view change, and collapsing every scene otherwise leaves the reader staring at empty canvas. |
 
-Checklist:
+The legend states the current view, including mixed, beside the group's name. What selection
+does across a fold is [Dialogue Graph Region Fold](../graph/Dialogue%20Graph%20Region%20Fold.md#what-selection-does-across-a-fold)'s.
 
-- [x] Every per-item control across the report uses the shared chevron pair.
-- [x] The Source gutter renders the shared chevrons rather than CodeMirror's defaults.
-- [x] The scene band's chevron is the codicon glyph, drawn as SVG text.
-- [x] `Expand all` / `Collapse all` beside the legend's region group, both enabled when the stage
-      has at least one region.
-- [x] Each command replaces the collapsed set outright.
-- [x] The legend states the current view, including mixed, beside the group's own name.
-- [x] An all-command re-fits the camera; a single chevron does not.
-- [x] Selection survives, moving to the collapsed scene only when the fold hid it.
+## Ignored regions in Source
 
-## Component 2 — Ignored regions in Source
-
-The larger piece: Source
-gains the **ignored region** as a unit it can fold, so both panes finally fold the same thing.
+Source folds the **ignored region** as a unit, so both panes fold the same thing.
 
 Source already folds ranges of lines from its gutter, and an ignored block region *is* a range of
 lines. So it folds **from the same place, through the same mechanism**: the compiler's ignored spans
 are published to CodeMirror as another source of foldable ranges, and the gutter chevron the writer
 already knows appears beside them.
-
-A separate control on the region itself was built first and then removed. It put two chevrons on one
-line, each folding a different thing, and asked the reader to choose between mechanisms where one
-would do. Multi-line content is what a writer wants out of the way, and folding it is what a code
-editor is already for.
 
 What sits on the region is therefore a **cue, not a control**: a `circle-slash` trailing the
 region's first line that says *the compiler left this out*, in the manner of an editor's inline
@@ -219,17 +186,8 @@ Because the folding is CodeMirror's, its guarantees come along unearned: the cur
 placed inside a folded range, the editor's own placeholder opens it on click, and a fold survives
 edits elsewhere in the document by mapping through them.
 
-Checklist:
-
-- [x] Ignored block spans fold in Source from the editor's own gutter, beside line-range folding.
-- [x] An ignored region that owns its lines carries a `circle-slash` cue, which states a status and
-      takes no click.
-- [x] Source offers its own pair of all-commands over its ignored regions, from the editor's own
-      menu and keys rather than new chrome.
-- [x] The ignored spans survive the re-render that follows every keystroke, keyed as the Preview
-      already keys regions.
-- [x] Hidden text is never silently edited — a folded range refuses the cursor.
-- [x] Source and Preview fold independently; neither drives the other.
+The ignored spans survive the re-render that follows every keystroke, keyed as the Preview keys
+regions.
 
 ## Key design decisions
 
@@ -243,7 +201,7 @@ line ranges that are not ignored (a heading section) have no Preview counterpart
 that are not line ranges (a divider, an inline autolink) have no Source counterpart. Any partial
 sync teaches the reader a rule with unpredictable exceptions.
 
-Even where Component 2 makes the units match, Source and Preview keep **separate** state, because
+Even where the units match, Source and Preview keep **separate** state, because
 the two panes answer different questions. Source is the editable truth: its ignored text is
 deliberately dimmed but visible so a writer can find and change it. Hiding a region while *reading*
 the compiled result must not remove the text the writer may need to *edit*. So each surface owns
@@ -259,16 +217,13 @@ A surface's unit follows from what that surface is *for*. Source edits text, so 
 real convenience there and stay. Preview shows the compiled result, so only excluded content may be
 hidden. The graph draws flow, so only a compiler-owned grouping may be contracted without lying.
 
-Component 2 does not *replace* Source's line-range folding; it **adds** the ignored-region unit
-alongside it. Source is therefore the one surface with two units — but deliberately with only one
+Source keeps line-range folding and **adds** the ignored-region unit alongside it. Source is therefore the one surface with two units — but deliberately with only one
 **gesture**: both fold from the gutter, because both are ranges of lines, and CodeMirror's gutter is
 already the affordance for exactly that.
 
-An earlier draft gave the ignored region its own control on the region itself, reasoning that a
-different place would keep a different unit unambiguous. Built, it read as clutter rather than
-clarity: two chevrons on one line, and a reader forced to learn which folded which before folding
-anything. The distinction the reader actually needs is *what is ignored*, and that is a question a
-static cue answers better than a second control does.
+A second control on the region itself would put two chevrons on one line, each folding a
+different thing. The distinction the reader needs is *what is ignored*, which a static cue answers
+better.
 
 Dropping line-range folding to leave one unit was rejected: folding a scene's prose while writing
 is genuinely useful and has nothing to do with what the compiler ignores.
@@ -301,10 +256,9 @@ there, not the mechanism that put it away.
 ### D6 — Content first, chrome second
 
 An ignored region is usually an authoring aid the writer still reads — a table of prices, a block
-of notes — so the region's own furniture must not out-shout what it frames. The first build had it
-backwards: a solid rail and a filled chip surface at full strength around content dimmed to 0.72.
+of notes — so the region's own furniture must not out-shout what it frames.
 
-So the chrome now **recedes while the content shows** and comes forward on hover or focus, and the
+The chrome **recedes while the content shows** and comes forward on hover or focus, and the
 content is *set back* from dialogue rather than faded toward the page. Two floors keep the quieting
 honest, and both are tested: the control's glyph stays above the 3:1 a UI component owes even at
 rest, and the content keeps at least 55% of normal prose's contrast.
@@ -354,7 +308,7 @@ should read as the thing to press.
 
 None blocking. Two settled points worth revisiting if the report grows:
 
-1. **Folding nested scenes.** Regions are flat today, so a nested scene folds separately. If the
+1. **Folding nested scenes.** Regions are flat, so a nested scene folds separately. If the
    compiler ever nests them, the all-commands need to say whether "all" means every region or only
    the top level.
 2. **A fifth surface.** The Config tab folds TOML sections through its own fold service. It is out

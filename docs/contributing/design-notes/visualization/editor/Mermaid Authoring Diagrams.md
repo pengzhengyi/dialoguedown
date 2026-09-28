@@ -1,11 +1,9 @@
-# Mermaid authoring diagrams
+# Mermaid Authoring Diagrams
 
 > [!NOTE]
-> Status: **implemented**. How Mermaid *reaches* the page has since changed: it is no
-> longer bundled into the client, but fetched on demand when serving and inlined only
-> for a script that draws a diagram when exporting. Sizes quoted below describe the
-> bundle as this note shipped it. See increment 16 of the
-> [Development Cycle Optimization](../../other/Development%20Cycle%20Optimization.md) note.
+> Status: **implemented**. Fenced `mermaid` blocks render as diagrams in every Markdown preview
+> while staying out of compiled dialogue; `ddown compile --emit dot` is the only graph text
+> output.
 
 ## Table of contents
 
@@ -22,10 +20,9 @@
 ## Goal and scope
 
 Render an author's fenced `mermaid` blocks as diagrams in every Markdown preview
-while keeping them out of compiled dialogue. The browser bundles the official
-Mermaid renderer, so live and exported reports stay self-contained and work
-offline. Compiler-stage graphs remain the interactive D3 views; the CLI keeps
-Graphviz DOT emission and retires its Mermaid renderer.
+while keeping them out of compiled dialogue. The official Mermaid renderer ships
+with the report, never from a CDN, so live and exported reports work offline.
+Compiler-stage graphs remain the interactive D3 views, and the CLI emits DOT.
 
 In scope:
 
@@ -33,9 +30,8 @@ In scope:
 - Live re-rendering while the author edits a diagram.
 - Safe Markdown and SVG insertion, theme-aware diagrams, accessible output, and
   an inline source fallback for invalid Mermaid.
-- Removal of `--emit mermaid`, `EmitFormat.Mermaid`, and the C#
-  `MermaidRenderer`; `--emit dot` remains.
-- Documentation, migration guidance, third-party notices, and release notes.
+- No compiler-stage Mermaid output: `--emit mermaid` is rejected with a pointer
+  to `--emit dot`.
 
 Out of scope:
 
@@ -43,7 +39,7 @@ Out of scope:
 - Validating Mermaid in the compiler or adding Mermaid failures to the Problems
   panel.
 - Loading Mermaid from a CDN or requiring Node at report runtime.
-- Designing the future serialized dialogue/runtime IR or its exporters.
+- Exporters to other formats.
 
 ## Functionality checklist
 
@@ -65,8 +61,7 @@ Out of scope:
       Mermaid only for a script that draws a diagram.
 - [x] CI holds the client every reader loads, and Mermaid separately, under approved raw limits.
 - [x] `--emit dot` behaves unchanged.
-- [x] `--emit mermaid` fails with a migration message for one release.
-- [x] The C# Mermaid output surface is removed.
+- [x] `--emit mermaid` fails with a message pointing to DOT and the preview.
 
 ## Ubiquitous language
 
@@ -77,8 +72,7 @@ Out of scope:
 | **Diagram preview** | The SVG Mermaid renders from diagram source inside a Markdown preview. |
 | **Markdown preview** | A rendered view of source Markdown: the whole-document Source preview or a node/region preview. |
 | **Stage graph** | A compiler-stage visualization rendered by the report's existing D3 graph UI. |
-| **Graph text emission** | CLI output of a stage graph for another tool. After this component, DOT is the only graph text emission. |
-| **Exporter** | A future adapter that writes a stable serialized dialogue/runtime IR into another format, such as Yarn Spinner or Mermaid. It is not part of this component. |
+| **Graph text emission** | CLI output of a stage graph for another tool. DOT is the only one. |
 
 ## Design
 
@@ -119,7 +113,7 @@ policy changes the cue, not whether the Markdown preview can draw the diagram.
 
 | Concern | Contract |
 | --- | --- |
-| Fence match | Normalize the info string, split on whitespace, and compare the first token to `mermaid` case-insensitively. A suffix may carry future metadata; an unlabeled fence never becomes a diagram. |
+| Fence match | Normalize the info string, split on whitespace, and compare the first token to `mermaid` case-insensitively. A suffix may carry extra metadata; an unlabeled fence never becomes a diagram. |
 | Surfaces | Apply the same rule to the whole-document Source preview, the graph inspector's node and region previews, and the Semantic tab's sticky node preview. |
 | Valid source | Replace the placeholder's contents with SVG. The source remains available in the editor or the inspector's adjacent **Source** section rather than being duplicated under the diagram. |
 | Invalid source | Keep the fenced source in its ordinary `<pre><code>` form and add one local rendering message. |
@@ -134,7 +128,7 @@ policy changes the cue, not whether the Markdown preview can draw the diagram.
 | Mermaid preview enhancer (new) | Configure Mermaid inside the serialized queue, assign unique render IDs, reject stale results, show source fallbacks, and rely on Mermaid's strict SVG sanitization. |
 | Preview hosts | Invoke the enhancer after writing Source, node, semantic-detail, or region preview HTML; dispose scheduled work when a host disappears. |
 | Theme integration | Notify the enhancer when the effective theme changes, including System-theme media-query changes, so mounted diagrams re-render. |
-| CLI visualization | Accept DOT as the only graph text format and explain the retired Mermaid option. |
+| CLI compile | Accept DOT as the only graph text format and answer `mermaid` with a pointer to DOT. |
 
 ## Key design decisions
 
@@ -149,34 +143,19 @@ dialogue to explain a relationship, state flow, or sequence. Drawing that block
 in the Markdown preview makes an existing authoring aid useful while the
 compiler continues to omit it from speech.
 
-### D2 — Bundle the official Mermaid package
+### D2 — Ship the official Mermaid build, loaded only when a diagram appears
 
 Use the official MIT-licensed `mermaid` package, pinned by `package-lock.json`.
-It is the reference implementation and supports the full Mermaid language. A
-six-diagram subset would make a `mermaid` fence mean something narrower in
-DialogueDown than it means in GitHub, editors, and Mermaid's own tooling.
+It is the reference implementation of the full language; a subset would make a
+`mermaid` fence mean less in DialogueDown than in GitHub and editors. Its license
+is recorded in `web/NOTICE.md`.
 
-The cost is deliberate and measured against the current report:
-
-| Build | Raw HTML | Gzip | Change |
-| --- | ---: | ---: | ---: |
-| Current report | 1.37 MB | 465 KB | — |
-| Implemented report with `mermaid@11.16.1` | 4.74 MB | 1.36 MB | +3.37 MB raw / +893 KB gzip |
-
-These numbers come from a disposable copy of the actual Vite project: add the
-single Mermaid import, run `npm run build`, then compare `wc -c` and `gzip -c`
-for `dist/report.html`. They measure the integrated report, not the package's
-published archive.
-
-The package is always bundled. This preserves the report's one-file offline
-contract and lets a live editor render the first Mermaid fence immediately,
-without a CDN, a server-only asset path, or a second build artifact. The
-dependency and its license are added to `web/NOTICE.md`.
-
-The existing report-bundle verification also gains a 5 MB raw size limit. The
-implemented 4,742,002-byte report leaves about 258 KB of headroom. Crossing the limit
-requires an explicit dependency or threshold review rather than silently making
-every report heavier.
+Mermaid is larger than the rest of the client, and almost no script uses it, so
+it is not part of the client bundle. A served report fetches Mermaid's
+self-contained build the first time a script shows a diagram; an exported report
+inlines it only when the script has a Mermaid fence. The details, measurements,
+and size limits are in
+[Served Client Packaging](../session/Served%20Client%20Packaging.md#d2--fetch-mermaid-on-demand-instead-of-bundling-it).
 
 ### D3 — Recognize an explicit fence on every preview surface
 
@@ -260,24 +239,19 @@ are absent, the preview wrapper supplies the accessible name **Mermaid diagram**
 and retains the source fallback for inspection. Diagrams participate in the
 existing axe-based browser checks.
 
-### D7 — Keep DOT emission; retire compiler-stage Mermaid emission
+### D7 — DOT is the only compiler-stage text output
 
-`ddown compile --emit dot` remains the current portable stage-graph output.
-The Mermaid enum arm, renderer, tests, README example, and CLI documentation are
-removed. For one release, `--emit mermaid` receives a specific validation
-message directing writers to preview fenced Mermaid diagrams and graph-tool
-users to DOT.
+`ddown compile --emit dot` is the portable stage-graph output. There is no
+Mermaid stage renderer: `--emit mermaid` receives a validation message directing
+writers to fenced Mermaid in the preview and graph-tool users to DOT. Keeping no
+Mermaid renderer avoids turning the transient `DisplayGraph` presentation model
+into a compatibility promise.
 
-The visualizer is at version 0.1 and explicitly labels its API unstable. Removing
-the C# renderer now avoids turning the transient `DisplayGraph` presentation
-model into a compatibility promise.
+### D8 — Exporters read the playbook, not the report
 
-### D8 — Future exporters wait for stable serialized IR
-
-No placeholder exporter interface is added here. Yarn Spinner, Mermaid, JSON, or
-other outputs should consume the future stable serialized dialogue/runtime IR,
-not the interactive report's `DisplayGraph`. That work gets its own design
-component when the IR exists.
+No exporter interface is added here. A Yarn Spinner, Mermaid, or other export
+should read the compiled [playbook](../../runtime/Playbook%20Format.md), not the
+interactive report's `DisplayGraph`.
 
 ## Error and boundary cases
 
@@ -295,15 +269,15 @@ component when the IR exists.
 | Raw HTML forging a Mermaid marker | Ignore it because it cannot carry the page's private placeholder token. |
 | Script or event syntax in a diagram | Mermaid's strict renderer encodes or disables it before the SVG is mounted. |
 | Theme changes mid-render | The new theme schedules a newer revision; the old result cannot mount. |
-| Static `file://` report | Render normally with bundled code and no storage or network requirement. |
+| Exported report opened from `file://` | Renders from the inlined build with no network request. |
 | `--emit mermaid` | Exit nonzero, write no output, and report: “Mermaid stage emission was removed. Use `--emit dot` for compiler graphs; fenced `mermaid` blocks render in the HTML report.” |
 
 ## Integration
 
-- **`web/package.json` / lockfile / `NOTICE.md`** — add Mermaid and DOMPurify as
-  direct, pinned runtime dependencies and record their MIT notices.
-- **Report-bundle verification** — fail CI when generated `report.html` exceeds
-  5 MB raw.
+- **`web/package.json` / lockfile / `NOTICE.md`** — Mermaid and DOMPurify are
+  direct, pinned runtime dependencies with recorded notices.
+- **`mermaid-loader.ts`** — returns the page's Mermaid global or fetches the
+  build the page names.
 - **`text.ts`** — mark explicit Mermaid fences without performing DOM work.
 - **`mermaid-placeholder.ts`** — share the page-private marker between the
   Marked renderer and Mermaid enhancer without exposing a forgeable constant.
@@ -313,12 +287,7 @@ component when the IR exists.
   including System preference changes.
 - **`scroll-sync.ts`** — treat a Mermaid wrapper as the fenced code block it
   replaces so block anchoring remains dense.
-- **CLI / visualization .NET projects** — remove the Mermaid renderer and enum
-  arm; keep DOT and the temporary migration error.
-- **Docs** — update the README, CLI guide, authoring-aids guide, compilation
-  visualization note, CLI emit note, design-note index, and changelog.
-- **Future work** — the stable-IR/exporter design is tracked separately rather than
-  preserving the current renderer as a speculative seam.
+- **CLI** — DOT is the only graph text format; `mermaid` gets its own message.
 
 ## Testability
 
@@ -332,8 +301,6 @@ component when the IR exists.
 - The enhancer renders valid source, keeps invalid source, assigns unique IDs,
   coalesces pending host updates, serializes Mermaid calls, and rejects
   stale/detached results.
-- The report-bundle infrastructure test fails above 5 MB and reports the measured
-  byte count.
 - Theme resolution chooses the expected Mermaid configuration and schedules
   re-rendering.
 - Scroll-block matching treats the rendered diagram as a fenced code block.
@@ -357,15 +324,12 @@ substitute the adapter; they do not duplicate Mermaid parsing or layout.
 
 ### .NET tests
 
-- The Mermaid renderer and enum member are absent.
-- DOT stage emission and file/stdout behavior remain covered.
-- `--emit mermaid` writes no output and reports the migration guidance.
+- DOT stage emission and file/stdout behavior are covered.
+- `--emit mermaid` writes no output and reports the pointer to DOT.
 
 The final gate remains the documented .NET, frontend, static E2E, live E2E,
 format, coverage, and report-bundle verification.
 
 ## Open questions
 
-None. Light and dark live previews confirmed that the diagram, invalid-source,
-and ignored-region presentation remain legible and unobtrusive. The
-one-release migration message is sufficient for the 0.1 public tool.
+None.

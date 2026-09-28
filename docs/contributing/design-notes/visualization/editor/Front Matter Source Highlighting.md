@@ -53,7 +53,6 @@ Markdig accepts; and projecting front matter from the compiler.
 - [x] Preserve front-matter-aware Preview rendering and source/preview scroll synchronization.
 - [x] Leave documents without front matter unchanged.
 - [x] Keep malformed or unterminated front matter editable through the YAML parser's recovery.
-- [x] Rebuild and commit `web/dist/report.html`.
 
 ## Ubiquitous language
 
@@ -120,14 +119,14 @@ Markdown. No DialogueDown grammar is duplicated in TypeScript.
 | Type / seam | Responsibility | Collaborators |
 | --- | --- | --- |
 | `yamlFrontmatter` | Build one language support with a YAML front-matter region and Markdown body. | `@codemirror/lang-yaml`, `markdown()` |
-| `source-view.ts` | Install the mixed source language instead of plain Markdown. | CodeMirror extensions |
+| `source-language.ts` | Export `sourceLanguage`, the mixed language `source-view.ts` installs. | CodeMirror extensions |
 | `markdownHighlightStyle` | Style YAML metadata tags alongside the existing Markdown tags. | `@lezer/highlight` tags, CSS variables |
 | `splitFrontMatter` | Remain the Preview/scroll-sync boundary for canonical front matter. | `text.ts`, `scroll-sync.ts` |
 | `MarkdigMarkdownParser` | Remain the compiler boundary; recognize and discard front matter. | Markdig YAML extension |
 
 ## Key design decisions
 
-### DD1 — Use CodeMirror's official YAML-front-matter wrapper
+### D1 — Use CodeMirror's official YAML-front-matter wrapper
 
 `@codemirror/lang-yaml` exports:
 
@@ -145,7 +144,7 @@ receives about 4.1 million weekly npm downloads. Its new parser dependency,
 already present. It is preferable to hand-writing a Lezer block parser for one standard document
 shape.
 
-### DD2 — Canonical fences define the editor contract
+### D2 — Canonical fences define the editor contract
 
 The wrapper recognizes exact `---` lines at the start of the document and as the closing
 delimiter. This matches `splitFrontMatter()`, the Preview, the scroll-sync offset, examples, and
@@ -158,7 +157,7 @@ front matter through EOF when no exact closing fence exists; `...` is YAML conte
 fence. Supporting Markdig's extra forms as first-class editor syntax would require a custom outer
 parser and cross-language conformance tests for little writer benefit.
 
-### DD3 — Front matter is metadata, not ignored Markdown
+### D3 — Front matter is metadata, not ignored Markdown
 
 Front matter is discarded unconditionally before the unmodeled-node policy runs. Calling it
 `Ignore` would incorrectly imply that `[markdown.unmodeled]` can change its fate. The Source
@@ -179,7 +178,7 @@ The YAML style is scoped to `yamlLanguage`, so generic tags such as `string` and
 recolor Markdown link titles or prose. The outer delimiter's `tags.meta` style remains in the
 Markdown-level style. No new theme colors are needed.
 
-### DD4 — Parse locally rather than project an invariant
+### D4 — Parse locally rather than project an invariant
 
 A compiler token could mark the front-matter range, but it would arrive only after compilation and
 would provide no YAML syntax tree, indentation, folding, or comment behavior. The front-matter
@@ -208,11 +207,11 @@ established parsers.
 
 ## Integration
 
-- **Source editor:** replace the current bare `markdown()` extension with the wrapper. The returned
+- **Source editor:** `source-language.ts` exports the wrapper in place of a bare `markdown()`. The returned
   `LanguageSupport` already carries the inner Markdown support, so installing both would be
   redundant and could produce conflicting language state. Compiler semantic-token decorations,
   completions, folding services, and the other non-language extensions remain separate. If the
-  Markdown language later gains options, pass them to the `markdown(...)` inside `content`.
+  Markdown language needs options, they go to the `markdown(...)` inside `content`.
 - **Markdown highlighting:** add YAML/meta tags to `markdownHighlightStyle`; compiler decorations
   continue to layer above it.
 - **Preview:** unchanged. `splitFrontMatter()` already presents canonical front matter as a
@@ -236,10 +235,8 @@ established parsers.
 - **Browser tests:** the existing `SAMPLE_SOURCE` already contains canonical front matter, so the
   report fixture must show it as metadata while the body and Preview continue to render and
   navigate correctly.
-- **Bundle gate:** against the merge-ready main baseline, the report grew from 4,748,972 to
-  4,762,098 bytes — a measured 13,126-byte increase. It remains below the approved 5,000,000-byte
-  raw limit with 237,902 bytes of headroom;
-  the cap did not change.
+- **Bundle gate:** the client stays under its approved size limit; see
+  [Served Client Packaging](../session/Served%20Client%20Packaging.md).
 
 ## Alternatives not chosen
 

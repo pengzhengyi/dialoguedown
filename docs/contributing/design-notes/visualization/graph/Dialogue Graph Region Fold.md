@@ -1,8 +1,8 @@
-# Dialogue Graph — Region Fold
+# Dialogue Graph Region Fold
 
 > [!NOTE]
-> Status: **implemented**. Folding is offered by the Dialogue Graph tab, the only
-> stage whose nodes carry regions.
+> Status: **implemented**. On the Dialogue Graph tab, the only stage whose nodes carry regions, a
+> scene folds to one box that shows only what crosses its border.
 
 Folding a scene collapses it to a single box that shows only what crosses its
 border. A long script is mostly scenes the reader is not currently reading; being
@@ -60,8 +60,10 @@ The keyboard rule is deliberately narrow. Hovering a *line* and pressing
 not lose the scene they are reading. Folding an open scene from the keyboard is a
 two-step act: choose the band, then press the key.
 
-This also matches the visual language the report settled on for ignored Markdown:
-a **static mark states a status, a chevron performs an action**.
+The chevron follows the report's
+[collapse contract](../report/Collapsing%20Across%20the%20Report.md): a static mark states a status,
+a chevron performs an action. **Expand all** and **Collapse all** sit beside the legend's scene
+group.
 
 ## What a collapsed scene means
 
@@ -180,7 +182,7 @@ Fold state is remembered per graph alongside the camera and the node fold, and
 
 ## Open questions and deferred work
 
-- **Folding a scene's subscenes with it.** Regions are flat today, so a nested
+- **Folding a scene's subscenes with it.** Regions are flat, so a nested
   scene is its own region and folds separately.
 - **Folds are not carried across a reload, by design.** Fold state lives with the
   in-memory camera store, which is deliberately not serialized so the offline

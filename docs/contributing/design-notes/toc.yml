@@ -14,11 +14,9 @@
     href: core/Semantic Analyzer.md
   - name: Script Compiler Facade
     href: core/Script Compiler Facade.md
-  - name: Compilation Outcome
-    href: core/Compilation Outcome.md
   - name: Dialogue Graph
     href: core/Dialogue Graph.md
-  - name: Error Model
+  - name: Error model
     href: core/Error Model.md
 - name: Runtime
   items:
@@ -26,18 +24,14 @@
     href: runtime/Dialogue Runtime Architecture.md
   - name: Playbook Format
     href: runtime/Playbook Format.md
+  - name: Playbook Reader Rules
+    href: runtime/Playbook Reader Rules.md
   - name: Conformance Corpus
     href: runtime/Conformance Corpus.md
-  - name: Node Outward Shape
-    href: runtime/Node Outward Shape.md
-  - name: Branch Arm Order
-    href: runtime/Branch Arm Order.md
   - name: Speech as Plain Text
     href: runtime/Speech as Plain Text.md
-  - name: Runtime Core
-    href: runtime/Runtime Core.md
-  - name: Waiting on the Host
-    href: runtime/Waiting on the Host.md
+  - name: Runner
+    href: runtime/Runner.md
   - name: Asking the World
     href: runtime/Asking the World.md
 - name: Language constructs
@@ -48,12 +42,6 @@
     href: language/Random Choice.md
   - name: Conditions
     href: language/Conditions.md
-  - name: Conditional Jump
-    href: language/Conditional Jump.md
-  - name: Conditional Line
-    href: language/Conditional Line.md
-  - name: Conditional Choice
-    href: language/Conditional Choice.md
   - name: Unquoted Keys
     href: language/Unquoted Keys.md
   - name: Symbol Escape
@@ -92,8 +80,6 @@
   items:
   - name: Command-Line Interface
     href: cli/Command-Line Interface.md
-  - name: Visualize on the CLI
-    href: cli/Visualize on the CLI.md
   - name: Compile CLI — Emit DOT
     href: cli/Compile CLI - Emit DOT.md
   - name: Compile CLI — Fix Mode
@@ -104,127 +90,85 @@
     items:
     - name: Compilation Visualization
       href: visualization/report/Compilation Visualization.md
-    - name: Compiler Stage Tooltips
-      href: visualization/report/Compiler Stage Tooltips.md
-    - name: Dialogue AST Visualization Tab
-      href: visualization/report/Dialogue AST Visualization Tab.md
-    - name: Desugared AST Visualization Tab
-      href: visualization/report/Desugared AST Visualization Tab.md
+    - name: AST Stage Tabs
+      href: visualization/report/AST Stage Tabs.md
     - name: Semantic Model Visualization Tab
       href: visualization/report/Semantic Model Visualization Tab.md
     - name: Dialogue Graph Visualization Tab
       href: visualization/report/Dialogue Graph Visualization Tab.md
-    - name: Collapsing Across the Report
-      href: visualization/report/Collapsing Across the Report.md
-    - name: Saying Nothing Across the Report
-      href: visualization/report/Saying Nothing Across the Report.md
-    - name: Tag Capsules
-      href: visualization/report/Tag Capsules.md
-    - name: Copyable Identifiers
-      href: visualization/report/Copyable Identifiers.md
-    - name: Jumping into the Playbook
-      href: visualization/report/Jumping into the Playbook.md
-    - name: Following an Index in the Playbook
-      href: visualization/report/Following an Index in the Playbook.md
-    - name: Configuration Tab
-      href: visualization/report/Configuration Tab.md
-    - name: Configuration Tab — Live Edit
-      href: visualization/report/Configuration Tab - Live Edit.md
-    - name: Configuration Tab — Autocompletion
-      href: visualization/report/Configuration Tab - Autocompletion.md
-    - name: Configuration Tab — Create New
-      href: visualization/report/Configuration Tab - Create New.md
-    - name: Unavailable Stage Tabs
-      href: visualization/report/Unavailable Stage Tabs.md
     - name: Playbook Tab
       href: visualization/report/Playbook Tab.md
     - name: Playbook Nodes Table
       href: visualization/report/Playbook Nodes Table.md
     - name: Playbook Summary Segments
       href: visualization/report/Playbook Summary Segments.md
+    - name: Navigating the Playbook
+      href: visualization/report/Navigating the Playbook.md
+    - name: Configuration Tab
+      href: visualization/report/Configuration Tab.md
+    - name: Table Cell Conventions
+      href: visualization/report/Table Cell Conventions.md
+    - name: Collapsing Across the Report
+      href: visualization/report/Collapsing Across the Report.md
   - name: Source editor
     items:
+    - name: Compiler-Projected Editor Semantics
+      href: visualization/editor/Compiler-Projected Editor Semantics.md
+    - name: Diagnostics Overlay
+      href: visualization/editor/Diagnostics Overlay.md
+    - name: Diagnostic Quick Fixes
+      href: visualization/editor/Diagnostic Quick Fixes.md
+    - name: Heading Anchors
+      href: visualization/editor/Heading Anchors.md
     - name: Unmodeled Markdown Highlighting
       href: visualization/editor/Unmodeled Markdown Highlighting.md
     - name: Front Matter Source Highlighting
       href: visualization/editor/Front Matter Source Highlighting.md
-    - name: Mermaid Authoring Diagrams
-      href: visualization/editor/Mermaid Authoring Diagrams.md
     - name: Ignored Markdown Preview Toggle
       href: visualization/editor/Ignored Markdown Preview Toggle.md
-    - name: Co-located Diagnostics Presentation
-      href: visualization/editor/Co-located Diagnostics Presentation.md
-    - name: Diagnostic Quick Fixes
-      href: visualization/editor/Diagnostic Quick Fixes.md
-    - name: Source Editor Autocompletion
-      href: visualization/editor/Source Editor Autocompletion.md
-    - name: Diagnostics Overlay
-      href: visualization/editor/Diagnostics Overlay.md
-    - name: Compiler-Projected Editor Semantics
-      href: visualization/editor/Compiler-Projected Editor Semantics.md
-    - name: Precise Speaker Tokens
-      href: visualization/editor/Precise Speaker Tokens.md
-    - name: Live Visualization — Heading Anchors
-      href: visualization/editor/Live Visualization - Heading Anchors.md
-    - name: Jump-Target Completion
-      href: visualization/editor/Jump-Target Completion.md
     - name: Construct Marks in the Source Preview
       href: visualization/editor/Construct Marks in the Source Preview.md
-  - name: Graph
+    - name: Mermaid Authoring Diagrams
+      href: visualization/editor/Mermaid Authoring Diagrams.md
+    - name: Line Debugger UI
+      href: visualization/editor/Line Debugger UI.md
+  - name: Graph interaction
     items:
-    - name: Dialogue Graph — Region Fold
-      href: visualization/graph/Dialogue Graph Region Fold.md
     - name: Graph Position Preservation
       href: visualization/graph/Graph Position Preservation.md
-    - name: Live Visualization — Node Inspector
-      href: visualization/graph/Live Visualization - Node Inspector.md
-    - name: Live Visualization — Reverse Jump
-      href: visualization/graph/Live Visualization - Reverse Jump.md
+    - name: Node Inspector
+      href: visualization/graph/Node Inspector.md
+    - name: Jump to Stage
+      href: visualization/graph/Jump to Stage.md
+    - name: Dialogue Graph Region Fold
+      href: visualization/graph/Dialogue Graph Region Fold.md
     - name: Region-Aware Graph Layout
       href: visualization/graph/Region-Aware Graph Layout.md
     - name: Keyboard Navigation
       href: visualization/graph/Keyboard Navigation.md
-  - name: Live session
+  - name: Served session
     items:
-    - name: Live Visualization — Explorer Toggle
-      href: visualization/session/Live Visualization - Explorer Toggle.md
-    - name: Live Visualization — Hot Reload
-      href: visualization/session/Live Visualization - Hot Reload.md
-    - name: Live Visualization — File Launcher
-      href: visualization/session/Live Visualization - File Launcher.md
-    - name: Live Visualization — Live Edit
-      href: visualization/session/Live Visualization - Live Edit.md
-    - name: Live Visualization — View and Edit Modes
-      href: visualization/session/Live Visualization - View and Edit Modes.md
-    - name: Live Visualization — Autosave
-      href: visualization/session/Live Visualization - Autosave.md
-    - name: Live Visualization — File Explorer
-      href: visualization/session/Live Visualization - File Explorer.md
-    - name: Live Visualization — Unified Served Shell
-      href: visualization/session/Live Visualization - Unified Served Shell.md
-    - name: Live Visualization — Line Debugger UI
-      href: visualization/session/Live Visualization - Line Debugger UI.md
-    - name: Live Visualization — Zen Mode
-      href: visualization/session/Live Visualization - Zen Mode.md
-    - name: Live Visualization — Narrow Screen Layout
-      href: visualization/session/Live Visualization - Narrow Screen Layout.md
-    - name: Live Visualization — Problems Panel
-      href: visualization/session/Live Visualization - Problems Panel.md
-    - name: Opening a Script Without Reloading the Page
-      href: visualization/session/Opening a Script Without Reloading the Page.md
-    - name: One Watcher for the Served Tree
-      href: visualization/session/One Watcher for the Served Tree.md
+    - name: Served Shell
+      href: visualization/session/Served Shell.md
+    - name: Live Edit and Autosave
+      href: visualization/session/Live Edit and Autosave.md
+    - name: Explorer
+      href: visualization/session/Explorer.md
+    - name: Chrome and Layout
+      href: visualization/session/Chrome and Layout.md
+    - name: Served Client Packaging
+      href: visualization/session/Served Client Packaging.md
 - name: Other notes
   items:
-  - name: BBCode Rendering
-    href: other/BBCode Rendering.md
-  - name: Development Cycle Optimization
-    href: other/Development Cycle Optimization.md
-  - name: Enum Wire Names
-    href: other/Enum Wire Names.md
-  - name: Interactive Playthrough
-    href: other/Interactive Playthrough.md
-  - name: Namespace Layout
-    href: other/Namespace Layout.md
   - name: Target Frameworks
     href: other/Target Frameworks.md
+  - name: Namespace Layout
+    href: other/Namespace Layout.md
+  - name: Enum Wire Names
+    href: other/Enum Wire Names.md
+  - name: Development Cycle Optimization
+    href: other/Development Cycle Optimization.md
+  - name: BBCode Rendering
+    href: other/BBCode Rendering.md
+  - name: Interactive Playthrough
+    href: other/Interactive Playthrough.md

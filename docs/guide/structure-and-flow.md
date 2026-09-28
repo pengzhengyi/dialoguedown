@@ -91,7 +91,7 @@ options should appear in a random order.
 
 ## Random choices
 
-Sometimes you want the *engine* to pick, not the player — a condition who greets you
+Sometimes you want the *engine* to pick, not the player — a guard who greets you
 one of several ways, a coin that lands heads or tails. Give an option a **weight**
 — a code span ending in `%` — and the whole list becomes a **random choice**: at
 runtime the engine selects exactly one option by weight and runs its body. No
@@ -188,8 +188,13 @@ dialogue.
 
 ```markdown
 => [Play tennis](#play-tennis)
-=> [Meet Bob](chapter-02.md#meet-bob)
+
+=> [Meet Bob](chapter-02.dialogue.md#meet-bob)
 ```
+
+A jump into another file parses today, but the compiler does not resolve it yet:
+it reports warning `DLG2016`, and reading continues past the jump as if it
+were not there.
 
 > [!NOTE]
 > **A jump cannot appear inside a heading.** A heading marks a scene, which is
@@ -344,7 +349,7 @@ The guard says nothing and waves you through.
 
 If `Angry` is true, that line plays; if it is false, the line is skipped and
 reading continues with the next line. The condition is not spoken — it sits
-before the speaker, and `Condition` is still recognized as the speaker.
+before the speaker, and `Guard` is still recognized as the speaker.
 
 A line with no speaker can be conditional too:
 
@@ -358,6 +363,7 @@ often a second conditional line testing the opposite flag.
 
 ```markdown
 `Angry?` Guard: You again? Get out.
+
 `NotAngry?` Guard: Back so soon? Go on through.
 ```
 
@@ -374,8 +380,8 @@ as true. The condition goes at the very start of the option:
 - Search for another way in.
 ```
 
-If `HasKey` is true the reader sees both options; if it is false only *Search for
-another way in* is offered. The condition guards the whole option, not just its
+If `HasKey` is false, the first option is still offered but marked unavailable,
+so the player can see it and cannot pick it. The condition guards the whole option, not just its
 first line.
 
 A [random option](#random-choices) can be conditional too — the condition comes
@@ -464,6 +470,7 @@ top-level scenes instead:
 
 ```markdown
 `Rich?` => [The lord's hall](#the-lords-hall)
+
 `Poor?` => [The gutter](#the-gutter)
 ```
 
@@ -475,7 +482,7 @@ flag for the opposite case.
 
 ## Ending a run
 
-`#END` is a reserved jump target that ends the current run. Divert to it to stop
+`#END` is a reserved jump target that ends the current run. Jump to it to stop
 the dialogue at a definite endpoint:
 
 ```markdown
@@ -493,10 +500,8 @@ In a Markdown preview `=> [The end](#END)` renders as an ordinary link. Because
 `#END` matches no heading, the link simply scrolls nowhere; the compiler
 recognizes it as the reserved endpoint.
 
-> [!NOTE]
-> Reaching `#END` stops a run *early*. How reading otherwise flows from one scene
-> to the next — the dialogue's progression order — and the runtime that walks it
-> are still in progress; see the *Progression Order* design note for the model.
+Without a jump, reading falls through from one scene to the next in the order
+they are written, and the run ends after the last line of the file.
 
 ## Comments
 

@@ -2,7 +2,8 @@
 
 Engine-agnostic, C#-first **dialogue compiler** library: it lowers a Markdown
 dialogue script through distinct stages — **source → Markdown AST → Dialogue AST
-→ desugared AST → (semantic analysis → graph → runtime, in progress)** — keeping
+→ desugared AST → semantic model → dialogue graph → playbook**, which a runner
+then plays — keeping
 the core free of any Godot dependency so it stays reusable and unit-testable. An
 optional TypeScript visualization renders each compiler stage as an interactive
 report.

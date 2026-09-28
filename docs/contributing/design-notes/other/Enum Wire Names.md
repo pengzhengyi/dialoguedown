@@ -1,10 +1,9 @@
-# Enum wire names
+# Enum Wire Names
 
 > [!NOTE]
 > Status: **implemented**. Every enum in a JSON contract pins its wire name with a
 > hand-written converter, so no shipped build needs a .NET 9+ package. The
-> `net8.0` target stays — only the out-of-band reference goes. Closes
-> [#314](https://github.com/pengzhengyi/dialoguedown/issues/314); the target
+> `net8.0` target stays — only the out-of-band reference goes. The target
 > story remains [Target Frameworks](./Target%20Frameworks.md).
 
 ## Table of contents
@@ -34,8 +33,7 @@ The pin is one hand-written converter per enum. The alternative — the .NET 9
 attribute `[JsonStringEnumMemberName]` — would make the `net8.0` build carry
 an out-of-band `System.Text.Json` package: **~800 KB** (660.8 KB
 `System.Text.Json` + 75.3 KB `System.IO.Pipelines` + 64.3 KB
-`System.Text.Encodings.Web`) for net8.0 consumers only, per
-[#314](https://github.com/pengzhengyi/dialoguedown/issues/314).
+`System.Text.Encodings.Web`) for net8.0 consumers only.
 
 **In scope:** the two enums, their converters, the tests that keep the wire
 names and the strictness, the removal of both conditional package references,
@@ -76,8 +74,8 @@ Surveyed 2026-09-24 (NuGet metadata and repository activity):
 | [`PolySharp`](https://github.com/Sergio0694/PolySharp) 1.16 / [`Polyfill`](https://github.com/SimonCropp/Polyfill) 11.4 | MIT | Actively maintained polyfill generators | They can polyfill the attribute *type*, but the net8.0 serializer ignores it — the behavior is what is missing. |
 
 Five members across two enums do not justify a dependency, an attribute swap,
-and an upgrade surface. The hand-written route is also the fallback #314
-already named.
+and an upgrade surface. The hand-written route was also the
+natural fallback.
 
 ## The converter
 

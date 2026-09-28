@@ -1,4 +1,4 @@
-# Asking the world
+# Asking the World
 
 > [!NOTE]
 > Status: **implemented**. The pass that lets a run ask the world a question and
@@ -7,10 +7,8 @@
 > condition's arms are asked and answered. An option's condition arrives with
 > choices.
 >
-> It builds on the [runtime core](./Runtime%20Core.md), whose protocol and
-> harness it extends, and on
-> [waiting on the host](./Waiting%20on%20the%20Host.md), whose reverse-request
-> shape it follows. It applies the
+> It extends the [Runner](./Runner.md)'s protocol and harness, and follows the
+> shape of its wait on the host. It applies the
 > [dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
 > owns the cross-cutting decisions this note uses, and does not restate them.
 

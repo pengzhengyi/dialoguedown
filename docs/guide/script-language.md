@@ -145,7 +145,6 @@ deliberate.
 ```markdown
 ---
 title: Gallery Visit
-speakers: speakers.json
 ---
 
 <!-- A short gallery scene that exercises the whole language. -->

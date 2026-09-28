@@ -1,7 +1,9 @@
-# Live Visualization — Reverse Jump
+# Jump to Stage
 
 > [!NOTE]
-> Status: **implemented** — the source→node reverse navigation described here ships in the report.
+> Status: **implemented**. Right-clicking the Source editor offers **Jump to ▸ \<stage\>**, which
+> reveals the node in that stage whose span most tightly encloses the selection — the reverse of
+> [Jump to source](Node%20Inspector.md).
 
 ## Goal and scope
 
@@ -18,11 +20,9 @@ is **tedious to do by hand**: finding one small node in a large graph is hard,
 while a node already shows its source span. Automating the hard direction is where
 the value concentrates.
 
-**In scope:** the reverse-navigation action, a nested context-menu affordance in
-the Source editor, closest-enclosing-span matching, and reveal-and-center in the
-target tab. **Out of scope (planned seam):** a dedicated global keyboard *chord*
-(e.g. a leader key then a per-stage digit). A keybinding that merely *opens* the
-Jump-to menu at the caret is in scope.
+**In scope:** the action, a nested context-menu entry in the Source editor, closest-enclosing-span
+matching, reveal-and-center in the target tab, and `Alt-J` to open the stage list at the caret.
+**Out of scope:** a blind keyboard chord (a leader key, then a per-stage digit).
 
 ## Functionality checklist
 
@@ -43,8 +43,7 @@ Jump-to menu at the caret is in scope.
 - [x] The context menu supports one level of nested submenu with mouse and
       keyboard navigation (open with `ArrowRight`/`Enter`, leave with
       `ArrowLeft`/`Escape`).
-- [x] `Alt-J` opens the Jump-to picker at the caret (the entry point of the
-      "shortcut series").
+- [x] `Alt-J` opens the Jump-to picker at the caret.
 - [x] Hovering a stage **previews** its enclosing span in the source with a faint
       highlight, distinct from the live selection; it clears on leave or dismiss.
 - [x] The submenu is a **hover-intent flyout** — visible only while the pointer
@@ -74,9 +73,7 @@ stage knowledge and revealing live in `app.ts`.
   cross-tab handoff* (`beginNavigation` → `activate`), mirroring `jumpToSource`
   rather than inventing new machinery.
 - **Label "Jump to".** The app already says **Jump to source** for cross-stage
-  navigation; using **Jump to ▸ \<stage\>** keeps one verb for the whole
-  bidirectional pair. (Alternative "View in" was considered; "Jump to" wins on
-  vocabulary consistency.)
+  navigation; **Jump to ▸ \<stage\>** keeps one verb for the whole bidirectional pair.
 - **Enclose by subtree extent, capped at a scene.** A container's *own* span is
   often just a header — a `Scene` node covers only its heading line, while its
   lines and choices are `Child` nodes. Matching on own spans alone therefore
@@ -102,11 +99,12 @@ stage knowledge and revealing live in `app.ts`.
   `source.beginNavigation`, exactly like a normal tab switch, so an Auto-save
   flushes or a Manual prompt resolves before the jump.
 - **Nested submenu over a flat list.** A `Jump to ▸` flyout groups the stage
-  targets under one entry (the user's requested shape and the natural anchor for a
-  keyboard series), rather than scattering `Jump to X` items across the top menu.
+  targets under one entry, rather than scattering `Jump to X` items across the top menu.
   It behaves as a **hover-intent** flyout — opening on hover of the parent and
   closing shortly after the pointer leaves both it and the parent — and its stage
   rows are icon-less, since a repeated glyph adds no meaning.
+- **Pipeline order.** Stages are listed in pipeline order, which is more predictable than
+  listing the most specific match first.
 - **Hover preview.** Hovering a stage highlights, in the source, the extent its
   jump would reveal — the enclosing node's subtree extent in that stage — via a
   CodeMirror decoration (`jumpPreviewField` + `setJumpPreview`) kept fainter than
@@ -129,7 +127,7 @@ stage knowledge and revealing live in `app.ts`.
 flowchart LR
     sel["Source selection [from,to)"] -->|right-click / Alt-J| menu["Jump to ▸ stage"]
     menu -->|choose stage| run["target.run(from,to)"]
-    run --> find["findEnclosingNode(nodes, edges, from, to)"]
+    run --> find["findEnclosingNode(scope, from, to)"]
     find -->|node.id| nav["beginNavigation → activate(tab)"]
     nav --> reveal["TreeView.selectById(id, { center:true })"]
 ```
@@ -150,10 +148,7 @@ stage list as a flat picker at the caret.
 - **e2e** — right-click the Source editor, open **Jump to**, pick a stage, and
   assert the corresponding node is selected and centered in that tab.
 
-## Deferred
+## Open questions
 
-- **Blind keyboard chord.** `Alt-J` opens the Jump-to picker at the caret; a full
-  blind chord (a leader then a per-stage digit, jumping with no visible menu) is
-  deferred. The picker is data-driven, so the chord can reuse it later.
-- **Target ordering.** Stages are listed in pipeline order. A "most specific match
-  first" ordering was considered but rejected as less predictable.
+- **A blind keyboard chord** — a leader key, then a per-stage digit, jumping with no visible menu.
+  The picker is data-driven, so a chord can reuse it.

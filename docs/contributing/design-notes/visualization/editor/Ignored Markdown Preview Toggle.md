@@ -1,22 +1,13 @@
 # Ignored Markdown Preview Toggle
 
 > [!NOTE]
-> Status: **implemented**, with the glyphs later revised. Each ignored region can be shown or
-> hidden on its own, while the footer keeps two commands that override every region at once.
-
-The glyphs have since changed.
-
-> [!IMPORTANT]
-> [Collapsing Across the Report](../report/Collapsing%20Across%20the%20Report.md) supersedes this note
-> wherever the two disagree about glyphs. A region's control is now a **chevron on the leading
-> edge** and `circle-slash` is a **status mark on the trailing edge**, on inline and block regions
-> alike — see [D5](#d5--the-ignored-marker-is-the-regions-own-control) below, which records the
-> reasoning that was replaced.
+> Status: **implemented**. Each ignored region in the Preview can be shown or hidden on its own,
+> and two footer commands reset every region at once.
 
 ## Table of contents
 
 - [Goal and scope](#goal-and-scope)
-- [Vocabulary](#vocabulary)
+- [Ubiquitous language](#ubiquitous-language)
 - [Functionality checklist](#functionality-checklist)
 - [Writer-facing behavior](#writer-facing-behavior)
 - [Architecture](#architecture)
@@ -45,7 +36,7 @@ reload, and a real configured inline-ignore demo through
 per-region handling configuration. This component only decides Preview visibility for content the
 compiler has already classified as ignored.
 
-## Vocabulary
+## Ubiquitous language
 
 | Term | Meaning |
 | --- | --- |
@@ -82,17 +73,17 @@ The two panes end with matching compiler-owned footers:
 The state prose names the view exactly: `all shown in Preview`, `all hidden in Preview`, or
 `2 of 4 shown in Preview` once any region differs from the baseline.
 
-Every region carries its own control on the `circle-slash` marker it already displays. Clicking it
+Every region carries its own chevron control beside a static `circle-slash` mark. Clicking the chevron
 shows or hides that region alone; the footer prose updates to reflect the mixed view. A hidden
 document keeps compact anchors where its content was:
 
 ```text
-circle-slash  Table · 4 lines
+›  circle-slash  Table · 4 lines
 
-Alice: Visit [circle-slash] before sundown.
+Alice: Visit [› circle-slash] before sundown.
 
-circle-slash  Code block · 5 lines
-circle-slash  Divider
+›  circle-slash  Code block · 5 lines
+›  circle-slash  Divider
 ```
 
 The inline chip's tooltip names the kind and source, for example
@@ -117,7 +108,7 @@ flowchart LR
 
 | Type | Responsibility |
 | --- | --- |
-| `renderDocument` | Emits ignored regions with kind, source-line count, tooltip source, a stable region key, and each region's marker button. |
+| `renderDocument` | Emits ignored regions with kind, source-line count, tooltip source, a stable region key, and each region's chevron button. |
 | `createIgnoredPreviewController` | Owns the baseline, the session overrides, and the footer. Applies effective visibility after every render and handles region and footer clicks. |
 | `source-view.ts` | Hosts the Preview shell and refreshes the controller after each render. Unchanged. |
 | `styles.css` | Mirrors the `#END` footer, and styles expanded regions, collapsed summaries, inline chips, and the region control's hover and focus states. |
@@ -166,37 +157,22 @@ Ignored HTML is shown as escaped source rather than executed markup. Markdig exp
 and closing tags as separate tokens; rendering them as HTML after the compiler ignored them would
 unbalance Preview DOM. Escaped source also better communicates what was left out.
 
-### D5 — The ignored marker is the region's own control
+### D5 — A chevron controls the region; `circle-slash` only states what it is
 
-> [!IMPORTANT]
-> **Superseded.** Reusing the status glyph as the control made `circle-slash` mean *press me* here
-> and *this is ignored* everywhere else. The control is now a chevron and the status mark is a
-> separate `circle-slash` that trails the region. The button semantics below still hold.
+Every region, block or inline, carries a chevron button and a separate static `circle-slash`
+mark. The chevron is the report's shared fold control
+([Collapsing Across the Report](../report/Collapsing%20Across%20the%20Report.md)), so a reader meets
+one glyph for "show or hide" everywhere; `circle-slash` means *excluded from dialogue* and nothing
+else. Using the status mark as the button would make it mean *press me* here and *this is ignored*
+everywhere else.
 
-Each ignored region already displays a `circle-slash` marker meaning *excluded from dialogue*. That
-marker becomes the region's button rather than growing a second glyph beside it, which would double
-the width of an inline chip and break the sentence it sits in.
-
-The glyph stays `circle-slash` in both states, because visibility is already self-evident from
-whether the content is there; the glyph's job is to say *what kind of region this is*. What makes it
-a control instead of a sticker is real button semantics: it is focusable, exposes `aria-expanded`,
-names its action ("Hide ignored Table · 4 lines"), and shows hover and focus affordances.
-
-Static status glyphs remain distinguishable at both layers. The conditional-dialogue `question`
-marker and the footer's category marker stay non-focusable CSS pseudo-elements, so assistive
-technology and pointer users meet exactly one control per region.
-
-Turning a sticker into a control exposes three things a pseudo-element never had to survive. The
-marker must **lead its region and stay put**: it sits in a gutter at the region's start in both
-states, because a control that moves when clicked forces a reader to chase it across the pane to
-undo what they just did. Hiding an inline region therefore collapses the span onto that same
-gutter, and the span holds one line box so the marker cannot drop onto the text baseline.
-
-The marker also needs its own stacking level, because a region's own content — a table's cells, for
-example — otherwise paints over it and swallows the click. And it has to opt out of the button
-styling Pico applies to every `button`: Pico redefines `--pico-background-color` to its accent and
-adds a bottom margin, which would tint the marker and grow the footer past the height it shares
-with the Source editor's `#END` footer.
+The chevron is a real control: focusable, `aria-expanded`, and named for its action ("Hide ignored
+Table · 4 lines"). It stays put in both states, so a reader never chases it across the pane to undo
+a click; a hidden inline region collapses onto the same spot, holding one line box. It has its own
+stacking level, so a table's cells cannot swallow the click, and it opts out of Pico's button
+background and margin, so the footer keeps the height it shares with the Source editor's `#END`
+footer. The conditional-dialogue `question` mark and the footer's category mark are non-focusable
+pseudo-elements, so each region has exactly one control.
 
 ### D6 — Ignored content is dimmed, but never below legibility
 
@@ -214,14 +190,13 @@ through.
 
 ### D7 — A persisted baseline and session-only overrides
 
-The baseline is how the writer wants to read the served project, so one conditional local-storage key
-applies across file switches and survives hot reloads on the same report origin. A fresh origin
-starts from the `shown` baseline.
+The baseline is how the writer wants to read the project, so one `localStorage` key
+(`dd-ignored-preview-collapsed`) holds it for the report's origin. A fresh origin starts from the
+`shown` baseline.
 
 Overrides are working state, not preference: they live in memory, keyed by region key, and clear on
 any global command. Persisting them would accumulate keys for regions that no longer exist and
-would restore a scattered view days later with no visible cause. Opening another script is a full
-page navigation, so a file switch clears overrides without the controller needing a document API.
+would restore a scattered view days later with no visible cause. A page load starts with none.
 
 Overrides deliberately survive the two events that happen constantly while writing: the Preview
 re-render after every keystroke, and a hot reload that leaves the region's own text alone.
@@ -266,7 +241,6 @@ whitespace-delimited HTML `class` attribute, not `class=` inside an autolink que
 | Region's own text edited | Its key changes, so it returns to the baseline. |
 | Two identical regions | The occurrence counter keeps their overrides apart. |
 | Region deleted | Its entry is unused and cleared by the next global command. |
-| File switch | Full page navigation; the baseline is restored and overrides start empty. |
 | Ignored inline among words | One inline chip control preserves surrounding spaces and flow. |
 | Ignored content inside a blockquote | Region still matches and collapses; literal quote markers inside code remain. |
 | Autolink URL containing `class=` | Link still receives the ignored class and collapses. |

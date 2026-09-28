@@ -1,92 +1,66 @@
-# Block controls
+# Block Controls
 
 > [!NOTE]
-> Status: **implemented**. Runtime evaluation is deferred to the graph/runtime.
+> Status: **implemented**. A block `if`/`elseif`/`else` —
+> grouped, mutually exclusive branches with an optional fallback — compiles to a
+> `branch` node whose arms carry conditions. The runner tries the arms in order and
+> takes the first whose condition holds (see
+> [Asking the World](../runtime/Asking%20the%20World.md)).
 
 ## Table of contents
 
-- [Block controls](#block-controls)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Prior art](#prior-art)
-  - [Chosen shape](#chosen-shape)
-    - [Marker spelling — two spans](#marker-spelling--two-spans)
-    - [Grouping — one connected blockquote](#grouping--one-connected-blockquote)
-    - [Rendering in a stock preview](#rendering-in-a-stock-preview)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Grammar](#grammar)
-  - [Architecture](#architecture)
-  - [Interfaces and responsibilities](#interfaces-and-responsibilities)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — Recognize in the transpiler, from the blockquote structure](#d1--recognize-in-the-transpiler-from-the-blockquote-structure)
-    - [D2 — The marker is the two-span form](#d2--the-marker-is-the-two-span-form)
-    - [D3 — One connected blockquote, enforced; a severed chain is an error](#d3--one-connected-blockquote-enforced-a-severed-chain-is-an-error)
-    - [D4 — `ControlBlock` / `Branch` mirror `Choices` / `Choice`](#d4--controlblock--branch-mirror-choices--choice)
-    - [D5 — Editor support offsets the `>` authoring tax](#d5--editor-support-offsets-the--authoring-tax)
-    - [D6 — A scene is a top-level unit; no heading inside a branch](#d6--a-scene-is-a-top-level-unit-no-heading-inside-a-branch)
-    - [D7 — Separate every marker and utterance with a quoted blank line](#d7--separate-every-marker-and-utterance-with-a-quoted-blank-line)
-  - [Markdown interaction](#markdown-interaction)
-  - [Diagnostics](#diagnostics)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Testability](#testability)
-  - [Alternatives not chosen](#alternatives-not-chosen)
-  - [Crosscheck](#crosscheck)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Ubiquitous language](#ubiquitous-language)
+- [Prior art](#prior-art)
+- [Chosen shape](#chosen-shape)
+  - [Marker spelling — two spans](#marker-spelling--two-spans)
+  - [Grouping — one connected blockquote](#grouping--one-connected-blockquote)
+  - [Rendering in a stock preview](#rendering-in-a-stock-preview)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Grammar](#grammar)
+- [Architecture](#architecture)
+- [Interfaces and responsibilities](#interfaces-and-responsibilities)
+- [Key design decisions](#key-design-decisions)
+  - [D1 — Recognize in the transpiler, from the blockquote structure](#d1--recognize-in-the-transpiler-from-the-blockquote-structure)
+  - [D2 — The marker is the two-span form](#d2--the-marker-is-the-two-span-form)
+  - [D3 — One connected blockquote, enforced; a severed chain is an error](#d3--one-connected-blockquote-enforced-a-severed-chain-is-an-error)
+  - [D4 — `ControlBlock` / `Branch` mirror `Choices` / `Choice`](#d4--controlblock--branch-mirror-choices--choice)
+  - [D5 — Editor support offsets the `>` authoring tax](#d5--editor-support-offsets-the--authoring-tax)
+  - [D6 — A scene is a top-level unit; no heading inside a branch](#d6--a-scene-is-a-top-level-unit-no-heading-inside-a-branch)
+  - [D7 — Separate every marker and utterance with a quoted blank line](#d7--separate-every-marker-and-utterance-with-a-quoted-blank-line)
+- [Markdown interaction](#markdown-interaction)
+- [Diagnostics](#diagnostics)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
+- [Alternatives not chosen](#alternatives-not-chosen)
 
 ## Goal and scope
 
 A writer often wants a **group** of dialogue — several lines, a choice, a jump — to
 play only under some game-state condition, and to fall back otherwise. The inline
-[**condition**](./Conditions.md) (`` `key?` ``) already guards a single
-[jump](./Conditional%20Jump.md), [line](./Conditional%20Line.md), or
-[choice option](./Conditional%20Choice.md), each **independently** and with **no
-`else`**. This construct is the complementary one: a **block `if`/`elseif`/`else`** —
+[**condition**](./Conditions.md) (`` `key?` ``) guards a single jump, line, or
+choice option, each **independently** and with **no `else`**. This construct is the complementary one: a **block `if`/`elseif`/`else`** —
 **grouped, mutually-exclusive** branches with an optional fallback.
 
 In scope: the surface **shape** (marker spelling and grouping), the **grammar**, the
 **AST** and how it is recognized while transpiling, **diagnostics**, and source
 **spans**.
 
-Out of scope: **runtime evaluation** — choosing and playing a branch belongs to the
-graph/runtime — and
-**negation / in-script expressions**, unchanged from the condition primitive (a
-writer composes logic behind a single game-defined key).
+Out of scope: **negation and in-script expressions**, as for every
+[condition](./Conditions.md#d10--no-negation-no-expressions).
 
-This note assumes the shipped [Conditions](./Conditions.md),
+This note assumes the [Conditions](./Conditions.md),
 [Unquoted Keys](./Unquoted%20Keys.md), and [Control Line](./Control%20Line.md) notes
 and does not repeat them: a branch marker takes the condition primitive, which is
 unquoted by default, and the **marker** is a *control line* (an effect-only,
 speaker-less block). Read those, plus [Progression Order](./Progression%20Order.md),
 first.
 
-## Functionality checklist
-
-Design targets for the implementation:
-
-- [x] Recognize a **connected blockquote** led by an `` `if` `` marker as a single
-      `ControlBlock` with mutually-exclusive branches.
-- [x] Parse the **two-span marker** — `` `if` ``/`` `elseif` `` plus the verbatim
-      condition span `` `cond?` ``, and a bare `` `else` `` — reusing the shipped
-      condition reader.
-- [x] Group each **branch body** across blank-line-separated utterances, bounded by
-      the blockquote (no terminator keyword).
-- [x] Nest via a nested `> >` blockquote, recursively.
-- [x] Report a **severed chain** (a `` `elseif` ``/`` `else` `` opening its own
-      blockquote) and **malformed marker order** as errors; never silently re-pair.
-- [x] Report a **scene heading inside a branch** — a scene stays a top-level unit.
-- [x] Require a **quoted blank line** between markers/utterances and to close a nested
-      branch; report a marker fused into content.
-- [x] Read a **non-marker blockquote** as a transparent wrapper — its inner blocks in place.
-- [x] Preserve source spans of the block, each branch, and each condition.
-- [x] Handle `ControlBlock` in every block switch (rewriter, traversal, projection,
-      validation), with focused tests at each seam.
-
 ## Ubiquitous language
 
 | Term | Meaning |
 | --- | --- |
-| **Condition** | The shipped game-state boolean, `` `key?` `` (see [Unquoted Keys](./Unquoted%20Keys.md)). |
+| **Condition** | The game-state boolean, `` `key?` `` (see [Conditions](./Conditions.md)). |
 | **Marker** | The token that opens a branch: `` `if` `` / `` `elseif` `` (each with a condition) or `` `else` ``. A *control line* (see [Control Line](./Control%20Line.md)). |
 | **Branch** | One arm — an `if`, an `elseif`, or the `else` — a guarding condition (none for `else`) plus its body. |
 | **Branch body** | The blocks a branch plays when taken; may hold a nested control block. |
@@ -131,7 +105,7 @@ marker `` `if Rich?` `` would parse as a single condition on the key `if Rich`, 
 `if` guarding `Rich`. The two-span form sidesteps that: `` `if` `` is a bare,
 sigil-less, quote-less span — a closed marker vocabulary that collides with nothing (a
 condition needs a sigil, a value read needs quotes, a command needs parens) — and
-`` `Rich?` `` is the *verbatim* shipped condition, reusing its reader, highlighting,
+`` `Rich?` `` is the *verbatim* condition, reusing its reader, highlighting,
 and completion. It composes even with spaces: `` `if` `` `` `Is Alice rich?` ``.
 
 ### Grouping — one connected blockquote
@@ -152,7 +126,7 @@ arms through unbroken `>`, so each utterance's blank-line separator must be a ba
 line, and reflowing means maintaining `>` (and `> >` when nested). DialogueDown already
 projects editor semantics from the compiler (see
 [Compiler-Projected Editor Semantics](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md)
-and [Source Editor Autocompletion](../visualization/editor/Source%20Editor%20Autocompletion.md)); the same
+and [Source Editor Autocompletion](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md)); the same
 seam maintains the `>` prefixes as the writer types, completes the markers, and
 highlights them — so the friction is an editor affordance, not a manual chore.
 
@@ -196,8 +170,8 @@ they are armed:
 The `` `if` `` opens the block; each `` `elseif` `` and the final `` `else` `` continue
 the **same** blockquote (note the bare `>` separators). A branch body may hold several
 utterances, a bare jump, a silent command, or a **nested** conditional (the `> >`
-block above). Zero or one branch is taken at play time: the first true guard, the
-optional `else`, or none when no guard matches.
+block above). Zero or one branch is taken at play time: the first true condition, the
+optional `else`, or none when no condition holds.
 
 A blockquote that is **not** led by a marker is a transparent wrapper: its inner blocks
 read as ordinary content, in place.
@@ -219,7 +193,7 @@ IfMarker     = "`" , "if" , "`"     , Condition ;   (* two spans: keyword + cond
 ElseIfMarker = "`" , "elseif" , "`" , Condition ;
 ElseMarker   = "`" , "else" , "`" ;                 (* no condition *)
 
-Condition    = "`" , Key , "?" , "`" ;              (* the shipped condition; Unquoted Keys *)
+Condition    = "`" , Key , "?" , "`" ;              (* see Conditions *)
 BranchBody   = { Block } ;                          (* any blocks, incl. a nested ControlBlock *)
 ```
 
@@ -234,7 +208,7 @@ Recognition happens **in the transpiler**, not in a desugar rule. A control bloc
 *Markdown-level* shape — a marker-headed blockquote with nested blocks — so it must be
 built where that structure is still in hand. (Contrast the [Control Line](./Control%20Line.md),
 recognized in desugar because it needs jumps assembled first.) Two things change; the
-rest of the pipeline recurses into branch bodies unchanged.
+rest of the pipeline recurses into branch bodies.
 
 ```mermaid
 flowchart LR
@@ -274,18 +248,18 @@ completeness the [Control Line](./Control%20Line.md) note relied on.
 
 ## Interfaces and responsibilities
 
-| Component                       | Responsibility                                                                            | Change                                           |
-| ------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `QuoteBlock` (Markdown AST)     | Hold a blockquote's child blocks structurally.                                            | New; converter stops flattening quotes.          |
-| `MarkdigToMarkdownAstConverter` | Map a Markdig `QuoteBlock` to the new node.                                               | Add the case.                                    |
-| `MarkerRecognition`             | Read a paragraph as an `` `if` ``/`` `elseif` `` + condition, or `` `else` ``.            | New; reuses the condition reader.                |
-| `BlockBuilder`                  | Dispatch a quote to control construction or transparently transpile its inner blocks.     | Add the `QuoteBlock` case.                       |
-| `ControlBlockBuilder`           | Validate and split markers, build branches, and recurse through `BlockBuilder`.           | New builder.                                     |
-| `ControlBlock` / `Branch` (AST) | Model the construct and its arms; carry spans and each arm's condition.                   | New records.                                     |
-| `DialogueAstRewriter`           | Rewrite a `ControlBlock` and each branch body.                                            | New hook (like `RewriteChoice`).                 |
-| `ScriptNodeExtensions`          | Enumerate a `ControlBlock`'s branches and each branch's children.                         | New arms.                                        |
-| `DialogueAstProjection`         | Project a `ControlBlock` to a report node.                                                | New arm.                                         |
-| Validation rules                | Treat a branch condition as a bound guard; reject scene headings inside branch bodies.    | New/extended rules.                              |
+| Component | Responsibility |
+| --- | --- |
+| `QuoteBlock` (Markdown AST) | Hold a blockquote's child blocks structurally. |
+| `MarkdigToMarkdownAstConverter` | Map a Markdig `QuoteBlock` to the Markdown AST node. |
+| `MarkerRecognition` | Read a paragraph as an `` `if` ``/`` `elseif` `` + condition, or `` `else` ``. |
+| `BlockBuilder` | Dispatch a quote to control construction or transparently transpile its inner blocks. |
+| `ControlBlockBuilder` | Validate and split markers, build branches, and recurse through `BlockBuilder`. |
+| `ControlBlock` / `Branch` (AST) | Model the construct and its arms; carry spans and each arm's condition. |
+| `DialogueAstRewriter` | Rewrite a `ControlBlock` and each branch body. |
+| `ScriptNodeExtensions` | Enumerate a `ControlBlock`'s branches and each branch's children. |
+| `DialogueAstProjection` | Project a `ControlBlock` to a report node. |
+| Validation rules | Treat a branch condition as a bound condition; reject scene headings inside branch bodies. |
 
 ## Key design decisions
 
@@ -382,7 +356,7 @@ checks recurse into branch bodies.
   lacks its required condition span.
 - **Unexpected `else` condition** (`DLG1112`) — an `` `else` `` carries a condition;
   recovery keeps it as the unconditional fallback.
-- **Orphan condition** (`DLG1106`, reused) — a branch's condition is a *bound* guard, not
+- **Orphan condition** (`DLG1106`, reused) — a branch's condition is *bound*, not
   an orphan, exactly as for a conditional line or control line.
 - **Unreachable after a jump** (reused) — the [Progression Order](./Progression%20Order.md)
   check still applies to a jump inside a branch.
@@ -403,6 +377,7 @@ checks recurse into branch bodies.
 | a marker fused into a paragraph (no quoted blank line) | marker-standalone error (`DLG1110`) | a marker must be alone on its line |
 | a blockquote **not** led by a marker | transparent wrapper (inner blocks in place) | the construct claims only marker-headed quotes |
 | `` `if Rich?` `` (one span) | a condition on the key `if Rich` | not a marker — see [D2](#d2--the-marker-is-the-two-span-form) |
+| an empty or effect-only branch body | valid | a branch may do nothing, or only act |
 
 ## Testability
 
@@ -429,15 +404,3 @@ checks recurse into branch bodies.
   ([D2](#d2--the-marker-is-the-two-span-form)).
 - **Command-style marker** `` `If(Rich?)` `` — collides with the command form and inverts
   the "a command acts, a condition reads" distinction.
-
-## Crosscheck
-
-| Outcome | Result |
-| --- | --- |
-| **Achieved** | Connected and nested blockquotes build semantic `ControlBlock` / `Branch` nodes; grammar and placement diagnostics recover without polluting the AST; traversal, desugaring, validation, visualization, and editor highlighting cover the construct. |
-| **Changed** | Control construction moved from `BlockBuilder` into a dedicated `ControlBlockBuilder`; malformed marker shapes use five focused transpile diagnostics; marker highlighting combines the Markdown AST's keyword spans with the semantic Dialogue AST rather than retaining marker kinds on `Branch`. Empty and effect-only branch bodies remain valid. |
-| **Not implemented** | Runtime branch selection remains deferred to the runtime. |
-
-## Open questions and deferred work
-
-- **Runtime evaluation** — selecting and playing a branch belongs to the graph/runtime.

@@ -97,8 +97,8 @@ Given a script:
 | The `if` quote | Dialogue | Fully colored inside a question-marked region — it plays |
 | The `<div>` | Kept | Ordinary dialogue text, because that is exactly what it becomes |
 
-The blockquote is the point of the change: today it is the dimmest thing on screen, though it is
-the only one of the four that branches the dialogue.
+The blockquote matters most: a muted quote would be the dimmest thing on screen, though it is the
+only one of the four that branches the dialogue.
 
 ## Architecture
 
@@ -133,7 +133,7 @@ flowchart LR
 
 ## Key design decisions
 
-### DD1 — Project what the policy decides; style natively what Markdown already knows
+### D1 — Project what the policy decides; style natively what Markdown already knows
 
 The editor projects a construct's fate from the compiler **only when that fate can vary**.
 
@@ -151,7 +151,7 @@ This sharpens the "compiler is the single source of truth" principle inherited f
 compiler is the authority on **DialogueDown's grammar and its configuration**, not on plain
 Markdown the client can already parse correctly.
 
-### DD2 — Recover ignored spans from the diagnostic the front end already reports
+### D2 — Recover ignored spans from the diagnostic the front end already reports
 
 An ignored construct leaves nothing behind in the Markdown tree — being left out is what
 `Ignore` means — so it cannot be found by inspecting the tree. It can be found by inspecting
@@ -166,7 +166,7 @@ The tradeoff: the highlighting depends on that diagnostic being produced, so dem
 suppressing `DLG1114` would silently take the coloring with it. A test pins the pair together so
 it cannot happen unnoticed.
 
-### DD2a — The diagnostics reach the projection as an optional argument
+### D2a — The diagnostics reach the projection as an optional argument
 
 `Project` takes the compile's located diagnostics as a trailing optional parameter, so a caller
 that only wants dialogue tokens — the projection's existing tests among them — is unchanged, and
@@ -176,7 +176,7 @@ The coupling to `DLG1114` is made in code rather than by a literal: the
 projection compares against `DiagnosticCatalog.IgnoredUnmodeledMarkdown.Code`,
 so the code cannot drift from the catalog silently.
 
-### DD3 — Kept material is styled as dialogue, because that is what it becomes
+### D3 — Kept material is styled as dialogue, because that is what it becomes
 
 `Keep` means the construct's source text *becomes dialogue text, exactly as written*. Text that
 will be said should therefore look like text that will be said. A distinct tint would assert
@@ -188,7 +188,7 @@ flattened construct is byte-for-byte indistinguishable from ordinary text in the
 so recognizing it would have required a new record threaded out of the parse for no reader
 benefit.
 
-### DD4 — Stop muting blockquotes; mark control regions from existing tokens
+### D4 — Stop muting blockquotes; mark control regions from existing tokens
 
 The fix is to delete `{ tag: tags.quote, color: "var(--md-muted)" }`, not to add a token that
 re-colors quotes. In DialogueDown a blockquote is always live: a marker-headed quote is a
@@ -199,9 +199,9 @@ new token and no new span arithmetic.
 
 The Preview adds a question sticker only when an existing `ControlKeyword` token lands inside
 the rendered blockquote. It does not recognize `if` strings in TypeScript. This preserves the
-same boundary as DD1: the compiler decides DialogueDown grammar; the client renders it.
+same boundary as D1: the compiler decides DialogueDown grammar; the client renders it.
 
-### DD5 — Use semantic regions and a two-level gray hierarchy
+### D5 — Use semantic regions and a two-level gray hierarchy
 
 Ignored material is **dark gray**; a comment is **lighter gray and italic**. Both survive a
 colorblind reader and both themes, where new hues in an already thirteen-color legend would not.
@@ -251,7 +251,7 @@ token disappears and both panes return it to full strength.
 
 - **Unit — projection:** an ignored construct emits a token over the reported span; a script with
   no ignored construct emits none; nesting is covered.
-- **Unit — the DD2 coupling:** a test asserts an ignored construct produces both the diagnostic
+- **Unit — the D2 coupling:** a test asserts an ignored construct produces both the diagnostic
   and the token, so demoting one cannot silently break the other.
 - **Unit — client:** the new kind maps to its class, alongside every existing kind.
 - **Unit — Markdown layer:** `markdownHighlightStyle` is asserted to leave a blockquote unstyled
@@ -266,9 +266,9 @@ token disappears and both panes return it to full strength.
 
 | Alternative | Why not |
 | --- | --- |
-| Re-run the policy inside the projection | Two authorities on one question, and an ignored node is no longer in the tree to classify ([DD2](#dd2--recover-ignored-spans-from-the-diagnostic-the-front-end-already-reports)). |
-| Thread a record of every fate out of the parse | A second transport for something the diagnostic already carries, to distinguish kept text that should not be distinguished ([DD3](#dd3--kept-material-is-styled-as-dialogue-because-that-is-what-it-becomes)). |
-| A projected token kind for comments | Duplicates what the editor's Markdown parser already recognizes, for a fate that never varies ([DD1](#dd1--project-what-the-policy-decides-style-natively-what-markdown-already-knows)). |
-| Re-color blockquotes with a new token | The mute was the problem; the contents already have their own colors ([DD4](#dd4--stop-muting-blockquotes-mark-control-regions-from-existing-tokens)). |
-| Opacity alone in Preview | Too easy to overlook; a semantic region preserves flow while making coverage explicit ([DD5](#dd5--use-semantic-regions-and-a-two-level-gray-hierarchy)). |
+| Re-run the policy inside the projection | Two authorities on one question, and an ignored node is no longer in the tree to classify ([D2](#d2--recover-ignored-spans-from-the-diagnostic-the-front-end-already-reports)). |
+| Thread a record of every fate out of the parse | A second transport for something the diagnostic already carries, to distinguish kept text that should not be distinguished ([D3](#d3--kept-material-is-styled-as-dialogue-because-that-is-what-it-becomes)). |
+| A projected token kind for comments | Duplicates what the editor's Markdown parser already recognizes, for a fate that never varies ([D1](#d1--project-what-the-policy-decides-style-natively-what-markdown-already-knows)). |
+| Re-color blockquotes with a new token | The mute was the problem; the contents already have their own colors ([D4](#d4--stop-muting-blockquotes-mark-control-regions-from-existing-tokens)). |
+| Opacity alone in Preview | Too easy to overlook; a semantic region preserves flow while making coverage explicit ([D5](#d5--use-semantic-regions-and-a-two-level-gray-hierarchy)). |
 | A badge on its own row | Breaks the Markdown's vertical rhythm and does not clearly enclose the content it labels. |

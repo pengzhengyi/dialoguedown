@@ -1,15 +1,11 @@
-# Progression order
+# Progression Order
 
 > [!NOTE]
-> Status: **partially implemented**. This note fixes DialogueDown's **progression
-> order** — how a reader moves through a script when nothing branches — and the two
-> roles a jump can play under it. Its compile-time surfaces ship now: the **`#END`**
-> reserved terminator resolves to the **End sentinel**, an
-> **unreachable-content-after-a-jump** diagnostic warns on dead content, and the
-> report **highlights** and **completes** `#END`. The play-time traversal that walks
-> this flow — and the returning **detour** — remain deferred to the
-> dialogue graph and runtime;
-> this note settles the *meaning* that graph will implement.
+> Status: **partially implemented**. A script plays in **reading order**, a `=>`
+> jump never returns, and `#END` stops a run early; the
+> [dialogue graph](../core/Dialogue%20Graph.md) builds these edges and the
+> [runner](../runtime/Runner.md) walks them. The returning **detour** and a
+> `#START` entry are not built.
 
 ## Table of contents
 
@@ -43,14 +39,11 @@ In scope:
 - The two jump **roles** it creates: a non-returning **divert** (the existing
   `=>`) and a returning **detour** (concept only here).
 - The **`#END`** reserved terminator that stops a run early.
-- The compile-time surfaces that can ship without the runtime:
-  **`#END` resolution**, **diagnostics**, and **editor support**
-  (highlighting and completion).
+- **`#END` resolution**, **diagnostics**, and **editor support** (highlighting and
+  completion).
 
 Out of scope / deferred (see [open questions](#open-questions-and-deferred-work)):
 
-- **Runtime traversal** — actually walking the flow at play time is the deferred
-  graph/runtime.
 - **The detour's syntax and return boundary** — its concrete spelling and *where*
   it returns get their own follow-up note; here it is only a named role.
 - **`#START` / entry point** — where a run begins (file top vs. a designated start
@@ -147,9 +140,9 @@ The infinity glyph is a **sentinel marker**, not a line number: the row does not
 source text, line counts, selection, search, folding, diagnostics, or undo history.
 
 The report model names this concept a **reserved target** with one of two roles:
-`Entry` or `Terminal`. Only `#END` (`Terminal`) exists today. If `#START` entry semantics are adopted later,
-the compiler can project `#START` (`Entry`) through the same metadata and panel without
-turning either sentinel into a source heading.
+`Entry` or `Terminal`. Only `#END` (`Terminal`) exists. A `#START` (`Entry`) would
+project through the same metadata and panel without turning either sentinel into a
+source heading.
 
 **Choices rejoin.** After the reader picks an option, that option's body plays, then
 control **continues after the choice block** — the branch weaves back into the main
@@ -197,7 +190,7 @@ flowchart LR
     C["Poisoned"] -->|"=> [The end](#END)"| END(["End sentinel"])
 ```
 
-**Detour is returning** (deferred): a detour adds a return edge, so control resumes
+**Detour is returning** (not built): a detour would add a return edge, so control resumes
 after it once the target depletes. This is the only shape under which trailing
 content or a second jump on a line is reachable.
 
@@ -205,11 +198,11 @@ content or a second jump on a line is reachable.
 
 | Stage | Change |
 | --- | --- |
-| [Semantic Analyzer](../core/Semantic%20Analyzer.md) — jump resolution | Recognize the reserved `#END` anchor **before** `AnchorTable` lookup and resolve it to the **End sentinel**; ordinary anchors resolve as today. |
-| Validation | Add an **unreachable-after-divert** rule; reframe the existing multiple-jumps rule (see [diagnostics](#diagnostics)). |
+| [Semantic Analyzer](../core/Semantic%20Analyzer.md) — jump resolution | Recognize the reserved `#END` anchor **before** `AnchorTable` lookup and resolve it to the **End sentinel** (`TerminalJump`); ordinary anchors resolve by slug. |
+| Validation | An **unreachable-after-a-jump** rule (`DLG1003`) that also covers a second jump on a line (see [diagnostics](#diagnostics)). |
 | Semantic model | Expose the End sentinel and reserved-anchor resolution so the graph builder and editor projections can consume them. |
 | Editor projections (visualization) | Surface `#END` through the **semantic symbol projection** so completion offers it as a divert target; project it as a typed reserved target for the fixed Source-editor panel; and add a **semantic token** so source occurrences highlight as a reserved keyword. See the [Compiler-Projected Editor Semantics](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md) note. |
-| Flow graph / runtime — **deferred** | The succession/divert/detour **edges** and play-time traversal are the deferred graph/runtime. This note only fixes their meaning. |
+| [Dialogue graph](../core/Dialogue%20Graph.md) and [runner](../runtime/Runner.md) | Succession and divert edges and an `end` node; the runner follows a divert before a succession. No detour edge exists. |
 
 ## Markdown interaction
 
@@ -221,17 +214,15 @@ acceptable for a control keyword the compiler interprets specially.
 
 ## Diagnostics
 
-Reading order plus a non-returning divert makes two structural checks meaningful.
-Both are **warnings** (dead content, not malformed input) and both are purely
-structural, so they can ship without the runtime.
+Reading order plus a non-returning jump makes one structural check meaningful. It
+is a **warning** (dead content, not malformed input).
 
 - **Unreachable content after a divert (`DLG1003`).** In a line's speech, any
   non-blank fragment after the first divert — trailing text, or a second `=>` — can
   never play, because the divert already left. Warn, spanning the unreachable content.
-- **The former "multiple jumps on a line" check is subsumed.** A second jump is just
-  unreachable content after the first, so the single rule above covers it — there is
-  no separate multiple-jumps diagnostic. Once the returning detour exists, the rule
-  keys off the *divert*, since detours legitimately chain.
+- **A second jump on a line** is unreachable content after the first, so the same
+  rule covers it. A returning detour would chain legitimately, so the rule keys off
+  the non-returning jump.
 
 A divert to an unknown reserved anchor (for example a mistyped `#ENND`) is an
 unresolved target, reported like any other missing anchor.
@@ -244,8 +235,8 @@ unresolved target, reported like any other missing anchor.
   existing jump rules — needing no runtime.
 - **Editor.** Component tests assert `#END` is offered by completion and carries its
   semantic token; a thin browser test proves the integration.
-- **Deferred.** Play-time traversal (fall-through, divert, detour, termination) is
-  tested with the graph/runtime, not here.
+- **Play time.** Fall-through, divert, and termination are covered by the
+  conformance corpus (`linear-speech`, `a-jump`) and the runner's tests.
 
 ## Alternatives not chosen
 
@@ -273,8 +264,6 @@ unresolved target, reported like any other missing anchor.
   note.
 - **`#START` / entry point** — reserving a start sentinel is natural, but its meaning
   (file top vs. a designated start vs. cross-file entry) is unsettled and deferred.
-- **Runtime traversal** — fall-through, divert, detour, and termination execute in
-  the deferred graph/runtime.
 - **Case-insensitive scene-target matching** — ordinary jump targets are matched
   case-sensitively against lowercased slugs, so a hand-typed `#The-Market` fails to
   resolve. Autocomplete inserts the correct slug, so it rarely bites, but it is a

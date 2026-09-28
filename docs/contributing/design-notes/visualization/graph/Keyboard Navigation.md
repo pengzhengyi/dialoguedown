@@ -1,12 +1,8 @@
 # Keyboard Navigation
 
 > [!NOTE]
-> Status: **implemented**. The graph tabs answer the keyboard along the graph's
-> own edges: → the first way out, ← back the way the reader came, and the digits
-> the numbered ways out and in. A jump is reachable without a mouse.
->
-> Like the rest of the visualization tooling, this surface is "vibe-coded" (see
-> the visualization note's maturity caveat); the core stays the reviewed surface.
+> Status: **implemented**. The graph tabs answer the keyboard along the graph's own edges: → the
+> first way out, ← back the way the reader came, and the digits the numbered ways out and in.
 
 ## Table of contents
 
@@ -18,13 +14,10 @@
 
 ## Goal
 
-Before this, the arrow keys moved through the drawing's layout tree — → the first
-drawn child, ← the layout parent, ↑/↓ same-depth siblings. That tree is the
-spanning tree the renderer chose, not the dialogue's structure, so a jump, drawn
-as a `Reference` edge rather than a child, could not be reached at all.
-
-The keys follow the stage's edges now, so every node with a route in or out is
-reachable without a mouse, and a key's way out is the inspector's. A node held
+The drawing's layout tree is the spanning tree the renderer chose, not the dialogue's structure:
+a jump is drawn as a `Reference` edge, not a child. So the keys follow the stage's edges instead,
+every node with a route in or out is reachable without a mouse, and a key's way out is the
+inspector's. A node held
 only by a placement link has no route in or out, so every key is a no-op on it.
 
 ## The key map
@@ -36,15 +29,15 @@ only by a placement link has no route in or out, so every key is a no-op on it.
 | ↑ / ↓ | The previous or next sibling in the drawing, wrapping at the ends. |
 | 1–9 | The nth way out, once a node is chosen — on every stage, since a tree's ways out are its children. |
 | Shift+1–9 | The nth way in. **Dialogue Graph only.** |
-| Enter / Space | Fold or open: the scene under the pointer or chosen on the Dialogue Graph, the chosen node on a tree. |
+| Enter / Space | Fold or open: a scene on the Dialogue Graph ([Region Fold](Dialogue%20Graph%20Region%20Fold.md#two-gestures-not-one)), the chosen node on a tree. |
 | An arrow, nothing chosen | Select the root. |
 | A click | Start a new origin: forget the trail. |
 
 ## Key design decisions
 
-**The edges lead, not the layout tree.** The old map read the drawing's hierarchy,
-whose sibling order is an accident of which route reached a node first — and a
-jump was not in it at all. The keys and the inspector now name the same lists.
+**The edges lead, not the layout tree.** The drawing's hierarchy has a sibling order that is an
+accident of which route reached a node first, and leaves jumps out. The keys and the inspector name
+the same lists.
 
 **← is Back, not "the layout parent".** A graph is a DAG, so a node may be led to
 from several places and the layout's parent is an artifact of the spanning tree.
@@ -93,4 +86,3 @@ inspector's words. No reader meets a key that does nothing in front of them.
 | Vitest — `tree-view.test.ts` | A digit takes the nth child on a tree; a tree keeps Shift even when its edges wear route colors; a flow stage honors Shift even when no edge names its route; a folded scene's box is reachable through its edge and counts among its siblings; a leaf with nothing leading in or out stays put. |
 | Playwright — `e2e/graph-keys.spec.ts` | The Dialogue Graph takes the nth way in with Shift and the nth way out with a digit; a tree takes the nth child and leaves Shift alone; the `#` header fits its gutter; each stage's help names its own map. |
 | Playwright — `e2e/playbook.spec.ts` | Enter or Space pressed on a focused way-out control reveals the node it names, so the activation keys behave the same beside the graph as on it. |
-| Playwright — `e2e/narrow-layout.spec.ts` | The `#app` zero-basis fix that shipped beside the keymap: in a short window with the tallest inspector, the status line keeps its height and stays inside the footer. |
