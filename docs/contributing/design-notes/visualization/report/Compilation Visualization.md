@@ -29,7 +29,7 @@ renders each intermediate representation as a readable, interactive graph or tab
 Markdown AST to the playbook a runtime loads.
 
 **Out of scope here:** the `ddown visualize` command and the served session, which wrap this
-component and have their own notes under [`session/`](../session/).
+component and have their own notes under [the reading guide](../../README.md#served-session).
 
 ## Ubiquitous language
 
@@ -52,7 +52,7 @@ The tab order is the pipeline order, from configuration to shipped artifact:
 | Tab | Shows | Built by | Note |
 | --- | --- | --- | --- |
 | **Config** | The applied `dialogue.toml` and its speakers | `ConfigurationProjection` | [Configuration Tab](./Configuration%20Tab.md) |
-| **Source** | The script beside a live Markdown preview | — (the input, not a stage) | [`editor/`](../editor/) |
+| **Source** | The script beside a live Markdown preview | — (the input, not a stage) | [Source editor notes](../../README.md#source-editor) |
 | **Markdown AST** | The parsed Markdown tree | `MarkdownAstProjection` | This note |
 | **Dialogue AST** | The transpiler's tree | `DialogueAstProjection` | [AST Stage Tabs](./AST%20Stage%20Tabs.md) |
 | **Desugared AST** | The normalized tree | `DialogueAstProjection` | [AST Stage Tabs](./AST%20Stage%20Tabs.md) |
@@ -216,4 +216,4 @@ argument is an ordinary .NET argument exception.
 
 The client's gates — `tsc --noEmit`, ESLint, Stylelint, Prettier, Vitest, and the build-freshness
 check — run through `npm run check` and the CI Frontend job; see
-[CONTRIBUTING](../../../../../CONTRIBUTING.md).
+[CONTRIBUTING](https://github.com/pengzhengyi/dialoguedown/blob/main/CONTRIBUTING.md).

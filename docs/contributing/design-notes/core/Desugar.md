@@ -19,7 +19,7 @@
 ## Goal and scope
 
 The [transpiler](./Markdown%20to%20Dialogue%20AST%20Transpiler.md) is a local
-tokenizer and leaves three things uncomposed. Desugar composes them, still with
+tokenizer and leaves three things in pieces. Desugar composes them, still with
 local information only:
 
 | Before | After |

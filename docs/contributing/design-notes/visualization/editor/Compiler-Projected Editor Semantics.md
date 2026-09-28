@@ -149,7 +149,7 @@ plain strings, so the semantic analyzer and every other reader are untouched.
 
 ### D5 — Complete the whole jump target from `=>`
 
-Writing `[Label](#slug)` by hand means remembering the heading, typing brackets, and slugifying
+Writing `[Label](#slug)` by hand means remembering the heading, typing brackets, and turning the heading into its anchor by hand
 correctly; a mistyped slug is a silent dead link. Firing at `=>` inserts the complete target with
 the heading pre-selected, so the common case is one keystroke and a different label is one retype.
 The popup's info panel previews the full `[Heading](#slug)`. A single space always follows `=>`.

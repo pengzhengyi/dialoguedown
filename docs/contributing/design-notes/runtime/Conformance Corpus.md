@@ -8,9 +8,9 @@
 > playable rather than skipped.
 
 The corpus layout, the fixture files, and how to add a case are documented beside
-the fixtures in [`conformance/README.md`](../../../../conformance/README.md), and the
+the fixtures in [`conformance/README.md`](https://github.com/pengzhengyi/dialoguedown/blob/main/conformance/README.md), and the
 fixture format is specified by
-[`schema/fixture-0.schema.json`](../../../../schema/fixture-0.schema.json). This note
+[`schema/fixture-0.schema.json`](https://github.com/pengzhengyi/dialoguedown/blob/main/schema/fixture-0.schema.json). This note
 records the decisions behind them.
 
 ## Table of contents

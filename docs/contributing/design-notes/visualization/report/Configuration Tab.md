@@ -110,7 +110,7 @@ The right pane is a `Name · Id · Tags` table drawn by `config-view.ts` with th
 ### D6 — Two paths in the status bar
 
 `path-display.ts` shows the script's path and the config's, each led by an icon (a document, a
-gear), ellipsizing the directory and copying the full path on click. With no file, the config path
+gear), shortening the directory with an ellipsis and copying the full path on click. With no file, the config path
 reads **No config file**.
 
 ### D7 — No config file is an ordinary state
@@ -229,7 +229,7 @@ The create is exclusive, so a file that appeared first is never clobbered:
 | The starter template (a retry) | Adopted as is (`Adopted`) | 200 |
 | A different file | Adopted as is (`AdoptedExisting`) | 200 |
 | The session's adopted file, since changed | Nothing written (`Conflict`) | 409 |
-| Unwritable serve root | Write failure | 400 |
+| Serve root not writable | Write failure | 400 |
 
 ## Error and boundary cases
 
