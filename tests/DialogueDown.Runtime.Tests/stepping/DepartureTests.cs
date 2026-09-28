@@ -22,7 +22,7 @@ public sealed class DepartureTests
         AssertAsked(
             Departure.From(PlayContextFactory.ALineWhoseJumpAsksTheWorld(), 0),
             node: 0,
-            new Moment.ToLeave(),
+            Moment.BeforeLeaving,
             "Alice.HasKey");
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class DepartureTests
             PlayContextFactory.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
         AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
-        AssertAwaitingSupply(result.State, node: 0, new Moment.ToLeave(), "Alice.HasKey");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforeLeaving, "Alice.HasKey");
     }
 
     [Fact]
@@ -118,5 +118,5 @@ public sealed class DepartureTests
     /// <summary>Where a run stands after asking, on the way out, about these keys.</summary>
     /// <remarks>Leaving is what this class is about, so every wait here is one to leave.</remarks>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
-        new(node, [.. keys], new Moment.ToLeave());
+        new(node, [.. keys], Moment.BeforeLeaving);
 }

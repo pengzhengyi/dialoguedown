@@ -13,9 +13,9 @@ public sealed class SituationExtensionsTests
         new AtNode(4),
         new AwaitingDone(4, new Resume.From(2)),
         new AwaitingDone(4, new Resume.FromFinished()),
-        new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(0)),
-        new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(2)),
-        new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToLeave()),
+        new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforePlaying),
+        new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeContinuingFrom(2)),
+        new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeLeaving),
         new AtEnd(),
     ];
 
@@ -28,7 +28,7 @@ public sealed class SituationExtensionsTests
             "node 4, waiting for the host", new AwaitingDone(4, new Resume.FromFinished()).Describe());
         Assert.Equal(
             "node 4, waiting for the world before it plays",
-            new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(0)).Describe());
+            new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforePlaying).Describe());
         Assert.Equal("the end", new AtEnd().Describe());
     }
 
@@ -38,13 +38,13 @@ public sealed class SituationExtensionsTests
         // would read as the same wait twice.
         Assert.Equal(
             "node 4, waiting for the world before it leaves",
-            new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToLeave()).Describe());
+            new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeLeaving).Describe());
 
     [Fact]
     public void Describe_SaysWhereALineContinuesOnceTheWorldAnswers() =>
         Assert.Equal(
             "node 4, waiting for the world before continuing from segment 2",
-            new AwaitingSupply(4, ["Alice.HasKey"], new Moment.ToPlay(2)).Describe());
+            new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeContinuingFrom(2)).Describe());
 
     [Fact]
     public void Describe_SaysWhereALineContinuesOnceTheHostIsDone() =>

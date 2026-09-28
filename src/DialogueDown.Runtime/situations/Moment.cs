@@ -15,6 +15,17 @@ public abstract record Moment
     {
     }
 
+    /// <summary>Gets the moment before a node plays from its start.</summary>
+    public static Moment BeforePlaying { get; } = new ToPlay(0);
+
+    /// <summary>Gets the moment before a run leaves a node.</summary>
+    public static Moment BeforeLeaving { get; } = new ToLeave();
+
+    /// <summary>The moment before a line continues from one of its segments.</summary>
+    /// <param name="segmentIndex">The index of the segment the line continues from.</param>
+    /// <returns>The moment.</returns>
+    public static Moment BeforeContinuingFrom(int segmentIndex) => new ToPlay(segmentIndex);
+
     /// <summary>Before playing: whether the node plays, and what its words say.</summary>
     /// <param name="SegmentIndex">
     /// The index of the segment playing starts from, among the line's segments; zero when the node
