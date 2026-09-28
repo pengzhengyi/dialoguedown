@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
@@ -41,6 +42,57 @@ public sealed class PlayingTests
             PlayTheFirstNode(PlayContextFactory.ALineWithAQuery(), Answering(("playerName", string.Empty))),
             speaker: "Alice",
             text: "Hello, .");
+
+    [Fact]
+    public void At_ALineEndingWithACommand_SaysItsWordsThenPerformsTheCommand()
+    {
+        var result = PlayTheFirstNode(PlayContextFactory.ALineEndingWithACommand());
+
+        AssertEvents(result, "said Alice 'Hello. '", "perform Wave()");
+        AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void At_ALineThatIsOnlyACommand_StillNamesItsSpeakerFirst() =>
+        // The host learns who is acting before the command arrives.
+        AssertEvents(PlayTheFirstNode(ALineThatIsOnlyACommand()), "said Alice ''", "perform Wave()");
+
+    [Fact]
+    public void At_ALineOpeningWithACommand_ContinuesWithTheWordsAfterIt() =>
+        AssertEvents(
+            PlayTheFirstNode(ALineOpeningWithACommand()),
+            "said Alice ''",
+            "perform Wave()",
+            "continued ' Hello.'");
+
+    [Fact]
+    public void At_ALineWithAStageDirectionMidSentence_PerformsItBetweenTheWords() =>
+        AssertEvents(
+            PlayTheFirstNode(ALineWithAStageDirectionMidSentence()),
+            "said Yuki 'Then... '",
+            "perform (\"Yuki hides a smile behind her sleeve\")",
+            "continued ' I will not argue.'");
+
+    [Fact]
+    public void At_ALineWithTwoCommandsInARow_SendsNothingForTheSpaceBetweenThem() =>
+        AssertEvents(
+            PlayTheFirstNode(ALineWithTwoCommandsInARow()),
+            "said Alice 'Hi. '",
+            "perform Bow()",
+            "perform Wave()",
+            "continued ' Bye.'");
+
+    [Fact]
+    public void At_ALineEndingWithACommandAndASpace_SendsNothingAfterTheCommand() =>
+        AssertEvents(
+            PlayTheFirstNode(ALineEndingWithACommandAndASpace()), "said Alice 'Hello. '", "perform Wave()");
+
+    [Fact]
+    public void At_ALineWithAQueryBeforeACommand_SaysTheAnswerBeforePerforming() =>
+        AssertEvents(
+            PlayTheFirstNode(ALineWithAQueryBeforeACommand(), Answering(("playerName", "Robin"))),
+            "said Alice 'Hello, Robin. '",
+            "perform Wave()");
 
     [Fact]
     public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten() =>
@@ -103,6 +155,93 @@ public sealed class PlayingTests
     /// <returns>A context whose only line is said by the anonymous default speaker.</returns>
     private static PlayContext ALineNobodyClaims() =>
         PlayContextFactory.Of([Line(0, speaker: 0, "Nobody said this.", next: 1), End(1)], [null]);
+
+    /// <summary>A line whose only speech is a command, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: `Wave()`
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line has no words to say.</returns>
+    private static PlayContext ALineThatIsOnlyACommand() =>
+        OneLineSaying("Alice", Command("Wave"));
+
+    /// <summary>A line opening with a command, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: `Wave()` Hello.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line says its words after its command.</returns>
+    private static PlayContext ALineOpeningWithACommand() =>
+        OneLineSaying("Alice", Command("Wave"), new TextFragment(" Hello."));
+
+    /// <summary>A line with a stage direction in the middle of a sentence, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Yuki: Then... `("Yuki hides a smile behind her sleeve")` I will not argue.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line is said on both sides of its command.</returns>
+    private static PlayContext ALineWithAStageDirectionMidSentence() =>
+        OneLineSaying(
+            "Yuki",
+            new TextFragment("Then... "),
+            new DefaultCommandFragment("Yuki hides a smile behind her sleeve"),
+            new TextFragment(" I will not argue."));
+
+    /// <summary>A line with two commands in a row, a space between them, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hi. `Bow()` `Wave()` Bye.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line holds words that say nothing between two commands.</returns>
+    private static PlayContext ALineWithTwoCommandsInARow() =>
+        OneLineSaying(
+            "Alice",
+            new TextFragment("Hi. "),
+            Command("Bow"),
+            new TextFragment(" "),
+            Command("Wave"),
+            new TextFragment(" Bye."));
+
+    /// <summary>A line ending with a command and a space after it, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello. `Wave()`␠
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line holds words that say nothing after its command.</returns>
+    private static PlayContext ALineEndingWithACommandAndASpace() =>
+        OneLineSaying("Alice", new TextFragment("Hello. "), Command("Wave"), new TextFragment(" "));
+
+    /// <summary>A line with a query before its command, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello, `"playerName"`. `Wave()`
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line needs the player's name before it is said.</returns>
+    private static PlayContext ALineWithAQueryBeforeACommand() =>
+        OneLineSaying(
+            "Alice",
+            new TextFragment("Hello, "),
+            new QueryFragment("playerName"),
+            new TextFragment(". "),
+            Command("Wave"));
+
+    /// <summary>One line said by one speaker, then the end.</summary>
+    /// <param name="speaker">Who says the line.</param>
+    /// <param name="speech">What the line says, in the order written.</param>
+    /// <returns>A context whose only line is the one given.</returns>
+    private static PlayContext OneLineSaying(string speaker, params SpeechFragment[] speech) =>
+        PlayContextFactory.Of([LineSaying(0, speaker: 0, next: 1, condition: null, speech), End(1)], [speaker]);
+
+    /// <summary>A command the host binds by name, with no arguments.</summary>
+    /// <param name="name">What the host binds it by.</param>
+    /// <returns>The command, as it stands in a line.</returns>
+    private static CustomCommandFragment Command(string name) => new(name, []);
 
     /// <summary>Two effects in one node, then a line, then the end.</summary>
     /// <remarks>

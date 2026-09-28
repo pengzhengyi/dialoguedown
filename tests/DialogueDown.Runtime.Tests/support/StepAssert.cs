@@ -25,6 +25,23 @@ internal static class StepAssert
         Assert.Equal(text, SpeechText.Of(said.Speech));
     }
 
+    /// <summary>Asserts everything a step produced, in order.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="expected">
+    /// Each event written out: <c>said Alice 'Hello. '</c>, <c>continued ' Bye.'</c>,
+    /// <c>perform Wave()</c>, <c>perform ("fade in")</c>, <c>resolve playerName, Rainy</c>,
+    /// <c>ended</c>, or <c>refused Misplaced</c>. Words sit in quotes so a space shows, and the
+    /// default speaker is written <c>nobody</c>.
+    /// </param>
+    public static void AssertEvents(StepResult result, params string[] expected) =>
+        AssertEvents(result.Events, expected);
+
+    /// <summary>Asserts a list of events is exactly these, in order.</summary>
+    /// <param name="events">The events to check.</param>
+    /// <param name="expected">Each event written out, as the overload taking a step describes.</param>
+    public static void AssertEvents(IEnumerable<Event> events, params string[] expected) =>
+        Assert.Equal(expected, events.Select(WrittenOut));
+
     /// <summary>Asserts a step asked the host to carry things out, in order, and nothing else.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="actions">What should have been asked for, in the order written.</param>
@@ -106,4 +123,20 @@ internal static class StepAssert
         Assert.Equal(moment, waiting.Moment);
         Assert.Equal(keys, waiting.Keys);
     }
+
+    // Every kind is named, so an event kind the protocol gains fails here until it is given a written
+    // form, rather than passing as its bare type name.
+    private static string WrittenOut(Event happened) =>
+        happened switch
+        {
+            Said said => $"said {said.Speaker ?? "nobody"} '{SpeechText.Of(said.Speech)}'",
+            Continued continued => $"continued '{SpeechText.Of(continued.Speech)}'",
+            Perform { Effect: CustomCommandFragment command } =>
+                $"perform {command.Name}({string.Join(", ", command.Args)})",
+            Perform { Effect: DefaultCommandFragment command } => $"perform (\"{command.Action}\")",
+            Resolve resolve => $"resolve {string.Join(", ", resolve.Keys)}",
+            Ended => "ended",
+            Refused refused => $"refused {refused.Reason}",
+            _ => throw new NotSupportedException($"No written form is defined for {happened}."),
+        };
 }

@@ -49,6 +49,50 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_NextWhileALineWaitsOnTheHost_IsRefused()
+    {
+        var context = PlayContextFactory.ALineEndingWithACommand();
+
+        var result = Runner.Step(context, Started(context), new Next());
+
+        AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
+        AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void Step_DoneAfterALinesCommand_GivesThePlayerTheTurn()
+    {
+        // Nothing is left for the host to answer, so the driver waits for the player's Next.
+        var context = PlayContextFactory.ALineEndingWithACommand();
+
+        var result = Runner.Step(context, Started(context), new Done());
+
+        Assert.Empty(result.Events);
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Step_NextOnceALinesCommandIsDone_MovesOnToWhatFollows()
+    {
+        var context = PlayContextFactory.ALineEndingWithACommand();
+        var done = Runner.Step(context, Started(context), new Done()).State;
+
+        AssertSaid(Runner.Step(context, done, new Next()), "Bob", "Goodbye.");
+    }
+
+    [Fact]
+    public void Step_DoneAfterAFailureAtALine_GivesThePlayerTheTurn()
+    {
+        var context = PlayContextFactory.ALineEndingWithACommand();
+        var failed = Runner.Step(context, Started(context), new Failed("the animation is missing")).State;
+
+        var result = Runner.Step(context, failed, new Done());
+
+        Assert.Empty(result.Events);
+        AssertAt(result, 0);
+    }
+
+    [Fact]
     public void Step_DoneOnceTheHostHasCarriedItOut_MovesOnToWhatFollows()
     {
         var context = PlayContextFactory.AnEffectThenALine();

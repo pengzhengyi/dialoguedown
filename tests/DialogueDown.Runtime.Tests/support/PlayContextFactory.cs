@@ -93,6 +93,24 @@ internal static class PlayContextFactory
             ],
             ["Alice"]);
 
+    /// <summary>A line ending with a command, then another line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello. `Wave()`
+    ///
+    /// Bob: Goodbye.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose first line waits on the host before the player can move on.</returns>
+    public static PlayContext ALineEndingWithACommand() =>
+        Of(
+            [
+                LineSaying(0, speaker: 0, next: 1, condition: null, new TextFragment("Hello. "), Wave()),
+                Line(1, speaker: 1, "Goodbye.", next: 2),
+                End(2),
+            ],
+            ["Alice", "Bob"]);
+
     /// <summary>A choice, which is a node kind this pass cannot play.</summary>
     /// <remarks>
     /// <code>
@@ -223,6 +241,8 @@ internal static class PlayContextFactory
                 End(4),
             ],
             ["Alice"]);
+
+    private static CustomCommandFragment Wave() => new("Wave", []);
 
     private static PlaybookSpeaker Speaker(string? name) =>
         new(Id: null, Name: name, Default: name is null, Tags: []);

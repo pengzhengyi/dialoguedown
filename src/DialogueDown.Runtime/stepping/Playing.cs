@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
@@ -7,8 +6,8 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What playing a node hands the host — a line's words, a control block's effects, or the end —
-/// and what follows once the host has done what the node asked.
+/// What playing a node hands the host — a line's words and commands, a control block's effects, or
+/// the end — and what follows once the host has done what the node asked.
 /// </summary>
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
@@ -63,12 +62,17 @@ internal static class Playing
         };
     }
 
-    // A line is said in the name of the speaker who owns it, and the run stands there so the
-    // player can read it and move on.
-    private static StepResult Line(PlayContext context, int position, LineNode line, Supply? supply) =>
-        new(
-            new PlayState(new AtNode(position)),
-            [new Said(context.SpeakerName(line.Speaker), AsSpoken(line.Speech, supply))]);
+    // A line is said in the order it was written, in the name of the speaker who owns it. The run
+    // waits on the host while the line has a command for it to carry out. Otherwise nothing is left
+    // to answer, and the run stands at the line so the player can read it and move on.
+    private static StepResult Line(PlayContext context, int position, LineNode line, Supply? supply)
+    {
+        var events = LineEventsBuilder.Of(
+            context.SpeakerName(line.Speaker), supply, SpeechTemplate.Segments(line.Speech));
+        Situation after = events.HasCommand ? new AwaitingDone(position) : new AtNode(position);
+
+        return new StepResult(new PlayState(after), events.Freeze());
+    }
 
     // A control block asks the host for each of its effects in the order written, and the run
     // waits until the host has carried them out.
@@ -86,12 +90,6 @@ internal static class Playing
             position,
             RefusalReason.UnplayableNode,
             $"This build cannot play a node of kind {unplayable.GetType().Name} yet.");
-
-    // A line without queries is spoken as written. A line with queries is spoken with the words
-    // the world gave for each.
-    private static ImmutableArray<SpeechFragment> AsSpoken(
-        ImmutableArray<SpeechFragment> speech, Supply? supply) =>
-        supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
 
     // Nothing new is said, and nothing is left for the host to answer, so the player has the turn.
     private static StepResult WaitForThePlayer(int position) =>

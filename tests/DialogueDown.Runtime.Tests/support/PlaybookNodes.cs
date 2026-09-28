@@ -44,7 +44,7 @@ internal static class PlaybookNodes
     /// <param name="speech">What is said, in the order written.</param>
     /// <returns>The node.</returns>
     /// <remarks>
-    /// For a line a query stands in, which plain text cannot spell.
+    /// For a line holding a query or a command, which plain text cannot spell.
     /// </remarks>
     public static LineNode LineSaying(
         int id, int speaker, int next, Condition? condition, params SpeechFragment[] speech) =>
