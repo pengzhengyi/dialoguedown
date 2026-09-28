@@ -30,7 +30,7 @@ public static class Runner
         {
             (_, Start) => Arrival.At(context, context.Entry),
             (AtNode at, Next) => Departure.From(context, at.Node),
-            (AwaitingDone waiting, Done) => Departure.From(context, waiting.Node),
+            (AwaitingDone waiting, Done) => Playing.Performed(context, waiting),
             (AwaitingSupply waiting, Supply supply) => Supplied(context, waiting, supply),
             (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(

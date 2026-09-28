@@ -1,4 +1,5 @@
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
@@ -47,6 +48,35 @@ public sealed class PlayingTests
         // than as a construct nobody has taught the runner yet.
         AssertRefused(
             PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "ChoiceNode");
+    }
+
+    [Fact]
+    public void Performed_AtALine_StandsThereForThePlayer()
+    {
+        // A line belongs to its speaker, so once the host is done the player moves on from it.
+        var result = Playing.Performed(PlayContextFactory.OneLine(), new AwaitingDone(0));
+
+        Assert.Empty(result.Events);
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Performed_AtAControlBlock_LeavesIt()
+    {
+        var result = Playing.Performed(PlayContextFactory.AnEffectThenALine(), new AwaitingDone(0));
+
+        AssertSaid(result, speaker: "Alice", text: "Hello.");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void Performed_AtAKindThatAsksNothingOfTheHost_IsRefused()
+    {
+        // A run never waits on the host at the end, so only a state built by hand gets here.
+        var result = Playing.Performed(PlayContextFactory.Of([End(0)]), new AwaitingDone(0));
+
+        AssertRefused(result, RefusalReason.Misplaced, "asks nothing of the host");
+        AssertAwaitingDone(result, 0);
     }
 
     /// <summary>Plays the node a context begins with.</summary>

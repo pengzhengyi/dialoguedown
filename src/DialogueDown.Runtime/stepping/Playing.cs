@@ -7,12 +7,12 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What playing a node hands the host: a line's words, a control block's effects, or the end.
+/// What playing a node hands the host — a line's words, a control block's effects, or the end —
+/// and what follows once the host has done what the node asked.
 /// </summary>
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
-/// the node is known to be allowed and its answers are in hand. Playing never moves the run to
-/// another node: walking to one is arriving, and going on from one is leaving.
+/// the node is known to be allowed and its answers are in hand.
 /// <para>
 /// This is the axis a runner grows along: every construct the language gains has to be played
 /// here, and each brings work of its own. Keeping it apart from the protocol guard leaves that
@@ -38,6 +38,28 @@ internal static class Playing
             ControlNode control => Control(position, control),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
+        };
+    }
+
+    /// <summary>Carries on once the host has done what a node asked of it.</summary>
+    /// <param name="context">What the run needs and never changes.</param>
+    /// <param name="waiting">The node that asked the host.</param>
+    /// <returns>Where the run now stands, and what it has to say.</returns>
+    /// <remarks>
+    /// The kind of node decides what follows. A line belongs to its speaker, so the run stands at
+    /// it until the player moves on. A control block belongs to nobody, so the run leaves it. No
+    /// other kind asks the host for anything, so a <c>Done</c> there is refused.
+    /// </remarks>
+    public static StepResult Performed(PlayContext context, AwaitingDone waiting)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(waiting);
+
+        return context.NodeAt(waiting.Node) switch
+        {
+            LineNode => WaitForThePlayer(waiting.Node),
+            ControlNode => Departure.From(context, waiting.Node),
+            var asksNothing => RefuseDone(waiting, asksNothing),
         };
     }
 
@@ -70,4 +92,19 @@ internal static class Playing
     private static ImmutableArray<SpeechFragment> AsSpoken(
         ImmutableArray<SpeechFragment> speech, Supply? supply) =>
         supply is null ? speech : SpeechTemplate.Fill(speech, supply.Words);
+
+    // Nothing new is said, and nothing is left for the host to answer, so the player has the turn.
+    private static StepResult WaitForThePlayer(int position) =>
+        new(new PlayState(new AtNode(position)), []);
+
+    // The run stays where it was, as it does for any command sent where it cannot be taken.
+    private static StepResult RefuseDone(AwaitingDone waiting, Node asksNothing) =>
+        new(
+            new PlayState(waiting),
+            [
+                new Refused(
+                    RefusalReason.Misplaced,
+                    $"Node {waiting.Node}, a {asksNothing.GetType().Name}, asks nothing of the host, "
+                        + "so there is no Done to take there."),
+            ]);
 }
