@@ -35,6 +35,14 @@ public sealed class PlayingTests
             text: "Hello, Robin.");
 
     [Fact]
+    public void At_ALineWhoseQueryIsAnsweredWithNoWords_SaysTheRestOfIt() =>
+        // An empty answer is one the world may give, so the step still says the line.
+        AssertSaid(
+            PlayTheFirstNode(PlayContextFactory.ALineWithAQuery(), Answering(("playerName", string.Empty))),
+            speaker: "Alice",
+            text: "Hello, .");
+
+    [Fact]
     public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten() =>
         AssertPerformed(PlayTheFirstNode(TwoEffectsThenALine()), "fade in", "play a chime");
 

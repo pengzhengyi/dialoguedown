@@ -44,7 +44,7 @@ changes easy to categorize.
   run stops for, answered by `Supply(answers)`: a truth for a guard, words for a query. A line or
   control block the world withholds is stepped over; a jump or a block condition's arm is taken only
   when the world allows it, and a block with no arm taken and no `else` is skipped; a query in a line
-  is said as the words that answered it. A node is asked about before it plays and again before the
+  is said as the words that answered it, and an answer of no words leaves nothing in its place. A node is asked about before it plays and again before the
   run leaves it, so a way out is judged against the world an effect left behind. An answer that does
   not fit what was asked is refused and the run keeps waiting, so the driver can answer again. See
   [Asking the world](docs/contributing/design-notes/runtime/Asking%20the%20World.md).
