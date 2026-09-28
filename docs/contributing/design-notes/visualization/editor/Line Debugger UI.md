@@ -1,11 +1,10 @@
-# Live Visualization — Line Debugger UI
+# Line Debugger UI
 
 > [!NOTE]
-> Status: **implemented, dormant**. The Source editor contains the reusable line-debugger
-> presentation layer and a transport/runtime-neutral `DebugController` seam. Production
-> reports do not supply a controller, so no debugger controls, breakpoint gutters, or
-> execution markers render. A test-only fake exercises the contract until the dialogue graph
-> and runtime can drive it.
+> Status: **partially implemented**. The Source editor carries a line-debugger presentation layer
+> behind a runtime-neutral `DebugController` seam, but no report supplies a controller, so nothing
+> renders; the adapter that would connect it to the [runtime](../../runtime/Runner.md) is
+> not built.
 
 ## Table of contents
 
@@ -24,20 +23,19 @@
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Integration seam](#integration-seam)
 - [Testability](#testability)
-- [Deferred runtime work](#deferred-runtime-work)
+- [Unbuilt runtime adapter](#unbuilt-runtime-adapter)
 
 ## Goal and scope
 
-Provide a polished, reusable Source-editor UI for future line debugging without making
+Provide a polished, reusable Source-editor UI for line debugging without making
 the visualization client understand the dialogue graph, runtime, or server transport.
 When a `DebugController` is supplied, CodeMirror can show requested breakpoints, their
 verified state, a paused execution line, debugger controls, and path choices. When no
-controller is supplied—the only production configuration today—the Source editor behaves
-exactly as before.
+controller is supplied, which is every production report, the Source editor is unchanged.
 
 ```mermaid
 flowchart LR
-    R["Dialogue runtime"] --> A["Debug adapter<br/>(future)"]
+    R["Dialogue runtime"] --> A["Debug adapter<br/>(unbuilt)"]
     A --> C["DebugController"]
     C --> T["Floating debug palette"]
     C --> E["CodeMirror debug extension"]
@@ -59,7 +57,7 @@ flowchart LR
 
 **Out of scope:**
 
-- Runtime traversal, guard/weight evaluation, choices, jumps, game-system effects, call
+- Runtime traversal, condition/weight evaluation, choices, jumps, game-system effects, call
   stacks, variables, or debugger transport.
 - Production breakpoint persistence, keyboard shortcuts, conditional breakpoints, log
   points, Pause, Restart, or multi-client ownership.
@@ -69,7 +67,7 @@ flowchart LR
 
 | Term | Meaning |
 | --- | --- |
-| **Debug controller** | The UI-facing command/snapshot seam. A future runtime adapter implements it. |
+| **Debug controller** | The UI-facing command/snapshot seam. A runtime adapter implements it. |
 | **Debug snapshot** | Immutable UI state: status, paused location, available paths, breakpoint bindings, enabled controls, and an optional message. |
 | **Requested breakpoint** | A source line selected by the writer. CodeMirror owns and maps it through edits. |
 | **Verified breakpoint** | A requested breakpoint that the controller can bind to an executable runtime location. |
@@ -117,7 +115,7 @@ The durable UI has three layers:
 
 ```mermaid
 sequenceDiagram
-    participant Runtime as Future runtime adapter
+    participant Runtime as Runtime adapter
     participant Controller as DebugController
     participant Editor as CodeMirror extension
     participant Palette as Debug palette
@@ -142,10 +140,10 @@ sequenceDiagram
 | `BreakpointBinding` | One requested line and its verified state. | Controller → editor. |
 | `debugEditor(controller)` | CodeMirror extension for breakpoints and execution visuals. | Depends only on controller snapshots/commands. |
 | `createDebugToolbar(controller, options)` | Floating controls, status, path choices, and drag behavior. | Depends only on controller snapshots/commands. |
-| `SourceViewOptions.debug` | Optional composition seam. | Future app/runtime wiring → Source view. |
+| `SourceViewOptions.debug` | Optional composition seam. | App and runtime wiring → Source view. |
 
 The controller intentionally exposes control capabilities rather than requiring the UI to
-infer command legality from status. A later asynchronous server adapter can therefore disable
+infer command legality from status. An asynchronous server adapter can therefore disable
 commands during requests or runtime-specific states without changing the palette.
 
 ## Key design decisions
@@ -154,7 +152,7 @@ commands during requests or runtime-specific states without changing the palette
 
 The editor never imports graph nodes, runtime types, HTTP clients, or SSE event shapes. It
 consumes source-mapped snapshots and sends semantic debugger commands. This keeps the
-CodeMirror layer reusable and lets the future live adapter translate server events into the
+CodeMirror layer reusable and lets a live adapter translate server events into the
 same contract.
 
 The fake controller used during design evaluation now lives under `src/test-support/`. It is
@@ -255,13 +253,13 @@ createSourceView(source, { debug: runtimeDebugController });
 runApp(report, sourceOptions, runtimeDebugController);
 ```
 
-Two source TODO comments point future work at the deferred runtime:
+Two source comments mark where the adapter plugs in:
 
 - `debug-controller.ts` — implement the server-backed runtime adapter;
 - `app.ts` — inject that adapter after the dialogue graph/runtime can publish source-mapped
   snapshots.
 
-The future adapter should own runtime launch/session state and translate commands/events into
+The adapter should own runtime launch/session state and translate commands/events into
 `DebugController`; it should not add graph or transport knowledge to `debug-editor.ts` or
 `debug-toolbar.ts`.
 
@@ -281,20 +279,16 @@ Coverage includes:
 - Source-view mounting/teardown and accessible breakpoint action; and
 - real served-report dormancy.
 
-The frontend gate passes **542** unit tests plus **16** infrastructure tests. The full browser
-gate passes **81** static and **55** live Playwright tests.
+## Unbuilt runtime adapter
 
-## Deferred runtime work
+The compiler and [runtime](../../runtime/Runner.md) exist; connecting them to this UI
+still needs:
 
-The runtime must provide or enable:
+- binding requested breakpoints to the runtime's source positions;
+- Start, Continue, Step Over, and Stop over the runtime's stepping;
+- a server command and event transport;
+- a rebind policy after the source is edited;
+- runtime errors, the end state, and session ownership; and
+- optional breakpoint and palette persistence and keyboard shortcuts.
 
-- source-mapped dialogue graph nodes;
-- Start/Continue/Step Over/Stop semantics;
-- guard, weight, choice, jump, and game-system effect execution;
-- breakpoint binding against compiled runtime locations;
-- server command and event transport;
-- clean-source invalidation and rebind policy;
-- runtime errors, end state, and session ownership; and
-- optional breakpoint/palette persistence and keyboard shortcuts.
-
-Until that runtime adapter is implemented and reviewed, the UI remains dormant.
+Until that adapter exists, the UI stays dormant.

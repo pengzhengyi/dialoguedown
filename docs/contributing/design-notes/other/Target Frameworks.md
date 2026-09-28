@@ -50,6 +50,7 @@ Neither, then. The libraries a game references **multi-target**, and everything 
 | `DialogueDown` | `net8.0;net10.0` | Referenced by a game; must load on Godot's bundled runtime. |
 | `DialogueDown.ConfigurationLoader` | `net8.0;net10.0` | Same — a game reads its own `dialogue.toml`. |
 | `DialogueDown.Playbook` | `net8.0;net10.0` | Same — a game embeds the playbook types to read a compiled script. |
+| `DialogueDown.Runtime` | `net8.0;net10.0` | Same — a game runs the playbook with it. |
 | `DialogueDown.Cli` | `net10.0` | A developer tool. It never enters a game export, so nothing about Godot constrains it. |
 | `DialogueDown.Visualization`, `.Live` | `net10.0` | Diagnostics only, not shipped in the core package. |
 
@@ -63,13 +64,13 @@ only place that knows which runtime it will run on.**
 ### D1 — Multi-target the consumer surface, not everything
 
 Multi-targeting is not free: every target is another build and another set of test runs, and any
-API a target lacks has to be `#if`-conditional. So it is spent only where it buys something — the two
+API a target lacks has to be `#if`-conditional. So it is spent only where it buys something — the
 libraries a game actually references. Applying it to the CLI or the visualizer would double their
 build for a compatibility nobody consumes.
 
 ### D2 — The CLI takes LTS immediately
 
-`DialogueDown.Cli` is the only artifact published today, and it is the one with genuine EOL
+`DialogueDown.Cli` is the artifact the release publishes, and it is the one with genuine EOL
 exposure. It is also a developer tool: it compiles and visualizes scripts on a developer's machine
 and never ships inside a game, so moving it to `net10.0` cannot break an export. Its package
 therefore carries `tools/net10.0` alone.
@@ -95,13 +96,15 @@ including `net8.0`. Conflating the two is the mistake this note exists to preven
 
 Dropping `net8.0` from a shipped library is the dangerous edit, because **nothing else would
 notice**: the solution still builds, every test still passes, and only a consumer's Godot export
-fails — somewhere else, later, for someone else. A guardrail test therefore reads the shipped
-project files directly and fails if either stops offering `net8.0` or `net10.0`, naming the
-consequence in its message. It lives beside the other repository-manifest guards in
+fails — somewhere else, for someone else. A guardrail test therefore reads the shipped project
+files directly and fails if one stops offering `net8.0` or `net10.0`, naming the consequence in
+its message. It covers `DialogueDown`, `DialogueDown.ConfigurationLoader`, and
+`DialogueDown.Playbook`; `DialogueDown.Runtime` is missing from its list. It lives beside the
+other repository-manifest guards in
 `dev-dotnet-tasks.test.mjs`.
 
 ## When Godot moves
 
-Once Godot's bundled runtime reaches .NET 10, `net8.0` can be dropped from both libraries and this
+Once Godot's bundled runtime reaches .NET 10, `net8.0` can be dropped from these libraries and this
 note revised to record it. That is a one-line change per project plus the guardrail — the work of
 carrying two targets was done here precisely so the eventual move is trivial.

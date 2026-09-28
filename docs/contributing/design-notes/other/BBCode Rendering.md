@@ -1,26 +1,22 @@
 # BBCode Rendering
 
 > [!NOTE]
-> Status: **surveyed — not yet adopted**. This note records a preliminary
-> library survey and a proposed architecture for rendering a line's styled
-> speech as [BBCode](https://en.wikipedia.org/wiki/BBCode) (and for the terminal
-> and web previews). No code is merged. It captures the directions considered,
-> the tradeoffs found, and enough guidance to implement whichever surfaces the
-> project adopts.
+> Status: **proposed**. A library survey and a proposed `ISpeechFormatter` seam for rendering a
+> playbook line's speech fragments as BBCode for Godot, as terminal markup, and as HTML. None of it
+> is built; the plain-text reading is `SpeechText.Of`
+> ([Speech as Plain Text](../runtime/Speech%20as%20Plain%20Text.md)).
 
-The compiler produces a Dialogue AST whose lines carry **inline fragments** —
-plain text, styled runs, links, images, and game constructs. Something
-downstream has to turn those fragments into *displayed* text. The primary
-consumer is Godot, whose `RichTextLabel` renders **BBCode** natively; the
-[Interactive Playthrough](./Interactive%20Playthrough.md) previews additionally
-want to show styled speech in a terminal and in a browser. This note surveys how
-to serve all three from one seam.
+A compiled [playbook](../runtime/Playbook%20Format.md) carries each line's speech as a list of
+fragments — plain text, styled runs, links, images, and game constructs — because every host renders
+it differently. The primary consumer is Godot, whose `RichTextLabel` renders **BBCode** natively; a
+terminal or web preview would want styled speech too. This note surveys how to serve all three from
+one seam.
 
 ## Table of contents
 
 - [Goal and scope](#goal-and-scope)
 - [The key framing: two opposite directions](#the-key-framing-two-opposite-directions)
-- [What the AST gives us](#what-the-ast-gives-us)
+- [What the playbook gives us](#what-the-playbook-gives-us)
 - [Emit target: Godot BBCode](#emit-target-godot-bbcode)
 - [Rendering surfaces and their libraries](#rendering-surfaces-and-their-libraries)
   - [Web (JavaScript/TypeScript)](#web-javascripttypescript)
@@ -33,17 +29,17 @@ to serve all three from one seam.
   - [Reproduce a Spectre formatter (terminal)](#reproduce-a-spectre-formatter-terminal)
   - [Reproduce an HTML render (web)](#reproduce-an-html-render-web)
   - [Optional: parse BBCode back](#optional-parse-bbcode-back)
-- [Open questions if adopted](#open-questions-if-adopted)
+- [Open questions](#open-questions)
 
 ## Goal and scope
 
 Give the project **one way** to turn a line's inline fragments into displayed
 text on three surfaces — Godot (BBCode), the terminal preview, and the web
 preview — without duplicating the styling logic per surface, and without pulling
-a rendering dependency into the engine-agnostic core.
+a rendering dependency into the game-facing libraries.
 
 Out of scope: animation and typewriter effects, per-game theming, and the
-runtime that walks the graph. This note is about *formatting one line's
+runtime that walks the playbook. This note is about *formatting one line's
 fragments*, not about playing a script.
 
 ## The key framing: two opposite directions
@@ -53,11 +49,11 @@ avoids over-tooling, because they need very different amounts of code.
 
 | Direction | What it is | Where it is needed | Tooling weight |
 | --- | --- | --- | --- |
-| **Emit** (AST → BBCode) | Inline fragments → a BBCode string | Feeding Godot `RichTextLabel` — the real consumer | **None** — a small visitor |
+| **Emit** (fragments → BBCode) | Inline fragments → a BBCode string | Feeding Godot `RichTextLabel` — the real consumer | **None** — a small visitor |
 | **Render** (BBCode → display) | A BBCode string → HTML / terminal styling | The web and terminal previews | A parser library helps |
 
 The important consequence: for the project's *own* previews we already hold the
-AST, so a preview can render the fragments **directly** to terminal markup or
+fragments, so a preview can render the fragments **directly** to terminal markup or
 HTML — it does not have to round-trip through BBCode. A BBCode *parser* is only
 needed if a preview should consume the exact BBCode string Godot receives, as a
 fidelity check on the emitter. That single decision determines whether any
@@ -65,7 +61,7 @@ parsing dependency is taken at all.
 
 ```mermaid
 flowchart TB
-    AST["Line.Speech<br/>(inline fragments)"]
+    AST["Playbook speech<br/>(SpeechFragment list)"]
     AST --> BB["BBCode formatter<br/>→ Godot RichTextLabel"]
     AST --> SP["Spectre formatter<br/>→ terminal"]
     AST --> HT["HTML render<br/>→ web preview"]
@@ -73,24 +69,22 @@ flowchart TB
     PARSE -. re-render .-> HT
 ```
 
-## What the AST gives us
+## What the playbook gives us
 
-The inline surface a formatter must handle (see
-[Markdown to Dialogue AST Transpiler](../core/Markdown%20to%20Dialogue%20AST%20Transpiler.md)):
+The fragments a formatter must handle, from `DialogueDown.Playbook`:
 
 | Fragment | Carries | Notes |
 | --- | --- | --- |
-| `Text` | literal words | escape target-specific metacharacters |
-| `StyledText` | a `SpeechStyle` (`Italic`, `Bold`, `Strikethrough`) + nested children | styles nest, so bold-inside-italic is two wrappers |
-| `LineBreak` | — | a soft break hint |
-| `Link` | label + target | |
-| `Image` | alt + source | |
-| `GameCall`, `Jump`, `JumpIndicator`, `Tag` | game/flow constructs | no direct visual equivalent; map to custom tags or resolve before rendering |
+| `TextFragment` | literal words | escape target-specific metacharacters |
+| `StyledTextFragment` | a `SpeechStyle` (`Italic`, `Bold`, `Strikethrough`) + nested children | styles nest, so bold-inside-italic is two wrappers |
+| `LineBreakFragment` | — | a soft break hint |
+| `LinkFragment` | target + label fragments | |
+| `ImageFragment` | source + alt fragments | |
+| `QueryFragment`, `DefaultCommandFragment`, `CustomCommandFragment`, `TagFragment` | game constructs | no direct visual equivalent; map to custom tags or resolve before rendering |
 
-Styling records only *that* text is italic/bold/strikethrough; how it renders
-"stays a downstream `ISpeechFormatter` concern"
-([Markdown Front-End](../core/Markdown%20Front-End.md), the script language
-[spec](../../../guide/script-language.md)). This note fills in that seam.
+Styling records only *that* text is italic, bold, or struck through; how it renders is a downstream
+concern ([Markdown Front-End](../core/Markdown%20Front-End.md), the script language
+[spec](../../../guide/script-language.md)). This note proposes that seam.
 
 ## Emit target: Godot BBCode
 
@@ -100,21 +94,21 @@ direct, so emitting is a plain visitor with **no library**:
 
 | Fragment | BBCode | Note |
 | --- | --- | --- |
-| `Text` | the literal | escape `[` as `[lb]` |
-| `StyledText` Italic / Bold / Strikethrough | `[i]…[/i]` / `[b]…[/b]` / `[s]…[/s]` | recurse into children |
-| `Link` | `[url=target]label[/url]` | |
-| `Image` | `[img]source[/img]` | |
-| `LineBreak` | newline | |
-| `GameCall` / `Jump` / `Tag` | custom BBCode tags | Godot supports custom tags and `RichTextEffect`s |
+| `TextFragment` | the literal | escape `[` as `[lb]` |
+| `StyledTextFragment` Italic / Bold / Strikethrough | `[i]…[/i]` / `[b]…[/b]` / `[s]…[/s]` | recurse into children |
+| `LinkFragment` | `[url=target]label[/url]` | |
+| `ImageFragment` | `[img]source[/img]` | |
+| `LineBreakFragment` | newline | |
+| Query / command / tag fragments | custom BBCode tags | Godot supports custom tags and `RichTextEffect`s |
 
 Godot's custom-tag and `RichTextEffect` support means the game-specific
-fragments have a natural home: emit `[jump=scene]…[/jump]`-style tags and let the
+fragments have a natural home: emit `[cmd=name]…[/cmd]`-style tags and let the
 game's presentation layer interpret them.
 
 ## Rendering surfaces and their libraries
 
 Libraries only matter on the **render** side (BBCode → display), and only if a
-preview consumes BBCode rather than the AST. The survey below is a snapshot of
+preview consumes BBCode rather than the fragments. The survey below is a snapshot of
 the ecosystem at the time of writing; re-check maintenance before adopting.
 
 ### Web (JavaScript/TypeScript)
@@ -142,7 +136,7 @@ The CLI already uses [Spectre.Console](https://spectreconsole.net/) (see
 markup (`[bold]…[/]`), **not** BBCode, and no OSS bridge between the two exists.
 Two clean paths:
 
-- **Emit only** (AST is the source): write a Spectre formatter — the same
+- **Emit only** (fragments are the source): write a Spectre formatter — the same
   visitor pattern as the BBCode one with a different string table. **No new
   dependency.**
 - **Parse BBCode** (preview consumes the emitted string):
@@ -166,10 +160,9 @@ mitigated by its MIT license and small, vendorable source.
 - **Emit is the real work; parsing is optional.** The valuable, reusable code is
   the fragment visitor. A parser is a convenience for one specific preview mode
   (BBCode fidelity), not a core need.
-- **The core must stay engine-agnostic.** A BBCode formatter is pure string
-  building and belongs in the core behind an interface; a Spectre formatter
-  depends on Spectre and must live in the CLI/preview project, not in
-  `DialogueDown`.
+- **Game-facing libraries stay engine-agnostic.** A BBCode formatter is pure
+  string building and can sit beside `SpeechText` in `DialogueDown.Playbook`; a
+  Spectre formatter depends on Spectre and must live in the CLI.
 - **Markup dialects differ in closing syntax.** BBCode closes by name
   (`[/b]`); Spectre closes generically (`[/]`) and combines styles in one tag
   (`[bold red]`). A shared emitter cannot target both verbatim — hence one small
@@ -182,12 +175,12 @@ mitigated by its MIT license and small, vendorable source.
 
 ## Evaluation and recommendation
 
-1. **Build the emit seam first.** An `ISpeechFormatter` in the core with a
+1. **Build the emit seam first.** An `ISpeechFormatter` in `DialogueDown.Playbook` with a
    `BBCodeSpeechFormatter` covers the primary Godot use case and needs no
    dependency.
 2. **Add a Spectre formatter in the preview/CLI project** for the terminal
    preview — again a small visitor, no new dependency.
-3. **Render the web preview from the AST** (or its JSON projection) directly.
+3. **Render the web preview from the fragments** (the playbook JSON) directly.
    Reach for **`@bbob/*`** only if the preview should consume the emitted BBCode
    string; reach for **`CodeKicker.BBCode.Core`** only for the analogous .NET
    BBCode-parsing case. Both are MIT and AST-based.
@@ -203,14 +196,14 @@ Enough to reproduce each piece. All code below is **proposed**, not implemented.
 
 ### The seam: `ISpeechFormatter`
 
-One interface in the core turns a line's fragments into a string for a target.
+One interface beside `SpeechText` turns a line's fragments into a string for a target.
 It is the single place styling decisions live.
 
 ```csharp
-// proposed — in the engine-agnostic core
+// proposed — in DialogueDown.Playbook
 public interface ISpeechFormatter
 {
-    string Format(IReadOnlyList<InlineFragment> speech);
+    string Format(ImmutableArray<SpeechFragment> speech);
 }
 ```
 
@@ -226,23 +219,23 @@ A visitor that appends tags. No dependency.
 // proposed
 public sealed class BBCodeSpeechFormatter : ISpeechFormatter
 {
-    public string Format(IReadOnlyList<InlineFragment> speech)
+    public string Format(ImmutableArray<SpeechFragment> speech)
     {
         var sb = new StringBuilder();
         Write(sb, speech);
         return sb.ToString();
     }
 
-    private static void Write(StringBuilder sb, IReadOnlyList<InlineFragment> fragments)
+    private static void Write(StringBuilder sb, ImmutableArray<SpeechFragment> fragments)
     {
         foreach (var fragment in fragments)
         {
             switch (fragment)
             {
-                case Text t:
-                    sb.Append(t.Content.Replace("[", "[lb]"));
+                case TextFragment t:
+                    sb.Append(t.Text.Replace("[", "[lb]"));
                     break;
-                case StyledText s:
+                case StyledTextFragment s:
                     var tag = s.Style switch
                     {
                         SpeechStyle.Italic => "i",
@@ -254,10 +247,10 @@ public sealed class BBCodeSpeechFormatter : ISpeechFormatter
                     Write(sb, s.Children);
                     if (tag is not null) sb.Append("[/").Append(tag).Append(']');
                     break;
-                case LineBreak:
+                case LineBreakFragment:
                     sb.Append('\n');
                     break;
-                // Link, Image, GameCall, Jump, Tag → their BBCode / custom tags
+                // Link, image, query, command, and tag fragments → their BBCode / custom tags
             }
         }
     }
@@ -268,13 +261,13 @@ public sealed class BBCodeSpeechFormatter : ISpeechFormatter
 
 The same traversal, a different string table, and Spectre's generic close `[/]`.
 Escape literal `[` with Spectre's `Markup.Escape` (or `[[`). Lives in the
-CLI/preview project so the core takes no Spectre dependency.
+CLI so the game-facing libraries take no Spectre dependency.
 
 | Fragment | Spectre markup |
 | --- | --- |
-| `Text` | `Markup.Escape(content)` |
-| `StyledText` Italic / Bold / Strikethrough | `[italic]…[/]` / `[bold]…[/]` / `[strikethrough]…[/]` |
-| `LineBreak` | newline |
+| `TextFragment` | `Markup.Escape(text)` |
+| `StyledTextFragment` Italic / Bold / Strikethrough | `[italic]…[/]` / `[bold]…[/]` / `[strikethrough]…[/]` |
+| `LineBreakFragment` | newline |
 
 ### Reproduce an HTML render (web)
 
@@ -283,7 +276,7 @@ elements — `<em>`, `<strong>`, `<del>`, `<a>` — escaping text. Only if the
 preview must consume the emitted BBCode string, use bbob with a custom preset:
 
 ```ts
-// proposed — only if consuming BBCode, not the AST
+// proposed — only if consuming BBCode, not the fragments
 import bbobHTML from '@bbob/html'
 import presetHTML5 from '@bbob/preset-html5'
 import { TagNode } from '@bbob/plugin-helper'
@@ -307,17 +300,17 @@ Only for a fidelity check that a preview shows exactly what Godot would. In .NET
 and emit Spectre markup or HTML. In the web client, bbob's parser yields the same
 AST it renders from. Skip this entirely if previews render from the fragments.
 
-## Open questions if adopted
+## Open questions
 
 - **Scope of the first formatter.** Ship BBCode-for-Godot alone, or land the
   Spectre and HTML formatters together so the previews and the engine share the
   seam from day one?
-- **Where the seam lives.** `ISpeechFormatter` in the core is clean for BBCode
-  and HTML-from-AST; the Spectre formatter must sit outside the core. Confirm the
-  project boundary (core interface, edge implementations) matches the
+- **Where the seam lives.** `ISpeechFormatter` beside `SpeechText` suits BBCode
+  and HTML; the Spectre formatter must sit in the CLI. Confirm the
+  project boundary (library interface, edge implementations) matches the
   architecture rules.
-- **Custom-tag vocabulary.** Which BBCode tags represent `GameCall` / `Jump` /
-  `Tag`, and are they resolved before rendering or passed through for the game to
+- **Custom-tag vocabulary.** Which BBCode tags represent query, command, and
+  tag fragments, and are they resolved before rendering or passed through for the game to
   interpret?
 - **Fidelity check.** Is round-tripping through a BBCode parser worth a
-  dependency, or is rendering previews from the AST sufficient?
+  dependency, or is rendering previews from the fragments sufficient?
