@@ -53,6 +53,49 @@ public sealed class NodeQuestionsTests
     public void ToPlay_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => NodeQuestions.ToPlay(null!));
 
+    [Fact]
+    public void ToPlay_ReadsEveryQueryInTheLine_WhereverItStands() =>
+        Assert.Equal(
+            ["Rainy", "playerName", "mood"], NodeQuestions.ToPlay(AGuardedLineAskingEitherSideOfACommand()).Keys());
+
+    [Fact]
+    public void ToPlayFrom_TheStart_ReadsTheGuardAndTheOpeningWordsAlone() =>
+        // The query after the command is asked once the command is done, not on arrival.
+        Assert.Equal(
+            ["Rainy", "playerName"], NodeQuestions.ToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 0).Keys());
+
+    [Fact]
+    public void ToPlayFrom_ALaterSegment_ReadsItsWordsWithoutTheGuard() =>
+        // The guard was read on arrival, and the line is already playing.
+        Assert.Equal(["mood"], NodeQuestions.ToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 1).Keys());
+
+    [Fact]
+    public void ToPlayFrom_IsNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => NodeQuestions.ToPlayFrom(null!, 0));
+
+    /// <summary>A line the world must allow, asking one query before its command and one after.</summary>
+    /// <remarks>
+    /// <code>
+    /// `Rainy?` Alice: Hello, `"playerName"`. `Wave()` You look `"mood"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>The node.</returns>
+    private static LineNode AGuardedLineAskingEitherSideOfACommand() =>
+        new(
+            0,
+            Speaker: 0,
+            [
+                new TextFragment("Hello, "),
+                new QueryFragment("playerName"),
+                new TextFragment(". "),
+                new CustomCommandFragment("Wave", []),
+                new TextFragment(" You look "),
+                new QueryFragment("mood"),
+                new TextFragment("."),
+            ],
+            new KeyCondition("Rainy"),
+            [new SuccessionEdge(1)]);
+
     /// <summary>A line the world must allow, with a query standing in what it says.</summary>
     /// <remarks>
     /// <code>

@@ -18,7 +18,7 @@ namespace DialogueDown.Runtime.Stepping;
 internal readonly record struct NodeQuestions(
     ImmutableArray<string> Truths, ImmutableArray<string> Words)
 {
-    /// <summary>What a node needs answered before it can be played.</summary>
+    /// <summary>Everything a node needs answered to be played, wherever in it the question stands.</summary>
     /// <param name="node">The node being arrived at.</param>
     /// <returns>Its questions, both kinds together.</returns>
     public static NodeQuestions ToPlay(Node node)
@@ -26,6 +26,23 @@ internal readonly record struct NodeQuestions(
         ArgumentNullException.ThrowIfNull(node);
 
         return new NodeQuestions(node.FindTruthsForPlaying(), node.FindWordsForPlaying());
+    }
+
+    /// <summary>What a node needs answered before it plays from one of its segments.</summary>
+    /// <param name="node">The node being played.</param>
+    /// <param name="segmentIndex">The index of the segment playing starts from; zero from the node's start.</param>
+    /// <returns>The guard, when playing from the start, and the queries in that segment's words.</returns>
+    /// <remarks>
+    /// A line stops before any later segment whose words ask the world something, so the segment it
+    /// plays from is the only one that can ask before the next stop. The guard is read once, on
+    /// arrival.
+    /// </remarks>
+    public static NodeQuestions ToPlayFrom(Node node, int segmentIndex)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+
+        return new NodeQuestions(
+            segmentIndex == 0 ? node.FindTruthsForPlaying() : [], node.FindWordsForSegment(segmentIndex));
     }
 
     /// <summary>What a node needs answered before a run can tell which way out it takes.</summary>
