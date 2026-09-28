@@ -12,6 +12,7 @@ internal static class EventDescription
         happened switch
         {
             Said spoke => $"heard {SpeakerNames.Of(spoke.Speaker)} speak",
+            Continued => "heard the line go on",
             Ended => "ended",
             Refused refused => $"refused: {refused.Explanation}",
             Resolve resolve => $"asked the world about {string.Join(", ", resolve.Keys)}",

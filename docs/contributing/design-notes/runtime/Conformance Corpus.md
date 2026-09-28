@@ -197,6 +197,7 @@ Each `expect` is one message the runtime must produce next.
 | `expect` | Asserts |
 | --- | --- |
 | `said` | `speaker` (the name, never the index) and the `speech` — see below |
+| `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
 | `asked` | the options offered, each a `label` and whether it was `available` |
 | `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asked the world about |
