@@ -118,7 +118,8 @@ flowchart LR
     SPT --> RC["7. Runtime Core"]
     RC --> WT["8. Waiting on the Host"]
     WT --> AW["9. Asking the World"]
-    AW --> RUN(["the rest of the runner,<br/>players, adapters"])
+    AW --> SL["10. Speaking a Line"]
+    SL --> RUN(["the rest of the runner,<br/>players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -132,6 +133,7 @@ flowchart LR
 | 7 | [Runtime Core](./runtime/Runtime%20Core.md) | The first pass of the C# runner: the state, the step that advances it, and the harness that holds it to the corpus | Implemented |
 | 8 | [Waiting on the Host](./runtime/Waiting%20on%20the%20Host.md) | The pass that waits on the host: `Perform` answered by `Done` or `Failed`, the `AwaitingDone` stage, and when the run carries on | Implemented |
 | 9 | [Asking the World](./runtime/Asking%20the%20World.md) | The pass that asks the world: `Resolve` answered by `Supply`, the `AwaitingSupply` stage, and conditions, block conditions, and queries in speech | Implemented |
+| 10 | [Speaking a Line](./runtime/Speaking%20a%20Line.md) | The pass that plays a line's words and commands in written order, stopping inside the line only before a query written after a command | In progress |
 
 ### Language constructs
 
