@@ -1,7 +1,10 @@
 # Namespace Layout
 
 > [!NOTE]
-> Status: **implemented**.
+> Status: **implemented**. An architecture test fails when an assembly's root namespace holds more
+> than ten types, so each assembly's root keeps only its facade.
+
+## Table of contents
 
 - [Goal and scope](#goal-and-scope)
 - [Ubiquitous language](#ubiquitous-language)
@@ -51,9 +54,11 @@ Measured by reflecting over the built assemblies, counting authored non-nested
 types per namespace. The core was already the model — one type at the root,
 everything else named by its stage — and three assemblies were not:
 
-| Assembly | Root types before | After | Sub-namespaces added |
+| Assembly | Root types before the rule | Root types | Sub-namespaces added |
 | --- | ---: | ---: | --- |
 | `DialogueDown` | 1 | 1 | — |
+| `DialogueDown.Playbook` | 7 | 7 | — |
+| `DialogueDown.Runtime` | 4 | 4 | — |
 | `DialogueDown.Cli` | 8 | 8 | — |
 | `DialogueDown.ConfigurationLoader` | 11 | 2 | `Readers`, `Toml`, `Errors` |
 | `DialogueDown.Visualization.Live` | 31 | 6 | `Browsing`, `Serving`, `Files`, `Configuration` |
@@ -67,7 +72,7 @@ organized — see [D1](#d1--count-types-not-files).
 - [x] A rule fails when a root namespace holds more than the cap.
 - [x] The failure message names each offending namespace, its count, the cap,
       and example type names, so the fix is obvious without a debugger.
-- [x] The rule covers all five shipped assemblies, including the CLI.
+- [x] The rule covers all seven shipped assemblies (`Architecture.AllAssemblies`), including the CLI.
 - [x] Compiler-generated and nested types never reach the count.
 - [x] The three offending assemblies are refactored into sub-namespaces that
       name their roles, and the rule passes.

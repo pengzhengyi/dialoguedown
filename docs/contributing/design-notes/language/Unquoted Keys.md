@@ -1,54 +1,43 @@
-# Unquoted keys
+# Unquoted Keys
 
 > [!NOTE]
-> Status: **implemented**. This note refines the syntax of the **query key** shared
-> by the [Conditional Jump](./Conditional%20Jump.md),
-> [Conditional Line](./Conditional%20Line.md),
-> [Conditional Choice](./Conditional%20Choice.md), and
-> [Random Choice](./Random%20Choice.md) notes; read those first for the condition
-> and weight they build on.
+> Status: **implemented**. A key may drop its quotes wherever a sigil follows it —
+> in a [condition](./Conditions.md) (`?`) and a [random-choice](./Random%20Choice.md)
+> weight (`%`). Unquoted is the recommended default; quotes are the escape.
 
 ## Table of contents
 
-- [Unquoted keys](#unquoted-keys)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Grammar](#grammar)
-  - [Key resolution](#key-resolution)
-  - [Prior art](#prior-art)
-  - [Architecture](#architecture)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — Only a sigil-terminated form may be unquoted](#d1--only-a-sigil-terminated-form-may-be-unquoted)
-    - [D2 — Quotes are the escape, detected by shape](#d2--quotes-are-the-escape-detected-by-shape)
-    - [D3 — A weight is a number first, a key second](#d3--a-weight-is-a-number-first-a-key-second)
-    - [D4 — The game-call grammar is untouched](#d4--the-game-call-grammar-is-untouched)
-    - [D5 — An unquoted key may contain spaces](#d5--an-unquoted-key-may-contain-spaces)
-  - [Markdown interaction](#markdown-interaction)
-  - [Diagnostics](#diagnostics)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Testability](#testability)
-  - [Implementation crosscheck](#implementation-crosscheck)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Ubiquitous language](#ubiquitous-language)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Grammar](#grammar)
+- [Key resolution](#key-resolution)
+- [Prior art](#prior-art)
+- [Architecture](#architecture)
+- [Key design decisions](#key-design-decisions)
+  - [D1 — Only a sigil-terminated form may be unquoted](#d1--only-a-sigil-terminated-form-may-be-unquoted)
+  - [D2 — Quotes are the escape, detected by shape](#d2--quotes-are-the-escape-detected-by-shape)
+  - [D3 — A weight is a number first, a key second](#d3--a-weight-is-a-number-first-a-key-second)
+  - [D4 — The game-call grammar is untouched](#d4--the-game-call-grammar-is-untouched)
+  - [D5 — An unquoted key may contain spaces](#d5--an-unquoted-key-may-contain-spaces)
+- [Markdown interaction](#markdown-interaction)
+- [Diagnostics](#diagnostics)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
+- [Open questions and deferred work](#open-questions-and-deferred-work)
 
 ## Goal and scope
 
-A game-state **key** is written in quotes today: `` `"IsAngry"?` `` guards a jump,
-line, or choice, and `` `"Luck"%` `` weights a random option. Writers find the
-quotes unnatural — a key reads like a plain question or phrase, and the quotes are
-punctuation they must remember to add and to balance.
-
-This note lets a writer **drop the quotes** on a key where it is safe to do so:
+A quoted key — `` `"IsAngry"?` ``, `` `"Luck"%` `` — reads unnaturally to a
+writer: a key is a plain question or phrase, and the quotes are punctuation to
+remember and balance. So a writer may **drop the quotes** where it is safe:
 
 ```markdown
 `IsAngry?` => [The guard blocks you](#blocked)
 ```
 
-The quotes remain valid — an unquoted key is an *optional shorthand*, not a
-replacement — and they stay **required** wherever dropping them would be
-ambiguous.
+The quoted form stays valid, and quotes stay **required** wherever dropping them
+would be ambiguous.
 
 Scope:
 
@@ -68,32 +57,13 @@ Out of scope:
   `IsAngry?` in prose is not a condition. The backtick is what marks the span
   as game-state, not speech.
 
-## Functionality checklist
-
-- [x] Recognize a **condition** whose key is unquoted: `` `IsAngry?` `` reads the
-      key `IsAngry`.
-- [x] Recognize a **weight** whose key is unquoted: `` `Luck%` `` reads the key
-      `Luck` as a dynamic weight.
-- [x] Keep accepting the **quoted** form of both, unchanged.
-- [x] Keep the **value read** quoted-only; a bare `` `IsAngry` `` stays *not a game
-      call*.
-- [x] Treat a trailing `?`/`%` as the **operator**; a key that ends in a literal
-      `?`/`%` is written quoted (`` `"Rainy?"?` ``).
-- [x] Preserve a numeric weight: `` `50%` `` is the number 50, not the key `50`;
-      a negative numeric weight (`` `-5%` ``) stays an **invalid weight**, not a key.
-- [x] Trim insignificant whitespace around the key and the sigil; keep spaces
-      *inside* an unquoted key.
-- [x] Present the unquoted form as the **recommended default** in the writer guide,
-      with quotes documented as the escape.
-- [x] Leave the source span of the condition, the weight, and the key correct.
-
 ## Ubiquitous language
 
 | Term             | Meaning                                                                           |
 | ---------------- | --------------------------------------------------------------------------------- |
 | **Key**          | The opaque string the game resolves — the argument of a query.                    |
 | **Quoted key**   | A key written in straight double quotes: `"IsAngry"`.                             |
-| **Unquoted key** | A key written without quotes: `IsAngry`. New in this note.                        |
+| **Unquoted key** | A key written without quotes: `IsAngry`.                                          |
 | **Sigil**        | The trailing operator inside a code span: `?` (condition) or `%` (weight).        |
 | **Value read**   | A query that inserts the key's value into speech (`` `"key"` ``); has *no* sigil. |
 | **Condition**    | A boolean read that guards a jump, line, or choice (`` `key?` ``).                |
@@ -106,7 +76,7 @@ operation, so the key before it needs no quotes to mark where it ends.
 
 A key may be written **quoted or unquoted** wherever a sigil follows it:
 
-| Form       | Quoted (still valid)          | Unquoted (new)   | Reads                     |
+| Form       | Quoted (the escape)           | Unquoted         | Reads                     |
 | ---------- | ----------------------------- | ---------------- | ------------------------- |
 | Condition  | `` `"IsAngry"?` ``            | `` `IsAngry?` `` | key `IsAngry`             |
 | Weight     | `` `"Luck"%` ``               | `` `Luck%` ``    | key `Luck`                |
@@ -191,8 +161,8 @@ and the trailing sigil already delimits it, so a natural phrase is safe (see
 
 ## Architecture
 
-The change is small and localized, because the sigil readers already isolate the
-key before validating it. Two readers gain the unquoted form; nothing else moves.
+The sigil readers isolate the key before validating it, so the unquoted form
+lives in one shared reader.
 
 ```mermaid
 flowchart TD
@@ -203,12 +173,12 @@ flowchart TD
     CS --> GC["GameCallParser.Grammar\n(value read, commands)\nUNCHANGED"]
 ```
 
-| Type                 | Responsibility                                           | Change                                         |
-| -------------------- | -------------------------------------------------------- | ---------------------------------------------- |
-| `ConditionReader`    | Read a `` `key?` `` code span into a `Condition`.        | Accept an unquoted key.                        |
-| `ChoiceWeightReader` | Read a `` `…%` `` code span into a `ChoiceWeight`.       | Accept an unquoted key for the dynamic weight. |
-| `QueryKeyReader`     | Turn the text before the sigil into a key.               | New shared reader: quoted **or** unquoted.     |
-| `GameCallParser`     | Recognize a value read, default command, custom command. | **None** — value reads stay quoted.            |
+| Type                 | Responsibility                                                          |
+| -------------------- | ----------------------------------------------------------------------- |
+| `ConditionReader`    | Read a `` `key?` `` code span into a `Condition`.                       |
+| `ChoiceWeightReader` | Read a `` `…%` `` code span into a `ChoiceWeight`.                      |
+| `QueryKeyReader`     | Turn the text before the sigil into a key, quoted **or** unquoted.      |
+| `GameCallParser`     | Recognize a value read and the commands; value reads stay quoted-only.  |
 
 ## Key design decisions
 
@@ -248,8 +218,8 @@ key — there is no "malformed key" to report, only the empty one.
 A weight's text may be a **number** (`50`), a **key**, or empty (an auto weight).
 The reader tries the number first, so `` `50%` `` stays the number 50 rather than a
 key named `50`. A value that *parses as a number but is out of range* — a negative
-percentage like `` `-5%` `` — stays an **invalid weight**, the same error it is
-today, rather than falling through to a key named `-5`. Only text that is *not*
+percentage like `` `-5%` `` — is an **invalid weight** rather than a key named
+`-5`. Only text that is *not*
 numeric becomes an unquoted key.
 
 ### D4 — The game-call grammar is untouched
@@ -274,21 +244,19 @@ operator) and a backtick (which closes the code span); quotes express both.
 
 Nothing changes for Markdown. A key still lives inside an inline **code span**, so
 an ordinary Markdown preview renders `` `IsAngry?` `` as monospace — visibly not
-speech — exactly as it renders the quoted form today. Dropping the quotes only
+speech — exactly as it renders the quoted form. Dropping the quotes only
 removes two characters from inside the span; it does not change how Markdown
 tokenizes it.
 
 ## Diagnostics
 
-No new diagnostic code. The change **widens** what the two sigil readers accept, so
-inputs that are errors today because they are unquoted (`` `IsAngry?` ``) become
-valid. Existing diagnostics are preserved:
+No diagnostic code of its own. The unquoted form widens what the two sigil
+readers accept; the surrounding diagnostics keep their meaning:
 
 - A **value read** that is unquoted (`` `IsAngry` ``) still reports *not a game call*
   (`DLG1102`) — value reads are quoted-only.
-- An **invalid weight** (`` `-5%` ``, `` `1/2%` ``) still reports its existing weight
-  diagnostic; a non-numeric, non-empty weight is now a key rather than an error, but
-  a numeric-but-invalid one is unchanged (see
+- An **invalid weight** is a negative number (`` `-5%` ``, `DLG1105`). Any
+  non-numeric, non-empty weight — `` `abc%` ``, `` `1/2%` `` — is a key (see
   [D3](#d3--a-weight-is-a-number-first-a-key-second)).
 - An **orphan condition** (`DLG1106`) is unaffected — an unquoted condition with
   nothing to guard is still an orphan.
@@ -306,7 +274,8 @@ valid. Existing diagnostics are preserved:
 | `` `IsAngry` ``           | *not a game call* (`DLG1102`)   | value reads are quoted-only          |
 | `` `Luck%` ``             | weight, key `Luck`              | unquoted key + sigil                 |
 | `` `50%` ``               | weight, number 50               | number wins over key                 |
-| `` `-5%` ``               | *invalid weight*                | numeric but out of range             |
+| `` `-5%` ``               | *invalid weight* (`DLG1105`)    | numeric but out of range             |
+| `` `1/2%` ``              | weight, key `1/2`               | not a number, so a key               |
 | `` `%` ``                 | auto weight                     | empty weight                         |
 | `` `JoinClub("Alice")` `` | custom command                  | grammar untouched                    |
 
@@ -326,22 +295,6 @@ valid. Existing diagnostics are preserved:
   plus a key with spaces, asserting each yields the same key its quoted form would.
 - **Value read** — a bare code span with no sigil still reports *not a game call*,
   guarding the quoted-only rule.
-
-## Implementation crosscheck
-
-Built as designed, with these notes:
-
-- **Achieved.** A condition and a dynamic weight accept an unquoted key through a
-  shared `QueryKeyReader.Read`; the quoted form and the value read are unchanged; a
-  number still beats a key in a weight and a negative number stays an invalid
-  weight; and the writer guide recommends the unquoted form. Reader unit tests plus
-  the end-to-end `UnquotedKeyTranspilationTests` cover a line, a choice, a random
-  option, a jump, and a key with spaces.
-- **Changed.** The shared step sketched as `resolveKey` shipped as the static
-  `QueryKeyReader.Read`. The `InvalidChoiceWeight` explanation was corrected: since
-  non-numeric text is now a key, a negative number is the only invalid weight.
-- **Not implemented.** Nothing deferred — the construct is pure compile-time syntax
-  with no runtime component.
 
 ## Open questions and deferred work
 

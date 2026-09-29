@@ -1,4 +1,4 @@
-# Diagnostic quick fixes
+# Diagnostic Quick Fixes
 
 > [!NOTE]
 > Status: **implemented**. A diagnostic may carry a **fix** — a title and literal
@@ -8,26 +8,16 @@
 
 ## Table of contents
 
-- [Diagnostic quick fixes](#diagnostic-quick-fixes)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Architecture](#architecture)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — The producer attaches fixes to its diagnostic](#d1--the-producer-attaches-fixes-to-its-diagnostic)
-    - [D2 — A fix is data, not a callback](#d2--a-fix-is-data-not-a-callback)
-    - [D3 — Edit ranges are relative to the diagnostic span](#d3--edit-ranges-are-relative-to-the-diagnostic-span)
-    - [D4 — Applying a fix is one ordinary edit transaction](#d4--applying-a-fix-is-one-ordinary-edit-transaction)
-    - [D5 — A fix repeats the remedy its message names](#d5--a-fix-repeats-the-remedy-its-message-names)
-    - [D6 — Fixes are an edit-mode affordance](#d6--fixes-are-an-edit-mode-affordance)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Integration](#integration)
-  - [Testability](#testability)
-  - [Implementation crosscheck](#implementation-crosscheck)
-  - [Alternatives not chosen](#alternatives-not-chosen)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Ubiquitous language](#ubiquitous-language)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Architecture](#architecture)
+- [Key design decisions](#key-design-decisions)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Integration](#integration)
+- [Testability](#testability)
+- [Alternatives not chosen](#alternatives-not-chosen)
+- [Out of scope](#out-of-scope)
 
 ## Goal and scope
 
@@ -44,31 +34,8 @@ recompilation all inherit.
 **In scope:** the fix model, the dangling-arrow producer, the projection into the
 report payload, and the editor action.
 
-**Out of scope:** general refactors, "fix all", fixes in the published
-reference, and a "Make literal" command for valid sigils — not planned, because
-a valid tag or jump carries no diagnostic and the escape is one typed character.
-The CLI mode that applies fixes shipped later, in
-[Compile CLI — fix mode](../../cli/Compile%20CLI%20-%20Fix%20Mode.md).
-
-## Functionality checklist
-
-- [x] `Diagnostic` carries an ordered list of fixes, empty by default.
-- [x] A fix has a writer-facing title and one or more text edits.
-- [x] `DLG1113` attaches *"Escape as literal text"*, inserting `\` at the arrow's
-      start.
-- [x] The projection carries the fixes on the LSP-shaped diagnostic, with edit
-      ranges relative to the diagnostic's own span.
-- [x] The editor shows one action per fix in the diagnostic tooltip and applies
-      its edits as a single undoable transaction.
-- [x] The Problems panel offers each fix as a leading lightbulb whose hover help
-      names the repair.
-- [x] A diagnostic with no fixes is unchanged in payload and UI, and its row still
-      reserves the fix slot so rows align.
-- [x] A read-only report offers no actions and no lightbulbs.
-- [x] An action whose diagnostic range has collapsed (the text is gone) is a
-      no-op.
-- [x] Applying a fix marks the document dirty and lets autosave and the live
-      recompile clear the warning.
+The CLI applies the same fixes with `ddown compile --fix`; see
+[Compile CLI — Fix Mode](../../cli/Compile%20CLI%20-%20Fix%20Mode.md).
 
 ## Ubiquitous language
 
@@ -135,7 +102,7 @@ The stage that knows the repair attaches it where the diagnostic is made
 (`JumpAssembler`, at the moment it degrades the arrow). Consumers then only
 forward or ignore it: the CLI renders the message and applies the fix on
 request, the published reference keeps rendering the message alone, the
-projection carries the fix, and a future language server serves it without
+projection carries the fix, and a language server could serve it without
 moving knowledge around.
 
 Deriving fixes in the visualization from a diagnostic's code and span was
@@ -197,7 +164,7 @@ recompile.
 | A read-only report or View mode                          | Diagnostics render; the tooltip offers no actions and the panel no lightbulbs (D6).  |
 | The mode flips while diagnostics are listed              | Both surfaces recompute from the same list, so an Edit-mode action cannot linger.    |
 | A fixable row beside a fix-less row                      | Both reserve the leading fix slot, so the messages align.                            |
-| An arrow in a choice body or control branch              | The diagnostic is reported there today; its fix rides along unchanged.               |
+| An arrow in a choice body or control branch              | The diagnostic is reported there too; its fix rides along unchanged.                 |
 | A fix with several edits                                 | Applied in order within one transaction (D4).                                        |
 
 ## Integration
@@ -237,32 +204,12 @@ recompile.
 | Derive fixes in the visualization from code and span  | Re-derives producer knowledge and gives the fix a second home (D1).                                                                                                                              |
 | Absolute edit offsets                                 | Stale within the live-edit window; a misplaced insert corrupts text (D3).                                                                                                                        |
 | Callbacks instead of data                             | Not serializable, not testable without an editor, not portable to a server (D2).                                                                                                                 |
-| A client-side "Make literal" command for valid sigils | A valid tag or jump carries no diagnostic, and the escape is one typed character; not planned — issue [#461](https://github.com/pengzhengyi/dialoguedown/issues/461) closed with that reasoning. |
+| A client-side "Make literal" command for valid sigils | A valid tag or jump carries no diagnostic, and the escape is one typed character.                                                                                                                |
 | Attaching fixes to the descriptor                     | A descriptor is shared by every instance; a fix needs a span.                                                                                                                                    |
 
-## Implementation crosscheck
+## Out of scope
 
-Built as designed, with these notes:
-
-- **Achieved.** The producer attaches fixes; the located view and the projection
-  carry them with relative ranges; the tooltip action and the Problems panel's
-  lightbulb both apply through the source-view handle as one transaction; the
-  live e2e proves the save-and-clear loop; every checklist item is covered.
-- **Changed.** Preview review added the Problems-panel surface and editability
-  gating: the panel re-renders when the mode flips, the source view re-applies
-  its diagnostics, and a read-only report offers nothing. The panel also gained
-  the leading slot every row reserves, so rows with and without a fix align.
-- **Not implemented.** More producers and a "fix all" stay unbuilt until a
-  consumer asks.
-- **Shipped since.** The CLI `--fix` mode, this note's out-of-scope follow-up,
-  landed in [Compile CLI — fix mode](../../cli/Compile%20CLI%20-%20Fix%20Mode.md).
-
-## Open questions and deferred work
-
-- **The literalize command and suggestions** are not planned: a valid sigil
-  carries no diagnostic and the escape is one typed character, and suggestions
-  for tag-like prose risk noise. Issue
-  [#461](https://github.com/pengzhengyi/dialoguedown/issues/461) tracked this and
-  closed with that reasoning.
-- **More producers** may follow; the seam is one attach call, and each new fix
-  should arrive with its message already naming the remedy (D5).
+- General refactors, "fix all", and fixes in the published reference.
+- A literalize command or suggestions for valid sigils: a valid sigil carries no diagnostic, the
+  escape is one typed character, and suggestions for tag-like prose would be noise.
+- Further producers: each is one attach call, and its message must already name the remedy (D5).

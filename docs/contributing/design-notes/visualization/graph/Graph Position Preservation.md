@@ -1,19 +1,9 @@
 # Graph Position Preservation
 
 > [!NOTE]
-> Status: **implemented** (an enhancement to
-> [Compilation Visualization](../report/Compilation%20Visualization.md)). Each stage's
-> graph remembers where the reader left it. A graph the reader has adjusted keeps
-> its own zoom, pan, and collapsed branches; a graph they have not yet positioned
-> **inherits the current view**, so switching tabs stays at roughly the same place.
-> Graphs open **framed to fit the whole drawing** and drop to a root-centered view
-> only when that fit would fall below a legibility floor; the zoom toolbar takes a
-> **typed percentage** or a one-click **revert**. The memory lives entirely in the
-> browser; nothing new is serialized or sent to the server.
->
-> Like the rest of the visualization tooling, this surface is "vibe-coded" (see
-> the visualization note's maturity caveat); the core engine stays the reviewed
-> surface.
+> Status: **implemented**. Each stage's graph remembers its zoom, pan, and folds across tab
+> switches and hot reloads; an untouched graph inherits the current view, and graphs open framed to
+> fit, within a legibility floor. The memory lives in the browser only.
 
 ## Table of contents
 
@@ -22,21 +12,14 @@
 - [Design](#design)
 - [Key design decisions](#key-design-decisions)
 - [Testability](#testability)
-- [Implementation checklist](#implementation-checklist)
 
 ## Goal
 
-The report shows one interactive graph per compiler stage, each in its own tab.
-A reader zooms into a node, pans to a branch, and collapses noise to focus. Two
-routine actions throw that work away today:
+A reader zooms into a node, pans to a branch, and collapses noise to focus. Two routine actions
+would throw that work away: switching tabs, which could re-fit a graph each time, and a hot reload
+or save, which rebuilds every stage graph from scratch — exactly when staying put matters most.
 
-- **Switching tabs.** Activating a tab re-fits its graph to the container every
-  time, so returning to a stage you had zoomed into resets it to the default view.
-- **Hot-reloading.** A disk change (or a Live Edit save) rebuilds the stage graphs
-  from scratch, so the reader's zoom, pan, and fold state vanish on every edit —
-  exactly when staying put matters most.
-
-Make each stage's graph **spatially stable**, with a hybrid memory that favors
+Each stage's graph is therefore **spatially stable**, with a hybrid memory that favors
 continuity by default. A graph the reader has adjusted keeps its own camera and
 fold across tab switches and hot-reloads. A graph they have not positioned inherits
 the **current** camera — wherever they are now — so moving between tabs does not
@@ -60,8 +43,7 @@ Out of scope:
 
 - Persisting position across a full browser reload (F5). The memory is per page
   load, matching the report's other in-browser state (selection, theme aside).
-- Remembering the selected node or the open detail panel across rebuilds
-  (selection is still cleared on tab change, as today).
+- Remembering the selected node across a tab change.
 - Any change to the layout algorithm, the graphs' content, or the server payload.
 
 ## Ubiquitous language
@@ -78,9 +60,9 @@ Out of scope:
 
 ## Design
 
-The tree view owns its camera (a D3 zoom behavior) and its fold state (per-node
-`_children`). This enhancement lets it apply a given camera/fold and report the
-reader's own adjustments, and adds a small hybrid memory beside the tabs.
+The tree view owns its camera (a D3 zoom behavior) and its fold state (per-node `_children`). It
+applies a given camera and fold and reports the reader's own adjustments to a small hybrid memory
+beside the tabs.
 
 ```text
    reader gesture (pin)        reveal a tab / rebuild
@@ -144,7 +126,7 @@ real size (a just-shown tab reads zero until it lays out), retried per frame and
 capped, and conditional by a generation token so a stale retry cannot clobber a
 camera a later reveal has applied.
 
-The zoom toolbar's ratio becomes a number input the reader types a percentage into
+The zoom toolbar's ratio is a number input the reader types a percentage into
 (clamped to the zoom extent), alongside the `−`/`+` steppers and a **Revert** button
 that restores the default framing and clears the graph's remembered position.
 
@@ -153,8 +135,7 @@ that restores the default framing and clears the graph's remembered position.
 - **D1 — Hybrid: inherit by default, pin on adjust.** An untouched graph inherits
   the shared current camera so switching tabs stays at roughly the same view;
   adjusting a graph pins its own override so it keeps its place. This favors
-  continuity while still letting each graph diverge, which is the balance the reader
-  asked for.
+  continuity while still letting each graph diverge.
 - **D2 — Fold stays per-graph.** Collapsed node ids only make sense within one
   graph (nodes differ between stages), so fold is never shared — only the camera is.
 - **D3 — Key overrides and fold by stage title.** Titles are stable across rebuilds
@@ -195,19 +176,3 @@ that restores the default framing and clears the graph's remembered position.
   - A stage keeps its zoom when you leave the tab and come back.
   - A graph keeps its zoom across a hot reload.
   - An untouched graph inherits the current zoom while an adjusted one keeps its own.
-
-## Implementation checklist
-
-- [x] `GraphCameraStore` (pure hybrid module): `cameraFor` / `foldFor` /
-      `adjustCamera` / `noteCamera` / `setFold` / `reset`, plus `CameraTransform`.
-- [x] `TreeView.applyView`, the `onCameraChange` / `onFoldChange` / `onRevert`
-      hooks and initial camera/fold on `createTreeView`, with reader-gesture
-      detection.
-- [x] Fit-to-fit default framing with a legibility floor that falls back to a root
-      anchor (real-size retry, generation-token conditional).
-- [x] Zoom toolbar: editable percentage input and a Revert button.
-- [x] `runApp` records adjustments live and applies the store on reveal / rebuild.
-- [x] Vitest coverage for the store and the zoom controls.
-- [x] Playwright e2e for default framing, the zoom input + revert, tab-switch and
-      hot-reload persistence, and the inherit-vs-pinned hybrid.
-- [x] Rebuild the committed report bundle; confirm it is deterministic.

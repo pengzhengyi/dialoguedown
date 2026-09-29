@@ -1,4 +1,4 @@
-# Live visualization — heading anchors
+# Heading Anchors
 
 > [!NOTE]
 > Status: **implemented**. Copy a scene heading's GitHub-style anchor straight from
@@ -23,7 +23,7 @@
 ## Goal and scope
 
 A jump is written `[text](#slug)`, where `slug` is the GitHub-style anchor of a
-scene heading. Today a writer must know or hand-type that slug. This feature lets
+scene heading. Without help a writer must know or hand-type that slug. This feature lets
 them **copy a heading's anchor directly from the Source view**, through two
 affordances:
 

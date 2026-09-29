@@ -93,23 +93,22 @@ Alice: Hello, Bob!
 Stable IDs are useful when a character has nicknames, localized names, or
 multiple display names.
 
-For long-form stories, keep a central `speakers.json` file so speaker identity
-and metadata have a single source of truth.
+For a long story, declare speakers once for the whole project in
+`dialogue.toml`, so every script shares one source of truth:
 
-```json
-[
-  {
-    "name": "Alice",
-    "id": "A",
-    "tags": ["main"]
-  },
-  {
-    "name": "Bob",
-    "id": "B",
-    "tags": ["npc"]
-  }
-]
+```toml
+[[speakers]]
+name = "Alice"
+id   = "A"
+tags = ["main"]
+
+[[speakers]]
+name = "Bob"
+id   = "B"
+tags = ["npc"]
 ```
+
+See [Project configuration](configuration.md#configuring-speakers).
 
 ### Partial declaration
 

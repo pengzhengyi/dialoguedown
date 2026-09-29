@@ -1,66 +1,45 @@
-# Control line
+# Control Line
 
 > [!NOTE]
-> Status: **implemented**. The compiler recognizes a **control line** — an
-> *effect-only* block with no speaker, distinct from a spoken
-> [line](./Conditional%20Line.md). It models what a bare jump and a silent command
-> already are (control and effect, not speech), so neither is attributed to the
-> configured default speaker. It grows out of the
-> [Block Controls](./Block%20Controls.md) survey and reuses the jump and command
-> fragments from the
-> [Markdown to Dialogue AST Transpiler](../core/Markdown%20to%20Dialogue%20AST%20Transpiler.md)
-> and the condition from the [Conditional Jump](./Conditional%20Jump.md) note.
-> Executing an effect at play time is part of the planned
-> runtime.
+> Status: **implemented**. A **control line** is an effect-only block with no
+> speaker — a bare jump or a silent command — so neither is attributed to the
+> default speaker. It compiles to a `control` node, which the
+> [runner](../runtime/Runner.md) plays: it asks the host to perform each effect and
+> waits, or walks past a control node with no effects.
 
 ## Table of contents
 
-- [Control line](#control-line)
-  - [Table of contents](#table-of-contents)
-  - [Goal and scope](#goal-and-scope)
-  - [Functionality checklist](#functionality-checklist)
-  - [Ubiquitous language](#ubiquitous-language)
-  - [Writer-facing behavior](#writer-facing-behavior)
-  - [Grammar](#grammar)
-  - [Architecture](#architecture)
-  - [Interfaces and responsibilities](#interfaces-and-responsibilities)
-  - [Key design decisions](#key-design-decisions)
-    - [D1 — A distinct sibling type, conditional through `IConditional`](#d1--a-distinct-sibling-type-conditional-through-iconditional)
-    - [D2 — The boundary is speaker-less and effect-only](#d2--the-boundary-is-speaker-less-and-effect-only)
-    - [D3 — Recognize as a rule in the desugar pipeline](#d3--recognize-as-a-rule-in-the-desugar-pipeline)
-    - [D4 — The default-speaker fill no longer covers effects](#d4--the-default-speaker-fill-no-longer-covers-effects)
-    - [D5 — A control line reuses the effect fragments and may carry a condition](#d5--a-control-line-reuses-the-effect-fragments-and-may-carry-a-condition)
-    - [D6 — Every block switch handles the new kind](#d6--every-block-switch-handles-the-new-kind)
-  - [Markdown interaction](#markdown-interaction)
-  - [Diagnostics](#diagnostics)
-  - [Error and boundary cases](#error-and-boundary-cases)
-  - [Testability](#testability)
-  - [Alternatives not chosen](#alternatives-not-chosen)
-  - [Open questions and deferred work](#open-questions-and-deferred-work)
+- [Goal and scope](#goal-and-scope)
+- [Ubiquitous language](#ubiquitous-language)
+- [Writer-facing behavior](#writer-facing-behavior)
+- [Grammar](#grammar)
+- [Architecture](#architecture)
+- [Interfaces and responsibilities](#interfaces-and-responsibilities)
+- [Key design decisions](#key-design-decisions)
+- [Diagnostics](#diagnostics)
+- [Error and boundary cases](#error-and-boundary-cases)
+- [Testability](#testability)
+- [Alternatives not chosen](#alternatives-not-chosen)
 
 ## Goal and scope
 
-A [line](./Conditional%20Line.md) is *spoken*: it belongs to a speaker who says its
-speech. Two constructs, however, are not speech at all — they are **effects**:
+A line is *spoken*: it belongs to a speaker who says its speech. Two constructs
+are not speech at all — they are **effects**:
 
 - a **bare jump** on its own line (`=> [The cave](#cave)`), which diverts the
   reading;
 - a **silent command** on its own line (`` `("open the gate")` ``), which changes
   game state.
 
-Today both are modeled as a `Line` that **names no speaker**, and the desugarer
-fills every speaker-less line with the **configured default speaker**. That
-overloads the line's optional speaker to mean two different things — *"spoken,
-speaker unspecified, use the default"* (narration) and *"not spoken at all"* (an
-effect). When a game configures the default speaker to a named character, a bare
-jump or a silent command is then attributed to that character, as if they had
-"said" it.
+If both were a `Line` with no speaker, the desugarer's default-speaker fill would
+give them the configured default speaker — so a game whose default is a named
+character would have that character "say" a jump. A line's missing speaker would
+mean two things: *spoken by the default* (narration) and *not spoken at all* (an
+effect).
 
-This note introduces the **control line**: an effect-only block with **no speaker**,
-so an effect is never attributed to a speaker. It is the smallest coherent step
-toward the [Block Controls](./Block%20Controls.md) survey — a later **control
-block** (`if`/`elseif`/`else`) reuses this same "control, not speech" substrate for
-its markers.
+A **control line** is an effect-only block that has **no speaker field**, so an
+effect is never attributed to a speaker. [Block Controls](./Block%20Controls.md)
+reuses the same "control, not speech" idea for its markers.
 
 Scope:
 
@@ -69,33 +48,8 @@ Scope:
 - Compile-time recognition, preservation, spans, and the traversal, validation, and
   report seams a new block kind touches.
 
-Out of scope (see [deferred work](#open-questions-and-deferred-work)):
-
-- **Runtime execution** — diverting on a jump and calling the game system for a
-  command belong to the graph/runtime.
-- **The control block** (`if`/`elseif`/`else`) — the next construct, which builds
-  on this one.
-
-## Functionality checklist
-
-- [x] Add a `ControlLine` block: an ordered list of effect fragments, a span, and
-      an optional `Condition`; it has **no speaker**.
-- [x] Extract an `IConditional` interface (a `Condition?`) with an `IsConditional`
-      extension method, implemented by `Line`, `ControlLine`, `Choice`,
-      `RandomOption`, and `Jump` — a small refactor removing today's duplicated
-      predicate.
-- [x] Recognize a speaker-less, effect-only line as a `ControlLine` — a bare jump
-      or one or more silent commands — after jumps are assembled.
-- [x] Keep a speaker-less line that carries **prose** as a spoken `Line` (default
-      narration), and keep a line with a speaker a spoken `Line`.
-- [x] Leave the `DefaultSpeaker` fill to spoken lines only, so an effect is never
-      attributed to a speaker.
-- [x] Preserve the source spans of the control line and its effects, and carry a
-      guarding condition when present.
-- [x] Handle `ControlLine` in every block switch — the AST rewriter, the traversal
-      helper, the report projection, and the affected validation rules.
-- [x] Update the writer-facing specification so a silent command and a bare jump are
-      documented as effect-only, not spoken by the default speaker.
+Out of scope: the control block (`if`/`elseif`/`else`), owned by
+[Block Controls](./Block%20Controls.md).
 
 ## Ubiquitous language
 
@@ -110,8 +64,8 @@ The domain term is **control line**, the effect-only counterpart to a spoken
 
 ## Writer-facing behavior
 
-Nothing new is typed. A writer already writes a bare jump and a silent command on
-their own line; this note only changes what they *mean* in the model:
+Nothing new is typed. A bare jump and a silent command on their own line are
+control lines:
 
 ```markdown
 Guide: The gate is open. Go on through.
@@ -129,11 +83,12 @@ default speaker) speaks. A line that carries prose but no speaker is still
 The gate swings open with a groan.
 ```
 
-A control line follows the same guarding rule as a
-[conditional jump](./Conditional%20Jump.md): a leading condition guards the effect.
+A leading [condition](./Conditions.md) guards a control line. Before a bare jump
+the condition binds to the jump itself; before a silent command it binds to the
+control line:
 
 ```markdown
-`"GateJammed"?` => [Force the gate](#forced)
+`GateJammed?` `("force the gate")`
 ```
 
 ## Grammar
@@ -172,17 +127,17 @@ completeness the compiler enforces.
 
 ## Interfaces and responsibilities
 
-| Component                      | Responsibility                                                                                  |
-| ------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `ControlLine` (new AST block)  | Hold the effect fragments, the span, and an optional `Condition`; expose no speaker.            |
-| `IConditional` (new interface) | Expose a `Condition?` across conditional nodes; `IsConditional` is an extension method over it. |
-| `ControlLineRecognitionRule`   | Recognize a speaker-less, effect-only line as a `ControlLine`, after jump assembly.             |
-| `DefaultSpeakerFiller`         | Fill the default speaker on spoken lines only; never see a control line.                        |
-| `DialogueAstRewriter`          | Rewrite a `ControlLine` (its effects and condition) with a new block hook.                      |
-| `ScriptNodeExtensions`         | Enumerate a `ControlLine`'s children (its effects) for traversal.                               |
-| `DialogueAstProjection`        | Project a `ControlLine` to a report node with a control category.                               |
-| `OrphanConditionRule`          | Treat a `ControlLine`'s condition as a bound guard, not an orphan.                              |
-| `UnreachableAfterJumpRule`     | Apply the after-a-jump reachability check to a jump on a control line.                          |
+| Component | Responsibility |
+| --- | --- |
+| `ControlLine` (AST block) | Hold the effect fragments, the span, and an optional `Condition`; expose no speaker. |
+| `IConditional` (interface) | Expose a `Condition?` across conditional nodes; `IsConditional` is an extension method over it. |
+| `ControlLineRecognitionRule` | Recognize a speaker-less, effect-only line as a `ControlLine`, after jump assembly. |
+| `DefaultSpeakerFiller` | Fill the default speaker on spoken lines only; never see a control line. |
+| `DialogueAstRewriter` | Rewrite a `ControlLine` (its effects and condition) with a block hook. |
+| `ScriptNodeExtensions` | Enumerate a `ControlLine`'s children (its effects) for traversal. |
+| `DialogueAstProjection` | Project a `ControlLine` to a report node with a control category. |
+| `OrphanConditionRule` | Treat a `ControlLine`'s condition as bound, not an orphan. |
+| `UnreachableAfterJumpRule` | Apply the after-a-jump reachability check to a jump on a control line. |
 
 ## Key design decisions
 
@@ -201,12 +156,11 @@ block consumer switches and diverges per concrete type — and the one field the
 share, an optional `Condition`, is **not** line-specific: it already recurs on
 `Choice`, `RandomOption`, and `Jump`. So the condition is modeled as a small capability
 interface, `IConditional` (a `Condition?`), implemented by all of them, with
-`IsConditional` extracted as an **extension method** over the interface — which
-also removes today's duplicated predicate. A shared abstract line base, by
+`IsConditional` as an **extension method** over the interface. A shared abstract
+line base, by
 contrast, would rename the most common domain word, invent a base with no natural
-name, and still miss that cross-cutting guard (see
-[alternatives](#alternatives-not-chosen)). The `IConditional` extraction is a
-small, self-contained refactor landed alongside this change.
+name, and still miss that cross-cutting condition (see
+[alternatives](#alternatives-not-chosen)).
 
 ### D2 — The boundary is speaker-less and effect-only
 
@@ -234,12 +188,8 @@ never given a speaker.
 
 ### D4 — The default-speaker fill no longer covers effects
 
-`DefaultSpeakerFiller` today notes that "a lone command line is just a speaker-less
-line, so this same fill also covers the DSL's silent command." That special case
-goes away: a silent command (and a bare jump) is now a `ControlLine` the filler
-never sees. This is a deliberate **behavior change** — effects stop being
-attributed to the default speaker — and the writer-facing specification is updated
-to match.
+A silent command and a bare jump are `ControlLine`s the default-speaker fill never
+sees, so an effect is never attributed to the default speaker.
 
 ### D5 — A control line reuses the effect fragments and may carry a condition
 
@@ -247,7 +197,7 @@ A `ControlLine` holds an ordered `IReadOnlyList<InlineFragment>` of effects, reu
 the existing `Jump` and command nodes rather than inventing effect types, and keeps
 their spans. It carries an optional `Condition`, so a conditional bare jump or a
 conditional silent command is a conditional control line; the condition follows the same
-rule as a [conditional jump](./Conditional%20Jump.md).
+rule as every other [condition](./Conditions.md).
 
 ### D6 — Every block switch handles the new kind
 
@@ -259,23 +209,22 @@ construction.
 
 ## Markdown interaction
 
-None changes. A bare jump and a silent command are the same Markdown paragraphs
-they are today; only their modeling downstream changes.
+None. A bare jump and a silent command are ordinary Markdown paragraphs; only
+their modeling downstream differs.
 
 ## Diagnostics
 
-No new diagnostic is introduced. Two existing rules generalize to the new kind:
+No diagnostic of its own. Two rules cover the kind:
 
 - **Orphan condition** — a condition that guards a control line's effect is a bound
-  guard, detected by identity, not an orphan.
+  condition, detected by identity, not an orphan.
 - **Unreachable after a jump** — the [Progression Order](./Progression%20Order.md)
   reachability check applies to a jump whether it sits on a spoken line or a control
   line.
 
 ## Error and boundary cases
 
-- A lone condition with no following effect or prose still guards nothing and is
-  reported, unchanged.
+- A lone condition with no following effect or prose guards nothing (`DLG1106`).
 - A line mixing prose and an effect keeps its speaker (or the default) and stays a
   spoken line; it is not a control line.
 - Several silent commands on one line form one control line holding each command in
@@ -301,18 +250,10 @@ No new diagnostic is introduced. Two existing rules generalize to the new kind:
 - **A shared abstract line base** (`SpokenLine`/`ControlLine` under a new base) —
   rejected in [D1](#d1--a-distinct-sibling-type-conditional-through-iconditional): the
   two share little behavior to hoist, it renames the most common domain word, its
-  base has no natural name, and it still misses the cross-cutting guard that the
+  base has no natural name, and it still misses the cross-cutting condition that the
   `IConditional` interface captures.
 - **A "system" speaker sentinel** — attributing effects to a reserved non-character
   speaker keeps them inside the speaker model, which is exactly the coupling this
   note removes.
 - **Recognizing in the transpiler** — rejected in [D3](#d3--recognize-as-a-rule-in-the-desugar-pipeline):
   a jump is not yet assembled there, so it would duplicate jump-precursor detection.
-
-## Open questions and deferred work
-
-- **Control block** — the `if`/`elseif`/`else` construct from the
-  [Block Controls](./Block%20Controls.md) survey reuses this "control, not speech"
-  substrate for its markers; it is designed separately.
-- **Runtime** — executing a jump (a divert) and a command (a game-system call)
-  belongs to the graph/runtime, alongside the conditional constructs.

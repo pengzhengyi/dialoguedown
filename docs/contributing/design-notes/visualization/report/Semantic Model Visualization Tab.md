@@ -1,17 +1,10 @@
 # Semantic Model Visualization Tab
 
 > [!NOTE]
-> Status: **implemented** (an enhancement to
-> [Compilation Visualization](./Compilation%20Visualization.md), showing the
-> [Semantic Analyzer](../../core/Semantic%20Analyzer.md)'s output). Unlike the AST stages, the
-> semantic analyzer produces **several outputs, not one graph**: a scene tree plus a
-> speaker table, an anchor table, and a jump-resolution table. So its tab is an
-> **analytics layout** — the **scene tree** as the graph on the left, and the three
-> tables stacked as **collapsible panels** down the right — with **cross-linking**, so
-> hovering a scene or speaker in one place highlights it everywhere it appears.
->
-> Like the rest of the visualization tooling, this surface is "vibe-coded" (see the
-> visualization note's maturity caveat); the core engine stays the reviewed surface.
+> Status: **implemented**. The **Semantic Model** tab shows the
+> [semantic analyzer](../../core/Semantic%20Analyzer.md)'s output as an analytics layout: the scene
+> tree as a graph, and the speaker, anchor, and jump-resolution tables stacked beside it, all
+> cross-linked by entity key.
 
 ## Table of contents
 
@@ -30,12 +23,10 @@
 - [Integration](#integration)
 - [Testability](#testability)
 - [Deferred enhancements](#deferred-enhancements)
-- [Implementation checklist](#implementation-checklist)
 
 ## Goal & scope
 
-The report shows the Markdown, Dialogue, and Desugared ASTs — each a single graph in
-its own tab. The **semantic analyzer** runs after desugar and exposes a
+The **semantic analyzer** runs after desugaring and exposes a
 [`SemanticModel`](../../core/Semantic%20Analyzer.md) on the compilation result; this tab shows
 it.
 
@@ -58,8 +49,8 @@ appears, so a reader can see which scene a jump resolves to, or every line a spe
 scene's script blocks) plus the three tables, all sharing cross-link keys; the TS
 analytics-layout tab (graph + resizable, collapsible stacked tables) with cross-link
 highlighting; and wiring the tab through the existing report payload. **Out of scope:**
-changing the analyzer or its model; the flow graph (succession/choice/jump *edges*, a later
-component); editing from this tab; and speaker-driven autocomplete (the next component).
+changing the analyzer or its model; the flow between nodes, which is the
+[Dialogue Graph](./Dialogue%20Graph%20Visualization%20Tab.md) tab's; and editing from this tab.
 
 ## Ubiquitous language
 
@@ -103,25 +94,23 @@ one name across the analyzer, this tab, and the code.
 - [x] Clicking a scene or block shows its attributes, source, and a rendered preview in a
       **node-details panel** pinned to the top of the tables column (sticky); it auto-expands
       on selection.
-- [x] The tab is read-only on every mode; the View/Edit toggle stays frozen (as on the
-      other graph tabs).
+- [x] The tab's content is read-only in both View and Edit.
 
 ## Design
 
 ### Payload shape
 
-The report payload today is `{ mode, path, source, stages }`, where each `stage` is a
-graph (`title`, `description`, `nodes`, `edges`). The semantic stage **is still a graph**
-— the scene tree — so it reuses that, and adds its tables alongside:
+Each `stage` in the report payload is a graph (`title`, `description`, `nodes`, `edges`). The
+semantic stage **is still a graph** — the scene tree — so it reuses that, and adds its tables
+alongside:
 
-- Extend `Stage` with an optional **`tables?: SemanticTable[]`**. A stage with no
-  `tables` renders exactly as today (a plain graph tab). A stage with `tables` renders in
+- `Stage` has an optional **`tables?: SemanticTable[]`**. A stage with no
+  `tables` renders as a plain graph tab. A stage with `tables` renders in
   the analytics layout.
 
 This keeps one uniform tab model: the scene tree flows through the entire existing tree
 view (camera memory, fold, full screen, cross-stage colors) for free, and the tables are
-purely additive. (Alternative — a separate top-level `semantic` payload with a bespoke
-tab — was rejected: it would duplicate the tree view and split the tab model.)
+purely additive, with no second tab model.
 
 ### Cross-linking by entity key
 
@@ -224,9 +213,8 @@ flowchart LR
   is `internal`; the visualization project already has friend access via
   `CompilationResult.Semantics`, so the projection lives on the visualization side with no
   new public surface. The scene-tree graph goes through `GraphWalk` like every other stage.
-- **Hover-to-highlight for v1.** The user's spec is hover-driven; a sticky click-to-pin
-  selection is a possible later enhancement (see
-  [Deferred enhancements](#deferred-enhancements)).
+- **Hover to highlight.** Cross-linking follows the pointer; a sticky click-to-pin selection is
+  an open question (see [Deferred enhancements](#deferred-enhancements)).
 - **A node's legend name can differ from its label.** A scene node labels itself by its
   **title** (so the tree reads as scenes), which would make the legend list every title.
   So a node carries an optional `TypeName` ("Scene", "Document") that the legend groups and
@@ -250,13 +238,11 @@ flowchart LR
 
 ## Integration
 
-- **C#:** `CompilationVisualizer.BuildStages` appends the semantic stage after the three
-  AST stages, projecting `result.Semantics` through `SemanticProjection`. `DisplayGraphJson`
+- **C#:** `CompilationVisualizer` adds the semantic stage after the three AST stages, projecting `result.Semantics` through `SemanticProjection`. `DisplayGraphJson`
   serializes the new `tables` field (omitted when null, like other optional payload fields).
 - **TS:** `runApp`'s `addStageTab` routes a stage that has `tables` to `createSemanticView`
   instead of the plain graph path; the scene tree still uses `createTreeView`, so camera
-  memory, fold, and full screen work unchanged. The tab freezes the View/Edit toggle like
-  the other graph tabs and hides the shared node-detail inspector; clicking a node instead
+  memory, fold, and full screen work unchanged. The tab hides the shared node-detail inspector; clicking a node instead
   fills its own **node-details panel**, pinned (sticky) to the top of the tables column and
   reusing the shared detail rendering.
 - The report stays a single self-contained offline file; no new runtime dependency.
@@ -284,30 +270,12 @@ flowchart LR
 
 ## Deferred enhancements
 
-Settled for the current build, with these enhancements deliberately deferred:
+Two enhancements are deliberately not built:
 
 1. **Click-to-pin selection.** Cross-linking is **hover-to-highlight** only. A sticky
-   click-to-pin selection (so a reader can move the mouse away while comparing) is a
-   possible fast follow.
+   click-to-pin selection (so a reader can move the mouse away while comparing) is an
+   open question.
 2. **Scene-to-speaker aggregation.** A speaker cross-links from each of its **mentions** in
    the tree and its speaker row. Tagging each *scene* node with the speakers that appear in
    it (so hovering a speaker lights up whole scenes, not just the mentions) is deferred — it
    needs the projection to aggregate speakers per scene.
-
-## Implementation checklist
-
-- [x] C#: `SemanticTable`/`SemanticRow`/`SemanticCell` model + `SceneTreeProjection` +
-      `SemanticProjection`; unit tests.
-- [x] C#: `Stage.tables` in the payload; `DisplayGraphJson` serializes it; `BuildStages`
-      appends the semantic stage; tests.
-- [x] C#: composite `SceneTreeProjection` shows each scene's script blocks (reusing
-      `DialogueAstProjection`) and adds `RefKey` cross-links on speaker/jump nodes; tests.
-- [x] C#: `NodeDescription`/`DisplayNode` `TypeName` for clean scene-tree legend labels,
-      and `RefKey` for speaker/jump cross-links; `GraphWalk` copies both; tests.
-- [x] TS: `Stage.tables`/`refKey` types; `createEntityHighlighter`; `createSemanticView`
-      (graph + resizable, collapsible stacked tables); `tree-view` emits `data-ref-key`;
-      `addStageTab` routing; unit + e2e tests.
-- [x] Styling for the analytics layout, the table panels, and the resizable column divider;
-      help text for the Semantic tab.
-- [x] Rebuild the committed `dist/report.html`; `CHANGELOG` + README touch-ups.
-- [ ] **Explicit UI-correctness approval** (live preview) before merge.

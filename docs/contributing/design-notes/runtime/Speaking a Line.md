@@ -1,12 +1,12 @@
 # Speaking a line
 
 > [!IMPORTANT]
-> Status: **in progress** — M1 is implemented, M2 is not yet. The pass that plays a
+> Status: **partially implemented** — M1 is implemented, M2 is not yet. The pass that plays a
 > line whose speech carries commands:
 > its words and its commands reach the host in the order they were written, and
 > the run stops inside the line only before a query written after a command. It
-> builds on [asking the world](./Asking%20the%20World.md) and
-> [waiting on the host](./Waiting%20on%20the%20Host.md), whose requests it
+> builds on [asking the world](./Asking%20the%20World.md) and the
+> [runner](./Runner.md)'s wait on the host, whose requests it
 > interleaves with speech, and applies the
 > [dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
 > owns the cross-cutting decisions this note uses.
@@ -257,7 +257,8 @@ That rule holds for every shape this pass creates. A line with no commands sends
 answer, the player has the turn. A control block sends `Perform`s; after `Done`,
 the next node's events arrive.
 
-It refines the runtime core's rule that `Said` means advance, which no longer
+It refines the [runner](./Runner.md#d3--the-situation-says-where-the-run-is-and-what-it-is-doing)'s
+rule that `Said` means advance, which no longer
 holds once a command can follow the words in the same step. The driver still
 reacts to the messages it receives rather than reading the situation; it reacts to
 the absence of a request, not to one kind of event.
@@ -386,8 +387,7 @@ decides what follows (S5) sits beside the code that made the host a request.
 | `PlaybookGen` | Draws lines with commands, and queries after commands, so the walk property stops inside lines |
 | Guide | The Commands section says a command in a line is carried out where it is written |
 | Asking the world | A1 notes that a line can be asked about more than once on the way in, once per stop |
-| Waiting on the host | W4's "one wait per node" and the "What waits" table allow a line to wait on the host, once per stop |
-| Runtime core | Its rule that `Said` means advance becomes S4's rule, and its protocol table lists `Continued` |
+| Runner | D3's rule that `Said` means advance becomes S4's rule; D12's "one wait per node" and the arriving table allow a line to wait on the host, once per stop; its vocabulary lists `Continued` |
 | Runtime architecture | The transcript fold joins a `Continued` onto the `Said` before it |
 
 ## Testability

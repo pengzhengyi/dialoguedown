@@ -22,29 +22,14 @@ architecture, the reasoning behind each compiler stage, and how to get set up.
 
 ## The compiler pipeline
 
-DialogueDown lowers a script through distinct stages, each with its own design
-note under [Design notes](design-notes/README.md):
-
-**source → Markdown AST → Dialogue AST → desugared AST → (semantic analysis →
-graph → runtime, in progress)**.
-
-Reading the notes in that order is the fastest way to learn how the compiler fits
-together before making a change.
+A script is lowered through distinct stages — parse, transpile, desugar, validate,
+analyze, build the graph, then write a playbook a runtime plays. The
+[pipeline diagram](design-notes/README.md#core-the-compiler-pipeline) links each
+stage to its design note; reading the notes in that order is the fastest way to
+learn how the compiler fits together.
 
 ## Enforced architecture boundaries
 
-The pipeline's shape is not just convention — it is enforced by architecture tests
-in
-[`tests/DialogueDown.Architecture.Tests`](https://github.com/pengzhengyi/dialoguedown/tree/main/tests/DialogueDown.Architecture.Tests)
-(built on NetArchTest.eNhancedEdition). They fail the build if a change breaks the
-intended dependency direction:
-
-- The engine-agnostic core (`DialogueDown`) must not depend on the CLI, the
-  visualization projects, or any Spectre/Godot/console package.
-- Each visualization layer depends only downward
-  (`Visualization.Live → Visualization → core`).
-- Inside the core, the Dialogue AST stays decoupled from Markdown, and no pipeline
-  stage calls back into the compilation orchestrator.
-
-When you add a layer or boundary, extend that suite so the rule travels with the
-code.
+The dependency direction between projects and between core layers is enforced by
+architecture tests that fail the build when a change breaks it. The rules, and how
+to extend them, are in [How this project is tested](testing.md#architecture-tests).

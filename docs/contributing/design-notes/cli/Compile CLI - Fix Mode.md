@@ -3,16 +3,14 @@
 > [!NOTE]
 > Status: **implemented**. `ddown compile --fix` applies the preferred fix a
 > diagnostic already carries, corrects the script in place, and recompiles it.
-> The fix model, its first producer, and the editor affordance shipped with
-> [Diagnostic quick fixes](../visualization/editor/Diagnostic%20Quick%20Fixes.md);
-> this note covers the CLI half
-> ([#505](https://github.com/pengzhengyi/dialoguedown/issues/505)).
+> The fix model and the editor's one-click repair are the
+> [Diagnostic Quick Fixes](../visualization/editor/Diagnostic%20Quick%20Fixes.md) note;
+> this note covers the CLI.
 
 ## Table of contents
 
 - [Goal and scope](#goal-and-scope)
 - [Prior art](#prior-art)
-- [Functionality checklist](#functionality-checklist)
 - [CLI surface](#cli-surface)
 - [Behavior](#behavior)
 - [Applying fixes](#applying-fixes)
@@ -75,35 +73,6 @@ non-fix runs (ESLint and Ruff). Skipped: per-code selection (always a separate f
 option, never a `--fix` value), safety tiers (the only fix is mechanically
 derived), a dry-run or patch mode, and the CI postures.
 
-## Functionality checklist
-
-- [x] `ddown compile <script> --fix` applies the preferred fix of every
-      diagnostic that carries one and rewrites the script in place.
-- [x] `--fix` with nothing applicable is byte-identical to a plain compile on
-      both streams, writes nothing, and leaves the file's modification time
-      unchanged.
-- [x] The diagnostics print exactly as a plain compile prints them, with no fix
-      narration among them.
-- [x] A fix run appends a separate section: the write notice
-      `Fixed <script> (<N> fix; <state>)`, then a numbered item per repair —
-      `1. Applied Fix: <title>` with a line-numbered hunk, or
-      `2. Skipped Fix: <title> (<reason>)`.
-- [x] The hunk is computed with DiffPlex over the script with and without that
-      one fix, with one line of context either side and the changed words
-      emphasized on a terminal.
-- [x] A plain compile prints `N fixable with --fix` when any diagnostic
-      carries a fix.
-- [x] Candidates are selected in ascending position with a deterministic
-      tie-break and applied descending, so the earliest fix in a conflict
-      wins.
-- [x] The recompiled script sets the exit code; a diagnostic that appears only
-      after fixing prints under an `after fixing:` lead-in.
-- [x] A second `--fix` run applies nothing, writes nothing, and shows no fix
-      section while the remaining errata print as usual.
-- [x] A leading UTF-8 BOM survives the rewrite.
-- [x] `--fix` with `--emit` or `-o` is a usage error (64).
-- [x] `--help` carries a `--fix` example and describes the flag.
-
 ## CLI surface
 
 ```bash
@@ -146,7 +115,7 @@ CLI, next to the command that uses it.
    one action per element, and the fix model records it as an ordered list; the
    first element is therefore the preferred, auto-applicable repair. `--fix`
    applies exactly one fix per diagnostic — the first — and leaves any siblings
-   for the writer. The contract now lives on `Diagnostic.Fixes` and
+   for the writer. The contract lives on `Diagnostic.Fixes` and
    `LocatedDiagnostic.Fixes`, mirroring ESLint's split between one automatic
    `fix` and a list of `suggestions`, and LSP's `isPreferred` flag.
 2. **Build the candidate set, then order it deterministically.** Sort
@@ -162,11 +131,11 @@ CLI, next to the command that uses it.
 5. **Skip an edit that falls outside the text.** Defensive: a stale offset is
    dropped with its fix and reported, and the remaining fixes still apply.
 
-Today every diagnostic carries at most one fix — `DLG1113` inserts `\` before
-the arrow — so overlap cannot occur and step 3 is a no-op. The policy is fixed
-now so that a producer offering alternatives, or a multi-edit fix, cannot
-interleave silently. The CLI's ordering policy is normative for batch repair;
-the editor applies one chosen fix at a time, so no ordering exists there yet.
+The only producer, `DLG1113`, carries one single-edit fix (insert `\` before
+the arrow), so overlap cannot occur and step 3 is a no-op. The policy exists so
+that a producer offering alternatives, or a multi-edit fix, cannot interleave
+silently. The CLI's ordering policy is normative for batch repair; the editor
+applies one chosen fix at a time, so it needs no ordering.
 
 ## Report and exit codes
 
@@ -238,11 +207,10 @@ even when the compile ends in an error.
 
 ## Demonstrable runs
 
-> [!NOTE]
-> Captured from the CLI on this branch, in a directory of throwaway scripts.
-> Long messages are elided with `…`; the terminal wraps them to its width. A
-> hunk row's leading number is its line number, a single-space row is context,
-> and H strips the color from the pseudo-terminal capture.
+Long messages are elided with `…`. A hunk row's leading number is its line number,
+and a row starting with a space is context. On a terminal the diagnostics render as
+rich Errata blocks, the hunk rows are colored, and the fix section is otherwise
+identical.
 
 ### A — fix in place: one warning fixed, one remains
 
@@ -268,34 +236,6 @@ $ echo $?
 The diagnostics are exactly what `ddown compile workshop.dialogue.md` prints;
 the fix section then names the repair and shows the change as a hunk.
 
-### B — discovery: the hint on a plain compile
-
-```console
-$ ddown compile workshop.dialogue.md
-workshop.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  for more information, see …#dlg1113
-workshop.dialogue.md(5,1): warning DLG1107: This line looks like a speaker prefix …
-  for more information, see …#dlg1107
-2 warnings
-1 fixable with --fix
-```
-
-### C — nothing applicable: byte-identical to a plain compile
-
-```console
-$ ddown compile styled.dialogue.md --fix
-styled.dialogue.md(3,1): warning DLG1107: This line looks like a speaker prefix ("Bob:") but the name is styled, so it is not recognized and the line has no speaker. Remove the styling to declare the speaker.
-  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1107
-1 warning
-$ ddown compile clean.dialogue.md --fix
-$ echo $?
-0
-```
-
-The first run prints exactly what `ddown compile styled.dialogue.md` prints;
-the second prints nothing, because a clean plain compile already prints
-nothing. Neither writes a file nor changes a modification time.
-
 ### D — an error survives; the correction still lands
 
 ```console
@@ -320,103 +260,6 @@ $ echo $?
 The warning is gone from the script and the write notice says the error
 remains, while the duplicated scene still fails the compile.
 
-### E — a second run: nothing to apply
-
-```console
-$ ddown compile workshop.dialogue.md --fix
-workshop.dialogue.md(5,1): warning DLG1107: This line looks like a speaker prefix ("Bob:") but the name is styled, so it is not recognized and the line has no speaker. Remove the styling to declare the speaker.
-  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1107
-1 warning
-$ echo $?
-0
-```
-
-Run after A, the escape is already in place, so the only diagnostic left is
-unfixable: no fix section, no write, exit 0. The report is what a plain compile
-of the corrected script prints.
-
-### F — `--fix` with an emission option
-
-```console
-$ ddown compile workshop.dialogue.md --fix --emit dot
---fix corrects the script in place and writes no emission. Remove --emit, or drop --fix to emit instead.
-$ ddown compile workshop.dialogue.md --fix -o workshop.fixed.dialogue.md
---fix corrects the script in place and writes no emission. Remove -o, or drop --fix to emit instead.
-$ echo $?
-64
-```
-
-### G — a leading BOM survives
-
-```console
-$ ddown compile bom.dialogue.md --fix
-bom.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  for more information, see …#dlg1113
-1 warning
-1 fixable with --fix
-
-Fixed bom.dialogue.md (1 fix)
-1. Applied Fix: Escape as literal text
-2 |  
-3 | -Alice: The rule is simple => the lever opens the door.
-3 | +Alice: The rule is simple \=> the lever opens the door.
-4 |  
-$ file bom.dialogue.md
-bom.dialogue.md: Unicode text, UTF-8 (with BOM) text
-```
-
-### H — rich rendering on a terminal
-
-Colors stripped; the diagnostics keep their rich blocks and the fix section
-follows unchanged.
-
-```text
-syntax warning [DLG1113]: `=>` makes a jump only when a link follows it. …
-NOTE: for more information, see …#dlg1113
-   ┌─[rich.dialogue.md]
-   │
- 3 │ Alice: The rule is simple => the lever opens the door.
-   ·                           ─┬
-   ·                            ╰────────────────────────── DLG1113
-   │
-   └─
-2 warnings
-1 fixable with --fix
-
-Fixed rich.dialogue.md (1 fix; 1 warning remains)
-1. Applied Fix: Escape as literal text
-2 │  
-3 │ -Alice: The rule is simple => the lever opens the door.
-3 │ +Alice: The rule is simple \=> the lever opens the door.
-4 │  
-```
-
-### I — two fixes: a numbered note and hunk each
-
-```console
-$ ddown compile two-arrows.dialogue.md --fix
-two-arrows.dialogue.md(3,11): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
-two-arrows.dialogue.md(3,25): warning DLG1113: `=>` makes a jump only when a link follows it. …
-  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
-2 warnings
-2 fixable with --fix
-
-Fixed two-arrows.dialogue.md (2 fixes)
-1. Applied Fix: Escape as literal text
-2 |  
-3 | -Alice: Go => left, then => right.
-3 | +Alice: Go \=> left, then => right.
-
-2. Applied Fix: Escape as literal text
-2 |  
-3 | -Alice: Go => left, then => right.
-3 | +Alice: Go => left, then \=> right.
-```
-
-Each numbered fix is diffed against the script as read, so a hunk shows that
-one repair's change and nothing else.
-
 ## Key design decisions
 
 ### D1 — Fix mode lives on `compile`
@@ -429,7 +272,7 @@ instead of becoming a second command that would duplicate all three.
 
 `Fixes` is a menu the writer chooses from in the editor, not a plan to execute
 in full. The first element is the preferred, auto-applicable repair, and
-`--fix` applies only it, as the model's documentation now states. Applying
+`--fix` applies only it, as the model's documentation states. Applying
 every element would execute conflicting remedies the moment a producer offers
 two — the message for `DLG1113` itself advertises a jump target and an escape —
 and ESLint's `fix`-versus-`suggestions` split is the mature shape of that
@@ -477,8 +320,8 @@ The second compile is not reporting, it is verification: it sets the exit code
 from the corrected state, and it catches the one case a single pass cannot
 otherwise see — a fix that fails to clear its own diagnostic, or introduces a
 new one. Diagnostics present after but not before print under an
-`after fixing:` lead-in, so a future producer cannot hide a regression. Today
-the set is always empty, and the testable invariant is that every applied fix
+`after fixing:` lead-in, so a producer cannot hide a regression. With the
+shipped producer the set is always empty, and the testable invariant is that every applied fix
 is absent from the recompiled diagnostics.
 
 ### D8 — Silence is paired with discovery
@@ -490,7 +333,7 @@ compile advertises the feature with `N fixable with --fix`, in the spirit of
 ESLint's and Ruff's fixable-count hints. Silence never crosses the write: a run
 that changed a file says so.
 
-### D9 — `--mode` still bounds which fixes are discovered
+### D9 — `--mode` bounds which fixes are discovered
 
 `--mode stage-boundary` (the default) stops the pipeline at an error, so a
 script whose error precedes desugaring yields no fixes, while
@@ -498,11 +341,11 @@ script whose error precedes desugaring yields no fixes, while
 as clang-tidy, which refuses to apply fixes when compilation errors were found
 unless `--fix-errors` is given; `--fix` alone never overrides the mode.
 
-### D10 — No selection and no CI mode in this change
+### D10 — No selection and no CI mode
 
-With one fix producer there is no user choice to express; both features are
-additive later. Recording their shapes now keeps the surface from ossifying
-around a value-taking `--fix`.
+With one fix producer there is no user choice to express; both are additive (see
+[Deferred work](#deferred-work)). Keeping `--fix` a plain flag leaves room for a
+separate `--fix-code` filter.
 
 ### D11 — DiffPlex computes the hunk
 
@@ -527,7 +370,7 @@ stays local.
 | A fix that changes no line | its note still prints, with no hunk |
 | Overlapping fixes | the later candidate is skipped whole and reported |
 | Two insertions at the same offset | fixed by the ascending tie-break: code, then title |
-| Script read-only, or the write fails | I/O error surfaces, exit 1, and no `fix applied:` line was printed |
+| Script read-only, or the write fails | I/O error surfaces, exit 1, and no write notice is printed |
 | Leading UTF-8 BOM | detected on read, written back per D4 |
 | CRLF line endings | preserved by splicing; a replacement containing a lone `\n` is a producer bug, not an applier behavior |
 | Non-UTF-8 script without a BOM | the compile already assumes UTF-8; fix mode inherits that assumption |
@@ -535,10 +378,8 @@ stays local.
 
 ## Integration
 
-- `CompileSettings` gained `--fix` and rejects `--emit` or `-o` with it in
-  validation; `CliConfigurator` gained
-  `.WithExample("compile", "scene.dialogue.md", "--fix")`, after the plain
-  compile example and before the export examples.
+- `CompileSettings` declares `--fix` and rejects `--emit` or `-o` with it;
+  `CliConfigurator` carries a `--fix` help example.
 - `CompileCommand` branches to fix mode before emission: read, compile,
   select, apply, write, recompile, report.
 - `DialogueDown.Cli.Fixing` owns the pure splice: `FixApplier.Apply` returns a
@@ -556,8 +397,8 @@ stays local.
   CLI; nothing outside `Fixing.FixDiff` names it.
 - `Diagnostic.Fixes` and `LocatedDiagnostic.Fixes` document the preference
   order, so the model itself carries the contract an automatic fixer relies on.
-- `docs/guide/cli.md` documents `--fix`, including the warning that a fix run
-  exits 0 after rewriting the file until a CI check mode exists.
+- The [command-line guide](../../../guide/cli.md) documents `--fix`, including
+  that a fix run exits 0 after rewriting the file, since there is no CI check mode.
 
 ## Testability
 
@@ -616,8 +457,8 @@ path is unit-tested because no shipped producer can trigger it.
 - **`fixed` and `skipped` as severity words** (`scene.dialogue.md(3,27): fixed DLG1113 …`).
   That slot belongs to a severity in the `file(line,col): severity CODE:
   message` grammar that problem matchers parse; no surveyed tool invents a
-  fix severity, and the message would be lost with it. The fix rides as a
-  continuation line instead.
+  fix severity, and the message would be lost with it. The fix narration gets
+  its own section after the diagnostics instead (D6).
 - **A corrected copy via `-o`.** No surveyed fixer offers one; it overloads the
   emission destination and makes one report name two files. A dry run or a
   patch is the mature way to be non-destructive.

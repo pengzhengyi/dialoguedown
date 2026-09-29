@@ -29,10 +29,9 @@ This page covers *which* test to write; that one covers *how* to run it.
 
 ## The shape of the suite
 
-Roughly **5,000 .NET tests** and **1,100 frontend tests**, weighted heavily toward
-fast unit tests, with a thin layer of **36 browser spec files** at the top. The
-whole .NET suite runs in under 20 seconds, which is deliberate: it is meant to be
-run constantly.
+Thousands of .NET and frontend tests, weighted heavily toward fast unit tests,
+with a thin layer of browser specs at the top. The whole .NET suite runs in
+seconds, which is deliberate: it is meant to be run constantly.
 
 Most of that count is ordinary example-based unit tests. The interesting part is
 the smaller set below them — property tests, goldens, architecture tests, and
@@ -99,14 +98,9 @@ whether the change was **right**, so read the diff.
 A playbook is a persisted artifact — the one way out of the compiler — so a
 writer's work survives only if what was written reads back as what it was. For
 every generated script that compiles, `PlaybookRoundTripTests` writes a playbook,
-reads it with `PlaybookReader`, and writes it again: the two renderings must
-match.
-
-A round trip compares the two serialized JSON renderings, not the document objects:
-`PlaybookRoundTripTests` writes a playbook, reads it back, and writes it again, and
-the JSON text must match. Comparing the text is deliberate — it also catches a change
-in how a field is spelled or ordered, which comparing objects would hide. The
-playbook records compare by value as well, so a test asking a question about the
+reads it with `PlaybookReader`, and writes it again: the two JSON texts must match.
+Comparing text rather than objects also catches a change in how a field is spelled
+or ordered. The playbook records compare by value too, so a test asking about the
 model can compare objects directly.
 
 A round trip needs no oracle beyond the input itself, and a counterexample is
@@ -117,14 +111,17 @@ the writer emitted something the reader cannot express.
 
 **Guard the shape of the codebase, not its behavior.**
 
-Layering erosion compiles fine and passes every unit test. These catch it:
+Layering erosion compiles fine and passes every unit test. These catch it, using
+NetArchTest.eNhancedEdition:
 
-- the core never depends on the CLI, the visualization, or any engine;
-- the Dialogue AST stays immutable, so no later stage can rewrite what an
-  earlier one produced;
-- no core type grows into a God class, and no namespace flattens into a list.
+| Boundary | Rule |
+| --- | --- |
+| Assemblies | The core depends on no CLI, visualization, configuration-loader, presentation, or engine package. `Visualization.Live → Visualization → core`, never back. The loader depends only on the core and Tomlyn; the runtime only on the playbook; the playbook only on the framework. |
+| Core layers | `Common`, `Configuration`, and `Diagnostics` are foundation leaves. The Dialogue AST, desugar, and semantics stay free of Markdown and the transpiler; validation never depends on the semantic model; no stage calls back into the compilation orchestrator; the graph depends only upstream. |
+| Shape | The Dialogue AST stays immutable, no core type grows into a God class, and no namespace flattens into a list. |
 
-They live in `DialogueDown.Architecture.Tests` and run in seconds.
+They live in `DialogueDown.Architecture.Tests`. When you add a layer or a boundary,
+extend that suite so the rule travels with the code.
 
 ### Corpus gates
 
@@ -173,9 +170,9 @@ Two properties are worth knowing before adding a case:
 - **A refusal's message is never asserted.** Every runtime should explain itself in
   its own language; `because` is for the human reading the file.
 
-This is not made redundant by the schema. Seven of the nine refusals shipped are
-**valid** by `schema/playbook-0.schema.json`: a schema constrains shape, so it
-cannot know there are only two nodes to point at, or which versions a build reads.
+This is not made redundant by the schema. Most refusals are **valid** by
+`schema/playbook-0.schema.json`: a schema constrains shape, so it cannot know there
+are only two nodes to point at, or which versions a build reads.
 
 `CorpusIntegrityTests` and `PlayableCaseTests` keep the corpus itself honest —
 every case ships its three files, and every playable playbook is recompiled from
@@ -192,7 +189,7 @@ Two suites, and the difference matters:
 | `e2e/` | A static `file://` export | Rendering, interaction, accessibility. Fast. |
 | `e2e-live/` | The real .NET server | Hot reload, saving, the Explorer, anything needing a server. |
 
-Seven `e2e/` specs also assert **no accessibility violations** with
+Several `e2e/` specs also assert **no accessibility violations** with
 [axe](https://github.com/dequelabs/axe-core), so a keyboard- or screen-reader
 regression fails the build rather than waiting for a report.
 
@@ -228,9 +225,9 @@ every second added is paid many times.
 ## Coverage that grows with the feature
 
 A few tests here cover less than they eventually will, on purpose. The generator
-behind the runtime's walk property draws only the node kinds the runner can play
-today; the playable half of the conformance corpus ships thirteen cases and plays
-seven. Both are correct, and both are unfinished by design — the runtime arrives
+behind the runtime's walk property draws only the node kinds the runner can play;
+the playable half of the conformance corpus ships more cases than the runner plays.
+Both are correct, and both are unfinished by design — the runtime arrives
 one pass at a time, and a test that waited for all of it would test nothing until
 the end.
 
@@ -244,9 +241,9 @@ fails when that list stops being true in either direction. A case that starts
 passing matters as much as one that stops, because the first is the moment the
 list should have grown.
 
-| Test | Covers today | Widens when | Tells you when to widen |
+| Test | Covers | Widens when | Tells you when to widen |
 | --- | --- | --- | --- |
-| `PlayableConformanceTests` | Seven of the corpus's thirteen playable cases, named one by one | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
+| `PlayableConformanceTests` | The playable cases the runner can play, named one by one | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
 | `PlaybookGen` | Lines, ends, jumps, effects, and lines that jump | Each runtime pass teaches the runner a node or edge kind | Yes — teaching the runner a kind the generator skips fails a test that names the kind |
 
 `PlaybookGen` is held to the format the way `ExampleConstructCoverageTests` is

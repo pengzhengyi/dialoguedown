@@ -1,572 +1,200 @@
-# Conformance corpus
+# Conformance Corpus
 
 > [!NOTE]
-> Status: **implemented**. This note records the fixtures that keep more than one
-> runtime honest, the format they are written in, and the harness that runs both
-> halves — the readable fixtures against the reader, the playable ones against the
-> reference runner. A playable fixture whose session sends a command the runner
-> does not take yet is reported as not-yet-playable rather than skipped. It
-> implements the conformance half of the
-> [Dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
-> owns the cross-cutting decisions this note applies.
+> Status: **implemented**. Language-neutral fixtures every runtime must reproduce:
+> `readable/` cases a playbook reader must accept or refuse, and `playable/`
+> sessions a runner must hold. The C# reader and [runner](./Runner.md) run both
+> halves; a playable case the runner cannot play yet is reported as not yet
+> playable rather than skipped.
+
+The corpus layout, the fixture files, and how to add a case are documented beside
+the fixtures in [`conformance/README.md`](https://github.com/pengzhengyi/dialoguedown/blob/main/conformance/README.md), and the
+fixture format is specified by
+[`schema/fixture-0.schema.json`](https://github.com/pengzhengyi/dialoguedown/blob/main/schema/fixture-0.schema.json). This note
+records the decisions behind them.
 
 ## Table of contents
 
-- [Goal and scope](#goal-and-scope)
-- [Functionality checklist](#functionality-checklist)
-- [Where the corpus lives](#where-the-corpus-lives)
-- [The fixture format](#the-fixture-format)
+- [The session vocabulary](#the-session-vocabulary)
 - [What the corpus covers](#what-the-corpus-covers)
 - [Key design decisions](#key-design-decisions)
 - [Error and boundary cases](#error-and-boundary-cases)
-- [Integration](#integration)
 - [Testability](#testability)
 - [Open questions and deferred work](#open-questions-and-deferred-work)
 
-## Goal and scope
+## The session vocabulary
 
-A playbook can now leave the compiler, and one day more than one runtime will
-read it. Nothing yet says whether two runtimes agree. This component is that
-statement: **language-neutral fixtures every runtime must reproduce**, each a
-playbook and the conversation a driver must be able to hold with it.
-
-In scope:
-
-- the fixture format, as data any language can read;
-- **readable fixtures** — a document a reader must refuse, and one it must accept;
-- **playable fixtures** — a session a runner must reproduce;
-- the C# harness for the readable half, which runs against today's reader.
-
-The harness runs both halves: the readable fixtures against the reader, and the
-playable ones against the reference runner. A fixture whose session needs a
-command the runner does not take yet is reported as not-yet-playable, so adding
-the command turns it on without touching the fixture.
-
-This note assumes the vocabulary of the
-[architecture note](./Dialogue%20Runtime%20Architecture.md) — *playbook*,
-*driver*, *runner*, *command*, *event* — and does not restate it.
-
-### Why the fixtures come before the runner
-
-A corpus written **after** a runner is a mirror: the natural way to produce an
-expected result is to run the fixture and accept what comes back, which proves
-only that the runner agrees with itself. That is the gap
-[inkjs](https://github.com/y-lohse/inkjs) lives with — it tracks the C# runtime by
-hand, and drift surfaces as user bug reports.
-
-Written **before**, the same file is a specification. The sessions here are
-hand-authored from the design, so when C2 runs them the corpus is asking a real
-question.
-
-The cost is honest and worth naming: the message vocabulary below is C2's
-protocol, so this note settles part of C2's design surface early, as data rather
-than as C# types. That direction is deliberate — it is the same principle as the
-playbook being a designed contract rather than a dump of the compiler's graph.
-
-## Functionality checklist
-
-- [x] A fixture format that a runtime in any language can read without a compiler.
-- [x] Purpose-built source scripts, one construct each, committed beside their
-      compiled playbooks.
-- [x] Readable fixtures covering every refusal the reader makes, and the
-      acceptances it must not refuse.
-- [x] A refused source that opens with a `broken:` block naming and showing the
-      edit, checked for shape and compiled to prove the case is otherwise sound.
-- [x] Playable fixtures covering speech, succession, choices, conditions,
-      branches, jumps, effects, effect failures, and queries.
-- [x] A refused command a session can assert, by reason rather than by wording.
-- [x] A C# harness that runs the readable fixtures.
-- [x] A harness that runs the playable fixtures against the reference runner,
-      reporting a case the build cannot play yet rather than failing it.
-
-## Where the corpus lives
-
-At the repository root, in `conformance/`, beside `schema/`:
-
-```text
-conformance/
-  README.md                     what a port is expected to do with this
-  readable/                     can a reader load this document at all
-    unknown-requires/
-      source.dialogue.md        the compile, opening with a broken: comment
-      playbook.json             that compile, then broken in one deliberate way
-      fixture.json              the claim: which verdict, and why
-    …
-  playable/                     does a runner hold the same conversation
-    a-player-choice/
-      source.dialogue.md        the script, so the fixture stays maintainable
-      playbook.json             compiled, committed, regenerated on demand
-      fixture.json              the hand-authored session
-    …
-```
-
-Every case is a directory whose `fixture.json` is the entry point, in both halves,
-so a port writes one loader rather than two.
-
-Both halves ship the source their playbook came from. A `playable/` case's
-playbook is exactly what that source compiles to. A `readable/` case's is not:
-its playbook is that compile with one deliberate edit, because no script compiles
-to a broken playbook — a compiler will not emit an unknown capability or a
-dangling node reference. The source is there so a reviewer reads a dialogue
-rather than a hundred lines of JSON, and `because` names the edit.
-
-Every refusal's source opens with a **`broken:` block** — an HTML comment whose
-first line names the deliberate edit after `broken:`, a blank line, then the
-evidence: the invalid script where the language can express the break (a lone
-`else`, an `else` before its `if`, a second `else`), otherwise the part of the
-playbook that was changed (a branch's `out`, an `entry`, a `version`), or prose
-alone when there is no run of JSON to quote (a truncated file). The comment is
-inert — the front end ignores it — so the valid script below still compiles to the
-accepted document the case derives from. A block must hold neither `-->` nor
-`<!--`, or it would close early and leak into the script.
-
-The block is **repository authoring, not part of the portable corpus contract**: a
-port reads a fixture and the document it names, never the source. It is there so a
-reviewer of this repository sees, in one place, how the source and the broken
-playbook differ.
-
-The two directories name the **dimension a fixture probes** — can it be read, and
-does it play the same way — so each holds both verdicts. `readable/` covers both
-the documents a reader must refuse and the ones it must accept, and the verdict
-is a per-fixture field. `readable` is the term the code already uses
-(`PlaybookSupport.NewestReadableVersion`).
-
-Not under `tests/`, which holds C# projects. The corpus is **data owned by the
-format**, and a TypeScript or Rust port must be able to consume it without
-building anything of ours. `schema/` set that precedent for C1; this follows it.
-
-## The fixture format
-
-### A playable fixture
-
-A fixture is one **session**: the messages a driver sends, interleaved with what
-the runtime must reply, in the order they occur.
+A playable fixture is one **session**: the messages a driver sends interleaved with
+what the runtime must reply, in order.
 
 ```json
-{
-  "name": "a false condition marks a player option unavailable",
-  "playbook": "playbook.json",
-  "session": [
-    { "expect": { "resolve": ["IsCurious"] } },
-    { "send": { "supply": { "IsCurious": false } } },
-    { "expect": { "said": { "speaker": "Alice", "speech": "My favorite color is red." } } },
-    { "send": "next" },
-    { "expect": { "asked": [
-        { "label": "Ask about the inn", "available": false },
-        { "label": "Say nothing", "available": true }
-      ] } },
-    { "send": { "choose": 1 } },
-    { "expect": { "ended": {} } }
-  ]
-}
+{ "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
+{ "send": "next" },
+{ "expect": { "asked": [
+    { "label": "Go east", "available": true },
+    { "label": "Go west", "available": true } ] } },
+{ "send": { "choose": 0 } }
 ```
-
-Read top to bottom, cause sits beside effect. `send` and `expect` are the verbs
-of [expect(1)](https://core.tcl-lang.org/expect/), and they are asymmetric on
-purpose: `expect` is the asserting side's word, so a fixture always speaks as the
-driver and never has to say whose turn it is.
-
-### What a driver sends
-
-Each `send` is one message from the driver. The vocabulary is the protocol's own,
-so a fixture reads as the conversation it replays:
 
 | `send` | Means |
 | --- | --- |
 | `"next"` | `Next` — proceed past what was just said |
-| `{ "choose": n }` | `Choose(n)` — take the option at position `n` *(not taken by the reference runner yet)* |
-| `{ "supply": { … } }` | `Supply(answers)` — here is what the world says *(not taken yet)* |
-| `"done"` | `Done()` — the effect just asked for has been carried out |
+| `"done"` | `Done` — the effect just asked for has been carried out |
 | `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
-| `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than the top *(the runner always begins at `entry` today)* |
-| `"describe"` | `Describe()` — ask where the run stands *(not taken yet)* |
-
-A session with no `start` begins at the playbook's `entry`.
-
-`choose` is **zero-based**, and indexes the options **as just offered, in the
-order offered** — not the node's outgoing edges, which can differ because
-unavailable options are still shown. Zero-based keeps it the only convention in
-the format: node identifiers are already gapless from zero, and the options are a
-JSON array. A menu that reads `1)` to a player is the shell's presentation, and
-the shell translates.
-
-### What a runtime must reply
-
-Each `expect` is one message the runtime must produce next.
+| `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered |
+| `{ "supply": { … } }` | `Supply(answers)` — what the world says |
+| `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than `entry` |
+| `"describe"` | `Describe()` — ask where the run stands |
 
 | `expect` | Asserts |
 | --- | --- |
-| `said` | `speaker` (the name, never the index) and the `speech` — see below |
+| `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
-| `asked` | the options offered, each a `label` and whether it was `available` |
+| `asked` | the options offered, each a `label` and whether it is `available` |
 | `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
-| `resolve` | the keys the runtime asked the world about |
+| `resolve` | the keys the runtime asks the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
-| `refused` | why the command could not be taken, from the protocol's closed set |
+| `refused` | the `reason`, from the runner's [closed set](./Runner.md#refusals) |
 
-A speaker is named, not numbered: the speaker table's order is an encoding detail,
-and the anonymous default speaker simply has no name.
-
-Interleaving removes a redundancy the earlier two-list sketch carried. An `asked`
-entry no longer records which option was taken, because the very next `send` says
-so. One fact, one place.
-
-A session may also send a command the run cannot take, and say which refusal it
-expects:
-
-```json
-{ "send": "next" },
-{ "expect": { "refused": { "reason": "already-ended" } } }
-```
-
-`reason` is one of the protocol's closed set, named in
-[Runtime core](./Runtime%20Core.md) as `R11`: a stable value two runtimes can
-compare. The explanation a refusal also carries is the run's own, the same rule the
-readable half applies to a reader's message, argued in F5.
-
-### Speech and labels are fragments
-
-Two places in a playbook hold prose: a line's `speech` and an option's `label`.
-Both are lists of **fragments** — plain text, styled runs, breaks, tags, queries,
-and custom commands. Fragments are what the core emits; turning them into
-something a player sees is the shell's job, and a terminal, a browser, and Godot
-each do it differently. So the fragments are the canonical assertion, **written
-exactly as the playbook serializes them**:
-
-```json
-{ "expect": { "said": { "speaker": "Alice", "speech": [
-    { "kind": "text", "text": "My key is " },
-    { "kind": "styled", "style": "bold", "children": [
-        { "kind": "text", "text": "rusty" } ] },
-    { "kind": "text", "text": "." }
-] } } }
-```
-
-Reusing the playbook's vocabulary verbatim — the `kind` discriminator, `styled`
-with nested `children`, `bold` and `italic` — is the point. A port already reads
-fragments to load a playbook, so conformance adds no second naming scheme to
-learn, implement, or keep in sync.
-
-Most fixtures are not about styling, and reading that for a fixture about
-conditions is a poor trade. So either field may instead be written as a plain
-string, which asserts the **flattened** form:
-
-```json
-{ "expect": { "said": { "speaker": "Alice", "speech": "My key is rusty." } } }
-```
-
-One field, two forms: **an array asserts the fragments, a string asserts the
-flattening**. A string is a deliberately weaker assertion, chosen for
-readability, so any fixture whose subject *is* styling or interpolation writes
-the array. Because the string form is a projection, the projection is specified:
-concatenate each fragment's plain text, drop style markers, and substitute
-resolved queries. That is deterministic here, since a fixture supplies its own
-answers.
-
-The same two forms apply to an option's label, where the flattened form is the
-common case and keeps the option readable:
-
-```json
-{ "expect": { "asked": [
-    { "label": "Take the east road", "available": true },
-    { "label": [ { "kind": "text", "text": "Ask the guide first " },
-                 { "kind": "tag", "name": "cautious" } ], "available": false }
-] } }
-```
-
-Neither form carries a node reference. The runtime's `Transcript` puts a
-`nodeRef` on every entry, but a node reference is a **position**, so an assertion
-carrying one would change whenever the compiler renumbered — exactly the churn
-this corpus must not have. What is left is semantic: who spoke, what was offered,
-what was taken.
-
-### A readable fixture
-
-The readable half asks a smaller question — can a reader load this at all — so a
-fixture states the document and the verdict:
-
-```json
-{
-  "name": "an unknown required capability is refused",
-  "playbook": "playbook.json",
-  "verdict": "refuse",
-  "because": "requires 'detour', which no version-0 runtime offers"
-}
-```
-
-`verdict` is `refuse` or `accept`. A refusal's message is not asserted: every
-runtime should explain itself in its own language, and pinning English would make
-the corpus untranslatable. `because` documents the fixture for a human reading it.
-
-This half is not made redundant by `schema/playbook-0.schema.json`, and measuring
-that was worth the trouble: **eleven of the seventeen refusals shipped are valid
-by the schema.** A schema constrains shape — `entry` is a non-negative integer —
-but not meaning, so it cannot know there are only two nodes to point at, which
-versions a build reads, or that a node's id must equal its position. Only the
-type error, the truncated file, a foreign arm kind, two successions on one node, a
-lone `else`, and a second `else` are its to catch. Conversely, every case the
-corpus *accepts* must also validate, or the format's two specifications disagree;
-CI checks that.
-
-### Running a session
-
-The playable harness lives with the reference runner, which is the only
-component that can execute anything. Its **shape** is settled here, so that
-component inherits an acceptance suite rather than a corpus to interpret.
-
-```mermaid
-flowchart TD
-    READ["Read the fixture and its playbook"] --> BEGIN["Begin a run at the playbook's entry"]
-    BEGIN --> NEXT{"Another turn?"}
-    NEXT -->|"send"| DELIVER["Deliver the message to the runner"]
-    DELIVER --> NEXT
-    NEXT -->|"expect"| WAITING{"Has the runtime replied?"}
-    WAITING -->|"no"| SHORT["Fail: the run ended before the session"]
-    WAITING -->|"yes"| MATCH{"Does the reply match?"}
-    MATCH -->|"no"| DIVERGED["Fail: report both messages"]
-    MATCH -->|"yes"| NEXT
-    NEXT -->|"none left"| DRAINED{"Is the runtime silent?"}
-    DRAINED -->|"no"| EXTRA["Fail: the session ended before the run"]
-    DRAINED -->|"yes"| PASS["Conformant"]
-```
-
-Two rules carry most of the weight:
-
-- **Take the runtime's messages in order, one per `expect`.** A harness that
-  searched ahead for a match would accept a runner that reordered its replies,
-  which is the drift a session exists to catch.
-- **Both must run out together.** A run that stops early and a session that stops
-  early are different failures, and reporting them differently is what tells a
-  contributor whether the fixture or the runner is wrong.
-
-Matching a single message is ordinary equality with two exceptions, both already
-specified above: `speech` and `label` compare as fragments when written as an
-array and as the flattening when written as a string, and an absent `speaker`
-means the anonymous default speaker rather than "any speaker".
+A session with no `start` begins at the playbook's `entry`. `speech` and `label` are
+written either as an **array** — the playbook's fragments, verbatim — or as a
+**string**, which asserts the flattening defined by
+[Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# runner takes
+`next`, `done`, and `failed`; a case that sends anything else is not yet playable.
 
 ## What the corpus covers
 
-Fixtures are **purpose-built and minimal — one construct each**, so a failure
-names the construct rather than a script. The shipped `examples/` are broad and
-make good regression material, but a failure in one says little about what broke.
+Fixtures are **minimal — one construct each** — so a failure names the construct
+rather than a script.
 
-| Fixture | Asks |
-| --- | --- |
-| Linear speech | Does one line follow another, and does the run end? |
-| A player choice | Is the menu offered, and does a choice move where it should? |
-| An unavailable option | Is a failing option **shown but unavailable**, not hidden? |
-| A conditional line | Is a line skipped without ending the run? |
-| A conditional block | Are the arms tried in the order written? |
-| A jump | Does a divert transfer without returning? |
-| An effect | Is a control block's effect asked for, and waited on before the run goes past it? |
-| A failed effect | Does the run stand still, so a retry can land and an advance cannot? |
-| A query in speech | Is `Resolve` raised, and the supplied answer spoken? |
-| Styled speech | Do fragment boundaries and styles survive intact? |
-| A command the run cannot take | Is it refused, for the reason the session names, rather than thrown or quietly ignored? |
-| Ordered and unordered choices | Is a menu's stated order honored where it is stated? |
+| Playable case | Asks | Plays in the C# runner |
+| --- | --- | --- |
+| `linear-speech` | Does one line follow another, and does the run end? | yes |
+| `styled-speech` | Do fragment boundaries and styles survive intact? | yes |
+| `a-jump` | Does a jump transfer without returning? | yes |
+| `an-effect` | Is an effect asked for, and waited on before the run goes past it? | yes |
+| `a-failed-effect` | Does the run stand still, so a retry lands and an advance cannot? | yes |
+| `a-next-while-waiting` | Is `next` refused while the host is carrying out an effect? | yes |
+| `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |
+| `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | not yet |
+| `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | not yet |
+| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | not yet |
+| `a-conditional-line` | Is a line skipped without ending the run? | not yet |
+| `a-conditional-block` | Are the arms tried in the order written? | not yet |
+| `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | not yet |
 
-The unavailable-option fixture matters more than its size suggests: showing a
-failing option rather than hiding it is a deliberate decision, and a port is
-likelier to get it wrong than to get speech wrong.
-
-Every row above ships except the last, which is deferred: see
-[open questions](#open-questions-and-deferred-work).
+The `readable/` half covers every refusal the reader makes — version, capability,
+node position, the four dangling references, and the
+[reader rules](./Playbook%20Reader%20Rules.md) — plus the documents it must accept.
 
 ## Key design decisions
 
 ### F1 — The corpus is data, not a test project
 
-Fixtures are JSON at the repository root. A harness is a consumer, not the owner.
-Anything a port cannot read without building our C# is not conformance material.
-
-JSON rather than a session-log mini-language of our own: a bespoke format would
-need a parser in **every** port before a single fixture ran, would have to escape
-dialogue that happens to start with a marker character, and — decisively — would
-itself need a specification and conformance tests. The corpus exists to remove
-ambiguity between implementations; hand-rolling a language would reintroduce it
-one level down. Readability is bought by the interleaved session instead.
+Fixtures are JSON at the repository root, beside `schema/`, not under `tests/`. A
+harness is a consumer, not the owner: a TypeScript or Rust port must be able to run
+them without building anything of ours. JSON rather than a session mini-language,
+because a bespoke format would need a parser and a specification of its own in every
+port — the ambiguity the corpus exists to remove.
 
 ### F2 — A fixture carries a playbook, not a script
 
-A runtime has no compiler. The playbook is the artifact it loads, so that is what
-a fixture supplies. The source script is committed beside it, so the fixture stays
-maintainable and reviewable, and the playbook is regenerated from it — never
-hand-edited.
+A runtime has no compiler, so a fixture supplies the playbook it loads. The source
+script is committed beside it, so a reviewer reads a dialogue rather than JSON, and a
+test recompiles every playable source and compares it to the committed playbook. A
+`readable/` refusal is an accepted document with one deliberate edit, and its source
+opens with a `broken:` block showing that edit.
 
 ### F3 — A fixture is a session, not a transcript
-
-The alternative was a list of driver messages plus the transcript they produce.
-Two lists read as two disjoint documents, and the reader has to interleave them
-mentally to see one conversation — a real cost in a file humans author and review.
-
-Interleaving also changes what conformance *means*, and for the better:
 
 | Shape | Asserts |
 | --- | --- |
 | Transcript | the same story came out |
 | Session | the same conversation happened |
 
-A fold over the event stream cannot see a runner that emits `Asked` before
-`Said`, or asks `Resolve` for the wrong keys, or asks too eagerly. A session
-can, and it has somewhere to put `describe` — which a transcript, having no slot
-for a question, could not express at all.
-
-The risk is that a stricter shape rejects a port that legitimately batches
-messages differently. That is a feature: it forces C2 to *state* whether batching
-is allowed instead of leaving it to be discovered when a port diverges.
+A fold over the event stream cannot see a runner that reports `Asked` before `Said`,
+asks `Resolve` for the wrong keys, or asks too eagerly. Interleaving also removes a
+redundancy: an `asked` entry does not record the pick, because the next `send` says
+so. The stricter shape forces the runtime design to *state* whether batching is
+allowed rather than leave it to be discovered when a port diverges.
 
 ### F4 — Speech and labels are the playbook's fragments
 
-Rendering lives in the shell, so fragments are what the core is accountable for,
-and a fixture writes them exactly as the playbook serializes them rather than in
-a vocabulary of its own — a second naming scheme for one concept would need its
-own tests and its own drift to police.
-
-The plain-string form exists because most fixtures are not about styling and
-should stay readable. Making it the *same* field rather than a second one means
-the two can never be supplied together, and keeps `label` named `label`.
+Rendering lives in the host, so fragments are what the core is accountable for, and
+a fixture writes them exactly as the playbook serializes them — no second naming
+scheme to keep in sync. The string form exists because most fixtures are not about
+styling; it is the same field rather than a second one, so the two can never be
+supplied together. A fixture whose subject *is* styling or interpolation writes the
+array. Neither form carries a node reference: a position churns whenever the
+compiler renumbers.
 
 ### F5 — A refusal asserts the verdict, not the wording
 
-A runtime must refuse the same documents. It need not refuse them in English.
-
-That leaves a hole: a document refused for an *accidental* reason still passes.
-The readable half closes it with an **accepted document one edit away**: the
-line-level cases all share `baseline/`, and a case built on a richer construct
-ships its own accepted source. The accepted document passing proves the rest is
-sound, so a refusal can only be about the edit its case made. The reason is pinned
-without a word of any message being asserted, and `because` names the edit for a
-reader.
-
-The session half needs the same rule and cannot use the baseline: a runtime refuses
-a **command**, not a document, so there is no second file to diff against — the
-reason has to travel on the refusal itself. `Refused` therefore carries a reason
-from a closed set beside the explanation it words for itself, and an `expect`
-asserts the reason, exactly as the readable half asserts a verdict rather than a message
-(the reason set is stated in [Runtime core](./Runtime%20Core.md) as `R11`).
+A runtime must refuse the same documents, not refuse them in English. To stop a
+document refused for an *accidental* reason from passing, every refusal has an
+accepted document one edit away — `baseline/` for the line-level cases, or the case's
+own compiled source — so a refusal can only be about the edit its case made. A runner
+refuses a **command**, not a document, so the reason travels on the refusal itself as
+a value from a closed set, and `expect` asserts it.
 
 ### F6 — Minimal fixtures over realistic ones
 
-One construct per fixture. Realistic scripts belong in `examples/`, and their
-playbooks are already pinned by C1's goldens.
+One construct per fixture. Realistic scripts belong in `examples/`, whose playbooks
+are pinned by the goldens.
 
 ### F7 — A verdict gathers every reason it carries
 
-One reason per case was the first shape, and it made a contributor fix one
-divergence, re-run, and meet the next — the experience of a compiler that stops
-at the first error, which this project deliberately avoids.
-
-So an outcome carries a **list** of reasons. The verdict lattice is unchanged:
-the gravest verdict still wins, and reasons gather at that gravestness, in the
-order the checks ran. A reason a graver verdict outranks is dropped, because
-reporting a construct nobody has taught the harness beside a real failure would
-only dilute the failure.
-
-The list is flat rather than nested under the claim that found it: a reason is
-written to stand alone — the speaker check names the speaker it expected, a
-fragment check names the fragment's place — so nesting would restate what the
-words already say, and cost a type to do it.
-
-The **run** still stops at the first session entry that does not conform: a send
-advances the run, so carrying on would judge later entries against a state the
-fixture never described. Gathering within an entry is safe for the same reason
-in reverse — nothing has moved between one check and the next.
-
-What the build has **yet to learn** gathers further out still. The harness asks
-that of the fixture before running it — every node kind it cannot play, every
-send no reader owns, every claim in an expectation nothing knows how to check —
-so one run of a case names everything it needs instead of one construct per
-run. Asking rather than stepping is what keeps it safe: the
-run never moves past a message that was never sent.
-
-The verdict is called **not yet playable**, not "not yet runnable", because the
-product already says so: a node kind the runner cannot take is a
-`RefusalReason.UnplayableNode`, and the corpus folder and its fixtures have been
-*playable* since the format's first pass. One adjective serves the playing side —
-*playable* — and one verb, *play*; **run** stays the noun for one playthrough,
-which is `Runner` and `PlayState`'s word. The harness's own vocabulary held the
-only "runnable" the repository had.
+An outcome carries a **list** of reasons, so a contributor sees every divergence in
+an entry at once rather than fixing one and re-running. The gravest verdict wins, and
+reasons gather at that verdict in the order the checks ran; a reason a graver verdict
+outranks is dropped. The run still stops at the first entry that does not conform,
+because a send advances the run and later entries would be judged against a state
+the fixture never described. What the build has **yet to learn** — node kinds, sends,
+and claims nothing checks — is gathered before the run starts, so one run names
+everything a case needs. The verdict is **not yet playable**, matching
+`RefusalReason.UnplayableNode` and the `playable/` folder.
 
 ## Error and boundary cases
 
-Both halves' failures are implemented; the harness reports what each one found.
-
-| Case | Behavior | |
-| --- | --- | --- |
-| A fixture's playbook does not load | Fail as a fixture bug, naming the case and the file, distinct from a conformance failure | shipped |
-| A fixture is malformed | Fail naming the case, so nobody opens files hunting for it | shipped |
-| A `refused` names a reason the protocol does not give | Fail as a fixture bug: the schema closes the set, so the fixture and the harness have drifted apart | shipped |
-| A readable fixture whose document is not valid JSON | Still a refusal; the corpus does not care why | shipped |
-| A case missing a fixture, a playbook, or a source | Fail: the corpus is incomplete, in either half | shipped |
-| The runtime replies something other than the next `expect` | Fail, reporting both messages — this is the divergence the corpus exists to catch | shipped |
-| A runner asks for input the session does not answer next | Fail, naming the divergence — a silent skip would hide it | shipped |
-| The session ends before the run does | Fail: the fixture is incomplete, which is a fixture bug worth surfacing | shipped |
-| The run ends before the session does | Fail, for the same reason | shipped |
-| A `said` differs in several fields | Fail, reporting every field that differs rather than the whole document, or only the first | shipped |
-
-## Integration
-
-| Seam | Change |
+| Case | Behavior |
 | --- | --- |
-| `conformance/` | New root folder, alongside `schema/`, with a `README.md` a port starts from |
-| `schema/fixture-0.schema.json` | The fixture format's own schema, published beside the playbook's, so a fixture is checked in an editor as it is hand-authored |
-| C# harness | `DialogueDown.Conformance` finds cases and reads their files, naming the case in every failure (`CorpusFolder`), and says what a readable case *means* (`ReadableCorpus`); `Corpora` is the only place that knows where the corpus sits. The playable half runs in `DialogueDown.Runtime.Tests`, on the shared `DialogueDown.TestSupport` helpers |
-| C2 | Inherits the playable fixtures as its acceptance suite and runs them; a case it cannot play yet is reported as not yet playable rather than failed |
-| C4 | The `ddown play` REPL sends and receives the same messages, so a session and a REPL transcript are one shape — `--replay <fixture>` makes the REPL a harness |
-| C5b | The TypeScript runner is held to the same corpus, which is the whole reason the fixtures are language-neutral |
-| CI | The readable harness runs with the existing suite; every case the corpus accepts is also validated against the schema, so the format's two specifications cannot drift apart |
+| A fixture's playbook does not load | Fails as a fixture bug, naming the case and the file |
+| A fixture is malformed, or a case lacks a fixture, playbook, or source | Fails naming the case |
+| A `refused` names a reason the protocol does not give | Fails as a fixture bug; the schema closes the set |
+| A readable document that is not valid JSON | Still a refusal |
+| The runtime replies something other than the next `expect` | Fails, reporting both messages |
+| A runner asks for input the session does not answer next | Fails, naming the divergence |
+| The session ends before the run, or the run before the session | Fails, saying which |
+| A `said` differs in several fields | Fails, reporting every field that differs |
 
 ## Testability
 
-The corpus is itself test material, so the question is what tests *it*.
-
 | Level | What it covers |
 | --- | --- |
-| Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture, a fixture naming a document that is not there |
-| Readable corpus | Every refusal **the reader** makes has a case, and every acceptance does too. C1's boundary table also lists a duplicate speaker id, which the *writer* asserts before emitting, so no document a reader could be handed exercises it |
-| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI, which is what holds the hand-authored playable half together. Every case in **either** half ships a fixture, a playbook, and a source |
-| Source integrity | Every `playable/` case is recompiled from its source and compared to the committed playbook. Every `readable/` refusal's source opens with a well-formed `broken:` block; the script below it compiles and is accepted by the reader, yet differs from the committed playbook, so the case is really broken |
+| Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
+| Readable corpus | Every refusal the reader makes has a case, and every acceptance does too |
+| Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI; every case ships a fixture, a playbook, and a source |
+| Source integrity | Every playable source recompiles to its committed playbook; every readable refusal's `broken:` block is well formed, and the script below it compiles to an accepted document that differs from the committed one |
+| Schema agreement | Every accepted playbook validates against `schema/playbook-0.schema.json` |
 
-The last two are the guard against a corpus rotting. A committed playbook that no
-longer matches its source is a fixture asserting yesterday's format, and a case
-that quietly lost a file is one nobody can review — neither of which the harness
-itself would notice, because it reads only a fixture and the document it names.
-
-The source comparison lives in `DialogueDown.Tests`, which owns the compiler and
-already keeps the golden playbooks; the rest lives beside the reader it exercises.
+The source comparison lives in `DialogueDown.Tests`, which owns the compiler; the
+readable harness in `DialogueDown.Playbook.Tests`; the playable harness in
+`DialogueDown.Runtime.Tests`. `DialogueDown.Conformance` finds cases and reads their
+files for all three.
 
 ## Open questions and deferred work
 
-- **`describe` has a slot but no fixtures.** The format accommodates the query
-  half so it does not have to be retrofitted, but what a `describe` reply
-  contains is C2's to settle — writing fixtures now would mean designing C2's
-  query surface from the outside. The line debugger is the consumer that will
-  force the shape.
-- **Which fragment kinds survive a run is C2's to settle.** A fixture writes the
-  playbook's fragments verbatim, but the runtime cannot emit all of them
-  unchanged: a `query` fragment must become something else once `Supply` answers
-  it, and whether `tag` and `custom-command` pass through to the shell or surface
-  as their own events is a runner decision. The rule here — reuse the vocabulary,
-  and expect it to differ only where the runtime resolves something — holds
-  either way, so fixtures that lean on those kinds wait for C2.
-- **Menu ordering has no fixture yet, and the reason is a real question.** An
-  ordered list states that the choices must be presented in that order; an
-  unordered one leaves later stages free to shuffle. A fixture can only assert
-  either if `asked` says *which* kind a menu is — and whether the shuffling
-  belongs to the runner or to the shell is C2's to settle. Under functional core
-  and imperative shell the answer is likely the shell, in which case `asked` is
-  always in document order and carries the menu's stated kind alongside it.
-- **A menu written as a divert waits on the runner.** `- => [Label](#anchor)` is
-  the ordinary way to write a branching menu, and `a-divert-option` writes one.
-  What this build cannot do yet is pick from it: the session sends `choose`, and
-  no reader owns that command.
-- **Random choice has no fixture yet.** Pinning a draw needs the entropy decision
-  C2 owns — a specified generator, or values the host supplies. Deferred until
-  that is settled, and called out here rather than quietly omitted.
-- **A rendered view of a session** — `ddown conformance show <fixture>` printing a
-  session as prose — would give human readability with no parser in any port,
-  since it is generated and never authored. Worth doing once fixtures exist.
-- **The playable harness landed with the reference runner.** A fixture that needs
-  a command the runner does not take yet is reported as not-yet-playable, so the
-  gap is visible instead of silently green.
+- **`describe` has a slot but no fixtures.** What a `describe` reply contains is the
+  runner's to settle; the line debugger is the consumer that will force the shape.
+- **Which fragment kinds survive a run.** A `query` fragment must become something
+  else once `supply` answers it, and whether `tag` and `custom-command` pass through
+  or surface as their own events is a runner decision.
+- **Menu ordering has no fixture.** Asserting ordered versus unordered menus needs
+  `asked` to say which kind a menu is, and whether shuffling belongs to the runner or
+  the host is undecided.
+- **Random choice has no fixture.** Pinning a draw needs the entropy decision the
+  [architecture note](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
+  owns.
+- **A rendered view of a session** — printing a fixture as prose — would give
+  readability with no parser in any port.

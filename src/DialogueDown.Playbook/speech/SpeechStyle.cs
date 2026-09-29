@@ -8,20 +8,18 @@ namespace DialogueDown.Playbook.Speech;
 /// <remarks>
 /// Each member's wire name is pinned explicitly, for the reason a property carries a
 /// <see cref="JsonPropertyNameAttribute"/>: the value is a public contract, and deriving it from
-/// the C# member name would let a rename change the format silently.
+/// the C# member name would let a rename change the format silently. The names live in
+/// <see cref="SpeechStyleConverter"/>, which keeps them off every target's package list.
 /// </remarks>
-[JsonConverter(typeof(StringOnlyEnumConverter<SpeechStyle>))]
+[JsonConverter(typeof(SpeechStyleConverter))]
 public enum SpeechStyle
 {
     /// <summary>Emphasis, written with single asterisks or underscores.</summary>
-    [JsonStringEnumMemberName("italic")]
     Italic,
 
     /// <summary>Strong emphasis, written with double asterisks or underscores.</summary>
-    [JsonStringEnumMemberName("bold")]
     Bold,
 
     /// <summary>Struck-through text, written with double tildes.</summary>
-    [JsonStringEnumMemberName("strikethrough")]
     Strikethrough,
 }

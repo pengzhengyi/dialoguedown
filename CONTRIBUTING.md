@@ -21,7 +21,7 @@ small, well-scoped changes are easiest to review and merge.
 
 Requirements:
 
-- .NET SDK 8 or newer
+- .NET SDK 10 or newer
 - Git
 
 Clone the repository and run:

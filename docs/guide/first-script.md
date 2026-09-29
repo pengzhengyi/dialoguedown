@@ -16,6 +16,7 @@ yet.
 - [5. Jump somewhere](#5-jump-somewhere)
 - [6. Talk to your game](#6-talk-to-your-game)
 - [7. End the run](#7-end-the-run)
+- [The whole script](#the-whole-script)
 - [Where to go next](#where-to-go-next)
 
 ## 1. Say one line
@@ -43,15 +44,17 @@ Put a name before a colon:
 Ada: The lamp turns, and the sea answers.
 ```
 
-`Ada` is now the **speaker**. Declare her once with an `@id` and the compiler
-will recognize her by either name from then on:
+`Ada` is now the **speaker**. Give her an `@id` in the prefix once, and a later
+line can use either the name or the id:
 
 ```markdown
-@keeper Ada
+Ada @keeper: The lamp turns, and the sea answers.
 
-Ada: The lamp turns, and the sea answers.
-keeper: Forty years, and it has never missed a night.
+@keeper: Forty years, and it has never missed a night.
 ```
+
+Each line is its own paragraph, so leave a blank line between them — two lines
+with no blank line between them are one line of speech.
 
 Lines with no speaker at all fall to a **default speaker**, so narration needs no
 prefix. See [Speakers and lines](speakers-and-lines.md) for styling, tags, and
@@ -84,16 +87,17 @@ A Markdown list becomes a **choice**:
 
 Ada: You made it through the squall.
 
-- [Ask about the light](#the-light)
-- [Ask about the storm](#the-storm)
+- => [Ask about the light](#the-light)
+- => [Ask about the storm](#the-storm)
 ```
 
-Each option is a link to the scene it leads to. To let the *engine* pick instead
-of the player, give the options weights with `` `%` ``:
+The `=>` makes each option a jump to the scene it names; the link text is what
+the player sees. To let the *engine* pick instead of the player, give each option
+a weight with `` `%` `` — no menu is shown, and exactly one option runs:
 
 ```markdown
-- `60%` [She smiles](#warm)
-- `40%` [She says nothing](#cold)
+- `60%` Ada smiles at the lamp.
+- `40%` Ada says nothing.
 ```
 
 ## 5. Jump somewhere
@@ -108,8 +112,8 @@ Ada: It has burned every night for forty years.
 => [Departure](#departure)
 ```
 
-A jump on a line of its own is a **control line** — it carries an effect, not
-speech, so it is never attributed to a speaker.
+A jump on a line of its own is a **control line** — it carries a jump or a
+command, not speech, so it is never attributed to a speaker.
 
 ## 6. Talk to your game
 
@@ -117,13 +121,13 @@ An inline code span is how a script reaches your game. A **query** asks a
 question, a **command** tells the game to act:
 
 ```markdown
-Ada: `"met_ada"?` Good to see you again, sailor.
+`met_ada?` Ada: Good to see you again, sailor.
 
 Ada: Take this. `give("lantern")`
 ```
 
-The query `` `"met_ada"?` `` fronts the line, so the line plays **only** when
-your game answers true. The same condition can guard a choice or a jump. See
+The query `` `met_ada?` `` comes before the speaker, so the line plays **only**
+when your game answers true. The same condition can guard a choice or a jump. See
 [Game state](game-state.md).
 
 ## 7. End the run
@@ -136,10 +140,49 @@ Ada: Safe travels, sailor.
 => [The end](#END)
 ```
 
+## The whole script
+
+Put together, the pieces make one script that compiles without a warning:
+
+```markdown
+# Arrival
+
+The lamp turns, and the sea answers.
+
+Ada @keeper: You made it through the squall.
+
+@keeper: Forty years, and the light has never missed a night.
+
+`met_ada?` Ada: Good to see you again, sailor.
+
+- => [Ask about the light](#the-light)
+- => [Ask about the storm](#the-storm)
+
+# The Light
+
+Ada: Take this. `give("lantern")`
+
+- `60%` Ada smiles at the lamp.
+- `40%` Ada says nothing.
+
+=> [Departure](#departure)
+
+# The Storm
+
+Ada: It came up from the south, fast and black.
+
+=> [Departure](#departure)
+
+# Departure
+
+Ada: Safe travels, sailor.
+
+=> [The end](#END)
+```
+
 ## Where to go next
 
-Compile the finished script and open the interactive report to see each compiler
-stage:
+Open the interactive report to see each compiler stage:
 
 ```bash
 ddown visualize lighthouse.dialogue.md
