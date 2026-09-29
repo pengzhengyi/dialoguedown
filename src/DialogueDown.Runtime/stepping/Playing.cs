@@ -68,7 +68,7 @@ internal static class Playing
     private static StepResult Line(PlayContext context, int position, LineNode line, Supply? supply)
     {
         var events = LineEventsBuilder.Of(
-            context.SpeakerName(line.Speaker), supply, SpeechTemplate.Segments(line.Speech));
+            context.SpeakerName(line.Speaker), supply, SpeechTemplate.Segments(line.Speech), toPlay: ..);
         Situation after = events.HasCommand
             ? new AwaitingDone(position, new Resume.FromFinished())
             : new AtNode(position);
