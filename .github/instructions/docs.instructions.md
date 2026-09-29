@@ -33,6 +33,32 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 - **Describe only what ships.** A user-facing page must not advertise a capability
   the system does not have, and a status callout states what is built now — a
   feature that is planned, dormant, or superseded says so.
+- **Guide examples compile as written.** A tutorial that teaches a form the compiler
+  reads differently is worse than no tutorial. Compile each example you add or change:
+
+  ```bash
+  dotnet run --project src/DialogueDown.Cli -- compile <example.md> --emit playbook
+  ```
+
+- **Reword rather than extend the dictionary.** When cspell flags a word you coined,
+  a plainer phrase is usually clearer. Add a word to
+  `cspell.json` only when it is a real name: a tool, a format, a proper noun.
+
+## Design notes
+
+- **One note per concept, named for the concept.** A follow-up to an existing
+  design goes into that note's section; a new note is only for a concern the
+  existing notes do not cover. Never name a note after the step that delivered it
+  (`… Pass 2`, `… Follow-up`): those notes restate their parent and drift from it.
+- **Present tense, no history.** A note records the design as it stands. Leave out
+  issue and PR numbers, branch names, test counts, and delivery labels such as
+  "Component 3"; git holds that history.
+- **Link the shared pipeline diagram.** The reading guide owns the one diagram of
+  the compiler stages; a note links it rather than drawing its own copy.
+- **Links must resolve inside the site.** DocFX only follows links within `docs/`.
+  Link a file outside it — `conformance/`, `CONTRIBUTING.md`, source code — by its
+  GitHub URL (`https://github.com/pengzhengyi/dialoguedown/blob/main/<path>`), and
+  link a section of the reading guide rather than a bare folder.
 
 ## How to add a design note
 
@@ -45,8 +71,13 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 2. Add the note to the **reading guide** in
    `docs/contributing/design-notes/README.md`: put it in the section matching its
    folder, in reading order, and keep that section's Mermaid chart current.
-3. Register it in `docs/contributing/design-notes/toc.yml` so it appears in the
-   site sidebar (`- name:` + `href:`), with the folder in the `href:`.
+3. Regenerate the site sidebar, `toc.yml`, from the reading guide. Never edit it by
+   hand; CI fails when the two disagree:
+
+   ```bash
+   python3 .github/scripts/generate-design-notes-toc.py
+   ```
+
 4. Build the site to confirm it renders and links resolve:
 
    ```bash
@@ -56,5 +87,17 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
 
    The build fails on a warning, and CI builds the site on every pull request, so a broken
    link or a missing cross-reference is a failure to fix rather than a note to leave.
+
+## Moving, merging, or renaming a note
+
+A note's path is cited outside `docs/`, so a move is not done until every citation
+follows it. After updating the reading guide and regenerating `toc.yml`, search the
+repository for the old file name and retarget:
+
+- links in other notes, the guide, `README.md`, and `CHANGELOG.md`;
+- the accepted pairs in `.github/scripts/find-doc-duplication.py`.
+
+When a note is merged into another, carry every claim the merged note made that the
+owner lacks before deleting it.
 
 The generated `docs/_site/` and `docs/api/*.yml` are ignored — never commit them.

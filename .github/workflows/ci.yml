@@ -323,6 +323,11 @@ jobs:
             --offline --no-progress docs README.md CONTRIBUTING.md AGENTS.md
             SECURITY.md CODE_OF_CONDUCT.md .github
 
+      # The design-notes sidebar is generated from the reading guide, so a note added to one
+      # and not the other would otherwise be invisible in the site or missing from the guide.
+      - name: Check design-notes sidebar
+        run: python3 .github/scripts/generate-design-notes-toc.py --check
+
       # Advisory like the two steps above, and for the same reason: a word cspell has not met
       # yet — a newly cited tool, a proper noun — arrives as a reviewable dictionary diff rather
       # than a blocked merge. The whole tree is swept rather than the files a pull request
