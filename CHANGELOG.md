@@ -55,7 +55,10 @@ changes easy to categorize.
   words before the first command even when there are none; each command is a `Perform`; and the
   words after a command are a `Continued`, a new event with no speaker that goes on with the same
   line, sent only when they say something. Once the host answers `Done`, the player has the turn.
-  The conformance corpus gains a `continued` expectation and five cases. See
+  A query written after a command is asked only once the host is done with it: the step stops
+  after the command, and the run asks the world again before it goes on with the line, so the
+  words say what the world holds after the command. The conformance corpus gains a `continued`
+  expectation and six cases. See
   [Speaking a Line](docs/contributing/design-notes/runtime/Speaking%20a%20Line.md).
 
 - **A host can report that an effect failed** — `Failed(explanation)` joins `Done` as the answer

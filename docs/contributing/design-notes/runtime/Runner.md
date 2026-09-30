@@ -109,7 +109,7 @@ What may be sent where is one matrix:
 | --- | --- | --- | --- | --- | --- |
 | `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 | `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
-| `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` |
+| `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` |
 | `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment |
 | `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 
@@ -125,7 +125,7 @@ nothing. The first node that asks for something is where the run stands.
 | Node | Arriving reports | The run then |
 | --- | --- | --- |
 | `line` | `Said(speaker name, speech)` | waits on the player — `Next` |
-| `line` with commands | `Said`, then a `Perform` per command and a `Continued` for the words after it, in the order written | waits on the world — `Done` gives the player the turn, `Failed` holds |
+| `line` with commands | `Said`, then a `Perform` per command and a `Continued` for the words after it, in the order written, up to a query written after a command | waits on the world — `Done` goes on with the line if it stopped, otherwise gives the player the turn; `Failed` holds |
 | `control` with effects | one `Perform` per effect, in order | waits on the world — `Done` moves on, `Failed` holds |
 | `control` with no effects | nothing | walks on — this is a jump on its own line |
 | `branch` | nothing | leaves by the first arm, in `order`, whose condition holds |
@@ -133,7 +133,8 @@ nothing. The first node that asks for something is where the run stands.
 | `choice`, `random-choice` | `Refused(unplayable-node)` | stands at that node |
 
 Before a node plays, the run asks the world, in one `Resolve`, every key the node
-needs to play: its own condition and the queries in its speech. Before it leaves, it
+needs to play: its own condition and the queries in its speech up to its first
+[stop](./Speaking%20a%20Line.md#s8--the-world-is-asked-once-per-stop). A line asks once more at each stop, once the host is done. Before it leaves, it
 asks in one more `Resolve` about the conditions on its ways out. The `Moment` on
 `AwaitingSupply` says which of the two a `Supply` answers. A node whose own
 condition fails is stepped over by its succession; a guarded way out whose
@@ -153,7 +154,7 @@ flowchart TD
     Cond -->|no| Kind{"Which kind?"}
     Kind -->|Line| Say["Said"] --> Player(["Waits on the player"])
     Kind -->|"Line, with commands"| Speak["Said, then Perform<br/>and Continued in written order"] --> LineWorld(["Waits on the world"])
-    LineWorld -.->|Done| Player
+    LineWorld -.->|"Done, line finished"| Player
     Kind -->|End| Over["Ended"] --> Nobody(["Waits on nobody"])
     Kind -->|"Control, with effects"| Ask["Perform, once per effect"] --> World(["Waits on the world"])
     Kind -->|"Control, no effects"| Onward{"Way onward?"}
@@ -295,8 +296,8 @@ run waits is refused as `misplaced`, so a fast-forward cannot skip a causal wait
 A node's effects are independent things to do, so each gets its own request. They
 were written as one line and effects only write, so the host applies them in order
 and answers once, and round trips stay proportional to what was written. A line
-with commands in its speech waits the same way: once, after the words and commands
-it says in one step, as [speaking a line](./Speaking%20a%20Line.md#s3--a-step-stops-before-a-query-written-after-a-command) describes.
+with commands in its speech waits the same way: once per step, after the words and
+commands that step says, as [speaking a line](./Speaking%20a%20Line.md#s3--a-step-stops-before-a-query-written-after-a-command) describes.
 
 ### D13 — A ring is refused by counting
 

@@ -1,8 +1,7 @@
 # Speaking a line
 
-> [!IMPORTANT]
-> Status: **partially implemented** — M1 is implemented, M2 is not yet. The pass that plays a
-> line whose speech carries commands:
+> [!NOTE]
+> Status: **implemented**. The pass that plays a line whose speech carries commands:
 > its words and its commands reach the host in the order they were written, and
 > the run stops inside the line only before a query written after a command. It
 > builds on [asking the world](./Asking%20the%20World.md) and the
@@ -49,8 +48,6 @@ The pass lands in two milestones on one branch:
 | **M1 — a line performs its commands in place** | Words and commands in written order in one step; the run waits for `Done`, then stands at the line for `Next` |
 | **M2 — a query after a command stops the line** | The step stops after the last command before that query; once the host is done, the world is asked, and the line resumes |
 
-Until M2 lands, a line asks about all of its queries on arrival, as it does today.
-
 In scope:
 
 - the segment walk, driven by `SpeechTemplate.Segments`, which exists and is not
@@ -90,17 +87,17 @@ M1:
 - [x] `Failed` on a command inside a line holds the run, as it does for a control
       block, and `Done` then carries on.
 - [x] The player's turn comes when a step leaves the host nothing to answer.
-- [ ] An option's label is never performed.
+- [ ] An option's label is never performed. Deferred to choices (C2b).
 
 M2:
 
-- [ ] A step stops after the last command before a query written after it.
-- [ ] Once the host is done, the run asks about the keys of the segment it
+- [x] A step stops after the last command before a query written after it.
+- [x] Once the host is done, the run asks about the keys of the segment it
       resumes from, then continues.
-- [ ] A line's guard and its first segment's keys are asked on arrival in one
+- [x] A line's guard and its first segment's keys are asked on arrival in one
       request.
-- [ ] One key asked on both sides of a stop is asked twice.
-- [ ] The run only ever stands at a resume place its line has.
+- [x] One key asked on both sides of a stop is asked twice.
+- [x] The run only ever stands at a resume place its line has.
 
 ## How a line is played
 
