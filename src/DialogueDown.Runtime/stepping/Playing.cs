@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
@@ -12,7 +13,7 @@ namespace DialogueDown.Runtime.Stepping;
 /// </summary>
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
-/// the node is known to be allowed and its answers are in hand.
+/// the node is known to be allowed and the answers for the words it plays are in hand.
 /// <para>
 /// This is the axis a runner grows along: every construct the language gains has to be played
 /// here, and each brings work of its own. Keeping it apart from the protocol guard leaves that
@@ -83,19 +84,47 @@ internal static class Playing
         };
     }
 
-    // Says the line from the given segment onward, in its speaker's name. If those segments hold a
-    // command, the run then waits on the host. Otherwise it stands at the line so the player can
-    // read it and move on.
+    // Says the line in its speaker's name, from the given segment up to the next stop, or to the
+    // line's end when there is none.
     private static StepResult Line(
         PlayContext context, int position, LineNode line, Supply? supply, int segmentIndex)
     {
+        var segments = SpeechTemplate.Segments(line.Speech);
+        var stop = NextStop(segments, segmentIndex);
         var events = LineEventsBuilder.Of(
-            context.SpeakerName(line.Speaker), supply, SpeechTemplate.Segments(line.Speech), toPlay: segmentIndex..);
-        Situation after = events.HasCommand
-            ? new AwaitingDone(position, new Resume.FromFinished())
-            : new AtNode(position);
+            context.SpeakerName(line.Speaker), supply, segments, toPlay: segmentIndex..stop);
 
-        return new StepResult(new PlayState(after), events.Freeze());
+        return new StepResult(
+            new PlayState(AfterPlaying(position, events.HasCommand, stop, segments.Length)), events.Freeze());
+    }
+
+    // A step stops before the first later segment whose words ask the world something, because the
+    // commands before those words can change the answers. Every segment after the first starts
+    // right after a command, so a stop always falls after a command.
+    private static int NextStop(ImmutableArray<SpeechSegment> segments, int segmentIndex)
+    {
+        for (var later = segmentIndex + 1; later < segments.Length; later++)
+        {
+            if (SpeechTemplate.HasKeys(segments[later].Words))
+            {
+                return later;
+            }
+        }
+
+        return segments.Length;
+    }
+
+    // A line that stopped waits on the host, then continues from the stop. A line that finished
+    // waits on the host if the part just played held a command. Otherwise the run stands at the
+    // line so the player can read it and move on.
+    private static Situation AfterPlaying(int position, bool hasCommand, int stop, int segmentCount)
+    {
+        if (stop < segmentCount)
+        {
+            return new AwaitingDone(position, new Resume.From(stop));
+        }
+
+        return hasCommand ? new AwaitingDone(position, new Resume.FromFinished()) : new AtNode(position);
     }
 
     // A command can change the world, so the words after it are asked about only once the host has

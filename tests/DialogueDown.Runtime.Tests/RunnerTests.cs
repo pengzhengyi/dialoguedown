@@ -93,6 +93,27 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_ThroughALineReadingOneKeyEitherSideOfACommand_AsksTheWorldEachTime()
+    {
+        // The command can change the world, so the key is asked again once the command is done, and
+        // the answer may differ.
+        var context = PlayContextFactory.ALineReadingOneKeyEitherSideOfACommand();
+
+        var asked = Runner.Step(context, PlayState.Initial, new Start());
+        AssertAsked(asked, node: 0, Moment.BeforePlaying, "weapon.Attack");
+
+        var said = Runner.Step(context, asked.State, Answering(("weapon.Attack", "10")));
+        AssertEvents(said, "said Smith 'It was 10. '", "perform Polish()");
+
+        var askedAgain = Runner.Step(context, said.State, new Done());
+        AssertAsked(askedAgain, node: 0, Moment.BeforeContinuingFrom(1), "weapon.Attack");
+
+        var continued = Runner.Step(context, askedAgain.State, Answering(("weapon.Attack", "15")));
+        AssertEvents(continued, "continued ' Now it is 15.'");
+        AssertAt(continued, 0);
+    }
+
+    [Fact]
     public void Step_DoneOnceTheHostHasCarriedItOut_MovesOnToWhatFollows()
     {
         var context = PlayContextFactory.AnEffectThenALine();

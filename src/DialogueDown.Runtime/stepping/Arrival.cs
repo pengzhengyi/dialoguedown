@@ -71,16 +71,16 @@ internal static class Arrival
         ArgumentNullException.ThrowIfNull(supply);
 
         var arrived = context.NodeAt(waiting.Node);
-        var needs = NodeQuestions.RequiredToPlay(arrived);
 
         // Asked again here, because a run can be restored into this situation rather than walked
         // into it, and one answer cannot serve a key that needs two kinds of answer.
-        if (needs.NeededBothWays() is { Count: > 0 } bothWays)
+        if (NodeQuestions.RequiredToPlay(arrived).NeededBothWays() is { Count: > 0 } bothWays)
         {
             return RefuseBothWays(waiting.Node, bothWays);
         }
 
-        if (AnswerCheck.Disagrees(needs.Asked(), supply.Answers, out var refusal))
+        if (AnswerCheck.Disagrees(
+            NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked(), supply.Answers, out var refusal))
         {
             // The run stays where it asked, so a driver that misread the request can answer it
             // again rather than losing the conversation over a mistake it can still fix.
@@ -126,10 +126,11 @@ internal static class Arrival
     private static Visited Visit(PlayContext context, int position)
     {
         var arrived = context.NodeAt(position);
-        var needs = NodeQuestions.RequiredToPlay(arrived);
 
-        return RefuseIfAKeyIsNeededBothWays(position, needs)
-            ?? AskIfPlayingNeedsAnswers(position, needs)
+        // A key needed both as a truth and as words is refused wherever in the node it is used, so
+        // that check reads the whole node. Arrival asks only what the node needs up to its first stop.
+        return RefuseIfAKeyIsNeededBothWays(position, NodeQuestions.RequiredToPlay(arrived))
+            ?? AskIfPlayingNeedsAnswers(position, NodeQuestions.RequiredToPlayFrom(arrived, 0))
             ?? Enter(context, position, arrived);
     }
 

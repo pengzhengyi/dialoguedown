@@ -95,6 +95,28 @@ public sealed class PlayingTests
             "perform Wave()");
 
     [Fact]
+    public void At_ALineWithAQueryAfterACommand_StopsAfterTheCommand()
+    {
+        // The command can change the world, so the step ends before the words that ask about it.
+        var result = PlayTheFirstNode(
+            PlayContextFactory.ALineWithAQueryAfterACommand(), Answering(("playerName", "Robin")));
+
+        AssertEvents(result, "said Alice 'Hello, Robin. '", "perform Wave()");
+        AssertAwaitingDone(result, 0, new Resume.From(1));
+    }
+
+    [Fact]
+    public void At_ALineWithTwoCommandsBeforeAQuery_StopsOnlyAfterTheLastOfThem()
+    {
+        // Only the words after the second command ask the world something, so the line stops once,
+        // after both commands.
+        var result = PlayTheFirstNode(ALineWithTwoCommandsBeforeAQuery());
+
+        AssertEvents(result, "said Alice 'A '", "perform One()", "continued ' B '", "perform Two()");
+        AssertAwaitingDone(result, 0, new Resume.From(2));
+    }
+
+    [Fact]
     public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten() =>
         AssertPerformed(PlayTheFirstNode(TwoEffectsThenALine()), "fade in", "play a chime");
 
@@ -181,6 +203,16 @@ public sealed class PlayingTests
     }
 
     [Fact]
+    public void Supplied_ToALineWithAQueryAfterItsNextCommand_StopsAgain()
+    {
+        var result = Playing.Supplied(
+            ALineWithAQueryAfterEachOfTwoCommands(), WaitingOnTheWorldToContinueFrom(1, "k"), Answering(("k", "K")));
+
+        AssertEvents(result, "continued ' K '", "perform Two()");
+        AssertAwaitingDone(result, 0, new Resume.From(2));
+    }
+
+    [Fact]
     public void Supplied_WithoutAnAnswerItAskedFor_RefusesAndKeepsWaiting()
     {
         // The run stays where it asked, so the driver can answer again.
@@ -241,6 +273,44 @@ public sealed class PlayingTests
     /// <returns>The wait.</returns>
     private static AwaitingSupply WaitingOnTheWorldToContinueFrom(int segmentIndex, params string[] keys) =>
         new(0, [.. keys], Moment.BeforeContinuingFrom(segmentIndex));
+
+    /// <summary>A line with two commands, and a query after the second, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: A `One()` B `Two()` `"k"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line stops once, after its second command.</returns>
+    private static PlayContext ALineWithTwoCommandsBeforeAQuery() =>
+        OneLineSaying(
+            "Alice",
+            new TextFragment("A "),
+            Command("One"),
+            new TextFragment(" B "),
+            Command("Two"),
+            new TextFragment(" "),
+            new QueryFragment("k"),
+            new TextFragment("."));
+
+    /// <summary>A line with a query after each of its two commands, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: A `One()` `"k"` `Two()` `"j"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line stops after each of its commands.</returns>
+    private static PlayContext ALineWithAQueryAfterEachOfTwoCommands() =>
+        OneLineSaying(
+            "Alice",
+            new TextFragment("A "),
+            Command("One"),
+            new TextFragment(" "),
+            new QueryFragment("k"),
+            new TextFragment(" "),
+            Command("Two"),
+            new TextFragment(" "),
+            new QueryFragment("j"),
+            new TextFragment("."));
 
     /// <summary>A line with nobody named in front of it, then the end.</summary>
     /// <remarks>

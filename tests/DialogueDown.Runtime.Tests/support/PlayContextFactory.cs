@@ -140,6 +140,32 @@ internal static class PlayContextFactory
             ],
             ["Alice", "Bob"]);
 
+    /// <summary>A line reading one key before its command and again after it, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Smith: It was `"weapon.Attack"`. `Polish()` Now it is `"weapon.Attack"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line asks about the same key on each side of its command.</returns>
+    public static PlayContext ALineReadingOneKeyEitherSideOfACommand() =>
+        Of(
+            [
+                LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    condition: null,
+                    new TextFragment("It was "),
+                    new QueryFragment("weapon.Attack"),
+                    new TextFragment(". "),
+                    new CustomCommandFragment("Polish", []),
+                    new TextFragment(" Now it is "),
+                    new QueryFragment("weapon.Attack"),
+                    new TextFragment(".")),
+                End(1),
+            ],
+            ["Smith"]);
+
     /// <summary>A choice, which is a node kind this pass cannot play.</summary>
     /// <remarks>
     /// <code>

@@ -122,6 +122,28 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_ALineWithAQueryAfterACommand_AsksOnlyWhatItsOpeningWordsNeed() =>
+        // The command can change the world, so the query after it is asked only once the command
+        // is done.
+        AssertAsked(
+            Arrival.At(PlayContextFactory.ALineWithAQueryAfterACommand(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            "playerName");
+
+    [Fact]
+    public void Supplied_ToALineWithAQueryAfterACommand_PlaysUpToTheStop()
+    {
+        var result = Arrival.Supplied(
+            PlayContextFactory.ALineWithAQueryAfterACommand(),
+            Waiting(0, "playerName"),
+            Answering(("playerName", "Robin")));
+
+        AssertEvents(result, "said Alice 'Hello, Robin. '", "perform Wave()");
+        AssertAwaitingDone(result, 0, new Resume.From(1));
+    }
+
+    [Fact]
     public void At_ALineGuardedAndCarryingAQuery_AsksAboutBothInOneRequest() =>
         // The whole node is judged against a single reading of the world, so it stops once.
         AssertAsked(

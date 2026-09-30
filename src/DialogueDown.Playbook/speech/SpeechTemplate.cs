@@ -57,6 +57,11 @@ public static class SpeechTemplate
         return [.. found.Distinct(StringComparer.Ordinal)];
     }
 
+    /// <summary>Whether a run of speech asks the world about any key.</summary>
+    /// <param name="speech">The speech to read.</param>
+    /// <returns><see langword="true"/> when the speech holds a query, wherever it sits.</returns>
+    public static bool HasKeys(ImmutableArray<SpeechFragment> speech) => !Keys(speech).IsEmpty;
+
     /// <summary>Fills every hole with what the world said, and leaves the rest standing.</summary>
     /// <param name="speech">The speech to fill.</param>
     /// <param name="answer">What a key is worth. Asked once per hole, repeats included.</param>
