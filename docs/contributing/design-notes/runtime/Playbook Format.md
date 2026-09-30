@@ -207,9 +207,10 @@ The writer's whole job is this mapping. Every row is one test.
 | `BranchEdge`       | `branch`        | `target`, `condition?`           |
 | `DivertEdge`       | `divert`        | `target`, `label`, `condition?`  |
 
-**A branch's arms are tried in the order they appear in `out`.** JSON keeps the
-order of an array, so the arms read as the `if`/`elseif`/`else` chain was written —
-see [D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order).
+**Where an order matters, it is the order of `out`.** JSON keeps the order of an
+array, so a branch's arms are tried as its `if`/`elseif`/`else` chain was written,
+and an ordered menu's options are offered as the writer numbered them — see
+[D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order).
 
 **Both label-bearing edges carry their own text**, rather than deriving it from the
 node they lead to. For an option that is a correctness matter as much as a
