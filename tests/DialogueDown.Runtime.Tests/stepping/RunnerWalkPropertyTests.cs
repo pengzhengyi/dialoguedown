@@ -1,5 +1,7 @@
 using CsCheck;
 using DialogueDown.Playbook.Checking;
+using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 
@@ -23,9 +25,9 @@ public sealed class RunnerWalkPropertyTests
     private const int Samples = 200;
 
     // A drawn playbook may loop, so a walk is cut off rather than run to an end. Passing a node can
-    // take three steps: answering what playing it needs, moving on, and answering which way out to
-    // take. So this is long enough to pass through every node a playbook of this size can hold,
-    // several times over.
+    // take five steps: answering what playing it needs, the host finishing a command inside a line,
+    // answering what the rest of the line needs, moving on, and answering which way out to take. So
+    // this is long enough to pass through every node a playbook of this size can hold, twice over.
     private const int MostSteps = 120;
 
     // Why a run turns an answer away. An answer can also lead the walk somewhere the run refuses,
@@ -45,6 +47,42 @@ public sealed class RunnerWalkPropertyTests
     [Fact]
     public void AWalkOnlyEverStandsWhereThePlaybookHasANode() =>
         ForEveryWalk((context, stepped) => AssertAddressable(context, stepped.State.Situation));
+
+    /// <summary>
+    /// A run that stops part-way through a line only ever continues from a segment that line has.
+    /// </summary>
+    /// <remarks>
+    /// Where a line continues is an index into its segments, read straight when the run goes on. The
+    /// runner picks that index, so it is the runner that must pick one the line has: after its first
+    /// segment, before its end, and on a node that is a line.
+    /// </remarks>
+    [Fact]
+    public void AWalkOnlyEverContinuesALineFromASegmentItHas() =>
+        ForEveryWalk((context, stepped) => AssertContinuesWithinALine(context, stepped.State.Situation));
+
+    /// <summary>
+    /// Some walk stops part-way through a line.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If no walk ever stopped inside a line, the walk
+    /// above would pass without checking anything.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_StopsPartWayThroughALine()
+    {
+        var stops = 0;
+
+        ForEveryWalk(
+            (_, stepped) =>
+            {
+                if (stepped.State.Situation is AwaitingDone { Resume: Resume.From })
+                {
+                    Interlocked.Increment(ref stops);
+                }
+            });
+
+        Assert.True(stops > 0, "No walk stopped part-way through a line.");
+    }
 
     /// <summary>
     /// Every answer a walk gives is one the run accepts.
@@ -128,5 +166,28 @@ public sealed class RunnerWalkPropertyTests
         {
             Assert.InRange(addressable, 0, context.Playbook.Nodes.Length - 1);
         }
+    }
+
+    // Two stages name a place part-way through a line: waiting on the host before continuing from
+    // it, and waiting on the world before continuing from it. Waiting on the world before a node
+    // plays from its start is not part-way through, so any kind of node may stand there.
+    private static void AssertContinuesWithinALine(PlayContext context, Situation situation)
+    {
+        switch (situation)
+        {
+            case AwaitingDone { Resume: Resume.From from } waiting:
+                AssertALineHasTheSegment(context, waiting.Node, from.SegmentIndex);
+                break;
+            case AwaitingSupply { Moment: Moment.ToPlay { SegmentIndex: > 0 } play } waiting:
+                AssertALineHasTheSegment(context, waiting.Node, play.SegmentIndex);
+                break;
+        }
+    }
+
+    private static void AssertALineHasTheSegment(PlayContext context, int node, int segmentIndex)
+    {
+        var line = Assert.IsType<LineNode>(context.NodeAt(node));
+
+        Assert.InRange(segmentIndex, 1, SpeechTemplate.Segments(line.Speech).Length - 1);
     }
 }
