@@ -56,8 +56,10 @@ In scope:
 - a `continued` expectation in the fixture schema, its matcher, and corpus cases.
 
 Out of scope: choices (C2b), `Describe` (C2e), and saves (C2f), though the
-resume place is designed to be saved; and how whitespace and quotes in speech are
-normalized, which the language owns.
+resume place is designed to be saved; a command written before a line's speaker
+prefix, as in `` `Wave()` Alice: Hello. ``, losing that speaker, which the compiler
+owns; and how whitespace and quotes in speech are normalized, which the language
+owns.
 
 ## Vocabulary
 
@@ -394,4 +396,4 @@ decides what follows (S5) sits beside the code that made the host a request.
 | Unit — situations | `Resume` and `Moment` each covering their members, and `Describe` wording each |
 | Unit — the protocol | `Done` resuming inside a line; `Done` at the end of a line standing; `Done` at a control block leaving |
 | Property | The walk property draws lines with commands and queries after commands, and only ever stands where the playbook has a node — and, inside a line, at a resume place the line has; some walk does stop inside a line |
-| Conformance | The new cases; every existing case unchanged |
+| Conformance | The new cases, each written with the speaker first, since a command written before the speaker prefix loses the speaker in the compiler; every existing case unchanged |
