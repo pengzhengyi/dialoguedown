@@ -46,7 +46,7 @@ public sealed class EdgeMappingTests
     public void Write_ABranchArm_KeepsItsCondition()
     {
         var written = AssertLeadsTo<BranchEdge>(
-            Write(BranchEdge(NodeId(3), condition: Condition("IsBrave"))), 1);
+            Write(BranchEdge(NodeId(3), Condition("IsBrave"))), 1);
 
         Assert.NotNull(written.Condition);
     }

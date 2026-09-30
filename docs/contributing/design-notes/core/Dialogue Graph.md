@@ -63,7 +63,7 @@ each construct flows is fixed by [Progression Order](../language/Progression%20O
 | **Succession** | Fall-through to the next block in document order. |
 | **Divert** | The edge a jump lowers to. It does not return. |
 | **Option** | One arm of a choice; a random option also carries a weight. |
-| **Branch edge** | One ordered arm of a block control; the first whose condition holds is taken. |
+| **Branch edge** | One arm of a block control. The arms are tried in the order the node lists them, and the first whose condition holds is taken. |
 | **Condition** | The AST `Condition`, opaque to the core. On an edge it withholds a **route**; on a node it withholds the node's **content**. |
 | **Effect** | A game call (`GameCall`) a node runs when it plays. |
 | **Region** | A named grouping overlaid on the flat graph — a scene. Its **own nodes** are held directly; **subregions** nest. |
@@ -97,7 +97,7 @@ sealed record SuccessionEdge(Target);
 sealed record DivertEdge(Target, IReadOnlyList<InlineFragment> Label, Condition? Condition);
 sealed record OptionEdge(Target, IReadOnlyList<InlineFragment> Label, Condition? Condition);
 sealed record RandomOptionEdge(Target, ChoiceWeight Weight, Condition? Condition);
-sealed record BranchEdge(Target, int Order, Condition? Condition);
+sealed record BranchEdge(Target, Condition? Condition);
 
 // ── Overlay: metadata over the flat graph, not part of its topology.
 sealed record RegionTree(IReadOnlyList<Region> Roots);
