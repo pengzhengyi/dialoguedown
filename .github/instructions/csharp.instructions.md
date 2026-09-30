@@ -25,11 +25,39 @@ design live in [`docs/contributing/design-notes/`](../../docs/contributing/desig
   simple, not clever.
 - Four-space indent, LF line endings, UTF-8.
 - **Write self-documenting code.** Let clear names, small methods, and good types
-  carry the meaning so the code reads without narration. Reserve comments for
-  public-API doc comments (`///`) and the occasional *why* — intent, a non-obvious
-  tradeoff, or a subtle edge case — never to restate *what* the code already says.
-  Don't be afraid to comment when it genuinely aids understanding, but treat the
-  urge to explain a tangled block as a signal to refactor it instead.
+  carry the meaning so the code reads without narration. The rules for the
+  comments that remain are in [Comments](#comments).
+
+## Comments
+
+The shared rules — true now, standing alone, plain words, the fact rather than the
+argument, an example — are in
+[`copilot-instructions.md`](../copilot-instructions.md#comments). In C#:
+
+- **`<summary>`** is one sentence saying what the member is or does.
+- **`<remarks>`** holds only what the summary cannot: an example, a constraint a
+  caller must keep, or a reason the code cannot show.
+- Show dialogue source in a **`<code>`** block inside `<remarks>`, so it appears on
+  hover. Use `<c>` for a literal value, `<paramref>` for a parameter, and
+  `<see cref>` for a type the signature uses.
+- Leave a private member undocumented unless its reason is not obvious, and never
+  restate the signature.
+- **Test fixtures:** a helper that builds a fixture names the scenario in its
+  `<summary>` and shows the dialogue source in its `<remarks>`. When no script
+  could produce the fixture, the remarks say so instead of inventing source.
+
+  ```csharp
+  /// <summary>A line the world must allow before it is spoken, then the end.</summary>
+  /// <remarks>
+  /// <code>
+  /// `Alice.HasKey?` Alice: I have the key.
+  /// </code>
+  /// </remarks>
+  private static PlayContext AConditionalLine() => ...
+  ```
+
+- **Assertions:** comment an expected value that is not self-evident, such as an
+  offset or a count: `Assert.Equal(7, span.Start); // just after "Alice: "`.
 
 ## Size and complexity
 

@@ -74,13 +74,54 @@ multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
   [`docs/contributing/design-notes/`](../docs/contributing/design-notes/); read
   them in pipeline order to understand the compiler.
 - **American English** in code, comments, docs, and commit messages.
-- **SOLID and composition over inheritance;** write self-documenting code and
-  reserve comments for public-API docs or a genuine *why* — a comment explaining
-  *what* tangled code does is a signal to refactor it.
+- **SOLID and composition over inheritance;** write self-documenting code, and
+  comment only what the code cannot say (see [Comments](#comments)).
 - **Keep the core engine-agnostic:** no Godot or rendering dependency in
   `DialogueDown`.
 - When you change `web/src`, or a file it embeds — the report imports
   `schema/playbook-0.schema.json` — rebuild and commit `web/dist/report.html`.
+
+## Comments
+
+The code is the first documentation. Before adding a comment, try a better name or
+a small, well-named helper; a comment explaining *what* tangled code does is a
+signal to refactor it. When a comment is still needed, it:
+
+- **is true now.** It describes the code as it is. A reversed decision leaves no
+  trace, and there is no history: no "previously", "no longer", or "for now".
+- **stands alone.** No issue or PR numbers, no design-note paths or decision labels
+  such as `D14`, and no other type named as the reason. The design note holds the
+  argument; the comment holds the fact.
+- **reads once.** Plain words a developer new to the project understands on first
+  reading (see the word list below).
+- **states the fact, not the argument.** It leaves out the route not taken and
+  warnings about misuse.
+- **shows an example.** Compiler code shows the dialogue source it handles, runtime
+  code the commands and events exchanged, and a flow a small diagram:
+
+  ```csharp
+  /// <summary>Splits a leading condition off a line.</summary>
+  /// <remarks>
+  /// <code>
+  /// `Alice.HasKey?` Alice: I have the key.
+  /// </code>
+  /// gives the condition <c>Alice.HasKey</c> and the line <c>Alice: I have the key.</c>
+  /// </remarks>
+  ```
+
+Tests follow the same rules. The language files add the conventions for
+[C#](instructions/csharp.instructions.md#comments) and
+[TypeScript](instructions/web.instructions.md#comments).
+
+Words that read two ways or are figurative:
+
+| Avoid | Write | Why |
+| --- | --- | --- |
+| a run of (text, lines) | a sequence of, consecutive | "run" reads as the verb |
+| peel | split off, remove | figurative |
+| weave | join, meet again | figurative |
+| surface (as a verb) | report, show | figurative |
+| arm, for a `switch` case | case | here an **arm** is only one way forward from a node, as the [Playbook Reader Rules](../docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md) define it |
 
 ## Engineering principles
 

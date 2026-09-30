@@ -49,3 +49,20 @@ For inner-loop feedback, use the VS Code tasks `web: test file`,
 - Live end-to-end tests run with `npm run e2e:live`. The command builds the CLI
   once; each Playwright server launches that Release DLL directly. Do not replace
   the shared launcher with per-server `dotnet run` calls.
+
+## Comments
+
+The shared rules — true now, standing alone, plain words, the fact rather than the
+argument, an example — are in
+[`copilot-instructions.md`](../copilot-instructions.md#comments). In the client:
+
+- A module opens with a one- or two-sentence comment saying what it does.
+- **TSDoc** (`/** */`) documents exported functions, types, and module state whose
+  purpose is not obvious. The first sentence says what it is; `{@link name}` refers
+  to an identifier.
+- A CSS rule gets a comment only for a layout reason the selector does not show,
+  stated as it holds now.
+- **End-to-end tests** describe the condition a test guards ("in a 1280×640
+  window, a tall selection keeps the footer on screen"), not the bug it once was
+  ("used to push the footer off"). A viewport size, a wait, or a retry gets a
+  comment when its reason is not visible.
