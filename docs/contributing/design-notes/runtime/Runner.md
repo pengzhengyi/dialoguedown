@@ -128,7 +128,7 @@ nothing. The first node that asks for something is where the run stands.
 | `line` with commands | `Said`, then a `Perform` per command and a `Continued` for the words after it, in the order written, up to a query written after a command | waits on the world — `Done` goes on with the line if it stopped, otherwise gives the player the turn; `Failed` holds |
 | `control` with effects | one `Perform` per effect, in order | waits on the world — `Done` moves on, `Failed` holds |
 | `control` with no effects | nothing | walks on — this is a jump on its own line |
-| `branch` | nothing | leaves by the first arm, in `order`, whose condition holds |
+| `branch` | nothing | leaves by the first arm, in the order written, whose condition holds |
 | `end` | `Ended` | waits on nobody |
 | `choice`, `random-choice` | `Refused(unplayable-node)` | stands at that node |
 

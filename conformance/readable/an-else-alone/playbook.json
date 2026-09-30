@@ -21,7 +21,7 @@
       "kind": "branch",
       "id": 0,
       "out": [
-        { "kind": "branch", "target": 3, "order": 0 }
+        { "kind": "branch", "target": 3 }
       ]
     },
     {

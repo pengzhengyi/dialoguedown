@@ -132,17 +132,14 @@ internal static class PlaybookNodes
 
     /// <summary>An arm of a block condition, taken when the world answers that the key holds.</summary>
     /// <param name="target">Where the arm leads.</param>
-    /// <param name="order">Where it sits in the order the arms are tried, counting from zero.</param>
     /// <param name="key">What the world is asked before the arm is taken.</param>
     /// <returns>The edge.</returns>
-    public static BranchEdge Arm(int target, int order, string key) =>
-        new(target, order, new KeyCondition(key));
+    public static BranchEdge Arm(int target, string key) => new(target, new KeyCondition(key));
 
     /// <summary>The else of a block condition, taken when no arm before it is.</summary>
     /// <param name="target">Where it leads.</param>
-    /// <param name="order">Where it sits in the order the arms are tried, which is last.</param>
     /// <returns>The edge.</returns>
-    public static BranchEdge Else(int target, int order) => new(target, order, Condition: null);
+    public static BranchEdge Else(int target) => new(target, Condition: null);
 
     /// <summary>A random choice with one auto-weighted option — a kind this pass cannot play.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -171,7 +168,7 @@ internal static class PlaybookNodes
         new ControlNode(0, [], Condition: null, [new SuccessionEdge(1)]),
         Effects(0, next: 1, "fade in"),
         Choice(0, leadsTo: 1),
-        Branch(0, Else(1, order: 0)),
+        Branch(0, Else(1)),
         RandomChoice(0, leadsTo: 1),
     ];
 }

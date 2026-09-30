@@ -85,12 +85,12 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ABranchWhoseArmIsWithheldAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            Branch(0, Arm(7, order: 0, "Alice.HasKey"))
+            Branch(0, Arm(7, "Alice.HasKey"))
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_WithoutAnswers_TakesAnArmNothingGuards() =>
-        Assert.Equal(9, Branch(0, Else(9, order: 0)).OnwardTarget());
+        Assert.Equal(9, Branch(0, Else(9)).OnwardTarget());
 
     [Fact]
     public void OnwardTarget_WithoutAnswers_PassesOverAJumpTheWorldMustAllow() =>
@@ -165,9 +165,9 @@ public sealed class NodeTraversalExtensionsTests
     private static BranchNode ABranchWithAnElse() =>
         Branch(
             0,
-            Arm(7, order: 0, "Alice.HasKey"),
-            Arm(8, order: 1, "Alice.HasPick"),
-            Else(9, order: 2));
+            Arm(7, "Alice.HasKey"),
+            Arm(8, "Alice.HasPick"),
+            Else(9));
 
     /// <summary>A block condition with an if and no else, and a succession beneath it.</summary>
     /// <remarks>
@@ -177,5 +177,5 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithoutAnElse() =>
-        Branch(0, Arm(7, order: 0, "Alice.HasKey"), new SuccessionEdge(4));
+        Branch(0, Arm(7, "Alice.HasKey"), new SuccessionEdge(4));
 }

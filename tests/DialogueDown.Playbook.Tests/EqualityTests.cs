@@ -92,8 +92,8 @@ public sealed class EqualityTests
                 new RandomChoiceNode(2, [new SuccessionEdge(3)]),
                 new BranchNode(3,
                 [
-                    new BranchEdge(4, 0, null),
-                    new BranchEdge(5, 1, new KeyCondition("HasKey")),
+                    new BranchEdge(4, null),
+                    new BranchEdge(5, new KeyCondition("HasKey")),
                 ]),
                 new ControlNode(
                     4,

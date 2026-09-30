@@ -36,8 +36,8 @@ internal static class PlaybookNodeFactory
     public static BranchNode Branch(params Edge[] arms) => new(0, [.. arms]);
 
     /// <summary>One arm of a block condition; a null key is the final else.</summary>
-    public static BranchEdge Arm(string? key, int order = 0, int target = 0) =>
-        new(target, order, key is null ? null : new KeyCondition(key));
+    public static BranchEdge Arm(string? key, int target = 0) =>
+        new(target, key is null ? null : new KeyCondition(key));
 
     /// <summary>An effect-only line: something the host performs, attributed to nobody.</summary>
     public static ControlNode Control(params SpeechFragment[] effects) =>

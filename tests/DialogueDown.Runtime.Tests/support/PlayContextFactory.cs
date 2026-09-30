@@ -289,7 +289,7 @@ internal static class PlayContextFactory
     public static PlayContext AConditionalBlock() =>
         Of(
             [
-                Branch(0, Arm(1, order: 0, "Alice.HasKey"), Arm(2, order: 1, "Alice.HasPick"), Else(3, order: 2)),
+                Branch(0, Arm(1, "Alice.HasKey"), Arm(2, "Alice.HasPick"), Else(3)),
                 Line(1, speaker: 0, "The key turns.", next: 4),
                 Line(2, speaker: 0, "The pick clicks.", next: 4),
                 Line(3, speaker: 0, "The door stays shut.", next: 4),

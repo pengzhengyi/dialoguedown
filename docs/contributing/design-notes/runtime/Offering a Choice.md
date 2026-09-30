@@ -185,7 +185,7 @@ what already happened.
 ### O3 — Every option is offered, in the order it was written
 
 An option carries an `order`, as a branch's arm does, because a port may keep a
-node's edges as an unordered collection ([reader rules D4](./Playbook%20Reader%20Rules.md#d4--order-is-authoritative-the-sorted-array-is-canonical)). The compiler
+node's edges as an unordered collection ([reader rules D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order)). The compiler
 writes an option's position in the list, and the reader requires a menu's options
 in strictly ascending `order`, so the array and `order` always agree.
 

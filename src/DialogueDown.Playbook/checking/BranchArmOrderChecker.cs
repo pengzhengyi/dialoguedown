@@ -4,23 +4,21 @@ using DialogueDown.Playbook.Nodes;
 namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
-/// Refuses a <see cref="BranchNode"/> whose arms are not in the order they are tried.
+/// Refuses a <see cref="BranchNode"/> that has no gated arm, or whose else is not its last arm.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A branch's arms are tried in order, and each carries an explicit <see cref="BranchEdge.Order"/>
-/// because a reader is not obliged to preserve the array it was written in. The compiler emits the
-/// arms in source order with the order equal to the arm's index, but the format does not say so, so
-/// a hand-edited or tool-written playbook can list them out of order or put the <c>else</c> before a
-/// gated arm. Two conformant readers — one that walks the array, one that sorts by <c>order</c> —
-/// would then take different arms.
+/// A branch's arms are tried in the order they appear in its ways out, and the conditionless
+/// <c>else</c> is taken whenever it is reached. The compiler writes the arms in source order, but a
+/// hand-edited or tool-written playbook can put the <c>else</c> before a gated arm, and every arm
+/// after it could then never be taken.
 /// </para>
 /// <para>
-/// Three guards, independent and all required: at least one arm is gated (a branch is a block
-/// condition, and an <c>else</c> needs one to fall back from), the arms ascend as they appear, and
-/// the conditionless <c>else</c>, when present, is the last arm. The last guard refuses a second
-/// conditionless arm, since at most one arm can be last. A fall-through (<c>succession</c>) is not
-/// an arm, so its position is left to the outward-shape rule.
+/// Two guards, independent and both required: at least one arm is gated (a branch is a block
+/// condition, and an <c>else</c> needs one to fall back from), and the <c>else</c>, when present,
+/// is the last arm. The second guard refuses a second conditionless arm, since at most one arm can
+/// be last. A fall-through (<c>succession</c>) is not an arm, so its position is left to the
+/// outward-shape rule.
 /// </para>
 /// </remarks>
 public sealed class BranchArmOrderChecker : IPlaybookChecker
@@ -43,14 +41,13 @@ public sealed class BranchArmOrderChecker : IPlaybookChecker
     {
         var arms = branch.Out.OfType<BranchEdge>().ToArray();
 
-        // An arm count of zero is the outward-shape rule's to refuse; there is nothing to order.
+        // An arm count of zero is the outward-shape rule's to refuse; there is nothing to check.
         if (arms.Length == 0)
         {
             return;
         }
 
         RefuseNoGatedArm(branch, arms);
-        RefuseOutOfOrder(branch, arms);
         RefuseElseNotLast(branch, arms);
     }
 
@@ -61,29 +58,6 @@ public sealed class BranchArmOrderChecker : IPlaybookChecker
             Refuse(
                 $"Node {branch.Id}, a branch, carries no gated arm; every arm is an else. "
                     + "A branch is a block condition, so at least one arm carries one.");
-        }
-    }
-
-    private static void RefuseOutOfOrder(BranchNode branch, BranchEdge[] arms)
-    {
-        for (var index = 1; index < arms.Length; index++)
-        {
-            var previous = arms[index - 1].Order;
-            var order = arms[index].Order;
-
-            if (order < previous)
-            {
-                Refuse(
-                    $"Node {branch.Id}, a branch, lists its arms out of order: "
-                        + $"order {order} follows order {previous}.");
-            }
-
-            if (order == previous)
-            {
-                Refuse(
-                    $"Node {branch.Id}, a branch, gives two arms the same order ({order}); "
-                        + "the arms are tried one after another.");
-            }
         }
     }
 

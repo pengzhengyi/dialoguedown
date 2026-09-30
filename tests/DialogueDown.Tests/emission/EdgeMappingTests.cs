@@ -43,12 +43,12 @@ public sealed class EdgeMappingTests
     }
 
     [Fact]
-    public void Write_ABranchArm_KeepsTheOrderItIsTriedIn()
+    public void Write_ABranchArm_KeepsItsCondition()
     {
         var written = AssertLeadsTo<BranchEdge>(
-            Write(BranchEdge(NodeId(3), order: 2, Condition("IsBrave"))), 1);
+            Write(BranchEdge(NodeId(3), condition: Condition("IsBrave"))), 1);
 
-        Assert.Equal(2, written.Order);
+        Assert.NotNull(written.Condition);
     }
 
     [Fact]

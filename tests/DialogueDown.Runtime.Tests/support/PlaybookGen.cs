@@ -180,7 +180,7 @@ internal static class PlaybookGen
                 [new SuccessionEdge(Onward)]),
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
             Draws.Block => new BranchNode(id, [Arm(), new SuccessionEdge(Onward)]),
-            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Order: 1, Condition: null)]),
+            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Condition: null)]),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
@@ -213,6 +213,6 @@ internal static class PlaybookGen
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
-        private BranchEdge Arm() => new(Elsewhere, Order: 0, ArmGuard);
+        private BranchEdge Arm() => new(Elsewhere, ArmGuard);
     }
 }

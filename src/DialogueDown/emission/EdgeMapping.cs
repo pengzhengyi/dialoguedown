@@ -47,12 +47,8 @@ internal static class EdgeMapping
                 target,
                 WeightMapping.Write(random.Weight),
                 ConditionMapping.Write(random.Condition)),
-
-            // The order arms are tried is otherwise lost: a reader is not obliged to keep a JSON
-            // array in the order it was written, and an if/else that reorders tells another story.
             GraphEdges.BranchEdge branch => new BranchEdge(
-                target, branch.Order, ConditionMapping.Write(branch.Condition)),
-
+                target, ConditionMapping.Write(branch.Condition)),
             GraphEdges.DivertEdge divert => new DivertEdge(
                 target,
                 SpeechMapping.Write(divert.Label),
