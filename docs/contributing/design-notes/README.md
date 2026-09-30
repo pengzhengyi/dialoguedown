@@ -145,6 +145,7 @@ first, since a construct threads through them.
 | [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./language/Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
+| [Game Calls in Labels](./language/Game%20Calls%20in%20Labels.md) | Which game calls a link label, alt text, or menu option may hold: a query is filled like one in speech, a command or condition is reported | Approved |
 | [Cross-File Jump Resolution](./language/Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.dialogue.md#meet-bob`) across a project, via a linker | Proposed |
 
 ### Configuration
