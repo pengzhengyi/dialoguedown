@@ -122,6 +122,14 @@ middle of a sentence happens in the middle of that sentence:
 Yuki: Then... `("Yuki hides a smile behind her sleeve")` I will not argue.
 ```
 
+A query written after a command is read once the command has run, so it sees
+what the command changed. Here the game is asked about `weapon.Attack` before the
+line starts, and again once `Polish()` has run:
+
+```markdown
+Smith: It was `"weapon.Attack"`. `Polish()` Now it is `"weapon.Attack"`.
+```
+
 The line still belongs to its speaker, even when a command opens it or is all it
 says, and the reader moves on from it as from any other line.
 

@@ -30,18 +30,15 @@ A writer puts a command inside a line to tie it to the words around it:
 Keeper: Steel and nerve. Perhaps you *will* come back. `GiveQuest("EmberCrown")`
 ```
 
-Today the runner says the whole line in one `Said`, commands included, and leaves
-the host to find each command among the fragments and carry it out. Nothing
-states when the host should, a command there cannot report failure, and a query
-after a command reads the world before the command has changed it.
+The host needs to know when to carry out each command, a command there must be
+able to report failure, and a query after a command must see what the command
+changed. So the runner plays such a line in the order it was written: the line
+opens with a `Said` that names its speaker, each command arrives as a `Perform`,
+and each run of words after a command arrives as a `Continued`. A step stops
+inside the line only before a query written after a command, so that query is
+read once the command has run.
 
-This pass makes the runner play such a line the way it was written. The line
-opens with a `Said` that names its speaker; each command arrives as a `Perform`;
-each run of words after a command arrives as a `Continued`; all of them in
-written order. A step stops inside the line only before a query written after a
-command, so the query reads the world the command left behind.
-
-The pass lands in two milestones on one branch:
+The pass has two milestones:
 
 | Milestone | What it delivers |
 | --- | --- |
@@ -50,17 +47,16 @@ The pass lands in two milestones on one branch:
 
 In scope:
 
-- the segment walk, driven by `SpeechTemplate.Segments`, which exists and is not
-  yet called;
+- the segment walk, driven by `SpeechTemplate.Segments`;
 - `Continued`, the event for a later part of the same utterance;
 - the place inside a line the run resumes from, carried by the situation;
 - asking the world once per stop rather than once per line;
-- splitting `Arrival` into arriving, playing a line, and resuming;
+- playing a node in its own step type, `Playing`, beside `Arrival` and
+  `Departure`;
 - a `continued` expectation in the fixture schema, its matcher, and corpus cases.
 
 Out of scope: choices (C2b), `Describe` (C2e), and saves (C2f), though the
-resume place is designed to be saved; a line that opens with a command losing its
-speaker, which the compiler owns; and how whitespace and quotes in speech are
+resume place is designed to be saved; and how whitespace and quotes in speech are
 normalized, which the language owns.
 
 ## Vocabulary
@@ -115,7 +111,7 @@ Each line below plays in one step unless it stops; the arrow marks the host's
 The last row has a single space between the two commands. That segment says
 nothing, so no `Continued` is sent for it.
 
-A line with no command is played exactly as today. A line with commands but no
+A line with no command is one `Said`. A line with commands but no
 query after any of them is still one step: the host hears everything in order,
 answers every `Perform` with one `Done`, and then the player reads and moves on.
 A stage direction inside a sentence plays that way:
@@ -169,14 +165,15 @@ sequenceDiagram
 | --- | --- | --- |
 | `SpeechTemplate.Segments` | Breaks speech into segments at each command | `Playing` |
 | `SpeechSegment.SaysSomething` | Whether a segment's words say something, judged before any query is filled | `LineEventsBuilder` |
-| `LineEventsBuilder` | Gathers the events a line hands the host, one segment at a time: its `Said`, each `Continued`, and each `Perform` | `Playing` |
+| `SpeechTemplate.HasKeys` | Whether a run of speech holds a query, which is where a step stops | `Playing` |
+| `LineEventsBuilder` | Gathers the events of the part of a line a step plays, one segment at a time: the `Said` when the part starts the line, each `Continued`, and each `Perform` | `Playing` |
 | `Continued(speech)` | An event: the words after a command, in the utterance the line's `Said` opened | `Event`, alongside `Said` |
 | `AwaitingDone(node, resume)` | Waiting for the host, and where the node carries on once it is done | `Situation` |
 | `Resume` | A closed union: `From(segmentIndex)`, the line continues from that segment; or `FromNodeEnd`, the node has finished playing | `AwaitingDone` |
 | `AwaitingSupply(node, keys, moment)` | Waiting for the world; the moment says where in the node the keys were asked | `Situation` |
-| `Moment` | A closed union: `ToPlay(segmentIndex)`, asked before playing from a segment; or `ToLeave`, asked before leaving | `AwaitingSupply`, `Runner` |
-| `NodeQuestions.RequiredToPlayFrom(node, segmentIndex)` | The guard when playing from the start, and the keys of the segment playing resumes from | `Playing` |
-| `Playing` | Plays a node and says where the run then stands: a line's segments from a place up to its next stop, a control block's effects, or the end | `Arrival`, `Runner` |
+| `Moment` | A closed union: `ToPlay(segmentIndex)`, asked before playing from a segment; or `ToLeave`, asked before leaving. Named by `BeforePlaying`, `BeforeContinuingFrom(segmentIndex)`, and `BeforeLeaving` | `AwaitingSupply`, `Runner` |
+| `NodeQuestions.RequiredToPlayFrom(node, segmentIndex)` | The guard when playing from the start, and the keys of the segment playing starts from | `Arrival`, `Playing` |
+| `Playing` | Plays a node and says where the run then stands: a line's segments from a place up to its next stop, a control block's effects, or the end. Also takes the host's `Done`, and the world's answers part-way through a line | `Arrival`, `Runner` |
 | `ContinuedMatcher` | Holds a `Continued` to a fixture's `continued` expectation | The harness |
 
 ## Key design decisions
@@ -235,7 +232,7 @@ it, as it already does for a control block with several effects.
 
 The stop falls after the *last* command before the query. In
 ``A `One()` B `Two()` `"k"` ``, both commands and `B` go out together, and the run
-stops once, before asking about `k`: `One` is done by the time `Two` is.
+stops once, before asking about `k`, and one `Done` answers both commands.
 
 The runner cannot tell whether a command changes what a query reads, so it stops
 before every query written after a command. That costs little: the host answers
@@ -254,17 +251,16 @@ That rule holds for every shape this pass creates. A line with no commands sends
 answer, the player has the turn. A control block sends `Perform`s; after `Done`,
 the next node's events arrive.
 
-It refines the [runner](./Runner.md#d3--the-situation-says-where-the-run-is-and-what-it-is-doing)'s
-rule that `Said` means advance, which no longer
-holds once a command can follow the words in the same step. The driver still
-reacts to the messages it receives rather than reading the situation; it reacts to
-the absence of a request, not to one kind of event.
+The driver reacts to the messages it receives rather than reading the situation,
+as the [runner](./Runner.md#d3--the-situation-says-where-the-run-is-and-what-it-is-doing)
+sets out; it reacts to the absence of a request, not to one kind of event, because
+a command can follow a line's words in the same step.
 
 ### S5 — Once the host is done, a line waits for the player and a control block moves on
 
 A line belongs to a speaker, whether it has words or not, so once the host is done
 the run stands at it until the player moves on with `Next`. A control block
-belongs to nobody, so once the host is done the run leaves it, as it does today.
+belongs to nobody, so once the host is done the run leaves it.
 
 The kind of node decides, not what the line happened to say. A line whose only
 speech is a command still waits for the player, which is what lets a host hold the
@@ -302,7 +298,7 @@ A resume place is an index into `SpeechTemplate.Segments`, so how speech is
 segmented becomes part of what a saved run depends on. The save version (C2f)
 covers it along with the playbook's fingerprint.
 
-The runner trusts a resume place as it trusts a node position today: it produces
+The runner trusts a resume place as it trusts a node position: it produces
 only places the node has, which the walk property checks, and checking a restored
 state against its playbook is the save pass's job.
 
@@ -311,15 +307,14 @@ state against its playbook is the save pass's job.
 Every segment after a stop holds a query — that is why the stop is there — and no
 segment between two stops holds one. So the keys to ask before playing from a
 segment are that segment's keys, plus the line's guard when playing from the
-start. On arrival that is the guard and the first segment's keys, in one request,
-as today.
+start. On arrival that is the guard and the first segment's keys, in one request.
 
 One key asked on both sides of a stop is asked twice, and may be answered
 differently the second time. That is the point of the stop, and it is the rule
 [asking the world](./Asking%20the%20World.md#a2--the-runner-does-not-remember-an-answer)
 already set for two lines asking one key.
 
-A key needed as a truth and as words both is still refused for the whole node,
+A key needed as a truth and as words both is refused for the whole node,
 before anything is asked, even where the two uses fall either side of a stop. The
 compiler is to reject that script outright, and one rule for the whole node is the
 one it will enforce.
@@ -332,15 +327,13 @@ option's commands when a menu is shown. A label is display-only: a command is
 performed only when the run plays the line that owns it. Whether a label reaches
 the host with its commands removed is for choices (C2b) to decide.
 
-### S10 — `Arrival` splits into arriving, playing, and leaving
+### S10 — Playing is its own step, beside arriving and leaving
 
-`Arrival` today walks to a node, plays it, and finishes an arrival the world was
-asked about. Playing is the part that grows: a line now has a resume place and is
-played from three places — arriving, a `Supply` given inside the line, and a
-`Done` — and every node kind the language gains is played there too.
-
-So playing gets its own step type, `Playing`, beside `Arrival` (walking to a node
-and deciding whether it plays) and `Departure` (leaving it):
+Playing is the part of a step that grows: a line has a resume place and is played
+from three places — arriving, a `Supply` given inside the line, and a `Done` — and
+every node kind the language gains is played there too. So playing has its own
+step type, `Playing`, beside `Arrival` (walking to a node and deciding whether it
+plays) and `Departure` (leaving it):
 
 | Step type | Owns | Entered from |
 | --- | --- | --- |
@@ -356,16 +349,18 @@ decides what follows (S5) sits beside the code that made the host a request.
 
 | Case | Behavior |
 | --- | --- |
-| A line with no commands | One `Said`, as today |
+| A line with no commands | One `Said` |
 | A line that opens with a command | `Said` with no words, then the `Perform` |
 | A line whose only speech is a command | `Said` with no words, `Perform`; after `Done`, the player's turn |
 | A line that ends with a command, or with a command and a space | No `Continued` after it |
 | Two commands with only a space between them | Both performed in order, no `Continued` between them |
 | A command inside a link's label or an image's alt text | Nothing to perform: the compiler writes such a call as plain text |
 | `Failed` on a command inside a line | The run holds where it is; `Done` then carries on from the resume place |
-| `Next` while a line waits on the host or the world | Refused as misplaced, as today |
+| `Next` while a line waits on the host or the world | Refused as misplaced |
 | An answer that does not fit a mid-line request | Refused; the run keeps waiting where it asked |
-| A guarded line the world withholds | Stepped over before any of it is played, as today |
+| `Done` at a node that asks nothing of the host | Refused as misplaced; the run keeps waiting |
+| A `Supply` for continuing at a node with nothing to continue | Refused as misplaced; the run keeps waiting |
+| A guarded line the world withholds | Stepped over before any of it is played |
 | A query whose answer is empty | Said as empty words; whether its segment says something was decided before the answer |
 | One key asked before and after a stop | Asked twice |
 | A resume place the line does not have | Never produced by the runner; a restored state is checked by the save pass |
@@ -376,25 +371,27 @@ decides what follows (S5) sits beside the code that made the host a request.
 | --- | --- |
 | `protocol` | `Continued` joins the events; `Said` carries the words before a line's first command, with queries filled and no commands |
 | `situations` | `AwaitingDone` carries `Resume`; `Moment` becomes a closed union |
-| `stepping` | `Arrival` splits (S10); `Playing` walks segments; `NodeQuestions.RequiredToPlayFrom` reads from a starting segment |
-| `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which continues or stands at a line, and leaves a control block |
+| Playbook | `SpeechSegment.SaysSomething` and `SpeechTemplate.HasKeys`; `SpeechTemplate.Fill` leaves nothing where a query is answered with no words |
+| `stepping` | `Playing` plays a node (S10) and walks a line's segments; `LineEventsBuilder` gathers a line's events; `NodeQuestions.RequiredToPlayFrom` reads from a starting segment |
+| `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which continues or stands at a line, and leaves a control block; a `Supply` answering a later segment goes to `Playing` |
 | Fixture schema | A `continued` expectation beside `said` |
 | Harness | `ContinuedMatcher`; the screen learns `continued` |
 | Corpus | New cases: a command at the end of a line, one mid-line, one opening a line, a line whose only speech is a command, a query after a command, and a failed command inside a line |
 | `PlaybookGen` | Draws lines with commands, and queries after commands, so the walk property stops inside lines |
-| Guide | The Commands section says a command in a line is carried out where it is written |
-| Asking the world | A1 notes that a line can be asked about more than once on the way in, once per stop |
-| Runner | D3's rule that `Said` means advance becomes S4's rule; D12's "one wait per node" and the arriving table allow a line to wait on the host, once per stop; its vocabulary lists `Continued` |
+| Guide | The Commands section says a command in a line is carried out where it is written, and a query after it reads what the command changed |
+| Asking the world | A1 counts one more moment at each stop inside a line |
+| Runner | D3 states S4's rule; D12 and the arriving table let a line wait on the host once per step; its vocabulary lists `Continued` |
 | Runtime architecture | The transcript fold joins a `Continued` onto the `Said` before it |
 
 ## Testability
 
 | Level | What it covers |
 | --- | --- |
-| Unit — segments | `SpeechTemplate`'s own tests, plus "says something" on whitespace, line breaks, and a lone query |
+| Unit — segments | `SpeechTemplate`'s own tests, plus "says something" on whitespace, line breaks, and a lone query, and `HasKeys` on a query however deeply it sits |
+| Unit — `LineEventsBuilder` | The `Said` only when a part starts the line; a part starting later continues it; a part ending early leaves the rest |
 | Unit — `Playing` | Parts and commands in order; the `Said` sent even with no words; no `Continued` for words that say nothing; stopping after the last command before a query; resuming from a place |
 | Unit — questions | The guard and first segment's keys on arrival; a later segment's keys alone |
 | Unit — situations | `Resume` and `Moment` each covering their members, and `Describe` wording each |
 | Unit — the protocol | `Done` resuming inside a line; `Done` at the end of a line standing; `Done` at a control block leaving |
-| Property | The walk property draws lines with commands and queries after commands, and only ever stands where the playbook has a node — and, inside a line, at a resume place the line has |
-| Conformance | The new cases, written with the speaker first, since a line that opens with a command loses its speaker to a compiler defect today; every existing case unchanged |
+| Property | The walk property draws lines with commands and queries after commands, and only ever stands where the playbook has a node — and, inside a line, at a resume place the line has; some walk does stop inside a line |
+| Conformance | The new cases; every existing case unchanged |
