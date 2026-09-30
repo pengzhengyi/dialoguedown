@@ -24,7 +24,7 @@ internal static class Departure
 
         var leaving = context.NodeAt(position);
 
-        return NodeQuestions.ToLeave(leaving).Keys() is { IsEmpty: false } neededForLeaving
+        return NodeQuestions.RequiredToLeave(leaving).Keys() is { IsEmpty: false } neededForLeaving
             ? StepResults.Ask(position, neededForLeaving, Moment.BeforeLeaving)
             : Onward(context, position, leaving.OnwardTarget());
     }
@@ -43,7 +43,7 @@ internal static class Departure
         var leaving = context.NodeAt(waiting.Node);
 
         if (AnswerCheck.Disagrees(
-            NodeQuestions.ToLeave(leaving).Asked(), supply.Answers, out var refusal))
+            NodeQuestions.RequiredToLeave(leaving).Asked(), supply.Answers, out var refusal))
         {
             // The run stays where it asked, so a driver that misread the request can answer it
             // again rather than losing the conversation over a mistake it can still fix.

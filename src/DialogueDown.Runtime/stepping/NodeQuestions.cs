@@ -21,7 +21,7 @@ internal readonly record struct NodeQuestions(
     /// <summary>Everything a node needs answered to be played, wherever in it the question stands.</summary>
     /// <param name="node">The node being arrived at.</param>
     /// <returns>Its questions, both kinds together.</returns>
-    public static NodeQuestions ToPlay(Node node)
+    public static NodeQuestions RequiredToPlay(Node node)
     {
         ArgumentNullException.ThrowIfNull(node);
 
@@ -37,7 +37,7 @@ internal readonly record struct NodeQuestions(
     /// plays from is the only one that can ask before the next stop. The guard is read once, on
     /// arrival.
     /// </remarks>
-    public static NodeQuestions ToPlayFrom(Node node, int segmentIndex)
+    public static NodeQuestions RequiredToPlayFrom(Node node, int segmentIndex)
     {
         ArgumentNullException.ThrowIfNull(node);
 
@@ -51,7 +51,7 @@ internal readonly record struct NodeQuestions(
     /// <remarks>
     /// A way out is guarded rather than spoken, so nothing here is answered with words.
     /// </remarks>
-    public static NodeQuestions ToLeave(Node node)
+    public static NodeQuestions RequiredToLeave(Node node)
     {
         ArgumentNullException.ThrowIfNull(node);
 

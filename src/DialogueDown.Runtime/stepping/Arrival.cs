@@ -71,7 +71,7 @@ internal static class Arrival
         ArgumentNullException.ThrowIfNull(supply);
 
         var arrived = context.NodeAt(waiting.Node);
-        var needs = NodeQuestions.ToPlay(arrived);
+        var needs = NodeQuestions.RequiredToPlay(arrived);
 
         // Asked again here, because a run can be restored into this situation rather than walked
         // into it, and one answer cannot serve a key that needs two kinds of answer.
@@ -126,7 +126,7 @@ internal static class Arrival
     private static Visited Visit(PlayContext context, int position)
     {
         var arrived = context.NodeAt(position);
-        var needs = NodeQuestions.ToPlay(arrived);
+        var needs = NodeQuestions.RequiredToPlay(arrived);
 
         return RefuseIfAKeyIsNeededBothWays(position, needs)
             ?? AskIfPlayingNeedsAnswers(position, needs)
@@ -165,7 +165,7 @@ internal static class Arrival
     // only the world can allow is asked about here. The walk carries on in its own loop rather than
     // by leaving through departure, which is what keeps a ring of such nodes inside the bound.
     private static Visited? AskIfLeavingNeedsAnswers(int position, Node arrived) =>
-        NodeQuestions.ToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving
+        NodeQuestions.RequiredToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving
             ? new Visited.Standing(StepResults.Ask(position, neededForLeaving, Moment.BeforeLeaving))
             : null;
 

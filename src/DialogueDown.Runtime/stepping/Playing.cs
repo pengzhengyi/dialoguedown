@@ -102,14 +102,14 @@ internal static class Playing
     // carried it out. When those words ask nothing, the line goes on at once.
     private static StepResult AskBeforeContinuing(
         PlayContext context, int position, LineNode line, int segmentIndex) =>
-        NodeQuestions.ToPlayFrom(line, segmentIndex).Keys() is { IsEmpty: false } keys
+        NodeQuestions.RequiredToPlayFrom(line, segmentIndex).Keys() is { IsEmpty: false } keys
             ? StepResults.Ask(position, keys, Moment.BeforeContinuingFrom(segmentIndex))
             : Line(context, position, line, supply: null, segmentIndex);
 
     private static StepResult ContinueWith(
         PlayContext context, AwaitingSupply waiting, LineNode line, int segmentIndex, Supply supply)
     {
-        var asked = NodeQuestions.ToPlayFrom(line, segmentIndex).Asked();
+        var asked = NodeQuestions.RequiredToPlayFrom(line, segmentIndex).Asked();
 
         if (AnswerCheck.Disagrees(asked, supply.Answers, out var refusal))
         {

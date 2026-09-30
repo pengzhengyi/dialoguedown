@@ -178,7 +178,7 @@ sequenceDiagram
 | `Resume` | A closed union: `From(segmentIndex)`, the line continues from that segment; or `FromFinished`, the node has finished playing | `AwaitingDone` |
 | `AwaitingSupply(node, keys, moment)` | Waiting for the world; the moment says where in the node the keys were asked | `Situation` |
 | `Moment` | A closed union: `ToPlay(segmentIndex)`, asked before playing from a segment; or `ToLeave`, asked before leaving | `AwaitingSupply`, `Runner` |
-| `NodeQuestions.ToPlay(node, from)` | The guard when playing from the start, and the keys of the segment playing resumes from | `Playing` |
+| `NodeQuestions.RequiredToPlayFrom(node, segmentIndex)` | The guard when playing from the start, and the keys of the segment playing resumes from | `Playing` |
 | `Playing` | Plays a node and says where the run then stands: a line's segments from a place up to its next stop, a control block's effects, or the end | `Arrival`, `Runner` |
 | `ContinuedMatcher` | Holds a `Continued` to a fixture's `continued` expectation | The harness |
 
@@ -379,7 +379,7 @@ decides what follows (S5) sits beside the code that made the host a request.
 | --- | --- |
 | `protocol` | `Continued` joins the events; `Said` carries the words before a line's first command, with queries filled and no commands |
 | `situations` | `AwaitingDone` carries `Resume`; `Moment` becomes a closed union |
-| `stepping` | `Arrival` splits (S10); `Playing` walks segments; `NodeQuestions.ToPlay` takes a starting segment |
+| `stepping` | `Arrival` splits (S10); `Playing` walks segments; `NodeQuestions.RequiredToPlayFrom` reads from a starting segment |
 | `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which continues or stands at a line, and leaves a control block |
 | Fixture schema | A `continued` expectation beside `said` |
 | Harness | `ContinuedMatcher`; the screen learns `continued` |
