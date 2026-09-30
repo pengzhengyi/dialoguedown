@@ -40,6 +40,19 @@ public sealed class SpeechTemplateTests
             $"A query {where} was not found.");
 
     [Fact]
+    public void HasKeys_OfSpeechWithNoQueries_IsFalse() =>
+        Assert.False(SpeechTemplate.HasKeys([Text("Hello."), Bold("there")]));
+
+    [Fact]
+    public void HasKeys_OfSpeechWithAQuery_IsTrue() =>
+        Assert.True(SpeechTemplate.HasKeys([Text("Hello, "), Query("HeroName")]));
+
+    [Theory]
+    [MemberData(nameof(NestedQueries))]
+    public void HasKeys_FindsAQueryHoweverDeeplyItSits(string where, SpeechFragment nested) =>
+        Assert.True(SpeechTemplate.HasKeys([nested]), $"A query {where} was not found.");
+
+    [Fact]
     public void Fill_PutsTheWordsWhereTheQueryWas() =>
         Assert.Equal(
             "You are Ada.",
@@ -89,6 +102,51 @@ public sealed class SpeechTemplateTests
     }
 
     [Fact]
+    public void Fill_WithAnEmptyAnswer_LeavesNothingWhereTheQueryWas() =>
+        // Words are never empty, so an answer of none is no fragment at all.
+        Assert.Equal(
+            [Text("Smith, at your service.")],
+            SpeechTemplate.Fill([Query("title"), Text("Smith, at your service.")], _ => string.Empty));
+
+    [Fact]
+    public void Fill_WithAnEmptyAnswer_DropsEmphasisLeftAroundNothing() =>
+        // Emphasis around no words would show a reader styling with nothing inside it.
+        Assert.Equal(
+            [Text("Smith"), Text(", at your service.")],
+            SpeechTemplate.Fill(
+                [Text("Smith"), Bold(Query("title")), Text(", at your service.")], _ => string.Empty));
+
+    [Fact]
+    public void Fill_WithAnEmptyAnswer_KeepsEmphasisThatStillHoldsWords()
+    {
+        var filled = SpeechTemplate.Fill([Bold(Text("Sir "), Query("title"))], _ => string.Empty);
+        var styled = Assert.IsType<StyledTextFragment>(Assert.Single(filled));
+
+        Assert.Equal([Text("Sir ")], styled.Children);
+    }
+
+    [Fact]
+    public void Fill_WithAnEmptyAnswer_KeepsALinkWithNoWordsToShow()
+    {
+        // A link is somewhere to go as well as words to show, so it stays even with no words.
+        var filled = SpeechTemplate.Fill([Link("#the-market", Query("MapName"))], _ => string.Empty);
+        var link = Assert.IsType<LinkFragment>(Assert.Single(filled));
+
+        Assert.Equal("#the-market", link.Target);
+        Assert.Empty(link.Label);
+    }
+
+    [Fact]
+    public void Fill_WithAnEmptyAnswer_KeepsAnImageWithNoAltText()
+    {
+        var filled = SpeechTemplate.Fill([Image("art/key.png", Query("Alt"))], _ => string.Empty);
+        var image = Assert.IsType<ImageFragment>(Assert.Single(filled));
+
+        Assert.Equal("art/key.png", image.Source);
+        Assert.Empty(image.Alt);
+    }
+
+    [Fact]
     public void Fill_WithNothingToFill_SaysWhatItAlreadySaid() =>
         Assert.Equal("Hello.", SpeechText.Of(SpeechTemplate.Fill([Text("Hello.")], _ => "unused")));
 
@@ -101,7 +159,7 @@ public sealed class SpeechTemplateTests
     {
         var only = Assert.Single(SpeechTemplate.Segments([]));
 
-        Assert.False(only.Speaks);
+        Assert.False(only.SaysSomething);
         Assert.Null(only.Command);
     }
 
@@ -111,7 +169,7 @@ public sealed class SpeechTemplateTests
         var only = Assert.Single(SpeechTemplate.Segments([Text("Hello, "), Bold("there"), Text(".")]));
 
         AssertSegment(only, "Hello, there.", command: null);
-        Assert.True(only.Speaks);
+        Assert.True(only.SaysSomething);
     }
 
     [Fact]
@@ -120,7 +178,7 @@ public sealed class SpeechTemplateTests
         var only = Assert.Single(SpeechTemplate.Segments([CustomCommand("PlayBgm", "closer")]));
 
         AssertSegment(only, string.Empty, CustomCommand("PlayBgm", "closer"));
-        Assert.False(only.Speaks);
+        Assert.False(only.SaysSomething);
     }
 
     [Fact]
@@ -188,7 +246,7 @@ public sealed class SpeechTemplateTests
             [CustomCommand("ShowBackground", "platform"), CustomCommand("PlayBgm", "crescendo")]);
 
         Assert.Equal(2, segments.Length);
-        Assert.All(segments, segment => Assert.False(segment.Speaks));
+        Assert.All(segments, segment => Assert.False(segment.SaysSomething));
         Assert.Equal(CustomCommand("ShowBackground", "platform"), segments[0].Command);
         Assert.Equal(CustomCommand("PlayBgm", "crescendo"), segments[1].Command);
     }

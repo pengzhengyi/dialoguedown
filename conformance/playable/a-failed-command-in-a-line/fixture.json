@@ -1,0 +1,51 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a failed command in a line holds the run, and the retry gives the player the turn",
+  "playbook": "playbook.json",
+  "because": "the world did not change, so the run keeps waiting on the host at the line and refuses to move on; once the retry lands, nothing is left to answer and the player moves on -- a port that let next past the failure, or that left the line at the retry, would tell a different story",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Hello. "
+        }
+      }
+    },
+    {
+      "expect": {
+        "perform": {
+          "kind": "custom-command",
+          "name": "Wave",
+          "args": []
+        }
+      }
+    },
+    {
+      "send": {
+        "failed": "the animation is missing"
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "refused": {
+          "reason": "misplaced"
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

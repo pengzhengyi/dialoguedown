@@ -24,13 +24,13 @@ public static class Runner
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(command);
 
-        // What may be sent where, as one matrix. The work each construct does lives in Arrival
-        // and Traversal, which is the axis this grows along.
+        // What may be sent where, as one matrix. The work each construct does lives in the steps
+        // this hands off to, which is the axis a runner grows along.
         return (state.Situation, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
             (AtNode at, Next) => Departure.From(context, at.Node),
-            (AwaitingDone waiting, Done) => Departure.From(context, waiting.Node),
+            (AwaitingDone waiting, Done) => Playing.Performed(context, waiting),
             (AwaitingSupply waiting, Supply supply) => Supplied(context, waiting, supply),
             (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(
@@ -48,12 +48,16 @@ public static class Runner
         };
     }
 
-    // Which of the node's two readings of the world the answers belong to is the situation's to
-    // say, and it decides which construct finishes the step it started.
+    // The run may ask the world for answers at different moments, and the moment decides what
+    // happens next. Arrival asks before a node plays from its start, so the answers decide whether
+    // the node plays and what its words say. Playing asks before a line continues from a later
+    // segment, so the answers fill in the words it says next. Departure asks before leaving a node,
+    // so the answers pick the way out.
     private static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply) =>
         waiting.Moment switch
         {
-            Moment.ToPlay => Arrival.Supplied(context, waiting, supply),
+            Moment.ToPlay { SegmentIndex: 0 } => Arrival.Supplied(context, waiting, supply),
+            Moment.ToPlay => Playing.Supplied(context, waiting, supply),
             Moment.ToLeave => Departure.Supplied(context, waiting, supply),
             _ => throw new NotSupportedException($"No step is defined for {waiting.Moment}."),
         };

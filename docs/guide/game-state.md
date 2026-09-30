@@ -114,13 +114,29 @@ Bob: Of course.
 Alice: Thank you!
 ```
 
+A command in a line is carried out where you wrote it. The words before it are
+said, the command runs, and then the line carries on, so a stage direction in the
+middle of a sentence happens in the middle of that sentence:
+
+```markdown
+Yuki: Then... `("Yuki hides a smile behind her sleeve")` I will not argue.
+```
+
+A query written after a command is read once the command has run, so it sees
+what the command changed. Here the game is asked about `weapon.Attack` before the
+line starts, and again once `Polish()` has run:
+
+```markdown
+Smith: It was `"weapon.Attack"`. `Polish()` Now it is `"weapon.Attack"`.
+```
+
+The line still belongs to its speaker, even when a command opens it or is all it
+says, and the reader moves on from it as from any other line.
+
 Under the hood, a silent command is an **effect**, not speech: it compiles to a
 command-only control line that has no speaker, so it is never attributed to a
-character or the default speaker.
-
-Each call compiles to its own node — an **effect** the runtime asks the host to
-perform. The node shape and the execution contract belong to the runtime, not to
-the script.
+character or the default speaker. The runtime asks the host to perform it, and the
+execution contract belongs to the runtime, not to the script.
 
 ## Quoting a key
 

@@ -21,25 +21,11 @@ public sealed class ArrivalTests
         AssertSaid(Arrival.At(PlayContextFactory.OneLine(), 0), speaker: "Alice", text: "Hello.");
 
     [Fact]
-    public void At_ALine_StandsThere() => AssertAt(Arrival.At(PlayContextFactory.OneLine(), 0), 0);
-
-    [Fact]
-    public void At_ALineSaidByTheDefaultSpeaker_NamesNobody()
-    {
-        // The anonymous speaker has no name, which is why a said carries none rather than an
-        // empty one: there is a difference between nobody and somebody called "".
-        AssertSaid(Arrival.At(ALineNobodyClaims(), 0), speaker: null, text: "Nobody said this.");
-    }
-
-    [Fact]
-    public void At_TheEnd_EndsTheRun() => AssertEnded(Arrival.At(PlayContextFactory.Of([End(0)]), 0));
-
-    [Fact]
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
     {
         // Speaking it without asking would read as played correctly while the condition it carries
         // went unread, and only the world's answer could have shown otherwise.
-        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.ToPlay, "Alice.HasKey");
+        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
     }
 
     [Fact]
@@ -94,7 +80,7 @@ public sealed class ArrivalTests
         // the ring bound is never reached. The world may answer differently the next time round.
         var result = Arrival.Supplied(ALoopOfOneGuardedLine(), Waiting(0, "Rainy"), Answering(("Rainy", false)));
 
-        AssertAsked(result, node: 0, Moment.ToPlay, "Rainy");
+        AssertAsked(result, node: 0, Moment.BeforePlaying, "Rainy");
     }
 
     [Fact]
@@ -118,27 +104,50 @@ public sealed class ArrivalTests
             Waiting(0, "Rainy"),
             Answering(("Rainy", true)));
 
-        AssertAsked(result, node: 0, Moment.ToLeave, "Late");
+        AssertAsked(result, node: 0, Moment.BeforeLeaving, "Late");
     }
 
     [Fact]
     public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
-        AssertAsked(Arrival.At(ALineWithAQuery(), 0), node: 0, Moment.ToPlay, "playerName");
+        AssertAsked(Arrival.At(PlayContextFactory.ALineWithAQuery(), 0), node: 0, Moment.BeforePlaying, "playerName");
 
     [Fact]
     public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
     {
         var result = Arrival.Supplied(
-            ALineWithAQuery(), Waiting(0, "playerName"), Answering(("playerName", "Robin")));
+            PlayContextFactory.ALineWithAQuery(), Waiting(0, "playerName"), Answering(("playerName", "Robin")));
 
         AssertSaid(result, "Alice", "Hello, Robin.");
         AssertAt(result, 0);
     }
 
     [Fact]
+    public void At_ALineWithAQueryAfterACommand_AsksOnlyWhatItsOpeningWordsNeed() =>
+        // The command can change the world, so the query after it is asked only once the command
+        // is done.
+        AssertAsked(
+            Arrival.At(PlayContextFactory.ALineWithAQueryAfterACommand(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            "playerName");
+
+    [Fact]
+    public void Supplied_ToALineWithAQueryAfterACommand_PlaysUpToTheStop()
+    {
+        var result = Arrival.Supplied(
+            PlayContextFactory.ALineWithAQueryAfterACommand(),
+            Waiting(0, "playerName"),
+            Answering(("playerName", "Robin")));
+
+        AssertEvents(result, "said Alice 'Hello, Robin. '", "perform Wave()");
+        AssertAwaitingDone(result, 0, continuingFrom: 1);
+    }
+
+    [Fact]
     public void At_ALineGuardedAndCarryingAQuery_AsksAboutBothInOneRequest() =>
         // The whole node is judged against a single reading of the world, so it stops once.
-        AssertAsked(Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, Moment.ToPlay, "Alice.HasKey", "playerName");
+        AssertAsked(
+            Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey", "playerName");
 
     [Fact]
     public void Supplied_WithATruthAndWordsTogether_SaysTheLineTheWorldAllowed()
@@ -180,7 +189,7 @@ public sealed class ArrivalTests
             AConditionalLine(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
         AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
-        AssertAwaitingSupply(result.State, node: 0, Moment.ToPlay, "Alice.HasKey");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforePlaying, "Alice.HasKey");
     }
 
     [Fact]
@@ -201,14 +210,19 @@ public sealed class ArrivalTests
     public void At_AGuardedJumpOnItsOwnLine_AsksTheWorldWhichWayToGo() =>
         // The walk passes a node that hands the host nothing, but it cannot pass one whose way out
         // only the world can choose.
-        AssertAsked(Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.ToLeave, "Rainy");
+        AssertAsked(
+            Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.BeforeLeaving, "Rainy");
 
     [Fact]
     public void At_AConditionalBlock_AsksTheWorldWhichArmToTake() =>
         // A block says nothing, so the run walks into it and on to choosing an arm, asking about
         // every arm at once.
         AssertAsked(
-            Arrival.At(PlayContextFactory.AConditionalBlock(), 0), node: 0, Moment.ToLeave, "Alice.HasKey", "Alice.HasPick");
+            Arrival.At(PlayContextFactory.AConditionalBlock(), 0),
+            node: 0,
+            Moment.BeforeLeaving,
+            "Alice.HasKey",
+            "Alice.HasPick");
 
     [Fact]
     public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
@@ -227,10 +241,6 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void At_AControlNodeCarryingEffects_AsksForEachInTheOrderWritten() =>
-        AssertPerformed(Arrival.At(TwoEffectsThenALine(), 0), "fade in", "play a chime");
-
-    [Fact]
     public void At_AControlNodeCarryingEffects_StopsThereRatherThanReadingOn()
     {
         // The line after it must not be reached until the host says the effects were carried out,
@@ -239,26 +249,6 @@ public sealed class ArrivalTests
 
         AssertAwaitingDone(Arrival.At(context, 0), 0);
     }
-
-    [Fact]
-    public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
-    {
-        // Silence here would leave a run standing at a node forever, which reads as a hang rather
-        // than as a construct nobody has taught the runner yet.
-        var context = PlayContextFactory.NotYetPlayable();
-
-        AssertRefused(Arrival.At(context, 0), RefusalReason.UnplayableNode, "ChoiceNode");
-    }
-
-    /// <summary>A line with nobody named in front of it, then the end.</summary>
-    /// <remarks>
-    /// <code>
-    /// Nobody said this.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context whose only line is said by the anonymous default speaker.</returns>
-    private static PlayContext ALineNobodyClaims() =>
-        PlayContextFactory.Of([Line(0, speaker: 0, "Nobody said this.", next: 1), End(1)], [null]);
 
     /// <summary>A line the world must allow before it is spoken, then the end.</summary>
     /// <remarks>
@@ -318,46 +308,6 @@ public sealed class ArrivalTests
                 Line(1, speaker: 0, "Never spoken.", next: 2),
                 Line(2, speaker: 0, "Here.", next: 3),
                 End(3),
-            ],
-            ["Alice"]);
-
-    /// <summary>Two effects in one node, then a line, then the end.</summary>
-    /// <remarks>
-    /// <code>
-    /// `("fade in")` `("play a chime")`
-    ///
-    /// Alice: Hello.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context whose run asks the host for both effects before it says anything.</returns>
-    private static PlayContext TwoEffectsThenALine() =>
-        PlayContextFactory.Of(
-            [
-                Effects(0, next: 1, "fade in", "play a chime"),
-                Line(1, speaker: 0, "Hello.", next: 2),
-                End(2),
-            ],
-            ["Alice"]);
-
-    /// <summary>A line with a query standing in what it says, then the end.</summary>
-    /// <remarks>
-    /// <code>
-    /// Alice: Hello, `"playerName"`.
-    /// </code>
-    /// </remarks>
-    /// <returns>A context that cannot say its only line until the world names the player.</returns>
-    private static PlayContext ALineWithAQuery() =>
-        PlayContextFactory.Of(
-            [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    condition: null,
-                    new TextFragment("Hello, "),
-                    new QueryFragment("playerName"),
-                    new TextFragment(".")),
-                End(1),
             ],
             ["Alice"]);
 
@@ -490,5 +440,5 @@ public sealed class ArrivalTests
     /// <summary>Where a run stands after asking, on the way in, about these keys.</summary>
     /// <remarks>Arrival is what this class is about, so every wait here is one to play.</remarks>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
-        new(node, [.. keys], Moment.ToPlay);
+        new(node, [.. keys], Moment.BeforePlaying);
 }

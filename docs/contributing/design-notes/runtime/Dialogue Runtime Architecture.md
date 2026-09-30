@@ -237,9 +237,9 @@ role *behind* the driver; LSP and DAP solve this by naming the message
 
 | Direction | Kind | Built | Designed, not built |
 | --- | --- | --- | --- |
-| driver → runner | **command** | `Start`, `Next` | `Choose(i)`, `Restore(state)` |
-| runner → driver | **event** | `Said`, `Ended`, `Refused` | `Asked`, `Invalidated` |
-| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)` | `Resolve(keys)`, answered by `Supply(answers)` |
+| driver → runner | **command** | `Start`, `Next`, `Done`, `Failed(explanation)`, `Supply(answers)` | `Choose(i)`, `Restore(state)` |
+| runner → driver | **event** | `Said`, `Continued`, `Ended`, `Refused` | `Asked`, `Invalidated` |
+| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(keys)`, answered by `Supply(answers)` | — |
 | driver → runner | **query** | — | `Describe()`, answered with the current location |
 
 `Resolve` is LSP's `workspace/configuration`: *the server knows what it needs; the
@@ -285,8 +285,10 @@ Godot host never sees the protocol.
 ## Reading the world
 
 > [!NOTE]
-> Proposed; not built. The runner refuses any node that carries a condition until
-> this seam exists.
+> The protocol half is built: the runner asks with `Resolve` and reads the
+> driver's `Supply`, as [Asking the World](./Asking%20the%20World.md) describes.
+> The host-side seam below, with typed reads and a registration layer, is proposed
+> and not built.
 
 ### The world seam
 
@@ -381,6 +383,9 @@ TranscriptEntry = Said      { speaker, fragments, nodeRef }
                 | Performed { effect, nodeRef }
 ```
 
+- **Join a continuation to its line.** A `Continued` adds its fragments to the
+  `Said` entry before it, so a sentence a command divides still reads as one line.
+  See [speaking a line](./Speaking%20a%20Line.md#s2--every-line-opens-with-its-said-the-words-after-a-command-are-continued).
 - **Store resolved fragments.** A line spoken as "…is red" is recorded that way.
 - **Record the menu and the selection.** The roads not taken are most of a
   backlog's value.
@@ -563,7 +568,7 @@ flowchart LR
 | # | Component | Delivers | Note | Status |
 | --- | --- | --- | --- | --- |
 | C1 | **Playbook format and writer** | The schema, the header, the reader and its checks, and `ddown compile --output` | [Playbook Format](./Playbook%20Format.md), [Playbook Reader Rules](./Playbook%20Reader%20Rules.md) | Implemented |
-| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines, jumps, effects, the end |
+| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, the end |
 | C3 | **Conformance corpus** | Fixtures plus a harness, owned as data | [Conformance Corpus](./Conformance%20Corpus.md) | Implemented |
 | C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
 | C5a | **Web proxy Play tab** | The served report plays through the C# runner (level 1) | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |

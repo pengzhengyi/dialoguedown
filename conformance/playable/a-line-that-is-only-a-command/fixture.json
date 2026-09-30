@@ -1,0 +1,36 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a line whose only speech is a command still waits for the player",
+  "playbook": "playbook.json",
+  "because": "a line belongs to its speaker whether or not it has words, so it opens in their name and, once the host is done, the run stands at it until the player moves on -- a port that treated it as a control block would leave the moment the host finished, before the player saw it",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": ""
+        }
+      }
+    },
+    {
+      "expect": {
+        "perform": {
+          "kind": "custom-command",
+          "name": "Wave",
+          "args": []
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

@@ -89,7 +89,7 @@ holds — `false` for a guard, `"Robin"` for a query.
       succession beneath the block, so the block is skipped; one with no
       succession either leads nowhere, and says so.
 - [x] Every key a moment needs is asked for in a single `Resolve`: one on the way
-      in, and one on the way out.
+      in, one at each stop inside a line, and one on the way out.
 - [x] A query in speech is replaced by what the world said before the line is said.
 - [x] A key asked and left unanswered is refused, and so is a key answered that
       nobody asked about.
@@ -122,14 +122,15 @@ holds — `false` for a guard, `"Robin"` for a query.
 
 ## Key design decisions
 
-### A1 — One ask per moment, and a node has two of them
+### A1 — One ask per moment
 
 A run reads the world twice at a node, and each reading gathers every key that
-moment needs and asks for them together.
+moment needs and asks for them together. A line with a query written after a
+command has one more moment at each [stop](./Speaking%20a%20Line.md#s8--the-world-is-asked-once-per-stop) inside it.
 
 **Arriving** asks what decides whether the node plays and what it says: the
 node's own condition, answered with a truth, and the queries standing in its
-speech, answered with words. **Leaving** asks what decides which way out is
+speech up to its first stop, answered with words. **Leaving** asks what decides which way out is
 taken: the conditions on its jump or on a block condition's arms.
 
 The two are kept apart because the node changes the world between them. A node
@@ -142,8 +143,8 @@ to the keys that decide succession.
 
 Within one moment the batch is a **snapshot**, so evaluation is a repeatable
 read: a menu whose options are guarded by the same key cannot offer one and
-refuse another. A run therefore stops at most once on the way in and at most once
-on the way out, which is what keeps the protocol readable.
+refuse another. A run therefore stops at most once on the way in, once at each stop
+inside a line, and once on the way out, which is what keeps the protocol readable.
 
 A moment asks about every key it might need, not only the ones that end up
 deciding. A block's `elseif` is asked about even when its `if` holds and the

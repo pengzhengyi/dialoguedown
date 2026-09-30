@@ -8,8 +8,8 @@ using static DialogueDown.Runtime.Tests.World;
 namespace DialogueDown.Runtime.Tests;
 
 /// <summary>
-/// The protocol matrix: which command a run accepts where. What each construct does when reached
-/// belongs to <c>ArrivalTests</c>, and which way out of a node is taken to <c>TraversalTests</c>.
+/// The protocol matrix: which command a run accepts where. What each construct does when reached,
+/// and which way out of a node is taken, are tested beside the steps that do them.
 /// </summary>
 public sealed class RunnerTests
 {
@@ -46,6 +46,71 @@ public sealed class RunnerTests
 
         AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
         AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void Step_NextWhileALineWaitsOnTheHost_IsRefused()
+    {
+        var context = PlayContextFactory.ALineEndingWithACommand();
+
+        var result = Runner.Step(context, Started(context), new Next());
+
+        AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
+        AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void Step_DoneAfterALinesCommand_GivesThePlayerTheTurn()
+    {
+        // Nothing is left for the host to answer, so the driver waits for the player's Next.
+        var context = PlayContextFactory.ALineEndingWithACommand();
+
+        var result = Runner.Step(context, Started(context), new Done());
+
+        Assert.Empty(result.Events);
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Step_NextOnceALinesCommandIsDone_MovesOnToWhatFollows()
+    {
+        var context = PlayContextFactory.ALineEndingWithACommand();
+        var done = Runner.Step(context, Started(context), new Done()).State;
+
+        AssertSaid(Runner.Step(context, done, new Next()), "Bob", "Goodbye.");
+    }
+
+    [Fact]
+    public void Step_DoneAfterAFailureAtALine_GivesThePlayerTheTurn()
+    {
+        var context = PlayContextFactory.ALineEndingWithACommand();
+        var failed = Runner.Step(context, Started(context), new Failed("the animation is missing")).State;
+
+        var result = Runner.Step(context, failed, new Done());
+
+        Assert.Empty(result.Events);
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Step_ThroughALineReadingOneKeyEitherSideOfACommand_AsksTheWorldEachTime()
+    {
+        // The command can change the world, so the key is asked again once the command is done, and
+        // the answer may differ.
+        var context = PlayContextFactory.ALineReadingOneKeyEitherSideOfACommand();
+
+        var asked = Runner.Step(context, PlayState.Initial, new Start());
+        AssertAsked(asked, node: 0, Moment.BeforePlaying, "weapon.Attack");
+
+        var said = Runner.Step(context, asked.State, Answering(("weapon.Attack", "10")));
+        AssertEvents(said, "said Smith 'It was 10. '", "perform Polish()");
+
+        var askedAgain = Runner.Step(context, said.State, new Done());
+        AssertAsked(askedAgain, node: 0, Moment.BeforeContinuingFrom(1), "weapon.Attack");
+
+        var continued = Runner.Step(context, askedAgain.State, Answering(("weapon.Attack", "15")));
+        AssertEvents(continued, "continued ' Now it is 15.'");
+        AssertAt(continued, 0);
     }
 
     [Fact]
@@ -214,7 +279,7 @@ public sealed class RunnerTests
         var asked = Runner.Step(context, Started(context), new Next());
         var left = Runner.Step(context, asked.State, Answering(("Alice.HasKey", true)));
 
-        AssertAsked(asked, node: 0, Moment.ToLeave, "Alice.HasKey");
+        AssertAsked(asked, node: 0, Moment.BeforeLeaving, "Alice.HasKey");
         AssertSaid(left, "Alice", "Inside.");
     }
 
@@ -228,8 +293,22 @@ public sealed class RunnerTests
         var asked = Runner.Step(context, PlayState.Initial, new Start());
         var left = Runner.Step(context, asked.State, Answering(("Rainy", false)));
 
-        AssertAsked(asked, node: 0, Moment.ToLeave, "Rainy");
+        AssertAsked(asked, node: 0, Moment.BeforeLeaving, "Rainy");
         AssertSaid(left, "Alice", "Onward in the sun.");
+    }
+
+    [Fact]
+    public void Step_ASupplyForWordsLaterInALine_GoesOnWithTheLine()
+    {
+        // Waiting to continue a line uses the same kind of moment as waiting before it plays; only
+        // the segment tells them apart. So the answer here continues the line from segment 1.
+        var context = PlayContextFactory.ALineWithAQueryAfterACommand();
+        var waiting = new PlayState(new AwaitingSupply(0, ["mood"], Moment.BeforeContinuingFrom(1)));
+
+        var result = Runner.Step(context, waiting, Answering(("mood", "tired")));
+
+        AssertEvents(result, "continued ' You look tired.'");
+        AssertAt(result, 0);
     }
 
     private static PlayState Started(PlayContext context) =>

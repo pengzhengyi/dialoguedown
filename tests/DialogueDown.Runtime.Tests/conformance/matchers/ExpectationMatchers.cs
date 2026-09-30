@@ -15,7 +15,8 @@ internal static class ExpectationMatchers
     private static readonly Dictionary<string, IExpectationMatcher> _byKey =
         new IExpectationMatcher[]
         {
-            new SaidMatcher(), new EndedMatcher(), new PerformMatcher(), new RefusedMatcher(), new ResolveMatcher(),
+            new SaidMatcher(), new ContinuedMatcher(), new EndedMatcher(), new PerformMatcher(),
+            new RefusedMatcher(), new ResolveMatcher(),
         }
             .ToDictionary(matcher => matcher.Key, StringComparer.Ordinal);
 

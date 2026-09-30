@@ -34,6 +34,8 @@
     href: runtime/Runner.md
   - name: Asking the World
     href: runtime/Asking the World.md
+  - name: Speaking a Line
+    href: runtime/Speaking a Line.md
 - name: Language constructs
   items:
   - name: Progression Order

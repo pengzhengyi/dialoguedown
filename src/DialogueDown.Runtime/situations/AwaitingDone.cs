@@ -13,4 +13,5 @@ namespace DialogueDown.Runtime.Situations;
 /// </para>
 /// </remarks>
 /// <param name="Node">The node's position in the playbook.</param>
-public sealed record AwaitingDone(int Node) : Situation;
+/// <param name="Resume">Where the node carries on once the host is done.</param>
+public sealed record AwaitingDone(int Node, Resume Resume) : Situation;

@@ -3,6 +3,7 @@ using DialogueDown.Playbook;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
+using DialogueDown.Playbook.Speech;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
 namespace DialogueDown.Runtime.Tests;
@@ -69,6 +70,101 @@ internal static class PlayContextFactory
                 End(2),
             ],
             ["Alice", "Bob"]);
+
+    /// <summary>A line with a query standing in what it says, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello, `"playerName"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that cannot say its only line until the world names the player.</returns>
+    public static PlayContext ALineWithAQuery() =>
+        Of(
+            [
+                LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    condition: null,
+                    new TextFragment("Hello, "),
+                    new QueryFragment("playerName"),
+                    new TextFragment(".")),
+                End(1),
+            ],
+            ["Alice"]);
+
+    /// <summary>A line ending with a command, then another line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello. `Wave()`
+    ///
+    /// Bob: Goodbye.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose first line waits on the host before the player can move on.</returns>
+    public static PlayContext ALineEndingWithACommand() =>
+        Of(
+            [
+                LineSaying(0, speaker: 0, next: 1, condition: null, new TextFragment("Hello. "), Wave()),
+                Line(1, speaker: 1, "Goodbye.", next: 2),
+                End(2),
+            ],
+            ["Alice", "Bob"]);
+
+    /// <summary>A line with a query on each side of its command, then another line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello, `"playerName"`. `Wave()` You look `"mood"`.
+    ///
+    /// Bob: Goodbye.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose first line needs the mood only for the words after its command.</returns>
+    public static PlayContext ALineWithAQueryAfterACommand() =>
+        Of(
+            [
+                LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    condition: null,
+                    new TextFragment("Hello, "),
+                    new QueryFragment("playerName"),
+                    new TextFragment(". "),
+                    Wave(),
+                    new TextFragment(" You look "),
+                    new QueryFragment("mood"),
+                    new TextFragment(".")),
+                Line(1, speaker: 1, "Goodbye.", next: 2),
+                End(2),
+            ],
+            ["Alice", "Bob"]);
+
+    /// <summary>A line reading one key before its command and again after it, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Smith: It was `"weapon.Attack"`. `Polish()` Now it is `"weapon.Attack"`.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose only line asks about the same key on each side of its command.</returns>
+    public static PlayContext ALineReadingOneKeyEitherSideOfACommand() =>
+        Of(
+            [
+                LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    condition: null,
+                    new TextFragment("It was "),
+                    new QueryFragment("weapon.Attack"),
+                    new TextFragment(". "),
+                    new CustomCommandFragment("Polish", []),
+                    new TextFragment(" Now it is "),
+                    new QueryFragment("weapon.Attack"),
+                    new TextFragment(".")),
+                End(1),
+            ],
+            ["Smith"]);
 
     /// <summary>A choice, which is a node kind this pass cannot play.</summary>
     /// <remarks>
@@ -200,6 +296,8 @@ internal static class PlayContextFactory
                 End(4),
             ],
             ["Alice"]);
+
+    private static CustomCommandFragment Wave() => new("Wave", []);
 
     private static PlaybookSpeaker Speaker(string? name) =>
         new(Id: null, Name: name, Default: name is null, Tags: []);

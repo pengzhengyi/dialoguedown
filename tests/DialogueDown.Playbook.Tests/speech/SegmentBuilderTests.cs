@@ -60,7 +60,7 @@ public sealed class SegmentBuilderTests
     {
         var only = Assert.Single(new SegmentBuilder().Freeze());
 
-        Assert.False(only.Speaks);
+        Assert.False(only.SaysSomething);
         Assert.Null(only.Command);
     }
 

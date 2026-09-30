@@ -190,6 +190,19 @@
           },
           "additionalProperties": false
         },
+        "continued": {
+          "type": "object",
+          "description": "More of the line a said opened: the words after a command, sent only when they say something. It names no speaker, because whoever opened the line is still speaking.",
+          "required": [
+            "speech"
+          ],
+          "properties": {
+            "speech": {
+              "$ref": "#/$defs/speech"
+            }
+          },
+          "additionalProperties": false
+        },
         "asked": {
           "type": "array",
           "description": "The options offered, in the order offered. What was taken is not recorded here: the next send says so.",

@@ -14,9 +14,10 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to carry something out, and a block condition. A later pass adds its node and
-/// edge kinds here as it teaches the runner to play them, so a walk keeps covering everything a
-/// run can meet.
+/// asks the host to carry something out, and a block condition. A line may hold a command before,
+/// between, or after its words, or say nothing but a command. A later pass adds its node and edge
+/// kinds here as it teaches the runner to play them, so a walk keeps covering everything a run can
+/// meet.
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
 /// fire only when the world allows it, a block condition's first arm is always guarded, and a line
@@ -65,6 +66,25 @@ internal static class PlaybookGen
         BlockWithAnElse,
     }
 
+    /// <summary>Where a drawn line holds a command in what it says.</summary>
+    private enum CommandAt
+    {
+        /// <summary>Nowhere: the line only speaks.</summary>
+        Nowhere,
+
+        /// <summary>Before its words.</summary>
+        First,
+
+        /// <summary>Between two runs of its words.</summary>
+        Between,
+
+        /// <summary>After its words.</summary>
+        Last,
+
+        /// <summary>In place of any words.</summary>
+        Alone,
+    }
+
     /// <summary>Playbooks the default reader accepts.</summary>
     /// <returns>The generator.</returns>
     public static Gen<PlaybookDocument> Valid() =>
@@ -103,9 +123,10 @@ internal static class PlaybookGen
             Guard(),
             Guard(),
             Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]),
-            Gen.Bool,
-            (draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, asks) =>
-                new NodeDraft(draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, asks));
+            Gen.Select(Gen.Bool, Gen.Enum<CommandAt>()),
+            (draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, speech) =>
+                new NodeDraft(
+                    draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, speech.Item1, speech.Item2));
 
     // Nothing guards it as often as each key does, so a walk still meets plenty of nodes it can
     // pass without asking.
@@ -133,6 +154,7 @@ internal static class PlaybookGen
     /// <param name="JumpGuard">What the world must allow for a jump to fire.</param>
     /// <param name="ArmGuard">What the world must allow for a block condition's arm to be taken.</param>
     /// <param name="Asks">Whether a line has a query in what it says.</param>
+    /// <param name="CommandAt">Where a line holds a command in what it says.</param>
     private readonly record struct NodeDraft(
         Draws Draws,
         int Speaker,
@@ -141,7 +163,8 @@ internal static class PlaybookGen
         Condition? Guard,
         Condition? JumpGuard,
         Condition ArmGuard,
-        bool Asks)
+        bool Asks,
+        CommandAt CommandAt)
     {
         /// <summary>The node, standing at a position.</summary>
         /// <param name="id">Its position in the playbook.</param>
@@ -169,10 +192,24 @@ internal static class PlaybookGen
         private LineNode Speaks(int id, ImmutableArray<Edge> out_) =>
             new(id, Speaker, Speech(), Guard, out_);
 
+        // A query in the words after a command is a query written after a command, so drawing
+        // both covers a line whose words the world must answer part-way through.
         private ImmutableArray<SpeechFragment> Speech() =>
+            CommandAt switch
+            {
+                CommandAt.First => [Wave(), .. Words()],
+                CommandAt.Between => [new TextFragment("Well "), Wave(), .. Words()],
+                CommandAt.Last => [.. Words(), Wave()],
+                CommandAt.Alone => [Wave()],
+                _ => Words(),
+            };
+
+        private ImmutableArray<SpeechFragment> Words() =>
             Asks
                 ? [new TextFragment("Something, "), new QueryFragment(WordsKey), new TextFragment(".")]
                 : [new TextFragment("Something.")];
+
+        private static CustomCommandFragment Wave() => new("Wave", []);
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 

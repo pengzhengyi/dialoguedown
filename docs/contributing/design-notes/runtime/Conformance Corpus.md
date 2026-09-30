@@ -49,6 +49,7 @@ what the runtime must reply, in order.
 | `expect` | Asserts |
 | --- | --- |
 | `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
+| `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
 | `asked` | the options offered, each a `label` and whether it is `available` |
 | `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |

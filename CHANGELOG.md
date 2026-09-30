@@ -44,10 +44,22 @@ changes easy to categorize.
   run stops for, answered by `Supply(answers)`: a truth for a guard, words for a query. A line or
   control block the world withholds is stepped over; a jump or a block condition's arm is taken only
   when the world allows it, and a block with no arm taken and no `else` is skipped; a query in a line
-  is said as the words that answered it. A node is asked about before it plays and again before the
-  run leaves it, so a way out is judged against the world an effect left behind. An answer that does
-  not fit what was asked is refused and the run keeps waiting, so the driver can answer again. See
+  is said as the words that answered it, and an answer of no words leaves nothing in its place. A
+  node is asked about before it plays and again before the run leaves it, so a way out is judged
+  against the world an effect left behind. An answer that does not fit what was asked is refused and
+  the run keeps waiting, so the driver can answer again. See
   [Asking the world](docs/contributing/design-notes/runtime/Asking%20the%20World.md).
+
+- **A line carries out the commands written in it** — a line with a command in its speech reaches
+  the host in the order it was written. It opens with a `Said` in its speaker's name, carrying the
+  words before the first command even when there are none; each command is a `Perform`; and the
+  words after a command are a `Continued`, a new event with no speaker that goes on with the same
+  line, sent only when they say something. Once the host answers `Done`, the player has the turn.
+  A query written after a command is asked only once the host is done with it: the step stops
+  after the command, and the run asks the world again before it goes on with the line, so the
+  words say what the world holds after the command. The conformance corpus gains a `continued`
+  expectation and six cases. See
+  [Speaking a Line](docs/contributing/design-notes/runtime/Speaking%20a%20Line.md).
 
 - **A host can report that an effect failed** — `Failed(explanation)` joins `Done` as the answer
   to a `Perform`, so a world whose write was refused says so instead of lying with `Done` or

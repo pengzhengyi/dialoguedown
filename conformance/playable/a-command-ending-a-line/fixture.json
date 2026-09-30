@@ -1,0 +1,36 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a command ending a line is carried out after its words, and then the player moves on",
+  "playbook": "playbook.json",
+  "because": "the line's words reach the host before the command it wrote after them, and once the host is done nothing is left to answer, so the run waits for the player -- a port that sent the line with its command still inside, or that moved on at done, would end the run before the player read the line",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Hello. "
+        }
+      }
+    },
+    {
+      "expect": {
+        "perform": {
+          "kind": "custom-command",
+          "name": "Wave",
+          "args": []
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

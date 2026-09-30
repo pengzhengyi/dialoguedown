@@ -1,0 +1,42 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a command in the middle of a line is carried out between its words",
+  "playbook": "playbook.json",
+  "because": "the writer put the stage direction mid-sentence, so the host hears it there: the words before it open the line, and the words after it go on with the same line rather than opening another -- a port that said the whole line first, or that gave the rest its own speaker, would show the direction late or split one sentence in two",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Yuki",
+          "speech": "Then... "
+        }
+      }
+    },
+    {
+      "expect": {
+        "perform": {
+          "kind": "default-command",
+          "action": "Yuki hides a smile behind her sleeve"
+        }
+      }
+    },
+    {
+      "expect": {
+        "continued": {
+          "speech": " I will not argue."
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

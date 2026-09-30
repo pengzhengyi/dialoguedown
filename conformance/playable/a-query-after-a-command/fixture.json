@@ -1,0 +1,71 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a query written after a command is asked once the command is done",
+  "playbook": "playbook.json",
+  "because": "the command can change what the world says, so the line stops after it and asks about the words that follow only once the host is done, and the answer may differ from the one given before -- a port that asked every key on arrival would say the value from before the command, and one that did not stop would say the rest of the line before the host had carried the command out",
+  "session": [
+    {
+      "expect": {
+        "resolve": [
+          "weapon.Attack"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "weapon.Attack": "10"
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Smith",
+          "speech": "It was 10. "
+        }
+      }
+    },
+    {
+      "expect": {
+        "perform": {
+          "kind": "custom-command",
+          "name": "Polish",
+          "args": []
+        }
+      }
+    },
+    {
+      "send": "done"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "weapon.Attack"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "weapon.Attack": "15"
+        }
+      }
+    },
+    {
+      "expect": {
+        "continued": {
+          "speech": " Now it is 15."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

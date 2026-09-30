@@ -56,6 +56,22 @@ internal static class NodeQuestionExtensions
         return node is LineNode line ? SpeechTemplate.Keys(line.Speech) : [];
     }
 
+    /// <summary>What the world must answer before a run can say one segment of a node.</summary>
+    /// <param name="node">The node being played.</param>
+    /// <param name="segmentIndex">The segment's index among the line's segments.</param>
+    /// <returns>
+    /// The keys standing in that segment's words, each needing words, in the order they first
+    /// appear. Empty for a node that says nothing.
+    /// </returns>
+    public static ImmutableArray<string> FindWordsForSegment(this Node node, int segmentIndex)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+
+        return node is LineNode line
+            ? SpeechTemplate.Keys(SpeechTemplate.Segments(line.Speech)[segmentIndex].Words)
+            : [];
+    }
+
     /// <summary>What the world must answer before a run can tell which way out it takes.</summary>
     /// <param name="node">The node being left.</param>
     /// <returns>The keys its ways out ask about, each named once. Empty when none is guarded.</returns>

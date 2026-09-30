@@ -57,10 +57,20 @@ public static class SpeechTemplate
         return [.. found.Distinct(StringComparer.Ordinal)];
     }
 
+    /// <summary>Whether a run of speech asks the world about any key.</summary>
+    /// <param name="speech">The speech to read.</param>
+    /// <returns><see langword="true"/> when the speech holds a query, wherever it sits.</returns>
+    public static bool HasKeys(ImmutableArray<SpeechFragment> speech) => !Keys(speech).IsEmpty;
+
     /// <summary>Fills every hole with what the world said, and leaves the rest standing.</summary>
     /// <param name="speech">The speech to fill.</param>
     /// <param name="answer">What a key is worth. Asked once per hole, repeats included.</param>
     /// <returns>The speech, with each query replaced by the words that answered it.</returns>
+    /// <remarks>
+    /// A query answered with no words leaves nothing in its place, and emphasis left with nothing
+    /// inside it goes too. A link or an image stays, with no words to show, because it is also
+    /// somewhere to go or a picture to draw.
+    /// </remarks>
     public static ImmutableArray<SpeechFragment> Fill(
         ImmutableArray<SpeechFragment> speech, Func<string, string> answer)
     {
@@ -74,18 +84,21 @@ public static class SpeechTemplate
     // that get asked about and the holes that get filled from ever being two different sets.
     private static ImmutableArray<SpeechFragment> Rewrite(
         ImmutableArray<SpeechFragment> speech, Func<string, string>? answer, List<string> found) =>
-        [.. speech.OrEmpty().Select(fragment => Rewrite(fragment, answer, found))];
+        [.. speech.OrEmpty().Select(fragment => Rewrite(fragment, answer, found)).OfType<SpeechFragment>()];
 
-    private static SpeechFragment Rewrite(
+    // Nothing comes back where a fragment is left with nothing to say.
+    private static SpeechFragment? Rewrite(
         SpeechFragment fragment, Func<string, string>? answer, List<string> found)
     {
         switch (fragment)
         {
             case QueryFragment query:
                 found.Add(query.Key);
-                return answer is null ? query : new TextFragment(answer(query.Key));
+                return answer is null ? query : Words(answer(query.Key));
             case StyledTextFragment styled:
-                return new StyledTextFragment(styled.Style, Rewrite(styled.Children, answer, found));
+                return Rewrite(styled.Children, answer, found) is { IsEmpty: false } children
+                    ? new StyledTextFragment(styled.Style, children)
+                    : null;
             case LinkFragment link:
                 return new LinkFragment(link.Target, Rewrite(link.Label, answer, found));
             case ImageFragment image:
@@ -94,4 +107,8 @@ public static class SpeechTemplate
                 return fragment;
         }
     }
+
+    // Plain words are never empty, so an answer of no words is no fragment at all.
+    private static TextFragment? Words(string answered) =>
+        answered.Length == 0 ? null : new TextFragment(answered);
 }
