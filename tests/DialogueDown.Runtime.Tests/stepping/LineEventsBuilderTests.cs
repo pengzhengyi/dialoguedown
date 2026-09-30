@@ -69,7 +69,7 @@ public sealed class LineEventsBuilderTests
             "perform Bow()");
 
     [Fact]
-    public void Of_APartEndingBeforeTheLineDoes_LeavesTheRestUntaken() =>
+    public void Of_APartEndingBeforeTheLineDoes_TakesNothingAfterIt() =>
         AssertEvents(
             Gathered("Alice", toPlay: ..1, Segment("Hi. ", command: "Wave"), Segment(" Bye.")),
             "said Alice 'Hi. '",
