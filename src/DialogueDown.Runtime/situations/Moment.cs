@@ -4,9 +4,9 @@ namespace DialogueDown.Runtime.Situations;
 /// Where in a node a run is waiting on the world.
 /// </summary>
 /// <remarks>
-/// A run reads the world at a node before it plays and again before it leaves, because the node may
-/// change the world between them. The moment travels with the wait and says which reading the
-/// answers belong to.
+/// A run asks the world about a node before it plays, again before a line continues after a
+/// command, and again before it leaves, because the node may change the world in between. The
+/// moment travels with the wait and says which of these the answers are for.
 /// </remarks>
 public abstract record Moment
 {

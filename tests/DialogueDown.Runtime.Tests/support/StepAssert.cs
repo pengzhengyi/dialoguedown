@@ -90,6 +90,13 @@ internal static class StepAssert
     public static void AssertAwaitingDone(StepResult result, int node) =>
         AssertAwaitingDone(result.State, node);
 
+    /// <summary>Asserts a step left the run waiting on the host at a node, and where it carries on from.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="node">Where it should be waiting.</param>
+    /// <param name="resume">Where the node should carry on once the host is done.</param>
+    public static void AssertAwaitingDone(StepResult result, int node, Resume resume) =>
+        Assert.Equal(new AwaitingDone(node, resume), result.State.Situation);
+
     /// <summary>Asserts a run is waiting on the host at a node.</summary>
     /// <param name="state">Where the run stands.</param>
     /// <param name="node">Where it should be waiting.</param>

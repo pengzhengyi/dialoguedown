@@ -111,6 +111,35 @@ internal static class PlayContextFactory
             ],
             ["Alice", "Bob"]);
 
+    /// <summary>A line with a query on each side of its command, then another line, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: Hello, `"playerName"`. `Wave()` You look `"mood"`.
+    ///
+    /// Bob: Goodbye.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose first line needs the mood only for the words after its command.</returns>
+    public static PlayContext ALineWithAQueryAfterACommand() =>
+        Of(
+            [
+                LineSaying(
+                    0,
+                    speaker: 0,
+                    next: 1,
+                    condition: null,
+                    new TextFragment("Hello, "),
+                    new QueryFragment("playerName"),
+                    new TextFragment(". "),
+                    Wave(),
+                    new TextFragment(" You look "),
+                    new QueryFragment("mood"),
+                    new TextFragment(".")),
+                Line(1, speaker: 1, "Goodbye.", next: 2),
+                End(2),
+            ],
+            ["Alice", "Bob"]);
+
     /// <summary>A choice, which is a node kind this pass cannot play.</summary>
     /// <remarks>
     /// <code>

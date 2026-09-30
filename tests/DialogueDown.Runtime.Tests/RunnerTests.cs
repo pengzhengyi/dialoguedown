@@ -276,6 +276,20 @@ public sealed class RunnerTests
         AssertSaid(left, "Alice", "Onward in the sun.");
     }
 
+    [Fact]
+    public void Step_ASupplyForWordsLaterInALine_GoesOnWithTheLine()
+    {
+        // Waiting to continue a line uses the same kind of moment as waiting before it plays; only
+        // the segment tells them apart. So the answer here continues the line from segment 1.
+        var context = PlayContextFactory.ALineWithAQueryAfterACommand();
+        var waiting = new PlayState(new AwaitingSupply(0, ["mood"], Moment.BeforeContinuingFrom(1)));
+
+        var result = Runner.Step(context, waiting, Answering(("mood", "tired")));
+
+        AssertEvents(result, "continued ' You look tired.'");
+        AssertAt(result, 0);
+    }
+
     private static PlayState Started(PlayContext context) =>
         Runner.Step(context, PlayState.Initial, new Start()).State;
 }

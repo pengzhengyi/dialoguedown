@@ -139,6 +139,84 @@ public sealed class PlayingTests
         AssertAwaitingDone(result, 0);
     }
 
+    [Fact]
+    public void Performed_AtALineToContinueBeforeAQuery_AsksWhatItsNextWordsNeed() =>
+        // The command can change the world, so the words after it are asked about only once the
+        // host is done.
+        AssertAsked(
+            Playing.Performed(PlayContextFactory.ALineWithAQueryAfterACommand(), WaitingOnTheHostToContinueFrom(1)),
+            node: 0,
+            Moment.BeforeContinuingFrom(1),
+            "mood");
+
+    [Fact]
+    public void Performed_AtALineToContinueWithWordsThatAskNothing_ContinuesAtOnce()
+    {
+        var result = Playing.Performed(ALineWithAStageDirectionMidSentence(), WaitingOnTheHostToContinueFrom(1));
+
+        AssertEvents(result, "continued ' I will not argue.'");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Performed_AtALineToContinueWithACommandOfItsOwn_WaitsOnTheHostAgain()
+    {
+        var result = Playing.Performed(ALineWithTwoCommandsInARow(), WaitingOnTheHostToContinueFrom(1));
+
+        AssertEvents(result, "perform Wave()", "continued ' Bye.'");
+        AssertAwaitingDone(result, 0, new Resume.FromFinished());
+    }
+
+    [Fact]
+    public void Supplied_ToALineToContinueBeforeAQuery_ContinuesWithTheAnswer()
+    {
+        // Nothing is left for the host to do, so once the line has been said the player has the turn.
+        var result = Playing.Supplied(
+            PlayContextFactory.ALineWithAQueryAfterACommand(),
+            WaitingOnTheWorldToContinueFrom(1, "mood"),
+            Answering(("mood", "tired")));
+
+        AssertEvents(result, "continued ' You look tired.'");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Supplied_WithoutAnAnswerItAskedFor_RefusesAndKeepsWaiting()
+    {
+        // The run stays where it asked, so the driver can answer again.
+        var result = Playing.Supplied(
+            PlayContextFactory.ALineWithAQueryAfterACommand(),
+            WaitingOnTheWorldToContinueFrom(1, "mood"),
+            Answering(("title", "Sir")));
+
+        AssertRefused(result, RefusalReason.UnansweredKey, "mood");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforeContinuingFrom(1), "mood");
+    }
+
+    [Fact]
+    public void Supplied_ToANodeThatIsNotALine_IsRefused()
+    {
+        // Only a line continues part-way through, so only a state built by hand gets here.
+        var result = Playing.Supplied(
+            PlayContextFactory.AnEffectThenALine(), WaitingOnTheWorldToContinueFrom(1), Answering());
+
+        AssertRefused(result, RefusalReason.Misplaced, "nothing to continue");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforeContinuingFrom(1));
+    }
+
+    [Fact]
+    public void Supplied_ToALineWaitingToLeave_IsRefused()
+    {
+        // The answers pick the way out, so there is nothing in the line to continue.
+        var waitingToLeave = new AwaitingSupply(0, [], Moment.BeforeLeaving);
+
+        var result = Playing.Supplied(PlayContextFactory.OneLine(), waitingToLeave, Answering());
+
+        AssertRefused(
+            result, RefusalReason.Misplaced, "nothing to continue at node 0, waiting for the world before it leaves");
+        Assert.Equal(waitingToLeave, result.State.Situation);
+    }
+
     /// <summary>Plays the node a context begins with.</summary>
     /// <param name="context">A context whose first node is the one under test.</param>
     /// <param name="supply">What the world said, when playing the node needed answers.</param>
@@ -150,6 +228,19 @@ public sealed class PlayingTests
     /// <param name="node">The node's position in the playbook.</param>
     /// <returns>The wait.</returns>
     private static AwaitingDone WaitingOnTheHost(int node) => new(node, new Resume.FromFinished());
+
+    /// <summary>Where a run stands once the first node has asked the host, with more of the line to play.</summary>
+    /// <param name="segmentIndex">The segment the line continues from.</param>
+    /// <returns>The wait.</returns>
+    private static AwaitingDone WaitingOnTheHostToContinueFrom(int segmentIndex) =>
+        new(0, new Resume.From(segmentIndex));
+
+    /// <summary>Where a run stands once the first node has asked the world before continuing from a segment.</summary>
+    /// <param name="segmentIndex">The segment the line continues from.</param>
+    /// <param name="keys">The keys it asked about.</param>
+    /// <returns>The wait.</returns>
+    private static AwaitingSupply WaitingOnTheWorldToContinueFrom(int segmentIndex, params string[] keys) =>
+        new(0, [.. keys], Moment.BeforeContinuingFrom(segmentIndex));
 
     /// <summary>A line with nobody named in front of it, then the end.</summary>
     /// <remarks>
