@@ -84,24 +84,24 @@ internal static class StepAssert
     public static void AssertAt(PlayState state, int node) =>
         Assert.Equal(node, Assert.IsType<AtNode>(state.Situation).Node);
 
-    /// <summary>Asserts a step left the run waiting on the host at a node.</summary>
+    /// <summary>Asserts a step left the run waiting on the host at a node with nothing left to play.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>
     public static void AssertAwaitingDone(StepResult result, int node) =>
         AssertAwaitingDone(result.State, node);
 
-    /// <summary>Asserts a step left the run waiting on the host at a node, and where it carries on from.</summary>
+    /// <summary>Asserts a step left the run waiting on the host part-way through a line.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>
-    /// <param name="resume">Where the node should carry on once the host is done.</param>
-    public static void AssertAwaitingDone(StepResult result, int node, Resume resume) =>
-        Assert.Equal(new AwaitingDone(node, resume), result.State.Situation);
+    /// <param name="continuingFrom">The segment the line should continue from once the host is done.</param>
+    public static void AssertAwaitingDone(StepResult result, int node, int continuingFrom) =>
+        Assert.Equal(new AwaitingDone(node, new Resume.From(continuingFrom)), result.State.Situation);
 
-    /// <summary>Asserts a run is waiting on the host at a node.</summary>
+    /// <summary>Asserts a run is waiting on the host at a node with nothing left to play.</summary>
     /// <param name="state">Where the run stands.</param>
     /// <param name="node">Where it should be waiting.</param>
     public static void AssertAwaitingDone(PlayState state, int node) =>
-        Assert.Equal(node, Assert.IsType<AwaitingDone>(state.Situation).Node);
+        Assert.Equal(new AwaitingDone(node, new Resume.FromNodeEnd()), state.Situation);
 
     /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
     /// <param name="result">What the step produced.</param>

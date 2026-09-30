@@ -60,7 +60,7 @@ internal static class Playing
         return (context.NodeAt(waiting.Node), waiting.Resume) switch
         {
             (LineNode line, Resume.From from) => AskBeforeContinuing(context, waiting.Node, line, from.SegmentIndex),
-            (LineNode, Resume.FromFinished) => WaitForThePlayer(waiting.Node),
+            (LineNode, Resume.FromNodeEnd) => WaitForThePlayer(waiting.Node),
             (ControlNode, _) => Departure.From(context, waiting.Node),
             (var asksNothing, _) => RefuseDone(waiting, asksNothing),
         };
@@ -124,7 +124,7 @@ internal static class Playing
             return new AwaitingDone(position, new Resume.From(stop));
         }
 
-        return hasCommand ? new AwaitingDone(position, new Resume.FromFinished()) : new AtNode(position);
+        return hasCommand ? new AwaitingDone(position, new Resume.FromNodeEnd()) : new AtNode(position);
     }
 
     // A command can change the world, so the words after it are asked about only once the host has
@@ -154,7 +154,7 @@ internal static class Playing
     // waits until the host has carried them out.
     private static StepResult Control(int position, ControlNode control) =>
         new(
-            new PlayState(new AwaitingDone(position, new Resume.FromFinished())),
+            new PlayState(new AwaitingDone(position, new Resume.FromNodeEnd())),
             [.. control.Effects.Select(Event (effect) => new Perform(effect))]);
 
     private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);

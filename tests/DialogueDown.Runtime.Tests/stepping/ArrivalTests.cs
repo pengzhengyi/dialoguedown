@@ -140,7 +140,7 @@ public sealed class ArrivalTests
             Answering(("playerName", "Robin")));
 
         AssertEvents(result, "said Alice 'Hello, Robin. '", "perform Wave()");
-        AssertAwaitingDone(result, 0, new Resume.From(1));
+        AssertAwaitingDone(result, 0, continuingFrom: 1);
     }
 
     [Fact]

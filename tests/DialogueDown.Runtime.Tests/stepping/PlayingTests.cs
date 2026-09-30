@@ -102,7 +102,7 @@ public sealed class PlayingTests
             PlayContextFactory.ALineWithAQueryAfterACommand(), Answering(("playerName", "Robin")));
 
         AssertEvents(result, "said Alice 'Hello, Robin. '", "perform Wave()");
-        AssertAwaitingDone(result, 0, new Resume.From(1));
+        AssertAwaitingDone(result, 0, continuingFrom: 1);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public sealed class PlayingTests
         var result = PlayTheFirstNode(ALineWithTwoCommandsBeforeAQuery());
 
         AssertEvents(result, "said Alice 'A '", "perform One()", "continued ' B '", "perform Two()");
-        AssertAwaitingDone(result, 0, new Resume.From(2));
+        AssertAwaitingDone(result, 0, continuingFrom: 2);
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public sealed class PlayingTests
         var result = Playing.Performed(ALineWithTwoCommandsInARow(), WaitingOnTheHostToContinueFrom(1));
 
         AssertEvents(result, "perform Wave()", "continued ' Bye.'");
-        AssertAwaitingDone(result, 0, new Resume.FromFinished());
+        AssertAwaitingDone(result, 0);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public sealed class PlayingTests
             ALineWithAQueryAfterEachOfTwoCommands(), WaitingOnTheWorldToContinueFrom(1, "k"), Answering(("k", "K")));
 
         AssertEvents(result, "continued ' K '", "perform Two()");
-        AssertAwaitingDone(result, 0, new Resume.From(2));
+        AssertAwaitingDone(result, 0, continuingFrom: 2);
     }
 
     [Fact]
@@ -259,7 +259,7 @@ public sealed class PlayingTests
     /// <summary>Where a run stands once a node has asked the host and has nothing left to play.</summary>
     /// <param name="node">The node's position in the playbook.</param>
     /// <returns>The wait.</returns>
-    private static AwaitingDone WaitingOnTheHost(int node) => new(node, new Resume.FromFinished());
+    private static AwaitingDone WaitingOnTheHost(int node) => new(node, new Resume.FromNodeEnd());
 
     /// <summary>Where a run stands once the first node has asked the host, with more of the line to play.</summary>
     /// <param name="segmentIndex">The segment the line continues from.</param>

@@ -175,7 +175,7 @@ sequenceDiagram
 | `LineEventsBuilder` | Gathers the events a line hands the host, one segment at a time: its `Said`, each `Continued`, and each `Perform` | `Playing` |
 | `Continued(speech)` | An event: the words after a command, in the utterance the line's `Said` opened | `Event`, alongside `Said` |
 | `AwaitingDone(node, resume)` | Waiting for the host, and where the node carries on once it is done | `Situation` |
-| `Resume` | A closed union: `From(segmentIndex)`, the line continues from that segment; or `FromFinished`, the node has finished playing | `AwaitingDone` |
+| `Resume` | A closed union: `From(segmentIndex)`, the line continues from that segment; or `FromNodeEnd`, the node has finished playing | `AwaitingDone` |
 | `AwaitingSupply(node, keys, moment)` | Waiting for the world; the moment says where in the node the keys were asked | `Situation` |
 | `Moment` | A closed union: `ToPlay(segmentIndex)`, asked before playing from a segment; or `ToLeave`, asked before leaving | `AwaitingSupply`, `Runner` |
 | `NodeQuestions.RequiredToPlayFrom(node, segmentIndex)` | The guard when playing from the start, and the keys of the segment playing resumes from | `Playing` |
@@ -295,10 +295,10 @@ no wait ever holds a value that means nothing for it:
 
 | Wait | Carries | Members |
 | --- | --- | --- |
-| `AwaitingDone` | `Resume` — where the node carries on once the host is done | `From(segmentIndex)`: the line continues from that segment · `FromFinished`: the node has finished playing, so S5 decides what follows |
+| `AwaitingDone` | `Resume` — where the node carries on once the host is done | `From(segmentIndex)`: the line continues from that segment · `FromNodeEnd`: the node has finished playing, so S5 decides what follows |
 | `AwaitingSupply` | `Moment` — where in the node the keys were asked | `ToPlay(segmentIndex)`: before playing from that segment · `ToLeave`: before leaving |
 
-A control block's `Done` is always `FromFinished`; so is a line's once its last
+A control block's `Done` is always `FromNodeEnd`; so is a line's once its last
 segment has been played.
 
 A resume place is an index into `SpeechTemplate.Segments`, so how speech is

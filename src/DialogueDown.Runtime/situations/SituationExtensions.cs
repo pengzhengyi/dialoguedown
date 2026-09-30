@@ -23,7 +23,7 @@ internal static class SituationExtensions
             AtNode at => $"node {at.Node}",
             AwaitingDone { Resume: Resume.From from } waiting =>
                 $"node {waiting.Node}, waiting for the host before continuing from segment {from.SegmentIndex}",
-            AwaitingDone { Resume: Resume.FromFinished } waiting => $"node {waiting.Node}, waiting for the host",
+            AwaitingDone { Resume: Resume.FromNodeEnd } waiting => $"node {waiting.Node}, waiting for the host",
             AwaitingSupply { Moment: Moment.ToPlay { SegmentIndex: 0 } } waiting =>
                 $"node {waiting.Node}, waiting for the world before it plays",
             AwaitingSupply { Moment: Moment.ToPlay play } waiting =>

@@ -19,5 +19,5 @@ public abstract record Resume
     public sealed record From(int SegmentIndex) : Resume;
 
     /// <summary>The node has finished playing, so its kind decides what follows.</summary>
-    public sealed record FromFinished : Resume;
+    public sealed record FromNodeEnd : Resume;
 }

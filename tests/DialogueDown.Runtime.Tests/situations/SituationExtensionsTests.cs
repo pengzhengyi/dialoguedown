@@ -12,7 +12,7 @@ public sealed class SituationExtensionsTests
         new NotStarted(),
         new AtNode(4),
         new AwaitingDone(4, new Resume.From(2)),
-        new AwaitingDone(4, new Resume.FromFinished()),
+        new AwaitingDone(4, new Resume.FromNodeEnd()),
         new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforePlaying),
         new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeContinuingFrom(2)),
         new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeLeaving),
@@ -25,7 +25,7 @@ public sealed class SituationExtensionsTests
         Assert.Equal("no position, before the run has started", new NotStarted().Describe());
         Assert.Equal("node 4", new AtNode(4).Describe());
         Assert.Equal(
-            "node 4, waiting for the host", new AwaitingDone(4, new Resume.FromFinished()).Describe());
+            "node 4, waiting for the host", new AwaitingDone(4, new Resume.FromNodeEnd()).Describe());
         Assert.Equal(
             "node 4, waiting for the world before it plays",
             new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforePlaying).Describe());
