@@ -198,18 +198,6 @@ public sealed class InlineBuilderTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Build([new UnknownMarkdownInline(SourceSpanFactory.Span())]));
 
-    [Fact]
-    public void Build_WithStrictPolicy_ReportsAndDropsACodeSpanInALabel()
-    {
-        var builder = TranspilerBuilderFactory.InlineBuilder(new RejectingInlinePolicy());
-
-        var speech = Build(builder, [Md.Link("#x", Md.CodeSpan("q"))], out var diagnostics);
-
-        var link = AssertLink(Assert.Single(speech), "#x");
-        Assert.Empty(link.Label);
-        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DisallowedLabelElement);
-    }
-
     private static SpeechStyle StyleOf(MdEmphasisKind kind) =>
         AssertStyledText(Assert.Single(Build([Md.Emphasis(kind, Md.Text("x"))]))).Style;
 
@@ -221,12 +209,5 @@ public sealed class InlineBuilderTests
     {
         diagnostics = new DiagnosticBag();
         return _builder.Build(inlines, diagnostics);
-    }
-
-    private static IReadOnlyList<InlineFragment> Build(
-        InlineBuilder builder, IReadOnlyList<MarkdownInline> inlines, out DiagnosticBag diagnostics)
-    {
-        diagnostics = new DiagnosticBag();
-        return builder.Build(inlines, diagnostics);
     }
 }

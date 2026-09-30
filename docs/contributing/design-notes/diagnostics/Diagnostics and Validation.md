@@ -135,7 +135,6 @@ mode does.
 | --- | --- | --- |
 | speaker builder | `DLG1101` | drop the tags; the line falls back to the default speaker |
 | game-call builder | `DLG1102` | keep the code span's text as a literal fragment |
-| rejecting label policy (not in the default composition) | `DLG1103` | drop the disallowed element; keep text and styling |
 | anchor table | `DLG2001` | keep the first scene for the anchor |
 | scene builder | `DLG2002` | build the scene with no anchor |
 | speaker binder | `DLG2003`–`DLG2006` | keep the first binding or default; ignore the conflicting one |
