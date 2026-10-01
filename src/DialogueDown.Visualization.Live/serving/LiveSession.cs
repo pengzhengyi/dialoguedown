@@ -14,10 +14,10 @@ namespace DialogueDown.Visualization.Live.Serving;
 /// A live session bound to one document. It reads and compiles the current file on
 /// demand (for the initial page and the document API) and pushes hot-reload events
 /// to connected clients; the watcher calls <see cref="Refresh"/> when the file
-/// changes on disk. Saving is optimistic and generation-safe: a write carries the
-/// baseline it expects on disk (<see cref="Save"/>), so an external change is reported
-/// as a conflict instead of being overwritten silently, and Config Auto validates the
-/// TOML before writing. When the compile applied a <c>dialogue.toml</c>, the session
+/// changes on disk. Saving is optimistic: a write carries the baseline it expects on
+/// disk (<see cref="Save"/>), so an external change is reported as a conflict instead
+/// of being overwritten silently, and a Config save can require the TOML to be valid
+/// before it is written. When the compile applied a <c>dialogue.toml</c>, the session
 /// can also save an edited configuration and recompile with it; a session with no
 /// configuration file can create one (<see cref="CreateConfig"/>).
 /// </summary>
@@ -66,7 +66,7 @@ internal sealed class LiveSession
     /// </summary>
     public string DisplayPath { get; }
 
-    /// <summary>The mode this session serves in (watch or live).</summary>
+    /// <summary>The mode this session serves in (<c>view</c> or <c>edit</c>).</summary>
     public string Mode { get; }
 
     /// <summary>
@@ -91,7 +91,7 @@ internal sealed class LiveSession
     public string RenderInitialHtml() =>
         RenderReportHtml(File.ReadAllText(DocumentPath), CurrentConfigOverlay());
 
-    /// <summary>Serializes the current document payload (<c>{ mode, path, source, stages }</c>).</summary>
+    /// <summary>Compiles the current file and serializes it as the document payload JSON.</summary>
     public string CurrentDocumentJson() =>
         SerializeReportDocument(File.ReadAllText(DocumentPath), CurrentConfigOverlay());
 
@@ -99,13 +99,15 @@ internal sealed class LiveSession
     /// Applies one save request and returns a payload carrying a typed <c>outcome</c>:
     /// <c>saved</c>, <c>saved-invalid</c>, <c>invalid-auto</c>, <c>conflict</c>, or
     /// <c>uncertain</c> (a write that could not establish a safe state on disk without risking
-    /// newer external data). A dialogue
-    /// save is always written (its errors surface as diagnostics); a Config save validates when
-    /// the request requires it, and every non-forced write first compares the disk against the
-    /// requested source (idempotent recovery) and the expected baseline (conflict detection).
-    /// Records the written content so the watcher's self-triggered <see cref="Refresh"/> is not
-    /// mistaken for an external edit.
+    /// newer external data).
     /// </summary>
+    /// <remarks>
+    /// A dialogue save is written even when the script has errors, which come back as
+    /// diagnostics; a Config save is validated first when the request requires it. Every
+    /// non-forced write first compares the disk against the requested source (already saved)
+    /// and the expected baseline (a conflict). The written content is recorded so the watcher's
+    /// <see cref="Refresh"/> for this write is not mistaken for an external edit.
+    /// </remarks>
     public string Save(SaveInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -127,22 +129,26 @@ internal sealed class LiveSession
 
     /// <summary>
     /// Creates a <c>dialogue.toml</c> at <paramref name="configPath"/> for a session that has none
-    /// and adopts it (so later saves and reloads apply it). The write is exclusive
-    /// (<see cref="FileMode.CreateNew"/>): it either creates the starter file
-    /// (<see cref="CreateConfigStatus.Created"/>), or — when a file already exists — adopts it. An
-    /// existing file equal to the starter template is adopted idempotently
-    /// (<see cref="CreateConfigStatus.Adopted"/>, a create retry after a lost response); a
-    /// <em>different</em> pre-existing file is adopted without overwriting it
-    /// (<see cref="CreateConfigStatus.AdoptedExisting"/>) — valid TOML into the visualizer, invalid
-    /// TOML as saved-invalid — so a config-less session recovers into the existing configuration
-    /// rather than a dead end. <see cref="ConfigPath"/> is assigned only after a successful creation
-    /// or adoption, so a failed create leaves the no-config state unchanged for a retry. A retry that
-    /// arrives after this session already adopted the same <paramref name="configPath"/> (its first
-    /// response was lost) is idempotent while the file is still the untouched starter template and a
-    /// <see cref="CreateConfigStatus.Conflict"/> once the content diverges (the session already
-    /// applies the file, so a reload opens it). Throws <see cref="InvalidOperationException"/> when
-    /// the session already has a <em>different</em> configuration file.
+    /// and adopts it, so later saves and reloads apply it.
     /// </summary>
+    /// <remarks>
+    /// The write is exclusive (<see cref="FileMode.CreateNew"/>), so an existing file is never
+    /// overwritten. The result is:
+    /// <list type="bullet">
+    /// <item><see cref="CreateConfigStatus.Created"/>: the starter file was written.</item>
+    /// <item><see cref="CreateConfigStatus.Adopted"/>: the file already exists and equals the
+    /// starter template, as after a retry whose first response was lost.</item>
+    /// <item><see cref="CreateConfigStatus.AdoptedExisting"/>: a different file already exists;
+    /// valid TOML is applied, and invalid TOML is recorded as saved-invalid.</item>
+    /// <item><see cref="CreateConfigStatus.Conflict"/>: a retry for the file this session already
+    /// adopted finds it different from the starter template; a reload opens it.</item>
+    /// </list>
+    /// <see cref="ConfigPath"/> is set only once the file is created or adopted, so a failed
+    /// create leaves the session without a configuration, ready for a retry.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// The session already has a different configuration file.
+    /// </exception>
     public CreateConfigResult CreateConfig(string configPath)
     {
         ArgumentNullException.ThrowIfNull(configPath);
@@ -153,8 +159,6 @@ internal sealed class LiveSession
                 throw new InvalidOperationException("This session already has a configuration file.");
             }
 
-            // A lost-response retry of the create that this session already satisfied: idempotent
-            // while the file is still the starter template, a conflict once its content diverges.
             return AdoptOrConflict(configPath);
         }
 
@@ -164,9 +168,7 @@ internal sealed class LiveSession
         }
         catch (IOException) when (File.Exists(configPath))
         {
-            // A dialogue.toml already exists at the serve root: adopt it as recovery rather than
-            // leaving the session config-less. An untouched starter template is a lost-create-response
-            // adoption; any other content is an existing configuration adopted without overwriting.
+            // The file already exists: adopt it without overwriting.
             return AdoptExisting(configPath);
         }
 
@@ -185,8 +187,8 @@ internal sealed class LiveSession
         try
         {
             var current = File.ReadAllText(DocumentPath);
-            // One-shot suppression: a self-write arms a single suppression token, consumed here so a
-            // later external change back to the same content still reloads (an A->B->A sequence).
+            // A save records its text for one check only, cleared here, so a later external change
+            // back to the same text still reloads (A -> B -> A).
             var expected = _lastSaved;
             _lastSaved = null;
             if (current == expected)
@@ -225,8 +227,8 @@ internal sealed class LiveSession
         try
         {
             var current = File.ReadAllText(_configPath);
-            // One-shot suppression: a self-write arms a single suppression token, consumed here so a
-            // later external change back to the same content still reloads (an A->B->A sequence).
+            // A save records its text for one check only, cleared here, so a later external change
+            // back to the same text still reloads (A -> B -> A).
             var expected = _lastSavedConfig;
             _lastSavedConfig = null;
             if (current == expected)
@@ -245,9 +247,8 @@ internal sealed class LiveSession
         }
     }
 
-    // A test seam mirroring <see cref="AtomicFile"/>'s: <paramref name="afterReplace"/> is threaded
-    // into the atomic replace so a test can deterministically drive the target-changed-again and
-    // post-commit-verification races that make a write uncertain.
+    // A test seam: afterReplace is passed to AtomicFile.Transact, so a test can change the file
+    // inside the atomic replace and drive the races that make a write uncertain.
     internal string Save(SaveInput input, Action? afterReplace)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -261,14 +262,12 @@ internal sealed class LiveSession
         return node.ToJsonString();
     }
 
-    // A saved-invalid/invalid Config payload keeps the last valid report but must carry the
-    // external (invalid) TOML and a configuration file the Config tab can open. Serializing with a
     private static string OutcomeJson(string outcome, string message) =>
         JsonSerializer.Serialize(new { outcome, message });
 
     // A missing-file/read-failure problem carries which document it is about (the served
     // document or its configuration) so the client can route it through that controller's
-    // disk-change/conflict path instead of only flashing a banner.
+    // disk-change/conflict path.
     private static string ProblemJson(string message, string target) =>
         JsonSerializer.Serialize(new { message, target });
 
@@ -281,7 +280,7 @@ internal sealed class LiveSession
     // external (invalid) TOML and a configuration file the Config tab can open. Serializing with a
     // ConfigStatusOverlay guarantees a configuration.file (path and invalid source) plus the
     // saved-invalid status/message even when no valid configuration was ever applied; the outcome
-    // and message are then layered on for the save/reload state machine.
+    // and message are then added for the client's save and reload handling.
     private string InvalidConfigPayload(string source, string error, string outcome)
     {
         var overlay = new ConfigStatusOverlay(_configPath!, source, error);
@@ -292,9 +291,9 @@ internal sealed class LiveSession
         return node.ToJsonString();
     }
 
-    // A create retry for the config this session already adopted lost the race to the existing file:
-    // adopt it idempotently when it is still the starter template, otherwise report a conflict (the
-    // session already applies the file, so a reload opens it) and leave it untouched.
+    // A create retry for the config this session already adopted: adopt it again while it is still
+    // the starter template, otherwise report a conflict (the session already applies the file, so a
+    // reload opens it) and leave it untouched.
     private CreateConfigResult AdoptOrConflict(string configPath)
     {
         var existing = File.ReadAllText(configPath);
@@ -307,10 +306,10 @@ internal sealed class LiveSession
         return new CreateConfigResult(CreateConfigStatus.Adopted, AdoptConfig(configPath, existing));
     }
 
-    // A config-less session's create lost the race to a pre-existing file: adopt it without
-    // overwriting. An untouched starter template is a lost-create-response adoption; any other
-    // content is an existing configuration adopted as recovery (valid, or saved-invalid) so the
-    // session is no longer config-less and the frontend can reload and open it.
+    // A config-less session's create found a file already there: adopt it without overwriting. The
+    // starter template is a create whose first response was lost; any other content is an existing
+    // configuration, applied when valid or recorded as saved-invalid, which the client can reload
+    // and open.
     private CreateConfigResult AdoptExisting(string configPath)
     {
         var existing = File.ReadAllText(configPath);
@@ -494,8 +493,9 @@ internal sealed class LiveSession
         }
 
         // Publish the recompiled visualizer and config source/validity only now that AtomicFile has
-        // confirmed the write committed (or that there was nothing to write): a staging failure or a
-        // conflict throws above, so the session's rendered state never advances past disk.
+        // confirmed the write committed (or that there was nothing to write): a conflict or a failed
+        // write has already returned or thrown above, so the session's state never gets ahead of
+        // the disk.
         return immediate ?? PublishConfig(committed!);
     }
 

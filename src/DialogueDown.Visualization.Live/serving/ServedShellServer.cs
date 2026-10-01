@@ -12,10 +12,10 @@ namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// The loopback server behind the served shell. It serves the empty shell at <c>/</c>, browses the
-/// launch root for <c>.dialogue.md</c> sources, and on open swaps in a live session for
-/// the chosen source — served once (static) or watched — under <c>/r/</c>. Browsing and
-/// serving stay confined to the launch root (see <see cref="BrowseRoot"/>); the report is
-/// mounted under <c>/r/</c> so it never collides with the empty shell at <c>/</c>.
+/// launch root for <c>.dialogue.md</c> sources, and on open replaces the active document with a
+/// watched live session for the chosen source. Browsing and serving stay confined to the launch
+/// root (see <see cref="BrowseRoot"/>); the report is mounted under <c>/r/</c> so it never
+/// collides with the empty shell at <c>/</c>.
 /// </summary>
 internal sealed class ServedShellServer : IAsyncDisposable
 {
@@ -50,8 +50,8 @@ internal sealed class ServedShellServer : IAsyncDisposable
         _sessionFactory = sessionFactory ?? ((path, mode, displayPath) => new LiveSession(path, mode, displayPath: displayPath));
         // One watcher covers the served tree for the run's lifetime, but only from the first
         // document opened: registering with the operating system costs over a tenth of a second on
-        // macOS, and a run that only ever browses never needs it. Static files keep their own
-        // provider: that one must go on hiding sensitive files, and it never watches anything.
+        // macOS, and a run that only ever browses never needs it. Static files use their own
+        // provider, which hides dot-prefixed, hidden, and system files and watches nothing.
         _watches = new Lazy<TreeWatches>(() => new TreeWatches(root.RootDirectory));
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
@@ -71,7 +71,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
     public Task StartAsync() => _app.StartAsync();
 
     /// <summary>
-    /// Blocks until the web host shuts down — either a Ctrl+C / termination signal that
+    /// Completes when the web host shuts down — either a Ctrl+C / termination signal that
     /// the host's own console lifetime handles, or <paramref name="cancellationToken"/>
     /// (the command's token) — then stops the host. Returning is the signal to dispose.
     /// </summary>
@@ -132,9 +132,9 @@ internal sealed class ServedShellServer : IAsyncDisposable
         return parsed.Length != 0;
     }
 
-    // Served HTML is per-session and rebuilt on every launch, so it must never be cached: a stale
-    // report.html would render an old bundle against the live filesystem (wrong toggles, missing
-    // features). The empty shell follows the same rule.
+    // Served HTML is rebuilt for each session and carries that session's document, so it is never
+    // cached: a cached page would show an old document and link client assets this run may no
+    // longer serve. The empty shell follows the same rule.
     private static IResult NoStoreHtml(HttpContext context, string html)
     {
         context.Response.Headers.CacheControl = "no-store";
@@ -144,7 +144,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
     // The client itself is the same for every document and every session, so a page links it
     // instead of carrying it. Each asset is named after a hash of its own content, which is what
     // makes "never revalidate" safe: a rebuilt client is a different name, so this body cannot go
-    // stale. That is the opposite trade from the page above, which is why they are served apart.
+    // stale.
     private static IResult Asset(HttpContext context, string name)
     {
         if (ReportAssets.Find(AssetMount + "/" + name) is not { } asset)

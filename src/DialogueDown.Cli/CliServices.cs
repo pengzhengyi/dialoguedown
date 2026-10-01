@@ -17,8 +17,8 @@ internal static class CliServices
         services.AddSingleton<ProjectConfiguration>();
         services.AddSingleton<Func<CompilerOptions, IScriptCompiler>>(
             _ => options => ScriptCompilerFactory.CreateDefault(options));
-        // The stream a playbook goes to when no destination is named. Injected rather than
-        // reached for so a test can read what a compile emitted.
+        // The stream a playbook goes to when no destination is named; injected so a test can read
+        // what a compile emitted.
         services.AddSingleton(_ => Console.Out);
         services.AddSingleton<IPlaybookWriter>(_ => PlaybookWriterFactory.CreateDefault());
         services.AddSingleton<IErrataRenderer, ErrataRenderer>();

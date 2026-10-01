@@ -11,8 +11,9 @@ namespace DialogueDown.Cli.Fixing;
 /// A diagnostic's <see cref="LocatedDiagnostic.Fixes"/> is a list of alternatives, not a plan: its
 /// first element is the preferred, auto-applicable repair, and the rest are choices for the
 /// writer. Candidates are considered in ascending position with a fixed tie-break, so the
-/// compiler's emission order never decides which fix wins; the earliest fix in the file keeps a
-/// conflict, and it is applied as one atomic splice against the original offsets.
+/// compiler's emission order never decides which fix wins: of two overlapping fixes, the one
+/// earlier in the file is applied. The kept fixes are spliced in together against the original
+/// offsets.
 /// </remarks>
 internal static class FixApplier
 {
@@ -79,7 +80,7 @@ internal static class FixApplier
         candidate.Edits.Any(edit => kept.Edits.Any(keptEdit => Overlaps(edit, keptEdit)));
 
     // Half-open ranges, with a zero-width edit (an insertion) widened by one so that an insertion
-    // and a replacement at the same offset conflict, the way clang-tidy's overlap sweep treats them.
+    // conflicts with any other edit that starts at the same offset.
     private static bool Overlaps(LocatedEdit left, LocatedEdit right) =>
         left.StartOffset < EndOf(right) && right.StartOffset < EndOf(left);
 

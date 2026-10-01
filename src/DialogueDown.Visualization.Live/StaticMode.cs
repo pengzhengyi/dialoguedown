@@ -4,7 +4,7 @@ using DialogueDown.Visualization.Live.Files;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// The <c>visualize &lt;file&gt;</c> path: compile the document and write a
+/// The <c>visualize &lt;file&gt; -o &lt;path&gt;</c> path: compile the document and write a
 /// self-contained report, then open it in the browser unless suppressed. This is
 /// the offline artifact — no server.
 /// </summary>
