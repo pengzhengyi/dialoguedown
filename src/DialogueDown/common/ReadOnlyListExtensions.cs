@@ -28,9 +28,7 @@ internal static class ReadOnlyListExtensions
     /// <summary>
     /// A new list with the element at <paramref name="index"/> replaced by
     /// <paramref name="replacement"/>, or removed when <paramref name="replacement"/> is
-    /// <c>null</c>; every other element is kept in order. The source is not modified. This is the
-    /// shape a peel leaves behind — swap the leading element for what remains, or drop it when
-    /// nothing does.
+    /// <c>null</c>; every other element is kept in order. The source is not modified.
     /// </summary>
     public static IReadOnlyList<T> ReplaceOrRemoveAt<T>(
         this IReadOnlyList<T> source, int index, T? replacement)

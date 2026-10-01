@@ -4,12 +4,11 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Walks the blocks of a sequence — and of any body nested in it, a choice option's or a
-/// conditional block's branch — pairing each block with
-/// its <b>continuation</b>: the node control reaches once that block is done, which is the next
-/// block in its own sequence, or the sequence's own continuation when it is the last. Because an
-/// option's body continues where the choice itself would have, the arms of a branch weave back
-/// together:
+/// Walks the blocks of a sequence, and of any body nested in it (a choice option's or a control
+/// block's branch), pairing each block with its <b>continuation</b>: the node control reaches
+/// once that block is done, which is the next block in its own sequence, or the sequence's own
+/// continuation when it is the last. Because an option's body continues where the choice itself
+/// would have, the arms of a choice meet again:
 /// <code>
 /// Guide: Pick.        n0
 /// - Alice: Left.      n1 is the choice group; n2 is this arm's first block
@@ -22,8 +21,8 @@ namespace DialogueDown.Graph.Passes;
 ///                                                           ▼
 ///                                         n5 ──succession──▶ End
 /// </code>
-/// Both arms continue at <c>n5</c>, the choice's own continuation. A nested group repeats the
-/// shape one level down, so its arms weave back to wherever the enclosing body continues.
+/// Both arms continue at <c>n5</c>, the choice's own continuation. A nested group does the same
+/// one level down, so its arms meet again wherever the enclosing body continues.
 /// </summary>
 internal static class BlockSequence
 {
@@ -60,8 +59,8 @@ internal static class BlockSequence
         return entry.Count > 0 ? draft.IdOf(entry[0]) : continuation;
     }
 
-    // The bodies a block holds, which continue where the block itself does. Both branching kinds
-    // weave back the same way, so the walk does not care which kind it is descending into.
+    // The bodies a block holds; each continues where the block itself does, for choices and
+    // control blocks alike.
     private static IEnumerable<IReadOnlyList<ScriptBlock>> NestedBodies(ScriptBlock block) =>
         block switch
         {

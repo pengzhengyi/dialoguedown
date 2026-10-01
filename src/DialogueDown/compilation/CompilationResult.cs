@@ -6,12 +6,11 @@ namespace DialogueDown.Compilation;
 
 /// <summary>
 /// The outcome of one compilation: the original <see cref="Source"/>, the front-end artifacts
-/// every compile reaches, and the <see cref="Diagnostics"/> collected while compiling. Which
-/// ending it is, is its type — a <see cref="CompilationSuccess"/> carrying every stage artifact,
-/// or a <see cref="CompilationFailure"/> carrying how far the compile got. The stage artifacts
-/// and the diagnostics are internal — they are the compiler's own types, still under active
-/// design — so tooling that has friend access (the visualization project) can project them,
-/// while a public caller sees the source, a <see cref="HasErrors"/> convenience, and the located
+/// every compile reaches, and the <see cref="Diagnostics"/> collected while compiling. Its type
+/// says how the compile ended: a <see cref="CompilationSuccess"/> carries every stage artifact,
+/// and a <see cref="CompilationFailure"/> carries the artifacts reached before it stopped. The
+/// stage artifacts and the diagnostics are internal, read by the visualization project through
+/// friend access; a public caller sees the source, <see cref="HasErrors"/>, and the located
 /// diagnostics.
 /// </summary>
 public abstract record CompilationResult

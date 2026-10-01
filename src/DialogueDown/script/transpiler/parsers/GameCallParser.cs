@@ -11,6 +11,13 @@ namespace DialogueDown.Script.Transpiler.Parsers;
 /// command with arguments. It only recognizes shape; a separate builder makes the
 /// AST node and reports text that is not a game call.
 /// </summary>
+/// <remarks>
+/// <code>
+/// "Alice.FavoriteColor"          a query
+/// ("Alice joins Kung Fu")        a default command
+/// JoinClub("Alice", "Kung Fu")   a named command with arguments
+/// </code>
+/// </remarks>
 internal static class GameCallParser
 {
     // A comma between arguments may be padded with whitespace on either side, so

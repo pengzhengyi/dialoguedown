@@ -21,7 +21,6 @@ internal sealed class GameCallBuilder(IParser<GameCallData> parser)
             return ToNode(result.MatchedValue, span);
         }
 
-        // Not a game call: report and recover by keeping the text as literal speech.
         diagnostics.Report(new Diagnostic(DiagnosticCatalog.NotAGameCall, span, [input.Text]));
         return new Text(input.Text, span);
     }

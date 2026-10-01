@@ -11,6 +11,17 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// its child blocks at marker paragraphs. Branch bodies return to the owning
 /// <see cref="BlockBuilder"/>, so ordinary blocks and nested controls use the same recursive walk.
 /// </summary>
+/// <remarks>
+/// <code>
+/// &gt; `if` `Rich?`
+/// &gt;
+/// &gt; Alice: Welcome upstairs.
+/// &gt;
+/// &gt; `else`
+/// &gt;
+/// &gt; Alice: Try downstairs.
+/// </code>
+/// </remarks>
 internal sealed class ControlBlockBuilder(BlockBuilder blockBuilder)
 {
     /// <summary>

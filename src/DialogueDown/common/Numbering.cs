@@ -1,12 +1,13 @@
 namespace DialogueDown.Common;
 
 /// <summary>
-/// Gives each distinct thing the next number, in the order they are first seen.
+/// Gives each distinct thing the next number, counting from zero, in the order they are first
+/// seen.
 /// </summary>
 /// <remarks>
-/// The shape behind every "where does this sit in the written list?" question: a document's
-/// nodes, the speakers who say its lines. Repeats are free — asking twice about the same thing
-/// gives the same number back — so a caller can walk what it has without deduplicating first.
+/// Numbers a document's nodes, or the speakers who say its lines, in written order. Asking about
+/// the same thing twice gives the same number back, so a caller can pass everything it has
+/// without removing duplicates first.
 /// </remarks>
 /// <typeparam name="T">What is being numbered.</typeparam>
 internal sealed class Numbering<T>
@@ -19,9 +20,8 @@ internal sealed class Numbering<T>
     /// Initializes a new instance of the <see cref="Numbering{T}"/> class.
     /// </summary>
     /// <param name="comparer">
-    /// What counts as the same thing. Pass <see cref="ReferenceEqualityComparer.Instance"/> when
-    /// identity is the object rather than its value — two speakers may share a name and still be
-    /// two people.
+    /// What counts as the same thing. Pass <see cref="ReferenceEqualityComparer.Instance"/> to
+    /// number objects by identity rather than by value.
     /// </param>
     public Numbering(IEqualityComparer<T>? comparer = null) => _positions = new(comparer);
 
@@ -31,7 +31,7 @@ internal sealed class Numbering<T>
     /// <summary>
     /// Numbers everything in <paramref name="items"/>, in the order it comes.
     /// </summary>
-    /// <param name="items">What to number. Repeats are free and keep their first number.</param>
+    /// <param name="items">What to number. A repeat keeps its first number.</param>
     /// <param name="comparer">What counts as the same thing.</param>
     /// <returns>The numbering for those items.</returns>
     public static Numbering<T> Of(IEnumerable<T> items, IEqualityComparer<T>? comparer = null)
