@@ -5,7 +5,7 @@ using System.Text;
 namespace DialogueDown.Visualization.Render;
 
 /// <summary>
-/// The constant halves of a report: the client script, its stylesheet, and Mermaid's own build.
+/// The constant parts of a report: the client script, its stylesheet, and Mermaid's own build.
 /// A served report links them, so a browser downloads and compiles the client once and reuses it
 /// for every script it opens; an exported report inlines them, because a file that leaves the
 /// server has to work offline. Mermaid stays apart from the client in both shapes — it is the

@@ -1,10 +1,9 @@
 namespace DialogueDown.Visualization.Render;
 
 /// <summary>
-/// The category → color map for emitted diagrams, mirroring the report's on-screen
-/// palette so an exported Mermaid graph carries the same category signal (a code span
-/// and the game call it becomes are both red). The interactive report keeps its own
-/// copy in the web client; this is the .NET-side source for text renderers.
+/// The category → color map on the .NET side, using the colors the report's on-screen
+/// palette gives the same categories, so a code span and the game call it becomes are
+/// both red. The web client keeps its own copy.
 /// </summary>
 internal static class CategoryPalette
 {

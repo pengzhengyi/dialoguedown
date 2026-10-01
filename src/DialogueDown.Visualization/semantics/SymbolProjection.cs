@@ -92,7 +92,6 @@ internal sealed class SymbolProjection
         }
     }
 
-    // A small insertion-ordered, de-duplicating string collector (mirrors the browser scanner).
     private sealed class OrderedSet
     {
         private readonly HashSet<string> _seen = [];

@@ -1,8 +1,8 @@
 namespace DialogueDown.Visualization.Render;
 
 /// <summary>
-/// Reads a bundled client asset embedded in this assembly — the single
-/// self-contained report page built by the <c>web/</c> Vite project — so a
+/// Reads a client asset embedded in this assembly — the report page, script,
+/// stylesheet, or Mermaid build that the <c>web/</c> Vite project produces — so a
 /// generated report needs no files on disk.
 /// </summary>
 internal static class EmbeddedAsset

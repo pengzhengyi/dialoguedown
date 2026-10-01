@@ -100,8 +100,7 @@ internal sealed class GraphProjection
     }
 
     // A node reads as what a writer recognizes: a line by what is said, a branching node by what
-    // kind of branch it is, the sentinel by its name. How many ways it leads is not spelled out —
-    // the graph already draws one edge per way, and the label would only repeat the picture.
+    // kind of branch it is, the sentinel by its name.
     private static (string Label, string Category) LabelOf(DialogueNode node) => node switch
     {
         LineNode line => (LineLabel(line), SpeechCategory),
@@ -126,15 +125,13 @@ internal sealed class GraphProjection
             ? string.Join(", ", control.Effects.Select(EffectText))
             : JumpLabel(control);
 
-    // A bare jump's only out-edge is its divert, and the words the writer gave the jump travel
-    // there. The node says them too, because a drawing where every jump reads "(jump)" tells a
-    // reader only that each one is a jump — which the arrow leaving it already said. An unnamed
-    // jump keeps the plain word.
+    // A control line that only jumps is named by the words the writer gave the jump, which its
+    // divert edge carries, so jumps in a drawing can be told apart: `⇒ Back to the market`. A jump
+    // without words reads "(jump)".
     //
-    // The arrow is the rendered "⇒" rather than the "=>" a writer types: this is a drawing, and
-    // everywhere else the report *shows* a jump it shows the ligature, leaving the two characters
-    // to the source. One character rather than a styled span, because a label is clipped to a
-    // measured budget by rewriting its text, which would discard any structure inside it.
+    // The arrow is the single character "⇒", as the report shows "=>" wherever it draws a jump.
+    // It is not a styled span because a label is clipped to a measured budget by rewriting its
+    // text, which would discard any structure inside it.
     private static string JumpLabel(ControlNode control) =>
         control.Out
             .OfType<DivertEdge>()
@@ -169,7 +166,8 @@ internal sealed class GraphProjection
     }
 
     // An edge the walk followed to first reach its target is that node's parent in the layout;
-    // every other edge — a weave-back, a jump to an earlier scene — is drawn as a reference so the
+    // every other edge — an arm rejoining the flow, a jump to an earlier scene — is drawn as a
+    // reference so the
     // tree stays a tree while the flow stays complete. Its category says what kind of route it is,
     // so a reader tells a fall-through from a jump or a chosen arm by color.
     private static DisplayEdge Describe(DialogueNode from, Edge edge, SpanningTree layout) =>

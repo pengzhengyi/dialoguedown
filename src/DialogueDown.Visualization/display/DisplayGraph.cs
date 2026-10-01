@@ -17,21 +17,21 @@ public sealed record DisplayGraph(
     StageUnavailable? Unavailable = null)
 {
     /// <summary>
-    /// The named areas the nodes sit in — a scene, and later a file. Empty for a stage that has
-    /// no grouping to show.
+    /// The named areas the nodes sit in, such as scenes. Empty for a stage that has no grouping
+    /// to show.
     /// </summary>
     public IReadOnlyList<DisplayRegion> Regions { get; init; } = [];
 
     /// <summary>
     /// Whether a <see cref="DisplayEdgeKind.Child"/> edge nests the child's source inside the
-    /// parent's. True for a stage projected from a syntax tree, where a container's span is only
-    /// its header and its true reach comes from its children. False for a stage whose child edges
-    /// mark the spanning tree it is <em>drawn</em> with rather than what contains what — there a
-    /// node's own span already covers everything it holds, and following those edges would stretch
-    /// its reach along the flow instead.
+    /// parent's. True for a stage projected from a syntax tree, where a container's span can be
+    /// just its header (a scene covers only its heading) and its children hold the rest. False for
+    /// a stage whose child edges mark the spanning tree it is <em>drawn</em> with rather than what
+    /// contains what — there a node's own span already covers everything it holds, and following
+    /// those edges would extend its range along the flow.
     /// </summary>
     /// <remarks>
-    /// A reader relies on this when jumping from a source selection into a stage: it decides
+    /// The client relies on this when jumping from a source selection into a stage: it decides
     /// whether the node revealed is found by subtree extent or by span alone.
     /// </remarks>
     public bool Nests { get; init; } = true;

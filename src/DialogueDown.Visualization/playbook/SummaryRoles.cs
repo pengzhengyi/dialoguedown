@@ -4,10 +4,8 @@ namespace DialogueDown.Visualization.Playbook;
 /// What a summary segment is, as the report's payload names it.
 /// </summary>
 /// <remarks>
-/// A role is a fact about the text rather than a way of drawing it, so these names are a wire
-/// contract: the client's <c>SummaryRole</c> union lists exactly these, and each one maps to a class
-/// of its own. They are plain strings rather than an enum because a string is what crosses the wire,
-/// the same way <c>NodeKinds</c> names a node's kind.
+/// A role says what the text is, not how to draw it. These names are a wire contract: the
+/// client's <c>SummaryRole</c> union lists exactly these.
 /// </remarks>
 internal static class SummaryRoles
 {
