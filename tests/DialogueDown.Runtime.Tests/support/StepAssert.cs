@@ -30,6 +30,7 @@ internal static class StepAssert
     /// <param name="expected">
     /// Each event written out: <c>said Alice 'Hello. '</c>, <c>continued ' Bye.'</c>,
     /// <c>perform Wave()</c>, <c>perform ("fade in")</c>, <c>resolve playerName, Rainy</c>,
+    /// <c>offer 'Go east', 'Go west'</c>, <c>offer ordered 'Open the door' unavailable</c>,
     /// <c>ended</c>, or <c>refused Misplaced</c>. Words sit in quotes so a space shows, and the
     /// default speaker is written <c>nobody</c>.
     /// </param>
@@ -103,6 +104,12 @@ internal static class StepAssert
     public static void AssertAwaitingDone(PlayState state, int node) =>
         Assert.Equal(new AwaitingDone(node, new Resume.FromNodeEnd()), state.Situation);
 
+    /// <summary>Asserts a step left the run waiting for the player to choose at a menu.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="node">The menu it should be waiting at.</param>
+    public static void AssertAwaitingChoice(StepResult result, int node) =>
+        Assert.Equal(new AwaitingChoice(node), result.State.Situation);
+
     /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>
@@ -142,8 +149,13 @@ internal static class StepAssert
                 $"perform {command.Name}({string.Join(", ", command.Args)})",
             Perform { Effect: DefaultCommandFragment command } => $"perform (\"{command.Action}\")",
             Resolve resolve => $"resolve {string.Join(", ", resolve.Keys)}",
+            Offer offer => $"offer {(offer.Ordered ? "ordered " : string.Empty)}"
+                + string.Join(", ", offer.Options.Select(WrittenOut)),
             Ended => "ended",
             Refused refused => $"refused {refused.Reason}",
             _ => throw new NotSupportedException($"No written form is defined for {happened}."),
         };
+
+    private static string WrittenOut(OfferedOption option) =>
+        $"'{SpeechText.Of(option.Label)}'{(option.Available ? string.Empty : " unavailable")}";
 }
