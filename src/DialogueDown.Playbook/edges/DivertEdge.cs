@@ -22,9 +22,9 @@ public sealed partial record DivertEdge(
     /// Gets what the writer called this jump.
     /// </summary>
     /// <remarks>
-    /// Carried because it exists nowhere else: a jump is written inside a line but is no part of
-    /// what that line says, so without this the words are gone. A host may show them, use them as
-    /// a hint, or ignore them.
+    /// The link text of the jump: <c>=&gt; [Play tennis](#play-tennis)</c> has the label
+    /// <c>Play tennis</c>. It is not part of the line's speech, so it is kept here. A host may show
+    /// it, use it as a hint, or ignore it.
     /// </remarks>
     [OrderedEquality]
     [JsonPropertyOrder(2)]

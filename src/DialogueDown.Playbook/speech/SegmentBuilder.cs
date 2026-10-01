@@ -4,15 +4,16 @@ using DialogueDown.Playbook.Common;
 namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
-/// Speech under division: the segments closed so far, and the words gathered since the last one.
+/// Splits speech into segments at each command: the segments closed so far, and the words
+/// gathered since the last command.
 /// </summary>
 /// <remarks>
 /// Fragments are taken in the order they were written. Words gather until a command arrives, which
 /// closes a segment around them, and <see cref="Freeze"/> closes whatever words are left over.
 /// <para>
-/// Emphasis is divided by a command written inside it. The children are taken by a builder of
-/// their own, and each side comes back out emphasized again, so <c>*polished `Shine()` bright*</c>
-/// keeps both halves bold rather than losing the styling where it was divided.
+/// A command inside emphasis splits the emphasis. Its children are taken by a builder of their
+/// own, and the words on each side are wrapped in the same style again, so
+/// <c>*polished `Shine()` bright*</c> keeps both halves italic.
 /// </para>
 /// </remarks>
 internal sealed class SegmentBuilder
@@ -26,7 +27,7 @@ internal sealed class SegmentBuilder
     /// <summary>Whether a command has divided this speech.</summary>
     public bool IsDivided => _closed.Count > 0;
 
-    /// <summary>Takes a whole run of speech and hands back what it came to.</summary>
+    /// <summary>Creates a builder that has taken all of the given speech.</summary>
     /// <param name="speech">The speech to take.</param>
     /// <returns>A builder that has taken all of it.</returns>
     public static SegmentBuilder Of(ImmutableArray<SpeechFragment> speech)
@@ -37,8 +38,8 @@ internal sealed class SegmentBuilder
         return builder;
     }
 
-    /// <summary>Takes a run of speech, in the order it was written.</summary>
-    /// <param name="speech">The speech to take. An empty run leaves the builder as it was.</param>
+    /// <summary>Takes each fragment of the speech, in the order it was written.</summary>
+    /// <param name="speech">The speech to take. Empty speech leaves the builder as it was.</param>
     public void TakeAll(ImmutableArray<SpeechFragment> speech)
     {
         foreach (var fragment in speech.OrEmpty())
@@ -50,7 +51,7 @@ internal sealed class SegmentBuilder
     /// <summary>Takes one fragment, which either joins the current words or closes them off.</summary>
     /// <param name="fragment">The fragment to take.</param>
     /// <exception cref="NotSupportedException">
-    /// The fragment is of a kind this has never been taught to divide on or say.
+    /// The fragment is of a kind this builder does not handle.
     /// </exception>
     public void Take(SpeechFragment fragment)
     {
@@ -82,19 +83,18 @@ internal sealed class SegmentBuilder
         }
     }
 
-    /// <summary>Closes the words left over and reads out every segment.</summary>
+    /// <summary>Closes the words left over and returns every segment.</summary>
     /// <returns>
     /// The segments, in written order. Always at least one, so speech that says nothing still
-    /// reads as a single silent segment.
+    /// reads as a single segment with no words and no command.
     /// </returns>
     public ImmutableArray<SpeechSegment> Freeze() =>
-        // Speech ending in a command has already had its last segment closed by that command. The
-        // emptiness check is what still gives speech saying nothing a segment to be nothing in.
+        // Speech ending in a command already closed its last segment. Empty speech still gets one
+        // segment, with no words and no command.
         _words.Count > 0 || !IsDivided
             ? _closed.ToImmutable().Add(new SpeechSegment(_words.ToImmutable(), Command: null))
             : _closed.ToImmutable();
 
-    // Joins the words being gathered, exactly as it stands.
     private void TakeWord(SpeechFragment fragment) => _words.Add(fragment);
 
     // The words gathered so far are said, and then this command is performed.
@@ -113,8 +113,7 @@ internal sealed class SegmentBuilder
             return;
         }
 
-        // The inner builder's segments are cut open into this one, so a division found inside the
-        // emphasis becomes a division out here. Each side is emphasized again on its way across.
+        // Move the inner segments into this builder, wrapping each one's words in the same style.
         foreach (var segment in inner._closed)
         {
             TakeStyledWords(styled.Style, segment.Words);
@@ -128,8 +127,8 @@ internal sealed class SegmentBuilder
         TakeStyledWords(styled.Style, inner._words.ToImmutable());
     }
 
-    // Styling with nothing inside it would show a reader an emphasis around no words at all, which
-    // is what a command opening or closing an emphasized run would otherwise leave behind.
+    // Skips empty styling, which a command at the start or end of the emphasis would otherwise
+    // leave behind.
     private void TakeStyledWords(SpeechStyle style, ImmutableArray<SpeechFragment> children)
     {
         if (!children.IsEmpty)

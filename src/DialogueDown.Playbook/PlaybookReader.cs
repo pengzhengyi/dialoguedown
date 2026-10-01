@@ -7,10 +7,9 @@ namespace DialogueDown.Playbook;
 /// Loads a playbook, refusing anything it cannot play exactly as written.
 /// </summary>
 /// <remarks>
-/// A gatekeeper before it is a parser. Unlike most formats, an unknown construct here cannot be
-/// skipped: a dropped condition does not error, it silently tells a different story. What counts
-/// as playable is the checker's to say, so a runtime that reads fewer constructs than this build
-/// can supply its own rather than inherit these.
+/// An unknown construct is refused, never skipped: skipping a condition raises no error but plays
+/// a different story. The checker decides what is playable, so a runtime that reads fewer
+/// constructs than this build can pass its own.
 /// </remarks>
 public sealed class PlaybookReader
 {
