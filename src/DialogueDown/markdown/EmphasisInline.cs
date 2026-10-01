@@ -2,7 +2,7 @@ using DialogueDown.Common;
 namespace DialogueDown.Markdown;
 
 /// <summary>
-/// Emphasized text — italic or bold (see <see cref="Kind"/>). <see cref="Children"/>
+/// Emphasized text: italic, bold, or strikethrough (see <see cref="Kind"/>). <see cref="Children"/>
 /// are the parsed inline contents, so a query, jump, image, or nested emphasis
 /// inside keeps its structure. This layer records only that the text is styled;
 /// how it renders is decided downstream.

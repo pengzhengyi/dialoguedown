@@ -9,8 +9,8 @@ namespace DialogueDown.Emission;
 /// </summary>
 /// <remarks>
 /// Nothing is flattened to a string, because a host re-renders it: Godot as BBCode, the report
-/// as HTML, a terminal as ANSI. Styles, links, and image labels therefore stay nested, and tags stay
-/// where in the line they attached rather than being hoisted beside it.
+/// as HTML, a terminal as ANSI. Styles, links, and image labels therefore stay nested, and tags
+/// stay where in the line they attached rather than being hoisted beside it.
 /// </remarks>
 internal static class SpeechMapping
 {

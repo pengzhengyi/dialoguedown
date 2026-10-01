@@ -10,7 +10,7 @@ internal static class DiagnosticCatalog
 {
     // Syntax — DLG1xxx: a problem in how a line or block is written.
 
-    /// <summary>DLG1003 — content follows a jump on the same line, so it can never play.</summary>
+    /// <summary>DLG1003 — content follows a jump on its line, so it can never play.</summary>
     public static readonly DiagnosticDescriptor UnreachableContentAfterJump = new(
         "DLG1003",
         "Unreachable content after a jump",

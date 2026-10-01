@@ -36,9 +36,9 @@ internal static class MarkdownInlineExtensions
 
     /// <summary>
     /// The inlines with any leading whitespace removed from the first text inline (a
-    /// whitespace-only leading inline is dropped). This lets a caller that peels a leading
-    /// inline — such as a random choice's weight — leave clean content behind, so the remainder
-    /// reads as if the peeled inline were never there.
+    /// whitespace-only leading inline is dropped). A caller that splits off a leading inline,
+    /// such as a random choice's weight, uses this to leave the rest reading as if that inline
+    /// were never there.
     /// </summary>
     public static IReadOnlyList<MarkdownInline> TrimLeadingWhitespace(
         this IEnumerable<MarkdownInline> inlines)
@@ -73,9 +73,9 @@ internal static class MarkdownInlineExtensions
     };
 
     /// <summary>
-    /// The plain text of a run of inlines, concatenated (see
-    /// <see cref="PlainText(MarkdownInline)"/>), or <c>null</c> when any inline in the run has no
-    /// plain-text form.
+    /// The plain text of a sequence of inlines, concatenated (see
+    /// <see cref="PlainText(MarkdownInline)"/>), or <c>null</c> when any of them has no plain-text
+    /// form.
     /// </summary>
     public static string? PlainText(this IEnumerable<MarkdownInline> inlines)
     {

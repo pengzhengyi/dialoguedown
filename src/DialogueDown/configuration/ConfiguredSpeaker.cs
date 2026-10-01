@@ -58,7 +58,9 @@ public sealed partial record ConfiguredSpeaker
         init => _reservedTags = value.AssertInitialized(nameof(ReservedTags));
     }
 
-    /// <summary>Deconstructs the speaker into its name, id, custom tags, and reserved tags.</summary>
+    /// <summary>
+    /// Deconstructs the speaker into its name, id, custom tags, and reserved tags.
+    /// </summary>
     public void Deconstruct(
         out string name,
         out string? id,
