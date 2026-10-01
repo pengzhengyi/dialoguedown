@@ -14,7 +14,9 @@ internal sealed class AnchorTable
 {
     private readonly Dictionary<string, Scene> _sceneByAnchor = [];
 
-    /// <summary>The scene for <paramref name="anchor"/>, or null when no scene slugs to it.</summary>
+    /// <summary>
+    /// Finds the scene for <paramref name="anchor"/>; false when no scene slugs to it.
+    /// </summary>
     public bool TryResolve(string anchor, [MaybeNullWhen(false)] out Scene scene) =>
         _sceneByAnchor.TryGetValue(anchor, out scene);
 

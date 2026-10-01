@@ -6,10 +6,10 @@ using DialogueDown.Script.Desugar;
 namespace DialogueDown.Script.Validation;
 
 /// <summary>
-/// Warns at the first choice group beyond the recommended nesting depth on each branch. A group
-/// is a player <see cref="Choices"/> or a <see cref="RandomChoices"/>; both add source-indentation
-/// depth, so both count. Deeper descendants do not repeat the same advice; separately over-nested
-/// sibling branches still report independently.
+/// Warns at the first choice group nested deeper than the recommended depth. A group is a player
+/// <see cref="Choices"/> or a <see cref="RandomChoices"/>; both add source-indentation depth, so
+/// both count. Groups nested further inside the warned one are not warned again; a sibling that
+/// is also too deep is warned separately.
 /// </summary>
 internal sealed class ChoiceNestingDepthRule : DiagnosticRule
 {

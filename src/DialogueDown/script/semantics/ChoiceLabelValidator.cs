@@ -8,10 +8,9 @@ namespace DialogueDown.Script.Semantics;
 /// about a blank row before a player is offered one.
 /// </summary>
 /// <remarks>
-/// The compile invents nothing for such an arm: reading words off the node it leads to would put
-/// somebody else's line in the player's mouth, so an unlabelled arm stays unlabelled and this says
-/// so instead. Only a player choice is checked — a random arm is picked by the engine and never
-/// shown, so it carries a weight rather than words.
+/// No label is made up for such an arm; it stays unlabelled and is reported. Only a player choice
+/// is checked — a random arm is picked by the engine and never shown, so it carries a weight
+/// rather than words.
 /// </remarks>
 internal static class ChoiceLabelValidator
 {

@@ -14,7 +14,7 @@ namespace DialogueDown.Script.Transpiler.Builders;
 internal static class ConditionReader
 {
     // Null unless the whole code span is a key followed by a trailing '?'. Whitespace around
-    // the key and the sign is insignificant, matching a value query and a dynamic weight.
+    // the key and the sign is insignificant, matching a dynamic weight.
     public static Condition? Read(string content, SourceSpan span)
     {
         var value = content.Trim();

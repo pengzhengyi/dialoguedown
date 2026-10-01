@@ -18,9 +18,10 @@ internal static class SceneExtensions
     }
 
     /// <summary>
-    /// The block reaching each scene lands on: the scene's first block, or — when the scene owns
+    /// The block where play enters each scene: the scene's first block, or — when the scene owns
     /// no content of its own — the next block in reading order, since an empty scene falls through
-    /// like any exhausted one. It is null when nothing follows, so reaching the scene ends the run.
+    /// like any exhausted one. It is null when nothing follows, so reaching the scene ends the
+    /// dialogue.
     /// </summary>
     public static IReadOnlyDictionary<Scene, ScriptBlock?> EntryBlocks(this Scene root)
     {
