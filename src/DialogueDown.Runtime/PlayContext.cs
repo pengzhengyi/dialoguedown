@@ -4,16 +4,11 @@ using DialogueDown.Playbook.Nodes;
 namespace DialogueDown.Runtime;
 
 /// <summary>
-/// What a run needs and never changes, and how to read it.
+/// What a run needs and never changes: the playbook, and lookups into it.
 /// </summary>
 /// <remarks>
-/// A container, so that what a run depends on can grow -- entropy settings, the capabilities
-/// whoever drives it declared -- while the signature every part of the runtime calls stays put.
-/// <para>
-/// It also owns how a playbook is addressed. A position is an index today and becomes a qualified
-/// reference once play can cross into another script, so keeping the lookup here means that change
-/// lands in one place rather than at every site that reads a node.
-/// </para>
+/// The runtime looks up nodes and speakers only through <see cref="NodeAt"/> and
+/// <see cref="SpeakerName"/>, so how a position addresses the playbook is decided in one place.
 /// </remarks>
 public sealed class PlayContext
 {
@@ -40,7 +35,7 @@ public sealed class PlayContext
     /// <returns>The node standing there.</returns>
     public Node NodeAt(int position) => Playbook.Nodes[position];
 
-    /// <summary>Who speaks under an index.</summary>
+    /// <summary>The name of the speaker at an index.</summary>
     /// <param name="speaker">The speaker's position in the playbook's speaker table.</param>
     /// <returns>Their name, or <see langword="null"/> for the anonymous default speaker.</returns>
     public string? SpeakerName(int speaker) => Playbook.Speakers[speaker].Name;

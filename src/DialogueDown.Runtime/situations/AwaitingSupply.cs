@@ -9,14 +9,16 @@ namespace DialogueDown.Runtime.Situations;
 /// The run has reached the node and read what it needs, but cannot say what the node means until
 /// the world replies. A guarded line waits here before anyone learns whether it is spoken at all.
 /// <para>
-/// The keys are kept here because nowhere else remembers them. The runner holds nothing between
-/// steps, so when the answers arrive this is what they are held to: exactly these keys, no more
-/// and no fewer. The moment is kept for the same reason: it says which reading of the world the
-/// answers belong to.
+/// The runner keeps nothing between steps, so the keys asked about are stored here, and the
+/// <c>Supply</c> must answer exactly these keys. The moment says which point in the node the
+/// answers are for.
 /// </para>
 /// </remarks>
 /// <param name="Node">The node's position in the playbook.</param>
 /// <param name="Keys">The keys the run asked the world about.</param>
-/// <param name="Moment">Where in the node the keys were asked: before playing, or before leaving.</param>
+/// <param name="Moment">
+/// Where in the node the keys were asked: before playing, before a line continues after a command,
+/// or before leaving.
+/// </param>
 public sealed record AwaitingSupply(
     int Node, ImmutableArray<string> Keys, Moment Moment) : Situation;

@@ -4,7 +4,7 @@ namespace DialogueDown.Runtime.Protocol;
 /// The world answers with words.
 /// </summary>
 /// <remarks>
-/// What a query in speech is owed. A writer puts a key in the middle of a line —
+/// The answer a query in speech needs. A writer puts a key in the middle of a line —
 /// <c>Alice: Hello, `"playerName"`.</c> — because the words belong to the running game rather
 /// than to the script: the player chose them, or another scene set them.
 /// <para>
