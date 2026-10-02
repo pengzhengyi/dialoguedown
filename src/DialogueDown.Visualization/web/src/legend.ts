@@ -65,8 +65,8 @@ export interface LegendHandlers {
 }
 
 /**
- * Folding every region at once, as the report's shared contract describes it: two commands rather
- * than one toggle, because from a mixed view a single control cannot name what it would do.
+ * Folding every region at once: two commands rather than one toggle, because from a mixed view a
+ * single toggle cannot say what it would do.
  */
 export interface RegionFoldCommands {
     onExpandAll(): void;
@@ -82,9 +82,8 @@ export function setRegionFoldState(
     folded: ReadonlySet<string>,
     total: number,
 ): void {
-    // Each row shows its own scene's state in its swatch: a filled mark holds its nodes, a hollow
-    // one has put them away. That is a status, so it stays a mark rather than borrowing the
-    // chevron the report uses for the action.
+    // Each row's swatch shows its own region's state: filled when open, hollow when folded. It is
+    // a status mark, not the chevron the report uses for the fold action.
     for (const row of legend.querySelectorAll<HTMLElement>(".legend-region")) {
         const region = row.dataset.region ?? "";
         const shut = folded.has(region);
@@ -104,8 +103,8 @@ export function setRegionFoldState(
 
 /**
  * Build the interactive legend for a stage: one row per category present, showing
- * its color, the stage's own type name(s), and a node count. Clicking a row
- * toggles it (dimming); hovering highlights it.
+ * its color, the stage's own type name(s), and a node count, then edge and region rows
+ * where the stage has them. Clicking a row toggles it (dimming); hovering highlights it.
  */
 export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElement {
     const { regionFold } = handlers;
@@ -118,12 +117,9 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     const legend = document.createElement("div");
     legend.className = "legend";
 
-    // The legend floats over the drawing it describes, and it has grown — nodes, edges, and now
-    // regions. A reader who has learned it can fold it away and have the canvas back.
-    //
-    // Both glyphs are rendered and the stylesheet shows one, as the inspector's own collapse
-    // toggle does: the close mark the rest of the app dismisses a floating panel with, and — once
-    // folded — a list, which is what a legend is.
+    // The legend floats over the drawing it describes, so a reader can fold it away to see the
+    // whole canvas. Both glyphs are rendered and the stylesheet shows one: the close mark while
+    // open, and a list once folded.
     const fold = document.createElement("button");
     fold.type = "button";
     fold.className = "legend-fold";
@@ -165,8 +161,8 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         }
     }
 
-    // Edges only carry a meaning on a stage that has kinds of route to tell apart, so the edge
-    // group appears there and nowhere else — and with it, the heading that names the other group.
+    // Only a stage whose edges carry categories gets an edge group. Group headings appear only
+    // when there is more than the node group.
     const edgeCounts = edgeCategoryCounts(stage.edges);
     const edgeItems = Object.keys(CATEGORY_COLORS)
         .filter((category) => edgeCounts[category])
@@ -176,8 +172,8 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     // rows behave as the others do: hover to pick it out, click to fade it.
     const regions = regionCounts(stage.nodes);
     const tints = tintsOf(stage.nodes.map((node) => node.region));
-    // A region is grouped under the kind of grouping it is — a scene today, a file later — so the
-    // legend already has a shelf to put the next kind on.
+    // Regions are grouped by kind, such as "Scene"; a region the stage gives no kind falls
+    // under "Region".
     const byKind = new Map<string, HTMLElement[]>();
     for (const [name, count] of regions) {
         const kind = stage.regions?.find((each) => each.name === name)?.kind ?? "Region";
@@ -198,7 +194,7 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     }
     return legend;
 
-    /** One kind of region, as a disclosure the reader can fold away when it is not the question. */
+    /** One kind of region, as a disclosure the reader can fold away. */
     function kindGroup(kind: string, rows: HTMLElement[]): HTMLElement {
         const group = document.createElement("div");
         group.className = "legend-kind";
@@ -272,8 +268,8 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
         // string, and a region name cannot collide with a palette category.
         const item = interactiveItem(name, name, count);
         item.classList.add("legend-region");
-        // "Nodes" is what a region's number counts, and the "Regions" heading above cannot say so
-        // the way the "Nodes" and "Edges" headings do for their own rows.
+        // The count names its unit: unlike "Nodes" and "Edges", the "Regions" heading does not
+        // say what a region row counts.
         item.querySelector<HTMLElement>(".count")!.textContent =
             `${count} ${count === 1 ? "node" : "nodes"}`;
         item.dataset.region = name;
@@ -292,8 +288,7 @@ export function createLegend(stage: Stage, handlers: LegendHandlers): HTMLElemen
     }
 
     // An edge row names the route and shows a line rather than a dot, so it never reads as a node.
-    // It answers to the pointer exactly as a node row does: a route is as worth isolating as a
-    // kind of node, and a row that looks alike but behaves differently only misleads.
+    // Hover and click work on it as they do on a node row.
     function edgeItem(category: string, count: number): HTMLButtonElement {
         const style = edgeStyle(category);
         const item = interactiveItem(category, style?.label ?? category, count);

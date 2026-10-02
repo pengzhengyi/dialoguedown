@@ -3,8 +3,8 @@ import type { LspPosition } from "./model";
 
 /**
  * Resolve a zero-based LSP position to a document offset in `state`, clamped inside the
- * buffer. Shared by the diagnostics overlay and the semantic-token highlighting so both map
- * the compiler's LSP geometry onto the editor the same way (mirroring the .NET `LspLineMap`).
+ * buffer. Shared by the diagnostics overlay, the semantic-token highlighting, and the source
+ * view, so all of them map the compiler's LSP positions onto the editor the same way.
  *
  * A line past the last one is a stale range (the buffer shrank since the compile); it clamps
  * to the very end so a marker still shows rather than jumping to the wrong line. The

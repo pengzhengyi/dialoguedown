@@ -5,8 +5,8 @@ import { edgeStyle } from "./edge-style";
  * Whether an edge is one control actually travels.
  *
  * Not every line on the drawing is flow: a placement link only says where an unreachable node
- * sits in the document. It earns a line so the node is not adrift, but it is not something a
- * reader can follow, so it has no place in a list of where control comes from or goes.
+ * sits in the document, so the node is drawn attached to something. Control never travels it,
+ * so it is left out of a list of where control comes from or goes.
  */
 export function isFlow(edge: DisplayEdge): boolean {
     return edgeStyle(edge.category)?.isRoute !== false;
@@ -26,12 +26,7 @@ export function isFlowStage(stage: Stage): boolean {
     return stage.nests === false;
 }
 
-/**
- * One end of an edge, seen from the node on the other end of it.
- *
- * Named for what a reader is looking for — *which* node, reached *how* — rather than for the
- * edge record it came from.
- */
+/** One end of an edge, seen from the node on the other end of it. */
 export interface Neighbor {
     /** The node at the other end, so a row can take the reader there. */
     id: string;
