@@ -10,7 +10,7 @@ export interface NodeDetailPanelOptions {
     /** Jump to the shown node's source in the Source tab (selecting a span, or placing the caret
      *  for a synthetic node). Absent when there is no Source tab to jump to. */
     jumpToSource?: (span: Span) => void;
-    /** The active stage has recognized Dialogue jump syntax. */
+    /** Whether the active stage has recognized Dialogue jump syntax. */
     recognizeJumps?: boolean;
 }
 

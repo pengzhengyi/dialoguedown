@@ -52,8 +52,7 @@ import { playbookReferences, playbookReferenceKeymap } from "./playbook-referenc
  *
  * The roles are VS Code's — a key, a string, a number, and a literal each on their own hue —
  * because a playbook is nearly all quoted strings and shades of one blue would not separate
- * them. The Lezer grammar is what makes it possible at all: the legacy tokenizer this replaced
- * emitted a single token for a property name and a string value alike.
+ * them.
  *
  * Punctuation is the exception, muted rather than VS Code's plain black. This editor is read,
  * not written, so the braces that give a block its shape should recede behind the data.
@@ -157,7 +156,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
     });
 }
 
-/** The left pane when the compile never reached a playbook — the same news the graph tab gives. */
+/** The left pane when the compile produced no playbook: the reason, and where to fix it. */
 function renderUnavailable(reason: string | undefined): HTMLElement {
     const note = document.createElement("div");
     note.className = "playbook-empty-state";
@@ -299,8 +298,8 @@ function anchorTable(anchors: readonly PlaybookAnchorView[]): SemanticTable {
 
 /**
  * The class each summary role wears in the Nodes table. A writer's own words (`plain`) carry
- * none, so they keep the cell's own color while the report's scaffolding steps back; so do the
- * roles whose meaning is drawn rather than painted — a boundary is a break and a target is a link.
+ * none, so they keep the cell's own color while the report's own words are muted. Nor do the
+ * roles drawn by shape rather than color: a boundary is a break and a target is a link.
  */
 const SUMMARY_SEGMENT_CLASS: Record<SummaryRole, string | undefined> = {
     speaker: "dd-sum-speaker",
@@ -375,7 +374,7 @@ const TARGET_TIP_FALLBACK: PieceTip = {
     meaning: "A node control can reach from here.",
 };
 
-/** What a piece that can be followed adds to its own meaning. */
+/** The line added to the tip of a piece that names a node. */
 const TARGET_HINT = '<div class="tip-label">Click to reveal it in the playbook.</div>';
 
 /**
@@ -419,8 +418,8 @@ function drawnSegment(segment: PlaybookSegmentView, kind: string): SemanticSegme
 
 /**
  * A node's summary as a list: what reads before the first boundary introduces it, and each group
- * after a boundary is one item. Null for a summary that is a single line — one item is not a list,
- * and a summary with no boundaries is written as the one line it is.
+ * after a boundary is one item. Null for fewer than two items: one item is not a list, so that
+ * summary is written as one line.
  */
 function summaryList(node: PlaybookNodeView): SemanticList | null {
     const lead: PlaybookSegmentView[] = [];
@@ -446,7 +445,6 @@ function summaryList(node: PlaybookNodeView): SemanticList | null {
     };
 }
 
-/** The text of one drawn line, which is its pieces joined. */
 function lineText(line: SemanticSegment[]): string {
     return line.map((segment) => segment.text).join("");
 }
@@ -490,8 +488,6 @@ function nodeTable(nodes: readonly PlaybookNodeView[]): SemanticTable {
                     // The kind wears the color the Dialogue Graph gives it, so the table and the
                     // drawing name a node the same way.
                     { text: node.kind, category: node.category },
-                    // The words a writer wrote keep the plain color while the report's own
-                    // scaffolding steps back, so the speech is what the eye lands on.
                     summaryCell(node),
                     waysOut(node.targets),
                 ],

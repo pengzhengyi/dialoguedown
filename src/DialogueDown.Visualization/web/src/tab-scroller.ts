@@ -2,8 +2,8 @@
  * Arrow controls for the stage-tab row. The row scrolls horizontally on a narrow window, but
  * a horizontal scroll gesture is not something every pointing device offers — a plain wheel
  * mouse or a trackpad-less desktop has no way to reach an off-screen tab except by tabbing
- * through it. These give that reader an explicit control, the way Material's scrollable tabs
- * do, and stay out of the way entirely when the whole row already fits.
+ * through it. These give that reader an explicit control, and stay hidden when the whole row
+ * already fits.
  */
 
 /** How much of the visible row a single press travels, leaving a tab of context behind. */
@@ -35,7 +35,7 @@ function arrow(label: string, path: string): HTMLButtonElement {
 
 /**
  * Build the two arrows for `tabs` and keep them in step with its scroll position. Both are
- * hidden while the row fits, and the arrow at a spent end is disabled rather than removed, so
+ * hidden while the row fits, and the arrow at an end already reached is disabled, not removed, so
  * pressing repeatedly toward one end never shifts the other control out from under the cursor.
  */
 export function createTabScroller(tabs: HTMLElement): TabScroller {

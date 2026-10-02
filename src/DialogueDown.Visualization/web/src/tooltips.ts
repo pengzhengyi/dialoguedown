@@ -32,9 +32,10 @@ export function initTooltips(parent: Element): void {
 }
 
 /**
- * Hover tooltips (Tippy.js) over the labeled pieces of a table's cells, showing what each piece
- * means (from its `data-tip`). Opened beside the piece, because a piece is a word or two rather
- * than a line the reader is following. Delegation covers a table rebuilt on a search or a sort.
+ * Hover tooltips (Tippy.js) over the labeled pieces of a table's cells or the Source preview,
+ * showing what each piece means (from its `data-tip`). Opened beside the piece, because a piece is
+ * a word or two rather than a line the reader is following. Delegation covers a table rebuilt on a
+ * search or a sort, and a preview rebuilt on an edit.
  */
 export function initPieceTooltips(parent: Element): void {
     delegate(parent, {

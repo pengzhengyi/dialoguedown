@@ -14,7 +14,7 @@ export function sanitizePreviewHtml(html: string): string {
     });
 }
 
-/** Replace a preview host's contents through the one author-controlled HTML boundary. */
+/** Replace a preview host's contents with the sanitized form of author-written HTML. */
 export function mountPreviewHtml(host: Element, html: string): void {
     host.innerHTML = sanitizePreviewHtml(html);
 }

@@ -108,9 +108,9 @@ export const markdownHighlightStyle = HighlightStyle.define([
     { tag: [tags.link, tags.url], color: "var(--md-link)", textDecoration: "underline" },
     { tag: tags.monospace, color: "var(--md-code)" },
     { tag: tags.meta, color: "var(--md-muted)" },
-    // A blockquote is never decoration here: a marker-headed quote is a control block, and any
-    // other quote is a transparent wrapper whose contents are dialogue. Muting it would gray out
-    // live dialogue, and the compiler's own tokens already color what is inside.
+    // No entry mutes a blockquote: a marker-headed quote is a control block, and any other quote
+    // is a transparent wrapper whose contents are dialogue. Muting it would gray out live
+    // dialogue, and the compiler's own tokens already color what is inside.
     {
         tag: tags.comment,
         color: "var(--md-muted)",
@@ -186,9 +186,9 @@ function runInEditor(view: EditorView, command: StateCommand): void {
     view.focus();
 }
 
-/** Move keyboard focus out of the editor — the escape hatch that pairs with Tab-to-indent so the
- *  editor is never a keyboard trap. Bound to Escape at low precedence, below a completion or search
- *  dismiss, so it only fires when there is nothing else to close. */
+/** Move keyboard focus out of the editor, so that with Tab bound to indent the editor is never a
+ *  keyboard trap. Bound to Escape at low precedence, below a completion or search dismiss, so it
+ *  only fires when there is nothing else to close. */
 const blurEditor = (view: EditorView): boolean => {
     view.contentDOM.blur();
     return true;
@@ -223,13 +223,13 @@ const smartTab = (view: EditorView): boolean => {
  * - **keydown** binds the blockquote shortcut to the **Period key** (which bears `.` and `>`),
  *   with Shift choosing the direction: **Cmd/Ctrl+.** quotes, **Cmd/Ctrl+Shift+.** unquotes. It
  *   matches the physical key (`event.code === "Period"`) as well as the reported character, because
- *   on macOS a held Cmd can surface `event.key` as the unshifted `.` even with Shift — which made
- *   the plain CodeMirror keymap binding for `>` / `<` unreliable in Chrome and Safari. Comma is
- *   deliberately avoided, since `Cmd/Ctrl+,` is Preferences in most apps.
+ *   on macOS a held Cmd can report `event.key` as the unshifted `.` even with Shift, so a plain
+ *   CodeMirror keymap binding for `>` / `<` is unreliable in Chrome and Safari. Comma is avoided
+ *   because `Cmd/Ctrl+,` opens Preferences in most apps.
  * - **contextmenu** is handled per instance (it must also open in read-only View), so it is not
  *   wired here — see the editor's context-menu handler built in {@link createSourceView}.
  *
- * In View, the keydown shortcuts defer to the browser (selection copy, its own menu).
+ * In View, the keydown handler leaves every key to the browser.
  */
 const surroundHandlers = EditorView.domEventHandlers({
     keydown(event, view) {
@@ -339,7 +339,7 @@ function caretCoords(view: EditorView): { left: number; bottom: number } | null 
     }
 }
 
-/** Open the reverse Jump-to picker at the caret — the keyboard entry to the "shortcut series". */
+/** Open the reverse Jump-to picker at the caret: the keyboard way into the menu. */
 function openJumpMenuAtCaret(view: EditorView, jumpTargets: readonly SourceJumpTarget[]): boolean {
     if (jumpTargets.length === 0) return false;
     const editor = view.dom.getBoundingClientRect();
@@ -561,10 +561,9 @@ export function createSourceView(
         mermaidPreviews.schedule(preview, delay);
     };
     renderPreview(source);
-    // Delegated once on the stable preview element, so a re-render keeps them: the marks behave
-    // the way the report's tables do. A tag copies itself and an ask-me mark explains what it is
-    // on hover. Nothing in the preview moves the editor: the two panes already scroll together,
-    // and a click that reached across the split would be a mapping no other mark has.
+    // Delegated once on the stable preview element, so a re-render keeps them: a tag copies
+    // itself on click, and a mark with a tip explains itself on hover. Clicking in the preview
+    // never moves the editor.
     initPieceTooltips(preview);
     wireClickToCopy(preview);
     // Delegated once on the stable preview element; each render re-annotates its headings.
@@ -710,10 +709,11 @@ export function createSourceView(
     container.append(sourcePane, divider, previewShell);
     const disposeSplitDivider = initSplitDivider(container, divider);
 
-    // Scroll the editor and its preview together (VS Code-style), anchored on headings — but
-    // only side by side. In the stacked (narrow) layout the vertical axes don't correspond, so
-    // the sync is disabled there and re-enabled if the viewport widens again. Where matchMedia
-    // is unavailable (non-browser hosts), fall back to the side-by-side default.
+    // Scroll the editor and its preview together (VS Code-style), anchored on matching blocks
+    // or headings — but only side by side. In the stacked (narrow) layout the vertical axes
+    // don't correspond, so the sync is disabled there and re-enabled if the viewport widens
+    // again. Where matchMedia is unavailable (non-browser hosts), fall back to the side-by-side
+    // default.
     const narrow =
         typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 800px)") : null;
     let disposeScrollSync: (() => void) | null = null;
@@ -784,7 +784,6 @@ export function createSourceView(
                         span: { start: range.from, end: range.to },
                     })),
             };
-            // The editor folds the same regions the Preview does, from its own state.
             view.dispatch({ effects: setIgnoredSpans.of(previewSemantics.ignored) });
             renderPreview(view.state.doc.toString());
         },
@@ -801,8 +800,8 @@ export function createSourceView(
  * Put the editor's selection on a source range and bring it into view, for a selection a reader
  * asked for outside the editor — a stage tab revealing where a node came from.
  *
- * Clamp to the document and order the pair, so a stale span can only ever land the cursor
- * in-bounds rather than throw. A zero-width range collapses to a caret.
+ * Clamp to the document, so a stale span lands the cursor in bounds rather than throwing. A
+ * zero-width or reversed range collapses to a caret at `from`.
  */
 function revealInEditor(view: EditorView, from: number, to: number): void {
     const max = view.state.doc.length;

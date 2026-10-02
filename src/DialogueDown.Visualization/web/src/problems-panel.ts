@@ -6,9 +6,6 @@ import type { LspDiagnostic, LspFix, LspSeverity } from "./model";
 /**
  * The Problems panel: every diagnostic the compiler reported for the document, as a list whose
  * rows navigate to the text they describe.
- *
- * Until this existed the only way to find a problem was to scroll the Source editor hunting for
- * squiggles, and on the graph tabs the diagnostics were invisible entirely.
  */
 
 /** How many diagnostics of each severity the document currently has. */
@@ -35,9 +32,8 @@ const SEVERITY_ICON: Record<keyof DiagnosticCounts, string> = {
 
 export interface ProblemsPanelOptions {
     /**
-     * Navigate to a diagnostic. The panel hands over the whole value rather than a resolved
-     * offset, so it never needs an editor to render — converting the LSP range is the caller's
-     * job, which keeps the panel testable without a laid-out document.
+     * Navigate to a diagnostic. Converting its LSP range to an editor position is the caller's
+     * job, so the panel renders without an editor.
      */
     goTo(diagnostic: LspDiagnostic): void;
     /**
