@@ -156,7 +156,7 @@ export function debugEditor(controller: DebugController): Extension {
     return [debugVisualField, executionGutter, breakpointField, breakpointGutter, bridge];
 }
 
-/** Toggle the requested breakpoint on the line containing `position`. Exported for testing. */
+/** Toggle the requested breakpoint on the line containing `position`. */
 export function toggleBreakpointAt(view: EditorView, position: number): void {
     view.dispatch({ effects: toggleBreakpointEffect.of(position) });
 }

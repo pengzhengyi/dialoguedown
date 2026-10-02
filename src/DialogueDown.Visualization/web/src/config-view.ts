@@ -53,7 +53,7 @@ export interface ConfigViewOptions {
 /**
  * A handle to the Config tab so the live-edit machinery can drive it: flip the TOML editor
  * between editable and read-only, replace its content (a discard/restore), refresh the
- * configured speakers after a recompile, and signpost the pane as stale while unsaved.
+ * configured speakers after a recompile, and mark the pane as stale while unsaved.
  */
 export interface ConfigViewHandle {
     /** The Config tab element to mount. */
@@ -102,9 +102,9 @@ const foldTomlSections = foldService.of((state, lineStart) => {
 
 /**
  * The Config tab: the applied configuration shown as a two-column split — the `dialogue.toml`
- * source (read-only, TOML-highlighted) on the left and the resolved configured speakers on
- * the right — reusing the Source tab's split machinery. When no config file was found it
- * shows a friendly explanation instead, because running on the built-in defaults is normal.
+ * source (TOML-highlighted, editable in Edit) on the left and the mode and resolved configured
+ * speakers on the right — reusing the Source tab's split machinery. When no config file was found
+ * it shows a friendly explanation instead, because running on the built-in defaults is normal.
  */
 export function createConfigView(
     config: ConfigReport,
@@ -123,7 +123,7 @@ export function createConfigView(
     side.className = "config-side";
 
     // A quiet, hidden-by-default hint that marks the speakers as out of date while the TOML
-    // has unsaved edits (the speakers only refresh on Save — see the Live Edit note, DD6).
+    // has unsaved edits (the speakers refresh only on save).
     const staleHint = renderStaleHint();
 
     let editor: EditorView | null = null;
@@ -153,8 +153,8 @@ export function createConfigView(
 
     // A portable Tippy tooltip on the mode value, delegated on the stable side panel so it keeps
     // working after the row is replaced on save. It anchors to the small value pill (not the
-    // full-width row, whose center sits far right of the text) and replaces a native `title`,
-    // which triggered unreliably and looks different on each platform.
+    // full-width row, whose center sits far right of the text) and is used instead of a native
+    // `title`, which shows unreliably and looks different on each platform.
     delegate(side, {
         target: ".config-mode-value",
         content: MODE_TOOLTIP,
@@ -218,8 +218,9 @@ function editableConfig(editable: boolean, reservedTags: readonly string[]) {
     ];
 }
 
-// TOML table headers are `[[table]]`, so auto-closing `[` fights the writer (and would leave a
-// stray `]` when accepting a `[[speakers]]` completion). Close only braces and quotes here.
+// TOML table headers are `[[table]]`, where an auto-closed `[` adds a `]` the writer must delete
+// (and would leave a stray `]` when accepting a `[[speakers]]` completion). Close only
+// parentheses, braces, and quotes here.
 const configCloseBrackets = EditorState.languageData.of(() => [
     { closeBrackets: { brackets: ["(", "{", '"', "'"] } },
 ]);
@@ -278,11 +279,7 @@ function renderStaleHint(): HTMLElement {
     return hint;
 }
 
-/**
- * The mode row's tooltip: why the setting exists and how it relates to the report. Rendered by a
- * portable Tippy tooltip (delegated below) rather than a native `title`, which hovered
- * unreliably and varies across platforms.
- */
+/** The mode row's tooltip: why the setting exists and how it relates to the report. */
 const MODE_TOOLTIP =
     "How this project compiles after an error — used by the dialoguedown CLI and embedded " +
     "builds. The visualization always renders stage-boundary, so every stage it shows is " +
@@ -304,7 +301,6 @@ function renderModeRow(mode: string | undefined): HTMLElement {
     return row;
 }
 
-/** A focusable, read-only CodeMirror showing the TOML source. */
 /** The configured-speakers table: Name, Id, and tag chips colored by reserved vs custom. Every
  *  value is click-to-copy, so a writer can lift a name, `@id`, or tag straight into a script. */
 function renderSpeakers(speakers: ConfiguredSpeakerView[]): HTMLElement {
@@ -403,7 +399,7 @@ function renderNoConfig(editable: boolean, onCreate?: () => Promise<void>): NoCo
         button.disabled = true;
         error.hidden = true;
         // On success the caller reloads onto the Config tab (the button stays disabled as the
-        // page navigates); on conflict or failure, surface the message and re-enable.
+        // page navigates); on conflict or failure, show the message and re-enable.
         onCreate().catch((reason: unknown) => {
             error.textContent = reason instanceof Error ? reason.message : String(reason);
             error.hidden = false;

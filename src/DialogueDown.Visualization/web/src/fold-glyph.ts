@@ -4,8 +4,8 @@ import { codicon } from "./codicon";
  * The one look folding has, wherever the report offers it.
  *
  * The Source editor, the Preview, and the Dialogue Graph each fold a different kind of thing, but
- * a reader who learns the gesture on one should recognize it on the next. Keeping the glyphs here
- * means a new surface cannot quietly introduce a fifth rendering of "fold this".
+ * a reader who learns the gesture on one should recognize it on the next, so every surface takes
+ * its glyphs from here.
  *
  * A chevron always performs the action; a status mark such as `circle-slash` states what a thing
  * *is* and stays a static, unfocusable mark beside it.
@@ -32,8 +32,8 @@ export function foldControlIcon(expanded: boolean, extraClass: string): HTMLElem
 
 /**
  * The fold marker a CodeMirror gutter shows. Supplying this replaces the library's default text
- * characters, which are the one place the report spoke a different visual language from itself.
- * The titles match the library's own so nothing that reads them has to change.
+ * characters, so the gutter shows the same chevrons as the rest of the report. The titles match
+ * the library's own so nothing that reads them has to change.
  */
 export function foldGutterMarker(open: boolean): HTMLElement {
     const marker = foldControlIcon(open, "cm-fold-marker");
