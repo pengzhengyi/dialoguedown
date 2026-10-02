@@ -129,9 +129,9 @@ internal sealed class GraphProjection
     // divert edge carries, so jumps in a drawing can be told apart: `⇒ Back to the market`. A jump
     // without words reads "(jump)".
     //
-    // The arrow is the single character "⇒", as the report shows "=>" wherever it draws a jump.
-    // It is not a styled span because a label is clipped to a measured budget by rewriting its
-    // text, which would discard any structure inside it.
+    // The arrow is the single character "⇒", matching how the report draws "=>" elsewhere. It is
+    // not a styled span because a label is clipped to a measured budget by rewriting its text,
+    // which would discard any structure inside it.
     private static string JumpLabel(ControlNode control) =>
         control.Out
             .OfType<DivertEdge>()
@@ -167,9 +167,8 @@ internal sealed class GraphProjection
 
     // An edge the walk followed to first reach its target is that node's parent in the layout;
     // every other edge — an arm rejoining the flow, a jump to an earlier scene — is drawn as a
-    // reference so the
-    // tree stays a tree while the flow stays complete. Its category says what kind of route it is,
-    // so a reader tells a fall-through from a jump or a chosen arm by color.
+    // reference so the tree stays a tree while the flow stays complete. Its category says what
+    // kind of route it is, so a reader tells a fall-through from a jump or a chosen arm by color.
     private static DisplayEdge Describe(DialogueNode from, Edge edge, SpanningTree layout) =>
         new(
             DisplayId(from.Id),
@@ -180,7 +179,7 @@ internal sealed class GraphProjection
             Label = LabelOf(edge),
         };
 
-    // Scaffolding, not flow: it says where an unreachable node sits, and nothing travels it.
+    // Not a route: it only places an unreachable node, and no flow runs along it.
     private static DisplayEdge Place((NodeId From, NodeId To) placement) =>
         new(DisplayId(placement.From), DisplayId(placement.To), DisplayEdgeKind.Child)
         {
@@ -188,13 +187,9 @@ internal sealed class GraphProjection
         };
 
     // A route carries the words the writer gave it, which the details panel shows when the route is
-    // chosen. Only a jump and a choice arm have any: a jump is named by its link text, an arm by
+    // selected. Only a jump and a choice arm have any: a jump is named by its link text, an arm by
     // what the player is offered. A fall-through was never written down, and a random arm is picked
     // by the engine rather than read, so neither has words to report.
-    //
-    // The drawing itself stays free of them. It draws no route text at all, and adding it here
-    // would repeat what is already on screen a hop away — the speech an arm leads to, or the
-    // jump's own node.
     private static string? LabelOf(Edge edge) => Written(edge) switch
     {
         { Count: > 0 } written => InlineText.Of(written).Trim() is { Length: > 0 } label ? label : null,

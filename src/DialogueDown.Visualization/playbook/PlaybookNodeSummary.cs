@@ -50,7 +50,9 @@ internal static class PlaybookNodeSummary
     /// <summary>How a choice option reads when the writer spelled out no words for it.</summary>
     private const string NoLabel = "<no label>";
 
-    /// <summary>How a random arm with a bare <c>%</c> weight reads: an equal share of the rest.</summary>
+    /// <summary>
+    /// How a random arm with a bare <c>%</c> weight reads: an equal share of what is left.
+    /// </summary>
     private const string Evenly = "evenly";
 
     /// <summary>What a summary cut at the cap trails.</summary>
