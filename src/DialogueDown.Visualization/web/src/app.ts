@@ -746,10 +746,10 @@ export function runApp(
         // A tab with no tree view (Config, Source, Playbook) and the Semantic tab (its own
         // tables) have no shared node-detail inspector; hide it so their content takes the full
         // width.
-        const isSource = views[index] === null;
+        const hasNoGraph = views[index] === null;
         const section = stagesEl.children[index] as HTMLElement | undefined;
         const isSemantic = section?.classList.contains("semantic-stage") ?? false;
-        appEl.classList.toggle("no-detail", isSource || isSemantic);
+        appEl.classList.toggle("no-detail", hasNoGraph || isSemantic);
         setHelp(helpContextFor(index));
         // Frame the tab now that it is visible (a tree built while hidden had a
         // zero-size container). Applying its remembered position — instead of always
