@@ -1,6 +1,8 @@
 namespace DialogueDown.Visualization.Live.Configuration;
 
-/// <summary>How a <see cref="LiveSession.CreateConfig">create-config</see> request settled.</summary>
+/// <summary>
+/// How a <see cref="LiveSession.CreateConfig">create-config</see> request settled.
+/// </summary>
 internal enum CreateConfigStatus
 {
     /// <summary>The starter <c>dialogue.toml</c> was created and adopted.</summary>

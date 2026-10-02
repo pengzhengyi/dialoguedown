@@ -158,8 +158,8 @@ internal sealed class ServedShellServer : IAsyncDisposable
 
     private void Configure(WebApplication app)
     {
-        // Compress the large report pages; text/event-stream is not compressible, so the
-        // SSE hot-reload stream passes through untouched.
+        // Compress the report pages and client assets; text/event-stream is not compressible, so
+        // the SSE hot-reload stream passes through untouched.
         app.UseResponseCompression();
 
         // Assets for the active source resolve under the launch root at /r/... . Static
@@ -173,9 +173,8 @@ internal sealed class ServedShellServer : IAsyncDisposable
         app.UseRouting();
 
         app.MapGet("/", Root);
-        // The shell on its own path, for a reader already inside a report: the landing may be
-        // redirected to a pinned document, so "back to the files" needs a door that is always the
-        // shell rather than whatever this run landed on.
+        // The shell at its own path, for a reader already inside a report: `/` may redirect to the
+        // initial document, so a link back to the files needs a path that always serves the shell.
         app.MapGet("/browse", BrowseShell);
         app.MapGet(AssetMount + "/{name}", (HttpContext context, string name) => Asset(context, name));
         app.MapGet("/api/browse", (string? path) => Browse(path ?? string.Empty));
@@ -215,7 +214,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
         return NoStoreHtml(context, _emptyShellHtml);
     }
 
-    // The file selector, however this run started and whatever it landed on.
+    // The file selector, whether or not `/` redirects to a report.
     private IResult BrowseShell(HttpContext context) => NoStoreHtml(context, _emptyShellHtml);
 
     private IResult Open(OpenRequest request, HttpContext context)
@@ -235,8 +234,8 @@ internal sealed class ServedShellServer : IAsyncDisposable
     }
 
     // Creates a new, empty script at a root-confined path and opens it in Edit. A name that
-    // already exists is a conflict (409) — the file is left untouched, so the client can offer
-    // to open it instead — and is never overwritten.
+    // already exists is a conflict (409) and the file is left untouched, so the client can offer
+    // to open it instead.
     private IResult Create(CreateRequest request, HttpContext context)
     {
         var relativePath = request.Path ?? string.Empty;
@@ -313,7 +312,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
         // always serves within a root, so every served report is project-aware.
         session.Project = new ReportProject(_root.RootDirectory, _root.Relativize(documentPath));
         // A served session always watches the file: View hot-reloads the report, Edit
-        // surfaces a passive "changed on disk" chip.
+        // shows a passive "changed on disk" chip.
         var watcher = _watches.Value.Watch(documentPath, session.Refresh);
         // A session that already applies a config watches it too, so external config edits reload.
         var configWatcher = session.ConfigPath is { } configPath
@@ -483,10 +482,12 @@ internal sealed class ServedShellServer : IAsyncDisposable
         }
     }
 
-    // Creates a dialogue.toml at the launch root for an active session that has none, then
-    // returns the recompiled payload. The path is composed server-side from the launch root —
-    // never from the request — so no request value reaches the filesystem. An existing file is
-    // a conflict (409), left untouched; a write failure is 400.
+    // Creates a dialogue.toml at the launch root for an active session that has none, starts
+    // watching it, and returns the recompiled payload. The path is composed server-side from the
+    // launch root — never from the request — so no request value reaches the filesystem. An
+    // existing file is adopted without being overwritten; only a retry for a file this session
+    // already adopted that differs from the starter template is a conflict (409). A write failure
+    // is 400.
     private IResult CreateConfig()
     {
         var active = Active();
@@ -499,10 +500,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
         try
         {
             // The exclusive create in LiveSession decides create/adopt/conflict atomically, so
-            // there is no File.Exists check to race here. A create, an idempotent adoption, or a
-            // differing pre-existing file adopted as recovery (AdoptedExisting) starts the config
-            // watcher and returns 200; only a retry of an already-adopted file that diverged is a
-            // conflict (409), left untouched.
+            // there is no File.Exists check to race here.
             var result = active.Session.CreateConfig(configPath);
             if (result.Status == CreateConfigStatus.Conflict)
             {
@@ -519,7 +517,7 @@ internal sealed class ServedShellServer : IAsyncDisposable
     }
 
     // Starts (or replaces) the watcher for the active document's newly created config so external
-    // edits to it hot-reload, unless the active document has since been swapped out.
+    // edits to it hot-reload, unless the active document has since been replaced.
     private void StartConfigWatcher(ActiveDocument active, string configPath)
     {
         lock (_gate)
@@ -550,10 +548,9 @@ internal sealed class ServedShellServer : IAsyncDisposable
         context.Response.Headers.ContentType = "text/event-stream";
         context.Response.Headers.CacheControl = "no-cache";
 
-        // A tab says which document it is showing. Binding it to whatever happens to be active
-        // would feed it another script's reloads after a switch — a browser reconnects a dropped
-        // stream on its own, so this is reached without anyone navigating. Report the displacement
-        // instead and let the tab stop; it is the same news the swap broadcasts to a live stream.
+        // A tab names the document it shows. A browser reconnects a dropped stream on its own, so
+        // a tab can arrive here after another script became active: it gets the same displaced
+        // event an open stream receives when the active document changes, and the stream ends.
         if (doc is { Length: > 0 } named
             && !PathComparison.Comparer.Equals(named, _root.Relativize(active.Session.DocumentPath)))
         {

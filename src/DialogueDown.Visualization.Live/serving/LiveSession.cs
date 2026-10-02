@@ -493,9 +493,9 @@ internal sealed class LiveSession
         }
 
         // Publish the recompiled visualizer and config source/validity only now that AtomicFile has
-        // confirmed the write committed (or that there was nothing to write): a conflict or a failed
-        // write has already returned or thrown above, so the session's state never gets ahead of
-        // the disk.
+        // confirmed the write committed (or that there was nothing to write): a conflict or a
+        // failed write has already returned or thrown above, so the session's state never gets
+        // ahead of the disk.
         return immediate ?? PublishConfig(committed!);
     }
 
