@@ -17,7 +17,7 @@ public static class FragmentKinds
     /// <summary>An image, carrying the speech that describes it.</summary>
     public const string Image = "image";
 
-    /// <summary>A place where the source wrapped onto a new line within one line of speech.</summary>
+    /// <summary>A place where the source wrapped within one line of speech.</summary>
     public const string Break = "break";
 
     /// <summary>A read of game state spliced into speech.</summary>

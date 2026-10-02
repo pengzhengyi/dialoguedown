@@ -45,8 +45,7 @@ internal static class Departure
         if (AnswerCheck.Disagrees(
             NodeQuestions.RequiredToLeave(leaving).Asked(), supply.Answers, out var refusal))
         {
-            // The run stays where it asked, so a driver that misread the request can answer it
-            // again rather than losing the conversation over a mistake it can still fix.
+            // The run stays where it asked, so the driver can send a corrected supply.
             return new StepResult(new PlayState(waiting), [refusal]);
         }
 

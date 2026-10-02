@@ -27,9 +27,9 @@ public static class SpeechTemplate
     /// </returns>
     /// <remarks>
     /// A command is the boundary. The words before it are said, then it is performed, then the
-    /// rest of the line carries on, so a command written mid-sentence is performed mid-sentence. <c>Alice: Here you go. `GiveQuest("EmberCrown")` Take care.</c> reads
-    /// as two segments: the first says <c>Here you go.</c> and gives the quest, the second says
-    /// <c>Take care.</c>
+    /// rest of the line carries on, so a command written mid-sentence is performed mid-sentence.
+    /// <c>Alice: Here you go. `GiveQuest("EmberCrown")` Take care.</c> reads as two segments: the
+    /// first says <c>Here you go.</c> and gives the quest, the second says <c>Take care.</c>
     /// <para>
     /// Emphasis written around a command divides with it, and is re-applied to the words on each
     /// side, so <c>*polished `Shine()` bright*</c> keeps both halves emphasized. A command inside
@@ -40,7 +40,7 @@ public static class SpeechTemplate
     public static ImmutableArray<SpeechSegment> Segments(ImmutableArray<SpeechFragment> speech) =>
         SegmentBuilder.Of(speech).Freeze();
 
-    /// <summary>The keys the speech's queries ask the world about, in the order they first appear.</summary>
+    /// <summary>The keys the speech's queries ask about, in the order they first appear.</summary>
     /// <param name="speech">The speech to read.</param>
     /// <returns>The keys, each named once.</returns>
     /// <remarks>
@@ -69,8 +69,8 @@ public static class SpeechTemplate
     /// <returns>The speech, with each query replaced by the words that answered it.</returns>
     /// <remarks>
     /// A query answered with an empty string leaves nothing in its place, and emphasis left with
-    /// nothing inside it is removed too. A link or an image stays, with no words to show, because it is also
-    /// somewhere to go or a picture to draw.
+    /// nothing inside it is removed too. A link or an image stays, with no words to show, because
+    /// it is also somewhere to go or a picture to draw.
     /// </remarks>
     public static ImmutableArray<SpeechFragment> Fill(
         ImmutableArray<SpeechFragment> speech, Func<string, string> answer)

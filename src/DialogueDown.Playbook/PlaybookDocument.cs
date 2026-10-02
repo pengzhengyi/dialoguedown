@@ -23,10 +23,10 @@ public sealed partial record PlaybookDocument
     /// <param name="format">Whether a runtime can play this at all.</param>
     /// <param name="script">The script this was compiled from.</param>
     /// <param name="entry">Where a playthrough begins by default.</param>
-    /// <param name="anchors">Each scene's slug, mapped to the index of the node it starts at.</param>
+    /// <param name="anchors">Each scene's slug, mapped to the node it starts at.</param>
     /// <param name="speakers">Everybody who speaks here.</param>
     /// <param name="nodes">The steps of a playthrough, each at its own index.</param>
-    /// <param name="schema">Where an editor can find the JSON schema, or <c>null</c> when none is named.</param>
+    /// <param name="schema">Where an editor can find the JSON schema, or <c>null</c>.</param>
     [JsonConstructor]
     public PlaybookDocument(
         PlaybookFormat format,
@@ -50,7 +50,7 @@ public sealed partial record PlaybookDocument
         Nodes = nodes.OrEmpty();
     }
 
-    /// <summary>Gets where an editor can find the JSON schema, or <c>null</c> when none is named.</summary>
+    /// <summary>Gets where an editor can find the JSON schema, or <c>null</c>.</summary>
     [JsonPropertyOrder(0)]
     [JsonPropertyName("$schema")]
     public string? Schema { get; }
