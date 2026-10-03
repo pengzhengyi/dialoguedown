@@ -57,7 +57,9 @@ public sealed partial class DesignNoteCodeCitationsTests
             + string.Join("; ", _namedButNotShipped.Select(entry => $"{entry.Key} ({entry.Value})")));
     }
 
-    /// <summary>A note is shipped when it has a status line that is neither Explored nor Proposed.</summary>
+    /// <summary>
+    /// A note is shipped when it has a status line that is neither Explored nor Proposed.
+    /// </summary>
     private static bool IsShipped(string text)
     {
         var status = Status().Match(text);

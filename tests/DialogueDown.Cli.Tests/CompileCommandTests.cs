@@ -438,8 +438,7 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_WithoutEmit_StillEmitsAPlaybook()
     {
-        // A playbook is what compiling produces, so asking for nothing else asks for one. The
-        // help text, the guide, and the pipe example all promise it.
+        // A playbook is what compiling produces, so asking for nothing else asks for one.
         using var script = new TempScript("Alice: Hello.");
         var standardOutput = new StringWriter();
 
@@ -526,8 +525,7 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_OutputWithoutEmit_AsksForTheDefaultFormat()
     {
-        // `--output` alone used to be an error, when the only thing to emit was the stage graphs.
-        // A playbook is the compiler's own artifact, so naming a destination now asks for one.
+        // A playbook is the compiler's own artifact, so naming a destination asks for one.
         using var tree = new TempTree();
         using var script = new TempScript("# Scene");
         var destination = Path.Combine(tree.Root, "scene.playbook.json");

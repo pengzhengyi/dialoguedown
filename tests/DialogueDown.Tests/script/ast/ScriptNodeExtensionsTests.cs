@@ -286,8 +286,8 @@ public sealed class ScriptNodeExtensionsTests
     [Fact]
     public void Jumps_AControlLine_FindsTheJumpAmongItsEffects()
     {
-        // A jump hides in a different place in each block, which is the whole reason this is
-        // asked here rather than known separately by everything that lowers or names one.
+        // A jump sits in a different place in each kind of block; in a control line it is among
+        // the effects.
         var jump = Jump("#the-market", Text("east"));
         var control = ControlLine(DefaultCommand("fade out"), jump);
 
@@ -319,8 +319,8 @@ public sealed class ScriptNodeExtensionsTests
         Assert.Empty(Choices(Choice(Line(Text("pick")))).Jumps());
     }
 
-    // Script nodes the traversal helpers do not recognize, used to prove each category's
-    // dispatch throws on an unhandled type as the AST grows.
+    // Script nodes the traversal helpers do not recognize, so each category's dispatch can be
+    // shown to throw on an unhandled type.
     private sealed record UnknownNode(SourceSpan Span) : ScriptNode(Span);
 
     private sealed record UnknownBlock(SourceSpan Span) : ScriptBlock(Span);

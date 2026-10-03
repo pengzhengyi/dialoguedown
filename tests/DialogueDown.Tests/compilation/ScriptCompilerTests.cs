@@ -145,8 +145,8 @@ public sealed class ScriptCompilerTests
     }
 
     // Builds a compiler whose stages are substitutes that yield empty artifacts, so a test can focus
-    // on the facade. Outs the transpiler and analyzer so a test can install a spy on either, and
-    // takes the mode (best-effort by default, so every stage runs).
+    // on the facade. Returns the transpiler and analyzer through out parameters so a test can
+    // install a spy on either, and takes the mode (best-effort by default, so every stage runs).
     private static ScriptCompiler Compiler(
         out IScriptTranspiler transpiler,
         out ISemanticAnalyzer analyzer,

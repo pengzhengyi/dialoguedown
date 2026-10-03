@@ -34,8 +34,8 @@ public sealed class SpeechMappingTests
     [Fact]
     public void Write_EveryStyleTheAstHas_IsMapped()
     {
-        // The two enums are declared apart, so agreeing on three members today is no promise
-        // they agree tomorrow.
+        // The AST's style enum and the playbook's are declared separately, so every member of the
+        // AST's is checked.
         Assert.All(Enum.GetValues<Ast.SpeechStyle>(), style => Assert.NotNull(Styled(style)));
     }
 

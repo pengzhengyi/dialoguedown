@@ -81,7 +81,7 @@ public sealed class DialogueGraphBuilderFactoryTests
         AssertOnlySuccession(graph.Nodes[2], graph.Nodes[3].Id);
         AssertTargets(graph.Nodes[3], graph.Nodes[4].Id, graph.Nodes[5].Id);
 
-        // An inner arm weaves back past the inner choice to where the outer body continues.
+        // An inner arm continues past the inner choice, at the node where the outer body continues.
         AssertOnlySuccession(graph.Nodes[4], done);
         AssertOnlySuccession(graph.Nodes[5], done);
         AssertOnlySuccession(graph.Nodes[6], done);

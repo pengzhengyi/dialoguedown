@@ -67,7 +67,7 @@ public sealed class TextRangeTests
 
     [Fact]
     public void Plus_RangesWithAGapBetween_Throws() =>
-        // [2,5) then [6,8) leaves [5,6) uncovered, so joining would swallow a gap.
+        // [2,5) then [6,8) leaves [5,6) uncovered, so joining would also cover the gap.
         Assert.Throws<ArgumentException>(() => new TextRange(2, 3) + new TextRange(6, 2));
 
     [Fact]

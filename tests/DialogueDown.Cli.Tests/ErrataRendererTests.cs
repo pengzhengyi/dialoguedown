@@ -118,7 +118,7 @@ public sealed class ErrataRendererTests
         new ErrataRenderer(console).Render("scene.dialogue.md", "", diagnostics);
 
         var output = console.Output;
-        // Each diagnostic is followed, inline, by a doc link to its own code (Clippy/Biome style).
+        // Each diagnostic is followed, inline, by a doc link to its own code.
         Assert.Contains(
             "for more information, see "
             + "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1003",
@@ -147,7 +147,7 @@ public sealed class ErrataRendererTests
 
         new ErrataRenderer(console).Render("scene.dialogue.md", "", diagnostics);
 
-        // Inline links are per-occurrence (canonical for this style), so the code's link appears twice.
+        // Each occurrence gets its own link, so the code's link appears twice.
         Assert.Equal(2, CountOccurrences(console.Output, "#dlg2001"));
     }
 
@@ -226,7 +226,7 @@ public sealed class ErrataRendererTests
         Assert.Contains("1. Applied Fix: Escape as literal text", output, StringComparison.Ordinal);
         Assert.Contains("-say => now", output, StringComparison.Ordinal);
         Assert.Contains("+say \\=> now", output, StringComparison.Ordinal);
-        // No inline outcome continuation rides the diagnostic anymore.
+        // The fix outcome is reported in the fix section, not under the diagnostic.
         Assert.DoesNotContain("  fix applied", output, StringComparison.Ordinal);
         // Diagnostics as found, then the fix section.
         Assert.True(

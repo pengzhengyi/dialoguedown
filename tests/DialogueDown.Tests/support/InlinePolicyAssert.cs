@@ -8,7 +8,7 @@ namespace DialogueDown.Tests.Support;
 
 /// <summary>
 /// Helpers for exercising and asserting <see cref="IInlinePolicy"/> outcomes, so a policy
-/// test resolves an inline and inspects the result without repeating the sink plumbing.
+/// test resolves an inline and inspects the result without repeating the diagnostic-sink setup.
 /// </summary>
 internal static class InlinePolicyAssert
 {
@@ -20,7 +20,7 @@ internal static class InlinePolicyAssert
         policy.Resolve(inline, new DiagnosticBag());
 
     /// <summary>
-    /// Resolves <paramref name="inline"/>, outing the sink so a test can assert what the policy
+    /// Resolves <paramref name="inline"/>, returning the sink so a test can assert what the policy
     /// reported while recovering.
     /// </summary>
     public static IReadOnlyList<InlineFragment> Resolve(
