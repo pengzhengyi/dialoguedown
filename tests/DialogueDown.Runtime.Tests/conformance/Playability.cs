@@ -10,15 +10,12 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// takes, and why a playbook or a session is not there yet.
 /// </summary>
 /// <remarks>
-/// A case is screened before it runs, so a construct nobody has taught reads as not yet playable
-/// rather than as a divergence. That screen is a second statement of what the runner knows, which
-/// is why a test holds the two to each other: were they to disagree, a case would be reported as
-/// untaught when it plays, or as a divergence when nobody had taught it.
+/// A case is screened before it runs, so a construct the runner cannot play reads as not yet
+/// playable rather than as a divergence. The screen restates what the runner can play, so a test
+/// checks that the two agree.
 /// <para>
-/// A node kind is playable or not by kind alone, so the answer is a property of the kind rather
-/// than of the instance. A session entry is playable when the harness can take it: a send needs a
-/// reader, and an expectation is takeable when every claim in it is one the harness can check —
-/// an unowned claim ends the run where it is read, so it is a gap the screen can name first.
+/// A node is playable by its kind alone. A send is playable when a reader owns it, and an
+/// expectation when the harness can check every claim in it.
 /// </para>
 /// </remarks>
 internal static class Playability
@@ -41,8 +38,8 @@ internal static class Playability
 
     /// <summary>Why a playbook is not playable yet: one reason per kind it cannot play.</summary>
     /// <remarks>
-    /// Asked of the playbook rather than found while running it, so one run names everything the
-    /// build has yet to learn.
+    /// Asked of the playbook rather than found while running it, so one run names every kind the
+    /// runner cannot play.
     /// </remarks>
     /// <param name="context">The playbook a case loads.</param>
     /// <returns>The reasons, in the order the kinds appear, each named once.</returns>
@@ -67,11 +64,14 @@ internal static class Playability
         _ => [],
     };
 
-    /// <summary>Why a session is not playable yet: one reason per send no reader owns.</summary>
+    /// <summary>
+    /// Why a session is not playable yet: one reason per send no reader owns, and per claim the
+    /// harness cannot check.
+    /// </summary>
     /// <remarks>
-    /// Asked of the session rather than found while running it. Carrying on past an unsendable
-    /// message would be wrong instead: the run stands still, so later entries would be judged
-    /// against a state the fixture never described.
+    /// Asked of the session before running it. A run cannot carry on past an unsendable message:
+    /// it would stand still, and later entries would be checked against a state the fixture never
+    /// described.
     /// </remarks>
     /// <param name="session">What a case sends and expects.</param>
     /// <returns>The reasons, in the order the session names them, each named once.</returns>

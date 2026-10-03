@@ -51,8 +51,8 @@ public sealed class CommandsTests
     [Fact]
     public void TryRead_APayloadAfterABareCommand_IsAFixtureBug()
     {
-        // The schema sends `done` as a bare name, so a payload beside it is a fixture mistake
-        // to surface rather than a construct to read past.
+        // The schema sends `done` as a bare name, so a payload beside it is reported as a fixture
+        // mistake.
         Assert.Throws<InvalidFixtureException>(() => Commands.TryRead(Sent("""{ "done": true }"""), out _));
     }
 
@@ -71,7 +71,7 @@ public sealed class CommandsTests
     [Fact]
     public void NameOf_AShapedSend_IsTheKeyItIsSentUnder()
     {
-        // Two payloads of one untaught command answer to one name, so a screen names one gap.
+        // Two payloads of one unknown command share one name, so the screen reports one gap.
         Assert.Equal("choose", Commands.NameOf(Sent("""{ "choose": 0 }""")));
         Assert.Equal("choose", Commands.NameOf(Sent("""{ "choose": 1 }""")));
     }

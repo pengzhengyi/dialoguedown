@@ -9,6 +9,6 @@ internal enum SessionVerdict
     /// <summary>The runner said something the session did not expect.</summary>
     Diverged,
 
-    /// <summary>The session uses something this build has not learned.</summary>
+    /// <summary>The session uses something the runner cannot play yet.</summary>
     NotYetPlayable,
 }
