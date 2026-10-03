@@ -7,8 +7,7 @@ import type { Page } from "@playwright/test";
  * Colors are animated, so the moment a state changes, every themed element is partway between its
  * old and new color. Any check that samples appearance right then — an axe contrast pass above all
  * — reads a color that belongs to neither state, and fails or passes on timing rather than on the
- * styling under test. That is exactly how a contrast check on ignored Preview links failed in CI
- * at a ratio (4.35) matching no settled color, while passing locally.
+ * styling under test.
  *
  * Waiting on the transitions themselves, rather than on a fixed delay, keeps the wait both exact
  * and as short as the animation actually is. Only transitions are awaited: an indefinite CSS

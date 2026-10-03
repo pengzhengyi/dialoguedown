@@ -170,8 +170,7 @@ test.describe("Playbook tab — a compiled script", () => {
                 .first()
                 .evaluate((node) => getComputedStyle(node).color);
 
-        // A key and a string value are both quoted, so only a real parser can tell them apart —
-        // the previous tokenizer emitted one token for both and could not have passed this.
+        // A key and a string value are both quoted, so only a real parser can tell them apart.
         const [key, string, number] = [
             await colorOf('"script"'),
             await colorOf('"scene.dialogue.md"'),
@@ -546,7 +545,7 @@ const linkable: Report = {
     },
 };
 
-/** The `[from, to)` text of the line CodeMirror currently marks active, trimmed. */
+/** The text of the line CodeMirror currently marks active, trimmed. */
 const activeLine = (page: Page) =>
     page.evaluate(
         () =>

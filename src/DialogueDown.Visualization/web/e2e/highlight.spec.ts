@@ -322,8 +322,8 @@ test("keeps dialogue tokens and code spans colored when nested inside a choice l
     await expect(active.locator(".source-pane .dd-tok-jump")).toHaveCount(2);
     await expect(active.locator(".source-pane .dd-tok-custom-tag")).toHaveCount(2);
 
-    // The color the reader actually sees is the innermost element's — a Markdown highlight
-    // span nested inside the token decoration would override it, which is the bug this guards.
+    // The color the reader actually sees is the innermost element's, so a Markdown highlight
+    // span nested inside the token decoration must not override it.
     const colors = await active.evaluate((root) => {
         const effectiveColor = (element: Element | null): string => {
             if (element == null) return "missing";
@@ -402,8 +402,8 @@ test("marks the same constructs in the rendered preview, in the editor's vocabul
     await expect(preview.locator(".dd-tok-speaker-id")).toHaveAttribute("data-tip");
     await expect(chip).not.toHaveAttribute("data-tip");
 
-    // Nothing in the preview is clickable, so no mark promises a click: the arrow that once
-    // revealed its line wears the same ask-me pointer as the marks beside it.
+    // Nothing in the preview is clickable, so no mark promises a click: the arrow has the same
+    // ask-me pointer as the marks beside it.
     const [jumpCursor, speakerCursor] = await preview.evaluate((root) => [
         getComputedStyle(root.querySelector(".dd-tok-jump") as Element).cursor,
         getComputedStyle(root.querySelector(".dd-tok-speaker-name") as Element).cursor,

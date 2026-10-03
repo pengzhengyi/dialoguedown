@@ -38,8 +38,8 @@ test("mirrors the End sentinel with an always-present Preview footer", async ({ 
 });
 
 test("joins the two footers into one band across the split divider", async ({ page }) => {
-    // The panes are separated by a draggable divider, and its column showed through as a white
-    // notch in the one row where the two footers should read as a single bar.
+    // The panes are separated by a draggable divider, whose column must not show through as a
+    // notch in the one row where the two footers read as a single bar.
     const end = page.locator(".dd-reserved-target-row");
     const ignored = page.locator(".dd-ignored-preview-footer");
     const [endBox, ignoredBox] = await Promise.all([end.boundingBox(), ignored.boundingBox()]);
@@ -142,8 +142,8 @@ test("shows a fixed, copyable End sentinel without changing source lines", async
 
 test("stays behind the footer help overlay on a short window", async ({ page }) => {
     // On a short window the footer help panel floats up over the editor (height <= 640px).
-    // CodeMirror defaults its panels to z-index 300, so without a reset the reserved End row
-    // painted on top of the help text. It must sit behind the overlay instead.
+    // CodeMirror defaults its panels to z-index 300, which would paint the reserved End row over
+    // the help text; it sits behind the overlay instead.
     await page.setViewportSize({ width: 1150, height: 600 });
 
     const panel = page.locator(".dd-reserved-targets");
