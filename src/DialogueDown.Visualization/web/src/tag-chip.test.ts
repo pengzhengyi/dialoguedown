@@ -12,8 +12,8 @@ describe("tagLabel", () => {
 
 describe("tagHue", () => {
     it("gives one name the same hue every time", () => {
-        // The whole point of hashing the name rather than counting tags: a reader who learns
-        // `#wise` by its dot sees the same dot in every table and every tab, across reloads.
+        // The hue comes from the name, so `#wise` shows the same dot in every table and tab,
+        // across reloads.
         expect(tagHue("wise")).toBe(tagHue("wise"));
     });
 
@@ -67,8 +67,6 @@ describe("renderTag", () => {
 
 describe("renderTag — reaching the copy without a mouse", () => {
     it("is a button, so it takes focus and answers Enter and Space", () => {
-        // Copying is an act. A `<span>` that answers only a click leaves a keyboard with no way
-        // to perform it; a real button is focusable and activates on its own.
         const chip = renderTag({ name: "wise", reserved: false });
 
         expect(chip.tagName).toBe("BUTTON");

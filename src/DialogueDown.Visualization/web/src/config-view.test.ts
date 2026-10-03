@@ -72,8 +72,6 @@ describe("createConfigView", () => {
     });
 
     it("leaves a speaker's absent id and empty tag list as empty cells", () => {
-        // Nothing to say, so the table says nothing — the same rule the Semantic Model and
-        // Playbook speaker tables follow, so one speaker reads the same way in all three.
         const view = mount({
             file: { path: "/proj/dialogue.toml", source: '[[speakers]]\nname = "Bob"\n' },
             speakers: [{ name: "Bob", tags: [] }],

@@ -292,8 +292,7 @@ describe("edgeSwatch", () => {
 });
 
 describe("periodsShown", () => {
-    // A pattern the reader cannot see repeat is not a pattern; it is one bar of unknown length.
-    // This is what made a jump and a conditional indistinguishable at the old swatch width.
+    // A dash pattern shown only once looks like a single bar, so two patterns can look alike.
     it.each(["jump", "choice", "control"])("repeats %s's pattern at least twice", (category) => {
         expect(periodsShown(edgeStyle(category))).toBeGreaterThanOrEqual(2);
     });

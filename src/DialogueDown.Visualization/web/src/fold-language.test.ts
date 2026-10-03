@@ -3,16 +3,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * The report folds things on several surfaces, and each one arrived separately. This test keeps
- * them speaking one visual language: a surface that grows a fold control must take the chevron
- * from the shared module rather than naming a glyph itself, which is how four different
- * renderings of "fold this" appeared in the first place.
+ * Every fold control takes its chevron from the shared module, so "fold this" looks the same on
+ * every surface of the report. No other source file may spell a chevron glyph itself.
  *
  * Stylesheets are exempt: a CSS `::before` cannot call a helper, so the legend group's disclosure
- * names the codepoint directly. The rule that matters is that no *behavior* picks its own glyph.
+ * names the codepoint directly.
  *
- * A submenu marker is exempt too. It points at a menu that opens beside it rather than at content
- * that folds away, so it is a different idea that happens to share a shape.
+ * A submenu marker is exempt too: it points at a menu that opens beside it, not at content that
+ * folds away.
  */
 const SHARED_GLYPH_MODULE = "fold-glyph.ts";
 const NOT_A_FOLD_CONTROL = ["context-menu.ts"];

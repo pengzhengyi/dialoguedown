@@ -374,7 +374,7 @@ describe("createTreeView — folding a scene", () => {
 });
 
 /**
- * A graph whose scenes the flow weaves through, as a branching script's does: the Market's own
+ * A graph whose flow crosses between scenes, as a branching script's does: the Market's own
  * choice keeps one arm for itself and sends the other into the Forest, which fans out in three.
  *
  * Laid out by subtree extent alone, the Market's choice sinks towards the Forest's fan while the
@@ -422,7 +422,7 @@ function wovenStage(): Stage {
  * The rows each band covers, named and in drawn order.
  *
  * Only the rows: jsdom lays no text out, so a measured label width is zero and a band's *width*
- * degenerates. Rows are what the layout pass actually promises.
+ * means nothing here.
  */
 function bandRows(view: { svg: SVGSVGElement }): { region: string; top: number; bottom: number }[] {
     return [...view.svg.querySelectorAll<SVGGElement>("g.region")].map((band) => {
@@ -470,9 +470,8 @@ describe("createTreeView — scenes never share rows with one another", () => {
 
 describe("createTreeView — the fold control keeps to its own corner", () => {
     it("dresses the band and the control in classes of their own", () => {
-        // The stylesheet paints a folded band with a broken edge. A rule reaching every rect
-        // inside the band would dress the control's invisible target in it too, drawing a box
-        // around the chevron that reads as a stray outline.
+        // The stylesheet draws a folded band with a dashed edge. A rule matching every rect in
+        // the band would also outline the control's invisible hit target around the chevron.
         const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
         const band = bandOf(view, "The Market");
 
@@ -665,7 +664,7 @@ describe("createTreeView — keyboard navigation follows the edges", () => {
 
     it("leaves Shift+digit to a tree even when its edges wear route colors", () => {
         // A named route does not make a stage the flow graph: the keyboard reads the stage's own
-        // `nests` declaration, so a colored tree keeps its map.
+        // `nests` declaration, not its edge colors.
         const tree = stageWith({ start: 0, end: 3 });
         const colored: Stage = {
             ...tree,

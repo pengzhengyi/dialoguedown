@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createCollapseToggle, initCollapsiblePanel } from "./collapse-toggle";
 
-/** A throwaway in-memory Storage so persistence is testable without touching the DOM one. */
+/** An in-memory Storage, so a test checks persistence without touching `localStorage`. */
 function memoryStorage(): Storage {
     const map = new Map<string, string>();
     return {
@@ -90,8 +90,6 @@ describe("initCollapsiblePanel", () => {
     });
 
     it("persists the choice either way, so a default can mean hidden", () => {
-        // A marker whose absence meant "shown" cannot express "shown on purpose", which a panel
-        // that starts hidden needs: the two have to be told apart.
         const { panel, storage } = setup();
         panel.toggle();
         expect(storage.getItem("dd-test")).toBe("1");

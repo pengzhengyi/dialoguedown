@@ -10,7 +10,7 @@ describe("createExplorerToggle", () => {
         expect(button.type).toBe("button");
         expect(button.classList.contains("tabbar-explorer")).toBe(true);
         expect(button.getAttribute("aria-controls")).toBe("explorer");
-        // The row's own icon family, at the size and weight the Config tab's gear uses.
+        // The stroke width of the tab row's other icons.
         expect(button.querySelector("svg.tab-icon")?.getAttribute("stroke-width")).toBe("2");
         // No word: the tab row's width belongs to the stages, and the glyph carries the meaning.
         expect(button.textContent?.trim()).toBe("");
@@ -25,8 +25,8 @@ describe("createExplorerToggle", () => {
     });
 
     it("says whether the Explorer is showing, and names itself for pointer and screen reader", () => {
-        // Showing no word, the tooltip and the accessible name are the only way to learn what
-        // this glyph opens — so both are load-bearing, and both come from one constant.
+        // With no visible word, the tooltip and the accessible name are the only way to learn
+        // what the button opens.
         const container = document.createElement("div");
         const panel = initCollapsiblePanel({
             container,
