@@ -44,9 +44,9 @@ type TreeNode = HierarchyPointNode<DisplayNode> & {
 
 /**
  * The ids of a node's **lineage**: the node, all its ancestors (its path to the root), and
- * all its *visible* descendants (its subtree). Used to spotlight a node's place in the tree
- * on hover. It reads `children`, so a collapsed node's hidden descendants are excluded — the
- * highlight matches exactly what is drawn.
+ * all its *visible* descendants (its subtree). Hovering a node spotlights these. It reads
+ * `children`, so a collapsed node's hidden descendants are excluded and the highlight matches
+ * what is drawn.
  */
 export function lineageIds<T extends { id: string }>(node: HierarchyNode<T>): Set<string> {
     return new Set([...node.ancestors(), ...node.descendants()].map((member) => member.data.id));
@@ -66,10 +66,8 @@ const SCENE_NODE_HALO = 1;
 const ARROW_SIZE = 9;
 
 /**
- * How far short of a node's center a line aimed at it should stop.
- *
- * Far enough for the head that follows it to reach the dot's painted edge and no further: the
- * head is drawn forward from the line's end, so the line yields it the whole of its own length.
+ * How far short of a node's center a line aimed at it stops: the dot's painted edge plus
+ * {@link ARROW_SIZE}, because the arrowhead is drawn forward from the line's end.
  */
 function nodeStandoff(node: DisplayNode): number {
     const painted = isSceneNode(node)
@@ -79,16 +77,15 @@ function nodeStandoff(node: DisplayNode): number {
 }
 
 /**
- * The drawn size of a repeated glyph, and how far apart the line stamps them. The spacing is a
- * whole multiple of the dot pitch of the line it rides on, so the glyphs land on dots instead of
- * beating against them.
+ * The drawn size of a repeated glyph, and how far apart a line places them. The spacing is a
+ * whole multiple of the dotted line's dot pitch, so each glyph lands on a dot.
  */
 const SYMBOL_SIZE = 7;
 const SYMBOL_SPACING = 18;
-/** How many dots ride between one glyph and the next. */
+/** How many dot pitches lie between one glyph and the next. */
 const DOTS_PER_SYMBOL = 3;
 
-/** How far below the deepest row the first cross-link lane sits — one row's worth of clear air. */
+/** How far below the deepest row the first cross-link lane sits: one row's height. */
 const LANE_GAP = 62;
 
 /** How far apart stacked cross-link lanes sit, so two routes never share a line. */
@@ -98,12 +95,11 @@ const LANE_STEP = 26;
 const PORT_STEP = 9;
 
 /**
- * A region band's header row: where its fold chevron and its name sit inside the room
- * `region-bands.ts` leaves above the nodes.
+ * A region band's header row: where its fold chevron and its name sit in the padding the band
+ * leaves above its nodes.
  *
- * The chevron is tucked into the padded corner *above* the first node's dot rather than beside
- * it: a folded band closes to one node's width, so a control on the node's own row would sit on
- * top of it.
+ * The chevron sits in the corner *above* the first node's dot: a folded band is one node wide,
+ * so a control on the node's own row would cover the node.
  */
 const FOLD_CONTROL_X = 9;
 const FOLD_CONTROL_Y = 10;
@@ -131,10 +127,9 @@ interface CrossLinkTrack {
  * A column holds a node's dot, the words beside it, and the gutter the cross-link corridors climb
  * in before they reach the next column. Those three add up to the step, and the budget is what is
  * left for the words — so widening the gutter shortens the labels unless the step grows with it.
- * Stating the arithmetic here keeps that trade honest: it cannot be broken by tuning one number.
  */
 const COLUMN_STEP = 320;
-/** Air between the widest a label may run and the outermost corridor beside it. */
+/** The gap between a label at its widest and the outermost corridor beside it. */
 const CORRIDOR_AIR = 18;
 const CORRIDOR_GUTTER = MAX_CORRIDOR_REACH + CORRIDOR_AIR;
 const LABEL_BUDGET = COLUMN_STEP - LABEL_INSET - CORRIDOR_GUTTER;
@@ -143,8 +138,7 @@ const LABEL_BUDGET = COLUMN_STEP - LABEL_INSET - CORRIDOR_GUTTER;
  * Where in a gutter a cross-link drops.
  *
  * The gutter is shared: climbs occupy its last {@link MAX_CORRIDOR_REACH} pixels, fanning back
- * from the column they serve. A drop therefore takes the near end instead, so the two kinds of
- * vertical never stand in the same place.
+ * from the column they serve. A drop takes the near end, so a drop and a climb never overlap.
  */
 const DROP_INSET = 6;
 
@@ -167,21 +161,21 @@ export interface TreeView {
     /**
      * Select the node with the given stable {@link DisplayNode.id}, applying the same operation the
      * gesture would (an optional fold toggle and recenter), or return `false` when no node in this
-     * view has that id. Used to resolve a deferred selection against the freshly installed view
-     * after a save-triggered rebuild.
+     * view has that id. Callers name a node from outside the drawing: a search hit, a neighbor
+     * row, or a selection restored after a rebuild.
      */
     selectById(id: string, options?: NodeSelectOptions): boolean;
     /** Choose the route between two nodes, as clicking it in the drawing does. */
     selectEdgeBetween(fromId: string, toId: string): boolean;
     /** Choose a region, as clicking its band does. */
     selectRegion(region: string): void;
-    /** Light up one node, or one route, while the pointer rests on a row naming it elsewhere. */
+    /** Highlight a node, route, or region while the pointer rests on a row naming it elsewhere. */
     spotlight(
         what: { nodeId?: string; fromId?: string; toId?: string; region?: string } | null,
     ): void;
     /**
-     * Show the given camera and fold. A `null` camera uses the default (root-centered)
-     * framing. Call after the tab becomes visible so the framing uses real dimensions.
+     * Show the given camera and fold. A `null` camera uses the default framing. Call after the
+     * tab becomes visible so the framing uses real dimensions.
      */
     applyView(
         camera: CameraTransform | null,
@@ -195,7 +189,7 @@ export interface TreeView {
 export interface TreeViewOptions {
     /**
      * The camera to apply on creation: a pinned override, the inherited shared
-     * camera, or `null` for the default (root-centered) framing.
+     * camera, or `null` for the default framing.
      */
     initialCamera?: CameraTransform | null;
     /** The collapsed node ids to restore on creation. */
@@ -207,10 +201,9 @@ export interface TreeViewOptions {
     /**
      * Whether a node can be folded away.
      *
-     * A tree's children *are* its content, so hiding them hides only detail. A graph's are an
-     * accident of which route happened to reach them first: folding one takes away nodes other
-     * routes still lead to, and the edges into them, leaving a picture of the flow that is not
-     * true. A graph stage therefore says no.
+     * A tree's children *are* its content, so hiding them hides only detail. A graph's children
+     * are whichever nodes a route reached first, so folding one would hide nodes that other
+     * routes still lead to, and the edges into them. A graph stage passes `false`.
      */
     foldable?: boolean;
     /**
@@ -258,13 +251,13 @@ const FOLD_KEYS = ["Enter", " "];
 /** The ways in and out of a node the drawing does not hold at all. */
 const NO_NEIGHBORS: Neighbors = { incoming: [], outgoing: [] };
 
-// Default framing: a readable 100% zoom with the root anchored near the left edge and
-// vertically centered, so the reader starts at the root with its subtree filling the
-// viewport rightward — rather than a whole-graph fit that shrinks large trees.
+// A stage that is not fitted whole opens with its root this fraction of the free width from the
+// left, vertically centered. DEFAULT_ZOOM is that framing's scale when there is no zoom to
+// inherit and the drawing cannot be measured.
 const DEFAULT_ZOOM = 1;
 const ROOT_ANCHOR_X = 0.2;
 
-/** Air between the drawing and a panel floating over the canvas. */
+/** The gap kept between the drawing and a panel floating over the canvas. */
 const FLOATING_PANEL_GAP = 12;
 
 /** How far out the reader may zoom by hand. */
@@ -273,20 +266,17 @@ const MIN_ZOOM = 0.03;
 /**
  * The smallest scale a stage will *open* at.
  *
- * Fitting a long script would shrink it to an unreadable smudge, so a stage that cannot be shown
- * whole at this scale opens at the start of itself instead. The reader can still zoom further out
- * than this — a default just should not choose it for them.
+ * A stage that cannot be shown whole above this scale opens at its start instead, at this
+ * scale. The reader can still zoom further out by hand.
  */
 const LEGIBLE_ZOOM = 0.15;
 
 /**
  * The smallest scale a *revealed* node is shown at.
  *
- * Deliberate navigation — a reverse jump from the Source, a neighbor row in the inspector — is a
- * request to read one node, not to take in the whole drawing. A long script fits only at a scale
- * where a node is a few pixels tall, so centering the camera there marks a node the reader still
- * cannot read: the same failure as leaving it folded away. Revealing therefore raises the camera
- * to this scale, and never lowers it — a reader already closer keeps the view they chose.
+ * Deliberate navigation (a reverse jump from the Source, a neighbor row in the inspector) asks to
+ * read one node. Revealing raises the camera to this scale so the node is legible, and never
+ * lowers it: a reader already closer keeps their view.
  */
 const REVEAL_ZOOM = DEFAULT_ZOOM;
 
@@ -311,24 +301,22 @@ export function createTreeView(
         onSelectRegion,
         onRevert,
     } = options;
-    // Which scenes are folded away. A scene is the one grouping a reader may collapse without the
-    // drawing lying about itself: its membership comes from the document, not from which route
-    // happened to reach a node first. See `region-fold.ts`.
+    // The scenes folded away, each drawn as one box. Unlike a node, a scene may be folded on a
+    // graph too: its members come from the document, not from which route reached a node first.
     const collapsedRegions = new Set<string>(initialRegionFold);
 
-    // Every meaning the stage's edges can ever carry. Read from the stage rather than the folded
-    // graph, because a fold only ever merges edges: the markers defined once here therefore
-    // always cover what is drawn.
+    // Every edge category in the stage. A fold only merges edges, so the markers defined once
+    // for these cover every drawn edge.
     const edgeCategoriesPresent = [
         ...new Set(stage.edges.flatMap((edge) => (edge.category ? [edge.category] : []))),
     ];
-    // Whether this stage is the flow graph rather than a tree. Its child edges span the flow, and
-    // a node may be led to from several places — so Shift+digit has a list to address. On a tree
-    // the key is not this view's at all and is left to the browser.
+    // Whether this stage is the flow graph rather than a tree. Only a graph node may be led to
+    // from several places, so Shift+digit picks a way in there and is left to the browser on a
+    // tree.
     const flowStage = isFlowStage(stage);
 
-    // The graph as it is currently drawn — the stage's own when nothing is folded, and its
-    // quotient when a scene is. Everything downstream reads these rather than the stage.
+    // The graph as it is currently drawn: the stage's own when nothing is folded, and the folded
+    // graph when a scene is. Everything downstream reads these rather than the stage.
     let graph: FoldedGraph = { nodes: stage.nodes, edges: stage.edges };
     let referenceEdges: DisplayEdge[] = [];
     // The lookup is by the pair an edge joins, which is unique because a node is reached from a
@@ -353,9 +341,8 @@ export function createTreeView(
     // The nodes keyboard navigation has visited, most recent last: ← retraces them. A selection
     // made any other way clears it, so ← from a clicked node starts at the first way in.
     let trail: string[] = [];
-    // The reader's current object, when it is not a node. Exactly one of these three is set at a
-    // time: choosing a route or a region is as much a choice as choosing a node, and the drawing
-    // says so by letting the last one go.
+    // The reader's current object, when it is not a node. At most one of `selected`,
+    // `selectedEdge`, and `selectedRegion` is set: choosing one clears the other two.
     let selectedEdge: { fromId: string; toId: string } | null = null;
     let selectedRegion: string | null = null;
     // The node whose lineage is currently spotlighted on hover (null when not hovering).
@@ -405,11 +392,8 @@ export function createTreeView(
             defs.append("marker")
                 .attr("id", `arrow-${markerScope}-${category}`)
                 .attr("viewBox", "0 0 10 10")
-                // The head is drawn *forward* from the line's end rather than back over it, so
-                // the reference point is its base. Sitting the head on top of the line instead
-                // leaves the line showing past the taper — a triangle narrows to nothing at its
-                // tip, and the 1.5-wide line beneath it reads as a blunt stub through the point.
-                // Forward, the base is wider than the line it continues, and covers it.
+                // The reference point is the head's base, so the head is drawn forward from the
+                // line's end and the line never shows through its narrowing tip.
                 .attr("refX", 0)
                 .attr("refY", 5)
                 .attr("markerWidth", ARROW_SIZE)
@@ -423,19 +407,17 @@ export function createTreeView(
     }
 
     const viewport = svg.append("g");
-    // Regions are the ground the drawing stands on, so they are laid down before anything else.
+    // Region bands go first, so they sit behind everything else.
     const gRegions = viewport.append("g").attr("class", "regions");
     const gLinks = viewport.append("g");
     const gReferences = viewport.append("g");
     const gNodes = viewport.append("g");
-    // A node's click target is a generous rectangle that reaches into the corridor its own
-    // outgoing edges travel through, so it would swallow every hover aimed at a line. The lines
-    // therefore get an invisible, wider twin above the nodes: on the stroke, the edge wins.
+    // A node's click target is a wide rectangle that reaches into the corridor its own outgoing
+    // edges travel through, so it would catch hovers meant for a line. Each line therefore gets
+    // an invisible, wider twin above the nodes, so on the stroke the edge wins.
     const gEdgeHits = viewport.append("g").attr("class", "edge-hits");
 
     const zoomBehavior = zoom<SVGSVGElement, undefined>()
-        // The floor is low enough that even a long script fits on arrival; a reader who wants to
-        // read rather than survey zooms straight back in.
         .scaleExtent([MIN_ZOOM, 3])
         // Use the container size as the extent so zoom centers correctly and does not
         // depend on the SVG's intrinsic size.
@@ -481,8 +463,6 @@ export function createTreeView(
                 : undefined,
     });
 
-    // The column step is wide enough for a full-width label plus the lead-out its outgoing line
-    // needs, so a node's own words never run into the next column or get struck through.
     const layout = tree<DisplayNode>().nodeSize([62, COLUMN_STEP]);
     // The tree lays out depth along y and rows along x; the drawing reads the other way round.
     const at = (node: { x: number; y: number }): Point => ({ x: node.y, y: node.x });
@@ -515,10 +495,7 @@ export function createTreeView(
         applyView,
     };
 
-    /**
-     * Lights up whatever a row elsewhere is naming — a node, or a route — so the reader can see
-     * that the words and the drawing are the same thing seen twice.
-     */
+    /** Highlights the node, route, or region a row elsewhere names; `null` clears it. */
     function spotlight(
         what: { nodeId?: string; fromId?: string; toId?: string; region?: string } | null,
     ): void {
@@ -546,14 +523,11 @@ export function createTreeView(
             );
     }
 
-    // Names the route a line is, so hovering it says what it means and a screen reader can read
-    // it. The class is what the stylesheet thickens on hover — an edge is thin, so it needs a
-    // generous target and a clear response.
+    // Names the route a line is, for the hover tip and for a screen reader. The `routed` class is
+    // what the stylesheet thickens on hover.
     //
-    // Two channels, because they answer to different readers. The `<title>` names the *kind* of
-    // route and nothing else, which is what assistive technology announces. The hover carries the
-    // detail — what the kind means, and the words the writer gave this particular route — the way
-    // a node's does, so learning what an arm offers costs a hover rather than a click.
+    // The `<title>` names only the route's kind, which assistive technology announces. The hover
+    // tip adds what the kind means and the words the writer gave this route, as a node's tip does.
     function describeEdge<Datum>(
         selection: Selection<SVGPathElement, Datum, SVGGElement, unknown>,
         categoryOfDatum: (datum: Datum) => string | undefined,
@@ -592,9 +566,8 @@ export function createTreeView(
      * Measures every drawn node and sizes its click target to match, returning how far past each
      * node's dot an outgoing line must start to clear its own words.
      *
-     * The text is measured rather than estimated: a character-count guess is wrong by exactly the
-     * amount that puts a line through a label. A DOM that does not lay text out (a test's) has
-     * nothing to measure, and reports zero — the lines are then merely shorter, never misplaced.
+     * A DOM that does not lay text out (a test's) has nothing to measure and reports zero: the
+     * lines are then shorter, never misplaced.
      */
     function measureLabelBlocks(): Map<string, { clearance: number; width: number }> {
         const measured = new Map<string, { clearance: number; width: number }>();
@@ -611,14 +584,10 @@ export function createTreeView(
     }
 
     /**
-     * Draws each region as a band behind the nodes that share it.
+     * Draws each region as a band behind the nodes that share it, so a scene is named once around
+     * its nodes rather than under each one.
      *
-     * A scene names an area of the document, so it is written once around that area rather than
-     * repeated under every line inside it — which is both quieter and one line shorter per node.
-     *
-     * The band answers a click by *selecting* the scene; folding it away is a different kind of
-     * act — it changes what is drawn, not what the reader is looking at — so it gets a control of
-     * its own, the chevron in the band's corner.
+     * A click on the band *selects* the scene; the chevron in the band's corner folds it.
      */
     function drawRegions(
         nodes: readonly TreeNode[],
@@ -639,7 +608,6 @@ export function createTreeView(
         entering
             .append("rect")
             .attr("class", "region-band")
-            // A region is a thing a reader can ask about, so the band it is drawn as answers.
             .on("click", (_event, datum) => selectRegion(datum.region));
         entering.append("text").attr("class", "region-name");
         appendFoldControl(entering);
@@ -717,17 +685,16 @@ export function createTreeView(
             .attr("width", FOLD_HIT_SIZE)
             .attr("height", FOLD_HIT_SIZE)
             .attr("rx", 3);
-        // Drawn rather than rotated: a rotation about a bounding box is reported inconsistently
-        // across engines, and two short paths say the same thing without asking the engine.
+        // One glyph per state rather than one glyph rotated: engines disagree on how to rotate
+        // text about its bounding box.
         control.select("text").text((datum) => foldGlyphCharacter(!folded(datum)));
     }
 
     /**
-     * Clips one drawn label to the column's budget, and reports the width it ended up.
+     * Clips one drawn label to {@link LABEL_BUDGET} and returns its drawn width.
      *
-     * Measured rather than counted: a character count cannot say how wide a label will be, and the
-     * corridors climbing beside it need the answer. A DOM that lays no text out measures nothing,
-     * so the text is left as written — shorter lines, never misplaced ones.
+     * A DOM that does not lay text out (a test's) has nothing to measure: the label stays as
+     * written and its width is zero.
      */
     function clipLabel(text: SVGTextElement): number {
         if (!text.getComputedTextLength) return 0;
@@ -740,9 +707,9 @@ export function createTreeView(
         return text.getComputedTextLength();
     }
 
-    // The empty band under the deepest row, where cross-links travel. Each cross-link gets a lane
-    // of its own so two never share a line: the shortest hop runs closest to the drawing and a
-    // longer one passes beneath it, the way nested brackets never cross.
+    // Gives each cross-link its own lane in the empty band under the deepest row, so two never
+    // share a line: the shortest hop runs closest to the drawing and a longer one passes beneath
+    // it, the way nested brackets never cross.
     function assignLanes(
         edges: readonly DisplayEdge[],
         positionById: Map<string, TreeNode>,
@@ -751,10 +718,9 @@ export function createTreeView(
         const floor = nodes.reduce((low, node) => Math.max(low, node.x), 0) + LANE_GAP;
         const spanOf = (edge: DisplayEdge): number =>
             Math.abs(positionById.get(edge.toId)!.y - positionById.get(edge.fromId)!.y);
-        // Routes climbing in one column queue up: each takes the next corridor back from it, and
-        // leans in from its own row, so none of them lies on top of another. The queue is keyed by
-        // the column rather than by the target, because two routes to *different* nodes standing
-        // at the same depth climb in the same place and would coincide just as badly.
+        // Routes climbing into one column each take the next corridor back from it and their own
+        // approach row, so none lies on top of another. The count is per column, not per target:
+        // routes to two different nodes at the same depth climb in the same place.
         const arrivals = new Map<number, number>();
         return new Map(
             [...edges]
@@ -792,8 +758,8 @@ export function createTreeView(
         return gutterStart + DROP_INSET;
     }
 
-    // Ports fan either side of the target's own row — 0, above, below, further above — so the
-    // first route arrives dead level and the rest lean off it symmetrically.
+    // Approach rows alternate either side of the target's own row, so the first route arrives
+    // level: 0, -PORT_STEP, +PORT_STEP, -2 × PORT_STEP, +2 × PORT_STEP, ...
     function portOffset(queued: number): number {
         const rank = Math.ceil(queued / 2);
         return queued === 0 ? 0 : (queued % 2 === 1 ? -1 : 1) * rank * PORT_STEP;
@@ -854,10 +820,8 @@ export function createTreeView(
     }
 
     /**
-     * A command over every region, rather than a fold of one. It replaces the whole set outright,
-     * so no scene keeps an exception, and it re-frames: folding everything shrinks the drawing far
-     * enough that leaving the camera put would leave the reader looking at empty canvas. A single
-     * fold deliberately does neither.
+     * Fold exactly the given scenes, replacing the whole folded set, and re-frame: folding every
+     * scene shrinks the drawing enough to leave the old camera over empty canvas.
      */
     function foldEveryRegion(regions: readonly string[]): void {
         const keptNode = selected?.data.id ?? null;
@@ -949,7 +913,7 @@ export function createTreeView(
         return best;
     }
 
-    /** How far a point lies from a path, measured by walking it — near enough, and exact enough. */
+    /** The squared distance from a point to the nearest of a path's sampled points. */
     function distanceToPath(path: SVGPathElement, x: number, y: number): number {
         const length = path.getTotalLength();
         const steps = Math.max(2, Math.min(PICK_SAMPLES, Math.round(length / PICK_SAMPLE_SPACING)));
@@ -981,8 +945,7 @@ export function createTreeView(
         const points = Array.from({ length: steps + 1 }, (_, step) =>
             path.getPointAtLength((length * step) / steps),
         );
-        // The dots between the glyphs take their pitch from the glyphs' own spacing, so the two
-        // patterns stay in step instead of drifting against each other along the line.
+        // The dot pitch divides the glyph spacing evenly, so every glyph lands on a dot.
         path.style.strokeDasharray = `0 ${trim(length / steps / DOTS_PER_SYMBOL)}`;
         path.setAttribute(
             "d",
@@ -1010,11 +973,8 @@ export function createTreeView(
     }
 
     /**
-     * Re-derives everything the drawing is built from, for the scenes currently folded.
-     *
-     * The fold is a change of graph, not a hiding of drawn elements: the hierarchy, the
-     * cross-links, and the edge meanings all belong to the graph the reader is looking at, so
-     * they are rebuilt together rather than patched apart.
+     * Re-derives everything the drawing is built from, for the scenes currently folded: the
+     * hierarchy, the cross-links, the edge categories and labels, and each node's neighbors.
      */
     function rebuildGraph(): void {
         graph = foldRegions(stage.nodes, stage.edges, collapsedRegions);
@@ -1063,9 +1023,8 @@ export function createTreeView(
 
     // Resolve a node by its stable id against this view's current hierarchy (including collapsed
     // subtrees) and apply the operation, or report failure so a deferred selection cancels safely.
-    // This is how a selection deferred across a save-triggered rebuild lands on the freshly
-    // installed node — with its current source spans — rather than the stale node the click
-    // captured.
+    // A selection deferred across a rebuild thus lands on the rebuilt node, with its current
+    // source spans.
     function selectById(id: string, options: NodeSelectOptions = {}): boolean {
         // A selection named from elsewhere — a neighbor row, a search hit, a restore — is not a
         // keyboard step, so ← must not retrace the trail it interrupts.
@@ -1281,9 +1240,8 @@ export function createTreeView(
         event.preventDefault();
 
         if (folds) {
-            // A scene is the graph's foldable thing, so the fold key acts on the scene the reader
-            // is on — the one under the pointer, else the one chosen. Reaching a folded scene's
-            // box and pressing Enter should open it, which is the whole point of the box.
+            // A fold key acts on the scene the reader is on: the box under the pointer, else the
+            // chosen scene. So Enter on a folded scene's box opens it.
             const region = regionUnderKey();
             if (region !== null) {
                 toggleRegion(region);
@@ -1291,8 +1249,8 @@ export function createTreeView(
             }
         }
         if (!selected) {
-            // Nothing chosen yet: an arrow — or, as before, a fold key — starts at the root. A
-            // digit has no ways out to count until a node is chosen.
+            // Nothing chosen yet: an arrow or a fold key starts at the root. A digit has no ways
+            // out to count until a node is chosen.
             if (digit === null) {
                 forgetNavigation();
                 select(root);
@@ -1396,8 +1354,8 @@ export function createTreeView(
      * Walk back along the routes the keyboard took, or, with no trail left, to the first node
      * that leads here.
      *
-     * A graph is a DAG, so a node may be reached several ways: "back" is the way the reader came
-     * when the trail remembers it, and otherwise the first way in — never a single parent.
+     * A node may be reached several ways: "back" is the way the reader came when the trail
+     * remembers it, and otherwise the first way in.
      */
     function followBack(from: TreeNode): void {
         while (trail.length > 0) {
@@ -1549,9 +1507,9 @@ export function createTreeView(
         syncEdgeHits();
     }
 
-    // Mirrors every named route as an invisible wide path above the nodes, and lends its hover to
-    // the real line. Kept in sync after each render rather than joined on its own data, so the
-    // twin can never disagree with the line it stands for.
+    // Copies every routed line as an invisible, wider path above the nodes that takes the pointer
+    // for it. The twins are rebuilt from the drawn lines after each render, so each matches its
+    // line.
     function syncEdgeHits(): void {
         const routes = viewport.selectAll<SVGPathElement, unknown>("path.link.routed").nodes();
 
@@ -1618,9 +1576,8 @@ export function createTreeView(
             .attr("class", "label")
             .attr("dy", "0.32em")
             .attr("x", 12)
-            // Clipped to a *measured* budget once drawn, so the gutter beside it is a known width
-            // rather than whatever thirty characters happened to come to. The inspector and the
-            // hover tip carry the whole of it.
+            // Clipped to a measured width once drawn, so the gutter beside it stays clear. The
+            // inspector and the hover tip show the whole label.
             .text((d) => d.data.label);
 
         group.each(function (d) {
@@ -1661,7 +1618,7 @@ export function createTreeView(
         }
     }
 
-    /** Show a camera and fold; a `null` camera uses the default (root-centered) framing. */
+    /** Show a camera and fold; a `null` camera uses the default framing. */
     function applyView(
         camera: CameraTransform | null,
         fold: string[],
@@ -1695,9 +1652,10 @@ export function createTreeView(
      * until it lays out, so retry next frame (capped so a never-shown tab does not loop forever).
      * The `token` aborts the retry if a later applyView has superseded this one.
      *
-     * A stage opens on the whole of what it draws, kept clear of the panels floating over the
-     * canvas. Where the drawing cannot be measured — a DOM that lays nothing out — it falls back
-     * to anchoring the root, which needs no measurement.
+     * With no zoom to inherit, the stage is fitted whole, clear of the panels floating over the
+     * canvas, when that fit is above {@link LEGIBLE_ZOOM}. Otherwise the root is anchored at the
+     * left of the free area: at the inherited zoom, at LEGIBLE_ZOOM when the drawing is too large
+     * to fit legibly, or at {@link DEFAULT_ZOOM} when the drawing cannot be measured.
      */
     function scheduleDefaultView(token: number, attempt = 0): void {
         if (token !== viewToken) return;
@@ -1709,16 +1667,12 @@ export function createTreeView(
             return;
         }
         const insets = floatingPanelInsets(parent);
-        // A reader who chose a zoom elsewhere keeps it: moving between stages should not silently
-        // resize them. Only a stage arrived at with no zoom to inherit frames itself.
+        // An inherited zoom is kept; only a stage with no zoom to inherit is fitted.
         const content = inheritedZoom === null ? drawnExtent() : null;
         if (content) {
             const fitted = frameToFit(content, { width, height }, insets, {
                 minScale: LEGIBLE_ZOOM,
             });
-            // Shrinking a long script until every node is on screen leaves an unreadable smudge.
-            // Where the whole of it will not fit legibly, open at the start of it instead — the
-            // reader can zoom out further by hand than a default should ever choose for them.
             if (fitted.k > LEGIBLE_ZOOM) {
                 applyTransform(fitted);
                 return;
@@ -1727,8 +1681,7 @@ export function createTreeView(
         const rootX = (root as TreeNode).x ?? 0; // vertical position after layout
         const rootY = (root as TreeNode).y ?? 0; // horizontal position (0 at the root)
         const scale = content ? LEGIBLE_ZOOM : (inheritedZoom ?? DEFAULT_ZOOM);
-        // Anchor the root inside the free rectangle, not the whole viewport: a stage that opens
-        // at its start should no more begin underneath the legend than one that opens framed.
+        // Anchor the root inside the area the legend leaves free, not the whole viewport.
         const free = width - (insets.left ?? 0) - (insets.right ?? 0);
         const tx = (insets.left ?? 0) + free * ROOT_ANCHOR_X - scale * rootY;
         const ty = height / 2 - scale * rootX;
@@ -1748,10 +1701,8 @@ export function createTreeView(
     }
 
     /**
-     * The room the panels floating over the canvas ask to be kept clear of.
-     *
-     * The legend is the one that matters: it sits at the top right and has grown tall enough to
-     * cover a good part of the drawing it describes.
+     * The space to keep clear of the panels floating over the canvas. Only the legend, at the top
+     * right, is counted.
      */
     function floatingPanelInsets(parent: Element): Insets {
         const canvas = parent.getBoundingClientRect?.();

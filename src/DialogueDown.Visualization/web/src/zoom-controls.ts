@@ -1,4 +1,4 @@
-// Factor each zoom-in/out button press multiplies (or divides) the scale by.
+/** The factor each zoom-in/out button press multiplies (or divides) the scale by. */
 export const ZOOM_STEP = 1.3;
 
 // A revert glyph (anticlockwise circle arrow) — "reset to the default view".
