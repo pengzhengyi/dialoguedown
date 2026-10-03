@@ -136,7 +136,10 @@ internal sealed class SceneTreeProjection : INodeProjection<object>
                 described.Category,
                 described.EntityKey,
                 described.TypeName,
-                refKey);
+                refKey)
+            {
+                Span = described.Span,
+            };
     }
 
     private string? RefKeyFor(object node) => node switch
