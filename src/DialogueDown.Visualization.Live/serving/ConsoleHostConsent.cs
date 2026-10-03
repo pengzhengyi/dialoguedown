@@ -2,7 +2,7 @@ namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
 /// Asks for hosting consent on the console. When there is no interactive terminal
-/// (piped input, CI), it declines and points at <c>--render-root</c> instead of
+/// (piped input, CI), it declines and points at <c>--root</c> instead of
 /// blocking on a prompt no one can answer.
 /// </summary>
 internal sealed class ConsoleHostConsent : IHostConsent
@@ -40,7 +40,7 @@ internal sealed class ConsoleHostConsent : IHostConsent
         if (!_interactive)
         {
             _output.WriteLine(
-                $"Not hosting them (no interactive prompt). Re-run with --render-root \"{request.RootDirectory}\" to allow.");
+                $"Not hosting them (no interactive prompt). Re-run with --root \"{request.RootDirectory}\" to allow.");
             return false;
         }
 
