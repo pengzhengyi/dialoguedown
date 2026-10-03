@@ -114,8 +114,7 @@ public sealed class SymbolProjectionTests
     [Fact]
     public void Project_IncludesAConfiguredSpeakerTheScriptNeverUses()
     {
-        // The whole point of config-aware completion: a speaker declared in dialogue.toml
-        // completes in the editor even before a line uses it.
+        // A speaker declared in dialogue.toml completes in the editor before any line uses it.
         var options = new CompilerOptions
         {
             Speakers = [new ConfiguredSpeaker("Narrator", null, [], [])],
