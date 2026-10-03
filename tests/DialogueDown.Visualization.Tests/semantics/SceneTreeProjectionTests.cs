@@ -2,6 +2,7 @@ using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Script;
 using DialogueDown.Visualization.Semantics;
 using DialogueDown.Visualization.Tests.Support;
 
@@ -92,6 +93,34 @@ public sealed class SceneTreeProjectionTests
     }
 
     [Fact]
+    public void Describe_ASpeaker_KeepsItsSourceSpan()
+    {
+        // A speaker gains a ref key for cross-highlighting, and still maps to its place in the
+        // source, so its detail panel can jump there.
+        var source = "Alice: Hello.";
+        var model = Pipeline.Model(source);
+        var speaker = FirstLine(model).Speaker!;
+
+        AssertSpanAsOnTheDesugaredTab(source, model, speaker);
+    }
+
+    [Fact]
+    public void Describe_AJumpToAScene_KeepsItsSourceSpan()
+    {
+        var source = """
+            Alice: Off we go. => [The market](#the-market)
+
+            # The Market
+
+            Bob: Fresh apples!
+            """;
+        var model = Pipeline.Model(source);
+        var jump = FirstLine(model).Speech.OfType<Jump>().Single();
+
+        AssertSpanAsOnTheDesugaredTab(source, model, jump);
+    }
+
+    [Fact]
     public void Neighbors_YieldTheScenesOwnBlocksThenItsChildScenes()
     {
         // "A Scene" owns a line, then nests "Deeper" — the tree shows the block before the child.
@@ -112,5 +141,16 @@ public sealed class SceneTreeProjectionTests
 
         Assert.IsAssignableFrom<ScriptBlock>(neighbors[0]);
         Assert.Equal("deeper", Assert.IsType<Scene>(neighbors[^1]).Anchor);
+    }
+
+    private static Line FirstLine(SemanticModel model) =>
+        Assert.IsType<Line>(model.SceneRoot.Blocks[0]);
+
+    private static void AssertSpanAsOnTheDesugaredTab(string source, SemanticModel model, object node)
+    {
+        var expected = new DialogueAstProjection(source).Describe(node).Span;
+
+        Assert.NotNull(expected);
+        Assert.Equal(expected, new SceneTreeProjection(model, source).Describe(node).Span);
     }
 }
