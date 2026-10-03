@@ -23,8 +23,8 @@ public sealed class ServedShellServerTests
         Assert.Equal(LandingHtml, html);
     }
 
-    // The shell's own door, which a session's back link points at: a run that pinned a document
-    // redirects `/` to its report, so the way back needs a path that is always the shell.
+    // A report's back link points at /browse, because a run started on a script redirects `/` to
+    // that script's report, while /browse always serves the shell.
     [Fact]
     public async Task BrowseShell_ServesTheLandingHtml()
     {
@@ -527,8 +527,9 @@ public sealed class ServedShellServerTests
     [Fact]
     public async Task Events_WhenAnotherDocumentIsOpened_TellsTheStreamItWasDisplaced()
     {
-        // A tab showing one script keeps its stream when a second is opened elsewhere. Its watcher
-        // goes with the swap, so without being told it would sit silent forever.
+        // A tab showing one script keeps its stream when another script is opened. The server
+        // stops watching the first script, so without this event the tab would never hear of
+        // another change.
         using var tree = new TempTree();
         tree.File("root/a.dialogue.md", "# A");
         tree.File("root/b.dialogue.md", "# B");
@@ -563,8 +564,6 @@ public sealed class ServedShellServerTests
     [Fact]
     public async Task Events_ForTheServedDocument_StaysOpenForItsReloads()
     {
-        // The naming must not cost the ordinary case: a tab that names the script being served
-        // gets the stream it came for.
         using var tree = new TempTree();
         var document = tree.File("root/a.dialogue.md", "# A");
         await using var server = await Started(tree);

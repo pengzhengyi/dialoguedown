@@ -38,7 +38,6 @@ internal static class GraphAssert
         Assert.Equal(labels, node.Out.Select(edge => InlineText.Of(AssertOption(edge).Label)));
     }
 
-    /// <summary>Asserts the node's only out-edge is a succession to <paramref name="target"/>.</summary>
     /// <summary>
     /// Asserts the node's one fall-through leads to <paramref name="target"/>, beside whatever
     /// other routes it offers — unlike <see cref="AssertOnlySuccession"/>, which asserts the
@@ -57,6 +56,7 @@ internal static class GraphAssert
         Assert.Empty(node.Out.OfType<SuccessionEdge>());
     }
 
+    /// <summary>Asserts the node's only out-edge is a succession to <paramref name="target"/>.</summary>
     public static void AssertOnlySuccession(DialogueNode node, NodeId target)
     {
         ArgumentNullException.ThrowIfNull(node);
@@ -111,10 +111,8 @@ internal static class GraphAssert
     }
 
     /// <summary>
-    /// Asserts the graph holds a node answering to <paramref name="id"/>. The graph resolves an id
-    /// by lookup, so an id it does not hold is not a malformed drawing but an exception thrown at
-    /// whichever runtime is walking the flow. <paramref name="namedBy"/> says what pointed at the
-    /// id, so a failure names the edge or endpoint at fault rather than the id alone.
+    /// Asserts the graph holds a node with the id <paramref name="id"/>. <paramref name="namedBy"/>
+    /// says what pointed at the id, so a failure names the edge or endpoint at fault.
     /// </summary>
     public static void AssertHoldsNode(DialogueGraph graph, NodeId id, string namedBy)
     {
@@ -125,11 +123,7 @@ internal static class GraphAssert
             NamesANodeTheGraphDoesNotHold(namedBy, id));
     }
 
-    /// <summary>
-    /// Asserts no two of the graph's nodes answer to the same id. The id is how everything
-    /// downstream names a node, and the lookup that resolves a shared one silently prefers
-    /// whichever was indexed last.
-    /// </summary>
+    /// <summary>Asserts no two of the graph's nodes share an id.</summary>
     public static void AssertNodeIdsAreDistinct(DialogueGraph graph)
     {
         ArgumentNullException.ThrowIfNull(graph);

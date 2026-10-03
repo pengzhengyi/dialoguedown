@@ -6,23 +6,14 @@ namespace DialogueDown.Tests.Support;
 /// Generates DialogueDown scripts for property tests.
 /// </summary>
 /// <remarks>
-/// The generator aims at scripts a writer could plausibly have written rather than arbitrary
-/// text: a property that only ever sees random characters exercises the front end's rejection
-/// path and little else, so it would pass while saying nothing about the constructs the compiler
-/// actually models. Each piece here is a construct the language defines, assembled in the
-/// combinations a script puts them in.
+/// Each piece is a construct the language defines, so a generated script reaches the stages past
+/// the front end instead of being rejected as random text.
 /// <para>
-/// A script is generated from its headings outwards, because the two things that decide whether a
-/// script compiles are both properties of the whole document rather than of any one line: headings
-/// must be distinct, or they claim the same anchor, and a jump must name a heading the script
-/// contains. Generating jump targets beside the scenes instead of from them leaves most scripts
-/// rejected in semantic analysis, and everything after that stage — resolution, lowering, the
-/// graph — unreached and therefore untested.
+/// A script is generated from its headings outward: the headings are distinct, and every jump names
+/// one of them, so most scripts pass semantic analysis and go on to lowering and the graph.
 /// </para>
 /// <para>
-/// Generated content is deliberately small and drawn from a fixed vocabulary. A counterexample is
-/// only useful if a person can read it, and a shrunk script of a few lines is a bug report where
-/// four hundred characters of noise is not.
+/// Content is small and drawn from a fixed vocabulary, so a shrunk counterexample stays readable.
 /// </para>
 /// </remarks>
 internal static class ScriptGen
@@ -97,8 +88,8 @@ internal static class ScriptGen
     private static Gen<string> AnchorOf(string[] headings) =>
         Gen.OneOfConst(Array.ConvertAll(headings, heading => $"#the-{heading}"));
 
-    // Speech that exercises the inline surface: plain words, styling, a query, a game call, and
-    // a link — each of which becomes a different fragment, and each of which carries its own span.
+    // Speech that covers each inline construct: plain words, styling, a query, a game call, and a
+    // link. Each becomes a different fragment with its own span.
     private static Gen<string> Speech(Gen<string> anchor) =>
         Gen.OneOf(
             _prose,
@@ -150,7 +141,7 @@ internal static class ScriptGen
                 (k, s, t, w, target) => $"`{k}?` {s}: {t}. => [{w}]({target})");
 
         // A choice whose options are all gated, and an `if` with no `else`: both gain a succession
-        // for the run where every arm is declined.
+        // taken when every arm is declined.
         var gatedChoice =
             Gen.Select(
                 _key, _key, _prose, _prose,

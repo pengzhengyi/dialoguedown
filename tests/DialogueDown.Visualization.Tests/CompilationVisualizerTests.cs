@@ -23,8 +23,7 @@ public sealed class CompilationVisualizerTests
     public void BuildStages_ErroringScriptThatReachedAnalysis_StillShowsEveryStageItReached()
     {
         // A jump to a missing scene is reported after the transpiler, so the compile runs every
-        // stage and fails. Reaching a stage is not succeeding: the artifacts it produced are still
-        // worth inspecting, so every stage before the graph reads as available.
+        // stage and fails. A stage it reached still shows what it produced.
         var stages = new CompilationVisualizer(ScriptCompilerFactory.CreateDefault())
             .BuildStages("Alice: away => [nowhere](#no-such-scene)");
 
@@ -143,8 +142,8 @@ public sealed class CompilationVisualizerTests
                 script,
                 desugared,
                 semantics,
-                // This AST is assembled here rather than desugared, so it carries none of the
-                // defaults lowering relies on; the visualizer projects no graph stage anyway.
+                // The hand-built AST lacks the defaults lowering needs, so the graph is an empty
+                // stand-in.
                 EmptyGraph(),
                 []));
         var visualizer = new CompilationVisualizer(compiler);
@@ -165,7 +164,7 @@ public sealed class CompilationVisualizerTests
         Assert.NotNull(stages[3].Tables);
 
         // The Markdown AST has not read Dialogue meaning, so `=>` there is still plain text; every
-        // stage from the transpiler on has, and says so itself rather than being matched by title.
+        // stage from the transpiler on has.
         Assert.False(stages[0].ReadsDialogueMeaning);
         Assert.All(stages.Skip(1), stage => Assert.True(stage.ReadsDialogueMeaning));
     }
@@ -459,7 +458,7 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("\"kind\":\"CustomTag\"", json);
         Assert.Contains("\"kind\":\"Separator\"", json);
         Assert.Contains("\"kind\":\"JumpIndicator\"", json);
-        Assert.DoesNotContain("\"kind\":\"Speaker\"", json); // the coarse kind is retired
+        Assert.DoesNotContain("\"kind\":\"Speaker\"", json); // a speaker is SpeakerName
     }
 
     [Fact]
@@ -567,7 +566,7 @@ public sealed class CompilationVisualizerTests
         Assert.Contains("src=\"/assets/", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/assets/", html, StringComparison.Ordinal);
         Assert.DoesNotContain("--pico-", html, StringComparison.Ordinal);
-        // The payload still travels with the page: only the constant half was lifted out.
+        // The payload stays inline; only the client is linked.
         Assert.Contains("__DD_REPORT__", html, StringComparison.Ordinal);
     }
 

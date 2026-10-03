@@ -21,9 +21,8 @@ public sealed class PlaybookNodeSummaryCoverageTests
         (End(), NodeKinds.End),
     ];
 
-    // Matching on a class hierarchy compiles with a discard arm, so a seventh node kind would fall
-    // through it in silence. Reading the registrations turns that into a failing test naming the
-    // kind nobody accounted for.
+    // Matching on a class hierarchy compiles with a discard case, so a seventh node kind would fall
+    // through it unnoticed. Reading the registrations makes that a failing test naming the kind.
     [Fact]
     public void Of_AccountsForEveryNodeKindTheFormatDeclares()
     {

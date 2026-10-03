@@ -43,8 +43,8 @@ public sealed class PlaybookProjectionTests
 
         var metadata = Assert.IsType<PlaybookMetadataView>(report.Metadata);
         Assert.Equal(Script, metadata.Script);
-        // Every playbook needs the core capability; the format version is still pre-1.0, so the
-        // number itself is not asserted — only that the summary reports what the document says.
+        // Every playbook needs the core capability. The format version changes between releases,
+        // so it is not asserted.
         Assert.Contains("core", metadata.Requires);
         Assert.Equal(0, metadata.Entry);
         Assert.True(metadata.NodeCount > 0, "A compiled script has nodes to play.");

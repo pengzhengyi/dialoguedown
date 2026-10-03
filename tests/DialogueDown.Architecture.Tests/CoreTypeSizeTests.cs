@@ -4,20 +4,17 @@ using System.Runtime.CompilerServices;
 namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
-/// Group D — type shape. A class that exposes too many public methods tends to
-/// carry too many responsibilities (a "God class"). This guards the core against
-/// that by capping the public method surface per type.
+/// Type shape. A class that exposes too many public methods tends to carry too many
+/// responsibilities, so this caps the number of public methods each core type declares.
 /// </summary>
 /// <remarks>
-/// The count is deliberately of <em>public</em> authored methods, not all methods:
-/// the size/complexity guardrails (S138 caps a method at 40 lines) actively
-/// encourage decomposing behavior into many small <em>private</em> helpers, so
-/// counting those would penalize good design. Compiler-generated members, property
-/// and event accessors, operators, and the object/record protocol
-/// (<c>Equals</c>, <c>GetHashCode</c>, <c>ToString</c>, <c>Deconstruct</c>,
-/// <c>PrintMembers</c>) are excluded so records and data types are not flagged.
-/// This lives as an architecture test because SonarAnalyzer's S1448 ("too many
-/// methods") does not activate through <c>.editorconfig</c> in the pinned version.
+/// Only <em>public</em> authored methods count, since the method-length limit (S138, 40
+/// lines) favors many small private helpers. Compiler-generated members, property and
+/// event accessors, operators, and the object/record protocol (<c>Equals</c>,
+/// <c>GetHashCode</c>, <c>ToString</c>, <c>Deconstruct</c>, <c>PrintMembers</c>) are
+/// excluded so records and data types are not flagged. This is an architecture test
+/// because SonarAnalyzer's S1448 ("too many methods") does not activate through
+/// <c>.editorconfig</c> in the pinned version.
 /// </remarks>
 public sealed class CoreTypeSizeTests
 {
