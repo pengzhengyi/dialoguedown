@@ -27,7 +27,7 @@ public sealed class PlaybookNodeSummaryTests
     }
 
     // The Leads to column lists a branch's targets but cannot say which condition reaches which, so
-    // the summary is where that pairing survives.
+    // the summary shows that pairing.
     [Fact]
     public void Of_ABranch_PairsEachConditionWithTheNodeItReaches()
     {

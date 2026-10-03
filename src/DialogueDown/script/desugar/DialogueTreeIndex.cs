@@ -5,7 +5,7 @@ namespace DialogueDown.Script.Desugar;
 /// <summary>
 /// A build-once index of every node in a desugared tree, grouped by type and connected to its
 /// parent, so a compiler sub-pass can query type and ancestry without walking the tree itself.
-/// The tree is traversed once; each node is grouped under **every** type in its inheritance
+/// The tree is traversed once; each node is grouped under every type in its inheritance
 /// chain (its concrete type up to <see cref="ScriptNode"/>) in document order, so a base-type
 /// query such as <c>OfType&lt;Speaker&gt;()</c> works and results read top-to-bottom.
 /// </summary>
@@ -38,8 +38,8 @@ internal sealed class DialogueTreeIndex
 
     /// <summary>
     /// The indexed node's ancestors, nearest parent first. Parent relationships use reference
-    /// identity because separate AST records may carry equal values but belong to different
-    /// branches.
+    /// identity because separate AST records may carry equal values but sit in different
+    /// places in the tree.
     /// </summary>
     public IEnumerable<ScriptNode> AncestorsOf(ScriptNode node)
     {

@@ -36,6 +36,6 @@ public sealed class ConditionExtensionsTests
     public void Keys_RejectNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Condition)null!).Keys());
 
-    /// <summary>A condition kind nothing has been taught to read, for the refusal case.</summary>
+    /// <summary>A condition kind no reader handles, for the refusal case.</summary>
     private sealed record UntaughtCondition : Condition;
 }

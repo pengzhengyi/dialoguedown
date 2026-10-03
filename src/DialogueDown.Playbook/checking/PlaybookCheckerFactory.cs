@@ -4,15 +4,8 @@ namespace DialogueDown.Playbook.Checking;
 /// Creates the checks a playbook must satisfy to be played by this build.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The one place the standard set is wired, so what a default reader accepts can be read in a
-/// single method rather than gathered from a static on every checker.
-/// </para>
-/// <para>
-/// Keeping it here also keeps each checker honest: a checker takes the policy it applies and
-/// knows nothing of the one this build happens to use, which is what lets a runtime supply
-/// narrower rules of its own.
-/// </para>
+/// The only place this build's limits from <see cref="PlaybookSupport"/> are passed to the
+/// checkers, so what a default reader accepts can be read in one method.
 /// </remarks>
 public static class PlaybookCheckerFactory
 {

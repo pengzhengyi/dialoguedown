@@ -8,7 +8,7 @@ namespace DialogueDown.Script.Desugar;
 internal static class InlineFragmentExtensions
 {
     /// <summary>
-    /// Whether the fragment is a run of plain text holding nothing but whitespace.
+    /// Whether the fragment is plain text holding nothing but whitespace.
     /// A soft <see cref="LineBreak"/> is deliberately not blank: it ends a single-line
     /// construct such as a jump rather than padding it.
     /// </summary>

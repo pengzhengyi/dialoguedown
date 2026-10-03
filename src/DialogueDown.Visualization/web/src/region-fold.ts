@@ -1,15 +1,9 @@
 /**
  * Folding a scene: the graph seen with one region contracted to a single box.
  *
- * A scene is the one grouping a reader may collapse without the drawing telling a lie about
- * itself. A node's children in this graph are an accident of which route reached them first, so
- * folding a *node* hides lines other routes still lead to; scene membership is decided by the
- * compiler from the document, and no traversal order can change it.
- *
- * The fold is a quotient, not a filter: the scene's nodes contract to one supernode, the edges
- * that crossed its border are re-pointed at that supernode, and the edges wholly inside vanish
- * with the interior they joined. Everything downstream stays exactly where it was — control
- * passes *through* the folded scene rather than disappearing into it.
+ * The scene's nodes contract to one box, the edges that crossed its border are re-pointed at that
+ * box, and the edges wholly inside are dropped with the nodes they joined. Everything downstream
+ * stays where it was: control passes *through* the folded scene rather than disappearing into it.
  */
 
 import type { DisplayEdge, DisplayNode } from "./model";
@@ -95,10 +89,9 @@ function countByRegion(
 /**
  * An id per folded region.
  *
- * A region whose box id a node already answers to is left unfolded rather than renamed: the box
- * id has to invert back to the region's name for an inspector to say what a line joins, and a
- * disambiguated id would not. The compiler's own ids cannot collide, so this is the door being
- * locked rather than a case that arises.
+ * A region whose box id is already some node's id is left unfolded rather than renamed, because
+ * the inspector maps a box id back to the region's name to say what a line joins. The compiler's
+ * own ids never take this form, so this only guards a stage the compiler did not produce.
  */
 function allocateBoxIds(
     nodes: readonly DisplayNode[],
@@ -119,9 +112,8 @@ function allocateBoxIds(
 }
 
 /**
- * The box a folded region is drawn as: a scene-shaped node named for the scene it stands for and
- * carrying how much it is hiding — a fold that does not say what it took away is just a gap. Its
- * band drops its own name while it is folded, so the name is written once, not twice.
+ * The box a folded region is drawn as: a scene node named for the region, carrying how many nodes
+ * it holds. Its band drops its own name while it is folded, so the name is written once.
  */
 function boxNode(id: string, region: string, count: number): DisplayNode {
     return {
@@ -129,7 +121,7 @@ function boxNode(id: string, region: string, count: number): DisplayNode {
         label: region,
         attributes: [{ name: "nodes", value: String(count) }],
         region,
-        // A folded scene reads as a structural anchor, the way a scene node does elsewhere.
+        // Drawn like any other scene node.
         typeName: "Scene",
     };
 }
@@ -165,12 +157,11 @@ function contract(edges: readonly DisplayEdge[], idOf: ReadonlyMap<string, strin
  * Re-derives which edges the drawing is laid out from.
  *
  * The client draws a graph by naming one parent per node and treating everything else as a
- * cross-link, and the compiler guarantees that shape on the way in. Contracting a region breaks
- * it in two ways: two routes that entered a scene at different lines now enter the same box, and
- * two scenes that lead into each other become a cycle no node-level cycle existed for. A
- * breadth-first walk from the root claims the edge that first reaches each node, exactly as the
- * compiler's own spanning tree does — the tree edges the fold left legal are all kept, since the
- * walk follows them first.
+ * cross-link, and the compiler sends that shape. Contracting a region breaks it in two ways: two
+ * routes that entered a scene at different lines now enter the same box, and two scenes that lead
+ * into each other form a cycle between their boxes. A breadth-first walk from the root claims the
+ * edge that first reaches each node. It follows the compiler's tree edges first, so every tree
+ * edge the fold left valid is kept.
  */
 function rebuildTree(edges: readonly DisplayEdge[], rootId: string | undefined): DisplayEdge[] {
     if (rootId === undefined) return [...edges];

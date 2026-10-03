@@ -8,9 +8,9 @@ namespace DialogueDown.Emission;
 /// Where each node of a graph sits in the playbook being written.
 /// </summary>
 /// <remarks>
-/// The compiler's <see cref="NodeId"/> is an opaque handle minted as blocks are encountered, so
-/// it need not run 0, 1, 2 in the order the node list is in. A playbook addresses nodes by
-/// position, so writing one renumbers — and this is the translation every reference goes through.
+/// The compiler's <see cref="NodeId"/> is an opaque handle assigned as blocks are encountered, so
+/// the ids need not count 0, 1, 2 in the order of the node list. A playbook addresses nodes by
+/// position, so every reference to a node is translated through this numbering.
 /// </remarks>
 internal sealed class NodeNumbering
 {

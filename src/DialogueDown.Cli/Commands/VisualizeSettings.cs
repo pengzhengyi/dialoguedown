@@ -35,9 +35,9 @@ internal sealed class VisualizeSettings : CommandSettings
     [Description("Do not open the report in the browser.")]
     public bool NoOpen { get; init; }
 
-    // Kept only to fail loudly: `--emit` moved to `compile`. Without it Spectre silently ignores
-    // the option, so `visualize x --emit dot -o stages.dot` would quietly write an HTML report
-    // into stages.dot instead of the DOT text the caller asked for.
+    // Declared only to reject `--emit` and point to `compile --emit`. Spectre ignores an unknown
+    // option, so `visualize x --emit dot -o stages.dot` would otherwise write an HTML report into
+    // stages.dot instead of the DOT text the caller asked for.
     [CommandOption("--emit <format>", IsHidden = true)]
     [Description("Moved to 'ddown compile --emit'.")]
     public string? Emit { get; init; }

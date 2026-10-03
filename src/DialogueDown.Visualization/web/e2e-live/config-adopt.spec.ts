@@ -38,5 +38,5 @@ test("adopts an existing dialogue.toml from the no-config state instead of faili
     await expect(page.locator(".tab.active", { hasText: "Config" })).toBeVisible();
     await expect(page.locator(".config-source .cm-content")).toContainText("Zelda");
     expect(existsSync(CONFIG_ADOPT_TOML)).toBe(true);
-    expect(readFileSync(CONFIG_ADOPT_TOML, "utf8")).toBe(CONFIG_ADOPT_CONFIG); // never overwritten
+    expect(readFileSync(CONFIG_ADOPT_TOML, "utf8")).toBe(CONFIG_ADOPT_CONFIG);
 });

@@ -156,9 +156,11 @@ This section owns the modes; other notes link here.
 | `best-effort` | `DiagnosticBag` | Recover through every stage and collect everything. | tools that want the fullest picture |
 | `fail-fast` | `FailFastDiagnosticSink` | Throw a `DiagnosticException` at the first error. | an embedder that wants "compiled, or abort" |
 
-The transpiler is the only checkpoint because it is the only stage that reports
-errors before analysis. Either collecting mode ends with no graph when any error was
-reported; the result is a `CompilationFailure` carrying what it reached. Warnings
+The checkpoint sits after the transpiler because every later stage reads the script
+it builds, so an error there makes their input unreliable. Structural validation and
+semantic analysis then report their errors together, and either collecting mode ends
+with no graph when any error was reported; the result is a `CompilationFailure`
+carrying what it reached. Warnings
 never fail a compile in any mode.
 
 Only `stage-boundary` and `best-effort` are author-facing settings — through

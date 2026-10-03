@@ -6,6 +6,7 @@ namespace DialogueDown.Playbook.Speech;
 /// <summary>
 /// A command written as a plain phrase, which the host performs however it chooses.
 /// </summary>
+/// <remarks><c>`("Alice joins Art")`</c> gives the action <c>Alice joins Art</c>.</remarks>
 /// <param name="Action">The phrase the writer wrote.</param>
 public sealed record DefaultCommandFragment(string Action) : SpeechFragment
 {

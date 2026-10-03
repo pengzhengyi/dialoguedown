@@ -7,10 +7,8 @@ namespace DialogueDown.Emission;
 /// Writes the steps of a playthrough.
 /// </summary>
 /// <remarks>
-/// A node keeps only what playing it needs. The source span it was lowered from is left behind:
-/// a span addresses text that a runtime does not have and cannot be given, since a playbook is
-/// written to be carried elsewhere and interpreted there. Source positions serve diagnostics,
-/// and diagnostics stay with the compiler.
+/// A node keeps only what playing it needs, so its source span is dropped: a runtime does not
+/// have the source text a span points into.
 /// </remarks>
 internal static class NodeMapping
 {

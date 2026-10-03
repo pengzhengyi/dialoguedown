@@ -5,7 +5,7 @@ using DialogueDown.Visualization.Render;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// The <c>visualize &lt;file&gt; --emit &lt;format&gt;</c> path: compile the document
+/// The <c>compile &lt;file&gt; --emit &lt;format&gt;</c> path: compile the document
 /// and write every stage's graph as DOT text, to a file or standard output.
 /// A non-interactive emit for embedding a graph elsewhere — no server, no browser.
 /// </summary>

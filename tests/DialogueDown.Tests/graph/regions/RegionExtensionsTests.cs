@@ -28,7 +28,7 @@ public sealed class RegionExtensionsTests
     [Fact]
     public void DescendantsAndSelf_NoRegionAtAll_IsRejectedWhenAsked()
     {
-        // Eagerly, rather than whenever somebody gets round to enumerating the result.
+        // The argument is checked at the call, not when the result is first enumerated.
         Assert.Throws<ArgumentNullException>(() => RegionExtensions.DescendantsAndSelf(null!));
     }
 }

@@ -12,7 +12,7 @@
     <Description>Diagnostic visualization of DialogueDown compiler stages (Markdown AST, ...).</Description>
     <!-- The web/ frontend is a self-contained Vite/TypeScript project with its own
          toolchain; keep the .NET SDK from globbing its sources (and node_modules).
-         Only the pre-built single-file report is embedded, below. -->
+         Only the built report files are embedded, below. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);web\**</DefaultItemExcludes>
   </PropertyGroup>
 

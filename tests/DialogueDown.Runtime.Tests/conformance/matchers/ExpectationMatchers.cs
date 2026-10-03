@@ -6,12 +6,13 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
 /// <summary>Checks every claim an expectation carries, each against the matcher that owns its key.</summary>
 /// <remarks>
-/// Every claim is checked, not only the ones something knows how to check.
+/// Every claim is checked, and a claim no matcher owns is reported as not yet playable rather than
+/// skipped.
 /// </remarks>
 internal static class ExpectationMatchers
 {
-    // Keyed rather than searched, so two matchers claiming one key is a startup failure rather
-    // than a silent win for whichever was registered first.
+    // Keyed, so two matchers claiming one key fail at startup rather than one silently replacing
+    // the other.
     private static readonly Dictionary<string, IExpectationMatcher> _byKey =
         new IExpectationMatcher[]
         {

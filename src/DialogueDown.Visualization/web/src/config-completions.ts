@@ -81,7 +81,7 @@ export function speakerKeyCompletions(reservedTags: readonly string[]): Completi
 
 /**
  * Complete a top-level key position (outside any table) with the document's root settings —
- * currently the `mode` key. A root key position is the start of a line, before any `=`, not a
+ * the `mode` key. A root key position is the start of a line, before any `=`, not a
  * comment, and above the first table header (where TOML's root key/values must live).
  */
 export function rootKeyCompletions(): CompletionSource {

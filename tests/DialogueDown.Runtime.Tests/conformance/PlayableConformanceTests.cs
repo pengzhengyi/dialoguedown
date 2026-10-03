@@ -8,7 +8,7 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </summary>
 public sealed class PlayableConformanceTests
 {
-    // Every case this pass conforms to, named rather than counted, so a case that starts passing
+    // Every case this build conforms to, named rather than counted, so a case that starts passing
     // is noticed and one that stops passing is a failure.
     private static readonly string[] _conforming =
         ["a-command-ending-a-line", "a-command-mid-line", "a-command-opening-a-line", "a-command-too-late",
@@ -37,7 +37,7 @@ public sealed class PlayableConformanceTests
     public void NoCase_DivergesFromWhatItClaims()
     {
         // A divergence is the failure the corpus exists to catch, so it is reported apart from a
-        // construct the runner has simply not learned yet.
+        // construct the runner cannot play yet.
         var diverged = Corpora.Playable.Cases()
             .Select(aCase => (Case: aCase.Name, Outcome: PlayableRun.Match(aCase)))
             .Where(run => run.Outcome.Verdict == SessionVerdict.Diverged)

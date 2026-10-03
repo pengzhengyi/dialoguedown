@@ -397,8 +397,8 @@ describe("renderDocument", () => {
     });
 
     it("gives an inline region the same chevron and trailing status as a block one", () => {
-        // One glyph, one meaning, wherever a reader meets it: the chevron always acts and the
-        // circle-slash always states. An inline region is no longer an exception to that.
+        // One glyph, one meaning, in an inline region as in a block one: the chevron always
+        // folds, and the circle-slash always states the region's status.
         const source = "<https://example.com>";
         const html = renderDocument(source, {
             ignored: [{ start: 0, end: source.length }],

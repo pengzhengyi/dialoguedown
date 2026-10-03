@@ -1,8 +1,8 @@
 /**
  * Where an edge runs between two laid-out nodes.
  *
- * A node writes its label to the right of its dot, so a line that leaves from the dot strikes
- * through the very words it belongs to. And a cross-link that spans the drawing lies across every
+ * A node writes its label to the right of its dot, so a line that leaves from the dot crosses the
+ * very words it belongs to. And a cross-link that spans the drawing lies across every
  * row it passes. Both are answered here as pure geometry, so the shapes can be tested without a
  * browser.
  *
@@ -24,8 +24,8 @@ export interface Curve {
 
 /**
  * A cross-link's three moves: it drops out of its row, runs the length of the lane, and rises to
- * its target. The two vertical moves happen at the columns the nodes themselves stand in, which is
- * why the route can cross rows without ever crossing their words.
+ * its target. The two vertical moves happen in the gutters beside the columns, where no label is
+ * drawn, which is why the route can cross rows without ever crossing their words.
  */
 export interface LaneRoute {
     readonly start: Point;
@@ -46,9 +46,9 @@ export interface RouteOptions {
      * Which corridor this cross-link climbs in, counted back from its target's own column.
      *
      * Several routes often end at one node — every jump into a scene lands on its entry — and if
-     * each climbs in that node's column they lie on top of one another: one line to the eye, and
-     * a coin toss to the pointer. A corridor apiece keeps them separate for all but the last few
-     * pixels.
+     * each climbs in that node's column they lie on top of one another: they look like one line,
+     * and the pointer cannot pick out either. A corridor apiece keeps them separate for all but
+     * the last few pixels.
      */
     readonly corridor?: number;
     /**
@@ -66,13 +66,7 @@ export interface RouteOptions {
     readonly port?: number;
     /**
      * How far short of the target the line stops, so it ends on the dot's edge rather than at its
-     * center.
-     *
-     * A line that runs to the center has to be hidden by the dot, and its arrowhead pushed back
-     * to compensate. The head is pushed back along the line's *final direction*, though, which on
-     * a curved approach is not the direction of the center — so the head lands beside the line
-     * and stroke shows past it. Stopping the line where the dot begins leaves nothing to hide and
-     * nothing to compensate for.
+     * center, and its arrowhead sits on the line's end with no stroke showing past it.
      */
     readonly standoff?: number;
 }
@@ -85,7 +79,7 @@ export const LABEL_INSET = 12;
 const LABEL_PADDING = 10;
 const LEAD_GAP = 6;
 
-/** How much of a forward run is kept for the curve itself, however wide the source's label. */
+/** How much of a forward step's width is kept for the curve itself, however wide the label. */
 const MIN_RUN = 12;
 
 /** How far a cross-link steps aside from its source's dot before dropping. */
@@ -119,13 +113,13 @@ export function labelClearance(textWidth: number): number {
 /**
  * The curve an ordinary step follows, from one node to the next along the flow.
  *
- * It leaves past the source's label, so it never strikes through it, and sweeps to the target's
- * dot, where its arrowhead lands.
+ * It leaves past the source's label when the step is wide enough, so it does not cross the label,
+ * and sweeps to the target's dot, where its arrowhead lands.
  */
 export function routeCurve(from: Point, to: Point, clearance = 0): Curve {
     const span = to.x - from.x;
-    // Clear the label if the run allows, but always keep a stretch of curve to draw in — a long
-    // label on a short run yields ground rather than overshooting its own target.
+    // Clear the label if the step is wide enough, but always keep a stretch of curve to draw in:
+    // on a short step, a long label's clearance is cut short rather than overshooting the target.
     const lead = Math.max(0, Math.min(clearance, span - MIN_RUN));
     const start = { x: from.x + lead, y: from.y };
     const middle = (start.x + to.x) / 2;
@@ -140,8 +134,8 @@ export function routeCurve(from: Point, to: Point, clearance = 0): Curve {
 /**
  * The route a cross-link follows, down into the lane and along it.
  *
- * Its two vertical moves are the only places it can strike a row it has no business in, so both
- * are made in a **gutter** — the strip at the end of a column that no label is allowed to enter.
+ * Its two vertical moves are the only places it can cross another row's words, so both are made
+ * in a **gutter** — the strip at the end of a column that no label is allowed to enter.
  * The climb takes the gutter before its target's column; the drop takes the one the caller names
  * through `dropX`, which is the only piece of column arithmetic this module does not own.
  *
@@ -206,8 +200,8 @@ export function edgePath(from: Point, to: Point, options: RouteOptions = {}): st
  *
  * Backing along the final control point is what preserves that heading: a cubic leaves its last
  * control point pointing at its end, so the trimmed end sits on the line's own tangent rather
- * than off to one side. The standoff yields ground when the whole approach is shorter than it,
- * which would otherwise turn a short step into a line running backwards.
+ * than off to one side. The step back is capped at the distance from `floor` to the end, so a
+ * short approach never turns into a line running backwards.
  */
 function pullBack(end: Point, from: Point, standoff: number, floor: Point): Point {
     if (standoff <= 0) return end;

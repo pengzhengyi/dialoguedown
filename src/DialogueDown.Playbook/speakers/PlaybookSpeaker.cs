@@ -6,12 +6,12 @@ using Generator.Equals;
 namespace DialogueDown.Playbook.Speakers;
 
 /// <summary>
-/// Somebody who says lines, hoisted out of the lines that quote them.
+/// Somebody who says lines, listed once in the playbook rather than on every line.
 /// </summary>
 /// <remarks>
-/// Hoisted out of the lines that quote them, so a host has one place to bind a portrait, a
-/// voice, or a color. Lines address a speaker by its index here, as every other reference in a
-/// playbook does; nothing about the speaker is invented to give them an address.
+/// One entry per speaker gives a host one place to bind a portrait, a voice, or a color. A line
+/// names its speaker by index into this list. <c>Alice @A #main: Hello!</c> declares the speaker
+/// with id <c>A</c>, name <c>Alice</c>, and tag <c>main</c>.
 /// </remarks>
 /// <param name="Id">The <c>@id</c> the writer gave them, or <c>null</c> if they gave none.</param>
 /// <param name="Name">What the writer calls them, or <c>null</c> for the anonymous default.</param>
@@ -25,8 +25,7 @@ public sealed partial record PlaybookSpeaker(
     /// Gets the <c>@id</c> the writer gave them, or <c>null</c> if they gave none.
     /// </summary>
     /// <remarks>
-    /// The script's own identifier, carried through unchanged. It is not how a line addresses a
-    /// speaker — that is the index — so a host reading one always knows the writer typed it.
+    /// Copied unchanged from the script. A line names its speaker by index, not by this id.
     /// </remarks>
     [JsonPropertyOrder(1)]
     [JsonPropertyName("id")]

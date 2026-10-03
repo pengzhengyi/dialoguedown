@@ -117,7 +117,7 @@ internal sealed class MarkdownAstProjection : INodeProjection<object>
     private static DisplayAttribute SpanAttribute(SourceSpan span) =>
         new("span", $"[{span.Start}, {span.End})");
 
-    // A link label or image alt is a run of inline nodes; flatten it to plain text for
+    // A link label or image alt is a sequence of inline nodes; flatten it to plain text for
     // the attribute display. Styling delimiters are dropped (the node's own span still
     // points at the exact source), so `[**bold**](url)` shows its label as `bold`.
     private static string InlineText(IReadOnlyList<MarkdownInline> inlines) =>
@@ -135,7 +135,7 @@ internal sealed class MarkdownAstProjection : INodeProjection<object>
     };
 
     // Markdig source locations can occasionally run past the end of the string;
-    // clamp defensively so a diagnostics view never throws on a stray span.
+    // clamp defensively so the report never throws on a stray span.
     private string Slice(SourceSpan span)
     {
         var start = Math.Clamp(span.Start, 0, _source.Length);

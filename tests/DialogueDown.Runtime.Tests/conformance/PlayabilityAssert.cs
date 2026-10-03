@@ -5,10 +5,7 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 
 /// <summary>What this build can play, asserted together with the words its reasons use.</summary>
 /// <remarks>
-/// Mirrors <see cref="SessionOutcomeAssert"/>: asking about playability answers with reasons, so
-/// these assert the fact and the wording in one call rather than leaving every test to spell out
-/// both. Each asserts the reasons exactly, in the order asked, because the order is deterministic
-/// and a changed wording should fail a test.
+/// Each asserts the reasons exactly and in order, so a changed wording fails a test.
 /// </remarks>
 internal static class PlayabilityAssert
 {

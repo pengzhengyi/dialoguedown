@@ -106,13 +106,18 @@ public sealed class DialogueAstRewriterTests
         AssertSpeechText(AssertLine(control.Branches[1].Body[0]), "BROKE");
     }
 
-    // A control block with a conditional `if` branch and a bare `else`, so both a branch's condition and
-    // its body survive a rewrite. Shape:
-    //
-    //   > if `Rich?`
-    //   > > wealthy
-    //   > else
-    //   > > broke
+    /// <summary>A control block with a conditional <c>if</c> branch and a bare <c>else</c>.</summary>
+    /// <remarks>
+    /// <code>
+    /// > `if` `Rich?`
+    /// >
+    /// > wealthy
+    /// >
+    /// > `else`
+    /// >
+    /// > broke
+    /// </code>
+    /// </remarks>
     private static ScriptDocument ControlBlockSample() =>
         new(
         [
@@ -124,11 +129,13 @@ public sealed class DialogueAstRewriterTests
                 SourceSpanFactory.Span()),
         ]);
 
-    // A random choice with a numeric and an auto weight, so both the weights and the option
-    // bodies can be checked after a rewrite. Shape:
-    //
-    //   - `50%` heads
-    //   - `%`   tails
+    /// <summary>A random choice with a numeric weight and an auto weight.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `50%` heads
+    /// - `%` tails
+    /// </code>
+    /// </remarks>
     private static ScriptDocument RandomChoiceSample() =>
         new(
         [
@@ -140,13 +147,18 @@ public sealed class DialogueAstRewriterTests
                 SourceSpanFactory.Span()),
         ]);
 
-    // A hand-built tree holding a fragment of every kind, so a rewrite can be checked at
-    // each position. Jump is included even though the transpiler never emits one directly
-    // (Desugar assembles it), because the rewriter is reused after Desugar. Shape:
-    //
-    //   ## cave
-    //   alice: hi **bold** [link](#x) ![alt](p.png) =>[jump](#y) #aside
-    //   - choice
+    /// <summary>A scene heading, a line holding a fragment of every kind, and a choice.</summary>
+    /// <remarks>
+    /// Built by hand, because the transpiler never emits a jump inside speech: Desugar assembles
+    /// it, and the rewriter also runs after Desugar. It reads roughly as:
+    /// <code>
+    /// ## cave
+    ///
+    /// alice: hi **bold** [link](#x) ![alt](p.png) => [jump](#y) #aside
+    ///
+    /// - choice
+    /// </code>
+    /// </remarks>
     private static ScriptDocument FragmentSample() =>
         new(
         [
@@ -165,13 +177,18 @@ public sealed class DialogueAstRewriterTests
             Choices(Choice(Line(Text("choice")))),
         ]);
 
-    // One line per speaker form, plus a speech tag, so speaker and tag rewriting can be
-    // checked in every place a tag or speaker appears. Shape:
-    //
-    //   alice @A #mood: hi #aside     (declaration: name + id + tags)
-    //   @B #added: yo                 (partial declaration: id + tags)
-    //   bob: hey                      (name reference)
-    //   narrator text                 (no speaker)
+    /// <summary>
+    /// One line for each speaker form — a declaration, a partial declaration, a name reference,
+    /// and none — with a tag in the first line's speech.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    /// alice @A #mood: hi #aside
+    /// @B #added: yo
+    /// bob: hey
+    /// narrator text
+    /// </code>
+    /// </remarks>
     private static ScriptDocument SpeakerSample() =>
         new(
         [

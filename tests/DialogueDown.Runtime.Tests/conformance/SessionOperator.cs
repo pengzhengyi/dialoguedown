@@ -31,8 +31,8 @@ internal sealed class SessionOperator
     /// </summary>
     /// <param name="send">The session entry naming what to send.</param>
     /// <returns>
-    /// A conforming outcome once the runner was stepped, or what stopped the send when the message
-    /// is not yet something anything can send.
+    /// A conforming outcome once the runner was stepped, or a not-yet-playable one when no reader
+    /// owns the message.
     /// </returns>
     public SessionOutcome Send(Send send)
     {

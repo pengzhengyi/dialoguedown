@@ -7,16 +7,15 @@ using DialogueDown.Visualization.Playbook;
 namespace DialogueDown.Visualization.Render;
 
 /// <summary>
-/// Assembles a self-contained HTML report from one or more display graphs and,
-/// optionally, the source they were compiled from. The page itself — D3, marked,
-/// Pico.css, Tippy, the stylesheet, and the client script — is built ahead of
-/// time by the <c>web/</c> Vite project into a single file
-/// (<c>web/dist/report.html</c>) that is embedded in this assembly. All this step
-/// does is inject the report data (the source and each stage) into that file's
-/// data slot, so the report opens in any modern browser with no network and no
-/// files on disk. The source becomes a "Source" tab and each graph becomes a
-/// stage tab. Used for a single graph (<see cref="HtmlRenderer"/>) and for the
-/// multi-stage report.
+/// Assembles an HTML report from one or more display graphs and, optionally, the
+/// source they were compiled from. The <c>web/</c> Vite project builds the page, the
+/// client script, its stylesheet, and Mermaid ahead of time, and this assembly embeds
+/// them. This step injects the report data into the page's data slot, then either
+/// inlines the assets, so the report opens with no network and no files on disk
+/// (<see cref="RenderPage"/>), or links them for a server to host
+/// (<see cref="RenderLinkedPage"/>). The source becomes a "Source" tab and each graph
+/// becomes a stage tab. Used for a single graph (<see cref="HtmlRenderer"/>) and for
+/// the multi-stage report.
 /// </summary>
 internal static class HtmlTemplate
 {
@@ -47,7 +46,7 @@ internal static class HtmlTemplate
     /// Renders the same report as <see cref="RenderPage"/>, but linking the client rather than
     /// inlining it, for a server that can also serve <see cref="ReportBundle"/>'s assets. Every
     /// document then shares one download and one compile of the client, and the page carries only
-    /// its own payload. Never use this for a file that leaves the server: nothing would resolve.
+    /// its own payload. The page works only where those assets are served.
     /// </summary>
     public static string RenderLinkedPage(
         IReadOnlyList<DisplayGraph> stages,
@@ -69,7 +68,7 @@ internal static class HtmlTemplate
 
     // Everything inlined, so the file opens from disk with no server and no network. Mermaid is
     // the one asset that comes and goes: it is larger than the rest of the report together, so it
-    // rides along only for a script that actually draws a diagram.
+    // is included only for a script that actually draws a diagram.
     private static string SelfContained(string? source)
     {
         var bundle = ReportBundle.Default;
@@ -96,7 +95,7 @@ internal static class HtmlTemplate
             page, ScriptTag, $"<script type=\"module\" crossorigin src=\"{bundle.ScriptPath}\"></script>");
     }
 
-    // A built page that no longer holds an anchor exactly once has changed shape underneath us;
+    // A built page that does not hold the anchor exactly once is not the page this code expects;
     // failing here is far better than emitting a report that is quietly missing its client.
     private static string ReplaceOnce(string page, string anchor, string value)
     {

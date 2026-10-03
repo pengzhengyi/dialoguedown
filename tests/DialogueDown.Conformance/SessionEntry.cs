@@ -8,9 +8,8 @@ namespace DialogueDown.Conformance;
 /// One entry in a session: something sent, or something the runtime must reply.
 /// </summary>
 /// <remarks>
-/// The message stays as JSON rather than becoming a parallel set of C# types. The corpus is the
-/// specification, and a second vocabulary standing beside it would be one more thing to keep in
-/// step -- with nothing checking that it had been.
+/// The message stays as JSON: the corpus is the specification, and C# types beside it would be a
+/// second copy of the format to keep in step.
 /// </remarks>
 public abstract record SessionEntry
 {

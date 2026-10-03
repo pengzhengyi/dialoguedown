@@ -29,15 +29,17 @@ internal static class DisplayGraphJson
 
     /// <summary>
     /// Serializes the report payload injected into the page — the display
-    /// <paramref name="mode"/> (static/watch/live), the document <paramref name="path"/>
+    /// <paramref name="mode"/> (static, view, or edit), the document <paramref name="path"/>
     /// when known, the compiled <paramref name="source"/> (shown in the Source tab;
     /// omitted when null), each stage's display graph, the editor's resolved
     /// <paramref name="symbols"/> (omitted when null), the applied
     /// <paramref name="configuration"/> for the Config tab (omitted when null), the
     /// LSP-shaped <paramref name="diagnostics"/> the editor overlay renders (omitted when
-    /// null; an empty array clears the overlay after a clean compile), and the
+    /// null; an empty array clears the overlay after a clean compile), the
     /// <paramref name="semanticTokens"/> the editor highlights (omitted when null; an empty
-    /// array for a document with no dialogue constructs).
+    /// array for a document with no dialogue constructs), and, when given, the served
+    /// <paramref name="project"/>, the <paramref name="playbook"/>, and the
+    /// <paramref name="configOverlay"/> for a saved but invalid configuration.
     /// </summary>
     public static string SerializeReport(
         string mode,
@@ -71,9 +73,9 @@ internal static class DisplayGraphJson
     }
 
     /// <summary>
-    /// Serializes the current document payload —
-    /// <c>{ mode, path, source, stages, symbols, configuration, diagnostics, semanticTokens }</c>
-    /// — for the live server's document API and its hot-reload push events.
+    /// Serializes the current document payload, in the same shape as
+    /// <see cref="SerializeReport"/>, for the live server's document API and its hot-reload
+    /// push events.
     /// </summary>
     public static string SerializeDocument(
         string mode,
@@ -106,12 +108,10 @@ internal static class DisplayGraphJson
         return configOverlay is null ? json : ApplyConfigOverlay(json, configOverlay);
     }
 
-    // A saved-invalid Config overlay: the graphs and speakers stay the last valid compile, but the
-    // Config tab must show the current invalid source and the payload must announce it is stale, so
-    // a reload of the page restores the saved-invalid state instead of the last valid text. When the
-    // last valid compile had no configuration at all (an invalid file adopted from the no-config
-    // state), the configuration section and its file are synthesized from the overlay so the client
-    // can still open the Config tab to edit and recover the invalid file.
+    // Marks the configuration as saved but invalid and puts the invalid source in the Config tab,
+    // leaving the graphs and speakers from the last valid compile. When that compile had no
+    // configuration at all, the configuration section and its file are built from the overlay, so
+    // the client can still open the Config tab to fix the file.
     private static string ApplyConfigOverlay(string json, ConfigStatusOverlay overlay)
     {
         var node = JsonNode.Parse(json)!.AsObject();

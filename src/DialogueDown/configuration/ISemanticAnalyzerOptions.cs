@@ -1,9 +1,8 @@
 namespace DialogueDown.Configuration;
 
 /// <summary>
-/// The options the semantic analysis stage reads. A per-stage view that
-/// <see cref="CompilerOptions"/> separates from the umbrella, so the analyzer depends only on
-/// the options it uses rather than the whole configuration.
+/// The options the semantic analysis stage reads, taken from <see cref="CompilerOptions"/> so the
+/// analyzer depends only on the options it uses.
 /// </summary>
 internal interface ISemanticAnalyzerOptions
 {

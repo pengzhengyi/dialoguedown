@@ -38,8 +38,8 @@ async function themeColor(page: Page, variable: string): Promise<string> {
 
 /**
  * Click a node by label. Overlays (legend, zoom controls, detail panel) sit above the
- * SVG and can cover a node, so disable their pointer-events first — the same approach
- * the hover test uses — so the click reaches the node beneath.
+ * SVG and can cover a node, so disable their pointer-events first so the click reaches
+ * the node beneath.
  */
 async function clickNodeInView(page: Page, label: string): Promise<void> {
     await page.addStyleTag({
@@ -125,8 +125,8 @@ test("clicking a preview anchor link scrolls to its heading", async ({ page }) =
 test("the preview cycles nested unordered bullets by depth and keeps ordered lists numbered", async ({
     page,
 }) => {
-    // Regression: Pico's base stylesheet forces every `ul li` to a square, flattening nested
-    // unordered lists to one marker. The preview must restore the browser/VSCode cascade
+    // Pico's base stylesheet forces every `ul li` to a square, flattening nested unordered
+    // lists to one marker. The preview restores the browser/VS Code cascade
     // (disc -> circle -> square) while leaving ordered lists numbered.
     await page.goto(writeReport({ source: "- a\n  - b\n    - c\n\n1. x\n1. y\n", stages: [] }));
     const preview = page.locator("section.stage.active .source-preview");
@@ -147,9 +147,9 @@ test("the preview cycles nested unordered bullets by depth and keeps ordered lis
 test("the preview keeps an even vertical rhythm across items around a nested list", async ({
     page,
 }) => {
-    // Regression: Pico gives every list a 1rem bottom margin, which on a *nested* list opened a
-    // gap several times the spacing between sibling items — so stepping out of a sub-list looked
-    // uneven. Every consecutive item pair should sit at about the same vertical step.
+    // Pico gives every list a 1rem bottom margin, which on a *nested* list would open a gap
+    // several times the spacing between sibling items. Every consecutive item pair should sit at
+    // about the same vertical step.
     await page.goto(writeReport({ source: "1. one\n   - a\n   - b\n1. two\n", stages: [] }));
     const preview = page.locator("section.stage.active .source-preview");
     await expect(preview.locator("li")).toHaveCount(4);
@@ -196,7 +196,7 @@ test("the editor selection uses the themed color when focused, not CodeMirror's 
     page,
 }) => {
     await page.locator(".cm-content").click();
-    await page.keyboard.press("ControlOrMeta+a"); // focused selection — the historic bug's case
+    await page.keyboard.press("ControlOrMeta+a"); // a focused selection
     const bg = await page
         .locator(".cm-selectionBackground")
         .first()

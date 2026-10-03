@@ -7,8 +7,8 @@ public sealed class ChoiceNodeTests
     [Fact]
     public void RoundTrip_AChoice_KeepsWhetherItIsOrdered()
     {
-        // A runner still resolves the whole menu in one ask: it gathers the keys by walking the
-        // options it just arrived at, rather than reading a list the playbook repeated.
+        // The node lists no condition keys: a runner gathers them from the options to resolve the
+        // whole menu in one ask.
         const string Json = """
             {
               "kind": "choice",

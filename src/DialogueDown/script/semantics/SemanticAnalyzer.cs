@@ -8,9 +8,10 @@ namespace DialogueDown.Script.Semantics;
 /// <summary>
 /// The default <see cref="ISemanticAnalyzer"/>: it runs the analysis sub-passes in dependency
 /// order — index the tree, build the scene tree and anchors and the speaker table, then resolve
-/// jumps and validate reserved tags against those tables — and assembles their outputs into a
-/// <see cref="SemanticModel"/>. Each sub-pass is a pure function of its inputs; the analyzer
-/// only wires their order and seeds the speaker binder's configured layer from its options.
+/// jumps and check reserved tags and choice labels — and assembles their outputs into a
+/// <see cref="SemanticModel"/>. Each sub-pass depends only on its inputs and reports into the
+/// shared sink; the analyzer only wires their order and seeds the speaker binder's configured
+/// layer from its options.
 /// </summary>
 internal sealed class SemanticAnalyzer : ISemanticAnalyzer
 {

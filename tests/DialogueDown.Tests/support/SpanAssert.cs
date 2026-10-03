@@ -24,9 +24,8 @@ internal static class SpanAssert
     }
 
     /// <summary>
-    /// Asserts <paramref name="child"/> claims no text outside <paramref name="parent"/>, which is
-    /// what lets a tree be searched by position: a walk that descends into the child containing a
-    /// position never has to look outside a parent to find what is there.
+    /// Asserts <paramref name="child"/> claims no text outside <paramref name="parent"/>, so a tree
+    /// can be searched by position by descending into the child that contains it.
     /// </summary>
     public static void AssertContainedIn(
         SourceSpan child, SourceSpan parent, string childSubject, string parentSubject) =>

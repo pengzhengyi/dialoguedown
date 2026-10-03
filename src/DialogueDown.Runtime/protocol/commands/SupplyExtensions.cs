@@ -1,18 +1,13 @@
 namespace DialogueDown.Runtime.Protocol;
 
 /// <summary>
-/// Reading a supply for the answer a use needs.
+/// Reads one key's answer from a supply that has already been checked.
 /// </summary>
 /// <remarks>
-/// A supply is held to the questions it answers before anything reads it — the same keys, each
-/// answered with the kind its use needs. So reading one is a matter of taking the answer, not of
-/// checking it again, and a guard reads a truth and a query reads words without either having to
-/// say what it will do when the answer is something else.
-/// <para>
-/// A key that turns out to be missing here, or to carry another kind, means that holding was
-/// skipped. That is a fault in the run rather than anything the world did, so it is raised rather
-/// than refused: a refusal says the driver got something wrong, and here the driver did not.
-/// </para>
+/// A supply is checked against what was asked before anything reads it: the same keys, each
+/// answered with the kind its use needs (a truth for a condition, words for a query). A missing
+/// key or a wrong kind here therefore means that check was skipped. That is a bug in the runner,
+/// not a mistake by the driver, so it throws instead of refusing.
 /// </remarks>
 internal static class SupplyExtensions
 {

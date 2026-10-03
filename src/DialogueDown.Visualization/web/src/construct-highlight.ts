@@ -8,8 +8,8 @@ import { renderTag } from "./tag-chip";
  *
  * Nothing here parses the script. Every mark comes from a token the compiler projected, matched to the
  * exact text it was written as, so the Preview cannot disagree with the compiler about what a
- * construct is. The marks wear the editor's own classes (`dd-tok-*`) except for a tag, which wears the
- * capsule the rest of the report shows it in.
+ * construct is. The marks use the editor's own classes (`dd-tok-*`) except for a tag, which is
+ * drawn as the capsule the rest of the report shows it in.
  */
 
 /** The token kinds the Preview marks. The kinds left out are plain on purpose. */
@@ -31,7 +31,7 @@ export const PREVIEW_CONSTRUCT_KINDS: readonly TokenKind[] = [
 export interface PositionedConstruct {
     /** Which construct it is, which decides the mark's shape and what it explains. */
     kind: TokenKind;
-    /** Where it is written, for the one mark that can reveal it in the editor. */
+    /** Where it is written, so its text can be read from the document and kept in place on edit. */
     span: Span;
 }
 
@@ -42,10 +42,11 @@ export interface PreviewConstruct extends PositionedConstruct {
 }
 
 /**
- * What an ask-me mark says when the reader points at it. A tag carries no tip: it copies instead, the
- * way every other tag capsule in the report does. The kinds with no entry are the ones not marked at
- * all — a separator's colon is a colon wherever it appears, the control keyword is already the subject
- * of its own region, and the ignored Markdown is what the Preview deliberately renders plain.
+ * What a mark's tooltip says when the reader points at it. A tag carries no tip: it copies instead,
+ * the way every other tag capsule in the report does. The kinds with no entry are the ones not
+ * marked at all — a separator's colon is a colon wherever it appears, the control keyword is
+ * already the subject of its own region, and the ignored Markdown is what the Preview deliberately
+ * renders plain.
  */
 const CONSTRUCT_TIP: Partial<Record<TokenKind, string>> = {
     SpeakerName: "The speaker — who says this line.",
@@ -61,7 +62,10 @@ const CONSTRUCT_TIP: Partial<Record<TokenKind, string>> = {
     JumpIndicator: "A jump — takes the run to another section of the script.",
 };
 
-/** Elements that are already spoken for: a link is navigable, a fence is not prose, a capsule is a tag. */
+/**
+ * Elements whose text is never marked: a link is navigable, a fence is not prose, a capsule is
+ * already a tag, a mark is already a construct, and ignored Markdown stays plain.
+ */
 const SPOKEN_FOR =
     "a, pre, .dd-tag, [data-construct], .dd-preview-ignored, .dd-preview-ignored-region, .dd-preview-ignored-region-inline";
 
@@ -202,8 +206,8 @@ function markAt(
  *
  * A tag or a speaker id stands alone: `#happy` is not the `#happy` inside `#happiness`, and one glued
  * to the word before it belongs to that word. A jump indicator is a line's arrow, not an arrow in a
- * sentence. A speaker's name is marked only where it opens a prefix — the occurrence a `:` or an
- * `@id` follows — because the same name appears in prose without being anybody's line.
+ * sentence. A speaker's name is marked only where it opens a prefix — the occurrence a `:`, an
+ * `@id`, or a `#tag` follows — because the same name appears in prose without being anybody's line.
  */
 function readsAsConstruct(text: string, at: number, mark: ResolvedMark): boolean {
     const before = at === 0 ? "" : text[at - 1]!;
@@ -226,8 +230,8 @@ function isWordChar(value: string | undefined): boolean {
 }
 
 function markElement(mark: ResolvedMark): HTMLElement {
-    // A tag wears the capsule the rest of the report shows, minus the identity dot: that dot tells
-    // several tags apart in one table cell, and a tag standing in a sentence names itself.
+    // A tag is drawn as the capsule the rest of the report shows, minus the identity dot: that
+    // dot tells several tags apart in one table cell, and a tag in a sentence names itself.
     const element =
         mark.tag === null ? constructSpan(mark) : renderTag(mark.tag, { identityDot: false });
     element.dataset.construct = "";

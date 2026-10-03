@@ -5,8 +5,8 @@ namespace DialogueDown.Conformance.Authoring;
 /// runtime.
 /// </summary>
 /// <remarks>
-/// Kept distinct from the exception a reader throws, as <see cref="InvalidFixtureException"/> is, so
-/// a failing run says whether the corpus is wrong or the reader is.
+/// Kept distinct from the exception a reader throws, so a failing run says whether the corpus is
+/// wrong or the reader is.
 /// </remarks>
 public sealed class MalformedBrokenBlockException : Exception
 {

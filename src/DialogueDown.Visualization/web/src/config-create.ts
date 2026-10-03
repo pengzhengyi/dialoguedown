@@ -19,10 +19,10 @@ export type ConfigCreateOutcome = "created" | "adopted";
 /**
  * Create a `dialogue.toml` for a project that has none. On success it flags the reloaded page
  * to open on the Config tab and reloads (the reloaded report carries the configuration, so the
- * Config tab becomes the Stage 2 editor). When a different config already exists the server adopts
- * it without overwriting rather than failing, so this still succeeds — reported as `adopted` — and
- * the reloaded page opens the existing Config. Only a genuine failure (a write error, or a retry of
- * an already-adopted file that diverged) throws with a reader-facing message.
+ * Config tab shows the new file in its editor). When a different config already exists the
+ * server adopts it without overwriting rather than failing, so this still succeeds — reported as
+ * `adopted` — and the reloaded page opens the existing Config. Only a genuine failure (a write
+ * error, or a retry of an already-adopted file that diverged) throws with a reader-facing message.
  */
 export async function createConfig(ports: ConfigCreatePorts): Promise<ConfigCreateOutcome> {
     const response = await ports.post();

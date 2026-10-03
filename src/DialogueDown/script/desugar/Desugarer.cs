@@ -4,8 +4,7 @@ namespace DialogueDown.Script.Desugar;
 
 /// <summary>
 /// Runs a composed set of <see cref="IDesugarRule"/>s over a Dialogue AST, in order, each rule's
-/// output feeding the next. Composing the rules here keeps desugaring open to new normalizations
-/// without touching the pipeline.
+/// output feeding the next.
 /// </summary>
 internal sealed class Desugarer
 {

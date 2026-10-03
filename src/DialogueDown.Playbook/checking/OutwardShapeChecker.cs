@@ -8,19 +8,18 @@ namespace DialogueDown.Playbook.Checking;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Each node kind offers one kind of arm — a divert for a line or a control, an option for a
-/// choice, a random-option for a random choice, a branch for a branch — and either always has a
-/// way on or does not. The compiler only ever emits nodes that hold to this, but the format does
-/// not say so, so a hand-edited or tool-written playbook can carry a line with two ways forward,
-/// an option out of an end, or a choice that can withhold every arm with nowhere to fall through.
-/// A runtime would then play whichever edge came first in the array.
+/// Each node kind takes one kind of arm — a divert for a line or a control, an option for a
+/// choice, a random option for a random choice, a branch arm for a branch — within a count given
+/// by <see cref="NodeShape.For"/>. The compiler always writes nodes of this shape; a hand-edited
+/// or tool-written playbook may carry a line with two ways forward, or a choice whose every option
+/// may be withheld with nowhere to fall through, and a runtime would then play whichever edge came
+/// first in the array.
 /// </para>
 /// <para>
-/// The static half of the rule — which arm kind, and how many — is the table in
-/// <see cref="NodeShape.For"/>. The rest is read from the node itself: a fall-through is needed unless
-/// some arm always applies, which means an unconditional arm on a node that is not itself
-/// conditional. A node that could reach a dead end, or one carrying an edge kind it cannot act
-/// on, is refused. A succession that can never run is accepted: it plays no differently.
+/// A node also needs a succession to fall through to unless it is sure to leave by an arm: the
+/// node has no condition of its own and has an arm without one. A node that could reach a dead
+/// end, or that carries an edge kind it cannot act on, is refused. A succession that can never be
+/// taken is accepted, since it changes nothing in play.
 /// </para>
 /// </remarks>
 public sealed class OutwardShapeChecker : IPlaybookChecker
@@ -38,9 +37,8 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
 
     private static void CheckWaysOut(Node node)
     {
-        // An end carries no ways out by construction — its record takes none — so there is
-        // nothing here to check. A hand-written end that leads somewhere is the schema's
-        // `maxItems: 0` to catch.
+        // An end has no ways out: its record takes none, so an `out` list written on an end is
+        // not read.
         if (node is EndNode)
         {
             return;
@@ -99,7 +97,7 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
                 Refuse(CannotLeave(node, shape));
                 break;
 
-            // Every arm can be withheld — the no-arms case included, vacuously — so likewise.
+            // Every arm has a condition, or there are no arms, so none may be taken.
             case 0 when arms.All(edge => IsGated(edge)):
                 Refuse(CannotLeave(node, shape));
                 break;

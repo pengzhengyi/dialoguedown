@@ -44,7 +44,7 @@ export interface DisplayNode {
     region?: string;
 }
 
-/** A named area of the document the stage's nodes sit in — a scene today, a file later. */
+/** A named area of the document the stage's nodes sit in, such as a scene. */
 export interface DisplayRegion {
     name: string;
     /** What kind of grouping it is, as the compiler names it. */
@@ -105,7 +105,7 @@ export interface SemanticSegment {
     refKey?: string;
 }
 
-/** A cell drawn as a list: what introduces it, what it holds, and whether its order means. */
+/** A cell drawn as a list: what introduces it, what it holds, and whether its order matters. */
 export interface SemanticList {
     /**
      * The pieces that read before the items — the condition a list is subject to, the header a draw
@@ -127,14 +127,13 @@ export interface SemanticCell {
     refKey?: string;
     /** A cross-stage category for color. */
     category?: string;
-    /** Present when the cell is a tag list: drawn as capsules instead of {@link text}. */
+    /** Present when the cell is a tag list: drawn as capsules instead of `text`. */
     tags?: TagView[];
     /**
-     * Set when the cell's text is drawn in styled stretches rather than as one run of prose.
+     * Set when the cell's text is drawn in styled stretches rather than as plain prose.
      * `text` stays the plain rendering, so search and sort still read the cell and only the
-     * drawing differs — the same arrangement {@link tags} uses. The segments' texts must
-     * concatenate back to `text`, because the search highlight is found in `text` and drawn across
-     * the segments.
+     * drawing differs, as with `tags`. The segments' texts must concatenate back to `text`,
+     * because the search highlight is found in `text` and drawn across the segments.
      */
     segments?: SemanticSegment[];
     /**
@@ -159,7 +158,7 @@ export interface SemanticCell {
     /**
      * Set when the cell names several places at once, so each is reachable on its own instead of
      * the cell standing for one of them. `text` stays the plain rendering, so search and sort
-     * still read the cell and only the drawing differs — the same arrangement {@link tags} uses.
+     * still read the cell and only the drawing differs, as with `tags`.
      */
     jumps?: SemanticJump[];
 }
@@ -221,12 +220,8 @@ export interface StageUnavailable {
 }
 
 /**
- * The report payload the .NET library injects: the compiled source document and
- * each stage's display graph.
- */
-/**
  * The served-mode project context behind the Explorer sidebar: the project `root` to display and
- * the active script's root-relative `activePath` to highlight and reveal in the tree, or `null`
+ * the active script's root-relative `activePath` to highlight and reveal in the tree, absent
  * when no document is active (the served shell's empty state).
  */
 export interface ReportProject {
@@ -234,7 +229,7 @@ export interface ReportProject {
     activePath?: string;
 }
 
-/** One entry in the playbook's metadata table — a label and the value the runtime will read. */
+/** The playbook's header, as the metadata table shows it: one row per field. */
 export interface PlaybookMetadataView {
     /** The script the playbook was compiled from. */
     script: string;
@@ -332,6 +327,10 @@ export interface PlaybookReport {
     unavailable?: string;
 }
 
+/**
+ * The report payload the .NET library injects: the compiled source document, each stage's
+ * display graph, and what the tabs, editors, and served session read beside them.
+ */
 export interface Report {
     /**
      * The original source document, shown in the Source tab. Absent when a single
@@ -411,8 +410,7 @@ export type LspSeverity = 1 | 2 | 3 | 4;
  * report payload: a zero-based {@link LspRange}, an integer {@link LspSeverity}, the error
  * {@link LspDiagnostic.code}, the rendered {@link LspDiagnostic.message}, the producing
  * {@link LspDiagnostic.source} (`"dialoguedown"`), and the suggested repairs
- * {@link LspDiagnostic.fixes} (absent when the compiler knows none). A future language server
- * publishes the identical structure, so the editor overlay consumes it unchanged.
+ * {@link LspDiagnostic.fixes} (absent when the compiler knows none).
  */
 export interface LspDiagnostic {
     range: LspRange;
@@ -464,8 +462,7 @@ export type TokenKind =
 /**
  * One positioned dialogue token the compiler projects from the parse: a zero-based
  * {@link LspRange} and its {@link TokenKind}. The Source editor renders it as a decoration
- * layered over the Markdown highlighting. A future language server publishes the identical
- * structure as its `semanticTokens`, so the editor consumes it unchanged.
+ * layered over the Markdown highlighting.
  */
 export interface SemanticToken {
     range: LspRange;

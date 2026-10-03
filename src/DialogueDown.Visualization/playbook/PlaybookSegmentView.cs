@@ -9,7 +9,7 @@ namespace DialogueDown.Visualization.Playbook;
 /// </param>
 internal sealed record PlaybookSegmentView(string Text, string Role, int? Target = null)
 {
-    /// <summary>A speaker's name, or the stand-in standing where a name would be.</summary>
+    /// <summary>A speaker's name, or the stand-in written where a name would be.</summary>
     /// <param name="text">The name to write.</param>
     /// <returns>The piece.</returns>
     public static PlaybookSegmentView Speaker(string text) => new(text, SummaryRoles.Speaker);

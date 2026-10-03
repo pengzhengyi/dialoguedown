@@ -88,6 +88,6 @@ public sealed class SituationExtensionsTests
     public void Describe_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Situation)null!).Describe());
 
-    /// <summary>A situation nothing has been taught to word, for the refusal case.</summary>
+    /// <summary>A situation with no description, for the refusal case.</summary>
     private sealed record UntaughtSituation : Situation;
 }

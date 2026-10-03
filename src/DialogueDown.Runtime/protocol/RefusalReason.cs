@@ -16,8 +16,8 @@ public enum RefusalReason
     AlreadyEnded,
 
     /// <summary>
-    /// A command the protocol defines arrived where the run cannot take it — <c>Next</c> while the
-    /// run waits on the host, or <c>Done</c> or <c>Failed</c> when nothing was asked of it.
+    /// A command the protocol defines arrived where the run cannot take it, such as <c>Next</c>
+    /// while the run waits on the host, or <c>Done</c> when no <c>Perform</c> is waiting.
     /// </summary>
     Misplaced,
 
@@ -27,7 +27,9 @@ public enum RefusalReason
     /// <summary>The node the run stands at has no way onward.</summary>
     LeadsNowhere,
 
-    /// <summary>A walk entered a ring of nodes that hand the host nothing.</summary>
+    /// <summary>
+    /// The run entered a cycle of nodes that give the host nothing, so it would never stop.
+    /// </summary>
     EndlessRing,
 
     /// <summary>The world was asked about a key and did not answer it.</summary>
@@ -41,11 +43,11 @@ public enum RefusalReason
 
     /// <summary>One key on a node is needed as a truth and as words both.</summary>
     /// <remarks>
-    /// A key is asked about once, so a key that both guards a node and stands in what it says has
-    /// one answer to serve two uses, and whichever kind comes back leaves the other unreadable.
+    /// A key is asked about once, so in <c>`Alice.HasKey?` Alice: You have `"Alice.HasKey"`.</c>
+    /// one answer would have to be both a truth and words.
     /// </remarks>
     KeyNeededBothWays,
 
-    /// <summary>The node kind is one this build has not learned to play.</summary>
+    /// <summary>The node is of a kind this build cannot play.</summary>
     UnplayableNode,
 }

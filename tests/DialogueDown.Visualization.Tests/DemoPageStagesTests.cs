@@ -4,10 +4,9 @@ using DialogueDown.TestSupport;
 namespace DialogueDown.Visualization.Tests;
 
 /// <summary>
-/// The demo landing page advertises a list of compiler stages by hand, while the report renders
-/// whichever stages the visualization projects. This gate keeps the two honest: a stage added to
-/// the pipeline shows up in every report automatically, so without this the page quietly goes
-/// stale — which is exactly what happened when the Dialogue Graph stage shipped.
+/// The demo landing page lists the compiler stages by hand, while the report renders whichever
+/// stages the visualization projects. These tests check that the page names exactly the stages
+/// the report renders.
 /// </summary>
 public sealed partial class DemoPageStagesTests
 {

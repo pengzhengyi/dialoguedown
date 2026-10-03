@@ -5,6 +5,6 @@ namespace DialogueDown.Playbook.Conditions;
 /// </summary>
 public static class ConditionKinds
 {
-    /// <summary>A question the world answers yes or no.</summary>
+    /// <summary>A key the world answers yes or no, such as <c>Alice.HasKey</c>.</summary>
     public const string Key = "key";
 }

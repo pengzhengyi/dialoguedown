@@ -25,8 +25,8 @@ public sealed class ContinuedMatcherTests
 
     [Fact]
     public void ARunOpeningALineInsteadDiverges() =>
-        // A port that opened a second line where the first went on would show the host two name
-        // plates for one sentence.
+        // A port that sent a second Said where the line went on would show the speaker's name
+        // twice for one sentence.
         AssertDiverged(
             Match(new Said("Alice", [new TextFragment(" Bye.")]), """{ "speech": " Bye." }"""),
             "expected the line to go on",

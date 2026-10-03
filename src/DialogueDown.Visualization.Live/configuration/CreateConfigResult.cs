@@ -1,29 +1,27 @@
 namespace DialogueDown.Visualization.Live.Configuration;
 
 /// <summary>
-/// How a <see cref="LiveSession.CreateConfig">create-config</see> request settled: the file was
-/// freshly written from the starter template, an existing starter-template file was adopted
-/// idempotently (a create retry after a lost response), a different pre-existing file was adopted
-/// as recovery so the session is no longer config-less, or a retry of the file this session already
-/// adopted found it diverged and is a conflict.
+/// How a <see cref="LiveSession.CreateConfig">create-config</see> request settled.
 /// </summary>
 internal enum CreateConfigStatus
 {
     /// <summary>The starter <c>dialogue.toml</c> was created and adopted.</summary>
     Created,
 
-    /// <summary>An existing file equal to the starter template was adopted without rewriting.</summary>
+    /// <summary>
+    /// An existing file equal to the starter template was adopted without rewriting, as when a
+    /// create is retried after its first response was lost.
+    /// </summary>
     Adopted,
 
     /// <summary>
     /// A different <c>dialogue.toml</c> already existed at the serve root and was adopted without
-    /// overwriting it — valid TOML into the visualizer, invalid TOML as saved-invalid — so a
-    /// config-less session recovers into the existing configuration instead of a dead end.
+    /// overwriting it: valid TOML is applied, and invalid TOML is recorded as saved-invalid.
     /// </summary>
     AdoptedExisting,
 
     /// <summary>
-    /// A create retry for the file this session already adopted found its content diverged from the
+    /// A create retry for the file this session already adopted found its content differs from the
     /// starter template; nothing was written. The session already applies the file, so a reload
     /// opens it.
     /// </summary>

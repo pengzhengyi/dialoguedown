@@ -41,8 +41,8 @@ describe("rankByRegion", () => {
     });
 
     it("keeps nodes the layout put on one row together", () => {
-        // A straight run of dialogue is a single-child chain, and the tree layout gives every node
-        // in it the same row. Splitting them apart would turn one line into a staircase.
+        // A straight sequence of dialogue is a single-child chain, and the tree layout gives every
+        // node in it the same row. Splitting them apart would turn one line into a staircase.
         const placed = rankByRegion(
             [node("l1", 5, "A"), node("l2", 5, "A"), node("l3", 5, "A"), node("l4", 67, "A")],
             ["A"],
@@ -154,7 +154,7 @@ function encloses(band: Band, x: number, y: number): boolean {
 }
 
 describe("rankByRegion drawn as bands", () => {
-    /** The interleaving the drawing suffers today: B is entered partway through A, and A goes on. */
+    /** Two interleaved scenes: B is entered partway through A, and A goes on after it. */
     const interleaved: RankInput[] = [
         node("entry", 40),
         node("a1", 0, "A"),
@@ -187,7 +187,7 @@ describe("rankByRegion drawn as bands", () => {
     });
 
     it("leaves every band overlapping today, without the pass", () => {
-        // The regression this exists to prevent: the same nodes, laid out as the tree left them.
+        // The same nodes on the rows the tree layout gave them, before `rankByRegion` runs.
         const asLaidOut = new Map(interleaved.map((input) => [input.id, input.row]));
         const bands = bandsOf(draw(asLaidOut, interleaved));
 
@@ -228,8 +228,8 @@ describe("rankByRegion over generated graphs", () => {
     }
 
     /**
-     * A drawing shaped as the compiler can actually emit one: scenes own runs of consecutive
-     * nodes, and the only nodes without a scene are the ones before the first heading.
+     * A drawing shaped as the compiler can emit one: each scene owns consecutive nodes, and the
+     * only nodes without a scene are the ones before the first heading.
      */
     function contiguousRuns(random: () => number): { nodes: RankInput[]; order: string[] } {
         const count = 4 + Math.floor(random() * 20);
@@ -275,8 +275,8 @@ describe("rankByRegion over generated graphs", () => {
     });
 
     it("places every node whatever it is handed, even a shape the compiler cannot emit", () => {
-        // Scattered membership is not something `ScenesByNode` can produce, so no ordering claim is
-        // made about it — only that the pass stays total and its tiers stay apart.
+        // The compiler never gives a scene scattered nodes, so this makes no ordering claim: only
+        // that the pass places every node and keeps its tiers apart.
         const random = randomFrom(4242);
         for (let run = 0; run < 100; run++) {
             const count = 1 + Math.floor(random() * 15);

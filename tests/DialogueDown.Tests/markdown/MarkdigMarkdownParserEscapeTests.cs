@@ -41,7 +41,7 @@ public sealed class MarkdigMarkdownParserEscapeTests : MarkdigMarkdownParserTest
         Assert.Equal("*cd", second.Text);
         Assert.Equal(2, second.Span.Start); // raw span still counts the backslash
         Assert.Equal(3, second.ContentSpan.Start); // content anchors at the star
-        Assert.True(second.IsFirstCharacterEscaped); // the escaped run starts the star
+        Assert.True(second.IsFirstCharacterEscaped); // the star is the escaped character
     }
 
     [Fact]

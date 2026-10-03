@@ -38,7 +38,6 @@ test("creates a dialogue.toml from the no-config state and lands on the editable
     await expect(page.locator(".config-source .cm-editor")).toBeVisible();
     await expect(page.locator(".config-source .cm-content")).toContainText("[[speakers]]");
 
-    // The starter file is on disk.
     expect(existsSync(CONFIG_CREATE_TOML)).toBe(true);
     expect(readFileSync(CONFIG_CREATE_TOML, "utf8")).toContain("[[speakers]]");
 });

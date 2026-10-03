@@ -174,8 +174,7 @@ const PLAYBOOK_HELP = `
      script you last saved. A script with errors compiles no playbook, and the tab says so.</p>
 `;
 
-/** What the open panel covers. The button reads "Help"; this is its tooltip, so the context
- * is still available without spending status-line width on it. */
+/** What the open panel covers, shown in the help button's tooltip; its label stays "Help". */
 const SUMMARY: Record<HelpContext, string> = {
     source: "Using the Source tab",
     tree: "Using a tree stage",

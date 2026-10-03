@@ -5,7 +5,7 @@ using Generator.Equals;
 namespace DialogueDown.Playbook.Speech;
 
 /// <summary>
-/// A run of words, and the command that comes after them.
+/// A sequence of words, and the command that comes after them.
 /// </summary>
 /// <remarks>
 /// A line is a list of these, in the order the writer wrote them. A line with no commands is one

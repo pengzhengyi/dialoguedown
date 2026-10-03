@@ -8,13 +8,11 @@ namespace DialogueDown.Diagnostics;
 /// <see cref="Category"/>, the fully rendered <see cref="Message"/>, the one-based
 /// <see cref="Start"/> and <see cref="End"/> positions, and the half-open character range
 /// <c>[<see cref="StartOffset"/>, <see cref="EndOffset"/>)</c> the diagnostic points at.
-/// Line/column suit human display and editor (LSP) ranges; the offsets let a tool index the source
-/// directly — a rendered underline or an editor selection. Consumers — the CLI errata renderer
-/// today, the LSP and web overlays later — depend on this stable projection rather than the
-/// compiler's internal diagnostic, whose types are free to evolve. Built by projecting a
-/// <see cref="Diagnostic"/> through a <see cref="LineMap"/>: the message is composed once (invariant
-/// culture) and the offsets are resolved to line/column, so every consumer shares identical text
-/// and locations.
+/// Line and column suit human display and editor ranges; the offsets let a tool index the source
+/// directly, for an underline or a selection. Built by projecting a <see cref="Diagnostic"/>
+/// through a <see cref="LineMap"/>: the message is composed once (invariant culture) and the
+/// offsets are resolved to line and column, so every consumer shares identical text and
+/// locations.
 /// </summary>
 [Equatable]
 public sealed partial record LocatedDiagnostic(
@@ -31,8 +29,7 @@ public sealed partial record LocatedDiagnostic(
     /// Suggested repairs for this problem, with absolute source offsets, in preference order —
     /// empty when the compiler knows none. The first is the preferred, auto-applicable repair an
     /// automatic fixer applies; the rest are alternatives a writer chooses between. Excluded from
-    /// equality for the same reason it is on the core diagnostic: the located view is identified
-    /// by the problem it locates.
+    /// equality: the located view is identified by the problem it locates.
     /// </summary>
     [IgnoreEquality]
     public IReadOnlyList<LocatedFix> Fixes { get; init; } = [];

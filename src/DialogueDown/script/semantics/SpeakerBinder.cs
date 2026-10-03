@@ -7,17 +7,22 @@ namespace DialogueDown.Script.Semantics;
 
 /// <summary>
 /// Builds the <see cref="SpeakerTable"/> from a document's speaker prefixes. It walks them in
-/// document order, auto-declaring a bare name or <c>@id</c> on first use and enriching one
-/// symbol in place as later prefixes add its other half or its tags, so a name and an id for
-/// one speaker converge on a single identity. When the document tags no <c>##default</c>, a
-/// speakerless line falls back to an anonymous, non-referable default.
+/// document order, declaring a bare name or <c>@id</c> on first use and adding to that one
+/// symbol as later prefixes give its name, its id, or its tags, so a name and an id for one
+/// speaker resolve to a single identity. When neither the script nor the configured speakers
+/// tag a <c>##default</c>, a speakerless line falls back to an anonymous default that no prefix
+/// can name.
 /// </summary>
 /// <remarks>
-/// The binder is the boundary between the AST and the semantic model, so it — not the
-/// error-proof <see cref="SpeakerSymbol"/> — owns the source locations diagnostics need. It
-/// rejects conflicting metadata as it binds (a name bound to two ids, an id bound to two
-/// names, two <c>##default</c>s, fusing two separately-used speakers) and, once every prefix
-/// is bound, checks that every stable <c>@id</c> ends up named.
+/// <code>
+/// @alice: Hello.
+/// Alice @alice #calm: Hi again.
+/// </code>
+/// binds both lines to one speaker, named Alice with the id <c>alice</c> and the tag
+/// <c>#calm</c>. The binder holds the source locations diagnostics need, so it reports
+/// conflicting metadata as it binds (a name bound to two ids, an id bound to two names, two
+/// <c>##default</c>s in one layer, or a name and an id that already belong to different
+/// speakers) and, once every prefix is bound, reports each <c>@id</c> that never got a name.
 /// </remarks>
 internal sealed class SpeakerBinder
 {

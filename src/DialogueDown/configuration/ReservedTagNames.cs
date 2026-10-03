@@ -11,7 +11,7 @@ namespace DialogueDown.Configuration;
 /// </summary>
 public static class ReservedTagNames
 {
-    /// <summary>Marks the speaker it rides on as the document's default speaker.</summary>
+    /// <summary>Marks the speaker that carries it as the document's default speaker.</summary>
     public const string Default = "default";
 
     /// <summary>Every reserved-tag name DialogueDown recognizes.</summary>

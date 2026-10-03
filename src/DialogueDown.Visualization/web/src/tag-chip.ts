@@ -47,8 +47,8 @@ export function tagLabel(tag: TagView): string {
 }
 
 /**
- * One capsule. It carries `data-copy`, which is what the Config tab's delegated copy handler
- * looks for, so a reader can lift the tag straight into a script exactly as it is written.
+ * One capsule. It carries `data-copy`, which the report's delegated copy handler looks for, so a
+ * reader can lift the tag straight into a script exactly as it is written.
  *
  * The capsule is a button because copying is an act, and an act must be reachable without a mouse.
  *

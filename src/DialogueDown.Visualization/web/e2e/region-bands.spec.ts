@@ -14,15 +14,14 @@ function child(fromId: string, toId: string): DisplayEdge {
 }
 
 /**
- * Three scenes the flow weaves through, shaped as the Dialogue Graph of a real script is.
+ * Three scenes the flow passes in and out of, shaped as the Dialogue Graph of a real script is.
  *
  * The Alarm offers a choice. One arm is a line of the Alarm's own that talks the resident down and
  * sends them to the Stairwell; the other diverts to the Door, which opens a choice of three.
  *
  * The tree layout centres a parent between its children, so the Alarm's choice is pushed down
  * towards the Door's wide fan while the Door's own band reaches up to hold its first arm. Left as
- * the layout leaves them, the two bands cross — the same blend `examples/highrise-fire.dialogue.md`
- * shows between those two scenes, and the defect these tests hold shut.
+ * the layout leaves them, the two bands would cross.
  */
 const WOVEN: Stage = {
     title: "Dialogue Graph",

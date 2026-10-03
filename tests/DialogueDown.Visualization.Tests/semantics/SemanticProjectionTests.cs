@@ -44,7 +44,7 @@ public sealed class SemanticProjectionTests
         Assert.Contains(graph.Nodes, node => node.EntityKey == "scene:the-forest" && node.Label == "The Forest");
     }
 
-    // A heading is a run of speech too, so a query in a scene's name is named the same way a query
+    // A heading holds speech too, so a query in a scene's name is named the same way a query
     // in a line is, and the scene reads as the writer wrote it.
     [Fact]
     public void Project_ASceneHeadingHoldingAQuery_NamesItInTheLabel()
@@ -149,8 +149,7 @@ public sealed class SemanticProjectionTests
     public void Project_SpeakerTable_NamesTheAnonymousSpeakerAndLeavesItsIdEmpty()
     {
         // A speaker-less line resolves to the anonymous default speaker. Having no name is what
-        // that speaker *is*, so the table says so; having no @id is merely nothing, so it says
-        // nothing — the same rule the Playbook and Config tables follow.
+        // that speaker *is*, so the table says so; a missing @id leaves its cell empty.
         var graph = Project("The room is silent.");
 
         var row = Assert.Single(Table(graph, "Speakers").Rows);

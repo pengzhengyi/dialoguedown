@@ -3,10 +3,8 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Script.Semantics;
 
 /// <summary>
-/// Maps each analyzed <c>Jump</c> to what it resolved to, so a consumer asks the table rather
-/// than reaching through a dictionary — mirroring <see cref="SpeakerTable"/> and
-/// <see cref="AnchorTable"/>. Every jump in the analyzed tree is present, so <see cref="Resolve"/>
-/// treats a missing jump as a caller error.
+/// Maps each analyzed <c>Jump</c> to what it resolved to. Every jump in the analyzed tree is
+/// present, so <see cref="Resolve"/> treats a missing jump as a caller error.
 /// </summary>
 internal sealed class JumpResolutionTable
 {

@@ -4,9 +4,9 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Creates one node draft per script block in document order — including the blocks nested in a
-/// choice option's body — then adds the terminal End node.
-/// A later pass wires the edges between them.
+/// Creates one node draft per script block in document order, including the blocks nested in a
+/// choice option's body or a control branch, then adds the terminal End node. Later passes add
+/// the edges between them.
 /// </summary>
 internal sealed class NodeCreationPass : GraphBuildPass
 {

@@ -78,8 +78,7 @@ test("keeps the reader's open tab across a switch", async ({ page }) => {
     await page.locator(".explorer-script-row", { hasText: "second" }).click();
     await expect(page.locator(".explorer-script.active .explorer-script-row")).toHaveText(/second/);
 
-    // Staying put is the point of the change: a reader comparing two graphs is not sent back
-    // to Source on every click.
+    // A reader comparing two graphs is not sent back to Source on every click.
     await expect(page.locator(".tab.active")).toHaveText("Dialogue Graph");
     expect(await samePage(page)).toBe(true);
 });

@@ -41,8 +41,7 @@ public sealed class ReadableFixtureTests
     [Fact]
     public void Read_AVerdictInAnotherCase_IsRefusedAsThePlaybookFormatRefusesItsOwn()
     {
-        // A playbook refuses "Italic" for "italic", so the corpus documenting that format is
-        // neither stricter nor looser than the format itself. One spelling, everywhere.
+        // A playbook refuses "Italic" for "italic", so the corpus is just as strict.
         Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdict", "Refuse")));
     }
 
@@ -82,8 +81,6 @@ public sealed class ReadableFixtureTests
     [Fact]
     public void Read_AMisspelledField_IsRefusedRatherThanIgnored()
     {
-        // A fixture is hand-authored, so a typo is a mistake to surface -- the opposite of a
-        // playbook, where an unknown property is a newer compiler talking to an older reader.
         var error = Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdcit", "accept")));
 
         Assert.Contains("verdcit", error.Message, StringComparison.Ordinal);
@@ -99,7 +96,7 @@ public sealed class ReadableFixtureTests
         Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(json));
     }
 
-    /// <summary>A fixture whose every field is well formed, for one test to bend one way.</summary>
+    /// <summary>A well-formed fixture, which each test changes in one field.</summary>
     private static JsonObject Fixture() => new()
     {
         ["name"] = "a fixture",
@@ -108,7 +105,7 @@ public sealed class ReadableFixtureTests
         ["because"] = "a reason a reviewer can weigh",
     };
 
-    /// <summary>That fixture with one field set, whether or not it belongs there.</summary>
+    /// <summary>The well-formed fixture with one field set, whether or not the field belongs.</summary>
     private static string With(string field, JsonNode value)
     {
         var fixture = Fixture();
@@ -117,13 +114,12 @@ public sealed class ReadableFixtureTests
         return fixture.ToJsonString();
     }
 
-    /// <summary>That fixture with one field taken away.</summary>
+    /// <summary>The well-formed fixture with one field removed.</summary>
     private static string Without(string field)
     {
         var fixture = Fixture();
 
-        // A helper that silently removed nothing would leave the test asserting the opposite of
-        // what it reads as.
+        // Removing a field the fixture lacks would leave the test checking a complete fixture.
         Assert.True(fixture.Remove(field), $"'{field}' is not a field of a fixture.");
 
         return fixture.ToJsonString();

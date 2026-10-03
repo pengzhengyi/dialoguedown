@@ -14,13 +14,8 @@ public sealed record PlayableFixture
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 
-        // A fixture is hand-authored, so a misspelled field is a mistake to surface. This is the
-        // opposite of a playbook, where an unknown property is a newer compiler talking to an
-        // older reader and is deliberately ignored.
+        // A fixture is written by hand, so a misspelled field is reported rather than ignored.
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-
-        // Session entries are decoded by SessionEntryJsonConverter, which performs the same
-        // per-entry validation the hand-rolled reader used to.
         Converters = { new SessionEntryJsonConverter() },
     };
 
@@ -28,9 +23,8 @@ public sealed record PlayableFixture
     /// Gets where an editor can find the schema this fixture is written against.
     /// </summary>
     /// <remarks>
-    /// Known and optional rather than merely tolerated: unknown properties are refused here, so a
-    /// fixture could not carry it otherwise, and a hand-authored file is exactly the kind that
-    /// benefits from an editor checking it as it is written.
+    /// Declared because unknown properties are refused; without it a fixture could not name its
+    /// schema.
     /// </remarks>
     [JsonPropertyName("$schema")]
     public string? Schema { get; init; }
@@ -45,8 +39,8 @@ public sealed record PlayableFixture
     /// Gets why the verdict is what it is, for a human reviewing the corpus.
     /// </summary>
     /// <remarks>
-    /// Required rather than optional: a fixture nobody can review on sight is a fixture that
-    /// silently rots, and ports read this corpus as the format's specification.
+    /// Required, because other implementations read this corpus as the format's specification and
+    /// a case without a reason cannot be reviewed.
     /// </remarks>
     public required string Because { get; init; }
 

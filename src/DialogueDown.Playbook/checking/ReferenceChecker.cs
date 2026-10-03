@@ -4,17 +4,17 @@ using DialogueDown.Playbook.Nodes;
 namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
-/// Refuses a playbook that points somewhere it does not have.
+/// Refuses a playbook with an index past the end of its nodes or its speakers.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Every address in a playbook is a plain index — into the nodes, or into the speakers — so a
-/// reference is sound exactly when it lands. These are the rules a schema cannot state, because
-/// each relates a value to something else in the same document.
+/// Every reference in a playbook is a plain index: the entry, each edge's target, and each
+/// anchor point into the nodes, and each line's speaker points into the speakers. A schema cannot
+/// check these, because each relates a value to something else in the same document.
 /// </para>
 /// <para>
-/// Only the upper bound is checked here. A negative index is refused when the value is built, so
-/// by the time a document exists there is no such thing.
+/// Only the upper bound is checked here. A negative entry, edge target, or speaker is refused when
+/// the value is built.
 /// </para>
 /// </remarks>
 public sealed class ReferenceChecker : IPlaybookChecker

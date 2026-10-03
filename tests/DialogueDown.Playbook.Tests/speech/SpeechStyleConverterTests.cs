@@ -39,8 +39,7 @@ public sealed class SpeechStyleConverterTests
     [Fact]
     public void EveryMember_HasAWireName_AndTheSetIsExactlyThese()
     {
-        // The attribute this replaces made a missing name impossible to forget; the converter
-        // keeps that guard here, so a new member cannot reach a playbook unnamed.
+        // Fails when a new member has no wire name, so it cannot reach a playbook unnamed.
         var written = Enum.GetValues<SpeechStyle>()
             .Select(style => PlaybookJsonAssert.Serialize(style))
             .ToList();

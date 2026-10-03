@@ -212,8 +212,7 @@ public sealed class ScriptCompilerFactoryTests
     [Fact]
     public void CreateDefault_ATableInAScript_SurfacesTheFrontEndNote()
     {
-        // The front end reports before any other stage runs, so its note rides along with the
-        // rest and the compile still succeeds.
+        // The front end reports the ignored table as a note, and the compile still succeeds.
         var source =
             """
             # The Tavern
@@ -253,8 +252,8 @@ public sealed class ScriptCompilerFactoryTests
     [Fact]
     public void CreateDefault_BestEffort_TagsWithoutSpeaker_RecoversToADefaultSpeaker()
     {
-        // Best-effort runs every stage, so the recovery is visible — but the error means the
-        // compile did not succeed, and the desugared tree rides along on the failure.
+        // Best-effort runs every stage, so the line gets a default speaker; the error still makes
+        // the compile a failure, which carries the desugared tree.
         var result = AssertFailure(BestEffortCompiler().Compile("#lonely: Hi"));
 
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);

@@ -3,9 +3,10 @@ using DialogueDown.Common;
 namespace DialogueDown.Script.Ast;
 
 /// <summary>
-/// One selectable option at a branch. It holds its own <see cref="Body"/> blocks, so a
-/// choice can carry a <see cref="Line"/> and a nested <see cref="Choices"/> — which is
-/// how nested choices are represented. A choice is not itself a <see cref="ScriptBlock"/>.
+/// One option the player can select in a <see cref="Choices"/> group. It holds its own
+/// <see cref="Body"/> blocks, so a choice can carry a <see cref="Line"/> and a nested
+/// <see cref="Choices"/> — which is how nested choices are represented. A choice is not itself
+/// a <see cref="ScriptBlock"/>.
 /// An optional <see cref="Condition"/> guards the whole option: a conditional option is offered
 /// only when the condition is true.
 /// </summary>

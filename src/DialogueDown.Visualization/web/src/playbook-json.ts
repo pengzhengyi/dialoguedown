@@ -27,7 +27,7 @@ export function opensBlock(line: string): boolean {
 
 /**
  * The line closing the block a line opens, or null when the line opens none. The close is the
- * first line at or above the opener's own depth — the writer indents every member deeper, so
+ * first later line no deeper than the opener — the writer indents every member deeper, so
  * nothing shallower can belong to the block.
  */
 export function blockEnd(state: EditorState, lineNumber: number): number | null {

@@ -7,9 +7,9 @@ namespace DialogueDown.Playbook.Speakers;
 /// An annotation on a speaker, such as a portrait or a voice a host binds.
 /// </summary>
 /// <remarks>
-/// Shaped like a tag in speech but a separate type, because this one annotates a *speaker*
-/// rather than a point in a line — typing it as a fragment would put it in a union it can
-/// never appear in.
+/// Written after the speaker's name, such as <c>#mood=happy</c> in
+/// <c>Bob @B #mood=happy: Thank you.</c> A tag among the words of a line is a
+/// <see cref="DialogueDown.Playbook.Speech.TagFragment"/> instead.
 /// </remarks>
 /// <param name="Name">The tag's name.</param>
 /// <param name="Value">The tag's value, or <c>null</c> when it carries none.</param>

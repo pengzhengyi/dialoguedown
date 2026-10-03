@@ -38,9 +38,7 @@ internal readonly record struct TextRange
     /// <summary>
     /// Joins two contiguous ranges into one covering both — from <paramref name="left"/>'s
     /// start to <paramref name="right"/>'s end. They must meet end-to-start
-    /// (<c>left.End == right.Start</c>) with no gap or overlap, so joining them cannot
-    /// silently swallow a gap; a non-contiguous pair throws. This makes the "adjacent"
-    /// assumption explicit wherever ranges are merged.
+    /// (<c>left.End == right.Start</c>); a pair with a gap or an overlap throws.
     /// </summary>
     public static TextRange operator +(TextRange left, TextRange right)
     {

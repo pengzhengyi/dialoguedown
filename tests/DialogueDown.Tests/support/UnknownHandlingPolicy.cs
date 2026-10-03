@@ -4,8 +4,8 @@ using DialogueDown.Markdown;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>
-/// A policy from a future where <see cref="UnmodeledNodeHandling"/> has grown a member this code
-/// was never taught to carry out, so a test can prove the front end notices rather than guesses.
+/// A policy that answers with an <see cref="UnmodeledNodeHandling"/> value outside the defined
+/// members, so a test can show the front end throws rather than guessing.
 /// </summary>
 internal sealed class UnknownHandlingPolicy : IUnmodeledNodeHandlingPolicy
 {

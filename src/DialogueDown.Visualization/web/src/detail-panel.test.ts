@@ -321,8 +321,8 @@ describe("createDetailPanel", () => {
     });
 
     it("shows the words a jump was written with", () => {
-        // A jump becomes a line on the drawing and is kept nowhere else in this stage, so the
-        // panel is where what the writer called it survives.
+        // A jump is drawn as an edge and appears nowhere else in this stage, so the panel is the
+        // only place its words show.
         panel.showEdge({
             category: "jump",
             label: "through the gate",
@@ -334,8 +334,7 @@ describe("createDetailPanel", () => {
     });
 
     it("says nothing for a route that carries no words of its own", () => {
-        // A fall-through was never written down; printing anything would be the report inventing
-        // words rather than reporting them.
+        // A fall-through is not written in the source, so it has no words to show.
         panel.showEdge({
             category: "break",
             source: { id: "a", label: "Alice: First.", category: "speech" },
@@ -449,8 +448,8 @@ describe("createDetailPanel", () => {
     });
 
     it("titles a content node by its kind, and shows its words as the first detail", () => {
-        // A whole paragraph of dialogue in a heading crowds the panel out; the words themselves
-        // are spelled out under Source and Preview a moment below.
+        // A label too long for the heading is replaced there by the node's kind, and its words
+        // open the details table.
         panel.show({
             id: "n1",
             label: "Vharos folds down into the hoard with a sound like a closing forge.",
@@ -464,8 +463,6 @@ describe("createDetailPanel", () => {
     });
 
     it("keeps the label as the title when it is short enough to be one", () => {
-        // A scene's title names it in three words and belongs in the heading; only a label that
-        // runs to a paragraph gives way to its kind.
         panel.show({ id: "n1", label: "The Market", typeName: "Scene", attributes: [] });
 
         expect(title.textContent).toBe("The Market");

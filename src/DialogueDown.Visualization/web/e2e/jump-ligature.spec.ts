@@ -110,7 +110,7 @@ test("keeps the indicator on the first line of its target at a narrow wrap point
     const target = page.locator(".source-preview .jump-target");
     await expect(target).toHaveCount(1);
 
-    // Reproduce a dragged-narrow Preview where the breakable space used to leave `=>` alone.
+    // Narrow the Preview as a drag would, so the target has to wrap.
     await target.locator("..").evaluate((parent) => {
         (parent as HTMLElement).style.width = "30px";
     });

@@ -2,9 +2,9 @@ namespace DialogueDown.Cli;
 
 /// <summary>
 /// Resolves the hosted documentation URL for a diagnostic code, so the CLI can point a reader at
-/// the Error codes reference. The anchor mirrors the DocFX-slugged heading on that page — a
-/// <c>### DLG1102</c> heading becomes <c>#dlg1102</c> — which the docs generator keeps in lockstep
-/// with the diagnostic catalog.
+/// the Error codes reference. That page is generated from the diagnostic catalog with a heading
+/// per code, and the anchor is DocFX's slug of the heading: <c>### DLG1102</c> becomes
+/// <c>#dlg1102</c>.
 /// </summary>
 internal static class DiagnosticDocumentation
 {

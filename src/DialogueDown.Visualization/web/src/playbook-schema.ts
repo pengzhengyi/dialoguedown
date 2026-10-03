@@ -12,8 +12,7 @@ import { blockEnd, depthOf, opensBlock } from "./playbook-json";
  *
  * The descriptions come from the published playbook schema itself, imported here rather than
  * copied, so a schema edit reaches the report with nothing to keep in sync. It is bundled
- * instead of sent with each report because it describes the *format*, not this playbook — a
- * per-report copy would be re-sent on every save to say the same thing.
+ * instead of sent with each report because it describes the *format*, not this playbook.
  *
  * A path is resolved *through* the schema on demand rather than flattened into a lookup table
  * up front. The playbook format is recursive — a fragment holds fragments — so a table of every
@@ -92,9 +91,9 @@ function step(node: SchemaNode, segment: string): unknown[] {
 /**
  * What the schema says about a path, or undefined when it describes nothing there.
  *
- * A tagged variant is searched across all of its branches and the first description wins: the
- * branches of a `oneOf` describe the same position, so any of them is a true answer, and
- * choosing between them would mean re-deriving the document's own discriminator.
+ * A tagged variant resolves to the branch the document's `kind` names at that level, from
+ * `kinds`. Without a tag every branch is searched and the first description wins: the branches
+ * of a `oneOf` describe the same position, so any of them is a true answer.
  */
 export function describeSchemaPath(
     path: string,
@@ -247,11 +246,8 @@ function tokenRange(text: string, from: number): { start: number; end: number } 
 
 /**
  * The stretch of document a hovered description applies to: the whole object or array when the
- * property opens one, and the property's own line when it holds a scalar.
- *
- * The reader is told what a rule covers, not merely that it exists — the same question the
- * Source tab's Jump-to preview answers about a stage's enclosing node, answered with the same
- * faint wash.
+ * property opens one, and the property's own line when it holds a scalar. Shading it shows the
+ * reader what a rule covers, not merely that it exists.
  */
 export function appliedRange(state: EditorState, lineNumber: number): { from: number; to: number } {
     const line = state.doc.line(lineNumber);
@@ -263,8 +259,8 @@ export function appliedRange(state: EditorState, lineNumber: number): { from: nu
 /** Toggles the faint wash over the stretch a hovered description applies to. */
 const setAppliedEffect = StateEffect.define<{ from: number; to: number } | null>();
 
-// The Source tab's Jump-to preview marks an enclosing span the same way, so it wears the same
-// class: two surfaces answering "what does this cover?" should not answer it in two colors.
+// The same class as the Source tab's Jump-to preview, which also marks what a span covers, so
+// the two look alike.
 const appliedMark = Decoration.mark({ class: "dd-jump-preview" });
 
 const appliedField = StateField.define<DecorationSet>({
@@ -286,8 +282,8 @@ const appliedField = StateField.define<DecorationSet>({
 /**
  * The hover extension. A tooltip appears only over the property name (or an array element's
  * value) and only when the schema actually describes it, so hovering punctuation or a blank
- * stretch stays quiet. While it is open, the stretch the description applies to is washed in,
- * and the wash lifts with the tooltip.
+ * stretch stays quiet. While it is open, the stretch the description applies to is shaded with a
+ * faint wash, which clears when the tooltip closes.
  */
 export function schemaHover() {
     return [

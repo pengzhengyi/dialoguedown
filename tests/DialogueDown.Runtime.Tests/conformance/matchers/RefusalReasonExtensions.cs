@@ -7,9 +7,9 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// that reason's.
 /// </summary>
 /// <remarks>
-/// The spelling is the fixture format's: the schema declares it and the corpus's own fixtures pin
-/// it, which is why the runtime's enum carries no serialization attribute — the runtime depends on
-/// the playbook and the framework and nothing else, and an architecture test holds it that way.
+/// The names belong to the fixture format, not the runtime, so the runtime's enum carries no
+/// serialization attribute: <see cref="RefusalReason.EndlessRing"/> is written
+/// <c>endless-ring</c>.
 /// </remarks>
 internal static class RefusalReasonExtensions
 {

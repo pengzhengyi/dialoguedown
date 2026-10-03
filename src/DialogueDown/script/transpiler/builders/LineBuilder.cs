@@ -10,11 +10,18 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// <summary>
 /// Builds one <see cref="Line"/> from a group of Markdown inlines — a paragraph, or one
 /// slice of it between hard breaks. The work is done by a single-use <see cref="Assembler"/>
-/// that peels an optional leading <see cref="Condition"/> condition, then an optional speaker, off
-/// the front, and builds the remaining speech through the <see cref="InlineBuilder"/>. The
-/// line's span covers the whole group, the condition and speaker prefix included. The group
-/// must be non-empty; an empty line is dropped upstream.
+/// that splits an optional leading <see cref="Condition"/>, then an optional speaker, off the
+/// front, and builds the remaining speech through the <see cref="InlineBuilder"/>. The line's
+/// span covers the whole group, the condition and speaker prefix included. The group must be
+/// non-empty; an empty line is dropped upstream.
 /// </summary>
+/// <remarks>
+/// <code>
+/// `Alice.HasKey?` Alice: I have the key.
+/// </code>
+/// gives the condition <c>Alice.HasKey</c>, the speaker <c>Alice</c>, and the speech
+/// <c>I have the key.</c>
+/// </remarks>
 internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder inlineBuilder)
 {
     public Line Build(IReadOnlyList<MarkdownInline> group, IDiagnosticSink diagnostics)
@@ -30,9 +37,8 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
 
     /// <summary>
     /// A single-use assembler for one line. It holds the not-yet-consumed inlines in
-    /// <see cref="_remaining"/> and peels the condition, then the speaker, off the front in order —
-    /// each step reads and reassigns the shared remainder as it consumes the front. It is created
-    /// fresh per line, so <see cref="LineBuilder"/> stays stateless.
+    /// <see cref="_remaining"/> and splits the condition, then the speaker, off the front in order.
+    /// It is created fresh per line, so <see cref="LineBuilder"/> stays stateless.
     /// </summary>
     private sealed class Assembler(
         SpeakerBuilder speakerBuilder, InlineBuilder inlineBuilder,
@@ -47,7 +53,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
             var speaker = PeelSpeaker();
             if (speaker is null)
             {
-                // The peel failed: warn when a styled leading run would have been a speaker prefix.
+                // No speaker prefix: warn when styled leading text would have been one.
                 StyledSpeakerPrefixDetector.Report(_remaining, diagnostics);
             }
 
@@ -55,7 +61,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         }
 
         // Whether the content begins with the jump indicator `=>` (still raw text at this stage,
-        // tokenized later). Such a condition guards the jump, not the line, so it is not peeled.
+        // tokenized later). Such a condition guards the jump, not the line, so it stays in place.
         private static bool PrecedesAJump(IReadOnlyList<MarkdownInline> content) =>
             content is [TextInline head, ..] && head.StartsWithJumpIndicator();
 

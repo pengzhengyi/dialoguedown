@@ -1,10 +1,10 @@
 namespace DialogueDown.Script.Semantics;
 
 /// <summary>
-/// What a <c>Jump</c>'s target resolves to. A jump to a local anchor reaches a
-/// <see cref="SceneJump"/>; a jump that names a file is a <see cref="FileScopedJump"/> left for
-/// a future multi-file component; a jump with no target is an <see cref="UnresolvedJump"/>. A
-/// missing local anchor is a hard error (thrown by the resolver), not a resolution state.
+/// What a <c>Jump</c>'s target resolves to: a <see cref="SceneJump"/> for a local anchor that
+/// names a scene, a <see cref="TerminalJump"/> for the reserved <c>#END</c>, a
+/// <see cref="FileScopedJump"/> for a target that names a file, and an
+/// <see cref="UnresolvedJump"/> for an empty target or a local anchor no scene has.
 /// </summary>
 internal abstract record JumpResolution;
 
@@ -18,12 +18,14 @@ internal sealed record SceneJump(Scene Scene) : JumpResolution;
 /// </summary>
 internal sealed record FileScopedJump(string File, string? Anchor) : JumpResolution;
 
-/// <summary>A jump whose target is empty, so it points nowhere and cannot be resolved.</summary>
+/// <summary>
+/// A jump that points nowhere: its target is empty, or names a local anchor no scene has.
+/// </summary>
 internal sealed record UnresolvedJump : JumpResolution;
 
 /// <summary>
-/// A jump to the reserved <c>#END</c> anchor: it resolves to the run's End sentinel and
-/// terminates the run when reached. The anchor is uppercase and matched case-sensitively, so it
+/// A jump to the reserved <c>#END</c> anchor: it resolves to the End sentinel and ends the
+/// dialogue when reached. The anchor is uppercase and matched case-sensitively, so it
 /// can never collide with a heading's anchor, which is always lowercased.
 /// </summary>
 internal sealed record TerminalJump : JumpResolution;

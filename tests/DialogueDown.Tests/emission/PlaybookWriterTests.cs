@@ -38,7 +38,7 @@ public sealed class PlaybookWriterTests
     public void Write_APlaybook_PointsAtTheSchemaThisRepositoryShips()
     {
         // Bumping the format version renames the schema this looks for, so raising it without
-        // writing the new schema fails here rather than shipping playbooks that point at a 404.
+        // writing the new schema fails here rather than shipping playbooks that name a missing one.
         var shipped = JsonDocument.Parse(File.ReadAllText(
             Path.Combine(AppContext.BaseDirectory, "schema", PlaybookWriter.SchemaFileName)));
 

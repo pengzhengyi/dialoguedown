@@ -7,10 +7,6 @@ namespace DialogueDown.Playbook.Checking;
 /// <summary>
 /// Refuses a playbook written in a format version this reader does not read.
 /// </summary>
-/// <remarks>
-/// The version is the coarse gate — the shape of the document itself. What that shape may
-/// contain is the finer gate, and belongs to the capability check.
-/// </remarks>
 public sealed class VersionChecker : IPlaybookChecker
 {
     private readonly int _oldest;
@@ -23,7 +19,8 @@ public sealed class VersionChecker : IPlaybookChecker
     /// <param name="newest">The newest format version to accept.</param>
     public VersionChecker(int oldest, int newest)
     {
-        // A backwards range refuses every playbook while blaming the document, so say so here.
+        // With oldest above newest, every playbook would be refused with a message blaming the
+        // document, so the mistake is reported here instead.
         ArgumentOutOfRangeException.ThrowIfGreaterThan(oldest, newest);
 
         _oldest = oldest.AssertNotNegative(nameof(oldest));

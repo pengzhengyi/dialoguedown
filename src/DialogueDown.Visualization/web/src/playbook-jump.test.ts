@@ -54,8 +54,8 @@ function textAt(line: number | null, doc = PLAYBOOK): string | null {
 
 describe("nodeLine", () => {
     it("finds a node by its id, not by its position", () => {
-        // The corpus carries `node-out-of-position` for exactly this reason: ids need not be
-        // dense, so the second element's id is 5. Indexing would land on the wrong node.
+        // Ids need not match positions: the second element's id is 5, so indexing the array
+        // would land on the wrong node.
         const line = nodeLine(state(), 5);
 
         expect(textAt(line)).toBe("    {");
@@ -70,8 +70,7 @@ describe("nodeLine", () => {
     });
 
     it("does not answer for a position that has no matching id", () => {
-        // There *is* a second element, so anything indexing the array would happily return it for
-        // 1. There is no node with id 1, and the honest answer is nothing.
+        // The array has an element at position 1, but no node has id 1.
         expect(elementLine(state(), "nodes", 1)).not.toBeNull();
         expect(nodeLine(state(), 1)).toBeNull();
     });

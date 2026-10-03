@@ -6,8 +6,8 @@ namespace DialogueDown.Script.Validation;
 
 /// <summary>
 /// Reports a <see cref="SceneHeading"/> nested inside a control branch or choice option. Scene
-/// construction reads headings only from the document body, so a nested heading would otherwise
-/// create neither a scene nor a jump target.
+/// construction reads headings only from the document body, so a nested heading creates neither
+/// a scene nor a jump target.
 /// </summary>
 internal sealed class SceneHeadingPlacementRule : DiagnosticRule
 {

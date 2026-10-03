@@ -34,7 +34,7 @@ public sealed class ReferenceCheckerTests
     [Fact]
     public void Check_APlaybookWithNoNodesAtAll_IsRefused()
     {
-        // Nothing to play, so the entry cannot land. This is where an empty playbook is caught.
+        // With no nodes, the entry points at nothing. This is where an empty playbook is caught.
         var playbook = PlaybookFactory.Document(nodes: []);
 
         Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));

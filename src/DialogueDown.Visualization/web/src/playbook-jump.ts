@@ -52,9 +52,8 @@ export function elementLine(state: EditorState, name: string, index: number): nu
 /**
  * The line opening the node with this **id**.
  *
- * A node's id is not its position in the array. The conformance corpus carries a case whose ids
- * run `0, 5` precisely so a runtime cannot get away with indexing, and neither can this: the
- * search reads each element's own `"id"` and matches on it.
+ * A node's id is not its position in the array — ids may skip, as in `0, 5` — so the search
+ * reads each element's own `"id"` and matches on it.
  */
 export function nodeLine(state: EditorState, id: number): number | null {
     const start = arrayLine(state, "nodes");
@@ -81,11 +80,8 @@ export function lineOf(state: EditorState, target: PlaybookTarget): number | nul
 }
 
 /**
- * Put the reader on `line`, centered, with the cursor at its start.
- *
- * Centering rather than merely scrolling into view: a line revealed at the very bottom of the
- * pane is technically visible and practically useless, because the object it opens runs off the
- * screen below it.
+ * Put the reader on `line`, centered, with the cursor at its start. Centering leaves room on
+ * screen for the object the line opens.
  */
 export function revealLine(view: EditorView, line: number): void {
     const target = view.state.doc.line(line);

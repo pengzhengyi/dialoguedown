@@ -2,8 +2,7 @@ namespace DialogueDown.Diagnostics;
 
 /// <summary>
 /// The concrete <see cref="IDiagnosticSink"/> for one compilation: it collects diagnostics as
-/// producers report them and hands back an immutable snapshot in report order. Sorting or grouping
-/// is a rendering choice, so the bag stays a plain, predictable collector.
+/// producers report them and hands back an immutable snapshot in report order.
 /// </summary>
 internal sealed class DiagnosticBag : IDiagnosticSink
 {

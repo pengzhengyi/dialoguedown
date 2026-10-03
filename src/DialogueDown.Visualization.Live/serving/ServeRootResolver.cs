@@ -3,7 +3,7 @@ namespace DialogueDown.Visualization.Live.Serving;
 /// <summary>
 /// Decides which folder the live server hosts for a document. It keeps hosting
 /// minimal: the document's own folder by default, a broader ancestor only with
-/// consent (or an explicit <c>--render-root</c>), so a document cannot silently
+/// consent (or an explicit <c>--root</c>), so a document cannot silently
 /// cause files above its folder to be served.
 /// </summary>
 internal static class ServeRootResolver

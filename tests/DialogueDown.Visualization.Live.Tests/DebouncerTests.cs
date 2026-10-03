@@ -40,10 +40,9 @@ public sealed class DebouncerTests
     [Fact]
     public void Fire_WhenTheActionThrows_ClearsRunningSoLaterTriggersStillFire()
     {
-        // A refresh that throws (e.g. an unreadable file) must not wedge the debouncer: clearing
-        // the running flag in a finally keeps every later on-disk change producing a reload. A
-        // manual timer drives the callback so the test does not depend on a fake timer re-firing
-        // after a throw.
+        // A refresh that throws, such as on an unreadable file, must not stop later changes from
+        // reloading. A manual timer drives the callback, so the test does not depend on how a fake
+        // timer re-fires after a throw.
         var provider = new ManualTimeProvider();
         var runs = 0;
         using var debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () =>
@@ -59,7 +58,7 @@ public sealed class DebouncerTests
         Assert.Throws<InvalidOperationException>(timer.Fire); // the throwing run propagates
         Assert.Equal(1, runs);
 
-        // Not wedged: a later change re-arms the timer (a no-op if _running were stuck true)...
+        // A later change re-arms the timer...
         var armed = timer.ChangeCount;
         debouncer.Trigger();
         Assert.True(timer.ChangeCount > armed);
@@ -158,9 +157,9 @@ public sealed class DebouncerTests
 
         debouncer.Dispose();
         var changesBefore = timer.ChangeCount;
-        debouncer.Trigger(); // a change that lands after disposal
+        debouncer.Trigger();
 
-        Assert.Equal(changesBefore, timer.ChangeCount); // the disposed timer is never re-armed
+        Assert.Equal(changesBefore, timer.ChangeCount);
         Assert.False(timer.ChangedWhileDisposed);
         Assert.Equal(0, runs);
     }
@@ -210,9 +209,8 @@ public sealed class DebouncerTests
     [Fact]
     public async Task Dispose_RacingConcurrentTriggers_NeverThrows()
     {
-        // The production race: many watcher events call Trigger while the host disposes the
-        // debouncer. Arming under the gate with a disposed flag keeps a trigger from ever calling
-        // Change on a disposed timer (which would throw ObjectDisposedException).
+        // Many watcher events call Trigger while the host disposes the debouncer. No trigger may
+        // call Change on the disposed timer, which would throw ObjectDisposedException.
         for (var iteration = 0; iteration < 50; iteration++)
         {
             var debouncer = new Debouncer(TimeSpan.FromMilliseconds(1), () => { });
@@ -256,7 +254,7 @@ public sealed class DebouncerTests
 
         public bool Disposed { get; private set; }
 
-        // Set if Change is ever called after Dispose — the exact bug the gate must prevent.
+        // Set when Change is called after Dispose.
         public bool ChangedWhileDisposed { get; private set; }
 
         public bool Change(TimeSpan dueTime, TimeSpan period)

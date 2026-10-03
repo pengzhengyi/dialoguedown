@@ -6,8 +6,8 @@ namespace DialogueDown.Runtime.Tests.Conformance.Readers;
 
 /// <summary>Reads one command a session can send.</summary>
 /// <remarks>
-/// One reader per command, keyed so two claiming one key is a startup failure rather than a silent
-/// win for whichever was registered first — the shape the expectation matchers already use.
+/// One reader per command, keyed by <see cref="Key"/>; two readers claiming one key fail at
+/// startup.
 /// </remarks>
 internal interface ICommandReader
 {

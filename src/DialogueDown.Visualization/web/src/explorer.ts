@@ -3,7 +3,7 @@
  * `.dialogue.md` scripts, with the active script highlighted and revealed. A folder loads its
  * children the first time it is expanded (one `GET /api/browse` per folder). The DOM building
  * lives here (unit-tested with jsdom); the browser wiring — `fetch`, and save-safe navigation —
- * is injected through {@link ExplorerPorts}, mirroring the launcher.
+ * is injected through {@link ExplorerPorts}.
  */
 
 import { foldGlyphName } from "./fold-glyph";
@@ -33,9 +33,9 @@ export interface ExplorerPorts {
     openScript(path: string): void;
     /** Create a script at a root-relative path — save-safe; the host navigates on success. */
     create(path: string): Promise<CreateOutcome>;
-    /** Create a folder at a root-relative path; the host refreshes the tree on success. */
+    /** Create a folder at a root-relative path; the tree refreshes on success. */
     createFolder(path: string): Promise<CreateFolderOutcome>;
-    /** Rename (move) a script to a new root-relative path; the host reopens it if it was active. */
+    /** Rename (move) a script or folder; the host reopens the active script if it moved. */
     rename(from: string, to: string): Promise<RenameOutcome>;
     /** Open the project's configuration (dialogue.toml) — the host activates the Config tab. */
     openConfig(): void;
@@ -229,14 +229,12 @@ export function initExplorer(
         void rebuild(openFolders());
     };
 
-    // Collapse every folder.
     const collapseAll = (): void => {
         void rebuild(new Set());
     };
 
-    // Create a script under {@link parent} ("" is the project root), reusing the launcher's rules:
-    // append the extension, open the new file, or — when the name is taken — offer to open the
-    // existing one.
+    // Create a script under {@link parent} ("" is the project root): append the extension, open
+    // the new file, or — when the name is taken — offer to open the existing one.
     const submitCreate = async (name: string, parent: string): Promise<void> => {
         const typed = name.trim();
         if (typed === "") return;
@@ -401,7 +399,7 @@ export function initExplorer(
     };
 
     // Rename to a trimmed name in the item's own folder (a script keeps its extension); refresh on
-    // success (an active file/folder rename navigates via the host), or surface a clash / error.
+    // success (an active file/folder rename navigates via the host), or show a clash or error.
     const submitRename = async (
         fromPath: string,
         newBase: string,
@@ -493,8 +491,7 @@ export function ancestorFolders(activePath: string | undefined): string[] {
 /**
  * Resolve a preview link's file part — written relative to the folder of the script that contains
  * it — to a root-relative path the Explorer can open, or `null` when it escapes the project root or
- * names no file. The `#anchor` is dropped: opening the file is the Explorer's job; resolving the
- * anchor is the linker's (deferred).
+ * names no file. The `#anchor` is dropped: only the file is resolved here.
  */
 export function resolveProjectPath(baseFolder: string, link: string): string | null {
     const filePart = link.split("#")[0];

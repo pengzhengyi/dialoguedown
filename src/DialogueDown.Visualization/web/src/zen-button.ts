@@ -1,16 +1,11 @@
 import { codicon } from "./codicon";
 
 /**
- * A Zen-mode toggle button carrying the same concentric-circles codicon VS Code shows beside
- * its own **Zen Mode** command (`target`). Using VS Code's glyph makes the mode recognizable
- * to readers who already know it, and it reads as a different idea from the maximize
- * button's outward arrows sitting next to it rather than a second flavour of full screen.
+ * A Zen-mode toggle button with the concentric-circles codicon (`target`) that VS Code shows
+ * beside its own **Zen Mode** command.
  *
- * Deliberately not `layout-centered`: that is the glyph VS Code uses for its separate
- * **Centered Layout** command, so borrowing it here would name a different feature.
- *
- * The pressed state is reflected by {@link ./fullscreen!initFullscreen} from the root class,
- * not per-button, so a button built while Zen is already on still reads correctly.
+ * {@link ./fullscreen!initFullscreen} sets the pressed state from the root class rather than per
+ * button, so a button built while Zen is already on still reads correctly.
  */
 export function createZenButton(onToggle: () => void): HTMLButtonElement {
     const button = document.createElement("button");

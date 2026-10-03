@@ -7,9 +7,9 @@ using Spectre.Console.Cli;
 namespace DialogueDown.Cli.Commands;
 
 /// <summary>
-/// The <c>visualize</c> command. Given a script it opens a <b>served session</b> on the unified
-/// report shell — read-only <b>View</b> by default, or editable <b>Edit</b> with <c>--edit</c>,
-/// toggled in the browser — with the Explorer sidebar alongside it. With no script it lands on
+/// The <c>visualize</c> command. Given a script it opens a <b>served session</b> on the report
+/// shell — read-only <b>View</b> by default, or editable <b>Edit</b> with <c>--edit</c>,
+/// toggled in the browser — with the Explorer sidebar alongside it. With no script it opens
 /// that shell's empty state to browse or create one. <c>-o</c> is a non-interactive static export.
 /// Every report is compiled with the project's resolved
 /// <see cref="CompilerOptions"/>. The static export is delegated to
@@ -49,8 +49,6 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
 
         var mode = settings.Edit ? ReportMode.Edit : ReportMode.View;
 
-        // A script opens directly on its report, with the Explorer sidebar alongside it; no script
-        // lands on the empty shell to browse or create one. One unified server serves both.
         if (hasScript)
         {
             return _shell.RunAsync(

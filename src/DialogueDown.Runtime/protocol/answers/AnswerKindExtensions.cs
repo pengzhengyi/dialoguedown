@@ -9,7 +9,7 @@ internal static class AnswerKindExtensions
     /// <param name="answer">The answer to read.</param>
     /// <returns>The kind it carries.</returns>
     /// <exception cref="NotSupportedException">
-    /// The answer is of a kind nothing has been taught to tell apart.
+    /// The answer is of a kind this method does not handle.
     /// </exception>
     public static AnswerKind Kind(this Answer answer)
     {

@@ -9,10 +9,10 @@ namespace DialogueDown.Runtime.Stepping;
 /// What a run asks the world about a node, and at which moment it asks.
 /// </summary>
 /// <remarks>
-/// A run reads the world twice at a node, and the two readings are kept apart because the node may
-/// change the world between them. Arriving asks what decides whether the node plays at all.
-/// Leaving asks what decides which way out is taken, by which time whatever the node performs has
-/// been performed and the world may have moved.
+/// A run asks the world about a node on arrival, before a line continues after a command, and on
+/// leaving, because the node may change the world in between. Arriving asks what decides whether
+/// the node plays at all and what its first words say. Leaving asks what decides which way out is
+/// taken, by which time whatever the node performs has been performed.
 /// <para>
 /// Arriving asks two kinds of question at once. A guard is answered with a truth, and a query
 /// standing in what the node says is answered with words, so the two are read apart and put back
@@ -45,9 +45,8 @@ internal static class NodeQuestionExtensions
     /// Empty for a node that says nothing.
     /// </returns>
     /// <remarks>
-    /// A line is the only node that speaks, so it is the only one a query can stand in. An effect
-    /// is written for the host to carry out rather than for anybody to read, and a query inside one
-    /// would be answering a question nobody is being told.
+    /// Only a line's speech is searched for queries. A control block's effects are for the host to
+    /// carry out, not for anybody to read.
     /// </remarks>
     public static ImmutableArray<string> FindWordsForPlaying(this Node node)
     {

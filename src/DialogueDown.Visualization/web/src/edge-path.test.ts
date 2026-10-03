@@ -96,9 +96,8 @@ describe("laneRoute", () => {
     });
 
     it("climbs before its target whichever way it traveled, never past it", () => {
-        // Right of a dot is where its words are, and a column's words sit on every row. A climb
-        // on that side is a line drawn through the text of rows the route has no business in, so
-        // both directions climb on the left — in the gutter no label may enter.
+        // A node's label sits right of its dot, so a climb on that side would cross other rows'
+        // labels. Both directions climb on the left, in the gutter no label enters.
         const target = { x: 900, y: 62 };
 
         expect(laneRoute(from, target, 400).rise.x).toBeLessThan(target.x);
@@ -114,8 +113,8 @@ describe("laneRoute", () => {
     });
 
     it("never starts past the column it is about to drop in", () => {
-        // A short run can leave less room than the label wants; the line yields rather than
-        // doubling back on itself.
+        // The drop column leaves less room than the clearance asks for, so the line starts at the
+        // column instead of doubling back.
         const route = laneRoute(from, { x: 900, y: 62 }, 400, 0, { dropX: 40, clearance: 400 });
 
         expect(route.start.x).toBe(40);
@@ -152,8 +151,7 @@ describe("edgePath", () => {
         const first = laneRoute(from, target, 400, 0);
         const second = laneRoute(from, target, 400, 1);
 
-        // Two routes to one node would otherwise climb in the same column, one hidden under the
-        // other — one line to the eye, and a coin toss to the pointer.
+        // Two routes to one node climb in separate columns, so neither hides the other.
         expect(second.rise.x).toBeLessThan(first.rise.x);
     });
 
@@ -167,8 +165,8 @@ describe("edgePath", () => {
         const first = laneRoute({ x: 1800, y: 0 }, target, 400, 0);
         const second = laneRoute({ x: 1800, y: 0 }, target, 400, 1);
 
-        // Back from the target means left of it, the same side a forward run climbs on, so two
-        // routes doubling back to one node still stand apart instead of on top of each other.
+        // A route that doubles back also climbs left of the target, and two such routes to one
+        // node still climb in separate columns.
         expect(second.rise.x).toBeLessThan(first.rise.x);
         expect(first.rise.x).toBeLessThan(target.x);
     });
@@ -185,11 +183,8 @@ describe("edgePath ports", () => {
 });
 
 describe("edgePath standoff", () => {
-    // The line used to run all the way to the target's center and rely on the dot to hide the
-    // overshoot, while the arrowhead was pushed back along the *tangent* to compensate. On a
-    // curved approach the two disagree: the head lands off the line, so stroke shows past it, and
-    // the last stretch of curve bends inside the circle. Stopping the line at the dot's edge
-    // leaves nothing to hide.
+    // A standoff ends the line at the target dot's edge instead of its center, so on a curved
+    // approach the arrowhead still sits on the line.
     const endOf = (path: string): Point => {
         const [x, y] = path
             .split(/[MCL,]/)

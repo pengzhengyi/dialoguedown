@@ -5,8 +5,8 @@ namespace DialogueDown.Graph;
 
 /// <summary>
 /// Lowers a <see cref="SemanticModel"/> into a <see cref="DialogueGraph"/> — the compiler stage
-/// after semantic analysis. Mirrors <c>ISemanticAnalyzer</c>: a pure function of the model, with
-/// no I/O and no engine dependency.
+/// after semantic analysis. It is a pure function of the model, with no I/O and no engine
+/// dependency.
 /// </summary>
 internal interface IDialogueGraphBuilder
 {

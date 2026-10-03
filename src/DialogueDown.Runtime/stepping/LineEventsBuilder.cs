@@ -39,7 +39,7 @@ internal sealed class LineEventsBuilder
     /// <summary>Gets whether a command was taken, which leaves the host something to carry out.</summary>
     public bool HasCommand { get; private set; }
 
-    /// <summary>Takes part of a line and hands back what it came to.</summary>
+    /// <summary>Creates a builder that has taken the segments to play.</summary>
     /// <param name="speaker">
     /// Who says the line, by name, or <see langword="null"/> for the anonymous default speaker.
     /// </param>
@@ -60,7 +60,7 @@ internal sealed class LineEventsBuilder
         return builder;
     }
 
-    /// <summary>Reads out every event gathered, in the order they were taken.</summary>
+    /// <summary>Returns every event gathered, in the order they were taken.</summary>
     /// <returns>The events.</returns>
     public ImmutableArray<Event> Freeze() => _events.ToImmutable();
 

@@ -7,8 +7,7 @@ namespace DialogueDown.Script.Semantics;
 /// <summary>
 /// Checks each reserved (<c>##name</c>) tag against DialogueDown's <see cref="ReservedTagNames.Known"/>
 /// set and reports one whose name is not recognized. Custom (<c>#name</c>) tags are opaque and
-/// never reach here; the transpiler already guarantees a tag rides on a speaker, image, or
-/// speech, so a tag with nothing to attach to is not re-checked.
+/// never reach here.
 /// </summary>
 internal static class TagValidator
 {

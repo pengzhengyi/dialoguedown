@@ -49,7 +49,8 @@ public sealed class LineEventsBuilderTests
 
     [Fact]
     public void Of_ALaterSegmentWhoseOnlyQueryIsAnsweredWithNothing_StillContinuesTheLine() =>
-        // Words are judged before they are filled, so the world's answer never changes what is sent.
+        // Whether a segment says anything is decided before its queries are filled, so an empty
+        // answer still sends a Continued.
         AssertEvents(
             Gathered(
                 "Alice",

@@ -4,10 +4,9 @@ import { codicon } from "./codicon";
  * The footer drawer: one bounded, dismissible surface at the bottom of the report that hosts
  * several named panels behind a tab bar — the shape of VS Code's bottom panel.
  *
- * It is one drawer rather than one per panel because the footer has a single edge to anchor to.
- * Two independent disclosures would each need the same hard-won behavior — a height bound, an
- * internal scroll, floating over the stage on a short window — and would fight over the same
- * space when both were open.
+ * It is one drawer rather than one per panel because the footer has a single edge to anchor to,
+ * so the panels share one height bound, one internal scroll, and one way of floating over the
+ * stage on a short window.
  */
 
 /** One named panel the drawer can show. */

@@ -9,11 +9,12 @@ import type {
     DebugStatus,
 } from "../debug-controller";
 
-/** One location in the explicit prototype fixture, bound by an exact unique source line. */
+/** A way forward from a fake location, leading to the location `targetId`. */
 export interface FakeDebugPath extends DebugPath {
     targetId: string;
 }
 
+/** One location in the fixture program, bound to the one source line equal to `anchor`. */
 export interface FakeDebugLocation {
     id: string;
     anchor: string;
@@ -28,7 +29,7 @@ export interface FakeDebugProgram {
     locations: readonly FakeDebugLocation[];
 }
 
-/** The fake controller's spike-only lifecycle seam. */
+/** A fake {@link DebugController} that can be bound again to edited source. */
 export interface FakeDebugController extends DebugController {
     rebind(source: string): void;
 }
@@ -41,7 +42,7 @@ interface BoundProgram {
 
 const NO_PATHS: readonly FakeDebugPath[] = [];
 
-/** Bind an explicit fixture and return the deterministic in-browser debugger used by the spike. */
+/** Bind `program` to `source` and return a deterministic in-browser debugger over it. */
 export function createFakeDebugController(
     source: string,
     program: FakeDebugProgram,

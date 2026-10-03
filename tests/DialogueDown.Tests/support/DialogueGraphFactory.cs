@@ -9,7 +9,7 @@ using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 namespace DialogueDown.Tests.Support;
 
-/// <summary>Object Mother and small construction helpers for dialogue-graph tests.</summary>
+/// <summary>Builds the nodes, edges, regions, and graphs that graph tests start from.</summary>
 internal static class DialogueGraphFactory
 {
     public static NodeId NodeId(int value) => new(value);

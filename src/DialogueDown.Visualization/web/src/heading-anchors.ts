@@ -13,13 +13,13 @@ const LINK_ICON =
 
 /**
  * The Markdown jump link the chain-link affordance copies — `[text](#slug)`, ready to paste after
- * a `=>` choice. Exported for testing.
+ * a `=>` jump. Exported for testing.
  */
 export function headingJumpLink(text: string, slug: string): string {
     return `[${text}](#${slug})`;
 }
 
-/** The link affordance whose tooltip and clipboard payload are both {@link copy}. */
+/** The link affordance whose tooltip and clipboard payload are both `copy`. */
 function linkButton(copy: string, label: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";

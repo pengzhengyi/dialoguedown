@@ -28,9 +28,8 @@ internal sealed class TomlDocumentParser
 
     private static void ThrowSyntaxError(DocumentSyntax document)
     {
-        // Fail fast on the first error, like every other compiler stage. Filter to Error kind so a
-        // leading warning is never mistaken for the failure; collecting every diagnostic waits for
-        // the planned repo-wide diagnostics phase.
+        // Throw on the first error. Tomlyn also reports warnings, so the first diagnostic is not
+        // always the error.
         var error = document.Diagnostics.First(
             diagnostic => diagnostic.Kind == DiagnosticMessageKind.Error);
         throw new DialogueConfigurationException(error.Message, TomlLocation.From(error.Span));
