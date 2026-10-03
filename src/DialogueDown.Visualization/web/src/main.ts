@@ -103,7 +103,7 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     // so a superseded flush never replays a stale transition.
     let navToken = 0;
     // runApp activates a tab during construction (before `ui` and the controllers exist), so the
-    // active-document reflection is armed only once everything below is wired.
+    // active-document reflection is enabled only once everything below is wired.
     let controllersReady = false;
 
     // The active document's controller: the config when the Config tab is active, else the
@@ -145,7 +145,8 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         );
     }
 
-    // The callback-shaped boundary tabs and node selection use: settle, then proceed.
+    // The callback-shaped boundary that tab switches and source/stage jumps use: settle, then
+    // proceed.
     function beginNavigation(proceed: () => void): void {
         void resolveForNavigation().then((ok) => {
             if (ok) proceed();
@@ -261,9 +262,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
 
     // A way back to the file selector, beside the path it leaves. The shell is a page of its own
     // (`/browse`), so this is an ordinary link — the browser's middle-click and open-in-new-tab
-    // work — and it is offered only in a served report, where a shell exists to go back to. A run
-    // that pinned a document redirects `/` to that document, which is why the link names the
-    // shell's own door rather than the landing.
+    // work — and it is offered only in a served report, where a shell exists to go back to. It
+    // points at `/browse` rather than `/` because a run that pinned a document redirects `/` to
+    // that document.
     const statusBar = document.querySelector(".status-bar");
     if (report.project != null && statusBar) {
         const back = document.createElement("a");
@@ -276,7 +277,8 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
             '<polyline points="15 18 9 12 15 6"/></svg>';
         statusBar.insertBefore(back, document.getElementById("doc-path"));
-    } // The stream is bound to one document — the one this tab is showing — so the watch is held:
+    }
+    // The stream is bound to one document — the one this tab is showing — so the watch is held:
     // a switch has to reconnect it against the newly opened script, and the server tells a tab
     // whose script stopped being served rather than leaving it waiting.
     const serverEvents = watchServerEvents(
@@ -345,9 +347,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         if (typeof script === "string") void scripts.restore(script);
     });
     // The Explorer sidebar: present only for a served, browsable report (report.project is set by
-    // the project server). It reuses the launcher's browse/open endpoints and routes a file open
-    // through beginNavigation, so switching scripts respects the save mode (Auto flushes, Manual
-    // prompts) before the server switches sessions.
+    // the project server). It reuses the launcher's browse/open endpoints and opens a file through
+    // the script switch, which settles the current document first, so switching scripts respects
+    // the save mode (Auto flushes, Manual prompts) before the server switches sessions.
     if (report.project) {
         const explorerEl = document.getElementById("explorer");
         const appEl = document.getElementById("app");
@@ -433,10 +435,10 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
                 configExplorerEntry(report.configuration),
             );
             // The controller reflected the starting mode before this handle existed, so the sidebar
-            // takes it now: the report's own state is the truth both read.
+            // reads it from the page now.
             explorer.setEditable(document.documentElement.dataset.servedMode === "edit");
-            // Shut on arrival: the reader asked for this script, so the tree is a detour. The
-            // Files control in the tab bar summons it, and an explicit choice outranks this.
+            // Collapsed on arrival, since the reader has already chosen a script. The Files control
+            // in the tab bar opens it, and a collapse choice the reader saved overrides this.
             const explorerPanel = initCollapsiblePanel({
                 container: appEl,
                 collapsedClass: "explorer-collapsed",
@@ -448,8 +450,8 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
             document.getElementById("tabbar-leading")?.appendChild(explorerPanel.button);
 
             // A cross-file link in the Source preview opens the target script like a hyperlink;
-            // same-file #anchors keep their native scroll, and the anchor part is dropped (the
-            // linker resolves anchors, deferred).
+            // same-file #anchors keep their native scroll. TODO: a cross-file link's #anchor is
+            // dropped; the opened script does not scroll to it yet.
             for (const preview of document.querySelectorAll(".source-preview")) {
                 preview.addEventListener("click", (event) => {
                     const anchor = (event.target as Element | null)?.closest("a");

@@ -18,8 +18,8 @@ public static class ReportAssets
 
     /// <summary>
     /// The asset served from <paramref name="path"/>, or <see langword="null"/> when no asset has
-    /// that name. Matching whole names rather than resolving a path keeps the route from being
-    /// steered at anything the client was not built from.
+    /// that name. Only an exact name matches and no path is resolved, so a request can reach
+    /// nothing outside these assets.
     /// </summary>
     public static ReportAsset? Find(string? path) =>
         All.FirstOrDefault(asset => string.Equals(asset.Path, path, StringComparison.Ordinal));

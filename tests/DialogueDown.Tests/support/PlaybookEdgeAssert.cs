@@ -7,8 +7,8 @@ namespace DialogueDown.Tests.Support;
 /// than as a type check wrapped around a property.
 /// </summary>
 /// <remarks>
-/// The graph's own edges are asserted by <see cref="GraphAssert"/>. These are the written ones,
-/// whose targets are positions rather than node ids — which is the difference worth checking.
+/// These are the playbook's edges, whose targets are node positions rather than node ids. The
+/// graph's own edges are asserted by <see cref="GraphAssert"/>.
 /// </remarks>
 internal static class PlaybookEdgeAssert
 {

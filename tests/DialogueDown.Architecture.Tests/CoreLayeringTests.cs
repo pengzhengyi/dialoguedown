@@ -3,11 +3,10 @@ using NetArchTest.Rules;
 namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
-/// Group B — layering inside the core. The compiler pipeline flows
-/// <c>Markdown -> Script.Ast -> Desugar -> Validation -> Semantics -> Graph -> Compilation</c>
-/// atop the <c>Common</c> foundation. Each stage may depend only on stages beneath it, so a
-/// change to a later stage never ripples backward. The dialogue <c>Graph</c> is the late
-/// stage that lowers the semantic model, not a foundation leaf.
+/// Layering inside the core. The compiler pipeline runs
+/// <c>Markdown -> Transpiler -> Desugar -> Validation -> Semantics -> Graph -> Compilation</c>
+/// over the <c>Common</c>, <c>Configuration</c>, and <c>Diagnostics</c> foundations, and no stage
+/// depends on a stage after it.
 /// </summary>
 public sealed class CoreLayeringTests
 {

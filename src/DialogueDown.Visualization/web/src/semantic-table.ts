@@ -22,11 +22,11 @@ import { renderTags, tagLabel } from "./tag-chip";
 import { wireClickToCopy } from "./copy-on-click";
 import { cellAction } from "./cell-action";
 
-// The feature set this table opts into. Since v9, `table-core` registers behavior explicitly
-// rather than bundling every feature: sorting, per-column (facet) filtering, and the global
-// search, each with its row model. Registering the stock `filterFns` keeps naming a filter by
-// string ("equalsString") valid. Vanilla use must also supply the reactivity bindings, because
-// no framework adapter is present to wire the table's state atoms into a render.
+// The feature set this table opts into; `table-core` registers each one explicitly: sorting,
+// per-column (facet) filtering, and the global search, each with its row model. Registering the
+// stock `filterFns` keeps naming a filter by string ("equalsString") valid. Vanilla use must also
+// supply the reactivity bindings, because no framework adapter is present to wire the table's
+// state atoms into a render.
 const features = tableFeatures({
     coreReactivityFeature: storeReactivityBindings(),
     columnFilteringFeature,
@@ -61,9 +61,9 @@ let facetGroupSeq = 0;
  * Render one semantic table as a **collapsible panel** whose title bar carries the collapse caret,
  * an on-demand search toggle, and the (filter-aware) row count. Its rows sort on any column header,
  * filter through a revealed search box, and — for categorical columns — through a faceted popover
- * whose choice shows as a chip in the header. Sorting and filtering run on TanStack `table-core`
- * (headless), so this module still owns every pixel: category accents, cross-link keys, and the
- * collapsible state all survive. The collapsed state persists across reloads.
+ * whose choice shows as a chip in the header. Sorting and filtering run on TanStack `table-core`,
+ * which is headless, so this module draws everything itself: category accents, cross-link keys,
+ * and the collapsible state. The collapsed state persists across reloads.
  *
  * `storagePrefix` namespaces that remembered state. Two tabs can hold same-named tables — the
  * Semantic tab and the Playbook tab both show Speakers and Anchors — and a shared key would make
@@ -219,7 +219,7 @@ function buildInteractiveTable(
         renderFallbackValue: null,
     });
 
-    // v9 tables own their state, so a change is observed rather than fed back in: every sort or
+    // The table owns its state, so a change is observed rather than fed back in: every sort or
     // filter update publishes to the store, and re-rendering from that keeps the body in step.
     instance.store.subscribe(() => render());
 
@@ -322,7 +322,7 @@ function matchToggle(label: string, title: string): HTMLButtonElement {
 /**
  * The facet control for a categorical column: a funnel button that, when a value is chosen, becomes
  * a value chip. Clicking it opens a radio popover (All plus the column's distinct values); choosing
- * one applies that column's exact-match filter and All clears it.
+ * one filters the column to it (see {@link facetFilterFn}) and All clears it.
  */
 function buildFacetControl(
     table: SemanticTable,
@@ -485,18 +485,18 @@ function renderRow(row: SemanticRow, query: SearchQuery | undefined): HTMLElemen
 /** A `<td>` carrying the cell's text, category color accent, and any cross-link key. */
 function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLElement {
     const td = document.createElement("td");
-    // An identifier is something a writer lifts into a script, so it offers itself for copying.
-    // `data-copy` is all the shared listener needs; the class carries the hover cue.
-    // A cell that stands for a place in a document offers to take the reader there. It is
-    // marked rather than wired here: the table does not know what document, so the surface that
-    // built the cell listens for the click.
     let action: string | undefined;
+    // A cell that stands for a place in a document offers to take the reader there. It is
+    // marked rather than wired here: the table does not know what document, so the view that
+    // built the table listens for the click.
     if (cell.jump && cell.text !== "") {
         td.classList.add("dd-jump");
         td.dataset.jump = JSON.stringify(cell.jump);
         td.title = "Click to reveal in the playbook";
         action = `Reveal ${cell.text} in the playbook`;
     }
+    // An identifier is something a writer lifts into a script, so it offers itself for copying.
+    // `data-copy` is all the shared listener needs; the class carries the hover cue.
     if (cell.copyable && cell.text !== "") {
         td.dataset.copy = cell.text;
         td.classList.add("dd-copy");
@@ -535,9 +535,8 @@ function renderCell(cell: SemanticCell, query: SearchQuery | undefined): HTMLEle
         return td;
     }
 
-    // A cell drawn in styled segments. The styling is only for drawing: the highlight is still
-    // found in the cell's own text and then laid across the segments, so searching keeps marking
-    // a cell that has gained color.
+    // A cell drawn in styled segments. The styling is only for drawing: the highlight is found
+    // in the cell's own text and then laid across the segments.
     if (cell.segments && cell.segments.length > 0) {
         drawSegments(td, cell, query);
         return td;
@@ -600,8 +599,8 @@ function drawSegments(td: HTMLElement, cell: SemanticCell, query: SearchQuery | 
 /**
  * Draws a cell as a list, one item per line. The cell's text joins the introduction and the items
  * with a newline, so a match still belongs to the line that holds it: the breaks are counted among
- * the offsets and drawn as the list's own marker rather than as characters. The introduction reads
- * on the cell's first line, where the pieces that come before a break read anywhere else.
+ * the offsets and drawn as the list's own marker rather than as characters. The introduction, the
+ * pieces before the first break, reads on the cell's first line.
  */
 function drawList(td: HTMLElement, cell: SemanticCell, query: SearchQuery | undefined): void {
     const list = cell.list;
@@ -695,7 +694,7 @@ function inside(ranges: MatchRange[], start: number, end: number): MatchRange[] 
         }));
 }
 
-/** A 15px stroked Lucide-style icon from its inner paths. */
+/** A 14px stroked Lucide-style icon from its inner paths. */
 function svg(paths: string): string {
     return (
         `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ` +

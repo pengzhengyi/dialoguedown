@@ -3,12 +3,7 @@ import { runApp } from "./app";
 import type { Report, Stage } from "./model";
 import { mermaidPreviews } from "./mermaid-preview";
 
-/**
- * The report skeleton `runApp` binds to — the ids it and its helpers query. The nodes below are
- * deliberately sourceless: the inspector shows a note (not a CodeMirror editor) so the test
- * exercises the selection-preservation logic without mounting the editor, whose jsdom layout
- * measurement is covered end-to-end by Playwright instead.
- */
+/** The report skeleton `runApp` binds to: the ids it and its helpers query. */
 function mountDom(): void {
     document.body.innerHTML = `
         <nav id="tabs"></nav>
@@ -36,7 +31,8 @@ function mountDom(): void {
  * to `c`. `b` is listed before `a` so the layout's first child differs from the first outgoing
  * edge (they follow node and edge order respectively), which lets a test tell which one a key
  * follows. `a`'s label is overridable and `a` itself can be dropped, so a rebuild can lose the
- * selected node.
+ * selected node. No node carries source, so the inspector shows a note instead of mounting an
+ * editor.
  */
 function stage(options: { labelOfA?: string; dropA?: boolean } = {}): Stage {
     const nodes = [
@@ -55,10 +51,8 @@ function stage(options: { labelOfA?: string; dropA?: boolean } = {}): Stage {
 }
 
 /**
- * The same fork and join as the flow graph: its child edges span the flow rather than nesting, and
- * every edge names its route, so the stage is the one whose ways in answer to Shift+digit. Kept
- * apart from `stage()` — which a nesting tree is — because the keyboard rule follows the stage's
- * declared shape, not its title or its palette.
+ * The fork and join of {@link stage} as a flow graph, with a route on every edge. It does not nest,
+ * so Shift+digit takes the nth way in; the keyboard follows `nests`, not the stage's title.
  */
 function graphStage(): Stage {
     const edges = stage().edges.map((edge) => ({ ...edge, category: "choice" as const }));
@@ -395,8 +389,6 @@ describe("runApp — keyboard navigation follows the graph's edges", () => {
     });
 
     it("does not count the numpad's digits, which carry their own codes", () => {
-        // Numpad2 reports `2` as its key but does not answer the drawing's numbering: the
-        // inspector's digits are promised to the number row.
         arrow("ArrowDown"); // the root
         press({ key: "2", code: "Numpad2" });
 

@@ -4,12 +4,12 @@ using System.Text.RegularExpressions;
 namespace DialogueDown.Tests.Diagnostics;
 
 /// <summary>
-/// Guards that a design note which ships cites only diagnostic codes the catalog can emit. An
-/// origin document is the likeliest place for a code to go stale — one implemented note still
-/// assigned the dangling arrow to <c>DLG1002</c> while the shipped code was <c>DLG1113</c> — so
-/// the citations in shipped notes are checked against the catalog. A note whose status is
-/// Explored or Proposed is exempt: it names codes it means to reserve.
+/// Checks that a shipped design note cites only diagnostic codes the catalog can emit.
 /// </summary>
+/// <remarks>
+/// A note whose status is Explored or Proposed is exempt, because it may name codes it means to
+/// reserve.
+/// </remarks>
 public sealed partial class DesignNoteCodeCitationsTests
 {
     /// <summary>
@@ -57,7 +57,9 @@ public sealed partial class DesignNoteCodeCitationsTests
             + string.Join("; ", _namedButNotShipped.Select(entry => $"{entry.Key} ({entry.Value})")));
     }
 
-    /// <summary>A note is shipped unless its status callout still calls it a proposal.</summary>
+    /// <summary>
+    /// A note is shipped when it has a status line that is neither Explored nor Proposed.
+    /// </summary>
     private static bool IsShipped(string text)
     {
         var status = Status().Match(text);

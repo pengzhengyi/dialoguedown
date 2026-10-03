@@ -429,8 +429,8 @@ describe("createModeController — switchDocument (opening another script)", () 
     });
 
     it("adopts the opened script in Edit too, rather than raising a conflict", () => {
-        // The difference from onReload: an external change must never clobber an active buffer,
-        // but an open the reader asked for has already resolved that buffer and must land.
+        // Unlike an external change, an open the reader asked for has already resolved the
+        // buffer, so it replaces it.
         const { ports } = fakePorts();
         const c = createModeController("edit", ports);
 

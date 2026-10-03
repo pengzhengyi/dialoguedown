@@ -36,12 +36,12 @@ const DRIVER_HOLD_MS = 100;
  * Map a scroll offset from one scrollable axis to another through paired anchor offsets.
  *
  * `fromAnchors[i]` (a pixel offset on the driving axis) corresponds to `toAnchors[i]`
- * (a pixel offset on the following axis) — here, the top of the i-th heading in each
- * pane. The result is a piecewise-linear interpolation through the breakpoints `0 → 0`,
- * each `fromAnchors[i] → toAnchors[i]`, and `fromMax → toMax`. Anchors that are not
- * strictly increasing on both axes (or that fall outside `(0, max)`) are dropped, so a
- * stray or duplicated heading cannot invert the map; extra anchors on either side are
- * ignored by pairing on the shorter list.
+ * (a pixel offset on the following axis) — here, the top of the i-th matched block or
+ * heading in each pane. The result is a piecewise-linear interpolation through the
+ * breakpoints `0 → 0`, each `fromAnchors[i] → toAnchors[i]`, and `fromMax → toMax`.
+ * Anchors that are not strictly increasing on both axes (or that fall outside
+ * `(0, max)`) are dropped, so a stray or duplicated heading cannot invert the map;
+ * extra anchors on either side are ignored by pairing on the shorter list.
  */
 export function mapScroll(
     from: number,
@@ -160,7 +160,7 @@ function editorBlockKind(name: string): string | null {
     }
 }
 
-/** Direct body blocks from CodeMirror. An unsupported block makes dense pairing unsafe. */
+/** The editor's top-level body blocks, or null when one has no known preview element to pair. */
 function editorBlockAnchors(view: EditorView): ScrollAnchor[] | null {
     const firstBodyOffset = bodyStart(view);
     const cursor = syntaxTree(view.state).cursor();

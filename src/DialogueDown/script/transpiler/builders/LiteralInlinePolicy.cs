@@ -10,7 +10,8 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// but the functional elements — a code span, link, image, jump, or break — are not.
 /// An unsupported element is restored to its plain-text form so the writer's characters
 /// survive as words (a code span keeps its backticks, a nested link its brackets). This
-/// is approximate: a doubled code fence like <c>``a``</c> comes back as <c>`a`</c>.
+/// is approximate: a code span written with double backticks, like <c>``a``</c>, comes back as
+/// <c>`a`</c>.
 /// </summary>
 internal sealed class LiteralInlinePolicy : IInlinePolicy
 {
@@ -24,7 +25,7 @@ internal sealed class LiteralInlinePolicy : IInlinePolicy
 
     // Rebuild the element's canonical Markdown text from the node, recursing so a nested
     // link or image flattens too. Emphasis loses its exact delimiter (a single '*' vs
-    // '_'), which does not matter once the whole run is plain text.
+    // '_'), which does not matter once the whole label is plain text.
     private static string Reconstruct(MarkdownInline inline) => inline switch
     {
         TextInline text => text.Text,

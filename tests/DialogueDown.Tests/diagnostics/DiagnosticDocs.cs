@@ -5,8 +5,8 @@ namespace DialogueDown.Tests.Diagnostics;
 internal static class DiagnosticDocs
 {
     // Codes documented without an example because no default compile can produce them yet. When
-    // their producer or registration lands, give the code an example and remove it here;
-    // DiagnosticDocsTests enforces that this list stays honest.
+    // a code gains a producer or a registration, give it an example and remove it here;
+    // DiagnosticDocsTests checks that this list stays accurate.
     public static IReadOnlySet<string> WithoutExampleYet { get; } =
         new HashSet<string>
         {

@@ -15,14 +15,21 @@ namespace DialogueDown.Visualization.Playbook;
 /// </summary>
 /// <remarks>
 /// The report reads a node without the reader having to parse its JSON, so each kind is reduced to
-/// the shortest run of pseudocode that still says what the node holds. Every piece also says what
-/// it is — a speaker, a writer's words, the table's own grammar, a command, a query, or a marker
-/// standing where a value is missing — so the client draws the piece by the role it was given
-/// rather than re-reading the line and guessing where the writer's words stop.
+/// the shortest pseudocode that still says what the node holds:
+/// <code>
+/// Alice: Did you bring the {Item}?
+/// IF HasKey? THEN 4 ELSE 7
+/// Take the key || Leave it IF Brave?
+/// DRAW 1 FROM 2: 60% || evenly
+/// ⇒ Back to the market
+/// </code>
+/// Every piece also says what it is — a speaker, a writer's words, the table's own grammar, a
+/// command, a query, or a marker standing where a value is missing — so the client draws each
+/// piece by its role without re-reading the line to find where the writer's words stop.
 /// </remarks>
 internal static class PlaybookNodeSummary
 {
-    /// <summary>Marks a query as the boolean member of the family, as the script writes it.</summary>
+    /// <summary>Ends a condition's key, as the script writes it: <c>Rainy?</c>.</summary>
     private const string BooleanQuery = "?";
 
     /// <summary>Stands in for a speaker the playbook's speaker list does not hold.</summary>
@@ -37,13 +44,15 @@ internal static class PlaybookNodeSummary
     /// <summary>The summary of a node where a run stops.</summary>
     private const string EndOfScript = "END";
 
-    /// <summary>How a control node reads when it only moves from one scene to the next.</summary>
+    /// <summary>How a control node with no command and no named jump reads.</summary>
     private const string CarriesOn = "CONTINUE";
 
     /// <summary>How a choice option reads when the writer spelled out no words for it.</summary>
     private const string NoLabel = "<no label>";
 
-    /// <summary>How an arm of a random choice reads when its share is left to the other arms.</summary>
+    /// <summary>
+    /// How a random arm with a bare <c>%</c> weight reads: an equal share of what is left.
+    /// </summary>
     private const string Evenly = "evenly";
 
     /// <summary>What a summary cut at the cap trails.</summary>
@@ -77,7 +86,7 @@ internal static class PlaybookNodeSummary
     /// </summary>
     /// <param name="node">The node to summarize.</param>
     /// <param name="speakers">The playbook's speakers, which a line addresses by index.</param>
-    /// <returns>The pieces, in the order they read, or none for a kind not yet covered.</returns>
+    /// <returns>The pieces, in the order they read, or none for a kind it does not know.</returns>
     public static ImmutableArray<PlaybookSegmentView> SegmentsOf(
         Node node, ImmutableArray<PlaybookSpeaker> speakers)
     {
@@ -284,9 +293,8 @@ internal static class PlaybookNodeSummary
     private static ImmutableArray<PlaybookSegmentView> Guarded(Condition? condition) =>
         condition is KeyCondition key ? [PlaybookSegmentView.Keyword(Guard), Condition(key.Key)] : [];
 
-    // A condition lives on the kinds that can carry one, which the playbook names through
-    // IConditional, so a kind that gains one later is summarized without a change here. Only a key
-    // condition has anything to show; another kind reads as unguarded until it does.
+    // Any node kind that implements IConditional can lead with a condition. Only a key condition
+    // is shown; any other kind of condition reads as unguarded.
     private static KeyCondition? ConditionOf(Node node) =>
         (node as IConditional)?.Condition as KeyCondition;
 
@@ -384,9 +392,8 @@ internal static class PlaybookNodeSummary
         return taken.ToImmutable();
     }
 
-    // A condition is a query like any other — the boolean member of the family — so it wears the
-    // query's role and the `?` the script marks it with. The reader then sees a question only the
-    // running game can answer, rather than a name the report happens to know.
+    // A condition is a query whose answer is true or false, so it takes the query role and the `?`
+    // the script marks it with: a question only the running game can answer.
     private static PlaybookSegmentView Condition(string key) => PlaybookSegmentView.Query($"{key}{BooleanQuery}");
 
     private static string Target(int target) => target.ToString(CultureInfo.InvariantCulture);

@@ -1,8 +1,8 @@
 namespace DialogueDown.Playbook.Common;
 
 /// <summary>
-/// Guards for the strings a playbook carries, so a null or blank one is refused where it enters
-/// rather than surfacing later as a missing link target or an unnamed speaker.
+/// Checks for the strings a playbook carries, so a null or empty one is refused when the value is
+/// built rather than showing up later as a missing link target or an unnamed speaker.
 /// </summary>
 internal static class StringExtensions
 {
@@ -19,8 +19,8 @@ internal static class StringExtensions
     }
 
     /// <summary>
-    /// The string itself, or an exception when it is absent or empty — for the places where
-    /// nothing is not a valid document, such as the words a line says.
+    /// The string itself, or an exception when it is absent or empty — for values that may not be
+    /// empty, such as the words of a text fragment.
     /// </summary>
     /// <param name="value">The string to check.</param>
     /// <param name="paramName">The name reported on the exception.</param>

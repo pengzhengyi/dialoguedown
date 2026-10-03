@@ -4,9 +4,8 @@ namespace DialogueDown.Conformance;
 /// What a reader must do with a fixture's playbook.
 /// </summary>
 /// <remarks>
-/// Each member's wire name is pinned explicitly, as <see cref="Speech.SpeechStyle"/> pins its own:
-/// the corpus is read by other runtimes, so deriving the value from the C# member name would let a
-/// rename change the format silently. <see cref="VerdictConverter"/> is where the names live.
+/// Each member's wire name is pinned in <see cref="VerdictConverter"/>, so renaming a member
+/// cannot change the format other runtimes read.
 /// </remarks>
 public enum Verdict
 {

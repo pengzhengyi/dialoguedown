@@ -11,7 +11,8 @@ const PAUSED: ReadonlySet<SaveStatus> = new Set<SaveStatus>([
 ]);
 
 /**
- * Resolve one document before navigation continues (a tab change, node selection, or Edit→View).
+ * Resolve one document before navigation continues (a tab change, a jump between the source and a
+ * stage, opening another script, or Edit→View).
  *
  * The current save (if any) is awaited first, so a decision is made on a settled state rather than
  * mid-write: Manual never prompts while a save is in flight, and its Discard is never a no-op.
@@ -20,8 +21,8 @@ const PAUSED: ReadonlySet<SaveStatus> = new Set<SaveStatus>([
  * edit made during a flush is saved before navigation proceeds. It rechecks the mode and the
  * optional {@link isCancelled} signal before every follow-up flush, so switching to Manual (or a
  * newer navigation superseding this one) stops the follow-up saving and cancels this navigation
- * rather than driving stale Auto flushes. In Manual it runs the existing Save-or-Discard prompt for
- * whatever remains dirty.
+ * rather than driving stale Auto flushes. In Manual it asks the reader whether to discard whatever
+ * remains dirty.
  */
 export async function resolveDocumentForNavigation(
     live: LiveEditController,

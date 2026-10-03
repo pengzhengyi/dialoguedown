@@ -6,7 +6,7 @@ namespace DialogueDown.Visualization.Lsp;
 /// A zero-based position in the source — a <see cref="Line"/> and a <see cref="Character"/>
 /// offset within that line, counted in UTF-16 code units. It is the Language Server Protocol
 /// counterpart of the core's one-based <see cref="LinePosition"/>: the shape both the diagnostics
-/// and the semantic-token projections carry, and a future language server publishes.
+/// and the semantic-token projections carry.
 /// </summary>
 internal readonly record struct LspPosition(int Line, int Character)
 {

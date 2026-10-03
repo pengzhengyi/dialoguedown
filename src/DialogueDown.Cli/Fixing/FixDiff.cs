@@ -101,8 +101,9 @@ internal static class FixDiff
         }
     }
 
-    // A changed line's words come from DiffPlex's sub-pieces: the side we keep is unchanged prose,
-    // and the side we drop is the emphasis. A line with no sub-pieces changed whole.
+    // A changed line's words come from DiffPlex's sub-pieces. A removed line drops the inserted
+    // words and an added line the deleted ones; every changed word left is emphasized. A line with
+    // no sub-pieces changed whole and is shown without emphasis.
     private static IReadOnlyList<HunkSegment> Segments(DiffPiece piece, bool removed)
     {
         if (piece.SubPieces.Count == 0)
@@ -119,8 +120,8 @@ internal static class FixDiff
         ];
     }
 
-    // The number of the side the row belongs to: the direct piece when there is one, else the
-    // pane that has a line at this row (an insertion's old side, a deletion's new side).
+    // The row's line number on its own side of the diff, or the other side's when that piece has
+    // none.
     private static int LineNumber(DiffPiece primary, DiffPiece? fallback = null) =>
         primary.Position ?? fallback?.Position ?? 0;
 

@@ -3,12 +3,16 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Script.Weights;
 
 /// <summary>
-/// The default weight-normalization strategy (Shape A): explicit percentages are taken as
-/// written, each auto weight claims an equal share of the percentage they leave, and every
-/// resolved weight is divided by their total so the probabilities sum to 1. A zero weight
-/// total is reported as an error by validation (`DLG2010`); the normalizer still recovers to
-/// a uniform distribution, so no consumer ever divides by zero.
+/// The default weight-normalization strategy: explicit percentages are taken as written, each
+/// auto weight claims an equal share of the percentage they leave, and every resolved weight is
+/// divided by their total so the probabilities sum to 1. A zero weight total is reported as an
+/// error by validation; the normalizer still recovers to a uniform distribution, so no consumer
+/// ever divides by zero.
 /// </summary>
+/// <remarks>
+/// <c>`50%`</c>, <c>`%`</c>, <c>`%`</c> resolve to 50, 25, and 25, giving 0.5, 0.25, and 0.25.
+/// <c>`30%`</c>, <c>`30%`</c> total 60 and still give 0.5 and 0.5.
+/// </remarks>
 internal sealed class DefaultWeightNormalization : IWeightNormalization
 {
     private const double OneHundredPercent = 100;
@@ -29,8 +33,6 @@ internal sealed class DefaultWeightNormalization : IWeightNormalization
         var resolved = weights.Select(weight => Resolve(weight, autoShare)).ToList();
         var rawTotal = resolved.Sum();
 
-        // A zero total is a validation error (DLG2010); recover to a uniform distribution so
-        // the graph and runtime never divide by zero on a still-collected, best-effort result.
         var probabilities = rawTotal > 0
             ? resolved.Select(value => value / rawTotal).ToList()
             : Enumerable.Repeat(1.0 / weights.Count, weights.Count).ToList();
@@ -38,9 +40,8 @@ internal sealed class DefaultWeightNormalization : IWeightNormalization
         return new WeightDistribution(probabilities, rawTotal);
     }
 
-    // A negative percentage cannot mean a probability; recognition rejects it as a diagnostic,
-    // so reaching here is a caller bug. Failing fast keeps the output probabilities valid —
-    // non-negative and summing to 1 — rather than silently normalizing nonsense.
+    // A negative percentage cannot mean a probability, and recognition reports one instead of
+    // building it, so one here is a caller bug.
     private static void RequireNonNegativePercentages(IReadOnlyList<ChoiceWeight> weights)
     {
         foreach (var number in weights.OfType<NumberWeight>())

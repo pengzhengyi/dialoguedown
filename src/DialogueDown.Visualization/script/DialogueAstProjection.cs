@@ -17,7 +17,7 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
 {
     // Semantic categories: the same cross-stage vocabulary the Markdown projection uses,
     // so corresponding concepts share a color (a code span and the game call it becomes
-    // are both "call"). "tag" is new — the Dialogue AST is the first stage with tags.
+    // are both "call"). "control" and "tag" have no Markdown counterpart.
     private const string DocumentCategory = "document";
     private const string StructureCategory = "structure";
     private const string SpeechCategory = "speech";
@@ -184,9 +184,9 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
                 $"Unsupported Dialogue AST node type '{node.GetType().Name}'.", nameof(node)),
         };
 
-        // Attach the structured span centrally so every arm above stays focused on its
-        // label/attributes: every real node is a spanned ScriptNode, the root spans the
-        // whole document, and a synthetic node's empty span yields none.
+        // Attach the structured span here so each case above holds only its label and
+        // attributes: every real node is a spanned ScriptNode, the root spans the whole
+        // document, and a synthetic node gets a zero-width span where it belongs.
         return description with { Span = SpanOf(node) };
     }
 
@@ -234,7 +234,7 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
     private static IEnumerable<DisplayAttribute> Optional(string name, string? value) =>
         value is null ? [] : [new DisplayAttribute(name, value)];
 
-    // A line's children are its optional condition condition, then its optional speaker, followed by
+    // A line's children are its optional condition, then its optional speaker, followed by
     // its speech fragments — condition-first, matching the traversal and how the line reads.
     private static IEnumerable<object> LineChildren(
         Condition? condition, Speaker? speaker, IReadOnlyList<InlineFragment> speech)
@@ -255,13 +255,13 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
         }
     }
 
-    // A link label or image alt is a run of inline fragments; flatten it to plain text for
+    // A link label or image alt is a sequence of inline fragments; flatten it to plain text for
     // the attribute display (the node's own span still points at the exact source).
     private static string InlineText(IReadOnlyList<InlineFragment> fragments) =>
         DialogueDown.Script.Ast.InlineText.Of(fragments);
 
-    // Spans come from the Markdown source locations; clamp defensively so a diagnostics
-    // view never throws on a stray span. An empty span yields no source: the node marks a
+    // Spans come from the Markdown source locations; clamp defensively so the report never
+    // throws on a stray span. An empty span yields no source: the node marks a
     // position rather than a range of text — it was inserted by a stage (a filled default
     // speaker), so it has nothing to slice.
     private string? Slice(SourceSpan span)
@@ -276,8 +276,8 @@ internal sealed class DialogueAstProjection : INodeProjection<object>
         return _source[start..end];
     }
 
-    // The node's editable source range: the whole document for the root, the clamped span
-    // for a spanned node, and none for a synthetic (empty-span) node.
+    // The node's editable source range: the whole document for the root, and the clamped
+    // span for any other node, which is zero-width for a synthetic node.
     private DisplaySpan? SpanOf(object node) => node switch
     {
         ScriptDocument => new DisplaySpan(0, _source.Length),

@@ -170,8 +170,8 @@ test("its field and guidance are legible, in the theme the report is wearing", a
     await page.locator(".source-pane .cm-content").click();
     await page.keyboard.press("Control+g");
 
-    // Both would still be "visible" to a selector while painting text onto its own background —
-    // CodeMirror's light-themed `.cm-textfield` did exactly that to the field on the dark theme.
+    // Both would still be "visible" to a selector while painting text onto its own background,
+    // as CodeMirror's light-themed `.cm-textfield` would on the dark theme.
     for (const selector of [field, guidance]) {
         const painted = await page.locator(selector).evaluate((node) => {
             const style = getComputedStyle(node);
@@ -191,7 +191,6 @@ test("its field follows the dark theme rather than a library default", async ({ 
         .locator(field)
         .evaluate((node) => getComputedStyle(node).backgroundColor);
 
-    // A white field on a dark report is the regression this guards.
     expect(background).not.toBe("rgb(255, 255, 255)");
 });
 

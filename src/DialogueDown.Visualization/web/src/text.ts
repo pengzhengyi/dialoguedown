@@ -27,13 +27,12 @@ export function baseLabel(label: string): string {
     return label.replace(/\s*\(.*\)\s*$/, "");
 }
 
-/** HTML for a node's hover tooltip: its label and full (untruncated) attributes. */
 /**
  * The hover tooltip for a route: what kind it is, what that kind means, and — when the writer gave
  * the route words of its own — those words.
  *
- * A route's `<title>` names its kind for assistive technology and must keep doing only that, so the
- * detail a reader wants on hover rides here instead, the way a node's does.
+ * A route's `<title>` names only its kind, for assistive technology, so the detail a reader wants
+ * on hover goes here instead, as a node's does.
  */
 export function edgeTooltipHtml(kind: string, meaning: string, written: string | null): string {
     const parts = [`<strong>${escapeHtml(kind)}</strong>`, `<div>${escapeHtml(meaning)}</div>`];
@@ -41,6 +40,7 @@ export function edgeTooltipHtml(kind: string, meaning: string, written: string |
     return parts.join("");
 }
 
+/** HTML for a node's hover tooltip: its label and full (untruncated) attributes. */
 export function tooltipHtml(node: DisplayNode): string {
     const parts = [`<strong>${escapeHtml(node.label)}</strong>`];
     for (const attr of node.attributes) {
@@ -56,8 +56,8 @@ interface FrontMatterSplit {
 
 /**
  * Split a leading YAML front matter block off a source string. marked has no
- * notion of front matter and would render `title:` + `---` as a heading, so we
- * peel it off and show it as metadata instead.
+ * notion of front matter and would render `title:` + `---` as a heading, so the
+ * block is split off and shown as metadata instead.
  */
 export function splitFrontMatter(source: string): FrontMatterSplit {
     const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source);
@@ -137,10 +137,7 @@ export function renderNodePreview(source: string, label: string, recognizeJumps 
     return decorateJumpIndicators(html);
 }
 
-/**
- * Like {@link renderMarkdown}, but adds GitHub-style heading ids so in-document
- * anchor links work. Use for the whole-document Source preview.
- */
+/** The compiler's spans the Source preview marks, as offsets into the source. */
 export interface PreviewSemantics {
     ignored: readonly Span[];
     controlKeywords: readonly Span[];
@@ -157,6 +154,11 @@ const EMPTY_PREVIEW_SEMANTICS: PreviewSemantics = {
     constructs: [],
 };
 
+/**
+ * Like {@link renderMarkdown}, but adds GitHub-style heading ids so in-document
+ * anchor links work, and marks what `semantics` describes. Use for the
+ * whole-document Source preview.
+ */
 export function renderDocument(
     source: string,
     semantics: PreviewSemantics = EMPTY_PREVIEW_SEMANTICS,
@@ -172,9 +174,10 @@ export function renderDocument(
 }
 
 /**
- * A document parser that marks only the Markdown the compiler says it ignored. The source
- * snippets, not Markdown kinds, drive this: when project configuration changes a kind from
- * Ignore to Keep, its semantic token disappears and the same preview renders at full strength.
+ * A document parser that marks the Markdown the compiler says it ignored and the control
+ * keywords it found. The source snippets, not Markdown kinds, drive this: when project
+ * configuration changes a kind from Ignore to Keep, its semantic token disappears and the same
+ * preview renders at full strength.
  */
 function documentParser(source: string, semantics: PreviewSemantics): Marked {
     if (semantics.ignored.length === 0 && semantics.controlKeywords.length === 0) {
@@ -265,9 +268,8 @@ function ignoredRegion(token: Token, html: string, regionKey: RegionKey): string
         ? `Ignored ${kind.toLowerCase()}: ${source}`
         : "Ignored — not included in dialogue";
     const sourceBlock = token.type === "code" ? ' data-preview-block="pre"' : "";
-    // A chevron performs the action and a static mark states what the region is, which is the
-    // rule the whole report follows -- inline as well, so a reader never meets the same glyph
-    // meaning two different things depending on where it sits.
+    // The chevron folds the region and a static mark states what the region is, inline as well
+    // as for a block, so one glyph never means two different things.
     //
     // The accessible name and pressed state depend on the current view, so the Preview controller
     // owns them; the renderer only emits the structure.

@@ -1,9 +1,9 @@
 namespace DialogueDown.Conformance;
 
 /// <summary>
-/// One case from the corpus: what it claims, and the document it claims it about.
+/// One case from the readable half: a document, and what a reader must do with it.
 /// </summary>
-/// <param name="Name">The case's folder name, which every failure reports so a run names the file to open.</param>
+/// <param name="Name">The case's folder name, which every failure reports.</param>
 /// <param name="Fixture">What a reader must do with the document, and why.</param>
 /// <param name="Playbook">The document itself, unparsed, because some cases are not valid JSON.</param>
 public sealed record ReadableCase(string Name, ReadableFixture Fixture, string Playbook)
@@ -15,8 +15,8 @@ public sealed record ReadableCase(string Name, ReadableFixture Fixture, string P
     public bool WillRefuse => Fixture.Verdict == Verdict.Refuse;
 
     /// <summary>
-    /// Gets the case's name, so a theory that carries a case names it by name rather than by the
-    /// whole document it is about.
+    /// Returns the case's name, so a test theory lists the case by name rather than by its whole
+    /// playbook.
     /// </summary>
     public override string ToString() => Name;
 }

@@ -18,13 +18,8 @@ public sealed record DisplayEdge(string FromId, string ToId, DisplayEdgeKind Kin
     public string? Category { get; init; }
 
     /// <summary>
-    /// What the writer called this route, for a link that carries words of its own — a jump names
-    /// where it goes. Null for a route whose meaning is its shape rather than its text: a
-    /// fall-through is not written down, and a chosen arm reads as the speech it leads to.
+    /// The words the writer gave this route: a jump's link text, or the words a choice arm offers.
+    /// Null for a route with no words of its own, such as a fall-through or a random arm.
     /// </summary>
-    /// <remarks>
-    /// A jump becomes an edge and is not kept in the line it left, so this is the only place in
-    /// the graph stage those words survive.
-    /// </remarks>
     public string? Label { get; init; }
 }

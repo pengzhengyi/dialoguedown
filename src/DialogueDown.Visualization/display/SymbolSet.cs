@@ -5,8 +5,8 @@ namespace DialogueDown.Visualization.Display;
 /// <summary>
 /// The editor's compiler-projected language metadata: completable names resolved by the semantic
 /// analyzer, plus reserved targets DialogueDown owns independently of the document. Its shape
-/// mirrors the browser's <c>DialogueSymbols</c>, so it deserializes straight into the editor's
-/// completion and fixed-panel seams.
+/// matches the browser's <c>DialogueSymbols</c>, so the editor reads it directly for completion
+/// and for its reserved-targets panel.
 /// </summary>
 internal sealed record SymbolSet(
     IReadOnlyList<JumpTargetSymbol> JumpTargets,

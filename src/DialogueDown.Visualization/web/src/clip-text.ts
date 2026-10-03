@@ -1,10 +1,9 @@
 /**
  * Clipping a label to the width it is allowed, rather than to a count of characters.
  *
- * A character count is a poor proxy for width: thirty `W`s are more than twice as wide as thirty
- * `i`s, so a fixed count leaves the gap beside a column unknown. The cross-link corridors climb in
- * that gap, so "unknown" means they cannot be spread apart without some label, somewhere, being
- * struck through. Measuring instead makes the gap a number the layout can rely on.
+ * Thirty `W`s are more than twice as wide as thirty `i`s, so only a measured clip gives the gap
+ * beside a column a known width. The tree view's cross-link corridors run in that gap, and a known
+ * width lets the layout space them out without a line crossing any label.
  */
 
 /** Measures a string as it would be drawn. Returns the width in the drawing's own units. */
@@ -22,7 +21,7 @@ export const ELLIPSIS = "…";
 export function clipToWidth(text: string, budget: number, measure: MeasureText): string {
     if (text === "" || measure(text) <= budget) return text;
 
-    // Not even the mark fits: there is no honest way to show anything at all.
+    // Not even the ellipsis fits, so nothing is shown.
     if (measure(ELLIPSIS) > budget) return "";
 
     let fits = 0; // a prefix length known to fit, with the ellipsis

@@ -18,8 +18,8 @@ public sealed class NodeNumberingTests
     [Fact]
     public void Position_IdsThatWereNeverPositions_AreNumberedAnyway()
     {
-        // The compiler mints ids as blocks are encountered, so they need not run 0, 1, 2 in list
-        // order — which is the whole reason writing a playbook renumbers.
+        // The compiler assigns ids as blocks are encountered, so they need not run 0, 1, 2 in list
+        // order; writing a playbook renumbers them.
         var numbering = NodeNumbering.Of([EndNode(12), EndNode(3)]);
 
         Assert.Equal(1, numbering.Position(NodeId(3)));

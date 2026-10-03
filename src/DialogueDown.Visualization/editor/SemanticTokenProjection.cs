@@ -10,10 +10,10 @@ namespace DialogueDown.Visualization.Editor;
 
 /// <summary>
 /// Projects the compiler's Markdown and Dialogue ASTs into the editor's semantic tokens — the
-/// LSP-shaped highlighting the report payload carries and a future language server would publish
-/// unchanged. Dialogue nodes supply semantic constructs; the Markdown tree supplies block-control
-/// keyword spans that the semantic-only Dialogue AST deliberately discards; and the compile's own
-/// diagnostics supply the Markdown its handling policy left out of the dialogue.
+/// LSP-shaped highlighting the report payload carries. Dialogue nodes supply semantic constructs;
+/// the Markdown tree supplies block-control keyword spans that the semantic-only Dialogue AST
+/// deliberately discards; and the compile's own diagnostics supply the Markdown its handling
+/// policy left out of the dialogue.
 /// </summary>
 internal sealed class SemanticTokenProjection
 {
@@ -44,10 +44,8 @@ internal sealed class SemanticTokenProjection
     }
 
     // Markdown the handling policy left out of the dialogue. An ignored construct is absent from
-    // the tree — being left out is what ignoring means — so it cannot be found by walking one.
-    // The compile already located every one of them while reporting it, and reading that report
-    // keeps the policy the only authority on what is ignored: a project that configures the
-    // policy colors correctly with nothing to change here.
+    // the tree, so it is found through the diagnostic the compile reported for it; whatever a
+    // project configures its policy to ignore is colored with no change here.
     private static IEnumerable<SemanticToken> IgnoredMarkdownTokens(
         IReadOnlyList<LocatedDiagnostic> diagnostics, LspLineMap map)
     {
@@ -111,12 +109,11 @@ internal sealed class SemanticTokenProjection
         }
     }
 
-    // The token(s) a node contributes, if any. Non-dialogue nodes (text, styled runs, the line
-    // itself) contribute nothing and keep their Markdown highlighting. Each token is a raw AST
-    // span — the projection never re-derives structure the compiler already parsed. A speaker
-    // projects a token per part it wrote (name, @id, and the : separator) from its prefix spans;
-    // the parts are disjoint and interleave with the separate tag tokens. A synthetic or
-    // recovered speaker carries no prefix spans, so it contributes nothing.
+    // The token(s) a node contributes, if any. Non-dialogue nodes (text, styled text, the line
+    // itself) contribute nothing and keep their Markdown highlighting. A speaker projects a token
+    // per part it wrote (name, @id, and the : separator) from its prefix spans; its tags are
+    // tokens of their own. A synthetic or recovered speaker carries no prefix spans, so it
+    // contributes nothing.
     private static IEnumerable<SemanticToken> TokensOf(ScriptNode node, string source, LspLineMap map)
     {
         switch (node)
@@ -165,10 +162,8 @@ internal sealed class SemanticTokenProjection
     }
 
     // The source span of the reserved #END destination in a divert, or null when the link is not a
-    // terminator. #END is written as an ordinary divert whose destination is the uppercase anchor;
-    // the AST keeps only the whole-link span, so the reserved destination text (link.Target, e.g.
-    // "#END") is located within it to color just the anchor — a coarse, visualization-only token
-    // like the whole-prefix speaker one, until the parse projects a precise target span.
+    // terminator. The AST keeps only the whole link's span, so the destination text (link.Target)
+    // is searched for inside it: in `[Leave](#END)` only `#END` is colored.
     private static SourceSpan? TerminalAnchorSpan(Link link, string source)
     {
         var target = JumpTarget.Parse(link.Target);

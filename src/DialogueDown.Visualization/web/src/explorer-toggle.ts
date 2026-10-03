@@ -2,18 +2,17 @@
  * The Explorer's own control: a Files button pinned at the leading edge of the tab bar.
  *
  * It is a **glyph alone**, sized and spaced like the Zen and maximize buttons at the row's other
- * end, because the tab bar's width belongs to the stages. A word here would spend that width on
- * a control that is not a stage, and the file glyph already carries the meaning — it is the same
- * mark an editor puts on its own file panel. It never takes the row's underline, though: that
- * mark means "the stage you are on", and the Explorer is not a stage.
+ * end, so the tab bar's width stays with the stages; the file glyph is the same mark an editor
+ * puts on its own file panel. It never takes the row's underline, though: that mark means "the
+ * stage you are on", and the Explorer is not a stage.
  *
  * It is a **disclosure**, not a mode — a button that shows and hides a named region — so it
  * carries `aria-expanded` (set by the panel it drives) and names the region with
- * `aria-controls`. Having no visible word, it leans on the name and tooltip the panel gives it,
- * which is why {@link EXPLORER_PANEL_NAME} is what the panel is registered under.
+ * `aria-controls`. Having no visible word, it takes its name and tooltip from the panel, which
+ * is why {@link EXPLORER_PANEL_NAME} is what the panel is registered under.
  *
- * It is pinned rather than placed among the stage tabs on purpose: the stage row scrolls on a
- * narrow window, and a control that scrolls out of reach is worse than no control at all.
+ * It is pinned outside the stage tabs because the stage row scrolls on a narrow window, and this
+ * control must stay in reach.
  */
 
 /** Feather Icons (MIT) `file-text`, matching the Config tab's gear in family, size, and weight. */

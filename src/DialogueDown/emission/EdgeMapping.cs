@@ -48,8 +48,8 @@ internal static class EdgeMapping
                 WeightMapping.Write(random.Weight),
                 ConditionMapping.Write(random.Condition)),
 
-            // The order arms are tried is otherwise lost: a reader is not obliged to keep a JSON
-            // array in the order it was written, and an if/else that reorders tells another story.
+            // The order is written out because a JSON reader need not keep an array's order, and
+            // an if/else whose arms are tried in another order means something else.
             GraphEdges.BranchEdge branch => new BranchEdge(
                 target, branch.Order, ConditionMapping.Write(branch.Condition)),
 

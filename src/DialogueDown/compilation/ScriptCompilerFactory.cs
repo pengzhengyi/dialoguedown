@@ -9,17 +9,16 @@ using DialogueDown.Script.Validation;
 namespace DialogueDown.Compilation;
 
 /// <summary>
-/// The container-free composition root for the default <see cref="IScriptCompiler"/>: it
-/// wires the standard stages — the Markdig-based parser, the default transpiler, the
-/// desugarer, the structural validator, the semantic analyzer, and the graph builder — into a
-/// ready compiler in one
-/// call, for callers that do not run a dependency injection container. Container callers use the
-/// <c>AddDialogueDown</c> registration instead; both build the same graph.
+/// The container-free composition root for the default <see cref="IScriptCompiler"/>: it wires
+/// the standard stages (the Markdig-based parser, the default transpiler, the desugarer, the
+/// structural validator, the semantic analyzer, and the graph builder) into a ready compiler,
+/// for callers that do not use a dependency injection container. Container callers use the
+/// <c>AddDialogueDown</c> registration instead; both assemble the same stages.
 /// </summary>
 public static class ScriptCompilerFactory
 {
     /// <summary>
-    /// Creates the default compiler with its standard stage graph, configured by
+    /// Creates the default compiler with its standard stages, configured by
     /// <paramref name="options"/> (the unconfigured <see cref="CompilerOptions.Default"/> when null).
     /// </summary>
     public static IScriptCompiler CreateDefault(CompilerOptions? options = null)

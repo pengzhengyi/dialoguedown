@@ -132,7 +132,7 @@ public sealed class PlaybookNodeSummarySegmentTests
             "Alice",
             "Keeper");
 
-    // The bug this change removes: every one of these was read as the table's own grammar.
+    // Text the writer typed that matches the summary's own separators stays part of their words.
     [Fact]
     public void SegmentsOf_AnOptionLabelHoldingTheSeparator_StaysOnePieceOfTheWritersWords() =>
         AssertSegments(
@@ -255,9 +255,8 @@ public sealed class PlaybookNodeSummarySegmentTests
         Assert.Equal(registered, _everyFragmentKind.Select(fragment => fragment.GetType().Name).Order());
     }
 
-    // The walk must read every fragment exactly as the format's own flattening does. Breadcrumb
-    // words either side keep the line from being empty, so what the walk made of the fragment is
-    // what the difference shows — and a fragment that says nothing leaves the words joined.
+    // The walk reads every fragment exactly as the format's own flattening does. Words on either
+    // side keep the line from being empty, and a fragment that says nothing leaves them joined.
     [Fact]
     public void SegmentsOf_WalksEveryFragmentKindAsTheFormatDoes() =>
         Assert.All(
@@ -268,9 +267,8 @@ public sealed class PlaybookNodeSummarySegmentTests
                     SpeechPieces([Words("before"), fragment, Words("after")])
                         .Select(piece => piece.Text))));
 
-    // A condition is a query like any other — the boolean member of the family — so it wears the
-    // query's role and the `?` the script marks it with. The sigil is written after the key
-    // whatever the key holds, as the braces of a value query are.
+    // A condition is a boolean query, so it takes the query role and the `?` the script marks it
+    // with. The `?` is written after the key whatever the key holds, as a value query's braces are.
     [Fact]
     public void SegmentsOf_AConditionKeyEndingInTheSigil_ReadsWithTwo() =>
         AssertSegments(

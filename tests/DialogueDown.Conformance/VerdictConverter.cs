@@ -7,10 +7,9 @@ namespace DialogueDown.Conformance;
 /// Reads and writes <see cref="Verdict"/> by its pinned wire names.
 /// </summary>
 /// <remarks>
-/// Names only, as the playbook format reads its own enums: the default converter would also accept
-/// <c>"verdict": 1</c>, a document the format's own schema rejects. Hand-written for the same
-/// reason as <see cref="DialogueDown.Playbook.Speech.SpeechStyleConverter"/> — the attribute
-/// alternative is a .NET 9 feature the net8.0 target would need an out-of-band package for.
+/// Names only, so <c>"verdict": 1</c> is refused as the fixture schema refuses it. Hand-written
+/// because the attribute that pins an enum member's name needs .NET 9, and this project also
+/// targets net8.0.
 /// </remarks>
 internal sealed class VerdictConverter : JsonConverter<Verdict>
 {

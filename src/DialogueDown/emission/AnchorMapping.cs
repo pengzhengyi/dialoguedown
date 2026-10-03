@@ -7,9 +7,8 @@ namespace DialogueDown.Emission;
 /// Writes the table of scenes a playthrough can be pointed at.
 /// </summary>
 /// <remarks>
-/// Play needs to answer one question about scenes — which node opens this slug — so that is all
-/// this writes. The rest of the region tree describes nesting and ownership, which serve analysis
-/// and presentation rather than playing, and would ship with nothing to read them.
+/// Play needs one fact about scenes, which node opens each slug, so that is all this writes; the
+/// nesting the region tree records is left out.
 /// </remarks>
 internal static class AnchorMapping
 {
@@ -23,9 +22,8 @@ internal static class AnchorMapping
         ArgumentNullException.ThrowIfNull(regions);
         ArgumentNullException.ThrowIfNull(nodes);
 
-        // Every region, not only the roots: scenes nest, and a nested one is addressable in its
-        // own right because a jump names any heading. Sorted into a stable order by the document,
-        // which owns that rule for every table it holds.
+        // Every region, not only the roots: scenes nest, and a jump can name any heading. The
+        // playbook document sorts the keys ordinally, so no comparer is passed here.
         return regions.All()
             .OfType<SceneRegion>()
             .ToImmutableSortedDictionary(

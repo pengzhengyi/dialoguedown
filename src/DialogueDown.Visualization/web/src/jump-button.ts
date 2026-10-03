@@ -12,7 +12,7 @@ import type { DisplayNode, Span } from "./model";
 export interface JumpButton {
     /** The button element to place in a node title row. */
     readonly element: HTMLButtonElement;
-    /** Reflect the shown node: hidden when it maps to no position, else armed with its span. */
+    /** Reflect the shown node: hidden when it maps to no position, else jumping to its span. */
     update(node: DisplayNode | null): void;
 }
 

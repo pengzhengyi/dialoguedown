@@ -6,12 +6,22 @@ namespace DialogueDown.ConfigurationLoader.Readers;
 
 /// <summary>
 /// Reads the <c>[[speakers]]</c> entries of a parsed <see cref="DocumentSyntax"/> into
-/// <see cref="ConfiguredSpeaker"/>s, in document order, validating each as it goes. It owns the
-/// mapping from TOML shape to the configuration model — a name, an optional id, custom tags (DSL
-/// shorthand strings or an inline-table escape hatch), and reserved typed keys — and rejects a
-/// malformed speaker with a located <see cref="DialogueConfigurationException"/>. It maps syntax to
-/// data generically; interpreting a reserved tag's meaning stays downstream in the compiler.
+/// <see cref="ConfiguredSpeaker"/>s, in document order, and rejects a malformed speaker with a
+/// located <see cref="DialogueConfigurationException"/>.
 /// </summary>
+/// <remarks>
+/// <code>
+/// [[speakers]]
+/// name = "Alice"
+/// id = "A"
+/// default = true
+/// tags = ["main", "mood=cheerful", { name = "voice", value = "soft" }]
+/// </code>
+/// A custom tag is a <c>name</c> or <c>name=value</c> string, or an inline table with a
+/// <c>name</c> and an optional <c>value</c>. Any other key must be a reserved tag such as
+/// <c>default</c>, set to a boolean or a string, and at most one speaker may be the default. The
+/// reader maps syntax to data only; what a reserved tag means is decided by the compiler.
+/// </remarks>
 internal sealed class ConfiguredSpeakerReader
 {
     private const string SpeakersTableName = "speakers";

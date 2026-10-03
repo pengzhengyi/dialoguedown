@@ -5,9 +5,8 @@ namespace DialogueDown.Conformance;
 /// must reach about it.
 /// </summary>
 /// <remarks>
-/// This is the C# reference for what a port's own loader has to do. It reads a fixture and the
-/// document that fixture is about, and nothing else: the source beside them is a reading aid, so
-/// requiring it would ask a port to carry a file it has no use for.
+/// The C# reference for a port's own loader: it reads a fixture and the document the fixture
+/// names, and nothing else. The source beside them is only a reading aid for reviewers.
 /// </remarks>
 public sealed class ReadableCorpus
 {

@@ -22,8 +22,8 @@ public sealed partial record OptionEdge(
     /// Gets the speech the menu shows for this option.
     /// </summary>
     /// <remarks>
-    /// Compiled in rather than discovered, so presenting a menu never reads the target node —
-    /// which keeps a menu free of the side effects a peek could trigger.
+    /// Stored on the edge, so showing a menu never reads the target node and cannot set off
+    /// anything that node does.
     /// </remarks>
     [OrderedEquality]
     [JsonPropertyOrder(2)]

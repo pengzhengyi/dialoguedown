@@ -37,7 +37,7 @@ const reservedTargetsField = StateField.define<readonly ReservedTarget[]>({
         ),
 });
 
-/** Install the always-available panel seam; it stays invisible until targets are pushed. */
+/** The editor extension holding the reserved targets; its panel shows only while there are any. */
 export function reservedTargetsPanel(): Extension {
     return reservedTargetsField;
 }
@@ -123,10 +123,10 @@ class ReservedTargetsPanel implements Panel {
     }
 
     /**
-     * Mirror CodeMirror's real gutter so the faux row lines up with the source above it: the column
-     * spans the whole gutter width, and the sentinel marker right-aligns under the line-number
-     * digits (matching their right edge and padding) instead of floating centered across the fold
-     * gutter too.
+     * Match CodeMirror's gutter so the panel's rows line up with the source above them: the marker
+     * column spans the whole gutter width, and the marker right-aligns under the line-number
+     * digits (matching their right edge and padding) instead of centering across the fold gutter
+     * too.
      */
     private syncGutterMetrics(): void {
         this.view.requestMeasure({

@@ -2,23 +2,18 @@ import { type Tag, tags } from "@lezer/highlight";
 import { describe, expect, it } from "vitest";
 import { markdownHighlightStyle, yamlHighlightStyle } from "./source-view";
 
-/**
- * The Markdown layer under the compiler's tokens. These assertions pin two decisions that are
- * easy to undo by reflex: a blockquote must not be muted, and a comment must be.
- */
+/** The Markdown layer under the compiler's tokens: a blockquote is not muted, and a comment is. */
 describe("markdownHighlightStyle", () => {
     const styled = (tag: Tag) => markdownHighlightStyle.style([tag]);
 
     it("does not mute blockquotes", () => {
         // A marker-headed quote is a control block and any other quote is a transparent wrapper,
-        // so every blockquote is live dialogue. Muting it grayed out the liveliest construct in
-        // the language and overrode the compiler's own tokens inside it.
+        // so every blockquote is live dialogue, colored by the compiler's own tokens.
         expect(styled(tags.quote)).toBeNull();
     });
 
     it("styles comments, which never reach the compiler", () => {
-        // A comment is always left out, unconditionally, so the editor's own parser can style it
-        // — no projection needed for a fate that never varies.
+        // The compiler always leaves a comment out, so the editor's own parser can style it.
         expect(styled(tags.comment)).not.toBeNull();
     });
 

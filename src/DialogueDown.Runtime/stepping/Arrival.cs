@@ -16,16 +16,17 @@ namespace DialogueDown.Runtime.Stepping;
 /// </remarks>
 internal static class Arrival
 {
-    /// <summary>Arrives at a node and reports whatever being there means.</summary>
+    /// <summary>
+    /// Arrives at a node, walking past nodes that give the host nothing, and reports what the run
+    /// stops at.
+    /// </summary>
     /// <param name="context">What the run needs and never changes.</param>
     /// <param name="position">The node's position in the playbook.</param>
     /// <returns>Where the run now stands, and what it has to say.</returns>
     public static StepResult At(PlayContext context, int position)
     {
-        // A ring of nodes that hand the host nothing would walk forever, and a step must stay
-        // total. A walk passing more nodes than the playbook has must have passed one of them
-        // twice, so that is the bound: exact, and no number anybody has to choose. Counting is
-        // all this does; what a node means is Visit's to say.
+        // A cycle of nodes that give the host nothing would loop forever. A walk that passes more
+        // nodes than the playbook holds has passed one of them twice, so that count is the bound.
         for (var passed = 0; passed <= context.Playbook.Nodes.Length; passed++)
         {
             switch (Visit(context, position))
@@ -43,25 +44,23 @@ internal static class Arrival
         return RefuseRing(position);
     }
 
-    /// <summary>Takes what the world said, and reads on from the node that asked.</summary>
+    /// <summary>Takes the answers asked for on arrival, and plays or skips the node.</summary>
     /// <param name="context">What the run needs and never changes.</param>
     /// <param name="waiting">The node that asked, and the keys it asked about.</param>
     /// <param name="supply">What the world said.</param>
     /// <returns>Where the run now stands, and what it has to say.</returns>
     /// <remarks>
-    /// A condition that fails routes rather than refuses: the node is stepped over and the walk
-    /// carries on, so a line the world withheld is simply not spoken and the run reads the next
-    /// one. Refusing would end a conversation the writer meant to continue.
+    /// A node whose condition fails is skipped, not refused: the run goes on to its succession.
+    /// A jump on the skipped line is skipped with it:
+    /// <code>
+    /// `Alice.HasKey?` Alice: I unlock it. =&gt; [Inside](#inside)
+    ///
+    /// Bob: It's locked.
+    /// </code>
+    /// When <c>Alice.HasKey</c> is false, the run goes on to Bob's line, not to Inside.
     /// <para>
-    /// Stepping over takes the succession alone. A line written
-    /// <c>`Alice.HasKey?` Alice: I unlock it. =&gt; [Inside](#inside)</c> carries that jump as part
-    /// of itself, so a reader the world withheld the line from is not sent through the door it
-    /// opens; they read the line the writer wrote beneath it.
-    /// </para>
-    /// <para>
-    /// A node the world allows is entered as if it had needed no answers. It is played with the
-    /// answers in it, so a query standing in a line is said as the words that answered it, or it is
-    /// walked past when it hands the host nothing.
+    /// A node whose condition holds is entered as if it had needed no answers, with each query in
+    /// its words replaced by its answer, or walked past when it gives the host nothing.
     /// </para>
     /// </remarks>
     public static StepResult Supplied(PlayContext context, AwaitingSupply waiting, Supply supply)
@@ -72,8 +71,8 @@ internal static class Arrival
 
         var arrived = context.NodeAt(waiting.Node);
 
-        // Asked again here, because a run can be restored into this situation rather than walked
-        // into it, and one answer cannot serve a key that needs two kinds of answer.
+        // Checked again here: a run can be restored straight into this situation without passing
+        // the check in Visit, and one answer cannot serve a key that needs two kinds of answer.
         if (NodeQuestions.RequiredToPlay(arrived).NeededBothWays() is { Count: > 0 } bothWays)
         {
             return RefuseBothWays(waiting.Node, bothWays);
@@ -82,15 +81,13 @@ internal static class Arrival
         if (AnswerCheck.Disagrees(
             NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked(), supply.Answers, out var refusal))
         {
-            // The run stays where it asked, so a driver that misread the request can answer it
-            // again rather than losing the conversation over a mistake it can still fix.
+            // The run stays where it asked, so the driver can send a corrected supply.
             return new StepResult(new PlayState(waiting), [refusal]);
         }
 
         if (arrived is IConditional guarded && !guarded.IsAllowed(supply))
         {
-            // A jump belongs to the node that carries it, so a node the world withheld did not
-            // jump either. The run lands on the succession the writer wrote beneath it.
+            // A skipped node's jump is skipped too: the run goes on to its succession.
             return arrived.SuccessionTarget() is int onward
                 ? At(context, onward)
                 : StepResults.Refuse(
@@ -164,7 +161,7 @@ internal static class Arrival
 
     // Only a node being walked past reaches this, and passing a node is leaving it, so a way out
     // only the world can allow is asked about here. The walk carries on in its own loop rather than
-    // by leaving through departure, which is what keeps a ring of such nodes inside the bound.
+    // by leaving through departure, which keeps a cycle of such nodes inside the bound.
     private static Visited? AskIfLeavingNeedsAnswers(int position, Node arrived) =>
         NodeQuestions.RequiredToLeave(arrived).Keys() is { IsEmpty: false } neededForLeaving
             ? new Visited.Standing(StepResults.Ask(position, neededForLeaving, Moment.BeforeLeaving))

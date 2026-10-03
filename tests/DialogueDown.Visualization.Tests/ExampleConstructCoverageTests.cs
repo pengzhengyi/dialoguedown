@@ -10,16 +10,13 @@ namespace DialogueDown.Visualization.Tests;
 /// Every construct the language models is demonstrated by a shipped example.
 /// </summary>
 /// <remarks>
-/// The examples are the project's shop window and the corpus every other gate reads, so a
-/// construct nobody demonstrates is a hole in the documentation rather than a bug in the compiler:
-/// nothing shows a reader how to write it, and no golden pins how it compiles. The check reads the
-/// AST the compiler actually produced, so adding a construct fails this test until an example uses
-/// it naturally.
+/// A construct no example uses has nothing showing a reader how to write it, and no golden file
+/// recording how it compiles. The check reads the AST the compiler produced, so adding a construct
+/// fails this test until an example uses it.
 /// </remarks>
 public sealed class ExampleConstructCoverageTests
 {
-    // Constructs a script cannot contain, only the compiler can produce: the document root that
-    // wraps every parse, and the desugarer's fill-ins for what an author left implicit.
+    // Constructs no example can demonstrate: the document root that wraps every parse.
     private static readonly HashSet<string> _notAuthored = new(StringComparer.Ordinal)
     {
         nameof(ScriptDocument),
@@ -45,8 +42,8 @@ public sealed class ExampleConstructCoverageTests
     [Fact]
     public void TheExamples_ExerciseMoreThanAHandfulOfConstructs()
     {
-        // Guards the guard: a walk that silently stopped descending would leave the check above
-        // passing against almost nothing.
+        // A walk that stopped descending would leave the check above passing against almost
+        // nothing.
         Assert.True(DemonstratedConstructs().Count > 20);
     }
 
@@ -79,9 +76,8 @@ public sealed class ExampleConstructCoverageTests
         return seen;
     }
 
-    // Walks a node's public record properties for nested nodes, so the walk follows the AST's own
-    // shape rather than a hand-written list that a new construct would silently escape. The root
-    // document is walked too, though it is not itself a construct an author writes.
+    // Walks a node's public properties for nested nodes, so a new construct is found without a
+    // hand-written list.
     private static void Collect(object node, HashSet<string> seen)
     {
         if (node is ScriptNode)

@@ -3,10 +3,8 @@ namespace DialogueDown.Diagnostics;
 /// <summary>
 /// The per-compilation bundle passed to each stage for diagnostics: the original
 /// <see cref="Source"/> a report is anchored to, and the <see cref="Diagnostics"/> sink to report
-/// into. It replaces the bare source string threaded through the stages, so a stage can point a
-/// diagnostic back at the text and report it without learning how diagnostics are stored. It
-/// carries the write-only sink (not the bag), so a stage reports but never reads what has been
-/// collected.
+/// into. It carries the write-only sink, not the bag, so a stage reports but never reads what has
+/// been collected.
 /// </summary>
 internal sealed class DiagnosticsContext
 {

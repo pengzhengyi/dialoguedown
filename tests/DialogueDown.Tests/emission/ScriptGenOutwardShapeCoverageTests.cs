@@ -15,23 +15,17 @@ namespace DialogueDown.Tests.Emission;
 /// it also gets a succession), and an <c>if</c> with no <c>else</c> (the same).
 /// </summary>
 /// <remarks>
-/// <see cref="PlaybookRoundTripTests"/> only checks the shapes <see cref="ScriptGen"/> actually
-/// generates. These three were missing, so a node-shape checker added to
-/// <c>PlaybookReader.Default</c> could pass the round-trip tests without ever seeing them. This
-/// test fails if the generator stops producing any of the three.
+/// <see cref="PlaybookRoundTripTests"/> checks only the shapes <see cref="ScriptGen"/> generates,
+/// so this fails if the generator stops producing any of the three.
 /// <para>
-/// The seed is pinned, so this runs over one fixed set of 400 scripts rather than a fresh random
-/// draw each time: a regression guard, not a search, and it cannot flake. In that fixed set the
-/// rarest of the three shapes lands on about a quarter of the scripts, so the guard has plenty of
-/// margin — a generator change that removed a shape would still fail it clearly.
+/// The seed is pinned, so the test runs over one fixed set of 400 scripts and cannot flake.
 /// </para>
 /// </remarks>
 public sealed class ScriptGenOutwardShapeCoverageTests
 {
     private const int Samples = 400;
 
-    // Any seed works — every shape is common in the generator's output — but a fixed one keeps the
-    // run deterministic. Captured from CsCheck and confirmed to cover all three shapes.
+    // A fixed seed keeps the sample deterministic; this one covers all three shapes.
     private const string Seed = "000UIj2j5CP1";
 
     private const string ScriptName = "generated.dialogue.md";

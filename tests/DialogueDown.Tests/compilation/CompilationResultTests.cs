@@ -6,7 +6,7 @@ using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Compilation;
 
-// The shared surface both outcomes carry, exercised through one of them.
+// The members both outcomes share, tested through one of them.
 public sealed class CompilationResultTests
 {
     [Fact]

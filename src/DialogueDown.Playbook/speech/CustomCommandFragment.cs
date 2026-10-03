@@ -8,6 +8,10 @@ namespace DialogueDown.Playbook.Speech;
 /// <summary>
 /// A named command with arguments, which the host binds and performs.
 /// </summary>
+/// <remarks>
+/// <c>`JoinClub("Alice", "Art")`</c> gives the name <c>JoinClub</c> and the arguments
+/// <c>Alice</c> and <c>Art</c>.
+/// </remarks>
 /// <param name="Name">The command's name, as the host binds it.</param>
 /// <param name="Args">The arguments the writer supplied. May be empty.</param>
 [Equatable]

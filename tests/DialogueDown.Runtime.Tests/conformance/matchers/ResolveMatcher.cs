@@ -7,8 +7,7 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// <summary>Checks a <c>resolve</c> claim: what the run asked the world about.</summary>
 /// <remarks>
 /// The keys are compared in order, because a run names them as the playbook names them and two
-/// runtimes reading the same playbook therefore ask in the same order. A fixture that listed them
-/// some other way would be claiming something the protocol does not promise.
+/// runtimes reading the same playbook therefore ask in the same order.
 /// </remarks>
 internal sealed class ResolveMatcher : IExpectationMatcher
 {

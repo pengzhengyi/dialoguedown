@@ -9,9 +9,8 @@ namespace DialogueDown.Runtime.Stepping;
 /// Which way out of a node a run takes.
 /// </summary>
 /// <remarks>
-/// The second axis a runner grows along: each kind of way out is read here once the runner plays
-/// it. A jump and a block condition's arms are taken as the world allows, the first allowed in the
-/// order written.
+/// A jump and a block condition's arms are taken as the world allows, the first allowed in the
+/// order written; when none is allowed, the run falls through to the succession.
 /// </remarks>
 internal static class NodeTraversalExtensions
 {
@@ -35,7 +34,7 @@ internal static class NodeTraversalExtensions
     /// a jump to 9 beside a succession to 4 leads to 9, and the 4 is unreachable.
     /// <para>
     /// Without answers, only a way out that nothing guards is taken. A node with a guarded way out
-    /// is asked about before it is left, and read on with the answers in hand.
+    /// is asked about before it is left, and left once the answers arrive.
     /// </para>
     /// </remarks>
     /// <param name="node">The node being left.</param>
@@ -65,8 +64,8 @@ internal static class NodeTraversalExtensions
         return node.FirstWayOutTaken(way => way.IsAllowed(supply)) ?? node.SuccessionTarget();
     }
 
-    // A reader has already put a block's arms in the order they are tried, so the first taken in
-    // the order written is the first taken in the order tried.
+    // The reader refuses a branch whose arms are out of order, so the array order is the order the
+    // arms are tried.
     private static int? FirstWayOutTaken(this Node node, Func<IConditional, bool> isTaken) =>
         node.Out
             .FirstOrDefault(way => way is DivertEdge or BranchEdge && isTaken((IConditional)way))

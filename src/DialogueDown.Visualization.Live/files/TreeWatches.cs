@@ -9,21 +9,16 @@ namespace DialogueDown.Visualization.Live.Files;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A folder is watched shallowly rather than the whole tree recursively. Watching the tree would
-/// make every open free, but it also reports every change beneath it: on Linux a busy subfolder can
-/// overflow the kernel's event buffer, and the only honest response to a lost event is to reload
-/// everything. Registering one folder at a time keeps the reports to files that might matter, and
-/// a reader revisiting a folder still pays nothing.
+/// A folder is watched without its subfolders, so a busy subfolder cannot overflow the operating
+/// system's event buffer with changes to files no one is watching.
 /// </para>
 /// <para>
 /// A launched script is resolved through its symlinks, so the file being watched can be a real file
 /// anywhere on disk while the served tree is elsewhere. Its folder is registered like any other.
 /// </para>
 /// <para>
-/// <c>PhysicalFileProvider</c> offers the same cheap registration and was tried first. Its change
-/// tokens report one save as several notifications up to 0.8 seconds apart, which no debounce
-/// window gathers back together, and the live session's suppression of its own writes expects
-/// exactly one. Owning the watcher keeps the event stream this repository already relies on.
+/// The debounce gathers the events of one save into one call, which the live session relies on:
+/// it skips exactly one call after each of its own writes.
 /// </para>
 /// </remarks>
 internal sealed class TreeWatches : IDisposable
@@ -40,7 +35,10 @@ internal sealed class TreeWatches : IDisposable
         WatcherFor(PathComparison.Normalize(root));
     }
 
-    /// <summary>How many watchers are open — one per folder a watched document has lived in.</summary>
+    /// <summary>
+    /// How many watchers are open — one for the root and one per other folder a watched document
+    /// has lived in.
+    /// </summary>
     public int WatchersInUse => _watchers.Count;
 
     /// <summary>
@@ -86,7 +84,8 @@ internal sealed class TreeWatches : IDisposable
         {
             var watcher = new FileSystemWatcher(key)
             {
-                // The filter the per-document watcher used, so one save still reports once.
+                // Writes, renames, and size changes only; attribute and access-time changes are not
+                // a save.
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
             };
             watcher.Changed += OnEntryChanged;

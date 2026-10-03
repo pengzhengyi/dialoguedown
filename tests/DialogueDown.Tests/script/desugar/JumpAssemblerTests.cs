@@ -25,7 +25,7 @@ public sealed class JumpAssemblerTests
     [Fact]
     public void SameLineWhitespaceBetweenIndicatorAndLink_IsFoldedIn()
     {
-        // "=>   [go](#play)" — any run of same-line spaces is consumed.
+        // "=>   [go](#play)" — any number of spaces on the same line is consumed.
         var result = Assemble(
             [JumpIndicator(), Text("   "), Link("#play", Text("go"))]);
 
@@ -71,7 +71,7 @@ public sealed class JumpAssemblerTests
     public void DanglingIndicatorBetweenText_DegradesToPlainTextKeptGranular()
     {
         // "the " => " arrow" — no link follows, so the arrow is just the text "=>". It
-        // stays its own run; folding adjacent text is a later, rendering-stage concern.
+        // stays a separate text fragment; joining adjacent text is left to a later stage.
         var result = Assemble([Text("the "), JumpIndicator(), Text(" arrow")]);
 
         Assert.Equal(3, result.Count);

@@ -11,14 +11,7 @@ namespace DialogueDown.Runtime.Tests.Stepping;
 /// What must hold for <em>every</em> playbook a walk can take, not only the ones an example names.
 /// </summary>
 /// <remarks>
-/// The suite's example tests each pin one playbook to one expected step, which is the right way to
-/// specify behavior. What they cannot state is an invariant quantified over all playbooks, and a
-/// run that walks off the document it is playing is exactly that kind of defect: no single example
-/// is wrong, but some unwritten one would be.
-/// <para>
-/// Sample counts are deliberately modest: these run in the ordinary suite, and a property that
-/// makes the suite slow stops being run at all.
-/// </para>
+/// Sample counts are small because these run in the ordinary suite.
 /// </remarks>
 public sealed class RunnerWalkPropertyTests
 {
@@ -39,10 +32,9 @@ public sealed class RunnerWalkPropertyTests
     /// A run only ever stands at a node the playbook has.
     /// </summary>
     /// <remarks>
-    /// A position is an index, and it is read straight — <c>Nodes[position]</c>, with no guard,
-    /// because a reader has already refused a playbook that points where it does not have. The
-    /// runner is what turns one position into the next, so it is the runner that must not
-    /// manufacture an index out of a document that never held one.
+    /// A position is read as <c>Nodes[position]</c> with no bounds check, because the reader has
+    /// refused any playbook that points outside itself. The runner chooses each next position, so
+    /// it must choose one the playbook has.
     /// </remarks>
     [Fact]
     public void AWalkOnlyEverStandsWhereThePlaybookHasANode() =>
@@ -52,8 +44,8 @@ public sealed class RunnerWalkPropertyTests
     /// A run that stops part-way through a line only ever continues from a segment that line has.
     /// </summary>
     /// <remarks>
-    /// Where a line continues is an index into its segments, read straight when the run goes on. The
-    /// runner picks that index, so it is the runner that must pick one the line has: after its first
+    /// Where a line continues is an index into its segments, read with no bounds check when the run
+    /// goes on. The runner picks that index, so it must pick one the line has: after its first
     /// segment, before its end, and on a node that is a line.
     /// </remarks>
     [Fact]
@@ -109,9 +101,8 @@ public sealed class RunnerWalkPropertyTests
     /// What this draws is what a reader accepts.
     /// </summary>
     /// <remarks>
-    /// The walk above is quantified over the playbooks a runtime can be handed, which are the ones
-    /// the reader passes. Asking the reader itself, rather than trusting the generator to have
-    /// encoded its rules, is what keeps the two from drifting apart in silence.
+    /// The walks above hold for the playbooks a reader passes, so this asks the reader itself
+    /// rather than trusting the generator to follow its rules.
     /// </remarks>
     [Fact]
     public void EveryDrawnPlaybookIsOneTheReaderAccepts() =>

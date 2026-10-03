@@ -10,7 +10,7 @@ namespace DialogueDown.Playbook.Tests.Support;
 /// <remarks>
 /// Registration is easy to forget and fails late — a member with no <c>JsonDerivedType</c> throws
 /// only when something tries to serialize it, in whatever host got there first. Checking it by
-/// reflection turns that into a build failure naming the missing type.
+/// reflection turns that into a test failure naming the missing type.
 /// </remarks>
 internal static class UnionAssert
 {

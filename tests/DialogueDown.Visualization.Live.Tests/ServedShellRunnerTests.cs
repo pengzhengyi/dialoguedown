@@ -51,8 +51,8 @@ public sealed class ServedShellRunnerTests
         var url = Assert.Single(browser.Opened);
         Assert.StartsWith("http://127.0.0.1:", url);
 
-        // The landing is the report shell's empty state (the Explorer over the project), not a
-        // separate picker page: it carries the project payload and no active document.
+        // The landing page is the report shell with no script open, carrying the project payload
+        // its file explorer lists.
         using var client = new HttpClient { BaseAddress = new Uri(url) };
         var landing = await client.GetStringAsync("/", TestContext.Current.CancellationToken);
         Assert.StartsWith("<!doctype html", landing, StringComparison.OrdinalIgnoreCase);

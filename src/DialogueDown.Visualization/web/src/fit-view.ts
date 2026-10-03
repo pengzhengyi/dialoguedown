@@ -45,7 +45,7 @@ const DEFAULT_PADDING = 24;
  * leaves the reader to hunt for the rest.
  *
  * The insets keep the drawing clear of the panels floating over the canvas — the legend most of
- * all, which has grown tall enough to cover a good part of what it is describing.
+ * all, which is tall enough to cover a good part of what it describes.
  */
 export function frameToFit(
     content: Extent,

@@ -5,9 +5,9 @@ import type { DiagnosticCounts } from "./problems-panel";
  * The status-line diagnostic summary: an error, warning, and info count that opens the Problems
  * panel.
  *
- * It lives on the status line because that is the only chrome present on **every** tab. Before
- * this, a diagnostic was visible only as a squiggle inside the Source editor, so on the five
- * graph tabs the reader had no signal at all that the script had problems.
+ * It lives on the status line because that is the only chrome present on **every** tab, so a
+ * reader on a graph tab, away from the Source editor's squiggles, still sees that the script has
+ * problems.
  */
 export interface DiagnosticSummary {
     /** The status-line control to mount. */

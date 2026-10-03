@@ -8,7 +8,7 @@ import { PAD_BOTTOM, PAD_TOP } from "./region-bands";
  * interleave, and the bands drawn behind them — each the bounding box of its own nodes — cross.
  *
  * This pass runs after that layout and rewrites the cross-axis coordinate alone: every region is
- * given one contiguous run of rows, a **tier**, and the tiers are stacked clear of one another.
+ * given its own consecutive rows, a **tier**, and the tiers are stacked clear of one another.
  * Two bands then cannot intersect, and no node can fall inside a band that is not its own.
  *
  * Depth is never touched, so a node keeps the column the tree layout gave it.
@@ -35,8 +35,8 @@ export const ROW_PITCH = 62;
  * The distance from one tier's last row to the next tier's first.
  *
  * A band reaches {@link PAD_TOP} above its nodes and {@link PAD_BOTTOM} below them, so parting the
- * rows by less than their sum would leave the bands themselves touching. The remainder is the air
- * a reader sees between two scenes.
+ * rows by less than their sum would leave the bands themselves touching. The remainder is the
+ * visible gap between two scenes.
  */
 export const TIER_GAP = PAD_TOP + PAD_BOTTOM + 28;
 
@@ -51,7 +51,7 @@ type TierKey = string | typeof PROLOGUE;
  * `tierOrder` fixes the order the scenes are stacked in; the caller passes the order the stage
  * names them, which is what the legend lists. A region named there but absent from `nodes` takes
  * no room, and a region present in `nodes` but missing from the order is still placed, after the
- * ones that were named, so the pass is total whatever it is handed.
+ * ones that were named, so every node gets a row.
  */
 export function rankByRegion(
     nodes: readonly RankInput[],
@@ -68,8 +68,8 @@ export function rankByRegion(
 
     for (const tier of tiersIn(members, tierOrder)) {
         const tierMembers = members.get(tier)!;
-        // The rows a tier occupies, not the nodes on them: a straight run of dialogue shares one
-        // row across many columns, and splitting it apart would turn a line into a staircase.
+        // The rows a tier occupies, not the nodes on them: consecutive dialogue lines share one
+        // row across many columns, and splitting them apart would turn a line into a staircase.
         const rows = [...new Set(tierMembers.map((node) => node.row))].sort(
             (left, right) => left - right,
         );

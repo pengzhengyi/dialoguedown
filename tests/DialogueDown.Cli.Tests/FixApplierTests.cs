@@ -90,7 +90,7 @@ public sealed class FixApplierTests
         var later = Diagnostic("DLG0002", 1, 1, Fix("second", Insert(1, "Y")));
         var earlier = Diagnostic("DLG0001", 1, 1, Fix("first", Insert(1, "X")));
 
-        // The compiler's emission order is not a contract, so the later code still loses.
+        // Passed in reverse order: the fix whose code sorts first still wins.
         var application = FixApplier.Apply(Source, [later, earlier]);
 
         Assert.Equal("aXb", application.Text);

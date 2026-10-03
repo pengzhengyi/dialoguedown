@@ -61,7 +61,7 @@ public sealed class MarkdigMarkdownParserImageTests : MarkdigMarkdownParserTestB
     public void Parse_ImageAmongText_KeepsSurroundingText()
     {
         // An image can sit inline with speech (e.g. a portrait or emoji mid-chat),
-        // so the surrounding text stays its own runs.
+        // so the text on either side stays a separate text inline.
         var document = Parse("see ![alt](x.png) end");
 
         var paragraph = AssertSingleBlock<Paragraph>(document);

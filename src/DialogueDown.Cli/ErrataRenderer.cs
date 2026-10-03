@@ -11,8 +11,8 @@ namespace DialogueDown.Cli;
 /// <see href="https://github.com/spectreconsole/errata">Errata</see> library to draw a rich block
 /// per diagnostic — the source line with a colored caret under the offending range — and otherwise
 /// writes a greppable <c>file(line,column): severity CODE: message</c> one-liner. Both paths end
-/// with a summary and a fixable-count hint, exactly as a plain compile prints them; the fix section
-/// then follows separately. Rendering stays confined to the CLI (the umbrella note's DD7).
+/// with a summary line and, when any diagnostic carries a fix, a fixable-count hint; the fix
+/// section follows.
 /// </summary>
 internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
 {
@@ -99,8 +99,8 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
         }
     }
 
-    // An Errata span within the source, non-decreasing; a zero-width (synthetic) span is widened by
-    // one where possible so there is a caret to draw.
+    // An Errata span clamped to the source, its end never before its start; a zero-width span is
+    // widened by one where possible so there is a caret to draw.
     private static TextSpan LabelSpan(LocatedDiagnostic diagnostic, string source)
     {
         var start = Math.Clamp(diagnostic.StartOffset, 0, source.Length);

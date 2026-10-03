@@ -65,9 +65,8 @@ test("the documented .NET test commands guard against a silent zero-test run", (
     // an app that rejects one exits without running anything. The run then reports "Zero tests
     // ran" and looks like an ordinary command — `-m:3` (an MSBuild-only switch), a bare
     // `--stop-on-fail` (it needs `on`/`off`), and `--maximum-failed-tests` (not offered here) all
-    // land the same way. Banning flags one at a time cannot catch the next one, so every
-    // documented full command states how many tests it expects: too few is then a loud failure
-    // (exit code 9) rather than a green-looking no-op. Raise or lower the floor deliberately.
+    // land the same way. So every documented full command states how many tests it expects, and
+    // too few is a loud failure (exit code 9) rather than a green-looking no-op.
     const full = tasks.find((task) => task.label === "test");
     const coverage = tasks.find((task) => task.label === "coverage");
 
@@ -103,13 +102,13 @@ test("the documented .NET test commands guard against a silent zero-test run", (
 
 test("package versions are managed centrally, without pinning transitives into the published packages", () => {
     // Two projects cannot drift onto different versions of one package if only one file states
-    // versions — the failure that left a test project on its own test runner (#287).
+    // versions.
     const central = readFileSync(resolve(repositoryRoot, "Directory.Packages.props"), "utf8");
     assert.match(central, /<ManagePackageVersionsCentrally>true<\/ManagePackageVersionsCentrally>/);
 
     // Transitive pinning promotes pinned transitives into the generated nuspec, so enabling it
     // would widen what DialogueDown and DialogueDown.Cli declare to their consumers — a change to
-    // the published packages that nothing else here would surface.
+    // the published packages that no other check here would catch.
     for (const [path, text] of [
         ["Directory.Packages.props", central],
         [
@@ -128,7 +127,7 @@ test("package versions are managed centrally, without pinning transitives into t
 test("the libraries a game references keep the target framework Godot can load", () => {
     // Godot bundles the .NET runtime an exported game runs on, so the floor is Godot's, not ours.
     // Dropping net8.0 from a shipped library would break every Godot project silently — the build
-    // stays green and only a consumer's export fails. See the Target Frameworks note.
+    // stays green and only a consumer's export fails.
     for (const project of [
         "DialogueDown",
         "DialogueDown.ConfigurationLoader",

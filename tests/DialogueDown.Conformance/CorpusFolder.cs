@@ -4,13 +4,9 @@ namespace DialogueDown.Conformance;
 /// A folder of conformance cases, one subfolder each.
 /// </summary>
 /// <remarks>
-/// Knows where cases live and how to read their files; knows nothing about what any of them mean.
-/// Both halves of the corpus are laid out this way, so the playable half reuses this untouched and
-/// only its reading of a fixture differs.
-/// <para>
-/// Every failure names the case, because the corpus is read a folder at a time and "a fixture is
-/// malformed" without a name leaves a contributor opening files until they find it.
-/// </para>
+/// Knows where cases live and how to read their files, not what they mean; both halves of the
+/// corpus use this layout. Every failure names the case, so a contributor knows which folder to
+/// open.
 /// </remarks>
 public sealed class CorpusFolder
 {
@@ -27,7 +23,7 @@ public sealed class CorpusFolder
         _folder = folder;
     }
 
-    /// <summary>Gets the folder's own name, which distinguishes one half of the corpus from the other.</summary>
+    /// <summary>Gets the folder's name, such as <c>readable</c> or <c>playable</c>.</summary>
     public string Name => Path.GetFileName(_folder)!;
 
     /// <summary>Every case, by folder name, in a stable order.</summary>

@@ -5,19 +5,14 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// The step results a run produces wherever it stands.
+/// The step results shared by arriving, playing, and leaving: asking the world, and refusing.
 /// </summary>
-/// <remarks>
-/// Arriving at a node and leaving one both ask the world and both refuse, and each says it the
-/// same way. Writing those two here means a run asking on the way out and a run asking on the way
-/// in produce the same shape without either having to know about the other.
-/// </remarks>
 internal static class StepResults
 {
     /// <summary>Puts a question to the world and waits at the node for the answers.</summary>
     /// <param name="position">The node's position in the playbook.</param>
     /// <param name="keys">The keys the world is asked about.</param>
-    /// <param name="moment">Which of the node's two readings of the world this is.</param>
+    /// <param name="moment">Which point in the node the keys are asked at.</param>
     /// <returns>The request, and the wait it leaves the run in.</returns>
     /// <remarks>
     /// The keys go out as the request and stay in the situation, because nowhere else remembers

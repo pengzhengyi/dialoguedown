@@ -1,9 +1,8 @@
 namespace DialogueDown.Graph.Regions;
 
 /// <summary>
-/// Read-only traversal over the region overlay, shared by everything that walks it. The regions
-/// stay plain data; walking their nesting lives here, beside them, so the emitter and the
-/// visualization describe the tree one way.
+/// Read-only traversal over the region overlay, shared by everything that walks it, such as the
+/// emitter and the visualization.
 /// </summary>
 internal static class RegionExtensions
 {

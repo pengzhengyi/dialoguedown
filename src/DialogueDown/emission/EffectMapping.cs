@@ -8,9 +8,8 @@ namespace DialogueDown.Emission;
 /// Writes the game calls a line or a control block runs — its effects.
 /// </summary>
 /// <remarks>
-/// Separate from the rest of speech because an effect is a different thing to a host: text is
-/// shown, an effect is performed. A line's effects stay in its speech, in position, so a runtime
-/// knows where in the line each one fires.
+/// A control block's effects are written as a list. A line's effects stay in its speech, in
+/// position, so a runtime knows where in the line each one runs.
 /// </remarks>
 internal static class EffectMapping
 {

@@ -13,8 +13,8 @@ export interface ServerEventHandlers {
     /** A recompiled report was pushed for an external configuration change. */
     onReloadConfig(report: Report): void;
     /**
-     * A compile error or a missing/unreadable document — a message to surface. A disk-level
-     * problem carries {@link ProblemTarget} so it can be routed to the matching controller.
+     * A compile error or a missing/unreadable document — a message to show. A disk-level
+     * problem carries a {@link ProblemTarget} so it can be routed to the matching controller.
      */
     onProblem(message: string, target?: ProblemTarget): void;
     /**
@@ -32,7 +32,7 @@ export interface ServerEventWatch {
     /** The stream currently connected. */
     readonly source: EventSource;
     /**
-     * Reconnect against {@link document}, so events follow the script the reader has just opened.
+     * Reconnect against `document`, so events follow the script the reader has just opened.
      * A stream opened against the previous document keeps reporting on a session nobody is looking
      * at any more.
      */
@@ -42,9 +42,9 @@ export interface ServerEventWatch {
 /**
  * Subscribe to the served session's event stream. On each push it routes a `reload`
  * (a recompiled report from a document change), a `reload-config` (a recompiled report from an
- * external configuration change), or a `problem` (a message) to the handlers; the mode controller
- * decides what to do with a reload (View re-syncs, Edit chips). The browser's `EventSource`
- * reconnects on its own if the connection drops.
+ * external configuration change), a `problem` (a message), or a `displaced` notice to the handlers;
+ * the mode controller decides what to do with a reload (View re-syncs, Edit enters Conflict). The
+ * browser's `EventSource` reconnects on its own if the connection drops.
  */
 export function watchServerEvents(
     handlers: ServerEventHandlers,

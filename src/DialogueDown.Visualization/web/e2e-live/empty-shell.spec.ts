@@ -16,8 +16,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("lists the root's scripts and folders in the Explorer", async ({ page }) => {
-    // Open on arrival here, unlike a session with a document: nothing is showing, so the tree is
-    // not a detour but the only thing to do — the card beside it points straight at it.
+    // Open on arrival here, unlike a session with a document: with nothing showing, browsing the
+    // tree is the only thing to do.
     await expect(page.locator("#explorer")).toBeVisible();
     await expect(page.locator(".tabbar-explorer")).toHaveAttribute("aria-expanded", "true");
     await expect(
@@ -95,8 +95,8 @@ test("seats the Files control at the same height as a session does", async ({ pa
 });
 
 // A session's status line carries the way back to the file selector, beside the path it leaves.
-// This server pins a document and redirects `/` to it, so the link is also the proof that the
-// shell has a door of its own.
+// This server pins a document and redirects `/` to it, so the link has to reach the file selector
+// at an address of its own.
 test("carries a way back to the file selector from a session", async ({ page }) => {
     await page.goto(`http://127.0.0.1:${LIVE_PORT}/`);
     await expect(page.locator(".tab").first()).toBeVisible();
@@ -119,9 +119,8 @@ test("shows no Problems panel until a script is open", async ({ page }) => {
     await expect(page.locator(".status-bar .diagnostic-summary")).toHaveCount(0);
 });
 
-// The Files tab is the Explorer's own control, and its highlight is what says the panel is
-// showing. A glyph riding half outside the bed the state paints around it reads as a control
-// that is only half pressed, so the two have to be one box.
+// The Files tab's highlight (the bed its `::before` paints) says the Explorer is showing. A glyph
+// half outside that bed reads as a control that is only half pressed, so the glyph stays inside.
 test("draws the Files tab's glyph inside its own highlight", async ({ page }) => {
     const box = await page.locator(".tabbar-explorer").evaluate((el) => {
         const glyph = el.querySelector(".tab-icon")!.getBoundingClientRect();

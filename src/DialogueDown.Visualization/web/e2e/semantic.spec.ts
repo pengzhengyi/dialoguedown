@@ -168,7 +168,7 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
     await expect(page.locator(".semantic-graph g.node")).toHaveCount(6);
     await expect(page.locator('.semantic-graph g.node:has-text("Line")')).toBeVisible();
     await expect(page.locator('.semantic-graph g.node:has-text("Jump")')).toBeVisible();
-    // The three table panels stack below the sticky node-details panel.
+    // The three table panels stack below the node-details panel.
     await expect(
         page.locator(".table-panel:not(.node-detail-panel) .table-panel-title"),
     ).toHaveText(["Speakers", "Anchors", "Jump resolutions"]);
@@ -179,8 +179,8 @@ test("lays the scene-tree graph, its script blocks, and the three stacked tables
 });
 
 test("heads the legend with its name beside the fold control", async ({ page }) => {
-    // A button alone on a row reads as stray, and the panel had no accessible name; the header
-    // carries both.
+    // A button alone on a row reads as stray, and the panel needs an accessible name; the header
+    // gives the button company and the panel its name.
     const legend = page.locator(".stage.active .legend");
     const title = legend.locator(".legend-title");
     const fold = legend.locator(".legend-fold");
@@ -201,8 +201,8 @@ test("heads the legend with its name beside the fold control", async ({ page }) 
 });
 
 test("keeps the legend no wider than its rows", async ({ page }) => {
-    // The card is positioned, so its width is implicit; with the rows nested under a body it
-    // resolved to stretch and spread over the drawing, which then kept clear of the whole span.
+    // The card is positioned, so its width is implicit and could stretch over the drawing, which
+    // keeps clear of the card's whole span.
     const legend = page.locator(".stage.active .legend");
     const [box, canvas] = await Promise.all([
         legend.boundingBox(),
@@ -228,8 +228,6 @@ test("collapses the legend to the control alone, on the same pixels", async ({ p
 });
 
 test("keeps the tables clear of the window's top and right edges", async ({ page }) => {
-    // The cards used to borrow their breathing room from an inset on the main area; without it
-    // they sat against the glass.
     const card = page.locator(".semantic-tables .table-panel").first();
     const [box, width] = await Promise.all([
         card.boundingBox(),
@@ -419,9 +417,9 @@ test("shows a clicked node's details in the node-details panel", async ({ page }
 });
 
 test("panel titles have legible contrast (regression: not white-on-white)", async ({ page }) => {
-    // The panel header is a <button>; Pico's white button text made the titles invisible on the
-    // light panel background. axe reports "incomplete" (not a violation) for a transparent button
-    // over the panel, so it did not catch this — assert the contrast directly.
+    // The panel header is a <button>, and Pico's white button text would vanish on the light
+    // panel background. axe reports "incomplete" (not a violation) for a transparent button over
+    // the panel, so the contrast is asserted directly.
     const ratio = await page.evaluate(() => {
         const title = document.querySelector(".table-panel-title")!;
         const parse = (c: string): number[] => (c.match(/\d+/g) ?? []).slice(0, 3).map(Number);

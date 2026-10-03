@@ -8,7 +8,7 @@ namespace DialogueDown.Tests.Emission;
 /// reviewable diff rather than something noticed later.
 /// </summary>
 /// <remarks>
-/// Regenerate by accepting the .received.json files Verify writes beside the goldens. They churn
+/// Regenerate by accepting the .received.json files Verify writes beside the goldens. They change
 /// whenever node positions shift, which is expected: a playbook is a build artifact nobody edits.
 /// </remarks>
 public sealed class PlaybookGoldenTests

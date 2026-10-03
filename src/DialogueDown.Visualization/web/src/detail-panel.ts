@@ -51,7 +51,7 @@ export interface DetailPanelOptions {
     jumpToSource?: (span: Span) => void;
     /**
      * Select another node by id, so a neighbor row can take the reader to the node it names.
-     * Absent when nothing is listening, which also makes the rows plain text.
+     * When absent, pressing a row does nothing.
      */
     selectNode?: (id: string) => void;
     /** Show the route between two nodes, so an edge cell opens the edge it names. */
@@ -81,7 +81,7 @@ export interface NodePreviewOptions {
      * meaning — in a tree, a node's parent and children are already plain from the drawing.
      */
     neighbors?: Neighbors;
-    /** The tint the node's region is drawn with, so its name wears the band's color here too. */
+    /** The tint the node's region is drawn with, so its name shows the band's color here too. */
     regionTint?: number;
 }
 
@@ -104,7 +104,8 @@ export function nodeDetailTitle(node: DisplayNode): string {
 }
 
 /**
- * Whether the node's label is too long to serve as a title.
+ * Whether the node is titled by its kind: it has a kind name, and its label is too long to serve
+ * as a title.
  *
  * A scene's title names it in three words and belongs in the heading; a line of dialogue can run a
  * paragraph and crowds the panel out. Length is what separates them — not the stage they came
@@ -125,13 +126,13 @@ export function nodeDetailBody(node: DisplayNode, preview: NodePreviewOptions = 
 }
 
 /**
- * The graph tabs' node inspector: a selected node's category, attributes, the source it was
- * produced from, and a rendered preview.
+ * The graph tabs' inspector: a selected node's category, attributes, the source it was produced
+ * from, and a rendered preview, or the detail of a selected edge or region.
  *
  * It is deliberately **read-only**. Editing lives in one place — the Source tab — and the
  * **Jump to source** action beside the title takes the reader there with the node's span already
- * selected. This panel and the Semantic tab's node-details panel therefore render identically
- * through {@link nodeDetailTitle} and {@link nodeDetailBody}; only where they mount differs.
+ * selected. The Semantic tab's node-details panel renders a node through the same
+ * {@link nodeDetailTitle} and {@link nodeDetailBody}; only where they mount differs.
  */
 export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel {
     const titleEl = document.getElementById("detail-title")!;
@@ -175,8 +176,8 @@ export function createDetailPanel(options: DetailPanelOptions = {}): DetailPanel
         if (region?.dataset.region) options.selectRegion?.(region.dataset.region);
     });
 
-    // Hovering a cell lights the thing it names in the drawing, so a row and a line are plainly
-    // the same object seen twice.
+    // Hovering a cell highlights the thing it names in the drawing, so a row and a line are
+    // plainly the same object seen twice.
     bodyEl.addEventListener("mouseover", (event) => onHover(event.target as Element | null));
     bodyEl.addEventListener("mouseout", (event) => {
         const leaving = (event.target as Element | null)?.closest(
@@ -244,8 +245,6 @@ function categoryDot(category: string | undefined): string {
     return `<span class="dot" style="background:${colorOf(category)}"></span>`;
 }
 
-// The region is drawn around the node rather than under it, so the inspector is where its name
-// is spelled out in full.
 // The words a content node carries, shown as its first detail because the title names its kind.
 // Clipped: the whole of it is right below, under Source and Preview.
 function contentRow(node: DisplayNode): DisplayNode["attributes"] {
@@ -253,6 +252,8 @@ function contentRow(node: DisplayNode): DisplayNode["attributes"] {
     return [{ name: node.typeName!.toLowerCase(), value: ellipsize(node.label, MAX_TITLE_TEXT) }];
 }
 
+// The region is drawn around the node rather than under it, so the inspector is where its name
+// is spelled out in full.
 function regionSection(node: DisplayNode, tint: number | undefined): string {
     if (!node.region) return "";
     return (
@@ -278,10 +279,9 @@ function attributesTable(attributes: DisplayNode["attributes"]): string {
  * Where control comes from and where it goes, as two small tables.
  *
  * The drawing shows the same edges but cannot name them all at once; here the one node the reader
- * asked about says it in words. Every cell is a button, so reading the flow and walking it are the
- * same gesture: the node column takes you to that node, the edge column to that route. Each list
- * is numbered from 1 in its own order — the graph's digits address the ways out and, with Shift,
- * the ways in.
+ * asked about says it in words. The node and edge cells are buttons: the node column takes you to
+ * that node, the edge column to that route. Each list is numbered from 1 in its own order — the
+ * graph's digit keys take the ways out and, with Shift, the ways in.
  */
 function neighborSections(neighbors: Neighbors | undefined): string {
     if (!neighbors) return "";
@@ -388,7 +388,7 @@ export function regionDetailTitle(region: RegionDetail): string {
     return regionSwatch(region.tint) + escapeHtml(region.name);
 }
 
-// A region is named in several places; each one wears the tint its band is drawn with, so the
+// A region is named in several places; each one shows the tint its band is drawn with, so the
 // word and the color are never learned separately.
 function regionSwatch(tint: number | undefined): string {
     return `<span class="region-swatch" data-tint="${tint ?? 0}"></span>`;

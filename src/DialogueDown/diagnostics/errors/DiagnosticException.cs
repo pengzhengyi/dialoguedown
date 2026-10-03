@@ -4,11 +4,10 @@ using DialogueDown.Common.Errors;
 namespace DialogueDown.Diagnostics.Errors;
 
 /// <summary>
-/// The exception a <em>fail-fast</em> compile throws when a stage reports its first error: it
-/// carries the whole <see cref="Diagnostic"/> — code, span, and message arguments — so a caller can
-/// render it, rather than a bare string. The collecting modes report into the sink instead; this is
-/// only how fail-fast surfaces one. Composing the human message stays a rendering concern, so the
-/// exception exposes the structured diagnostic and gives itself only a terse code-and-title message.
+/// The exception a <em>fail-fast</em> compile throws when a stage reports its first error. It
+/// carries the whole <see cref="Diagnostic"/> (code, span, and message arguments) so a caller can
+/// render it; its own message is only the code and title, such as
+/// <c>DLG2009: Jump to a missing scene</c>.
 /// </summary>
 internal sealed class DiagnosticException : ScriptCompilationException
 {

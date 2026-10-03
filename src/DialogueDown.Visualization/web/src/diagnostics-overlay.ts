@@ -39,7 +39,7 @@ export function diagnosticsOverlay(): Extension {
 /**
  * Push the report's diagnostics into the editor, resolving each LSP line/character range to
  * a document offset against the current buffer. An empty list clears the overlay (a clean
- * compile). Called on load, on a View-mode hot-reload, and after each Edit-mode save.
+ * compile). Called on load and after every recompile.
  */
 export function setEditorDiagnostics(
     view: EditorView,
@@ -94,8 +94,7 @@ function toActions(state: EditorState, diagnostic: LspDiagnostic): Action[] {
  * Apply one fix's edits to the document. Offsets are relative to the diagnostic's start, and the
  * `from`/`to` CodeMirror passes are the range it currently maps the diagnostic to, so a fix stays
  * anchored to its text while the writer edits above it. A collapsed range means the text the fix
- * targets is gone, and a read-only editor takes no edits at all, so both are no-ops. Exported for
- * unit testing.
+ * targets is gone, and a read-only editor takes no edits at all, so both are no-ops.
  */
 export function applyFix(view: EditorView, fix: LspFix, from: number, to: number): void {
     if (from === to || view.state.readOnly) {

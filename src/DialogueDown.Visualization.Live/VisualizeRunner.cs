@@ -6,8 +6,8 @@ using DialogueDown.Visualization.Render;
 namespace DialogueDown.Visualization.Live;
 
 /// <summary>
-/// The default <see cref="IVisualizeRunner"/>: hides the export wiring behind the static HTML
-/// export and the text emit, opening results with the injected browser launcher.
+/// The default <see cref="IVisualizeRunner"/>: runs the static HTML export and the stage-graph
+/// text emit, opening a static report with the injected browser launcher.
 /// </summary>
 public sealed class VisualizeRunner : IVisualizeRunner
 {

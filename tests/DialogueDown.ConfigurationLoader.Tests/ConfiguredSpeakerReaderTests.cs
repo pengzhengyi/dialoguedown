@@ -192,7 +192,7 @@ public sealed class ConfiguredSpeakerReaderTests
     public void Read_ReservedTagWithStringValue_MapsToValuedReservedTag()
     {
         // The reader maps reserved keys generically: a bool is a name-only tag, a string a valued
-        // one. 'default' is the only reserved name today, so it stands in for the string path.
+        // one. 'default' is the only reserved name, so it stands in for the string path.
         var speakers = Read("""
             [[speakers]]
             name = "Narrator"
@@ -330,7 +330,7 @@ public sealed class ConfiguredSpeakerReaderTests
     public void Read_EmptyId_Throws()
     {
         // An empty id is as meaningless as a missing name; the core forbids it (an @id must name
-        // at least one character), so the edge rejects it too.
+        // at least one character), so the loader rejects it too.
         Assert.Throws<DialogueConfigurationException>(() => Read("""
             [[speakers]]
             name = "Alice"

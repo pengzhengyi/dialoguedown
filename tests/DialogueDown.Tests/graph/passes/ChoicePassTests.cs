@@ -31,8 +31,8 @@ public sealed class ChoicePassTests
     [Fact]
     public void Apply_EachOption_CarriesTheMenuTextOnItsEdge()
     {
-        // Compiled in rather than discovered, so presenting a menu never has to read the node an
-        // option leads to — which is what keeps a menu free of the effects a peek could fire.
+        // The menu text is on the edge, so showing a menu never reads the node an option leads to
+        // and never triggers that node's effects.
         var graph = Build("""
             Guide: Which way?
 
@@ -91,9 +91,8 @@ public sealed class ChoicePassTests
     [Fact]
     public void Apply_AnOptionWithNeitherWordsNorAJump_IsNamedByNothing()
     {
-        // Nothing the writer wrote names this arm, and reading the words off the node it leads to
-        // would put somebody else's line in the player's mouth. So the compile invents nothing and
-        // leaves the arm unnamed.
+        // Nothing the writer wrote names this arm, and the words of the node it leads to belong to
+        // another line, so the compile leaves the arm unnamed.
         var graph = Build("""
             - `("fade out")`
 

@@ -7,13 +7,13 @@ namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
 /// Walks the Markdown block tree into the Dialogue AST skeleton. It orchestrates: a
-/// heading becomes a flat <see cref="SceneHeading"/> marker, a paragraph is handed to the
-/// <see cref="LineBuilder"/>, a list becomes <see cref="Choices"/> or
-/// <see cref="RandomChoices"/> when any option leads with a weight (a <c>`…%`</c> code span), and
-/// a marker-headed blockquote becomes a <see cref="ControlBlock"/>. It is a faithful, local
-/// tokenizer — composition across siblings, such as grouping headings into scenes, is deferred
-/// to later stages. One shared, recursive <see cref="Build"/> serves the document body, choice
-/// bodies, and control-branch bodies.
+/// heading becomes a flat <see cref="SceneHeading"/> marker, a paragraph is split at its hard
+/// breaks and each part handed to the <see cref="LineBuilder"/>, a list becomes
+/// <see cref="Choices"/>, or <see cref="RandomChoices"/> when any option leads with a weight (a
+/// <c>`…%`</c> code span), and a marker-headed blockquote becomes a <see cref="ControlBlock"/>.
+/// It looks at one block at a time; work across siblings, such as grouping headings into scenes,
+/// is left to later stages. One shared, recursive <see cref="Build"/> serves the document body,
+/// choice bodies, and control-branch bodies.
 /// </summary>
 internal sealed class BlockBuilder
 {
@@ -25,8 +25,8 @@ internal sealed class BlockBuilder
     {
         _inlineBuilder = inlineBuilder;
         _lineBuilder = lineBuilder;
-        // Branch bodies re-enter Build; constructing the collaborator here avoids exposing a
-        // mutable, later-initialized back-reference.
+        // Built here, with a reference back to this builder, because branch bodies are built
+        // through this builder's Build.
         _controlBlockBuilder = new ControlBlockBuilder(this);
     }
 

@@ -31,7 +31,7 @@ public abstract partial record Node
     }
 
     /// <summary>
-    /// Gets this node's position in the playbook's node list, which its index must match.
+    /// Gets this node's id, which must equal its index in the playbook's node list.
     /// </summary>
     [JsonPropertyOrder(1)]
     [JsonPropertyName("id")]

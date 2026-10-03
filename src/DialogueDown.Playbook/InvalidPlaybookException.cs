@@ -1,11 +1,11 @@
 namespace DialogueDown.Playbook;
 
 /// <summary>
-/// A playbook cannot be played as written, and saying so is better than playing it anyway.
+/// Thrown when a playbook cannot be played as written.
 /// </summary>
 /// <remarks>
-/// Every message names the offending value, because these surface to whoever ran a compile or
-/// launched a game and "invalid playbook" alone tells them nothing they can act on.
+/// A message names the offending value when there is one, since it reaches whoever ran a compile
+/// or launched a game and "invalid playbook" alone tells them nothing they can act on.
 /// </remarks>
 public sealed class InvalidPlaybookException : Exception
 {

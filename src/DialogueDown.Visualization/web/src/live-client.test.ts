@@ -185,9 +185,9 @@ describe("watchServerEvents — displacement", () => {
     });
 
     it("closes the stream, so the browser does not reconnect it to another document", () => {
-        // An EventSource reconnects a stream that merely ends. Reconnecting would bind this tab
-        // to whichever document is active now, and it would start applying that script's reloads
-        // to what it is showing — worse than the silence it replaced.
+        // An EventSource reconnects a stream that merely ends. A reconnected stream binds to
+        // whichever document is active now, and this tab would apply that script's reloads to
+        // the one it shows.
         const { source } = setup();
 
         source.emit("displaced", JSON.stringify({ document: "a.dialogue.md" }));

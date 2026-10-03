@@ -142,7 +142,7 @@ test("keeps a graph's collapsed nodes across a hot reload", async ({ page }) => 
 
     // A disk change rebuilds the graph tabs in place (View mode auto-updates).
     writeFileSync(LIVE_DOC, INITIAL_SOURCE + "\n## Added Section\n\nBob: A brand new line.\n");
-    // Scope to the Source tab's preview — the node inspector now has its own preview too.
+    // Scope to the Source tab's preview — the node inspector has its own preview too.
     await expect(page.locator(".source-stage .source-preview")).toContainText("brand new line");
 
     // The rebuilt graph kept the Document node collapsed rather than expanding every
@@ -259,8 +259,7 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     // Source tab is active first: the toggle is interactive.
     await expect(view).toBeEnabled();
 
-    // A graph tab keeps the toggle interactive too — a node can be edited there, so mode is
-    // no longer confined to the Source tab.
+    // A graph tab keeps the toggle interactive too: a node can be edited there.
     await page.locator(".tab", { hasText: "Markdown AST" }).click();
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
     await expect(view).toBeEnabled();
@@ -292,8 +291,7 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
 
 test("seats the Files control in the tab row, clear of the brand mark", async ({ page }) => {
     // The row aligns to its bottom edge, so a control that is taller than its neighbors grows
-    // *upward* into the brand mark above. That is what a copied style block that missed one
-    // property did: the control stood half a row taller and touched the logo.
+    // *upward* toward the brand mark above.
     //
     // It is a glyph alone, so the row's *other icon buttons* — not the tabs — are what it has to
     // line up with.
@@ -336,8 +334,8 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
     expect(metrics.filesGlyph.height).toBeCloseTo(metrics.zenGlyph.height, 0);
     expect(metrics.files.height).toBeGreaterThan(metrics.zen.height);
     expect(metrics.files.top).toBeCloseTo(metrics.tabbar.top, 0);
-    // The box grows upward, so the glyph must not ride up with it: it sits on the same line the
-    // row's other icon buttons sit on. Centered in the taller box, it floated above them.
+    // The box grows upward, but the glyph stays on the line the row's other icon buttons sit on
+    // rather than centering in the taller box.
     expect(metrics.filesGlyphCentre).toBeCloseTo(metrics.zenGlyphCentre, 0);
     // The bed is centered on the glyph, not on the box behind it.
     expect((metrics.bedTop + metrics.bedBottom) / 2).toBeCloseTo(metrics.filesGlyphCentre, 0);
@@ -362,10 +360,8 @@ test("seats the Files control in the tab row, clear of the brand mark", async ({
 
 test("rings the focused Files control once, on its bed", async ({ page }) => {
     // Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
-    // alone leaves the control wearing two rings: a rounded one around the whole box and the
-    // square one this report draws on the bed. While the box was barely taller than the bed the
-    // two overlapped and the fault was invisible; grown to the row's height they separate, and
-    // the outer ring reaches the brand mark above.
+    // alone would leave two rings: a rounded one around the whole box, reaching the brand mark
+    // above, and the square one this report draws on the bed.
     const toggle = page.locator(".tabbar-explorer");
     await toggle.focus();
 
@@ -454,8 +450,7 @@ test("remembers that the Explorer was opened, across a reload", async ({ page })
 
     await page.reload();
 
-    // A deliberate "show it" outranks the shut default — which a marker whose absence meant
-    // "shown" could not express.
+    // A deliberate "show it" is remembered, and outranks the shut default.
     await expect(page.locator("#explorer")).toBeVisible();
     await expect(page.locator(".tabbar-explorer")).toHaveAttribute("aria-expanded", "true");
 });
@@ -484,8 +479,7 @@ test.describe("on a phone-sized window", () => {
         });
 
         expect(stacked.app).toBe("column");
-        // The seam kept `width: 1px` in a column and measured 1x0px, so it could not be dragged
-        // at all.
+        // In a column the seam turns: it spans the width and has a height to drag by.
         expect(stacked.seamHeight).toBeGreaterThan(0);
         expect(stacked.seamSpansWidth).toBe(true);
         // Content-sized rather than a rigid 15rem: this project holds a handful of files.
@@ -495,9 +489,8 @@ test.describe("on a phone-sized window", () => {
     });
 
     test("keeps the Explorer control a full-height target on a phone", async ({ page }) => {
-        // Its glyph is the icon buttons' glyph — left at the tab's smaller one it read as an
-        // afterthought beside them. Its target, though, takes the row's height, which matters
-        // most here: this is where fingers rather than pointers are doing the aiming.
+        // Its glyph is the icon buttons' glyph. Its target, though, takes the row's height, which
+        // matters most here: this is where fingers rather than pointers are doing the aiming.
         const metrics = await page.evaluate(() => {
             const box = (selector: string) => {
                 const rect = document.querySelector(selector)!.getBoundingClientRect();
@@ -1020,7 +1013,7 @@ test("names a region's kind and takes the reader to the heading that declares it
     await expect(page.locator("#detail-body table").first()).toContainText("Scene");
     await expect(page.locator("#detail-body table").first()).toContainText("the-gate");
     await page.locator("#detail-title button").click();
-    // The Source tab opens with the heading's own words selected, not the lines beneath them.
+    // The title's button takes the reader to the Source tab.
     await expect(page.locator(".source-stage")).toBeVisible();
 });
 
@@ -1143,11 +1136,9 @@ test("frames a graph from its own root rather than inheriting where you were loo
 });
 
 test("opens a stage showing the whole of it, clear of the legend", async ({ page }) => {
-    // A stage used to open at full size anchored on its root, which showed a handful of nodes and
-    // left the reader to hunt for the rest — and the legend covered part of what it described.
-    // Short enough to fit the canvas the test leaves once both panels have their room. A script
-    // too wide to fit at a legible scale opens at its start instead, and then some of it is
-    // behind the legend by necessity — that is the fold's job, not the framing's.
+    // This script is short enough to fit the canvas the test leaves once both panels have their
+    // room. A script too wide to fit at a legible scale opens at its start instead, and then some
+    // of it is behind the legend by necessity — that is the fold's job, not the framing's.
     await openDocument(
         page,
         ["# The Gate", "", "Guide: Which way?", "", "Guide: Inside.", ""].join("\n"),
@@ -1212,7 +1203,7 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
     page,
 }) => {
     // A character count cannot say how wide a label will be — thirty `W`s are more than twice
-    // thirty `i`s — so the gap the corridors climb in was unknown. Measuring makes it a number.
+    // thirty `i`s — so a label is clipped by its measured width, which fixes the corridors' gap.
     await openDocument(
         page,
         [
@@ -1249,8 +1240,8 @@ test("clips a label to the width it is allowed, leaving the corridors their gutt
 
 test("keeps a cross-link's verticals out of every other node's words", async ({ page }) => {
     // A cross-link leaves its row, runs below the drawing, and climbs back. Its lane can strike
-    // nothing; its two vertical moves can strike everything, and used to — a route doubling back
-    // climbed on its target's right, which is exactly where that column writes its words.
+    // nothing; its two vertical moves can strike everything — a route doubling back must not
+    // climb on its target's right, which is exactly where that column writes its words.
     //
     // Only a browser can judge this: the labels are measured text, and the gutter they leave is
     // a consequence of that measurement rather than a number the layout can be told.
@@ -1328,15 +1319,10 @@ test("keeps a cross-link's verticals out of every other node's words", async ({ 
 test("lands a route's arrowhead on its target's edge, with no line showing past it", async ({
     page,
 }) => {
-    // Two faults met here. A line that ran to the target's *center* had to be hidden by the dot,
-    // with its head pushed back to compensate — and the head is pushed back along the line's final
-    // **direction**, which on a curved approach points somewhere other than the center, so the head
-    // landed beside the line and the last of the curve bent inside the circle. Stopping the line at
-    // the dot's edge fixed that but left a second: a triangle narrows to nothing at its tip, so the
-    // 1.5-wide line beneath it showed through the point as a blunt stub.
-    //
-    // The line now stops where the head *begins*, and the head draws the rest. So the assertion is
-    // about the head's tip — what the reader actually sees — not the line's invisible end.
+    // The line stops where the head *begins*, and the head draws the rest up to the dot's edge: a
+    // triangle narrows to nothing at its tip, so a line running on beneath it would show through
+    // as a blunt stub. The assertion is about the head's tip — what the reader actually sees —
+    // not the line's invisible end.
     await openDocument(
         page,
         [
@@ -1465,9 +1451,8 @@ test("names each kind of route with its own pointer", async ({ page }) => {
 });
 
 test("shows each route in the legend as the line it actually is", async ({ page }) => {
-    // The legend used to approximate each route with a CSS gradient: a second drawing of the same
-    // vocabulary, free to drift, and with no way to show that a route points somewhere. It now
-    // draws the route itself, so the reader learns exactly what they will find on the canvas.
+    // The legend draws each route the way the canvas does, dash and arrowhead included, so the
+    // reader learns exactly what they will find on the canvas.
     await openDocument(
         page,
         ["# The Gate", "", "Guide: Farewell => [the end](#END)", "", "Guide: Unheard.", ""].join(
@@ -1649,8 +1634,8 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
 });
 
 test("hovering a route says what it is and what the writer called it", async ({ page }) => {
-    // A route's <title> names its kind for a screen reader and must keep doing only that, so the
-    // detail a reader wants rides on the hover instead — the way a node's already does.
+    // A route's <title> names its kind for a screen reader and does only that, so the detail a
+    // reader wants is shown on hover instead, as a node's is.
     await openDocument(
         page,
         [

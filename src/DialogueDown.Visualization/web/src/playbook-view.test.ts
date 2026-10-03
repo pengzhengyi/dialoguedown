@@ -215,8 +215,6 @@ describe("createPlaybookView", () => {
     });
 
     it("offers a node's number, a speaker's name, and the entry node as jumps", () => {
-        // Where the click *lands* is the resolver's business and is tested against a document in
-        // playbook-jump.test.ts; what matters here is that the right cells carry the right target.
         const view = createPlaybookView(compiled());
 
         expect(bodyRows(view, "Anchors")[0].cells[1]?.dataset.jump).toBe('{"kind":"node","id":9}');
@@ -230,8 +228,7 @@ describe("createPlaybookView", () => {
     });
 
     it("binds a speaker's jump to its place in the array, not to its row", () => {
-        // The panels sort and filter, so a row's position is not the speaker's index. Binding at
-        // build time is what keeps a sorted table pointing at the right object.
+        // The panels sort and filter, so a row's position is not the speaker's index.
         const view = createPlaybookView(compiled());
         const rows = bodyRows(view, "Speakers");
 
@@ -252,8 +249,6 @@ describe("createPlaybookView", () => {
     });
 
     it("copies a tag when it is clicked, the same as the Config tab", () => {
-        // The capsule wears a hover ring and carries the text to copy, so it promises a click
-        // will work. That promise is the shared table's to keep, not the Config tab's alone.
         const writeText = vi.fn().mockResolvedValue(undefined);
         Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
@@ -267,8 +262,6 @@ describe("createPlaybookView", () => {
     });
 
     it("leaves an absent id and an empty tag list as empty cells", () => {
-        // Nothing to say, so the table says nothing: the reader's eye goes to the speakers that
-        // do carry an id or a tag, not to a column of placeholders.
         const rows = bodyRows(createPlaybookView(compiled()), "Speakers");
 
         // Written with its `@`, exactly as a script references it.
@@ -385,8 +378,7 @@ describe("createPlaybookView Nodes table", () => {
     it("offers each of several ways out on its own, rather than picking one", () => {
         const cell = bodyRows(createPlaybookView(compiled()), "Nodes")[3].cells[3];
 
-        // The cell as a whole is not the target: it names two places, and a single link would
-        // announce both and deliver one.
+        // The cell names two places, so each is its own jump and the cell itself carries none.
         expect(cell?.dataset.jump).toBeUndefined();
         expect(cell?.textContent).toBe("10, 11");
 
@@ -443,8 +435,8 @@ describe("createPlaybookView Nodes table", () => {
     });
 
     it("draws exactly the segments it was sent, reading nothing back out of the text", () => {
-        // The bug this change removes: a writer's own separator used to be split as grammar. The
-        // client can no longer do that — it draws the roles it was handed and nothing else.
+        // A writer's own ` || ` inside plain text stays text; only the separator segment is drawn
+        // as one.
         const report = compiled();
         report.nodes[4].segments = [
             { text: "Go left || right", role: "plain" },
@@ -460,9 +452,8 @@ describe("createPlaybookView Nodes table", () => {
         ).toEqual([" || "]);
     });
 
-    // A menu is a list of options, and the boundaries the projection placed are where one ends and
-    // the next begins. The client draws that structure with the list's own marker instead of the
-    // punctuation — which is the freedom the roles bought.
+    // A menu is a list of options, and each boundary segment marks where one ends and the next
+    // begins. The client draws the options as list items, not with the punctuation between them.
     it("draws a choice as a list, one option to a line", () => {
         const cell = bodyRows(createPlaybookView(compiled()), "Nodes")[1].cells[2];
 
@@ -476,8 +467,7 @@ describe("createPlaybookView Nodes table", () => {
         expect(cell?.textContent).toBe("Go left\nGo right");
     });
 
-    // A menu's options are the picks on offer, so each one is a way to where it leads, and its tip
-    // says which pick it is rather than leaving the reader to match it against the Leads to column.
+    // Each option is a jump to where it leads, and its tip names it as a choice.
     it("offers a menu's options as jumps to where they lead", () => {
         const cell = bodyRows(createPlaybookView(compiled()), "Nodes")[1].cells[2];
         const options = [...cell!.querySelectorAll<HTMLElement>("button.dd-jump")];
@@ -567,7 +557,7 @@ describe("createPlaybookView Nodes table", () => {
     });
 
     // A reader who has not learned the script language cannot tell a query from braces a writer
-    // typed, so the piece says which it is on hover — the way the graph's routes explain themselves.
+    // typed, so the piece says which it is on hover.
     it("explains a query on hover", () => {
         const report = compiled();
         report.nodes[4].segments = [{ text: "{Gold}", role: "query" }];

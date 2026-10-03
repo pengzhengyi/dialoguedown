@@ -1,9 +1,6 @@
 /**
- * The bands drawn behind the nodes of a region.
- *
- * A scene is an area of the document, not a property of each line inside it. Printing its name
- * under every node says the same thing a dozen times and pushes the labels apart; drawing it once,
- * as a band the nodes sit in, says it where it belongs.
+ * The bands drawn behind the nodes of a region, so a scene's name is drawn once, above the nodes
+ * it holds, rather than under each node.
  */
 
 export interface PlacedNode {
@@ -26,14 +23,14 @@ export interface Band {
     readonly tint: number;
 }
 
-/** How far a band reaches beyond the nodes it holds. Room above for the band's own name. */
+/** How far a band reaches left and right of the nodes it holds. */
 const PAD_LEFT = 16;
 const PAD_RIGHT = 16;
 
 /**
- * How far a band reaches above and below its nodes. Exported because the layout that separates
- * two regions has to clear both — a gap that only parts the node rows still leaves the padded
- * bands touching.
+ * How far a band reaches above and below its nodes; the room above holds the band's name.
+ * Exported because the layout that separates two regions has to clear both — a gap that only
+ * parts the node rows still leaves the padded bands touching.
  */
 export const PAD_TOP = 26;
 export const PAD_BOTTOM = 18;

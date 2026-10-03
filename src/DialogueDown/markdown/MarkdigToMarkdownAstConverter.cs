@@ -108,8 +108,6 @@ internal sealed class MarkdigToMarkdownAstConverter
     private ListItem ConvertListItem(MarkdigListItemBlock block) =>
         new(ConvertBlocks(block), ConvertSpan(block.Span));
 
-    // A blockquote is kept as a structural wrapper around its inner blocks (not flattened) so a
-    // later stage can recognize a marker-headed quote as a block conditional.
     private QuoteBlock ConvertQuote(MarkdigQuoteBlock block) =>
         new(ConvertBlocks(block), ConvertSpan(block.Span));
 
@@ -146,8 +144,8 @@ internal sealed class MarkdigToMarkdownAstConverter
         MarkdigLiteralInline literal => new TextInline(
             literal.Content.ToString(), ConvertSpan(literal.Span), ContentSpanOf(literal),
             literal.IsFirstCharacterEscaped),
-        // Decoded text, raw span: the AST carries the character the author named, and anything
-        // pointing at the inline still points at the source that spelled it out.
+        // Decoded text, raw span: &amp; becomes the text "&" with a span over all five source
+        // characters.
         MarkdigHtmlEntityInline entity => new TextInline(
             entity.Transcoded.ToString(), ConvertSpan(entity.Span)),
         MarkdigEmphasisInline emphasis => ConvertEmphasis(emphasis),

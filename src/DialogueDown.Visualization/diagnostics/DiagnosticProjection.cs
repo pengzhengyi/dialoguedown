@@ -5,13 +5,11 @@ namespace DialogueDown.Visualization.Diagnostics;
 
 /// <summary>
 /// Projects the compiler's located diagnostics into <see cref="LspDiagnostic"/> values — the
-/// LSP-shaped view the report payload carries and a future language server would publish unchanged.
-/// The mapping is pure: it decrements the core's one-based <see cref="LinePosition"/> to LSP's
-/// zero-based <see cref="LspPosition"/>, maps each <see cref="DiagnosticSeverity"/> to the
-/// protocol's <see cref="LspSeverity"/>, tags every diagnostic with the <c>"dialoguedown"</c>
-/// source, and carries each fix with edit offsets relative to the diagnostic's own span start (see
-/// <see cref="LspEdit"/> for why). It reads only the located diagnostic view, so it can move into a
-/// shared editor-services library when the language server arrives.
+/// LSP-shaped view the report payload carries. The mapping is pure: it decrements the core's
+/// one-based <see cref="LinePosition"/> to LSP's zero-based <see cref="LspPosition"/>, maps each
+/// <see cref="DiagnosticSeverity"/> to the protocol's <see cref="LspSeverity"/>, tags every
+/// diagnostic with the <c>"dialoguedown"</c> source, and carries each fix with edit offsets
+/// relative to the diagnostic's own span start.
 /// </summary>
 internal sealed class DiagnosticProjection
 {
@@ -38,8 +36,7 @@ internal sealed class DiagnosticProjection
             SourceName,
             ToFixes(diagnostic.Fixes, diagnostic.StartOffset));
 
-    // No fixes is the field's absence on the wire, so a diagnostic without a repair is unchanged in
-    // the payload.
+    // A diagnostic with no fixes leaves the field out of the payload.
     private static IReadOnlyList<LspFix>? ToFixes(IReadOnlyList<LocatedFix> fixes, int diagnosticStart) =>
         fixes.Count == 0
             ? null

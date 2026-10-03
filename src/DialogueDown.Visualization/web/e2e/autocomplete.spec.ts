@@ -102,7 +102,7 @@ test("enriches the => jump indicator into a full [Heading](#slug) target", async
 test("does not offer completions in the read-only static report", async ({ page }) => {
     await page.goto(staticUrl);
     await page.locator(".cm-content").click();
-    // Even an explicit completion request surfaces nothing when the editor is read-only.
+    // Even an explicit completion request shows nothing when the editor is read-only.
     await page.keyboard.press("ControlOrMeta+ ");
     await expect(page.locator(tooltip)).toHaveCount(0);
 });

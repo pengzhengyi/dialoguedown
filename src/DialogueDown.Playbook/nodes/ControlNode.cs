@@ -11,6 +11,10 @@ namespace DialogueDown.Playbook.Nodes;
 /// <summary>
 /// An effect-only line: something the host performs, attributed to nobody.
 /// </summary>
+/// <remarks>
+/// A line holding only commands, such as <c>`JoinClub("Alice", "Art")`</c>, or only a jump,
+/// which gives a control node with no effects.
+/// </remarks>
 /// <param name="Id">This node's position in the node list.</param>
 /// <param name="Effects">What the host performs here.</param>
 /// <param name="Condition">What must hold for the effects to fire, or <c>null</c>.</param>

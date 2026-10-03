@@ -50,7 +50,7 @@ class CompactSearchPanel implements Panel {
 
         this.dom = document.createElement("div");
         this.dom.className = "dd-search";
-        // Keep the panel from stealing the editor's navigation keys; handle our own below.
+        // Enter steps through matches (or replaces, in the replace field); Escape closes the panel.
         this.dom.addEventListener("keydown", (event) => this.onKeydown(event));
 
         this.expandButton = iconButton(CHEVRON_RIGHT, "Toggle Replace", "dd-search-expand");
@@ -149,7 +149,6 @@ class CompactSearchPanel implements Panel {
         });
     }
 
-    // Run a search command, keeping focus in the find field so navigation stays keyboard-driven.
     private run(command: (view: EditorView) => boolean): void {
         command(this.view);
         this.updateCount();
@@ -255,7 +254,7 @@ function row(className: string, ...children: HTMLElement[]): HTMLElement {
     return element;
 }
 
-/** The compact search extension both editors use in place of the default `search()` panel. */
+/** The compact search extension every editor in the report uses in place of `search()`'s panel. */
 export function compactSearch() {
     return search({ top: true, createPanel: (view) => new CompactSearchPanel(view) });
 }

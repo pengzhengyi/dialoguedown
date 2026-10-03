@@ -4,17 +4,12 @@ import { EditorView, showDialog, type Command, type KeyBinding } from "@codemirr
 /**
  * Go to line, shaped like VS Code's: a small box that floats over the text with the field on one
  * line and a sentence under it saying what pressing Enter will do. No button — Enter goes, Escape
- * and clicking away dismiss.
+ * and clicking away dismiss. The sentence is what teaches the reader the expression syntax.
  *
- * CodeMirror ships this command, and the tab used it first. Its dialog cannot take this shape:
- * `showDialog` decides the button and the placement from the config the command passes, and the
- * command passes neither `content` nor `top`. Rendering the dialog here is what buys the second
- * line, and the second line is the point — the expression syntax below is worth far more than a
- * plain line number, and nothing else in the report would ever teach it.
- *
- * The cost is that the expression is parsed here rather than upstream. It is spent once: the
- * sentence a reader reads and the position the cursor lands on are computed by {@link resolve}
- * together, so the dialog can never promise a line it does not then go to.
+ * CodeMirror's own `gotoLine` calls `showDialog` without `content` or `top`, so its dialog has a
+ * button, sits at the bottom, and has no second line. This module therefore renders the dialog and
+ * parses the expression itself. {@link resolve} computes both the sentence and the position the
+ * cursor lands on, so the dialog never promises a line it does not then go to.
  */
 
 /** Where a Go to line expression lands, once resolved against the document. */
@@ -35,9 +30,9 @@ interface GotoTarget {
 
 /**
  * A line, optionally signed for a relative jump, optionally suffixed `%` for a position in the
- * document, and optionally followed by `:column`. Mirrors the expression CodeMirror's own
- * `gotoLine` accepts, with the colon allowed to stand alone — `23:` is a reader on their way to
- * naming a column, and the dialog answers them rather than falling silent.
+ * document, and optionally followed by `:column`: `12`, `+10`, `-10`, `50%`, `12:5`. The same
+ * expression CodeMirror's own `gotoLine` accepts, except that the colon may stand alone (`23:`)
+ * while the reader is still typing the column, so the dialog can prompt for it.
  */
 const EXPRESSION = /^\s*([+-])?(\d+)?(?::(\d*))?(%)?\s*$/;
 
@@ -61,7 +56,6 @@ export function resolve(state: EditorState, value: string): GotoTarget | null {
     }
 
     const clamped = Math.max(1, Math.min(state.doc.lines, line));
-    // One past the final character, so the last column is a place a cursor can actually rest.
     const lastColumn = state.doc.line(clamped).length + 1;
     const typed = columnDigits == null || columnDigits === "" ? null : Number(columnDigits);
     const column = typed == null ? 1 : Math.max(1, Math.min(lastColumn, typed));
@@ -108,8 +102,8 @@ export function guidanceFor(state: EditorState, value: string): string {
 /**
  * Moves the cursor to a resolved target and brings it into view.
  *
- * Columns are one-based, as they are in VS Code and in the sentence above the cursor — CodeMirror
- * counts them from zero, which would put `12:1` one character in from where a reader means.
+ * Columns are one-based, as they are in VS Code and in the dialog's sentence; CodeMirror counts
+ * them from zero, so `12:1` is offset by one to land on the line's first character.
  */
 function goTo(view: EditorView, target: GotoTarget): void {
     const line = view.state.doc.line(target.line);
@@ -178,15 +172,13 @@ export const gotoLine: Command = (view) => {
 };
 
 /**
- * VS Code's Go to Line binding, beside the `Mod-Alt-g` CodeMirror already provides.
+ * Opens this dialog on VS Code's Go to Line binding, `Ctrl-g`, and on CodeMirror's own
+ * `Mod-Alt-g`.
  *
  * `Ctrl-g` is literal Control on every platform, which is exactly what VS Code binds — on macOS
  * `Cmd-g` stays Find Next there as it does here, and on Windows and Linux `F3` keeps Find Next
- * when this takes `Ctrl-g` over. It is listed before `searchKeymap` so it wins that overlap.
- *
- * `Mod-l` is not an option however tempting it reads: the browser owns `Cmd/Ctrl-L` for the
- * address bar and a page cannot take it back. A synthetic key event in a test would still
- * "press" it, so a test would pass while no reader could ever use it.
+ * when this takes `Ctrl-g` over. The editors list this keymap before `searchKeymap` so it wins
+ * that overlap.
  */
 export const gotoLineKeymap: readonly KeyBinding[] = [
     { key: "Ctrl-g", run: gotoLine, preventDefault: true },

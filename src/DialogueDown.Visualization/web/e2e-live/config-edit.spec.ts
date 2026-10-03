@@ -81,8 +81,8 @@ async function contrastOf(locator: import("@playwright/test").Locator): Promise<
     return (high + 0.05) / (low + 0.05);
 }
 
-// An inert control still has to be read to be understood: an opacity dim on top of the muted
-// color blended this below 4.5:1 on the light theme, where the label all but vanished.
+// A disabled control still has to be read, so its label keeps 4.5:1 contrast with its dimming
+// applied, on the light theme as well.
 test.use({ colorScheme: "light" });
 
 test("a disabled Discard stays legible on the light theme", async ({ page }) => {
@@ -224,7 +224,7 @@ test("a saved config id feeds the Source editor's @-autocomplete", async ({ page
     await expect(page.locator(".config-speakers-table")).toContainText("Zed");
 
     // In the Source editor, start an @-mention: the completion draws on the analyzer's
-    // symbols, which the save must have refreshed (the reported bug left them stale).
+    // symbols, which the save must have refreshed.
     await page.locator(".tab", { hasText: "Source" }).click();
     await page.locator(".source-pane .cm-content").click();
     await page.keyboard.press("ControlOrMeta+End");

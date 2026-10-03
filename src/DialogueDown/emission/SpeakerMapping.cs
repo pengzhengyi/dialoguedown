@@ -8,9 +8,9 @@ namespace DialogueDown.Emission;
 /// Writes who says a line: everything the script said about them, and nothing more.
 /// </summary>
 /// <remarks>
-/// A speaker's <c>@id</c> is carried through unchanged rather than used as an address. Lines
-/// name a speaker by position, as every other reference in a playbook does, so nothing about
-/// them is invented to give them one.
+/// A speaker's <c>@id</c> is written as the script gave it, or left out when it gave none.
+/// Lines refer to a speaker by position, as every other reference in a playbook does, so no id
+/// is invented for a speaker without one.
 /// </remarks>
 internal static class SpeakerMapping
 {
@@ -24,8 +24,6 @@ internal static class SpeakerMapping
         return new(speaker.Id, speaker.Name, speaker.IsDefault, [.. speaker.Tags.Select(Write)]);
     }
 
-    // Reserved or not is a fact about the name, so a host tells the two apart by the flag rather
-    // than by a type — the same way a tag in a line's speech is written.
     private static SpeakerTag Write(Ast.Tag tag) =>
         new(tag.Name, tag.Value, tag is Ast.ReservedTag);
 }

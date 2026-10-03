@@ -7,8 +7,8 @@ namespace DialogueDown.Playbook.Tests.Support;
 /// "this document survives a round trip" — rather than repeating the serializer call.
 /// </summary>
 /// <remarks>
-/// Every method uses <see cref="PlaybookJson.Options"/>. Reaching for the serializer directly in
-/// a test would let it drift onto settings the format does not use, and quietly prove nothing.
+/// Every method uses <see cref="PlaybookJson.Options"/>, the settings the format is read and
+/// written with.
 /// </remarks>
 internal static class PlaybookJsonAssert
 {
@@ -41,8 +41,9 @@ internal static class PlaybookJsonAssert
     }
 
     /// <summary>
-    /// The same, for one member of a union: the document is read as <typeparamref name="TDeclared"/>
-    /// and must arrive as <typeparamref name="TActual"/>, which proves the discriminator resolved.
+    /// Asserts a round trip for one member of a union: the document is read as
+    /// <typeparamref name="TDeclared"/> and must arrive as <typeparamref name="TActual"/>, which
+    /// proves the discriminator resolved.
     /// </summary>
     public static TActual AssertRoundTrip<TDeclared, TActual>(string json)
         where TActual : TDeclared =>

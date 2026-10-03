@@ -1,6 +1,6 @@
 import type { MermaidApi } from "./mermaid-preview";
 
-/** Where the page says its Mermaid build lives, or null when it carries one already. */
+/** Where the page says its Mermaid build lives, or null when the page names no location. */
 export function mermaidSource(): string | null {
     const declared = (globalThis as { __DD_MERMAID__?: string }).__DD_MERMAID__;
     return typeof declared === "string" && declared.length > 0 ? declared : null;

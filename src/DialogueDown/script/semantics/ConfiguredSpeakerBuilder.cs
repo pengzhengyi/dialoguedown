@@ -5,9 +5,9 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Script.Semantics;
 
 /// <summary>
-/// Bridges a configuration <see cref="ConfiguredSpeaker"/> to the AST <see cref="SpeakerDeclaration"/>
-/// the speaker binder consumes — the one place that knows the declaration's shape. A configured
-/// speaker has no script text, so the declaration is synthetic and carries an empty span; its
+/// Converts a configuration <see cref="ConfiguredSpeaker"/> into the AST
+/// <see cref="SpeakerDeclaration"/> the speaker binder reads. A configured speaker has no script
+/// text, so the declaration is synthetic and carries an empty span; its
 /// reserved and custom tags map straight to <see cref="ReservedTag"/>s and <see cref="CustomTag"/>s.
 /// </summary>
 internal static class ConfiguredSpeakerBuilder

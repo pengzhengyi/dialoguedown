@@ -23,7 +23,7 @@ public enum UnmodeledNodeKind
     /// <summary>An autolink (<c>&lt;https://...&gt;</c>).</summary>
     Autolink,
 
-    /// <summary>A link reference definition (<c>[label]: target</c>), CommonMark plumbing rather than dialogue.</summary>
+    /// <summary>A link reference definition (<c>[label]: target</c>).</summary>
     LinkReferenceDefinition,
 
     /// <summary>Any other unmodeled construct not called out above.</summary>

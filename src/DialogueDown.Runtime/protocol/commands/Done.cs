@@ -4,9 +4,9 @@ namespace DialogueDown.Runtime.Protocol;
 /// What was asked for has been carried out.
 /// </summary>
 /// <remarks>
-/// The answer to a <see cref="Perform"/>, and the reason a guard that follows an effect can trust
-/// the world it reads. It is a separate command from <see cref="Next"/> on purpose: a host
-/// fast-forwarding through dialogue may collapse the waits that are only presentation, and must
-/// not be able to collapse this one.
+/// The answer to a <see cref="Perform"/>, so a condition after an effect reads the world the effect
+/// changed. One <c>Done</c> answers every <see cref="Perform"/> sent in the same step. It is
+/// separate from <see cref="Next"/> so a host that skips through dialogue by sending
+/// <see cref="Next"/> cannot skip past an effect.
 /// </remarks>
 public sealed record Done : Command;

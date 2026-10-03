@@ -9,16 +9,14 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 
 /// <summary>Reads what a session sends.</summary>
 /// <remarks>
-/// A separate, testable concern from operating the runner. Each command has a reader of its own,
-/// keyed so two claiming one key is a startup failure; <see cref="TryRead"/> answers
-/// <see langword="false"/> for a send no reader owns, which the caller reports as not yet
-/// playable, and a send that names a command but shapes it wrongly is a fixture bug.
+/// Each command has a reader of its own. <see cref="TryRead"/> answers <see langword="false"/> for
+/// a send no reader owns, which the caller reports as not yet playable; a send that names a command
+/// but gives it the wrong shape is a fixture bug.
 /// </remarks>
 internal static class Commands
 {
-    // Keyed rather than searched, so two readers claiming one key is a startup failure rather than
-    // a silent win for whichever was registered first. A bare command names itself, a shaped one is
-    // the single key wrapping its payload, and both kinds answer to one key space.
+    // Keyed, so two readers claiming one key fail at startup rather than one silently replacing
+    // the other. Bare and shaped commands share one key space.
     private static readonly Dictionary<string, ICommandReader> _byKey =
         new ICommandReader[] { new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader() }
             .ToDictionary(reader => reader.Key, StringComparer.Ordinal);
@@ -59,8 +57,8 @@ internal static class Commands
     public static bool IsStart(Send send) =>
         send.Message is JsonObject message && message.ContainsKey("start");
 
-    // A bare command names itself in a string; a shaped one is the single key it is sent under,
-    // with its payload beside it. Anything else names no command at all.
+    // A bare command is a string, such as "next"; a shaped one is an object with a single key and
+    // its payload, such as { "failed": "the database refused" }. Anything else names no command.
     private static bool TryReadKeyAndPayload(
         JsonNode message,
         [NotNullWhen(true)] out string? key,
