@@ -5,20 +5,21 @@ using DialogueDown.Runtime.Protocol;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// Holding what the world said to what it was asked.
+/// Checks that a supply answers exactly the keys the run asked about, each with the kind its use
+/// needs.
 /// </summary>
 /// <remarks>
 /// A run reads a supply as though it were the world itself, so it has to be the answer to the
 /// question that was put: the same keys, each answered the way its use needs. Asked about
-/// <c>Alice.HasKey</c> to guard a line and told <c>{ "Alice.HasKey": true }</c>, the run reads on.
+/// <c>Alice.HasKey</c> to guard a line and told <c>{ "Alice.HasKey": true }</c>, the run goes on.
 /// Told <c>{ }</c> instead, it is left without something it needs. Told
 /// <c>{ "Bob.HasRope": false }</c>, the driver answered a question nobody put. Told
 /// <c>{ "Alice.HasKey": "yes" }</c>, the right question came back with words where a guard needs a
 /// truth.
 /// <para>
-/// The three faults are told apart on purpose. A port that leaves a question unanswered, one that
-/// answers a question nobody asked, and one that answers the right question the wrong way have
-/// three different bugs, and the reason is what a fixture compares.
+/// Each fault has its own reason — <see cref="RefusalReason.UnansweredKey"/>,
+/// <see cref="RefusalReason.UnaskedKey"/>, <see cref="RefusalReason.WrongAnswerKind"/> — since
+/// each points to a different bug in the driver, and the reason is what a fixture compares.
 /// </para>
 /// </remarks>
 internal static class AnswerCheck
@@ -30,25 +31,14 @@ internal static class AnswerCheck
     /// What the run has to say about the disagreement, or <see langword="null"/> when there is none.
     /// </param>
     /// <returns>
-    /// <see langword="true"/> when the answers are not the questions, in which case the run says
-    /// so rather than reading on.
+    /// <see langword="true"/> when the supply does not match what was asked, in which case the run
+    /// refuses it.
     /// </returns>
     /// <remarks>
-    /// What this reports is settled rather than left to chance, because a run that holds nothing
-    /// must give the same answer to the same question every time — the property that lets a log
-    /// replay exactly.
-    /// <para>
-    /// Keys are named in sorted order however the world ordered them, since a supply is a
-    /// dictionary and a dictionary has no order of its own. Wording a refusal as the keys happened
-    /// to arrive would let one step word itself two ways. It also means two drivers meeting the
-    /// same disagreement produce the same sentence, so a reader comparing them sees one problem
-    /// rather than two.
-    /// </para>
-    /// <para>
-    /// A supply can carry more than one fault at once. They are reported in a fixed order — a
-    /// missing answer first, then a spare one, then an answer of the wrong kind — rather than
-    /// whichever check happened to run first.
-    /// </para>
+    /// The refusal is the same for the same arguments, so a log replays exactly. Keys are listed in
+    /// ordinal order, since a dictionary has no order of its own. When a supply has several kinds
+    /// of fault, only the first is reported, in this order: a missing answer, then an answer nobody
+    /// asked for, then an answer of the wrong kind.
     /// </remarks>
     public static bool Disagrees(
         ImmutableDictionary<string, AnswerKind> asked,

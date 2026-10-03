@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { QUICK_FIX_PORT, QUICK_FIX_DOC, QUICK_FIX_SOURCE } from "./fixture.mjs";
 
-// The compiler's quick fix end-to-end against the real .NET --live server: the dangling
+// The compiler's quick fix end-to-end against the real .NET --edit server: the dangling
 // arrow's warning offers the compiler's "Escape as literal text" fix, applying it inserts the
 // backslash, the save writes it to disk, and the recompile clears the warning.
 const base = `http://127.0.0.1:${QUICK_FIX_PORT}`;

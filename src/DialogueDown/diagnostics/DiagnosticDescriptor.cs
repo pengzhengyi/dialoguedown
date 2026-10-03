@@ -13,7 +13,6 @@ internal sealed record DiagnosticDescriptor
 {
     private const string CodePrefix = "DLG";
 
-    /// <summary><c>DLG</c> followed by exactly four ASCII digits (anchored).</summary>
     private static readonly Regex _codePattern = new("^DLG[0-9]{4}$");
 
     public DiagnosticDescriptor(

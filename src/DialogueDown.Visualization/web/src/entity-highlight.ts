@@ -1,12 +1,12 @@
 /**
- * Cross-links the Semantic tab: hovering any element that carries an entity key highlights
- * every element sharing it — a scene's graph node, its anchor-table row, and any jump that
- * resolves to it. The key is the single source of truth (no title or position matching), set
- * by the projection as `data-entity-key` (the element *is* that entity) or `data-ref-key`
- * (the element *references* it). Both map to the same highlight.
+ * Cross-links the Semantic and Playbook tabs: hovering any element that carries an entity key
+ * highlights every element sharing it — for example a scene's graph node, its anchor-table row,
+ * and any jump that resolves to it. The key is the single source of truth (no title or position
+ * matching), carried as `data-entity-key` (the element *is* that entity) or `data-ref-key` (the
+ * element *references* it). Both map to the same highlight.
  */
 export interface EntityHighlighter {
-    /** Re-scan `root` for keyed elements — call after the tables or graph are (re)rendered. */
+    /** Clear the active highlight, so hovering the same key after a re-render highlights again. */
     refresh(): void;
 }
 
@@ -16,8 +16,7 @@ const KEYED_SELECTOR = "[data-entity-key],[data-ref-key]";
 /**
  * Wire hover cross-linking within `root`. Any element carrying `data-entity-key` or
  * `data-ref-key` highlights, on hover, every element in `root` sharing that key. Uses
- * delegated listeners on `root`, so it keeps working as tables and the graph re-render;
- * call {@link EntityHighlighter.refresh} is unnecessary for hover but provided for parity.
+ * delegated listeners on `root`, so it keeps working as tables and the graph re-render.
  */
 export function createEntityHighlighter(root: HTMLElement): EntityHighlighter {
     const keyOf = (target: EventTarget | null): string | null => {

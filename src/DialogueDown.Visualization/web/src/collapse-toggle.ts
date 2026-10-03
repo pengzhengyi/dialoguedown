@@ -1,11 +1,8 @@
 /**
  * Lucide Icons (ISC): the standard "hide/show side panel" glyphs. A right-hand panel uses
- * `panel-right-close` (an inward chevron) to hide and `panel-right-open` (outward) to show; a
- * left-hand panel (the Explorer) uses the `panel-left-*` pair, so each side's chevron points the
- * way the panel moves — drawn correctly per side rather than mirrored with a CSS transform, which
- * some engines render inconsistently. Both glyphs render into the one button; CSS reveals whichever
- * matches the panel's collapsed state (a class on the panel's container), so a toggle built while
- * the panel is already collapsed still shows the correct glyph.
+ * `panel-right-close` to hide and `panel-right-open` to show; a left-hand panel (the Explorer)
+ * uses the `panel-left-*` pair, so each side's chevron points the way the panel moves — drawn
+ * per side rather than mirrored with a CSS transform, which some engines render inconsistently.
  */
 export type PanelSide = "left" | "right";
 
@@ -45,7 +42,7 @@ export function createCollapseToggle(
     return button;
 }
 
-/** A right-side panel that can be hidden to give the main content the full width. */
+/** A side panel that can be hidden to give the main content the full width. */
 export interface CollapsiblePanel {
     /** The toggle button to place on the panel's divider. */
     readonly button: HTMLButtonElement;

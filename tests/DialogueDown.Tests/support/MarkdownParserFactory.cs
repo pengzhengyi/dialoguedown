@@ -4,7 +4,7 @@ namespace DialogueDown.Tests.Support;
 
 /// <summary>
 /// Builds the front-end Markdown parser for tests in one place, so its construction is not
-/// repeated across test classes, mirroring <see cref="TranspilerBuilderFactory"/>.
+/// repeated across test classes.
 /// </summary>
 internal static class MarkdownParserFactory
 {

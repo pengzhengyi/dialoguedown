@@ -4,13 +4,14 @@ namespace DialogueDown.Runtime.Protocol;
 /// Something the runner asks the host for, and waits on.
 /// </summary>
 /// <remarks>
-/// A plain event reports; a request asks, and the run does not go past it until the driver
-/// answers. Reading the world and changing it are both asked for this way, so a guard that
-/// follows an effect sees a world the effect has already changed. A driver that means to answer
-/// at once may, and one that must await a database may too — what the request buys is the choice.
+/// The run does not go past a request until the driver answers: <see cref="Supply"/> for a
+/// <see cref="Resolve"/>, <see cref="Done"/> or <see cref="Failed"/> for a
+/// <see cref="Perform"/>. Reading the world and changing it are both asked for this way, so a
+/// condition after an effect reads the world the effect already changed. The driver may answer at
+/// once or after awaiting, say, a database.
 /// <para>
-/// Requests travel the same ordered stream as events, because a session is one conversation: what
-/// a runner asked and what it reported have to be replayable in the order they happened.
+/// Requests come in the same ordered list as other events, so a session replays in the order it
+/// happened.
 /// </para>
 /// </remarks>
 public abstract record Request : Event

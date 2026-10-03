@@ -12,7 +12,7 @@
  * keeps both the grid and the control.
  */
 
-/** The class every in-cell control wears, so one rule can strip the browser's button chrome. */
+/** The class on every in-cell control, so one rule can remove the browser's button styling. */
 export const CELL_ACTION_CLASS = "cell-action";
 
 /**

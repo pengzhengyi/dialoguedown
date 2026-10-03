@@ -42,22 +42,21 @@ internal sealed class CompileSettings : CommandSettings
 
     /// <summary>Whether this compile writes a playbook.</summary>
     /// <remarks>
-    /// A playbook is the compiler's own artifact, so it is what <c>compile</c> emits unless told
-    /// otherwise — with or without a destination, since standard output is a destination. The
-    /// stage graphs are the export that has to ask.
+    /// True when <c>--emit</c> is absent or names <c>playbook</c>, with or without <c>-o</c>:
+    /// without a destination the playbook goes to standard output.
     /// </remarks>
     public bool EmitsPlaybook => Emit is null || IsPlaybook(Emit);
 
-    /// <summary>
-    /// Parses an <c>--emit</c> value (case-insensitively) into an <see cref="EmitFormat"/>.
-    /// Returns false for an unknown format.
-    /// </summary>
     /// <summary>Whether an <c>--emit</c> value names the playbook format.</summary>
     /// <param name="value">The value given to <c>--emit</c>.</param>
     /// <returns>Whether it names a playbook.</returns>
     public static bool IsPlaybook(string value) =>
         string.Equals(value?.Trim(), PlaybookFormat, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Parses an <c>--emit</c> value (case-insensitively) into a stage-graph
+    /// <see cref="EmitFormat"/>. Returns false for any other value, <c>playbook</c> included.
+    /// </summary>
     public static bool TryParseEmitFormat(string value, out EmitFormat format)
     {
         switch (value.Trim().ToLowerInvariant())
@@ -101,8 +100,8 @@ internal sealed class CompileSettings : CommandSettings
         return ValidateEmit();
     }
 
-    // Fix mode writes the corrected script instead of an emission, so a named emission — either
-    // format or destination — is a contradiction rather than an instruction to prefer one output.
+    // Fix mode writes the corrected script and no emission, so naming a format or a destination
+    // is an error.
     private ValidationResult ValidateFix()
     {
         if (!Fix)
@@ -122,8 +121,7 @@ internal sealed class CompileSettings : CommandSettings
                 "--fix corrects the script in place and writes no emission. Remove -o, or drop --fix to emit instead.");
     }
 
-    // `--output` names where the emitted text goes, so the two are validated together. A
-    // destination on its own is not an error: it asks for the default format.
+    // A destination without `--emit` is valid: it receives the default format, a playbook.
     private ValidationResult ValidateEmit()
     {
         if (Emit is null || IsPlaybook(Emit))

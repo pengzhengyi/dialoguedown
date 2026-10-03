@@ -12,9 +12,7 @@ namespace DialogueDown.Graph.Builder;
 /// <remarks>
 /// The canonical entry is the <b>first node tracked</b>. Node creation adds blocks in document
 /// order, so the first tracked node is the document's opening block — or, for an empty document,
-/// the End node (making entry and End the same). This assumption lives here on purpose: a future
-/// entry policy, such as a designated start node, can revisit it by adjusting the tracking below
-/// or by specializing this type.
+/// the End node (making entry and End the same).
 /// </remarks>
 internal sealed class GraphDraft
 {
@@ -118,7 +116,7 @@ internal sealed class GraphDraft
 
     private void TrackNode(NodeDraft node)
     {
-        _entry ??= node.Id; // the first tracked node is the canonical entry (see the type remarks)
+        _entry ??= node.Id;
         _nodeDraftsInOrder.Add(node);
         _nodeDraftById.Add(node.Id, node);
     }

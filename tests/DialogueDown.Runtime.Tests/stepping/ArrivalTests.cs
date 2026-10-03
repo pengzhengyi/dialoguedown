@@ -23,8 +23,6 @@ public sealed class ArrivalTests
     [Fact]
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
     {
-        // Speaking it without asking would read as played correctly while the condition it carries
-        // went unread, and only the world's answer could have shown otherwise.
         AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
     }
 
@@ -55,8 +53,7 @@ public sealed class ArrivalTests
     [Fact]
     public void Supplied_WhenTheWorldWithholdsALineCarryingAJump_DoesNotTakeTheJump()
     {
-        // The jump belongs to the line. A line nobody spoke did not jump either, so the reader is
-        // not sent through the door it opens.
+        // The jump belongs to the line, so a line that is not spoken does not jump either.
         var result = Arrival.Supplied(
             AGuardedLineCarryingAJump(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false)));
 
@@ -297,7 +294,13 @@ public sealed class ArrivalTests
     /// <summary>A jump on its own line, over the line that follows it.</summary>
     /// <remarks>
     /// <code>
-    /// node 0, a jump -> node 2, leaving node 1 unread
+    /// =&gt; [Here](#here)
+    ///
+    /// Alice: Never spoken.
+    ///
+    /// # Here
+    ///
+    /// Alice: Here.
     /// </code>
     /// </remarks>
     /// <returns>A context whose entry says nothing until the walk reaches node 2.</returns>
@@ -438,7 +441,6 @@ public sealed class ArrivalTests
             ["Alice"]);
 
     /// <summary>Where a run stands after asking, on the way in, about these keys.</summary>
-    /// <remarks>Arrival is what this class is about, so every wait here is one to play.</remarks>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
         new(node, [.. keys], Moment.BeforePlaying);
 }

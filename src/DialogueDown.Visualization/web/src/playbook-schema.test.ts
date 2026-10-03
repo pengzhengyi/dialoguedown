@@ -157,8 +157,8 @@ describe("referenceTypeAt", () => {
     });
 
     it("still reports a node's own id as a node reference at this layer", () => {
-        // The schema does `$ref` `nodeReference` for `id`; excluding the definition is
-        // `referenceKindAt`'s job, one layer up, where the document is in view.
+        // The schema tags `id` as a `nodeReference`; telling a definition from a reference needs
+        // the document, which this layer does not read.
         expect(refOf('"id": 1')).toBe("node");
     });
 
@@ -185,7 +185,7 @@ describe("appliedRange", () => {
         expect(covered).toContain('"requires"');
         // Through the block's own closing brace, comma and all.
         expect(covered.trimEnd()).toMatch(/\},?$/);
-        // Not one line past it: the next property stays outside the wash.
+        // Not one line past it: the next property stays outside.
         expect(covered).not.toContain('"script"');
     });
 

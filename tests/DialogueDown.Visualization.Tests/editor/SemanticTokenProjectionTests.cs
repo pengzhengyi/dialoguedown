@@ -74,8 +74,7 @@ public sealed class SemanticTokenProjectionTests
         var source = "Alice @alice #happy: Hello there.";
         var tokens = Project(source);
 
-        // Precise tokens are non-overlapping: the tag sits between the id and the colon, and
-        // no speaker token covers it (unlike the retired coarse Speaker token).
+        // The tag sits between the id and the colon, and no speaker token covers it.
         AssertToken(tokens, TokenKind.SpeakerName, "Alice", source);
         AssertToken(tokens, TokenKind.SpeakerId, "@alice", source);
         AssertToken(tokens, TokenKind.CustomTag, "#happy", source);
@@ -294,9 +293,8 @@ public sealed class SemanticTokenProjectionTests
     [Fact]
     public void Project_SpeakerInASoftWrappedParagraph_TokenLandsOnItsOwnLine()
     {
-        // Regression: a speaker whose paragraph soft-wraps onto a second source line. Markdig
-        // rebuilds such a paragraph's content buffer, so a buffer-relative content offset put
-        // the token at the top of the file; it must sit on the speaker's own line instead.
+        // Markdig rebuilds the content of a paragraph that soft-wraps onto a second source line,
+        // so an offset into that content does not locate the speaker in the file.
         var source =
             """
             # Scene
@@ -380,7 +378,7 @@ public sealed class SemanticTokenProjectionTests
     [Fact]
     public void Project_KeptMarkdown_IsNotMarked()
     {
-        // Kept text becomes dialogue text, so it reads as dialogue rather than as something apart.
+        // Kept markup becomes dialogue text, so nothing marks it as left out.
         Assert.DoesNotContain(
             Project("<div>hi</div>"), token => token.Kind == TokenKind.IgnoredMarkdown);
     }
@@ -436,8 +434,8 @@ public sealed class SemanticTokenProjectionTests
     [Fact]
     public void Project_AnIgnoredConstruct_IsMarkedWhereverTheDiagnosticReportsIt()
     {
-        // The coupling this projection rests on: the diagnostic locates what the policy ignored,
-        // so demoting or suppressing it would silently take the highlighting with it.
+        // The projection marks the span the ignored-markdown diagnostic reports, so without that
+        // diagnostic nothing would be marked.
         var source =
             """
             Alice: Hi

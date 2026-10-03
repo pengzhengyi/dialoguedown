@@ -4,8 +4,8 @@ namespace DialogueDown.Graph.Regions;
 
 /// <summary>
 /// A scene grouping: the blocks beneath one heading. It carries the heading's displayable
-/// <see cref="Label"/> fragments and its slug <see cref="Anchor"/> — the target a divert to the
-/// scene lands on. The label stays fragments so each platform renders its styling in its own way.
+/// <see cref="Label"/> fragments and its slug <see cref="Anchor"/>, the target a jump to the scene
+/// names. The label stays fragments so each platform renders its styling in its own way.
 /// </summary>
 internal sealed record SceneRegion(
     RegionId Id,

@@ -1,12 +1,11 @@
 namespace DialogueDown.Configuration;
 
 /// <summary>
-/// The author-facing names of the <see cref="CompilationMode"/>s — the kebab-case vocabulary shared
-/// by the CLI's <c>--mode</c> option, the <c>dialogue.toml</c> <c>mode</c> key, and the
-/// visualization's Config tab, so the surfaces never drift. Only two modes are <em>settable</em>:
-/// <see cref="CompilationMode.FailFast"/> is deliberately not, because it throws at the first error
-/// instead of collecting diagnostics, so it is an embedding contract a caller opts into in code,
-/// not a reporting mode a tool exposes. Its name is still known, for read-only display.
+/// The author-facing names of the <see cref="CompilationMode"/>s: the kebab-case words shared by
+/// the CLI's <c>--mode</c> option, the <c>dialogue.toml</c> <c>mode</c> key, and the
+/// visualization's Config tab, so all three agree. Only two modes are <em>settable</em> there:
+/// <see cref="CompilationMode.FailFast"/> throws at the first error instead of returning
+/// diagnostics, so a caller chooses it in code. Its name is still known, for display.
 /// </summary>
 public static class CompilationModes
 {

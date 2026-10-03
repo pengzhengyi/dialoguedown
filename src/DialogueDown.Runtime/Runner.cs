@@ -10,6 +10,24 @@ namespace DialogueDown.Runtime;
 /// <remarks>
 /// Holds nothing, so the same arguments always produce the same result. That is what lets a log
 /// replay exactly, and what makes a conformance fixture mean something.
+/// <para>
+/// A driver sends commands and the runner answers with events. For
+/// <c>Smith: It was `"weapon.Attack"`. `Polish()` Now it is `"weapon.Attack"`.</c>
+/// </para>
+/// <code>
+/// driver                runner
+///   Start  ───────────▶
+///          ◀─────────── Resolve [weapon.Attack]
+///   Supply ───────────▶ { "weapon.Attack": "10" }
+///          ◀─────────── Said Smith "It was 10. "
+///          ◀─────────── Perform Polish()
+///   Done   ───────────▶
+///          ◀─────────── Resolve [weapon.Attack]
+///   Supply ───────────▶ { "weapon.Attack": "15" }
+///          ◀─────────── Continued " Now it is 15."
+///   Next   ───────────▶
+///          ◀─────────── Ended
+/// </code>
 /// </remarks>
 public static class Runner
 {
@@ -24,8 +42,8 @@ public static class Runner
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(command);
 
-        // What may be sent where, as one matrix. The work each construct does lives in the steps
-        // this hands off to, which is the axis a runner grows along.
+        // Which command each situation accepts. The work for each kind of node is in the steps
+        // called from here.
         return (state.Situation, command) switch
         {
             (_, Start) => Arrival.At(context, context.Entry),
@@ -62,13 +80,12 @@ public static class Runner
             _ => throw new NotSupportedException($"No step is defined for {waiting.Moment}."),
         };
 
-    // The world did not change, so the run cannot read on: it stands where it is and says nothing,
-    // and the driver's own message is the record of why.
+    // The host could not carry out what was asked, so the run stays where it is and sends no
+    // event; the driver's Failed explanation records why.
     private static StepResult Hold(PlayState state) => new(state, []);
 
-    // A command the protocol defines, offered where it cannot be taken, is misplaced; anything
-    // else is a command this runner has never been taught. The distinction is the protocol's,
-    // not the message's: a port asserts the reason, never the wording.
+    // A known command sent in the wrong situation is misplaced; any other command is unknown.
+    // Conformance tests compare this reason, never the explanation's wording.
     private static RefusalReason ReasonFor(Command command) =>
         command is Next or Done or Failed or Supply
             ? RefusalReason.Misplaced

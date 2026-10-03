@@ -11,9 +11,11 @@ internal static class ScriptNodeExtensions
     /// What a line says: its speech without the jump it may end in.
     /// </summary>
     /// <remarks>
-    /// A jump is written inside the line it leaves from, so the two arrive together. Everything
-    /// downstream wants one or the other — the words to show, or the route to take — and never
-    /// both at once.
+    /// A jump is written inside the line it leaves from:
+    /// <code>
+    /// Alice: Follow me. =&gt; [the market](#the-market)
+    /// </code>
+    /// speaks <c>Follow me.</c> and then jumps to <c>#the-market</c>.
     /// </remarks>
     internal static IReadOnlyList<InlineFragment> Spoken(this Line line)
     {
@@ -26,10 +28,8 @@ internal static class ScriptNodeExtensions
     /// The jumps a block leaves by, in the order they are written.
     /// </summary>
     /// <remarks>
-    /// A jump rides inside the block it leaves from, and where it rides depends on the block: a
-    /// line ends in one, while a control line runs it among its effects. Both lowering a jump to
-    /// an edge and naming the option a jump stands for need the same answer, so they ask here
-    /// rather than each knowing where a jump can hide.
+    /// A jump is written inside the block it leaves from: a line holds it in its speech, and a
+    /// control line among its effects.
     /// </remarks>
     internal static IEnumerable<Jump> Jumps(this ScriptBlock block) => block switch
     {
@@ -43,14 +43,14 @@ internal static class ScriptNodeExtensions
     /// name it.
     /// </summary>
     /// <remarks>
-    /// An arm is labelled by its own first block, read while the body is still in hand — an arm
-    /// with no body leads straight to whatever follows the choice, so a label read back off the
-    /// target would be somebody else's words. Usually the label is the words the arm speaks; for an
-    /// arm that only jumps it is the jump's own text, which is how the ordinary branching menu
-    /// (<c>- =&gt; [Take the east road](#the-market)</c>) is written.
-    ///
-    /// Lowering an arm and telling a writer their arm has nothing to show are the same question,
-    /// so they ask it here rather than each carrying its own copy of the rule.
+    /// The label comes from the arm's own first block: the words its line speaks or, when that
+    /// block only jumps, the jump's own text.
+    /// <code>
+    /// - Alice: I'll wait here.
+    /// - =&gt; [Take the east road](#the-market)
+    /// </code>
+    /// labels the arms <c>I'll wait here.</c> and <c>Take the east road</c>. An arm with no body
+    /// has no label: the block after the choice is not its own.
     /// </remarks>
     internal static IReadOnlyList<InlineFragment> Label(this Choice option)
     {
@@ -83,7 +83,7 @@ internal static class ScriptNodeExtensions
 
     /// <summary>
     /// The visible text of a fragment sequence: every <see cref="Text"/> anywhere within the
-    /// fragments, concatenated in document order. A styled run or a link label still
+    /// fragments, concatenated in document order. Styled text or a link label still
     /// contributes its words, so this reads a heading title or label as plain text.
     /// </summary>
     internal static string PlainText(this IEnumerable<InlineFragment> fragments) =>
@@ -93,10 +93,9 @@ internal static class ScriptNodeExtensions
             .Select(text => text.Content));
 
     /// <summary>
-    /// The node's direct children in document order. Dispatch is split by node category
-    /// (block, speaker, inline fragment) so each switch stays small; every concrete type is
-    /// handled, and an unhandled one throws rather than being silently skipped as the AST
-    /// grows.
+    /// The node's direct children in document order. A block, speaker, or other node of an
+    /// unknown type throws, so a new node type is not skipped by accident; an inline fragment
+    /// other than the four that hold fragments is a leaf.
     /// </summary>
     internal static IEnumerable<ScriptNode> Children(this ScriptNode node) => node switch
     {
@@ -131,8 +130,6 @@ internal static class ScriptNodeExtensions
         }
     }
 
-    // Blocks own the content that follows them: a line's speaker and speech, a choice
-    // set's options, or a heading's title fragments.
     private static IEnumerable<ScriptNode> BlockChildren(ScriptBlock block) => block switch
     {
         Line line => LineChildren(line),
@@ -146,7 +143,6 @@ internal static class ScriptNodeExtensions
             nameof(block), block.GetType(), "Unhandled block type in Children()."),
     };
 
-    // A declaration (full or partial) carries tags; every other speaker shape is a leaf.
     private static IEnumerable<ScriptNode> SpeakerChildren(Speaker speaker) => speaker switch
     {
         SpeakerDeclaration declaration => declaration.Tags,
@@ -169,13 +165,12 @@ internal static class ScriptNodeExtensions
         _ => [],
     };
 
-    // A potentially conditional arm yields its condition first, then its body blocks.
     private static IEnumerable<ScriptNode> ConditionalBodyChildren(
         Condition? condition, IReadOnlyList<ScriptBlock> body) =>
         condition is not null ? [condition, .. body] : body;
 
-    // A line's condition condition (when present) comes before its speaker and speech, so traversal
-    // keeps document order and matches the condition-first reading.
+    // Document order: a line's condition, when present, is written before its speaker and speech,
+    // as in `Alice.HasKey?` Alice: I have the key.
     private static IEnumerable<ScriptNode> LineChildren(Line line)
     {
         if (line.Condition is not null)
@@ -194,8 +189,7 @@ internal static class ScriptNodeExtensions
         }
     }
 
-    // A control line's condition (when present) comes before its effects, matching condition-first
-    // reading; it has no speaker.
+    // Document order: a control line's condition, when present, is written before its effects.
     private static IEnumerable<ScriptNode> ControlLineChildren(ControlLine control)
     {
         if (control.Condition is not null)

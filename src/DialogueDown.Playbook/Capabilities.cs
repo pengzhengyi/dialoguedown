@@ -10,12 +10,12 @@ namespace DialogueDown.Playbook;
 /// </remarks>
 public static class Capabilities
 {
-    /// <summary>Everything the compiler emits today. Always required.</summary>
+    /// <summary>Every construct the compiler emits. Always required.</summary>
     public const string Core = "core";
 
     /// <summary>
-    /// A reference into another script. Reserved and not yet emitted or read — a reference is a
-    /// plain index until the linker settles what a script identity is.
+    /// A reference into another script. Reserved: the compiler does not emit it and this build does
+    /// not read it, so every node reference is an index within one script.
     /// </summary>
     public const string CrossFileJump = "cross-file-jump";
 }

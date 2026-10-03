@@ -75,9 +75,8 @@ export const CONFIG_ADOPT_INVALID_TOML = join(CONFIG_ADOPT_INVALID_TREE, "dialog
 export const CONFIG_ADOPT_INVALID_SOURCE = "# Scene\n\nAlice: Hello.\n";
 export const CONFIG_ADOPT_INVALID_CONFIG = "[[speakers]]\nbogus = true\n";
 
-// Semantic-autocomplete owns its document because the test replaces the editor buffer.
-// Sharing LIVE_EDIT_DOC let this spec race live-edit.spec.ts when Playwright ran files in
-// parallel.
+// Semantic-autocomplete owns its document because the test replaces the editor buffer, and
+// Playwright runs spec files in parallel with live-edit.spec.ts.
 export const SEMANTIC_AUTOCOMPLETE_PORT = 5183;
 export const SEMANTIC_AUTOCOMPLETE_DOC = join(here, ".semantic-autocomplete.dialogue.md");
 export const SEMANTIC_AUTOCOMPLETE_SOURCE = "# Scene\n\nAlice: The first line.\n";

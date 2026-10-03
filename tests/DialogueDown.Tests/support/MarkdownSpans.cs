@@ -10,7 +10,7 @@ namespace DialogueDown.Tests.Support;
 /// <remarks>
 /// The Markdown AST has no shared walker, because nothing in the compiler needs one: each stage
 /// knows the shapes it handles. A test that quantifies over the whole tree does need one, so it
-/// lives here rather than widening the library's surface for a test.
+/// lives here rather than in the library.
 /// </remarks>
 internal static class MarkdownSpans
 {

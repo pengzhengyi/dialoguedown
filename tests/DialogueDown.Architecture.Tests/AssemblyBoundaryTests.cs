@@ -3,7 +3,7 @@ using NetArchTest.Rules;
 namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
-/// Group A — assembly boundaries. The dependency direction is
+/// Assembly boundaries. The dependency direction is
 /// <c>Cli -> Visualization.Live -> Visualization -> Core</c>, and it must never
 /// reverse: lower layers stay unaware of the layers built on top of them. The
 /// configuration loader is a parallel satellite that depends only on the core (and
@@ -37,8 +37,8 @@ public sealed class AssemblyBoundaryTests
     [Fact]
     public void ConfigurationLoader_DependsOnlyOn_CoreAndToml()
     {
-        // The loader may reach for the core and Tomlyn; it must stay unaware of every sibling
-        // satellite and of any presentation or host library.
+        // The loader may use the core and Tomlyn, but no sibling satellite and no presentation or
+        // host library.
         Types.InAssembly(Architecture.ConfigurationLoaderAssembly)
             .ShouldNot()
             .HaveDependencyOnAny(
@@ -90,10 +90,8 @@ public sealed class AssemblyBoundaryTests
     [Fact]
     public void Runtime_DependsOnlyOn_ThePlaybook()
     {
-        // A game embeds a playbook and a runner. If the runner reached for the compiler, every
-        // shipped game would carry the Markdown parser with it -- and a runtime in another
-        // language could never be held to the same corpus, because half of what it must
-        // reimplement would be a compiler.
+        // A game embeds a playbook and a runner without the compiler, so the runner depends only
+        // on the playbook.
         Types.InAssembly(Architecture.RuntimeAssembly)
             .Should()
             .OnlyHaveDependencyOn("System", Architecture.Playbook, Architecture.Runtime)
@@ -104,12 +102,9 @@ public sealed class AssemblyBoundaryTests
     [Fact]
     public void Playbook_DependsOnlyOn_TheFrameworkAndGenerator()
     {
-        // The playbook is the contract between a compiler and a runtime, so it must
-        // belong to neither. A game embeds it alongside a runner; if it reached for
-        // the compiler, every shipped game would carry the Markdown parser, the TOML
-        // reader, and the diagnostics engine with it. The equality generator is the one
-        // allowed exception: it writes the records' value equality at build time, and the
-        // generated code calls its small comparer assembly.
+        // The playbook is the contract between a compiler and a runtime, so it depends on
+        // neither. The one exception is the equality generator: it writes the records' value
+        // equality at build time, and the generated code calls its small comparer assembly.
         Types.InAssembly(Architecture.PlaybookAssembly)
             .Should()
             .OnlyHaveDependencyOn("System", Architecture.Playbook, "Generator.Equals")

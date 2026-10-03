@@ -6,10 +6,9 @@ namespace DialogueDown.Tests.Conformance;
 /// A playable case's playbook must be exactly what its source compiles to.
 /// </summary>
 /// <remarks>
-/// This is the guard against the corpus rotting: a committed playbook that no longer matches its
-/// source is a fixture asserting yesterday's format. Only this half can be held to it -- a readable
-/// case's playbook is deliberately that compile with one field broken, which is the whole point of
-/// the case.
+/// A committed playbook that no longer matches its source asserts an outdated format. Only playable
+/// cases are checked this way: a readable case's playbook is deliberately that compile with one
+/// field broken.
 /// </remarks>
 public sealed class PlayableCaseTests
 {

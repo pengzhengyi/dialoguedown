@@ -4,7 +4,7 @@ namespace DialogueDown.Common;
 
 /// <summary>
 /// Guards for <see cref="ImmutableArray{T}"/>, whose <c>default</c> value wraps no array at
-/// all and throws on almost every member — a trap a reference type does not have.
+/// all and throws on almost every member.
 /// </summary>
 internal static class ImmutableArrayExtensions
 {

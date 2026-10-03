@@ -3,11 +3,6 @@ namespace DialogueDown.Playbook.Speech;
 /// <summary>
 /// The <c>kind</c> values that tag a speech fragment on the wire.
 /// </summary>
-/// <remarks>
-/// A wire value is part of the format contract, so it lives here rather than being spelled at
-/// each use: renaming one is then a single edit, and a reader, a test, and the schema can all
-/// name the same constant instead of repeating a string literal.
-/// </remarks>
 public static class FragmentKinds
 {
     /// <summary>Plain words, exactly as the writer typed them.</summary>
@@ -22,7 +17,7 @@ public static class FragmentKinds
     /// <summary>An image, carrying the speech that describes it.</summary>
     public const string Image = "image";
 
-    /// <summary>A hard wrap the writer asked for.</summary>
+    /// <summary>A place where the source wrapped within one line of speech.</summary>
     public const string Break = "break";
 
     /// <summary>A read of game state spliced into speech.</summary>

@@ -24,8 +24,8 @@ internal sealed class SpeakerTable
         _byId = byId;
         _defaultSpeaker = defaultSpeaker;
 
-        // A name and an @id for one speaker point at the same symbol, so reference-distinct
-        // the union of both maps to get each speaker once.
+        // A name and an @id for one speaker point at the same symbol, so the union of both maps
+        // is de-duplicated by reference to list each speaker once.
         Symbols = byName.Values
             .Concat(byId.Values)
             .Distinct<SpeakerSymbol>(ReferenceEqualityComparer.Instance)

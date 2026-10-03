@@ -284,9 +284,8 @@ describe("createSourceView jump-to menu", () => {
     });
 
     it("tells the jump when the selection is Markdown the compiler left out", () => {
-        // The stage tabs cannot work this out for themselves: the text they would look for is
-        // exactly what is missing from them, so the editor -- which was told the ignored spans --
-        // says so instead.
+        // The stage tabs hold no node for Markdown the compiler left out, so the editor, which
+        // knows the ignored spans, tells the jump.
         const run = vi.fn();
         const source = sourceView({
             jumpTargets: [{ title: "Dialogue AST", run, preview: () => null }],
@@ -402,8 +401,6 @@ describe("createSourceView document replacement", () => {
     });
 
     it("shows a different document through the history-dropping path", () => {
-        // The undo behavior itself is covered in editor-history.test.ts, against real editor
-        // commands; this pins the wiring, so the two operations cannot be swapped by accident.
         const source = mountSource("first\n");
 
         source.setDocument("second\n");

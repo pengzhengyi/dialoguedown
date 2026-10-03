@@ -5,7 +5,7 @@ using Markdig.Syntax.Inlines;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>
-/// Object Mother for raw Markdig nodes, so a front-end test can exercise one construct without
+/// Builds raw Markdig nodes, so a front-end test can exercise one construct without
 /// parsing a whole script. Markdig's block constructors take a parser argument these nodes never
 /// use; hiding that noise here keeps the tests readable. A node carries the span it occupies in
 /// the test's source, since the front end slices the original text through it.

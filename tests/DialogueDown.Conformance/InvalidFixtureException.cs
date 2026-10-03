@@ -5,8 +5,7 @@ namespace DialogueDown.Conformance;
 /// </summary>
 /// <remarks>
 /// Kept distinct from the exception a reader throws, so a failing run says whether the
-/// corpus is wrong or the reader is. Conflating the two would let a broken fixture masquerade as
-/// a conformance failure, which is the one thing a corpus must never do.
+/// corpus is wrong or the reader is.
 /// </remarks>
 public sealed class InvalidFixtureException : Exception
 {

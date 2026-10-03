@@ -10,8 +10,8 @@ namespace DialogueDown.Diagnostics;
 public enum DiagnosticCategory
 {
     /// <summary>
-    /// A problem in the script's surface: text that does not parse as intended, or Markdown that
-    /// never becomes dialogue.
+    /// A problem in how the script is written: text that does not parse as intended, or Markdown
+    /// that never becomes dialogue.
     /// </summary>
     Syntax = 0,
 

@@ -8,8 +8,7 @@ namespace DialogueDown.Visualization.Live.Files;
 /// <remarks>
 /// Runs are serialized: the action never runs concurrently with itself. A trigger (or a timer that
 /// fires) while a run is in progress is coalesced into a single follow-up run scheduled after the
-/// current one finishes, so a slow compile can never be overtaken by a newer one that then
-/// broadcasts a stale result before it — the newest run always broadcasts last.
+/// current one finishes, so runs never overlap and the newest run always broadcasts last.
 /// </remarks>
 internal sealed class Debouncer : IDisposable
 {
@@ -48,12 +47,12 @@ internal sealed class Debouncer : IDisposable
             {
                 // After disposal, drop the trigger entirely; during a run, remember it and let the
                 // current run finish, then run once more — never a second concurrent run and never
-                // a rearm of a disposed timer.
+                // a restart of a disposed timer.
                 _pending = _running && !_disposed;
                 return;
             }
 
-            // Arm under the gate so a concurrent Dispose cannot slip in and dispose the timer
+            // Start under the gate so a concurrent Dispose cannot slip in and dispose the timer
             // between the disposed check and the Change call.
             _timer.Change(_delay, Timeout.InfiniteTimeSpan);
         }
@@ -99,7 +98,7 @@ internal sealed class Debouncer : IDisposable
         finally
         {
             // Always clear _running — even if the action threw — so a failing refresh can never
-            // wedge the debouncer and stop every later on-disk change from reloading.
+            // leave the debouncer stuck and stop every later on-disk change from reloading.
             lock (_gate)
             {
                 _running = false;
@@ -110,8 +109,8 @@ internal sealed class Debouncer : IDisposable
 
         if (followUp)
         {
-            // Re-arm the debounce for the change that arrived during the run, but only under the
-            // gate and only if a concurrent Dispose has not already retired the timer.
+            // Restart the debounce for the change that arrived during the run, but only under the
+            // gate and only if a concurrent Dispose has not already disposed the timer.
             lock (_gate)
             {
                 if (!_disposed)

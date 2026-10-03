@@ -106,8 +106,8 @@ export function initFullscreen(
         });
     };
 
-    // Either key leaves focus mode entirely from anywhere but its own "off" state, so one
-    // press always gets the reader back rather than stepping down through a middle mode.
+    // Leaving always returns to normal, never from Zen down to full screen, so one press of
+    // `f` (in either mode) or `z` (in Zen) gets the reader all the way back.
     const toggle = (): void => set(mode() === "normal" ? "maximized" : "normal");
     const toggleZen = (): void => set(mode() === "zen" ? "normal" : "zen");
     const exit = (): void => set("normal");

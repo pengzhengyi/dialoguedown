@@ -123,9 +123,6 @@ describe("findEnclosingNode", () => {
         expect(findEnclosingNode({ nodes: [], edges: [] }, 0, 0)).toBeNull();
     });
 
-    // The Dialogue Graph's `Child` edges mark a node's parent in the spanning tree the drawing is
-    // laid out with, not the text that contains it. Unioning what they reach would grow a node's
-    // extent along the rest of the flow — across scene boundaries, since a jump is such an edge.
     it("ranks a stage that does not nest by its own spans, not by what its flow reaches", () => {
         const { nodes, edges } = flow();
         // Spans both options: only the choice's own span encloses them.

@@ -5,7 +5,9 @@ namespace DialogueDown.Cli.Fixing;
 /// <summary>The facts a fix run adds to the report, after the diagnostics as found.</summary>
 /// <param name="Outcomes">What happened to each candidate, in ascending position order.</param>
 /// <param name="WrittenFile">The script corrected on disk, or <c>null</c> when nothing was written.</param>
-/// <param name="Remaining">The corrected script's diagnostics, which phrase what is left.</param>
+/// <param name="Remaining">
+/// The corrected script's diagnostics, counted in the write notice as what remains.
+/// </param>
 /// <param name="NewAfterFixing">
 /// Diagnostics the corrected script reports that the script as read did not.
 /// </param>

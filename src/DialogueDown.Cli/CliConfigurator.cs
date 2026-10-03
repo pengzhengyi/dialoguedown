@@ -17,9 +17,7 @@ internal static class CliConfigurator
     public static void Configure(IConfigurator config)
     {
         ArgumentNullException.ThrowIfNull(config);
-        // Everything a person reads — diagnostics, usage errors, unhandled exceptions — goes to
-        // standard error, so standard output carries only what a compile emits. Set here rather
-        // than in the container because Spectre registers this console itself, after ours, and
+        // Set here, not in the container: Spectre registers this console itself, after ours, and
         // the later registration is the one that resolves.
         config.Settings.Console = ErrorConsole();
         config.SetApplicationName("ddown");
@@ -40,9 +38,9 @@ internal static class CliConfigurator
             .WithExample("visualize", "scene.dialogue.md", "-o", "report.html", "--no-open");
     }
 
-    // Turn framework and command exceptions into a clean message and a meaningful
-    // exit code, rather than a stack trace. Writes to the app's console (resolved
-    // via DI), which CommandAppTester captures in tests.
+    // Maps a known exception to a one-line message and its exit code; any other exception is
+    // written in full and exits with Error. Writes to the console resolved from the container, so
+    // a test that replaces the console captures the message.
     private static int HandleException(Exception exception, ITypeResolver? resolver)
     {
         var console = resolver?.Resolve(typeof(IAnsiConsole)) as IAnsiConsole ?? AnsiConsole.Console;
@@ -64,8 +62,9 @@ internal static class CliConfigurator
     }
 
     /// <summary>
-    /// The console for everything a person reads: standard error, so a playbook on standard
-    /// output is never interrupted by a warning and stays safe to pipe.
+    /// The console for everything a person reads (diagnostics, usage errors, unhandled
+    /// exceptions): standard error, so a playbook on standard output is never interrupted by a
+    /// warning and stays safe to pipe.
     /// </summary>
     private static IAnsiConsole ErrorConsole() =>
         AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Error) });

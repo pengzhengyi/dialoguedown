@@ -9,8 +9,8 @@ namespace DialogueDown.Visualization.Graph;
 /// as references.
 ///
 /// <para>A node the walk never reaches is unreachable content. It still has to be placed, and the
-/// place a reader looks for it is where it sits in the script — so it hangs off the block before
-/// it, through a <see cref="Placements"/> link that is scaffolding rather than flow. The entry is
+/// place a reader looks for it is where it sits in the script — so it is attached under the block
+/// before it, through a <see cref="Placements"/> link that carries no flow. The entry is
 /// then the one node with no parent at all: the graph's single root, and the leftmost thing on
 /// screen.</para>
 /// </summary>
@@ -44,9 +44,9 @@ internal sealed class SpanningTree
 
         Claim(graph, graph.Entry, parentOf, reached);
 
-        // Whatever the entry could not get to is unreachable. It hangs off the block before it in
-        // the script — already placed, since the walk runs in graph order — so it lands where a
-        // reader looks for it rather than in a corner of its own.
+        // Whatever the entry could not get to is unreachable. It is attached under the block before
+        // it in the script — already placed, since the walk runs in graph order — so it lands where
+        // a reader looks for it rather than in a corner of its own.
         for (var position = 1; position < graph.Nodes.Count; position++)
         {
             var id = graph.Nodes[position].Id;

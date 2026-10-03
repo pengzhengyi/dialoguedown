@@ -80,9 +80,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void Refresh_UnreadableDocument_BroadcastsAProblemInsteadOfThrowing()
     {
-        // The watcher fires Refresh from a timer callback; an unreadable file (permission denied,
-        // or the path became a directory) throws UnauthorizedAccessException, not IOException. It
-        // must be caught and broadcast as a targeted problem rather than escaping the callback.
+        // The watcher calls Refresh from a timer callback, so an unreadable file, which throws
+        // UnauthorizedAccessException, must become a problem event instead of escaping.
         using var tree = new TempTree();
         var docPath = tree.File("scene.dialogue.md", "# Scene");
         var session = new LiveSession(docPath, VisualizationMode.Edit);
@@ -163,9 +162,8 @@ public sealed class LiveSessionTests
     [Fact]
     public void Save_UncertainWrite_ReturnsUncertainAndKeepsTheNewerExternalData()
     {
-        // A newer external write races the commit so AtomicFile cannot establish a safe state: the
-        // save must surface an explicit uncertain outcome (not an ordinary no-write failure) and
-        // must never clobber the newer external data.
+        // A newer external write lands during the commit, so the save cannot tell whether its
+        // bytes are the ones on disk.
         using var script = new TempScript("# Old");
         var session = new LiveSession(script.Path, "edit");
 
@@ -239,9 +237,8 @@ public sealed class LiveSessionTests
         var second = Task.Run(() => SaveFrom("# Second"));
         var results = await Task.WhenAll(first, second);
 
-        // The exclusive compare-and-write serializes the two writes: whichever commits first is
-        // the baseline the other now compares against, so exactly one saves and the other sees a
-        // conflict — the lost update the non-atomic read-then-write allowed can no longer happen.
+        // The compare-and-write is exclusive: whichever save commits first changes the baseline
+        // the other compares against.
         Assert.Single(results, json => json.Contains("\"outcome\":\"saved\""));
         Assert.Single(results, json => json.Contains("\"outcome\":\"conflict\""));
 
@@ -289,8 +286,8 @@ public sealed class LiveSessionTests
         Assert.True(reader.TryRead(out var toA));
         Assert.Contains("# A", toA!.Data);
 
-        // An external change back to the earlier self-written content is a real external edit now,
-        // not a stale self-write: one-shot suppression means it still reloads.
+        // Writing the earlier self-written content back is an external edit, because the
+        // suppression applies only once.
         File.WriteAllText(script.Path, "# B");
         session.Refresh();
         Assert.True(reader.TryRead(out var backToB));
@@ -355,7 +352,7 @@ public sealed class LiveSessionTests
         var json = session.Save(new SaveInput(broken, "config", valid, "require-valid"));
 
         Assert.Contains("\"outcome\":\"invalid-auto\"", json);
-        Assert.Equal(valid, File.ReadAllText(configPath)); // Auto never writes invalid TOML
+        Assert.Equal(valid, File.ReadAllText(configPath)); // require-valid never writes invalid TOML
     }
 
     [Fact]
@@ -405,10 +402,9 @@ public sealed class LiveSessionTests
         var configPath = tree.File("dialogue.toml", valid);
         var session = ConfiguredSession(docPath, configPath);
 
-        // Make the config directory read-only so staging the replacement temp file fails after the
-        // candidate config has been parsed. The published visualizer/config state must not advance
-        // to a candidate that never reached disk — a page reload would otherwise render a config the
-        // file does not hold.
+        // A read-only config directory makes staging the replacement fail after the candidate
+        // config has been parsed. The session must keep the config the file holds, so a page
+        // reload shows what is on disk.
         var mode = File.GetUnixFileMode(tree.Root);
         File.SetUnixFileMode(tree.Root, UnixFileMode.UserRead | UnixFileMode.UserExecute);
         try
@@ -495,7 +491,7 @@ public sealed class LiveSessionTests
         Assert.Contains("[[speakers]]", File.ReadAllText(configPath));
         Assert.Contains("\"outcome\":\"saved\"", result.Payload);
         Assert.Equal(configPath, session.ConfigPath); // adopted: the session now applies it
-        // Staged temp + atomic move: the created file is complete and no staging temp is left behind.
+        // No staging temp file is left behind.
         Assert.Equal(
             new[] { "dialogue.toml", "scene.dialogue.md" },
             Directory.GetFiles(tree.Root).Select(Path.GetFileName).OrderBy(name => name).ToArray());
@@ -532,8 +528,6 @@ public sealed class LiveSessionTests
 
         var result = session.CreateConfig(configPath);
 
-        // A config-less session recovers into the existing file rather than a dead end: it is
-        // adopted without overwriting, ConfigPath is set, and the payload lets the frontend open it.
         Assert.Equal(CreateConfigStatus.AdoptedExisting, result.Status);
         Assert.Equal("# hand-written\n", File.ReadAllText(configPath)); // untouched
         Assert.Equal(configPath, session.ConfigPath); // no longer config-less
@@ -557,17 +551,16 @@ public sealed class LiveSessionTests
         Assert.Contains("\"outcome\":\"adopted-invalid\"", result.Payload);
         Assert.Contains("bogus", result.Payload); // the invalid source for the editor
 
-        // The saved-invalid state persists so a page reload restores it (the overlay marks it).
+        // The saved-invalid state is kept, so a page reload restores it.
         Assert.Contains("\"configStatus\":\"saved-invalid\"", session.CurrentDocumentJson());
     }
 
     [Fact]
     public void CreateConfig_ExistingInvalidContent_ReportCarriesConfigurationFileForRecovery()
     {
-        // Adopting an invalid pre-existing dialogue.toml from a config-less session must still let
-        // the frontend build a Config controller: the report needs a configuration.file with the
-        // path and the (invalid) source, plus a saved-invalid status and message, both in the
-        // adoption response and in the re-served page so a reload can edit and recover it.
+        // The report client builds its config editor from configuration.file, so after adopting
+        // an invalid file both the response and the re-served page carry its path and source,
+        // with a saved-invalid status and message.
         using var tree = new TempTree();
         var docPath = tree.File("scene.dialogue.md", "# Scene");
         var invalid = "[[speakers]]\nbogus = true\n";
@@ -603,7 +596,6 @@ public sealed class LiveSessionTests
         Assert.Throws<DirectoryNotFoundException>(() => session.CreateConfig(missingDirectory));
         Assert.Null(session.ConfigPath); // the no-config state is unchanged
 
-        // A retry at a valid path still succeeds: _configPath never mutated on the failed attempt.
         var result = session.CreateConfig(Path.Combine(tree.Root, "dialogue.toml"));
         Assert.Equal(CreateConfigStatus.Created, result.Status);
     }

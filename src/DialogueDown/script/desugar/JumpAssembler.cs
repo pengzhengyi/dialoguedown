@@ -9,15 +9,20 @@ namespace DialogueDown.Script.Desugar;
 
 /// <summary>
 /// Folds a jump and the pieces around it into one <see cref="Jump"/>, over a single fragment
-/// sequence. The rule is a small grammar — an optional guarding <see cref="Condition"/>, the
-/// <c>=&gt;</c> <see cref="JumpIndicator"/>, and the <see cref="Link"/> that follows, across
-/// same-line whitespace — expressed with the Pidgin parser combinators so the pattern reads
-/// declaratively instead of as hand-rolled index tracking and backtracking. A
-/// <see cref="JumpIndicator"/> with no link is dangling: it is reported and degrades to the
-/// characters <c>=&gt;</c>. A <see cref="LineBreak"/> is not blank, so it stops the scan and keeps
-/// a jump single-line. It works one level at a time; nested sequences are reached by the rewriter.
-/// An assembler reports into one compilation's sink, so it is built per compilation.
+/// sequence. The rule is a small grammar, written with Pidgin parser combinators: an optional
+/// guarding <see cref="Condition"/>, the <c>=&gt;</c> <see cref="JumpIndicator"/>, and the
+/// <see cref="Link"/> that follows, across same-line whitespace. A <see cref="JumpIndicator"/>
+/// with no link is dangling: it is reported and degrades to the characters <c>=&gt;</c>. A
+/// <see cref="LineBreak"/> is not blank, so it stops the scan and keeps a jump single-line. It
+/// works one level at a time; nested sequences are reached by the rewriter. An assembler reports
+/// into one compilation's sink, so it is built per compilation.
 /// </summary>
+/// <remarks>
+/// <code>
+/// `Alice.HasKey?` =&gt; [Open the door](#the-door)
+/// </code>
+/// becomes one jump to <c>#the-door</c>, guarded by <c>Alice.HasKey</c>.
+/// </remarks>
 internal sealed class JumpAssembler
 {
     private static readonly Parser<InlineFragment, InlineFragment> _blank =

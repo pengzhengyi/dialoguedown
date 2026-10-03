@@ -59,7 +59,7 @@ function editorLines(page: import("@playwright/test").Page) {
     return page.locator(".source-pane .cm-line");
 }
 
-/** Press the gutter chevron beside the line an ignored run starts on. */
+/** Press the gutter chevron beside the line an ignored region starts on. */
 async function foldFromGutter(page: import("@playwright/test").Page, text: string): Promise<void> {
     const line = await page
         .locator(".source-pane .cm-line", { hasText: text })

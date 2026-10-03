@@ -20,7 +20,7 @@ describe("annotateHeadingAnchors", () => {
 
         annotateHeadingAnchors(container);
 
-        // The tooltip (data-copy) is exactly what the affordance copies.
+        // `data-copy` is both the tooltip and the text the link copies.
         expect(link()!.dataset.copy).toBe("[The Market](#the-market)");
         expect(link()!.getAttribute("aria-label")).toBe("Copy jump link to The Market");
     });

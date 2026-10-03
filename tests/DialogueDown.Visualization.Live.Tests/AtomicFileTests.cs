@@ -26,7 +26,7 @@ public sealed class AtomicFileTests
         var seen = AtomicFile.Transact(path, transaction => transaction.Disk);
 
         Assert.Null(seen);
-        Assert.False(File.Exists(path)); // the inspection placeholder is removed on a no-write outcome
+        Assert.False(File.Exists(path));
     }
 
     [Fact]
@@ -63,8 +63,6 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_MissingDirectory_ReportsNullWithoutWriting()
     {
-        // The containing directory does not exist: the snapshot read reports a missing file (null)
-        // rather than throwing, and a no-write body leaves nothing behind.
         using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "nope", "doc.txt");
 
@@ -77,21 +75,20 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_MissingFileCreatedConcurrently_IsReadAndNeverDeleted()
     {
-        // Simulate the existence race: the target does not exist when the transaction begins, but
-        // an external writer creates it while the body runs. A no-write outcome must never delete
-        // that externally created file (the old File.Exists placeholder-and-delete bug).
+        // The target does not exist when the transaction begins, and an external writer creates
+        // it while the body runs.
         using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "raced.txt");
 
         var seen = AtomicFile.Transact(path, transaction =>
         {
-            File.WriteAllText(path, "external content"); // appears mid-transaction
+            File.WriteAllText(path, "external content");
             return transaction.Disk;
         });
 
         Assert.Null(seen); // it did not exist when the snapshot was read
         Assert.True(File.Exists(path));
-        Assert.Equal("external content", File.ReadAllText(path)); // never deleted or clobbered
+        Assert.Equal("external content", File.ReadAllText(path));
     }
 
     [Fact]
@@ -107,15 +104,14 @@ public sealed class AtomicFileTests
         });
 
         Assert.Equal("committed", File.ReadAllText(path));
-        // The staged bytes move atomically into place; no leftover temp file remains beside it.
         Assert.Single(Directory.GetFiles(tree.Root));
     }
 
     [Fact]
     public void Transact_Write_StagesInTheSameDirectory()
     {
-        // The staging temp must be a sibling of the target so the final move stays on one volume
-        // (an atomic rename), not a cross-device copy through the system temp folder.
+        // A temp file beside the target keeps the final move on one volume, where it is an atomic
+        // rename.
         using var tree = new TempTree();
         var directory = tree.Dir("nested");
         var path = Path.Combine(directory, "doc.txt");
@@ -142,19 +138,16 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_ExternalEditInTheReplaceWindow_ThrowsConflictAndKeepsTheExternalContent()
     {
-        // The cross-process race: the snapshot is read, the caller stages a full replacement, but an
-        // external editor writes the target before the atomic replace lands. The staged write must
-        // not silently clobber that external edit — the commit captures the immediately previous
-        // target into a backup, sees it differs from the expected baseline, rolls back, and reports
-        // a conflict. Writing to the path inside the body reproduces the window because the commit
-        // runs after the body returns.
+        // An external editor writes the target after the snapshot is read but before the staged
+        // replacement lands. Writing inside the body hits that window, because the commit runs
+        // after the body returns.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteConflictException>(() => AtomicFile.Transact(path, transaction =>
         {
             transaction.Write("my staged replacement");
-            File.WriteAllText(path, "external edit"); // lands in the pre-replace window
+            File.WriteAllText(path, "external edit");
             return 0;
         }));
 
@@ -184,8 +177,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ForcedWrite_OverwritesAnExternalEditInTheWindow()
     {
-        // A confirmed overwrite is force: it intentionally replaces whatever is on disk, so it
-        // commits over an external edit rather than reporting a conflict.
+        // A forced write is an overwrite the user confirmed, so it replaces whatever is on disk.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
@@ -213,14 +205,13 @@ public sealed class AtomicFileTests
         });
 
         Assert.Equal("committed", File.ReadAllText(path));
-        Assert.Single(Directory.GetFiles(tree.Root)); // the backup is removed after a clean commit
+        Assert.Single(Directory.GetFiles(tree.Root));
     }
 
     [Fact]
     public void Transact_ValidatedWrite_ExternalEditToTheSameContent_IsNotAConflict()
     {
-        // The external write in the window produced the very bytes this save is committing: no data
-        // is lost, so it settles as a normal commit rather than a spurious conflict.
+        // The external write holds the same bytes this save commits, so no data is lost.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
@@ -238,15 +229,15 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_ExternalDeleteInTheReplaceWindow_ThrowsConflict()
     {
-        // The target is deleted out from under the atomic replace (an external change, not a swap):
-        // the write must report a conflict rather than recreate the file the deleter intended gone.
+        // The target is deleted before the replace lands; the save reports a conflict instead of
+        // recreating the file.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
         Assert.Throws<AtomicFile.WriteConflictException>(() => AtomicFile.Transact(path, transaction =>
         {
             transaction.Write("my staged replacement");
-            File.Delete(path); // vanishes before the replace lands
+            File.Delete(path);
             return 0;
         }));
 
@@ -257,12 +248,9 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_TargetChangedAgainBetweenReplaceAndRollback_PreservesNewerDataAndReportsUncertain()
     {
-        // The conflict rollback must never clobber an even newer external write. An external edit
-        // lands in the replace window (the displaced backup differs from the baseline), but before
-        // the rollback restores it a *second*, newer external write lands on the target. Blindly
-        // restoring the first backup would overwrite that newer data, so the write must instead
-        // preserve the newer target, keep the captured backup safely, and report an uncertain
-        // outcome rather than a plain conflict.
+        // An external edit lands before the replace, so the backup differs from the snapshot. A
+        // second, newer external write then lands before the rollback. Restoring the backup would
+        // overwrite that newer data, so the save keeps both files and reports uncertain.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
@@ -288,8 +276,8 @@ public sealed class AtomicFileTests
     public void Transact_ValidatedWrite_TargetDeletedAgainBetweenReplaceAndRollback_PreservesBackupAndReportsUncertain()
     {
         // The target is deleted between the replace and the rollback. Restoring the backup would
-        // recreate a file the deleter intended gone using stale bytes, so the write preserves the
-        // captured backup and reports uncertain rather than a plain conflict or a lost update.
+        // bring back a deleted file with older bytes, so the save keeps the backup and reports
+        // uncertain.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
@@ -303,7 +291,7 @@ public sealed class AtomicFileTests
             },
             afterReplace: () => File.Delete(path)));
 
-        Assert.False(File.Exists(path)); // the deletion stands; no stale resurrection
+        Assert.False(File.Exists(path)); // the deletion stands
         var preserved = Directory.GetFiles(tree.Root).Select(File.ReadAllText).ToList();
         Assert.Contains("first external edit", preserved); // the captured backup is preserved
     }
@@ -311,10 +299,8 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_PostCommitVerificationFailure_ReportsUncertain()
     {
-        // A clean swap committed our bytes, but post-commit verification finds the target no longer
-        // holds them: an external process overwrote the file immediately after the swap. The write
-        // cannot claim success without possibly masking that newer data, so it reports uncertain
-        // and leaves the newer external content in place.
+        // The swap is clean, but an external write replaces our bytes before the save checks them,
+        // so it cannot report success.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
@@ -343,8 +329,7 @@ public sealed class AtomicFileTests
         var path = Path.Combine(directory, "doc.txt");
         File.WriteAllText(path, "original");
 
-        // Make the directory read-only so staging a sibling temp file fails; the original must be
-        // left byte-for-byte intact rather than truncated or partially written.
+        // A read-only directory makes staging the temp file beside the target fail.
         var info = new DirectoryInfo(directory);
         var mode = File.GetUnixFileMode(directory);
         File.SetUnixFileMode(directory, UnixFileMode.UserRead | UnixFileMode.UserExecute);

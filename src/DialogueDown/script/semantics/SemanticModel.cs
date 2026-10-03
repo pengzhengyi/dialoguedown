@@ -4,11 +4,10 @@ namespace DialogueDown.Script.Semantics;
 
 /// <summary>
 /// The analyzed artifact: the desugared tree together with what analysis resolved about it —
-/// the speaker table, the scene tree and its anchors, and the per-jump resolutions. Bound to
-/// the tree it analyzed (Roslyn's <c>SemanticModel</c>): the AST stays immutable and the model
-/// annotates it through side tables keyed by node identity. It holds the tree because a node
-/// key is meaningless without it and the graph builder needs both content and meaning, and it
-/// is the pipeline handoff to that builder, so analysis cannot be skipped.
+/// the speaker table, the scene tree and its anchors, and the per-jump resolutions. Like
+/// Roslyn's <c>SemanticModel</c>, it is bound to the tree it analyzed: the AST stays immutable
+/// and the model annotates it through side tables keyed by its nodes. The graph builder takes
+/// this model, so analysis cannot be skipped.
 /// </summary>
 internal sealed class SemanticModel
 {

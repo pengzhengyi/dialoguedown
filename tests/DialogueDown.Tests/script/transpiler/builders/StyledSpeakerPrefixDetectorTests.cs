@@ -44,7 +44,7 @@ public sealed class StyledSpeakerPrefixDetectorTests
     [Fact]
     public void Report_StylingWithinTheName_Reports()
     {
-        // Only part of the name is styled, but the flattened run is still a prefix.
+        // Only part of the name is styled, but the flattened text is still a prefix.
         var diagnostic = Assert.Single(Check(Text("A"), Italic(Text("l")), Text("ice: hi")));
 
         Assert.Equal("Alice:", Assert.Single(diagnostic.MessageArguments));
@@ -52,7 +52,7 @@ public sealed class StyledSpeakerPrefixDetectorTests
 
     [Fact]
     public void Report_AFullyStyledLine_ReportsNothing() =>
-        // The colon is inside the styling, so the styled run does not end before it.
+        // The colon is inside the styling, so the styled text does not end before it.
         Assert.Empty(Check(Italic(Text("Alice: hi"))));
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class StyledSpeakerPrefixDetectorTests
 
     [Fact]
     public void Report_AStyledNonName_ReportsNothing() =>
-        // A multi-word run is not a valid speaker name, so it does not parse as a prefix.
+        // Several words are not a valid speaker name, so they do not parse as a prefix.
         Assert.Empty(Check(Italic(Text("the great")), Text(": hi")));
 
     [Fact]

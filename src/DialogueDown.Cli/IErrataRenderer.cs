@@ -8,8 +8,8 @@ internal interface IErrataRenderer
 {
     /// <summary>
     /// Writes each diagnostic in <paramref name="diagnostics"/>, sorted by position then code,
-    /// followed by a summary and, when any carries an unapplied fix, a hint counting how many are exactly
-    /// what a plain compile prints. On an interactive console it renders rich Errata blocks with a
+    /// followed by a summary and, when any carries a fix, a hint such as
+    /// <c>2 fixable with --fix</c>. On an interactive console it renders rich Errata blocks with a
     /// source snippet and caret over <paramref name="source"/>; otherwise it writes the greppable
     /// <c>file(line,column): severity CODE: message</c> one-liner.
     /// </summary>

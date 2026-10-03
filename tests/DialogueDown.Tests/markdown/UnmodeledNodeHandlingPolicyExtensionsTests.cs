@@ -56,8 +56,8 @@ public sealed class UnmodeledNodeHandlingPolicyExtensionsTests
     public void BothQuestions_AreFalse_ForAHandlingThisCodeDoesNotKnow()
     {
         // The two are deliberately not each other's negation: a handling nothing here
-        // understands answers "no" to both, which is what lets a caller notice it rather than
-        // guess. MarkdigUnmodeledNodeHandler relies on this to fail loudly.
+        // understands answers "no" to both, so a caller can notice it and throw rather than
+        // guess.
         var policy = new UnknownHandlingPolicy();
 
         Assert.False(policy.ShouldIgnore(ThematicBreak()));

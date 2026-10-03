@@ -21,10 +21,8 @@ async function serving(body, run) {
     }
 }
 
-// The guard exists because `reuseExistingServer` adopts whatever holds a fixture port, so a
-// server left behind by another worktree runs the suite against a different build in silence.
-// Naming the port and the checkout is the whole point: the message has to send the reader to the
-// other server rather than to the tests that failed because of it.
+// The message names the port and the checkout, so it sends the reader to the other server rather
+// than to the tests that failed because of it.
 test("rejects a server that is not serving this checkout's fixtures", async () => {
     await serving("<!doctype html><body>a different build</body>", async (port) => {
         await assert.rejects(guardPortsIn([port], fixtures), (error) => {

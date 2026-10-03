@@ -97,10 +97,10 @@ export interface SourceOptions {
      */
     symbols?: DialogueSymbolProvider;
     /**
-     * An asynchronous boundary guarding navigation (switching tabs or selecting another node): it
-     * runs `proceed` once the active document's Auto save has flushed, or the reader chose to
-     * discard in Manual, and does nothing when navigation should stay put. Only the latest intent
-     * runs. Absent means navigation is always allowed.
+     * An asynchronous boundary guarding navigation (switching tabs, or jumping between the source
+     * and a stage): it runs `proceed` once the active document's Auto save has flushed, or the
+     * reader chose to discard in Manual, and does nothing when navigation should stay put. Only
+     * the latest intent runs. Absent means navigation is always allowed.
      */
     beginNavigation?(proceed: () => void): void;
     /** Called whenever the active tab changes, so the caller can reflect the active document's chrome. */
@@ -124,7 +124,7 @@ export interface AppController {
     setDiagnostics(diagnostics: readonly LspDiagnostic[]): void;
     /** Replace the Source editor's semantic-token highlighting after a recompile. */
     setSemanticTokens(tokens: readonly SemanticToken[]): void;
-    /** Replace the fixed panel's language-owned jump targets after a recompile. */
+    /** Replace the reserved jump targets listed in the Source editor's panel after a recompile. */
     setReservedTargets(targets: readonly ReservedTarget[]): void;
     /** Switch the config (TOML) editor between editable (Edit) and read-only (View) in place. */
     setConfigEditable(editable: boolean): void;
@@ -147,17 +147,17 @@ export interface AppController {
 }
 
 /**
- * Build the tabs — an optional Source tab followed by one per stage — wire the
- * shared interactions, and return a controller for live updates.
+ * Build the tabs — optional Config and Source tabs, one tab per stage, then an optional Playbook
+ * tab — wire the shared interactions, and return a controller for live updates.
  */
 export function runApp(
     report: Report,
     source?: SourceOptions,
     debug?: DebugController,
 ): AppController {
-    // TODO(runtime-debugger, #45): Inject a server-backed DebugController here once the
-    // dialogue graph and runtime can publish source-mapped execution snapshots. Until then,
-    // production callers omit it and the debugger UI remains completely dormant.
+    // TODO(runtime-debugger): Pass a server-backed DebugController here once the runtime can
+    // publish execution snapshots mapped to source positions. Production callers omit it, so the
+    // debugger UI is not installed.
     const tabsEl = document.getElementById("tabs")!;
     const stagesEl = document.getElementById("stages")!;
     const appEl = document.getElementById("app")!;
@@ -189,8 +189,8 @@ export function runApp(
         highlight: (what) => views[activeIndex]?.spotlight(what),
     });
 
-    // A region is shown as itself: how much it holds, what crosses its border, and the stretch of
-    // document it was written as — sliced from the source the report already carries.
+    // Shows a region in the inspector: how much it holds, what crosses its border, and the text
+    // it was written as, sliced from the source the report already carries.
     function showRegion(stage: Stage, region: string): void {
         const detail = regionDetailOf(stage, region);
         const text =
@@ -251,7 +251,7 @@ export function runApp(
     // The Problems panel and its status-line summary. Both live here rather than in the page
     // chrome because this is where the diagnostics and the save-safe jump already are. A report
     // with no source has nothing to diagnose and no editor to jump into — the file selector is
-    // that report — so the panel, its drawer tab, and its counts stay out of the reader's way.
+    // that report — so it gets no panel, no drawer tab, and no counts.
     const diagnosing = report.source != null;
     const problems = diagnosing
         ? createProblemsPanel({
@@ -293,9 +293,8 @@ export function runApp(
     if (summary) document.querySelector(".status-bar")?.appendChild(summary.element);
 
     /**
-     * The one place diagnostics fan out. Updating the editor overlay, the list, and the counts
-     * from separate call sites is how a stale badge survives a fix — the squiggle clears while
-     * the summary still says three.
+     * Sends diagnostics to the editor overlay, the Problems list, and the counts together, so the
+     * three always agree.
      */
     function applyDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
         const ordered = orderDiagnostics(diagnostics);
@@ -325,8 +324,7 @@ export function runApp(
             activate(index);
             views[index]?.selectById(match.node.id, { center: true, reveal: true });
             // Ignored Markdown becomes no node in any stage, so the jump lands on the node that
-            // encloses it. Said beside that node rather than inside the inspector: after a jump the
-            // reader is watching the drawing they arrived in, not the panel beside it.
+            // encloses it, and a note beside that node says so.
             if (!context.ignored) {
                 hideArrivalNote();
                 return;
@@ -349,16 +347,16 @@ export function runApp(
         if (stage == null || stage.unavailable != null) return null;
         return findEnclosingNode(stage, from, to)?.extent ?? null;
     }
-    // Per tab: its tree view (graph tabs) or null (the Source tab, which has no
-    // node-detail panel and no keyboard tree navigation).
+    // Per tab: its tree view, or null for a tab with no graph (Config, Source, Playbook, or an
+    // unavailable stage), which has no node inspector and no keyboard tree navigation.
     let views: (TreeView | null)[] = [];
     // Per tab: resources owned outside the tree view, such as Semantic preview renderers.
     let disposers: Array<() => void> = [];
     // The stages of the latest render, kept live for reverse Jump-to lookups: a save replaces
     // them through `updateStages`, and the Source view (with its Jump-to menu) outlives that.
     let currentStages: readonly Stage[] = [];
-    // Per tab: its camera-store key — the stage title for a graph tab, or null for
-    // the Source tab (which has no graph and no camera).
+    // Per tab: its camera-store key — the stage title for a stage tab, or null for the Config,
+    // Source, and Playbook tabs (which have no graph and no camera).
     let keys: (string | null)[] = [];
     // Per tab: its title, the stable identifier used to remember the last-open tab so a
     // refresh returns to it (indices shift when the Config tab is present, titles do not).
@@ -366,13 +364,13 @@ export function runApp(
     // Remembers each stage's zoom/pan and fold across tab switches and rebuilds.
     const cameras = new GraphCameraStore();
     // The stable id of the node the inspector is currently showing, or null when nothing is
-    // selected. Captured before a save-triggered `updateStages` rebuild so the selection — and
-    // the open inspector editor bound to it — can be restored against the freshly built view.
+    // selected. Captured before a save-triggered `updateStages` rebuild so the selection can be
+    // restored against the freshly built view.
     let selectedNodeId: string | null = null;
 
-    // Record the shown node's stable id, then drive the shared inspector. Wrapping `panel.show`
-    // (rather than calling it directly) is what lets `updateStages` reselect the same node after
-    // a rebuild, keeping the inspector editor open and rebound to the node's current source.
+    // Record the shown node's stable id, then fill the shared inspector. The recorded id is what
+    // lets `updateStages` reselect the same node after a rebuild, so the inspector stays open on
+    // the node's current version.
     function showNode(node: DisplayNode, recognizeJumps: boolean, stage?: Stage): void {
         selectedNodeId = node.id;
         shownStage = stage ?? null;
@@ -390,7 +388,7 @@ export function runApp(
 
     // The whole-window maximize mode (graphs and the source split) — one page-level action,
     // so it gets one app-level control (at the right end of the tab-nav row) plus the
-    // `f` / Escape keys, rather than a copy in every tab. Wired once for the app's lifetime.
+    // `f` / Escape keys. Wired once for the app's lifetime.
     const fullscreen = initFullscreen();
     // Arrow controls for the tab row, for readers whose pointing device cannot scroll
     // horizontally. They flank the row and hide themselves whenever it already fits.
@@ -485,8 +483,8 @@ export function runApp(
         configPresent = report.configuration != null;
         currentStages = report.stages;
 
-        // The Config tab comes first (a gear icon marks it), but the report still opens on
-        // Source below — Config is one click away for a reader who just wants the dialogue.
+        // The Config tab comes first (a gear icon marks it), but the default tab chosen below is
+        // still Source — Config is one click away for a reader who just wants the dialogue.
         if (report.configuration != null) {
             const section = document.createElement("section");
             section.className = "stage config-stage";
@@ -553,13 +551,12 @@ export function runApp(
         return 0;
     }
 
-    // Replace only the graph tabs (on a Live Edit save), leaving the Source tab and its
-    // editor — and the reader's cursor — untouched. Each graph's remembered camera and
-    // fold are recorded live (as the reader adjusts them), so a rebuilt stage restores
+    // Replace only the stage tabs and the Playbook tab after a recompile, leaving the Config and
+    // Source tabs and their editors — and the reader's cursor — untouched. Each graph's remembered
+    // camera and fold are recorded live (as the reader adjusts them), so a rebuilt stage restores
     // its position from the store. The inspector's selected node is remembered by its stable
-    // id and reselected against the freshly built view, so a successful autosave never closes
-    // the open node inspector; if the node is gone from the recompiled graph, the selection
-    // cancels safely and the inspector clears.
+    // id and reselected against the freshly built view, so a recompile does not close the node
+    // inspector; if the node is gone from the recompiled graph, the inspector clears.
     function updateStages(stages: Stage[], playbook?: PlaybookReport): void {
         const reselectId = selectedNodeId;
         currentStages = stages;
@@ -578,8 +575,8 @@ export function runApp(
         if (views.length > 0) {
             activate(Math.min(activeIndex, views.length - 1));
             // `activate` clears every view's selection and the inspector; restore the remembered
-            // node in the now-active view (re-opening and rebinding its inspector editor). A
-            // missing id resolves to `false` and leaves the inspector cleared.
+            // node in the now-active view. A missing id resolves to `false` and leaves the
+            // inspector cleared.
             if (reselectId !== null) views[activeIndex]?.selectById(reselectId);
         }
     }
@@ -587,12 +584,12 @@ export function runApp(
     /**
      * The Playbook tab, appended after the graph stages because the playbook is what the last
      * stage becomes: the artifact a runtime loads. It is not a stage — it has no graph — so it
-     * carries a `null` view and, like Config, refreshes through its own handle. A report built
+     * carries a `null` view, and `updateStages` rebuilds it with the stage tabs. A report built
      * without the compiler (a bare graph render) has no playbook and gets no tab.
      */
     function addPlaybookTab(playbook: PlaybookReport | undefined): void {
-        // A recompile that did not carry a playbook keeps showing the last one rather than
-        // dropping the tab out from under the reader.
+        // A recompile that did not carry a playbook keeps showing the last one, so the tab does
+        // not disappear while the reader is on it.
         const next = playbook ?? currentPlaybook;
         if (next == null) return;
         currentPlaybook = next;
@@ -607,8 +604,8 @@ export function runApp(
         section.className = "stage";
         if (stage.unavailable) {
             // The stage's artifact was not produced (a halted compile). Render a disabled tab
-            // the reader cannot enter; its content is intentionally empty — surfacing the
-            // diagnostics is a separate concern.
+            // the reader cannot enter; its content is intentionally empty — the Problems panel
+            // lists the diagnostics.
             addTab(stage.title, section, null, stage.description, stage.title, undefined, {
                 reason: stage.unavailable.reason,
             });
@@ -746,12 +743,13 @@ export function runApp(
         Array.from(stagesEl.children).forEach((el, i) =>
             el.classList.toggle("active", i === index),
         );
-        // The Source tab (no tree view) and the Semantic tab (its own tables) have no shared
-        // node-detail inspector; hide it so their content takes the full width.
-        const isSource = views[index] === null;
+        // A tab with no tree view (Config, Source, Playbook) and the Semantic tab (its own
+        // tables) have no shared node-detail inspector; hide it so their content takes the full
+        // width.
+        const hasNoGraph = views[index] === null;
         const section = stagesEl.children[index] as HTMLElement | undefined;
         const isSemantic = section?.classList.contains("semantic-stage") ?? false;
-        appEl.classList.toggle("no-detail", isSource || isSemantic);
+        appEl.classList.toggle("no-detail", hasNoGraph || isSemantic);
         setHelp(helpContextFor(index));
         // Frame the tab now that it is visible (a tree built while hidden had a
         // zero-size container). Applying its remembered position — instead of always
@@ -766,15 +764,14 @@ export function runApp(
     /**
      * Which help the active tab shows.
      *
-     * The help follows the stage's shape rather than its tab name: the flow graph is the one whose
-     * digits answer ways in with Shift, so it gets the full map, while the syntax and semantic
-     * trees get the map their edges actually support — ways out only. The Source tab and the
-     * Config tab share the source's explanation; a playbook has its own.
+     * The help follows the stage's shape rather than its tab name: in a flow graph the digit keys
+     * take ways out and, with Shift, ways in; in a tree they take children only. The Semantic tab
+     * has its own help. The Source tab and the Config tab share the source's explanation; the
+     * Playbook tab has its own.
      */
     function helpContextFor(index: number): HelpContext {
         const section = stagesEl.children[index] as HTMLElement | undefined;
         if (section?.classList.contains("playbook-stage")) return "playbook";
-        // Source and Config have no graph; Config borrows the source's explanation.
         if (views[index] === null) return "source";
         if (section?.classList.contains("semantic-stage")) return "semantic";
         const stage = currentStages.find((candidate) => candidate.title === titles[index]);

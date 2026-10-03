@@ -46,12 +46,9 @@ public sealed class TreeWatchesTests
             File.WriteAllText(document, $"# Write {i}");
         }
 
-        // The quiet period runs on the injected clock, so a report lands only when the test moves
-        // it — however the operating system decides to split the save, and however long a loaded
-        // runner holds a write back. Advancing doubles as the delivery probe: a write the watcher
-        // has been told about has armed the timer, and the advance fires it once. The loop stops
-        // at the first report, so a straggler delivered later can only re-arm a clock that never
-        // moves again. Exactly one report is therefore the outcome under every delivery timing.
+        // The quiet period runs on the injected clock, so a report fires only when the test
+        // advances it, whenever the operating system delivers the writes. The loop stops at the
+        // first report, so a write delivered later can only re-arm a clock that no longer moves.
         var deadline = DateTime.UtcNow + _patience;
         while (Volatile.Read(ref count) == 0 && DateTime.UtcNow < deadline)
         {
@@ -173,8 +170,7 @@ public sealed class TreeWatchesTests
     [Fact]
     public void Watch_RegistersNoFurtherWatcherForDocumentsSharingAFolder()
     {
-        // The point of the whole exercise: opening script after script must not keep paying the
-        // operating system to start watching. One registration covers a folder.
+        // Registering an operating-system watch is slow, so one registration covers a folder.
         using var tree = new TempTree();
         using var watches = new TreeWatches(tree.Root);
         var opened = new List<IDisposable>();
@@ -194,8 +190,6 @@ public sealed class TreeWatchesTests
     [Fact]
     public void Watch_RegistersOneWatcherPerFolder()
     {
-        // A folder costs one registration, not one per document — and never one per open, which is
-        // what made switching scripts slow.
         using var tree = new TempTree();
         using var watches = new TreeWatches(tree.Root);
         var opened = new List<IDisposable>();

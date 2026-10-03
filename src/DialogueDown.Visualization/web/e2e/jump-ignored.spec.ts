@@ -8,13 +8,13 @@ import { writeReport } from "./report";
 const source = [
     "# The Market", // 0
     "", // 13
-    "Trader: Apples.", // 15
-    "", // 31
-    "| Item | Cost |", // 32
-    "| --- | --- |", // 48
-    "| Rope | 5 |", // 62
-    "", // 75
-    "Alice: Two please.", // 76
+    "Trader: Apples.", // 14
+    "", // 30
+    "| Item | Cost |", // 31
+    "| --- | --- |", // 47
+    "| Rope | 5 |", // 61
+    "", // 74
+    "Alice: Two please.", // 75
 ].join("\n");
 
 const dialogueStart = source.indexOf("Trader: Apples.");

@@ -6,6 +6,10 @@ namespace DialogueDown.Playbook.Speech;
 /// <summary>
 /// A read of game state spliced into speech — the runner resolves it before the line is said.
 /// </summary>
+/// <remarks>
+/// <c>Alice: My favorite color is `"Alice.FavoriteColor"`.</c> holds a query for the key
+/// <c>Alice.FavoriteColor</c>.
+/// </remarks>
 /// <param name="Key">What the world is asked for.</param>
 public sealed record QueryFragment(string Key) : SpeechFragment
 {

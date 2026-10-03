@@ -6,7 +6,7 @@ using DialogueDown.Script.Semantics;
 namespace DialogueDown.Graph.Builder;
 
 /// <summary>
-/// A spoken line under construction: its resolved speaker and displayable speech, combined with
+/// A spoken line under construction: its resolved speaker and speech, combined with
 /// the edges accumulated by graph passes when frozen.
 /// </summary>
 internal sealed class LineNodeDraft : NodeDraft, IConditionalNode

@@ -5,7 +5,7 @@ export interface ContextMenuAction {
     icon?: string;
     label: string;
     run: () => void;
-    /** Fired while the pointer rests on the item (e.g. to preview what choosing it would do). */
+    /** Fired when the pointer enters the item (e.g. to preview what choosing it would do). */
     onHover?: () => void;
     /** Fired when the pointer leaves the item, to undo an {@link onHover} effect. */
     onBlur?: () => void;

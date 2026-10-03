@@ -3,9 +3,7 @@ namespace DialogueDown.Visualization.Editor;
 /// <summary>
 /// The vocabulary of dialogue tokens the editor highlights — the semantic-tokens "legend". Each
 /// value names a dialogue-specific construct that generic Markdown highlighting does not
-/// understand; a future language server publishes this set as its semantic-tokens legend. The
-/// members serialize by name (PascalCase) into the report payload, matching the other payload
-/// enums.
+/// understand. The members serialize by name (PascalCase) into the report payload.
 /// </summary>
 internal enum TokenKind
 {

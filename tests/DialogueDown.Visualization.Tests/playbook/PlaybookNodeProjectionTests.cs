@@ -81,9 +81,8 @@ public sealed class PlaybookNodeProjectionTests
         Assert.Empty(end.Targets);
     }
 
-    // A playbook node is the same node the Dialogue Graph drew one tab earlier, so it wears the
-    // color that tab gave it. Reading the categories off the graph rather than restating them
-    // means recoloring one surface cannot leave the other behind.
+    // A playbook node is the same node the Dialogue Graph tab draws, so its row takes the
+    // category, and with it the color, that the graph gives the node.
     [Fact]
     public void Project_ARowsCategory_IsTheOneTheDialogueGraphGivesThatNode()
     {

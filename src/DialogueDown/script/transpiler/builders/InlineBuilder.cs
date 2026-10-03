@@ -12,8 +12,8 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// Walks inline content into fragments: a line's Speech, or the alt of an image and the
 /// label of a link. A piece of text is re-tokenized for embedded tags and jumps and
 /// built via the leaf builder; emphasis recurses in the same context; an image alt or a
-/// link label recurses under the label policy; a code span becomes a game call; a soft
-/// break becomes a line break. Speech admits everything; the injected label policy says
+/// link label recurses under the label policy; a code span becomes a condition or a game call;
+/// a line break stays a line break. Speech admits everything; the injected label policy says
 /// what a label admits and what an inadmissible element becomes.
 /// </summary>
 internal sealed class InlineBuilder(
@@ -79,7 +79,8 @@ internal sealed class InlineBuilder(
                         new ParseInput(code.Content, code.Span.Start), code.Span, diagnostics));
                 break;
             case MarkdownLineBreak:
-                // A soft break is kept as a display hint; hard breaks are split off earlier.
+                // Kept as a display hint. The block builder has already split a paragraph into
+                // lines at its top-level hard breaks.
                 fragments.Add(new AstLineBreak(inline.Span));
                 break;
             default:

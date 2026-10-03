@@ -21,7 +21,7 @@ public sealed class LineMapTests
     [InlineData("a\r\nb", 4, 2, 2)] // end of source
     // Empty source: one line, column one.
     [InlineData("", 0, 1, 1)]
-    // End-of-source positions from the note's DR4.
+    // The end of the source, with and without a trailing newline.
     [InlineData("abc", 3, 1, 4)]
     [InlineData("abc\n", 4, 2, 1)]
     public void Locate_MapsOffsetToOneBasedLineAndColumn(string source, int offset, int line, int column) =>

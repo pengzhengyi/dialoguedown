@@ -38,7 +38,7 @@ function fakePorts(overrides: Partial<ScriptSwitchPorts> = {}) {
     return ports;
 }
 
-/** Let the pending fetches in a switch settle up to the point the test parked them. */
+/** Let a switch's pending fetches settle, except the ones the test holds open. */
 const settle = async () => {
     for (let i = 0; i < 5; i++) await new Promise((resolve) => setTimeout(resolve));
 };
@@ -99,8 +99,8 @@ describe("createScriptSwitch", () => {
     });
 
     it("falls back to a whole page when the opened script does not fit the page", async () => {
-        // A script under a different dialogue.toml compiles in another context, so the page it was
-        // built for no longer describes it.
+        // A script under a different dialogue.toml compiles in another context, so the current
+        // page does not describe it.
         const ports = fakePorts({ fitsPage: vi.fn(() => false) });
 
         await createScriptSwitch(ports, INITIAL).open(FINALE);

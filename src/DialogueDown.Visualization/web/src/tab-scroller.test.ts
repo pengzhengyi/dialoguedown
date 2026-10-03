@@ -96,7 +96,7 @@ describe("createTabScroller", () => {
         const scroller = createTabScroller(nav);
         expect(scroller.next.hidden).toBe(true);
 
-        // The window narrowed, so tabs that fit a moment ago no longer do.
+        // The window narrows until the tabs overflow.
         stubGeometry(nav, 900, 300);
         scroller.refresh();
 

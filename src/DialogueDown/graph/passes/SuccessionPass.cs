@@ -4,11 +4,11 @@ using DialogueDown.Graph.Edges;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Wires the default flow: each block falls through to the node control reaches once it is done —
-/// the next block in its sequence, or that sequence's continuation. Runs after the passes that add
-/// diverts and options, so a node control already leaves is not also given a fall-through. A
-/// conditional node is the exception: its condition may skip it whole, taking any divert it holds with it,
-/// so it needs somewhere to continue however it leaves when it does play.
+/// Wires the default flow: each block falls through to the node control reaches once it is done,
+/// the next block in its sequence or that sequence's continuation. Runs after the passes that add
+/// diverts, options, and branches, so a node control already leaves is not also given a
+/// fall-through. A conditional node always gets one: when its condition fails it is skipped
+/// whole, divert included, and control needs somewhere to go.
 /// </summary>
 internal sealed class SuccessionPass : GraphBuildPass
 {

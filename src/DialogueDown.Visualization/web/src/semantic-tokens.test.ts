@@ -103,8 +103,8 @@ describe("decoratedRanges", () => {
     it("clamps a stale range past the end of the shrunken buffer", () => {
         const state = EditorState.create({ doc: "Hi." });
 
-        // A token on a line that no longer exists clamps to the document end; both ends land
-        // on the end offset, so it collapses to zero width and is dropped rather than throwing.
+        // Line 9 is past the document's end, so both ends clamp to the end offset; the
+        // zero-width range is dropped rather than throwing.
         expect(decoratedRanges(state, [token("SpeakerName", 9, 0, 5)])).toEqual([]);
     });
 });

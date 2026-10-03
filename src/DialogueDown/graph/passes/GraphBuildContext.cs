@@ -60,7 +60,8 @@ internal sealed class GraphBuildContext
     public JumpResolution ResolveJump(Jump jump) => Semantics.Jumps.Resolve(jump);
 
     /// <summary>
-    /// The block reaching <paramref name="scene"/> lands on, or null when nothing follows it.
+    /// The block where play enters <paramref name="scene"/>: its first block, or the next block in
+    /// reading order when it has none of its own; null when nothing follows its heading.
     /// </summary>
     public ScriptBlock? EntryBlockOf(Scene scene) => _entryBlockByScene[scene];
 }

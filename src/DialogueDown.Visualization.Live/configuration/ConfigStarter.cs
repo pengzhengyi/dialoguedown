@@ -1,10 +1,9 @@
 namespace DialogueDown.Visualization.Live.Configuration;
 
 /// <summary>
-/// The seed text a newly created <c>dialogue.toml</c> is written with. It is a friendly,
-/// fully commented scaffold: it teaches the <c>mode</c> setting and the <c>[[speakers]]</c> schema
-/// by example, yet the project keeps compiling on the built-in defaults until the reader uncomments
-/// it — so creating a config has no effect on the resolved options until they choose to edit.
+/// The seed text a newly created <c>dialogue.toml</c> is written with. It teaches the
+/// <c>mode</c> setting and the <c>[[speakers]]</c> schema by example, all commented out, so the
+/// project keeps compiling on the built-in defaults until the reader uncomments a setting.
 /// </summary>
 internal static class ConfigStarter
 {

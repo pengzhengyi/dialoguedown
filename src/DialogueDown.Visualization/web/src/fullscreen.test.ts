@@ -217,9 +217,8 @@ describe("initFullscreen — Zen mode", () => {
     it("blurs a control inside a panel Zen hides, so it cannot be activated unseen", () => {
         const fs = initFullscreen(document.body, document);
 
-        // The preview's collapse toggle lives inside the divider Zen hides. If focus stayed
-        // there, Enter would collapse the preview and persist that choice — the one thing
-        // Zen promises never to touch.
+        // The preview's collapse toggle sits inside the divider Zen hides. With focus left
+        // there, Enter would collapse the preview and save that choice.
         const divider = document.createElement("div");
         divider.className = "source-divider";
         const toggle = document.createElement("button");
@@ -279,8 +278,8 @@ describe("initFullscreen — Zen mode", () => {
     it("blurs a control in the chrome, which both focus modes hide", () => {
         const fs = initFullscreen(document.body, document);
 
-        // Save/Discard/Reload and the help toggle live in the chrome, so full screen alone
-        // can already strand focus on them.
+        // Save, Discard, Reload, and the help toggle sit in the chrome that full screen alone
+        // hides, so focus must leave them.
         const footer = document.createElement("div");
         footer.className = "app-footer";
         const save = document.createElement("button");

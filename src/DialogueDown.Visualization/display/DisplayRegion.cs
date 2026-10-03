@@ -1,7 +1,7 @@
 namespace DialogueDown.Visualization.Display;
 
 /// <summary>
-/// A named area of the document a stage's nodes sit in — a scene today, a file later.
+/// A named area of the document a stage's nodes sit in, such as a scene.
 /// </summary>
 /// <remarks>
 /// A region is metadata rather than flow, so it is carried beside the nodes rather than as edges

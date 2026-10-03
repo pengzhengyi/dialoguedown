@@ -4,7 +4,7 @@ using DialogueDown.Diagnostics;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>
-/// Object Mother for the diagnostic model, so a test builds a descriptor, a diagnostic, a fix, or
+/// Builds the diagnostic model for tests, so a test builds a descriptor, a diagnostic, a fix, or
 /// an edit through one place with sane defaults and a constructor change touches only this file. A
 /// descriptor is built directly where it is the type under test; here it is a ready dependency.
 /// </summary>
@@ -41,8 +41,8 @@ internal static class DiagnosticsFactory
     public static DiagnosticEdit Edit(SourceSpan? span = null, string newText = "\\") =>
         new(span ?? SourceSpanFactory.Span(0, 0), newText);
 
-    /// <summary>A fail-fast sink over a fresh bag; <paramref name="collected"/> outs the bag so a
-    /// test can inspect what was forwarded before any throw.</summary>
+    /// <summary>A fail-fast sink over a fresh bag; <paramref name="collected"/> returns the bag
+    /// so a test can inspect what was forwarded before any throw.</summary>
     public static FailFastDiagnosticSink FailFastSink(out DiagnosticBag collected)
     {
         collected = new DiagnosticBag();

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { SAMPLE_REPORT, SAMPLE_SOURCE, writeReport } from "./report";
 
 // Two problems on known lines of the sample document, so the assertions can name exact text.
-// Line 6 (zero-based) is the "Alice:" line; line 12 is inside "The Market" scene.
+// Line 6 (zero-based) is the "Alice:" line; line 12 is a filler paragraph further down.
 const url = writeReport({
     ...SAMPLE_REPORT,
     diagnostics: [
@@ -141,7 +141,7 @@ test("condenses the status line to icons rather than wrapping it on a phone", as
         };
     });
 
-    // The long paths were what wrapped the line onto three rows; their tooltips still carry them.
+    // The long paths are what would wrap the line; hidden here, their tooltips still carry them.
     expect(line.pathTextShown).toBe(false);
     expect(line.pathWidth).toBeLessThan(60);
     expect(line.rows).toBe(1);
@@ -155,9 +155,8 @@ test("marks a missing config when its label is hidden", async ({ page }) => {
     await expect(page.locator("#config-path")).toHaveClass(/config-missing/);
 });
 
-// The status line regressed at 780px once before: an older rule stacked it into a column
-// below 800px while the icon-collapse only started at 720px, leaving a band that wrapped onto
-// three rows. Sweep the range rather than testing one convenient width.
+// The status line changes layout at more than one breakpoint, and a band of widths between two
+// of them could wrap it onto several rows. Sweep the range rather than one convenient width.
 for (const width of [420, 600, 760, 900, 1280]) {
     test(`keeps the status line on one row at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 800 });
@@ -227,8 +226,8 @@ test("leaves no underline on the tab you switched away from", async ({ page }) =
 
     await page.locator('.drawer-tab[data-panel="problems"]').click();
 
-    // The framework animates border colors on buttons, so the tab just left kept a fading
-    // underline that read as a second selected tab.
+    // The framework animates border colors on buttons, so without a zero transition the tab just
+    // left would keep a fading underline that reads as a second selected tab.
     const help = page.locator('.drawer-tab[data-panel="help"]');
     await expect(help).toHaveCSS("border-bottom-color", "rgba(0, 0, 0, 0)");
     await expect(help).toHaveCSS("transition-duration", "0s");

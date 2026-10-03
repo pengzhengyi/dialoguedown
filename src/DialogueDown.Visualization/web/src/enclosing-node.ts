@@ -38,7 +38,8 @@ export interface EnclosingScope {
  * only common ancestor is the document) resolves instead to the scene containing its start. Stages
  * without scenes fall back to the common ancestor.
  *
- * @returns the matching node and its extent, or `null` when no span-bearing node contains the offset.
+ * @returns the matching node and its extent, or `null` when no span-bearing node contains the
+ * selection's start.
  */
 export function findEnclosingNode(
     scope: EnclosingScope,

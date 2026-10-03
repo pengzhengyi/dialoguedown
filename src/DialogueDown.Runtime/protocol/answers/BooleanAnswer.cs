@@ -4,7 +4,7 @@ namespace DialogueDown.Runtime.Protocol;
 /// The world answers yes or no.
 /// </summary>
 /// <remarks>
-/// What a guard is owed. A writer gates a line or a jump on a key — <c>Alice.HasKey</c>,
+/// The answer a condition needs. A writer gates a line or a jump on a key — <c>Alice.HasKey</c>,
 /// <c>QuestAccepted</c> — and the answer depends on what the player has done by the time the line
 /// is reached. It cannot be settled when the script is compiled, which is why the running game is
 /// asked for it.

@@ -68,7 +68,7 @@ public sealed record NodeDescription
     /// <summary>
     /// The node's source location as a half-open character range into the original document
     /// (the structured form of the "span" attribute), so a client can splice an edit back
-    /// into the exact source. Null for a synthetic node with no source of its own.
+    /// into the exact source. Zero-width or null for a synthetic node with no source of its own.
     /// </summary>
     public DisplaySpan? Span { get; init; }
 }

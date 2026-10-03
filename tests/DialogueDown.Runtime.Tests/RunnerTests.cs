@@ -38,8 +38,8 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextWhileTheHostHasSomethingToCarryOut_IsRefused()
     {
-        // The wait a fast-forward must not collapse: advancing here would read past an effect the
-        // world has not applied, and the next thing read might depend on it.
+        // Reading on here would pass an effect the host has not carried out, and the next node
+        // might depend on it.
         var context = PlayContextFactory.AnEffectThenALine();
 
         var result = Runner.Step(context, Started(context), new Next());
@@ -191,7 +191,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_DoneAfterAFailure_CarriesOnFromWhereItStood()
     {
-        // A retry is the same effect, so it keeps its ordinal and the same session carries on.
+        // Failed leaves the run waiting where it stood, so the host can retry and then send Done.
         var context = PlayContextFactory.AnEffectThenALine();
         var failed = Runner.Step(context, Started(context), new Failed("the database refused")).State;
 

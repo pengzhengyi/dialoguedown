@@ -23,7 +23,7 @@ describe("frameToFit", () => {
     });
 
     it("places a small drawing rather than blowing it up", () => {
-        // A three-node graph filling the screen at 400% reads as a mistake, not as a feature.
+        // A drawing smaller than the viewport stays at 100%.
         const camera = frameToFit({ x: 0, y: 0, width: 100, height: 40 }, viewport);
 
         expect(camera.k).toBe(1);
@@ -47,7 +47,7 @@ describe("frameToFit", () => {
     });
 
     it("keeps the drawing clear of a panel floating over the canvas", () => {
-        // The legend has grown tall enough to cover a good part of what it describes.
+        // A panel covers the right 300 px of the 1000 px viewport, leaving 700 px to draw in.
         const content: Extent = { x: 0, y: 0, width: 500, height: 300 };
 
         const camera = frameToFit(content, viewport, { right: 300 }, { padding: 0 });

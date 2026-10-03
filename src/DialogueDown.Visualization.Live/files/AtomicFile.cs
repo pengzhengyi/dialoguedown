@@ -29,57 +29,46 @@ internal enum WriteMode
 /// concurrent in-process saves from the same baseline settle as one write and one conflict rather
 /// than a lost update. Against a <em>separate</em> process (an external editor) this is
 /// <em>optimistic</em> concurrency, not a held OS lock: the snapshot read and the atomic replace
-/// are distinct steps, which keeps the replace a portable, cross-volume-safe rename. A validated
-/// <see cref="Transaction.Write"/> closes that window as a compare-and-swap — the atomic replace
-/// captures the target's immediately previous content into a backup and, if it differs from the
-/// snapshot the caller decided on, rolls the external content back and reports a conflict — so an
-/// edit that lands between the snapshot and the replace is never silently overwritten. The atomic
-/// move also guarantees a reader ever sees only the whole old file or the whole new file — never a
-/// partial write.
+/// are distinct steps. A validated <see cref="Transaction.Write"/> checks that window as a
+/// compare-and-swap, so an edit made between the snapshot and the replace is never silently
+/// overwritten. The atomic move also means a reader sees only the whole old file or the whole new
+/// file, never a partial write.
 /// </remarks>
 internal static class AtomicFile
 {
     // A brief bounded spin lets a concurrent writer (another save, or a quick external editor)
     // release its handle so the atomic replace can complete instead of failing the save outright.
-    //
-    // The spin sleeps the thread rather than awaiting, and stays that way deliberately. Renaming
-    // has no asynchronous form to call: POSIX `rename`/`unlink` and Win32 `MoveFileEx`/`ReplaceFile`
-    // are blocking, unlike read and write, so the BCL offers `ReadAllTextAsync` but no `MoveAsync`.
-    // The libraries that appear to solve this elsewhere — `aiofiles`, `fs.promises` — do not make
-    // the call asynchronous either; they run the same blocking call on a thread pool, which is what
-    // `Task.Run` would do here and what .NET guidance tells a library not to hide behind an async
-    // signature. Awaiting only the delay is possible, but it would cost the monitor below — `await`
-    // cannot cross a `lock` — and the publish itself would block regardless. The retry is reached
-    // about never in practice, and this server has one user, so the thread it holds is not scarce.
+    // The spin sleeps the thread: renaming has no asynchronous API, and the retry runs inside a
+    // `lock`, which `await` cannot cross. It is rarely reached, and the server has one user.
     private const int MaxAttempts = 100;
 
     private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
     private static readonly TimeSpan _retryDelay = TimeSpan.FromMilliseconds(5);
 
-    // One lock per target path serializes this process's own read→decide→write windows, so two
-    // concurrent in-process saves from the same baseline settle as one write and one conflict
-    // rather than a lost update. It does not serialize a separate external process — that narrower,
-    // portable guarantee is covered by the baseline check and the watcher (see the type remarks).
+    // One lock per target path serializes this process's own read→decide→write windows. Another
+    // process is not locked out; the compare-and-swap covers it (see the type remarks).
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _locks =
         new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Reads the current content of <paramref name="path"/> and invokes <paramref name="body"/>
-    /// with a <see cref="Transaction"/> exposing that content and a <see cref="Transaction.Write"/>
-    /// that stages a full replacement. A file that does not exist is reported as <c>null</c>
-    /// content; a no-write outcome touches nothing on disk, so a file that was never present stays
-    /// absent and an externally created one is left untouched. A staged <see cref="Transaction.Write"/>
-    /// is a compare-and-swap: after the atomic replace it validates the content it displaced against
-    /// the snapshot the body decided on, and if an external process wrote the target in the
-    /// meantime it rolls the external content back into place and throws
-    /// <see cref="WriteConflictException"/> rather than silently overwriting that edit. A staged
-    /// <see cref="Transaction.WriteForced"/> replaces whatever is on disk unconditionally (a
-    /// confirmed overwrite). Either way the original is never truncated in place and a failed write
-    /// preserves it.
+    /// Reads the current content of <paramref name="path"/>, passes it to <paramref name="body"/>
+    /// in a <see cref="Transaction"/>, and commits whatever replacement the body staged.
     /// </summary>
+    /// <remarks>
+    /// A file that does not exist is reported as <c>null</c> content; a no-write outcome touches
+    /// nothing on disk, so a file that was never present stays absent and an externally created
+    /// one is left untouched. A staged <see cref="Transaction.Write"/> is a compare-and-swap
+    /// against the snapshot the body decided on; a staged <see cref="Transaction.WriteForced"/>
+    /// replaces whatever is on disk (a confirmed overwrite). Either way the original is never
+    /// truncated in place and a failed write preserves it.
+    /// </remarks>
     /// <exception cref="WriteConflictException">
     /// A validated <see cref="Transaction.Write"/> found the target changed by another process
     /// between the snapshot and the replace; the external content is left on disk.
+    /// </exception>
+    /// <exception cref="WriteUncertainException">
+    /// A validated <see cref="Transaction.Write"/> found the target changed or deleted after the
+    /// replace; the newer content and a backup of the displaced one are left on disk.
     /// </exception>
     public static T Transact<T>(string path, Func<Transaction, T> body)
     {
@@ -92,11 +81,12 @@ internal static class AtomicFile
     /// <summary>
     /// Creates <paramref name="path"/> from <paramref name="content"/> only when it does not
     /// already exist: the full bytes are staged in a same-directory temporary file, flushed, then
-    /// moved into place with a no-overwrite atomic move, so a concurrent create loses the race and
-    /// an incomplete temp is removed on any failure. Throws <see cref="IOException"/> when a file
-    /// already exists at <paramref name="path"/> (the target is left untouched), matching the
-    /// exclusive-create contract callers detect a conflict by.
+    /// moved into place with a no-overwrite atomic move, so an existing file is never replaced and
+    /// an incomplete temp is removed on any failure.
     /// </summary>
+    /// <exception cref="IOException">
+    /// A file already exists at <paramref name="path"/>; it is left untouched.
+    /// </exception>
     public static void CreateNew(string path, string content)
     {
         ArgumentNullException.ThrowIfNull(path);
@@ -137,8 +127,7 @@ internal static class AtomicFile
     // A test seam: <paramref name="afterReplace"/> runs inside a validated replace, after the
     // atomic swap captured the displaced backup but before the rollback/verification reads the
     // target, so a test can deterministically reproduce a target changed or deleted again in that
-    // window (or a post-commit overwrite) without racing real threads. Threaded through the call
-    // rather than held in static state so parallel test collections never see each other's hook.
+    // window (or a post-commit overwrite) without racing real threads.
     internal static T Transact<T>(string path, Func<Transaction, T> body, Action? afterReplace)
     {
         ArgumentNullException.ThrowIfNull(path);
@@ -193,11 +182,9 @@ internal static class AtomicFile
     // Stages the complete replacement bytes in a same-directory temporary file, flushes them to
     // disk, then publishes them over the target. A forced commit moves the temp over whatever is
     // there. A validated commit is a compare-and-swap: a create (expected null) uses a no-overwrite
-    // move so an external create wins the race; a replace captures the target's immediately previous
-    // content into a backup and, if that content is neither the expected snapshot nor the bytes just
-    // written, an external process wrote in the window — the backup is restored and a conflict is
-    // reported. The original is untouched until the publish, so any staging failure leaves it
-    // intact, and the temp/backup are always cleaned.
+    // move so an external create wins the race; a replace checks the content it displaced (see
+    // ReplaceValidated). The original is untouched until the publish, so any staging failure
+    // leaves it intact, and the temp is removed on failure.
     private static void Commit(string path, string content, string? expected, bool validate, Action? afterReplace)
     {
         var fullPath = Path.GetFullPath(path);
@@ -265,16 +252,18 @@ internal static class AtomicFile
         }
     }
 
-    // A validated replace's publish: atomically swap the temp over the target while capturing the
-    // target's immediately previous content into a backup. If that captured content is neither the
-    // expected snapshot nor the bytes just written, an external process wrote in the window; the
-    // external content is rolled back only when the target still holds the bytes this write just
-    // published — otherwise a still newer external write (or another deletion) landed between the
-    // replace and the rollback, so the newer data is preserved and the outcome is uncertain rather
-    // than a lost update. A clean swap is confirmed by a post-commit read of the target; if that
-    // read no longer sees the published bytes, an external overwrite raced the commit and the
-    // outcome is likewise uncertain. Either uncertain path keeps the captured backup on disk so no
-    // content is silently deleted. A clean, verified swap removes the backup.
+    // A validated replace's publish: atomically swap the temp over the target, capturing the
+    // target's previous content in a backup, then decide from what was displaced and what the
+    // target holds now:
+    //
+    //   displaced                    target now       outcome
+    //   the snapshot, or our bytes   our bytes        saved; backup removed
+    //   the snapshot, or our bytes   anything else    uncertain; backup kept
+    //   an external edit             our bytes        backup restored; conflict
+    //   an external edit             anything else    uncertain; backup kept
+    //
+    // A target deleted before the swap is a conflict. Keeping the backup when the outcome is
+    // uncertain means no content is silently lost.
     private static void ReplaceValidated(
         string temp, string target, string expected, string content, Action? afterReplace)
     {
@@ -305,29 +294,26 @@ internal static class AtomicFile
         if (displaced == expected || displaced == content)
         {
             // A clean swap. Verify the target still holds the bytes we published before declaring
-            // success: an external overwrite that raced the commit leaves newer data we must not mask.
+            // success: an external overwrite that raced the commit leaves newer data.
             if (ReadSnapshot(target) == content)
             {
                 TryDelete(backup);
                 return;
             }
 
-            // Post-commit verification failed: newer external data is on the target. Preserve the
-            // captured backup and surface an uncertain outcome instead of a false success.
             throw new WriteUncertainException();
         }
 
-        // An external edit landed in the window. Roll it back into place only when the target still
-        // holds the bytes we just published; otherwise a still newer external write (or a deletion)
-        // arrived after the replace, and overwriting it with the older backup would lose data.
+        // An external edit was made in the window. Roll it back into place only when the target
+        // still holds the bytes we just published; otherwise a still newer external write (or a
+        // deletion) arrived after the replace, and overwriting it with the older backup would lose
+        // data.
         if (ReadSnapshot(target) == content)
         {
             Replace(backup, target);
             throw new WriteConflictException();
         }
 
-        // The target changed or was deleted again between the replace and the rollback: keep the
-        // captured backup on disk and report uncertain rather than clobber the newer external data.
         throw new WriteUncertainException();
     }
 
@@ -399,7 +385,7 @@ internal static class AtomicFile
 
         /// <summary>
         /// Stages <paramref name="content"/> as an unconditional overwrite — a confirmed overwrite
-        /// that intentionally replaces whatever is on disk, still atomically and non-destructively.
+        /// that replaces whatever is on disk, still through an atomic move.
         /// </summary>
         public void WriteForced(string content)
         {

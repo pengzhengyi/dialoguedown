@@ -7,8 +7,7 @@ namespace DialogueDown.Runtime.Tests;
 /// What the world answers when a run asks it something, written the way a test means it.
 /// </summary>
 /// <remarks>
-/// A supply is a dictionary of answers, so an unhelped test spends a line building one before it
-/// states anything. These name the answers instead: a yes or no for a guard, words for a query.
+/// Each builds a supply from plain values: a yes or no for a guard, words for a query.
 /// </remarks>
 internal static class World
 {

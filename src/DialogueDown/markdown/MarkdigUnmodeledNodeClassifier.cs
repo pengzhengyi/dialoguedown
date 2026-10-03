@@ -13,8 +13,8 @@ namespace DialogueDown.Markdown;
 
 /// <summary>
 /// The Markdig-specific mapping from an unmodeled Markdig node to an
-/// <see cref="UnmodeledNodeKind"/>. It is a pure, stateless lookup, so it is a
-/// static class. Anything not recognized here is <see cref="UnmodeledNodeKind.Other"/>.
+/// <see cref="UnmodeledNodeKind"/>. Anything not recognized here is
+/// <see cref="UnmodeledNodeKind.Other"/>.
 /// </summary>
 internal static class MarkdigUnmodeledNodeClassifier
 {

@@ -67,8 +67,8 @@ public sealed class AnswerCheckTests
     [Fact]
     public void Disagrees_WhenSeveralKeysAreUnanswered_NamesThemInOneOrder()
     {
-        // However the world ordered what it said, one step words this the same way every time,
-        // which is what a run holding nothing between steps promises.
+        // Named in sorted order, whatever order they were asked in, so the same step always words
+        // the refusal the same way.
         Assert.True(
             AnswerCheck.Disagrees(Guards("Hero.HasSword", "Alice.HasKey"), Answered(), out var refusal));
 

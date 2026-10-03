@@ -4,12 +4,10 @@ namespace DialogueDown.Conformance;
 /// The corpus this build ships, resolved once from where the build put it.
 /// </summary>
 /// <remarks>
-/// The one place that knows the corpus's layout on disk. Keeping it here leaves
-/// <see cref="CorpusFolder"/> a plain folder of cases and <see cref="ReadableCorpus"/> a reader of
-/// them, neither carrying a path that only this repository's build could satisfy.
+/// The one place that knows where the build puts the corpus on disk.
 /// <para>
-/// The folders are declared before what reads them, because a static property initializer that
-/// reached forward to a later one would quietly see null.
+/// The folders are declared before the corpora that read them, because a static property
+/// initializer that reads a later one sees null.
 /// </para>
 /// </remarks>
 public static class Corpora

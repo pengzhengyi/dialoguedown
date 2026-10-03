@@ -41,8 +41,7 @@ public sealed class ReportAssetsTests
     [InlineData("")]
     public void Find_RefusesAPathItDoesNotOffer(string path)
     {
-        // Only the two names the client was built under resolve, so the route cannot be talked
-        // into reading anything else.
+        // Only the two names the client was built under resolve, so the route reads no other file.
         Assert.Null(ReportAssets.Find(path));
     }
 }

@@ -152,7 +152,6 @@ public sealed class InlineBuilderTests
     [Fact]
     public void Build_AnchorsFragmentSpansAtTheInlineSource()
     {
-        // A text inline sitting at source offset 4.
         var text = new DialogueDown.Markdown.TextInline("hi", SourceSpanFactory.Span(4, 2));
 
         var speech = Build([text]);
@@ -177,7 +176,7 @@ public sealed class InlineBuilderTests
     [Fact]
     public void Build_TextRunWithAnEscapedFirstCharacter_KeepsItsSigilAsText()
     {
-        // Source "\#happy": the run is "#happy" with the escape recorded, so the tag is
+        // Source "\#happy": the text is "#happy" with the escape recorded, so the tag is
         // read as plain text rather than metadata.
         var text = new DialogueDown.Markdown.TextInline(
             "#happy", SourceSpanFactory.Span(0, 7), SourceSpanFactory.Span(1, 6),

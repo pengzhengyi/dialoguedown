@@ -1,10 +1,9 @@
 namespace DialogueDown.Configuration;
 
 /// <summary>
-/// The author-facing names of the unmodeled-Markdown vocabulary — the kebab-case words shared by
+/// The author-facing names of the unmodeled-Markdown vocabulary: the kebab-case words shared by
 /// the <c>dialogue.toml</c> <c>[markdown.unmodeled]</c> section and any tool that displays the
-/// configuration, so the surfaces never drift. Mirrors
-/// <see cref="CompilationModes"/> for the compilation modes.
+/// configuration, so they all agree.
 /// </summary>
 public static class UnmodeledMarkdownNames
 {

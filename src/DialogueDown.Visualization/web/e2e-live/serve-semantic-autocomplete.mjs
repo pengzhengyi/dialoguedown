@@ -7,6 +7,8 @@ import {
     SEMANTIC_AUTOCOMPLETE_SOURCE,
 } from "./fixture.mjs";
 
+// The Playwright webServer for the semantic-autocomplete e2e: write a fresh temp document, then
+// run the real .NET server in --edit (editable) mode against it on its own loopback port.
 writeFileSync(SEMANTIC_AUTOCOMPLETE_DOC, SEMANTIC_AUTOCOMPLETE_SOURCE);
 
 spawnCli([

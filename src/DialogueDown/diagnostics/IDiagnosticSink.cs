@@ -1,8 +1,8 @@
 namespace DialogueDown.Diagnostics;
 
 /// <summary>
-/// The seam a producer reports a <see cref="Diagnostic"/> into during one compilation, so a
-/// producer never learns how diagnostics are stored or later surfaced.
+/// Where a producer reports a <see cref="Diagnostic"/> during one compilation, without knowing
+/// how diagnostics are stored or shown.
 /// </summary>
 internal interface IDiagnosticSink
 {

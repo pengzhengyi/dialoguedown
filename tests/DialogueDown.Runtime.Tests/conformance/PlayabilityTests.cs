@@ -32,8 +32,8 @@ public sealed class PlayabilityTests
     [Fact]
     public void CanPlay_AnExpectationNobodyCanCheck_IsNot()
     {
-        // An entry is only as takeable as the claims in it: a key no matcher owns ends the run
-        // where it is read, so the validation detects before the run starts.
+        // A key no matcher owns would end the run where it is read, so the screen reports it before
+        // the run starts.
         AssertNotPlayable(Expected("""{ "asked": [] }"""));
     }
 
@@ -85,10 +85,8 @@ public sealed class PlayabilityTests
     [Fact]
     public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
     {
-        // The harness screens a playbook before stepping, so a construct nobody has taught reads
-        // as untaught rather than as a divergence. That screen states what this build can play a
-        // second time, and the two must agree: a case would otherwise be reported as untaught
-        // while it plays, or as a divergence when nobody had taught it.
+        // The harness screens a playbook before stepping, and the screen restates what the runner
+        // can play, so the two must agree.
         foreach (var node in OneOfEveryNodeKind())
         {
             var refused = node.RefusalOnArrival() is not null;

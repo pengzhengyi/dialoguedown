@@ -11,8 +11,8 @@ namespace DialogueDown.Script.Transpiler.Parsers;
 /// (<see cref="TextLeaf"/>), a tag (<see cref="TagLeaf"/>) where the writer embedded
 /// <c>#tag</c>, and a jump (<see cref="JumpLeaf"/>) where they wrote <c>=&gt;</c>.
 /// Markdown treats these as ordinary text, so this is where they are recognized. Tags
-/// are recognized in every context; jumps only where the context allows (they are
-/// dropped inside a label). Each leaf keeps the range it covered, and neighboring text
+/// are recognized in every context; jumps only where the context allows (inside a label,
+/// <c>=&gt;</c> stays plain text). Each leaf keeps the range it covered, and neighboring text
 /// is joined into one piece.
 /// </summary>
 internal static class InlineLeafTokenizer
@@ -39,15 +39,12 @@ internal static class InlineLeafTokenizer
     public static IReadOnlyList<Spanned<InlineLeaf>> Tokenize(
         ParseInput input, bool allowJumps, bool escapedFirstCharacter = false)
     {
-        // Tags are recognized in every context; jumps only where the context allows.
         var recognized = allowJumps ? _jump.Or(_tag) : _tag;
 
         var leaves = new List<Spanned<InlineLeaf>>();
         var rest = input;
         if (escapedFirstCharacter)
         {
-            // An escaped leading character is text: the whole sigil that begins there
-            // goes literal, and a character that begins no sigil is literal alone.
             leaves.Add(LiteralizeLeadingCharacter(recognized, input, out rest));
         }
 
@@ -56,9 +53,8 @@ internal static class InlineLeafTokenizer
     }
 
     /// <summary>
-    /// Whether this text opens with the jump indicator (<c>=&gt;</c>) written unescaped. A
-    /// stage that must decide before tokenizing — whether a condition guards a jump, say —
-    /// asks here, so the arrow's spelling and its escape rule stay in one place.
+    /// Whether this text opens with the jump indicator (<c>=&gt;</c>) written unescaped, for a
+    /// stage that must decide before tokenizing, such as whether a condition guards a jump.
     /// </summary>
     public static bool StartsWithJumpIndicator(this TextInline text) =>
         !text.IsFirstCharacterEscaped && text.Text.StartsWith(Arrow, StringComparison.Ordinal);
@@ -71,18 +67,13 @@ internal static class InlineLeafTokenizer
     }
 
     // An escaped leading character is literal. When a sigil begins at that character,
-    // the whole sigil goes literal with it (`\##default` writes "##default"); when no
-    // sigil begins there, only the character itself is (`\=#tag` keeps "#tag" a tag).
+    // the whole sigil goes literal with it (`\##default` writes "##default", not a literal
+    // "#" and a custom tag); when no sigil begins there, only the character itself is
+    // (`\=#tag` keeps "#tag" a tag).
     private static Spanned<InlineLeaf> LiteralizeLeadingCharacter(
         IParser<InlineLeaf> recognized, ParseInput input, out ParseInput rest)
     {
-        // Try the sigil parser at the escaped character: on a match it reports how far
-        // the sigil reaches, and on a miss it consumes nothing.
         var match = recognized.Consume(input);
-
-        // A miss literalizes exactly the one escaped character — the backslash escaped
-        // that character and nothing else. A match literalizes the sigil's whole length,
-        // so a reserved `##default` cannot split into a literal `#` and a custom tag.
         var length = match.Success ? match.MatchedLength : 1;
 
         rest = input.Advance(length);

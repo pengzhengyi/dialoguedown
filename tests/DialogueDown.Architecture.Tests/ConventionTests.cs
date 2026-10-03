@@ -3,11 +3,8 @@ using NetArchTest.Rules;
 namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
-/// Group C — convention hygiene. Keeps the error vocabulary discoverable: the
-/// thrown exception hierarchy lives together under <c>*.Errors</c>, while value
-/// types that merely describe a failure (for example a parse-failure record) are
-/// deliberately excluded because they are data, not exceptions. It also holds the
-/// Dialogue AST to the shape every later stage assumes: immutable nodes.
+/// Conventions: every exception type in the core lives in a <c>*.Errors</c> namespace, and every
+/// Dialogue AST type is immutable.
 /// </summary>
 public sealed class ConventionTests
 {
@@ -24,16 +21,12 @@ public sealed class ConventionTests
     }
 
     /// <remarks>
-    /// The transpiler, desugarer, analyzer, and graph builder all read the same AST and
-    /// none of them copies it defensively, so one settable property would let a later
-    /// stage change what an earlier one produced — a class of bug that shows up as a
-    /// wrong graph far from its cause. Every node is a record today; this keeps it that
-    /// way. <c>BeImmutableExternally</c> checks the publicly reachable state, which is
-    /// what a later stage can actually reach.
+    /// The transpiler, desugarer, analyzer, and graph builder all read the same AST without
+    /// copying it, so a settable property would let a later stage change what an earlier one
+    /// produced. <c>BeImmutableExternally</c> checks the publicly reachable state.
     /// <para>
-    /// Enums are excluded: an enum is immutable by definition, but the check reads the
-    /// compiler-generated <c>value__</c> field as mutable state and would report every
-    /// one of them.
+    /// Enums are excluded: the check reads an enum's compiler-generated <c>value__</c> field as
+    /// mutable state.
     /// </para>
     /// </remarks>
     [Fact]

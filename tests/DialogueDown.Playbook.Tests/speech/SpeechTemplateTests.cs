@@ -5,7 +5,7 @@ namespace DialogueDown.Playbook.Tests.Speech;
 
 public sealed class SpeechTemplateTests
 {
-    /// <summary>A query buried inside each fragment kind that wraps other speech.</summary>
+    /// <summary>A query nested inside each fragment kind that wraps other speech.</summary>
     public static TheoryData<string, SpeechFragment> NestedQueries() =>
         new()
         {
@@ -258,9 +258,9 @@ public sealed class SpeechTemplateTests
             [Bold(Text("polished "), DefaultCommand("it gleams"), Text(" bright"))]);
 
         Assert.Equal(2, segments.Length);
-        AssertStyledRun(segments[0], SpeechStyle.Bold, "polished ");
+        AssertStyledFragment(segments[0], SpeechStyle.Bold, "polished ");
         Assert.Equal(DefaultCommand("it gleams"), segments[0].Command);
-        AssertStyledRun(segments[1], SpeechStyle.Bold, " bright");
+        AssertStyledFragment(segments[1], SpeechStyle.Bold, " bright");
         Assert.Null(segments[1].Command);
     }
 
@@ -271,8 +271,8 @@ public sealed class SpeechTemplateTests
             [Italic(Text("a "), Bold(Text("b "), DefaultCommand("winks"), Text(" c")), Text(" d"))]);
 
         Assert.Equal(2, segments.Length);
-        AssertStyledRun(segments[0], SpeechStyle.Italic, "a b ");
-        AssertStyledRun(segments[1], SpeechStyle.Italic, " c d");
+        AssertStyledFragment(segments[0], SpeechStyle.Italic, "a b ");
+        AssertStyledFragment(segments[1], SpeechStyle.Italic, " c d");
 
         // The inner emphasis is put back on both sides too, not flattened into the outer one.
         Assert.All(segments, segment =>
@@ -290,7 +290,7 @@ public sealed class SpeechTemplateTests
         Assert.Equal(2, segments.Length);
         Assert.Empty(segments[0].Words);
         Assert.Equal(DefaultCommand("she turns"), segments[0].Command);
-        AssertStyledRun(segments[1], SpeechStyle.Bold, "Listen.");
+        AssertStyledFragment(segments[1], SpeechStyle.Bold, "Listen.");
     }
 
     [Fact]
@@ -300,9 +300,9 @@ public sealed class SpeechTemplateTests
             [Bold(Text("a "), DefaultCommand("one"), Text(" b "), DefaultCommand("two"), Text(" c"))]);
 
         Assert.Equal(3, segments.Length);
-        AssertStyledRun(segments[0], SpeechStyle.Bold, "a ");
-        AssertStyledRun(segments[1], SpeechStyle.Bold, " b ");
-        AssertStyledRun(segments[2], SpeechStyle.Bold, " c");
+        AssertStyledFragment(segments[0], SpeechStyle.Bold, "a ");
+        AssertStyledFragment(segments[1], SpeechStyle.Bold, " b ");
+        AssertStyledFragment(segments[2], SpeechStyle.Bold, " c");
     }
 
     [Fact]
@@ -339,11 +339,11 @@ public sealed class SpeechTemplateTests
         Assert.Equal(command, segment.Command);
     }
 
-    /// <summary>Checks that a segment says one styled run, and what that run is styled and says.</summary>
+    /// <summary>Checks that a segment says one styled fragment, with its style and words.</summary>
     /// <param name="segment">The segment to check.</param>
-    /// <param name="style">The styling the run should carry.</param>
+    /// <param name="style">The styling the fragment should carry.</param>
     /// <param name="spoken">The words inside it.</param>
-    private static void AssertStyledRun(SpeechSegment segment, SpeechStyle style, string spoken)
+    private static void AssertStyledFragment(SpeechSegment segment, SpeechStyle style, string spoken)
     {
         var styled = Assert.IsType<StyledTextFragment>(Assert.Single(segment.Words));
 

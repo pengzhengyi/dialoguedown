@@ -11,24 +11,20 @@ namespace DialogueDown.Visualization.Semantics;
 /// display graph (via <see cref="SceneTreeProjection"/>) plus the speaker, anchor, and
 /// jump-resolution tables. Everything shares cross-link keys — a scene node and its anchor and
 /// jump rows all carry <c>scene:&lt;anchor&gt;</c> — so the report can highlight an entity
-/// everywhere it appears. It reads the model through the friend-visible
-/// <c>CompilationResult.Semantics</c>; the model itself is unchanged.
+/// everywhere it appears.
 /// </summary>
 internal sealed class SemanticProjection
 {
     private const string StructureCategory = "structure";
     private const string SpeechCategory = "speech";
 
-    // Shown in a cell whose single value is absent — a speaker with no name or no @id — so the
-    // gap reads as "not applicable" rather than an ambiguous dash.
     // The anonymous speaker — the one an unprefixed line belongs to. Its namelessness is a fact
     // about the script rather than a gap in the table, so it is the one absence the report names;
     // every other empty cell is left empty.
     private const string Anonymous = "(anonymous)";
 
-    // Jump-resolution kind colors. "terminal" reuses the reserved #END editor hue so the End type
-    // reads the same in the table and the source; "deferred" marks a not-yet-resolvable cross-file
-    // jump. Both are unique palette colors.
+    // Jump-resolution kind colors: "terminal" marks a jump to #END, and "deferred" a cross-file
+    // jump this compile cannot resolve. Each has a palette color no other category uses.
     private const string TerminalCategory = "terminal";
     private const string DeferredCategory = "deferred";
 
@@ -115,7 +111,7 @@ internal sealed class SemanticProjection
     }
 
     // Every analyzed jump paired with its type and what it resolved to; a scene jump cross-links
-    // its scene. The leading Type cell groups the rows by resolution kind and carries its color.
+    // its scene. The leading Type cell names the resolution kind and carries its color.
     private static SemanticTable JumpTable(DialogueTreeIndex index, SemanticModel model)
     {
         var rows = new List<SemanticRow>();
@@ -155,8 +151,8 @@ internal sealed class SemanticProjection
 
     private static string Anchor(string? anchor) => anchor is null ? "" : $"#{anchor}";
 
-    // The Jump cell text: the shown label, prefixed with the guarding condition when the jump is
-    // conditional, so a conditional jump reads as it was written (`"key"?` before the label).
+    // The Jump cell text: the shown label, led by its condition when the jump is conditional:
+    // `"Rainy"? Wait out the storm`.
     private static string JumpText(Jump jump)
     {
         var label = LabelText(jump);

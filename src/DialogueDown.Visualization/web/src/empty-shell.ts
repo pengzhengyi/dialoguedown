@@ -156,8 +156,9 @@ export function initEmptyShell(report: Report): void {
     stagesEl.appendChild(card);
     createButton = card.querySelector<HTMLButtonElement>(".empty-shell-create");
     hint = card.querySelector<HTMLElement>(".empty-shell-hint");
-    // A start-page row rather than a button: the mark the Explorer's own New file action wears,
-    // its words at the report's own size, and the ellipsis that says a name is asked for next.
+    // Drawn as a start-page row rather than a raised button: the icon the Explorer's own New File
+    // action shows, its words at the report's own size, and the ellipsis that says a name is asked
+    // for next.
     const createLabel = document.createElement("span");
     createLabel.textContent = "New dialogue file…";
     createButton?.append(codicon("new-file", "empty-shell-create-icon"), createLabel);

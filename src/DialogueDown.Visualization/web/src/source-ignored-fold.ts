@@ -6,25 +6,21 @@ import type { Span } from "./model";
 /**
  * The Markdown the compiler ignored, in the Source editor.
  *
- * Folding here is the **editor's own** fold, from the gutter chevron a code editor already offers.
- * Hiding a run of lines is what a writer wants from an editor and what the gutter already means,
- * so an ignored region simply becomes foldable — it does not grow a second control that would give
- * one table two ways to close.
- *
- * What this adds beyond that is a quiet cue: a mark saying *this run never becomes dialogue*,
- * annotation rather than button, in the manner of an editor's inline hints.
+ * An ignored region of several whole lines folds with the **editor's own** fold, from the gutter
+ * chevron, like any other foldable block. Every region that spans whole lines also carries a quiet
+ * cue: a mark saying *this text never becomes dialogue*, an annotation rather than a button.
  *
  * The Preview folds the same regions from its own state. Neither pane drives the other, because
  * Source is the editable truth: a reading choice must not hide the text a writer needs to change.
  */
 
-/** One run of ignored Markdown, as the editor sees it. */
+/** One stretch of ignored Markdown, as the editor sees it. */
 export interface IgnoredRegion {
     readonly from: number;
     readonly to: number;
-    /** A run that occupies its lines entirely, rather than a span inside a line of dialogue. */
+    /** A region that occupies its lines entirely, rather than a span inside a line of dialogue. */
     readonly ownsItsLines: boolean;
-    /** Whether the editor's gutter can fold this run away. */
+    /** Whether the editor's gutter can fold this region away. */
     readonly foldable: boolean;
 }
 
@@ -64,8 +60,8 @@ export function ignoredRegionsOf(state: EditorState): readonly IgnoredRegion[] {
                 from: span.start,
                 to: span.end,
                 ownsItsLines,
-                // Folding hides lines beneath the one the gutter chevron sits on, so a run of a
-                // single line has nothing to hide even though it owns that line.
+                // Folding hides lines beneath the one the gutter chevron sits on, so a region of
+                // a single line has nothing to hide even though it owns that line.
                 foldable: ownsItsLines && last.number > first.number,
             };
         })
@@ -87,7 +83,7 @@ function ignoredFoldRange(
     return null;
 }
 
-/** A quiet mark saying the run it trails never becomes dialogue. It is annotation, not a control. */
+/** A quiet mark saying the region it trails never becomes dialogue. It is not a control. */
 class IgnoredCueWidget extends WidgetType {
     override eq(): boolean {
         return true;
