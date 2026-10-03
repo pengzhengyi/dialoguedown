@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import {
     LIVE_PORT,
-    RENDER_ROOT_PORT,
+    SERVE_ROOT_PORT,
     SHELL_PORT,
     LIVE_EDIT_PORT,
     CONFIG_EDIT_PORT,
@@ -50,8 +50,8 @@ export default defineConfig({
             timeout: 180_000,
         },
         {
-            command: "node ./e2e-live/serve-renderroot.mjs",
-            url: `http://127.0.0.1:${RENDER_ROOT_PORT}`,
+            command: "node ./e2e-live/serve-root.mjs",
+            url: `http://127.0.0.1:${SERVE_ROOT_PORT}`,
             reuseExistingServer: !process.env.CI,
             timeout: 180_000,
         },
