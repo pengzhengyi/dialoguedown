@@ -14,7 +14,7 @@ public sealed class ServeRootResolverTests
         var error = new StringWriter();
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, ["assets/pic.png"], renderRoot: null, new ThrowingConsent(), error);
+            document, ["assets/pic.png"], explicitServeRoot: null, new ThrowingConsent(), error);
 
         Assert.NotNull(serveRoot);
         Assert.Equal(documentDirectory, serveRoot.Value.RootDirectory);
@@ -29,7 +29,7 @@ public sealed class ServeRootResolverTests
         var document = tree.File("proj/scene.dialogue.md");
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, [], renderRoot: null, new ThrowingConsent(), new StringWriter());
+            document, [], explicitServeRoot: null, new ThrowingConsent(), new StringWriter());
 
         Assert.Equal("/", serveRoot!.Value.ReportPath);
     }
@@ -43,7 +43,7 @@ public sealed class ServeRootResolverTests
         var consent = new StubConsent(allow: true);
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, ["../shared/painting.png"], renderRoot: null, consent, new StringWriter());
+            document, ["../shared/painting.png"], explicitServeRoot: null, consent, new StringWriter());
 
         Assert.NotNull(serveRoot);
         Assert.Equal(Path.GetFullPath(tree.Root), serveRoot.Value.RootDirectory);
@@ -62,7 +62,7 @@ public sealed class ServeRootResolverTests
         var documentDirectory = Path.GetDirectoryName(Path.GetFullPath(document))!;
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, ["../shared/painting.png"], renderRoot: null, new StubConsent(allow: false), new StringWriter());
+            document, ["../shared/painting.png"], explicitServeRoot: null, new StubConsent(allow: false), new StringWriter());
 
         Assert.Equal(documentDirectory, serveRoot!.Value.RootDirectory);
         Assert.Equal("/", serveRoot.Value.ReportPath);
@@ -77,27 +77,27 @@ public sealed class ServeRootResolverTests
         var consent = new StubConsent(allow: true);
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, [painting], renderRoot: null, consent, new StringWriter());
+            document, [painting], explicitServeRoot: null, consent, new StringWriter());
 
         Assert.Equal(Path.GetFullPath(tree.Root), serveRoot!.Value.RootDirectory);
         Assert.NotNull(consent.Received);
     }
 
     [Fact]
-    public void Resolve_ExplicitRenderRoot_HostsItWithoutPrompting()
+    public void Resolve_ExplicitServeRoot_HostsItWithoutPrompting()
     {
         using var tree = new TempTree();
         var document = tree.File("proj/scene.dialogue.md");
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, ["../shared/x.png"], renderRoot: tree.Root, new ThrowingConsent(), new StringWriter());
+            document, ["../shared/x.png"], explicitServeRoot: tree.Root, new ThrowingConsent(), new StringWriter());
 
         Assert.Equal(Path.GetFullPath(tree.Root), serveRoot!.Value.RootDirectory);
         Assert.Equal("/proj/", serveRoot.Value.ReportPath);
     }
 
     [Fact]
-    public void Resolve_ExplicitRenderRoot_NotFound_ReturnsNullWithError()
+    public void Resolve_ExplicitServeRoot_NotFound_ReturnsNullWithError()
     {
         using var tree = new TempTree();
         var document = tree.File("proj/scene.dialogue.md");
@@ -105,14 +105,14 @@ public sealed class ServeRootResolverTests
         var error = new StringWriter();
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, [], renderRoot: missing, new ThrowingConsent(), error);
+            document, [], explicitServeRoot: missing, new ThrowingConsent(), error);
 
         Assert.Null(serveRoot);
-        Assert.Contains("Render root not found", error.ToString());
+        Assert.Contains("The --root folder does not exist", error.ToString());
     }
 
     [Fact]
-    public void Resolve_ExplicitRenderRoot_DoesNotContainDocument_ReturnsNullWithError()
+    public void Resolve_ExplicitServeRoot_DoesNotContainDocument_ReturnsNullWithError()
     {
         using var tree = new TempTree();
         var document = tree.File("proj/scene.dialogue.md");
@@ -120,10 +120,10 @@ public sealed class ServeRootResolverTests
         var error = new StringWriter();
 
         var serveRoot = ServeRootResolver.Resolve(
-            document, [], renderRoot: elsewhere, new ThrowingConsent(), error);
+            document, [], explicitServeRoot: elsewhere, new ThrowingConsent(), error);
 
         Assert.Null(serveRoot);
-        Assert.Contains("not inside the render root", error.ToString());
+        Assert.Contains("not inside the --root folder", error.ToString());
     }
 
     [Fact]

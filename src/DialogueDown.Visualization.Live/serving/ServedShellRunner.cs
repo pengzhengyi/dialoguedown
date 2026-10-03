@@ -98,12 +98,12 @@ public sealed class ServedShellRunner : IServedShellRunner
     }
 
     // A script opens directly on its report. The served root is resolved from the document — its own
-    // folder, an ancestor pinned by renderRoot, or (when the document links images above its folder)
+    // folder, an ancestor pinned by --root, or (when the document links images above its folder)
     // the smallest covering folder with the reader's consent — so those images resolve while hosting
     // stays minimal.
     private async Task<int> RunDocumentAsync(
         string script,
-        string? renderRoot,
+        string? explicitServeRoot,
         ReportMode mode,
         int? port,
         bool noOpen,
@@ -128,7 +128,7 @@ public sealed class ServedShellRunner : IServedShellRunner
 
         var references = new CompilationVisualizer().LocalImageReferences(File.ReadAllText(documentPath));
         var consent = new ConsoleHostConsent(!Console.IsInputRedirected, Console.In, Console.Out);
-        var serveRoot = ServeRootResolver.Resolve(documentPath, references, renderRoot, consent, error);
+        var serveRoot = ServeRootResolver.Resolve(documentPath, references, explicitServeRoot, consent, error);
         if (serveRoot is null)
         {
             return 1;
