@@ -13,15 +13,9 @@ namespace DialogueDown.Runtime.Tests;
 /// can play.
 /// </summary>
 /// <remarks>
-/// The generator draws only the kinds this build can play, because a walk cannot check a kind the
-/// runner does not play. The risk is that the generator stays as it is while the runner learns
-/// more kinds. The walk property would then cover fewer and fewer of the kinds a real playbook can
-/// contain, the example tests would stay green, and nothing would report the lost coverage.
-/// <para>
-/// So every kind left out is listed with a note saying what must change before it is drawn, and
-/// these tests check those notes. The change that teaches the runner a kind is the change that
-/// makes this suite fail until the generator draws that kind too.
-/// </para>
+/// The generator draws only the kinds the runner can play. Every kind it leaves out is listed with
+/// a note on what must change first, and these tests fail once the runner plays a listed kind, so
+/// the generator keeps up with the runner.
 /// </remarks>
 public sealed class PlaybookGenTests
 {
@@ -58,8 +52,7 @@ public sealed class PlaybookGenTests
     [Fact]
     public void EveryNodeKindLeftOut_IsStillOneTheRunnerRefuses()
     {
-        // This is what turns a note into a check. Once the runner learns a kind, its note no
-        // longer holds, and the failure names the kind the generator now has to draw.
+        // Fails once the runner plays a listed kind, naming the kind the generator must now draw.
         foreach (var node in OneOfEveryNodeKind())
         {
             var kind = node.GetType().Name;

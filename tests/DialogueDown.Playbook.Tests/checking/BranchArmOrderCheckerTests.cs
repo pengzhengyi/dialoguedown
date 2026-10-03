@@ -36,7 +36,7 @@ public sealed class BranchArmOrderCheckerTests
     [Fact]
     public void Check_ABranchWhoseOnlyArmIsAnElse_IsRefused()
     {
-        // An else falls back from the gated arms; with none, the branch is no condition at all.
+        // An else is the fallback for gated arms; with no gated arm, the branch tests nothing.
         var playbook = PlaybookFactory.Document(
             nodes: [new BranchNode(0, [Arm(1, 0, isElse: true)]), new EndNode(1)]);
 

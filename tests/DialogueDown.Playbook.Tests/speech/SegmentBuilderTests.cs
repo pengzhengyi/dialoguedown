@@ -94,6 +94,6 @@ public sealed class SegmentBuilderTests
     public void Take_RejectsNothing() =>
         Assert.Throws<ArgumentNullException>(() => new SegmentBuilder().Take(null!));
 
-    /// <summary>A fragment kind the builder has never been taught, for the refusal case.</summary>
+    /// <summary>A fragment kind the builder does not handle, for the refusal case.</summary>
     private sealed record UntaughtFragment : SpeechFragment;
 }

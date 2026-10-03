@@ -56,6 +56,6 @@ public sealed class AnswerKindExtensionsTests
     public void Describe_RefusesAKindItWasNeverTaught() =>
         Assert.Throws<ArgumentOutOfRangeException>(() => ((AnswerKind)999).Describe());
 
-    /// <summary>An answer kind nothing has been taught to tell apart, for the refusal case.</summary>
+    /// <summary>An answer kind no code handles, for the refusal case.</summary>
     private sealed record UntaughtAnswer : Answer;
 }

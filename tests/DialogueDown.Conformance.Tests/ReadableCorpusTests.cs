@@ -53,8 +53,8 @@ public sealed class ReadableCorpusTests
     [Fact]
     public void Read_AFixtureNamingAnotherPlaybook_FollowsTheNameRatherThanAssumingOne()
     {
-        // The document is named by the fixture rather than fixed by convention, so a case is free
-        // to point at one under any name -- and must be told when that name leads nowhere.
+        // The fixture names the document, so a case may use any file name, and a name with no
+        // file behind it is reported.
         using var corpus = new TemporaryCorpus().With(
             "renamed",
             ("fixture.json", Fixture.Replace("playbook.json", "elsewhere.json", StringComparison.Ordinal)),

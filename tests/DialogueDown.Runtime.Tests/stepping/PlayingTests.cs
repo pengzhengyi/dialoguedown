@@ -23,8 +23,8 @@ public sealed class PlayingTests
     [Fact]
     public void At_ALineSaidByTheDefaultSpeaker_NamesNobody()
     {
-        // The anonymous speaker has no name, which is why a said carries none rather than an
-        // empty one: there is a difference between nobody and somebody called "".
+        // The anonymous speaker has no name, so the Said event carries null rather than "": nobody
+        // is not somebody called "".
         AssertSaid(PlayTheFirstNode(ALineNobodyClaims()), speaker: null, text: "Nobody said this.");
     }
 
@@ -127,7 +127,7 @@ public sealed class PlayingTests
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
-        // than as a construct nobody has taught the runner yet.
+        // than as a node kind the runner cannot play.
         AssertRefused(
             PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "ChoiceNode");
     }
@@ -417,7 +417,7 @@ public sealed class PlayingTests
     /// Alice: Hello.
     /// </code>
     /// </remarks>
-    /// <returns>A context whose run asks the host for both effects before it says anything.</returns>
+    /// <returns>A context that asks the host for both effects before anything is said.</returns>
     private static PlayContext TwoEffectsThenALine() =>
         PlayContextFactory.Of(
             [

@@ -33,7 +33,7 @@ public sealed class NodeQuestionExtensionsTests
 
     [Fact]
     public void FindWordsForPlaying_NameAQueryWrittenTwiceOnlyOnce() =>
-        // One reading of the world fills both holes, so the same name is not asked about twice.
+        // One reading of the world answers both queries, so the same name is not asked about twice.
         Assert.Equal(
             ["Hero"],
             Saying(new QueryFragment("Hero"), new TextFragment(" told "), new QueryFragment("Hero"))
@@ -41,7 +41,6 @@ public sealed class NodeQuestionExtensionsTests
 
     [Fact]
     public void FindWordsForPlaying_OfAKindThatSaysNothing_AreNone() =>
-        // An effect is written for the host to carry out, not for anybody to read.
         Assert.Empty(new EndNode(0).FindWordsForPlaying());
 
     [Fact]

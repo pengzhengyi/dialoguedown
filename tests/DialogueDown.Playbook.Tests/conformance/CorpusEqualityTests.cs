@@ -7,10 +7,7 @@ namespace DialogueDown.Playbook.Tests.Conformance;
 /// Reads every playbook the conformance corpus offers twice, and asserts the two are one value.
 /// </summary>
 /// <remarks>
-/// The corpus is the project's normative set of real documents, so this keeps value equality honest
-/// as those documents grow. It complements the constructed comprehensive document in
-/// <see cref="EqualityTests"/>, which pins that every construct kind is compared by value today;
-/// the two cover different halves of the same contract.
+/// The corpus holds the project's real documents, so this check grows as they do.
 /// </remarks>
 public sealed class CorpusEqualityTests
 {
