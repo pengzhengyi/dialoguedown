@@ -203,26 +203,41 @@
           },
           "additionalProperties": false
         },
-        "asked": {
-          "type": "array",
-          "description": "The options offered, in the order offered. What was taken is not recorded here: the next send says so.",
-          "items": {
-            "type": "object",
-            "required": [
-              "label",
-              "available"
-            ],
-            "properties": {
-              "label": {
-                "$ref": "#/$defs/speech"
-              },
-              "available": {
-                "type": "boolean",
-                "description": "Whether the option may be taken. A failing option is shown unavailable rather than hidden."
-              }
+        "offer": {
+          "type": "object",
+          "description": "The menu offered to the player. What was taken is not recorded here: the next send says so.",
+          "required": [
+            "ordered",
+            "options"
+          ],
+          "properties": {
+            "ordered": {
+              "type": "boolean",
+              "description": "Whether the writer numbered the options. A numbered menu's options are claimed in the order offered; a bulleted menu's in any order, because the host may shuffle them."
             },
-            "additionalProperties": false
-          }
+            "options": {
+              "type": "array",
+              "description": "Every option offered.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "label",
+                  "available"
+                ],
+                "properties": {
+                  "label": {
+                    "$ref": "#/$defs/speech"
+                  },
+                  "available": {
+                    "type": "boolean",
+                    "description": "Whether the option may be taken. A failing option is shown unavailable rather than hidden."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         },
         "perform": {
           "description": "The effect the runtime asks the host to carry out, as the playbook names it. The run does not go past it until the driver sends `done`, so an effect is settled in the world before anything reads it.",

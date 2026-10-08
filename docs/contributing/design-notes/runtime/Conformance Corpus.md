@@ -30,9 +30,9 @@ what the runtime must reply, in order.
 ```json
 { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
 { "send": "next" },
-{ "expect": { "asked": [
+{ "expect": { "offer": { "ordered": false, "options": [
     { "label": "Go east", "available": true },
-    { "label": "Go west", "available": true } ] } },
+    { "label": "Go west", "available": true } ] } } },
 { "send": { "choose": 0 } }
 ```
 
@@ -50,7 +50,7 @@ what the runtime must reply, in order.
 | --- | --- |
 | `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
-| `asked` | the options offered, each a `label` and whether it is `available` |
+| `offer` | the menu offered: whether it is `ordered`, and its `options`, each a `label` and whether it is `available`. A bulleted menu's options match in any order |
 | `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |
 | `invalidated` | an offered option that stopped being available |
@@ -113,9 +113,9 @@ opens with a `broken:` block showing that edit.
 | Transcript | the same story came out |
 | Session | the same conversation happened |
 
-A fold over the event stream cannot see a runner that reports `Asked` before `Said`,
+A fold over the event stream cannot see a runner that reports `Offer` before `Said`,
 asks `Resolve` for the wrong keys, or asks too eagerly. Interleaving also removes a
-redundancy: an `asked` entry does not record the pick, because the next `send` says
+redundancy: an `offer` entry does not record the pick, because the next `send` says
 so. The stricter shape forces the runtime design to *state* whether batching is
 allowed rather than leave it to be discovered when a port diverges.
 
@@ -190,9 +190,9 @@ files for all three.
 - **Which fragment kinds survive a run.** A `query` fragment must become something
   else once `supply` answers it, and whether `tag` and `custom-command` pass through
   or surface as their own events is a runner decision.
-- **Menu ordering has no fixture.** Asserting ordered versus unordered menus needs
-  `asked` to say which kind a menu is, and whether shuffling belongs to the runner or
-  the host is undecided.
+- **No case pins a numbered menu's order yet.** An `offer` says which kind a menu
+  is, and a bulleted menu's options match in any order because shuffling is the
+  host's; the one numbered menu in the corpus waits on a menu that reads the world.
 - **Random choice has no fixture.** Pinning a draw needs the entropy decision the
   [architecture note](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
   owns.

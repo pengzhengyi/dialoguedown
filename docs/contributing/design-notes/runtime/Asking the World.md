@@ -60,7 +60,7 @@ a random choice.
 ## What the corpus fixes
 
 The contract is not this note's to choose. The published fixture schema defines
-`resolve`, `supply`, and `asked`, and five corpus cases pin the exchanges, so this
+`resolve`, `supply`, and `offer`, and five corpus cases pin the exchanges, so this
 note is about how the runner meets that contract.
 
 | Case | What it fixes |
