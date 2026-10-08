@@ -110,14 +110,27 @@ license does not affect the library's MIT license or reach consumers.
   executable), with **NSubstitute** for mocks and **coverlet** for coverage.
 - **One test file per source file**, mirroring the folder layout and named for the
   type under test (`Foo.cs` → `FooTests.cs`).
-- Name tests `Method_Scenario_ExpectedResult`; cover edge and error cases, not just
-  the happy path.
+- Name tests `Method_Scenario_ExpectedResult`; a test of a rule over the whole
+  suite may be a sentence (`EveryCatalogCodeIsDocumented`). Cover edge and error
+  cases, not just the happy path.
 - Write multi-line test input as **multi-line raw string literals** (`"""…"""`),
   not single lines stitched with `\n`, so the parsed shape is visible.
-- Build a type's dependencies through the shared **test factory** (Object Mother)
-  so a constructor change touches one place.
 - **Treat tests as code:** refactor them relentlessly, and follow the testing
   pyramid — many small unit tests, fewer integration tests, minimal end-to-end.
+- **Write a test to read as documentation**, following
+  [How a test reads](../../docs/contributing/testing.md#how-a-test-reads). The
+  mechanics specific to this repository:
+  - A fixture helper's `<remarks>` shows the dialogue in a `<code>` block (see
+    [Comments](#comments)). Where a suite has a `Pipeline`, prefer compiling real
+    dialogue to hand-building a stage's input.
+  - Mothers and `XAssert` helpers live in the suite's `support/` folder, or in
+    `DialogueDown.TestSupport` when several suites need them. An `XAssert` class
+    has the singular suffix, holds static methods, and is imported with
+    `using static`.
+  - The playbook records cannot be varied with `with`; their mothers take the
+    varying value as an argument.
+  - Large output is pinned as a Verify golden; JSON is parsed, never matched by
+    substring.
 - **Guard architecture with tests.** Dependency-direction rules live in
   [`tests/DialogueDown.Architecture.Tests`](../../tests/DialogueDown.Architecture.Tests),
   built on **NetArchTest.eNhancedEdition** (the maintained fork of NetArchTest's
