@@ -13,8 +13,8 @@ namespace DialogueDown.Playbook.Checking;
 /// check these, because each relates a value to something else in the same document.
 /// </para>
 /// <para>
-/// Only the upper bound is checked here. A negative entry, edge target, or speaker is refused when
-/// the value is built.
+/// Only the upper bound is checked here. A negative entry, anchor, edge target, or speaker is
+/// refused when the value is built.
 /// </para>
 /// </remarks>
 public sealed class ReferenceChecker : IPlaybookChecker
