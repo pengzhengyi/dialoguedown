@@ -176,7 +176,7 @@ runtimes.
 | `misplaced` | a known command arrives where it cannot be taken — `Next` while the run waits on the host, or `Done`/`Failed` when nothing was asked |
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
-| `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
+| `endless-loop` | a walk enters a loop of nodes that hand the host nothing |
 | `unanswered-key` | a `Supply` leaves out a key the run asked about |
 | `unasked-key` | a `Supply` answers a key the run did not ask about |
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |

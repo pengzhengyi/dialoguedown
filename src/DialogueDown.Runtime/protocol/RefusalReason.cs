@@ -28,9 +28,9 @@ public enum RefusalReason
     LeadsNowhere,
 
     /// <summary>
-    /// The run entered a cycle of nodes that give the host nothing, so it would never stop.
+    /// The run entered a loop of nodes that give the host nothing, so it would never stop.
     /// </summary>
-    EndlessRing,
+    EndlessLoop,
 
     /// <summary>The world was asked about a key and did not answer it.</summary>
     UnansweredKey,

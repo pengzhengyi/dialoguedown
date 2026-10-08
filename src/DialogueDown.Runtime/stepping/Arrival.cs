@@ -183,7 +183,7 @@ internal static class Arrival
     private static StepResult RefuseRing(int position) =>
         StepResults.Refuse(
             position,
-            RefusalReason.EndlessRing,
+            RefusalReason.EndlessLoop,
             $"Node {position} sits in a ring of nodes that hand the host nothing, "
                 + "so a run entering it would never come out.");
 

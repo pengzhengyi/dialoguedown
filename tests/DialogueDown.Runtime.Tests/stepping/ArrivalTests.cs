@@ -226,7 +226,7 @@ public sealed class ArrivalTests
     {
         // Nothing in the ring ever hands the host anything, so a walk with no bound would never
         // return and a total step would become a hang.
-        AssertRefused(Arrival.At(PlayContextFactory.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
+        AssertRefused(Arrival.At(PlayContextFactory.RingOfJumps(3), 0), RefusalReason.EndlessLoop, "ring");
     }
 
     [Fact]
