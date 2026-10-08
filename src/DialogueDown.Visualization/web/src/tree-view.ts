@@ -72,14 +72,15 @@ const SCENE_NODE_HALO = 1;
 const ARROW_SIZE = 9;
 
 /**
- * How far short of a node's center a line aimed at it stops: the dot's painted edge plus
- * {@link ARROW_SIZE}, because the arrowhead is drawn forward from the line's end.
+ * How far short of a node's center a line aimed at it stops: the dot's painted edge, plus
+ * {@link ARROW_SIZE} when the line is a route, because its arrowhead is drawn forward from the
+ * line's end.
  */
-function nodeStandoff(node: DisplayNode): number {
+function nodeStandoff(node: DisplayNode, category: string | undefined): number {
     const painted = isSceneNode(node)
         ? SCENE_NODE_RADIUS + SCENE_NODE_HALO
         : CONTENT_NODE_RADIUS + CONTENT_NODE_HALO;
-    return painted + ARROW_SIZE;
+    return edgeStyle(category)?.isRoute ? painted + ARROW_SIZE : painted;
 }
 
 /**
@@ -1461,7 +1462,7 @@ export function createTreeView(
             .attr("d", (link) =>
                 edgePath(at(link.source), at(link.target), {
                     clearance: clearanceOf((link.source as TreeNode).data.id),
-                    standoff: nodeStandoff((link.target as TreeNode).data),
+                    standoff: nodeStandoff((link.target as TreeNode).data, categoryOf(link)),
                 }),
             )
             .each(function (link) {
@@ -1496,7 +1497,7 @@ export function createTreeView(
             .attr("d", (edge) =>
                 edgePath(at(positionById.get(edge.fromId)!), at(positionById.get(edge.toId)!), {
                     clearance: clearanceOf(edge.fromId),
-                    standoff: nodeStandoff(positionById.get(edge.toId)!.data),
+                    standoff: nodeStandoff(positionById.get(edge.toId)!.data, edge.category),
                     ...(laneOf.get(edgeKey(edge)) ?? {}),
                 }),
             )
