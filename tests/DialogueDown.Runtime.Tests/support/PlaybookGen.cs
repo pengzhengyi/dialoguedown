@@ -14,15 +14,16 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to carry something out, and a block condition. A line may hold a command before,
-/// between, or after its words, or say nothing but a command. A later pass adds its node and edge
-/// kinds here as it teaches the runner to play them, so a walk keeps covering everything a run can
-/// meet.
+/// asks the host to carry something out, a block condition, and a menu. A line may hold a command
+/// before, between, or after its words, or say nothing but a command. A later pass adds its node
+/// and edge kinds here as it teaches the runner to play them, so a walk keeps covering everything a
+/// run can meet.
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
 /// fire only when the world allows it, a block condition's first arm is always guarded, and a line
 /// may have a query in what it says. A guard and a query never read the same key, so a world drawn
-/// beside the playbook can answer each key in the kind it needs.
+/// beside the playbook can answer each key in the kind it needs. A menu is the exception: it is
+/// offered without reading the world, so nothing guards its options and its labels ask nothing.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -64,6 +65,9 @@ internal static class PlaybookGen
 
         /// <summary>A block condition with one arm and an else.</summary>
         BlockWithAnElse,
+
+        /// <summary>A menu of two options, one carrying on and one leading elsewhere.</summary>
+        Menu,
     }
 
     /// <summary>Where a drawn line holds a command in what it says.</summary>
@@ -116,7 +120,8 @@ internal static class PlaybookGen
                 Draws.Effects,
                 Draws.LineThatJumps,
                 Draws.Block,
-                Draws.BlockWithAnElse),
+                Draws.BlockWithAnElse,
+                Draws.Menu),
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
@@ -181,6 +186,7 @@ internal static class PlaybookGen
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
             Draws.Block => new BranchNode(id, [Arm(), new SuccessionEdge(Onward)]),
             Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Condition: null)]),
+            Draws.Menu => new ChoiceNode(id, Ordered: false, Options()),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
@@ -214,5 +220,11 @@ internal static class PlaybookGen
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
         private BranchEdge Arm() => new(Elsewhere, ArmGuard);
+
+        private ImmutableArray<Edge> Options() =>
+            [Option(Onward, "Go on."), Option(Elsewhere, "Go elsewhere.")];
+
+        private static OptionEdge Option(int target, string label) =>
+            new(target, [new TextFragment(label)], Condition: null);
     }
 }

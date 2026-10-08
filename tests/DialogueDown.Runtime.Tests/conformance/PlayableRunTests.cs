@@ -14,11 +14,10 @@ public sealed class PlayableRunTests
     [Fact]
     public void Match_ACaseTheBuildCannotPlay_NamesWhatItHasNotLearned()
     {
-        // The corpus's untaught case, end to end: a menu and the choose that would pick from it,
-        // both named before the run starts.
+        // The corpus's untaught case, end to end: the menu a fixture expects and the choose that
+        // picks from it, both named before the run starts.
         AssertNotYetPlayable(
             PlayableRun.Match(Corpora.Playable.Read("a-player-choice")),
-            "nothing plays a ChoiceNode yet",
             "nothing sends",
             "nothing checks asked yet");
     }

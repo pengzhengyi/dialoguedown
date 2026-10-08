@@ -166,15 +166,33 @@ internal static class PlayContextFactory
             ],
             ["Smith"]);
 
-    /// <summary>A choice, which is a node kind this pass cannot play.</summary>
+    /// <summary>A menu of two options, each said as it is taken, then the end.</summary>
     /// <remarks>
     /// <code>
     /// - Go east
+    /// - Go west
     /// </code>
     /// </remarks>
-    /// <returns>A context that begins at a choice.</returns>
+    /// <returns>A context that begins at the menu.</returns>
+    public static PlayContext AMenu() =>
+        Of(
+            [
+                Menu(0, Option(1, "Go east"), Option(2, "Go west")),
+                Line(1, speaker: 0, "Go east", next: 3),
+                Line(2, speaker: 0, "Go west", next: 3),
+                End(3),
+            ],
+            [null]);
+
+    /// <summary>A random choice, which is a node kind this pass cannot play.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `%` Go east
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that begins at a random choice.</returns>
     public static PlayContext NotYetPlayable() =>
-        Of([Choice(0, leadsTo: 1), End(1)], ["Alice"]);
+        Of([RandomChoice(0, leadsTo: 1), End(1)], ["Alice"]);
 
     /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>

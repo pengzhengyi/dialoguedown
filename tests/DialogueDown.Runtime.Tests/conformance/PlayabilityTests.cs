@@ -41,10 +41,9 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
         var context = PlayContextFactory.Of(
-            [Choice(0, leadsTo: 3), Choice(1, leadsTo: 3), RandomChoice(2, leadsTo: 3), End(3)],
-            ["Alice"]);
+            [RandomChoice(0, leadsTo: 2), RandomChoice(1, leadsTo: 2), End(2)], ["Alice"]);
 
-        AssertNotPlayable(context, "nothing plays a ChoiceNode yet", "nothing plays a RandomChoiceNode yet");
+        AssertNotPlayable(context, "nothing plays a RandomChoiceNode yet");
     }
 
     [Fact]

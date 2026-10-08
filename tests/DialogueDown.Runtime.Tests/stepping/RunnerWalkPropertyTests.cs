@@ -152,13 +152,14 @@ public sealed class RunnerWalkPropertyTests
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {
-        // Three stages name a node, and a walk standing outside the document at any of them is the
+        // Four stages name a node, and a walk standing outside the document at any of them is the
         // same defect.
         var node = situation switch
         {
             AtNode at => at.Node,
             AwaitingDone waiting => waiting.Node,
             AwaitingSupply waiting => waiting.Node,
+            AwaitingChoice waiting => waiting.Node,
             _ => (int?)null,
         };
 

@@ -124,12 +124,21 @@ public sealed class PlayingTests
     public void At_TheEnd_EndsTheRun() => AssertEnded(PlayTheFirstNode(PlayContextFactory.Of([End(0)])));
 
     [Fact]
+    public void At_AMenu_OffersItsOptionsAndWaitsForThePlayer()
+    {
+        var result = PlayTheFirstNode(PlayContextFactory.AMenu());
+
+        AssertEvents(result, "offer 'Go east', 'Go west'");
+        AssertAwaitingChoice(result, 0);
+    }
+
+    [Fact]
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
         // than as a construct nobody has taught the runner yet.
         AssertRefused(
-            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "ChoiceNode");
+            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "RandomChoiceNode");
     }
 
     [Fact]

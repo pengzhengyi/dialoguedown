@@ -159,8 +159,8 @@ option rejoins there unless its arm jumps away.
 | `AwaitingChoice(node, available)` | Waiting for the player at a menu, and the positions of the options that could be taken when it was offered | `Situation` |
 | `NodeQuestions` | For a choice node, its options' conditions and its labels' queries, in the sequence the options are offered; and the same whether read for the whole node or from its start | `Arrival` |
 | `Arrival` | Walks past a menu with nothing available, as it walks past a branch | `Playing` |
-| `Playing` | Plays a choice node: builds the offer | `Arrival` |
-| `Departure` | Leaves a menu by the option the player took, and arrives at its node | `Runner` |
+| `Playing` | Hands a choice node to `Choosing` | `Arrival` |
+| `Choosing` | Offers a menu's options and waits; takes `Choose` against the options offered, refusing one the menu cannot take, and arrives at the chosen option's node | `Playing`, `Runner`, `Arrival` |
 | `OfferMatcher` | Holds an `Offer` to a fixture's `offer` expectation | The harness |
 
 ## Key design decisions
@@ -268,12 +268,18 @@ The wait carries no labels, so a run restored at a menu offers it again by
 arriving at the choice node afresh, reading the world as it is then. Saves own
 the restore; this is the seam they meet.
 
-### O7 — Choosing is leaving
+### O7 — A menu's offer and its choice live together
 
-`Choose` goes to `Departure`, which leaves a node by the way the world allows. At
-a menu, that way is the one the player took. The run then arrives at the option's
-node as it arrives anywhere: asking what that node needs, walking past a jump, or
-saying a line.
+`Choosing` holds both halves of a menu: it builds the `Offer`, and it takes the
+`Choose` that answers it. The two read the same options, so how the offer lists
+them and how an index is counted against them change together, and one place
+keeps them in step. `Playing` hands it a choice node, and `Runner.Step` sends it
+`Choose` at a menu.
+
+Taking an option is leaving the menu. A menu asks nothing as it is left
+([O5](#o5--what-decides-a-menu-is-read-once-on-arrival)), so the run arrives at
+the option's node as it arrives anywhere: asking what that node needs, walking
+past a jump, or saying a line.
 
 ### O8 — A choice the menu cannot take is refused, and the menu stays open
 
@@ -331,8 +337,8 @@ the run goes instead.
 | --- | --- |
 | `protocol` | `Offer` joins the requests, with `OfferedOption`; `Choose` joins the commands; `RefusalReason` gains `NoSuchOption` and `UnavailableOption` |
 | `situations` | `AwaitingChoice`, with its wording in a refusal |
-| `stepping` | `Playing` plays a choice node; `Arrival` walks past a menu with nothing available; `Departure` leaves by a taken option; a choice node's questions are its options' conditions and labels' queries in the sequence the options are offered, asked on arrival and never on leaving |
-| `Runner.Step` | `(AwaitingChoice, Choose)` goes to `Departure`; `Choose` anywhere else is misplaced |
+| `stepping` | `Choosing` offers a menu and takes `Choose`, and `Playing` hands it a choice node; `Arrival` walks past a menu with nothing available; a choice node's questions are its options' conditions and labels' queries in the sequence the options are offered, asked on arrival and never on leaving |
+| `Runner.Step` | `(AwaitingChoice, Choose)` goes to `Choosing`; `Choose` anywhere else is misplaced |
 | Fixture schema | `asked` becomes `offer`, shaped `{ ordered, options }`; a `choose` send names the option by its label; the two new refusal reasons |
 | Harness | A `choose` reader that finds the named label's position in the `Offer` received, and refuses a label offered twice; an `OfferMatcher` that matches an unordered menu's options in any sequence and an ordered menu's in the order written; the screen plays a choice node |
 | Corpus | `a-player-choice`, `a-divert-option`, and `an-unavailable-option` conform; new cases for each refusal, a label with a query, a label with a command, an ordered menu, an ordered menu whose keys interleave conditions and queries, a menu with nothing available, and a `Choose` past the options of a menu with a fall-through |
@@ -348,9 +354,8 @@ the run goes instead.
 
 | Level | What it covers |
 | --- | --- |
-| Unit — `Playing` | The offer: an ordered menu's labels in the order written, queries filled, commands removed, availability, and the ordered flag |
+| Unit — `Choosing` | The offer: an ordered menu's labels in the order written, queries filled, commands removed, availability, and the ordered flag; taking an option; each refusal, with the menu left open |
 | Unit — `Arrival` | Walking past a menu with nothing available; leading nowhere without a fall-through |
-| Unit — `Departure` | Leaving by the taken option; each refusal, with the menu left open |
 | Unit — questions | A choice node's keys in the sequence its options are offered, the same whole or from its start, and nothing asked on leaving it |
 | Unit — the protocol | Each new matrix cell |
 | Unit — situations | `AwaitingChoice`'s wording in a refusal |
