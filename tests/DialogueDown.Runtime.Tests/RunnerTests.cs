@@ -72,6 +72,17 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_ChooseAtAMenu_LeavesByTheOptionTaken()
+    {
+        var context = PlayContextFactory.AMenu();
+
+        var result = Runner.Step(context, Started(context), new Choose(0));
+
+        AssertSaid(result, speaker: null, text: "Go east");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
     public void Step_ChooseAwayFromAMenu_IsMisplacedRatherThanUnknown()
     {
         var context = PlayContextFactory.OneLine();
