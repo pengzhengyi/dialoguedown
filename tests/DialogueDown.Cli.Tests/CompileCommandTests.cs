@@ -501,7 +501,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--emit", "yaml");
 
-        Assert.NotEqual(0, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
         AssertNothingEmitted(runner);
     }
 
