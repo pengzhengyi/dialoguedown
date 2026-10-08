@@ -1,5 +1,7 @@
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader.Errors;
+using DialogueDown.TestSupport;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfiguredSpeakerAssert;
 using static DialogueDown.ConfigurationLoader.Tests.Support.TomlConfigReading;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
@@ -37,7 +39,7 @@ public sealed class TomlConfigurationLoaderTests
 
         CompilerOptions options = TomlConfigurationLoader.Parse(toml, SourceName);
 
-        ConfiguredSpeaker speaker = Assert.Single(options.Speakers);
+        var speaker = AssertOnlySpeaker(options.Speakers);
         Assert.Equal("Alice", speaker.Name);
         Assert.Equal("A", speaker.Id);
     }
@@ -80,7 +82,7 @@ public sealed class TomlConfigurationLoaderTests
         CompilerOptions options = TomlConfigurationLoader.Parse(toml, SourceName);
 
         Assert.Equal(CompilationMode.BestEffort, options.Mode);
-        ConfiguredSpeaker speaker = Assert.Single(options.Speakers);
+        var speaker = AssertOnlySpeaker(options.Speakers);
         Assert.Equal("Alice", speaker.Name);
     }
 
@@ -104,24 +106,17 @@ public sealed class TomlConfigurationLoaderTests
     [Fact]
     public void Load_ReadsFileIntoOptions()
     {
-        var toml = """
+        using var tree = new TempTree();
+        var path = tree.File("dialogue.toml", """
             [[speakers]]
             name = "Alice"
-            """;
-        string path = Path.Combine(Path.GetTempPath(), $"dialogue-{Guid.NewGuid():N}.toml");
-        File.WriteAllText(path, toml);
+            """);
 
-        try
-        {
-            CompilerOptions options = TomlConfigurationLoader.Load(path);
+        CompilerOptions options = TomlConfigurationLoader.Load(path);
 
-            ConfiguredSpeaker speaker = Assert.Single(options.Speakers);
-            Assert.Equal("Alice", speaker.Name);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        var speaker = AssertOnlySpeaker(options.Speakers);
+
+        Assert.Equal("Alice", speaker.Name);
     }
 
     [Fact]
@@ -140,11 +135,15 @@ public sealed class TomlConfigurationLoaderTests
     }
 
     [Fact]
-    public void Parse_NoUnmodeledSection_KeepsTheDefaults() =>
-        Assert.Empty(TomlConfigurationLoader.Parse("""
+    public void Parse_NoUnmodeledSection_KeepsTheDefaults()
+    {
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
             [[speakers]]
             name = "Alice"
-            """, SourceName).UnmodeledMarkdown);
+            """, SourceName);
+
+        Assert.Empty(options.UnmodeledMarkdown);
+    }
 
     [Fact]
     public void Parse_UnmodeledWithSpeakersAndMode_AppliesAll()
@@ -160,7 +159,7 @@ public sealed class TomlConfigurationLoaderTests
             """, SourceName);
 
         Assert.Equal(CompilationMode.BestEffort, options.Mode);
-        Assert.Single(options.Speakers);
+        AssertOnlySpeaker(options.Speakers);
         Assert.Equal(
             UnmodeledNodeHandling.Keep, options.UnmodeledMarkdown[UnmodeledNodeKind.Table]);
     }

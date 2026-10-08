@@ -65,12 +65,16 @@ public sealed class ConfiguredUnmodeledReaderTests
     }
 
     [Fact]
-    public void Read_OmittedKind_IsAbsent() =>
-        // Absence is the signal to keep the built-in default, so the reader must not invent one.
-        Assert.False(Read("""
+    public void Read_OmittedKind_IsAbsent()
+    {
+        var handling = Read("""
             [markdown.unmodeled]
             table = "ignore"
-            """).ContainsKey(UnmodeledNodeKind.CodeBlock));
+            """);
+
+        // Absence is the signal to keep the built-in default, so the reader must not invent one.
+        Assert.DoesNotContain(UnmodeledNodeKind.CodeBlock, handling);
+    }
 
     [Fact]
     public void Read_QuotedKindKey_IsEquivalentToBareKey() =>
