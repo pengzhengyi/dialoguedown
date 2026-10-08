@@ -142,6 +142,20 @@ public sealed class NodeTraversalExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).SuccessionTarget());
     }
 
+    [Fact]
+    public void Options_AMenuWithAFallThrough_AreOnlyItsOptionsInTheOrderListed()
+    {
+        var menu = Menu(0, Option(7, "Go east"), new SuccessionEdge(4), Option(8, "Go west"));
+
+        Assert.Equal([7, 8], menu.Options().Select(option => option.Target));
+    }
+
+    [Fact]
+    public void Options_NoMenu_IsRefused()
+    {
+        Assert.Throws<ArgumentNullException>(() => ((ChoiceNode)null!).Options());
+    }
+
     /// <summary>A node whose jump the world must allow, with a fall-through beneath it.</summary>
     /// <remarks>
     /// <code>

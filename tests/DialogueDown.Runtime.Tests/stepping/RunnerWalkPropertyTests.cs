@@ -1,10 +1,10 @@
 using CsCheck;
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
+using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -153,7 +153,7 @@ public sealed class RunnerWalkPropertyTests
 
     // A menu offers at least one option, so the pick modulo their count is always one of them.
     private static int OptionsAt(PlayContext context, int node) =>
-        context.NodeAt(node).Out.OfType<OptionEdge>().Count();
+        Assert.IsType<ChoiceNode>(context.NodeAt(node)).Options().Length;
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {

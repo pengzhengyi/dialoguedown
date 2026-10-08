@@ -48,20 +48,20 @@ internal static class Choosing
 
         return context.NodeAt(waiting.Node) switch
         {
-            ChoiceNode choice => Take(context, waiting, Options(choice), choose.Index),
+            ChoiceNode choice => Take(context, waiting, choice.Options(), choose.Index),
             var notAMenu => RefuseChoose(waiting, notAMenu),
         };
     }
 
     private static bool AsksTheWorld(ChoiceNode choice) =>
-        Options(choice).Any(option => option.Condition is not null || SpeechTemplate.HasKeys(option.Label));
+        choice.Options().Any(option => option.Condition is not null || SpeechTemplate.HasKeys(option.Label));
 
     // Every option is offered, in the order the node lists them. Nothing guards an option here, so
     // every one of them can be taken.
     private static StepResult OfferEveryOption(int position, ChoiceNode choice) =>
         new(
             new PlayState(new AwaitingChoice(position)),
-            [new Offer(choice.Ordered, [.. Options(choice).Select(Offered)])]);
+            [new Offer(choice.Ordered, [.. choice.Options().Select(Offered)])]);
 
     private static OfferedOption Offered(OptionEdge option) =>
         new([.. SpeechTemplate.Segments(option.Label).SelectMany(segment => segment.Words)], Available: true);
@@ -71,9 +71,6 @@ internal static class Choosing
         index >= 0 && index < options.Length
             ? Arrival.At(context, options[index].Target)
             : RefuseNoSuchOption(waiting, options.Length, index);
-
-    // A choice node's fall-through is not an option, so it is never offered or chosen.
-    private static ImmutableArray<OptionEdge> Options(ChoiceNode choice) => [.. choice.Out.OfType<OptionEdge>()];
 
     private static StepResult RefuseNoSuchOption(AwaitingChoice waiting, int offered, int index) =>
         new(
