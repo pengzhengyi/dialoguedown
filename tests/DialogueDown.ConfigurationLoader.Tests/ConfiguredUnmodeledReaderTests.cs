@@ -3,6 +3,7 @@ using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
 using DialogueDown.ConfigurationLoader.Tests.Support;
 using Tomlyn.Syntax;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
@@ -88,7 +89,7 @@ public sealed class ConfiguredUnmodeledReaderTests
             table.format = "keep"
             """);
 
-        Assert.Contains("table.format", exception.Message);
+        AssertMentions(exception, "table.format");
     }
 
     [Fact]
@@ -107,9 +108,7 @@ public sealed class ConfiguredUnmodeledReaderTests
             footnote = "ignore"
             """);
 
-        Assert.Equal(2, exception.Location.Line);
-        Assert.Contains("footnote", exception.Message);
-        Assert.Contains("table", exception.Message);
+        AssertRejectedAt(exception, line: 2, "footnote", "table");
     }
 
     [Fact]
@@ -120,9 +119,7 @@ public sealed class ConfiguredUnmodeledReaderTests
             table = "delete"
             """);
 
-        Assert.Equal(2, exception.Location.Line);
-        Assert.Contains("delete", exception.Message);
-        Assert.Contains("keep", exception.Message);
+        AssertRejectedAt(exception, line: 2, "delete", "keep");
     }
 
     [Fact]
@@ -133,7 +130,7 @@ public sealed class ConfiguredUnmodeledReaderTests
             table = 42
             """);
 
-        Assert.Contains("string", exception.Message);
+        AssertMentions(exception, "string");
     }
 
     [Fact]
@@ -148,7 +145,7 @@ public sealed class ConfiguredUnmodeledReaderTests
             table = "keep"
             """);
 
-        Assert.Contains("markdown.unmodeled.table", exception.Message);
+        AssertMentions(exception, "markdown.unmodeled.table");
     }
 
     private static IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> Read(string toml) =>

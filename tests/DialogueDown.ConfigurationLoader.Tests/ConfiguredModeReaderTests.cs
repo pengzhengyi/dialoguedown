@@ -3,6 +3,7 @@ using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
 using DialogueDown.ConfigurationLoader.Tests.Support;
 using Tomlyn.Syntax;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
@@ -47,9 +48,7 @@ public sealed class ConfiguredModeReaderTests
             mode = "turbo"
             """);
 
-        Assert.Equal(1, exception.Location.Line);
-        Assert.Contains("turbo", exception.Message);
-        Assert.Contains("stage-boundary", exception.Message);
+        AssertRejectedAt(exception, line: 1, "turbo", "stage-boundary");
     }
 
     [Fact]
@@ -60,7 +59,7 @@ public sealed class ConfiguredModeReaderTests
             mode = "fail-fast"
             """);
 
-        Assert.Contains("fail-fast", exception.Message);
+        AssertMentions(exception, "fail-fast");
     }
 
     [Fact]
@@ -70,7 +69,7 @@ public sealed class ConfiguredModeReaderTests
             mode = 42
             """);
 
-        Assert.Contains("string", exception.Message);
+        AssertMentions(exception, "string");
     }
 
     [Fact]

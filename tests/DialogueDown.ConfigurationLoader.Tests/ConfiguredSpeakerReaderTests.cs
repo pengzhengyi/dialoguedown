@@ -3,6 +3,7 @@ using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
 using DialogueDown.ConfigurationLoader.Tests.Support;
 using Tomlyn.Syntax;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
@@ -224,7 +225,7 @@ public sealed class ConfiguredSpeakerReaderTests
             name = ""
             """);
 
-        Assert.Equal(2, exception.Location.Line);
+        AssertRejectedAt(exception, line: 2);
     }
 
     [Fact]
@@ -309,9 +310,7 @@ public sealed class ConfiguredSpeakerReaderTests
             default = true
             """);
 
-        Assert.Equal(5, exception.Location.Line);
-        Assert.Contains("Narrator", exception.Message);
-        Assert.Contains("Alice", exception.Message);
+        AssertRejectedAt(exception, line: 5, "Narrator", "Alice");
     }
 
     [Fact]
