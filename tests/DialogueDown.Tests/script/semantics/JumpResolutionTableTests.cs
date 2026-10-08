@@ -25,6 +25,16 @@ public sealed class JumpResolutionTableTests
     }
 
     [Fact]
+    public void Resolve_AnEqualCopyOfAnAnalyzedJump_Throws()
+    {
+        var jump = Jump("#play");
+        var table = new JumpResolutionTable(new Dictionary<Jump, JumpResolution> { [jump] = new UnresolvedJump() });
+
+        // The copy holds the same values, but it is not the jump that was analyzed.
+        Assert.Throws<ArgumentException>(() => table.Resolve(jump with { }));
+    }
+
+    [Fact]
     public void Resolutions_AndCount_ReflectTheEntries()
     {
         var table = new JumpResolutionTable(new Dictionary<Jump, JumpResolution>
