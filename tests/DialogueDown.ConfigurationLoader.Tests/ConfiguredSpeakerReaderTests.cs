@@ -4,6 +4,7 @@ using DialogueDown.ConfigurationLoader.Readers;
 using DialogueDown.ConfigurationLoader.Tests.Support;
 using Tomlyn.Syntax;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfiguredSpeakerAssert;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
@@ -33,28 +34,26 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_UnrelatedTableArray_IsIgnored()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[extras]]
             note = "not a speaker"
 
             [[speakers]]
             name = "Alice"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal("Alice", speaker.Name);
     }
 
     [Fact]
     public void Read_NameAndId_AreMapped()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             id = "A"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal("Alice", speaker.Name);
         Assert.Equal("A", speaker.Id);
         Assert.Empty(speaker.CustomTags);
@@ -64,115 +63,97 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_SpeakerWithoutId_LeavesIdNull()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Narrator"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Null(speaker.Id);
     }
 
     [Fact]
     public void Read_DefaultTrue_AddsDefaultReservedTag()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Narrator"
             default = true
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag reserved = Assert.Single(speaker.ReservedTags);
-        Assert.Equal(new ConfiguredTag(ReservedTagNames.Default), reserved);
+        Assert.Equal([new ConfiguredTag(ReservedTagNames.Default)], speaker.ReservedTags);
     }
 
     [Fact]
     public void Read_DefaultFalse_AddsNoReservedTag()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             default = false
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Empty(speaker.ReservedTags);
     }
 
     [Fact]
     public void Read_ShorthandTagWithoutValue_MapsNameOnly()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = ["main"]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("main"), tag);
+        Assert.Equal([new ConfiguredTag("main")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_ShorthandTagWithValue_SplitsAtFirstEquals()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = ["mood=happy=ish"]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("mood", "happy=ish"), tag);
+        Assert.Equal([new ConfiguredTag("mood", "happy=ish")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_InlineTableTag_MapsNameAndValue()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "quest=intro", value = "ok" }]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("quest=intro", "ok"), tag);
+        Assert.Equal([new ConfiguredTag("quest=intro", "ok")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_InlineTableTagWithoutValue_LeavesValueNull()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "quest=intro" }]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("quest=intro"), tag);
+        Assert.Equal([new ConfiguredTag("quest=intro")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_MixedTagForms_PreserveArrayOrder()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = ["main", "mood=happy", { name = "role", value = "guide" }]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal(
-            new[]
-            {
-                new ConfiguredTag("main"),
-                new ConfiguredTag("mood", "happy"),
-                new ConfiguredTag("role", "guide"),
-            },
+            [new ConfiguredTag("main"), new ConfiguredTag("mood", "happy"), new ConfiguredTag("role", "guide")],
             speaker.CustomTags);
     }
 
@@ -187,7 +168,7 @@ public sealed class ConfiguredSpeakerReaderTests
             name = "Alice"
             """);
 
-        Assert.Equal(new[] { "Narrator", "Alice" }, speakers.Select(s => s.Name));
+        Assert.Equal(["Narrator", "Alice"], speakers.Select(speaker => speaker.Name));
     }
 
     [Fact]
@@ -195,15 +176,13 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // The reader maps reserved keys generically: a bool is a name-only tag, a string a valued
         // one. 'default' is the only reserved name, so it stands in for the string path.
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Narrator"
             default = "primary"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag reserved = Assert.Single(speaker.ReservedTags);
-        Assert.Equal(new ConfiguredTag(ReservedTagNames.Default, "primary"), reserved);
+        Assert.Equal([new ConfiguredTag(ReservedTagNames.Default, "primary")], speaker.ReservedTags);
     }
 
     [Fact]
@@ -317,12 +296,11 @@ public sealed class ConfiguredSpeakerReaderTests
     public void Read_QuotedStructuralKey_IsEquivalentToBareKey()
     {
         // TOML treats "name" and name as the same key.
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             "name" = "Alice"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal("Alice", speaker.Name);
     }
 
