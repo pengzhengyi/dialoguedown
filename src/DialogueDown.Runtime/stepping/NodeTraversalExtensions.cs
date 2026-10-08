@@ -79,8 +79,7 @@ internal static class NodeTraversalExtensions
         return node.FirstWayOutTaken(way => way.IsAllowed(supply)) ?? node.SuccessionTarget();
     }
 
-    // The reader refuses a branch whose arms are out of order, so the array order is the order the
-    // arms are tried.
+    // A branch's arms are tried in the order they appear, so the first one allowed is the arm taken.
     private static int? FirstWayOutTaken(this Node node, Func<IConditional, bool> isTaken) =>
         node.Out
             .FirstOrDefault(way => way is DivertEdge or BranchEdge && isTaken((IConditional)way))
