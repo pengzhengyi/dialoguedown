@@ -33,7 +33,7 @@ internal sealed class VisualizeCommand : AsyncCommand<VisualizeSettings>
     }
 
     /// <inheritdoc />
-    protected override Task<int> ExecuteAsync(
+    public override Task<int> ExecuteAsync(
         CommandContext context, VisualizeSettings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
