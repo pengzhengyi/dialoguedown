@@ -34,7 +34,7 @@ public sealed class PlayabilityTests
     {
         // A key no matcher owns would end the run where it is read, so the screen reports it before
         // the run starts.
-        AssertNotPlayable(Expected("""{ "offer": {} }"""));
+        AssertNotPlayable(Expected("""{ "invalidated": {} }"""));
     }
 
     [Fact]
@@ -63,9 +63,9 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAnExpectation_NamesEachClaimNobodyChecks()
     {
         var session = ImmutableArray.Create<SessionEntry>(
-            Expected("""{ "offer": {}, "frobnicate": true }"""));
+            Expected("""{ "invalidated": {}, "frobnicate": true }"""));
 
-        AssertNotPlayable(session, "nothing checks offer yet", "nothing checks frobnicate yet");
+        AssertNotPlayable(session, "nothing checks invalidated yet", "nothing checks frobnicate yet");
     }
 
     [Fact]

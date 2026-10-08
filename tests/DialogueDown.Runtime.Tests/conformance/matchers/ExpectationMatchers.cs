@@ -17,7 +17,7 @@ internal static class ExpectationMatchers
         new IExpectationMatcher[]
         {
             new SaidMatcher(), new ContinuedMatcher(), new EndedMatcher(), new PerformMatcher(),
-            new RefusedMatcher(), new ResolveMatcher(),
+            new RefusedMatcher(), new ResolveMatcher(), new OfferMatcher(),
         }
             .ToDictionary(matcher => matcher.Key, StringComparer.Ordinal);
 

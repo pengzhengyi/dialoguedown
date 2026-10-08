@@ -67,10 +67,10 @@ public sealed class SessionOutcomeTests
         // So one run names every construct the runner cannot play yet.
         var combined = SessionOutcome.Combine([
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
-            SessionOutcome.NotYetPlayable("nothing checks offer yet")]);
+            SessionOutcome.NotYetPlayable("nothing checks invalidated yet")]);
 
         Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
-        Assert.Equal(["nothing checks describe yet", "nothing checks offer yet"], combined.Reasons);
+        Assert.Equal(["nothing checks describe yet", "nothing checks invalidated yet"], combined.Reasons);
     }
 
     [Fact]
