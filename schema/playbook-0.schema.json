@@ -710,7 +710,7 @@
             },
             "ordered": {
               "const": true,
-              "description": "Present only when the options must be offered in the order given."
+              "description": "Present only when the options must be shown in the order given. Every menu is offered in that order, and without this a host may show the options in any order."
             },
             "out": {
               "$ref": "#/$defs/choiceOut"

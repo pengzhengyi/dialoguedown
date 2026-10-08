@@ -209,7 +209,7 @@ The writer's whole job is this mapping. Every row is one test.
 
 **Where an order matters, it is the order of `out`.** JSON keeps the order of an
 array, so a branch's arms are tried as its `if`/`elseif`/`else` chain was written,
-and an ordered menu's options are offered as the writer numbered them — see
+and a menu's options are offered in the order written, numbered or not — see
 [D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order).
 
 **Both label-bearing edges carry their own text**, rather than deriving it from the
