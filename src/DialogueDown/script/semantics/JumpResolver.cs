@@ -17,7 +17,10 @@ internal static class JumpResolver
     /// </summary>
     public static JumpResolutionTable Resolve(
         IEnumerable<Jump> jumps, AnchorTable anchors, IDiagnosticSink diagnostics) =>
-        new(jumps.ToDictionary(jump => jump, jump => Resolve(jump, anchors, diagnostics)));
+        new(jumps.ToDictionary<Jump, Jump, JumpResolution>(
+            jump => jump,
+            jump => Resolve(jump, anchors, diagnostics),
+            ReferenceEqualityComparer.Instance));
 
     private static JumpResolution Resolve(Jump jump, AnchorTable anchors, IDiagnosticSink diagnostics)
     {
