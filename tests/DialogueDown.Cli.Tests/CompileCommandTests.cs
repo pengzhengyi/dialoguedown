@@ -298,6 +298,26 @@ public sealed class CompileCommandTests
     }
 
     [Fact]
+    public void Compile_Fix_AnErrorLaterOnTheFixedLine_IsNotReportedAgainAfterFixing()
+    {
+        // The escape moves the unresolved jump one column right, but it is the same error.
+        var source = """
+            # Start
+
+            Alice: Go => then => [onward](#missing)
+            """;
+        using var script = new TempScript(source);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix");
+
+        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        Assert.Contains("Go \\=> then", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Contains("(1 fix; 1 error remains)", result.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("after fixing:", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Compile_Fix_PreservesALeadingBom()
     {
         using var tree = new TempTree();

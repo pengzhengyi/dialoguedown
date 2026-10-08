@@ -319,10 +319,13 @@ corrected state because the diagnostics above describe the script as read.
 The second compile is not reporting, it is verification: it sets the exit code
 from the corrected state, and it catches the one case a single pass cannot
 otherwise see — a fix that fails to clear its own diagnostic, or introduces a
-new one. Diagnostics present after but not before print under an
-`after fixing:` lead-in, so a producer cannot hide a regression. With the
-shipped producer the set is always empty, and the testable invariant is that every applied fix
-is absent from the recompiled diagnostics.
+new one. Those diagnostics print under an `after fixing:` lead-in, so a
+producer cannot hide a regression. A recompiled diagnostic is matched to the
+script as found by its code and by where it starts once the applied edits are
+undone, so one that a fix only moved, such as an error later on the escaped
+line, is not listed. It is listed when it has no match, when it starts inside
+text a fix wrote, or when it is the diagnostic an applied fix was meant to
+clear.
 
 ### D8 — Silence is paired with discovery
 
@@ -384,7 +387,8 @@ stays local.
   select, apply, write, recompile, report.
 - `DialogueDown.Cli.Fixing` owns the pure splice: `FixApplier.Apply` returns a
   `FixApplication` holding the corrected text and a `FixOutcome` per candidate —
-  applied, or skipped for a `FixSkipReason`. `FixRun` carries the corrected
+  applied, or skipped for a `FixSkipReason` — and `FixApplication.NewDiagnostics`
+  picks out what is new after fixing (D7). `FixRun` carries the corrected
   script's diagnostics, the written file, and anything new after fixing;
   `FixDiff` turns one applied fix into `HunkRow`s with `HunkSegment`s and
   renders them; `ScriptContents` reads and writes the script with its BOM frame.

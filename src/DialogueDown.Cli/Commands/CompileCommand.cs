@@ -2,7 +2,6 @@ using System.Text.Json;
 using DialogueDown.Cli.Fixing;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
-using DialogueDown.Diagnostics;
 using DialogueDown.Emission;
 using DialogueDown.Playbook;
 using DialogueDown.Visualization.Live;
@@ -90,22 +89,6 @@ internal sealed class CompileCommand : Command<CompileSettings>
     private static string ScriptDirectory(string script) =>
         Path.GetDirectoryName(Path.GetFullPath(script))!;
 
-    // New means no diagnostic as found has the same code and start line and column. Offsets are not
-    // compared: an applied fix shifts every offset after it, while a diagnostic on another line
-    // keeps its line and column unless the fix added or removed a line.
-    private static IReadOnlyList<LocatedDiagnostic> NewAfterFixing(
-        IReadOnlyList<LocatedDiagnostic> asFound, IReadOnlyList<LocatedDiagnostic> corrected)
-    {
-        var known = asFound
-            .Select(diagnostic => (diagnostic.Code, diagnostic.Start.Line, diagnostic.Start.Column))
-            .ToHashSet();
-        return
-        [
-            .. corrected.Where(diagnostic =>
-                !known.Contains((diagnostic.Code, diagnostic.Start.Line, diagnostic.Start.Column))),
-        ];
-    }
-
     // Fix mode: correct the script in place, then report the diagnostics as found and, after them,
     // what the run did. A run with no fix to apply reports the diagnostics exactly as a plain
     // compile does, and nothing more.
@@ -133,7 +116,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
             application.Outcomes,
             written,
             corrected.LocatedDiagnostics,
-            NewAfterFixing(asFound.LocatedDiagnostics, corrected.LocatedDiagnostics),
+            application.NewDiagnostics(asFound.LocatedDiagnostics, corrected.LocatedDiagnostics),
             application.Text);
         _errata.Render(settings.Script, script.Text, asFound.LocatedDiagnostics, run);
         return corrected.HasErrors ? ExitCodes.DataError : ExitCodes.Success;
