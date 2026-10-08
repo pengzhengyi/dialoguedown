@@ -175,6 +175,26 @@ describe("createDetailPanel", () => {
             jumping.clear();
             expect(jumpButton()?.hidden).toBe(true);
         });
+
+        it("takes a region to the heading that declares it, not the body it covers", () => {
+            const jumps: Array<{ start: number; end: number }> = [];
+            const jumping = createDetailPanel({ jumpToSource: (span) => jumps.push(span) });
+            // "# The Gate\n\nGuide: Which way?\n": the heading names the scene at [2, 10), and the
+            // scene's nodes cover [12, 29).
+            jumping.showRegion({
+                name: "The Gate",
+                nodeCount: 1,
+                entering: [],
+                leaving: [],
+                tint: 0,
+                span: { start: 12, end: 29 },
+                declaredAt: { start: 2, end: 10 },
+            });
+
+            jumpButton()!.click();
+
+            expect(jumps).toEqual([{ start: 2, end: 10 }]);
+        });
     });
 
     it("lists what leads to a node and what it leads to, naming the route of each", () => {
