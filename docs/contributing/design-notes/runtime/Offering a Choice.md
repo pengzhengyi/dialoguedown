@@ -52,8 +52,8 @@ about.
 In scope:
 
 - playing a `choice` node, and the `option` edges out of it;
-- the sequence a menu is offered in: the writer's for an ordered menu, and nobody's
-  for an unordered one;
+- the order a menu is offered in, which is the order written, and whether the host
+  must show it in that order;
 - the `Offer` request, the `Choose` command, and the situation between them;
 - reading the world once for a menu: its options' conditions and its labels'
   queries;
@@ -76,7 +76,7 @@ menu from the `Offer` it received and the `Choose` it sent.
 | **Option** | One `option` edge out of a choice node: a label, the node it leads to, and an optional condition. A choice node's `succession`, when it has one, is not an option |
 | **Label** | The words an option is offered by, compiled from the option's text; what the player reads, never what is said or performed |
 | **Available** | Whether an option can be taken: true unless its condition failed |
-| **Offer** | The `Offer` request: every option of a menu, each with its label and whether it is available; in the order written when the menu is ordered |
+| **Offer** | The `Offer` request: every option of a menu, in the order written, each with its label and whether it is available |
 | **Take** | The player's `Choose(index)`: the option at that position in the `Offer` the driver received |
 
 ## Functionality checklist
@@ -87,8 +87,8 @@ M1:
       for `Choose`.
 - [ ] `Offer` is a request, so a driver answers it as it answers `Perform` and
       `Resolve`, and `Next` at a menu is refused.
-- [ ] An ordered menu's options are offered in the order they appear in `out`;
-      `Offer` says whether the menu is ordered.
+- [ ] A menu's options are offered in the order they appear in `out`; `Offer` says
+      whether the host must show them in that order.
 - [ ] `Choose(index)` names a position in the `Offer` just sent, in either kind of
       menu.
 - [ ] A label is offered with its commands removed, and a command in a label is
@@ -105,7 +105,7 @@ M1:
 M2:
 
 - [ ] A menu's options' conditions and its labels' queries are asked on arrival in
-      one request, in the sequence the options are offered.
+      one request, in the order written.
 - [ ] A label is offered with its queries filled.
 - [ ] An option whose condition fails is offered unavailable, not hidden.
 - [ ] A `Choose` of an unavailable option is refused as `unavailable-option`, and
@@ -153,11 +153,11 @@ option rejoins there unless its arm jumps away.
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `Offer(ordered, options)` | A request answered by `Choose`: the menu offered, and whether it is ordered, so its sequence is the writer's to keep | `Request` |
+| `Offer(ordered, options)` | A request answered by `Choose`: the menu offered in the order written, and whether the host must show it in that order | `Request` |
 | `OfferedOption(label, available)` | One option as offered: its label with queries filled and commands removed, and whether it can be taken | `Offer` |
 | `Choose(index)` | A command: take the option at that position among those offered | `Command` |
 | `AwaitingChoice(node, available)` | Waiting for the player at a menu, and the positions of the options that could be taken when it was offered | `Situation` |
-| `NodeQuestions` | For a choice node, its options' conditions and its labels' queries, in the sequence the options are offered; and the same whether read for the whole node or from its start | `Arrival` |
+| `NodeQuestions` | For a choice node, its options' conditions and its labels' queries, in the order written; and the same whether read for the whole node or from its start | `Arrival` |
 | `Arrival` | Walks past a menu with nothing available, as it walks past a branch | `Playing` |
 | `Playing` | Hands a choice node to `Choosing` | `Arrival` |
 | `Choosing` | Offers a menu's options and waits; takes `Choose` against the options offered, refusing one the menu cannot take, and arrives at the chosen option's node | `Playing`, `Runner`, `Arrival` |
@@ -184,32 +184,32 @@ request, and the rule holds unchanged: at a menu, the answer is the player's
 offer these options to the player — where an event is named in the past tense for
 what already happened.
 
-### O3 — `Choose` names a place in the offer; an ordered menu keeps its written order
+### O3 — Every menu is offered in the order written; `ordered` is for the host
 
-The runner offers every option of a menu and never drops one. Two questions about
-the options look alike and are kept apart:
+The runner offers every option of a menu, in the order its options appear in `out`,
+and never drops one. The compiler writes them into `out` in the order the writer
+wrote them, and JSON keeps the order of an array, as it does for a branch's arms
+([reader rules D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order)). So
+in every menu, an option's position in the offer is its position as written.
 
-| Question | Answered by | For |
-| --- | --- | --- |
-| Which option does the player take? | `Choose(index)`: a position in the `Offer` the driver just received | Every menu |
-| In what sequence must the menu be shown? | The order its options appear in `out`, which is the order the writer numbered them | Ordered menus only |
+`Choose(index)` names a position in the `Offer` the driver just received. The
+runner rebuilds the same listing from the node when `Choose` arrives, because its
+step is a function of its state and command, and resolves the index against it.
+The index never counts a choice node's fall-through.
 
-`Choose` addresses what was offered, not the playbook. The runner rebuilds the same
-listing from the node when `Choose` arrives, because its step is a function of its
-state and command, and resolves the index against it. The index never counts a
-choice node's fall-through.
+Because the offer keeps the order written, a position names the same option in
+every runtime, which is what lets a fixture choose by position. A label could not
+do it, because two options may read the same:
 
-An ordered menu (`1.`) is shown in the sequence the writer numbered. The compiler
-writes its options into `out` in that sequence, and JSON keeps the order of an
-array, so an option's position in `out` is its place in the menu, as it is for a
-branch's arm ([reader rules D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order)).
-The runner offers the options in that order.
+```markdown
+- Gift Box `RandomGift()`
+- Gift Box `RandomGift()`
+```
 
-An unordered menu (`-`) has no sequence to keep: the runner offers its options in
-whatever sequence it reads them, and no conformance case depends on that sequence.
-`Offer` says whether the menu is ordered, so the host knows whether it may shuffle
-what it shows. Shuffling is presentation, so it is the host's; `Choose` still names
-the position in the `Offer`.
+`ordered` is for the host. A numbered menu (`1.`) is shown in the order offered; a
+bulleted menu (`-`) may be shown in any order. Shuffling is presentation, so it is
+the host's, and a host that reorders what it shows still answers with the position
+in the `Offer`.
 
 ### O4 — A label is shown, never performed
 
@@ -233,11 +233,9 @@ sets for any two questions.
 A menu's options' conditions and its labels' queries are all asked before it is
 offered, in one `Resolve`, as the **before playing** moment of
 [A1](./Asking%20the%20World.md#a1--one-ask-per-moment). The keys are named in
-the sequence the options are offered: the first option's condition, then its
-label's queries, then the next option's, each key once. In an unordered menu that
-sequence is the runner's own, so the corpus pins the sequence of keys only for an
-ordered menu. One snapshot decides the whole menu, so two options guarded by one
-key are always both available or both unavailable.
+the order written: the first option's condition, then its label's queries, then
+the next option's, each key once. One snapshot decides the whole menu, so two
+options guarded by one key are always both available or both unavailable.
 
 A1 reads the conditions on a node's ways out as it leaves, because the node may
 change the world in between. A choice node performs nothing, so nothing changes
@@ -313,7 +311,8 @@ the run goes instead.
 | Case | Behavior |
 | --- | --- |
 | A menu with one option | Offered; the player still takes it |
-| An unordered menu | Offered in whatever sequence the runner reads its options; `Choose` names a position in that offer |
+| A bulleted menu | Offered in the order written; the host may show it in another order, and `Choose` still names a position in the offer |
+| Two options with the same label | Both offered; `Choose` tells them apart by position |
 | An option whose label is only a command | Offered with an empty label; taking it performs the command |
 | A label whose command comes first | Offered starting with a space, as written |
 | An option whose arm is a jump | Taking it walks past the jump to where it leads |
@@ -337,11 +336,11 @@ the run goes instead.
 | --- | --- |
 | `protocol` | `Offer` joins the requests, with `OfferedOption`; `Choose` joins the commands; `RefusalReason` gains `NoSuchOption` and `UnavailableOption` |
 | `situations` | `AwaitingChoice`, with its wording in a refusal |
-| `stepping` | `Choosing` offers a menu and takes `Choose`, and `Playing` hands it a choice node; `Arrival` walks past a menu with nothing available; a choice node's questions are its options' conditions and labels' queries in the sequence the options are offered, asked on arrival and never on leaving |
+| `stepping` | `Choosing` offers a menu and takes `Choose`, and `Playing` hands it a choice node; `Arrival` walks past a menu with nothing available; a choice node's questions are its options' conditions and labels' queries in the order written, asked on arrival and never on leaving |
 | `Runner.Step` | `(AwaitingChoice, Choose)` goes to `Choosing`; `Choose` anywhere else is misplaced |
-| Fixture schema | `asked` becomes `offer`, shaped `{ ordered, options }`; a `choose` send names the option by its label; the two new refusal reasons |
-| Harness | A `choose` reader that finds the named label's position in the `Offer` received, and refuses a label offered twice; an `OfferMatcher` that matches an unordered menu's options in any sequence and an ordered menu's in the order written; the screen plays a choice node |
-| Corpus | `a-player-choice`, `a-divert-option`, and `an-unavailable-option` conform; new cases for each refusal, a label with a query, a label with a command, an ordered menu, an ordered menu whose keys interleave conditions and queries, a menu with nothing available, and a `Choose` past the options of a menu with a fall-through |
+| Fixture schema | `asked` becomes `offer`, shaped `{ ordered, options }`, its options claimed in the order offered; the two new refusal reasons |
+| Harness | A `choose` reader; an `OfferMatcher` that matches a claim's options in the order offered; the screen plays a choice node |
+| Corpus | `a-player-choice`, `a-divert-option`, and `an-unavailable-option` conform; new cases for each refusal, a label with a query, a label with a command, a numbered menu, two options with the same label, a menu whose keys interleave conditions and queries, a menu with nothing available, and a `Choose` past the options of a menu with a fall-through |
 | `PlaybookGen` | Draws menus, with conditions and a fall-through when every option has one; the walk takes an available option |
 | Runner | D3 names `Offer` among the requests; the protocol matrix gains a `Choose` column and an `AwaitingChoice` row; the arriving table offers a menu; its deferred list loses choices |
 | Speaking a line | S4 names `Offer` among the requests; S9's open half is settled: a label reaches the host with its commands removed |
@@ -354,9 +353,9 @@ the run goes instead.
 
 | Level | What it covers |
 | --- | --- |
-| Unit — `Choosing` | The offer: an ordered menu's labels in the order written, queries filled, commands removed, availability, and the ordered flag; taking an option; each refusal, with the menu left open |
+| Unit — `Choosing` | The offer: labels in the order written, queries filled, commands removed, availability, and the ordered flag; taking an option; each refusal, with the menu left open |
 | Unit — `Arrival` | Walking past a menu with nothing available; leading nowhere without a fall-through |
-| Unit — questions | A choice node's keys in the sequence its options are offered, the same whole or from its start, and nothing asked on leaving it |
+| Unit — questions | A choice node's keys in the order written, the same whole or from its start, and nothing asked on leaving it |
 | Unit — the protocol | Each new matrix cell |
 | Unit — situations | `AwaitingChoice`'s wording in a refusal |
 | Property | The walk offers and takes menus, and every `Choose` it sends is accepted |
