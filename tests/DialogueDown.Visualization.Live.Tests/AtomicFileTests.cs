@@ -108,31 +108,19 @@ public sealed class AtomicFileTests
     }
 
     [Fact]
-    public void Transact_Write_StagesInTheSameDirectory()
+    public void StagingPathFor_IsAHiddenTempBesideTheTarget()
     {
         // A temp file beside the target keeps the final move on one volume, where it is an atomic
-        // rename.
-        using var tree = new TempTree();
-        var directory = tree.Dir("nested");
-        var path = Path.Combine(directory, "doc.txt");
-        File.WriteAllText(path, "original");
+        // rename. Each call gets its own, so two writers never share one.
+        var directory = Path.Combine(Path.GetTempPath(), "nested");
+        var target = Path.Combine(directory, "doc.txt");
 
-        string? stagingDirectory = null;
-        AtomicFile.Transact(path, transaction =>
-        {
-            transaction.Write("committed");
-            stagingDirectory = Directory.GetFiles(directory)
-                .FirstOrDefault(file => !string.Equals(file, path, StringComparison.Ordinal)) is { } temp
-                ? Path.GetDirectoryName(temp)
-                : null;
-            return 0;
-        });
+        var first = AtomicFile.StagingPathFor(target);
+        var second = AtomicFile.StagingPathFor(target);
 
-        Assert.Equal("committed", File.ReadAllText(path));
-        if (stagingDirectory is not null)
-        {
-            Assert.Equal(directory, stagingDirectory);
-        }
+        Assert.Equal(directory, Path.GetDirectoryName(first));
+        Assert.Matches(@"^\.doc\.txt\.[0-9a-f]{32}\.tmp$", Path.GetFileName(first));
+        Assert.NotEqual(first, second);
     }
 
     [Fact]
