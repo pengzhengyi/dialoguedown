@@ -256,13 +256,16 @@ internal sealed class ServedShellServer : IAsyncDisposable
             return Results.BadRequest(new { message = "The containing folder does not exist." });
         }
 
-        if (File.Exists(target))
+        try
+        {
+            AtomicFile.CreateNew(target, string.Empty);
+        }
+        catch (IOException) when (File.Exists(target))
         {
             return Results.Conflict(
                 new { message = "A file with that name already exists.", path = relativePath });
         }
 
-        File.WriteAllText(target, string.Empty);
         return StartSession(target, VisualizationMode.Edit, context);
     }
 
