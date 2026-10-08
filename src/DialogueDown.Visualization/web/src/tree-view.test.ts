@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { hierarchy } from "d3";
 import { lineageIds, createTreeView } from "./tree-view";
 import type { DisplayNode, Stage } from "./model";
+import { MIN_ZOOM } from "./zoom-controls";
 
 interface Node {
     id: string;
@@ -159,6 +160,31 @@ describe("createTreeView — selection by stable id", () => {
         expect(view.selectById("a", { center: true })).toBe(true);
 
         expect(cameras.at(-1)).toBe(0.15);
+    });
+
+    it("keeps a reader zoomed all the way out at their own scale", () => {
+        const cameras: number[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            initialCamera: { k: MIN_ZOOM, x: 0, y: 0 },
+            onCameraChange: (transform) => cameras.push(transform.k),
+        });
+
+        expect(view.selectById("a", { center: true })).toBe(true);
+
+        expect(cameras.at(-1)).toBe(MIN_ZOOM);
+    });
+
+    it("zooms to a typed percentage as far out as the wheel goes", () => {
+        const cameras: number[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            onCameraChange: (transform) => cameras.push(transform.k),
+        });
+        const input = view.controls.querySelector<HTMLInputElement>(".zoom-input")!;
+
+        input.value = "5";
+        input.dispatchEvent(new Event("change"));
+
+        expect(cameras.at(-1)).toBeCloseTo(0.05);
     });
 });
 

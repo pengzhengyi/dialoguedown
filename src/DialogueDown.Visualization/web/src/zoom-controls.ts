@@ -1,6 +1,12 @@
 /** The factor each zoom-in/out button press multiplies (or divides) the scale by. */
 export const ZOOM_STEP = 1.3;
 
+/** How far out the reader may zoom. */
+export const MIN_ZOOM = 0.03;
+
+/** How far in the reader may zoom. */
+export const MAX_ZOOM = 3;
+
 // A revert glyph (anticlockwise circle arrow) — "reset to the default view".
 const REVERT_GLYPH = "\u21BA";
 
@@ -35,7 +41,7 @@ export function createZoomControls(handlers: ZoomHandlers): ZoomControls {
         setRatio(scale) {
             // Do not overwrite the value while the reader is typing into it.
             if (document.activeElement !== input.element) {
-                input.element.value = String(Math.round(scale * 100));
+                input.element.value = String(asPercent(scale));
             }
         },
     };
@@ -52,9 +58,9 @@ function zoomInput(onSetZoom: (percent: number) => void): {
     const input = document.createElement("input");
     input.type = "number";
     input.className = "zoom-input zoom-ratio";
-    input.min = "10";
-    input.max = "300";
-    input.step = "10";
+    input.min = String(asPercent(MIN_ZOOM));
+    input.max = String(asPercent(MAX_ZOOM));
+    input.step = "1";
     input.value = "100";
     input.title = "Zoom percent";
     input.setAttribute("aria-label", "Zoom percent");
@@ -78,6 +84,11 @@ function zoomInput(onSetZoom: (percent: number) => void): {
 
     field.append(input, suffix);
     return { field, element: input };
+}
+
+/** A scale as a whole percentage: 0.03 -> 3, where `0.03 * 100` alone gives 3.0000000000000004. */
+function asPercent(scale: number): number {
+    return Math.round(scale * 100);
 }
 
 function controlButton(text: string, ariaLabel: string, onClick: () => void): HTMLButtonElement {

@@ -34,7 +34,13 @@ import { colorOf } from "./palette";
 import { edgeTooltipHtml, tooltipHtml } from "./text";
 import { clipToWidth } from "./clip-text";
 import { createLegend, regionCounts, setRegionFoldState } from "./legend";
-import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
+import {
+    createZoomControls,
+    MAX_ZOOM,
+    MIN_ZOOM,
+    ZOOM_STEP,
+    type ZoomControls,
+} from "./zoom-controls";
 
 /** A laid-out hierarchy node augmented with collapse state (`_children`). */
 type TreeNode = HierarchyPointNode<DisplayNode> & {
@@ -260,9 +266,6 @@ const ROOT_ANCHOR_X = 0.2;
 /** The gap kept between the drawing and a panel floating over the canvas. */
 const FLOATING_PANEL_GAP = 12;
 
-/** How far out the reader may zoom by hand. */
-const MIN_ZOOM = 0.03;
-
 /**
  * The smallest scale a stage will *open* at.
  *
@@ -418,7 +421,7 @@ export function createTreeView(
     const gEdgeHits = viewport.append("g").attr("class", "edge-hits");
 
     const zoomBehavior = zoom<SVGSVGElement, undefined>()
-        .scaleExtent([MIN_ZOOM, 3])
+        .scaleExtent([MIN_ZOOM, MAX_ZOOM])
         // Use the container size as the extent so zoom centers correctly and does not
         // depend on the SVG's intrinsic size.
         .extent(() => {
@@ -1725,7 +1728,7 @@ export function createTreeView(
     }
 
     function clampScale(scale: number): number {
-        return Math.max(0.1, Math.min(3, scale));
+        return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale));
     }
 
     function applyTransform(transform: CameraTransform): void {

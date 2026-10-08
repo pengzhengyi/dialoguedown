@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { createZoomControls, ZOOM_STEP, type ZoomHandlers } from "./zoom-controls";
+import {
+    createZoomControls,
+    MAX_ZOOM,
+    MIN_ZOOM,
+    ZOOM_STEP,
+    type ZoomHandlers,
+} from "./zoom-controls";
 
 function setup() {
     const handlers: ZoomHandlers = {
@@ -76,6 +82,14 @@ describe("createZoomControls", () => {
         controls.setRatio(2);
         expect(input.value).toBe("77");
         controls.element.remove();
+    });
+
+    it("lets the field reach the same limits as the wheel, a whole percent at a time", () => {
+        const { input } = setup();
+        expect(Number(input.min) / 100).toBeCloseTo(MIN_ZOOM);
+        expect(Number(input.max) / 100).toBeCloseTo(MAX_ZOOM);
+        expect(input.min).toBe("3"); // a whole percent, where 0.03 * 100 is 3.0000000000000004
+        expect(input.step).toBe("1");
     });
 
     it("exposes a sensible zoom step", () => {
