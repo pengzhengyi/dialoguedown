@@ -6,7 +6,7 @@ namespace DialogueDown.Runtime.Protocol;
 /// Offer the player these options, and say which one they take.
 /// </summary>
 /// <remarks>
-/// A menu waits on the player, so it is a request, answered by the player's choice rather than by
+/// A menu waits on the player, so it is a request, answered by <see cref="Choose"/> rather than by
 /// <see cref="Next"/>.
 /// <para>
 /// A numbered menu is offered in the order the writer numbered its options, and is shown in that

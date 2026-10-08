@@ -72,6 +72,17 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_ChooseAwayFromAMenu_IsMisplacedRatherThanUnknown()
+    {
+        var context = PlayContextFactory.OneLine();
+
+        var result = Runner.Step(context, Started(context), new Choose(0));
+
+        AssertRefused(result, RefusalReason.Misplaced, "cannot take Choose");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
     public void Step_DoneAfterALinesCommand_GivesThePlayerTheTurn()
     {
         // Nothing is left for the host to answer, so the driver waits for the player's Next.
