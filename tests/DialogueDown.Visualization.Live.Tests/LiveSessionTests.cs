@@ -676,6 +676,28 @@ public sealed class LiveSessionTests
     }
 
     [Fact]
+    public void CreateConfig_RetryWithAnotherSpellingOfItsPath_MatchesByTheMachinesPathRule()
+    {
+        using var tree = new TempTree();
+        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
+        var session = new LiveSession(docPath, VisualizationMode.Edit);
+        var configPath = Path.Combine(tree.Root, "dialogue.toml");
+        session.CreateConfig(configPath);
+        var respelled = Path.Combine(tree.Root, "Dialogue.toml");
+
+        // Where file names ignore case, both spellings name the session's own config, so the
+        // retry is answered like any other; where they do not, it names a second file.
+        if (PathComparison.Comparer.Equals(configPath, respelled))
+        {
+            Assert.Equal(CreateConfigStatus.Adopted, session.CreateConfig(respelled).Status);
+        }
+        else
+        {
+            Assert.Throws<InvalidOperationException>(() => session.CreateConfig(respelled));
+        }
+    }
+
+    [Fact]
     public void CreateConfig_RetryAfterAdopt_DifferingContent_ReturnsConflict()
     {
         using var tree = new TempTree();

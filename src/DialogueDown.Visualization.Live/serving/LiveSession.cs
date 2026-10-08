@@ -274,7 +274,7 @@ internal sealed class LiveSession
     // Two paths name the same file — compared as normalized full paths so a session recognizes a
     // create retry for the very config it already adopted.
     private static bool PathsEqual(string left, string right) =>
-        string.Equals(Path.GetFullPath(left), Path.GetFullPath(right), StringComparison.Ordinal);
+        PathComparison.Comparer.Equals(PathComparison.Normalize(left), PathComparison.Normalize(right));
 
     // A saved-invalid/invalid Config payload keeps the last valid report but must carry the
     // external (invalid) TOML and a configuration file the Config tab can open. Serializing with a
