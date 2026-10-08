@@ -1,5 +1,6 @@
 using DialogueDown.Configuration;
 using DialogueDown.TestSupport;
+using DialogueDown.Visualization.Configuration;
 using static DialogueDown.Cli.Tests.Support.ConfigFiles;
 
 namespace DialogueDown.Cli.Tests;
@@ -24,7 +25,7 @@ public sealed class ProjectConfigurationTests
 
         var options = new ProjectConfiguration().Resolve(configPath, tree.Root);
 
-        Assert.Equal("Narrator", Assert.Single(options.Speakers).Name);
+        AssertOnlySpeaker(options, "Narrator");
     }
 
     [Fact]
@@ -35,7 +36,7 @@ public sealed class ProjectConfigurationTests
 
         var options = new ProjectConfiguration().Resolve(null, tree.Root);
 
-        Assert.Equal("Narrator", Assert.Single(options.Speakers).Name);
+        AssertOnlySpeaker(options, "Narrator");
     }
 
     [Fact]
@@ -47,7 +48,7 @@ public sealed class ProjectConfigurationTests
 
         var options = new ProjectConfiguration().Resolve(null, nested);
 
-        Assert.Equal("Narrator", Assert.Single(options.Speakers).Name);
+        AssertOnlySpeaker(options, "Narrator");
     }
 
     [Fact]
@@ -63,7 +64,7 @@ public sealed class ProjectConfigurationTests
 
         var options = new ProjectConfiguration().Resolve(null, nested);
 
-        Assert.Equal("Alice", Assert.Single(options.Speakers).Name);
+        AssertOnlySpeaker(options, "Alice");
     }
 
     [Fact]
@@ -89,7 +90,7 @@ public sealed class ProjectConfigurationTests
 
         var options = new ProjectConfiguration().Resolve(null, nested, boundary);
 
-        Assert.Equal("Narrator", Assert.Single(options.Speakers).Name);
+        AssertOnlySpeaker(options, "Narrator");
     }
 
     [Fact]
@@ -112,10 +113,8 @@ public sealed class ProjectConfigurationTests
 
         var applied = new ProjectConfiguration().ResolveApplied(null, tree.Root);
 
-        Assert.True(applied.IsConfiguredFromFile);
-        Assert.Equal(path, applied.File!.Path);
-        Assert.Equal(NarratorByDefault, applied.File.Source);
-        Assert.Equal("Narrator", Assert.Single(applied.Options.Speakers).Name);
+        AssertConfiguredFrom(applied, path, NarratorByDefault);
+        AssertOnlySpeaker(applied.Options, "Narrator");
     }
 
     [Fact]
@@ -126,8 +125,20 @@ public sealed class ProjectConfigurationTests
 
         var applied = new ProjectConfiguration().ResolveApplied(path, tree.Root);
 
+        AssertConfiguredFrom(applied, path, NarratorByDefault);
+    }
+
+    private static void AssertOnlySpeaker(CompilerOptions options, string name) =>
+        Assert.Equal(name, Assert.Single(options.Speakers).Name);
+
+    /// <summary>Asserts that the configuration was read from the file at <paramref name="path"/>.</summary>
+    /// <param name="applied">The resolved configuration.</param>
+    /// <param name="path">Where the file is.</param>
+    /// <param name="source">What the file says.</param>
+    private static void AssertConfiguredFrom(AppliedConfiguration applied, string path, string source)
+    {
         Assert.True(applied.IsConfiguredFromFile);
         Assert.Equal(path, applied.File!.Path);
-        Assert.Equal(NarratorByDefault, applied.File.Source);
+        Assert.Equal(source, applied.File.Source);
     }
 }
