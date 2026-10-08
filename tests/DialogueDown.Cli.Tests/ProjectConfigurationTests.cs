@@ -1,16 +1,11 @@
 using DialogueDown.Configuration;
 using DialogueDown.TestSupport;
+using static DialogueDown.Cli.Tests.Support.ConfigFiles;
 
 namespace DialogueDown.Cli.Tests;
 
 public sealed class ProjectConfigurationTests
 {
-    private const string NarratorConfig = """
-        [[speakers]]
-        name = "Narrator"
-        default = true
-        """;
-
     [Fact]
     public void Resolve_NoConfigAndNoFile_ReturnsDefault()
     {
@@ -25,7 +20,7 @@ public sealed class ProjectConfigurationTests
     public void Resolve_ExplicitConfig_LoadsThatFile()
     {
         using var tree = new TempTree();
-        var configPath = tree.File("elsewhere/custom.toml", NarratorConfig);
+        var configPath = tree.File("elsewhere/custom.toml", NarratorByDefault);
 
         var options = new ProjectConfiguration().Resolve(configPath, tree.Root);
 
@@ -36,7 +31,7 @@ public sealed class ProjectConfigurationTests
     public void Resolve_DiscoversFileInStartDirectory()
     {
         using var tree = new TempTree();
-        tree.File(ProjectConfiguration.FileName, NarratorConfig);
+        tree.File(ProjectConfiguration.FileName, NarratorByDefault);
 
         var options = new ProjectConfiguration().Resolve(null, tree.Root);
 
@@ -47,7 +42,7 @@ public sealed class ProjectConfigurationTests
     public void Resolve_WalksUpToNearestFile()
     {
         using var tree = new TempTree();
-        tree.File(ProjectConfiguration.FileName, NarratorConfig);
+        tree.File(ProjectConfiguration.FileName, NarratorByDefault);
         var nested = tree.Dir("act1/scene3");
 
         var options = new ProjectConfiguration().Resolve(null, nested);
@@ -59,7 +54,7 @@ public sealed class ProjectConfigurationTests
     public void Resolve_NearestFileWins()
     {
         using var tree = new TempTree();
-        tree.File(ProjectConfiguration.FileName, NarratorConfig);
+        tree.File(ProjectConfiguration.FileName, NarratorByDefault);
         var nested = tree.Dir("act1");
         tree.File($"act1/{ProjectConfiguration.FileName}", """
             [[speakers]]
@@ -75,7 +70,7 @@ public sealed class ProjectConfigurationTests
     public void Resolve_DoesNotReadConfigAboveTheBoundary()
     {
         using var tree = new TempTree();
-        tree.File(ProjectConfiguration.FileName, NarratorConfig);
+        tree.File(ProjectConfiguration.FileName, NarratorByDefault);
         var boundary = tree.Dir("project");
         var nested = tree.Dir("project/act1");
 
@@ -89,7 +84,7 @@ public sealed class ProjectConfigurationTests
     {
         using var tree = new TempTree();
         var boundary = tree.Dir("project");
-        tree.File($"project/{ProjectConfiguration.FileName}", NarratorConfig);
+        tree.File($"project/{ProjectConfiguration.FileName}", NarratorByDefault);
         var nested = tree.Dir("project/act1");
 
         var options = new ProjectConfiguration().Resolve(null, nested, boundary);
@@ -113,13 +108,13 @@ public sealed class ProjectConfigurationTests
     public void ResolveApplied_DiscoveredFile_CarriesItsPathTextAndOptions()
     {
         using var tree = new TempTree();
-        var path = tree.File(ProjectConfiguration.FileName, NarratorConfig);
+        var path = tree.File(ProjectConfiguration.FileName, NarratorByDefault);
 
         var applied = new ProjectConfiguration().ResolveApplied(null, tree.Root);
 
         Assert.True(applied.IsConfiguredFromFile);
         Assert.Equal(path, applied.File!.Path);
-        Assert.Equal(NarratorConfig, applied.File.Source);
+        Assert.Equal(NarratorByDefault, applied.File.Source);
         Assert.Equal("Narrator", Assert.Single(applied.Options.Speakers).Name);
     }
 
@@ -127,12 +122,12 @@ public sealed class ProjectConfigurationTests
     public void ResolveApplied_ExplicitConfig_CarriesThatFile()
     {
         using var tree = new TempTree();
-        var path = tree.File("elsewhere/custom.toml", NarratorConfig);
+        var path = tree.File("elsewhere/custom.toml", NarratorByDefault);
 
         var applied = new ProjectConfiguration().ResolveApplied(path, tree.Root);
 
         Assert.True(applied.IsConfiguredFromFile);
         Assert.Equal(path, applied.File!.Path);
-        Assert.Equal(NarratorConfig, applied.File.Source);
+        Assert.Equal(NarratorByDefault, applied.File.Source);
     }
 }

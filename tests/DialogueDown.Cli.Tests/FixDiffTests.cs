@@ -8,8 +8,14 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_InsertionInTheMiddle_ShowsContextMinusAndPlus()
     {
-        const string Source =
-            "# The Workshop\n\nAlice: The rule is simple => the lever opens the door.\n\n*Bob*: Did you read the manual?\n";
+        const string Source = """
+            # The Workshop
+
+            Alice: The rule is simple => the lever opens the door.
+
+            *Bob*: Did you read the manual?
+
+            """;
         var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
         var fix = Escape(arrow);
 

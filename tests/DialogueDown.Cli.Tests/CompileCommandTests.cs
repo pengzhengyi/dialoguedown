@@ -8,16 +8,29 @@ using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
 using static DialogueDown.Cli.Tests.Support.CliAssert;
+using static DialogueDown.Cli.Tests.Support.ConfigFiles;
 using static DialogueDown.Cli.Tests.Support.OutputAssert;
 
 namespace DialogueDown.Cli.Tests;
 
 public sealed class CompileCommandTests
 {
-    private const string NarratorConfig = """
-        [[speakers]]
-        name = "Narrator"
-        default = true
+    /// <summary>A line whose arrow leads nowhere: a DLG1113 warning that <c>--fix</c> escapes.</summary>
+    private const string ADanglingArrow = """
+        # The Workshop
+
+        Alice: The rule is simple => the lever opens the door.
+        """;
+
+    /// <summary>Two scenes with the same name: a DLG2001 error, so the compile fails.</summary>
+    private const string TwoScenesNamedAlike = """
+        # Gate
+
+        Alice: One.
+
+        # Gate
+
+        Bob: Two.
         """;
 
     [Fact]
@@ -54,7 +67,7 @@ public sealed class CompileCommandTests
     public void Compile_WithConfig_BuildsTheCompilerFromTheResolvedOptions()
     {
         using var tree = new TempTree();
-        var configPath = tree.File("dialogue.toml", NarratorConfig);
+        var configPath = tree.File("dialogue.toml", NarratorByDefault);
         using var script = new TempScript("# Scene");
         var compiler = Substitute.For<IScriptCompiler>();
         compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
@@ -199,12 +212,7 @@ public sealed class CompileCommandTests
     [Fact]
     public void Compile_Fix_AppliesThePreferredFixInPlace()
     {
-        var source = """
-            # The Workshop
-
-            Alice: The rule is simple => the lever opens the door.
-            """;
-        using var script = new TempScript(source);
+        using var script = new TempScript(ADanglingArrow);
         var tester = CliTester.Create();
 
         var result = tester.Run("compile", script.Path, "--fix");
@@ -313,32 +321,22 @@ public sealed class CompileCommandTests
     {
         using var tree = new TempTree();
         var path = tree.File("scene.dialogue.md");
-        File.WriteAllBytes(
-            path,
-            [
-                0xEF,
-                0xBB,
-                0xBF,
-                .. Encoding.UTF8.GetBytes("# The Workshop\n\nAlice: The rule is simple => the lever opens.\n"),
-            ]);
+        File.WriteAllBytes(path, [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(ADanglingArrow)]);
         var tester = CliTester.Create();
 
         var result = tester.Run("compile", path, "--fix");
 
         AssertSucceeded(result);
         var bytes = File.ReadAllBytes(path);
-        Assert.Equal([0xEF, 0xBB, 0xBF], bytes[..3]);
-        Assert.Contains("\\=>", Encoding.UTF8.GetString(bytes[3..]), StringComparison.Ordinal);
+        var bom = Encoding.UTF8.GetPreamble();
+        Assert.Equal(bom, bytes[..bom.Length]);
+        Assert.Contains("\\=>", Encoding.UTF8.GetString(bytes[bom.Length..]), StringComparison.Ordinal);
     }
 
     [Fact]
     public void Compile_Fix_IsIdempotent()
     {
-        using var script = new TempScript("""
-            # The Workshop
-
-            Alice: The rule is simple => the lever opens the door.
-            """);
+        using var script = new TempScript(ADanglingArrow);
         AssertSucceeded(CliTester.Create().Run("compile", script.Path, "--fix"));
         var corrected = File.ReadAllText(script.Path);
         var written = File.GetLastWriteTimeUtc(script.Path);
@@ -464,15 +462,7 @@ public sealed class CompileCommandTests
     {
         // Nothing half-written to pipe into the next command: a failed compile has no playbook,
         // and its diagnostics belong on standard error.
-        using var script = new TempScript("""
-            # Gate
-
-            Alice: One.
-
-            # Gate
-
-            Bob: Two.
-            """);
+        using var script = new TempScript(TwoScenesNamedAlike);
         var standardOutput = new StringWriter();
 
         var result = CliTester.Create(standardOutput: standardOutput).Run("compile", script.Path);
@@ -485,15 +475,7 @@ public sealed class CompileCommandTests
     public void Compile_AScriptWithErrors_LeavesTheOutputAlone()
     {
         using var tree = new TempTree();
-        using var script = new TempScript("""
-            # Gate
-
-            Alice: One.
-
-            # Gate
-
-            Bob: Two.
-            """);
+        using var script = new TempScript(TwoScenesNamedAlike);
         var destination = Path.Combine(tree.Root, "untouched.playbook.json");
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);

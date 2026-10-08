@@ -7,17 +7,12 @@ using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
 using static DialogueDown.Cli.Tests.Support.CliAssert;
+using static DialogueDown.Cli.Tests.Support.ConfigFiles;
 
 namespace DialogueDown.Cli.Tests;
 
 public sealed class VisualizeCommandTests
 {
-    private const string NarratorConfig = """
-        [[speakers]]
-        name = "Narrator"
-        default = true
-        """;
-
     [Fact]
     public void Visualize_NoArguments_OpensTheEmptyShellAtCurrentDirectoryInView()
     {
@@ -52,7 +47,7 @@ public sealed class VisualizeCommandTests
     {
         using var tree = new TempTree();
         var scriptPath = tree.File("scene.dialogue.md", "# Scene");
-        tree.File("dialogue.toml", NarratorConfig);
+        tree.File("dialogue.toml", NarratorByDefault);
         var shell = ShellRunner();
         var tester = CliTester.Create(shell: shell);
 
