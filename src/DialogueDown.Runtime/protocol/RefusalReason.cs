@@ -51,4 +51,7 @@ public enum RefusalReason
 
     /// <summary>The node is of a kind this build cannot play.</summary>
     UnplayableNode,
+
+    /// <summary><c>Choose</c> named a position outside the options the menu offered.</summary>
+    NoSuchOption,
 }

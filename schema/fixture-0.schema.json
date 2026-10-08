@@ -306,7 +306,8 @@
                 "unasked-key",
                 "wrong-answer-kind",
                 "key-needed-both-ways",
-                "unplayable-node"
+                "unplayable-node",
+                "no-such-option"
               ]
             }
           },

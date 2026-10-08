@@ -30,6 +30,7 @@ internal static class RefusalReasonExtensions
         RefusalReason.WrongAnswerKind => "wrong-answer-kind",
         RefusalReason.KeyNeededBothWays => "key-needed-both-ways",
         RefusalReason.UnplayableNode => "unplayable-node",
+        RefusalReason.NoSuchOption => "no-such-option",
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "No name is written for this reason."),
     };
 
