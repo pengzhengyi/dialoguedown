@@ -1,5 +1,5 @@
 using DialogueDown.Cli.Fixing;
-using DialogueDown.Diagnostics;
+using static DialogueDown.Cli.Tests.Support.LocatedDiagnosticFactory;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -10,7 +10,7 @@ public sealed class FixApplierTests
     {
         const string Source = "The rule is simple => the lever opens.";
         var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
-        var diagnostic = Diagnostic("DLG1113", arrow, arrow + 2, Fix("Escape as literal text", Insert(arrow, "\\")));
+        var diagnostic = Spanning("DLG1113", arrow, arrow + 2, Escape(arrow));
 
         var application = FixApplier.Apply(Source, [diagnostic]);
 
@@ -25,7 +25,7 @@ public sealed class FixApplierTests
     {
         const string Source = "The rule is simple.";
 
-        var application = FixApplier.Apply(Source, [Diagnostic("DLG1107", 0, 1)]);
+        var application = FixApplier.Apply(Source, [Spanning("DLG1107", 0, 1)]);
 
         Assert.Equal(Source, application.Text);
         Assert.False(application.HasCandidates);
@@ -38,9 +38,9 @@ public sealed class FixApplierTests
     {
         const string Source = "say => now";
         var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
-        var preferred = Fix("Escape as literal text", Insert(arrow, "\\"));
+        var preferred = Escape(arrow);
         var alternative = Fix("Add a jump target", Replace(arrow, arrow + 2, "=> [The market](#the-market)"));
-        var diagnostic = Diagnostic("DLG1113", arrow, arrow + 2, preferred, alternative);
+        var diagnostic = Spanning("DLG1113", arrow, arrow + 2, preferred, alternative);
 
         var application = FixApplier.Apply(Source, [diagnostic]);
 
@@ -57,8 +57,8 @@ public sealed class FixApplierTests
         var second = Source.IndexOf("=>", first + 2, StringComparison.Ordinal);
         var diagnostics = new[]
         {
-            Diagnostic("DLG1113", first, first + 2, Fix("Escape as literal text", Insert(first, "\\"))),
-            Diagnostic("DLG1113", second, second + 2, Fix("Escape as literal text", Insert(second, "\\"))),
+            Spanning("DLG1113", first, first + 2, Escape(first)),
+            Spanning("DLG1113", second, second + 2, Escape(second)),
         };
 
         var application = FixApplier.Apply(Source, diagnostics);
@@ -71,8 +71,8 @@ public sealed class FixApplierTests
     public void Apply_OverlappingFixes_KeepsTheEarlierAndSkipsTheLater()
     {
         const string Source = "abcdef";
-        var first = Diagnostic("DLG0001", 1, 4, Fix("first", Replace(1, 4, "X")));
-        var second = Diagnostic("DLG0002", 2, 5, Fix("second", Replace(2, 5, "Y")));
+        var first = Spanning("DLG0001", 1, 4, Fix("first", Replace(1, 4, "X")));
+        var second = Spanning("DLG0002", 2, 5, Fix("second", Replace(2, 5, "Y")));
 
         var application = FixApplier.Apply(Source, [first, second]);
 
@@ -87,8 +87,8 @@ public sealed class FixApplierTests
     public void Apply_TwoInsertionsAtTheSameOffset_KeepsTheOneThatSortsFirst()
     {
         const string Source = "ab";
-        var later = Diagnostic("DLG0002", 1, 1, Fix("second", Insert(1, "Y")));
-        var earlier = Diagnostic("DLG0001", 1, 1, Fix("first", Insert(1, "X")));
+        var later = Spanning("DLG0002", 1, 1, Fix("second", Insert(1, "Y")));
+        var earlier = Spanning("DLG0001", 1, 1, Fix("first", Insert(1, "X")));
 
         // Passed in reverse order: the fix whose code sorts first still wins.
         var application = FixApplier.Apply(Source, [later, earlier]);
@@ -104,8 +104,8 @@ public sealed class FixApplierTests
     public void Apply_AnEditOutsideTheText_SkipsThatFixAndAppliesTheRest()
     {
         const string Source = "ab";
-        var outside = Diagnostic("DLG0001", 0, 0, Fix("outside", new LocatedEdit(5, 6, "X")));
-        var inside = Diagnostic("DLG0002", 1, 1, Fix("inside", Insert(1, "Y")));
+        var outside = Spanning("DLG0001", 0, 0, Fix("outside", Replace(5, 6, "X")));
+        var inside = Spanning("DLG0002", 1, 1, Fix("inside", Insert(1, "Y")));
 
         var application = FixApplier.Apply(Source, [outside, inside]);
 
@@ -121,7 +121,7 @@ public sealed class FixApplierTests
         const string Source = "say => now";
         var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
         var fix = Fix("Parenthesize", Insert(arrow, "("), Insert(arrow + 2, ")"));
-        var diagnostic = Diagnostic("DLG0001", arrow, arrow + 2, fix);
+        var diagnostic = Spanning("DLG0001", arrow, arrow + 2, fix);
 
         var application = FixApplier.Apply(Source, [diagnostic]);
 
@@ -133,7 +133,7 @@ public sealed class FixApplierTests
     public void Apply_AnInsertionAtTheTextLength_Appends()
     {
         const string Source = "ab";
-        var diagnostic = Diagnostic("DLG0001", 2, 2, Fix("Append", Insert(2, "!")));
+        var diagnostic = Spanning("DLG0001", 2, 2, Fix("Append", Insert(2, "!")));
 
         var application = FixApplier.Apply(Source, [diagnostic]);
 
@@ -145,9 +145,9 @@ public sealed class FixApplierTests
     public void Apply_KeptFixesAndSkippedFixes_KeepTheCompileDiagnosticOrder()
     {
         const string Source = "abcdef";
-        var first = Diagnostic("DLG0001", 1, 4, Fix("first", Replace(1, 4, "X")));
-        var second = Diagnostic("DLG0002", 2, 5, Fix("second", Replace(2, 5, "Y")));
-        var third = Diagnostic("DLG0003", 5, 5, Fix("third", Insert(5, "!")));
+        var first = Spanning("DLG0001", 1, 4, Fix("first", Replace(1, 4, "X")));
+        var second = Spanning("DLG0002", 2, 5, Fix("second", Replace(2, 5, "Y")));
+        var third = Spanning("DLG0003", 5, 5, Fix("third", Insert(5, "!")));
 
         var application = FixApplier.Apply(Source, [first, second, third]);
 
@@ -155,24 +155,4 @@ public sealed class FixApplierTests
         Assert.Equal([true, false, true], application.Outcomes.Select(outcome => outcome.Applied));
         Assert.Equal("aXe!f", application.Text);
     }
-
-    private static LocatedDiagnostic Diagnostic(string code, int start, int end, params LocatedFix[] fixes) =>
-        new(
-            code,
-            DiagnosticSeverity.Warning,
-            DiagnosticCategory.Syntax,
-            $"{code} problem",
-            new LinePosition(1, start + 1),
-            new LinePosition(1, end + 1),
-            start,
-            end)
-        {
-            Fixes = fixes,
-        };
-
-    private static LocatedFix Fix(string title, params LocatedEdit[] edits) => new(title, edits);
-
-    private static LocatedEdit Insert(int at, string text) => new(at, at, text);
-
-    private static LocatedEdit Replace(int start, int end, string text) => new(start, end, text);
 }

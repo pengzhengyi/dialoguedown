@@ -1,5 +1,6 @@
 using DialogueDown.Cli.Commands;
 using DialogueDown.TestSupport;
+using static DialogueDown.Cli.Tests.Support.ValidationAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -8,7 +9,7 @@ public sealed class ConfigArgumentTests
     [Fact]
     public void Validate_Null_Succeeds()
     {
-        Assert.True(ConfigArgument.Validate(null).Successful);
+        AssertAccepted(ConfigArgument.Validate(null));
     }
 
     [Fact]
@@ -16,8 +17,7 @@ public sealed class ConfigArgumentTests
     {
         var result = ConfigArgument.Validate("   ");
 
-        Assert.False(result.Successful);
-        Assert.Contains("requires a path", result.Message, StringComparison.OrdinalIgnoreCase);
+        AssertRejected(result, "requires a path");
     }
 
     [Fact]
@@ -25,8 +25,7 @@ public sealed class ConfigArgumentTests
     {
         var result = ConfigArgument.Validate("no-such.toml");
 
-        Assert.False(result.Successful);
-        Assert.Contains("not found", result.Message, StringComparison.OrdinalIgnoreCase);
+        AssertRejected(result, "not found");
     }
 
     [Fact]
@@ -35,6 +34,6 @@ public sealed class ConfigArgumentTests
         using var tree = new TempTree();
         var configPath = tree.File("dialogue.toml", "");
 
-        Assert.True(ConfigArgument.Validate(configPath).Successful);
+        AssertAccepted(ConfigArgument.Validate(configPath));
     }
 }

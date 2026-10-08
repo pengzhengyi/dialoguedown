@@ -124,9 +124,9 @@ license does not affect the library's MIT license or reach consumers.
     [Comments](#comments)). Where a suite has a `Pipeline`, prefer compiling real
     dialogue to hand-building a stage's input.
   - Mothers and `XAssert` helpers live in the suite's `support/` folder, or in
-    `DialogueDown.TestSupport` when several suites need them. An `XAssert` class
-    has the singular suffix, holds static methods, and is imported with
-    `using static`.
+    `DialogueDown.TestSupport` when several suites need them. A mother is named
+    `XFactory` (`PlaybookNodes` is the one exception). An `XAssert` class has the
+    singular suffix, holds static methods, and is imported with `using static`.
   - The playbook records cannot be varied with `with`; their mothers take the
     varying value as an argument.
   - Large output is pinned as a Verify golden; JSON is parsed, never matched by

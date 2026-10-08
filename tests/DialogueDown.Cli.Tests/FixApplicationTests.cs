@@ -1,5 +1,6 @@
 using DialogueDown.Cli.Fixing;
 using DialogueDown.Diagnostics;
+using static DialogueDown.Cli.Tests.Support.LocatedDiagnosticFactory;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -53,7 +54,7 @@ public sealed class FixApplicationTests
     {
         // The escape was applied, so the arrow's warning should be gone; finding it again means
         // the fix did not clear it.
-        var escape = Fix(Insert(4, "\\"));
+        var escape = AFix(Insert(4, "\\"));
         var arrow = Diagnostic("DLG1113", 4, escape);
         var application = new FixApplication("say \\=> now", [FixOutcome.Apply(escape)]);
         var remaining = Diagnostic("DLG1113", 5);
@@ -73,7 +74,7 @@ public sealed class FixApplicationTests
     [Fact]
     public void NewDiagnostics_ASkippedFix_MovesNothing()
     {
-        var skipped = Fix(Insert(0, "\\"));
+        var skipped = AFix(Insert(0, "\\"));
         var application = new FixApplication("x", [FixOutcome.Skip(skipped, FixSkipReason.OverlapsAnAppliedFix)]);
 
         var fresh = application.NewDiagnostics([Diagnostic("DLG2009", 5)], [Diagnostic("DLG2009", 5)]);
@@ -83,25 +84,11 @@ public sealed class FixApplicationTests
 
     // An application whose fixes were all applied, each as one edit. Its text is not read.
     private static FixApplication Applied(params LocatedEdit[] edits) =>
-        new(string.Empty, [.. edits.Select(edit => FixOutcome.Apply(Fix(edit)))]);
+        new(string.Empty, [.. edits.Select(edit => FixOutcome.Apply(AFix(edit)))]);
 
+    // A diagnostic one character wide, since only its code and where it starts are compared.
     private static LocatedDiagnostic Diagnostic(string code, int start, params LocatedFix[] fixes) =>
-        new(
-            code,
-            DiagnosticSeverity.Error,
-            DiagnosticCategory.Semantic,
-            $"{code} problem",
-            new LinePosition(1, start + 1),
-            new LinePosition(1, start + 2),
-            start,
-            start + 1)
-        {
-            Fixes = fixes,
-        };
+        Spanning(code, start, start + 1, fixes);
 
-    private static LocatedFix Fix(params LocatedEdit[] edits) => new("A fix", edits);
-
-    private static LocatedEdit Insert(int at, string text) => new(at, at, text);
-
-    private static LocatedEdit Replace(int start, int end, string text) => new(start, end, text);
+    private static LocatedFix AFix(params LocatedEdit[] edits) => Fix("A fix", edits);
 }
