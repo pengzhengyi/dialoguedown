@@ -121,7 +121,7 @@
             "choose": {
               "type": "integer",
               "minimum": 0,
-              "description": "The zero-based position, among the options just offered, of the one taken."
+              "description": "The zero-based position, among the options just offered, of the one taken. Every menu is offered in the order written, so this is also the option's position as written."
             }
           },
           "additionalProperties": false
@@ -213,11 +213,11 @@
           "properties": {
             "ordered": {
               "type": "boolean",
-              "description": "Whether the writer numbered the options. A numbered menu's options are claimed in the order offered; a bulleted menu's in any order, because the host may shuffle them."
+              "description": "Whether the writer numbered the options, so the host must show them in the order offered. A bulleted menu may be shown in any order, but every menu is offered in the order written."
             },
             "options": {
               "type": "array",
-              "description": "Every option offered.",
+              "description": "Every option offered, in the order offered, which is the order written.",
               "items": {
                 "type": "object",
                 "required": [

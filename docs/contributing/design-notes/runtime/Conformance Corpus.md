@@ -41,7 +41,7 @@ what the runtime must reply, in order.
 | `"next"` | `Next` — proceed past what was just said |
 | `"done"` | `Done` — the effect just asked for has been carried out |
 | `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
-| `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered |
+| `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered, which is also its position as written |
 | `{ "supply": { … } }` | `Supply(answers)` — what the world says |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than `entry` |
 | `"describe"` | `Describe()` — ask where the run stands |
@@ -50,7 +50,7 @@ what the runtime must reply, in order.
 | --- | --- |
 | `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
-| `offer` | the menu offered: whether it is `ordered`, and its `options`, each a `label` and whether it is `available`. A bulleted menu's options match in any order |
+| `offer` | the menu offered: whether it is `ordered`, and its `options` in the order offered, which is the order written, each a `label` and whether it is `available` |
 | `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |
 | `invalidated` | an offered option that stopped being available |
@@ -190,9 +190,6 @@ files for all three.
 - **Which fragment kinds survive a run.** A `query` fragment must become something
   else once `supply` answers it, and whether `tag` and `custom-command` pass through
   or surface as their own events is a runner decision.
-- **No case pins a numbered menu's order yet.** An `offer` says which kind a menu
-  is, and a bulleted menu's options match in any order because shuffling is the
-  host's; the one numbered menu in the corpus waits on a menu that reads the world.
 - **Random choice has no fixture.** Pinning a draw needs the entropy decision the
   [architecture note](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
   owns.
