@@ -4,6 +4,7 @@ using DialogueDown.TestSupport;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Spectre.Console.Cli;
+using static DialogueDown.Cli.Tests.Support.CliAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -19,8 +20,7 @@ public sealed class CliConfiguratorTests
 
         var result = tester.Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.Error, result.ExitCode);
-        Assert.Contains("boom", result.Output, StringComparison.Ordinal);
+        AssertExited(result, ExitCodes.Error, "boom");
     }
 
     [Fact]

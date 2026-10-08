@@ -6,6 +6,7 @@ using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
+using static DialogueDown.Cli.Tests.Support.CliAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -25,7 +26,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize");
 
-        Assert.Equal(0, result.ExitCode);
+        AssertSucceeded(result);
         shell.Received(1).RunAsync(
             null, Directory.GetCurrentDirectory(), ReportMode.View,
             null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
@@ -40,7 +41,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", script.Path);
 
-        Assert.Equal(0, result.ExitCode);
+        AssertSucceeded(result);
         shell.Received(1).RunAsync(
             script.Path, null, ReportMode.View,
             null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
@@ -73,7 +74,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", script.Path, "--edit", "--root", root, "--port", "5199");
 
-        Assert.Equal(0, result.ExitCode);
+        AssertSucceeded(result);
         shell.Received(1).RunAsync(
             script.Path, root, ReportMode.Edit, 5199, false,
             Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
@@ -121,8 +122,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", script.Path, "--emit", "dot");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("ddown compile", result.Output, StringComparison.Ordinal);
+        AssertExited(result, ExitCodes.UsageError, "ddown compile");
         runner.DidNotReceive().RunEmit(
             Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
     }
@@ -136,7 +136,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", script.Path, "--emit", "dot", "-o", "stages.dot");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
         runner.DidNotReceive().RunStatic(
             Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<AppliedConfiguration>());
     }
@@ -149,7 +149,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", script.Path, "--config", "no-such.toml");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", "does-not-exist.dialogue.md");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public sealed class VisualizeCommandTests
 
         var result = tester.Run("visualize", "-o", "out.html");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
     }
 
     private static IServedShellRunner ShellRunner()
