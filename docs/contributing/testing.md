@@ -302,6 +302,11 @@ cannot set them; their mothers take the varying value as an argument instead.
 Keep one mother per type. When two suites each have one, merge them. The runtime
 and visualization suites still keep separate playbook mothers.
 
+Name a mother for the main type it builds, with the `Factory` suffix:
+`SourceSpanFactory`, `LocatedDiagnosticFactory`. The runtime's `PlaybookNodes` is
+the one exception, because its `Line(…)` and `End(…)` read like the playbook they
+build.
+
 ### Assertions say what they claim
 
 A group of assertions that appears together more than once becomes a helper
