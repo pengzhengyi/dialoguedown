@@ -49,7 +49,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
     }
 
     /// <inheritdoc />
-    protected override int Execute(
+    public override int Execute(
         CommandContext context, CompileSettings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
