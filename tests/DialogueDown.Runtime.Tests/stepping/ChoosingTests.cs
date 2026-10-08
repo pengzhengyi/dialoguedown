@@ -2,6 +2,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
@@ -48,10 +49,62 @@ public sealed class ChoosingTests
     [Fact]
     public void Offer_NoMenu_IsRejected() => Assert.Throws<ArgumentNullException>(() => Choosing.Offer(0, null!));
 
+    [Fact]
+    public void Chosen_AnOptionOffered_ArrivesAtTheNodeItLeadsTo()
+    {
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(), new Choose(1));
+
+        AssertSaid(result, speaker: null, text: "Go west");
+        AssertAt(result, 2);
+    }
+
+    [Fact]
+    public void Chosen_PastTheLastOption_IsRefusedAndTheMenuStaysOpen()
+    {
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(), new Choose(2));
+
+        AssertRefused(result, RefusalReason.NoSuchOption, "no option 2; choose from 0 to 1");
+        AssertAwaitingChoice(result, 0);
+    }
+
+    [Fact]
+    public void Chosen_BelowZero_IsRefusedAndTheMenuStaysOpen()
+    {
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(), new Choose(-1));
+
+        AssertRefused(result, RefusalReason.NoSuchOption, "no option -1");
+        AssertAwaitingChoice(result, 0);
+    }
+
+    [Fact]
+    public void Chosen_WhereOnlyTheFallThroughFollowsTheOptions_IsRefused() =>
+        // The fall-through is never offered, so a choice past the options does not reach it.
+        AssertRefused(
+            Choosing.Chosen(Standing(AMenuWithAFallThrough()), WaitingAtTheMenu(), new Choose(1)),
+            RefusalReason.NoSuchOption,
+            "no option 1");
+
+    [Fact]
+    public void Chosen_WhereTheNodeIsNotAMenu_IsRefusedAsMisplaced() =>
+        // A wait at a menu can be restored against a playbook whose node there is something else.
+        AssertRefused(
+            Choosing.Chosen(PlayContextFactory.OneLine(), WaitingAtTheMenu(), new Choose(0)),
+            RefusalReason.Misplaced,
+            "not a menu");
+
     /// <summary>Offers a menu standing at the start of a playbook.</summary>
     /// <param name="menu">The menu under test.</param>
     /// <returns>What offering it produced.</returns>
     private static StepResult Offering(ChoiceNode menu) => Choosing.Offer(0, menu);
+
+    /// <summary>Where a playthrough stands once the menu at the start has been offered.</summary>
+    /// <returns>The wait.</returns>
+    private static AwaitingChoice WaitingAtTheMenu() => new(0);
+
+    /// <summary>A playbook that begins at a menu whose options lead to two ends.</summary>
+    /// <param name="menu">The menu, standing first.</param>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext Standing(ChoiceNode menu) => PlayContextFactory.Of([menu, End(1), End(2)]);
 
     /// <summary>A menu of two options.</summary>
     /// <remarks>
