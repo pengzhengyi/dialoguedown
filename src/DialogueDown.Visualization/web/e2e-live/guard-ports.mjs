@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import {
     LIVE_PORT,
-    RENDER_ROOT_PORT,
+    SERVE_ROOT_PORT,
     SHELL_PORT,
     LIVE_EDIT_PORT,
     CONFIG_EDIT_PORT,
@@ -29,7 +29,7 @@ const FIXTURES = dirname(fileURLToPath(import.meta.url));
 
 const PORTS = [
     LIVE_PORT,
-    RENDER_ROOT_PORT,
+    SERVE_ROOT_PORT,
     SHELL_PORT,
     LIVE_EDIT_PORT,
     CONFIG_EDIT_PORT,

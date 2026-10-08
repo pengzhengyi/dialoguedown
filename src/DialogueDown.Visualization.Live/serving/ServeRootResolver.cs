@@ -15,16 +15,16 @@ internal static class ServeRootResolver
     /// <item>Some images outside it ⇒ compute the smallest folder covering the
     /// document and those images and ask <paramref name="consent"/>; a refusal falls
     /// back to the document's folder (those images will not load).</item>
-    /// <item><paramref name="renderRoot"/> given ⇒ host it directly after validating
+    /// <item><paramref name="explicitServeRoot"/> given ⇒ host it directly after validating
     /// it exists and contains the document (no prompt).</item>
     /// </list>
-    /// Returns <c>null</c> only when an explicit render root is invalid, after writing
+    /// Returns <c>null</c> only when an explicit serve root is invalid, after writing
     /// a message to <paramref name="error"/>.
     /// </summary>
     public static ServeRoot? Resolve(
         string documentPath,
         IReadOnlyList<string> localImageReferences,
-        string? renderRoot,
+        string? explicitServeRoot,
         IHostConsent consent,
         TextWriter error)
     {
@@ -36,9 +36,9 @@ internal static class ServeRootResolver
         var documentFullPath = Path.GetFullPath(documentPath);
         var documentDirectory = Path.GetDirectoryName(documentFullPath)!;
 
-        if (renderRoot is not null)
+        if (explicitServeRoot is not null)
         {
-            return ResolveExplicit(renderRoot, documentFullPath, documentDirectory, error);
+            return ResolveExplicit(explicitServeRoot, documentFullPath, documentDirectory, error);
         }
 
         var outside = OutsideImages(localImageReferences, documentDirectory);
@@ -89,18 +89,18 @@ internal static class ServeRootResolver
     }
 
     private static ServeRoot? ResolveExplicit(
-        string renderRoot, string documentFullPath, string documentDirectory, TextWriter error)
+        string explicitServeRoot, string documentFullPath, string documentDirectory, TextWriter error)
     {
-        var root = Path.GetFullPath(renderRoot);
+        var root = Path.GetFullPath(explicitServeRoot);
         if (!Directory.Exists(root))
         {
-            error.WriteLine($"Render root not found: {renderRoot}");
+            error.WriteLine($"The --root folder does not exist: {explicitServeRoot}");
             return null;
         }
 
         if (!IsWithin(documentFullPath, root))
         {
-            error.WriteLine($"The document is not inside the render root: {root}");
+            error.WriteLine($"The document is not inside the --root folder: {root}");
             return null;
         }
 
