@@ -29,7 +29,10 @@ function harness(documentType: DocumentType = "source", initial = "# Saved") {
     const idle: Array<() => void> = [];
     const calls = {
         applied: [] as Report[],
+        /** Every text the editor was given, by either path. */
         content: [] as string[],
+        /** Only the texts given as a different document, which drops the undo history. */
+        opened: [] as string[],
         dirty: [] as boolean[],
         status: [] as Array<{ status: SaveStatus; message?: string }>,
         unload: [] as boolean[],
@@ -42,7 +45,10 @@ function harness(documentType: DocumentType = "source", initial = "# Saved") {
         loadFromDisk: () => Promise.resolve(diskLoad),
         applyReport: (report) => calls.applied.push(report),
         setContent: (source) => calls.content.push(source),
-        setDocument: (source) => calls.content.push(source),
+        setDocument: (source) => {
+            calls.content.push(source);
+            calls.opened.push(source);
+        },
         setDirty: (dirty) => calls.dirty.push(dirty),
         setStatus: (status, message) => calls.status.push({ status, message }),
         setUnloadGuard: (active) => calls.unload.push(active),
@@ -346,6 +352,8 @@ describe("createLiveEdit — reload from disk", () => {
         await live.reload();
 
         expect(h.calls.content.at(-1)).toBe("# External");
+        // The same file, so undo can still reach the reader's edits from before the reload.
+        expect(h.calls.opened).toEqual([]);
         expect(live.dirty).toBe(false);
         expect(live.status).toBe("saved");
     });
@@ -621,6 +629,8 @@ describe("createLiveEdit — discard", () => {
         live.discardChanges();
 
         expect(h.calls.content.at(-1)).toBe("# Saved");
+        // The same file, so undo can still bring back the discarded edit.
+        expect(h.calls.opened).toEqual([]);
         expect(live.dirty).toBe(false);
         expect(live.status).toBe("saved");
     });
@@ -885,6 +895,8 @@ describe("createLiveEdit — adoptSwitch (opening another script)", () => {
         expect(live.dirty).toBe(false);
         expect(live.status).toBe("saved");
         expect(h.calls.content.at(-1)).toBe("# Another");
+        // A different file, so the previous script's undo history must not come with it.
+        expect(h.calls.opened).toEqual(["# Another"]);
         // The adopted script, not the previous one, is what a later edit is measured against.
         live.onEdit("# Another");
         expect(live.dirty).toBe(false);
