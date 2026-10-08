@@ -1013,8 +1013,13 @@ test("names a region's kind and takes the reader to the heading that declares it
     await expect(page.locator("#detail-body table").first()).toContainText("Scene");
     await expect(page.locator("#detail-body table").first()).toContainText("the-gate");
     await page.locator("#detail-title button").click();
-    // The title's button takes the reader to the Source tab.
-    await expect(page.locator(".source-stage")).toBeVisible();
+
+    // The title's button opens the Source tab on the words the heading names the scene with,
+    // not on the scene's body.
+    await expect(page.locator(".tab.active")).toHaveText("Source");
+    await expect(page.locator(".source-stage .cm-content")).toBeFocused();
+    const selected = (await page.evaluate(() => window.getSelection()?.toString() ?? "")).trim();
+    expect(selected).toBe("The Gate");
 });
 
 test("reads a jump as a jump in every stage that has interpreted one", async ({ page }) => {
