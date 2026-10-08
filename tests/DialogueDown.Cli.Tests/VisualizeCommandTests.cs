@@ -1,13 +1,12 @@
 using DialogueDown.Cli.Tests.Support;
-using DialogueDown.Configuration;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Live.Serving;
-using DialogueDown.Visualization.Render;
 using NSubstitute;
 using static DialogueDown.Cli.Tests.Support.CliAssert;
 using static DialogueDown.Cli.Tests.Support.ConfigFiles;
+using static DialogueDown.Cli.Tests.Support.VisualizeRunnerAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -22,9 +21,7 @@ public sealed class VisualizeCommandTests
         var result = tester.Run("visualize");
 
         AssertSucceeded(result);
-        shell.Received(1).RunAsync(
-            null, Directory.GetCurrentDirectory(), ReportMode.View,
-            null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        AssertServed(shell, script: null, root: Directory.GetCurrentDirectory(), ReportMode.View);
     }
 
     [Fact]
@@ -37,9 +34,7 @@ public sealed class VisualizeCommandTests
         var result = tester.Run("visualize", script.Path);
 
         AssertSucceeded(result);
-        shell.Received(1).RunAsync(
-            script.Path, null, ReportMode.View,
-            null, false, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        AssertServed(shell, script.Path, root: null, ReportMode.View);
     }
 
     [Fact]
@@ -53,10 +48,8 @@ public sealed class VisualizeCommandTests
 
         tester.Run("visualize", scriptPath);
 
-        shell.Received(1).RunAsync(
-            scriptPath, null, ReportMode.View, null, false,
-            Arg.Is<AppliedConfiguration>(c => c!.Options.Speakers.Any(s => s.Name == "Narrator")),
-            Arg.Any<CancellationToken>());
+        AssertServed(shell, scriptPath, root: null, ReportMode.View);
+        Assert.Contains(ConfigurationServedBy(shell).Options.Speakers, speaker => speaker.Name == "Narrator");
     }
 
     [Fact]
@@ -70,9 +63,7 @@ public sealed class VisualizeCommandTests
         var result = tester.Run("visualize", script.Path, "--edit", "--root", root, "--port", "5199");
 
         AssertSucceeded(result);
-        shell.Received(1).RunAsync(
-            script.Path, root, ReportMode.Edit, 5199, false,
-            Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        AssertServed(shell, script.Path, root: root, ReportMode.Edit, port: 5199);
     }
 
     [Fact]
@@ -84,9 +75,7 @@ public sealed class VisualizeCommandTests
 
         tester.Run("visualize", script.Path, "--edit");
 
-        shell.Received(1).RunAsync(
-            script.Path, null, ReportMode.Edit, null, false,
-            Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        AssertServed(shell, script.Path, root: null, ReportMode.Edit);
     }
 
     [Fact]
@@ -100,9 +89,7 @@ public sealed class VisualizeCommandTests
         tester.Run("visualize", script.Path, "-o", "out.html", "--no-open");
 
         runner.Received(1).RunStatic(script.Path, "out.html", true, Arg.Any<AppliedConfiguration>());
-        shell.DidNotReceive().RunAsync(
-            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<ReportMode>(), Arg.Any<int?>(),
-            Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+        AssertNothingServed(shell);
     }
 
     [Fact]
@@ -118,8 +105,7 @@ public sealed class VisualizeCommandTests
         var result = tester.Run("visualize", script.Path, "--emit", "dot");
 
         AssertExited(result, ExitCodes.UsageError, "ddown compile");
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -132,8 +118,7 @@ public sealed class VisualizeCommandTests
         var result = tester.Run("visualize", script.Path, "--emit", "dot", "-o", "stages.dot");
 
         AssertExited(result, ExitCodes.UsageError);
-        runner.DidNotReceive().RunStatic(
-            Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<AppliedConfiguration>());
+        AssertNoReportWritten(runner);
     }
 
     [Fact]
@@ -177,4 +162,32 @@ public sealed class VisualizeCommandTests
             .Returns(Task.FromResult(0));
         return shell;
     }
+
+    /// <summary>Asserts that the command served the report once, as described.</summary>
+    /// <param name="shell">The substitute the command was given.</param>
+    /// <param name="script">The script it opened, or <c>null</c> for the empty shell.</param>
+    /// <param name="root">The folder the Explorer shows, or <c>null</c> when none was named.</param>
+    /// <param name="mode">Whether the report opened to view or to edit.</param>
+    /// <param name="port">The port asked for, or <c>null</c> to pick a free one.</param>
+    /// <param name="noOpen">Whether the command was told not to open a browser.</param>
+    private static void AssertServed(
+        IServedShellRunner shell,
+        string? script,
+        string? root,
+        ReportMode mode,
+        int? port = null,
+        bool noOpen = false) =>
+        shell.Received(1).RunAsync(
+            script, root, mode, port, noOpen, Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+
+    private static void AssertNothingServed(IServedShellRunner shell) =>
+        shell.DidNotReceive().RunAsync(
+            Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<ReportMode>(), Arg.Any<int?>(),
+            Arg.Any<bool>(), Arg.Any<AppliedConfiguration>(), Arg.Any<CancellationToken>());
+
+    /// <summary>The configuration the report was served with.</summary>
+    /// <param name="shell">The substitute the command was given.</param>
+    /// <returns>The configuration passed to the shell's only call.</returns>
+    private static AppliedConfiguration ConfigurationServedBy(IServedShellRunner shell) =>
+        Assert.Single(Assert.Single(shell.ReceivedCalls()).GetArguments().OfType<AppliedConfiguration>());
 }

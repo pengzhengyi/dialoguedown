@@ -10,6 +10,7 @@ using NSubstitute;
 using static DialogueDown.Cli.Tests.Support.CliAssert;
 using static DialogueDown.Cli.Tests.Support.ConfigFiles;
 using static DialogueDown.Cli.Tests.Support.OutputAssert;
+using static DialogueDown.Cli.Tests.Support.VisualizeRunnerAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -53,8 +54,7 @@ public sealed class CompileCommandTests
             Alice: Hi.
             """;
         using var script = new TempScript(source);
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
+        var compiler = ACompilerThatSucceeds();
         var tester = CliTester.Create(compiler);
 
         var result = tester.Run("compile", script.Path);
@@ -69,17 +69,14 @@ public sealed class CompileCommandTests
         using var tree = new TempTree();
         var configPath = tree.File("dialogue.toml", NarratorByDefault);
         using var script = new TempScript("# Scene");
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
-        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
-        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        var compiler = ACompilerThatSucceeds();
+        var factory = AFactoryOf(compiler);
         var tester = CliTester.Create(compilerFactory: factory);
 
         var result = tester.Run("compile", script.Path, "--config", configPath);
 
         AssertSucceeded(result);
-        factory.Received(1).Invoke(
-            Arg.Is<CompilerOptions>(o => o != null && o.Speakers.Any(s => s.Name == "Narrator")));
+        Assert.Contains(OptionsTheCompilerWasBuiltWith(factory).Speakers, speaker => speaker.Name == "Narrator");
         compiler.Received(1).Compile(Arg.Any<string>());
     }
 
@@ -150,30 +147,24 @@ public sealed class CompileCommandTests
     public void Compile_Mode_OverridesTheCompilationMode()
     {
         using var script = new TempScript("# Scene");
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
-        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
-        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        var factory = AFactoryOf(ACompilerThatSucceeds());
         var tester = CliTester.Create(compilerFactory: factory);
 
         tester.Run("compile", script.Path, "--mode", "best-effort");
 
-        factory.Received(1).Invoke(Arg.Is<CompilerOptions>(o => o != null && o.Mode == CompilationMode.BestEffort));
+        Assert.Equal(CompilationMode.BestEffort, OptionsTheCompilerWasBuiltWith(factory).Mode);
     }
 
     [Fact]
     public void Compile_WithoutMode_InheritsTheResolvedMode()
     {
         using var script = new TempScript("# Scene");
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
-        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
-        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        var factory = AFactoryOf(ACompilerThatSucceeds());
         var tester = CliTester.Create(compilerFactory: factory);
 
         tester.Run("compile", script.Path);
 
-        factory.Received(1).Invoke(Arg.Is<CompilerOptions>(o => o != null && o.Mode == CompilationMode.StageBoundary));
+        Assert.Equal(CompilationMode.StageBoundary, OptionsTheCompilerWasBuiltWith(factory).Mode);
     }
 
     [Fact]
@@ -395,8 +386,7 @@ public sealed class CompileCommandTests
         var result = tester.Run("compile", script.Path);
 
         AssertSucceeded(result);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -493,9 +483,13 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--emit", "mermaid");
 
-        AssertExited(result, ExitCodes.UsageError, "Mermaid stage emission was removed", "--emit dot", "fenced `mermaid` blocks");
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertExited(
+            result,
+            ExitCodes.UsageError,
+            "Mermaid stage emission was removed",
+            "--emit dot",
+            "fenced `mermaid` blocks");
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -508,8 +502,7 @@ public sealed class CompileCommandTests
         var result = tester.Run("compile", script.Path, "--emit", "yaml");
 
         Assert.NotEqual(0, result.ExitCode);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -525,4 +518,29 @@ public sealed class CompileCommandTests
         AssertSucceeded(result);
         Assert.True(File.Exists(destination));
     }
+
+    /// <summary>A compiler that reports a clean compile of an empty script, whatever it is given.</summary>
+    /// <returns>A substitute a test can ask what it was given.</returns>
+    private static IScriptCompiler ACompilerThatSucceeds()
+    {
+        var compiler = Substitute.For<IScriptCompiler>();
+        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
+        return compiler;
+    }
+
+    /// <summary>A compiler factory that hands out <paramref name="compiler"/> whatever the options.</summary>
+    /// <param name="compiler">The compiler every call returns.</param>
+    /// <returns>A substitute a test can ask which options it was given.</returns>
+    private static Func<CompilerOptions, IScriptCompiler> AFactoryOf(IScriptCompiler compiler)
+    {
+        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
+        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        return factory;
+    }
+
+    /// <summary>The options the command built its one compiler from.</summary>
+    /// <param name="factory">The factory the command was given.</param>
+    /// <returns>The options of the factory's only call.</returns>
+    private static CompilerOptions OptionsTheCompilerWasBuiltWith(Func<CompilerOptions, IScriptCompiler> factory) =>
+        Assert.IsType<CompilerOptions>(Assert.Single(factory.ReceivedCalls()).GetArguments()[0]);
 }
