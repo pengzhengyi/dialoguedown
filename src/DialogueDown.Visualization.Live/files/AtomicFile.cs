@@ -45,10 +45,11 @@ internal static class AtomicFile
     private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
     private static readonly TimeSpan _retryDelay = TimeSpan.FromMilliseconds(5);
 
-    // One lock per target path serializes this process's own read→decide→write windows. Another
-    // process is not locked out; the compare-and-swap covers it (see the type remarks).
+    // One lock per target file serializes this process's own read→decide→write windows, with paths
+    // matched the way this machine names files. Another process is not locked out; the
+    // compare-and-swap covers it (see the type remarks).
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _locks =
-        new(StringComparer.Ordinal);
+        new(PathComparison.Comparer);
 
     /// <summary>
     /// Reads the current content of <paramref name="path"/>, passes it to <paramref name="body"/>
@@ -154,7 +155,7 @@ internal static class AtomicFile
     }
 
     private static object LockFor(string path) =>
-        _locks.GetOrAdd(Path.GetFullPath(path), _ => new object());
+        _locks.GetOrAdd(PathComparison.Normalize(path), _ => new object());
 
     // Reads the file's content, or null when it does not exist. Existence is established by the
     // open itself (a FileNotFound/DirectoryNotFound throw) rather than a separate File.Exists probe
