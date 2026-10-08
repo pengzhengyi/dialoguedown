@@ -1,14 +1,13 @@
 namespace DialogueDown.Playbook.Common;
 
 /// <summary>
-/// Guards for the arrays a caller composes by hand, where a gap is a wiring mistake rather than
-/// a document that says nothing.
+/// Checks for arrays a caller builds in code, where a <c>null</c> element is a programming error.
 /// </summary>
 internal static class ArrayExtensions
 {
     /// <summary>
-    /// The array itself, or an exception when the array or any element of it is missing — so a
-    /// gap is reported where it was wired rather than where it is later used.
+    /// The array itself, or an exception when the array or any element of it is <c>null</c>, so
+    /// the mistake is reported where the array is built rather than where it is later used.
     /// </summary>
     /// <typeparam name="T">The element type.</typeparam>
     /// <param name="values">The array to check.</param>

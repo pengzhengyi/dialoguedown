@@ -5,7 +5,7 @@ namespace DialogueDown.Graph;
 
 /// <summary>
 /// The compiled flow of a script: an immutable, flat list of <see cref="DialogueNode"/>s joined
-/// by directed edges, with a canonical <see cref="Entry"/> where a run begins, the
+/// by directed edges, with a canonical <see cref="Entry"/> where a playthrough begins, the
 /// <see cref="End"/> sentinel, and a <see cref="Regions"/> grouping overlay. <see cref="Node"/>
 /// resolves a <see cref="NodeId"/> through an id-keyed lookup, so the id is a position-independent
 /// handle rather than a list index.
@@ -29,13 +29,15 @@ internal sealed class DialogueGraph
     /// <summary>Every node, in the order the builder emitted them (document order).</summary>
     public IReadOnlyList<DialogueNode> Nodes { get; }
 
-    /// <summary>Where a run begins by default — the document's first node, or <see cref="End"/>.</summary>
+    /// <summary>
+    /// Where a playthrough begins by default: the document's first node, or <see cref="End"/>.
+    /// </summary>
     public NodeId Entry { get; }
 
-    /// <summary>The terminal sentinel reaching which ends the run.</summary>
+    /// <summary>The terminal sentinel: reaching it ends the playthrough.</summary>
     public NodeId End { get; }
 
-    /// <summary>The grouping overlay — scenes today — projected over the flat node list.</summary>
+    /// <summary>The grouping overlay, such as scenes, over the flat node list.</summary>
     public RegionTree Regions { get; }
 
     /// <summary>The node with the given <paramref name="id"/>.</summary>

@@ -18,9 +18,9 @@ export interface EdgeStyle {
      */
     cursor: string;
     /**
-     * A glyph repeated along the line, for a route that a dash pattern alone reads too much like.
-     * A stroke cannot draw a symbol, so the line is resampled into a polyline and the glyph is
-     * stamped at every vertex — which is what makes a barred `-x-x-` line possible at all.
+     * A glyph repeated along the line, for a route that a dash pattern alone would make look like
+     * another. A stroke cannot draw a symbol, so the line is resampled into a polyline and the
+     * glyph is stamped at every vertex — which is what makes a barred `-x-x-` line possible at all.
      */
     symbol?: "cross";
     /**
@@ -40,9 +40,9 @@ export const EDGE_STYLES: Readonly<Record<string, EdgeStyle>> = {
         meaning: "The natural order: when this node is done, the next one runs.",
     },
     // Dash-dot: a long leap, then a landing — the engineering convention for a path that leaves
-    // the sequence and rejoins it elsewhere. A plain long dash differed from a conditional's dash
-    // only in *length*, which the eye cannot judge without the two side by side, and which a
-    // legend swatch is far too short to show repeating at all. `alias` is the shortcut pointer.
+    // the sequence and rejoins it elsewhere. The dot sets it apart from a conditional's dash by
+    // shape, not only by length, which the eye cannot judge without the two side by side. `alias`
+    // is the shortcut pointer.
     jump: {
         label: "Jump",
         dash: "10 4 1 4",
@@ -89,7 +89,7 @@ export const EDGE_STYLES: Readonly<Record<string, EdgeStyle>> = {
  */
 export const ARROWHEAD_PATH = "M 0 0 L 10 5 L 0 10 z";
 
-/** The cross a withheld line is stamped with, in the same 0-10 marker viewBox. */
+/** The cross a "Not reached" line is stamped with, in the same 0-10 marker viewBox. */
 export const CROSS_PATH = "M 2 2 L 8 8 M 8 2 L 2 8";
 
 export function edgeStyle(category: string | undefined): EdgeStyle | undefined {

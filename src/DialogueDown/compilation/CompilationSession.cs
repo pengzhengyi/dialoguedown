@@ -4,11 +4,10 @@ using DialogueDown.Diagnostics;
 namespace DialogueDown.Compilation;
 
 /// <summary>
-/// The diagnostic apparatus for one compilation: the sink each stage reports through (chosen from
-/// the <see cref="CompilationMode"/>), the diagnostics it collects, and — for the stage-boundary
-/// mode — whether the compile should stop after a stage that reported an error. It keeps this
-/// policy out of the compiler, which only drives the stages and consults the session between them
-/// (much like a compiler driver checks its session between passes).
+/// The diagnostics state of one compilation: the sink each stage reports through (chosen from
+/// the <see cref="CompilationMode"/>), the diagnostics it collects, and, in stage-boundary mode,
+/// whether the compile should stop after a stage that reported an error. The compiler consults
+/// it between stages.
 /// </summary>
 internal sealed class CompilationSession
 {
@@ -44,8 +43,6 @@ internal sealed class CompilationSession
         return new CompilationSession(source, mode);
     }
 
-    // The sink each stage reports through: fail-fast throws on the first error; the collecting
-    // modes report straight into the bag. A new mode that needs a different sink adds a case.
     private static IDiagnosticSink CreateSink(CompilationMode mode, DiagnosticBag diagnostics) =>
         mode switch
         {

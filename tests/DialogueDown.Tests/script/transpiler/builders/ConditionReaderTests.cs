@@ -86,7 +86,7 @@ public sealed class ConditionReaderTests
     [Fact]
     public void TryPeel_LeadingNonConditionCodeSpan_ReturnsFalse()
     {
-        // A plain query (no `?`) is not a condition, so nothing is peeled.
+        // A plain query (no `?`) is not a condition, so nothing is split off.
         MarkdownInline[] inlines = [CodeSpan("\"Rainy\""), Text(" hello")];
 
         Assert.False(ConditionReader.TryPeel(inlines, out _, out _));

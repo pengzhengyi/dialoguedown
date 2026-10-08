@@ -9,7 +9,7 @@ namespace DialogueDown.Playbook.Nodes;
 /// </summary>
 /// <param name="Id">This node's position in the node list.</param>
 /// <param name="Ordered">Whether the options are numbered rather than bulleted.</param>
-/// <param name="Out">The options.</param>
+/// <param name="Out">The options, and the succession to fall through to when there is one.</param>
 public sealed record ChoiceNode(int Id, bool Ordered, ImmutableArray<Edge> Out) : Node(Id, Out)
 {
     /// <summary>

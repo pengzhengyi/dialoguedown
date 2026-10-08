@@ -16,8 +16,8 @@ dist/*
 # Live e2e temp document
 e2e-live/.live-doc.dialogue.md
 
-# Live e2e --render-root temp tree
-e2e-live/.render-root/
+# Live e2e temp tree for an explicit --root
+e2e-live/.serve-root/
 
 # Empty-shell e2e temp tree
 e2e-live/.shell-tree/

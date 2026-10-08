@@ -4,22 +4,18 @@ using DialogueDown.Visualization.Live.Files;
 namespace DialogueDown.Visualization.Live.Tests.Support;
 
 /// <summary>
-/// Synchronizes a test with the operating system's file-change events, so it waits for the watcher
-/// to actually be delivering rather than sleeping for a guess at how long that takes.
+/// Synchronizes a test with the operating system's file-change events by writing a sentinel file
+/// until the watcher reports it.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Registering a watch is not instant — on macOS it costs over a tenth of a second — so a test that
-/// writes immediately can miss its own change. A fixed settle covers that, but it is a guess in
-/// both directions: long enough to be wasted on every test that did not need it, short enough to
-/// miss registration on a loaded machine. Poking a sentinel file until the watcher reports it turns
-/// the wait into an observation, which ends as soon as delivery starts and cannot be too short.
+/// Registering a watch takes time (over a tenth of a second on macOS), so a test that writes
+/// immediately can miss its own change.
 /// </para>
 /// <para>
-/// A sentinel bounds waiting; it does not order it. Which of two paths the watcher reports first is
-/// the operating system's business, and inotify in particular promises nothing there. So a test
-/// waits for its own watch's report when it needs that report, and drains only to give a further
-/// one time to arrive.
+/// A sentinel bounds waiting; it does not order it. The operating system may report two paths in
+/// either order, so a test that needs its own watch's report waits for that report, and drains
+/// only to give a further one time to arrive.
 /// </para>
 /// </remarks>
 internal static class WatchSync
@@ -72,11 +68,8 @@ internal static class WatchSync
     /// under test, so the window waited is the one that watch would need.
     /// </summary>
     /// <remarks>
-    /// This is a bound on waiting, not a proof of ordering: the operating system makes no promise
-    /// that events for one path are delivered before another's, so a test that needs its own
-    /// watch's report should wait for that report and use this only to let a further one arrive.
-    /// What it does give a negative assertion is better than a sleep — the sentinel confirms the
-    /// watcher is delivering during the window, where a fixed delay may pass while it is stalled.
+    /// Use it before a negative assertion: the sentinel confirms the watcher was delivering during
+    /// the window, which a fixed delay cannot.
     /// </remarks>
     public static async Task DrainAsync(TreeWatches watches, string folder, TimeSpan debounce)
     {

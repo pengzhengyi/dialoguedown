@@ -30,9 +30,12 @@ export interface ModeController {
     onEditorChange(buffer: string): void;
     /** Route a config-editor change: dirty tracking in Edit, ignored in View. */
     onConfigEditorChange(buffer: string): void;
-    /** Route a pushed report: View re-syncs the editor + graphs; Edit raises the chip. */
+    /** Route a pushed report: View re-syncs the editor + graphs; Edit pauses in Conflict. */
     onReload(report: Report): void;
-    /** Route a pushed config report (external `dialogue.toml` change): View re-syncs, Edit chips. */
+    /**
+     * Route a pushed config report (external `dialogue.toml` change): View re-syncs; Edit pauses
+     * the config in Conflict.
+     */
     onReloadConfig(report: Report): void;
     /**
      * Apply a script the reader just opened, in **either** mode. Unlike {@link onReload} this is a
@@ -43,7 +46,7 @@ export interface ModeController {
     /**
      * Route a pushed problem (a missing or unreadable document/config on disk). In Edit it enters
      * the target controller's Conflict/epoch path so an in-flight save cannot silently overwrite
-     * the file; in View it surfaces the message as a banner.
+     * the file; in View it shows the message as a banner.
      */
     onProblem(message: string, target?: ProblemTarget): void;
     /** Request a mode switch (from the toggle). */
@@ -56,7 +59,7 @@ export type ProblemTarget = "document" | "config";
 /**
  * The View ⇄ Edit controller for a served session. View is read-only and auto-updating
  * (a disk change re-syncs the editor and graphs); Edit is editable and owns its buffers
- * (a disk change only raises the passive chip). Switching reconfigures both editors in
+ * (a disk change pauses the document in Conflict). Switching reconfigures both editors in
  * place — the buffers, cursors, and history survive — and prompts before discarding unsaved
  * edits when leaving Edit. At most one document is dirty at a time (navigation is locked
  * while dirty), so leaving Edit discards whichever one it is.
@@ -168,9 +171,8 @@ export function createModeController(
         onProblem(message, target) {
             const live = target === "config" ? ports.configLive : ports.dialogueLive;
             if (mode === "edit" && live) {
-                // A deletion/read failure under an active buffer is a disk change: route it through
-                // the controller so an in-flight save is invalidated (epoch) and the writer is
-                // paused in Conflict, rather than only flashing a banner that a save could ignore.
+                // A deletion/read failure under an active buffer is a disk change: the controller
+                // invalidates any in-flight save (epoch) and pauses the writer in Conflict.
                 live.onDiskChange(message);
                 return;
             }

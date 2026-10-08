@@ -5,8 +5,7 @@
  * whole document on every keystroke — so a region needs a name that is not its position. Inserting
  * a line above a region would otherwise hand its choice to an unrelated neighbor.
  *
- * The Source editor and the Preview keep separate fold state, but they name regions the same way,
- * so the two panes stay describable in one sentence.
+ * The Source editor and the Preview keep separate fold state, but they name regions the same way.
  */
 
 /** Names one region from its content, keeping identical siblings apart by the order they appear. */

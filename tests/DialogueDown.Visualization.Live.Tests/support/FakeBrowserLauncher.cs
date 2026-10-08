@@ -2,10 +2,8 @@ namespace DialogueDown.Visualization.Live.Tests.Support;
 
 /// <summary>Records the targets it is asked to open, without launching anything.</summary>
 /// <remarks>
-/// Opening happens on the runner's own thread once its server is listening, so a test cannot know
-/// when to look. Announcing the first open lets the test await it instead of asking repeatedly:
-/// the wait ends the moment it happens, and there is no polling interval to pick — an interval
-/// being both a delay on every run and a guess that a slower machine can outrun.
+/// Opening happens on the runner's own thread once its server is listening, so a test awaits
+/// <see cref="FirstOpened"/> instead of polling.
 /// </remarks>
 internal sealed class FakeBrowserLauncher : IBrowserLauncher
 {

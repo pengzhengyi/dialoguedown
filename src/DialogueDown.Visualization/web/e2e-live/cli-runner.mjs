@@ -6,11 +6,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const CLI_PROJECT = resolve(here, "../../../DialogueDown.Cli/DialogueDown.Cli.csproj");
 
-/**
- * The framework the CLI is actually built for, read from its project rather than repeated here.
- * A copy would go stale the next time the CLI's target framework moves, and the failure would
- * arrive as a missing file rather than as the version mismatch it really is.
- */
+/** The target framework the CLI is built for, read from its project file. */
 function cliTargetFramework() {
     const csproj = readFileSync(CLI_PROJECT, "utf8");
     const target = /<TargetFramework>([^<]+)<\/TargetFramework>/.exec(csproj);

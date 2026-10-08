@@ -7,9 +7,8 @@ namespace DialogueDown.Playbook;
 /// it honors.
 /// </summary>
 /// <remarks>
-/// Gathered in one place so growing the format is a single, reviewable edit rather than a hunt
-/// through the checkers. Checkers take the values they need as arguments and never read these
-/// directly, so a runtime remains free to state a narrower envelope of its own.
+/// Checkers take these values as arguments and never read them directly, so a runtime can pass
+/// narrower limits of its own.
 /// </remarks>
 public static class PlaybookSupport
 {

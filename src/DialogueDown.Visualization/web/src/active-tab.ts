@@ -1,8 +1,8 @@
 /**
  * Remembering the last-open report tab so a refresh returns to it instead of resetting to the
- * Source tab. Kept in `sessionStorage` (per browser tab, cleared when the tab closes) — the
- * same store the config-create reload flag uses — so two reports open side by side each keep
- * their own tab, and a blocked store simply falls back to the default tab.
+ * Source tab. Kept in `sessionStorage` (per browser tab, cleared when the tab closes), so two
+ * reports open side by side each keep their own tab, and a blocked store simply falls back to
+ * the default tab.
  */
 const ACTIVE_TAB_KEY = "dd-active-tab";
 
@@ -38,9 +38,9 @@ export function rememberedActiveTab(storage = defaultStorage()): string | null {
  * narrow window, so the tab activated by a keyboard shortcut or restored from the last
  * session can sit outside the visible span.
  *
- * Only the row scrolls: `block: "nearest"` leaves the page where it is, so revealing a tab
- * never pulls the report out from under the reader. `scrollIntoView` is absent in jsdom and
- * in older engines, so the call is guarded rather than assumed.
+ * Only the row scrolls: `block: "nearest"` leaves the page's vertical position alone while the
+ * row is in view. `scrollIntoView` is absent in jsdom and in older engines, so the call is
+ * guarded rather than assumed.
  */
 export function revealActiveTab(tabs: HTMLElement): void {
     const active = tabs.querySelector<HTMLElement>(".tab.active");

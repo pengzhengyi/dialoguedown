@@ -5,8 +5,8 @@ import { SAMPLE_REPORT, SAMPLE_STAGES, writeReport } from "./report";
 // produces after layout, so these run against the real built report rather than jsdom.
 const PHONE = { width: 390, height: 780 };
 
-// The wrapping only shows up with a realistic stage count, so pad the sample out to the
-// six tabs a served report carries (Source + Config + three ASTs + Semantic Model).
+// The wrapping only shows up with a realistic stage count, so pad the sample out to six tabs:
+// Source and five stages.
 const MANY_TABS = writeReport({
     ...SAMPLE_REPORT,
     stages: [
@@ -34,7 +34,6 @@ test("keeps every stage tab on a single scrollable row", async ({ page }) => {
     await page.goto(MANY_TABS);
     await expect(page.locator(".tab").first()).toBeVisible();
 
-    // Before the scroll strip this was 3 rows at 390px, which ate 124px of header.
     expect(await tabRowCount(page)).toBe(1);
 
     // The row absorbs the overflow itself instead of pushing the document sideways.
@@ -78,8 +77,6 @@ test("scrolls a restored tab back into view without a pointer", async ({ page })
 test("keeps the focus-mode controls pinned beside the scrolling tabs", async ({ page }) => {
     await page.goto(MANY_TABS);
 
-    // They used to be absolutely positioned against the header, so a wrapped nav stranded
-    // them on the last row. They now share the tab row and stay right of the tabs.
     const placement = await page.evaluate(() => {
         const nav = document.querySelector("nav.tabs")!.getBoundingClientRect();
         const zen = document.querySelector(".tabbar-zen")!.getBoundingClientRect();
@@ -128,7 +125,6 @@ test("bounds the expanded help so it cannot starve the stage", async ({ page }) 
     await page.locator("#help-toggle").click();
     await expect(page.locator(".shortcuts")).toBeVisible();
 
-    // Unbounded, the help panel measured 1093px in a 780px window and squeezed #app to 27px.
     const after = await page.evaluate(() => {
         const app = document.querySelector("#app")!.getBoundingClientRect();
         const shortcuts = document.querySelector(".shortcuts")!;
@@ -177,8 +173,8 @@ test.describe("on a short landscape window", () => {
             };
         });
 
-        // The stage floor used to be set on #stages, which made the child overflow its parent
-        // and paint over the footer; it belongs on #app, which holds the box open instead.
+        // The content area's height floor sits on #app, so #stages never overflows its parent
+        // and paints over the footer.
         expect(shell.stagesEscapesApp).toBe(false);
         // The transient help panel yields, so the footer still ends at the window's edge...
         expect(shell.footerBottom).toBe(shell.windowHeight);
@@ -190,8 +186,8 @@ test.describe("on a short landscape window", () => {
 });
 
 test.describe("on a short window with a tall graph inspector", () => {
-    // The investigated case: a 1280x640 window, where a tall selection used to push the footer
-    // past the bottom edge.
+    // A 1280×640 window is short enough for a tall selection to push the footer past the bottom
+    // edge, unless the inspector scrolls inside the shell.
     test.use({ viewport: { width: 1280, height: 640 } });
 
     test("keeps the status bar inside the window when the selected detail is tall", async ({
@@ -296,7 +292,7 @@ test.describe("with too little height for a docked help panel", () => {
             };
         });
 
-        // Docked, the panel had to share the column and showed about one line at a time.
+        // Docked, the panel would share the column and show about one line at a time.
         expect(floating.position).toBe("absolute");
         expect(floating.sitsAboveTheStatusLine).toBe(true);
         expect(floating.height).toBeGreaterThan(120);

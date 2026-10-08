@@ -7,10 +7,6 @@ namespace DialogueDown.Runtime.Tests;
 /// <summary>
 /// What a step produced, asserted in the words a fixture uses.
 /// </summary>
-/// <remarks>
-/// A step reports a list of events and a situation, so an unhelped test spends three lines
-/// unpacking before it says anything. These name the outcome instead.
-/// </remarks>
 internal static class StepAssert
 {
     /// <summary>Asserts a step said one line, and nothing else.</summary>

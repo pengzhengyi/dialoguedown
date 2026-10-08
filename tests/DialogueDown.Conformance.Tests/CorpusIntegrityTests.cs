@@ -6,9 +6,8 @@ namespace DialogueDown.Conformance;
 /// What must hold of every case in the corpus, in either half.
 /// </summary>
 /// <remarks>
-/// The harness reads only a fixture and the document it names, so nothing else would notice a case
-/// that quietly lost a file -- least of all in the playable half, which has no runner to run it
-/// until C2 arrives.
+/// The harness reads only a fixture and the document it names, so only these tests notice a case
+/// that lost its source.
 /// </remarks>
 public sealed class CorpusIntegrityTests
 {

@@ -3,8 +3,9 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Edges;
 
 /// <summary>
-/// An edge a condition can withhold — a divert or one arm of a choice. These are the edges control
-/// may find unavailable, so a conditional one leaves its source node needing a fall-through.
+/// An edge a condition can withhold: a divert, or one arm of a choice or a branch. These are the
+/// edges control may find unavailable, so a conditional one leaves its source node needing a
+/// fall-through.
 /// <see cref="SuccessionEdge"/>, the fall-through itself, is always available and so is not one of
 /// them.
 /// </summary>

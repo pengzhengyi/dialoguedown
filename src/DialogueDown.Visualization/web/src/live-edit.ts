@@ -28,7 +28,7 @@ export interface SaveRequest {
 
 /**
  * The typed result of one write attempt. A transport exception (the port throwing) is not a
- * value here — it surfaces as {@link SaveStatus} `uncertain` because the client cannot know
+ * value here — it becomes the {@link SaveStatus} `uncertain` because the client cannot know
  * whether the disk write committed. The server can also report `uncertain` explicitly when it
  * could not establish a safe state on disk (a newer external write raced the commit).
  */
@@ -93,7 +93,7 @@ export interface LiveEditPorts {
     setDirty(dirty: boolean): void;
     /** Publish the accessible save status (and an optional detail message). */
     setStatus(status: SaveStatus, message?: string): void;
-    /** Arm or disarm the guard that warns before leaving with unsaved edits or an in-flight save. */
+    /** Toggle the guard that warns before leaving with unsaved edits or an in-flight save. */
     setUnloadGuard(active: boolean): void;
     /** Schedule the 1,000 ms idle callback; returns a canceler. Replaced by a fake timer in tests. */
     scheduleIdle(callback: () => void): () => void;
@@ -101,7 +101,10 @@ export interface LiveEditPorts {
 
 /** Drives the Source/Config document's edit → save → conflict lifecycle in Live Edit. */
 export interface LiveEditController {
-    /** The buffer changed — record it, advance the edit generation, and (in Auto) arm the idle timer. */
+    /**
+     * The buffer changed — record it, advance the edit generation, and (in Auto) start the idle
+     * timer.
+     */
     onEdit(buffer: string): void;
     /** Explicit Save (button or ⌘/Ctrl-S) or a confirmed overwrite: request an immediate write. */
     save(options?: { overwrite?: boolean }): Promise<SaveResolution>;

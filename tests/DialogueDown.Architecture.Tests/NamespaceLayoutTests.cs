@@ -4,19 +4,14 @@ using System.Runtime.CompilerServices;
 namespace DialogueDown.Architecture.Tests;
 
 /// <summary>
-/// Group E — namespace layout. An assembly's root namespace should carry its
-/// facade, the entry points a consumer calls, while everything else lives in a
-/// sub-namespace that names its role. A crowded root namespace is where types
-/// land when nobody decided where they belong, so this caps it.
+/// Namespace layout. An assembly's root namespace should carry its facade, the entry
+/// points a consumer calls, while everything else lives in a sub-namespace that names
+/// its role, so this caps the number of types in the root namespace.
 /// </summary>
 /// <remarks>
-/// Only the <em>root</em> namespace is capped, because a deep namespace can be
-/// large and healthy: <c>DialogueDown.Script.Ast</c> holds a whole node
-/// vocabulary at one level, and splitting it would invent categories the domain
-/// does not have. A cap on every namespace would flag that before it flagged a
-/// genuinely flat layer, and would need an exemption list holding the largest
-/// namespaces. The count deliberately ignores visibility: the core is almost
-/// entirely internal, so counting only public types would make this a no-op.
+/// Only the <em>root</em> namespace is capped: a deeper namespace can be large and
+/// sound, as <c>DialogueDown.Script.Ast</c> holds a whole node vocabulary at one level.
+/// The count includes internal types, because the core is almost entirely internal.
 /// </remarks>
 public sealed class NamespaceLayoutTests
 {

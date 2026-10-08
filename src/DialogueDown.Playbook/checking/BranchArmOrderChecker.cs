@@ -4,21 +4,19 @@ using DialogueDown.Playbook.Nodes;
 namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
-/// Refuses a <see cref="BranchNode"/> that has no gated arm, or whose else is not its last arm.
+/// Refuses a <see cref="BranchNode"/> with no arm that has a condition, or whose else is not its last arm.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A branch's arms are tried in the order they appear in its ways out, and the conditionless
-/// <c>else</c> is taken whenever it is reached. The compiler writes the arms in source order, but a
-/// hand-edited or tool-written playbook can put the <c>else</c> before a gated arm, and every arm
-/// after it could then never be taken.
+/// A branch's arms are tried in the order they appear, and the <c>else</c> is taken whenever it is
+/// reached. The compiler always writes the <c>else</c> last; a hand-edited or tool-written playbook
+/// may not, and every arm after an early <c>else</c> could then never be taken.
 /// </para>
 /// <para>
-/// Two guards, independent and both required: at least one arm is gated (a branch is a block
-/// condition, and an <c>else</c> needs one to fall back from), and the <c>else</c>, when present,
-/// is the last arm. The second guard refuses a second conditionless arm, since at most one arm can
-/// be last. A fall-through (<c>succession</c>) is not an arm, so its position is left to the
-/// outward-shape rule.
+/// Two checks, both required: at least one arm has a condition (an <c>else</c> needs something to
+/// fall back from), and the <c>else</c>, which has no condition, is the last arm. The last check
+/// also refuses a second arm without a condition, since only one arm can be last. A succession edge
+/// is not an arm and is not checked here.
 /// </para>
 /// </remarks>
 public sealed class BranchArmOrderChecker : IPlaybookChecker
@@ -41,7 +39,7 @@ public sealed class BranchArmOrderChecker : IPlaybookChecker
     {
         var arms = branch.Out.OfType<BranchEdge>().ToArray();
 
-        // An arm count of zero is the outward-shape rule's to refuse; there is nothing to check.
+        // A branch with no arms has nothing to check; the outward-shape check refuses it.
         if (arms.Length == 0)
         {
             return;

@@ -9,9 +9,8 @@ namespace DialogueDown.Markdown;
 /// <summary>
 /// Decides what becomes of a Markdown construct DialogueDown does not model, and carries that
 /// decision out: it asks the <see cref="IUnmodeledNodeHandlingPolicy"/> about the construct and
-/// either keeps it as dialogue text or ignores it, noting every one it ignores. Gathering that here keeps
-/// the conversion of modeled Markdown free of it, and lets the decision be tested without parsing
-/// a script.
+/// either keeps it as dialogue text or ignores it, noting every one it ignores. Keeping this apart
+/// from the conversion of modeled Markdown lets the decision be tested without parsing a script.
 /// </summary>
 internal sealed class MarkdigUnmodeledNodeHandler
 {
@@ -65,9 +64,8 @@ internal sealed class MarkdigUnmodeledNodeHandler
         throw UnknownHandling(inline);
     }
 
-    // A policy that answers neither question has a handling this code has never seen — most
-    // likely a new UnmodeledNodeHandling that nothing here was taught to carry out. Failing here
-    // is better than silently guessing, which would keep or ignore the writer's content at random.
+    // A policy that answers neither question has a handling this code does not carry out, and
+    // guessing would keep or drop the writer's content at random.
     private static NotSupportedException UnknownHandling(object node) =>
         new($"The handling policy chose neither to keep nor to ignore a {node.GetType().Name}. "
             + "Every UnmodeledNodeHandling must be handled here.");

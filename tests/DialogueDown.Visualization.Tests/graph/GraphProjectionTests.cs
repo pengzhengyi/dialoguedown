@@ -459,8 +459,8 @@ public sealed class GraphProjectionTests
     [Fact]
     public void Edges_AChoiceArmWithNothingToShow_HasNoLabel()
     {
-        // The arm DLG2017 warns about: nothing named it, so the route reports nothing rather than
-        // an empty string the panel would render as a blank line.
+        // An arm whose option shows no words: the route reports nothing rather than an empty
+        // string the panel would render as a blank line.
         var graph = Project("""
             Guide: Which way?
 
@@ -491,9 +491,8 @@ public sealed class GraphProjectionTests
     [Fact]
     public void Project_TheStage_SaysItsChildEdgesDoNotNest()
     {
-        // A child edge here is the spanning tree the drawing is laid out with, so it runs along
-        // the flow. Treating it as containment would grow a node's reach through everything it
-        // leads to — and a jump is such an edge, so that reach would leave the scene entirely.
+        // A child edge here belongs to the spanning tree the drawing is laid out with, so it
+        // follows the flow rather than meaning one node contains another.
         var graph = Project("""
             # The Gate
 

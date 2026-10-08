@@ -41,7 +41,7 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_ADivergenceOutranksAnUnplayableClaim()
     {
-        // Otherwise a real failure hides behind an unrelated check nobody has taught the harness.
+        // Otherwise a real failure hides behind an unrelated check the harness cannot make yet.
         var combined = SessionOutcome.Combine([
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Diverged("said the wrong thing")]);
@@ -53,7 +53,7 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_OfTwoDivergences_GathersBoth()
     {
-        // A contributor fixes one divergence and re-runs; gathering means meeting both at once.
+        // Both are reported, so a contributor sees every divergence in one run.
         var combined = SessionOutcome.Combine([
             SessionOutcome.Diverged("the speaker"),
             SessionOutcome.Diverged("the speech")]);
@@ -64,7 +64,7 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_OfTwoUnplayableClaims_GathersBoth()
     {
-        // What lets one run name every construct this build has yet to learn.
+        // So one run names every construct the runner cannot play yet.
         var combined = SessionOutcome.Combine([
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.NotYetPlayable("nothing checks asked yet")]);

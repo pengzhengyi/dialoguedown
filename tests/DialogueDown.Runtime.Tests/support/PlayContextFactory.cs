@@ -28,7 +28,7 @@ internal static class PlayContextFactory
         ImmutableArray<Node> nodes, IEnumerable<string?>? speakers = null, int entry = 0) =>
         PlayContext.Of(Document(nodes, [.. (speakers ?? []).Select(Speaker)], entry));
 
-    /// <summary>The document behind such a context, for a test that needs the playbook itself.</summary>
+    /// <summary>The document a context is built over, for a test that needs the playbook itself.</summary>
     /// <param name="nodes">The steps of the playthrough.</param>
     /// <param name="speakers">Everybody who speaks.</param>
     /// <param name="entry">Where a playthrough begins.</param>
@@ -184,7 +184,7 @@ internal static class PlayContextFactory
             ],
             [null]);
 
-    /// <summary>A random choice, which is a node kind this pass cannot play.</summary>
+    /// <summary>A random choice, which is a node kind the runner cannot play.</summary>
     /// <remarks>
     /// <code>
     /// - `%` Go east
@@ -199,7 +199,7 @@ internal static class PlayContextFactory
     /// <code>
     /// node 0 -> node 1 -> node 2 -> ... -> node length-1 -> node 0
     /// </code>
-    /// Nothing in it ever hands the host anything, so a walk with no bound never comes out.
+    /// Nothing in it ever hands the host anything, so a walk with no bound never ends.
     /// </remarks>
     /// <param name="length">How many jumps the ring holds.</param>
     /// <returns>A context whose entry walks forever unless something stops it.</returns>
@@ -211,8 +211,7 @@ internal static class PlayContextFactory
     /// <code>
     /// node 0 -> node 1 -> node 2 -> ... -> node jumps-1 -> node jumps, the end
     /// </code>
-    /// The walk passes every node the playbook has, exactly once. One node further along and it
-    /// would be passing one of them twice, which is the case a bound must not confuse this with.
+    /// The walk passes every node exactly once, so it is the longest walk that is not a ring.
     /// </remarks>
     /// <param name="jumps">How many jumps precede the end.</param>
     /// <returns>A context whose walk passes every node exactly once.</returns>
@@ -231,7 +230,7 @@ internal static class PlayContextFactory
     /// Alice: Hello.
     /// </code>
     /// </remarks>
-    /// <returns>A context whose run waits on the host before it says anything.</returns>
+    /// <returns>A context whose playthrough waits on the host before anything is said.</returns>
     public static PlayContext AnEffectThenALine() =>
         Of(
             [

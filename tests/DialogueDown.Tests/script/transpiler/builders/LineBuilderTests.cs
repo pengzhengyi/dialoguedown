@@ -108,7 +108,7 @@ public sealed class LineBuilderTests
     public void LeadingConditionBeforeAJump_IsNotPeeled_SoItGuardsTheJump()
     {
         // `"key"?` => ... is a conditional *jump*: the condition stays in speech so desugar binds
-        // it to the jump, rather than being stolen as the line's condition.
+        // it to the jump, rather than being taken as the line's condition.
         var line = Build([CodeSpan("\"FoundKey\"?"), Text(" => "), Link("#the-vault", Text("open"))]);
 
         Assert.Null(line.Condition);
@@ -210,8 +210,8 @@ public sealed class LineBuilderTests
     [Fact]
     public void EscapedColon_KeepsAColonInSpeechWithoutASpeaker()
     {
-        // "Alice\: Hello" — escaping the colon declines the prefix, and Markdig's run split
-        // keeps the prefix parser from ever seeing a colon; the speech reads "Alice: Hello".
+        // "Alice\: Hello" — escaping the colon declines the prefix: Markdig splits the text at the
+        // escape, so the prefix parser never sees a colon; the speech reads "Alice: Hello".
         var line = Build(
             [Text("Alice"), new TextInline(": Hello", Span(5, 8), Span(6, 7), isFirstCharacterEscaped: true)]);
 
@@ -236,7 +236,7 @@ public sealed class LineBuilderTests
     [Fact]
     public void EscapedIdAfterAName_IsSpeechNotADeclaration()
     {
-        // "Alice \@alice: Hi" — the escaped '@' splits the run, so the prefix parser sees
+        // "Alice \@alice: Hi" — the escaped '@' splits the text, so the prefix parser sees
         // only "Alice ", which is no prefix; the line is speech, not a declaration.
         var line = Build(
             [Text("Alice "), new TextInline("@alice: Hi", Span(6, 11), Span(7, 10), isFirstCharacterEscaped: true)]);

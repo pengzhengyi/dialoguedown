@@ -7,9 +7,8 @@ namespace DialogueDown.Playbook.Tests.Speech;
 public sealed class SpeechTextTests
 {
     /// <summary>
-    /// One sample of each fragment kind beside the words it reads as. The tests below this pair
-    /// take the kinds that carry nuance further; these two together settle that a reading exists
-    /// for all of them and that none was left to chance.
+    /// One sample of each fragment kind beside the words it reads as. The next two tests use it to
+    /// check that every kind has a reading; the tests after them cover each kind's special cases.
     /// </summary>
     private static readonly (SpeechFragment Fragment, string Words)[] _everyKind =
     [
@@ -33,8 +32,8 @@ public sealed class SpeechTextTests
     [Fact]
     public void Of_ReadsEveryFragmentKindTheFormatDeclares()
     {
-        // A kind nobody taught it to read would say nothing at all, which looks like a line that
-        // happens to be quiet rather than a reading that was never written.
+        // A kind with no reading would say nothing, which looks like a quiet line rather than a
+        // missing reading.
         UnionCoverageAssert.AssertCoversEveryMember<SpeechFragment>(
             _everyKind.Select(kind => kind.Fragment));
     }
@@ -152,8 +151,7 @@ public sealed class SpeechTextTests
     [Fact]
     public void Of_WithAnEmptyAnswer_SaysNothingForTheQuery()
     {
-        // An answered query is answered. A world that says a key is worth nothing has still said
-        // so, and speaking for it would overrule the answer.
+        // An empty answer is still an answer, so it replaces the query and no placeholder is shown.
         Assert.Equal(
             "You are .",
             SpeechText.Of([Text("You are "), Query("HeroName"), Text(".")], _ => string.Empty));

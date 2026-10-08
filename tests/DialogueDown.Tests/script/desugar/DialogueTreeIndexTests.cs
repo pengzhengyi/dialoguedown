@@ -123,9 +123,16 @@ public sealed class DialogueTreeIndexTests
     private static DialogueTreeIndex Build(params ScriptBlock[] blocks) =>
         DialogueTreeIndex.Build(new DesugaredScriptDocument(new ScriptDocument(blocks)));
 
-    // ## Scene
-    // Alice: hi => [go](#play)
-    // - pick
+    /// <summary>A scene heading, a line that jumps, and a choice with one option.</summary>
+    /// <remarks>
+    /// <code>
+    /// # Scene
+    ///
+    /// Alice: hi => [go](#play)
+    ///
+    /// - pick
+    /// </code>
+    /// </remarks>
     private static DesugaredScriptDocument SampleDocument()
     {
         var heading = SceneHeading("Scene", 1);

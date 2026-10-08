@@ -15,8 +15,8 @@ internal readonly record struct ParseInput(string Text, int Position)
     /// The input remaining after consuming <paramref name="by"/> characters: the
     /// text past that point, anchored at the advanced position. Composites use this
     /// to run the next parser so ranges stay absolute. <paramref name="by"/> must be
-    /// within <c>[0, Text.Length]</c>; anything outside throws, to surface a
-    /// miscounted parser rather than silently clamping.
+    /// within <c>[0, Text.Length]</c>; anything outside throws, so a miscounted parser
+    /// fails at once instead of being clamped.
     /// </summary>
     public ParseInput Advance(int by) => by switch
     {

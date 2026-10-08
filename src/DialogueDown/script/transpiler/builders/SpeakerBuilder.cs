@@ -14,6 +14,15 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// metadata but names no speaker reports <see cref="DiagnosticCatalog.TagsWithoutSpeaker"/>
 /// and recovers to a <see cref="DefaultSpeaker"/>, dropping the orphan tags.
 /// </summary>
+/// <remarks>
+/// <code>
+/// Alice:                 a name reference
+/// @alice:                an id reference
+/// Alice @alice #calm:    a declaration
+/// @alice #excited:       a partial declaration: an id with tags
+/// #excited:              tags without a speaker: reported
+/// </code>
+/// </remarks>
 internal sealed class SpeakerBuilder(IParser<SpeakerPrefixData> parser, TagBuilder tagBuilder)
 {
     public ParseResult<Speaker> Build(ParseInput input, IDiagnosticSink diagnostics)

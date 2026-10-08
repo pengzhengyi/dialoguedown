@@ -8,7 +8,7 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// <remarks>
 /// An outcome is partial: a single check reports one, and combining the partials gives the verdict
 /// on the whole. A case this build cannot run is neither a failure nor a pass, and has a verdict of
-/// its own while the runner is still learning constructs.
+/// its own.
 /// </remarks>
 /// <param name="Verdict">Whether what was checked conformed, diverged, or could not yet be run.</param>
 /// <param name="Reasons">
@@ -38,12 +38,12 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
     /// <returns>The outcome.</returns>
     public static SessionOutcome Diverged(string because) => new(SessionVerdict.Diverged, [because]);
 
-    /// <summary>The session uses something this build has not learned.</summary>
+    /// <summary>The session uses something the runner cannot play yet.</summary>
     /// <param name="because">What is missing.</param>
     /// <returns>The outcome.</returns>
     public static SessionOutcome NotYetPlayable(string because) => new(SessionVerdict.NotYetPlayable, [because]);
 
-    /// <summary>The session uses several things this build has not learned.</summary>
+    /// <summary>The session uses several things the runner cannot play yet.</summary>
     /// <param name="reasons">What is missing, in the order it was found.</param>
     /// <returns>The outcome.</returns>
     public static SessionOutcome NotYetPlayable(IEnumerable<string> reasons) =>
@@ -51,10 +51,9 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
 
     /// <summary>The gravest of several partial outcomes, with every reason that reached it.</summary>
     /// <remarks>
-    /// A divergence outranks a construct nobody has taught the runner. Reasons gather at the gravest
-    /// verdict rather than one hiding the rest, because a contributor who fixes one divergence
-    /// should not have to re-run to meet the next. A reason a graver verdict outranks is dropped:
-    /// reporting it beside a real failure would only dilute the failure.
+    /// A divergence outranks a construct the runner cannot play. Every reason at the gravest verdict
+    /// is kept, so a contributor sees every divergence in one run; reasons at a lesser verdict are
+    /// dropped.
     /// </remarks>
     /// <param name="partials">What each check made of it, in the order they were checked.</param>
     /// <returns>The gravest verdict, and its reasons in the order they were found.</returns>

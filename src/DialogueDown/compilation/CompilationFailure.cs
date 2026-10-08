@@ -7,9 +7,8 @@ using DialogueDown.Script.Semantics;
 namespace DialogueDown.Compilation;
 
 /// <summary>
-/// A compile that stopped before running every stage, carrying only the artifacts it reached. It
-/// is named by where it stopped rather than by a stage field beside optional artifacts, so a
-/// combination no compile can reach cannot be constructed.
+/// A compile that stopped before running every stage, carrying only the artifacts it reached.
+/// Each factory names where the compile stopped and takes exactly the artifacts reached by then.
 /// </summary>
 public sealed record CompilationFailure : CompilationResult
 {
@@ -44,9 +43,9 @@ public sealed record CompilationFailure : CompilationResult
         new(source, markdown, script, desugared: null, semantics: null, diagnostics);
 
     /// <summary>
-    /// A compile that ran every stage and still reported an error, so the model it recovered no
-    /// longer describes what the writer wrote. Everything up to the semantic model was reached,
-    /// and a tool can still show it.
+    /// A compile that ran through semantic analysis and reported an error, so the model it
+    /// recovered does not describe what the writer wrote and no graph was built. Everything up to
+    /// the semantic model was reached, and a tool can still show it.
     /// </summary>
     internal static CompilationFailure AtAnalysis(
         string source,

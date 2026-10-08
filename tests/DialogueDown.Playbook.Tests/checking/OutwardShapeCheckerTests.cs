@@ -228,8 +228,8 @@ public sealed class OutwardShapeCheckerTests
     {
         var kinds = UnionMembers.Of<Node>().ToArray();
 
-        // If this fails, a node kind was added: give it a row in OutwardShapeChecker.ShapeOf and
-        // accept/refuse cases here.
+        // If this fails, a node kind was added: give it a shape in NodeShape.For and add accept
+        // and refuse cases here.
         Assert.Equal(6, kinds.Length);
     }
 

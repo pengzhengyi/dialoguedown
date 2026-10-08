@@ -223,7 +223,6 @@ describe("speakerIdCompletions", () => {
     });
 
     it("excludes the fully-typed id from its own suggestions", () => {
-        // Typing a whole known id back is noise; the exact match is dropped.
         expect(labelsAt(source, `@guide|`)).toEqual(["merchant"]);
     });
 
@@ -293,11 +292,9 @@ describe("dialogueAutocompletion keymap", () => {
     }
 
     /**
-     * Open the completion tooltip and wait until Tab/Enter would actually accept it.
-     * Two waits are needed: the completion query is async (poll until `active`), and
-     * CodeMirror enforces a 75 ms `interactionDelay` after a tooltip opens — an
-     * anti-misclick guard that blocks accepting a *just*-opened completion (it applies
-     * to Enter too). A human always clears it; the extra wait mirrors that.
+     * Open the completion tooltip and wait until Tab or Enter would accept it. The query is
+     * async, so this polls until `active`; then it waits out CodeMirror's 75 ms
+     * `interactionDelay`, which blocks accepting a completion that has just opened.
      */
     async function openCompletion(view: EditorView, timeout = 1000): Promise<void> {
         startCompletion(view);

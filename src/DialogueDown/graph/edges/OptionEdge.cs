@@ -8,10 +8,9 @@ namespace DialogueDown.Graph.Edges;
 /// reads true.
 /// </summary>
 /// <remarks>
-/// The label is the speech of the arm's first line, carried here rather than read back off the
-/// node the option leads to. Only this pass knows which nodes belong to which arm — an option
-/// with an empty body leads straight to whatever follows the choice, whose speech is somebody
-/// else's line entirely.
+/// The label comes from the arm's first block: the words its line speaks or, when that block only
+/// jumps, the jump's text. It is carried on the edge because an arm with an empty body leads
+/// straight to whatever follows the choice, a line that is not the option's own.
 /// </remarks>
 /// <param name="Target">The first node of the arm's body.</param>
 /// <param name="Label">The words shown for this option.</param>

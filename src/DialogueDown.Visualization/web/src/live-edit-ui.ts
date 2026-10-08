@@ -16,7 +16,7 @@ const RELOAD_URL = "/api/reload";
 /** The fixed trailing-edge idle delay before an Auto save fires (VS Code Web's default). */
 export const IDLE_DELAY_MS = 1000;
 
-/** The accessible label shown for each save status; detail messages are appended as a title. */
+/** The accessible label shown for each save status; a detail message follows it after a colon. */
 const STATUS_LABEL: Record<SaveStatus, string> = {
     saved: "Saved",
     dirty: "Unsaved",

@@ -8,8 +8,7 @@ namespace DialogueDown.Runtime.Tests.Protocol;
 /// </summary>
 /// <remarks>
 /// A supplied answer carries no tag naming its kind — the JSON value is the tag, so a boolean
-/// means a truth and a string means words. That rule has to live somewhere every reader can share,
-/// or each one invents it and they drift.
+/// means a truth and a string means words.
 /// </remarks>
 public sealed class AnswerJsonConverterTests
 {

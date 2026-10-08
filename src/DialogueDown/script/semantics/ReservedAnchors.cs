@@ -8,6 +8,6 @@ namespace DialogueDown.Script.Semantics;
 /// </summary>
 internal static class ReservedAnchors
 {
-    /// <summary>The terminator that ends a run early; resolves to the run's End sentinel.</summary>
+    /// <summary>The anchor that ends the dialogue early; resolves to the End sentinel.</summary>
     public const string End = "END";
 }

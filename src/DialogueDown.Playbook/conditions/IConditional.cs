@@ -6,9 +6,7 @@ namespace DialogueDown.Playbook.Conditions;
 /// </summary>
 /// <remarks>
 /// A node's condition decides whether it plays at all; an arm's decides whether that way out is
-/// taken. Both ask the world the same kind of question, so both are read the same way, and a
-/// reader looking for a guard asks once rather than naming every kind that can carry one. A
-/// succession is not one of these: it is the fall-through, and is always available.
+/// taken. A succession edge has no condition: it is the fall-through, and is always available.
 /// </remarks>
 public interface IConditional
 {
@@ -16,7 +14,7 @@ public interface IConditional
     Condition? Condition { get; }
 }
 
-/// <summary>Asking about a guard without naming the kind that carries it.</summary>
+/// <summary>Reads the condition of any node or arm that can carry one.</summary>
 public static class ConditionalExtensions
 {
     /// <summary>Whether a condition guards this.</summary>

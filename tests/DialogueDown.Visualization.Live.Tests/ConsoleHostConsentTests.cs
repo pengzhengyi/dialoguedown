@@ -29,13 +29,13 @@ public sealed class ConsoleHostConsentTests
     }
 
     [Fact]
-    public void AllowHosting_NonInteractive_DeclinesAndSuggestsRenderRoot()
+    public void AllowHosting_NonInteractive_DeclinesAndSuggestsRoot()
     {
         var output = new StringWriter();
         var consent = new ConsoleHostConsent(interactive: false, new StringReader(string.Empty), output);
 
         Assert.False(consent.AllowHosting(Request()));
-        Assert.Contains("--render-root", output.ToString());
+        Assert.Contains("Re-run with --root \"/proj-root\"", output.ToString());
         Assert.DoesNotContain("[y/N]", output.ToString());
     }
 

@@ -11,22 +11,13 @@ namespace DialogueDown.Tests.Emission;
 /// unchanged, for every script the compiler accepts.
 /// </summary>
 /// <remarks>
-/// A playbook is a persisted artifact — the one way out of the compiler — so a writer's work
-/// survives only if what was written reads back as what it was. The goldens pin what four shipped
-/// examples produce; this quantifies over scripts nobody wrote, which is where a field the reader
-/// silently drops would hide.
-/// <para>
 /// Equality is taken over the serialized JSON rather than over <see cref="PlaybookDocument"/>
-/// itself. The document holds its nodes and speakers in <c>ImmutableArray</c>, whose record
-/// equality compares the underlying array by reference, so two structurally identical documents
-/// are never equal. Re-serializing renders both through the same writer and compares what a file
-/// would actually hold.
-/// </para>
+/// itself: the document holds its nodes and speakers in <c>ImmutableArray</c>, which compares by
+/// reference, so two structurally identical documents are never equal.
 /// </remarks>
 public sealed class PlaybookRoundTripTests
 {
-    // Modest on purpose: this runs in the ordinary suite, and a property that makes the suite slow
-    // stops being run at all.
+    // Modest so the property runs in the ordinary suite.
     private const int Samples = 200;
 
     private const string ScriptName = "generated.dialogue.md";
@@ -34,11 +25,6 @@ public sealed class PlaybookRoundTripTests
     /// <summary>
     /// Writing a playbook, reading it back, and writing it again yields the same document.
     /// </summary>
-    /// <remarks>
-    /// A failure names one of two defects, and the diff says which: the reader dropped or
-    /// misread something the writer emitted, or the writer emitted something the reader cannot
-    /// express. Either way a runtime loading that file plays something the compiler did not mean.
-    /// </remarks>
     [Fact]
     public void WritingAPlaybookAndReadingItBackPreservesIt() =>
         ForEveryCompiledScript(
@@ -59,10 +45,8 @@ public sealed class PlaybookRoundTripTests
     /// A playbook the writer produced is one the reader accepts.
     /// </summary>
     /// <remarks>
-    /// The reader validates what it loads and throws <see cref="InvalidPlaybookException"/> on a
-    /// document it judges malformed. Nothing the writer produces should ever be judged that way —
-    /// if it is, the two sides disagree about the format they share, and the round-trip property
-    /// above would report it as an unrelated crash rather than as the disagreement it is.
+    /// The reader throws <see cref="InvalidPlaybookException"/> on a document it judges malformed;
+    /// this reports that as a rejection rather than as a crash inside the round-trip property.
     /// </remarks>
     [Fact]
     public void EveryPlaybookTheWriterProducesIsOneTheReaderAccepts() =>
@@ -83,8 +67,7 @@ public sealed class PlaybookRoundTripTests
     private static PlaybookDocument Write(CompilationSuccess compilation) =>
         PlaybookWriterFactory.CreateDefault().Write(compilation, ScriptName);
 
-    // Only a script the compiler accepts has a playbook. One it rejects never reaches the writer,
-    // and so says nothing either way about an invariant quantified over playbooks.
+    // Only a script the compiler accepts has a playbook; a rejected one is skipped.
     private static void ForEveryCompiledScript(Action<CompilationSuccess, string> invariantHolds) =>
         ScriptGen.Script()
             .Sample(

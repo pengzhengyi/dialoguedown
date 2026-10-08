@@ -4,13 +4,9 @@ namespace DialogueDown.Runtime.Situations;
 /// Standing at a node, waiting for the host to say what it asked for was carried out.
 /// </summary>
 /// <remarks>
-/// The run has reached the node and asked the host to change the world. It cannot read on until
-/// that change is made, because what it reads next may depend on it — a guard that follows an
-/// effect must see the world the effect left behind.
-/// <para>
-/// Saying so here, rather than in a flag beside the node, is what lets the protocol tell which
-/// command belongs where without going back to the playbook to work it out.
-/// </para>
+/// The run has sent <c>Perform</c> and waits for <c>Done</c> before going on, because what comes
+/// next may depend on the change: a condition after an effect must see the world the effect left
+/// behind.
 /// </remarks>
 /// <param name="Node">The node's position in the playbook.</param>
 /// <param name="Resume">Where the node carries on once the host is done.</param>

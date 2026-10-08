@@ -4,9 +4,8 @@ namespace DialogueDown.Playbook.Checking;
 /// Refuses a playbook this build cannot read at all.
 /// </summary>
 /// <remarks>
-/// Two questions in the order they are worth asking: whether the document has a shape we know,
-/// then whether what fills that shape is a story we can tell. A document of an unknown version
-/// may describe its capabilities in terms we would misread, so the version settles first.
+/// Checks the format version first, then the required capabilities: a document of an unknown
+/// version may list its capabilities in a form this build would misread.
 /// </remarks>
 public sealed class FormatChecker : IPlaybookChecker
 {
@@ -16,8 +15,8 @@ public sealed class FormatChecker : IPlaybookChecker
     /// <summary>
     /// Initializes a new instance of the <see cref="FormatChecker"/> class.
     /// </summary>
-    /// <param name="version">Whether the document's shape is one we know.</param>
-    /// <param name="capabilities">Whether what fills that shape is a story we can tell.</param>
+    /// <param name="version">The check on the format version.</param>
+    /// <param name="capabilities">The check on the capabilities a playbook requires.</param>
     public FormatChecker(IPlaybookChecker version, IPlaybookChecker capabilities)
     {
         ArgumentNullException.ThrowIfNull(version);

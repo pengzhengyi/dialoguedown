@@ -6,14 +6,14 @@ namespace DialogueDown.Script.Semantics;
 /// <summary>
 /// Resolves each <c>Jump</c>'s target against the <see cref="AnchorTable"/>, producing a
 /// per-jump <see cref="JumpResolution"/>. A local anchor resolves to its scene, or — when no scene
-/// slugs to it — is reported and left unresolved; a target outside this script is reported and
-/// deferred; an empty target is left unresolved.
+/// slugs to it — is reported and left unresolved; the reserved <c>#END</c> ends the dialogue; a
+/// target outside this script is reported and deferred; an empty target is left unresolved.
 /// </summary>
 internal static class JumpResolver
 {
     /// <summary>
     /// Resolves every jump in <paramref name="jumps"/> against <paramref name="anchors"/>, reporting
-    /// a jump to a missing local anchor into <paramref name="diagnostics"/>.
+    /// a missing local anchor or a target outside this script into <paramref name="diagnostics"/>.
     /// </summary>
     public static JumpResolutionTable Resolve(
         IEnumerable<Jump> jumps, AnchorTable anchors, IDiagnosticSink diagnostics) =>
@@ -25,9 +25,9 @@ internal static class JumpResolver
 
         if (target.HasFilePart)
         {
-            // TODO(cross-file, #59): resolve the file part against other documents, including a
-            // path that names the current file; until then a file-scoped target is deferred, and
-            // the writer is warned that it wires no flow rather than being left to wonder.
+            // TODO(cross-file): resolve the file part against other documents, including a path
+            // that names the current file. Until then a file-scoped target is deferred, and the
+            // writer is warned that the jump leads nowhere.
             diagnostics.Report(
                 new Diagnostic(DiagnosticCatalog.ExternalJumpNotResolved, jump.Span, [target.File!]));
             return new FileScopedJump(target.File!, target.Anchor);

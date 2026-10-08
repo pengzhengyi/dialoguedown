@@ -6,8 +6,7 @@ namespace DialogueDown.Visualization;
 /// An implementation names the stage (<see cref="Title"/>), describes any node
 /// (<see cref="Describe"/>), and yields a node's out-neighbors
 /// (<see cref="Neighbors"/>). The generic <see cref="GraphWalk"/> supplies the
-/// cycle-safe traversal, so a projection never builds a graph itself. Adding a
-/// stage is one small projection, not a bespoke graph-building routine.
+/// cycle-safe traversal, so a projection never builds a graph itself.
 /// </summary>
 /// <typeparam name="TNode">
 /// The IR node type. A heterogeneous AST whose nodes share no common base uses
@@ -20,8 +19,8 @@ public interface INodeProjection<TNode>
     string Title { get; }
 
     /// <summary>
-    /// A one-line description of what this stage's graph shows, surfaced as the
-    /// stage tab's hover tooltip in the report.
+    /// A one-line description of what this stage's graph shows; the report uses it as
+    /// the stage tab's hover tooltip.
     /// </summary>
     string Description { get; }
 

@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { LIVE_EDIT_PORT, LIVE_EDIT_DOC, LIVE_EDIT_SOURCE } from "./fixture.mjs";
 
-// Live Edit end-to-end against the real .NET --live server: the Source tab is an
+// Live Edit end-to-end against the real .NET --edit server: the Source tab is an
 // editable CodeMirror buffer, edits update the preview as you type, the Save button and
 // the Ctrl/⌘+S shortcut write the file from any tab, and an external change pauses in a
 // conflict without clobbering the buffer.
@@ -222,8 +222,8 @@ test("the Auto/Manual choice is persisted to a host-scoped cookie", async ({ pag
     expect(cookie).toContain("dd-save-mode-source=auto");
 });
 
-// A long, multi-scene document so both panes actually scroll. Front matter previously parsed as
-// a false editor heading, shifting every real scene pair by one.
+// A long, multi-scene document so both panes actually scroll. It opens with front matter, which
+// must not count as an editor heading, or every scene pair would be off by one.
 const SCENES = 8;
 const SCROLL_DOC =
     "---\ntitle: Scroll Sync\n---\n# Prologue\n\n" +
@@ -242,7 +242,6 @@ const SCROLL_DOC =
         return `## Scene ${i + 1}\n\n${body}${uneven}\n`;
     }).join("\n");
 
-/** The labeled top-level block nearest the top of each pane. */
 /**
  * Nudge a pane so the block nearest its top sits exactly at the top.
  *
@@ -266,9 +265,11 @@ async function alignToNearestBlock(page: Page, selector: string) {
             .sort((a, b) => Math.abs(a) - Math.abs(b))[0];
         if (nearest !== undefined) pane.scrollTop += nearest;
     }, selector);
+    // Give the other pane time to follow the nudge.
     await page.waitForTimeout(400);
 }
 
+/** The labeled top-level block nearest the top of each pane. */
 async function blocksAtTop(page: Page) {
     return page.evaluate(() => {
         const identity = (label: string | null) =>
@@ -315,7 +316,8 @@ const scrollBy = (page: Page, selector: string, total: number, step: number) =>
 test("the editor and preview scroll in sync, anchored on Markdown blocks", async ({ page }) => {
     writeFileSync(LIVE_EDIT_DOC, SCROLL_DOC);
     // The editor virtualizes its lines, so assert on the preview (full HTML) to know the
-    // long document loaded. Reused between the two directions for a clean, unowned slate.
+    // long document loaded; the page is reloaded until the server has compiled the new file.
+    // Reused between the two directions for a clean, unowned slate.
     const load = async () => {
         await expect(async () => {
             await page.goto(`${base}/`);
@@ -333,7 +335,7 @@ test("the editor and preview scroll in sync, anchored on Markdown blocks", async
     // within-block pixel offset depends on the platform's line metrics.
     await load();
     await scrollBy(page, ".source-pane .cm-scroller", 1600, 150);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // let the preview finish following
     await alignToNearestBlock(page, ".source-pane .cm-scroller");
     const byEditor = await blocksAtTop(page);
     expect(await scrollTopOf(".source-preview")).toBeGreaterThan(100); // the preview followed
@@ -343,7 +345,7 @@ test("the editor and preview scroll in sync, anchored on Markdown blocks", async
     // scrolling it down carries the editor to the same scene (bidirectional).
     await load();
     await scrollBy(page, ".source-preview", 1600, 150);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // let the editor finish following
     await alignToNearestBlock(page, ".source-preview");
     const byPreview = await blocksAtTop(page);
     expect(await scrollTopOf(".source-pane .cm-scroller")).toBeGreaterThan(100); // the editor followed
@@ -464,7 +466,7 @@ test("jumps from a Semantic-tab node to its source", async ({ page }) => {
 });
 
 // The diagnostics overlay is produced by the .NET compiler and pushed into the editor, so a
-// Save that introduces a compile error must surface it, and fixing the error must clear it —
+// Save that introduces a compile error must show it, and fixing the error must clear it —
 // proving the whole payload → overlay path end to end against the real server.
 const DIAG_CLEAN = "# Chapter One\n\nAlice: Hello.\n";
 const DIAG_BROKEN = "# Chapter\n\nAlice: Hello.\n\n# Chapter\n\nBob: Goodbye.\n";

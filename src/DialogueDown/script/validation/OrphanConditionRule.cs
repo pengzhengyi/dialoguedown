@@ -9,10 +9,13 @@ namespace DialogueDown.Script.Validation;
 /// precedes, the line it fronts, the choice option it leads, or the control branch it opens; one
 /// that guards none — left over in speech, or with no content after it — cannot do anything, so
 /// it is an error. The condition keeps its span, so the diagnostic points at the code span itself.
-/// A condition is <em>bound</em> when it is exactly the <see cref="Condition"/> its parent jump,
-/// line, option, or branch references, so a stray condition sharing a line with a real condition is
-/// still caught by identity rather than by its parent's type alone.
 /// </summary>
+/// <remarks>
+/// <code>
+/// Guide: `"Rainy"?` The moor is bleak.
+/// </code>
+/// The condition comes after the speaker, so it fronts no line.
+/// </remarks>
 internal sealed class OrphanConditionRule : DiagnosticRule
 {
     protected override DiagnosticDescriptor Descriptor { get; } =

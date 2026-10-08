@@ -14,8 +14,8 @@ const REPORT_WITH_PATH: Report = {
     stages: SAMPLE_STAGES,
 };
 
-// Light scheme is the harder case for the historic bug: the button-inverse text
-// color (white) would be invisible on the light footer.
+// The light scheme is the harder case: the button-inverse text color (white) would be
+// invisible on the light footer.
 test.use({ colorScheme: "light" });
 
 test("the document path stays legible on hover (not white-on-white)", async ({ page }) => {
@@ -28,8 +28,8 @@ test("the document path stays legible on hover (not white-on-white)", async ({ p
     const color = await path.evaluate((el) => getComputedStyle(el).color);
     const [r, g, b] = color.match(/\d+/g)!.map(Number);
     const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    // The bug rendered the hover text as the button inverse (white, luminance 255),
-    // which vanished on the light footer. Require a clearly darker foreground.
+    // Hover text in the button inverse (white, luminance 255) would vanish on the light
+    // footer, so require a clearly darker foreground.
     expect(luminance).toBeLessThan(180);
 });
 

@@ -74,6 +74,6 @@ public sealed partial record CompilerOptions
     /// <summary>The unconfigured options: every knob at its built-in default.</summary>
     public static CompilerOptions Default { get; } = new();
 
-    /// <summary>Separates out the options the semantic analysis stage reads from the umbrella.</summary>
+    /// <summary>The part of these options the semantic analysis stage reads.</summary>
     internal ISemanticAnalyzerOptions ForSemanticAnalyzer() => new SemanticAnalyzerOptions(Speakers);
 }

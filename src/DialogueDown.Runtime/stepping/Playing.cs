@@ -14,11 +14,6 @@ namespace DialogueDown.Runtime.Stepping;
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
 /// the node is known to be allowed and the answers for the words it plays are in hand.
-/// <para>
-/// This is the axis a runner grows along: every construct the language gains has to be played
-/// here, and each brings work of its own. Keeping it apart from the protocol guard leaves that
-/// guard the small, readable matrix of what may be sent where.
-/// </para>
 /// </remarks>
 internal static class Playing
 {
@@ -143,8 +138,7 @@ internal static class Playing
 
         if (AnswerCheck.Disagrees(asked, supply.Answers, out var refusal))
         {
-            // The run stays where it asked, so a driver that misread the request can answer it
-            // again rather than losing the conversation over a mistake it can still fix.
+            // The run stays where it asked, so the driver can send a corrected supply.
             return new StepResult(new PlayState(waiting), [refusal]);
         }
 
@@ -160,8 +154,7 @@ internal static class Playing
 
     private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);
 
-    // Saying nothing would leave the run standing here forever, which reads as a hang rather than
-    // as a construct nobody has taught the runner yet.
+    // Refused rather than answered with no events, which would look like a hang.
     private static StepResult Unplayable(int position, Node unplayable) =>
         StepResults.Refuse(
             position,

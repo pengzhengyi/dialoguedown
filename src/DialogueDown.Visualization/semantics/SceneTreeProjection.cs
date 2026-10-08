@@ -13,7 +13,7 @@ namespace DialogueDown.Visualization.Semantics;
 /// hovering it highlights the same scene in the anchor and jump tables. Each scene's script
 /// blocks are described by the shared <see cref="DialogueAstProjection"/>, so they read exactly
 /// like the Desugared AST tab; a speaker mention or a jump that resolves to a scene additionally
-/// carries a <see cref="NodeDescription.RefKey"/>, so hovering it lights up the matching speaker
+/// carries a <see cref="NodeDescription.RefKey"/>, so hovering it highlights the matching speaker
 /// or anchor/jump rows.
 /// </summary>
 internal sealed class SceneTreeProjection : INodeProjection<object>
@@ -136,7 +136,10 @@ internal sealed class SceneTreeProjection : INodeProjection<object>
                 described.Category,
                 described.EntityKey,
                 described.TypeName,
-                refKey);
+                refKey)
+            {
+                Span = described.Span,
+            };
     }
 
     private string? RefKeyFor(object node) => node switch

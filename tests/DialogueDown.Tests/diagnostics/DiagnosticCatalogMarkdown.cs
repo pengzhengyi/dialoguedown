@@ -5,12 +5,14 @@ using DialogueDown.Diagnostics;
 namespace DialogueDown.Tests.Diagnostics;
 
 /// <summary>
-/// Renders the diagnostic catalog as the user-facing "Error codes" reference page. The page is a
-/// generated artifact: <see cref="DiagnosticCatalogDocumentationTests"/> asserts the committed
-/// <c>docs/guide/error-codes.md</c> matches this output, so the reference never drifts from the
-/// catalog. Grouped by category and sorted by code, with one anchored subsection per code so a
-/// tool can deep-link a diagnostic (for example, <c>#dlg2001</c>).
+/// Renders the diagnostic catalog as the user-facing "Error codes" reference page.
 /// </summary>
+/// <remarks>
+/// <see cref="DiagnosticCatalogDocumentationTests"/> asserts the committed
+/// <c>docs/guide/error-codes.md</c> matches this output. Diagnostics are grouped by category and
+/// sorted by code, with one anchored subsection per code so a tool can link to a diagnostic (for
+/// example, <c>#dlg2001</c>).
+/// </remarks>
 internal static class DiagnosticCatalogMarkdown
 {
     private const string Intro =
@@ -26,7 +28,7 @@ internal static class DiagnosticCatalogMarkdown
         + "`{0}` are filled with specifics — a name, a count — when the message is shown.\n";
 
     // Categories in reporting order, each with the range its codes occupy and a one-line summary.
-    // A category with no descriptors yet (Style) is listed here but only rendered once it has one.
+    // A category with no descriptors is not rendered.
     private static readonly IReadOnlyList<CategorySection> _sections =
     [
         new(

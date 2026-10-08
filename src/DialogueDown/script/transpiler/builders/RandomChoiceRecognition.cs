@@ -8,7 +8,7 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// <summary>
 /// Recognizes a random choice's weights on a Markdown list item: whether the list is a random
 /// choice (an option leads with a <c>`…%`</c> code span), and, for one option, its
-/// <see cref="ChoiceWeight"/> plus the body blocks with the weight peeled off. It owns the two
+/// <see cref="ChoiceWeight"/> plus the body blocks with the weight removed. It owns the two
 /// weight diagnostics — <see cref="DiagnosticCatalog.MissingChoiceWeight"/> and
 /// <see cref="DiagnosticCatalog.InvalidChoiceWeight"/> — and recovers each to an equal share so
 /// the option still builds. The <see cref="BlockBuilder"/> then builds the returned blocks.
@@ -22,8 +22,8 @@ internal static class RandomChoiceRecognition
             return false;
         }
 
-        // A condition may condition a random option, so a weight can sit just past a leading
-        // condition; peek past it to classify the option as weighted.
+        // A condition may guard a random option and is written before its weight
+        // (`Alice.HasKey?` `30%` Alice: Hi.), so look past it for the weight.
         var inlines = ConditionReader.TryPeel(paragraph.Inlines, out _, out var afterCondition)
             ? afterCondition
             : paragraph.Inlines;

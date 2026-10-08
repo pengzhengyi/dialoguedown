@@ -4,17 +4,14 @@ import { colorOf } from "./palette";
 /**
  * A legend swatch drawn as the edge itself, rather than approximated.
  *
- * The legend used to redraw each pattern as a CSS repeating gradient, which was a second
- * implementation of the dash vocabulary — free to drift from the drawing, unable to carry an
- * arrowhead, and unable to show the glyphs a stamped line is marked with. Here the swatch is a
- * tiny SVG using the very same `stroke-dasharray`, the same round caps, and the same arrowhead as
- * the route it stands for, so what the reader learns is what the reader will find.
+ * The swatch is a tiny SVG using the very same `stroke-dasharray`, the same round caps, the same
+ * arrowhead, and the same stamped glyphs as the route it stands for, so what the reader learns is
+ * what the reader will find.
  */
 
 /**
  * How wide a swatch is drawn. Wide enough that the longest pattern repeats — a pattern shown once
- * is not a pattern but a bar of unknown length, which is what made a jump and a conditional
- * indistinguishable when the swatch was 14px. `periodsShown` is the guard, and it is tested.
+ * is not a pattern but a bar of unknown length. {@link periodsShown} measures it.
  */
 const SWATCH_WIDTH = 48;
 const SWATCH_HEIGHT = 12;
@@ -71,8 +68,8 @@ export function edgeSwatch(category: string, scope: string): SVGSVGElement {
 }
 
 /**
- * The swatch's line. A stamped route is drawn as a run of segments rather than one, because a
- * glyph is placed at a vertex — the same trick the canvas plays when it resamples such a line.
+ * The swatch's line. A stamped route is drawn as a sequence of segments rather than one, because a
+ * glyph is placed at a vertex — the same way the canvas resamples such a line.
  */
 function trace(end: number, middle: number, stamped: boolean): string {
     if (!stamped) return `M0,${middle}L${end},${middle}`;

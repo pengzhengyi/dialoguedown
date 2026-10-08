@@ -9,11 +9,11 @@ using DialogueDown.Script.Validation;
 namespace DialogueDown.Compilation;
 
 /// <summary>
-/// The default <see cref="IScriptCompiler"/>: it drives the stages — parse, transpile, desugar,
-/// validate, analyze, build the graph — in order, reporting each through a <see cref="CompilationSession"/> that
-/// owns the sink and the <see cref="CompilationMode"/> flow policy, and assembles their artifacts
-/// into a <see cref="CompilationResult"/>. The compiler stays a plain phase driver: the session
-/// decides which sink to report through and whether to stop at a stage boundary.
+/// The default <see cref="IScriptCompiler"/>: it runs the stages in order (parse, transpile,
+/// desugar, validate, analyze, build the graph) and assembles their artifacts into a
+/// <see cref="CompilationResult"/>. A <see cref="CompilationSession"/> chooses, from the
+/// <see cref="CompilationMode"/>, the sink each stage reports through and whether to stop at a
+/// stage boundary.
 /// </summary>
 internal sealed class ScriptCompiler : IScriptCompiler
 {
@@ -58,9 +58,8 @@ internal sealed class ScriptCompiler : IScriptCompiler
         var markdown = _parser.Parse(source, session.Context);
         var script = _transpiler.Transpile(markdown, session.Context);
 
-        // The transpiler is the only stage that reports errors before analysis, so a stage-boundary
-        // compile halts here rather than analyzing material its errors made unreliable — the result
-        // is partial. A future desugar producer would add one more checkpoint below.
+        // A stage-boundary compile stops here after an error from parsing or transpiling, since
+        // the later stages would read material that error made unreliable.
         if (session.ShouldHalt)
         {
             return CompilationFailure.AtTranspile(source, markdown, script, session.Diagnostics);
@@ -70,17 +69,15 @@ internal sealed class ScriptCompiler : IScriptCompiler
         _validator.Validate(desugared, session.Context.Diagnostics);
         var semantics = _analyzer.Analyze(desugared, session.Context);
 
-        // An error means the recovered model no longer describes what the writer wrote, so the
-        // compile did not succeed however far it got. Everything it reached rides along, since a
-        // tool still describes a broken script.
+        // An error means the recovered model does not describe what the writer wrote, so the
+        // compile failed. The failure keeps everything it reached, so a tool can still show a
+        // broken script.
         if (session.HasErrors)
         {
             return CompilationFailure.AtAnalysis(
                 source, markdown, script, desugared, semantics, session.Diagnostics);
         }
 
-        // Only a clean compile reaches here, so the graph is built from a model that still
-        // describes the script — there is no separate gate to keep in step.
         var graph = _graphBuilder.Build(semantics, session.Context);
 
         return new CompilationSuccess(

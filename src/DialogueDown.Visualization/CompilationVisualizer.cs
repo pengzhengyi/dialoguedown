@@ -25,14 +25,14 @@ namespace DialogueDown.Visualization;
 /// <remarks>
 /// <see cref="BuildStages"/> projects the stages the <see cref="IScriptCompiler"/> seam
 /// produces — the parsed Markdown AST, the transpiled Dialogue AST, the desugarer's
-/// normalized Desugared AST, and the analyzer's Semantic Model (a scene-tree graph beside
-/// its cross-linked tables) — each one a projection over the shared walk, model, and
-/// renderers.
+/// normalized Desugared AST, the analyzer's Semantic Model (a scene-tree graph beside
+/// its cross-linked tables), and the Dialogue Graph — each one a projection over the
+/// shared display model and renderers.
 /// </remarks>
 public sealed class CompilationVisualizer
 {
-    // Shown on a disabled stage tab when a halted compile did not produce that stage. The actual
-    // diagnostics are surfaced separately (a planned report overlay), not here.
+    // Shown on a disabled stage tab when a halted compile did not produce that stage. The
+    // diagnostics themselves appear in the editor's overlay.
     private const string StageUnavailableReason =
         "This stage is unavailable due to compilation errors.";
 
@@ -115,9 +115,9 @@ public sealed class CompilationVisualizer
     /// <summary>
     /// Returns the local image references in the document, in document order — the
     /// sources of <c>![alt](src)</c> images that name a file rather than a web
-    /// resource. Web and data URLs (<c>http:</c>, <c>https:</c>, <c>//</c>,
-    /// <c>data:</c>) are excluded. The live server uses these to decide which folder
-    /// it must serve so the report's images resolve.
+    /// resource. Web, mail, and data URLs (<c>http:</c>, <c>https:</c>, <c>ftp:</c>,
+    /// <c>mailto:</c>, <c>data:</c>, <c>//</c>) are excluded. The live server uses these
+    /// to decide which folder it must serve so the report's images resolve.
     /// </summary>
     public IReadOnlyList<string> LocalImageReferences(string source)
     {
@@ -144,7 +144,7 @@ public sealed class CompilationVisualizer
 
     /// <summary>
     /// Compiles the source and renders the HTML report as a <b>live</b> report: the
-    /// injected payload carries the given <paramref name="mode"/> (watch or live) and
+    /// injected payload carries the given <paramref name="mode"/> (view or edit) and
     /// <paramref name="documentPath"/>, so the client opens a live session
     /// (subscribes for hot-reload pushes) instead of showing a static report.
     /// </summary>
@@ -174,9 +174,9 @@ public sealed class CompilationVisualizer
     }
 
     /// <summary>
-    /// Compiles the source and serializes the current document payload
-    /// (<c>{ mode, path, source, stages }</c>) as JSON, for the live server's
-    /// document API and its hot-reload push events.
+    /// Compiles the source and serializes the current document payload — the same data
+    /// a live report page carries — as JSON, for the live server's document API and its
+    /// hot-reload push events.
     /// </summary>
     public string SerializeDocument(
         string documentPath, string source, string mode, ConfigStatusOverlay? configOverlay = null,
@@ -222,27 +222,28 @@ public sealed class CompilationVisualizer
         && !(Uri.TryCreate(source, UriKind.Absolute, out var uri)
             && uri.Scheme is "http" or "https" or "data" or "ftp" or "mailto");
 
-    // A visualization renders whatever the compiler produced. It compiles stage-boundary, so a
-    // valid script yields every stage and a broken one halts: the transpiler's later material is
-    // unreliable, so its stages are unavailable (disabled tabs) rather than projected from noise.
-    // Fail-fast is never used — it throws instead of returning a renderable result.
+    // A visualization renders whatever the compiler produced, so it compiles stage-boundary: a
+    // valid script yields every stage, and a broken one halts after the stage that reported the
+    // error, whose output is unreliable, so the stages after it show as disabled tabs. Fail-fast
+    // is never used, even when configured — it throws instead of returning a renderable result.
     private static CompilerOptions ForVisualization(CompilerOptions options) =>
         options with { Mode = CompilationMode.StageBoundary };
 
-    // The graph rides on a successful compile alone, so unlike the earlier stages it is not
-    // "how far did the compile get" but "did it succeed".
+    // The graph needs a successful compile, so unlike the earlier stages it asks not "how far did
+    // the compile get" but "did it succeed".
     private static DisplayGraph GraphStage(CompilationResult result, string source) =>
         result is CompilationSuccess success
             ? new GraphProjection().Project(success.Graph, source)
             : GraphProjection.Unavailable(GraphUnavailableReason);
 
-    // Compiles the source once and projects both the stage graphs and the editor's resolved
-    // symbols, so the report and the live document API share a single compilation.
     // The playbook records the script it was compiled from, which a compile does not know: the
-    // caller opened the file, so the caller names it. A report with no path is a bare render.
+    // caller opened the file, so the caller names it. A report with no path gets a placeholder.
     private static string ScriptNameOf(string? documentPath) =>
         documentPath is null ? "script.dialogue.md" : Path.GetFileName(documentPath);
 
+    // Compiles the source once and projects everything the report shows — the stage graphs, the
+    // editor's symbols, diagnostics, and semantic tokens, and the playbook — so the report and the
+    // live document API share a single compilation.
     private ReportContent BuildContent(string source, string? documentPath = null)
     {
         var result = _compiler.Compile(source);

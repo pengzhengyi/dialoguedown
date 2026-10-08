@@ -3,10 +3,10 @@ using DialogueDown.Visualization.Configuration;
 namespace DialogueDown.Visualization.Live.Serving;
 
 /// <summary>
-/// Drives the served <c>dialoguedown visualize</c> experience: one loopback server that hosts the
+/// Drives the served <c>ddown visualize</c> experience: one loopback server that hosts the
 /// report shell with its Explorer sidebar, confined to a root. Given a <c>script</c> it opens that
 /// document's report directly (resolving the served root from the script, with consent when it
-/// references images above its folder); with no script it lands on the empty shell so a script can
+/// references images above its folder); with no script it opens the empty shell so a script can
 /// be browsed or created in the tree. Runs until canceled. Injected so the command is testable with
 /// a substitute.
 /// </summary>

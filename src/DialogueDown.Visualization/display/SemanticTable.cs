@@ -4,7 +4,7 @@ namespace DialogueDown.Visualization.Display;
 /// A named table of the semantic model shown beside the scene-tree graph in the Semantic tab —
 /// the speaker, anchor, or jump-resolution table. Carries its <see cref="Columns"/> headers,
 /// its <see cref="Rows"/>, the <see cref="EmptyText"/> to show when there are no rows, and the
-/// <see cref="FacetColumns"/> whose small, fixed vocabulary the editor offers as a filter.
+/// <see cref="FacetColumns"/> whose small, fixed vocabulary the report offers as a filter.
 /// </summary>
 public sealed record SemanticTable(
     string Title,
@@ -40,8 +40,8 @@ public sealed record SemanticRow(
 /// which stays the plain-text rendering so search, sort, and export still read the cell.
 /// <para>
 /// A <see cref="Copyable"/> cell is an identifier a writer would paste into a script — an
-/// <c>@id</c>, an anchor, a jump target — and copies its text on click. Prose cells do not, so a
-/// click never lifts a sentence nobody asked for.
+/// <c>@id</c>, an anchor, a jump target — and copies its text on click. Prose cells do not, so
+/// clicking a sentence leaves the clipboard alone.
 /// </para>
 /// </remarks>
 public sealed record SemanticCell(

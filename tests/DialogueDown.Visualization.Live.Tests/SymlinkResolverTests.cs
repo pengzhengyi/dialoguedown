@@ -79,8 +79,7 @@ public sealed class SymlinkResolverTests
         Assert.Throws<IOException>(() => SymlinkResolver.Resolve(a));
     }
 
-    // Creates the symbolic link `relative` -> `target` inside `tree`, skipping the test when the
-    // platform (e.g. Windows without the privilege) refuses to create one.
+    // Creates the symbolic link `relative` -> `target` inside `tree`.
     private static string Symlink(TempTree tree, string relative, string target)
     {
         var link = Path.Combine(tree.Root, relative);

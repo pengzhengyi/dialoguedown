@@ -5,15 +5,13 @@ namespace DialogueDown.Script.Desugar;
 
 /// <summary>
 /// Desugars a transpiled Dialogue AST, applying the local normalizations the transpiler
-/// deferred (jump assembly, default-speaker fill). This is the seam downstream stages
-/// depend on, mirroring <c>IScriptTranspiler</c>.
+/// leaves for later: jump assembly, control-line recognition, and the default-speaker fill.
 /// </summary>
 internal interface IScriptDesugarer
 {
     /// <summary>
-    /// Desugars <paramref name="document"/> into a <see cref="DesugaredScriptDocument"/>.
-    /// <paramref name="context"/> carries the source future diagnostics anchor to and the sink to
-    /// report into; it is validated here, though desugaring itself reads only the tree.
+    /// Desugars <paramref name="document"/> into a <see cref="DesugaredScriptDocument"/>,
+    /// reporting into the sink of <paramref name="context"/>.
     /// </summary>
     DesugaredScriptDocument Desugar(ScriptDocument document, DiagnosticsContext context);
 }

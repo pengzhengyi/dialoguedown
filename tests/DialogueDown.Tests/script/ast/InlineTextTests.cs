@@ -20,7 +20,7 @@ public sealed class InlineTextTests
                 [StyledText(SpeechStyle.Italic, Text("bold")), Link("#x", Text("here"))]));
     }
 
-    // A jump's label and an image's alt are the words a reader sees, so a flattened run keeps
+    // A jump's label and an image's alt are the words a reader sees, so the flattened text keeps
     // them rather than dropping to an empty string where they appear.
     [Fact]
     public void Of_ReadsAJumpsLabelAndAnImagesAlt()

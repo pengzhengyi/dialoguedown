@@ -264,8 +264,8 @@ test("puts a shown thematic break on its marks' own line", async ({ page }) => {
 });
 
 test("draws a shown thematic break dark enough to see", async ({ page }) => {
-    // Muted ink dimmed a second time left the rule all but white, and the rule is the whole
-    // content of its region. WCAG asks 3:1 of a graphical object that carries meaning.
+    // The rule is the whole content of its region, and WCAG asks 3:1 of a graphical object that
+    // carries meaning.
     const { ink, backdrop } = await ruleAgainstBackdrop(regions(page).nth(2).locator("hr"));
     const painted = parseColor(ink);
     const behind = parseColor(backdrop);

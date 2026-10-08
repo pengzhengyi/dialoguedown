@@ -4,9 +4,8 @@ using Tomlyn.Syntax;
 namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
-/// Creates configuration errors at the TOML syntax node that violated the schema. Readers supply
-/// the domain-specific message; this helper keeps the Tomlyn-span to public-location mapping in
-/// one place.
+/// Creates configuration errors located at the TOML syntax node that violated the schema. Readers
+/// supply the domain-specific message.
 /// </summary>
 internal static class TomlErrors
 {

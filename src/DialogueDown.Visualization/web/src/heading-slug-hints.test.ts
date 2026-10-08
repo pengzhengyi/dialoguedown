@@ -12,11 +12,9 @@ function stateAt(doc: string, offset: number): EditorState {
 /**
  * The same state, with a tree that covers the whole document.
  *
- * `stateAt` alone is not enough to assert a slug against: the editor's first parse is bounded (20ms
- * of wall clock, counted with `Date.now()`, over at most the first 3000 characters), so a fresh
- * state's tree can stop mid-document, and which heading it reaches then depends on whether
- * anything stalled the parse. A case that means "this heading's slug is X" has to read a parse that
- * finished; only {@link stateWithUnparsedHeading} wants one that did not.
+ * CodeMirror's first parse stops after 20 ms of wall clock (by `Date.now()`) or the first 3000
+ * characters, so a fresh state's tree can end mid-document. A test that asserts a heading's slug
+ * reads a finished parse; only {@link stateWithUnparsedHeading} wants one that did not finish.
  */
 function parsedStateAt(doc: string, offset: number): EditorState {
     const state = stateAt(doc, offset);
@@ -46,16 +44,13 @@ describe("activeHeadingSlug", () => {
         );
     });
 
-    // The regression the fix pins: a state whose first parse a stall cut short holds no slug for a
-    // heading it never reached — the shape the full run failed on, where the file alone passed.
     it("reads the slug from a parse that finished, not from a stalled first parse", () => {
         let clock = 1_000_000;
         const spy = vi.spyOn(Date, "now").mockImplementation(() => (clock += 25));
         const stalled = stateAt(doc, doc.indexOf("The Dark Forest"));
         spy.mockRestore();
 
-        // The stall is real: the tree stopped at the first heading, which is why this assertion
-        // exists at all.
+        // The fake clock stalls the first parse before it reaches the second heading.
         expect(syntaxTree(stalled).length).toBeLessThan(doc.indexOf("The Dark Forest"));
         expect(activeHeadingSlug(stalled)).toBeNull();
         expect(activeHeadingSlug(parsedStateAt(doc, doc.indexOf("The Dark Forest")))).toBe(

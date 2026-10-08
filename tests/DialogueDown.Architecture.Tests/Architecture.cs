@@ -24,7 +24,7 @@ internal static class Architecture
     public const string Playbook = "DialogueDown.Playbook";
     public const string Runtime = "DialogueDown.Runtime";
 
-    // Core internal layers, in pipeline order.
+    // Core internal layers.
     public const string Common = "DialogueDown.Common";
     public const string Configuration = "DialogueDown.Configuration";
     public const string Diagnostics = "DialogueDown.Diagnostics";
@@ -38,7 +38,7 @@ internal static class Architecture
     public const string ScriptTranspiler = "DialogueDown.Script.Transpiler";
     public const string Compilation = "DialogueDown.Compilation";
 
-    // External presentation/host libraries the core must never reach for.
+    // External libraries that some layers must not depend on.
     public const string Markdig = "Markdig";
     public const string SpectreConsole = "Spectre.Console";
     public const string Godot = "Godot";

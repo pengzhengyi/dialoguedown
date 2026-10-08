@@ -31,8 +31,7 @@ internal static class PlaybookProjection
     private const string StructureCategory = "structure";
     private const string TerminalCategory = "terminal";
 
-    // The report shows the playbook to be read, not to be diffed byte-for-byte against a file, so
-    // it is indented here. `ddown compile --emit playbook` writes the same document compactly.
+    // Indented for reading, the same text `ddown compile --emit playbook` writes.
     private static readonly JsonSerializerOptions _readable = Readable();
 
     /// <summary>
@@ -74,8 +73,6 @@ internal static class PlaybookProjection
             playbook.Nodes.Length,
             playbook.Anchors.Count);
 
-    // A tag reads as `name=value` when it carries one, so the table shows what the script wrote
-    // rather than a name whose value is invisible.
     private static PlaybookSpeakerView ToView(PlaybookSpeaker speaker) =>
         new(
             speaker.Id,
@@ -83,8 +80,6 @@ internal static class PlaybookProjection
             speaker.Default,
             [.. speaker.Tags.Select(tag => new TagView(tag.Name, tag.Value, tag.Reserved))]);
 
-    // The wire tag and the color category are read together so the correspondence between them
-    // stays in one place rather than spread across two matches over the same types.
     private static PlaybookNodeView ToView(
         Node node, ImmutableArray<PlaybookSpeaker> speakers)
     {

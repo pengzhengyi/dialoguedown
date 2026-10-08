@@ -116,7 +116,6 @@ public sealed class DepartureTests
             ["Alice"]);
 
     /// <summary>Where a run stands after asking, on the way out, about these keys.</summary>
-    /// <remarks>Leaving is what this class is about, so every wait here is one to leave.</remarks>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
         new(node, [.. keys], Moment.BeforeLeaving);
 }

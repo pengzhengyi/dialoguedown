@@ -7,9 +7,8 @@ namespace DialogueDown.Playbook.Common;
 /// all and throws on almost every member — the shape an omitted JSON array deserializes into.
 /// </summary>
 /// <remarks>
-/// The compiler has a sibling of this helper in its own Common layer. The duplication is
-/// deliberate: this assembly is the contract a game embeds and therefore references nothing,
-/// so sharing four lines would cost the property that keeps a shipped game small.
+/// The compiler has a similar class of its own rather than sharing this one, because this
+/// assembly is embedded in games and references no other project.
 /// </remarks>
 internal static class ImmutableArrayExtensions
 {

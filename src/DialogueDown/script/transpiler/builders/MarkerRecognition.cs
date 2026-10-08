@@ -4,12 +4,12 @@ namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
 /// Recognizes a paragraph's inlines as a block-conditional marker in the two-span form — a bare
-/// keyword code span (<c>`if`</c>/<c>`elseif`</c>/<c>`else`</c>) optionally followed by the
-/// verbatim condition span. It only classifies: a leading marker keyword yields a
-/// <see cref="BranchMarker"/> carrying its captured condition and remainder, and anything else
-/// yields null so the block reads as ordinary content. The condition is peeled by the shared
-/// <see cref="ConditionReader.TryPeel"/>, never re-derived here; judging a marker well-formed —
-/// and reporting one that is not — belongs to a later stage.
+/// keyword code span (<c>`if`</c>/<c>`elseif`</c>/<c>`else`</c>) optionally followed by a
+/// condition code span, as in <c>`if` `Rich?`</c>. It only classifies: a leading marker keyword
+/// yields a <see cref="BranchMarker"/> carrying its captured condition and remainder, and anything
+/// else yields null so the block reads as ordinary content. The condition is read by
+/// <see cref="ConditionReader.TryPeel"/>; judging a marker well-formed — and reporting one that is
+/// not — happens when the control block is built.
 /// </summary>
 internal static class MarkerRecognition
 {

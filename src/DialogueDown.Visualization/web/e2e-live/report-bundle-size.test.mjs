@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { statSync } from "node:fs";
 import test from "node:test";
 
-// What a reader downloads is the page plus the client and its stylesheet; Mermaid rides along
-// only for a script that draws a diagram, so it is measured on its own. Both budgets are raw
+// What a reader downloads is the page plus the client and its stylesheet; Mermaid loads only
+// for a script that draws a diagram, so it is measured on its own. Both budgets are raw
 // bytes, and both are approved limits rather than targets.
 const MAX_CLIENT_BYTES = 2_000_000;
 const MAX_MERMAID_BYTES = 5_000_000;

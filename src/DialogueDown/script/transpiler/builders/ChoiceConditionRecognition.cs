@@ -5,16 +5,21 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
-/// Peels a leading condition off a choice list item, so the condition guards the whole option
-/// rather than its first line. It reuses the shared <see cref="ConditionReader.TryPeel"/> on the
-/// item's first paragraph and returns the item's blocks with the condition removed; the player
-/// and random choice builders both call it, before the option body — and, for a random option,
-/// its weight — is built.
+/// Splits a leading condition off a choice list item, so the condition guards the whole option
+/// rather than its first line. It reads the condition with <see cref="ConditionReader.TryPeel"/>
+/// on the item's first paragraph and returns the item's blocks with the condition removed; the
+/// player and random choice builders both call it, before the option body — and, for a random
+/// option, its weight — is built.
 /// </summary>
+/// <remarks>
+/// <code>
+/// - `Alice.HasKey?` Alice: I'll unlock it.
+/// </code>
+/// </remarks>
 internal static class ChoiceConditionRecognition
 {
     /// <summary>
-    /// The list item's blocks with a leading condition peeled off its first paragraph;
+    /// The list item's blocks with a leading condition removed from its first paragraph;
     /// <paramref name="condition"/> is the condition, or <c>null</c> when the option is unconditional
     /// and the blocks are returned unchanged.
     /// </summary>

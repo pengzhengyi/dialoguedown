@@ -4,9 +4,10 @@ namespace DialogueDown.Runtime.Protocol;
 /// One instruction that moves a run.
 /// </summary>
 /// <remarks>
-/// The whole surface through which a run is manipulated. Whatever is at the other end -- a test,
-/// a terminal, a replay, a remote client -- speaks this same closed set, and the runner refuses
-/// anything outside it plainly.
+/// The closed set every driver sends, whether a test, a terminal, a replay, or a remote client:
+/// <see cref="Start"/>, <see cref="Next"/>, <see cref="Done"/>, <see cref="Failed"/>, and
+/// <see cref="Supply"/>. The runner refuses any other command as
+/// <see cref="RefusalReason.UnknownCommand"/>.
 /// </remarks>
 public abstract record Command
 {

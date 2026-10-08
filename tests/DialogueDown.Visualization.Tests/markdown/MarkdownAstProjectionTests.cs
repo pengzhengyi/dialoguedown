@@ -227,7 +227,7 @@ public sealed class MarkdownAstProjectionTests
                 ],
                 new SourceSpan(0, 48)));
 
-        // Text, then the code span's content, the emphasized run, the break as a space, and the
+        // Text, then the code span's content, the emphasized text, the break as a space, and the
         // nested link's and image's own text.
         Assert.Equal("go now fast theremap", Attribute(description, "label"));
     }

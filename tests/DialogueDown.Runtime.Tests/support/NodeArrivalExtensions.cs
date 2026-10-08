@@ -9,10 +9,8 @@ namespace DialogueDown.Runtime.Tests;
 /// What the runner does when it arrives at a single node.
 /// </summary>
 /// <remarks>
-/// Several tests ask what the runner does with a node of a given kind, and none of them cares
-/// about the rest of the playbook. So this helper builds the smallest playbook that can hold one:
-/// the node, followed by an end node. The tests then ask their question without repeating that
-/// setup.
+/// Each helper places the node in the smallest playbook that can hold it: the node, then an end
+/// node.
 /// </remarks>
 internal static class NodeArrivalExtensions
 {
@@ -26,12 +24,13 @@ internal static class NodeArrivalExtensions
 
     /// <summary>Whether the runner has no code for a node of this kind yet.</summary>
     /// <remarks>
-    /// Narrower than refusing. A node can also be refused for the data it holds, such as one key
-    /// it needs as a truth and as words both. Only an untaught kind means nobody has written the
-    /// code that plays it.
+    /// Narrower than refusing: a node can also be refused for the data it holds, such as a key it
+    /// needs both as a truth and as words.
     /// </remarks>
     /// <param name="node">The node to arrive at.</param>
-    /// <returns><see langword="true"/> when arriving refuses because the kind is untaught.</returns>
+    /// <returns>
+    /// <see langword="true"/> when arriving refuses because the runner has no code for the kind.
+    /// </returns>
     public static bool IsUntaught(this Node node) =>
         node.RefusalOnArrival()?.Reason == RefusalReason.UnplayableNode;
 }

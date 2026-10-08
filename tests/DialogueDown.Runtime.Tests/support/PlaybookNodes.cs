@@ -11,9 +11,8 @@ namespace DialogueDown.Runtime.Tests;
 /// than what a node's constructor takes.
 /// </summary>
 /// <remarks>
-/// Each factory builds the simplest instance of its kind. A playbook is an immutable record with no
-/// behavior, so a test builds a real node rather than standing in a substitute, and a node a test
-/// hands to the runner has to be a real one anyway: stepping dispatches on the kind it finds.
+/// Each factory builds the simplest instance of its kind. A node is an immutable record with no
+/// behavior, so tests use real nodes rather than substitutes.
 /// </remarks>
 internal static class PlaybookNodes
 {
@@ -177,7 +176,7 @@ internal static class PlaybookNodes
     /// <returns>The edge.</returns>
     public static BranchEdge Else(int target) => new(target, Condition: null);
 
-    /// <summary>A random choice with one auto-weighted option — a kind this pass cannot play.</summary>
+    /// <summary>A random choice with one auto-weighted option — a kind the runner cannot play.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="leadsTo">Where the option leads.</param>
     /// <returns>The node.</returns>
@@ -191,12 +190,10 @@ internal static class PlaybookNodes
 
     /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
     /// <remarks>
-    /// Written out rather than reflected over, because a kind has to be built before it can be
-    /// asked anything, and only a person knows what the simplest one of each looks like. The one
-    /// list of the kinds, so the test that walks them and the test that asks whether the list is
-    /// complete cannot disagree about what "every kind" means.
+    /// Written out by hand, because reflection cannot choose a sensible instance of each kind; a
+    /// separate test checks that the list is complete.
     /// </remarks>
-    /// <returns>The nodes, each standing at position 0 and leading to position 1.</returns>
+    /// <returns>The nodes, each at position 0 and, unless it is the end, leading to position 1.</returns>
     public static IEnumerable<Node> OneOfEveryNodeKind() =>
     [
         Line(0, speaker: 0, "Hello.", next: 1),

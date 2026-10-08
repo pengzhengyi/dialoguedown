@@ -491,9 +491,7 @@ describe("createTablePanel — match highlighting and options", () => {
 
 describe("createTablePanel — copying a tag", () => {
     it("copies a tag capsule when it is clicked", () => {
-        // Every table built here draws tag capsules, and a capsule wears a hover ring and carries
-        // the text to copy — so the promise of a click belongs to the shared table, not to
-        // whichever tab remembered to wire it.
+        // The shared table wires the copy, so every tab that shows a tag capsule gets it.
         const writeText = vi.fn().mockResolvedValue(undefined);
         Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
         const table: SemanticTable = {
@@ -545,9 +543,8 @@ describe("createTablePanel — copying an identifier", () => {
     });
 
     it("puts the identifier in a button, so a keyboard can reach the copy", () => {
-        // A `<td>` is not focusable and answers no key, so a click-only cell is unreachable
-        // without a mouse. The button is nested rather than replacing the cell, because a `<td>`
-        // given a button role stops being a cell and the table stops being a table.
+        // A `<td>` takes no focus, so the button makes the copy reachable by keyboard. It sits
+        // inside the cell, because a `<td>` given a button role stops being a table cell.
         const panel = panelWith({ text: "#the-market", copyable: true });
         const cell = panel.querySelector<HTMLElement>("tbody td")!;
         const button = cell.querySelector<HTMLButtonElement>("button.cell-action");
@@ -628,8 +625,6 @@ describe("createTablePanel — a cell drawn in styled segments", () => {
         expect(cell.textContent).toBe("Keeper: Take a torch and go north.");
     });
 
-    // The split is only for drawing. If the highlight were not laid back across the segments, a cell
-    // would stop marking its matches the moment it gained color.
     it("still marks a search match inside a colored segment", () => {
         const panel = createTablePanel(segmentsTable());
         setFilter(panel, "torch");
@@ -765,8 +760,8 @@ describe("createTablePanel — a cell drawn as a list", () => {
         expect(cellOf(panel).querySelector("ol .table-mark")).toBeNull();
     });
 
-    // A piece that names a place is a control that goes there, which is how the whole-cell jump is
-    // drawn — so it is reachable without a mouse and carries the keys the highlighter reads.
+    // A piece that names a place is drawn as a button, like a whole-cell jump, so a keyboard
+    // reaches it and it carries the keys the highlighter reads.
     it("draws a piece that names a place as a control that goes there", () => {
         const table: SemanticTable = {
             title: "Nodes",

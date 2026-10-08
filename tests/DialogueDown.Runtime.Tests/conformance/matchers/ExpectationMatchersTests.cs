@@ -73,7 +73,7 @@ public sealed class ExpectationMatchersTests
     [Fact]
     public void TwoUncheckedClaims_AreBothNamed()
     {
-        // What lets one run list every claim the harness has yet to learn.
+        // So one run lists every claim the harness cannot check yet.
         var outcome = Match(_hello, """{ "frobnicate": true, "describe": true }""");
 
         AssertNotYetPlayable(outcome, "frobnicate", "describe");

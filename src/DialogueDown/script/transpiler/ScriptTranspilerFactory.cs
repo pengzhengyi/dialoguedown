@@ -6,10 +6,8 @@ namespace DialogueDown.Script.Transpiler;
 /// <summary>
 /// The production composition root for the default <see cref="IScriptTranspiler"/>: it
 /// wires the builder graph (block, line, inline, speaker, game-call, tag) with their
-/// standard parsers in one place, so a caller — the visualizer today, the compile
-/// pipeline later — obtains a ready transpiler without knowing the wiring. The test
-/// <c>TranspilerBuilderFactory</c> keeps its granular builder accessors for
-/// builder-level tests.
+/// standard parsers in one place, so a caller obtains a ready transpiler without knowing
+/// the wiring.
 /// </summary>
 internal static class ScriptTranspilerFactory
 {

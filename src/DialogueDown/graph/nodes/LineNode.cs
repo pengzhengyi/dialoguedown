@@ -6,15 +6,14 @@ using DialogueDown.Script.Semantics;
 namespace DialogueDown.Graph.Nodes;
 
 /// <summary>
-/// A spoken line: its resolved <see cref="Speaker"/> and the displayable <see cref="Speech"/>
-/// fragments they say. Its <see cref="Effects"/> are the game calls embedded in that speech,
+/// A spoken line: its resolved <see cref="Speaker"/> and the <see cref="Speech"/> fragments they
+/// say. Its <see cref="Effects"/> are the game calls embedded in that speech,
 /// in order — the calls the line runs when it plays. A <see cref="Condition"/> decides whether it
 /// is spoken at all; control continues past it either way.
 /// </summary>
 /// <remarks>
-/// A jump the line ended in is not part of its speech. By the time a node exists the jump is the
-/// divert leaving it, carrying the label the writer gave it, so keeping it here as well would
-/// say one thing twice.
+/// A jump at the end of the line is not part of its speech: it is the divert edge leaving the
+/// node, carrying the label the writer gave it.
 /// </remarks>
 internal sealed record LineNode(
     NodeId Id,

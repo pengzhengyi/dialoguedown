@@ -22,9 +22,8 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ANodeCarryingAJump_LeadsWhereTheJumpGoes()
     {
-        // The jump is the way out the writer asked for. The succession beside it is where the run
-        // would have landed had the jump not applied, so taking it here would be reading past the
-        // jump rather than through it.
+        // The jump is the way out the writer asked for; the succession beside it is only for when
+        // the jump does not apply.
         var node = Bare(0, Divert(9), new SuccessionEdge(4));
 
         Assert.Equal(9, node.OnwardTarget());
@@ -44,8 +43,6 @@ public sealed class NodeTraversalExtensionsTests
 
     [Fact]
     public void OnwardTarget_AJumpTheWorldWithholds_FallsThroughBeneathIt() =>
-        // A jump nobody allowed is not a way out, so the succession written beneath it is what the
-        // writer left the run to land on.
         Assert.Equal(4, AJumpTheWorldMustAllow().OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
@@ -132,8 +129,8 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeFallingThroughTwoWays_IsRefused()
     {
-        // A reader refuses such a node, so a run never meets one. Reading the single succession
-        // rather than the first of however many is what keeps that guarantee load-bearing.
+        // A reader refuses such a node, so a run never meets one. Throwing here, rather than taking
+        // the first succession, shows when that guarantee breaks.
         var node = Bare(0, new SuccessionEdge(4), new SuccessionEdge(9));
 
         Assert.Throws<InvalidOperationException>(() => node.SuccessionTarget());

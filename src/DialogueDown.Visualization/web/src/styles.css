@@ -17,10 +17,9 @@
     --md-code: #0550ae;
     --md-muted: #6e7781;
 
-    /* The Playbook editor's JSON, following the VS Code Light+ roles this file already uses for
-       code-span semantics (Dark+ counterparts below). JSON gets its own set rather than reusing
-       the Markdown hues, which are one blue family: a playbook is nearly all quoted strings, so
-       a key, a value, and a number have to part company on hue, not on shade. */
+    /* The Playbook editor's JSON, in the VS Code Light+ roles the code-span colors also use
+       (Dark+ counterparts below). A playbook is nearly all quoted strings, so a key, a value,
+       and a number differ in hue, not only in shade, unlike the one-family Markdown blues. */
     --json-key: #0451a5;
     --json-string: #a31515;
     --json-number: #098658;
@@ -32,7 +31,7 @@
     --problem-link: #0969da;
 
     /* Dialogue token highlighting: compiler-projected semantic tokens layered over Markdown.
-       Existing dialogue tokens use GitHub Primer-inspired hues. Code-span semantics follow
+       The dialogue tokens use GitHub Primer-inspired hues. Code-span semantics follow
        VS Code Light+ roles: keyword, constant, string/read, variable/boolean, number,
        type/dynamic value, and function. Dark+ counterparts override them below. */
     --tok-speaker-name: #8250df;
@@ -394,9 +393,9 @@ body {
 }
 
 /* The Explorer's control, pinned at the row's leading edge so it sits over the panel it
-   summons. Being a sibling of the stage nav rather than a member of it is the point: the nav
-   scrolls on a narrow window, and a control that scrolls out of reach is worse than none.
-   Empty — a static export has no Explorer — it takes no room, gap included.
+   summons. It is a sibling of the stage nav rather than a member, so it stays in reach when
+   the nav scrolls on a narrow window. Empty — a static export has no Explorer — it takes no
+   room, gap included.
 
    The slot takes the row's full height and the control stretches to fill it, so the target is
    as tall as the row can offer rather than as tall as its glyph happens to be. It keeps the
@@ -455,9 +454,9 @@ nav.tabs {
     gap: 0.25rem;
 
     /* One line at every width. The stage tabs are the compiler pipeline, so their order and
-       adjacency carry meaning that an overflow menu would hide; instead the row scrolls, the
-       way Material's scrollable tabs and GitHub's repository nav do. `min-width: 0` lets the
-       flex item shrink below its content so the overflow lands here and not on the document. */
+       adjacency carry meaning, and the row scrolls rather than hiding tabs in a menu.
+       `min-width: 0` lets the flex item shrink below its content so the overflow lands here
+       and not on the document. */
     flex: 1 1 auto;
     flex-wrap: nowrap;
     min-width: 0;
@@ -465,10 +464,10 @@ nav.tabs {
     scroll-snap-type: x proximity;
 
     /* Clipping the cross axis would cut off the focus ring, which Pico paints as a spread
-       box-shadow *outside* the tab's box — a tab exactly fills this row, so the ring had no
-       room and vanished. Overflow is clipped at the padding box, so this padding gives the
-       ring somewhere to land; the negative margin then takes the space back out of the
-       layout, keeping the active tab's underline flush with the header rule. */
+       box-shadow *outside* the tab's box, and a tab exactly fills this row. Overflow is
+       clipped at the padding box, so this padding leaves room for the ring; the negative
+       margin takes the space back out of the layout, keeping the active tab's underline
+       flush with the header rule. */
     padding-block: 3px;
     margin-block: -3px;
 
@@ -565,9 +564,7 @@ button.tab.dirty::after {
     min-height: 0;
 
     /* Full-bleed main: the editor, graphs, and the Source tab's footer bar use the whole window
-       between the header rule and the footer. The bar states where the document ends and what the
-       Preview left out, which is a statement about the whole window rather than about an inset
-       column, so an inset here read as a gap the content had failed to fill. */
+       between the header rule and the footer. */
     padding: 0;
 }
 
@@ -628,9 +625,9 @@ section.stage.empty-shell {
     color: var(--pico-muted-color);
 }
 
-/* The empty state's call to action: a start page's row rather than a page-filling button — the
-   new file mark the Explorer's own action wears, its words at the report's own size, and the
-   ellipsis promising the name the Explorer's inline field then asks for. */
+/* The empty state's call to action: a start page's row — the new-file mark the Explorer's own
+   action wears, its words at the report's own size, and an ellipsis for the name the Explorer's
+   inline field then asks for. */
 .empty-shell-create {
     /* Pico paints a button through `--pico-*` and re-sets them from a `:hover` rule more specific
        than a plain class; both are reset here so the row keeps the report's own colors. */
@@ -665,7 +662,7 @@ section.stage.empty-shell {
 }
 
 /* In View there is no file to make, so the row says so rather than offering. The label keeps
-   the muted color in full: dimming it by half left it below readable contrast on white. */
+   the muted color in full, because dimming it by half falls below readable contrast on white. */
 .empty-shell-create:disabled,
 .empty-shell-create:disabled:hover {
     border-color: transparent;
@@ -682,7 +679,7 @@ section.stage.empty-shell {
 }
 
 /* File Explorer sidebar. Hidden until main.ts adds `has-explorer` to #app for a served,
-   browsable report, so the static export is unchanged. Collapsible like the inspector. */
+   browsable report, so the static export has none. Collapsible like the inspector. */
 #explorer,
 #explorer-resizer {
     display: none;
@@ -695,7 +692,7 @@ section.stage.empty-shell {
     gap: 0.25rem;
     min-width: 0;
 
-    /* The main area is full-bleed, so the file list would otherwise start against the glass. */
+    /* The main area is full-bleed, so the file list would otherwise touch the window edge. */
     padding: 0 0.4rem;
     overflow-y: auto;
 }
@@ -712,9 +709,9 @@ section.stage.empty-shell {
     background: var(--pico-muted-border-color);
 }
 
-/* Shut, the divider has nothing to sit between, so it goes entirely and gives back its
-   margins too — its show/hide handle now lives in the tab bar. It keeps its resize role
-   whenever the panel is showing. */
+/* Shut, the divider has nothing to sit between, so it goes entirely, margins included; the
+   panel's show/hide control is in the tab bar. It keeps its resize role whenever the panel is
+   showing. */
 #app.explorer-collapsed #explorer,
 #app.explorer-collapsed #explorer-resizer {
     display: none;
@@ -758,7 +755,7 @@ section.stage.empty-shell {
 
 /* An action this mode cannot take — creating a file or folder in View. Grayed and inert like a
    stage tab whose artifact was not produced, with its tip saying what to do instead. The label
-   keeps the muted color in full, for the reason the Discard button records. */
+   keeps the muted color in full, because dimming it by half falls below readable contrast. */
 .explorer-action:disabled,
 .explorer-action:disabled:hover {
     background: transparent;
@@ -902,8 +899,7 @@ section.stage.empty-shell {
     white-space: nowrap;
 }
 
-/* Selected script: a subtle tint with a left accent bar following the View/Edit color —
-   not a heavy solid block. */
+/* Selected script: a subtle tint with a left accent bar following the View/Edit color. */
 .explorer-script.active > .explorer-script-row {
     background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 22%, transparent);
     box-shadow: inset 2px 0 0 var(--mode-accent, var(--pico-primary));
@@ -1098,9 +1094,8 @@ section.stage.empty-shell {
     overflow: hidden;
 }
 
-/* The node-details panel is a normal in-flow table panel — it scrolls with the rest of the
-   tables rather than pinning to the top, which floated it over and hid the panels beneath it.
-   Its body is still capped and scrolls (below), so a long source never dominates the column. */
+/* The node-details panel is a normal in-flow table panel: it scrolls with the rest of the
+   tables. Its body is capped and scrolls (below), so a long source never dominates the column. */
 
 .node-detail-body {
     max-height: 45vh;
@@ -1206,9 +1201,8 @@ section.stage.empty-shell {
     border-radius: 999px;
 }
 
-/* A panel narrowed past the point where even its short columns fit scrolls sideways rather than
-   clipping its last column out of sight. That holds for every table, not only a wide one: a
-   column that cannot be reached at all is worse than a column a scroll away. */
+/* Every table panel narrowed past the point where even its short columns fit scrolls sideways
+   rather than clipping its last column out of sight. */
 .table-panel-body {
     overflow-x: auto;
 }
@@ -1307,7 +1301,7 @@ section.stage.empty-shell {
 
 /* A cell drawn as a list — a choice's options — rather than as one line. Pico gives a bare list
    a bottom margin, so the reset keeps the cell's own rhythm; the marker wears the muted grammar
-   color so the bullets step back the way the separators they replaced did. */
+   color so the bullets stay quiet. */
 .dd-sum-list {
     margin: 0;
     padding-left: 1.1rem;
@@ -1408,7 +1402,7 @@ ol.dd-sum-list {
 
 /* The header label doubles as a sort button; it fills the cell and carries a direction caret. */
 .semantic-table .th-sort {
-    /* Pico redefines --pico-color to white on buttons, which turned the hovered header
+    /* Pico redefines --pico-color to white on buttons, which would make the hovered header
        white-on-white; inherit the normal text color instead. */
     --pico-color: inherit;
 
@@ -2174,20 +2168,11 @@ g.node.entity-highlight text.label {
     border: none;
 }
 
-/* CodeMirror's Go to line dialog arrives with browser-default chrome — a stacked label, a
-   full-width field, and a full-width button — mounted in the bottom panel row, where it pushes
-   the document up as it opens and back down as it closes.
-
-   Only its presentation is ours; the command, its parsing (a line, a `+`/`-` offset, a `%` of
-   the document, or `line:column`), and its behavior stay CodeMirror's. Lifting it out of flow
-   makes it behave like VS Code's Go to Line: a small box that floats over the text near the top,
-   already focused, gone the moment the jump is made. Nothing reflows behind it. */
-
 /* Go to line, shaped like VS Code's quick input: a small box floating over the text with the
-   field on one line and, under it, a sentence saying what Enter will do. It rides in the top
-   panel row, which the report already lifts out of flow, so nothing reflows as it opens — and it
-   is centred rather than pinned right, because it is a momentary prompt and not the find panel
-   the reader keeps open beside their work. */
+   field on one line and, under it, a sentence saying what Enter will do. Only the presentation
+   is ours; the command and its parsing (a line, a `+`/`-` offset, a `%` of the document, or
+   `line:column`) are CodeMirror's. It sits in the top panel row, which is out of flow, so nothing
+   reflows as it opens, and it is centered rather than pinned right like the find panel. */
 :is(.source-pane, .config-source, .playbook-source) .cm-panels-top:has(.dd-goto) {
     right: auto;
     left: 50%;
@@ -2210,8 +2195,7 @@ g.node.entity-highlight text.label {
     box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
 }
 
-/* Enter goes and Escape dismisses, so a close control would be a third way to do what two keys
-   and a click away already do — VS Code shows none either. */
+/* Enter goes, and Escape or a click away dismisses, so the dialog shows no close control. */
 .dd-goto .cm-dialog-close {
     display: none;
 }
@@ -2532,14 +2516,13 @@ g.node.entity-highlight text.label {
 }
 
 /* Mirror the Source editor's semantic cue in the rendered Markdown. These regions come from
-   compiler-projected IgnoredMarkdown spans, not HTML element types, so a future project policy
-   that keeps tables or code blocks automatically leaves them at full strength here too. The
-   marker leads the region as a control; the tint and glow appear on hover, matching the
-   blockquote region language without boxing authoring aids into permanent cards.
+   compiler-projected IgnoredMarkdown spans, not HTML element types, so Markdown the handling
+   policy keeps stays at full strength here. The marker leads the region as a control; the tint
+   and glow appear on hover, as on the blockquote regions.
 
-   Content first, chrome second: ignored Markdown is usually an authoring aid the writer still
-   reads, so the region's rail and control stay quiet while the content is showing and come
-   forward only when the region is pointed at or focused. */
+   Ignored Markdown is usually an authoring aid the writer still reads, so the region's rail and
+   control stay quiet while the content is showing and come forward only when the region is
+   pointed at or focused. */
 .source-preview .dd-preview-ignored-region {
     --i: var(--md-muted);
 
@@ -2581,10 +2564,10 @@ g.node.entity-highlight text.label {
         sans-serif;
 }
 
-/* The marker is the region's own control rather than a sticker beside one: a second glyph would
-   double the width of an inline chip and break the sentence it sits in. What separates it from
-   the static conditional-dialogue marker is that it is a real button — focusable, named, and
-   reporting its pressed state — so pointer and keyboard users meet one control per region. */
+/* The marker is the region's own control; a second glyph beside it would double the width of
+   an inline chip and break the sentence it sits in. Unlike the static conditional-dialogue
+   marker it is a real button — focusable, named, and reporting its pressed state — so pointer
+   and keyboard users meet one control per region. */
 .source-preview .dd-preview-ignored-region > .dd-ignored-region-toggle {
     /* Pico redefines --pico-background-color to its primary accent on every button, which would
        tint the marker's surface. Inheriting it again keeps the control mixed against the page. */
@@ -2664,8 +2647,8 @@ g.node.entity-highlight text.label {
 }
 
 /* An ignored link is not a destination the dialogue can reach, so it takes the muted ink rather
-   than the link accent. Dimming an accent color as well pushes it under the contrast floor,
-   which matters now that a writer can leave one region shown while the rest stay hidden. */
+   than the link accent. Dimming an accent color as well would push it under the contrast floor,
+   and a writer can leave one region shown while the rest stay hidden. */
 .source-preview a.dd-preview-ignored {
     opacity: 1;
     color: var(--md-muted);
@@ -2743,9 +2726,8 @@ a.dd-ignored-region-brief {
     display: inline;
 }
 
-/* A quiet mark on the compiler's ignored Markdown: it says this run never becomes dialogue, and
-   nothing more. Folding it is the editor's own gutter chevron, as it is for any other run of
-   lines, so a region never grows a second way to close. */
+/* A quiet mark on the compiler's ignored Markdown: it says this text never becomes dialogue, and
+   nothing more. The editor's own gutter chevron folds it, as it folds any other block of lines. */
 .dd-source-ignored-cue {
     margin-left: 0.5rem;
     color: var(--dd-chrome-muted);
@@ -2820,8 +2802,8 @@ a.dd-ignored-region-brief {
     position: relative;
 }
 
-/* The keyword that opens a conditional block had a hook with no color of its own. It wears the
-   token vocabulary now, so `if` reads in the Preview the way it reads in the editor. */
+/* The keyword that opens a conditional block takes its token color, so `if` reads in the Preview
+   the way it reads in the editor. */
 .source-preview .dd-preview-control-keyword {
     color: var(--tok-control-keyword);
     font-weight: 600;
@@ -3014,7 +2996,7 @@ svg.tree {
     display: block;
 }
 
-/* A region — a scene — drawn as the ground its nodes stand on, named once at its top-left
+/* A region — a scene — drawn as a band behind its nodes, named once at its top-left
    instead of repeated under every node inside it. The tints are faint on purpose: this is the
    backdrop, and the flow drawn over it has to stay the thing the eye follows.
 
@@ -3047,11 +3029,10 @@ svg.tree {
     pointer-events: none;
 }
 
-/* The band's own fold control. Folding is a different act from selecting the scene — it changes
-   what is drawn, not what the reader is looking at — so it is a control of its own rather than a
-   second meaning for the band's click. It sits in the padded corner above the first node's dot,
-   because a folded band closes to one node's width. The chevron is quiet until the band is
-   touched, so a drawing full of scenes is not also full of buttons. */
+/* The band's own fold control, separate from the band's click, which selects the scene. It sits
+   in the padded corner above the first node's dot, because a folded band is one node wide. The
+   chevron is quiet until the band is hovered or the control focused, and while the scene is
+   folded, so a drawing full of scenes is not also full of buttons. */
 .region-fold {
     cursor: pointer;
 }
@@ -3142,8 +3123,7 @@ svg.tree {
     stroke-width: 2.5px;
 }
 
-/* A route names itself on hover, so the pointer gets a target worth aiming at and the line
-   answers when it is found. */
+/* A route shows its name on hover, so its stroke takes pointer events. */
 .link.routed {
     pointer-events: stroke;
     cursor: help;
@@ -3152,15 +3132,16 @@ svg.tree {
         opacity 0.1s ease;
 }
 
-/* A touched line answers, but only just: a route drawn as dots or crosses loses its shape when
-   it is bolded, so the response is a small step up rather than a doubling. */
+/* A hovered route thickens only slightly: a route drawn as dots or crosses loses its shape when
+   it is bolded. */
 .link.routed:hover,
 .link.routed.hovered {
     stroke-width: 2.25px;
 }
 
 /* The invisible twin that carries a line's pointer target. Wide enough to aim at, drawn above the
-   nodes so a node's roomy click target cannot swallow it. Each route sets its own pointer shape. */
+   nodes so a node's wide click target cannot catch its hover. Each route sets its own pointer
+   shape. */
 .edge-hit {
     fill: none;
     stroke: transparent;
@@ -3186,8 +3167,8 @@ svg.tree {
     stroke-width: 2.25px;
 }
 
-/* The reader's current object. Only one thing is selected at a time — a node, a route, or a
-   region — so choosing one plainly lets the last one go. */
+/* The reader's current object. At most one thing is selected at a time: a node, a route, or a
+   region. */
 .link.selected {
     opacity: 1;
     stroke-width: 3px;
@@ -3305,10 +3286,8 @@ svg.tree.has-focus .link:not(.related) {
     gap: 0.1rem;
     min-width: 11rem;
 
-    /* As wide as its rows, no wider. A positioned box sizes itself to its content only while its
-       insets say so; with the rows a level deeper under a body, `auto` resolved to stretch instead
-       and the card spread across the canvas -- which the drawing then kept clear of, pushing the
-       diagram aside. Saying the width outright removes the ambiguity. */
+    /* As wide as its rows, no wider. With `auto`, this positioned card stretches across the
+       canvas, and the drawing, which keeps clear of the legend, is pushed aside. */
     width: fit-content;
 
     /* The legend floats over the canvas, so it must never be the thing that makes the page wider
@@ -3376,9 +3355,8 @@ svg.tree.has-focus .link:not(.related) {
     margin-top: 0;
 }
 
-/* The control shares a row with the legend's name instead of floating over the card's corner. In
-   the flow it cannot overlap a row, needs no padding reserved around it, and cannot be shifted by a
-   scrollbar -- three hazards the corner had. */
+/* The control shares a row with the legend's name, in the flow, so it cannot overlap a row, needs
+   no padding reserved around it, and cannot be shifted by a scrollbar. */
 .legend-header {
     display: flex;
     gap: 0.5rem;
@@ -3488,8 +3466,8 @@ svg.tree.has-focus .link:not(.related) {
     flex: none;
 }
 
-/* A kind of region — a scene today, a file later — folds away as a group, so the legend has a
-   shelf ready for the next kind rather than one flat list that grows. */
+/* Each kind of region (a scene) gets its own legend group, whose rows fold away under this
+   toggle. */
 .legend-kind-toggle {
     display: flex;
     align-items: center;
@@ -3506,8 +3484,8 @@ svg.tree.has-focus .link:not(.related) {
     cursor: pointer;
 }
 
-/* The legend group's own disclosure speaks the report's one fold language: the same chevron the
-   editors, the Preview, and the scene bands use, rather than a text arrow of its own. */
+/* The legend group's disclosure uses the same chevron as the editors, the Preview, and the scene
+   bands. */
 .legend-kind-toggle::before {
     content: "\eab4"; /* codicon-chevron-down */
     font-family: codicon, sans-serif;
@@ -3625,7 +3603,7 @@ svg.tree.has-focus .link:not(.related) {
 
 .zoom-controls button:hover {
     /* Re-assert the --pico-color reset: Pico's :hover rule otherwise flips it to
-       the primary-inverse and the glyphs go white-on-white (see .doc-path:hover). */
+       the primary-inverse and the glyphs go white-on-white. */
     --pico-color: inherit;
 
     background: var(--pico-muted-border-color);
@@ -3710,14 +3688,10 @@ body.maximized .maximize-button .icon-compress {
 /* The tab row's trailing controls: the Zen and maximize pair. They are app-level rather than
    per-tab, so they share one quiet styling and read as a set.
 
-   Stated once rather than per button on purpose. Held apart, they drift — a copy that missed the
-   line-height reset grew half a row taller than its sibling and pushed up into the brand mark
-   above, because the row aligns to its bottom edge.
-
-   Centering with flex is what makes that class of bug impossible: the glyph is a flex item, so
-   the inherited line box cannot size the button and no reset is needed to hold it back.
-   (Pico inverts --pico-color on buttons; reset it so the glyph uses the normal foreground
-   rather than white-on-white, as the zoom buttons do.) */
+   The glyph is a centered flex item, so the inherited line box cannot size the button: the row
+   aligns to its bottom edge, and a taller button would push up into the brand mark. (Pico
+   inverts --pico-color on buttons; reset it so the glyph uses the normal foreground rather than
+   white-on-white.) */
 .tabbar-maximize,
 .tabbar-zen {
     --pico-color: inherit;
@@ -3755,17 +3729,13 @@ body.maximized .maximize-button .icon-compress {
     color: inherit;
 }
 
-/* The Explorer's control leads the row as a glyph alone, carrying the same 16px mark the Zen
-   and maximize buttons at the row's other end carry. The row's width belongs to the stages, so
-   the control spends none of it on a word; the file glyph carries the meaning by itself, as it
-   does on an editor's own file panel.
+/* The Explorer's control leads the row as a glyph alone, the same 16px mark as the Zen and
+   maximize buttons at the row's other end, so it spends none of the row's width on a word.
 
-   Its *height*, though, is the row's rather than the glyph's — it stretches to fill the slot,
-   because a target the size of its icon is a small one to hit and a cramped one to ring with a
-   focus outline. The glyph does not ride up with it: the box grows *upward*, while the glyph
-   stays seated on the line the row's other icon buttons share. One styling at every width. It
-   never takes a tab's underline — in this row that mark answers "which stage am I on", and the
-   Explorer is not a stage. */
+   Its *height* is the row's rather than the glyph's: it stretches to fill the slot, which gives a
+   larger target and room for a focus outline. The box grows *upward* while the glyph stays on
+   the line the row's other icon buttons share. It never takes a tab's underline, which in this
+   row marks the current stage. */
 .tabbar-explorer {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -3774,9 +3744,7 @@ body.maximized .maximize-button .icon-compress {
     display: inline-flex;
 
     /* Seated, not centered: the box is taller than the row's other icon buttons, so centering
-       the glyph inside it would float the glyph above their line. The bed below takes the glyph's
-       own box for the same reason the glyph sits where it does — a highlight that hangs half a
-       glyph below the thing it highlights reads as a half-pressed control. */
+       the glyph inside it would lift the glyph above their line. */
     align-items: flex-end;
     justify-content: center;
     width: auto;
@@ -3789,15 +3757,12 @@ body.maximized .maximize-button .icon-compress {
     cursor: pointer;
 }
 
-/* The painted bed: the glyph as a chip rather than an outline drawn around the glyph itself.
-   The button stretches to whatever height the row has — a bare row is shorter than one holding
-   the stage tabs — while the glyph stays a glyph, so the bed is measured from the bottom the
-   glyph is seated on: a hair past the padding that seats it, and 24px tall, which leaves the
-   16px glyph 4px of air above and below. An outline tracing the glyph's own box reads as a
-   smaller glyph, not as a highlight around one.
-   Barely rounded — enough to soften the corners of the outline it wears when open, not so much
-   that the mark reads as a pill. Transparent until the control is touched, so one element
-   carries the resting, hovered, and open looks without three boxes to keep in step. */
+/* The painted bed: a chip behind the glyph rather than an outline traced around it. The button
+   stretches to the row's height — a bare row is shorter than one holding the stage tabs — so the
+   bed is measured from the bottom the glyph is seated on: a hair past the padding that seats it,
+   and 24px tall, which leaves the 16px glyph 4px above and below. Barely rounded, so the mark
+   does not read as a pill. Transparent until the control is hovered, focused, or open, so one
+   element carries every look. */
 .tabbar-explorer::before {
     content: "";
     position: absolute;
@@ -3825,12 +3790,10 @@ body.maximized .maximize-button .icon-compress {
     background: var(--pico-muted-border-color);
 }
 
-/* Open, it takes the marks this report already uses for a chosen file in the tree itself: a
-   tinted bed, and an accent line. The line runs the bed's whole outline rather than only its
-   leading edge — an editor's activity bar puts its bar on the side the panel opens from, and
-   this control sits in a row above the report rather than beside it, so no one edge is the
-   panel's. Drawn as an inset shadow rather than a border, it takes the bed's box on its own and
-   costs no layout. A hairline is enough: four edges carry the tint the one edge had to. */
+/* Open, it takes the marks a chosen file has in the tree: a tinted bed and an accent line. The
+   line runs the bed's whole outline, because the control sits above the panel rather than
+   beside it, so no one edge faces the panel. Drawn as an inset shadow rather than a border, it
+   costs no layout. */
 .tabbar-explorer[aria-expanded="true"] {
     color: var(--mode-accent, var(--pico-primary));
 }
@@ -3841,14 +3804,10 @@ body.maximized .maximize-button .icon-compress {
 }
 
 /* The ring is drawn on the bed rather than the button, so it hugs what is visible instead of
-   ballooning around the taller box behind it — and so it takes the bed's own gentle rounding
-   rather than a button's larger one.
+   the taller box behind it, and takes the bed's own rounding.
 
-   Pico rings a focused button with a `box-shadow`, not an `outline`, so clearing the outline
-   alone leaves that ring in place and the control wears two: a rounded one around the whole box
-   and a square one around the bed. They overlapped while the box was barely taller than the bed
-   and hid the fault; once the box grew to the row's height they separated, and the outer ring
-   reached the brand mark. Clear both. */
+   Pico rings a focused button with a `box-shadow`, not an `outline`, so both are cleared here;
+   otherwise a second ring would circle the whole row-tall box and reach the brand mark. */
 .tabbar-explorer:focus-visible {
     outline: none;
     box-shadow: none;
@@ -4014,7 +3973,7 @@ body.zen .playbook-view > .playbook-source {
         background 0.15s ease;
 }
 
-/* Surface the handle on hover, or whenever its panel is collapsed (so the re-open control
+/* Show the handle on hover, or whenever its panel is collapsed (so the re-open control
    is always obvious). */
 .collapse-toggle:hover,
 .collapse-toggle:focus-visible,
@@ -4445,8 +4404,8 @@ body.zen .playbook-view > .playbook-source {
 }
 
 .app-footer {
-    /* The framework's own <footer> block padding was dead space; a small top inset keeps the
-       chrome from sitting flush against the content without reinstating that band. */
+    /* A small top inset in place of the framework's <footer> block padding keeps the chrome off
+       the content without a band of dead space. */
     padding-block: 6px 0;
 
     /* The status line is permanent, but the help panel below it is a disclosure the reader
@@ -4467,10 +4426,10 @@ body.zen .playbook-view > .playbook-source {
     display: flex;
     align-items: center;
 
-    /* A constant strip. The framework scales the root font size by viewport, so left in `rem`
-       this row grew from 27px to 34px purely because the window widened — chrome drifting
-       wider the more room the content has. Its height is pinned in px and its controls size
-       from that (`em`), the way an editor's status bar stays put at every window size.
+    /* A constant strip. The framework scales the root font size by viewport, so in `rem` this
+       row would grow from 27px to 34px as the window widens. Its height is pinned in px and its
+       controls size from that (`em`), the way an editor's status bar stays put at every window
+       size.
        The *inline* padding stays in `rem` so the row keeps aligning with the content gutter
        above it, which does scale. */
     font-size: 13px;
@@ -4495,9 +4454,8 @@ body.zen .playbook-view > .playbook-source {
     padding-block: 6px;
 
     /* In Edit mode the row carries nine controls — the mode toggle, both paths, the counts,
-       the save-mode capsule, its status, and three buttons — and on a small window they
-       genuinely do not fit. Scrolling is the honest outcome: a control that cannot shrink
-       otherwise overlaps its neighbor, which is worse than being one gesture away. */
+       the save-mode capsule, its status, and three buttons — and on a small window they do
+       not fit, so the row scrolls rather than letting a control overlap its neighbor. */
     overflow-x: auto;
     scrollbar-width: none;
     min-width: 0; /* allow the path to shrink and ellipsize */
@@ -4743,8 +4701,8 @@ body.zen .playbook-view > .playbook-source {
 }
 
 /* An inert label stays legible: the muted color already reads as secondary, and halving its
-   opacity put the text at 2:1 against the light theme's white — the number the live e2e now
-   holds. The withdrawn border, the missing hover, and the inert cursor carry the state. */
+   opacity would put the text at 2:1 against the light theme's white. The withdrawn border, the
+   missing hover, and the inert cursor carry the state. */
 .discard-button:disabled {
     border-color: transparent;
     cursor: not-allowed;
@@ -4772,8 +4730,7 @@ body.zen .playbook-view > .playbook-source {
 
 .doc-path {
     /* Pico redefines --pico-color to its inverse (white) on buttons; reset it so
-       the hover text uses the normal foreground instead of white-on-white
-       (same fix as .zoom-controls button). */
+       the hover text uses the normal foreground instead of white-on-white. */
     --pico-color: inherit;
     --pico-background-color: transparent;
 
@@ -4886,12 +4843,12 @@ body.zen .playbook-view > .playbook-source {
     background: var(--pico-card-background-color);
 
     /* Sized from the status line rather than the article: the panel is chrome attached to
-       that strip, and at the page's reading size it dwarfed the row it belongs to. */
+       that strip. */
     font-size: 14px;
 
     /* The footer sits beside `#app` in a fixed-height column, so an unbounded panel takes its
        height straight out of the stage — on a phone the help text is taller than the whole
-       window and left the stage a 27px sliver. Bound it to half the window, let it shrink
+       window. Bound it to half the window, let it shrink
        below that when the window is short, and let it scroll itself; `contain` stops that
        scroll from chaining out to the page once it reaches an end. */
     flex: 0 1 auto;
@@ -4949,8 +4906,8 @@ body.zen .playbook-view > .playbook-source {
 }
 
 .drawer-tab:not(.active) {
-    /* Explicit, and with no transition: the framework animates border colors on buttons, so
-       the tab just left kept a fading underline that read as a second selected tab. */
+    /* Explicit, and with no transition: the framework animates border colors on buttons,
+       which would leave a fading underline on the tab just left, like a second selected tab. */
     border-bottom-color: transparent;
     transition: none;
 }
@@ -5164,8 +5121,8 @@ body.zen .playbook-view > .playbook-source {
     color: var(--debug-current, #9a6700);
 }
 
-/* Dismisses the panel from inside it. Only really needed once the panel floats over the
-   stage on a short window, but it costs nothing inline and saves a trip to the status line. */
+/* Dismisses the panel from inside it, which matters most once the panel floats over the stage
+   on a short window. */
 .drawer-close {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -5190,10 +5147,9 @@ body.zen .playbook-view > .playbook-source {
     background: var(--pico-muted-border-color);
 }
 
-/* On a short window the help cannot share the column with the stage and still be readable —
-   squeezed into the leftover strip it showed about one line at a time. So it stops competing
-   for the layout budget and floats over the stage instead, anchored just above the status
-   line that opened it, which stays visible as the way to dismiss it again. */
+/* On a short window the help cannot share the column with the stage and still be readable, so
+   it floats over the stage instead, anchored just above the status line that opened it, which
+   stays visible as the way to dismiss it again. */
 @media (height <= 640px) {
     .app-footer .shortcuts:not([hidden]) {
         position: absolute;
@@ -5252,7 +5208,7 @@ body.zen .playbook-view > .playbook-source {
     }
 
     /* The seam turns with the layout: a full-width rule with height, not a 1px-wide column,
-       which previously measured 1x0px and left the collapse toggle unreachable. */
+       so the collapse toggle on it stays reachable. */
     #app.has-explorer #explorer-resizer {
         width: auto;
         height: 1px;
@@ -5275,10 +5231,10 @@ body.zen .playbook-view > .playbook-source {
     }
 
     #resizer {
-        /* Shown as a horizontal collapse bar (was hidden on narrow screens): it carries the
-           inspector's collapse toggle, matching the Source and Config dividers so the panel
-           can be hidden here too. Non-draggable — the drag is guarded in resizer.ts since the
-           graph doesn't re-fit on resize — so it reads as a plain seam that hosts the handle. */
+        /* Shown as a horizontal collapse bar: it carries the inspector's collapse toggle,
+           matching the Source and Config dividers so the panel can be hidden here too. It is
+           not draggable (resizer.ts guards the drag) because the graph does not re-fit on
+           resize, so it reads as a plain seam that hosts the handle. */
         flex: 0 0 6px;
         cursor: default;
         border-top: 1px solid var(--pico-muted-border-color);
@@ -5344,8 +5300,7 @@ body.zen .playbook-view > .playbook-source {
 
     /* One row at every width. The document path ellipsizes, so it yields space before
        anything wraps; below 720px the paths drop to their icons entirely (see the rule at the
-       end of this file). Stacking the line into a column here — the previous answer — is what
-       produced a three-row status line. */
+       end of this file). */
     .status-line {
         gap: 0.3rem 0.6rem;
     }
@@ -5428,8 +5383,8 @@ button.tab.tab-with-icon {
     flex: none;
 }
 
-/* The Config tab mirrors the Source split (its own `--config-split` variable) with a
-   read-only TOML editor on the left and a scrollable speakers table on the right. */
+/* The Config tab mirrors the Source split (its own `--config-split` variable) with the
+   TOML editor on the left and a scrollable speakers table on the right. */
 .config-view,
 .playbook-view {
     position: relative;
@@ -5537,7 +5492,7 @@ button.tab.tab-with-icon {
     }
 }
 
-/* The read-only TOML editor fills its pane, blends with the background, and follows
+/* The Config and Playbook editors fill their panes, blend with the background, and follow
    the theme foreground — the same treatment the Source editor gets. */
 .config-source .cm-editor,
 .playbook-source .cm-editor {
@@ -5705,8 +5660,8 @@ button.tab.tab-with-icon {
    a mouse. The button must not *look* like one: the cell around it already carries the hover cue
    and the accent, so everything Pico paints on a button is stripped back off.
 
-   `display: inline` rather than `inline-block`, so the text wraps exactly as the bare text node
-   it replaced did, and so the jump cell's dotted hover underline still reaches it. */
+   `display: inline` rather than `inline-block`, so the text wraps as bare text would, and so
+   the jump cell's dotted hover underline still reaches it. */
 .cell-action {
     appearance: none;
     display: inline;
@@ -5833,8 +5788,7 @@ button.dd-tag:focus-visible {
 }
 
 /* Both path chips must be able to give up width. A chip that cannot shrink does not wrap when
-   the row runs out of room — it simply overlaps its neighbor, which is what the config label
-   did once Edit mode added the save controls beside it. */
+   the row runs out of room — it overlaps its neighbor, such as Edit mode's save controls. */
 #doc-path,
 #config-path {
     min-width: 0;

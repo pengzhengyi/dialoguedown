@@ -1,10 +1,9 @@
 namespace DialogueDown.Script.Ast;
 
 /// <summary>
-/// A node an optional <see cref="Ast.Condition"/> can condition — a <see cref="Line"/>, a
-/// <see cref="Choice"/>, a <see cref="RandomOption"/>, or a <see cref="Jump"/>. The condition is
-/// read uniformly through <see cref="ConditionalExtensions.IsConditional"/>, so the "is
-/// conditional" test lives in one place instead of on each node.
+/// A node an optional <see cref="Ast.Condition"/> can guard: a <see cref="Line"/>, a
+/// <see cref="ControlLine"/>, a <see cref="Choice"/>, a <see cref="RandomOption"/>, a
+/// <see cref="Branch"/>, or a <see cref="Jump"/>.
 /// </summary>
 internal interface IConditional
 {

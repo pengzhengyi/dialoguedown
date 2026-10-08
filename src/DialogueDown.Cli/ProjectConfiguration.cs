@@ -7,10 +7,8 @@ namespace DialogueDown.Cli;
 /// <summary>
 /// Resolves the <see cref="CompilerOptions"/> a command uses: an explicit <c>--config</c> path,
 /// else the nearest <c>dialogue.toml</c> found by walking up from a starting directory, else
-/// <see cref="CompilerOptions.Default"/>. Discovery mirrors how established tools (tsc,
-/// clang-format, Prettier, Black) find their config — nearest wins — so one file at a project
-/// root serves scripts nested in subfolders. It is the only CLI type that touches the TOML
-/// loader, keeping the file dependency at the edge.
+/// <see cref="CompilerOptions.Default"/>. The nearest file wins, so one file at a project root
+/// serves the scripts in its subfolders. It is the only CLI type that touches the TOML loader.
 /// </summary>
 internal sealed class ProjectConfiguration
 {

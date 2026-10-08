@@ -4,9 +4,8 @@ namespace DialogueDown.Playbook.Tests.Support;
 /// Asserts that two values are one value: equal, and hashing alike.
 /// </summary>
 /// <remarks>
-/// A record derives its <c>==</c> operator from <c>Equals</c>, so pinning <c>Equals</c> and the
-/// hash is what an equality test means — and it keeps the operator, the method, and the hash from
-/// being spelled out three times at every call site.
+/// A record's <c>==</c> operator calls <c>Equals</c>, so checking <c>Equals</c> and the hash
+/// covers all three.
 /// </remarks>
 internal static class EqualityAssert
 {

@@ -11,12 +11,11 @@ using Spectre.Console.Cli;
 namespace DialogueDown.Cli.Commands;
 
 /// <summary>
-/// The <c>compile</c> command: resolve the project's <see cref="CompilerOptions"/>, build a
-/// compiler configured with them, compile the script through the facade, render any diagnostics as
-/// errata, write what was asked for, and return a data-error exit code when the script has
-/// errors. It emits a playbook by default; <c>--emit dot</c> asks instead for each stage's graph
-/// as text — a non-interactive export, which is why it lives here rather than on the
-/// browser-opening <c>visualize</c>.
+/// The <c>compile</c> command: resolve the project's <see cref="CompilerOptions"/>, compile the
+/// script with them, render any diagnostics as errata, write what was asked for, and return a
+/// data-error exit code when the script has errors. It writes a playbook by default;
+/// <c>--emit dot</c> writes each stage's graph as Graphviz text instead, and <c>--fix</c>
+/// corrects the script in place.
 /// </summary>
 internal sealed class CompileCommand : Command<CompileSettings>
 {
@@ -50,7 +49,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
     }
 
     /// <inheritdoc />
-    protected override int Execute(
+    public override int Execute(
         CommandContext context, CompileSettings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -91,9 +90,9 @@ internal sealed class CompileCommand : Command<CompileSettings>
     private static string ScriptDirectory(string script) =>
         Path.GetDirectoryName(Path.GetFullPath(script))!;
 
-    // Identity is code plus position, not offset: an applied insertion shifts every offset after
-    // it while a surviving diagnostic keeps its line and column, and those point into the text the
-    // listing describes — the script as read.
+    // New means no diagnostic as found has the same code and start line and column. Offsets are not
+    // compared: an applied fix shifts every offset after it, while a diagnostic on another line
+    // keeps its line and column unless the fix added or removed a line.
     private static IReadOnlyList<LocatedDiagnostic> NewAfterFixing(
         IReadOnlyList<LocatedDiagnostic> asFound, IReadOnlyList<LocatedDiagnostic> corrected)
     {
@@ -108,8 +107,8 @@ internal sealed class CompileCommand : Command<CompileSettings>
     }
 
     // Fix mode: correct the script in place, then report the diagnostics as found and, after them,
-    // what the run did. A run with nothing applicable prints exactly what a plain compile prints,
-    // so silence stays silence.
+    // what the run did. A run with no fix to apply reports the diagnostics exactly as a plain
+    // compile does, and nothing more.
     private int RunFix(CompileSettings settings, CompilerOptions options)
     {
         var script = ScriptContents.Read(settings.Script);
@@ -141,8 +140,7 @@ internal sealed class CompileCommand : Command<CompileSettings>
     }
 
     // Only a successful compile has a graph, so a script with errors leaves the destination as it
-    // was. Warnings still write: a warning is a smell the compiler tolerates, and anything it
-    // cannot tolerate is an error.
+    // was. A script with warnings but no errors still writes.
     private void WritePlaybook(CompilationSuccess compiled, CompileSettings settings)
     {
         var playbook = _playbooks.Write(compiled, Path.GetFileName(settings.Script));

@@ -23,10 +23,10 @@ public sealed partial record PlaybookDocument
     /// <param name="format">Whether a runtime can play this at all.</param>
     /// <param name="script">The script this was compiled from.</param>
     /// <param name="entry">Where a playthrough begins by default.</param>
-    /// <param name="anchors">Every scene's slug, by node index.</param>
+    /// <param name="anchors">Each scene's slug, mapped to the node it starts at.</param>
     /// <param name="speakers">Everybody who speaks here.</param>
     /// <param name="nodes">The steps of a playthrough, each at its own index.</param>
-    /// <param name="schema">Where an editor can find the schema, if the writer said.</param>
+    /// <param name="schema">Where an editor can find the JSON schema, or <c>null</c>.</param>
     [JsonConstructor]
     public PlaybookDocument(
         PlaybookFormat format,
@@ -43,15 +43,14 @@ public sealed partial record PlaybookDocument
         Format = format;
         Script = script.AssertNotNull(nameof(script));
         Entry = entry.AssertNotNegative(nameof(entry));
-        // Ordinal whoever built it: a playbook's order must not depend on the culture of the
-        // machine that wrote or read it, or a golden file stops being one.
+        // Re-sorted ordinally whatever comparer the caller used; see Anchors.
         Anchors = (anchors ?? ImmutableSortedDictionary<string, int>.Empty)
             .WithComparers(StringComparer.Ordinal);
         Speakers = speakers.OrEmpty();
         Nodes = nodes.OrEmpty();
     }
 
-    /// <summary>Gets where an editor can find the schema, if the writer said.</summary>
+    /// <summary>Gets where an editor can find the JSON schema, or <c>null</c>.</summary>
     [JsonPropertyOrder(0)]
     [JsonPropertyName("$schema")]
     public string? Schema { get; }
@@ -68,23 +67,25 @@ public sealed partial record PlaybookDocument
 
     /// <summary>Gets where a playthrough begins when nothing says otherwise.</summary>
     /// <remarks>
-    /// The document's top, which has no heading and so is not an anchor. Stated rather than
-    /// assumed to be the first node, because that is the sort of assumption a later hoisted
-    /// construct breaks quietly.
+    /// The document's top, which has no heading and so is not an anchor. A runtime starts here
+    /// rather than assuming node 0.
     /// </remarks>
     [JsonPropertyOrder(3)]
     [JsonPropertyName("entry")]
     public int Entry { get; }
 
     /// <summary>
-    /// Gets every scene's slug, by node index — the targets a jump may name, and the named
-    /// conversations a game may start at instead of the top.
+    /// Gets each scene's slug, mapped to the index of the node it starts at: the targets a jump
+    /// may name, and the named conversations a game may start at instead of the top.
     /// </summary>
     /// <remarks>
+    /// The heading <c>## Discuss Bob's photo</c> gives the slug <c>discuss-bobs-photo</c>.
+    /// <para>
     /// Sorted, because a lookup table's order carries no meaning but a golden file needs one:
-    /// sorting makes a playbook byte-identical however the writer happened to build it. Sorted
+    /// sorting makes a playbook byte-identical whatever order the anchors were added in. Sorted
     /// <em>ordinally</em>, so that holds on any machine — the default comparer follows the
     /// current culture, which puts "a" before "B" in one place and after it in another.
+    /// </para>
     /// </remarks>
     [UnorderedEquality]
     [JsonPropertyOrder(4)]

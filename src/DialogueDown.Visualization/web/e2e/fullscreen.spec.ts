@@ -52,7 +52,7 @@ test("the f key toggles full screen and Escape leaves it", async ({ page }) => {
 });
 
 test("the single tab-bar control also maximizes from the Source tab", async ({ page }) => {
-    // No per-pane control remains on the Source tab.
+    // The Source tab has no per-pane control of its own.
     await expect(page.locator(".source-controls")).toHaveCount(0);
 
     await page.locator(".tabbar-maximize").click();

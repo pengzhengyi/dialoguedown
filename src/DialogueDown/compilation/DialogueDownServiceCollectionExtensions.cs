@@ -49,7 +49,7 @@ public static class DialogueDownServiceCollectionExtensions
             provider.GetRequiredService<IDialogueGraphBuilder>(),
             options.Mode));
 
-        // The way out of the process, and the only reason a compile leaves anything behind.
+        // Not a compiler stage: it writes a compiled graph out as a playbook.
         services.TryAddSingleton<IPlaybookWriter>(_ => PlaybookWriterFactory.CreateDefault());
 
         return services;

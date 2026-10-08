@@ -32,9 +32,8 @@ internal sealed class LineMap
 
     /// <summary>
     /// Locates <paramref name="offset"/> as a one-based line and column. Valid offsets run
-    /// <c>[0, length]</c> — the end-of-source insertion position is included so a zero-width
-    /// synthetic span at the end maps. An offset outside that range is a broken compiler span and
-    /// throws, so the defect surfaces rather than being silently mislocated.
+    /// <c>[0, length]</c>: the end-of-source position is included so a zero-width span at the end
+    /// maps. An offset outside that range throws, since only a broken compiler span produces one.
     /// </summary>
     public LinePosition Locate(int offset)
     {

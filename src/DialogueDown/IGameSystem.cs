@@ -1,8 +1,7 @@
 namespace DialogueDown;
 
 /// <summary>
-/// An adapter that is responsible handling the game invocations in dialogue.
-/// This enables dialogue to query game state or execute commands.
+/// An adapter that lets dialogue query game state and execute game commands.
 /// </summary>
 public interface IGameSystem
 {

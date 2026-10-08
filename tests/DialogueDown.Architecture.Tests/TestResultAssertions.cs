@@ -9,13 +9,9 @@ namespace DialogueDown.Architecture.Tests;
 /// names every offending type, so a broken boundary points straight at its cause.
 /// </summary>
 /// <remarks>
-/// Every rule in the suite is asserted through here, so this is also where the suite
-/// guards against a <em>vacuous pass</em>: a rule whose filter matches nothing is
-/// trivially successful, and would stay green forever. Renaming a namespace without
-/// updating the constant in <see cref="Architecture"/> does exactly that — the strings
-/// are not touched by an IDE rename — which would silently retire the rule instead of
-/// failing it. Asserting the rule actually examined something turns that silence into
-/// a failure.
+/// A rule whose filter matches no types also fails, since it would otherwise pass without
+/// checking anything. That happens when a namespace is renamed but its constant in
+/// <see cref="Architecture"/> is not, because an IDE rename does not touch the strings.
 /// </remarks>
 internal static class TestResultAssertions
 {

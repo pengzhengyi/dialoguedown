@@ -8,10 +8,10 @@ namespace DialogueDown.Runtime.Stepping;
 /// What one node needs the world to answer before a run can go on.
 /// </summary>
 /// <remarks>
-/// A guard is answered with a truth, and a query standing in what the node says is answered with
-/// words. Both are read at the same moment, so they are read together once: the keys that go out
-/// as a request, the kinds those answers are held to, and the clash that stops the request being
-/// sent at all are all worked out from this one pair.
+/// A condition is answered with a truth, and a query in what the node says is answered with
+/// words. Both are asked at the same moment, so the request's keys (<see cref="Keys"/>), the kind
+/// each answer must have (<see cref="Asked"/>), and the keys needed both ways
+/// (<see cref="NeededBothWays"/>) all come from this one pair.
 /// </remarks>
 /// <param name="Truths">The keys a guard reads, each needing a truth.</param>
 /// <param name="Words">The keys a query reads, each needing words.</param>

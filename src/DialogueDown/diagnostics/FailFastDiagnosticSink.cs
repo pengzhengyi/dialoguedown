@@ -5,9 +5,8 @@ namespace DialogueDown.Diagnostics;
 /// <summary>
 /// A fail-fast <see cref="IDiagnosticSink"/> decorator: it forwards every reported diagnostic to an
 /// inner sink, but the first <see cref="DiagnosticSeverity.Error"/> also throws a
-/// <see cref="DiagnosticException"/> carrying it — so a compile stops at the first error while still
-/// collecting the warnings that preceded it. This is how the fail-fast compile mode surfaces an
-/// error; the collecting modes report into the bare bag instead.
+/// <see cref="DiagnosticException"/> carrying it, so a compile stops at the first error while still
+/// collecting the warnings that preceded it.
 /// </summary>
 internal sealed class FailFastDiagnosticSink : IDiagnosticSink
 {

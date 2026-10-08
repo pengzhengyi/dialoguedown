@@ -4,18 +4,13 @@ using DialogueDown.Runtime.Protocol;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// Judging a condition by what the world said.
+/// Decides whether a condition holds, given the world's answers.
 /// </summary>
 /// <remarks>
-/// A condition asks the world about keys and the world answers them, which leaves the reading
-/// itself: whether those answers add up to a yes. A key condition holds exactly when the key it
-/// names was answered yes, so <c>`Hero.HasSword?`</c> answered
-/// <c>{ "Hero.HasSword": true }</c> holds and the line it guards plays.
-/// <para>
-/// The answers have already been held to the keys the condition asked about, each answered with a
-/// truth, so this takes them and reads. It is the last step of the three the world's reply goes
-/// through — asked, held, read — and the only one that says what the answer means.
-/// </para>
+/// A key condition holds exactly when the key it names was answered yes, so
+/// <c>`Hero.HasSword?`</c> answered <c>{ "Hero.HasSword": true }</c> holds and the line it guards
+/// plays. The supply has already been checked against the keys asked about, each answered with a
+/// truth, so this only reads it.
 /// </remarks>
 internal static class ConditionEvaluationExtensions
 {
@@ -24,7 +19,7 @@ internal static class ConditionEvaluationExtensions
     /// <param name="supply">What the world said.</param>
     /// <returns><see langword="true"/> when whatever the condition guards may go ahead.</returns>
     /// <exception cref="NotSupportedException">
-    /// The condition is of a kind nothing has been taught to read.
+    /// The condition is of a kind this method does not handle.
     /// </exception>
     public static bool Holds(this Condition condition, Supply supply)
     {
@@ -42,13 +37,8 @@ internal static class ConditionEvaluationExtensions
         };
     }
 
-    /// <summary>Whether what a guard stands in front of may go ahead, by what the world said.</summary>
-    /// <remarks>
-    /// A line, a jump, an option, and a branch arm are each written with a guard or without one.
-    /// Reading the two the same way here is what lets a caller ask whether a thing is allowed
-    /// without first asking whether anybody guarded it.
-    /// </remarks>
-    /// <param name="guarded">The thing a guard may stand in front of.</param>
+    /// <summary>Whether a node or arm may go ahead, given the world's answers.</summary>
+    /// <param name="guarded">The node or arm to check.</param>
     /// <param name="supply">What the world said.</param>
     /// <returns><see langword="true"/> when nothing guards it, or its guard holds.</returns>
     public static bool IsAllowed(this IConditional guarded, Supply supply)

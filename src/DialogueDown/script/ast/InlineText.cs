@@ -1,11 +1,11 @@
-// Aliased rather than imported: this namespace has a SpeechStyle of its own, so pulling the whole
-// speech namespace in here would leave two of that name in scope for whoever edits next.
+// An alias: importing the whole speech namespace would put its SpeechStyle in scope beside
+// this namespace's own SpeechStyle.
 using PlaybookSpeechText = DialogueDown.Playbook.Speech.SpeechText;
 
 namespace DialogueDown.Script.Ast;
 
 /// <summary>
-/// Flattens a run of inline fragments — a link or jump label, an image alt, a scene heading —
+/// Flattens a sequence of inline fragments — a link or jump label, an image alt, a scene heading —
 /// to plain text for a compact label or attribute. Each node's own span still points at the
 /// exact source; this is only the readable text.
 /// </summary>
@@ -23,9 +23,9 @@ internal static class InlineText
         Jump jump => Of(jump.Label),
         Image image => Of(image.Alt),
         LineBreak => " ",
-        // A query stands for a value only a running game can supply, so flattening names it. The
-        // wording comes from the format rather than from here, because the same query read off a
-        // compiled playbook has to read the same way.
+        // A query stands for a value only a running game can supply, so flattening names it, as
+        // {Gold} for the key Gold. The wording comes from the format rather than from here,
+        // because the same query read off a compiled playbook has to read the same way.
         Query query => PlaybookSpeechText.PlaceholderFor(query.Key),
         _ => string.Empty,
     };

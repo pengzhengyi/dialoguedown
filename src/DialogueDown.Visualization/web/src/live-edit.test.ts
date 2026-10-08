@@ -19,7 +19,7 @@ function reportFor(source: string): Report {
     return { source, stages: REPORT.stages };
 }
 
-/** A controllable save port: each call parks until the test resolves it with an outcome. */
+/** A controllable save port: each call stays pending until the test resolves it. */
 function harness(documentType: DocumentType = "source", initial = "# Saved") {
     const saves: Array<{
         request: SaveRequest;
@@ -294,9 +294,7 @@ describe("createLiveEdit — failure, conflict, uncertain", () => {
     });
 
     it("a server uncertain outcome enters Uncertain and surfaces its message", async () => {
-        // The server could not establish a safe state (a newer external write raced the commit),
-        // so it returns an explicit uncertain outcome rather than a plain failure: the controller
-        // pauses in Uncertain and announces the server's detail message.
+        // The server could not establish a safe state: a newer external write raced the commit.
         const h = harness();
         const live = h.make("manual");
 
@@ -330,7 +328,7 @@ describe("createLiveEdit — failure, conflict, uncertain", () => {
         live.onEdit("# New");
         h.fireIdle();
         await h.resolveSave({ kind: "failure", message: "denied" });
-        // An edit recovers to Dirty and re-arms idle; without an edit, no retry runs.
+        // An edit returns to Dirty and restarts the idle timer; without an edit, no retry runs.
         expect(h.idle.length).toBe(0);
     });
 });
@@ -450,8 +448,8 @@ describe("createLiveEdit — Config validation", () => {
         const explicit = live.save();
         const idle = live.whenIdle();
 
-        // The invalid-auto settles into Waiting; the queued explicit must still be promoted and run
-        // (persisting the invalid TOML) instead of stranding whenIdle behind a paused state.
+        // The invalid-auto settles into Waiting; the queued explicit save still runs and writes the
+        // invalid TOML, so `whenIdle` does not wait on a paused state.
         await h.resolveSave({ kind: "invalid-auto", message: "bad TOML" });
         expect(h.saves[0]!.request.validation).toBe("allow-invalid");
         await h.resolveSave({
@@ -667,9 +665,8 @@ describe("createLiveEdit — discard", () => {
     });
 
     it("reapplies the baseline report's diagnostics and semantic tokens exactly once", () => {
-        // Restoring the buffer is a full-document replacement, which drops the source editor's
-        // diagnostics squiggles and semantic-token highlighting. Discard must reapply the accepted
-        // baseline report so those overlays return, and do it exactly once.
+        // Restoring the buffer replaces the whole document, which drops the source editor's
+        // diagnostics and semantic-token highlighting.
         const h = harness();
         const baseline = reportFor("# Saved");
         const live = createLiveEdit(
@@ -859,10 +856,9 @@ describe("createLiveEdit — adoptDisk (View hot reload)", () => {
     });
 
     it("advances the baseline report on adopt, so a later Discard reapplies the adopted overlays", () => {
-        // A View hot reload adopts external content — and its report — as the clean baseline. A
-        // later Edit-session Discard restores the buffer with a full-document replacement (which
-        // drops the source editor's overlays), so it must reapply the ADOPTED report, not the
-        // stale pre-adopt one.
+        // A View hot reload adopts external content and its report as the clean baseline. Discard
+        // replaces the whole document, which drops the editor's overlays, so it reapplies the
+        // adopted report.
         const h = harness();
         const live = createLiveEdit(
             h.ports,
@@ -917,8 +913,8 @@ describe("createLiveEdit — adoptSwitch (opening another script)", () => {
         live.adoptSwitch("# Another", reportFor("# Another"));
         h.saves[0].resolve({ kind: "saved", report: reportFor("# Mine"), source: "# Mine" });
 
-        // The server now points at another document, so the reply belongs to a file the report is
-        // no longer showing: it must not install "# Mine" as the new script's baseline.
+        // The server points at another document, so the reply belongs to a file the report does
+        // not show: it must not install "# Mine" as the new script's baseline.
         await expect(saving).resolves.toBe("superseded");
         expect(live.status).toBe("saved");
         live.onEdit("# Another");

@@ -4,8 +4,8 @@ namespace DialogueDown.ConfigurationLoader.Toml;
 
 /// <summary>
 /// Maps a Tomlyn syntax span to a <see cref="ConfigurationSourceLocation"/>, converting Tomlyn's
-/// zero-based line and column to the one-based location a reader expects. It keeps the public
-/// location type free of any Tomlyn dependency, so the mapping lives in one place.
+/// zero-based line and column to the one-based location a reader expects, so the public location
+/// type takes no Tomlyn dependency.
 /// </summary>
 internal static class TomlLocation
 {

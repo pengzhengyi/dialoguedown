@@ -9,8 +9,7 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// <remarks>
 /// The playbook's own options, so the comparison is between a value and a value rather than
 /// between two spellings of one: a fixture may order a property as it likes and may spell out what
-/// a writer leaves off. Indentation comes off because nothing here is read by a person — these
-/// strings exist to be compared, and a difference in whitespace is not a difference in meaning.
+/// a writer leaves off. Written without indentation, because these strings are only compared.
 /// </remarks>
 internal static class FixtureJson
 {

@@ -33,8 +33,8 @@ public sealed class ConditionEvaluationExtensionsTests
         UnionCoverageAssert.AssertCoversEveryMember<Condition>(samples);
 
         // What each kind reads to depends on the kind; that every kind can be read does not.
-        // This is the only guard on the refusing arm, since Condition is closed at the Playbook
-        // assembly and no kind outside it can be built to reach that arm directly.
+        // This is the only check on the refusing case of the switch, since Condition is closed to
+        // the Playbook assembly and no kind outside it can be built to reach that case directly.
         Assert.All(
             samples,
             condition => Assert.Null(Record.Exception(() => condition.Holds(AnsweringEvery(condition)))));

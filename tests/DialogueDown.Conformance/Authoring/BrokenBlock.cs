@@ -5,12 +5,21 @@ namespace DialogueDown.Conformance.Authoring;
 /// valid script below it.
 /// </summary>
 /// <remarks>
-/// Repository authoring, not part of the portable readable contract — a port reads a fixture and
-/// the document it names, never the source. This is the one place that knows the block's shape, so
-/// the check that requires it and the check that compiles the script below it cannot drift.
+/// Part of this repository's authoring checks, not the portable readable contract: a port reads a
+/// fixture and the document it names, never the source. The block names the edit on its first
+/// line, then a blank line, then the evidence:
+/// <code>
+/// &lt;!-- broken: it requires a capability no version-0 runtime offers
+///
+///      "requires": [ "core", "detour" ]
+/// --&gt;
+/// # The Inn
+///
+/// Alice: Hello.
+/// </code>
 /// </remarks>
 /// <param name="Note">The one line naming the edit, after <c>broken:</c>.</param>
-/// <param name="Script">The valid script below the block, the compile the case was broken from.</param>
+/// <param name="Script">The valid script below the block, whose compiled document the case edits.</param>
 public sealed record BrokenBlock(string Note, string Script)
 {
     /// <summary>The marker that opens the block, at the very start of the source.</summary>

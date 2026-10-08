@@ -11,7 +11,7 @@ public enum DiagnosticSeverity
     /// <summary>A neutral note: nothing is wrong, but something is worth pointing out.</summary>
     Info = 0,
 
-    /// <summary>The script compiles but is suspect — a likely mistake worth surfacing.</summary>
+    /// <summary>The script compiles but is suspect: likely a mistake.</summary>
     Warning = 1,
 
     /// <summary>The script is invalid: the reported problem must be fixed.</summary>

@@ -15,9 +15,8 @@ namespace DialogueDown.Runtime.Tests;
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
 /// asks the host to carry something out, a block condition, and a menu. A line may hold a command
-/// before, between, or after its words, or say nothing but a command. A later pass adds its node
-/// and edge kinds here as it teaches the runner to play them, so a walk keeps covering everything a
-/// run can meet.
+/// before, between, or after its words, or say nothing but a command. A node or edge kind the
+/// runner gains belongs here too, so a walk covers everything a run can meet.
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
 /// fire only when the world allows it, a block condition's first arm is always guarded, and a line
@@ -79,7 +78,7 @@ internal static class PlaybookGen
         /// <summary>Before its words.</summary>
         First,
 
-        /// <summary>Between two runs of its words.</summary>
+        /// <summary>Between two parts of its words.</summary>
         Between,
 
         /// <summary>After its words.</summary>
@@ -133,8 +132,8 @@ internal static class PlaybookGen
                 new NodeDraft(
                     draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, speech.Item1, speech.Item2));
 
-    // Nothing guards it as often as each key does, so a walk still meets plenty of nodes it can
-    // pass without asking.
+    // No guard is drawn as often as each key, so a walk still meets plenty of nodes it can pass
+    // without asking.
     private static Gen<Condition?> Guard() =>
         Gen.OneOfConst<Condition?>([null, .. _truthKeys.Select(key => new KeyCondition(key))]);
 
@@ -198,8 +197,8 @@ internal static class PlaybookGen
         private LineNode Speaks(int id, ImmutableArray<Edge> out_) =>
             new(id, Speaker, Speech(), Guard, out_);
 
-        // A query in the words after a command is a query written after a command, so drawing
-        // both covers a line whose words the world must answer part-way through.
+        // A line that asks and holds its command first or between puts the query after the
+        // command, so the world is asked part-way through the line.
         private ImmutableArray<SpeechFragment> Speech() =>
             CommandAt switch
             {

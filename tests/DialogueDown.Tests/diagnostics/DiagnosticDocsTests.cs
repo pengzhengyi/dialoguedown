@@ -37,8 +37,8 @@ public sealed class DiagnosticDocsTests
             .Select(doc => doc.Descriptor.Code)
             .ToHashSet();
 
-        // A missing example must be a deliberate choice (the code's producer has not landed), not an
-        // oversight — so the set of example-less codes must match the documented allowlist exactly.
+        // A missing example must be deliberate (nothing reports the code yet), not an oversight, so
+        // the set of example-less codes must match the documented allowlist exactly.
         Assert.Equal(DiagnosticDocs.WithoutExampleYet, withoutExample);
     }
 

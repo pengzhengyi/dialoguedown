@@ -3,8 +3,8 @@
  * report, and repaint — instead of loading a whole page. The reader keeps the window they were
  * working in, so their zoom and open tab survive the move.
  *
- * The browser wiring (`fetch`, `history`, `location`) is injected through {@link ScriptSwitchPorts},
- * so the sequence is unit-testable, mirroring the Explorer and the live-edit controller.
+ * The browser wiring (`fetch`, `history`, `location`) is injected through
+ * {@link ScriptSwitchPorts}, so the sequence is unit-testable.
  */
 
 import type { Report, ServedMode } from "./model";
@@ -36,7 +36,7 @@ export interface ScriptSwitchPorts {
     setHistory(path: string, url: string): void;
     /** Load {@link url} as a whole page — the fallback when a switch cannot be applied in place. */
     load(url: string): void;
-    /** Surface a failed open to the reader. */
+    /** Tell the reader an open failed. */
     showProblem(message: string): void;
 }
 

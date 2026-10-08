@@ -38,10 +38,10 @@ export function completionsFrom(
 
 /**
  * Complete the jump indicator `=>` with a whole jump target. Offers every scene by its heading
- * and, on accept, enriches into `[Heading](#slug)` — the heading as an editable snippet field
+ * and, on accept, expands to `[Heading](#slug)` — the heading as an editable snippet field
  * (Tab past it), the compiler-correct slug fixed. Fires before the link brackets are typed; once
- * the writer is inside `](#…)` the {@link jumpSlugCompletions} source takes over. A single space
- * always follows `=>`, so the result reads `=> [..]`, never `=>[..]`.
+ * the writer is inside `](#…)` the {@link jumpSlugCompletions} source takes over. A space always
+ * follows `=>`, so the result reads `=> [..]`, never `=>[..]`.
  */
 export function jumpIndicatorCompletions(symbols: DialogueSymbolProvider): CompletionSource {
     return (context) => {

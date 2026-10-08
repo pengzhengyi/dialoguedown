@@ -27,7 +27,7 @@ public sealed class BlockSequenceTests
     public void AllContinuations_Choice_GivesEveryArmTheChoicesOwnContinuation()
     {
         // n0 question, n1 choice, n2/n3 the arms, n4 what follows, n5 End. Both arms continue
-        // at n4, and the choice does too, so picking either weaves back to the same place.
+        // at n4, and the choice does too, so picking either leads to the same place.
         Assert.Equal(
             [(0, 1), (1, 4), (2, 4), (3, 4), (4, 5)],
             Walk("""
@@ -44,7 +44,7 @@ public sealed class BlockSequenceTests
     [Fact]
     public void AllContinuations_ArmWithSeveralBlocks_ChainsInsideTheArmBeforeWeavingBack()
     {
-        // n1 the choice, n2 ▶ n3 within the arm, then n3 weaves back to n4.
+        // n1 the choice, n2 ▶ n3 within the arm, then n3 continues at n4.
         Assert.Equal(
             [(0, 1), (1, 4), (2, 3), (3, 4), (4, 5)],
             Walk("""

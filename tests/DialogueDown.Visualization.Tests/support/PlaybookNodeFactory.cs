@@ -29,10 +29,21 @@ internal static class PlaybookNodeFactory
     public static LineNode SilentLine(int speaker = 0, int id = 0) =>
         new(id, speaker, [], null, []);
 
-    /// <summary>Where a run stops.</summary>
+    /// <summary>Where play stops.</summary>
     public static EndNode End(int id = 0) => new(id);
 
-    /// <summary>A block condition fanning out to the arms it tries in order.</summary>
+    /// <summary>A block condition with the arms it tries in order.</summary>
+    /// <remarks>
+    /// <code>
+    /// > `if` `"Rich"?`
+    /// >
+    /// > Alice: Upstairs.
+    /// >
+    /// > `else`
+    /// >
+    /// > Alice: Side door.
+    /// </code>
+    /// </remarks>
     public static BranchNode Branch(params Edge[] arms) => new(0, [.. arms]);
 
     /// <summary>One arm of a block condition; a null key is the final else.</summary>
@@ -40,6 +51,11 @@ internal static class PlaybookNodeFactory
         new(target, key is null ? null : new KeyCondition(key));
 
     /// <summary>An effect-only line: something the host performs, attributed to nobody.</summary>
+    /// <remarks>
+    /// <code>
+    /// `("fade in")` `PlayMusic("battle")`
+    /// </code>
+    /// </remarks>
     public static ControlNode Control(params SpeechFragment[] effects) =>
         new(0, [.. effects], null, []);
 
@@ -51,6 +67,11 @@ internal static class PlaybookNodeFactory
     /// A control node with no effects, which is what a bare scene-to-scene jump compiles to. Its
     /// one way out is the divert carrying the words the writer gave the jump.
     /// </summary>
+    /// <remarks>
+    /// <code>
+    /// => [The Mountain Road](#the-mountain-road)
+    /// </code>
+    /// </remarks>
     public static ControlNode Diverting(string label, int target = 0) =>
         new(0, [], null, [new DivertEdge(target, Speech(label), null)]);
 
@@ -67,6 +88,13 @@ internal static class PlaybookNodeFactory
         new CustomCommandFragment(name, [.. args]);
 
     /// <summary>A menu the player picks from; its options are the ways out.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Alice: Go east.
+    ///
+    /// - => [Brave the west road](#END)
+    /// </code>
+    /// </remarks>
     public static ChoiceNode Choice(params Edge[] options) => new(0, false, [.. options]);
 
     /// <summary>One arm of a menu, carrying the words the menu shows for it.</summary>
@@ -77,6 +105,13 @@ internal static class PlaybookNodeFactory
     public static OptionEdge UnlabeledOption(int target = 0) => new(target, [], null);
 
     /// <summary>A choice the engine draws instead of offering.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `80%` Alice: Heads.
+    ///
+    /// - `20%` Alice: Tails.
+    /// </code>
+    /// </remarks>
     public static RandomChoiceNode RandomChoice(params Edge[] arms) => new(0, [.. arms]);
 
     /// <summary>One arm of a random choice, at odds the writer fixed in the script.</summary>
@@ -107,10 +142,7 @@ internal static class PlaybookNodeFactory
     public static ImmutableArray<PlaybookSpeaker> Speakers(params string?[] names) =>
         [.. names.Select(name => new PlaybookSpeaker(null, name, false, []))];
 
-    /// <summary>
-    /// The line a node's pieces read as — the cell's text, and the summary the projection used to
-    /// return as one string.
-    /// </summary>
+    /// <summary>The text a node's pieces join into: the line its table cell shows.</summary>
     public static string SummaryOf(Node node, ImmutableArray<PlaybookSpeaker> speakers) =>
         string.Concat(PlaybookNodeSummary.SegmentsOf(node, speakers).Select(segment => segment.Text));
 

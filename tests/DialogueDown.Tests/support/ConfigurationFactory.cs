@@ -3,7 +3,7 @@ using DialogueDown.Configuration;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>
-/// Object Mother for the public configuration option types, so a test builds a configured
+/// Builds the public configuration option types, so a test builds a configured
 /// speaker or tag through one place and a constructor change touches only this file.
 /// </summary>
 internal static class ConfigurationFactory

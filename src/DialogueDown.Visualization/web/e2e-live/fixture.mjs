@@ -10,14 +10,14 @@ export const LIVE_PORT = 5177;
 export const LIVE_DOC = join(here, ".live-doc.dialogue.md");
 export const INITIAL_SOURCE = "# Original Scene\n\nAlice: The original line.\n";
 
-// A second live server for the --render-root path: the document sits in a
+// A second live server for an explicit --root: the document sits in a
 // sub-folder and references an image in a sibling folder (outside its own), so the
 // server must host the common ancestor and serve the report at the sub-path.
-export const RENDER_ROOT_PORT = 5178;
-export const RENDER_ROOT_TREE = join(here, ".render-root");
-export const RENDER_ROOT_DOC = join(RENDER_ROOT_TREE, "proj", "scene.dialogue.md");
-export const RENDER_ROOT_IMAGE = join(RENDER_ROOT_TREE, "shared", "out.png");
-export const RENDER_ROOT_SOURCE = "# Gallery\n\n![an outside picture](../shared/out.png)\n";
+export const SERVE_ROOT_PORT = 5178;
+export const SERVE_ROOT_TREE = join(here, ".serve-root");
+export const SERVE_ROOT_DOC = join(SERVE_ROOT_TREE, "proj", "scene.dialogue.md");
+export const SERVE_ROOT_IMAGE = join(SERVE_ROOT_TREE, "shared", "out.png");
+export const SERVE_ROOT_SOURCE = "# Gallery\n\n![an outside picture](../shared/out.png)\n";
 
 // A shell server over a small tree: a script at the root and one in a
 // sub-folder, so the e2e can browse the tree from the empty state's Explorer,
@@ -75,9 +75,8 @@ export const CONFIG_ADOPT_INVALID_TOML = join(CONFIG_ADOPT_INVALID_TREE, "dialog
 export const CONFIG_ADOPT_INVALID_SOURCE = "# Scene\n\nAlice: Hello.\n";
 export const CONFIG_ADOPT_INVALID_CONFIG = "[[speakers]]\nbogus = true\n";
 
-// Semantic-autocomplete owns its document because the test replaces the editor buffer.
-// Sharing LIVE_EDIT_DOC let this spec race live-edit.spec.ts when Playwright ran files in
-// parallel.
+// Semantic-autocomplete owns its document because the test replaces the editor buffer, and
+// Playwright runs spec files in parallel with live-edit.spec.ts.
 export const SEMANTIC_AUTOCOMPLETE_PORT = 5183;
 export const SEMANTIC_AUTOCOMPLETE_DOC = join(here, ".semantic-autocomplete.dialogue.md");
 export const SEMANTIC_AUTOCOMPLETE_SOURCE = "# Scene\n\nAlice: The first line.\n";

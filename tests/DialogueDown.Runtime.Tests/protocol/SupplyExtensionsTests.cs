@@ -21,8 +21,8 @@ public sealed class SupplyExtensionsTests
 
     [Fact]
     public void Holds_WhenTheKeyWentUnanswered_IsAFaultInTheRun() =>
-        // Not a refusal: a supply is held to the keys it answers before it is read, so a gap here
-        // means that holding was skipped rather than that the driver did anything wrong.
+        // Not a refusal: a supply is checked against the keys asked before it is read, so a gap
+        // here means that check was skipped rather than that the driver did anything wrong.
         Assert.Throws<InvalidOperationException>(() => Answering().Holds("Hero.HasSword"));
 
     [Fact]
