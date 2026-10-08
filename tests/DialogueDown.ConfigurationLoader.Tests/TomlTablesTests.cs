@@ -1,3 +1,4 @@
+using DialogueDown.ConfigurationLoader.Tests.Support;
 using DialogueDown.ConfigurationLoader.Toml;
 using Tomlyn.Syntax;
 

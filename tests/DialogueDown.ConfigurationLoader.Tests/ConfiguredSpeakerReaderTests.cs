@@ -1,6 +1,7 @@
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
+using DialogueDown.ConfigurationLoader.Tests.Support;
 using Tomlyn.Syntax;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
@@ -229,70 +230,70 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_NonStringName_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = 42
-            """));
+            """);
     }
 
     [Fact]
     public void Read_TagsNotArray_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             tags = "main"
-            """));
+            """);
     }
 
     [Fact]
     public void Read_TagElementOfWrongType_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             tags = [42]
-            """));
+            """);
     }
 
     [Fact]
     public void Read_UnknownKey_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             color = "red"
-            """));
+            """);
     }
 
     [Fact]
     public void Read_ReservedTagOfWrongType_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             default = 42
-            """));
+            """);
     }
 
     [Fact]
     public void Read_InlineTableTagWithoutName_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             tags = [{ value = "orphan" }]
-            """));
+            """);
     }
 
     [Fact]
     public void Read_InlineTableTagWithUnknownField_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "role", extra = "x" }]
-            """));
+            """);
     }
 
     [Fact]
@@ -331,11 +332,11 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // An empty id is as meaningless as a missing name; the core forbids it (an @id must name
         // at least one character), so the loader rejects it too.
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name = "Alice"
             id = ""
-            """));
+            """);
     }
 
     [Fact]
@@ -343,10 +344,10 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // A dotted key is not part of the flat speaker schema; it must be rejected, not read as
         // its first segment (which would silently misread 'name.first' as 'name').
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        Reject("""
             [[speakers]]
             name.first = "Alice"
-            """));
+            """);
     }
 
     private static IReadOnlyList<ConfiguredSpeaker> Read(string toml) =>

@@ -1,12 +1,11 @@
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader.Errors;
+using static DialogueDown.ConfigurationLoader.Tests.Support.TomlConfigReading;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
 public sealed class TomlConfigurationLoaderTests
 {
-    private const string SourceName = "dialogue.toml";
-
     [Fact]
     public void Parse_NullToml_Throws()
     {
