@@ -94,8 +94,7 @@ internal static class AtomicFile
         ArgumentNullException.ThrowIfNull(content);
 
         var fullPath = Path.GetFullPath(path);
-        var directory = Path.GetDirectoryName(fullPath)!;
-        var temp = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+        var temp = StagingPathFor(fullPath);
 
         lock (LockFor(fullPath))
         {
@@ -154,6 +153,14 @@ internal static class AtomicFile
         }
     }
 
+    // A hidden temp file beside the target, unique to each call, so the final move stays on the
+    // target's own volume, where it is an atomic rename rather than a copy. For
+    // "/scripts/doc.txt" it is "/scripts/.doc.txt.<32 hex digits>.tmp".
+    internal static string StagingPathFor(string fullPath) =>
+        Path.Combine(
+            Path.GetDirectoryName(fullPath)!,
+            $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+
     private static object LockFor(string path) =>
         _locks.GetOrAdd(PathComparison.Normalize(path), _ => new object());
 
@@ -189,8 +196,7 @@ internal static class AtomicFile
     private static void Commit(string path, string content, string? expected, bool validate, Action? afterReplace)
     {
         var fullPath = Path.GetFullPath(path);
-        var directory = Path.GetDirectoryName(fullPath)!;
-        var temp = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+        var temp = StagingPathFor(fullPath);
 
         try
         {
