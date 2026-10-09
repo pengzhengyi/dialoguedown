@@ -40,7 +40,7 @@ public sealed class SegmentBuilderTests
     [Fact]
     public void Take_RefusesAKindItWasNeverTaught() =>
         Assert.Throws<NotSupportedException>(
-            () => new SegmentBuilder().Take(new UntaughtFragment()));
+            () => new SegmentBuilder().Take(new UnhandledFragment()));
 
     [Fact]
     public void IsDivided_IsTrueOnceACommandHasClosedASegment()
@@ -95,5 +95,5 @@ public sealed class SegmentBuilderTests
         Assert.Throws<ArgumentNullException>(() => new SegmentBuilder().Take(null!));
 
     /// <summary>A fragment kind the builder does not handle, for the refusal case.</summary>
-    private sealed record UntaughtFragment : SpeechFragment;
+    private sealed record UnhandledFragment : SpeechFragment;
 }

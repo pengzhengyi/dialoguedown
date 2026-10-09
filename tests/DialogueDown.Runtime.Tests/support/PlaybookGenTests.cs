@@ -60,7 +60,7 @@ public sealed class PlaybookGenTests
             if (_notDrawn.TryGetValue(kind, out var reason))
             {
                 Assert.True(
-                    node.IsUntaught(),
+                    node.IsUnplayableKind(),
                     $"{kind} is left out of the generator because {reason}, and the runner plays "
                         + "one now. Draw it, so the walk property covers what the runner learned, "
                         + "and remove its entry from the list.");

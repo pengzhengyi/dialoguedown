@@ -128,7 +128,7 @@ Words that read two ways or are figurative:
 | rides, rides along | is carried, holds | figurative |
 | wears (a class or color) | has, is drawn with | figurative |
 | reads on, held to | continues, checked against | figurative |
-| ring (of nodes) | cycle | a cycle is the graph term |
+| ring (of nodes) | cycle; an endless loop when it never stops for the host | a cycle is the graph term, and is ordinary dialogue; the runtime refuses only an endless loop |
 | writer, for code that builds a playbook | the compiler | a **writer** is the person who writes the script |
 
 ## Engineering principles
