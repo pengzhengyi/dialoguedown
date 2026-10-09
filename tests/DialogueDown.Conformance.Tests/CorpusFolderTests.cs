@@ -1,3 +1,4 @@
+using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -28,9 +29,7 @@ public sealed class CorpusFolderTests
     {
         using var corpus = new TemporaryCorpus().With("here", ("playbook.json", Anything));
 
-        var error = Assert.Throws<InvalidFixtureException>(() => corpus.Folder.Read("elsewhere", "playbook.json"));
-
-        Assert.Contains("elsewhere", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => corpus.Folder.Read("elsewhere", "playbook.json"), "elsewhere");
     }
 
     [Fact]
@@ -38,10 +37,7 @@ public sealed class CorpusFolderTests
     {
         using var corpus = new TemporaryCorpus().With("a-case", ("playbook.json", Anything));
 
-        var error = Assert.Throws<InvalidFixtureException>(() => corpus.Folder.Read("a-case", "fixture.json"));
-
-        Assert.Contains("a-case", error.Message, StringComparison.Ordinal);
-        Assert.Contains("fixture.json", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => corpus.Folder.Read("a-case", "fixture.json"), "a-case", "fixture.json");
     }
 
     [Fact]
