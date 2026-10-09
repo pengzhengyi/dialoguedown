@@ -172,7 +172,6 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
         list.hidden = clean;
     }
 
-    setDiagnostics.undo = undefined;
     function setDiagnostics(diagnostics: readonly LspDiagnostic[]): void {
         listed = diagnostics;
         render();
