@@ -10,8 +10,8 @@ namespace DialogueDown.TestSupport;
 /// </remarks>
 public static class UnionMembers
 {
-    /// <summary>Every concrete type in the base type's assembly that derives from it.</summary>
-    /// <param name="baseType">The base type. A class or an interface; abstract types are left out.</param>
+    /// <summary>Every concrete type in the base type's assembly that is assignable to it.</summary>
+    /// <param name="baseType">The base type. A class or an interface; abstract types are left out, and a concrete base type is itself included.</param>
     /// <returns>The concrete types, in no particular order.</returns>
     public static IEnumerable<Type> Of(Type baseType)
     {
@@ -21,18 +21,18 @@ public static class UnionMembers
             .Where(type => type.IsAssignableTo(baseType) && !type.IsAbstract);
     }
 
-    /// <summary>Every concrete type in the base type's assembly that derives from it.</summary>
-    /// <typeparam name="TBase">The base type. A class or an interface; abstract types are left out.</typeparam>
+    /// <summary>Every concrete type in the base type's assembly that is assignable to it.</summary>
+    /// <typeparam name="TBase">The base type. A class or an interface; abstract types are left out, and a concrete base type is itself included.</typeparam>
     /// <returns>The concrete types, in no particular order.</returns>
     public static IEnumerable<Type> Of<TBase>() => Of(typeof(TBase));
 
-    /// <summary>The name of every concrete type in the base type's assembly that derives from it.</summary>
-    /// <param name="baseType">The base type. A class or an interface; abstract types are left out.</param>
+    /// <summary>The name of every concrete type in the base type's assembly that is assignable to it.</summary>
+    /// <param name="baseType">The base type. A class or an interface; abstract types are left out, and a concrete base type is itself included.</param>
     /// <returns>The type names, in no particular order.</returns>
     public static IEnumerable<string> NamesOf(Type baseType) => Of(baseType).Select(type => type.Name);
 
-    /// <summary>The name of every concrete type in the base type's assembly that derives from it.</summary>
-    /// <typeparam name="TBase">The base type. A class or an interface; abstract types are left out.</typeparam>
+    /// <summary>The name of every concrete type in the base type's assembly that is assignable to it.</summary>
+    /// <typeparam name="TBase">The base type. A class or an interface; abstract types are left out, and a concrete base type is itself included.</typeparam>
     /// <returns>The type names, in no particular order.</returns>
     public static IEnumerable<string> NamesOf<TBase>() => NamesOf(typeof(TBase));
 }
