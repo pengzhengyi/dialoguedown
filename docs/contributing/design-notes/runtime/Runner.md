@@ -306,10 +306,11 @@ and nothing it reads changes as it goes, so it is in an endless loop. The guard 
 a counter against `Nodes.Length`: exact, allocation-free, and no number anybody
 picks.
 
-### D14 — An untaught node kind is refused, not guessed
+### D14 — A node kind the runner cannot play is refused, not guessed
 
 Offering a choice by walking past it would look like correct play. Refusing keeps
-an untaught construct reading as untaught until the runner learns it.
+a construct the runner cannot play yet showing as unplayable until the runner
+supports it.
 
 ### D15 — A failed effect holds the run
 
