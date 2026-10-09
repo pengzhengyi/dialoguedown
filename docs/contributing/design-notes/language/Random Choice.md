@@ -204,7 +204,7 @@ Lessons carried into this design:
 
 ```mermaid
 flowchart LR
-    LI["Markdown list item"] --> Recognize["RandomChoiceRecognition<br/>peel leading weight span"]
+    LI["Markdown list item"] --> Recognize["RandomChoiceRecognition<br/>remove leading weight span"]
     Recognize --> Read["ChoiceWeightReader"]
     Read --> NW["NumberWeight"]
     Read --> AW["AutoWeight"]
@@ -218,7 +218,7 @@ flowchart LR
     Runtime --> Norm
 ```
 
-Recognition happens in the **transpiler**. `RandomChoiceRecognition` peels a
+Recognition happens in the **transpiler**. `RandomChoiceRecognition` removes a
 leading weight code span before the ordinary inline walk can classify it as a
 game call. `ChoiceWeightReader` reads a number, an auto, or a key, and resolves the
 key through the shared `QueryKeyReader`, so a weight and a condition accept keys
@@ -294,7 +294,7 @@ evenly. All-auto lists are a natural uniform random.
 
 ### D5 — Recognize in the transpiler, warn in structural validation
 
-Peeling the weight belongs in `BlockBuilder` because that is the only place with
+Removing the weight belongs in `BlockBuilder` because that is the only place with
 the raw leading inline before game-call classification claims it. The
 total-drift warning belongs in a structural rule over the desugared AST, next to
 the choice-nesting rule, because it is a whole-group property best computed once
@@ -423,7 +423,7 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 ## Testability
 
 - **Recognition (transpiler):** each weight form (`` `50%` ``, `` `%` ``, and
-  `` `q%` ``) is peeled into the right spanned `ChoiceWeight`; the key form shares
+  `` `q%` ``) is read into the right spanned `ChoiceWeight`; the key form shares
   the condition's key reader; the option body keeps its remaining inlines.
 - **AST traversal:** a `RandomOption` yields its weight before its body, and each
   weight preserves the exact code-span source location.

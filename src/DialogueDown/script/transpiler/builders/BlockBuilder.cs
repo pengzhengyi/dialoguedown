@@ -136,7 +136,7 @@ internal sealed class BlockBuilder
 
     private Choice BuildChoice(ListItem item, IDiagnosticSink diagnostics)
     {
-        var blocks = ChoiceConditionRecognition.Peel(item, out var condition);
+        var blocks = ChoiceConditionRecognition.WithoutLeadingCondition(item, out var condition);
         return new Choice(Build(blocks, diagnostics), item.Span, condition);
     }
 
@@ -150,7 +150,7 @@ internal sealed class BlockBuilder
 
     private RandomOption BuildRandomOption(ListItem item, IDiagnosticSink diagnostics)
     {
-        var blocks = ChoiceConditionRecognition.Peel(item, out var condition);
+        var blocks = ChoiceConditionRecognition.WithoutLeadingCondition(item, out var condition);
         var (weight, body) = RandomChoiceRecognition.Resolve(item with { Blocks = blocks }, diagnostics);
         return new RandomOption(weight, Build(body, diagnostics), item.Span, condition);
     }

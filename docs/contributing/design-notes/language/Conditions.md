@@ -27,7 +27,7 @@
 | --- | --- |
 | **Condition** | A game-state query read as a boolean: `` `key?` ``. The one word for it in code, diagnostics, the guide, and the changelog. |
 | **Guard-first** | The condition is written *before* what it guards, so it reads "if … then …". |
-| **Peel** | Removing a leading condition code span from a block before the rest is parsed, so the condition becomes a property of the block rather than its content. |
+| **Leading condition** | A condition code span at the start of a block. It is read off before the rest is parsed, so the condition becomes a property of the block rather than its content. |
 | **Bound** | A condition that is exactly the `Condition` its parent jump, line, control line, option, or branch references. Any other condition guards nothing. |
 
 ## The primitive
@@ -61,14 +61,14 @@ is recognized and what a false answer means.
 | Attach point | Where the condition is bound | Playbook field | When false | Example |
 | --- | --- | --- | --- | --- |
 | Jump | Inline fragment, bound to the following `=>` in desugar (`JumpAssembler`) | `condition` on the `divert` edge | The jump does not fire; reading continues with the next block | `` `FoundKey?` => [Open the vault](#the-vault) `` |
-| Line | Peeled at the block start, before the speaker (`LineBuilder`) | `condition` on the `line` node | The line is skipped whole | `` `Angry?` Guard: You again? Get out. `` |
-| Control line | Peeled as for a line, then carried by the [control line](./Control%20Line.md) | `condition` on the `control` node | The effect is not performed | `` `GateJammed?` `("force the gate")` `` |
-| Choice option | Peeled at the list item, before the weight and body (`ChoiceConditionRecognition`) | `condition` on the `option` or `random-option` edge | A player option is shown **unavailable**; a random option is excluded and the rest re-normalized | `` - `HasKey?` Use the key on the lock. `` |
+| Line | Read off at the block start, before the speaker (`LineBuilder`) | `condition` on the `line` node | The line is skipped whole | `` `Angry?` Guard: You again? Get out. `` |
+| Control line | Read off as for a line, then carried by the [control line](./Control%20Line.md) | `condition` on the `control` node | The effect is not performed | `` `GateJammed?` `("force the gate")` `` |
+| Choice option | Read off at the list item, before the weight and body (`ChoiceConditionRecognition`) | `condition` on the `option` or `random-option` edge | A player option is shown **unavailable**; a random option is excluded and the rest re-normalized | `` - `HasKey?` Use the key on the lock. `` |
 | Control branch | After the `` `if` `` / `` `elseif` `` marker ([Block Controls](./Block%20Controls.md)) | `condition` on the `branch` edge | The next branch, or the `` `else` ``, is tried | `` > `if` `Rich?` `` |
 
 The attach points differ because the constructs differ: a jump can sit mid-line,
 so its condition travels with it through the inline stream, while a line and an
-option always start their block, so their condition is peeled there.
+option always start their block, so their condition is read off there.
 
 ## Conditional jump
 
@@ -92,7 +92,7 @@ jump inherits every other rule of a [jump](../../../guide/structure-and-flow.md#
 The condition sits **before the speaker**, and `Guard` is still recognized as the
 speaker. A speaker-less line may be conditional too (`` `Returned?` Welcome back. ``).
 
-`LineBuilder` peels the leading condition only when non-jump content follows it:
+`LineBuilder` reads off the leading condition only when non-jump content follows it:
 
 - when a `=>` follows, the condition is left for the jump to claim;
 - when nothing follows, the condition is left in place and reported as guarding
@@ -111,7 +111,7 @@ peeks past it to find the weight, so a condition-first option still makes the
 list a random choice. When `IsAngry` is false the first option is excluded and
 30 and 20 re-normalize to 60% and 40%.
 
-The option condition is peeled at the **list item**, before the body is built,
+The option condition is read off at the **list item**, before the body is built,
 so it guards the whole option and takes precedence over the inner line and jump
 handling:
 
@@ -170,12 +170,12 @@ through the `IConditional` interface (`Line`, `ControlLine`, `Jump`, `Choice`,
 `RandomOption`, `Branch`). Tooling can point at the exact condition, and one node
 and one reader serve every attach point.
 
-### D6 — An option condition is peeled at the list item and wins
+### D6 — An option condition is read off at the list item and wins
 
-A condition on a menu item is meant to guard the menu item, so the list-item peel
-runs before the inner builders and they never bind it again (see the precedence
-table above). The line and the option share `ConditionReader.TryPeel`; each
-applies its own binding policy.
+A condition on a menu item is meant to guard the menu item, so the list item's
+condition is read off before the inner builders run, and they never bind it again
+(see the precedence table above). The line and the option share
+`ConditionReader.TryReadLeading`; each applies its own binding policy.
 
 ### D7 — False falls through; no inline else
 
