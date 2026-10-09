@@ -14,11 +14,15 @@ public sealed class ConfiguredUnmodeledReaderTests
         Assert.Empty(Read(string.Empty));
 
     [Fact]
-    public void Read_OnlySpeakers_ReturnsNoOverrides() =>
-        Assert.Empty(Read("""
+    public void Read_OnlySpeakers_ReturnsNoOverrides()
+    {
+        var handling = Read("""
             [[speakers]]
             name = "Alice"
-            """));
+            """);
+
+        Assert.Empty(handling);
+    }
 
     [Theory]
     [InlineData("code-block", UnmodeledNodeKind.CodeBlock)]
@@ -77,11 +81,15 @@ public sealed class ConfiguredUnmodeledReaderTests
     }
 
     [Fact]
-    public void Read_QuotedKindKey_IsEquivalentToBareKey() =>
-        Assert.Equal(UnmodeledNodeHandling.Ignore, Read("""
+    public void Read_QuotedKindKey_IsEquivalentToBareKey()
+    {
+        var handling = Read("""
             [markdown.unmodeled]
             "table" = "ignore"
-            """)[UnmodeledNodeKind.Table]);
+            """);
+
+        Assert.Equal(UnmodeledNodeHandling.Ignore, handling[UnmodeledNodeKind.Table]);
+    }
 
     [Fact]
     public void Read_DottedKindKey_Throws()
@@ -97,12 +105,16 @@ public sealed class ConfiguredUnmodeledReaderTests
     }
 
     [Fact]
-    public void Read_UnrelatedMarkdownSection_IsIgnored() =>
-        // A sibling section under [markdown] is not this reader's concern.
-        Assert.Empty(Read("""
+    public void Read_UnrelatedMarkdownSection_IsIgnored()
+    {
+        var handling = Read("""
             [markdown.other]
             table = "ignore"
-            """));
+            """);
+
+        // A sibling section under [markdown] is not this reader's concern.
+        Assert.Empty(handling);
+    }
 
     [Fact]
     public void Read_UnknownKind_ThrowsLocated()

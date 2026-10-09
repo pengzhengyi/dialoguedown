@@ -14,11 +14,15 @@ public sealed class ConfiguredModeReaderTests
         Assert.Null(Read(string.Empty));
 
     [Fact]
-    public void Read_OnlySpeakers_ReturnsNull() =>
-        Assert.Null(Read("""
+    public void Read_OnlySpeakers_ReturnsNull()
+    {
+        var mode = Read("""
             [[speakers]]
             name = "Alice"
-            """));
+            """);
+
+        Assert.Null(mode);
+    }
 
     [Theory]
     [InlineData("stage-boundary", CompilationMode.StageBoundary)]
@@ -27,19 +31,27 @@ public sealed class ConfiguredModeReaderTests
         Assert.Equal(expected, Read($"mode = \"{value}\""));
 
     [Fact]
-    public void Read_QuotedModeKey_IsEquivalentToBareKey() =>
-        Assert.Equal(CompilationMode.BestEffort, Read("""
+    public void Read_QuotedModeKey_IsEquivalentToBareKey()
+    {
+        var mode = Read("""
             "mode" = "best-effort"
-            """));
+            """);
+
+        Assert.Equal(CompilationMode.BestEffort, mode);
+    }
 
     [Fact]
-    public void Read_ModeBeforeSpeakers_IsFound() =>
-        Assert.Equal(CompilationMode.BestEffort, Read("""
+    public void Read_ModeBeforeSpeakers_IsFound()
+    {
+        var mode = Read("""
             mode = "best-effort"
 
             [[speakers]]
             name = "Alice"
-            """));
+            """);
+
+        Assert.Equal(CompilationMode.BestEffort, mode);
+    }
 
     [Fact]
     public void Read_UnknownMode_ThrowsLocated()
@@ -73,20 +85,28 @@ public sealed class ConfiguredModeReaderTests
     }
 
     [Fact]
-    public void Read_UnrelatedRootKey_IsIgnored() =>
+    public void Read_UnrelatedRootKey_IsIgnored()
+    {
+        var mode = Read("""
+            title = "My project"
+            """);
+
         // Root keys other than 'mode' stay lenient so new settings can be added without breaking
         // older loaders.
-        Assert.Null(Read("""
-            title = "My project"
-            """));
+        Assert.Null(mode);
+    }
 
     [Fact]
-    public void Read_DottedModeKey_IsNotReadAsMode() =>
+    public void Read_DottedModeKey_IsNotReadAsMode()
+    {
+        var mode = Read("""
+            mode.strategy = "best-effort"
+            """);
+
         // A dotted key keeps its full name ('mode.strategy'), so it is an unrelated root key, not
         // the flat 'mode' setting — ignored rather than misread.
-        Assert.Null(Read("""
-            mode.strategy = "best-effort"
-            """));
+        Assert.Null(mode);
+    }
 
     private static CompilationMode? Read(string toml) =>
         TomlConfigReading.Read(toml, ReadMode);
