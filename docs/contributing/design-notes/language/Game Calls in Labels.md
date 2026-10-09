@@ -396,6 +396,6 @@ one, so it will not ask for the example. The gallery change is made deliberately
 | Where | What the writer sees |
 | --- | --- |
 | The writer's guide to game state | A query in a link label and in a menu option, compiled as written like every guide example. |
-| The error-code reference, `DLG1103` | The broken menu option, its fix (the command before `=>`), and an alternative fix for an inline link (the command beside the link). The docs tests compile all three: the broken form reports `DLG1103`, and neither fix does. |
+| The error-code reference, `DLG1103` | The broken menu option and its fix, the command before `=>`. The docs tests compile both: the broken form reports `DLG1103`, and the fix does not. The prose names the remedy for an inline link, the command beside it; an alternative fix on the page must start from the same broken script, so an inline link gets no example of its own. |
 | `gallery.dialogue.md` | The query in a menu option and a link, rendered in the report like any other example. |
 | `diagnostics.dialogue.md` | A command in a label, so the report's diagnostics overlay shows `DLG1103` beside the other codes a writer can meet. |

@@ -82,6 +82,26 @@ Alice: The sky turns `<mark class="dd-mark-fix">&quot;World.Weather&quot;</mark>
 
 A label — the text in a link's brackets, a jump's included, or an image's alt text — is shown as one piece, so a command written inside it would never run. To run the command when a jump is taken, write it before the `=>`; beside a link in a line, write it outside the brackets.
 
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># Hall
+Alice: Time to go.
+
+- =&gt; [Leave <mark class="dd-mark-bad">`SlamDoor()`</mark>](#exit)
+
+# Exit
+Alice: Gone.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight"># Hall
+Alice: Time to go.
+
+- <mark class="dd-mark-fix">`SlamDoor()` =&gt;</mark> [Leave](#exit)
+
+# Exit
+Alice: Gone.</code></pre>
+
 ### DLG1104
 
 <span class="dd-sev dd-sev--error">Error</span> · Missing weight in a random choice
