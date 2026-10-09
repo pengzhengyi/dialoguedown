@@ -37,58 +37,58 @@ public sealed class ConditionReaderTests
         Assert.Null(ConditionReader.Read(content, new SourceSpan(0, content.Length)));
 
     [Fact]
-    public void TryPeel_LeadingConditionThenContent_PeelsItAndTrimsTheRemainder()
+    public void TryReadLeading_LeadingConditionThenContent_ReadsItAndTrimsTheRemainder()
     {
         MarkdownInline[] inlines = [CodeSpan("\"Rainy\"?"), Text(" hello")];
 
-        var peeled = ConditionReader.TryPeel(inlines, out var condition, out var remainder);
+        var hasCondition = ConditionReader.TryReadLeading(inlines, out var condition, out var remainder);
 
-        Assert.True(peeled);
+        Assert.True(hasCondition);
         AssertCondition(condition, "Rainy");
         AssertSingleText(remainder, "hello");
     }
 
     [Fact]
-    public void TryPeel_OnlyACondition_PeelsItWithAnEmptyRemainder()
+    public void TryReadLeading_OnlyACondition_ReadsItWithAnEmptyRemainder()
     {
         MarkdownInline[] inlines = [CodeSpan("\"Rainy\"?")];
 
-        var peeled = ConditionReader.TryPeel(inlines, out var condition, out var remainder);
+        var hasCondition = ConditionReader.TryReadLeading(inlines, out var condition, out var remainder);
 
-        Assert.True(peeled);
+        Assert.True(hasCondition);
         AssertCondition(condition, "Rainy");
         Assert.Empty(remainder);
     }
 
     [Fact]
-    public void TryPeel_LeadingUnquotedCondition_PeelsItAndTrimsTheRemainder()
+    public void TryReadLeading_LeadingUnquotedCondition_ReadsItAndTrimsTheRemainder()
     {
         MarkdownInline[] inlines = [CodeSpan("Is Alice happy?"), Text(" hello")];
 
-        var peeled = ConditionReader.TryPeel(inlines, out var condition, out var remainder);
+        var hasCondition = ConditionReader.TryReadLeading(inlines, out var condition, out var remainder);
 
-        Assert.True(peeled);
+        Assert.True(hasCondition);
         AssertCondition(condition, "Is Alice happy");
         AssertSingleText(remainder, "hello");
     }
 
     [Fact]
-    public void TryPeel_NoLeadingCondition_ReturnsFalseAndTheOriginalSequence()
+    public void TryReadLeading_NoLeadingCondition_ReturnsFalseAndTheOriginalSequence()
     {
         MarkdownInline[] inlines = [Text("Alice: hello")];
 
-        var peeled = ConditionReader.TryPeel(inlines, out _, out var remainder);
+        var hasCondition = ConditionReader.TryReadLeading(inlines, out _, out var remainder);
 
-        Assert.False(peeled);
+        Assert.False(hasCondition);
         Assert.Same(inlines, remainder);
     }
 
     [Fact]
-    public void TryPeel_LeadingNonConditionCodeSpan_ReturnsFalse()
+    public void TryReadLeading_LeadingNonConditionCodeSpan_ReturnsFalse()
     {
         // A plain query (no `?`) is not a condition, so nothing is split off.
         MarkdownInline[] inlines = [CodeSpan("\"Rainy\""), Text(" hello")];
 
-        Assert.False(ConditionReader.TryPeel(inlines, out _, out _));
+        Assert.False(ConditionReader.TryReadLeading(inlines, out _, out _));
     }
 }

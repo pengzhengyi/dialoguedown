@@ -352,7 +352,7 @@ public sealed class BlockBuilderTests
     }
 
     [Fact]
-    public void RandomOption_WeightIsPeeled_AndTheSpeakerStillParses()
+    public void RandomOption_WeightIsRemoved_AndTheSpeakerStillParses()
     {
         var body = Build(
         [

@@ -126,7 +126,7 @@ flowchart LR
 | `TextInline` | Markdown text plus its content span | Carries `IsFirstCharacterEscaped`, copied from Markdig. |
 | `MarkdigToMarkdownAstConverter` | Markdig tree → Markdown AST | Copies `LiteralInline.IsFirstCharacterEscaped`; no span heuristic. |
 | `InlineLeafTokenizer` | Text → `TextLeaf` / `TagLeaf` / `JumpLeaf` | An escaped leading character takes the sigil that begins there — or itself — as text. |
-| `LineBuilder` | Peels a line's speaker prefix | Skips the prefix parse when the leading text starts escaped; `PrecedesAJump` asks the tokenizer's `StartsWithJumpIndicator`, which owns the arrow's spelling and escape rule. |
+| `LineBuilder` | Reads a line's speaker prefix | Skips the prefix parse when the leading text starts escaped; `PrecedesAJump` asks the tokenizer's `StartsWithJumpIndicator`, which owns the arrow's spelling and escape rule. |
 | Desugar, semantic analysis, graph, playbook | — | **Unchanged.** |
 
 Two Markdig details make the flag exact:
@@ -260,7 +260,7 @@ error-code reference offer `\=>` as the deliberate spelling.
   character that begins no sigil is literal alone (`\=#tag` keeps `#tag` a tag);
   `\=>x` and `=\>` yield text; adjacent text leaves still coalesce within a run.
 - **Line builder:** leading escaped text never parses as a speaker prefix, and a
-  condition before an escaped arrow peels as the line's condition.
+  condition before an escaped arrow is read as the line's condition.
 - **Integration:** compiling `\#notatag`, `\##default`, `\=>`, and `=\>` yields
   the expected `Text` fragments and no `DLG1113`; the escaped cases join the
   transpiler tests' boundary set.

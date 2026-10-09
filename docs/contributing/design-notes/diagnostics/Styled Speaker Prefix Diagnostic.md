@@ -35,13 +35,13 @@ The line still compiles unchanged.
 
 ## Why it happens
 
-`LineBuilder` peels a speaker only when the paragraph's first inline is plain text.
+`LineBuilder` reads a speaker only when the paragraph's first inline is plain text.
 `*Alice*: Hello` parses as `EmphasisInline("Alice")` + `TextInline(": Hello")`, so
-the peel stops and `SpeakerPrefixParser` never runs.
+reading stops and `SpeakerPrefixParser` never runs.
 
 ## Detection
 
-When the peel finds no speaker, `LineBuilder` calls `StyledSpeakerPrefixDetector`:
+When reading finds no speaker, `LineBuilder` calls `StyledSpeakerPrefixDetector`:
 
 1. The leading run up to the first `:` must contain an `EmphasisInline`.
 2. Flatten the leading inlines to plain text up to and including the first `:` that
@@ -52,9 +52,9 @@ When the peel finds no speaker, `LineBuilder` calls `StyledSpeakerPrefixDetector
 
 ```mermaid
 flowchart LR
-    LB["LineBuilder"] -->|"peel speaker"| PEEL{"recognized?"}
-    PEEL -->|yes| LINE["Line with speaker"]
-    PEEL -->|no| DET["StyledSpeakerPrefixDetector"]
+    LB["LineBuilder"] -->|"read speaker"| READ{"recognized?"}
+    READ -->|yes| LINE["Line with speaker"]
+    READ -->|no| DET["StyledSpeakerPrefixDetector"]
     DET -. "DLG1107" .-> DIAG["sink"]
     DET --> LINE2["Line, no speaker"]
 ```

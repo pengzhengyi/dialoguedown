@@ -73,7 +73,7 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
-    public void LeadingCondition_IsPeeledOntoTheLineBeforeTheSpeaker()
+    public void LeadingCondition_GuardsTheLine_AheadOfItsSpeaker()
     {
         var line = Build([CodeSpan("\"Angry\"?"), Text(" Guard: You again?")]);
 
@@ -94,7 +94,7 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
-    public void OnlyACondition_IsNotPeeled_SoItStaysAnOrphanFragment()
+    public void OnlyACondition_StaysInSpeech_AsAnOrphanFragment()
     {
         // A condition with nothing after it guards nothing; it is left in speech for the
         // orphan-condition rule to report, rather than becoming an empty conditional line.
@@ -105,7 +105,7 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
-    public void LeadingConditionBeforeAJump_IsNotPeeled_SoItGuardsTheJump()
+    public void LeadingConditionBeforeAJump_StaysInSpeech_SoItGuardsTheJump()
     {
         // `"key"?` => ... is a conditional *jump*: the condition stays in speech so desugar binds
         // it to the jump, rather than being taken as the line's condition.
@@ -183,7 +183,7 @@ public sealed class LineBuilderTests
     }
 
     [Fact]
-    public void EscapedArrowAfterACondition_StillPeelsTheCondition()
+    public void EscapedArrowAfterACondition_StillGuardsTheLine()
     {
         // "`Ready?`\=> go" (no space) — the escaped arrow is prose, not a jump, so the
         // condition guards the line instead of being left for jump binding.
