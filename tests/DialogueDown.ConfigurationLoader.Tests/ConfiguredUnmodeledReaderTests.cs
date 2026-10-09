@@ -96,7 +96,7 @@ public sealed class ConfiguredUnmodeledReaderTests
     {
         // A dotted key keeps its full name, so it is unknown rather than being misread as the
         // first segment (`table`).
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [markdown.unmodeled]
             table.format = "keep"
             """);
@@ -119,7 +119,7 @@ public sealed class ConfiguredUnmodeledReaderTests
     [Fact]
     public void Read_UnknownKind_ThrowsLocated()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [markdown.unmodeled]
             footnote = "ignore"
             """);
@@ -130,7 +130,7 @@ public sealed class ConfiguredUnmodeledReaderTests
     [Fact]
     public void Read_UnknownHandling_ThrowsLocated()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [markdown.unmodeled]
             table = "delete"
             """);
@@ -141,7 +141,7 @@ public sealed class ConfiguredUnmodeledReaderTests
     [Fact]
     public void Read_NonStringHandling_Throws()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [markdown.unmodeled]
             table = 42
             """);
@@ -155,7 +155,7 @@ public sealed class ConfiguredUnmodeledReaderTests
         // TOML forbids redefining a key, so a kind set twice never reaches this reader — the
         // parser names it first. Guards that the duplicate is reported rather than silently
         // last-wins.
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [markdown.unmodeled]
             table = "ignore"
             table = "keep"
@@ -167,8 +167,8 @@ public sealed class ConfiguredUnmodeledReaderTests
     private static IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> Read(string toml) =>
         TomlConfigReading.Read(toml, ReadUnmodeled);
 
-    private static DialogueConfigurationException Reject(string toml) =>
-        TomlConfigReading.Reject(toml, ReadUnmodeled);
+    private static DialogueConfigurationException AssertRejects(string toml) =>
+        TomlConfigReading.AssertRejects(toml, ReadUnmodeled);
 
     private static IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> ReadUnmodeled(
         DocumentSyntax document) => new ConfiguredUnmodeledReader().Read(document);

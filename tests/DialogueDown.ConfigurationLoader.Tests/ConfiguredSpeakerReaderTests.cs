@@ -188,7 +188,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_MissingName_ThrowsLocatedAtSpeaker()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [[speakers]]
             id = "A"
             """);
@@ -199,7 +199,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_EmptyName_Throws()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [[speakers]]
             name = ""
             """);
@@ -210,7 +210,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_NonStringName_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = 42
             """);
@@ -219,7 +219,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_TagsNotArray_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = "main"
@@ -229,7 +229,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_TagElementOfWrongType_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = [42]
@@ -239,7 +239,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_UnknownKey_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             color = "red"
@@ -249,7 +249,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_ReservedTagOfWrongType_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             default = 42
@@ -259,7 +259,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_InlineTableTagWithoutName_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = [{ value = "orphan" }]
@@ -269,7 +269,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_InlineTableTagWithUnknownField_Throws()
     {
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "role", extra = "x" }]
@@ -279,7 +279,7 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_TwoDefaultSpeakers_ThrowsLocatedAtSecond()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [[speakers]]
             name = "Narrator"
             default = true
@@ -309,7 +309,7 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // An empty id is as meaningless as a missing name; the core forbids it (an @id must name
         // at least one character), so the loader rejects it too.
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             id = ""
@@ -321,7 +321,7 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // A dotted key is not part of the flat speaker schema; it must be rejected, not read as
         // its first segment (which would silently misread 'name.first' as 'name').
-        Reject("""
+        AssertRejects("""
             [[speakers]]
             name.first = "Alice"
             """);
@@ -330,8 +330,8 @@ public sealed class ConfiguredSpeakerReaderTests
     private static IReadOnlyList<ConfiguredSpeaker> Read(string toml) =>
         TomlConfigReading.Read(toml, ReadSpeakers);
 
-    private static DialogueConfigurationException Reject(string toml) =>
-        TomlConfigReading.Reject(toml, ReadSpeakers);
+    private static DialogueConfigurationException AssertRejects(string toml) =>
+        TomlConfigReading.AssertRejects(toml, ReadSpeakers);
 
     private static IReadOnlyList<ConfiguredSpeaker> ReadSpeakers(DocumentSyntax document) =>
         new ConfiguredSpeakerReader().Read(document);

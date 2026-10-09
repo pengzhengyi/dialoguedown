@@ -56,7 +56,7 @@ public sealed class ConfiguredModeReaderTests
     [Fact]
     public void Read_UnknownMode_ThrowsLocated()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             mode = "turbo"
             """);
 
@@ -67,7 +67,7 @@ public sealed class ConfiguredModeReaderTests
     public void Read_FailFast_IsRejected()
     {
         // Fail-fast is an embedding contract that throws, not a settable reporting mode.
-        var exception = Reject("""
+        var exception = AssertRejects("""
             mode = "fail-fast"
             """);
 
@@ -77,7 +77,7 @@ public sealed class ConfiguredModeReaderTests
     [Fact]
     public void Read_NonStringMode_Throws()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             mode = 42
             """);
 
@@ -111,8 +111,8 @@ public sealed class ConfiguredModeReaderTests
     private static CompilationMode? Read(string toml) =>
         TomlConfigReading.Read(toml, ReadMode);
 
-    private static DialogueConfigurationException Reject(string toml) =>
-        TomlConfigReading.Reject(toml, ReadMode);
+    private static DialogueConfigurationException AssertRejects(string toml) =>
+        TomlConfigReading.AssertRejects(toml, ReadMode);
 
     private static CompilationMode? ReadMode(DocumentSyntax document) =>
         new ConfiguredModeReader().Read(document);

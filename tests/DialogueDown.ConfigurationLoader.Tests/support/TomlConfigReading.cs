@@ -31,6 +31,6 @@ internal static class TomlConfigReading
     /// <param name="toml">The snippet.</param>
     /// <param name="reader">The reader's <c>Read</c> method.</param>
     /// <returns>The error the reader raised.</returns>
-    public static DialogueConfigurationException Reject<T>(string toml, Func<DocumentSyntax, T> reader) =>
+    public static DialogueConfigurationException AssertRejects<T>(string toml, Func<DocumentSyntax, T> reader) =>
         Assert.Throws<DialogueConfigurationException>(() => Read(toml, reader));
 }
