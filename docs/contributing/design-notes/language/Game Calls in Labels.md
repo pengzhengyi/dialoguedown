@@ -55,6 +55,10 @@ Out of scope, and each designed separately:
   restored to its Markdown text, along with any query in its alt text.
 - **Playing a choice.** The runner does not play a choice yet. A query in an
   option's label reaches the playbook and waits for choice playback to fill it.
+  An option written without a jump (`` - Random Armor `AddToInventory("Armor")` ``)
+  takes its label from its own words, command included. Choice playback decides
+  what a menu does with that command; the option's line still performs it when
+  the option is chosen.
 
 ## Writer-facing behavior
 
@@ -239,23 +243,31 @@ internal sealed class CommandInLabelRule : DiagnosticRule
 
     protected override void Analyze(DialogueTreeIndex nodes, Reporter report)
     {
-        var commands = nodes.OfType<GameCall>()
-            .Where(call => call is DefaultCommand or CustomCommand);
-
-        foreach (var command in commands.Where(command => nodes.AncestorsOf(command).Any(IsLabel)))
+        foreach (var command in nodes.OfType<GameCall>().Where(IsCommand))
         {
-            report(command.Span, command.Canonical());   // GiveQuest("EmberCrown"), ("wave")
+            if (nodes.AncestorsOf(command).Any(IsLabel))
+            {
+                report(command.Span, command.Canonical());   // GiveQuest("EmberCrown"), ("wave")
+            }
         }
     }
 
-    // A link, an image, and a jump each show their label whole, so nothing inside it runs.
+    private static bool IsCommand(GameCall call) => call switch
+    {
+        Query => false,
+        DefaultCommand or CustomCommand => true,
+        _ => throw new NotSupportedException(/* … */),
+    };
+
     private static bool IsLabel(ScriptNode node) => node is Link or Image or Jump;
 }
 ```
 
 `DialogueTreeIndex` files each node under every type in its inheritance chain, so
-`OfType<GameCall>()` finds both command kinds. A label never contains a line, so
-any label among a command's ancestors means the command is inside one.
+`OfType<GameCall>()` finds every game call. `IsCommand` names each kind, so a game
+call kind added later fails here until someone decides whether a label may hold
+it. A label never contains a line, so any label among a command's ancestors means
+the command is inside one.
 
 ## Error and boundary cases
 
@@ -270,6 +282,7 @@ any label among a command's ancestors means the command is inside one.
 | A speakerless line holding only a jump whose label has a command | Still a control line, because `ControlLineRecognitionRule` reads only top-level fragments; the rule still reports `DLG1103`. |
 | A command beside a link, outside the brackets | Unchanged; it is speech. |
 | A command before a jump (`` `SlamDoor()` => [Leave](#exit) ``) | Unchanged; the jump's line performs it, as the remedy relies on. |
+| A command in an option's own words (`` - Random Armor `AddToInventory("Armor")` ``) | Unchanged; it is speech, which the option's line performs when chosen. |
 | A condition in a label | `DLG1106` at the code span. |
 | A condition before a jump | Unchanged; it guards the jump. |
 | A code span that is not a game call | `DLG1102` once, from `GameCallBuilder`; recovered as literal text. |
@@ -334,7 +347,7 @@ One input, one expected output, at the smallest unit that owns the behavior.
 | --- | --- |
 | `InlineBuilder` | A code span in a link label and in alt text builds a `Query`, a command, or a `Condition`. A malformed one reports `DLG1102` once. |
 | `LabelInlinePolicy` | It supports a code span, and still restores a link, an image, and a soft break to text. |
-| `CommandInLabelRule` | It reports a command in a link, image, or jump label, including inside emphasis. It stays silent for a command in speech, beside a link, or before a jump, and for any query. |
+| `CommandInLabelRule` | It reports a command in a link, image, or jump label, including inside emphasis. It stays silent for a command in speech, beside a link, before a jump, or in an option's own words, and for any query. |
 | `GameCallExtensions` | `Canonical` writes a query, a default command, and a named command with and without arguments in their standard form. |
 | Compilation | A menu option's label and a divert's label each carry a `QueryFragment`. A command or a condition in a label fails the compile with its code at the code span. |
 

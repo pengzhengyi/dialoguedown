@@ -22,6 +22,15 @@ public sealed class CommandInLabelRuleTests
     }
 
     [Fact]
+    public void Check_ACommandInAnImagesAltText_Reports() =>
+        AssertReported(
+            Check(InAnImagesAltText(CustomCommand("PlaySfx", "click"))), DiagnosticCatalog.CommandInLabel);
+
+    [Fact]
+    public void Check_ACommandInAJumpLabel_Reports() =>
+        AssertReported(Check(InAJumpLabel(CustomCommand("SlamDoor"))), DiagnosticCatalog.CommandInLabel);
+
+    [Fact]
     public void Check_ACommandInsideEmphasisInALabel_Reports() =>
         AssertReported(
             Check(InsideEmphasisInALinkLabel(CustomCommand("Wave"))), DiagnosticCatalog.CommandInLabel);
@@ -46,6 +55,14 @@ public sealed class CommandInLabelRuleTests
         AssertNotReported(Check(BesideALink(CustomCommand("Wave"))));
 
     [Fact]
+    public void Check_ACommandBeforeAJump_ReportsNothing() =>
+        AssertNotReported(Check(BeforeAJump(CustomCommand("SlamDoor"))));
+
+    [Fact]
+    public void Check_ACommandInAnOptionsOwnWords_ReportsNothing() =>
+        AssertNotReported(Check(InAnOptionsOwnWords(CustomCommand("AddToInventory", "Armor"))));
+
+    [Fact]
     public void Check_AQueryInALabel_ReportsNothing() =>
         AssertNotReported(Check(InALinkLabel(Query("PlaceName"))));
 
@@ -67,6 +84,24 @@ public sealed class CommandInLabelRuleTests
     /// </remarks>
     private static Line InALinkLabel(InlineFragment call) =>
         Line(Link("#inn", Text("Talk to "), call));
+
+    /// <summary>A line whose image's alt text holds <paramref name="command"/>.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice: ![A `PlaySfx("click")` button](button.png)
+    /// </code>
+    /// </remarks>
+    private static Line InAnImagesAltText(GameCall command) =>
+        Line(Image("button.png", Text("A "), command, Text(" button")));
+
+    /// <summary>A menu option's jump whose label holds <paramref name="command"/>.</summary>
+    /// <remarks>
+    /// <code>
+    /// - => [Leave `SlamDoor()`](#exit)
+    /// </code>
+    /// </remarks>
+    private static Choices InAJumpLabel(GameCall command) =>
+        Choices(Choice(ControlLine(Jump("#exit", Text("Leave "), command))));
 
     /// <summary>A line whose link label holds <paramref name="command"/> inside emphasis.</summary>
     /// <remarks>
@@ -103,6 +138,24 @@ public sealed class CommandInLabelRuleTests
     /// </remarks>
     private static Line BesideALink(GameCall command) =>
         Line(command, Text(" "), Link("#inn", Text("Talk to Bob")));
+
+    /// <summary>A menu option that performs <paramref name="command"/> and then jumps.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `SlamDoor()` => [Leave](#exit)
+    /// </code>
+    /// </remarks>
+    private static Choices BeforeAJump(GameCall command) =>
+        Choices(Choice(ControlLine(command, Jump("#exit", Text("Leave")))));
+
+    /// <summary>A menu option whose own words end in <paramref name="command"/>.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Random Armor `AddToInventory("Armor")`
+    /// </code>
+    /// </remarks>
+    private static Choices InAnOptionsOwnWords(GameCall command) =>
+        Choices(Choice(Line(Text("Random Armor "), command)));
 
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
