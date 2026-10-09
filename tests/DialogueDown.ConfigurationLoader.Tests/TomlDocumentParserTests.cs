@@ -1,11 +1,12 @@
 using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Toml;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
+using static DialogueDown.ConfigurationLoader.Tests.Support.TomlConfigReading;
+
 namespace DialogueDown.ConfigurationLoader.Tests;
 
 public sealed class TomlDocumentParserTests
 {
-    private const string SourceName = "dialogue.toml";
-
     [Fact]
     public void Parse_ValidToml_ReturnsDocument()
     {
@@ -29,8 +30,7 @@ public sealed class TomlDocumentParserTests
             broken =
             """));
 
-        Assert.Equal(SourceName, exception.Location.Source);
-        Assert.Equal(3, exception.Location.Line);
+        AssertRejectedAt(exception, line: 3);
         Assert.NotEqual(string.Empty, exception.Message);
     }
 }
