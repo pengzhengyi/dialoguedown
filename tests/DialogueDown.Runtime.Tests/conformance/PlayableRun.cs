@@ -13,12 +13,12 @@ internal static class PlayableRun
     {
         var session = playable.Fixture.Session;
         var context = PlayContext.Of(PlaybookReader.Default.Read(playable.Playbook));
-        var untaught = Playability.WhyNotPlayable(context)
+        var whyNotPlayable = Playability.WhyNotPlayable(context)
             .Concat(Playability.WhyNotPlayable(session))
             .ToList();
 
-        return untaught.Count > 0
-            ? SessionOutcome.NotYetPlayable(untaught)
+        return whyNotPlayable.Count > 0
+            ? SessionOutcome.NotYetPlayable(whyNotPlayable)
             : SessionMatcher.Match(new SessionOperator(context), session);
     }
 }

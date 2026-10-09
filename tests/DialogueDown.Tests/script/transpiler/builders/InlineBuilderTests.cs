@@ -174,7 +174,7 @@ public sealed class InlineBuilderTests
     }
 
     [Fact]
-    public void Build_TextRunWithAnEscapedFirstCharacter_KeepsItsSigilAsText()
+    public void Build_TextWithAnEscapedFirstCharacter_KeepsItsSigilAsText()
     {
         // Source "\#happy": the text is "#happy" with the escape recorded, so the tag is
         // read as plain text rather than metadata.

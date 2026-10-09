@@ -31,6 +31,6 @@ internal static class NodeArrivalExtensions
     /// <returns>
     /// <see langword="true"/> when arriving refuses because the runner has no code for the kind.
     /// </returns>
-    public static bool IsUntaught(this Node node) =>
+    public static bool IsUnplayableKind(this Node node) =>
         node.RefusalOnArrival()?.Reason == RefusalReason.UnplayableNode;
 }

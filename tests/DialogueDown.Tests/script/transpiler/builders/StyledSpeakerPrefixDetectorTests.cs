@@ -66,7 +66,7 @@ public sealed class StyledSpeakerPrefixDetectorTests
         Assert.Empty(Check(Italic(Text("the great")), Text(": hi")));
 
     [Fact]
-    public void Report_AStyledRunWithoutAColon_ReportsNothing() =>
+    public void Report_StyledTextWithoutAColon_ReportsNothing() =>
         Assert.Empty(Check(Italic(Text("Alice")), Text(" waves")));
 
     [Fact]
