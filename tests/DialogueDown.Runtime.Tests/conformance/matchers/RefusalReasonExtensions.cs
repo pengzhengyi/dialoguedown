@@ -8,8 +8,8 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// </summary>
 /// <remarks>
 /// The names belong to the fixture format, not the runtime, so the runtime's enum carries no
-/// serialization attribute: <see cref="RefusalReason.EndlessRing"/> is written
-/// <c>endless-ring</c>.
+/// serialization attribute: <see cref="RefusalReason.EndlessLoop"/> is written
+/// <c>endless-loop</c>.
 /// </remarks>
 internal static class RefusalReasonExtensions
 {
@@ -24,7 +24,7 @@ internal static class RefusalReasonExtensions
         RefusalReason.Misplaced => "misplaced",
         RefusalReason.UnknownCommand => "unknown-command",
         RefusalReason.LeadsNowhere => "leads-nowhere",
-        RefusalReason.EndlessRing => "endless-ring",
+        RefusalReason.EndlessLoop => "endless-loop",
         RefusalReason.UnansweredKey => "unanswered-key",
         RefusalReason.UnaskedKey => "unasked-key",
         RefusalReason.WrongAnswerKind => "wrong-answer-kind",

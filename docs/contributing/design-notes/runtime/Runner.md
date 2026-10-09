@@ -176,7 +176,7 @@ runtimes.
 | `misplaced` | a known command arrives where it cannot be taken — `Next` while the run waits on the host, or `Done`/`Failed` when nothing was asked |
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
-| `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
+| `endless-loop` | a walk enters a loop of nodes that hand the host nothing |
 | `unanswered-key` | a `Supply` leaves out a key the run asked about |
 | `unasked-key` | a `Supply` answers a key the run did not ask about |
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |
@@ -299,11 +299,12 @@ and answers once, and round trips stay proportional to what was written. A line
 with commands in its speech waits the same way: once per step, after the words and
 commands that step says, as [speaking a line](./Speaking%20a%20Line.md#s3--a-step-stops-before-a-query-written-after-a-command) describes.
 
-### D13 — A ring is refused by counting
+### D13 — An endless loop is refused by counting
 
 A walk that passes more nodes than the playbook has must have visited one twice,
-and nothing it reads changes as it goes, so it is in a ring. The guard is a counter
-against `Nodes.Length`: exact, allocation-free, and no number anybody picks.
+and nothing it reads changes as it goes, so it is in an endless loop. The guard is
+a counter against `Nodes.Length`: exact, allocation-free, and no number anybody
+picks.
 
 ### D14 — An untaught node kind is refused, not guessed
 

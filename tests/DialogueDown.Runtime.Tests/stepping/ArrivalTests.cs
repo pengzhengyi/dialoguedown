@@ -74,7 +74,7 @@ public sealed class ArrivalTests
     public void Supplied_WhenTheWorldWithholdsTheOnlyLineOfALoop_AsksAboutItAgain()
     {
         // The walk comes back round to a line it has to ask about, and asking stops it there, so
-        // the ring bound is never reached. The world may answer differently the next time round.
+        // the loop bound is never reached. The world may answer differently the next time round.
         var result = Arrival.Supplied(ALoopOfOneGuardedLine(), Waiting(0, "Rainy"), Answering(("Rainy", false)));
 
         AssertAsked(result, node: 0, Moment.BeforePlaying, "Rainy");
@@ -222,11 +222,11 @@ public sealed class ArrivalTests
             "Alice.HasPick");
 
     [Fact]
-    public void At_ARingOfJumps_RefusesRatherThanWalkingForever()
+    public void At_ALoopOfJumps_RefusesRatherThanWalkingForever()
     {
-        // Nothing in the ring ever hands the host anything, so a walk with no bound would never
+        // Nothing in the loop ever hands the host anything, so a walk with no bound would never
         // return and a total step would become a hang.
-        AssertRefused(Arrival.At(PlayContextFactory.RingOfJumps(3), 0), RefusalReason.EndlessRing, "ring");
+        AssertRefused(Arrival.At(PlayContextFactory.LoopOfJumps(3), 0), RefusalReason.EndlessLoop, "loop");
     }
 
     [Fact]

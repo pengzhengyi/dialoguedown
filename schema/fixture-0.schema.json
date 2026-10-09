@@ -301,7 +301,7 @@
                 "misplaced",
                 "unknown-command",
                 "leads-nowhere",
-                "endless-ring",
+                "endless-loop",
                 "unanswered-key",
                 "unasked-key",
                 "wrong-answer-kind",

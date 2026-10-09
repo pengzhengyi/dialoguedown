@@ -232,7 +232,7 @@ entered as if it had needed no answers: played with the answers in it, or walked
 past when it hands the host nothing.
 
 A guarded node stops the walk to ask. So a loop that comes back round to one asks
-about it again, and the world may answer differently the next time; the ring
+about it again, and the world may answer differently the next time; the loop
 bound only ever meets nodes that nothing guards.
 
 An edge's condition is a different question with a different answer: a way out
@@ -273,7 +273,7 @@ compiler writes beneath the block, so the block is skipped, as the guide describ
 
 A jump on its own line is walked past the same way, and its condition is asked
 on the way out too. Both ask inside the walk rather than by leaving through
-`Departure`, so the ring bound still counts every node the walk passes.
+`Departure`, so the loop bound still counts every node the walk passes.
 
 ### A9 — A query is substituted before the line is said
 
@@ -298,7 +298,7 @@ replays. It also leaves `SpeechText` with nothing new to know.
 | A branch whose arms all fail, with no `else` | Falls through to the succession beneath the block, so the block is skipped. Leads nowhere only when there is no succession either, which no script compiles to |
 | A skipped node whose succession leads nowhere | Leads nowhere |
 | A guarded node with nothing to say or perform, once the world allows it | Walked past, as an unguarded one is. No script compiles to this, but a reader accepts it |
-| A loop the world keeps withholding every guarded node of | Each guarded node is asked about again as the walk comes back to it; the ring bound is never reached |
+| A loop the world keeps withholding every guarded node of | Each guarded node is asked about again as the walk comes back to it; the loop bound is never reached |
 | A node with a condition **and** a query in its speech | One ask carrying both keys |
 | A node naming one key as its condition **and** as a query | `KeyNeededBothWays`, naming the key, refused before anything is asked, and again when a run restored straight into the wait is answered |
 
@@ -359,7 +359,7 @@ Three are worth naming because they are easy to leave out. A node with a conditi
 **and** a query must produce **one** `Resolve` carrying both keys, which is the
 half of A1 a single-key fixture cannot show. A branch whose arms all fail with no
 `else` must skip the block rather than hang. And a loop that comes back to a
-guarded node must ask about it again: the ring bound was written for nodes that
+guarded node must ask about it again: the loop bound was written for nodes that
 nothing guards, and a guarded node stops the walk before the bound is reached.
 
 ## Open questions and deferred work
