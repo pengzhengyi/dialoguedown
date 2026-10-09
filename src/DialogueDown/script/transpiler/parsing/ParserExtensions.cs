@@ -1,9 +1,9 @@
 namespace DialogueDown.Script.Transpiler.Parsing;
 
 /// <summary>
-/// Terminal helpers for running a parser and reporting its outcome. Unlike the
+/// Terminal helpers for running a parser over a whole input. Unlike the
 /// combinators, these do not return a new parser: they run one and hand back a
-/// result or a message for a caller — typically a builder — to act on.
+/// result for a caller — typically a builder — to act on.
 /// </summary>
 internal static class ParserExtensions
 {
@@ -43,12 +43,4 @@ internal static class ParserExtensions
         value = default!;
         return false;
     }
-
-    /// <summary>
-    /// Combines an author-facing <paramref name="headline"/> with the technical reason
-    /// a parse failed, so a syntax error reads well yet still carries the grammar's
-    /// detail (set off by a <c>↳</c>). With no failure, the headline stands alone.
-    /// </summary>
-    public static string Explain<T>(this ParseResult<T> result, string headline) =>
-        result.Error is { } error ? $"{headline}\n  ↳ {error.Detail}" : headline;
 }
