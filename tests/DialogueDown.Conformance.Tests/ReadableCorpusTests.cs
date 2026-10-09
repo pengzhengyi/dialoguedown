@@ -48,8 +48,6 @@ public sealed class ReadableCorpusTests
         AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("renamed"), "elsewhere.json");
     }
 
-
-
     [Fact]
     public void Cases_ReadEveryCaseName()
     {

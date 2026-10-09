@@ -62,7 +62,9 @@ public sealed class ReadableFixtureTests
     [Fact]
     public void Read_AFixtureWithoutASchema_IsStillRead()
     {
-        Assert.Null(ReadableFixture.Read(AReadableFixture().ToJsonString()).Schema);
+        var fixture = ReadableFixture.Read(AReadableFixture().ToJsonString());
+
+        Assert.Null(fixture.Schema);
     }
 
     [Theory]

@@ -64,7 +64,9 @@ public sealed class PlayableFixtureTests
     [Fact]
     public void Read_AFixtureWithoutASchema_IsStillRead()
     {
-        Assert.Null(PlayableFixture.Read(APlayableFixture().ToJsonString()).Schema);
+        var fixture = PlayableFixture.Read(APlayableFixture().ToJsonString());
+
+        Assert.Null(fixture.Schema);
     }
 
     [Theory]
