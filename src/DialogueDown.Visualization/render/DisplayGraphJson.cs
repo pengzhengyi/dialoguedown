@@ -28,7 +28,8 @@ internal static class DisplayGraphJson
         JsonSerializer.Serialize(graphs, _options);
 
     /// <summary>
-    /// Serializes the report payload injected into the page — the display
+    /// Serializes the report payload, which a page carries and the live server sends from its
+    /// document API and hot-reload events: the display
     /// <paramref name="mode"/> (static, view, or edit), the document <paramref name="path"/>
     /// when known, the compiled <paramref name="source"/> (shown in the Source tab;
     /// omitted when null), each stage's display graph, the editor's resolved
@@ -44,42 +45,6 @@ internal static class DisplayGraphJson
     public static string SerializeReport(
         string mode,
         string? path,
-        string? source,
-        IEnumerable<DisplayGraph> stages,
-        SymbolSet? symbols = null,
-        ConfigurationReport? configuration = null,
-        IReadOnlyList<LspDiagnostic>? diagnostics = null,
-        IReadOnlyList<SemanticToken>? semanticTokens = null,
-        ConfigStatusOverlay? configOverlay = null,
-        ReportProject? project = null,
-        PlaybookReport? playbook = null)
-    {
-        var json = JsonSerializer.Serialize(
-            new
-            {
-                mode,
-                path,
-                source,
-                stages,
-                symbols,
-                configuration,
-                diagnostics,
-                semanticTokens,
-                project,
-                playbook,
-            },
-            _options);
-        return configOverlay is null ? json : ApplyConfigOverlay(json, configOverlay);
-    }
-
-    /// <summary>
-    /// Serializes the current document payload, in the same shape as
-    /// <see cref="SerializeReport"/>, for the live server's document API and its hot-reload
-    /// push events.
-    /// </summary>
-    public static string SerializeDocument(
-        string mode,
-        string path,
         string? source,
         IEnumerable<DisplayGraph> stages,
         SymbolSet? symbols = null,

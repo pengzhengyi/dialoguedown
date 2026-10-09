@@ -185,7 +185,7 @@ public sealed class CompilationVisualizer
         ArgumentNullException.ThrowIfNull(documentPath);
         ArgumentNullException.ThrowIfNull(mode);
         var content = BuildContent(source, documentPath);
-        return DisplayGraphJson.SerializeDocument(
+        return DisplayGraphJson.SerializeReport(
             mode, documentPath, source, content.Stages, content.Symbols, content.Configuration,
             content.Diagnostics, content.SemanticTokens, configOverlay, project, content.Playbook);
     }
