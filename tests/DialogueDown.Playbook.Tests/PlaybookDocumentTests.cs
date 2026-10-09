@@ -102,6 +102,15 @@ public sealed class PlaybookDocumentTests
     }
 
     [Fact]
+    public void Construct_ANegativeAnchor_IsRejectedNamingTheScene()
+    {
+        void NegativeAnchor() => _ = PlaybookFactory.Document(anchors: [("the-inn", -1)]);
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(NegativeAnchor);
+        Assert.Contains("the-inn", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Equality_EquivalentSeparatelyBuiltDocuments_AreEqual()
     {
         // The whole document compares by value, so every table and node it holds does too.

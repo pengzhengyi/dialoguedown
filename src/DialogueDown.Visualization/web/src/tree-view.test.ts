@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { hierarchy } from "d3";
 import { lineageIds, createTreeView } from "./tree-view";
 import type { DisplayNode, Stage } from "./model";
+import { MIN_ZOOM } from "./zoom-controls";
 
 interface Node {
     id: string;
@@ -159,6 +160,31 @@ describe("createTreeView — selection by stable id", () => {
         expect(view.selectById("a", { center: true })).toBe(true);
 
         expect(cameras.at(-1)).toBe(0.15);
+    });
+
+    it("keeps a reader zoomed all the way out at their own scale", () => {
+        const cameras: number[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            initialCamera: { k: MIN_ZOOM, x: 0, y: 0 },
+            onCameraChange: (transform) => cameras.push(transform.k),
+        });
+
+        expect(view.selectById("a", { center: true })).toBe(true);
+
+        expect(cameras.at(-1)).toBe(MIN_ZOOM);
+    });
+
+    it("zooms to a typed percentage as far out as the wheel goes", () => {
+        const cameras: number[] = [];
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {}, {
+            onCameraChange: (transform) => cameras.push(transform.k),
+        });
+        const input = view.controls.querySelector<HTMLInputElement>(".zoom-input")!;
+
+        input.value = "5";
+        input.dispatchEvent(new Event("change"));
+
+        expect(cameras.at(-1)).toBeCloseTo(0.05);
     });
 });
 
@@ -621,6 +647,47 @@ function joinStage(): Stage {
         ],
         nests: false,
     };
+}
+
+describe("createTreeView — where a line ends", () => {
+    // A content dot is 5 wide plus a 0.75 halo; a route's arrowhead adds 9 in front of that.
+    const DOT_EDGE = 5.75;
+    const ARROWHEAD = 9;
+
+    it("ends a plain line on the edge of its node's dot", () => {
+        const view = createTreeView(stageWith({ start: 0, end: 3 }), () => {});
+
+        for (const gap of lineEndGaps(view)) expect(gap).toBeCloseTo(DOT_EDGE, 2);
+    });
+
+    it("leaves room for the arrowhead only on a line that has one", () => {
+        const view = createTreeView(deferredLeafStage(), () => {});
+
+        // root → tail is a route with a head; tail → orphan is "Not reached", with none.
+        const [notReached, route] = lineEndGaps(view).sort((a, b) => a - b);
+        expect(notReached).toBeCloseTo(DOT_EDGE, 2);
+        expect(route).toBeCloseTo(DOT_EDGE + ARROWHEAD, 2);
+    });
+});
+
+/** How far each drawn line ends from the center of the node nearest its end. */
+function lineEndGaps(view: { svg: SVGSVGElement }): number[] {
+    const centers = [...view.svg.querySelectorAll("g.node")].map((node) => {
+        const [x, y] = /translate\(([^,]+),([^)]+)\)/
+            .exec(node.getAttribute("transform")!)!
+            .slice(1)
+            .map(Number);
+        return { x, y };
+    });
+    return [...view.svg.querySelectorAll("path.link")].map((line) => {
+        const [x, y] = line
+            .getAttribute("d")!
+            .split(/[MCL,\s]/)
+            .filter(Boolean)
+            .slice(-2)
+            .map(Number);
+        return Math.min(...centers.map((center) => Math.hypot(center.x - x, center.y - y)));
+    });
 }
 
 describe("createTreeView — keyboard navigation follows the edges", () => {

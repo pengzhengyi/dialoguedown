@@ -44,8 +44,8 @@ public sealed partial record PlaybookDocument
         Script = script.AssertNotNull(nameof(script));
         Entry = entry.AssertNotNegative(nameof(entry));
         // Re-sorted ordinally whatever comparer the caller used; see Anchors.
-        Anchors = (anchors ?? ImmutableSortedDictionary<string, int>.Empty)
-            .WithComparers(StringComparer.Ordinal);
+        Anchors = AssertNoAnchorIsNegative(
+            (anchors ?? ImmutableSortedDictionary<string, int>.Empty).WithComparers(StringComparer.Ordinal));
         Speakers = speakers.OrEmpty();
         Nodes = nodes.OrEmpty();
     }
@@ -103,4 +103,16 @@ public sealed partial record PlaybookDocument
     [JsonPropertyOrder(6)]
     [JsonPropertyName("nodes")]
     public ImmutableArray<Node> Nodes { get; }
+
+    // An anchor is the position of the node a scene starts at, and no node sits below zero.
+    private static ImmutableSortedDictionary<string, int> AssertNoAnchorIsNegative(
+        ImmutableSortedDictionary<string, int> anchors)
+    {
+        foreach (var (slug, node) in anchors)
+        {
+            node.AssertNotNegative($"anchors[\"{slug}\"]");
+        }
+
+        return anchors;
+    }
 }

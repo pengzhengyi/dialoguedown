@@ -58,6 +58,16 @@ public sealed class PlaybookReaderTests
     }
 
     [Fact]
+    public void Read_ANegativeAnchor_IsRefusedWithoutCheckingNamingTheScene()
+    {
+        var error = Assert.Throws<InvalidPlaybookException>(
+            () => new PlaybookReader(_checker).Read(Playbook(anchors: """ "the-inn": -1 """)));
+
+        Assert.Contains("the-inn", error.Message, StringComparison.Ordinal);
+        _checker.DidNotReceive().Check(Arg.Any<PlaybookDocument>());
+    }
+
+    [Fact]
     public void Read_NothingAtAll_IsRejected()
     {
         // Not a malformed document but a caller mistake, so it is not an InvalidPlaybookException.

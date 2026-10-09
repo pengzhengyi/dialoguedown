@@ -1,5 +1,6 @@
 using System.Reflection;
 using DialogueDown.Cli.Tests.Support;
+using static DialogueDown.Cli.Tests.Support.CliAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -16,9 +17,8 @@ public sealed class AppTests
 
         var result = tester.Run("--version");
 
-        Assert.Equal(0, result.ExitCode);
         Assert.NotEqual("1.0.0", declared);
-        Assert.Contains(declared, result.Output, StringComparison.Ordinal);
+        AssertSucceeded(result, declared);
     }
 
     [Fact]
@@ -28,9 +28,7 @@ public sealed class AppTests
 
         var result = tester.Run("--help");
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.Contains("compile", result.Output, StringComparison.Ordinal);
-        Assert.Contains("visualize", result.Output, StringComparison.Ordinal);
+        AssertSucceeded(result, "compile", "visualize");
     }
 
     [Fact]
@@ -40,9 +38,7 @@ public sealed class AppTests
 
         var result = tester.Run();
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.Contains("compile", result.Output, StringComparison.Ordinal);
-        Assert.Contains("visualize", result.Output, StringComparison.Ordinal);
+        AssertSucceeded(result, "compile", "visualize");
     }
 
     [Fact]
@@ -52,7 +48,7 @@ public sealed class AppTests
 
         var result = tester.Run("nonsense");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
     }
 
     private static string ReleaseVersion()

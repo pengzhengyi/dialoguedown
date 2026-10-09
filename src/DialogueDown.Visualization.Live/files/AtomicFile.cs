@@ -45,10 +45,11 @@ internal static class AtomicFile
     private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
     private static readonly TimeSpan _retryDelay = TimeSpan.FromMilliseconds(5);
 
-    // One lock per target path serializes this process's own read→decide→write windows. Another
-    // process is not locked out; the compare-and-swap covers it (see the type remarks).
+    // One lock per target file serializes this process's own read→decide→write windows, with paths
+    // matched the way this machine names files. Another process is not locked out; the
+    // compare-and-swap covers it (see the type remarks).
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _locks =
-        new(StringComparer.Ordinal);
+        new(PathComparison.Comparer);
 
     /// <summary>
     /// Reads the current content of <paramref name="path"/>, passes it to <paramref name="body"/>
@@ -93,8 +94,7 @@ internal static class AtomicFile
         ArgumentNullException.ThrowIfNull(content);
 
         var fullPath = Path.GetFullPath(path);
-        var directory = Path.GetDirectoryName(fullPath)!;
-        var temp = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+        var temp = StagingPathFor(fullPath);
 
         lock (LockFor(fullPath))
         {
@@ -153,8 +153,16 @@ internal static class AtomicFile
         }
     }
 
+    // A hidden temp file beside the target, unique to each call, so the final move stays on the
+    // target's own volume, where it is an atomic rename rather than a copy. For
+    // "/scripts/doc.txt" it is "/scripts/.doc.txt.<32 hex digits>.tmp".
+    internal static string StagingPathFor(string fullPath) =>
+        Path.Combine(
+            Path.GetDirectoryName(fullPath)!,
+            $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+
     private static object LockFor(string path) =>
-        _locks.GetOrAdd(Path.GetFullPath(path), _ => new object());
+        _locks.GetOrAdd(PathComparison.Normalize(path), _ => new object());
 
     // Reads the file's content, or null when it does not exist. Existence is established by the
     // open itself (a FileNotFound/DirectoryNotFound throw) rather than a separate File.Exists probe
@@ -188,8 +196,7 @@ internal static class AtomicFile
     private static void Commit(string path, string content, string? expected, bool validate, Action? afterReplace)
     {
         var fullPath = Path.GetFullPath(path);
-        var directory = Path.GetDirectoryName(fullPath)!;
-        var temp = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+        var temp = StagingPathFor(fullPath);
 
         try
         {

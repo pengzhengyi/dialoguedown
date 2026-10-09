@@ -6,14 +6,17 @@ namespace DialogueDown.Script.Semantics;
 /// Maps each analyzed <c>Jump</c> to what it resolved to. Every jump in the analyzed tree is
 /// present, so <see cref="Resolve"/> treats a missing jump as a caller error.
 /// </summary>
+/// <remarks>
+/// Keyed by the jump itself, so a jump that merely looks the same was not analyzed.
+/// </remarks>
 internal sealed class JumpResolutionTable
 {
-    private readonly IReadOnlyDictionary<Jump, JumpResolution> _resolutionByJump;
+    private readonly Dictionary<Jump, JumpResolution> _resolutionByJump;
 
     public JumpResolutionTable(IReadOnlyDictionary<Jump, JumpResolution> resolutionByJump)
     {
         ArgumentNullException.ThrowIfNull(resolutionByJump);
-        _resolutionByJump = resolutionByJump;
+        _resolutionByJump = new(resolutionByJump, ReferenceEqualityComparer.Instance);
     }
 
     /// <summary>How many jumps the table holds.</summary>

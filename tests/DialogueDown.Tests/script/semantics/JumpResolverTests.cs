@@ -117,6 +117,19 @@ public sealed class JumpResolverTests
         Assert.IsType<FileScopedJump>(resolutions.Resolve(external));
     }
 
+    [Fact]
+    public void Resolve_TwoSeparateJumpsWithEqualValues_ResolvesEach()
+    {
+        var jump = Jump("#END");
+        var copy = jump with { };
+
+        var resolutions = JumpResolver.Resolve([jump, copy], new AnchorTable(), new DiagnosticBag());
+
+        Assert.IsType<TerminalJump>(resolutions.Resolve(jump));
+        Assert.IsType<TerminalJump>(resolutions.Resolve(copy));
+        Assert.Equal(2, resolutions.Count);
+    }
+
     private static JumpResolution ResolveOne(Jump jump, AnchorTable anchors) =>
         ResolveOne(jump, anchors, out _);
 

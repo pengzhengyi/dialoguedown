@@ -1,5 +1,6 @@
 using DialogueDown.Cli.Commands;
 using DialogueDown.TestSupport;
+using static DialogueDown.Cli.Tests.Support.ValidationAssert;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -12,7 +13,7 @@ public sealed class ScriptArgumentTests
     {
         var result = ScriptArgument.Validate(script);
 
-        Assert.False(result.Successful);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -20,8 +21,7 @@ public sealed class ScriptArgumentTests
     {
         var result = ScriptArgument.Validate("notes.txt");
 
-        Assert.False(result.Successful);
-        Assert.Contains(ScriptArgument.Extension, result.Message!, StringComparison.Ordinal);
+        AssertRejected(result, ScriptArgument.Extension);
     }
 
     [Fact]
@@ -29,8 +29,7 @@ public sealed class ScriptArgumentTests
     {
         var result = ScriptArgument.Validate("does-not-exist.dialogue.md");
 
-        Assert.False(result.Successful);
-        Assert.Contains("not found", result.Message!, StringComparison.OrdinalIgnoreCase);
+        AssertRejected(result, "not found");
     }
 
     [Fact]
@@ -40,6 +39,6 @@ public sealed class ScriptArgumentTests
 
         var result = ScriptArgument.Validate(script.Path);
 
-        Assert.True(result.Successful);
+        AssertAccepted(result);
     }
 }

@@ -34,7 +34,13 @@ import { colorOf } from "./palette";
 import { edgeTooltipHtml, tooltipHtml } from "./text";
 import { clipToWidth } from "./clip-text";
 import { createLegend, regionCounts, setRegionFoldState } from "./legend";
-import { createZoomControls, ZOOM_STEP, type ZoomControls } from "./zoom-controls";
+import {
+    createZoomControls,
+    MAX_ZOOM,
+    MIN_ZOOM,
+    ZOOM_STEP,
+    type ZoomControls,
+} from "./zoom-controls";
 
 /** A laid-out hierarchy node augmented with collapse state (`_children`). */
 type TreeNode = HierarchyPointNode<DisplayNode> & {
@@ -66,14 +72,15 @@ const SCENE_NODE_HALO = 1;
 const ARROW_SIZE = 9;
 
 /**
- * How far short of a node's center a line aimed at it stops: the dot's painted edge plus
- * {@link ARROW_SIZE}, because the arrowhead is drawn forward from the line's end.
+ * How far short of a node's center a line aimed at it stops: the dot's painted edge, plus
+ * {@link ARROW_SIZE} when the line is a route, because its arrowhead is drawn forward from the
+ * line's end.
  */
-function nodeStandoff(node: DisplayNode): number {
+function nodeStandoff(node: DisplayNode, category: string | undefined): number {
     const painted = isSceneNode(node)
         ? SCENE_NODE_RADIUS + SCENE_NODE_HALO
         : CONTENT_NODE_RADIUS + CONTENT_NODE_HALO;
-    return painted + ARROW_SIZE;
+    return edgeStyle(category)?.isRoute ? painted + ARROW_SIZE : painted;
 }
 
 /**
@@ -260,9 +267,6 @@ const ROOT_ANCHOR_X = 0.2;
 /** The gap kept between the drawing and a panel floating over the canvas. */
 const FLOATING_PANEL_GAP = 12;
 
-/** How far out the reader may zoom by hand. */
-const MIN_ZOOM = 0.03;
-
 /**
  * The smallest scale a stage will *open* at.
  *
@@ -418,7 +422,7 @@ export function createTreeView(
     const gEdgeHits = viewport.append("g").attr("class", "edge-hits");
 
     const zoomBehavior = zoom<SVGSVGElement, undefined>()
-        .scaleExtent([MIN_ZOOM, 3])
+        .scaleExtent([MIN_ZOOM, MAX_ZOOM])
         // Use the container size as the extent so zoom centers correctly and does not
         // depend on the SVG's intrinsic size.
         .extent(() => {
@@ -1458,7 +1462,7 @@ export function createTreeView(
             .attr("d", (link) =>
                 edgePath(at(link.source), at(link.target), {
                     clearance: clearanceOf((link.source as TreeNode).data.id),
-                    standoff: nodeStandoff((link.target as TreeNode).data),
+                    standoff: nodeStandoff((link.target as TreeNode).data, categoryOf(link)),
                 }),
             )
             .each(function (link) {
@@ -1493,7 +1497,7 @@ export function createTreeView(
             .attr("d", (edge) =>
                 edgePath(at(positionById.get(edge.fromId)!), at(positionById.get(edge.toId)!), {
                     clearance: clearanceOf(edge.fromId),
-                    standoff: nodeStandoff(positionById.get(edge.toId)!.data),
+                    standoff: nodeStandoff(positionById.get(edge.toId)!.data, edge.category),
                     ...(laneOf.get(edgeKey(edge)) ?? {}),
                 }),
             )
@@ -1725,7 +1729,7 @@ export function createTreeView(
     }
 
     function clampScale(scale: number): number {
-        return Math.max(0.1, Math.min(3, scale));
+        return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale));
     }
 
     function applyTransform(transform: CameraTransform): void {

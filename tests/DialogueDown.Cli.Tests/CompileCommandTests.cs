@@ -7,15 +7,31 @@ using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
+using static DialogueDown.Cli.Tests.Support.CliAssert;
+using static DialogueDown.Cli.Tests.Support.ConfigFiles;
+using static DialogueDown.Cli.Tests.Support.OutputAssert;
+using static DialogueDown.Cli.Tests.Support.VisualizeRunnerAssert;
 
 namespace DialogueDown.Cli.Tests;
 
 public sealed class CompileCommandTests
 {
-    private const string NarratorConfig = """
-        [[speakers]]
-        name = "Narrator"
-        default = true
+    /// <summary>A line whose arrow leads nowhere: a DLG1113 warning that <c>--fix</c> escapes.</summary>
+    private const string ADanglingArrow = """
+        # The Workshop
+
+        Alice: The rule is simple => the lever opens the door.
+        """;
+
+    /// <summary>Two scenes with the same name: a DLG2001 error, so the compile fails.</summary>
+    private const string TwoScenesNamedAlike = """
+        # Gate
+
+        Alice: One.
+
+        # Gate
+
+        Bob: Two.
         """;
 
     [Fact]
@@ -26,7 +42,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
     }
 
     [Fact]
@@ -38,13 +54,12 @@ public sealed class CompileCommandTests
             Alice: Hi.
             """;
         using var script = new TempScript(source);
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
+        var compiler = ACompilerThatSucceeds();
         var tester = CliTester.Create(compiler);
 
         var result = tester.Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
         compiler.Received(1).Compile(source);
     }
 
@@ -52,19 +67,16 @@ public sealed class CompileCommandTests
     public void Compile_WithConfig_BuildsTheCompilerFromTheResolvedOptions()
     {
         using var tree = new TempTree();
-        var configPath = tree.File("dialogue.toml", NarratorConfig);
+        var configPath = tree.File("dialogue.toml", NarratorByDefault);
         using var script = new TempScript("# Scene");
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
-        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
-        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        var compiler = ACompilerThatSucceeds();
+        var factory = AFactoryOf(compiler);
         var tester = CliTester.Create(compilerFactory: factory);
 
         var result = tester.Run("compile", script.Path, "--config", configPath);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
-        factory.Received(1).Invoke(
-            Arg.Is<CompilerOptions>(o => o != null && o.Speakers.Any(s => s.Name == "Narrator")));
+        AssertSucceeded(result);
+        Assert.Contains(OptionsTheCompilerWasBuiltWith(factory).Speakers, speaker => speaker.Name == "Narrator");
         compiler.Received(1).Compile(Arg.Any<string>());
     }
 
@@ -76,9 +88,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.DataError, result.ExitCode);
-        Assert.Contains("DLG1101", result.Output, StringComparison.Ordinal);
-        Assert.Contains("error", result.Output, StringComparison.Ordinal);
+        AssertExited(result, ExitCodes.DataError, "DLG1101", "error");
     }
 
     [Fact]
@@ -96,9 +106,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
-        Assert.Contains("DLG1003", result.Output, StringComparison.Ordinal);
-        Assert.Contains("warning", result.Output, StringComparison.Ordinal);
+        AssertSucceeded(result, "DLG1003", "warning");
     }
 
     [Fact]
@@ -109,8 +117,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--config", "no-such.toml");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("not found", result.Output, StringComparison.OrdinalIgnoreCase);
+        AssertExited(result, ExitCodes.UsageError, "not found");
     }
 
     [Fact]
@@ -123,8 +130,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--config", configPath);
 
-        Assert.Equal(ExitCodes.DataError, result.ExitCode);
-        Assert.Contains("dialogue.toml", result.Output, StringComparison.OrdinalIgnoreCase);
+        AssertExited(result, ExitCodes.DataError, "dialogue.toml");
     }
 
     [Fact]
@@ -134,38 +140,31 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", "does-not-exist.dialogue.md");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("not found", result.Output, StringComparison.OrdinalIgnoreCase);
+        AssertExited(result, ExitCodes.UsageError, "not found");
     }
 
     [Fact]
     public void Compile_Mode_OverridesTheCompilationMode()
     {
         using var script = new TempScript("# Scene");
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
-        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
-        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        var factory = AFactoryOf(ACompilerThatSucceeds());
         var tester = CliTester.Create(compilerFactory: factory);
 
         tester.Run("compile", script.Path, "--mode", "best-effort");
 
-        factory.Received(1).Invoke(Arg.Is<CompilerOptions>(o => o != null && o.Mode == CompilationMode.BestEffort));
+        Assert.Equal(CompilationMode.BestEffort, OptionsTheCompilerWasBuiltWith(factory).Mode);
     }
 
     [Fact]
     public void Compile_WithoutMode_InheritsTheResolvedMode()
     {
         using var script = new TempScript("# Scene");
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
-        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
-        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        var factory = AFactoryOf(ACompilerThatSucceeds());
         var tester = CliTester.Create(compilerFactory: factory);
 
         tester.Run("compile", script.Path);
 
-        factory.Received(1).Invoke(Arg.Is<CompilerOptions>(o => o != null && o.Mode == CompilationMode.StageBoundary));
+        Assert.Equal(CompilationMode.StageBoundary, OptionsTheCompilerWasBuiltWith(factory).Mode);
     }
 
     [Fact]
@@ -176,8 +175,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--mode", "turbo");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("--mode", result.Output, StringComparison.Ordinal);
+        AssertExited(result, ExitCodes.UsageError, "--mode");
     }
 
     [Fact]
@@ -188,9 +186,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--fix", "--emit", "dot");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("--fix", result.Output, StringComparison.Ordinal);
-        Assert.Contains("--emit", result.Output, StringComparison.Ordinal);
+        AssertExited(result, ExitCodes.UsageError, "--fix", "--emit");
     }
 
     [Fact]
@@ -201,36 +197,31 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--fix", "-o", "fixed.dialogue.md");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("--fix", result.Output, StringComparison.Ordinal);
-        Assert.Contains("-o", result.Output, StringComparison.Ordinal);
+        AssertExited(result, ExitCodes.UsageError, "--fix", "-o");
     }
 
     [Fact]
     public void Compile_Fix_AppliesThePreferredFixInPlace()
     {
-        var source = """
-            # The Workshop
-
-            Alice: The rule is simple => the lever opens the door.
-            """;
-        using var script = new TempScript(source);
+        using var script = new TempScript(ADanglingArrow);
         var tester = CliTester.Create();
 
         var result = tester.Run("compile", script.Path, "--fix");
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        var output = AssertSucceeded(result);
+        AssertInOrder(
+            output,
+            // The diagnostics are exactly what a plain compile prints, hint included.
+            "warning DLG1113",
+            "1 warning",
+            "1 fixable with --fix",
+            // Then the fix section: the write notice, the note, and the hunk.
+            "(1 fix)",
+            "1. Applied Fix: Escape as literal text",
+            "-Alice: The rule is simple => the lever opens the door.",
+            "+Alice: The rule is simple \\=> the lever opens the door.");
+        Assert.DoesNotContain("  fix applied", output, StringComparison.Ordinal);
         Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
-        // The diagnostics are exactly what a plain compile prints, hint included.
-        Assert.Contains("warning DLG1113", result.Output, StringComparison.Ordinal);
-        Assert.Contains("1 warning", result.Output, StringComparison.Ordinal);
-        Assert.Contains("1 fixable with --fix", result.Output, StringComparison.Ordinal);
-        // Then the fix section: the write notice, the note, and the hunk.
-        Assert.Contains("(1 fix)", result.Output, StringComparison.Ordinal);
-        Assert.Contains("1. Applied Fix: Escape as literal text", result.Output, StringComparison.Ordinal);
-        Assert.Contains("-Alice: The rule is simple => the lever opens the door.", result.Output, StringComparison.Ordinal);
-        Assert.Contains("+Alice: The rule is simple \\=> the lever opens the door.", result.Output, StringComparison.Ordinal);
-        Assert.DoesNotContain("  fix applied", result.Output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -246,10 +237,9 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--fix");
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
-        Assert.Equal(2, result.Output.Split("Applied Fix: Escape as literal text").Length - 1);
-        Assert.Equal(2, result.Output.Split("| +Alice: Go").Length - 1);
-        Assert.Contains("(2 fixes)", result.Output, StringComparison.Ordinal);
+        var output = AssertSucceeded(result, "(2 fixes)");
+        AssertOccurs(output, "Applied Fix: Escape as literal text", times: 2);
+        AssertOccurs(output, "| +Alice: Go", times: 2);
     }
 
     [Fact]
@@ -266,9 +256,8 @@ public sealed class CompileCommandTests
         var plain = CliTester.Create().Run("compile", script.Path);
         var fix = CliTester.Create().Run("compile", script.Path, "--fix");
 
-        Assert.Contains("DLG1107", plain.Output, StringComparison.Ordinal);
-        Assert.Equal(plain.Output, fix.Output);
-        Assert.Equal(ExitCodes.Success, fix.ExitCode);
+        var plainOutput = AssertSucceeded(plain, "DLG1107");
+        Assert.Equal(plainOutput, AssertSucceeded(fix));
         Assert.Equal(source, File.ReadAllText(script.Path));
         Assert.Equal(written, File.GetLastWriteTimeUtc(script.Path));
     }
@@ -290,11 +279,32 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--fix");
 
-        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        AssertExited(
+            result,
+            ExitCodes.DataError,
+            "1 error, 1 warning",
+            "(1 fix; 1 error remains)",
+            "1. Applied Fix: Escape as literal text");
         Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
-        Assert.Contains("1 error, 1 warning", result.Output, StringComparison.Ordinal);
-        Assert.Contains("(1 fix; 1 error remains)", result.Output, StringComparison.Ordinal);
-        Assert.Contains("1. Applied Fix: Escape as literal text", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_Fix_AnErrorLaterOnTheFixedLine_IsNotReportedAgainAfterFixing()
+    {
+        // The escape moves the unresolved jump one column right, but it is the same error.
+        var source = """
+            # Start
+
+            Alice: Go => then => [onward](#missing)
+            """;
+        using var script = new TempScript(source);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix");
+
+        var output = AssertExited(result, ExitCodes.DataError, "(1 fix; 1 error remains)");
+        Assert.DoesNotContain("after fixing:", output, StringComparison.Ordinal);
+        Assert.Contains("Go \\=> then", File.ReadAllText(script.Path), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -302,39 +312,29 @@ public sealed class CompileCommandTests
     {
         using var tree = new TempTree();
         var path = tree.File("scene.dialogue.md");
-        File.WriteAllBytes(
-            path,
-            [
-                0xEF,
-                0xBB,
-                0xBF,
-                .. Encoding.UTF8.GetBytes("# The Workshop\n\nAlice: The rule is simple => the lever opens.\n"),
-            ]);
+        File.WriteAllBytes(path, [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(ADanglingArrow)]);
         var tester = CliTester.Create();
 
         var result = tester.Run("compile", path, "--fix");
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
         var bytes = File.ReadAllBytes(path);
-        Assert.Equal([0xEF, 0xBB, 0xBF], bytes[..3]);
-        Assert.Contains("\\=>", Encoding.UTF8.GetString(bytes[3..]), StringComparison.Ordinal);
+        var bom = Encoding.UTF8.GetPreamble();
+        Assert.Equal(bom, bytes[..bom.Length]);
+        Assert.Contains("\\=>", Encoding.UTF8.GetString(bytes[bom.Length..]), StringComparison.Ordinal);
     }
 
     [Fact]
     public void Compile_Fix_IsIdempotent()
     {
-        using var script = new TempScript("""
-            # The Workshop
-
-            Alice: The rule is simple => the lever opens the door.
-            """);
-        Assert.Equal(ExitCodes.Success, CliTester.Create().Run("compile", script.Path, "--fix").ExitCode);
+        using var script = new TempScript(ADanglingArrow);
+        AssertSucceeded(CliTester.Create().Run("compile", script.Path, "--fix"));
         var corrected = File.ReadAllText(script.Path);
         var written = File.GetLastWriteTimeUtc(script.Path);
 
         var second = CliTester.Create().Run("compile", script.Path, "--fix");
 
-        Assert.Equal(ExitCodes.Success, second.ExitCode);
+        AssertSucceeded(second);
         Assert.Equal(string.Empty, second.Output);
         Assert.Equal(corrected, File.ReadAllText(script.Path));
         Assert.Equal(written, File.GetLastWriteTimeUtc(script.Path));
@@ -349,7 +349,7 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--mode", "fail-fast");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
+        AssertExited(result, ExitCodes.UsageError);
     }
 
     [Fact]
@@ -385,9 +385,8 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertSucceeded(result);
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -401,7 +400,7 @@ public sealed class CompileCommandTests
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
         PlaybookReader.Default.Read(File.ReadAllText(destination));
     }
 
@@ -430,7 +429,7 @@ public sealed class CompileCommandTests
         var result = CliTester.Create(standardOutput: standardOutput)
             .Run("compile", script.Path, "--emit", "playbook");
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
         Assert.Empty(Directory.EnumerateFiles(tree.Root));
         PlaybookReader.Default.Read(standardOutput.ToString());
     }
@@ -444,7 +443,7 @@ public sealed class CompileCommandTests
 
         var result = CliTester.Create(standardOutput: standardOutput).Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
         PlaybookReader.Default.Read(standardOutput.ToString());
     }
 
@@ -453,20 +452,12 @@ public sealed class CompileCommandTests
     {
         // Nothing half-written to pipe into the next command: a failed compile has no playbook,
         // and its diagnostics belong on standard error.
-        using var script = new TempScript("""
-            # Gate
-
-            Alice: One.
-
-            # Gate
-
-            Bob: Two.
-            """);
+        using var script = new TempScript(TwoScenesNamedAlike);
         var standardOutput = new StringWriter();
 
         var result = CliTester.Create(standardOutput: standardOutput).Run("compile", script.Path);
 
-        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        AssertExited(result, ExitCodes.DataError);
         Assert.Empty(standardOutput.ToString());
     }
 
@@ -474,20 +465,12 @@ public sealed class CompileCommandTests
     public void Compile_AScriptWithErrors_LeavesTheOutputAlone()
     {
         using var tree = new TempTree();
-        using var script = new TempScript("""
-            # Gate
-
-            Alice: One.
-
-            # Gate
-
-            Bob: Two.
-            """);
+        using var script = new TempScript(TwoScenesNamedAlike);
         var destination = Path.Combine(tree.Root, "untouched.playbook.json");
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
-        Assert.Equal(ExitCodes.DataError, result.ExitCode);
+        AssertExited(result, ExitCodes.DataError);
         Assert.False(File.Exists(destination));
     }
 
@@ -500,12 +483,13 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--emit", "mermaid");
 
-        Assert.Equal(ExitCodes.UsageError, result.ExitCode);
-        Assert.Contains("Mermaid stage emission was removed", result.Output, StringComparison.Ordinal);
-        Assert.Contains("--emit dot", result.Output, StringComparison.Ordinal);
-        Assert.Contains("fenced `mermaid` blocks", result.Output, StringComparison.Ordinal);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertExited(
+            result,
+            ExitCodes.UsageError,
+            "Mermaid stage emission was removed",
+            "--emit dot",
+            "fenced `mermaid` blocks");
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -517,9 +501,8 @@ public sealed class CompileCommandTests
 
         var result = tester.Run("compile", script.Path, "--emit", "yaml");
 
-        Assert.NotEqual(0, result.ExitCode);
-        runner.DidNotReceive().RunEmit(
-            Arg.Any<string>(), Arg.Any<EmitFormat>(), Arg.Any<string?>(), Arg.Any<CompilerOptions>());
+        AssertExited(result, ExitCodes.UsageError);
+        AssertNothingEmitted(runner);
     }
 
     [Fact]
@@ -532,7 +515,32 @@ public sealed class CompileCommandTests
 
         var result = CliTester.Create().Run("compile", script.Path, "-o", destination);
 
-        Assert.Equal(ExitCodes.Success, result.ExitCode);
+        AssertSucceeded(result);
         Assert.True(File.Exists(destination));
     }
+
+    /// <summary>A compiler that reports a clean compile of an empty script, whatever it is given.</summary>
+    /// <returns>A substitute a test can ask what it was given.</returns>
+    private static IScriptCompiler ACompilerThatSucceeds()
+    {
+        var compiler = Substitute.For<IScriptCompiler>();
+        compiler.Compile(Arg.Any<string>()).Returns(ScriptCompilerFactory.CreateDefault().Compile(""));
+        return compiler;
+    }
+
+    /// <summary>A compiler factory that hands out <paramref name="compiler"/> whatever the options.</summary>
+    /// <param name="compiler">The compiler every call returns.</param>
+    /// <returns>A substitute a test can ask which options it was given.</returns>
+    private static Func<CompilerOptions, IScriptCompiler> AFactoryOf(IScriptCompiler compiler)
+    {
+        var factory = Substitute.For<Func<CompilerOptions, IScriptCompiler>>();
+        factory(Arg.Any<CompilerOptions>()).Returns(compiler);
+        return factory;
+    }
+
+    /// <summary>The options the command built its one compiler from.</summary>
+    /// <param name="factory">The factory the command was given.</param>
+    /// <returns>The options of the factory's only call.</returns>
+    private static CompilerOptions OptionsTheCompilerWasBuiltWith(Func<CompilerOptions, IScriptCompiler> factory) =>
+        Assert.IsType<CompilerOptions>(Assert.Single(factory.ReceivedCalls()).GetArguments()[0]);
 }

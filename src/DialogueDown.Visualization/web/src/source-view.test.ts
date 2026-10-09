@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { undo, undoDepth } from "@codemirror/commands";
 import { forEachDiagnostic } from "@codemirror/lint";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
@@ -392,19 +393,31 @@ describe("createSourceView jump-to menu", () => {
 });
 
 describe("createSourceView document replacement", () => {
-    it("replaces the buffer for the same document", () => {
-        const source = mountSource("first\n");
+    /** The source view's editor, for checking its undo history. */
+    function editorOf(source: SourceViewHandle): EditorView {
+        return EditorView.findFromDOM(source.element.querySelector(".cm-editor")!)!;
+    }
+
+    // Editable, as in Edit mode: a read-only editor refuses to undo at all.
+    it("replaces the buffer for the same document, keeping its undo history", () => {
+        const source = mountSource("first\n", { editable: true });
 
         source.setContent("second\n");
 
         expect(source.getContent()).toBe("second\n");
+        undo(editorOf(source));
+        expect(source.getContent()).toBe("first\n");
     });
 
-    it("shows a different document through the history-dropping path", () => {
-        const source = mountSource("first\n");
+    it("shows a different document without the undo history of the one it replaces", () => {
+        const source = mountSource("first\n", { editable: true });
 
         source.setDocument("second\n");
 
+        expect(source.getContent()).toBe("second\n");
+        expect(undoDepth(editorOf(source).state)).toBe(0);
+        // Undoing into the previous script's text would let a save write it to this file.
+        undo(editorOf(source));
         expect(source.getContent()).toBe("second\n");
     });
 });
