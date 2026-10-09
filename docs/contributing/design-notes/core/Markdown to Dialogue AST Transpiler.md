@@ -210,7 +210,7 @@ what the context admits (`Supports`) and whether `=>` is a jump (`SupportsJumps`
 | --- | --- | --- | --- |
 | `AllowAllInlinePolicy` | speech | everything; `=>` is a jump | — |
 | `TitleInlinePolicy` | heading titles | everything; `=>` is text | — |
-| `LiteralInlinePolicy` | link labels, alt text | text and styling | restored to its plain-text form |
+| `LabelInlinePolicy` | link labels, alt text | text and styling | restored to its plain-text form |
 
 `InlineLeafTokenizer` builds `Repeated(Or(text, tag, jump)).ConsumeAll()` from the
 allowed leaves, dropping `jump` where jumps are off. It honors the

@@ -6,9 +6,9 @@ using MdEmphasisKind = DialogueDown.Markdown.EmphasisKind;
 
 namespace DialogueDown.Tests.Script.Transpiler.Builders;
 
-public sealed class LiteralInlinePolicyTests
+public sealed class LabelInlinePolicyTests
 {
-    private static readonly LiteralInlinePolicy _policy = new();
+    private static readonly LabelInlinePolicy _policy = new();
 
     [Fact]
     public void Supports_TextAndStyling_ButNotFunctionalElements()

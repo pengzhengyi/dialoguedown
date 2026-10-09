@@ -19,7 +19,7 @@ internal static class ScriptTranspilerFactory
         new(
             new InlineLeafBuilder(new TagBuilder()),
             new GameCallBuilder(GameCallParser.Grammar),
-            new LiteralInlinePolicy());
+            new LabelInlinePolicy());
 
     private static SpeakerBuilder SpeakerBuilder() =>
         new(SpeakerPrefixParser.Prefix, new TagBuilder());

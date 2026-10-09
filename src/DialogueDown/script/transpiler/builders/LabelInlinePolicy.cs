@@ -6,14 +6,14 @@ using MarkdownLineBreak = DialogueDown.Markdown.LineBreak;
 namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
-/// The lenient policy for an image alt or a link label: text and styling are supported,
+/// The policy for an image alt or a link label: text and styling are supported,
 /// but the functional elements — a code span, link, image, jump, or break — are not.
 /// An unsupported element is restored to its plain-text form so the writer's characters
 /// survive as words (a code span keeps its backticks, a nested link its brackets). This
 /// is approximate: a code span written with double backticks, like <c>``a``</c>, comes back as
 /// <c>`a`</c>.
 /// </summary>
-internal sealed class LiteralInlinePolicy : IInlinePolicy
+internal sealed class LabelInlinePolicy : IInlinePolicy
 {
     public bool SupportsJumps => false;
 
