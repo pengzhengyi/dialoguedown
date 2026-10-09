@@ -176,16 +176,16 @@ internal static class PlayContextFactory
     public static PlayContext NotYetPlayable() =>
         Of([Choice(0, leadsTo: 1), End(1)], ["Alice"]);
 
-    /// <summary>A ring of jumps, each leading to the next and the last back to the first.</summary>
+    /// <summary>A loop of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
     /// <code>
     /// node 0 -> node 1 -> node 2 -> ... -> node length-1 -> node 0
     /// </code>
     /// Nothing in it ever hands the host anything, so a walk with no bound never ends.
     /// </remarks>
-    /// <param name="length">How many jumps the ring holds.</param>
+    /// <param name="length">How many jumps the loop holds.</param>
     /// <returns>A context whose entry walks forever unless something stops it.</returns>
-    public static PlayContext RingOfJumps(int length) =>
+    public static PlayContext LoopOfJumps(int length) =>
         Of([.. Enumerable.Range(0, length).Select(at => Jump(at, (at + 1) % length))]);
 
     /// <summary>A chain of jumps ending at the end.</summary>
@@ -193,7 +193,7 @@ internal static class PlayContextFactory
     /// <code>
     /// node 0 -> node 1 -> node 2 -> ... -> node jumps-1 -> node jumps, the end
     /// </code>
-    /// The walk passes every node exactly once, so it is the longest walk that is not a ring.
+    /// The walk passes every node exactly once, so it is the longest walk that is not a loop.
     /// </remarks>
     /// <param name="jumps">How many jumps precede the end.</param>
     /// <returns>A context whose walk passes every node exactly once.</returns>

@@ -299,11 +299,12 @@ and answers once, and round trips stay proportional to what was written. A line
 with commands in its speech waits the same way: once per step, after the words and
 commands that step says, as [speaking a line](./Speaking%20a%20Line.md#s3--a-step-stops-before-a-query-written-after-a-command) describes.
 
-### D13 — A ring is refused by counting
+### D13 — An endless loop is refused by counting
 
 A walk that passes more nodes than the playbook has must have visited one twice,
-and nothing it reads changes as it goes, so it is in a ring. The guard is a counter
-against `Nodes.Length`: exact, allocation-free, and no number anybody picks.
+and nothing it reads changes as it goes, so it is in an endless loop. The guard is
+a counter against `Nodes.Length`: exact, allocation-free, and no number anybody
+picks.
 
 ### D14 — An untaught node kind is refused, not guessed
 

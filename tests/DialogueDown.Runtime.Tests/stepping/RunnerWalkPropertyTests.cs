@@ -24,7 +24,8 @@ public sealed class RunnerWalkPropertyTests
     private const int MostSteps = 120;
 
     // Why a run turns an answer away. An answer can also lead the walk somewhere the run refuses,
-    // such as into a ring, and that refusal is about where the walk went, not about the answer.
+    // such as into an endless loop, and that refusal is about where the walk went, not about the
+    // answer.
     private static readonly RefusalReason[] _answerRefusals =
         [RefusalReason.UnansweredKey, RefusalReason.UnaskedKey, RefusalReason.WrongAnswerKind];
 

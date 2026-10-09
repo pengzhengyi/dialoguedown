@@ -41,7 +41,7 @@ internal static class Arrival
             }
         }
 
-        return RefuseRing(position);
+        return RefuseEndlessLoop(position);
     }
 
     /// <summary>Takes the answers asked for on arrival, and plays or skips the node.</summary>
@@ -180,11 +180,11 @@ internal static class Arrival
     private static bool IsWalkedPast(Node node) =>
         node is ControlNode { Effects.IsEmpty: true } or BranchNode;
 
-    private static StepResult RefuseRing(int position) =>
+    private static StepResult RefuseEndlessLoop(int position) =>
         StepResults.Refuse(
             position,
             RefusalReason.EndlessLoop,
-            $"Node {position} sits in a ring of nodes that hand the host nothing, "
+            $"Node {position} sits in a loop of nodes that hand the host nothing, "
                 + "so a run entering it would never come out.");
 
     private static StepResult RefuseBothWays(int position, IReadOnlyList<string> bothWays) =>
