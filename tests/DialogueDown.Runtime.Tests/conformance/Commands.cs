@@ -15,11 +15,11 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </remarks>
 internal static class Commands
 {
-    // Keyed, so two readers claiming one key fail at startup rather than one silently replacing
-    // the other. Bare and shaped commands share one key space.
-    private static readonly Dictionary<string, ICommandReader> _byKey =
-        new ICommandReader[] { new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader() }
-            .ToDictionary(reader => reader.Key, StringComparer.Ordinal);
+    // Bare and shaped commands share one key space.
+    private static readonly IReadOnlyDictionary<string, ICommandReader> _byKey =
+        KeyedHandlers.ByKey<ICommandReader>(
+            reader => reader.Key,
+            new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader());
 
     /// <summary>The display name of a send: the command it names, or its message when it names none.</summary>
     /// <param name="send">What the session sends, in the corpus's own words.</param>
