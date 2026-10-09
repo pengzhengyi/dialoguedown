@@ -281,7 +281,7 @@ function renderStaleHint(): HTMLElement {
 
 /** The mode row's tooltip: why the setting exists and how it relates to the report. */
 const MODE_TOOLTIP =
-    "How this project compiles after an error — used by the dialoguedown CLI and embedded " +
+    "How this project compiles after an error — used by the ddown CLI and embedded " +
     "builds. The visualization always renders stage-boundary, so every stage it shows is " +
     "built from reliable input; this setting doesn't change the report.";
 
