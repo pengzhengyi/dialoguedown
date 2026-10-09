@@ -1,3 +1,4 @@
+using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -34,9 +35,7 @@ public sealed class ReadableCorpusTests
         using var corpus = new TemporaryCorpus()
             .With("broken", ("fixture.json", "{ not a fixture"), ("playbook.json", Playbook));
 
-        var error = Assert.Throws<InvalidFixtureException>(() => new ReadableCorpus(corpus.Folder).Read("broken"));
-
-        Assert.Contains("broken", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("broken"), "broken");
     }
 
     [Fact]
@@ -44,10 +43,7 @@ public sealed class ReadableCorpusTests
     {
         using var corpus = new TemporaryCorpus().With("no-playbook", ("fixture.json", Fixture));
 
-        var error = Assert.Throws<InvalidFixtureException>(() => new ReadableCorpus(corpus.Folder).Read("no-playbook"));
-
-        Assert.Contains("no-playbook", error.Message, StringComparison.Ordinal);
-        Assert.Contains("playbook.json", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("no-playbook"), "no-playbook", "playbook.json");
     }
 
     [Fact]
@@ -60,9 +56,7 @@ public sealed class ReadableCorpusTests
             ("fixture.json", Fixture.Replace("playbook.json", "elsewhere.json", StringComparison.Ordinal)),
             ("playbook.json", Playbook));
 
-        var error = Assert.Throws<InvalidFixtureException>(() => new ReadableCorpus(corpus.Folder).Read("renamed"));
-
-        Assert.Contains("elsewhere.json", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("renamed"), "elsewhere.json");
     }
 
 

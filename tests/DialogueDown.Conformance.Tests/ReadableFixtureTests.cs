@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -33,22 +34,20 @@ public sealed class ReadableFixtureTests
     [Fact]
     public void Read_AVerdictNobodyCanActOn_IsRefused()
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdict", "maybe")));
-
-        Assert.Contains("verdict", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => ReadableFixture.Read(With("verdict", "maybe")), "verdict");
     }
 
     [Fact]
     public void Read_AVerdictInAnotherCase_IsRefusedAsThePlaybookFormatRefusesItsOwn()
     {
         // A playbook refuses "Italic" for "italic", so the corpus is just as strict.
-        Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdict", "Refuse")));
+        AssertInvalid(() => ReadableFixture.Read(With("verdict", "Refuse")));
     }
 
     [Fact]
     public void Read_AVerdictWrittenAsANumber_IsRefused()
     {
-        Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdict", 1)));
+        AssertInvalid(() => ReadableFixture.Read(With("verdict", 1)));
     }
 
     [Fact]
@@ -73,17 +72,13 @@ public sealed class ReadableFixtureTests
     [InlineData("because")]
     public void Read_AFixtureMissingAField_SaysWhichIsMissing(string missing)
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(Without(missing)));
-
-        Assert.Contains(missing, error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => ReadableFixture.Read(Without(missing)), missing);
     }
 
     [Fact]
     public void Read_AMisspelledField_IsRefusedRatherThanIgnored()
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(With("verdcit", "accept")));
-
-        Assert.Contains("verdcit", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => ReadableFixture.Read(With("verdcit", "accept")), "verdcit");
     }
 
     [Theory]
@@ -93,7 +88,7 @@ public sealed class ReadableFixtureTests
     [InlineData("[]")]
     public void Read_SomethingThatIsNotAFixture_SaysSo(string json)
     {
-        Assert.Throws<InvalidFixtureException>(() => ReadableFixture.Read(json));
+        AssertInvalid(() => ReadableFixture.Read(json));
     }
 
     /// <summary>A well-formed fixture, which each test changes in one field.</summary>

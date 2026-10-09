@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -47,17 +48,13 @@ public sealed class PlayableFixtureTests
     [InlineData("session")]
     public void Read_AFixtureMissingAField_SaysWhichIsMissing(string missing)
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(Without(missing)));
-
-        Assert.Contains(missing, error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => PlayableFixture.Read(Without(missing)), missing);
     }
 
     [Fact]
     public void Read_AMisspelledField_IsRefusedRatherThanIgnored()
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(With("playbok", "playbook.json")));
-
-        Assert.Contains("playbok", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => PlayableFixture.Read(With("playbok", "playbook.json")), "playbok");
     }
 
     [Fact]
@@ -82,7 +79,7 @@ public sealed class PlayableFixtureTests
     [InlineData("[]")]
     public void Read_SomethingThatIsNotAFixture_SaysSo(string json)
     {
-        Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(json));
+        AssertInvalid(() => PlayableFixture.Read(json));
     }
 
     [Fact]
@@ -91,7 +88,7 @@ public sealed class PlayableFixtureTests
         var json = With("session", new JsonArray(
             new JsonObject { ["send"] = "next", ["expect"] = "same" }));
 
-        Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(json));
+        AssertInvalid(() => PlayableFixture.Read(json));
     }
 
     [Fact]
@@ -100,7 +97,7 @@ public sealed class PlayableFixtureTests
         var json = With("session", new JsonArray(
             new JsonObject { ["unrelated"] = 1 }));
 
-        Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(json));
+        AssertInvalid(() => PlayableFixture.Read(json));
     }
 
     private static JsonObject Fixture() => new()
