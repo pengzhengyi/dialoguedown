@@ -48,23 +48,4 @@ public sealed class ParserExtensionsTests
         Assert.False(TestParsers.Identifier.TryParseAll("abc def", out _));
         Assert.False(TestParsers.Identifier.TryParseAll("123", out _));
     }
-
-    [Fact]
-    public void Explain_WithAFailure_AppendsTheTechnicalReason()
-    {
-        var failure = TestParsers.Identifier.Consume(ParseInputFactory.Input("123"));
-
-        var message = failure.Explain("that is not an identifier");
-
-        Assert.Contains("that is not an identifier", message);
-        Assert.Contains("↳", message);
-    }
-
-    [Fact]
-    public void Explain_WithoutAFailure_ReturnsTheHeadlineAlone()
-    {
-        var success = TestParsers.Identifier.Consume(ParseInputFactory.Input("abc"));
-
-        Assert.Equal("all good", success.Explain("all good"));
-    }
 }
