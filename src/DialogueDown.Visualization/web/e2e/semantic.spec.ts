@@ -3,6 +3,7 @@ import { writeReport } from "./report";
 import { audit } from "./audit";
 import { textContrastOf } from "./contrast";
 import type { Report } from "../src/model";
+import { letPointerThroughPanels } from "./overlays";
 
 // A Semantic Model report: a two-scene tree beside the speaker, anchor, and
 // jump-resolution tables, wired with the same cross-link keys the .NET projection
@@ -346,10 +347,7 @@ test("cross-links a speaker mention in the tree to its Speakers row", async ({ p
 
 test("lineage focus preserves the scene backbone while spotlighting a scene", async ({ page }) => {
     const graph = page.locator(".semantic-graph");
-    // Overlays can cover a node; let the hover reach the node beneath.
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
 
     // Hover the scene "The Market"; its lineage is the document root and its own subtree,
     // so the sibling scene "The Square" sits outside it.
