@@ -53,12 +53,10 @@ public sealed class TomlTablesTests
             name = "Bob"
             """);
 
-        IReadOnlyList<TableArraySyntax> tables =
-            TomlTables.Named<TableArraySyntax>(document, "speakers").ToList();
+        var tables = TomlTables.Named<TableArraySyntax>(document, "speakers");
 
-        Assert.Equal(2, tables.Count);
         Assert.Equal(
             ["Alice", "Bob"],
-            tables.Select(table => ((StringValueSyntax)Assert.Single(table.Items).Value!).Value));
+            tables.Select(table => Assert.IsType<StringValueSyntax>(Assert.Single(table.Items).Value).Value));
     }
 }
