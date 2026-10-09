@@ -38,11 +38,12 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG1103 — a functional element appears inside a label or alt text.</summary>
-    public static readonly DiagnosticDescriptor DisallowedLabelElement = new(
+    /// <summary>DLG1103 — a command is written inside a label or alt text, where nothing runs.</summary>
+    public static readonly DiagnosticDescriptor CommandInLabel = new(
         "DLG1103",
-        "Disallowed element in a label",
-        "{0} is not allowed inside a label or alt text; only text and styling are.",
+        "Command in a label",
+        "`{0}` is a command, and nothing inside a label or alt text runs. Move it outside the "
+            + "brackets; before `=>`, it runs when the jump is taken.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 

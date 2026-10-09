@@ -76,11 +76,11 @@ Alice: The sky turns `<mark class="dd-mark-fix">&quot;World.Weather&quot;</mark>
 
 ### DLG1103
 
-<span class="dd-sev dd-sev--error">Error</span> · Disallowed element in a label
+<span class="dd-sev dd-sev--error">Error</span> · Command in a label
 
-{0} is not allowed inside a label or alt text; only text and styling are.
+`{0}` is a command, and nothing inside a label or alt text runs. Move it outside the brackets; before `=>`, it runs when the jump is taken.
 
-The default compile does not report this: a code span, image, nested link, or line break inside a jump or link label, or an image's alt text, is kept as its plain text. Only a stricter label mode, not yet available, allows just text and styling in a label; it reports such an element and drops it.
+A label — the text in a link's brackets, a jump's included, or an image's alt text — is shown as one piece, so a command written inside it would never run. To run the command when a jump is taken, write it before the `=>`; beside a link in a line, write it outside the brackets.
 
 ### DLG1104
 

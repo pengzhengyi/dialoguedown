@@ -80,8 +80,8 @@ command runs when the option is chosen:
 
 ```text
 scene.dialogue.md(9,13): error DLG1103: `SlamDoor()` is a command, and nothing
-inside a label runs. Move it outside the brackets; before `=>`, it runs when the
-jump is taken.
+inside a label or alt text runs. Move it outside the brackets; before `=>`, it
+runs when the jump is taken.
 ```
 
 The message shows the command with its arguments, so a writer can find it in a
