@@ -51,6 +51,13 @@ public sealed class OfferMatcherTests
         AssertDiverged(Match(new Ended(), TwoWays), "expected a menu to be offered", "ended");
 
     [Fact]
+    public void OfferingIsDescribedByItsLabelsWhenSomethingElseWasExpected() =>
+        // Each label is quoted, so a label holding a comma still reads as one option.
+        AssertDiverged(
+            new EndedMatcher().Match(Numbered(Option("Go east"), Option("Wait, listen")), JsonNode.Parse("{}")!),
+            "offered a menu: \"Go east\", \"Wait, listen\"");
+
+    [Fact]
     public void AnOfferThatDoesNotSayWhetherItIsOrderedIsAFixtureBug() =>
         Assert.Throws<InvalidFixtureException>(
             () => Match(Bulleted(Option("Go east")), """{ "options": [] }"""));

@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
@@ -16,6 +17,11 @@ internal static class EventDescription
             Ended => "ended",
             Refused refused => $"refused: {refused.Explanation}",
             Resolve resolve => $"asked the world about {string.Join(", ", resolve.Keys)}",
+            Offer offer => $"offered a menu: {Labels(offer)}",
             _ => happened.GetType().Name,
         };
+
+    // Each label is quoted, so a label holding a comma still reads as one option.
+    private static string Labels(Offer offer) =>
+        string.Join(", ", offer.Options.Select(option => $"\"{SpeechText.Of(option.Label)}\""));
 }
