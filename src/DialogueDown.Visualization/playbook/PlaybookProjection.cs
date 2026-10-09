@@ -31,9 +31,6 @@ internal static class PlaybookProjection
     private const string StructureCategory = "structure";
     private const string TerminalCategory = "terminal";
 
-    // Indented for reading, the same text `ddown compile --emit playbook` writes.
-    private static readonly JsonSerializerOptions _readable = Readable();
-
     /// <summary>
     /// Projects the playbook a compile produced.
     /// </summary>
@@ -54,7 +51,8 @@ internal static class PlaybookProjection
 
         var playbook = writer.Write(success, script);
         return new PlaybookReport(
-            JsonSerializer.Serialize(playbook, _readable),
+            // The same options `ddown compile --emit playbook` writes with, so the tab shows that text.
+            JsonSerializer.Serialize(playbook, PlaybookJson.Options),
             MetadataOf(playbook, script),
             [.. playbook.Speakers.Select(ToView)],
             [.. playbook.Anchors.Select(anchor => new PlaybookAnchorView(anchor.Key, anchor.Value))],
@@ -102,11 +100,5 @@ internal static class PlaybookProjection
             category,
             PlaybookNodeSummary.SegmentsOf(node, speakers),
             [.. node.Out.Select(edge => edge.Target)]);
-    }
-
-    private static JsonSerializerOptions Readable()
-    {
-        var options = new JsonSerializerOptions(PlaybookJson.Options) { WriteIndented = true };
-        return options;
     }
 }

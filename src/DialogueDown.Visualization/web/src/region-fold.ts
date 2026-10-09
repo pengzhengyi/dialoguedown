@@ -70,7 +70,8 @@ export function foldRegions(
         folded.push(boxNode(box, node.region!, interior.get(node.region!)!));
     }
 
-    const rootId = idOf.get(rootOf(nodes, edges)) ?? folded[0]?.id;
+    const root = rootOf(nodes, edges);
+    const rootId = (root === undefined ? undefined : idOf.get(root)) ?? folded[0]?.id;
     return { nodes: folded, edges: rebuildTree(contract(edges, idOf), rootId) };
 }
 
@@ -193,8 +194,11 @@ function rebuildTree(edges: readonly DisplayEdge[], rootId: string | undefined):
     return edges.map((edge) => ({ ...edge, kind: tree.has(edge) ? "Child" : "Reference" }));
 }
 
-/** The node the graph hangs from: the one no tree edge leads to, else the first drawn. */
-function rootOf(nodes: readonly DisplayNode[], edges: readonly DisplayEdge[]): string {
+/**
+ * The node the graph hangs from: the one no tree edge leads to, else the first drawn, or
+ * `undefined` for a graph with no nodes.
+ */
+function rootOf(nodes: readonly DisplayNode[], edges: readonly DisplayEdge[]): string | undefined {
     const parented = new Set(
         edges.filter((edge) => edge.kind === "Child").map((edge) => edge.toId),
     );

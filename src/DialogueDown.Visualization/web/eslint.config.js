@@ -16,6 +16,17 @@ export default tseslint.config(
                 ...globals.node,
             },
         },
+        rules: {
+            // Every import sits at the top of the module, before any declaration, so a reader
+            // sees all of a module's dependencies in one place.
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector: "Program > :not(ImportDeclaration) ~ ImportDeclaration",
+                    message: "Move this import up with the module's other imports.",
+                },
+            ],
+        },
     },
     {
         // Node scripts (the live e2e webServer launcher).

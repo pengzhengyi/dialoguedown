@@ -40,6 +40,12 @@ import { initTooltips, initTabTooltips } from "./tooltips";
 import { isTextEntryTarget } from "./text-entry";
 import { ellipsize, escapeHtml } from "./text";
 import { hideArrivalNote, showArrivalNote } from "./arrival-note";
+import { setHelp, helpBody, type HelpContext } from "./help";
+import { createProblemsPanel } from "./problems-panel";
+import { createDiagnosticSummary } from "./diagnostic-summary";
+import { orderDiagnostics } from "./diagnostic-order";
+import { createFooterDrawer } from "./footer-drawer";
+import type { DebugController } from "./debug-controller";
 
 /**
  * Whether a stage renders `=>` as the jump ligature the writer meant rather than two characters
@@ -48,12 +54,6 @@ import { hideArrivalNote, showArrivalNote } from "./arrival-note";
  * adds — has interpreted nothing, so it is left as plain text.
  */
 const recognizesJumps = (stage: Stage): boolean => stage.readsDialogueMeaning ?? false;
-import { setHelp, helpBody, type HelpContext } from "./help";
-import { createProblemsPanel } from "./problems-panel";
-import { createDiagnosticSummary } from "./diagnostic-summary";
-import { orderDiagnostics } from "./diagnostic-order";
-import { createFooterDrawer } from "./footer-drawer";
-import type { DebugController } from "./debug-controller";
 
 // The Source tab shows the compiler input, not a projected stage, so its hover
 // tip is a constant here rather than a field on the model.
