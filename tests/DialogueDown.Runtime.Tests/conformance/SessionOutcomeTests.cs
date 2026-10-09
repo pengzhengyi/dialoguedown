@@ -5,13 +5,13 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_OfNothing_Conforms()
     {
-        Assert.True(SessionOutcome.Combine([]).IsConformed);
+        Assert.True(SessionOutcome.Combine().IsConformed);
     }
 
     [Fact]
     public void Combine_OfConformingOutcomes_Conforms()
     {
-        var combined = SessionOutcome.Combine([SessionOutcome.Conformed(), SessionOutcome.Conformed()]);
+        var combined = SessionOutcome.Combine(SessionOutcome.Conformed(), SessionOutcome.Conformed());
 
         Assert.True(combined.IsConformed);
     }
@@ -19,10 +19,10 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_WithOneDivergence_Diverges()
     {
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.Conformed(),
             SessionOutcome.Diverged("said the wrong thing"),
-            SessionOutcome.Conformed()]);
+            SessionOutcome.Conformed());
 
         Assert.Equal(SessionVerdict.Diverged, combined.Verdict);
         Assert.Equal("said the wrong thing", combined.Because);
@@ -31,9 +31,9 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_WithOneUnplayableClaim_IsNotYetPlayable()
     {
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.Conformed(),
-            SessionOutcome.NotYetPlayable("nothing checks describe yet")]);
+            SessionOutcome.NotYetPlayable("nothing checks describe yet"));
 
         Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
     }
@@ -42,9 +42,9 @@ public sealed class SessionOutcomeTests
     public void Combine_ADivergenceOutranksAnUnplayableClaim()
     {
         // Otherwise a real failure hides behind an unrelated check the harness cannot make yet.
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
-            SessionOutcome.Diverged("said the wrong thing")]);
+            SessionOutcome.Diverged("said the wrong thing"));
 
         Assert.Equal(SessionVerdict.Diverged, combined.Verdict);
         Assert.Equal("said the wrong thing", combined.Because);
@@ -54,9 +54,9 @@ public sealed class SessionOutcomeTests
     public void Combine_OfTwoDivergences_GathersBoth()
     {
         // Both are reported, so a contributor sees every divergence in one run.
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.Diverged("the speaker"),
-            SessionOutcome.Diverged("the speech")]);
+            SessionOutcome.Diverged("the speech"));
 
         Assert.Equal(["the speaker", "the speech"], combined.Reasons);
     }
@@ -65,9 +65,9 @@ public sealed class SessionOutcomeTests
     public void Combine_OfTwoUnplayableClaims_GathersBoth()
     {
         // So one run names every construct the runner cannot play yet.
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
-            SessionOutcome.NotYetPlayable("nothing checks invalidated yet")]);
+            SessionOutcome.NotYetPlayable("nothing checks invalidated yet"));
 
         Assert.Equal(SessionVerdict.NotYetPlayable, combined.Verdict);
         Assert.Equal(["nothing checks describe yet", "nothing checks invalidated yet"], combined.Reasons);
@@ -76,10 +76,10 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Combine_DropsTheReasonsOfAVerdictItOutranks()
     {
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Diverged("the speaker"),
-            SessionOutcome.Diverged("the speech")]);
+            SessionOutcome.Diverged("the speech"));
 
         Assert.Equal(["the speaker", "the speech"], combined.Reasons);
     }
@@ -113,10 +113,10 @@ public sealed class SessionOutcomeTests
     public void Combine_ReadsOnPastAClaimItCannotCheck()
     {
         // A divergence outranks one, so reading carries on until it is known there is none.
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Conformed(),
-            SessionOutcome.Diverged("said the wrong thing")]);
+            SessionOutcome.Diverged("said the wrong thing"));
 
         Assert.Equal(SessionVerdict.Diverged, combined.Verdict);
     }
@@ -144,9 +144,9 @@ public sealed class SessionOutcomeTests
     [Fact]
     public void Because_OfSeveralReasons_CountsAndListsThem()
     {
-        var combined = SessionOutcome.Combine([
+        var combined = SessionOutcome.Combine(
             SessionOutcome.Diverged("the speaker"),
-            SessionOutcome.Diverged("the speech")]);
+            SessionOutcome.Diverged("the speech"));
 
         Assert.Equal(
             $"2 reasons:{Environment.NewLine}  - the speaker{Environment.NewLine}  - the speech",

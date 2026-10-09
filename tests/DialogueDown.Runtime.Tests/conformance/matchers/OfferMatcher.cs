@@ -30,7 +30,7 @@ internal sealed class OfferMatcher : IExpectationMatcher
         var options = expected["options"]?.AsArray()
             ?? throw new InvalidFixtureException("An offer needs options.");
 
-        return SessionOutcome.Combine([MatchKind(offer.Ordered, ordered), MatchOptions(offer.Options, options)]);
+        return SessionOutcome.Combine(MatchKind(offer.Ordered, ordered), MatchOptions(offer.Options, options));
     }
 
     private static SessionOutcome MatchKind(bool offered, bool claimed) =>
@@ -56,7 +56,7 @@ internal sealed class OfferMatcher : IExpectationMatcher
             ?? throw new InvalidFixtureException($"Option {at} of an offer needs available.");
 
         var outcome = SessionOutcome.Combine(
-            [SpeechClaim.Match(offered.Label, label), MatchAvailable(offered.Available, available)]);
+            SpeechClaim.Match(offered.Label, label), MatchAvailable(offered.Available, available));
 
         return ForOption(outcome, at);
     }
