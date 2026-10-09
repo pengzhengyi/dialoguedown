@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { audit } from "../e2e/audit";
+import { textContrastOf } from "../e2e/contrast";
 import {
     CONFIG_EDIT_PORT,
     CONFIG_EDIT_TREE,
@@ -39,48 +40,6 @@ async function appendToConfig(page: import("@playwright/test").Page, text: strin
     await page.keyboard.insertText(text); // insertText avoids the auto-close-bracket per-key path
 }
 
-/** The WCAG contrast ratio of a rendered element's text over its effective background. */
-async function contrastOf(locator: import("@playwright/test").Locator): Promise<number> {
-    const rendered = await locator.evaluate((element) => {
-        const own = getComputedStyle(element);
-        let node: Element | null = element;
-        let background = "rgba(0, 0, 0, 0)";
-        while (node !== null && background.endsWith(", 0)")) {
-            background = getComputedStyle(node).backgroundColor;
-            node = node.parentElement;
-        }
-
-        return { color: own.color, background, opacity: Number(own.opacity) };
-    });
-
-    const channels = (value: string): number[] =>
-        value
-            .match(/[\d.]+/g)!
-            .slice(0, 3)
-            .map(Number);
-    const [red, green, blue] = channels(rendered.color);
-    const [behindRed, behindGreen, behindBlue] = channels(rendered.background);
-    const blend = (channel: number, behind: number): number =>
-        channel * rendered.opacity + behind * (1 - rendered.opacity);
-    const luminance = (rgb: number[]): number =>
-        rgb
-            .map((channel) => channel / 255)
-            .map((channel) =>
-                channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
-            )
-            .reduce((sum, channel, at) => sum + channel * [0.2126, 0.7152, 0.0722][at], 0);
-    const foreground = luminance([
-        blend(red, behindRed),
-        blend(green, behindGreen),
-        blend(blue, behindBlue),
-    ]);
-    const background = luminance([behindRed, behindGreen, behindBlue]);
-    const [high, low] =
-        foreground > background ? [foreground, background] : [background, foreground];
-
-    return (high + 0.05) / (low + 0.05);
-}
-
 // A disabled control still has to be read, so its label keeps 4.5:1 contrast with its dimming
 // applied, on the light theme as well.
 test.use({ colorScheme: "light" });
@@ -93,7 +52,7 @@ test("a disabled Discard stays legible on the light theme", async ({ page }) => 
     await expect(discard).toBeVisible();
     await expect(discard).toBeDisabled();
 
-    expect(await contrastOf(discard)).toBeGreaterThanOrEqual(4.5);
+    expect(await textContrastOf(discard)).toBeGreaterThanOrEqual(4.5);
 });
 
 test("editing the config marks it dirty and stale; Save recompiles the speakers", async ({
