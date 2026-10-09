@@ -1,22 +1,10 @@
+using static DialogueDown.Conformance.Tests.Support.FixtureJsonFactory;
 using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
 
 namespace DialogueDown.Conformance;
 
 public sealed class ReadableCorpusTests
 {
-    private const string Fixture = """
-        {
-          "name": "a case",
-          "playbook": "playbook.json",
-          "verdict": "refuse",
-          "because": "a reason a reviewer can weigh"
-        }
-        """;
-
-    private const string Playbook = """
-        { "format": { "version": 0, "requires": [], "uses": [] } }
-        """;
-
     [Fact]
     public void Read_ACase_CarriesItsFixtureAndTheDocumentItIsAbout()
     {
@@ -26,14 +14,14 @@ public sealed class ReadableCorpusTests
 
         Assert.Equal("unknown-requires", aCase.Name);
         Assert.Equal(Verdict.Refuse, aCase.Fixture.Verdict);
-        Assert.Equal(Playbook, aCase.Playbook);
+        Assert.Equal(APlaybook, aCase.Playbook);
     }
 
     [Fact]
     public void Read_ACaseWhoseFixtureIsMalformed_SaysWhichCase()
     {
         using var corpus = new TemporaryCorpus()
-            .With("broken", ("fixture.json", "{ not a fixture"), ("playbook.json", Playbook));
+            .With("broken", ("fixture.json", "{ not a fixture"), ("playbook.json", APlaybook));
 
         AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("broken"), "broken");
     }
@@ -41,7 +29,8 @@ public sealed class ReadableCorpusTests
     [Fact]
     public void Read_ACaseWhosePlaybookIsMissing_SaysWhichCaseAndWhichFile()
     {
-        using var corpus = new TemporaryCorpus().With("no-playbook", ("fixture.json", Fixture));
+        using var corpus = new TemporaryCorpus()
+            .With("no-playbook", ("fixture.json", AReadableFixture().ToJsonString()));
 
         AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("no-playbook"), "no-playbook", "playbook.json");
     }
@@ -53,8 +42,8 @@ public sealed class ReadableCorpusTests
         // file behind it is reported.
         using var corpus = new TemporaryCorpus().With(
             "renamed",
-            ("fixture.json", Fixture.Replace("playbook.json", "elsewhere.json", StringComparison.Ordinal)),
-            ("playbook.json", Playbook));
+            ("fixture.json", AReadableFixture().WithField("playbook", "elsewhere.json")),
+            ("playbook.json", APlaybook));
 
         AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("renamed"), "elsewhere.json");
     }
@@ -72,5 +61,6 @@ public sealed class ReadableCorpusTests
     }
 
     private static TemporaryCorpus Holding(string caseName) =>
-        new TemporaryCorpus().With(caseName, ("fixture.json", Fixture), ("playbook.json", Playbook));
+        new TemporaryCorpus().With(
+            caseName, ("fixture.json", AReadableFixture().ToJsonString()), ("playbook.json", APlaybook));
 }

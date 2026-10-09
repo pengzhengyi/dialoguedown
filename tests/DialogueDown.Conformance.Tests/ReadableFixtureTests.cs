@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+using static DialogueDown.Conformance.Tests.Support.FixtureJsonFactory;
 using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
 
 namespace DialogueDown.Conformance;
@@ -26,7 +26,7 @@ public sealed class ReadableFixtureTests
     [Fact]
     public void Read_AnAcceptingFixture_IsUnderstood()
     {
-        var fixture = ReadableFixture.Read(With("verdict", "accept"));
+        var fixture = ReadableFixture.Read(AReadableFixture().WithField("verdict", "accept"));
 
         Assert.Equal(Verdict.Accept, fixture.Verdict);
     }
@@ -34,35 +34,35 @@ public sealed class ReadableFixtureTests
     [Fact]
     public void Read_AVerdictNobodyCanActOn_IsRefused()
     {
-        AssertInvalid(() => ReadableFixture.Read(With("verdict", "maybe")), "verdict");
+        AssertInvalid(() => ReadableFixture.Read(AReadableFixture().WithField("verdict", "maybe")), "verdict");
     }
 
     [Fact]
     public void Read_AVerdictInAnotherCase_IsRefusedAsThePlaybookFormatRefusesItsOwn()
     {
         // A playbook refuses "Italic" for "italic", so the corpus is just as strict.
-        AssertInvalid(() => ReadableFixture.Read(With("verdict", "Refuse")));
+        AssertInvalid(() => ReadableFixture.Read(AReadableFixture().WithField("verdict", "Refuse")));
     }
 
     [Fact]
     public void Read_AVerdictWrittenAsANumber_IsRefused()
     {
-        AssertInvalid(() => ReadableFixture.Read(With("verdict", 1)));
+        AssertInvalid(() => ReadableFixture.Read(AReadableFixture().WithField("verdict", 1)));
     }
 
     [Fact]
     public void Read_AFixturePointingAtItsSchema_KeepsTheUrl()
     {
         var fixture = ReadableFixture.Read(
-            With("$schema", "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json"));
+            AReadableFixture().WithField("$schema", SchemaUrl));
 
-        Assert.Equal("https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json", fixture.Schema);
+        Assert.Equal(SchemaUrl, fixture.Schema);
     }
 
     [Fact]
     public void Read_AFixtureWithoutASchema_IsStillRead()
     {
-        Assert.Null(ReadableFixture.Read(Fixture().ToJsonString()).Schema);
+        Assert.Null(ReadableFixture.Read(AReadableFixture().ToJsonString()).Schema);
     }
 
     [Theory]
@@ -72,13 +72,13 @@ public sealed class ReadableFixtureTests
     [InlineData("because")]
     public void Read_AFixtureMissingAField_SaysWhichIsMissing(string missing)
     {
-        AssertInvalid(() => ReadableFixture.Read(Without(missing)), missing);
+        AssertInvalid(() => ReadableFixture.Read(AReadableFixture().WithoutField(missing)), missing);
     }
 
     [Fact]
     public void Read_AMisspelledField_IsRefusedRatherThanIgnored()
     {
-        AssertInvalid(() => ReadableFixture.Read(With("verdcit", "accept")), "verdcit");
+        AssertInvalid(() => ReadableFixture.Read(AReadableFixture().WithField("verdcit", "accept")), "verdcit");
     }
 
     [Theory]
@@ -89,34 +89,5 @@ public sealed class ReadableFixtureTests
     public void Read_SomethingThatIsNotAFixture_SaysSo(string json)
     {
         AssertInvalid(() => ReadableFixture.Read(json));
-    }
-
-    /// <summary>A well-formed fixture, which each test changes in one field.</summary>
-    private static JsonObject Fixture() => new()
-    {
-        ["name"] = "a fixture",
-        ["playbook"] = "playbook.json",
-        ["verdict"] = "refuse",
-        ["because"] = "a reason a reviewer can weigh",
-    };
-
-    /// <summary>The well-formed fixture with one field set, whether or not the field belongs.</summary>
-    private static string With(string field, JsonNode value)
-    {
-        var fixture = Fixture();
-        fixture[field] = value;
-
-        return fixture.ToJsonString();
-    }
-
-    /// <summary>The well-formed fixture with one field removed.</summary>
-    private static string Without(string field)
-    {
-        var fixture = Fixture();
-
-        // Removing a field the fixture lacks would leave the test checking a complete fixture.
-        Assert.True(fixture.Remove(field), $"'{field}' is not a field of a fixture.");
-
-        return fixture.ToJsonString();
     }
 }
