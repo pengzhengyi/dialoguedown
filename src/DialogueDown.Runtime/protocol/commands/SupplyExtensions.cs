@@ -45,14 +45,14 @@ internal static class SupplyExtensions
         if (!supply.Answers.TryGetValue(key, out var answer))
         {
             throw new InvalidOperationException(
-                $"Nothing was said about {key}. A supply is held to the keys it answers before it "
-                    + "is read, so reaching this means that holding was skipped.");
+                $"Nothing was said about {key}. A supply is checked for the keys it answers before "
+                    + "it is read, so reaching this means that check was skipped.");
         }
 
         return answer as TAnswer
             ?? throw new InvalidOperationException(
-                $"{key} was answered with {answer.Kind().Describe()}. A supply is held to the kind "
-                    + "each key needs before it is read, so reaching this means that holding was "
+                $"{key} was answered with {answer.Kind().Describe()}. A supply is checked for the "
+                    + "kind each key needs before it is read, so reaching this means that check was "
                     + "skipped.");
     }
 }

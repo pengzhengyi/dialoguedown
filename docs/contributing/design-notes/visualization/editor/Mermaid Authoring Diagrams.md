@@ -270,7 +270,7 @@ interactive report's `DisplayGraph`.
 | Script or event syntax in a diagram | Mermaid's strict renderer encodes or disables it before the SVG is mounted. |
 | Theme changes mid-render | The new theme schedules a newer revision; the old result cannot mount. |
 | Exported report opened from `file://` | Renders from the inlined build with no network request. |
-| `--emit mermaid` | Exit nonzero, write no output, and report: “Mermaid stage emission was removed. Use `--emit dot` for compiler graphs; fenced `mermaid` blocks render in the HTML report.” |
+| `--emit mermaid` | Exit nonzero, write no output, and report: “`--emit mermaid` is not a compile format. Use `--emit dot` for compiler graphs; fenced `mermaid` blocks render in the HTML report.” |
 
 ## Integration
 

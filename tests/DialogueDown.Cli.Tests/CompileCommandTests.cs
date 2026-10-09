@@ -486,7 +486,7 @@ public sealed class CompileCommandTests
         AssertExited(
             result,
             ExitCodes.UsageError,
-            "Mermaid stage emission was removed",
+            "'--emit mermaid' is not a compile format",
             "--emit dot",
             "fenced `mermaid` blocks");
         AssertNothingEmitted(runner);

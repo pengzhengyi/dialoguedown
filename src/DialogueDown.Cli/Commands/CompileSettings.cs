@@ -132,7 +132,7 @@ internal sealed class CompileSettings : CommandSettings
         if (string.Equals(Emit.Trim(), "mermaid", StringComparison.OrdinalIgnoreCase))
         {
             return ValidationResult.Error(
-                "Mermaid stage emission was removed. Use '--emit dot' for compiler graphs; " +
+                "'--emit mermaid' is not a compile format. Use '--emit dot' for compiler graphs; " +
                 "fenced `mermaid` blocks render in the HTML report.");
         }
 

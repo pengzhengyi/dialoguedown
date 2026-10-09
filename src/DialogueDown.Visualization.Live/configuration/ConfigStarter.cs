@@ -11,7 +11,7 @@ internal static class ConfigStarter
     public const string Template =
         """
         # Compilation mode for this project — how far a compile proceeds after an error. It applies
-        # to the dialoguedown CLI and to embedded builds:
+        # to the ddown CLI and to embedded builds:
         #   stage-boundary  - stop at the first stage that reports an error (the default)
         #   best-effort     - recover through every stage and collect every problem
         # The visualization always renders stage-boundary, so every stage it shows is built from
