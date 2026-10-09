@@ -108,6 +108,7 @@ for both composition roots.
 | Rule | Code | Severity |
 | --- | --- | --- |
 | `UnreachableAfterJumpRule` — content after a jump on the same line | `DLG1003` | Warning |
+| `CommandInLabelRule` — [a command inside a label or alt text](../language/Game%20Calls%20in%20Labels.md) | `DLG1103` | Error |
 | `OrphanConditionRule` — a condition that guards nothing | `DLG1106` | Error |
 | `WeightTotalRule` — random-choice weights sum to zero / not to 100% | `DLG2010` / `DLG3003` | Error / Warning |
 | `SceneHeadingPlacementRule` — a heading inside a branch or option | `DLG2015` | Error |
