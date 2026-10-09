@@ -80,7 +80,7 @@ Alice: The sky turns `<mark class="dd-mark-fix">&quot;World.Weather&quot;</mark>
 
 {0} is not allowed inside a label or alt text; only text and styling are.
 
-A jump or link label is plain, styled text only. Functional elements — code spans, images, nested links, or line breaks — are not allowed inside a label or an image's alt text.
+The default compile does not report this: a code span, image, nested link, or line break inside a jump or link label, or an image's alt text, is kept as its plain text. Only a stricter label mode, not yet available, allows just text and styling in a label; it reports such an element and drops it.
 
 ### DLG1104
 
