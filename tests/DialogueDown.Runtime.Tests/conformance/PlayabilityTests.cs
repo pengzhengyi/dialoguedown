@@ -19,7 +19,7 @@ public sealed class PlayabilityTests
     [Fact]
     public void CanPlay_ASendNoReaderOwns_IsNot()
     {
-        AssertNotPlayable(Sent("""{ "choose": 0 }"""));
+        AssertNotPlayable(Sent("""{ "frobnicate": 0 }"""));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class PlayabilityTests
     [Fact]
     public void WhyNotPlayable_OfASendNoReaderOwns_NamesItsCommand()
     {
-        AssertNotPlayable(Sent("""{ "choose": 0 }"""), "nothing sends choose yet");
+        AssertNotPlayable(Sent("""{ "frobnicate": 0 }"""), "nothing sends frobnicate yet");
     }
 
     [Fact]
@@ -75,10 +75,10 @@ public sealed class PlayabilityTests
             SentCommand("next"),
             SentCommand("frobnicate"),
             SentCommand("frobnicate"),
-            Sent("""{ "choose": 0 }"""),
-            Sent("""{ "choose": 1 }"""));
+            Sent("""{ "twiddle": 0 }"""),
+            Sent("""{ "twiddle": 1 }"""));
 
-        AssertNotPlayable(session, "nothing sends frobnicate yet", "nothing sends choose yet");
+        AssertNotPlayable(session, "nothing sends frobnicate yet", "nothing sends twiddle yet");
     }
 
     [Fact]

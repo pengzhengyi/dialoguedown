@@ -72,8 +72,8 @@ public sealed class CommandsTests
     public void NameOf_AShapedSend_IsTheKeyItIsSentUnder()
     {
         // Two payloads of one unknown command share one name, so the screen reports one gap.
-        Assert.Equal("choose", Commands.NameOf(Sent("""{ "choose": 0 }""")));
-        Assert.Equal("choose", Commands.NameOf(Sent("""{ "choose": 1 }""")));
+        Assert.Equal("frobnicate", Commands.NameOf(Sent("""{ "frobnicate": 0 }""")));
+        Assert.Equal("frobnicate", Commands.NameOf(Sent("""{ "frobnicate": 1 }""")));
     }
 
     [Fact]
