@@ -60,8 +60,10 @@ what the runtime must reply, in order.
 A session with no `start` begins at the playbook's `entry`. `speech` and `label` are
 written either as an **array** — the playbook's fragments, verbatim — or as a
 **string**, which asserts the flattening defined by
-[Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# runner takes
-`next`, `done`, and `failed`; a case that sends anything else is not yet playable.
+[Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# harness sends
+everything but `start` and `describe`, and checks everything but `invalidated`. A
+case that uses one of those is not yet playable, and so is a case whose menu asks
+the world, which the C# runner does not offer yet.
 
 ## What the corpus covers
 
@@ -74,15 +76,23 @@ rather than a script.
 | `styled-speech` | Do fragment boundaries and styles survive intact? | yes |
 | `a-jump` | Does a jump transfer without returning? | yes |
 | `an-effect` | Is an effect asked for, and waited on before the run goes past it? | yes |
-| `a-failed-effect` | Does the run stand still, so a retry lands and an advance cannot? | yes |
+| `a-failed-effect` | Does the run stand still, so a retry carries on and an advance cannot? | yes |
 | `a-next-while-waiting` | Is `next` refused while the host is carrying out an effect? | yes |
+| `a-command-opening-a-line` | Does a line opening with a command still open in its speaker's name? | yes |
+| `a-command-mid-line` | Is a command in the middle of a line carried out between its words? | yes |
+| `a-command-ending-a-line` | Is a command ending a line carried out after its words, before the player moves on? | yes |
+| `a-line-that-is-only-a-command` | Does a line whose only speech is a command still wait for the player? | yes |
+| `a-failed-command-in-a-line` | Does a failed command in a line hold the run, so the retry gives the player the turn? | yes |
 | `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |
-| `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | not yet |
-| `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | not yet |
+| `a-conditional-line` | Is a line skipped without ending the run? | yes |
+| `a-conditional-jump` | Is a jump taken when its condition holds? | yes |
+| `a-conditional-block` | Are the arms tried in the order written? | yes |
+| `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | yes |
+| `a-query-after-a-command` | Is a query written after a command asked only once the command is done? | yes |
+| `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | yes |
+| `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | yes |
+| `a-choice-the-menu-did-not-offer` | Is a choice past the last option refused, with the menu still open? | yes |
 | `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | not yet |
-| `a-conditional-line` | Is a line skipped without ending the run? | not yet |
-| `a-conditional-block` | Are the arms tried in the order written? | not yet |
-| `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | not yet |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the
