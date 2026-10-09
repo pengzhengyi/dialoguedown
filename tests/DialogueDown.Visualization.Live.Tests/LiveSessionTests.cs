@@ -6,6 +6,7 @@ using DialogueDown.Visualization.Live.Files;
 using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Live.Tests.Support;
 using DialogueDown.Visualization.Render;
+using static DialogueDown.Visualization.Live.Tests.Support.LiveEventAssert;
 using static DialogueDown.Visualization.Live.Tests.Support.LivePageAssert;
 using static DialogueDown.Visualization.Live.Tests.Support.LivePayload;
 
@@ -70,9 +71,7 @@ public sealed class LiveSessionTests
 
         session.Refresh();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload", received!.Event);
-        Assert.Contains("# Second", received.Data);
+        Assert.Equal("# Second", AssertBroadcast(reader, "reload").Source);
     }
 
     [Fact]
@@ -83,10 +82,9 @@ public sealed class LiveSessionTests
 
         session.Refresh();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("not found", received.Data, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"target\":\"document\"", received.Data); // routes through the document controller
+        var problem = AssertBroadcast(reader, "problem");
+        Assert.Contains("not found", problem.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("document", problem.Target); // routes through the document controller
     }
 
     [Fact]
@@ -104,9 +102,7 @@ public sealed class LiveSessionTests
         var problem = Record.Exception(() => session.Refresh());
 
         Assert.Null(problem); // the callback never escapes
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("\"target\":\"document\"", received.Data);
+        Assert.Equal("document", AssertBroadcast(reader, "problem").Target);
     }
 
     [Fact]
@@ -293,19 +289,17 @@ public sealed class LiveSessionTests
 
         session.Save(new SaveInput("# B", ExpectedBaseline: "# Old"));
         session.Refresh(); // the browser's own write is suppressed once, consuming the token
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
 
         File.WriteAllText(script.Path, "# A");
         session.Refresh();
-        Assert.True(reader.TryRead(out var toA));
-        Assert.Contains("# A", toA!.Data);
+        Assert.Equal("# A", AssertBroadcast(reader, "reload").Source);
 
         // Writing the earlier self-written content back is an external edit, because the
         // suppression applies only once.
         File.WriteAllText(script.Path, "# B");
         session.Refresh();
-        Assert.True(reader.TryRead(out var backToB));
-        Assert.Contains("# B", backToB!.Data);
+        Assert.Equal("# B", AssertBroadcast(reader, "reload").Source);
     }
 
     [Fact]
@@ -318,7 +312,7 @@ public sealed class LiveSessionTests
         session.Save(new SaveInput("# Saved", ExpectedBaseline: "# Old"));
         session.Refresh(); // the watcher firing for the browser's own write
 
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
     }
 
     [Fact]
@@ -332,9 +326,7 @@ public sealed class LiveSessionTests
         File.WriteAllText(script.Path, "# External");
         session.Refresh();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload", received!.Event);
-        Assert.Contains("# External", received.Data);
+        Assert.Equal("# External", AssertBroadcast(reader, "reload").Source);
     }
 
     [Fact]
@@ -752,9 +744,7 @@ public sealed class LiveSessionTests
 
         session.RefreshConfig();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload-config", received!.Event);
-        Assert.Contains("External", received.Data);
+        Assert.Equal(Speaker("External", "E"), AssertBroadcast(reader, "reload-config").ConfigSource);
     }
 
     [Fact]
@@ -770,7 +760,7 @@ public sealed class LiveSessionTests
         session.Save(new SaveInput(Speaker("Bob", "B"), "config", valid, "require-valid"));
         session.RefreshConfig(); // the watcher firing for the browser's own config write
 
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
     }
 
     [Fact]
@@ -786,17 +776,15 @@ public sealed class LiveSessionTests
         var bob = Speaker("Bob", "B");
         session.Save(new SaveInput(bob, "config", valid, "require-valid"));
         session.RefreshConfig(); // the browser's own config write is suppressed once
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
 
         File.WriteAllText(configPath, Speaker("External", "E"));
         session.RefreshConfig();
-        Assert.True(reader.TryRead(out var toExternal));
-        Assert.Contains("External", toExternal!.Data);
+        Assert.Equal(Speaker("External", "E"), AssertBroadcast(reader, "reload-config").ConfigSource);
 
         File.WriteAllText(configPath, bob);
         session.RefreshConfig();
-        Assert.True(reader.TryRead(out var backToBob));
-        Assert.Contains("Bob", backToBob!.Data);
+        Assert.Equal(bob, AssertBroadcast(reader, "reload-config").ConfigSource);
     }
 
     [Fact]
@@ -811,10 +799,9 @@ public sealed class LiveSessionTests
 
         session.RefreshConfig();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("not found", received.Data, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"target\":\"config\"", received.Data); // routes through the config controller
+        var problem = AssertBroadcast(reader, "problem");
+        Assert.Contains("not found", problem.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("config", problem.Target); // routes through the config controller
     }
 
     [Fact]
@@ -831,9 +818,7 @@ public sealed class LiveSessionTests
         var problem = Record.Exception(() => session.RefreshConfig());
 
         Assert.Null(problem); // the timer callback never escapes
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("\"target\":\"config\"", received.Data);
+        Assert.Equal("config", AssertBroadcast(reader, "problem").Target);
     }
 
     [Fact]
@@ -845,7 +830,7 @@ public sealed class LiveSessionTests
 
         session.RefreshConfig();
 
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
     }
 
     private static LiveSession ConfiguredSession(string docPath, string configPath)
