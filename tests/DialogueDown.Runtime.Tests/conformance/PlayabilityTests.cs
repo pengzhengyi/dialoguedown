@@ -95,15 +95,15 @@ public sealed class PlayabilityTests
     {
         // The harness screens a playbook before stepping, and the screen restates what the runner
         // can play, so the two must agree: on every kind, and on the menus refused for what they ask.
-        foreach (var node in OneOfEveryNodeKind().Concat([AMenuWithAConditionalOption(), AMenuWithAQueryInALabel()]))
+        foreach (var (name, node) in EveryKindAndEveryMenuThatAsksTheWorld())
         {
             var refused = node.RefusalOnArrival() is not null;
 
             Assert.True(
                 Playability.CanPlay(node) == !refused,
-                $"{node.GetType().Name}: the harness calls it "
+                $"{name}: the harness calls it "
                     + $"{(Playability.CanPlay(node) ? "playable" : "untaught")}, "
-                    + $"but arriving at one {(refused ? "refuses" : "does not refuse")}.");
+                    + $"but arriving at it {(refused ? "refuses" : "does not refuse")}.");
         }
     }
 
@@ -114,4 +114,16 @@ public sealed class PlayabilityTests
         // about nothing.
         UnionCoverageAssert.AssertCoversEveryMember<Node>(OneOfEveryNodeKind());
     }
+
+    /// <summary>
+    /// One node of every kind, named by its kind, and each menu that asks the world, named by the
+    /// scenario that builds it.
+    /// </summary>
+    /// <returns>Each node, with the name a failure reports it by.</returns>
+    private static IEnumerable<(string Name, Node Node)> EveryKindAndEveryMenuThatAsksTheWorld() =>
+    [
+        .. OneOfEveryNodeKind().Select(node => (node.GetType().Name, node)),
+        (nameof(AMenuWithAConditionalOption), AMenuWithAConditionalOption()),
+        (nameof(AMenuWithAQueryInALabel), AMenuWithAQueryInALabel()),
+    ];
 }
