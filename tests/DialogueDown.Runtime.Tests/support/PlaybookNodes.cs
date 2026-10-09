@@ -159,6 +159,27 @@ internal static class PlaybookNodes
     public static OptionEdge OptionSaying(int target, params SpeechFragment[] label) =>
         new(target, [.. label], Condition: null);
 
+    /// <summary>A menu whose first option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Wait here
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    public static ChoiceNode AMenuWithAConditionalOption() =>
+        Menu(0, Option(1, "Open the door", "Alice.HasKey"), Option(2, "Wait here"));
+
+    /// <summary>A menu whose only option's label asks the world for words.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Call `"playerName"` over
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    public static ChoiceNode AMenuWithAQueryInALabel() =>
+        Menu(0, OptionSaying(1, new TextFragment("Call "), new QueryFragment("playerName"), new TextFragment(" over")));
+
     /// <summary>A block condition, which says nothing and performs nothing and goes on by an arm.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="ways">Its arms in the order they are tried, and a succession when it has no else.</param>

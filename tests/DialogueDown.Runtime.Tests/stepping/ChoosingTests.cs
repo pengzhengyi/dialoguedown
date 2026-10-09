@@ -157,26 +157,5 @@ public sealed class ChoosingTests
     /// <returns>The menu.</returns>
     private static ChoiceNode AMenuWhoseLabelIsOnlyACommand() => Menu(0, OptionSaying(1, Command("Wave")));
 
-    /// <summary>A menu whose first option only the world can allow.</summary>
-    /// <remarks>
-    /// <code>
-    /// - `Alice.HasKey?` Open the door
-    /// - Wait here
-    /// </code>
-    /// </remarks>
-    /// <returns>The menu.</returns>
-    private static ChoiceNode AMenuWithAConditionalOption() =>
-        Menu(0, Option(1, "Open the door", "Alice.HasKey"), Option(2, "Wait here"));
-
-    /// <summary>A menu whose only option's label asks the world for words.</summary>
-    /// <remarks>
-    /// <code>
-    /// - Call `"playerName"` over
-    /// </code>
-    /// </remarks>
-    /// <returns>The menu.</returns>
-    private static ChoiceNode AMenuWithAQueryInALabel() =>
-        Menu(0, OptionSaying(1, new TextFragment("Call "), new QueryFragment("playerName"), new TextFragment(" over")));
-
     private static CustomCommandFragment Command(string name) => new(name, []);
 }
