@@ -3,6 +3,10 @@ import { colorOf } from "./palette";
 import { ellipsize, escapeHtml, renderNodePreview } from "./text";
 import { mountPreviewHtml } from "./preview-html";
 import { mermaidPreviews } from "./mermaid-preview";
+import { createJumpButton, type JumpButton } from "./jump-button";
+import { edgeStyle } from "./edge-style";
+import type { Neighbor, Neighbors } from "./neighbors";
+import type { BorderCrossing, CrossingEnd, RegionDetail } from "./region-detail";
 
 /** How much of a content node's words its detail row shows before the full text below. */
 const MAX_TITLE_TEXT = 80;
@@ -21,10 +25,6 @@ const MAX_CELL_TEXT = 120;
 function cellText(label: string): string {
     return `<span class="cell-text">${escapeHtml(ellipsize(label, MAX_CELL_TEXT))}</span>`;
 }
-import { createJumpButton, type JumpButton } from "./jump-button";
-import { edgeStyle } from "./edge-style";
-import type { Neighbor, Neighbors } from "./neighbors";
-import type { BorderCrossing, CrossingEnd, RegionDetail } from "./region-detail";
 
 /** One end of an edge, as the inspector shows it. */
 export interface EdgeEnd {
