@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
-using DialogueDown.Conformance.Tests.Support;
 using static DialogueDown.Conformance.Tests.Support.FixtureJsonFactory;
 using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
+using static DialogueDown.Conformance.Tests.Support.SessionEntryAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -28,19 +28,12 @@ public sealed class PlayableFixtureTests
         Assert.Equal("playbook.json", fixture.Playbook);
         Assert.Equal("a reason a reviewer can weigh", fixture.Because);
 
-        Assert.Equal(4, fixture.Session.Length);
-
-        var send1 = Assert.IsType<Send>(fixture.Session[0]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("\"next\""), send1.Message));
-
-        var send2 = Assert.IsType<Send>(fixture.Session[1]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("""{ "choose": 0 }"""), send2.Message));
-
-        var expect1 = Assert.IsType<Expect>(fixture.Session[2]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("""{ "said": { "speaker": "Alice", "speech": "Hi" } }"""), expect1.Message));
-
-        var expect2 = Assert.IsType<Expect>(fixture.Session[3]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("""{ "ended": {} }"""), expect2.Message));
+        Assert.Collection(
+            fixture.Session,
+            entry => AssertSends(entry, "\"next\""),
+            entry => AssertSends(entry, """{ "choose": 0 }"""),
+            entry => AssertExpects(entry, """{ "said": { "speaker": "Alice", "speech": "Hi" } }"""),
+            entry => AssertExpects(entry, """{ "ended": {} }"""));
     }
 
     [Theory]

@@ -1,5 +1,6 @@
 using static DialogueDown.Conformance.Tests.Support.FixtureJsonFactory;
 using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
+using static DialogueDown.Conformance.Tests.Support.SessionEntryAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -13,11 +14,7 @@ public sealed class PlayableCorpusTests
         var aCase = new PlayableCorpus(corpus.Folder).Read("a-case");
 
         Assert.Equal("a-case", aCase.Name);
-        Assert.Single(aCase.Fixture.Session);
-
-        var send = Assert.IsType<Send>(aCase.Fixture.Session[0]);
-        Assert.Equal("next", send.Message.AsValue().GetValue<string>());
-
+        AssertSends(Assert.Single(aCase.Fixture.Session), "\"next\"");
         Assert.Equal(APlaybook, aCase.Playbook);
     }
 
