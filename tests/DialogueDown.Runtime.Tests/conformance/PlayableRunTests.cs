@@ -14,10 +14,10 @@ public sealed class PlayableRunTests
     [Fact]
     public void Match_ACaseTheBuildCannotPlay_NamesWhatItHasNotLearned()
     {
-        // The corpus case the runner cannot play yet, end to end: the choose that picks from its
-        // menu is named before the run starts.
+        // A corpus case the runner cannot play yet, end to end: its menu asks the world, and that
+        // is named before the run starts.
         AssertNotYetPlayable(
-            PlayableRun.Match(Corpora.Playable.Read("a-player-choice")),
-            "nothing sends choose yet");
+            PlayableRun.Match(Corpora.Playable.Read("an-unavailable-option")),
+            "nothing offers a menu that asks the world yet");
     }
 }
