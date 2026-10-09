@@ -23,12 +23,12 @@ public sealed class PerformMatcherTests
     public void AnEffectRenamedOnTheWayOutDiverges() =>
         AssertDiverged(
             Match(Performed("Bow"), Waving),
-            """expected {"kind":"custom-command","name":"Wave","args":[]} to be carried out""",
+            """expected {"kind":"custom-command","name":"Wave","args":[]} to be performed""",
             """but {"kind":"custom-command","name":"Bow","args":[]} was asked for""");
 
     [Fact]
     public void AnythingButAPerformDiverges() =>
-        AssertDiverged(Match(new Ended(), Waving), "expected the host to be asked to carry something out", "ended");
+        AssertDiverged(Match(new Ended(), Waving), "expected the host to be asked to perform something", "ended");
 
     [Fact]
     public void PerformingIsDescribedByTheEffectWhenSomethingElseWasExpected() =>
