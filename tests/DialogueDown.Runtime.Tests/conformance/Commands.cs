@@ -18,7 +18,10 @@ internal static class Commands
     // Keyed, so two readers claiming one key fail at startup rather than one silently replacing
     // the other. Bare and shaped commands share one key space.
     private static readonly Dictionary<string, ICommandReader> _byKey =
-        new ICommandReader[] { new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader() }
+        new ICommandReader[]
+        {
+            new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader(), new ChooseReader(),
+        }
             .ToDictionary(reader => reader.Key, StringComparer.Ordinal);
 
     /// <summary>The display name of a send: the command it names, or its message when it names none.</summary>

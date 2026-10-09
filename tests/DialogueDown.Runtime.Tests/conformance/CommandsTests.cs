@@ -25,6 +25,12 @@ public sealed class CommandsTests
     }
 
     [Fact]
+    public void TryRead_Choose_IsTheChooseCommand()
+    {
+        AssertReadableCommand<Choose>("""{ "choose": 0 }""");
+    }
+
+    [Fact]
     public void TryRead_Describe_IsNotPlayedYet()
     {
         AssertNotReadable("\"describe\"");
@@ -34,12 +40,6 @@ public sealed class CommandsTests
     public void TryRead_AnUnknownName_AnswersFalse()
     {
         AssertNotReadable("\"frobnicate\"");
-    }
-
-    [Fact]
-    public void TryRead_ACommandNobodyPlaysYet_AnswersFalse()
-    {
-        AssertNotReadable("""{ "choose": 0 }""");
     }
 
     [Fact]
