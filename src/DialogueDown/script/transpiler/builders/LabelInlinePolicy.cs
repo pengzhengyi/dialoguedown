@@ -6,18 +6,19 @@ using MarkdownLineBreak = DialogueDown.Markdown.LineBreak;
 namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
-/// The policy for an image alt or a link label: text and styling are supported,
-/// but the functional elements — a code span, link, image, jump, or break — are not.
+/// The policy for an image alt or a link label: text, styling, and code spans are supported,
+/// so a code span builds exactly as it does in speech. A link, image, jump, or break is not.
 /// An unsupported element is restored to its plain-text form so the writer's characters
-/// survive as words (a code span keeps its backticks, a nested link its brackets). This
-/// is approximate: a code span written with double backticks, like <c>``a``</c>, comes back as
-/// <c>`a`</c>.
+/// survive as words (a nested link keeps its brackets, and a code span inside it its
+/// backticks). This is approximate: a code span written with double backticks, like
+/// <c>``a``</c>, comes back as <c>`a`</c>.
 /// </summary>
 internal sealed class LabelInlinePolicy : IInlinePolicy
 {
     public bool SupportsJumps => false;
 
-    public bool Supports(MarkdownInline inline) => inline is TextInline or EmphasisInline;
+    public bool Supports(MarkdownInline inline) =>
+        inline is TextInline or EmphasisInline or CodeSpanInline;
 
     public IReadOnlyList<InlineFragment> Resolve(
         MarkdownInline unsupported, IDiagnosticSink diagnostics) =>

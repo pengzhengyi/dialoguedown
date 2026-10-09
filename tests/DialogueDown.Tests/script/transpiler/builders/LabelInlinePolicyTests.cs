@@ -11,12 +11,12 @@ public sealed class LabelInlinePolicyTests
     private static readonly LabelInlinePolicy _policy = new();
 
     [Fact]
-    public void Supports_TextAndStyling_ButNotFunctionalElements()
+    public void Supports_TextStylingAndCodeSpans_ButNotOtherElements()
     {
         Assert.True(_policy.Supports(Md.Text("hi")));
         Assert.True(_policy.Supports(Md.Emphasis(MdEmphasisKind.Bold, Md.Text("hi"))));
+        Assert.True(_policy.Supports(Md.CodeSpan("q")));
 
-        Assert.False(_policy.Supports(Md.CodeSpan("q")));
         Assert.False(_policy.Supports(Md.Link("#x", Md.Text("l"))));
         Assert.False(_policy.Supports(Md.Image("i.png", Md.Text("a"))));
         Assert.False(_policy.Supports(Md.LineBreak()));
@@ -24,10 +24,6 @@ public sealed class LabelInlinePolicyTests
 
     [Fact]
     public void SupportsJumps_IsFalse() => Assert.False(_policy.SupportsJumps);
-
-    [Fact]
-    public void Resolve_CodeSpan_KeepsItsBackticks() =>
-        AssertResolvesToText(_policy, Md.CodeSpan("q"), "`q`");
 
     [Fact]
     public void Resolve_LineBreak_BecomesASpace() =>
