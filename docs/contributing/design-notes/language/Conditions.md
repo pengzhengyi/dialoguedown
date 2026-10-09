@@ -130,9 +130,9 @@ The contract every runtime honors, for every attach point:
    behavior from [the table above](#where-a-condition-attaches).
 3. An unknown key is `false`, so a flag that was never set does not fire.
 
-The host interface that ships, `IGameSystem`, exposes only a string `Query` and
-an `Execute`. A dedicated boolean read is part of the proposed world seam in the
-[runtime architecture](../runtime/Dialogue%20Runtime%20Architecture.md#reading-the-world),
+No host interface for reading the world ships yet: the runner asks its driver
+with `Resolve`. A dedicated boolean read is part of the world interface proposed in
+the [runtime architecture](../runtime/Dialogue%20Runtime%20Architecture.md#reading-the-world),
 and its name is not settled.
 
 ## Key design decisions

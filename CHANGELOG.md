@@ -203,6 +203,13 @@ changes easy to categorize.
   tick, and names the nameless one `(anonymous)` in all three tabs rather than three ways. See
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Table%20Cell%20Conventions.md).
 
+### Removed
+
+- **`IGameSystem`** — the placeholder host interface in the core library, which
+  nothing implemented or called. The runner asks its driver for what it needs to
+  know through `Resolve`; a read-only world interface arrives with the drivers
+  that answer from a world.
+
 ### Fixed
 
 - **A disabled action stays readable in the light theme** — the Discard button, and the

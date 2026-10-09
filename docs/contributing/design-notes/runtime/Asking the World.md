@@ -367,9 +367,9 @@ nothing guards, and a guarded node stops the walk before the bound is reached.
 - **An option's condition arrives with choices.** `an-unavailable-option` is the
   one corpus case this pass touches without finishing; it stays named as not yet
   runnable until C2b lands.
-- **`IGameSystem` still has its placeholder name.** Nothing in this pass reads a
-  world directly: the runner asks the driver. So the rename to `IGameWorld` waits
-  for C2g, where a driver answers `Resolve` from a world.
+- **No world interface exists yet.** Nothing in this pass reads a world directly:
+  the runner asks the driver. So the world interface waits for C2g, where a driver
+  answers `Resolve` from a world.
 - **A key used both ways is caught only at play time.** The compiler does not yet
   reject a script that uses one key as a guard and as a query on the same node, so
   `KeyNeededBothWays` is what catches it.
