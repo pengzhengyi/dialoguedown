@@ -28,7 +28,7 @@ and how the compiler says so when a writer puts the wrong one there.
 | Term | Meaning |
 | --- | --- |
 | **Label** | The inline text inside a link's brackets or an image's alt text. A link after `=>` becomes a jump; when the jump is a menu option, its label is what the menu shows. |
-| **Game call** | A code span that talks to the game: a **query** (`` `"key"` ``) reads a value into the words, a **command** (`` `Wave()` ``, `` `(("wave"))` ``) asks the host to do something. |
+| **Game call** | A code span that talks to the game: a **query** (`` `"key"` ``) reads a value into the words, a **command** (`` `Wave()` ``, `` `("wave")` ``) asks the host to do something. |
 | **Condition** | A code span ending in `?` (`` `"key"?` ``) that guards what follows it. Not a game call, but written in the same backticks. |
 | **Moment** | A point in a run where the host performs a command: at a node, or between the words of a line. A link, an image, and a menu option are each shown whole, so a label has no moment inside it. |
 
@@ -87,7 +87,7 @@ runs when the jump is taken.
 The message shows the command with its arguments, so a writer can find it in a
 label that holds several. The rule sees the built node rather than the source, so
 it writes the command back out in canonical form: `GiveQuest("EmberCrown")` for a
-named command, `(("wave"))` for a default one.
+named command, `("wave")` for a default one.
 
 ## Functionality checklist
 
@@ -224,6 +224,7 @@ it to the format's list of derivable keys (see [Integration](#integration)).
 | `LabelInlinePolicy` | Renamed from `LiteralInlinePolicy`, which stops being literal once it builds code spans; supports `CodeSpanInline` | Says which Markdown elements a label builds, and restores the rest to text. Named for its context, like `TitleInlinePolicy`. |
 | `InlineBuilder` | None | Builds a code span into a `Condition`, a `GameCall`, or recovered `Text`, in speech and labels alike. |
 | `CommandInLabelRule` | New | Reports `DLG1103` for a command with a link, image, or jump among its ancestors. |
+| `GameCallExtensions.Canonical` | New | Writes a game call in its standard form, as a script spells it, for a message to show. |
 | `StructuralValidatorFactory` | Registers the new rule | Composes the default rule set. |
 | `DiagnosticCatalog.CommandInLabel` | Renamed from `DisallowedLabelElement`; title and message reworded | `DLG1103`, now a command in a label. |
 | `RejectingInlinePolicy` | Removed | Its only use, raising `DLG1103` for any functional element, contradicts D1 and D3. |
@@ -243,7 +244,7 @@ internal sealed class CommandInLabelRule : DiagnosticRule
 
         foreach (var command in commands.Where(command => nodes.AncestorsOf(command).Any(IsLabel)))
         {
-            report(command.Span, Canonical(command));   // GiveQuest("EmberCrown"), (("wave"))
+            report(command.Span, command.Canonical());   // GiveQuest("EmberCrown"), ("wave")
         }
     }
 
@@ -334,6 +335,7 @@ One input, one expected output, at the smallest unit that owns the behavior.
 | `InlineBuilder` | A code span in a link label and in alt text builds a `Query`, a command, or a `Condition`. A malformed one reports `DLG1102` once. |
 | `LabelInlinePolicy` | It supports a code span, and still restores a link, an image, and a soft break to text. |
 | `CommandInLabelRule` | It reports a command in a link, image, or jump label, including inside emphasis. It stays silent for a command in speech, beside a link, or before a jump, and for any query. |
+| `GameCallExtensions` | `Canonical` writes a query, a default command, and a named command with and without arguments in their standard form. |
 | Compilation | A menu option's label and a divert's label each carry a `QueryFragment`. A command or a condition in a label fails the compile with its code at the code span. |
 
 The [error and boundary cases](#error-and-boundary-cases) table is the list these
