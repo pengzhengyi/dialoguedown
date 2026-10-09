@@ -467,7 +467,7 @@ describe("createDetailPanel", () => {
         expect(opened).toEqual(["The Gate"]);
     });
 
-    it("titles a content node by its kind, and shows its words as the first detail", () => {
+    it("titles a node whose label is too long by its kind, and shows its words as the first detail", () => {
         // A label too long for the heading is replaced there by the node's kind, and its words
         // open the details table.
         panel.show({

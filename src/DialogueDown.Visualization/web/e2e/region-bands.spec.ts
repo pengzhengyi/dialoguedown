@@ -23,7 +23,7 @@ function child(fromId: string, toId: string): DisplayEdge {
  * towards the Door's wide fan while the Door's own band reaches up to hold its first arm. Left as
  * the layout leaves them, the two bands would cross.
  */
-const WOVEN: Stage = {
+const INTERLEAVED: Stage = {
     title: "Dialogue Graph",
     description: "A graph whose scenes the flow weaves through.",
     nodes: [
@@ -53,7 +53,7 @@ const WOVEN: Stage = {
     nests: false,
 };
 
-const url = writeReport({ stages: [WOVEN] });
+const url = writeReport({ stages: [INTERLEAVED] });
 
 interface Box {
     readonly region: string;
@@ -140,9 +140,9 @@ test("no node is drawn inside a band that is not its own", async ({ page }) => {
             };
         }),
     );
-    expect(spots.length).toBe(WOVEN.nodes.length);
+    expect(spots.length).toBe(INTERLEAVED.nodes.length);
 
-    const regionOf = new Map(WOVEN.nodes.map((n) => [n.id, n.region]));
+    const regionOf = new Map(INTERLEAVED.nodes.map((n) => [n.id, n.region]));
     for (const spot of spots) {
         for (const box of boxes) {
             if (box.region === regionOf.get(spot.id)) continue;

@@ -299,7 +299,7 @@ describe("createLiveEdit — failure, conflict, uncertain", () => {
         expect(live.status).toBe("uncertain");
     });
 
-    it("a server uncertain outcome enters Uncertain and surfaces its message", async () => {
+    it("a server uncertain outcome enters Uncertain and reports its message", async () => {
         // The server could not establish a safe state: a newer external write raced the commit.
         const h = harness();
         const live = h.make("manual");

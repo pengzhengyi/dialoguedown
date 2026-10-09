@@ -416,7 +416,7 @@ test("shows a clicked node's details in the node-details panel", async ({ page }
     await expect(body.locator(".preview")).toBeVisible(); // a rendered preview
 });
 
-test("panel titles have legible contrast (regression: not white-on-white)", async ({ page }) => {
+test("panel titles have legible contrast", async ({ page }) => {
     // The panel header is a <button>, and Pico's white button text would vanish on the light
     // panel background. axe reports "incomplete" (not a violation) for a transparent button over
     // the panel, so the contrast is asserted directly.

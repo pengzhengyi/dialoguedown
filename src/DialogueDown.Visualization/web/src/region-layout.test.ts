@@ -186,7 +186,7 @@ describe("rankByRegion drawn as bands", () => {
         }
     });
 
-    it("leaves every band overlapping today, without the pass", () => {
+    it("leaves bands overlapping without the pass", () => {
         // The same nodes on the rows the tree layout gave them, before `rankByRegion` runs.
         const asLaidOut = new Map(interleaved.map((input) => [input.id, input.row]));
         const bands = bandsOf(draw(asLaidOut, interleaved));
