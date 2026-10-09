@@ -23,7 +23,7 @@ public sealed class ScriptContentsTests
     {
         using var tree = new TempTree();
         var path = tree.File("script.dialogue.md");
-        File.WriteAllBytes(path, [0xEF, 0xBB, 0xBF, .. Encoding.UTF8.GetBytes("Alice: Hi.")]);
+        File.WriteAllBytes(path, [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes("Alice: Hi.")]);
 
         var contents = ScriptContents.Read(path);
 
@@ -39,7 +39,9 @@ public sealed class ScriptContentsTests
 
         new ScriptContents("Alice: Hi.", HasBom: true).Write(path);
 
-        Assert.Equal([0xEF, 0xBB, 0xBF, .. Encoding.UTF8.GetBytes("Alice: Hi.")], File.ReadAllBytes(path));
+        Assert.Equal(
+            [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes("Alice: Hi.")],
+            File.ReadAllBytes(path));
     }
 
     [Fact]

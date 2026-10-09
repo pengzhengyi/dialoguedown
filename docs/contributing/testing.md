@@ -24,6 +24,12 @@ This page covers *which* test to write; that one covers *how* to run it.
   - [Browser tests](#browser-tests)
   - [Repository infrastructure tests](#repository-infrastructure-tests)
 - [Which kind should I write?](#which-kind-should-i-write)
+- [How a test reads](#how-a-test-reads)
+  - [The fixture is a named scenario](#the-fixture-is-a-named-scenario)
+  - [One mother per type](#one-mother-per-type)
+  - [Assertions say what they claim](#assertions-say-what-they-claim)
+  - [What may be shared](#what-may-be-shared)
+  - [Names](#names)
 - [Coverage that grows with the feature](#coverage-that-grows-with-the-feature)
 - [Under consideration](#under-consideration)
 
@@ -221,6 +227,128 @@ Start from what would go wrong, not from the list:
 
 When two kinds both fit, prefer the faster one. The suite is run constantly;
 every second added is paid many times.
+
+## How a test reads
+
+The tests are the project's most exact documentation: they say what each part
+does, and they fail when that stops being true. A reader should be able to learn
+a behavior from its test without opening the code under test. So a test is
+written with the same care as the code it checks, and refactored just as freely.
+
+A test that reads well looks like this:
+
+```csharp
+[Fact]
+public void Step_NextPastTheLastLine_EndsTheRun()
+{
+    var context = PlayContextFactory.OneLine();
+
+    AssertEnded(Runner.Step(context, Started(context), new Next()));
+}
+```
+
+The name states the behavior. The body names the scenario, does one thing, and
+says what must hold. The script, the playbook it compiles to, and the checks that
+make up "ended" all live behind helpers a reader can hover.
+
+### The fixture is a named scenario
+
+A test never assembles its fixture inline when the reader would have to decode
+constructor arguments to learn the scenario. It calls a helper named for the
+scenario, and the helper's `<remarks>` shows the dialogue a writer would type, so
+hovering the call shows the script:
+
+```csharp
+/// <summary>One line, then the end.</summary>
+/// <remarks>
+/// <code>
+/// Alice: Hello.
+/// </code>
+/// </remarks>
+public static PlayContext OneLine() =>
+    Of([Line(0, speaker: 0, "Hello.", next: 1), End(1)], ["Alice"]);
+```
+
+A fixture that no script could produce, such as a node with no way out, says so in
+its remarks instead of inventing source.
+
+Prefer **real dialogue** to a hand-built model. Where a suite has a `Pipeline`
+and the stage under test can be reached by compiling a script, compile it and
+let the test show the source as a raw string literal. Build the model by hand
+only to test a stage in isolation, or to reach a shape no script produces.
+
+### One mother per type
+
+The type under test, and a value a reader takes in at a glance such as
+`new EndNode(0)`, are built directly. Everything else comes from its type's
+mother, so a change to a constructor touches one file. A test that needs a
+variation says only what varies: with `with` where the record allows it, or with
+an argument to the mother where it does not.
+
+```csharp
+var options = CompilerOptions.Default with { Mode = CompilationMode.BestEffort };
+var gated = PlaybookNodes.Divert(target: 2, key: "Alice.HasKey");
+```
+
+The playbook records redeclare their properties get-only, so a `with` expression
+cannot set them; their mothers take the varying value as an argument instead.
+
+| What | Lives in | Example |
+| --- | --- | --- |
+| A scenario one test class uses | A private static method in that class | `AConditionalLine()` |
+| A scenario several classes use | The suite's `support/` folder | `PlayContextFactory.OneLine()` |
+| The mother for a type | The suite's `support/` folder; `DialogueDown.TestSupport` when several suites need it, with the project reference that takes | `SourceSpanFactory` |
+
+Keep one mother per type. When two suites each have one, merge them. The runtime
+and visualization suites still keep separate playbook mothers.
+
+Name a mother for the main type it builds, with the `Factory` suffix:
+`SourceSpanFactory`, `LocatedDiagnosticFactory`. The runtime's `PlaybookNodes` is
+the one exception, because its `Line(…)` and `End(…)` read like the playbook they
+build.
+
+### Assertions say what they claim
+
+A group of assertions that appears together more than once becomes a helper
+named for the claim it makes. Helpers follow one form: a class named for its
+subject with the singular `Assert` suffix, holding static methods, kept in the
+suite's `support/` folder and imported with `using static`:
+
+```csharp
+using static DialogueDown.Tests.Support.CompilationAssert;
+
+var result = AssertSuccess(ScriptCompilerFactory.CreateDefault().Compile(source));
+```
+
+A helper checks every invariant the inline version always checked together, so
+including them makes the test stronger rather than only shorter. A helper that
+narrows a type, as `AssertSuccess` narrows a result to a success, returns the
+narrowed value so the test can assert more on it. Where this matters most:
+
+- **A type check followed by field checks** (`Assert.IsType<LineNode>`, then its
+  speaker, then its text) becomes one helper that checks the node and returns it.
+- **JSON** is parsed and asserted by structure, not searched for a quoted
+  fragment such as `"\"mode\":\"edit\""`, which passes on a match in the wrong
+  place.
+- **Large output** such as a whole playbook or report is pinned as a
+  [golden](#golden-tests) with Verify, not checked by a dozen `Contains` calls.
+
+Where a helper wraps a member, that member's own test calls it directly, so
+the member is tested without the helper in between.
+
+### What may be shared
+
+Tests run in parallel and each builds its own fixture. A test may share only what
+is immutable and stateless, and only when building it costs something. The
+compiler stages behind `Pipeline` are the example: built once as `static readonly`
+fields, because they hold no state between calls. Nothing that a test can change
+is ever shared.
+
+### Names
+
+Name a test `Method_Scenario_ExpectedResult`. A test of a rule that holds across
+the whole suite, rather than of one member, may be named as a sentence instead,
+such as `EveryCatalogCodeIsDocumented`.
 
 ## Coverage that grows with the feature
 

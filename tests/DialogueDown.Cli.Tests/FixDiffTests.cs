@@ -1,5 +1,5 @@
 using DialogueDown.Cli.Fixing;
-using DialogueDown.Diagnostics;
+using static DialogueDown.Cli.Tests.Support.LocatedDiagnosticFactory;
 
 namespace DialogueDown.Cli.Tests;
 
@@ -8,10 +8,16 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_InsertionInTheMiddle_ShowsContextMinusAndPlus()
     {
-        const string Source =
-            "# The Workshop\n\nAlice: The rule is simple => the lever opens the door.\n\n*Bob*: Did you read the manual?\n";
+        const string Source = """
+            # The Workshop
+
+            Alice: The rule is simple => the lever opens the door.
+
+            *Bob*: Did you read the manual?
+
+            """;
         var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
-        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(arrow, arrow, "\\")]);
+        var fix = Escape(arrow);
 
         var rows = FixDiff.Rows(Source, fix);
 
@@ -27,7 +33,7 @@ public sealed class FixDiffTests
     {
         const string Source = "Alice: The rule is simple => the lever opens the door.\n";
         var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
-        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(arrow, arrow, "\\")]);
+        var fix = Escape(arrow);
 
         var rows = FixDiff.Rows(Source, fix);
         var removed = Assert.Single(rows, row => row.Marker == '-');
@@ -44,7 +50,7 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_FirstLine_ShowsNoContextBefore()
     {
-        var fix = new LocatedFix("Append", [new LocatedEdit(1, 1, "b")]);
+        var fix = Fix("Append", Insert(1, "b"));
 
         Assert.Equal(["-a", "+ab"], FixDiff.Rows("a\n", fix).Select(row => row.Marker + row.Text));
     }
@@ -52,7 +58,7 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_LastLineWithoutATrailingNewline_ShowsTheContextLine()
     {
-        var fix = new LocatedFix("Append", [new LocatedEdit(3, 3, "b")]);
+        var fix = Fix("Append", Insert(3, "b"));
 
         Assert.Equal([" x", "-a", "+ab"], FixDiff.Rows("x\na", fix).Select(row => row.Marker + row.Text));
     }
@@ -60,7 +66,7 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_CrLfText_TrimsTheCarriageReturn()
     {
-        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(7, 7, "\\")]);
+        var fix = Escape(7);
 
         Assert.Equal(
             ["-Alice: => x", "+Alice: \\=> x"],
@@ -70,7 +76,7 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_ATrailingNewline_IsNotContext()
     {
-        var fix = new LocatedFix("Escape as literal text", [new LocatedEdit(7, 7, "\\")]);
+        var fix = Escape(7);
 
         Assert.Equal(
             ["-Alice: => x", "+Alice: \\=> x"],
@@ -80,7 +86,7 @@ public sealed class FixDiffTests
     [Fact]
     public void Rows_NoLineChange_RendersNothing()
     {
-        var fix = new LocatedFix("No-op", [new LocatedEdit(0, 0, string.Empty)]);
+        var fix = Fix("No-op", Insert(0, string.Empty));
 
         Assert.Empty(FixDiff.Rows("a\n", fix));
     }
