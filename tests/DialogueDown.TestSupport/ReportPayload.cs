@@ -2,25 +2,27 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DialogueDown.Visualization.Live.Tests.Support;
+namespace DialogueDown.TestSupport;
 
 /// <summary>
-/// A JSON payload a live session sends, read by the fields a test asks about rather than searched
-/// as text.
+/// The JSON a report carries, read by the fields a test asks about rather than searched as text:
+/// what a page embeds, or what a live session returns or broadcasts.
 /// </summary>
 /// <remarks>
-/// A report document carries <c>mode</c>, <c>path</c>, <c>source</c>, <c>stages</c>, and
-/// <c>configuration</c>, and a served report adds the <c>project</c> it belongs to; a save or
-/// reload result adds <c>outcome</c>; a saved but invalid configuration adds <c>configStatus</c>
-/// and <c>configMessage</c>; a problem carries <c>message</c> and <c>target</c>.
+/// A report always carries <c>mode</c> and <c>stages</c>. It carries <c>path</c>, <c>source</c>,
+/// <c>symbols</c>, <c>configuration</c>, <c>diagnostics</c>, <c>semanticTokens</c>,
+/// <c>project</c>, and <c>playbook</c> only when it has them. A save or reload result adds
+/// <c>outcome</c>; a saved but invalid configuration adds <c>configStatus</c> and
+/// <c>configMessage</c>. A problem a session broadcasts is not a report: it carries only
+/// <c>message</c> and <c>target</c>.
 /// </remarks>
-internal sealed class LivePayload
+public sealed class ReportPayload
 {
     private const string PageSlot = "window.__DD_REPORT__ = ";
 
-    private LivePayload(JsonObject json) => Json = json;
+    private ReportPayload(JsonObject json) => Json = json;
 
-    /// <summary>Gets the whole payload, for a test that compares two of them.</summary>
+    /// <summary>Gets the whole payload, for a field this type has no accessor for, or to compare two payloads.</summary>
     public JsonObject Json { get; }
 
     /// <summary>Gets what a save, reload, or config creation came to, such as <c>saved</c>.</summary>
@@ -73,15 +75,15 @@ internal sealed class LivePayload
     /// <summary>Gets which editor a problem is for: <c>document</c> or <c>config</c>.</summary>
     public string? Target => Text("target");
 
-    /// <summary>Reads a payload a session returned or broadcast.</summary>
+    /// <summary>Reads a report, or a payload a session returned or broadcast, from its JSON text.</summary>
     /// <param name="json">The payload's JSON text.</param>
     /// <returns>The payload.</returns>
-    public static LivePayload Parse(string json) => new(Assert.IsType<JsonObject>(JsonNode.Parse(json)));
+    public static ReportPayload Parse(string json) => new(Assert.IsType<JsonObject>(JsonNode.Parse(json)));
 
     /// <summary>Reads the report a page carries in its data slot.</summary>
     /// <param name="html">The page.</param>
     /// <returns>The report the page embeds.</returns>
-    public static LivePayload FromPage(string html)
+    public static ReportPayload FromPage(string html)
     {
         var slot = html.IndexOf(PageSlot, StringComparison.Ordinal);
         Assert.True(slot >= 0, "The page carries no report in its data slot.");

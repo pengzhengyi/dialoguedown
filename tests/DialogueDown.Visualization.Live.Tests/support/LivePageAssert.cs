@@ -1,3 +1,5 @@
+using DialogueDown.TestSupport;
+
 namespace DialogueDown.Visualization.Live.Tests.Support;
 
 /// <summary>Assertions about the report pages a live session serves.</summary>
@@ -9,6 +11,6 @@ internal static class LivePageAssert
     public static void AssertPageEmbeds(string html, string documentJson) =>
         // Both sides are written back the same way, so a difference shows where the reports part.
         Assert.Equal(
-            LivePayload.Parse(documentJson).Json.ToJsonString(),
-            LivePayload.FromPage(html).Json.ToJsonString());
+            ReportPayload.Parse(documentJson).Json.ToJsonString(),
+            ReportPayload.FromPage(html).Json.ToJsonString());
 }
