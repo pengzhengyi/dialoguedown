@@ -8,32 +8,12 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </summary>
 public sealed class PlayableConformanceTests
 {
-    // Every case this build conforms to, named rather than counted, so a case that starts passing
-    // is noticed and one that stops passing is a failure.
-    private static readonly string[] _conforming =
+    // Every case this build cannot play yet. Every other case must conform, so a new case is held to
+    // the whole conversation unless it is listed here, and a listed case that starts conforming is
+    // noticed so it can leave the list.
+    private static readonly string[] _notYetPlayable =
     [
-        "a-choice-after-the-menu-is-left",
-        "a-choice-the-menu-did-not-offer",
-        "a-command-ending-a-line",
-        "a-command-mid-line",
-        "a-command-opening-a-line",
-        "a-command-too-late",
-        "a-conditional-block",
-        "a-conditional-jump",
-        "a-conditional-line",
-        "a-divert-option",
-        "a-failed-command-in-a-line",
-        "a-failed-effect",
-        "a-jump",
-        "a-line-that-is-only-a-command",
-        "a-next-at-a-menu",
-        "a-next-while-waiting",
-        "a-player-choice",
-        "a-query-after-a-command",
-        "a-query-in-speech",
-        "an-effect",
-        "linear-speech",
-        "styled-speech",
+        "an-unavailable-option",
     ];
 
     public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];
@@ -44,9 +24,9 @@ public sealed class PlayableConformanceTests
     {
         var outcome = PlayableRun.Match(aCase);
 
-        var expected = _conforming.Contains(aCase.Name)
-            ? SessionVerdict.Conformed
-            : SessionVerdict.NotYetPlayable;
+        var expected = _notYetPlayable.Contains(aCase.Name)
+            ? SessionVerdict.NotYetPlayable
+            : SessionVerdict.Conformed;
 
         Assert.True(
             expected == outcome.Verdict,
@@ -65,6 +45,15 @@ public sealed class PlayableConformanceTests
             .ToList();
 
         Assert.True(diverged.Count == 0, string.Join(Environment.NewLine, diverged));
+    }
+
+    [Fact]
+    public void EveryCaseNotYetPlayable_IsInTheCorpus()
+    {
+        // A case renamed or removed would otherwise leave an entry that excuses nothing.
+        var cases = Corpora.Playable.Cases().Select(aCase => aCase.Name);
+
+        Assert.Empty(_notYetPlayable.Except(cases));
     }
 
     [Fact]
