@@ -116,6 +116,13 @@ changes easy to categorize.
   for a playtest to find. See
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
+- **A query in a label** — a link's text, an image's alt text, or a menu option written as a jump
+  can now hold a query (`` - => [Ask `"CompanionName"` to join](#join) ``), filled like one in
+  speech. A command in a label reports `DLG1103`, since a label is shown whole and the command
+  would never run; a condition there reports `DLG1106`. Before, every code span in a label was
+  silently kept as its literal text. See
+  [Game Calls in Labels](docs/contributing/design-notes/language/Game%20Calls%20in%20Labels.md).
+
 ### Changed
 
 - **The conformance harness reports every divergence a case has** — an outcome carries a list of

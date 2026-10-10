@@ -108,6 +108,7 @@ for both composition roots.
 | Rule | Code | Severity |
 | --- | --- | --- |
 | `UnreachableAfterJumpRule` — content after a jump on the same line | `DLG1003` | Warning |
+| `CommandInLabelRule` — [a command inside a label or alt text](../language/Game%20Calls%20in%20Labels.md) | `DLG1103` | Error |
 | `OrphanConditionRule` — a condition that guards nothing | `DLG1106` | Error |
 | `WeightTotalRule` — random-choice weights sum to zero / not to 100% | `DLG2010` / `DLG3003` | Error / Warning |
 | `SceneHeadingPlacementRule` — a heading inside a branch or option | `DLG2015` | Error |
@@ -135,7 +136,6 @@ mode does.
 | --- | --- | --- |
 | speaker builder | `DLG1101` | drop the tags; the line falls back to the default speaker |
 | game-call builder | `DLG1102` | keep the code span's text as a literal fragment |
-| rejecting label policy (not in the default composition) | `DLG1103` | drop the disallowed element; keep text and styling |
 | anchor table | `DLG2001` | keep the first scene for the anchor |
 | scene builder | `DLG2002` | build the scene with no anchor |
 | speaker binder | `DLG2003`–`DLG2006` | keep the first binding or default; ignore the conflicting one |

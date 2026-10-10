@@ -83,6 +83,7 @@ rather than a script.
 | `a-conditional-line` | Is a line skipped without ending the run? | not yet |
 | `a-conditional-block` | Are the arms tried in the order written? | not yet |
 | `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | not yet |
+| `a-query-in-a-link` | Is a query in a link's label resolved, and the answer spoken as part of the line? | yes |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the
