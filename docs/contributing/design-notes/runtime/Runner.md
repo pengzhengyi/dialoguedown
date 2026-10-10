@@ -81,16 +81,19 @@ there, so the state cannot contradict itself:
 flowchart LR
     NS["NotStarted"] -->|Start| AT["AtNode(i)"]
     AT -->|Next| AT2["AtNode(j)"]
+    AT -->|"Next, arriving at a guarded node"| AS["AwaitingSupply(k, keys, moment)"]
+    AT -->|"Next, arriving at a menu"| AC["AwaitingChoice(k)"]
     AT -->|"Next, arriving at a control node"| AD["AwaitingDone(k)"]
+    AS -->|Supply| AT2
+    AC -->|Choose| AT2
     AD -->|Done| AT2
     AD -->|Failed| AD
-    AT -->|"Next, arriving at a guarded node"| AS["AwaitingSupply(k, keys, moment)"]
-    AS -->|Supply| AT2
-    AT -->|"Next, arriving at a menu"| AC["AwaitingChoice(k)"]
-    AC -->|Choose| AT2
     AT2 -->|"Next, arriving at the end"| END["AtEnd"]
-    END -->|Start| AT
 ```
+
+`Start` is taken in every situation and begins again at the entry
+([D7](#d7--starting-is-a-command-and-therefore-also-a-restart)), so the diagram
+draws it only from `NotStarted`.
 
 `PlayContext` holds what a run needs and never changes — the playbook, and how a
 situation addresses a node — so the one signature every caller uses stays put as
