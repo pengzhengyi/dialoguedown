@@ -2,7 +2,7 @@ namespace DialogueDown.Script.Transpiler.Parsing;
 
 /// <summary>
 /// The outcome of a parse: either a successful <see cref="Match"/>, or a failure
-/// carrying an optional <see cref="Error"/> with the reason.
+/// whose <see cref="Error"/> gives the reason.
 /// </summary>
 internal readonly struct ParseResult<T>
 {
