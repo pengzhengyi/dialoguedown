@@ -1,14 +1,12 @@
 # Game Calls in Labels
 
 > [!NOTE]
-> Status: **approved**, not yet implemented. A query may stand in a label and is
-> filled like one in speech; a command in a label reports `DLG1103` and a condition
-> reports `DLG1106`. Today every game call in a label is silently restored to its
-> literal text.
+> Status: **implemented**. A query may stand in a label and is filled like one in
+> speech; a command in a label reports `DLG1103` and a condition reports `DLG1106`.
 
-A label is the text of a link, the alt text of an image, or the text a menu shows
-for an option. Each is shown as one piece, so nothing inside it gets a moment of
-its own in the conversation. This note settles which game calls a label may hold,
+A label is the text inside a link's brackets, a jump's included, or the alt text
+of an image. Each is shown as one piece, so nothing inside it gets a moment of its
+own in the conversation. This note settles which game calls a label may hold,
 and how the compiler says so when a writer puts the wrong one there.
 
 ## Table of contents
@@ -62,17 +60,15 @@ Out of scope, and each designed separately:
 
 ## Writer-facing behavior
 
-| Script | Today | With this design |
-| --- | --- | --- |
-| ``Alice: See [the `"PlaceName"` inn](#inn).`` | label text ``the `"PlaceName"` inn`` | label `the {PlaceName} inn`, filled at run time |
-| ``Alice: ![Portrait of `"CompanionName"`](a.png)`` | literal backticks in the alt text | a query in the alt text |
-| ``- => [Ask `"CompanionName"` to join](#join)`` | the menu shows the backticks | the option's label carries the query |
-| ``- => [Leave `SlamDoor()`](#exit)`` | literal, silent | `DLG1103` |
-| ``Alice: [Talk to `Wave()`](#inn)`` | literal, silent | `DLG1103` |
-| ``Alice: [Only if `"Met"?`](#inn)`` | literal, silent | `DLG1106` |
-| ``Alice: [see `config.toml`](#inn)`` | literal, silent | `DLG1102`, as the same code span in speech already reports |
-
-Every row compiles cleanly today and reports nothing.
+| Script | Result |
+| --- | --- |
+| ``Alice: See [the `"PlaceName"` inn](#inn).`` | label `the {PlaceName} inn`, filled at run time |
+| ``Alice: ![Portrait of `"CompanionName"`](a.png)`` | a query in the alt text |
+| ``- => [Ask `"CompanionName"` to join](#join)`` | the option's label carries the query |
+| ``- => [Leave `SlamDoor()`](#exit)`` | `DLG1103` |
+| ``Alice: [Talk to `Wave()`](#inn)`` | `DLG1103` |
+| ``Alice: [Only if `"Met"?`](#inn)`` | `DLG1106` |
+| ``Alice: [see `config.toml`](#inn)`` | `DLG1102`, as the same code span in speech reports |
 
 A command in a menu option is the case a writer is most likely to reach for, so
 the message names the remedy that works there. Written before the jump, the
@@ -90,25 +86,26 @@ runs when the jump is taken.
 
 The message shows the command with its arguments, so a writer can find it in a
 label that holds several. The rule sees the built node rather than the source, so
-it writes the command back out in canonical form: `GiveQuest("EmberCrown")` for a
-named command, `("wave")` for a default one.
+it writes the command back out in canonical form with
+`GameCallExtensions.Canonical`: `GiveQuest("EmberCrown")` for a named command,
+`("wave")` for a default one.
 
 ## Functionality checklist
 
-- [ ] A query in a link label, an image's alt text, or emphasis inside either
+- [x] A query in a link label, an image's alt text, or emphasis inside either
       builds as a `Query`.
-- [ ] A query in a jump's label reaches the option's or the divert's label in the
+- [x] A query in a jump's label reaches the option's or the divert's label in the
       playbook.
-- [ ] A command in any label reports `DLG1103` at the code span.
-- [ ] A condition in any label reports `DLG1106` at the code span.
-- [ ] A code span in a label that is not a game call reports `DLG1102` once.
-- [ ] A command, query, or condition in speech outside a label reports nothing new.
-- [ ] A soft break, nested link, or image in a label keeps today's literal text.
-- [ ] The two properties in [Property tests](#property-tests) hold, and their
+- [x] A command in any label reports `DLG1103` at the code span.
+- [x] A condition in any label reports `DLG1106` at the code span.
+- [x] A code span in a label that is not a game call reports `DLG1102` once.
+- [x] A command, query, or condition in speech outside a label reports nothing new.
+- [x] A soft break, nested link, or image in a label keeps its literal text.
+- [x] The two properties in [Property tests](#property-tests) hold, and their
       coverage guard passes.
-- [ ] The gallery example and the conformance corpus pin a query in a label.
-- [ ] `DLG1103` has a compiled example in the error-code reference.
-- [ ] The writer's guide says where a query may stand, and the diagnostics example
+- [x] The gallery example and the conformance corpus pin a query in a label.
+- [x] `DLG1103` has a compiled example in the error-code reference.
+- [x] The writer's guide says where a query may stand, and the diagnostics example
       shows `DLG1103`.
 
 ## Key design decisions
@@ -163,13 +160,11 @@ it is dropped.
 
 ### D3 — `DLG1103` is reused and narrowed to a command in a label
 
-`DLG1103` already exists for "a functional element inside a label", but only
-`RejectingInlinePolicy` raises it, and no default compile uses that policy. The
-error-code reference lists it among the codes with no example yet. No writer has
-ever seen it, so narrowing its meaning breaks nothing, and a new code would leave
-a dead one behind.
+`DLG1103` existed for "a functional element inside a label", but only a policy no
+default compile used could raise it, so no writer had seen it. Narrowing its
+meaning broke nothing, and a new code would have left a dead one behind.
 
-Its title becomes "Command in a label". Its message shows the command with its
+Its title is "Command in a label". Its message shows the command with its
 arguments, says why it cannot run, and gives the remedy from
 [Writer-facing behavior](#writer-facing-behavior). It stays an error: the writer
 asked for something to happen, and it never would.
@@ -192,7 +187,8 @@ image is still restored to its text. Admitting a linked image is separate work.
 
 Once a label builds code spans, one that is not a game call reports `DLG1102`,
 exactly as in speech. A label, like speech, can no longer use backticks for
-code-styled text. No shipped script writes a code span inside a label.
+code-styled text. No script shipped before this design wrote a code span inside
+a label, so none changed meaning.
 
 ### D7 — A divert label may hold a query that no runner fills
 
@@ -287,9 +283,9 @@ the command is inside one.
 | A condition before a jump | Unchanged; it guards the jump. |
 | A code span that is not a game call | `DLG1102` once, from `GameCallBuilder`; recovered as literal text. |
 | Two commands in one label | Two `DLG1103`. |
-| A soft break in a label | A space, as today. |
-| A linked image, and a query in its alt text | Restored to text as a whole, as today. |
-| A link inside a scene heading | Its label follows this note. A query there no longer counts toward the scene's anchor, where today its literal text does; a game call written directly in a heading already drops out the same way. |
+| A soft break in a label | A space. |
+| A linked image, and a query in its alt text | Restored to text as a whole. |
+| A link inside a scene heading | Its label follows this note. A query there does not count toward the scene's anchor, as a game call written directly in a heading does not. |
 | An escaped backtick in a label | Text; no code span is built. |
 
 ## Integration
@@ -312,24 +308,24 @@ Nothing past the transpiler needs a change to carry a query in a label:
   `{key}`, and the editor's semantic tokens walk label fragments, so a query there
   is highlighted like one in speech.
 
-The documentation that changes with the implementation:
+The documentation updated with the implementation:
 
 - `DLG1103` in the error-code reference: new title, prose, and a compiled example.
-  It leaves the list of codes without an example.
+  It left the list of codes without an example, which is now empty.
 - The writer's guide to game state: a query may stand in any label and is filled
   wherever the runner shows the words (a line's links and images today; a menu
   option once choices play; a divert label never), and a command may not stand
   in a label.
-- The writer's guide to speakers and lines, which says an image's alt text is kept
-  exactly as written; a query in it now becomes a query.
+- The writer's guide to speakers and lines, which names a query as the one part
+  of an image's alt text not kept as written.
 - The transpiler note's policy table (the label policy's row, and the rejecting
-  policy's row removed) and its error table, whose row for a game call inside a
-  label changes.
+  policy's row removed), its list of the codes the transpiler reports, and its
+  error table, which separates a game call in a label from a link or image there.
 - The diagnostics note's validator table (the new rule) and recovery table (the
   rejecting policy's `DLG1103` row removed).
 
-Removing `RejectingInlinePolicy` also removes `RejectingInlinePolicyTests` and
-the `InlineBuilder` test that composes it. `LabelInlinePolicy` keeps its
+Removing `RejectingInlinePolicy` also removed `RejectingInlinePolicyTests` and
+the `InlineBuilder` test that composed it. `LabelInlinePolicy` keeps its
 reconstruction of a code span: a linked image is still restored to text, alt text
 included, and that alt text can hold one.
 
@@ -349,7 +345,7 @@ One input, one expected output, at the smallest unit that owns the behavior.
 | `LabelInlinePolicy` | It supports a code span, and still restores a link, an image, and a soft break to text. |
 | `CommandInLabelRule` | It reports a command in a link, image, or jump label, including inside emphasis. It stays silent for a command in speech, beside a link, before a jump, or in an option's own words, and for any query. |
 | `GameCallExtensions` | `Canonical` writes a query, a default command, and a named command with and without arguments in their standard form. |
-| Compilation | A menu option's label and a divert's label each carry a `QueryFragment`. A command or a condition in a label fails the compile with its code at the code span. |
+| Compilation (`GameCallInLabelCompilationTests`) | A menu option's label and a divert's label each carry a `QueryFragment`. A command or a condition in a label fails the compile with its code at the code span. A query in a scene heading's link drops out of the scene's anchor. |
 
 The [error and boundary cases](#error-and-boundary-cases) table is the list these
 tests work through, one row at a time.
@@ -362,40 +358,45 @@ own rather than `ScriptGen`: `ScriptGen.Script()` yields bare script text, and a
 game call in a label would be one draw among many alternatives, so a run of a few
 hundred samples could hold almost none.
 
-The label generator yields a label's text together with a model of what it placed:
-its words, emphasis, and each game call in order. Every label holds at least one
-game call, and each of the three kinds is drawn often. A fixed scene places the
-label in a link, an image's alt text, a menu option's jump, or a divert.
+`LabelGen.Script()` yields a `LabelScript`: a fixed scene placing one label in a
+link, an image's alt text, a menu option's jump, or a divert, together with a model
+of each code span the label holds, in order, with its kind and its written form.
+Every label holds one to three code spans, each after a word and sometimes inside
+emphasis. A query is drawn twice as often as a command or a condition, so a fair
+share of labels hold only queries and compile. `LabelGen.QueryLabel()` builds a
+label the same way from queries alone, for the property that compares a label with
+speech.
 
 | Property | The law |
 | --- | --- |
 | **Brackets change how words are shown, not what they ask** | Speech built from words, emphasis, and queries, compiled bare and again wrapped in a link's brackets, asks for the same keys in the same order (`SpeechTemplate.Keys`) and reads as the same text (`SpeechText.Of`). This is the claim that a query in a label is filled like one in speech, stated as a metamorphic relation. |
-| **A label's calls decide its outcome** | When the model holds a command or a condition, the compile fails with exactly one `DLG1103` per command and one `DLG1106` per condition, each spanning its code span, and no other error. When it holds only queries, the compile succeeds, and the emitted label asks for the model's keys in order and holds no command at any depth. The expectation comes from the model, never from the compiler's own reading. |
+| **A label's code spans decide its outcome** | When the model holds a command or a condition, the compile fails with exactly one `DLG1103` per command and one `DLG1106` per condition, each spanning its code span, and no other error. When it holds only queries, the compile succeeds, and the emitted label asks for the model's keys in order and holds no command at any depth. The expectation comes from the model, never from the compiler's own reading. |
 
-A guard beside them, in the manner of `ScriptGenOutwardShapeCoverageTests`, runs
-the label generator on a pinned seed and asserts that every placement and every
-kind of game call appears. A generator change that stopped producing one fails
+Both live in `GameCallInLabelPropertyTests`. `LabelGenCoverageTests`, in the
+manner of `ScriptGenOutwardShapeCoverageTests`, runs the generator on a pinned seed
+and asserts that every placement and every kind of code span appears. A generator change that stopped producing one fails
 there, instead of leaving a property that passes on nothing.
 
 ### Golden tests
 
 Goldens pin whole outputs a person reviews as a diff.
 
-- **Playbook goldens.** `gallery.dialogue.md`, the construct showcase, gains a menu
-  option and an inline link whose labels hold a query. Its committed playbook then
-  pins the `QueryFragment` inside a `LinkFragment` and an `OptionEdge` label.
-- **Conformance corpus.** A hand-authored playable case: a query in an inline link's
-  label is resolved, and the supplied answer is spoken as part of the line. Every
-  runtime, in any language, must hold the same conversation.
+- **Playbook goldens.** `gallery.dialogue.md`, the construct showcase, holds a menu
+  option and an inline link whose labels hold a query. Its committed playbook pins
+  the `QueryFragment` inside a `LinkFragment` and an `OptionEdge` label.
+- **Conformance corpus.** The playable case `a-query-in-a-link`: a query in an
+  inline link's label is resolved, and the supplied answer is spoken as part of the
+  line. Every runtime, in any language, must hold the same conversation; the C#
+  runner does.
 
 `ExampleConstructCoverageTests` counts construct types, and a query is not a new
-one, so it will not ask for the example. The gallery change is made deliberately.
+one, so it does not ask for the example. The gallery change was made deliberately.
 
 ### Shown to writers
 
 | Where | What the writer sees |
 | --- | --- |
-| The writer's guide to game state | A query in a link label and in a menu option, compiled as written like every guide example. |
+| The writer's guide to game state | A query in a link label and in a menu option, where each label is filled, and a command in a label with its fix. No test compiles the guide's examples. |
 | The error-code reference, `DLG1103` | The broken menu option and its fix, the command before `=>`. The docs tests compile both: the broken form reports `DLG1103`, and the fix does not. The prose names the remedy for an inline link, the command beside it; an alternative fix on the page must start from the same broken script, so an inline link gets no example of its own. |
 | `gallery.dialogue.md` | The query in a menu option and a link, rendered in the report like any other example. |
 | `diagnostics.dialogue.md` | A command in a label, so the report's diagnostics overlay shows `DLG1103` beside the other codes a writer can meet. |
