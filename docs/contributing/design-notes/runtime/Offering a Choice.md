@@ -1,9 +1,11 @@
 # Offering a choice
 
 > [!NOTE]
-> Status: **proposed**. The pass that lets the runner play a menu: it offers the
-> player a choice node's options with an `Offer` request, waits, and follows the
-> option the player takes with `Choose`. It builds on
+> Status: **partially implemented**. The pass that lets the runner play a menu: it
+> offers the player a choice node's options with an `Offer` request, waits, and
+> follows the option the player takes with `Choose`. M1, a menu that asks the
+> world nothing, is built; M2, a menu whose options or labels ask the world, is
+> not. It builds on
 > [asking the world](./Asking%20the%20World.md), which reads an option's
 > condition, and on the [runner](./Runner.md)'s protocol, and applies the
 > [dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md), which
@@ -83,23 +85,23 @@ menu from the `Offer` it received and the `Choose` it sent.
 
 M1:
 
-- [ ] A choice node, once arrived at, offers its options in one `Offer` and waits
+- [x] A choice node, once arrived at, offers its options in one `Offer` and waits
       for `Choose`.
-- [ ] `Offer` is a request, so a driver answers it as it answers `Perform` and
+- [x] `Offer` is a request, so a driver answers it as it answers `Perform` and
       `Resolve`, and `Next` at a menu is refused.
-- [ ] A menu's options are offered in the order they appear in `out`; `Offer` says
+- [x] A menu's options are offered in the order they appear in `out`; `Offer` says
       whether the host must show them in that order.
-- [ ] `Choose(index)` names a position in the `Offer` just sent, in either kind of
+- [x] `Choose(index)` names a position in the `Offer` just sent, in either kind of
       menu.
-- [ ] A label is offered with its commands removed, and a command in a label is
+- [x] A label is offered with its commands removed, and a command in a label is
       never performed.
-- [ ] `Choose` leads to the chosen option's node, which is arrived at as any node
+- [x] `Choose` leads to the chosen option's node, which is arrived at as any node
       is.
-- [ ] A `Choose` outside the options offered is refused as `no-such-option`, and
+- [x] A `Choose` outside the options offered is refused as `no-such-option`, and
       the menu stays open.
-- [ ] `Choose` anywhere else, and any other command while a menu is open, is
-      refused as misplaced.
-- [ ] A menu that needs anything from the world is refused as `unplayable-node`
+- [x] `Choose` anywhere else, and `Next`, `Done`, `Failed`, or `Supply` while a
+      menu is open, is refused as misplaced.
+- [x] A menu that needs anything from the world is refused as `unplayable-node`
       until M2.
 
 M2:
