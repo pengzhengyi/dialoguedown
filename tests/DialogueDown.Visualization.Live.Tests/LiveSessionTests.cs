@@ -218,7 +218,9 @@ public sealed class LiveSessionTests
             afterReplace: () => File.WriteAllText(configPath, ASpeakerConfig("External", "E"))));
 
         Assert.Equal("uncertain", result.Outcome);
-        Assert.DoesNotContain("Bob", result.SpeakerNames); // the session state never advanced past disk
+        // An uncertain result carries only its outcome and message, so the session's state is read
+        // from its current document: it still applies the config it last committed.
+        Assert.Equal(["Alice"], Parse(session.CurrentDocumentJson()).SpeakerNames);
         Assert.Equal(ASpeakerConfig("External", "E"), File.ReadAllText(configPath)); // newer data preserved
     }
 
