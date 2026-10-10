@@ -189,7 +189,7 @@ runtimes.
 | --- | --- |
 | `not-started` | `Next` arrives before `Start` |
 | `already-ended` | `Next` arrives after the run has ended |
-| `misplaced` | a known command arrives where it cannot be taken — `Next` while the run waits on the host, or `Done`/`Failed` when nothing was asked |
+| `misplaced` | a known command arrives where it cannot be taken — `Next` while the run waits on the host or the player, `Done`/`Failed` when nothing was asked, or `Choose` where no menu waits |
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
 | `endless-ring` | a walk enters a ring of nodes that hand the host nothing |
@@ -197,7 +197,8 @@ runtimes.
 | `unasked-key` | a `Supply` answers a key the run did not ask about |
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |
 | `key-needed-both-ways` | one node needs the same key as a truth and as words, which one answer cannot be |
-| `unplayable-node` | the node kind is one this build does not play |
+| `unplayable-node` | the node is one this build does not play: a random choice, or a menu whose options ask the world |
+| `no-such-option` | a `Choose` names a position outside the options the menu offered: below 0, or past the last |
 
 A refused command leaves the situation where it was; a walk refused at a node
 stands at that node (`AtNode`). The reason names what the driver did or what the
@@ -345,6 +346,8 @@ because skipping is the silent wrong story the format refuses to tell.
 | A divert whose target is out of range, or an entry leading nowhere | Cannot occur; `PlaybookReader` refuses the document first |
 | A line whose speaker index is out of range | Cannot occur; refused by the reader |
 | An effect the host does not recognize | Not the runner's concern: it asks by the name the playbook gives |
+| `Choose` below 0 or past the last option | Refused as `no-such-option`; the menu stays open for another choice |
+| A hand-built `AwaitingChoice` at a node that is not a menu | `Choose` refused as `misplaced` |
 | A fixture the runner cannot play yet | Reported as not yet playable, naming what is missing |
 
 ## Testability
