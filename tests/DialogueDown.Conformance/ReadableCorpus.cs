@@ -33,7 +33,6 @@ public sealed class ReadableCorpus
     /// <returns>The case names.</returns>
     public IEnumerable<string> CaseNames() => _folder.Cases();
 
-
     /// <summary>Reads one case.</summary>
     /// <param name="caseName">The case's folder name.</param>
     /// <returns>The case, ready to run.</returns>
