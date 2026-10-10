@@ -49,6 +49,11 @@ public sealed class ReportPayload
     /// <summary>Gets the ranges the editor highlights and what each one is, or <c>null</c>.</summary>
     public JsonArray? SemanticTokens => Json["semanticTokens"] as JsonArray;
 
+    /// <summary>
+    /// Gets the compiled playbook and the facts the report shows beside it, or why there is none.
+    /// </summary>
+    public JsonObject? Playbook => Json["playbook"] as JsonObject;
+
     /// <summary>Gets <c>saved-invalid</c> when the configuration on disk does not parse, or <c>null</c>.</summary>
     public string? ConfigStatus => Text("configStatus");
 
