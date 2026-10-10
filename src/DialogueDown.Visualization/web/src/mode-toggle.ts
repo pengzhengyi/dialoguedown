@@ -1,3 +1,5 @@
+/** @file The header's View/Edit switch for a served session. */
+
 import type { ServedMode } from "./model";
 
 /** Feather Icons (MIT): an eye for View, a pencil for Edit. */
