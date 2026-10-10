@@ -140,7 +140,9 @@ nothing. The first node that asks for something is where the run stands.
 | `control` with no effects | nothing | walks on — this is a jump on its own line |
 | `branch` | nothing | leaves by the first arm, in the order written, whose condition holds |
 | `end` | `Ended` | waits on nobody |
-| `choice`, `random-choice` | `Refused(unplayable-node)` | stands at that node |
+| `choice` | `Offer(ordered, options)`: every option in the order written, each label with its commands removed, each available | waits on the player — `Choose` |
+| `choice` with an option's condition or a query in a label | `Refused(unplayable-node)` | stands at that node |
+| `random-choice` | `Refused(unplayable-node)` | stands at that node |
 
 Before a node plays, the run asks the world, in one `Resolve`, every key the node
 needs to play: its own condition and the queries in its speech up to its first
@@ -168,7 +170,8 @@ flowchart TD
     Kind -->|End| Over["Ended"] --> Nobody(["Waits on nobody"])
     Kind -->|"Control, with effects"| Ask["Perform, once per effect"] --> World(["Waits on the world"])
     Kind -->|"Control, no effects"| Onward{"Way onward?"}
-    Kind -->|"Choice, random choice"| RefuseK(["Refused: unplayable-node"])
+    Kind -->|Choice| Offer["Offer"] --> Chooser(["Waits on the player to choose"])
+    Kind -->|"Choice that asks the world, random choice"| RefuseK(["Refused: unplayable-node"])
     Onward -->|"divert or succession"| Arrive
     Onward -->|none| RefuseN(["Refused: leads-nowhere"])
 ```
@@ -289,8 +292,8 @@ in `Arrival`, edge kinds in `NodeTraversalExtensions`, one reader apiece.
 
 ### D10 — A step runs on only while the host has been handed nothing
 
-This is the rule every construct plugs into: a menu will be one more node that
-waits, and a branch one more that does not. A jump on its own line compiles to a
+This is the rule every construct plugs into: a menu is one more node that waits,
+and a branch one more that does not. A jump on its own line compiles to a
 control node with no effects, so it concerns nobody and the run walks past it.
 
 ### D11 — An effect is a request, not a report
@@ -315,10 +318,11 @@ A walk that passes more nodes than the playbook has must have visited one twice,
 and nothing it reads changes as it goes, so it is in a ring. The guard is a counter
 against `Nodes.Length`: exact, allocation-free, and no number anybody picks.
 
-### D14 — An untaught node kind is refused, not guessed
+### D14 — What the runner has not learned is refused, not guessed
 
-Offering a choice by walking past it would look like correct play. Refusing keeps
-an untaught construct reading as untaught until the runner learns it.
+Walking past a random choice, or offering a menu without asking the world about its
+options, would look like correct play. Refusing keeps an untaught construct reading
+as untaught until the runner learns it.
 
 ### D15 — A failed effect holds the run
 
