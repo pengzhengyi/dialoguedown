@@ -91,6 +91,7 @@ rather than a script.
 | `a-query-after-a-command` | Is a query written after a command asked only once the command is done? | yes |
 | `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | yes |
 | `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | yes |
+| `a-numbered-menu` | Is a numbered menu offered as ordered, its positions counted in the order written? | yes |
 | `a-choice-the-menu-did-not-offer` | Is a choice past the last option refused, with the menu still open? | yes |
 | `a-choice-after-the-menu-is-left` | Is a second choice refused once an option has been taken? | yes |
 | `a-next-at-a-menu` | Is `next` refused at a menu, which still takes a choice afterwards? | yes |
