@@ -1,13 +1,13 @@
-import type { ServedMode } from "./model";
-
 /**
- * The View/Edit mode a reader last chose, remembered for the next script they open.
+ * @file The View/Edit mode a reader last chose, remembered for the next script they open.
  *
  * The choice is the reader's, not the document's: a session keeps its own mode while it is open,
  * and the shell that has no document yet asks this for what to offer. It lives in `localStorage`,
  * so it survives a reload of the served report but not a server started on another port, which
  * is another origin.
  */
+
+import type { ServedMode } from "./model";
 
 const STORAGE_KEY = "dd-served-mode";
 

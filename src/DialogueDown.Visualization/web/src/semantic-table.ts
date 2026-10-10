@@ -1,3 +1,8 @@
+/**
+ * @file One table in the Semantic tab: a collapsible panel that can be sorted, searched, and
+ * filtered by column.
+ */
+
 import tippy from "tippy.js";
 import type { SemanticTable, SemanticCell, SemanticRow, SemanticSegment } from "./model";
 import { escapeHtml } from "./text";

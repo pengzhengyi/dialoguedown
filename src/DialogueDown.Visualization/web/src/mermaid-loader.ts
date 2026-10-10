@@ -1,3 +1,5 @@
+/** @file Loads Mermaid only when a page draws a diagram, from wherever the page says it lives. */
+
 import type { MermaidApi } from "./mermaid-preview";
 
 /** Where the page says its Mermaid build lives, or null when the page names no location. */

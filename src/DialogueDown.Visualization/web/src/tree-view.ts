@@ -1,3 +1,7 @@
+/**
+ * @file Draws one stage as an interactive, collapsible D3 graph, with its legend and zoom controls.
+ */
+
 import {
     create,
     pointer,

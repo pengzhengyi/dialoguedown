@@ -1,3 +1,5 @@
+/** @file Converts a zero-based LSP line and character to an offset in the editor's document. */
+
 import type { EditorState } from "@codemirror/state";
 import type { LspPosition } from "./model";
 

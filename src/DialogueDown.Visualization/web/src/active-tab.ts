@@ -1,9 +1,10 @@
 /**
- * Remembering the last-open report tab so a refresh returns to it instead of resetting to the
+ * @file Remembering the last-open report tab so a refresh returns to it instead of resetting to the
  * Source tab. Kept in `sessionStorage` (per browser tab, cleared when the tab closes), so two
- * reports open side by side each keep their own tab, and a blocked store simply falls back to
- * the default tab.
+ * reports open side by side each keep their own tab, and a blocked store simply falls back to the
+ * default tab.
  */
+
 const ACTIVE_TAB_KEY = "dd-active-tab";
 
 /** `sessionStorage`, or `undefined` when it is unavailable (e.g. a sandboxed context). */

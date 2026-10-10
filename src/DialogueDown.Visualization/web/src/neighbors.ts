@@ -1,3 +1,7 @@
+/**
+ * @file Which nodes lead to a node and which it leads to, along the edges control actually follows.
+ */
+
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import { edgeStyle } from "./edge-style";
 

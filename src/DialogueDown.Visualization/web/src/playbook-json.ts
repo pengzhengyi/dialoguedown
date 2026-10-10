@@ -1,7 +1,5 @@
-import type { EditorState } from "@codemirror/state";
-
 /**
- * The shape of a rendered playbook, read off the text.
+ * @file The shape of a rendered playbook, read off the text.
  *
  * The document is written by `JsonSerializer` with `WriteIndented`, whose output is exactly
  * regular: two spaces per level, one property or one bracket per line, and no literal newline
@@ -14,6 +12,8 @@ import type { EditorState } from "@codemirror/state";
  * at any position, however far the reader has scrolled. Folding, which only ever asks about
  * drawn lines, is left to the grammar.
  */
+
+import type { EditorState } from "@codemirror/state";
 
 /** How deep a line sits, in the two-space levels the writer emits. */
 export function depthOf(line: string): number {

@@ -1,3 +1,5 @@
+/** @file The status bar's document and config paths, which copy themselves when clicked. */
+
 import tippy from "tippy.js";
 import type { ConfigReport } from "./model";
 import { showToast } from "./toast";

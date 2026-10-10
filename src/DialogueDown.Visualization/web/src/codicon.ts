@@ -1,3 +1,5 @@
+/** @file VS Code's codicon glyphs as decorative elements. */
+
 /**
  * A VS Code codicon glyph as a decorative `<span>`. An empty name renders just the spacer class
  * (used to align rows that carry no leading icon under rows that do). The glyph is decorative, so

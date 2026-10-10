@@ -1,3 +1,8 @@
+/**
+ * @file Autocompletion for the Config tab's `dialogue.toml` editor: table headers, keys, and mode
+ * values.
+ */
+
 import {
     autocompletion,
     acceptCompletion,

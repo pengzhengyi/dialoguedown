@@ -1,5 +1,5 @@
 /**
- * The control inside a cell that does something — copying an identifier, revealing a place.
+ * @file The control inside a cell that does something — copying an identifier, revealing a place.
  *
  * A cell that acts when it is pressed is a control, and a control has to be reachable without a
  * mouse. A real `<button>` is what makes it one: it takes focus in document order, it turns Enter

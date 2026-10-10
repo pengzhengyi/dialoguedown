@@ -1,6 +1,6 @@
 /**
- * Project filesystem primitives shared by the Explorer and the served-shell wiring: the browse
- * listing shape (`GET /api/browse`), the create outcome, the script extension, and the
+ * @file Project filesystem primitives shared by the Explorer and the served-shell wiring: the
+ * browse listing shape (`GET /api/browse`), the create outcome, the script extension, and the
  * root-relative path helpers. Kept apart from any one UI so both the tree and the shell reuse them.
  */
 

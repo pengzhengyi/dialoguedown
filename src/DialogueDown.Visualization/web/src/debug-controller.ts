@@ -1,3 +1,8 @@
+/**
+ * @file The interface between the Source editor's debugger controls and whatever runs the script:
+ * its states, locations, and commands.
+ */
+
 /** The debugger states the Source UI renders. */
 export type DebugStatus =
     "unavailable" | "ready" | "running" | "paused" | "awaiting-path" | "ended" | "stale";

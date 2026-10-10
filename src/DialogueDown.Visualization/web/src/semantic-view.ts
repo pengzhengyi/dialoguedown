@@ -1,3 +1,8 @@
+/**
+ * @file The Semantic tab: the scene tree as a graph beside its tables of speakers, anchors, and
+ * how each jump resolves.
+ */
+
 import type { Stage } from "./model";
 import type { DisplayNode, Span } from "./model";
 import { createTreeView, type TreeView, type TreeViewOptions } from "./tree-view";

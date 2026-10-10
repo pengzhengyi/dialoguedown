@@ -1,3 +1,8 @@
+/**
+ * @file Autocompletion for the Source editor: jump targets, speaker names and ids, and tags, from
+ * the names the compiler found in the document.
+ */
+
 import {
     autocompletion,
     acceptCompletion,

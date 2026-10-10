@@ -1,14 +1,15 @@
-import { EditorSelection, type EditorState } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
-import { depthOf, opensBlock } from "./playbook-json";
-
 /**
- * Finding a place in a rendered playbook, so a table can send the reader to the JSON it summarizes.
+ * @file Finding a place in a rendered playbook, so a table can send the reader to the JSON it
+ * summarizes.
  *
  * Like the rest of the playbook's reading, this works off the text rather than a syntax tree: the
  * document is `WriteIndented` output and therefore exactly regular, and text answers the same way
  * however far the reader has scrolled (see [`playbook-json`](./playbook-json.ts)).
  */
+
+import { EditorSelection, type EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { depthOf, opensBlock } from "./playbook-json";
 
 /** Where a table cell sends the reader: one element of a named top-level array. */
 export type PlaybookTarget =

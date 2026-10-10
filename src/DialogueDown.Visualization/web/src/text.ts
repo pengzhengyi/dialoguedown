@@ -1,3 +1,8 @@
+/**
+ * @file Text helpers shared across the report: escaping and shortening, tooltips, and rendering
+ * Markdown to HTML.
+ */
+
 import { Marked, type MarkedExtension, type Token, type Tokens } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
 import { createRegionKeys, type RegionKey } from "./region-key";

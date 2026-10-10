@@ -1,3 +1,8 @@
+/**
+ * @file Whether an edited document saves on its own after a pause or only when asked, remembered
+ * for each kind of document.
+ */
+
 /** When a dirty buffer is scheduled to save: `auto` after idle, or `manual` only on request. */
 export type SaveMode = "auto" | "manual";
 

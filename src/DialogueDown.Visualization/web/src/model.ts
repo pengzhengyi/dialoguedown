@@ -1,4 +1,4 @@
-/** The display model produced by the .NET walk and serialized into the report. */
+/** @file The display model produced by the .NET walk and serialized into the report. */
 
 import type { PlaybookTarget } from "./playbook-jump";
 
