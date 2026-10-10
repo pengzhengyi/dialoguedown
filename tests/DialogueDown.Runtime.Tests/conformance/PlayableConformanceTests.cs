@@ -11,11 +11,11 @@ public sealed class PlayableConformanceTests
     // Every case this build conforms to, named rather than counted, so a case that starts passing
     // is noticed and one that stops passing is a failure.
     private static readonly string[] _conforming =
-        ["a-choice-the-menu-did-not-offer", "a-command-ending-a-line", "a-command-mid-line",
-         "a-command-opening-a-line", "a-command-too-late", "a-conditional-block", "a-conditional-jump",
-         "a-conditional-line", "a-divert-option", "a-failed-command-in-a-line", "a-failed-effect", "a-jump",
-         "a-line-that-is-only-a-command", "a-next-while-waiting", "a-player-choice", "a-query-after-a-command",
-         "a-query-in-speech", "an-effect", "linear-speech", "styled-speech"];
+        ["a-choice-after-the-menu-is-left", "a-choice-the-menu-did-not-offer", "a-command-ending-a-line",
+         "a-command-mid-line", "a-command-opening-a-line", "a-command-too-late", "a-conditional-block",
+         "a-conditional-jump", "a-conditional-line", "a-divert-option", "a-failed-command-in-a-line",
+         "a-failed-effect", "a-jump", "a-line-that-is-only-a-command", "a-next-while-waiting", "a-player-choice",
+         "a-query-after-a-command", "a-query-in-speech", "an-effect", "linear-speech", "styled-speech"];
 
     public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];
 

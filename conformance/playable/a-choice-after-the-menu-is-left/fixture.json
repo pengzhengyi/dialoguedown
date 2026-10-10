@@ -1,0 +1,20 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a choice sent after the menu is left is refused, and the run stays on the line it reached",
+  "playbook": "playbook.json",
+  "because": "taking an option closes the menu, so a second choice -- a double click, or a driver that left the menu on screen -- is refused rather than taken; a runner that kept the menu open would speak the other arm instead",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
+    { "send": "next" },
+    { "expect": { "offer": { "ordered": false, "options": [
+        { "label": "Go east", "available": true },
+        { "label": "Go west", "available": true }
+      ] } } },
+    { "send": { "choose": 0 } },
+    { "expect": { "said": { "speech": "Go east" } } },
+    { "send": { "choose": 1 } },
+    { "expect": { "refused": { "reason": "misplaced" } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}
