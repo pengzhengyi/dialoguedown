@@ -1,7 +1,5 @@
-import { codicon } from "./codicon";
-
 /**
- * The one look folding has, wherever the report offers it.
+ * @file The one look folding has, wherever the report offers it.
  *
  * The Source editor, the Preview, and the Dialogue Graph each fold a different kind of thing, but
  * a reader who learns the gesture on one should recognize it on the next, so every surface takes
@@ -10,6 +8,8 @@ import { codicon } from "./codicon";
  * A chevron always performs the action; a status mark such as `circle-slash` states what a thing
  * *is* and stays a static, unfocusable mark beside it.
  */
+
+import { codicon } from "./codicon";
 
 /** The chevron a fold control shows: down over an open item, right over a shut one. */
 export function foldGlyphName(expanded: boolean): string {

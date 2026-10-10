@@ -1,5 +1,5 @@
 /**
- * Keep the Source tab's editor and its rendered preview scrolled together, VS Code-style.
+ * @file Keep the Source tab's editor and its rendered preview scrolled together, VS Code-style.
  *
  * The mapping is block-anchored: top-level Markdown blocks in the editor are paired with
  * the matching rendered elements in the preview, and scrolling interpolates linearly
