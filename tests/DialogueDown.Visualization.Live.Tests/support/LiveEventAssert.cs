@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Serving;
 
 namespace DialogueDown.Visualization.Live.Tests.Support;
@@ -10,12 +11,12 @@ internal static class LiveEventAssert
     /// <param name="reader">The subscriber's reader.</param>
     /// <param name="name">The event's name, such as <c>reload</c> or <c>problem</c>.</param>
     /// <returns>The payload the event carries.</returns>
-    public static LivePayload AssertBroadcast(ChannelReader<LiveEvent> reader, string name)
+    public static ReportPayload AssertBroadcast(ChannelReader<LiveEvent> reader, string name)
     {
         Assert.True(reader.TryRead(out var received), $"Expected a {name} event, but nothing was broadcast.");
         Assert.Equal(name, received.Event);
 
-        return LivePayload.Parse(received.Data);
+        return ReportPayload.Parse(received.Data);
     }
 
     /// <summary>Asserts that a subscriber has nothing to read.</summary>
