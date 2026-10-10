@@ -8,10 +8,7 @@ internal static class DiagnosticDocs
     // a code gains a producer or a registration, give it an example and remove it here;
     // DiagnosticDocsTests checks that this list stays accurate.
     public static IReadOnlySet<string> WithoutExampleYet { get; } =
-        new HashSet<string>
-        {
-            DiagnosticCatalog.DisallowedLabelElement.Code,
-        };
+        new HashSet<string>();
 
     public static IReadOnlyList<DiagnosticDoc> All { get; } =
     [
@@ -75,11 +72,32 @@ internal static class DiagnosticDocs
                 ["just some words"],
                 [""" "World.Weather" """.Trim()])),
         new(
-            DiagnosticCatalog.DisallowedLabelElement,
-            "The default compile does not report this: a code span, image, nested link, or line "
-            + "break inside a jump or link label, or an image's alt text, is kept as its plain text. "
-            + "Only a stricter label mode, not yet available, allows just text and styling in a "
-            + "label; it reports such an element and drops it."),
+            DiagnosticCatalog.CommandInLabel,
+            "A label — the text in a link's brackets, a jump's included, or an image's alt text — "
+            + "is shown as one piece, so a command written inside it would never run. To run the "
+            + "command when a jump is taken, write it before the `=>`; beside a link in a line, "
+            + "write it outside the brackets.",
+            new(
+                """
+                # Hall
+                Alice: Time to go.
+
+                - => [Leave `SlamDoor()`](#exit)
+
+                # Exit
+                Alice: Gone.
+                """,
+                """
+                # Hall
+                Alice: Time to go.
+
+                - `SlamDoor()` => [Leave](#exit)
+
+                # Exit
+                Alice: Gone.
+                """,
+                ["`SlamDoor()`"],
+                ["`SlamDoor()` =>"])),
         new(
             DiagnosticCatalog.MissingChoiceWeight,
             "In a random choice — a list where at least one option leads with a weight — every "
