@@ -96,13 +96,12 @@ public sealed class BrowseRootTests
         tree.Dir("root/sub");
         var root = BrowseRoot.At(tree.Dir("root"));
 
-        var listing = root.Browse(string.Empty);
+        var listing = Assert.NotNull(root.Browse(string.Empty));
 
-        Assert.NotNull(listing);
-        Assert.Equal(string.Empty, listing!.Value.Path);
-        Assert.Null(listing.Value.Parent);
-        Assert.Equal(new[] { "sub" }, listing.Value.Directories);
-        Assert.Equal(new[] { "a.dialogue.md" }, listing.Value.Sources);
+        Assert.Equal(string.Empty, listing.Path);
+        Assert.Null(listing.Parent);
+        Assert.Equal(["sub"], listing.Directories);
+        Assert.Equal(["a.dialogue.md"], listing.Sources);
     }
 
     [Fact]
@@ -112,12 +111,11 @@ public sealed class BrowseRootTests
         tree.File("root/proj/scene.dialogue.md");
         var root = BrowseRoot.At(tree.Dir("root"));
 
-        var listing = root.Browse("proj");
+        var listing = Assert.NotNull(root.Browse("proj"));
 
-        Assert.NotNull(listing);
-        Assert.Equal("proj", listing!.Value.Path);
-        Assert.Equal(string.Empty, listing.Value.Parent);
-        Assert.Equal(new[] { "proj/scene.dialogue.md" }, listing.Value.Sources);
+        Assert.Equal("proj", listing.Path);
+        Assert.Equal(string.Empty, listing.Parent);
+        Assert.Equal(["proj/scene.dialogue.md"], listing.Sources);
     }
 
     [Fact]

@@ -10,9 +10,9 @@ namespace DialogueDown.Visualization.Live.Tests.Support;
 /// </summary>
 /// <remarks>
 /// A report document carries <c>mode</c>, <c>path</c>, <c>source</c>, <c>stages</c>, and
-/// <c>configuration</c>; a save or reload result adds <c>outcome</c>; a saved but invalid
-/// configuration adds <c>configStatus</c> and <c>configMessage</c>; a problem carries
-/// <c>message</c> and <c>target</c>.
+/// <c>configuration</c>, and a served report adds the <c>project</c> it belongs to; a save or
+/// reload result adds <c>outcome</c>; a saved but invalid configuration adds <c>configStatus</c>
+/// and <c>configMessage</c>; a problem carries <c>message</c> and <c>target</c>.
 /// </remarks>
 internal sealed class LivePayload
 {
@@ -55,6 +55,17 @@ internal sealed class LivePayload
         Json["configuration"]?["speakers"] is JsonArray speakers
             ? [.. speakers.Select(speaker => speaker!["name"]!.GetValue<string>())]
             : [];
+
+    /// <summary>
+    /// Gets the folder a served report's Explorer sidebar lists, or <c>null</c> for a report that is
+    /// not served from a project.
+    /// </summary>
+    public string? ProjectRoot => Json["project"]?["root"]?.GetValue<string>();
+
+    /// <summary>
+    /// Gets the open script's path within the served project, or <c>null</c> when no script is open.
+    /// </summary>
+    public string? ActivePath => Json["project"]?["activePath"]?.GetValue<string>();
 
     /// <summary>Gets what a problem says went wrong.</summary>
     public string? Message => Text("message");
