@@ -7,7 +7,11 @@ public sealed class DocumentValidationTests
     [Fact]
     public void Validate_ExistingDialogueMd_ReturnsNull()
     {
-        using var script = new TempScript("# Scene\n\nAlice: Hi.");
+        using var script = new TempScript("""
+            # Scene
+
+            Alice: Hi.
+            """);
 
         Assert.Null(DocumentValidation.Validate(script.Path));
     }
