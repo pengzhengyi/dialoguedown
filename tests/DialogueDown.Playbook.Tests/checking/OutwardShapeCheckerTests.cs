@@ -52,7 +52,7 @@ public sealed class OutwardShapeCheckerTests
     public void Check_AChoiceMixingOptionAndBranchArms_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [new ChoiceNode(0, false, [Option(1), new BranchEdge(1, 0, null)]), new EndNode(1)]);
+            nodes: [new ChoiceNode(0, false, [Option(1), new BranchEdge(1, null)]), new EndNode(1)]);
 
         Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
     }
@@ -109,7 +109,7 @@ public sealed class OutwardShapeCheckerTests
     public void Check_AnIfWithNoElseAndNoSuccession_LeadsNowhere_AndIsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [new BranchEdge(1, 0, Key())]), new EndNode(1)]);
+            nodes: [new BranchNode(0, [new BranchEdge(1, Key())]), new EndNode(1)]);
 
         Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
     }
@@ -216,7 +216,7 @@ public sealed class OutwardShapeCheckerTests
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                new BranchNode(0, [new BranchEdge(1, 0, Key()), new BranchEdge(1, 1, null)]),
+                new BranchNode(0, [new BranchEdge(1, Key()), new BranchEdge(1, null)]),
                 new EndNode(1),
             ]);
 

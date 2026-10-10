@@ -8,10 +8,13 @@
     { "send": "next" },
     {
       "expect": {
-        "asked": [
-          { "label": "Take the east road", "available": true },
-          { "label": "Brave the west road", "available": true }
-        ]
+        "offer": {
+          "ordered": false,
+          "options": [
+            { "label": "Take the east road", "available": true },
+            { "label": "Brave the west road", "available": true }
+          ]
+        }
       }
     },
     { "send": { "choose": 0 } },

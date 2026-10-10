@@ -34,7 +34,7 @@ public sealed class PlaybookNodeSummaryTests
         Assert.Equal(
             "IF Alice.HasMap? THEN 16 ELSE 18",
             SummaryOf(
-                Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
+                Branch(Arm("Alice.HasMap", target: 16), Arm(null, target: 18)),
                 Speakers()));
     }
 
@@ -46,20 +46,8 @@ public sealed class PlaybookNodeSummaryTests
             SummaryOf(
                 Branch(
                     Arm("Hero.IsBrave", target: 5),
-                    Arm("Hero.HasMap", order: 1, target: 9),
-                    Arm(null, order: 2, target: 14)),
-                Speakers()));
-    }
-
-    // An arm's place in the chain is what makes if/elseif/else mean what it says, and a JSON array
-    // does not oblige a reader to preserve it — so the summary reads the order, not the position.
-    [Fact]
-    public void Of_ABranchWhoseArmsArriveOutOfOrder_ReadsTheOrderTheyDeclare()
-    {
-        Assert.Equal(
-            "IF Hero.IsBrave? THEN 5 ELSE 14",
-            SummaryOf(
-                Branch(Arm(null, order: 1, target: 14), Arm("Hero.IsBrave", target: 5)),
+                    Arm("Hero.HasMap", target: 9),
+                    Arm(null, target: 14)),
                 Speakers()));
     }
 
@@ -70,7 +58,7 @@ public sealed class PlaybookNodeSummaryTests
         Assert.Equal(
             "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9",
             SummaryOf(
-                Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", order: 1, target: 9)),
+                Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", target: 9)),
                 Speakers()));
     }
 

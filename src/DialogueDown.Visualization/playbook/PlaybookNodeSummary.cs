@@ -139,9 +139,8 @@ internal static class PlaybookNodeSummary
     private static ImmutableArray<PlaybookSegmentView> Branch(BranchNode branch)
     {
         var arms = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
-        var ordered = branch.Out.OfType<BranchEdge>().OrderBy(arm => arm.Order);
 
-        foreach (var (arm, index) in ordered.Select((arm, index) => (arm, index)))
+        foreach (var (arm, index) in branch.Out.OfType<BranchEdge>().Select((arm, index) => (arm, index)))
         {
             arms.AddRange(Arm(arm, index == 0));
         }

@@ -60,7 +60,7 @@ a random choice.
 ## What the corpus fixes
 
 The contract is not this note's to choose. The published fixture schema defines
-`resolve`, `supply`, and `asked`, and five corpus cases pin the exchanges, so this
+`resolve`, `supply`, and `offer`, and five corpus cases pin the exchanges, so this
 note is about how the runner meets that contract.
 
 | Case | What it fixes |
@@ -84,7 +84,8 @@ holds — `false` for a guard, `"Robin"` for a query.
       whose condition holds is.
 - [ ] An option whose condition fails is offered unavailable. Deferred to choices
       (C2b).
-- [x] A branch node takes the first arm, in `order`, whose condition holds.
+- [x] A branch node takes the first arm, in the order written, whose condition
+      holds.
 - [x] A branch node with no satisfied arm and no `else` falls through to the
       succession beneath the block, so the block is skipped; one with no
       succession either leads nowhere, and says so.
@@ -262,9 +263,10 @@ So it belongs to the same family as the empty control node: the walk resolves it
 arms, takes the first that holds, and carries on to the target without the player
 ever being asked to advance past it.
 
-The arms' order is not this pass's to decide. The reader already guarantees that a
-branch's arms appear in strictly ascending `order`, that at least one is gated, and
-that a conditionless `else` comes last, so the runner tries them as it finds them.
+The arms' order is not this pass's to decide. A branch's arms are tried in the order
+they appear in `out`, and the reader already guarantees that at least one is gated
+and that a conditionless `else` comes last, so the runner tries them as it finds
+them.
 
 A branch has nothing to ask on the way in, so all of its reading happens on the way
 out: one ask carrying every arm's key, then the first arm the answers allow. When

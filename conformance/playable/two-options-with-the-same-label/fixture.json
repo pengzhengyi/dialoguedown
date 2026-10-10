@@ -1,0 +1,20 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "two options with the same label are both offered, and a choice tells them apart by position",
+  "playbook": "playbook.json",
+  "because": "nothing stops two options saying the same thing while leading to different arms, so a label cannot name an option -- a runner that keyed options by label would merge the two or always take the first; choosing 1 must reach the second arm",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Pick a box." } } },
+    { "send": "next" },
+    { "expect": { "offer": { "ordered": false, "options": [
+        { "label": "Gift Box", "available": true },
+        { "label": "Gift Box", "available": true }
+      ] } } },
+    { "send": { "choose": 1 } },
+    { "expect": { "said": { "speech": "Gift Box" } } },
+    { "send": "next" },
+    { "expect": { "said": { "speaker": "Alice", "speech": "A kitten!" } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

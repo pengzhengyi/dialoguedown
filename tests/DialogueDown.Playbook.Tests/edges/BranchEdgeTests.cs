@@ -5,15 +5,12 @@ namespace DialogueDown.Playbook.Tests.Edges;
 public sealed class BranchEdgeTests
 {
     [Fact]
-    public void RoundTrip_ABranchArm_KeepsItsOrder()
+    public void RoundTrip_AGatedArm_KeepsItsCondition()
     {
-        // Order is what makes if/elseif/else mean what it says; a JSON array alone would not
-        // oblige a reader to keep it.
         const string Json = """
             {
               "kind": "branch",
               "target": 7,
-              "order": 1,
               "condition": {
                 "kind": "key",
                 "key": "IsAngry"
@@ -25,8 +22,17 @@ public sealed class BranchEdgeTests
     }
 
     [Fact]
-    public void Construct_NegativeOrder_IsRejected()
+    public void RoundTrip_AnElse_IsJustAKindAndATarget()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BranchEdge(7, -1, Condition: null));
+        const string Json = """
+            {
+              "kind": "branch",
+              "target": 7
+            }
+            """;
+
+        var arm = PlaybookJsonAssert.AssertRoundTrip<Edge, BranchEdge>(Json);
+
+        Assert.Null(arm.Condition);
     }
 }

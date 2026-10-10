@@ -8,14 +8,14 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </summary>
 public sealed class PlayableConformanceTests
 {
-    // Every case this build conforms to, named rather than counted, so a case that starts passing
-    // is noticed and one that stops passing is a failure.
-    private static readonly string[] _conforming =
-        ["a-command-ending-a-line", "a-command-mid-line", "a-command-opening-a-line", "a-command-too-late",
-         "a-conditional-block", "a-conditional-jump", "a-conditional-line", "a-failed-command-in-a-line",
-         "a-failed-effect", "a-jump", "a-line-that-is-only-a-command", "a-next-while-waiting",
-         "a-query-after-a-command", "a-query-in-a-link", "a-query-in-speech", "an-effect", "linear-speech",
-         "styled-speech"];
+    // Every case this build cannot play yet, with each reason it gives. Every other case must
+    // conform, so a new case is held to the whole conversation unless it is listed here. A listed
+    // case must give exactly its reasons, so one that starts conforming, or that is held back by
+    // something else, is noticed.
+    private static readonly Dictionary<string, string[]> _notYetPlayable = new(StringComparer.Ordinal)
+    {
+        ["an-unavailable-option"] = [SessionReasons.UnsupportedMenu],
+    };
 
     public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];
 
@@ -25,13 +25,14 @@ public sealed class PlayableConformanceTests
     {
         var outcome = PlayableRun.Match(aCase);
 
-        var expected = _conforming.Contains(aCase.Name)
-            ? SessionVerdict.Conformed
-            : SessionVerdict.NotYetPlayable;
+        var expected = _notYetPlayable.TryGetValue(aCase.Name, out var reasons)
+            ? SessionOutcome.NotYetPlayable(reasons)
+            : SessionOutcome.Conformed();
 
         Assert.True(
-            expected == outcome.Verdict,
-            $"{aCase.Name}: expected {expected}, but was {outcome.Verdict} — {outcome.Because}");
+            expected.Verdict == outcome.Verdict && expected.Reasons.SequenceEqual(outcome.Reasons),
+            $"{aCase.Name}: expected {expected.Verdict} — {expected.Because}, "
+                + $"but was {outcome.Verdict} — {outcome.Because}");
     }
 
     [Fact]
@@ -46,6 +47,15 @@ public sealed class PlayableConformanceTests
             .ToList();
 
         Assert.True(diverged.Count == 0, string.Join(Environment.NewLine, diverged));
+    }
+
+    [Fact]
+    public void EveryCaseNotYetPlayable_IsInTheCorpus()
+    {
+        // A case renamed or removed would otherwise leave an entry that excuses nothing.
+        var cases = Corpora.Playable.Cases().Select(aCase => aCase.Name);
+
+        Assert.Empty(_notYetPlayable.Keys.Except(cases));
     }
 
     [Fact]

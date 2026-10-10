@@ -108,7 +108,7 @@ public sealed class DepartureTests
     private static PlayContext AConditionalBlockWithoutAnElse() =>
         PlayContextFactory.Of(
             [
-                Branch(0, Arm(1, order: 0, "Alice.HasKey"), new SuccessionEdge(2)),
+                Branch(0, Arm(1, "Alice.HasKey"), new SuccessionEdge(2)),
                 Line(1, speaker: 0, "The key turns.", next: 2),
                 Line(2, speaker: 0, "Onward.", next: 3),
                 End(3),

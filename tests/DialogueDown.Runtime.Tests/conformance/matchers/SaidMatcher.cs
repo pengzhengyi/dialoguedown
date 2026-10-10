@@ -25,7 +25,7 @@ internal sealed class SaidMatcher : IExpectationMatcher
         // Both claims are checked, so an event that gets the speaker and the speech wrong is not
         // reported as though only the speaker were at fault.
         return SessionOutcome.Combine(
-            [MatchSpeaker(said.Speaker, speaker), SpeechClaim.Match(said.Speech, speech)]);
+            MatchSpeaker(said.Speaker, speaker), SpeechClaim.Match(said.Speech, speech));
     }
 
     private static SessionOutcome MatchSpeaker(string? spoken, string? claimed) =>

@@ -114,14 +114,71 @@ internal static class PlaybookNodes
     public static LineNode Dead(int id, string text) =>
         new(id, Speaker: 0, [new TextFragment(text)], Condition: null, []);
 
-    /// <summary>A choice node offering one option — a kind the runner cannot play.</summary>
+    /// <summary>A menu offering one option.</summary>
     /// <param name="id">Its position in the playbook.</param>
     /// <param name="leadsTo">Where the option leads.</param>
     /// <param name="label">What the option offers, as the writer would read it.</param>
-    /// <param name="ordered">Whether the options are a fixed order rather than a menu.</param>
     /// <returns>The node.</returns>
-    public static ChoiceNode Choice(int id, int leadsTo, string label = "Go east", bool ordered = false) =>
-        new(id, Ordered: ordered, [new OptionEdge(leadsTo, [new TextFragment(label)], Condition: null)]);
+    public static ChoiceNode Choice(int id, int leadsTo, string label = "Go east") =>
+        Menu(id, Option(leadsTo, label));
+
+    /// <summary>A bulleted menu, whose options may be shown in any order.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="ways">Its options in the order written, and a succession when it has one.</param>
+    /// <returns>The node.</returns>
+    public static ChoiceNode Menu(int id, params Edge[] ways) => new(id, Ordered: false, [.. ways]);
+
+    /// <summary>A numbered menu, whose options are shown in the order written.</summary>
+    /// <param name="id">Its position in the playbook.</param>
+    /// <param name="ways">Its options in the order written, and a succession when it has one.</param>
+    /// <returns>The node.</returns>
+    public static ChoiceNode NumberedMenu(int id, params Edge[] ways) => new(id, Ordered: true, [.. ways]);
+
+    /// <summary>An option of a menu, which the player can always take.</summary>
+    /// <param name="target">Where the option leads.</param>
+    /// <param name="label">What the option offers.</param>
+    /// <returns>The edge.</returns>
+    public static OptionEdge Option(int target, string label) =>
+        new(target, [new TextFragment(label)], Condition: null);
+
+    /// <summary>An option the player can take only while the world answers that the key holds.</summary>
+    /// <param name="target">Where the option leads.</param>
+    /// <param name="label">What the option offers.</param>
+    /// <param name="key">What the world is asked before the option is offered.</param>
+    /// <returns>The edge.</returns>
+    public static OptionEdge Option(int target, string label, string key) =>
+        new(target, [new TextFragment(label)], new KeyCondition(key));
+
+    /// <summary>An option whose label is written out fragment by fragment.</summary>
+    /// <param name="target">Where the option leads.</param>
+    /// <param name="label">What the option offers, in the order written.</param>
+    /// <returns>The edge.</returns>
+    /// <remarks>
+    /// For a label holding a query or a command, which plain text cannot spell.
+    /// </remarks>
+    public static OptionEdge OptionSaying(int target, params SpeechFragment[] label) =>
+        new(target, [.. label], Condition: null);
+
+    /// <summary>A menu whose first option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Wait here
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    public static ChoiceNode AMenuWithAConditionalOption() =>
+        Menu(0, Option(1, "Open the door", "Alice.HasKey"), Option(2, "Wait here"));
+
+    /// <summary>A menu whose only option's label asks the world for words.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Call `"playerName"` over
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    public static ChoiceNode AMenuWithAQueryInALabel() =>
+        Menu(0, OptionSaying(1, new TextFragment("Call "), new QueryFragment("playerName"), new TextFragment(" over")));
 
     /// <summary>A block condition, which says nothing and performs nothing and goes on by an arm.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -131,17 +188,14 @@ internal static class PlaybookNodes
 
     /// <summary>An arm of a block condition, taken when the world answers that the key holds.</summary>
     /// <param name="target">Where the arm leads.</param>
-    /// <param name="order">Where it sits in the order the arms are tried, counting from zero.</param>
     /// <param name="key">What the world is asked before the arm is taken.</param>
     /// <returns>The edge.</returns>
-    public static BranchEdge Arm(int target, int order, string key) =>
-        new(target, order, new KeyCondition(key));
+    public static BranchEdge Arm(int target, string key) => new(target, new KeyCondition(key));
 
     /// <summary>The else of a block condition, taken when no arm before it is.</summary>
     /// <param name="target">Where it leads.</param>
-    /// <param name="order">Where it sits in the order the arms are tried, which is last.</param>
     /// <returns>The edge.</returns>
-    public static BranchEdge Else(int target, int order) => new(target, order, Condition: null);
+    public static BranchEdge Else(int target) => new(target, Condition: null);
 
     /// <summary>A random choice with one auto-weighted option — a kind the runner cannot play.</summary>
     /// <param name="id">Its position in the playbook.</param>
@@ -168,7 +222,7 @@ internal static class PlaybookNodes
         new ControlNode(0, [], Condition: null, [new SuccessionEdge(1)]),
         Effects(0, next: 1, "fade in"),
         Choice(0, leadsTo: 1),
-        Branch(0, Else(1, order: 0)),
+        Branch(0, Else(1)),
         RandomChoice(0, leadsTo: 1),
     ];
 }

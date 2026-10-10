@@ -60,7 +60,7 @@ pins the *reason* for each refusal without asserting a word of any message.
 
 ### The schema is not enough
 
-Eleven of the seventeen refusals under `readable/` are **valid by the JSON
+Nine of the fifteen refusals under `readable/` are **valid by the JSON
 Schema**. A schema describes shape: it can say `entry` is a non-negative integer,
 but not that there are only two nodes to point at; it can say `version` is an
 integer, but not which versions a build reads.
@@ -68,7 +68,7 @@ integer, but not which versions a build reads.
 | Refusal | Caught by |
 | --- | --- |
 | A target written as text; a truncated file; a foreign arm kind; two successions on one node; a lone else; a second else | the schema |
-| A version too new, an unknown capability, a node out of position, all four kinds of dangling reference, a node with no way out, and branch arms out of order, sharing an order, or led by the else | only a reader |
+| A version too new, an unknown capability, a node out of position, all four kinds of dangling reference, a node with no way out, and a branch led by its else | only a reader |
 
 So validating against the schema is necessary but not sufficient, and that gap is
 a large part of why this corpus exists.

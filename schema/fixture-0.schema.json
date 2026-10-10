@@ -121,7 +121,7 @@
             "choose": {
               "type": "integer",
               "minimum": 0,
-              "description": "The zero-based position, among the options just offered, of the one taken."
+              "description": "The zero-based position, among the options just offered, of the one taken. Every menu is offered in the order written, so this is also the option's position as written."
             }
           },
           "additionalProperties": false
@@ -203,26 +203,41 @@
           },
           "additionalProperties": false
         },
-        "asked": {
-          "type": "array",
-          "description": "The options offered, in the order offered. What was taken is not recorded here: the next send says so.",
-          "items": {
-            "type": "object",
-            "required": [
-              "label",
-              "available"
-            ],
-            "properties": {
-              "label": {
-                "$ref": "#/$defs/speech"
-              },
-              "available": {
-                "type": "boolean",
-                "description": "Whether the option may be taken. A failing option is shown unavailable rather than hidden."
-              }
+        "offer": {
+          "type": "object",
+          "description": "The menu offered to the player. What was taken is not recorded here: the next send says so.",
+          "required": [
+            "ordered",
+            "options"
+          ],
+          "properties": {
+            "ordered": {
+              "type": "boolean",
+              "description": "Whether the writer numbered the options, so the host must show them in the order offered. A bulleted menu may be shown in any order, but every menu is offered in the order written."
             },
-            "additionalProperties": false
-          }
+            "options": {
+              "type": "array",
+              "description": "Every option offered, in the order offered, which is the order written.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "label",
+                  "available"
+                ],
+                "properties": {
+                  "label": {
+                    "$ref": "#/$defs/speech"
+                  },
+                  "available": {
+                    "type": "boolean",
+                    "description": "Whether the option may be taken. A failing option is shown unavailable rather than hidden."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         },
         "perform": {
           "description": "The effect the runtime asks the host to carry out, as the playbook names it. The run does not go past it until the driver sends `done`, so an effect is settled in the world before anything reads it.",
@@ -306,7 +321,8 @@
                 "unasked-key",
                 "wrong-answer-kind",
                 "key-needed-both-ways",
-                "unplayable-node"
+                "unplayable-node",
+                "no-such-option"
               ]
             }
           },

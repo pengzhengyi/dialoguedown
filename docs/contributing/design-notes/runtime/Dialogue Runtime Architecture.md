@@ -5,8 +5,9 @@
 > [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook**, the
 > **runner** that plays one, the **protocol** between a runner and its driver, and
 > the **conformance corpus** that keeps runtimes honest. The playbook, the corpus,
-> and a runner that plays lines, jumps, effects, and the end are built; choices,
-> world reads, saves, drivers, and every other host are not (see
+> and a runner that plays lines, jumps, effects, branches, menus, and the end, and
+> asks the world what they need, are built; a menu that asks the world, random
+> choices, saves, drivers, and every other host are not (see
 > [components](#components-and-sequencing)).
 
 ## Table of contents
@@ -237,9 +238,9 @@ role *behind* the driver; LSP and DAP solve this by naming the message
 
 | Direction | Kind | Built | Designed, not built |
 | --- | --- | --- | --- |
-| driver → runner | **command** | `Start`, `Next`, `Done`, `Failed(explanation)`, `Supply(answers)` | `Choose(i)`, `Restore(state)` |
-| runner → driver | **event** | `Said`, `Continued`, `Ended`, `Refused` | `Asked`, `Invalidated` |
-| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(keys)`, answered by `Supply(answers)` | — |
+| driver → runner | **command** | `Start`, `Next`, `Done`, `Failed(explanation)`, `Supply(answers)`, `Choose(i)` | `Restore(state)` |
+| runner → driver | **event** | `Said`, `Continued`, `Ended`, `Refused` | `Invalidated` |
+| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(keys)`, answered by `Supply(answers)`; `Offer(ordered, options)`, answered by `Choose(i)` | — |
 | driver → runner | **query** | — | `Describe()`, answered with the current location |
 
 `Resolve` is LSP's `workspace/configuration`: *the server knows what it needs; the
@@ -258,7 +259,7 @@ sequenceDiagram
     R-->>D: Perform(JoinClub("Alice", "Kung Fu"))
     Note over D: plays a 3s animation
     D->>R: Done
-    R-->>D: Asked([Ask about the inn, Say nothing])
+    R-->>D: Offer([Ask about the inn, Say nothing])
     D->>R: Choose(1)
     R-->>D: Ended
 ```
@@ -379,7 +380,7 @@ optional fold over the event stream, bounded by a capacity:
 
 ```text
 TranscriptEntry = Said      { speaker, fragments, nodeRef }
-                | Asked     { options[], chosenIndex, nodeRef }
+                | Offered   { options[], chosenIndex, nodeRef }
                 | Performed { effect, nodeRef }
 ```
 
@@ -568,7 +569,7 @@ flowchart LR
 | # | Component | Delivers | Note | Status |
 | --- | --- | --- | --- | --- |
 | C1 | **Playbook format and writer** | The schema, the header, the reader and its checks, and `ddown compile --output` | [Playbook Format](./Playbook%20Format.md), [Playbook Reader Rules](./Playbook%20Reader%20Rules.md) | Implemented |
-| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, the end |
+| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus that ask the world nothing, the end |
 | C3 | **Conformance corpus** | Fixtures plus a harness, owned as data | [Conformance Corpus](./Conformance%20Corpus.md) | Implemented |
 | C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
 | C5a | **Web proxy Play tab** | The served report plays through the C# runner (level 1) | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |

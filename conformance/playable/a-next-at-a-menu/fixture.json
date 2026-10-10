@@ -1,0 +1,20 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a menu refuses to be advanced past, and still takes a choice",
+  "playbook": "playbook.json",
+  "because": "a menu waits for the player, so a next there is refused rather than read as a choice -- a runner that took the first option, or offered the menu again, would hold a different conversation, and one that left the menu would leave the player no choice to make",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
+    { "send": "next" },
+    { "expect": { "offer": { "ordered": false, "options": [
+        { "label": "Go east", "available": true },
+        { "label": "Go west", "available": true }
+      ] } } },
+    { "send": "next" },
+    { "expect": { "refused": { "reason": "misplaced" } } },
+    { "send": { "choose": 1 } },
+    { "expect": { "said": { "speech": "Go west" } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

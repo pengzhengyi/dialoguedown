@@ -60,6 +60,40 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_NextAtAMenu_IsRefused()
+    {
+        // A menu is answered by the player's choice, and moving past it would take no option.
+        var context = PlayContextFactory.AMenu();
+
+        var result = Runner.Step(context, Started(context), new Next());
+
+        AssertRefused(result, RefusalReason.Misplaced, "waiting for the player to choose");
+        AssertAwaitingChoice(result, 0);
+    }
+
+    [Fact]
+    public void Step_ChooseAtAMenu_LeavesByTheOptionTaken()
+    {
+        var context = PlayContextFactory.AMenu();
+
+        var result = Runner.Step(context, Started(context), new Choose(0));
+
+        AssertSaid(result, speaker: null, text: "Go east");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void Step_ChooseAwayFromAMenu_IsMisplacedRatherThanUnknown()
+    {
+        var context = PlayContextFactory.OneLine();
+
+        var result = Runner.Step(context, Started(context), new Choose(0));
+
+        AssertRefused(result, RefusalReason.Misplaced, "cannot take Choose");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
     public void Step_DoneAfterALinesCommand_GivesThePlayerTheTurn()
     {
         // Nothing is left for the host to answer, so the driver waits for the player's Next.

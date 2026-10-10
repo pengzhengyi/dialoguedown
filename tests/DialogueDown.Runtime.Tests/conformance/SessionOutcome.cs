@@ -57,7 +57,7 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
     /// </remarks>
     /// <param name="partials">What each check made of it, in the order they were checked.</param>
     /// <returns>The gravest verdict, and its reasons in the order they were found.</returns>
-    public static SessionOutcome Combine(IEnumerable<SessionOutcome> partials)
+    public static SessionOutcome Combine(params IEnumerable<SessionOutcome> partials)
     {
         var verdict = SessionVerdict.Conformed;
         var reasons = ImmutableArray.CreateBuilder<string>();

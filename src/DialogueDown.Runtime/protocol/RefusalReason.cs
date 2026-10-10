@@ -17,7 +17,8 @@ public enum RefusalReason
 
     /// <summary>
     /// A command the protocol defines arrived where the run cannot take it, such as <c>Next</c>
-    /// while the run waits on the host, or <c>Done</c> when no <c>Perform</c> is waiting.
+    /// while the run waits on the host, <c>Done</c> when no <c>Perform</c> is waiting, or
+    /// <c>Choose</c> away from a menu.
     /// </summary>
     Misplaced,
 
@@ -50,4 +51,7 @@ public enum RefusalReason
 
     /// <summary>The node is of a kind this build cannot play.</summary>
     UnplayableNode,
+
+    /// <summary><c>Choose</c> named a position outside the options the menu offered.</summary>
+    NoSuchOption,
 }

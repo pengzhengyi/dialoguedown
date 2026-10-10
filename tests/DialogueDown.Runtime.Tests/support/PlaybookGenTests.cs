@@ -26,9 +26,7 @@ public sealed class PlaybookGenTests
     // node kind it belongs to does, because that node is the only place it can appear.
     private static readonly Dictionary<string, string> _notDrawn = new(StringComparer.Ordinal)
     {
-        [nameof(ChoiceNode)] = "nothing plays a menu the player picks from yet",
         [nameof(RandomChoiceNode)] = "nothing draws a random choice yet",
-        [nameof(OptionEdge)] = "an option edge appears only on a choice node",
         [nameof(RandomOptionEdge)] = "a random-option edge appears only on a random-choice node",
     };
 

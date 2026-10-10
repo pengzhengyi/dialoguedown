@@ -166,15 +166,33 @@ internal static class PlayContextFactory
             ],
             ["Smith"]);
 
-    /// <summary>A choice, which is a node kind the runner cannot play.</summary>
+    /// <summary>A menu of two options, each said as it is taken, then the end.</summary>
     /// <remarks>
     /// <code>
     /// - Go east
+    /// - Go west
     /// </code>
     /// </remarks>
-    /// <returns>A context that begins at a choice.</returns>
+    /// <returns>A context that begins at the menu.</returns>
+    public static PlayContext AMenu() =>
+        Of(
+            [
+                Menu(0, Option(1, "Go east"), Option(2, "Go west")),
+                Line(1, speaker: 0, "Go east", next: 3),
+                Line(2, speaker: 0, "Go west", next: 3),
+                End(3),
+            ],
+            [null]);
+
+    /// <summary>A random choice, which is a node kind the runner cannot play.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `%` Go east
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that begins at a random choice.</returns>
     public static PlayContext NotYetPlayable() =>
-        Of([Choice(0, leadsTo: 1), End(1)], ["Alice"]);
+        Of([RandomChoice(0, leadsTo: 1), End(1)], ["Alice"]);
 
     /// <summary>A loop of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
@@ -288,7 +306,7 @@ internal static class PlayContextFactory
     public static PlayContext AConditionalBlock() =>
         Of(
             [
-                Branch(0, Arm(1, order: 0, "Alice.HasKey"), Arm(2, order: 1, "Alice.HasPick"), Else(3, order: 2)),
+                Branch(0, Arm(1, "Alice.HasKey"), Arm(2, "Alice.HasPick"), Else(3)),
                 Line(1, speaker: 0, "The key turns.", next: 4),
                 Line(2, speaker: 0, "The pick clicks.", next: 4),
                 Line(3, speaker: 0, "The door stays shut.", next: 4),

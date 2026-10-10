@@ -4,7 +4,7 @@ using DialogueDown.Runtime.Protocol;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
-/// <summary>Checks a <c>perform</c> claim: what the run asked the host to carry out.</summary>
+/// <summary>Checks a <c>perform</c> claim: what the run asked the host to perform.</summary>
 /// <remarks>
 /// The effect is compared as the playbook writes it, so a fixture names an effect in the same
 /// words the document does and a runtime that renamed one on the way out is caught.
@@ -19,7 +19,7 @@ internal sealed class PerformMatcher : IExpectationMatcher
         happened is Perform perform
             ? MatchEffect(perform, expected)
             : SessionOutcome.Diverged(
-                $"expected the host to be asked to carry something out, but the run {happened.Describe()}");
+                $"expected the host to be asked to perform something, but the run {happened.Describe()}");
 
     private static SessionOutcome MatchEffect(Perform perform, JsonNode expected)
     {
@@ -28,6 +28,6 @@ internal sealed class PerformMatcher : IExpectationMatcher
         return JsonNode.DeepEquals(asked, expected)
             ? SessionOutcome.Conformed()
             : SessionOutcome.Diverged(
-                $"expected {expected.ToJsonString()} to be carried out, but {asked?.ToJsonString()} was asked for");
+                $"expected {expected.ToJsonString()} to be performed, but {asked?.ToJsonString()} was asked for");
     }
 }

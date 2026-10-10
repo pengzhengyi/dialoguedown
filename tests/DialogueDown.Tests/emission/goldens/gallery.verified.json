@@ -450,7 +450,6 @@
         {
           "kind": "branch",
           "target": 16,
-          "order": 0,
           "condition": {
             "kind": "key",
             "key": "Alice.HasMap"
@@ -458,8 +457,7 @@
         },
         {
           "kind": "branch",
-          "target": 18,
-          "order": 1
+          "target": 18
         }
       ]
     },

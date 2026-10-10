@@ -14,43 +14,65 @@
     {
       "name": "Alice",
       "tags": []
+    },
+    {
+      "default": true,
+      "tags": []
     }
   ],
   "nodes": [
     {
-      "kind": "branch",
-      "id": 0,
-      "out": [
-        { "kind": "branch", "target": 1, "order": 1, "condition": { "kind": "key", "key": "Alice.HasMap" } },
-        { "kind": "branch", "target": 2, "order": 0, "condition": { "kind": "key", "key": "Alice.HasLantern" } },
-        { "kind": "branch", "target": 3, "order": 2 }
-      ]
-    },
-    {
       "kind": "line",
-      "id": 1,
+      "id": 0,
       "speaker": 0,
       "speech": [
         {
           "kind": "text",
-          "text": "You have the map."
+          "text": "Which way?"
         }
       ],
       "out": [
         {
           "kind": "succession",
-          "target": 4
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 1,
+      "ordered": true,
+      "out": [
+        {
+          "kind": "option",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Go east"
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 3,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Go west"
+            }
+          ]
         }
       ]
     },
     {
       "kind": "line",
       "id": 2,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "text",
-          "text": "You have the lantern."
+          "text": "Go east"
         }
       ],
       "out": [
@@ -63,11 +85,11 @@
     {
       "kind": "line",
       "id": 3,
-      "speaker": 0,
+      "speaker": 1,
       "speech": [
         {
           "kind": "text",
-          "text": "You have neither."
+          "text": "Go west"
         }
       ],
       "out": [

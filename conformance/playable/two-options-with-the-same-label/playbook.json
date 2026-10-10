@@ -1,0 +1,141 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    },
+    {
+      "default": true,
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Pick a box."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 1,
+      "out": [
+        {
+          "kind": "option",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Gift Box"
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "target": 4,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Gift Box"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Gift Box"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "A scarf!"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 6
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Gift Box"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 5,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "A kitten!"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 6
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 6,
+      "out": []
+    }
+  ]
+}

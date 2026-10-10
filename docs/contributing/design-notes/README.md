@@ -115,7 +115,8 @@ flowchart LR
     SPT --> RN["6. Runner"]
     RN --> AW["7. Asking the World"]
     AW --> SL["8. Speaking a Line"]
-    SL --> RUN(["players, adapters"])
+    SL --> OC["9. Offering a Choice"]
+    OC --> RUN(["players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -128,6 +129,7 @@ flowchart LR
 | 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |
 | 7 | [Asking the World](./runtime/Asking%20the%20World.md) | How the runner asks the world: `Resolve` answered by `Supply`, for conditions, block conditions, and queries in speech | Implemented |
 | 8 | [Speaking a Line](./runtime/Speaking%20a%20Line.md) | How the runner plays a line's words and commands in written order, stopping inside the line only before a query written after a command | Implemented |
+| 9 | [Offering a Choice](./runtime/Offering%20a%20Choice.md) | How the runner offers a menu with `Offer`, and follows the option the player takes with `Choose` | Partially implemented |
 
 ### Language constructs
 

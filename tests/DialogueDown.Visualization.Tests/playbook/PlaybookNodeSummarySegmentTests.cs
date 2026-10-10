@@ -84,7 +84,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ABranch_PairsEachConditionWithTheNodeItReaches() =>
         AssertSegments(
-            Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
+            Branch(Arm("Alice.HasMap", target: 16), Arm(null, target: 18)),
             [
                 ("keyword", "IF "),
                 ("query", "Alice.HasMap?"),
@@ -223,7 +223,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ThePieces_JoinBackToTheLineTheTableShows()
     {
-        var branch = Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18));
+        var branch = Branch(Arm("Alice.HasMap", target: 16), Arm(null, target: 18));
 
         Assert.Equal(
             "IF Alice.HasMap? THEN 16 ELSE 18",
@@ -280,7 +280,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ABranch_NamesTheNodesItsArmsReach() =>
         AssertTargets(
-            Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
+            Branch(Arm("Alice.HasMap", target: 16), Arm(null, target: 18)),
             [("16", 16), ("18", 18)]);
 
     [Fact]

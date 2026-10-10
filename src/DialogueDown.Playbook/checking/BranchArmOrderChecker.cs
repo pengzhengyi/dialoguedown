@@ -4,20 +4,19 @@ using DialogueDown.Playbook.Nodes;
 namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
-/// Refuses a <see cref="BranchNode"/> whose arms are not in the order they are tried.
+/// Refuses a <see cref="BranchNode"/> with no arm that has a condition, or whose else is not its last arm.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A runtime may walk the arms in array order or sort them by <see cref="BranchEdge.Order"/>, so
-/// the two must agree. The compiler always writes them that way; a hand-edited or tool-written
-/// playbook may not, and two runtimes would then take different arms.
+/// A branch's arms are tried in the order they appear, and the <c>else</c> is taken whenever it is
+/// reached. The compiler always writes the <c>else</c> last; a hand-edited or tool-written playbook
+/// may not, and every arm after an early <c>else</c> could then never be taken.
 /// </para>
 /// <para>
-/// Three checks, all required: at least one arm has a condition (an <c>else</c> needs something to
-/// fall back from), each arm's order is greater than the one before it, and the <c>else</c>, which
-/// has no condition, is the last arm. The last check also refuses a second arm without a
-/// condition, since only one arm can be last. A succession edge is not an arm and is not checked
-/// here.
+/// Two checks, both required: at least one arm has a condition (an <c>else</c> needs something to
+/// fall back from), and the <c>else</c>, which has no condition, is the last arm. The last check
+/// also refuses a second arm without a condition, since only one arm can be last. A succession edge
+/// is not an arm and is not checked here.
 /// </para>
 /// </remarks>
 public sealed class BranchArmOrderChecker : IPlaybookChecker
@@ -40,14 +39,13 @@ public sealed class BranchArmOrderChecker : IPlaybookChecker
     {
         var arms = branch.Out.OfType<BranchEdge>().ToArray();
 
-        // A branch with no arms has nothing to order; the outward-shape check refuses it.
+        // A branch with no arms has nothing to check; the outward-shape check refuses it.
         if (arms.Length == 0)
         {
             return;
         }
 
         RefuseNoGatedArm(branch, arms);
-        RefuseOutOfOrder(branch, arms);
         RefuseElseNotLast(branch, arms);
     }
 
@@ -58,29 +56,6 @@ public sealed class BranchArmOrderChecker : IPlaybookChecker
             Refuse(
                 $"Node {branch.Id}, a branch, carries no gated arm; every arm is an else. "
                     + "A branch is a block condition, so at least one arm carries one.");
-        }
-    }
-
-    private static void RefuseOutOfOrder(BranchNode branch, BranchEdge[] arms)
-    {
-        for (var index = 1; index < arms.Length; index++)
-        {
-            var previous = arms[index - 1].Order;
-            var order = arms[index].Order;
-
-            if (order < previous)
-            {
-                Refuse(
-                    $"Node {branch.Id}, a branch, lists its arms out of order: "
-                        + $"order {order} follows order {previous}.");
-            }
-
-            if (order == previous)
-            {
-                Refuse(
-                    $"Node {branch.Id}, a branch, gives two arms the same order ({order}); "
-                        + "the arms are tried one after another.");
-            }
         }
     }
 

@@ -30,9 +30,9 @@ what the runtime must reply, in order.
 ```json
 { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
 { "send": "next" },
-{ "expect": { "asked": [
+{ "expect": { "offer": { "ordered": false, "options": [
     { "label": "Go east", "available": true },
-    { "label": "Go west", "available": true } ] } },
+    { "label": "Go west", "available": true } ] } } },
 { "send": { "choose": 0 } }
 ```
 
@@ -41,7 +41,7 @@ what the runtime must reply, in order.
 | `"next"` | `Next` — proceed past what was just said |
 | `"done"` | `Done` — the effect just asked for has been carried out |
 | `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
-| `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered |
+| `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered, which is also its position as written |
 | `{ "supply": { … } }` | `Supply(answers)` — what the world says |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than `entry` |
 | `"describe"` | `Describe()` — ask where the run stands |
@@ -50,7 +50,7 @@ what the runtime must reply, in order.
 | --- | --- |
 | `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
-| `asked` | the options offered, each a `label` and whether it is `available` |
+| `offer` | the menu offered: whether it is `ordered`, and its `options` in the order offered, which is the order written, each a `label` and whether it is `available` |
 | `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |
 | `invalidated` | an offered option that stopped being available |
@@ -60,8 +60,10 @@ what the runtime must reply, in order.
 A session with no `start` begins at the playbook's `entry`. `speech` and `label` are
 written either as an **array** — the playbook's fragments, verbatim — or as a
 **string**, which asserts the flattening defined by
-[Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# runner takes
-`next`, `done`, and `failed`; a case that sends anything else is not yet playable.
+[Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# harness sends
+everything but `start` and `describe`, and checks everything but `invalidated`. A
+case that uses one of those is not yet playable, and so is a case whose menu asks
+the world, which the C# runner does not offer yet.
 
 ## What the corpus covers
 
@@ -74,16 +76,29 @@ rather than a script.
 | `styled-speech` | Do fragment boundaries and styles survive intact? | yes |
 | `a-jump` | Does a jump transfer without returning? | yes |
 | `an-effect` | Is an effect asked for, and waited on before the run goes past it? | yes |
-| `a-failed-effect` | Does the run stand still, so a retry lands and an advance cannot? | yes |
+| `a-failed-effect` | Does the run stand still, so a retry carries on and an advance cannot? | yes |
 | `a-next-while-waiting` | Is `next` refused while the host is carrying out an effect? | yes |
+| `a-command-opening-a-line` | Does a line opening with a command still open in its speaker's name? | yes |
+| `a-command-mid-line` | Is a command in the middle of a line carried out between its words? | yes |
+| `a-command-ending-a-line` | Is a command ending a line carried out after its words, before the player moves on? | yes |
+| `a-line-that-is-only-a-command` | Does a line whose only speech is a command still wait for the player? | yes |
+| `a-failed-command-in-a-line` | Does a failed command in a line hold the run, so the retry gives the player the turn? | yes |
 | `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |
-| `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | not yet |
-| `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | not yet |
-| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | not yet |
-| `a-conditional-line` | Is a line skipped without ending the run? | not yet |
-| `a-conditional-block` | Are the arms tried in the order written? | not yet |
-| `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | not yet |
+| `a-conditional-line` | Is a line skipped without ending the run? | yes |
+| `a-conditional-jump` | Is a jump taken when its condition holds? | yes |
+| `a-conditional-block` | Are the arms tried in the order written? | yes |
+| `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | yes |
+| `a-query-after-a-command` | Is a query written after a command asked only once the command is done? | yes |
 | `a-query-in-a-link` | Is a query in a link's label resolved, and the answer spoken as part of the line? | yes |
+| `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | yes |
+| `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | yes |
+| `a-numbered-menu` | Is a numbered menu offered as ordered, its positions counted in the order written? | yes |
+| `two-options-with-the-same-label` | Are two options with one label both offered, and told apart by position? | yes |
+| `a-command-in-a-label` | Is a label's command left out of the offer, and performed once its option is taken? | yes |
+| `a-choice-the-menu-did-not-offer` | Is a choice past the last option refused, with the menu still open? | yes |
+| `a-choice-after-the-menu-is-left` | Is a second choice refused once an option has been taken? | yes |
+| `a-next-at-a-menu` | Is `next` refused at a menu, which still takes a choice afterwards? | yes |
+| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | not yet |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the
@@ -114,9 +129,9 @@ opens with a `broken:` block showing that edit.
 | Transcript | the same story came out |
 | Session | the same conversation happened |
 
-A fold over the event stream cannot see a runner that reports `Asked` before `Said`,
+A fold over the event stream cannot see a runner that reports `Offer` before `Said`,
 asks `Resolve` for the wrong keys, or asks too eagerly. Interleaving also removes a
-redundancy: an `asked` entry does not record the pick, because the next `send` says
+redundancy: an `offer` entry does not record the pick, because the next `send` says
 so. The stricter shape forces the runtime design to *state* whether batching is
 allowed rather than leave it to be discovered when a port diverges.
 
@@ -191,9 +206,6 @@ files for all three.
 - **Which fragment kinds survive a run.** A `query` fragment must become something
   else once `supply` answers it, and whether `tag` and `custom-command` pass through
   or surface as their own events is a runner decision.
-- **Menu ordering has no fixture.** Asserting ordered versus unordered menus needs
-  `asked` to say which kind a menu is, and whether shuffling belongs to the runner or
-  the host is undecided.
 - **Random choice has no fixture.** Pinning a draw needs the entropy decision the
   [architecture note](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
   owns.
