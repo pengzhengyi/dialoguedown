@@ -74,8 +74,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        var open = await client.PostAsJsonAsync(
-            "/api/open", new { source = "proj/scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        var open = await Open(client, "proj/scene.dialogue.md", "view");
 
         Assert.Equal(HttpStatusCode.SeeOther, open.StatusCode);
         Assert.Equal("/r/proj/", open.Headers.Location!.ToString());
@@ -93,8 +92,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        await client.PostAsJsonAsync(
-            "/api/open", new { source = "proj/scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        await Open(client, "proj/scene.dialogue.md");
 
         // The shell always serves within a root, so the report carries the project context the
         // Explorer sidebar renders: the active script's root-relative path (and the root itself).
@@ -138,7 +136,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md");
         var report = await client.GetAsync("/r/", TestContext.Current.CancellationToken);
 
         // Per-session HTML is rebuilt each launch, so it must not be cached (no stale reports).
@@ -187,7 +185,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md");
         var report = await client.GetAsync("/r/", TestContext.Current.CancellationToken);
         var html = await report.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
@@ -283,8 +281,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        var open = await client.PostAsJsonAsync(
-            "/api/open", new { source = "scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        var open = await Open(client, "scene.dialogue.md", "view");
 
         Assert.Equal("/r/", open.Headers.Location!.ToString());
         Assert.Contains("\"mode\":\"view\"", await client.GetStringAsync("/r/", TestContext.Current.CancellationToken));
@@ -297,7 +294,7 @@ public sealed class ServedShellServerTests
         var path = tree.File("root/scene.dialogue.md", "# Scene");
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
-        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md", "edit");
 
         var save = await client.PostAsJsonAsync(
             "/api/save",
@@ -333,7 +330,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        var open = await client.PostAsJsonAsync("/api/open", new { source = "notes.md", mode = "view" }, TestContext.Current.CancellationToken);
+        var open = await Open(client, "notes.md");
 
         Assert.Equal(HttpStatusCode.NotFound, open.StatusCode);
     }
@@ -357,7 +354,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
 
-        await client.PostAsJsonAsync("/api/open", new { source = "proj/scene.dialogue.md", mode = "view" }, TestContext.Current.CancellationToken);
+        await Open(client, "proj/scene.dialogue.md");
         var asset = await client.GetAsync("/r/proj/art/pic.png", TestContext.Current.CancellationToken);
 
         Assert.True(asset.IsSuccessStatusCode);
@@ -446,7 +443,7 @@ public sealed class ServedShellServerTests
         tree.File("root/scene.dialogue.md", "# Scene");
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
-        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md", "edit");
 
         var create = await client.PostAsync("/api/create-config", content: null, TestContext.Current.CancellationToken);
 
@@ -463,7 +460,7 @@ public sealed class ServedShellServerTests
         tree.File("root/scene.dialogue.md", "# Scene");
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
-        await client.PostAsJsonAsync("/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md", "edit");
         await client.PostAsync("/api/create-config", content: null, TestContext.Current.CancellationToken); // adopt a config
 
         var save = await client.PostAsJsonAsync(
@@ -584,10 +581,7 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server);
 
-        var response = await client.PostAsJsonAsync(
-            "/api/open",
-            new { source = "scene.dialogue.md", mode = "sideways" },
-            TestContext.Current.CancellationToken);
+        var response = await Open(client, "scene.dialogue.md", "sideways");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -686,8 +680,7 @@ public sealed class ServedShellServerTests
         tree.File("root/scene.dialogue.md", "# Scene");
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
-        await client.PostAsJsonAsync(
-            "/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md", "edit");
 
         var json = await client.GetStringAsync("/api/document", TestContext.Current.CancellationToken);
 
@@ -714,8 +707,7 @@ public sealed class ServedShellServerTests
         var path = tree.File("root/scene.dialogue.md", "# Scene");
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
-        await client.PostAsJsonAsync(
-            "/api/open", new { source = "scene.dialogue.md", mode = "edit" }, TestContext.Current.CancellationToken);
+        await Open(client, "scene.dialogue.md", "edit");
         await File.WriteAllTextAsync(path, "# Changed on disk", TestContext.Current.CancellationToken);
 
         var response = await client.PostAsJsonAsync(
@@ -750,11 +742,10 @@ public sealed class ServedShellServerTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    private static async Task Open(HttpClient client, string source) =>
-        await client.PostAsJsonAsync(
-            "/api/open",
-            new { source, mode = "view" },
-            TestContext.Current.CancellationToken);
+    // Asks to open a script as the Explorer does. A script the server can open answers with a 303
+    // to its report.
+    private static Task<HttpResponseMessage> Open(HttpClient client, string source, string mode = "view") =>
+        client.PostAsJsonAsync("/api/open", new { source, mode }, TestContext.Current.CancellationToken);
 
     private static async Task<StreamReader> SubscribeAsync(HttpClient client, string doc)
     {
