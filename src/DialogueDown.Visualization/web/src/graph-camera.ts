@@ -1,3 +1,7 @@
+/**
+ * @file Remembers each graph's zoom and position, so it is kept when the reader comes back to it.
+ */
+
 /** A graph's zoom scale and pan translation — the D3 zoom transform. */
 export interface CameraTransform {
     k: number;

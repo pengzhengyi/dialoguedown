@@ -1,3 +1,5 @@
+/** @file The report's hover tooltips, for graph nodes and routes, table cells, and stage tabs. */
+
 import { delegate, followCursor } from "tippy.js";
 
 /**
