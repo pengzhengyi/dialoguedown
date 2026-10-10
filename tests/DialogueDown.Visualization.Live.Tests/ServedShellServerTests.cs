@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Serving;
+using DialogueDown.Visualization.Live.Tests.Support;
 using DialogueDown.Visualization.Render;
+using static DialogueDown.Visualization.Live.Tests.Support.LivePayload;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -47,11 +49,10 @@ public sealed class ServedShellServerTests
         await using var server = await Started(tree);
         using var client = Client(server);
 
-        var json = await client.GetStringAsync("/api/browse?path=", TestContext.Current.CancellationToken);
+        var listing = await Browse(client, string.Empty);
 
-        Assert.Contains("\"directories\":[\"proj\"]", json);
-        Assert.Contains("\"sources\":[\"a.dialogue.md\"]", json);
-        Assert.DoesNotContain("notes.md", json);
+        Assert.Equal(["proj"], listing.Directories);
+        Assert.Equal(["a.dialogue.md"], listing.Sources); // never notes.md
     }
 
     [Fact]
@@ -81,7 +82,7 @@ public sealed class ServedShellServerTests
 
         var html = await client.GetStringAsync("/r/proj/", TestContext.Current.CancellationToken);
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"mode\":\"view\"", html);
+        Assert.Equal("view", FromPage(html).Mode);
     }
 
     [Fact]
@@ -96,9 +97,9 @@ public sealed class ServedShellServerTests
 
         // The shell always serves within a root, so the report carries the project context the
         // Explorer sidebar renders: the active script's root-relative path (and the root itself).
-        var html = await client.GetStringAsync("/r/proj/", TestContext.Current.CancellationToken);
-        Assert.Contains("\"project\":{", html);
-        Assert.Contains("\"activePath\":\"proj/scene.dialogue.md\"", html);
+        var report = await ReportAt(client, "/r/proj/");
+        Assert.Equal(tree.Dir("root"), report.ProjectRoot);
+        Assert.Equal("proj/scene.dialogue.md", report.ActivePath);
     }
 
     [Fact]
@@ -112,8 +113,7 @@ public sealed class ServedShellServerTests
         var created = await client.PostAsJsonAsync("/api/create-folder", new { path = "act-2" }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, created.StatusCode);
 
-        var json = await client.GetStringAsync("/api/browse?path=", TestContext.Current.CancellationToken);
-        Assert.Contains("\"directories\":[\"act-2\"]", json);
+        Assert.Equal(["act-2"], (await Browse(client, string.Empty)).Directories);
     }
 
     [Fact]
@@ -209,9 +209,9 @@ public sealed class ServedShellServerTests
             TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, renamed.StatusCode);
 
-        var json = await client.GetStringAsync("/api/browse?path=act-1", TestContext.Current.CancellationToken);
-        Assert.Contains("prologue.dialogue.md", json);
-        Assert.DoesNotContain("scene.dialogue.md", json);
+        var listing = await Browse(client, "act-1");
+        Assert.Equal(["act-1/prologue.dialogue.md"], listing.Sources);
+        Assert.Empty(listing.Directories);
     }
 
     [Fact]
@@ -254,9 +254,8 @@ public sealed class ServedShellServerTests
         var renamed = await client.PostAsJsonAsync("/api/rename", new { from = "act-1", to = "act-one" }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, renamed.StatusCode);
 
-        Assert.Contains("\"directories\":[\"act-one\"]", await client.GetStringAsync("/api/browse?path=", TestContext.Current.CancellationToken));
-        Assert.Contains(
-            "act-one/scene.dialogue.md", await client.GetStringAsync("/api/browse?path=act-one", TestContext.Current.CancellationToken));
+        Assert.Equal(["act-one"], (await Browse(client, string.Empty)).Directories);
+        Assert.Equal(["act-one/scene.dialogue.md"], (await Browse(client, "act-one")).Sources);
     }
 
     [Fact]
@@ -284,7 +283,7 @@ public sealed class ServedShellServerTests
         var open = await Open(client, "scene.dialogue.md", "view");
 
         Assert.Equal("/r/", open.Headers.Location!.ToString());
-        Assert.Contains("\"mode\":\"view\"", await client.GetStringAsync("/r/", TestContext.Current.CancellationToken));
+        Assert.Equal("view", (await ReportAt(client, "/r/")).Mode);
     }
 
     [Fact]
@@ -301,9 +300,8 @@ public sealed class ServedShellServerTests
             new { source = "# Edited\n", expectedBaseline = "# Scene" },
             TestContext.Current.CancellationToken);
 
-        Assert.True(save.IsSuccessStatusCode);
-        var json = await save.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("\"stages\":", json);
+        Assert.Equal(HttpStatusCode.OK, save.StatusCode);
+        Assert.NotNull((await PayloadOf(save)).Stages);
         Assert.Equal("# Edited\n", await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
     }
 
@@ -349,7 +347,11 @@ public sealed class ServedShellServerTests
     public async Task OpenedSource_ServesRelativeAssetsUnderReportMount()
     {
         using var tree = new TempTree();
-        tree.File("root/proj/scene.dialogue.md", "# Scene\n\n![pic](art/pic.png)");
+        tree.File("root/proj/scene.dialogue.md", """
+            # Scene
+
+            ![pic](art/pic.png)
+            """);
         await File.WriteAllBytesAsync(tree.File("root/proj/art/pic.png"), [1, 2, 3, 4], TestContext.Current.CancellationToken);
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
@@ -357,7 +359,7 @@ public sealed class ServedShellServerTests
         await Open(client, "proj/scene.dialogue.md");
         var asset = await client.GetAsync("/r/proj/art/pic.png", TestContext.Current.CancellationToken);
 
-        Assert.True(asset.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.OK, asset.StatusCode);
         Assert.Equal(new byte[] { 1, 2, 3, 4 }, await asset.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
     }
 
@@ -376,8 +378,7 @@ public sealed class ServedShellServerTests
         Assert.True(File.Exists(created));
         Assert.Equal(string.Empty, await File.ReadAllTextAsync(created, TestContext.Current.CancellationToken));
 
-        var html = await client.GetStringAsync("/r/", TestContext.Current.CancellationToken);
-        Assert.Contains("\"mode\":\"edit\"", html);
+        Assert.Equal("edit", (await ReportAt(client, "/r/")).Mode);
     }
 
     [Fact]
@@ -391,7 +392,7 @@ public sealed class ServedShellServerTests
         var create = await client.PostAsJsonAsync("/api/create", new { path = "scene.dialogue.md" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Conflict, create.StatusCode);
-        Assert.Contains("scene.dialogue.md", await create.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("scene.dialogue.md", (await PayloadOf(create)).Path);
         Assert.Equal(
             "# Keep me",
             await File.ReadAllTextAsync(Path.Combine(tree.Dir("root"), "scene.dialogue.md"), TestContext.Current.CancellationToken));
@@ -447,9 +448,10 @@ public sealed class ServedShellServerTests
 
         var create = await client.PostAsync("/api/create-config", content: null, TestContext.Current.CancellationToken);
 
-        Assert.True(create.IsSuccessStatusCode);
-        Assert.True(File.Exists(Path.Combine(root, "dialogue.toml"))); // created at the launch root
-        Assert.Contains("dialogue.toml", await create.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(HttpStatusCode.OK, create.StatusCode);
+        var configPath = Path.Combine(root, "dialogue.toml");
+        Assert.True(File.Exists(configPath)); // created at the launch root
+        Assert.Equal(configPath, (await PayloadOf(create)).ConfigPath);
     }
 
     [Fact]
@@ -457,6 +459,12 @@ public sealed class ServedShellServerTests
     {
         using var tree = new TempTree();
         var root = tree.Dir("root");
+        var configDeclaringBob = """
+            [[speakers]]
+            name = "Bob"
+            id = "B"
+
+            """;
         tree.File("root/scene.dialogue.md", "# Scene");
         await using var server = await Started(tree);
         using var client = Client(server, followRedirects: false);
@@ -465,17 +473,12 @@ public sealed class ServedShellServerTests
 
         var save = await client.PostAsJsonAsync(
             "/api/save",
-            new
-            {
-                source = "[[speakers]]\nname = \"Bob\"\nid = \"B\"\n",
-                target = "config",
-                conflict = "overwrite",
-            },
+            new { source = configDeclaringBob, target = "config", conflict = "overwrite" },
             TestContext.Current.CancellationToken);
 
-        Assert.True(save.IsSuccessStatusCode);
-        Assert.Contains("Bob", await File.ReadAllTextAsync(Path.Combine(root, "dialogue.toml"), TestContext.Current.CancellationToken));
-        Assert.Contains("\"name\":\"Bob\"", await save.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(HttpStatusCode.OK, save.StatusCode);
+        Assert.Equal(configDeclaringBob, await File.ReadAllTextAsync(Path.Combine(root, "dialogue.toml"), TestContext.Current.CancellationToken));
+        Assert.Equal(["Bob"], (await PayloadOf(save)).SpeakerNames);
     }
 
     [Fact]
@@ -495,8 +498,7 @@ public sealed class ServedShellServerTests
         Assert.Equal(HttpStatusCode.SeeOther, landing.StatusCode);
         Assert.Equal("/r/proj/", landing.Headers.Location!.ToString());
 
-        var html = await client.GetStringAsync("/r/proj/", TestContext.Current.CancellationToken);
-        Assert.Contains("\"activePath\":\"proj/scene.dialogue.md\"", html);
+        Assert.Equal("proj/scene.dialogue.md", (await ReportAt(client, "/r/proj/")).ActivePath);
     }
 
     [Fact]
@@ -684,7 +686,7 @@ public sealed class ServedShellServerTests
 
         var json = await client.GetStringAsync("/api/document", TestContext.Current.CancellationToken);
 
-        Assert.Contains("Scene", json);
+        Assert.Equal("# Scene", Parse(json).Source);
     }
 
     [Fact]
@@ -713,9 +715,8 @@ public sealed class ServedShellServerTests
         var response = await client.PostAsJsonAsync(
             "/api/reload", new { }, TestContext.Current.CancellationToken);
 
-        Assert.True(response.IsSuccessStatusCode);
-        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("Changed on disk", json);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("# Changed on disk", (await PayloadOf(response)).Source);
     }
 
     [Fact]
@@ -746,6 +747,19 @@ public sealed class ServedShellServerTests
     // to its report.
     private static Task<HttpResponseMessage> Open(HttpClient client, string source, string mode = "view") =>
         client.PostAsJsonAsync("/api/open", new { source, mode }, TestContext.Current.CancellationToken);
+
+    // What /api/browse lists for a folder under the root, where the root itself is the empty path.
+    private static async Task<BrowseListing> Browse(HttpClient client, string path) =>
+        await client.GetFromJsonAsync<BrowseListing>(
+            $"/api/browse?path={Uri.EscapeDataString(path)}", TestContext.Current.CancellationToken);
+
+    // The report the page at a URL embeds.
+    private static async Task<LivePayload> ReportAt(HttpClient client, string url) =>
+        FromPage(await client.GetStringAsync(url, TestContext.Current.CancellationToken));
+
+    // The JSON an API response carries.
+    private static async Task<LivePayload> PayloadOf(HttpResponseMessage response) =>
+        Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
     private static async Task<StreamReader> SubscribeAsync(HttpClient client, string doc)
     {

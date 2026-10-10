@@ -56,7 +56,9 @@ public sealed class ServedShellRunnerTests
         using var client = new HttpClient { BaseAddress = new Uri(url) };
         var landing = await client.GetStringAsync("/", TestContext.Current.CancellationToken);
         Assert.StartsWith("<!doctype html", landing, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"project\":", landing);
+        var shell = LivePayload.FromPage(landing);
+        Assert.Equal(tree.Root, shell.ProjectRoot);
+        Assert.Null(shell.ActivePath);
 
         stop.Cancel();
         Assert.Equal(0, await task);
@@ -82,7 +84,8 @@ public sealed class ServedShellRunnerTests
         var url = Assert.Single(browser.Opened);
         Assert.Contains("/r/", url);
         using var client = new HttpClient { BaseAddress = new Uri(url) };
-        Assert.Contains("scene.dialogue.md", await client.GetStringAsync(url, TestContext.Current.CancellationToken));
+        var report = LivePayload.FromPage(await client.GetStringAsync(url, TestContext.Current.CancellationToken));
+        Assert.Equal("scene.dialogue.md", report.ActivePath);
 
         stop.Cancel();
         Assert.Equal(0, await task);
