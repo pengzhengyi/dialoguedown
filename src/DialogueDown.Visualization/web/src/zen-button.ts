@@ -1,3 +1,5 @@
+/** @file The Zen mode button, with the icon VS Code uses for it. */
+
 import { codicon } from "./codicon";
 
 /**

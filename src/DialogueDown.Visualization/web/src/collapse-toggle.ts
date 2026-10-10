@@ -1,4 +1,9 @@
 /**
+ * @file The button that hides or shows a side panel, and the wiring that lets a reader collapse the
+ * panel.
+ */
+
+/**
  * Lucide Icons (ISC): the standard "hide/show side panel" glyphs. A right-hand panel uses
  * `panel-right-close` to hide and `panel-right-open` to show; a left-hand panel (the Explorer)
  * uses the `panel-left-*` pair, so each side's chevron points the way the panel moves — drawn

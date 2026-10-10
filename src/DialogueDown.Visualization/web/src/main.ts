@@ -1,3 +1,9 @@
+/**
+ * @file The report's entry point: reads the data the page carries and builds the report, or the
+ * empty shell when a served session has no script open, then connects a served session to its
+ * server.
+ */
+
 import "@picocss/pico/css/pico.min.css";
 import "tippy.js/dist/tippy.css";
 import "@vscode/codicons/dist/codicon.css";
