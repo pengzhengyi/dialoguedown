@@ -2,9 +2,10 @@
 
 > [!NOTE]
 > Status: **partially implemented**. The C# runner plays lines, jumps, effects,
-> branches, and the end of a run. It waits on the host for each effect, asks the
-> world about conditions and queries (see [Asking the World](./Asking%20the%20World.md)),
-> and refuses what it cannot play yet: choices and random choices. It applies the
+> branches, menus, and the end of a run. It waits on the host for each effect and
+> on the player at each menu, asks the world about conditions and queries (see
+> [Asking the World](./Asking%20the%20World.md)), and refuses what it cannot play
+> yet: random choices, and menus whose options ask the world. It applies the
 > cross-cutting decisions of the
 > [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md).
 
@@ -28,16 +29,17 @@
 | --- | --- |
 | **Runner** | The static `Runner.Step`: a total, deterministic transition from a context, a state, and a command. |
 | **Driver** | Whoever sends commands and reads events — a harness, a CLI, a game. |
-| **Command** | What a driver sends: `Start`, `Next`, `Done`, `Failed`, `Supply`. |
+| **Command** | What a driver sends: `Start`, `Next`, `Done`, `Failed`, `Supply`, `Choose`. |
 | **Event** | What a step reports: `Said`, `Continued`, `Ended`, `Refused`, or a request. |
-| **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`; `Resolve`, answered by `Supply`. |
+| **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`; `Resolve`, answered by `Supply`; `Offer`, answered by `Choose`. |
+| **Menu** | A choice node: offered to the player with `Offer`, and left by the option they take with `Choose`. |
 | **Situation** | Where a run is, and what it is doing there. |
 | **Walk** | What arriving does: visit a node, and carry on only while it hands the host nothing. |
 
-Event names follow the conformance corpus (`said`, `ended`, `perform`, `resolve`), so a
-fixture, the harness, and the code read in one vocabulary. The past tense marks an
-event as a report of something that already happened; `Perform` is named for what
-it asks, because nothing has happened yet when it is sent.
+Event names follow the conformance corpus (`said`, `ended`, `perform`, `resolve`,
+`offer`), so a fixture, the harness, and the code read in one vocabulary. The past
+tense marks an event as a report of something that already happened; `Perform` is
+named for what it asks, because nothing has happened yet when it is sent.
 
 ## Where the types live
 
@@ -45,16 +47,18 @@ it asks, because nothing has happened yet when it is sent.
 src/DialogueDown.Runtime/          the facade: what a consumer calls
   PlayContext.cs  PlayState.cs  Runner.cs  StepResult.cs
   situations/                      Situation, NotStarted, AtNode, AwaitingDone,
-                                   AwaitingSupply, AtEnd, Resume, Moment
+                                   AwaitingSupply, AwaitingChoice, AtEnd, Resume, Moment
   protocol/                        Command, Event, Request, RefusalReason
-    commands/                      Start, Next, Done, Failed, Supply
-    events/                        Said, Continued, Ended, Refused, Perform, Resolve
+    commands/                      Start, Next, Done, Failed, Supply, Choose
+    events/                        Said, Continued, Ended, Refused, Perform, Resolve,
+                                   Offer, OfferedOption
     answers/                       Answer: what the world said about one key
   stepping/
     Arrival.cs                     arriving at a node: ask, then play or walk past
     Playing.cs                     playing a node: what it hands the host, and what follows Done
+    Choosing.cs                    a menu: offer its options, then take the one chosen
     Departure.cs                   leaving a node: ask which way out, then arrive
-    NodeTraversalExtensions.cs     one reader per edge kind: the way onward
+    NodeTraversalExtensions.cs     one reader per edge kind: the way onward, a menu's options
 ```
 
 Each member of a union gets its own file, as the playbook's nodes and edges do.
@@ -82,6 +86,8 @@ flowchart LR
     AD -->|Failed| AD
     AT -->|"Next, arriving at a guarded node"| AS["AwaitingSupply(k, keys, moment)"]
     AS -->|Supply| AT2
+    AT -->|"Next, arriving at a menu"| AC["AwaitingChoice(k)"]
+    AC -->|Choose| AT2
     AT2 -->|"Next, arriving at the end"| END["AtEnd"]
     END -->|Start| AT
 ```
