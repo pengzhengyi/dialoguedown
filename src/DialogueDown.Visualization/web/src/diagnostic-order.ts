@@ -1,3 +1,5 @@
+/** @file The one order every diagnostic list uses: by position in the source, then by severity. */
+
 import type { Diagnostic as EditorDiagnostic } from "@codemirror/lint";
 import type { LspDiagnostic, LspSeverity } from "./model";
 

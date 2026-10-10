@@ -1,3 +1,5 @@
+/** @file The status bar's error, warning, and info counts, which open the Problems panel. */
+
 import { codicon } from "./codicon";
 import type { DiagnosticCounts } from "./problems-panel";
 

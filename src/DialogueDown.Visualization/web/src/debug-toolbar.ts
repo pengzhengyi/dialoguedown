@@ -1,3 +1,5 @@
+/** @file The debugger's toolbar in the Source pane, drawn from the controller's state. */
+
 import tippy, { type Instance } from "tippy.js";
 import { codicon } from "./codicon";
 import type { DebugController, DebugSnapshot } from "./debug-controller";
