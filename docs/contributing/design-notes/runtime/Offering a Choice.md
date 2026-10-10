@@ -117,6 +117,10 @@ M2:
 - [ ] One key used as a condition and as a label's query in one menu is refused, as
       it is for any node.
 
+The sections below describe the whole design. What M2 adds is not built yet: asking
+the world on arrival, the available positions on `AwaitingChoice`,
+`unavailable-option`, and walking past a menu with nothing available.
+
 ## How a menu is played
 
 A menu is its own step, after the line that asks the question:
