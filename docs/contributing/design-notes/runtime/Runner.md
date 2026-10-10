@@ -220,7 +220,7 @@ session and judging it are separate pieces, each tested alone:
 | Piece | Responsibility |
 | --- | --- |
 | `PlayableRun` | Reads one case's playbook, screens it, then holds its session against the runner |
-| `Playability` | What this build can play: the node kinds, the sends a reader takes, and why a case is not there yet |
+| `Playability` | What this build can play: every node but a random choice and a menu that asks the world, the sends a reader takes, and why a case is not there yet |
 | `SessionMatcher` | Walks the session, playing each entry against the state the one before it left |
 | `SessionOperator` | Steps the runner and holds the events nobody has read yet |
 | `Commands` | Reads what a `send` names, one reader per command |
@@ -229,8 +229,10 @@ session and judging it are separate pieces, each tested alone:
 Each case reports **conformed**, **diverged**, or **not yet playable**. The
 screening asks the playbook and the session before a step is taken, so a construct
 the runner does not play reads as that rather than as a hang. A divergence outranks
-not-yet-playable. `PlayableConformanceTests` names every case it expects to
-conform, so a case that starts or stops passing is noticed.
+not-yet-playable. `PlayableConformanceTests` names every case this build cannot
+play yet, with the reasons it gives, and holds every other case to the whole
+conversation. A new case must conform unless it is listed, and a listed case that
+starts conforming, or is held back by something else, is noticed.
 
 ## Key design decisions
 
@@ -247,13 +249,13 @@ class would invite a field, and a field is what stops replay from working.
 
 ### D3 — The situation says where the run is and what it is doing
 
-`AwaitingDone` and `AwaitingSupply` stand at the same node `AtNode` would, doing
-something else there. Holding that in the situation rather than beside the node
-means the two cannot disagree, and the protocol stays a relation between a
-situation and a command without looking at the playbook. No field declares what
-may be sent next: a driver reacts to the events it just received — `Perform` and
-`Resolve` mean answer, and a step that leaves nothing to answer means advance
-([speaking a line](./Speaking%20a%20Line.md#s4--the-players-turn-comes-when-a-step-leaves-nothing-to-answer)).
+`AwaitingDone`, `AwaitingSupply`, and `AwaitingChoice` stand at the same node
+`AtNode` would, doing something else there. Holding that in the situation rather
+than beside the node means the two cannot disagree, and the protocol stays a
+relation between a situation and a command without looking at the playbook. No field declares what
+may be sent next: a driver reacts to the events it just received — `Perform`,
+`Resolve`, and `Offer` mean answer, and a step that leaves nothing to answer means
+advance ([speaking a line](./Speaking%20a%20Line.md#s4--the-players-turn-comes-when-a-step-leaves-nothing-to-answer)).
 
 ### D4 — A misplaced command is an event, not an exception
 
@@ -356,11 +358,12 @@ because skipping is the silent wrong story the format refuses to tell.
 | --- | --- |
 | Unit — `Runner` | Each cell of the protocol matrix |
 | Unit — `Arrival` | Each node kind: what it reports, and which party the run then waits on |
-| Unit — traversal | Divert taken, succession fallen through to, neither available |
+| Unit — `Choosing` | A menu offered, a menu that asks the world refused, a choice taken, a choice the menu did not offer refused |
+| Unit — traversal | Divert taken, succession fallen through to, neither available; a menu's options in the order written |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a session |
 | Conformance | Every case the runner plays conforms; the rest are named as not yet playable |
 | Architecture | The runtime references only the playbook |
-| Property | A walk over any playbook `PlaybookGen` draws stands only at a node that playbook has, answering each stage as it reaches it |
+| Property | A walk over any playbook `PlaybookGen` draws stands only at a node that playbook has, answering each stage as it reaches it and choosing at each menu |
 
 Unit tests build playbooks by hand; the corpus supplies compiled ones. A total
 function must handle shapes a compiler never emits — a line leading nowhere, a
@@ -371,10 +374,17 @@ runtime tests may not reference the compiler, and a test holds it and the harnes
 
 ## Open questions and deferred work
 
-- **Choices and saves.** `Choose`, `Asked`, `Describe`, and `Restore` are designed
-  in the [architecture note](./Dialogue%20Runtime%20Architecture.md#the-protocol)
-  and not built; each adds commands, events, and situations to the matrix above.
-  An option's condition arrives with choices.
+- **A menu that asks the world.** An option's condition and a query in a label
+  need the world's answer before the menu can be offered, so the runner refuses
+  such a menu for now. [Offering a Choice](./Offering%20a%20Choice.md) designs how
+  it asks, and how an unavailable option is offered.
+- **Random choices.** Refused until the runner learns to pick one. Whether the
+  runner draws by weight or the host supplies the draw is an
+  [open question](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
+  of the architecture note.
+- **Saves.** `Describe` and `Restore` are designed in the
+  [architecture note](./Dialogue%20Runtime%20Architecture.md#the-protocol) and not
+  built; each adds commands, events, and situations to the matrix above.
 - **Undo is replay.** Rewinding the situation is free because state is a value;
   rewinding the world is the host's. Replaying the log without its last command
   rewinds the runner exactly, with no inverses.
