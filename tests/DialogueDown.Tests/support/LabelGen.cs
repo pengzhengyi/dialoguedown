@@ -34,30 +34,35 @@ internal static class LabelGen
     private static readonly Gen<LabelCall> _call =
         Gen.Frequency((2, _query), (1, _command), (1, _condition));
 
-    // One code span after a word, sometimes with emphasis around both.
-    private static readonly Gen<(string Text, LabelCall Call)> _segment =
-        Gen.Select(
-            _word, _call, Gen.Bool,
-            (word, call, emphasized) =>
-                (emphasized ? $"*{word} {call.Written}*" : $"{word} {call.Written}", call));
-
     private static readonly Gen<LabelScript> _script =
         Gen.Select(
             Gen.Enum<LabelPlacement>(),
-            _segment.Array[1, 3],
-            (placement, segments) =>
-            {
-                var label = string.Join(" ", segments.Select(segment => segment.Text));
+            Label(_call),
+            (placement, label) =>
+                new LabelScript(Scene(Line(label.Text, placement)), placement, label.Text, label.Calls));
 
-                return new LabelScript(
-                    Scene(Line(label, placement)),
-                    placement,
-                    label,
-                    [.. segments.Select(segment => segment.Call)]);
-            });
+    private static readonly Gen<string> _queryLabel = Label(_query).Select(label => label.Text);
 
     /// <summary>A script holding one label in one of the four placements.</summary>
     public static Gen<LabelScript> Script() => _script;
+
+    /// <summary>
+    /// The text of a label that holds only words, emphasis, and queries, such as
+    /// <c>dawn `"PlaceName"` *map `"Alice.Mood"`*</c>, which reads the same as speech.
+    /// </summary>
+    public static Gen<string> QueryLabel() => _queryLabel;
+
+    // One to three segments, each a word and then a code span drawn from call, sometimes with
+    // emphasis around both.
+    private static Gen<(string Text, IReadOnlyList<LabelCall> Calls)> Label(Gen<LabelCall> call) =>
+        Gen.Select(_word, call, Gen.Bool, Segment)
+            .Array[1, 3]
+            .Select(segments => (
+                string.Join(" ", segments.Select(segment => segment.Text)),
+                (IReadOnlyList<LabelCall>)[.. segments.Select(segment => segment.Call)]));
+
+    private static (string Text, LabelCall Call) Segment(string word, LabelCall call, bool emphasized) =>
+        (emphasized ? $"*{word} {call.Written}*" : $"{word} {call.Written}", call);
 
     private static string Line(string label, LabelPlacement placement) => placement switch
     {

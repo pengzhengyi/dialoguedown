@@ -49,6 +49,64 @@ public sealed class GameCallInLabelPropertyTests
             },
             iter: Samples);
 
+    /// <summary>
+    /// Wrapping speech in a link's brackets changes how its words are shown, not what they ask.
+    /// </summary>
+    /// <remarks>
+    /// Speech of words, emphasis, and queries, compiled bare and again as a link's label, asks for
+    /// the same keys in the same order and reads as the same text. So a query in a label is filled
+    /// exactly like one in speech.
+    /// </remarks>
+    [Fact]
+    public void BracketsChangeHowWordsAreShownNotWhatTheyAsk() =>
+        LabelGen.QueryLabel().Sample(
+            label =>
+            {
+                var bare = Single<LineNode>(Playbooks.Of(Bare(label), "bare.dialogue.md")).Speech;
+                var wrapped = Assert.Single(
+                    Single<LineNode>(Playbooks.Of(Wrapped(label), "wrapped.dialogue.md"))
+                        .Speech.OfType<LinkFragment>()).Label;
+
+                Assert.Equal(SpeechTemplate.Keys(bare), SpeechTemplate.Keys(wrapped));
+                Assert.Equal(SpeechText.Of(bare), SpeechText.Of(wrapped));
+            },
+            iter: Samples);
+
+    /// <summary>A scene whose one line says <paramref name="speech"/>.</summary>
+    /// <remarks>
+    /// <code>
+    /// # The Square
+    ///
+    /// Alice: dawn `"PlaceName"` *map `"Alice.Mood"`*
+    /// </code>
+    /// </remarks>
+    private static string Bare(string speech) =>
+        $"""
+        # The Square
+
+        Alice: {speech}
+
+        """;
+
+    /// <summary>A scene whose one line holds only a link labeled <paramref name="speech"/>.</summary>
+    /// <remarks>
+    /// <code>
+    /// # The Square
+    ///
+    /// Alice: [dawn `"PlaceName"` *map `"Alice.Mood"`*](#the-square)
+    /// </code>
+    /// </remarks>
+    private static string Wrapped(string speech) =>
+        $"""
+        # The Square
+
+        Alice: [{speech}](#the-square)
+
+        """;
+
+    private static TNode Single<TNode>(PlaybookDocument playbook) where TNode : Node =>
+        Assert.Single(playbook.Nodes.OfType<TNode>());
+
     private static void AssertFailsAtEach(LabelScript script, IReadOnlyList<LabelCall> rejected)
     {
         var failure = AssertFailure(Pipeline.Compile(script.Source));
