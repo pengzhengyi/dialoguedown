@@ -111,17 +111,21 @@ the order they were written.
 
 What may be sent where is one matrix:
 
-| Situation | `Start` | `Next` | `Done` | `Failed` | `Supply` |
-| --- | --- | --- | --- | --- | --- |
-| `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
-| `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
-| `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` |
-| `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment |
-| `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| Situation | `Start` | `Next` | `Done` | `Failed` | `Supply` | `Choose` |
+| --- | --- | --- | --- | --- | --- | --- |
+| `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` | refused: `misplaced` |
+| `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment | refused: `misplaced` |
+| `AwaitingChoice` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the chosen option leads, or refused: `no-such-option` |
+| `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 
 The way onward is the node's `divert` when it carries one, otherwise its
 `succession`; with neither, the step is refused as `leads-nowhere`. A divert
 beside a succession leaves the succession unreachable, which plays no differently.
+A `Choose` names an option by its position among those the menu offered, counting
+from 0 in the order written. A menu's succession is not an option, so it is never
+counted.
 
 ## Arriving at a node
 
