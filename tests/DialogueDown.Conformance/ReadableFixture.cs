@@ -8,14 +8,7 @@ namespace DialogueDown.Conformance;
 /// </summary>
 public sealed record ReadableFixture
 {
-    private static readonly JsonSerializerOptions _options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-
-        // A fixture is written by hand, so a misspelled field is reported rather than ignored.
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        Converters = { new VerdictConverter() },
-    };
+    private static readonly JsonSerializerOptions _options = FixtureJson.OptionsWith(new VerdictConverter());
 
     /// <summary>
     /// Gets where an editor can find the schema this fixture is written against.

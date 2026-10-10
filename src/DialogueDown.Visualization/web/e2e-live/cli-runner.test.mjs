@@ -4,6 +4,7 @@ import test from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cliInvocation } from "./cli-runner.mjs";
+import * as fixture from "./fixture.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -24,7 +25,8 @@ test("every live E2E server uses the shared CLI runner", () => {
         (name) => name.startsWith("serve") && name.endsWith(".mjs"),
     );
 
-    assert.equal(serverScripts.length, 11); // one per fixture port
+    const ports = Object.keys(fixture).filter((name) => name.endsWith("_PORT"));
+    assert.equal(serverScripts.length, ports.length); // one server per fixture port
     for (const name of serverScripts) {
         const source = readFileSync(join(here, name), "utf8");
         assert.match(source, /spawnCli/);

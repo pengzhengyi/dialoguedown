@@ -148,6 +148,34 @@ const panel = (page: Page, title: string) =>
         .locator(".playbook-side .table-panel")
         .filter({ has: page.locator(".table-panel-title", { hasText: new RegExp(`^${title}$`) }) });
 
+/** The text of the line CodeMirror currently marks active, trimmed. */
+const activeLine = (page: Page) =>
+    page.evaluate(
+        () =>
+            document.querySelector(".playbook-source .cm-activeLine")?.textContent?.trim() ?? null,
+    );
+
+/**
+ * The text of the line `offset` lines below the active one. A revealed node's opening brace is
+ * the active line, so its `"id"` is two below it.
+ */
+const lineBelowActive = (page: Page, offset: number) =>
+    page.evaluate((offset) => {
+        const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
+        const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
+        return lines[at + offset]?.textContent ?? null;
+    }, offset);
+
+/** Whether the active line is wholly on screen, not merely selected somewhere out of view. */
+const activeLineOnScreen = (page: Page) =>
+    page.evaluate(() => {
+        const pane = document.querySelector(".playbook-source .cm-scroller")!;
+        const line = document.querySelector(".playbook-source .cm-activeLine")!;
+        const a = pane.getBoundingClientRect();
+        const b = line.getBoundingClientRect();
+        return b.top >= a.top && b.bottom <= a.bottom;
+    });
+
 test.describe("Playbook tab — a compiled script", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(writeReport(compiled));
@@ -264,11 +292,7 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(arm).toHaveAttribute("data-ref-key", "node:8");
         await arm.click();
 
-        const below = await page.evaluate(() => {
-            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
-            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
-            return lines[at + 2]?.textContent ?? null;
-        });
+        const below = await lineBelowActive(page, 2);
         expect(below).toContain('"id": 8');
     });
 
@@ -289,13 +313,7 @@ test.describe("Playbook tab — a compiled script", () => {
         expect(cursorLine).toBe("    {");
 
         // The revealed node is on screen, not merely selected somewhere above the fold.
-        const visible = await page.evaluate(() => {
-            const pane = document.querySelector(".playbook-source .cm-scroller")!;
-            const line = document.querySelector(".playbook-source .cm-activeLine")!;
-            const a = pane.getBoundingClientRect();
-            const b = line.getBoundingClientRect();
-            return b.top >= a.top && b.bottom <= a.bottom;
-        });
+        const visible = await activeLineOnScreen(page);
         expect(visible).toBe(true);
     });
 
@@ -304,13 +322,7 @@ test.describe("Playbook tab — a compiled script", () => {
 
         await panel(page, "Speakers").locator("tbody tr").nth(1).locator("td").first().click();
 
-        const revealed = await page.evaluate(() => {
-            const editor = document.querySelector(".playbook-source .cm-editor");
-            const lines = [...(editor?.querySelectorAll(".cm-line") ?? [])];
-            const active = editor?.querySelector(".cm-activeLine");
-            const at = lines.indexOf(active as Element);
-            return lines[at + 1]?.textContent ?? null;
-        });
+        const revealed = await lineBelowActive(page, 1);
         expect(revealed).toContain("(anonymous)");
     });
 
@@ -545,13 +557,6 @@ const linkable: Report = {
     },
 };
 
-/** The text of the line CodeMirror currently marks active, trimmed. */
-const activeLine = (page: Page) =>
-    page.evaluate(
-        () =>
-            document.querySelector(".playbook-source .cm-activeLine")?.textContent?.trim() ?? null,
-    );
-
 /** A reference mark on the line that reads `text`, e.g. `"target": 9`. */
 const refOnLine = (page: Page, text: string) =>
     page.locator(".playbook-source .cm-line", { hasText: text }).locator(".dd-playbook-ref");
@@ -580,21 +585,11 @@ test.describe("Playbook tab — following an index", () => {
 
         // Node 9 is the tenth element; its opener is the revealed line, and it is on screen.
         expect(await activeLine(page)).toBe("{");
-        const framed = await page.evaluate(() => {
-            const scroller = document.querySelector(".playbook-source .cm-scroller")!;
-            const line = document.querySelector(".playbook-source .cm-activeLine")!;
-            const a = scroller.getBoundingClientRect();
-            const b = line.getBoundingClientRect();
-            return b.top >= a.top && b.bottom <= a.bottom;
-        });
+        const framed = await activeLineOnScreen(page);
         expect(framed).toBe(true);
 
         // The line below the opener is node 9's own — the definition, found by id.
-        const below = await page.evaluate(() => {
-            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
-            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
-            return lines[at + 2]?.textContent ?? null;
-        });
+        const below = await lineBelowActive(page, 2);
         expect(below).toContain('"id": 9');
     });
 
@@ -604,11 +599,7 @@ test.describe("Playbook tab — following an index", () => {
 
         // The second speaker's opening brace.
         expect(await activeLine(page)).toBe("{");
-        const below = await page.evaluate(() => {
-            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
-            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
-            return lines[at + 1]?.textContent ?? null;
-        });
+        const below = await lineBelowActive(page, 1);
         expect(below).toContain('"name": "Bob"');
     });
 
@@ -752,11 +743,7 @@ test.describe("Playbook tab — the Nodes table", () => {
         expect(cursorLine).toBe("    {");
 
         // The line two below the opener is the node's own declaration, the one the target named.
-        const below = await page.evaluate(() => {
-            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
-            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
-            return lines[at + 2]?.textContent ?? null;
-        });
+        const below = await lineBelowActive(page, 2);
         expect(below).toContain('"id": 1');
     });
 
@@ -772,11 +759,7 @@ test.describe("Playbook tab — the Nodes table", () => {
         await expect(ways).toHaveCount(2);
         await ways.nth(1).click();
 
-        const below = await page.evaluate(() => {
-            const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
-            const at = lines.indexOf(document.querySelector(".playbook-source .cm-activeLine")!);
-            return lines[at + 2]?.textContent ?? null;
-        });
+        const below = await lineBelowActive(page, 2);
         expect(below).toContain('"id": 9');
     });
 
@@ -804,14 +787,7 @@ test.describe("Playbook tab — the Nodes table", () => {
                 .locator("td")
                 .nth(3)
                 .locator("[data-jump]");
-        const revealed = () =>
-            page.evaluate(() => {
-                const lines = [...document.querySelectorAll(".playbook-source .cm-line")];
-                const at = lines.indexOf(
-                    document.querySelector(".playbook-source .cm-activeLine")!,
-                );
-                return lines[at + 2]?.textContent ?? null;
-            });
+        const revealed = () => lineBelowActive(page, 2);
 
         await ways().nth(1).focus();
         await page.keyboard.press("Enter");

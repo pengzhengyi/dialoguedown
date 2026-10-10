@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { writeReport } from "./report";
 import { audit } from "./audit";
+import { textContrastOf } from "./contrast";
 import type { Report } from "../src/model";
+import { letPointerThroughPanels } from "./overlays";
 
 // A Semantic Model report: a two-scene tree beside the speaker, anchor, and
 // jump-resolution tables, wired with the same cross-link keys the .NET projection
@@ -345,10 +347,7 @@ test("cross-links a speaker mention in the tree to its Speakers row", async ({ p
 
 test("lineage focus preserves the scene backbone while spotlighting a scene", async ({ page }) => {
     const graph = page.locator(".semantic-graph");
-    // Overlays can cover a node; let the hover reach the node beneath.
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
 
     // Hover the scene "The Market"; its lineage is the document root and its own subtree,
     // so the sibling scene "The Square" sits outside it.
@@ -420,30 +419,7 @@ test("panel titles have legible contrast", async ({ page }) => {
     // The panel header is a <button>, and Pico's white button text would vanish on the light
     // panel background. axe reports "incomplete" (not a violation) for a transparent button over
     // the panel, so the contrast is asserted directly.
-    const ratio = await page.evaluate(() => {
-        const title = document.querySelector(".table-panel-title")!;
-        const parse = (c: string): number[] => (c.match(/\d+/g) ?? []).slice(0, 3).map(Number);
-        const luminance = ([r, g, b]: number[]): number => {
-            const channel = (v: number): number => {
-                const s = v / 255;
-                return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-            };
-            return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-        };
-        const color = parse(getComputedStyle(title).color);
-        let node: Element | null = title;
-        let background = [255, 255, 255];
-        while (node) {
-            const bg = getComputedStyle(node).backgroundColor;
-            if (bg && bg !== "rgba(0, 0, 0, 0)") {
-                background = parse(bg);
-                break;
-            }
-            node = node.parentElement;
-        }
-        const [l1, l2] = [luminance(color), luminance(background)];
-        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-    });
+    const ratio = await textContrastOf(page.locator(".table-panel-title").first());
     expect(ratio).toBeGreaterThan(4.5);
 });
 
