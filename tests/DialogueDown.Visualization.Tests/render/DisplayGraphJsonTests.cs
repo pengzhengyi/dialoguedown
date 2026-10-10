@@ -91,9 +91,9 @@ public sealed class DisplayGraphJsonTests
             "view", "act-1/prologue.dialogue.md", "Alice: hi", [],
             project: new ReportProject("/project/root", "act-1/prologue.dialogue.md"));
 
-        Assert.Contains("\"project\":{", json);
-        Assert.Contains("\"root\":\"/project/root\"", json);
-        Assert.Contains("\"activePath\":\"act-1/prologue.dialogue.md\"", json);
+        Assert.Contains(
+            "\"project\":{\"root\":\"/project/root\",\"activePath\":\"act-1/prologue.dialogue.md\"}",
+            json);
     }
 
     [Fact]
@@ -102,16 +102,6 @@ public sealed class DisplayGraphJsonTests
         var json = DisplayGraphJson.SerializeReport("view", "a.dialogue.md", "Alice: hi", []);
 
         Assert.DoesNotContain("\"project\"", json);
-    }
-
-    [Fact]
-    public void SerializeDocument_WithProject_IncludesTheProjectContext()
-    {
-        var json = DisplayGraphJson.SerializeDocument(
-            "edit", "a.dialogue.md", "Alice: hi", [],
-            project: new ReportProject("/root", "a.dialogue.md"));
-
-        Assert.Contains("\"project\":{\"root\":\"/root\",\"activePath\":\"a.dialogue.md\"}", json);
     }
 
     [Fact]
@@ -397,37 +387,6 @@ public sealed class DisplayGraphJsonTests
     }
 
     [Fact]
-    public void SerializeDocument_IncludesDiagnostics()
-    {
-        var graph = MakeGraph("G", [Node("n0", "Document")], []);
-        var diagnostics = new List<LspDiagnostic>
-        {
-            new(
-                new LspRange(new LspPosition(1, 2), new LspPosition(1, 5)),
-                LspSeverity.Warning, "DLG3001", "Suspect.", "dialoguedown"),
-        };
-
-        var json = DisplayGraphJson.SerializeDocument(
-            "view", "scene.dialogue.md", "# Hi", [graph], diagnostics: diagnostics);
-
-        Assert.Contains("\"code\":\"DLG3001\"", json);
-        Assert.Contains("\"severity\":2", json);
-    }
-
-    [Fact]
-    public void SerializeDocument_WrapsModePathSourceAndStages()
-    {
-        var graph = MakeGraph("Markdown AST", [Node("n0", "Document")], []);
-
-        var json = DisplayGraphJson.SerializeDocument("view", "scene.dialogue.md", "# Hi", [graph]);
-
-        Assert.Contains("\"mode\":\"view\"", json);
-        Assert.Contains("\"path\":\"scene.dialogue.md\"", json);
-        Assert.Contains("\"source\":\"# Hi\"", json);
-        Assert.Contains("\"stages\":[", json);
-    }
-
-    [Fact]
     public void SerializeReport_OmitsSemanticTokensWhenNull()
     {
         var graph = MakeGraph("G", [Node("n0", "Document")], []);
@@ -480,20 +439,5 @@ public sealed class DisplayGraphJsonTests
             "static", null, "# Hi", [graph], semanticTokens: []);
 
         Assert.Contains("\"semanticTokens\":[]", json);
-    }
-
-    [Fact]
-    public void SerializeDocument_IncludesSemanticTokens()
-    {
-        var graph = MakeGraph("G", [Node("n0", "Document")], []);
-        var tokens = new List<SemanticToken>
-        {
-            new(new LspRange(new LspPosition(0, 0), new LspPosition(0, 2)), TokenKind.JumpIndicator),
-        };
-
-        var json = DisplayGraphJson.SerializeDocument(
-            "view", "scene.dialogue.md", "=>", [graph], semanticTokens: tokens);
-
-        Assert.Contains("\"kind\":\"JumpIndicator\"", json);
     }
 }

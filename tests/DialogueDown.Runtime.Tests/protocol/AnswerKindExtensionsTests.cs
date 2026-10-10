@@ -31,7 +31,7 @@ public sealed class AnswerKindExtensionsTests
 
     [Fact]
     public void Kind_RefusesAnAnswerItWasNeverTaught() =>
-        Assert.Throws<NotSupportedException>(() => new UntaughtAnswer().Kind());
+        Assert.Throws<NotSupportedException>(() => new UnhandledAnswer().Kind());
 
     [Fact]
     public void Kind_IsNotReadFromNothing() =>
@@ -57,5 +57,5 @@ public sealed class AnswerKindExtensionsTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ((AnswerKind)999).Describe());
 
     /// <summary>An answer kind no code handles, for the refusal case.</summary>
-    private sealed record UntaughtAnswer : Answer;
+    private sealed record UnhandledAnswer : Answer;
 }

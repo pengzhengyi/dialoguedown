@@ -39,13 +39,9 @@ public sealed class ServedShellRunnerTests
         using var tree = new TempTree();
         tree.File("scene.dialogue.md", "# Scene");
         var browser = new FakeBrowserLauncher();
-        var runner = new ServedShellRunner(browser);
         using var stop = new CancellationTokenSource();
 
-        var task = runner.RunAsync(
-            script: null, root: tree.Root, ReportMode.View, port: 0, noOpen: false,
-            AppliedConfiguration.WithoutFile(CompilerOptions.Default),
-            new StringWriter(), new StringWriter(), stop.Token);
+        var task = Serve(browser, script: null, tree.Root, stop.Token);
         await browser.FirstOpened.WaitAsync(_patience, TestContext.Current.CancellationToken);
 
         var url = Assert.Single(browser.Opened);
@@ -56,7 +52,9 @@ public sealed class ServedShellRunnerTests
         using var client = new HttpClient { BaseAddress = new Uri(url) };
         var landing = await client.GetStringAsync("/", TestContext.Current.CancellationToken);
         Assert.StartsWith("<!doctype html", landing, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"project\":", landing);
+        var shell = LivePayload.FromPage(landing);
+        Assert.Equal(tree.Root, shell.ProjectRoot);
+        Assert.Null(shell.ActivePath);
 
         stop.Cancel();
         Assert.Equal(0, await task);
@@ -66,15 +64,16 @@ public sealed class ServedShellRunnerTests
     public async Task RunAsync_WithAScript_OpensItsReportUnderTheReportMount()
     {
         using var tree = new TempTree();
-        var scriptPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.\n");
+        var scriptPath = tree.File("scene.dialogue.md", """
+            # Scene
+
+            Alice: Hi.
+
+            """);
         var browser = new FakeBrowserLauncher();
-        var runner = new ServedShellRunner(browser);
         using var stop = new CancellationTokenSource();
 
-        var task = runner.RunAsync(
-            scriptPath, tree.Root, ReportMode.View, port: 0, noOpen: false,
-            AppliedConfiguration.WithoutFile(CompilerOptions.Default),
-            new StringWriter(), new StringWriter(), stop.Token);
+        var task = Serve(browser, scriptPath, tree.Root, stop.Token);
         await browser.FirstOpened.WaitAsync(_patience, TestContext.Current.CancellationToken);
 
         // A script opens directly on its report under the /r mount, and that report carries the
@@ -82,10 +81,18 @@ public sealed class ServedShellRunnerTests
         var url = Assert.Single(browser.Opened);
         Assert.Contains("/r/", url);
         using var client = new HttpClient { BaseAddress = new Uri(url) };
-        Assert.Contains("scene.dialogue.md", await client.GetStringAsync(url, TestContext.Current.CancellationToken));
+        var report = LivePayload.FromPage(await client.GetStringAsync(url, TestContext.Current.CancellationToken));
+        Assert.Equal("scene.dialogue.md", report.ActivePath);
 
         stop.Cancel();
         Assert.Equal(0, await task);
     }
 
+    // Serves `root` in view mode on a free port, opening the browser on `script` when there is one
+    // and on the empty shell otherwise, until `stop` is canceled.
+    private static Task<int> Serve(FakeBrowserLauncher browser, string? script, string root, CancellationToken stop) =>
+        new ServedShellRunner(browser).RunAsync(
+            script, root, ReportMode.View, port: 0, noOpen: false,
+            AppliedConfiguration.WithoutFile(CompilerOptions.Default),
+            new StringWriter(), new StringWriter(), stop);
 }

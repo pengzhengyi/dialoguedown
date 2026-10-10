@@ -33,7 +33,7 @@ internal static class ConditionReader
     /// trimmed) when the first inline is a condition code span; <c>false</c> with the sequence
     /// returned unchanged otherwise.
     /// </summary>
-    public static bool TryPeel(
+    public static bool TryReadLeading(
         IReadOnlyList<MarkdownInline> inlines,
         out Condition condition,
         out IReadOnlyList<MarkdownInline> remainder)

@@ -1,10 +1,5 @@
-import { EditorState, StateEffect, StateField, type Extension } from "@codemirror/state";
-import { Decoration, EditorView, WidgetType, type DecorationSet } from "@codemirror/view";
-import { foldEffect, foldService, foldedRanges, unfoldEffect } from "@codemirror/language";
-import type { Span } from "./model";
-
 /**
- * The Markdown the compiler ignored, in the Source editor.
+ * @file The Markdown the compiler ignored, in the Source editor.
  *
  * An ignored region of several whole lines folds with the **editor's own** fold, from the gutter
  * chevron, like any other foldable block. Every region that spans whole lines also carries a quiet
@@ -13,6 +8,11 @@ import type { Span } from "./model";
  * The Preview folds the same regions from its own state. Neither pane drives the other, because
  * Source is the editable truth: a reading choice must not hide the text a writer needs to change.
  */
+
+import { EditorState, StateEffect, StateField, type Extension } from "@codemirror/state";
+import { Decoration, EditorView, WidgetType, type DecorationSet } from "@codemirror/view";
+import { foldEffect, foldService, foldedRanges, unfoldEffect } from "@codemirror/language";
+import type { Span } from "./model";
 
 /** One stretch of ignored Markdown, as the editor sees it. */
 export interface IgnoredRegion {

@@ -1,3 +1,8 @@
+/**
+ * @file Settles the open document's unsaved changes before the reader moves elsewhere, asking first
+ * in Manual mode.
+ */
+
 import type { LiveEditController, SaveStatus } from "./live-edit";
 
 /** The reader's answer to the Manual "discard unsaved changes?" navigation prompt. */

@@ -1,16 +1,16 @@
-import type { Span, TagView, TokenKind } from "./model";
-import { TOKEN_CLASS } from "./semantic-tokens";
-import { renderTag } from "./tag-chip";
-
 /**
- * The compiler's dialogue constructs, drawn in the rendered Preview the way the Source editor already
- * draws them beside it.
+ * @file The compiler's dialogue constructs, drawn in the rendered Preview the way the Source editor
+ * already draws them beside it.
  *
  * Nothing here parses the script. Every mark comes from a token the compiler projected, matched to the
  * exact text it was written as, so the Preview cannot disagree with the compiler about what a
  * construct is. The marks use the editor's own classes (`dd-tok-*`) except for a tag, which is
  * drawn as the capsule the rest of the report shows it in.
  */
+
+import type { Span, TagView, TokenKind } from "./model";
+import { TOKEN_CLASS } from "./semantic-tokens";
+import { renderTag } from "./tag-chip";
 
 /** The token kinds the Preview marks. The kinds left out are plain on purpose. */
 export const PREVIEW_CONSTRUCT_KINDS: readonly TokenKind[] = [

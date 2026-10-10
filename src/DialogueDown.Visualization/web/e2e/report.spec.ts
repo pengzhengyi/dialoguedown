@@ -1,6 +1,7 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { SAMPLE_REPORT, writeReport } from "./report";
 import { audit } from "./audit";
+import { letPointerThroughPanels } from "./overlays";
 
 const url = writeReport(SAMPLE_REPORT);
 const nodeCount = SAMPLE_REPORT.stages[0].nodes.length;
@@ -36,15 +37,9 @@ async function themeColor(page: Page, variable: string): Promise<string> {
     }, variable);
 }
 
-/**
- * Click a node by label. Overlays (legend, zoom controls, detail panel) sit above the
- * SVG and can cover a node, so disable their pointer-events first so the click reaches
- * the node beneath.
- */
+/** Click a node by label, even where a floating panel covers it. */
 async function clickNodeInView(page: Page, label: string): Promise<void> {
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
     await page.locator("section.stage.active g.node", { hasText: label }).first().click();
 }
 
@@ -305,11 +300,7 @@ test("the Document preview renders front matter as metadata, not a heading", asy
 
 test("hovering a node shows a Tippy tooltip with the full attribute text", async ({ page }) => {
     await showAst(page);
-    // The overlays (legend, zoom, detail panel) sit above the SVG and can cover a
-    // node; disable their pointer-events so the hover reaches the node beneath.
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
     // Hover the circle: it is a solid, filled hit target (unlike the node's
     // pointer-events:none labels), so the delegated Tippy fires deterministically.
     await page.locator('g.node[data-tip*="ellipsized"] circle').hover();
@@ -320,10 +311,7 @@ test("hovering a node shows a Tippy tooltip with the full attribute text", async
 
 test("hovering a node spotlights its lineage and dims the rest", async ({ page }) => {
     await showAst(page);
-    // Overlays can cover a node; let the hover reach the node beneath.
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
     const active = page.locator("section.stage.active");
 
     // The Paragraph's lineage is the Document root (ancestor) plus its own children

@@ -111,13 +111,52 @@ public sealed class InlineBuilderTests
     }
 
     [Fact]
-    public void Build_CodeSpanInLabel_IsRestoredToLiteralText()
+    public void Build_QueryInALinkLabel_BecomesAQuery()
     {
-        // A code span carries no game call inside a label, so it comes back as text.
-        var speech = Build([Md.Link("#x", Md.CodeSpan("q"))]);
+        var speech = Build([Md.Link("#inn", Md.Text("the "), Md.CodeSpan("\"PlaceName\""))]);
 
-        var link = AssertLink(Assert.Single(speech), "#x");
-        AssertText(Assert.Single(link.Label), "`q`");
+        var link = AssertLink(Assert.Single(speech), "#inn");
+        Assert.Collection(
+            link.Label,
+            fragment => AssertText(fragment, "the "),
+            fragment => AssertQuery(fragment, "PlaceName"));
+    }
+
+    [Fact]
+    public void Build_QueryInAnImagesAltText_BecomesAQuery()
+    {
+        var speech = Build([Md.Image("a.png", Md.CodeSpan("\"CompanionName\""))]);
+
+        var image = AssertImage(Assert.Single(speech), "a.png");
+        AssertQuery(Assert.Single(image.Alt), "CompanionName");
+    }
+
+    [Fact]
+    public void Build_CommandInALinkLabel_BecomesACommand()
+    {
+        var speech = Build([Md.Link("#inn", Md.CodeSpan("Wave()"))]);
+
+        var link = AssertLink(Assert.Single(speech), "#inn");
+        AssertCustomCommand(Assert.Single(link.Label), "Wave");
+    }
+
+    [Fact]
+    public void Build_ConditionInALinkLabel_BecomesACondition()
+    {
+        var speech = Build([Md.Link("#inn", Md.CodeSpan("\"Met\"?"))]);
+
+        var link = AssertLink(Assert.Single(speech), "#inn");
+        AssertCondition(Assert.Single(link.Label), "Met");
+    }
+
+    [Fact]
+    public void Build_CodeSpanInALabelThatIsNotAGameCall_ReportsOnceAndKeepsAsText()
+    {
+        var speech = Build([Md.Link("#inn", Md.CodeSpan("config.toml"))], out var diagnostics);
+
+        var link = AssertLink(Assert.Single(speech), "#inn");
+        AssertText(Assert.Single(link.Label), "config.toml");
+        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.NotAGameCall);
     }
 
     [Fact]
@@ -127,6 +166,15 @@ public sealed class InlineBuilderTests
 
         var link = AssertLink(Assert.Single(speech), "#x");
         AssertText(Assert.Single(link.Label), "![alt](img.png)");
+    }
+
+    [Fact]
+    public void Build_QueryInALinkedImagesAltText_IsRestoredWithTheImage()
+    {
+        var speech = Build([Md.Link("#x", Md.Image("img.png", Md.CodeSpan("\"Name\"")))]);
+
+        var link = AssertLink(Assert.Single(speech), "#x");
+        AssertText(Assert.Single(link.Label), "![`\"Name\"`](img.png)");
     }
 
     [Fact]
@@ -174,7 +222,7 @@ public sealed class InlineBuilderTests
     }
 
     [Fact]
-    public void Build_TextRunWithAnEscapedFirstCharacter_KeepsItsSigilAsText()
+    public void Build_TextWithAnEscapedFirstCharacter_KeepsItsSigilAsText()
     {
         // Source "\#happy": the text is "#happy" with the escape recorded, so the tag is
         // read as plain text rather than metadata.
@@ -198,18 +246,6 @@ public sealed class InlineBuilderTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Build([new UnknownMarkdownInline(SourceSpanFactory.Span())]));
 
-    [Fact]
-    public void Build_WithStrictPolicy_ReportsAndDropsACodeSpanInALabel()
-    {
-        var builder = TranspilerBuilderFactory.InlineBuilder(new RejectingInlinePolicy());
-
-        var speech = Build(builder, [Md.Link("#x", Md.CodeSpan("q"))], out var diagnostics);
-
-        var link = AssertLink(Assert.Single(speech), "#x");
-        Assert.Empty(link.Label);
-        AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.DisallowedLabelElement);
-    }
-
     private static SpeechStyle StyleOf(MdEmphasisKind kind) =>
         AssertStyledText(Assert.Single(Build([Md.Emphasis(kind, Md.Text("x"))]))).Style;
 
@@ -221,12 +257,5 @@ public sealed class InlineBuilderTests
     {
         diagnostics = new DiagnosticBag();
         return _builder.Build(inlines, diagnostics);
-    }
-
-    private static IReadOnlyList<InlineFragment> Build(
-        InlineBuilder builder, IReadOnlyList<MarkdownInline> inlines, out DiagnosticBag diagnostics)
-    {
-        diagnostics = new DiagnosticBag();
-        return builder.Build(inlines, diagnostics);
     }
 }

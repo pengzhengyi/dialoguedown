@@ -15,8 +15,3 @@ Highlights:
 > This reference currently covers the core `DialogueDown` library. The
 > visualization and CLI projects are documented in the
 > [design notes](../contributing/design-notes/README.md).
->
-> `IGameSystem` is a placeholder integration seam that ships in core today but
-> nothing implements yet; the runtime's world read and effect protocol supersedes
-> it (see the
-> [runtime architecture](../contributing/design-notes/runtime/Dialogue%20Runtime%20Architecture.md)).

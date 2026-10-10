@@ -54,6 +54,8 @@
     href: language/Block Controls.md
   - name: Control Line
     href: language/Control Line.md
+  - name: Game Calls in Labels
+    href: language/Game Calls in Labels.md
   - name: Cross-File Jump Resolution
     href: language/Cross-File Jump Resolution.md
 - name: Configuration

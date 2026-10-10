@@ -1,3 +1,5 @@
+/** @file Lets a reader drag the divider to resize the detail panel. */
+
 /** Make the detail panel draggable to resize via the divider. */
 export function initResizer(): void {
     const resizer = document.getElementById("resizer");

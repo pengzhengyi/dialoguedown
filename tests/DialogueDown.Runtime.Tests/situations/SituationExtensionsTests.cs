@@ -87,12 +87,12 @@ public sealed class SituationExtensionsTests
 
     [Fact]
     public void Describe_RefusesASituationItWasNeverTaught() =>
-        Assert.Throws<NotSupportedException>(() => new UntaughtSituation().Describe());
+        Assert.Throws<NotSupportedException>(() => new UnhandledSituation().Describe());
 
     [Fact]
     public void Describe_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Situation)null!).Describe());
 
     /// <summary>A situation with no description, for the refusal case.</summary>
-    private sealed record UntaughtSituation : Situation;
+    private sealed record UnhandledSituation : Situation;
 }

@@ -1,3 +1,8 @@
+/**
+ * @file The compiler's diagnostics in the Source editor: gutter markers, underlines, hover
+ * messages, and fixes.
+ */
+
 import {
     lintGutter,
     setDiagnostics,

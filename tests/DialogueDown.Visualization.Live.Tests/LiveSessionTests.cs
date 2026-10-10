@@ -1,4 +1,3 @@
-using System.Text.Json;
 using DialogueDown.ConfigurationLoader;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
@@ -7,13 +6,35 @@ using DialogueDown.Visualization.Live.Files;
 using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Live.Tests.Support;
 using DialogueDown.Visualization.Render;
+using static DialogueDown.Visualization.Live.Tests.Support.LiveEventAssert;
+using static DialogueDown.Visualization.Live.Tests.Support.LivePageAssert;
+using static DialogueDown.Visualization.Live.Tests.Support.LivePayload;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
 public sealed class LiveSessionTests
 {
+    private const string AScene = """
+        # Scene
+
+        Alice: Hi.
+        """;
+
+    private const string AnEditedScene = """
+        # New
+
+        Alice: Hi
+        """;
+
+    /// <summary>A <c>dialogue.toml</c> that does not parse: a speaker with a key the schema lacks.</summary>
+    private const string AnInvalidConfig = """
+        [[speakers]]
+        bogus = true
+
+        """;
+
     [Fact]
-    public void RenderInitialHtml_MarksThePayloadWithTheSessionMode()
+    public void RenderInitialHtml_EmbedsTheCurrentDocument()
     {
         using var script = new TempScript("# Scene");
         var session = new LiveSession(script.Path);
@@ -21,7 +42,18 @@ public sealed class LiveSessionTests
         var html = session.RenderInitialHtml();
 
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"mode\":\"view\"", html); // view is the default session mode
+        AssertPageEmbeds(html, session.CurrentDocumentJson());
+    }
+
+    [Fact]
+    public void Mode_Default_IsView()
+    {
+        using var script = new TempScript("# Scene");
+
+        var session = new LiveSession(script.Path);
+
+        Assert.Equal("view", session.Mode);
+        Assert.Equal("view", Parse(session.CurrentDocumentJson()).Mode);
     }
 
     [Fact]
@@ -32,7 +64,7 @@ public sealed class LiveSessionTests
         var session = new LiveSession(script.Path, "edit");
 
         Assert.Equal("edit", session.Mode);
-        Assert.Contains("\"mode\":\"edit\"", session.CurrentDocumentJson());
+        Assert.Equal("edit", Parse(session.CurrentDocumentJson()).Mode);
     }
 
     [Fact]
@@ -41,11 +73,11 @@ public sealed class LiveSessionTests
         using var script = new TempScript("# Scene");
         var session = new LiveSession(script.Path);
 
-        var json = session.CurrentDocumentJson();
+        var document = Parse(session.CurrentDocumentJson());
 
-        Assert.Contains("\"path\":", json);
-        Assert.Contains("\"source\":\"# Scene\"", json);
-        Assert.Contains("\"stages\":[", json);
+        Assert.NotNull(document.Path);
+        Assert.Equal("# Scene", document.Source);
+        Assert.NotNull(document.Stages);
     }
 
     [Fact]
@@ -58,9 +90,7 @@ public sealed class LiveSessionTests
 
         session.Refresh();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload", received!.Event);
-        Assert.Contains("# Second", received.Data);
+        Assert.Equal("# Second", AssertBroadcast(reader, "reload").Source);
     }
 
     [Fact]
@@ -71,10 +101,9 @@ public sealed class LiveSessionTests
 
         session.Refresh();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("not found", received.Data, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"target\":\"document\"", received.Data); // routes through the document controller
+        var problem = AssertBroadcast(reader, "problem");
+        Assert.Contains("not found", problem.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("document", problem.Target); // routes through the document controller
     }
 
     [Fact]
@@ -92,9 +121,7 @@ public sealed class LiveSessionTests
         var problem = Record.Exception(() => session.Refresh());
 
         Assert.Null(problem); // the callback never escapes
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("\"target\":\"document\"", received.Data);
+        Assert.Equal("document", AssertBroadcast(reader, "problem").Target);
     }
 
     [Fact]
@@ -103,16 +130,16 @@ public sealed class LiveSessionTests
         using var script = new TempScript("# Old");
         var session = new LiveSession(script.Path, "edit");
 
-        var json = session.Save(new SaveInput("# New\n\nAlice: Hi", ExpectedBaseline: "# Old"));
+        var saved = Parse(session.Save(new SaveInput(AnEditedScene, ExpectedBaseline: "# Old")));
 
-        Assert.Equal("# New\n\nAlice: Hi", File.ReadAllText(script.Path));
-        Assert.Contains("\"outcome\":\"saved\"", json);
-        Assert.Contains("\"source\":\"# New", json);
-        Assert.Contains("\"stages\":[", json);
+        Assert.Equal(AnEditedScene, File.ReadAllText(script.Path));
+        Assert.Equal("saved", saved.Outcome);
+        Assert.Equal(AnEditedScene, saved.Source);
+        Assert.NotNull(saved.Stages);
     }
 
     [Fact]
-    public void RenderInitialHtml_ThroughASymlink_ShowsTheLaunchedPathNotTheResolvedTarget()
+    public void RenderInitialHtml_ThroughASymlink_EmbedsTheDocumentAtTheLaunchedPath()
     {
         using var tree = new TempTree();
         var real = tree.File("real.dialogue.md", "# Scene");
@@ -123,8 +150,11 @@ public sealed class LiveSessionTests
         var session = new LiveSession(resolved, displayPath: link);
         var html = session.RenderInitialHtml();
 
-        Assert.Contains("link.dialogue.md", html); // the report shows the launched link path
-        Assert.DoesNotContain("real.dialogue.md", html); // not the resolved real target
+        var document = session.CurrentDocumentJson();
+        AssertPageEmbeds(html, document);
+        Assert.Equal(link, Parse(document).Path); // the report shows the launched link path
+        Assert.DoesNotContain("real.dialogue.md", document); // and never the resolved real target
+        Assert.DoesNotContain("real.dialogue.md", html); // anywhere on the page
     }
 
     [Fact]
@@ -138,13 +168,14 @@ public sealed class LiveSessionTests
 
         // A served session resolves the link for IO but keeps the launched link path for display.
         var session = new LiveSession(resolved, "edit", displayPath: link);
-        var json = session.Save(new SaveInput("# New\n\nAlice: Hi", ExpectedBaseline: "# Old"));
+        var json = session.Save(new SaveInput(AnEditedScene, ExpectedBaseline: "# Old"));
 
-        Assert.Contains("\"outcome\":\"saved\"", json);
-        Assert.Equal("# New\n\nAlice: Hi", File.ReadAllText(real)); // the real target was written
+        var saved = Parse(json);
+        Assert.Equal("saved", saved.Outcome);
+        Assert.Equal(AnEditedScene, File.ReadAllText(real)); // the real target was written
         Assert.NotNull(new FileInfo(link).LinkTarget); // the link entry is preserved
-        Assert.Contains("link.dialogue.md", json); // the payload shows the launched link path
-        Assert.DoesNotContain("real.dialogue.md", json); // not the resolved real target
+        Assert.Equal(link, saved.Path); // the payload shows the launched link path
+        Assert.DoesNotContain("real.dialogue.md", json); // and never the resolved real target
     }
 
     [Fact]
@@ -153,9 +184,9 @@ public sealed class LiveSessionTests
         using var script = new TempScript("# External");
         var session = new LiveSession(script.Path, "edit");
 
-        var json = session.Save(new SaveInput("# Mine", ExpectedBaseline: "# Old"));
+        var result = Parse(session.Save(new SaveInput("# Mine", ExpectedBaseline: "# Old")));
 
-        Assert.Contains("\"outcome\":\"conflict\"", json);
+        Assert.Equal("conflict", result.Outcome);
         Assert.Equal("# External", File.ReadAllText(script.Path)); // untouched
     }
 
@@ -167,11 +198,11 @@ public sealed class LiveSessionTests
         using var script = new TempScript("# Old");
         var session = new LiveSession(script.Path, "edit");
 
-        var json = session.Save(
+        var result = Parse(session.Save(
             new SaveInput("# Mine", ExpectedBaseline: "# Old"),
-            afterReplace: () => File.WriteAllText(script.Path, "# Newer external"));
+            afterReplace: () => File.WriteAllText(script.Path, "# Newer external")));
 
-        Assert.Contains("\"outcome\":\"uncertain\"", json);
+        Assert.Equal("uncertain", result.Outcome);
         Assert.Equal("# Newer external", File.ReadAllText(script.Path)); // the newer data stands
     }
 
@@ -179,18 +210,18 @@ public sealed class LiveSessionTests
     public void SaveConfig_UncertainWrite_ReturnsUncertainAndDoesNotAdvanceState()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, configPath) = ASessionWithConfig(tree, valid);
 
-        var json = session.Save(
-            new SaveInput(Speaker("Bob", "B"), "config", valid, "require-valid"),
-            afterReplace: () => File.WriteAllText(configPath, Speaker("External", "E")));
+        var result = Parse(session.Save(
+            ConfigSave(ASpeakerConfig("Bob", "B"), valid),
+            afterReplace: () => File.WriteAllText(configPath, ASpeakerConfig("External", "E"))));
 
-        Assert.Contains("\"outcome\":\"uncertain\"", json);
-        Assert.DoesNotContain("\"name\":\"Bob\"", json); // the session state never advanced past disk
-        Assert.Equal(Speaker("External", "E"), File.ReadAllText(configPath)); // newer data preserved
+        Assert.Equal("uncertain", result.Outcome);
+        // An uncertain result carries only its outcome and message, so the session's state is read
+        // from its current document: it still applies the config it last committed.
+        Assert.Equal(["Alice"], Parse(session.CurrentDocumentJson()).SpeakerNames);
+        Assert.Equal(ASpeakerConfig("External", "E"), File.ReadAllText(configPath)); // newer data preserved
     }
 
     [Fact]
@@ -199,10 +230,10 @@ public sealed class LiveSessionTests
         using var script = new TempScript("# External");
         var session = new LiveSession(script.Path, "edit");
 
-        var json = session.Save(
-            new SaveInput("# Mine", ExpectedBaseline: "# Old", Conflict: "overwrite"));
+        var result = Parse(session.Save(
+            new SaveInput("# Mine", ExpectedBaseline: "# Old", Conflict: "overwrite")));
 
-        Assert.Contains("\"outcome\":\"saved\"", json);
+        Assert.Equal("saved", result.Outcome);
         Assert.Equal("# Mine", File.ReadAllText(script.Path));
     }
 
@@ -214,9 +245,9 @@ public sealed class LiveSessionTests
 
         // The disk already equals the requested source (a lost response), so a retry with a
         // different expected baseline still succeeds without a conflict.
-        var json = session.Save(new SaveInput("# Same", ExpectedBaseline: "# Stale"));
+        var result = Parse(session.Save(new SaveInput("# Same", ExpectedBaseline: "# Stale")));
 
-        Assert.Contains("\"outcome\":\"saved\"", json);
+        Assert.Equal("saved", result.Outcome);
         Assert.Equal("# Same", File.ReadAllText(script.Path));
     }
 
@@ -227,22 +258,21 @@ public sealed class LiveSessionTests
         var session = new LiveSession(script.Path, "edit");
         var ready = new Barrier(2);
 
-        string SaveFrom(string source)
+        string? SaveFrom(string source)
         {
             ready.SignalAndWait();
-            return session.Save(new SaveInput(source, ExpectedBaseline: "# Base"));
+            return Parse(session.Save(new SaveInput(source, ExpectedBaseline: "# Base"))).Outcome;
         }
 
         var first = Task.Run(() => SaveFrom("# First"));
         var second = Task.Run(() => SaveFrom("# Second"));
-        var results = await Task.WhenAll(first, second);
+        var outcomes = await Task.WhenAll(first, second);
 
         // The compare-and-write is exclusive: whichever save commits first changes the baseline
         // the other compares against.
-        Assert.Single(results, json => json.Contains("\"outcome\":\"saved\""));
-        Assert.Single(results, json => json.Contains("\"outcome\":\"conflict\""));
+        Assert.Equal(["conflict", "saved"], outcomes.Order());
 
-        var winner = results[0].Contains("\"outcome\":\"saved\"") ? "# First" : "# Second";
+        var winner = outcomes[0] == "saved" ? "# First" : "# Second";
         Assert.Equal(winner, File.ReadAllText(script.Path));
     }
 
@@ -250,24 +280,21 @@ public sealed class LiveSessionTests
     public async Task SaveConfig_ConcurrentSavesFromTheSameBaseline_ExactlyOneWinsTheOtherConflicts()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var baseline = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", baseline);
-        var session = ConfiguredSession(docPath, configPath);
+        var baseline = ASpeakerConfig("Alice", "A");
+        var (session, _) = ASessionWithConfig(tree, baseline);
         var ready = new Barrier(2);
 
-        string SaveFrom(string source)
+        string? SaveFrom(string source)
         {
             ready.SignalAndWait();
-            return session.Save(new SaveInput(source, "config", baseline, "require-valid"));
+            return Parse(session.Save(ConfigSave(source, baseline))).Outcome;
         }
 
-        var first = Task.Run(() => SaveFrom(Speaker("Bob", "B")));
-        var second = Task.Run(() => SaveFrom(Speaker("Cara", "C")));
-        var results = await Task.WhenAll(first, second);
+        var first = Task.Run(() => SaveFrom(ASpeakerConfig("Bob", "B")));
+        var second = Task.Run(() => SaveFrom(ASpeakerConfig("Cara", "C")));
+        var outcomes = await Task.WhenAll(first, second);
 
-        Assert.Single(results, json => json.Contains("\"outcome\":\"saved\""));
-        Assert.Single(results, json => json.Contains("\"outcome\":\"conflict\""));
+        Assert.Equal(["conflict", "saved"], outcomes.Order());
     }
 
     [Fact]
@@ -279,19 +306,17 @@ public sealed class LiveSessionTests
 
         session.Save(new SaveInput("# B", ExpectedBaseline: "# Old"));
         session.Refresh(); // the browser's own write is suppressed once, consuming the token
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
 
         File.WriteAllText(script.Path, "# A");
         session.Refresh();
-        Assert.True(reader.TryRead(out var toA));
-        Assert.Contains("# A", toA!.Data);
+        Assert.Equal("# A", AssertBroadcast(reader, "reload").Source);
 
         // Writing the earlier self-written content back is an external edit, because the
         // suppression applies only once.
         File.WriteAllText(script.Path, "# B");
         session.Refresh();
-        Assert.True(reader.TryRead(out var backToB));
-        Assert.Contains("# B", backToB!.Data);
+        Assert.Equal("# B", AssertBroadcast(reader, "reload").Source);
     }
 
     [Fact]
@@ -304,7 +329,7 @@ public sealed class LiveSessionTests
         session.Save(new SaveInput("# Saved", ExpectedBaseline: "# Old"));
         session.Refresh(); // the watcher firing for the browser's own write
 
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
     }
 
     [Fact]
@@ -318,40 +343,33 @@ public sealed class LiveSessionTests
         File.WriteAllText(script.Path, "# External");
         session.Refresh();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload", received!.Event);
-        Assert.Contains("# External", received.Data);
+        Assert.Equal("# External", AssertBroadcast(reader, "reload").Source);
     }
 
     [Fact]
     public void SaveConfig_ValidRequireValid_WritesAndRecompiles()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var configPath = tree.File("dialogue.toml", Speaker("Alice", "A"));
-        var session = ConfiguredSession(docPath, configPath);
+        var (session, configPath) = ASessionWithConfig(tree, ASpeakerConfig("Alice", "A"));
 
-        var json = session.Save(
-            new SaveInput(Speaker("Bob", "B"), "config", Speaker("Alice", "A"), "require-valid"));
+        var saved = Parse(session.Save(
+            ConfigSave(ASpeakerConfig("Bob", "B"), ASpeakerConfig("Alice", "A"))));
 
-        Assert.Contains("\"outcome\":\"saved\"", json);
+        Assert.Equal("saved", saved.Outcome);
         Assert.Contains("Bob", File.ReadAllText(configPath));
-        Assert.Contains("\"name\":\"Bob\"", json);
+        Assert.Equal(["Bob"], saved.SpeakerNames);
     }
 
     [Fact]
     public void SaveConfig_InvalidRequireValid_ReturnsInvalidAutoAndWritesNothing()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
-        var broken = "[[speakers]]\nbogus = true\n";
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, configPath) = ASessionWithConfig(tree, valid);
 
-        var json = session.Save(new SaveInput(broken, "config", valid, "require-valid"));
+        var result = Parse(session.Save(ConfigSave(AnInvalidConfig, valid)));
 
-        Assert.Contains("\"outcome\":\"invalid-auto\"", json);
+        Assert.Equal("invalid-auto", result.Outcome);
         Assert.Equal(valid, File.ReadAllText(configPath)); // require-valid never writes invalid TOML
     }
 
@@ -359,32 +377,27 @@ public sealed class LiveSessionTests
     public void SaveConfig_InvalidAllowInvalid_WritesAndReturnsSavedInvalid()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
-        var broken = "[[speakers]]\nbogus = true\n";
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, configPath) = ASessionWithConfig(tree, valid);
 
-        var json = session.Save(new SaveInput(broken, "config", valid, "allow-invalid"));
+        var saved = Parse(session.Save(ConfigSave(AnInvalidConfig, valid, "allow-invalid")));
 
-        Assert.Contains("\"outcome\":\"saved-invalid\"", json);
-        Assert.Equal(broken, File.ReadAllText(configPath)); // persisted, like a force-write
-        Assert.Contains("bogus", json); // the payload carries the invalid source for the editor
+        Assert.Equal("saved-invalid", saved.Outcome);
+        Assert.Equal(AnInvalidConfig, File.ReadAllText(configPath)); // persisted, like a force-write
+        Assert.Equal(AnInvalidConfig, saved.ConfigSource); // the payload carries the invalid source for the editor
     }
 
     [Fact]
     public void SaveConfig_BaselineMismatch_ReturnsConflictAndWritesNothing()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var disk = Speaker("External", "E");
-        var configPath = tree.File("dialogue.toml", disk);
-        var session = ConfiguredSession(docPath, configPath);
+        var disk = ASpeakerConfig("External", "E");
+        var (session, configPath) = ASessionWithConfig(tree, disk);
 
-        var json = session.Save(
-            new SaveInput(Speaker("Bob", "B"), "config", Speaker("Alice", "A"), "require-valid"));
+        var result = Parse(session.Save(
+            ConfigSave(ASpeakerConfig("Bob", "B"), ASpeakerConfig("Alice", "A"))));
 
-        Assert.Contains("\"outcome\":\"conflict\"", json);
+        Assert.Equal("conflict", result.Outcome);
         Assert.Equal(disk, File.ReadAllText(configPath));
     }
 
@@ -397,10 +410,8 @@ public sealed class LiveSessionTests
         }
 
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, configPath) = ASessionWithConfig(tree, valid);
 
         // A read-only config directory makes staging the replacement fail after the candidate
         // config has been parsed. The session must keep the config the file holds, so a page
@@ -410,17 +421,16 @@ public sealed class LiveSessionTests
         try
         {
             Assert.ThrowsAny<Exception>(() =>
-                session.Save(new SaveInput(Speaker("Bob", "B"), "config", valid, "require-valid")));
+                session.Save(ConfigSave(ASpeakerConfig("Bob", "B"), valid)));
         }
         finally
         {
             File.SetUnixFileMode(tree.Root, mode);
         }
 
-        var json = session.CurrentDocumentJson();
-        Assert.Contains("\"name\":\"Alice\"", json); // still the last committed config, not the candidate
-        Assert.DoesNotContain("\"name\":\"Bob\"", json);
-        Assert.DoesNotContain("\"configStatus\"", json); // state stayed valid, consistent with disk
+        var document = Parse(session.CurrentDocumentJson());
+        Assert.Equal(["Alice"], document.SpeakerNames); // still the last committed config, not the candidate
+        Assert.False(document.Json.ContainsKey("configStatus")); // state stayed valid, consistent with disk
         Assert.Equal(valid, File.ReadAllText(configPath)); // disk is unchanged
     }
 
@@ -431,7 +441,7 @@ public sealed class LiveSessionTests
         var session = new LiveSession(script.Path, VisualizationMode.Edit);
 
         Assert.Throws<InvalidOperationException>(
-            () => session.Save(new SaveInput(Speaker("Bob", "B"), "config")));
+            () => session.Save(new SaveInput(ASpeakerConfig("Bob", "B"), Target: "config")));
     }
 
     [Fact]
@@ -441,10 +451,10 @@ public sealed class LiveSessionTests
         var session = new LiveSession(script.Path, "edit");
         File.WriteAllText(script.Path, "# External");
 
-        var json = session.Reload(null);
+        var loaded = Parse(session.Reload(null));
 
-        Assert.Contains("\"outcome\":\"loaded\"", json);
-        Assert.Contains("# External", json);
+        Assert.Equal("loaded", loaded.Outcome);
+        Assert.Equal("# External", loaded.Source);
     }
 
     [Fact]
@@ -455,32 +465,30 @@ public sealed class LiveSessionTests
         var session = new LiveSession(docPath, "edit");
         File.Delete(docPath);
 
-        var json = session.Reload(null);
+        var result = Parse(session.Reload(null));
 
-        Assert.Contains("\"outcome\":\"missing\"", json);
+        Assert.Equal("missing", result.Outcome);
     }
 
     [Fact]
     public void Reload_InvalidConfig_KeepsLastValidAndCarriesTheDiskSource()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var configPath = tree.File("dialogue.toml", Speaker("Alice", "A"));
-        var session = ConfiguredSession(docPath, configPath);
-        File.WriteAllText(configPath, "[[speakers]]\nbogus = true\n");
+        var (session, configPath) = ASessionWithConfig(tree, ASpeakerConfig("Alice", "A"));
+        File.WriteAllText(configPath, AnInvalidConfig);
 
-        var json = session.Reload("config");
+        var result = Parse(session.Reload("config"));
 
-        Assert.Contains("\"outcome\":\"invalid\"", json);
-        Assert.Contains("bogus", json); // the external invalid TOML is carried for the editor
-        Assert.Contains("\"name\":\"Alice\"", json); // last valid report is retained
+        Assert.Equal("invalid", result.Outcome);
+        Assert.Equal(AnInvalidConfig, result.ConfigSource); // the external invalid TOML, for the editor
+        Assert.Equal(["Alice"], result.SpeakerNames); // last valid report is retained
     }
 
     [Fact]
     public void CreateConfig_WritesTheStarterFileAndAdoptsIt()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
+        var docPath = tree.File("scene.dialogue.md", AScene);
         var session = new LiveSession(docPath, VisualizationMode.Edit); // no configuration
         var configPath = Path.Combine(tree.Root, "dialogue.toml");
 
@@ -489,16 +497,16 @@ public sealed class LiveSessionTests
         Assert.Equal(CreateConfigStatus.Created, result.Status);
         Assert.True(File.Exists(configPath));
         Assert.Contains("[[speakers]]", File.ReadAllText(configPath));
-        Assert.Contains("\"outcome\":\"saved\"", result.Payload);
+        Assert.Equal("saved", Parse(result.Payload).Outcome);
         Assert.Equal(configPath, session.ConfigPath); // adopted: the session now applies it
         // No staging temp file is left behind.
         Assert.Equal(
             new[] { "dialogue.toml", "scene.dialogue.md" },
             Directory.GetFiles(tree.Root).Select(Path.GetFileName).OrderBy(name => name).ToArray());
         // Adopted: a later baseline-checked save recompiles with the new speaker.
-        var saved = session.Save(
-            new SaveInput(Speaker("Bob", "B"), "config", ConfigStarter.Template, "require-valid"));
-        Assert.Contains("\"name\":\"Bob\"", saved);
+        var saved = Parse(session.Save(
+            ConfigSave(ASpeakerConfig("Bob", "B"), ConfigStarter.Template)));
+        Assert.Equal(["Bob"], saved.SpeakerNames);
         Assert.Contains("Bob", File.ReadAllText(configPath));
     }
 
@@ -512,9 +520,10 @@ public sealed class LiveSessionTests
 
         var result = session.CreateConfig(configPath);
 
+        var adopted = Parse(result.Payload);
         Assert.Equal(CreateConfigStatus.Adopted, result.Status);
-        Assert.Contains("\"outcome\":\"saved\"", result.Payload);
-        Assert.Contains("dialogue.toml", result.Payload); // the payload now carries the configuration file
+        Assert.Equal("saved", adopted.Outcome);
+        Assert.Equal(configPath, adopted.ConfigPath); // the payload now carries the configuration file
         Assert.Equal(configPath, session.ConfigPath);
     }
 
@@ -531,7 +540,7 @@ public sealed class LiveSessionTests
         Assert.Equal(CreateConfigStatus.AdoptedExisting, result.Status);
         Assert.Equal("# hand-written\n", File.ReadAllText(configPath)); // untouched
         Assert.Equal(configPath, session.ConfigPath); // no longer config-less
-        Assert.Contains("\"outcome\":\"adopted\"", result.Payload);
+        Assert.Equal("adopted", Parse(result.Payload).Outcome);
     }
 
     [Fact]
@@ -539,20 +548,20 @@ public sealed class LiveSessionTests
     {
         using var tree = new TempTree();
         var docPath = tree.File("scene.dialogue.md", "# Scene");
-        var invalid = "[[speakers]]\nbogus = true\n";
-        var configPath = tree.File("dialogue.toml", invalid);
+        var configPath = tree.File("dialogue.toml", AnInvalidConfig);
         var session = new LiveSession(docPath, VisualizationMode.Edit);
 
         var result = session.CreateConfig(configPath);
 
+        var adopted = Parse(result.Payload);
         Assert.Equal(CreateConfigStatus.AdoptedExisting, result.Status);
-        Assert.Equal(invalid, File.ReadAllText(configPath)); // untouched
+        Assert.Equal(AnInvalidConfig, File.ReadAllText(configPath)); // untouched
         Assert.Equal(configPath, session.ConfigPath);
-        Assert.Contains("\"outcome\":\"adopted-invalid\"", result.Payload);
-        Assert.Contains("bogus", result.Payload); // the invalid source for the editor
+        Assert.Equal("adopted-invalid", adopted.Outcome);
+        Assert.Equal(AnInvalidConfig, adopted.ConfigSource); // the invalid source for the editor
 
         // The saved-invalid state is kept, so a page reload restores it.
-        Assert.Contains("\"configStatus\":\"saved-invalid\"", session.CurrentDocumentJson());
+        Assert.Equal("saved-invalid", Parse(session.CurrentDocumentJson()).ConfigStatus);
     }
 
     [Fact]
@@ -563,25 +572,21 @@ public sealed class LiveSessionTests
         // with a saved-invalid status and message.
         using var tree = new TempTree();
         var docPath = tree.File("scene.dialogue.md", "# Scene");
-        var invalid = "[[speakers]]\nbogus = true\n";
-        var configPath = tree.File("dialogue.toml", invalid);
+        var configPath = tree.File("dialogue.toml", AnInvalidConfig);
         var session = new LiveSession(docPath, VisualizationMode.Edit);
 
         var result = session.CreateConfig(configPath);
 
-        using var payload = JsonDocument.Parse(result.Payload);
-        var file = payload.RootElement.GetProperty("configuration").GetProperty("file");
-        Assert.Equal(configPath, file.GetProperty("path").GetString());
-        Assert.Equal(invalid, file.GetProperty("source").GetString());
-        Assert.Equal("saved-invalid", payload.RootElement.GetProperty("configStatus").GetString());
-        Assert.False(
-            string.IsNullOrEmpty(payload.RootElement.GetProperty("configMessage").GetString()));
+        var adopted = Parse(result.Payload);
+        Assert.Equal(configPath, adopted.ConfigPath);
+        Assert.Equal(AnInvalidConfig, adopted.ConfigSource);
+        Assert.Equal("saved-invalid", adopted.ConfigStatus);
+        Assert.False(string.IsNullOrEmpty(adopted.ConfigMessage));
 
-        using var served = JsonDocument.Parse(session.CurrentDocumentJson());
-        var servedFile = served.RootElement.GetProperty("configuration").GetProperty("file");
-        Assert.Equal(configPath, servedFile.GetProperty("path").GetString());
-        Assert.Equal(invalid, servedFile.GetProperty("source").GetString());
-        Assert.Equal("saved-invalid", served.RootElement.GetProperty("configStatus").GetString());
+        var served = Parse(session.CurrentDocumentJson());
+        Assert.Equal(configPath, served.ConfigPath);
+        Assert.Equal(AnInvalidConfig, served.ConfigSource);
+        Assert.Equal("saved-invalid", served.ConfigStatus);
     }
 
     [Fact]
@@ -604,62 +609,55 @@ public sealed class LiveSessionTests
     public void CurrentDocumentJson_AfterSavedInvalidConfig_CarriesTheInvalidSourceAndStatus()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
-        var broken = "[[speakers]]\nbogus = true\n";
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, _) = ASessionWithConfig(tree, valid);
 
-        session.Save(new SaveInput(broken, "config", valid, "allow-invalid"));
-        var json = session.CurrentDocumentJson();
+        session.Save(ConfigSave(AnInvalidConfig, valid, "allow-invalid"));
+        var document = Parse(session.CurrentDocumentJson());
 
         // A page reload re-serializes the current document: it must restore the saved-invalid state
         // (the invalid source and a stale report), not silently revert to the last valid text.
-        Assert.Contains("\"configStatus\":\"saved-invalid\"", json);
-        Assert.Contains("bogus", json); // the persisted invalid TOML
-        Assert.Contains("\"name\":\"Alice\"", json); // the last valid speakers remain (stale)
+        Assert.Equal("saved-invalid", document.ConfigStatus);
+        Assert.Equal(AnInvalidConfig, document.ConfigSource); // the persisted invalid TOML
+        Assert.Equal(["Alice"], document.SpeakerNames); // the last valid speakers remain (stale)
     }
 
     [Fact]
-    public void RenderInitialHtml_AfterSavedInvalidConfig_CarriesTheInvalidSourceAndStatus()
+    public void RenderInitialHtml_AfterSavedInvalidConfig_EmbedsTheSavedInvalidDocument()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
-        var broken = "[[speakers]]\nbogus = true\n";
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, _) = ASessionWithConfig(tree, valid);
 
-        session.Save(new SaveInput(broken, "config", valid, "allow-invalid"));
+        session.Save(ConfigSave(AnInvalidConfig, valid, "allow-invalid"));
         var html = session.RenderInitialHtml();
 
-        Assert.Contains("\"configStatus\":\"saved-invalid\"", html);
-        Assert.Contains("bogus", html);
+        // CurrentDocumentJson_AfterSavedInvalidConfig_CarriesTheInvalidSourceAndStatus asserts what
+        // that document carries; this asserts the page embeds it, once the save reached saved-invalid.
+        AssertPageEmbeds(html, session.CurrentDocumentJson());
+        Assert.Equal("saved-invalid", FromPage(html).ConfigStatus);
     }
 
     [Fact]
     public void CurrentDocumentJson_AfterConfigBecomesValidAgain_DropsTheStaleOverlay()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
-        var broken = "[[speakers]]\nbogus = true\n";
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, _) = ASessionWithConfig(tree, valid);
 
-        session.Save(new SaveInput(broken, "config", valid, "allow-invalid"));
-        session.Save(new SaveInput(Speaker("Bob", "B"), "config", broken, "require-valid"));
-        var json = session.CurrentDocumentJson();
+        session.Save(ConfigSave(AnInvalidConfig, valid, "allow-invalid"));
+        session.Save(ConfigSave(ASpeakerConfig("Bob", "B"), AnInvalidConfig));
+        var document = Parse(session.CurrentDocumentJson());
 
-        Assert.DoesNotContain("\"configStatus\"", json);
-        Assert.Contains("\"name\":\"Bob\"", json);
+        Assert.False(document.Json.ContainsKey("configStatus"));
+        Assert.Equal(["Bob"], document.SpeakerNames);
     }
 
     [Fact]
     public void CreateConfig_RetryAfterAdopt_IsIdempotentWhileTheFileIsStillTheTemplate()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
+        var docPath = tree.File("scene.dialogue.md", AScene);
         var session = new LiveSession(docPath, VisualizationMode.Edit);
         var configPath = Path.Combine(tree.Root, "dialogue.toml");
 
@@ -671,7 +669,7 @@ public sealed class LiveSessionTests
         var retry = session.CreateConfig(configPath);
 
         Assert.Equal(CreateConfigStatus.Adopted, retry.Status);
-        Assert.Contains("\"outcome\":\"saved\"", retry.Payload);
+        Assert.Equal("saved", Parse(retry.Payload).Outcome);
         Assert.Equal(configPath, session.ConfigPath);
     }
 
@@ -679,7 +677,7 @@ public sealed class LiveSessionTests
     public void CreateConfig_RetryWithAnotherSpellingOfItsPath_MatchesByTheMachinesPathRule()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
+        var docPath = tree.File("scene.dialogue.md", AScene);
         var session = new LiveSession(docPath, VisualizationMode.Edit);
         var configPath = Path.Combine(tree.Root, "dialogue.toml");
         session.CreateConfig(configPath);
@@ -701,26 +699,24 @@ public sealed class LiveSessionTests
     public void CreateConfig_RetryAfterAdopt_DifferingContent_ReturnsConflict()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
+        var docPath = tree.File("scene.dialogue.md", AScene);
         var session = new LiveSession(docPath, VisualizationMode.Edit);
         var configPath = Path.Combine(tree.Root, "dialogue.toml");
 
         session.CreateConfig(configPath);
-        File.WriteAllText(configPath, Speaker("Alice", "A")); // the config diverged from the template
+        File.WriteAllText(configPath, ASpeakerConfig("Alice", "A")); // the config diverged from the template
 
         var retry = session.CreateConfig(configPath);
 
         Assert.Equal(CreateConfigStatus.Conflict, retry.Status);
-        Assert.Equal(Speaker("Alice", "A"), File.ReadAllText(configPath)); // untouched
+        Assert.Equal(ASpeakerConfig("Alice", "A"), File.ReadAllText(configPath)); // untouched
     }
 
     [Fact]
     public void CreateConfig_WhenTheSessionAlreadyHasAConfig_Throws()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var configPath = tree.File("dialogue.toml", Speaker("Alice", "A"));
-        var session = ConfiguredSession(docPath, configPath);
+        var (session, _) = ASessionWithConfig(tree, ASpeakerConfig("Alice", "A"));
 
         Assert.Throws<InvalidOperationException>(
             () => session.CreateConfig(Path.Combine(tree.Root, "other.toml")));
@@ -730,86 +726,71 @@ public sealed class LiveSessionTests
     public void RefreshConfig_ExternalChange_BroadcastsAReloadConfigWithTheDiskContent()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var configPath = tree.File("dialogue.toml", Speaker("Alice", "A"));
-        var session = ConfiguredSession(docPath, configPath);
+        var (session, configPath) = ASessionWithConfig(tree, ASpeakerConfig("Alice", "A"));
         using var subscription = session.Broadcaster.Subscribe(out var reader);
-        File.WriteAllText(configPath, Speaker("External", "E"));
+        File.WriteAllText(configPath, ASpeakerConfig("External", "E"));
 
         session.RefreshConfig();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload-config", received!.Event);
-        Assert.Contains("External", received.Data);
+        Assert.Equal(ASpeakerConfig("External", "E"), AssertBroadcast(reader, "reload-config").ConfigSource);
     }
 
     [Fact]
     public void RefreshConfig_AfterSave_SuppressesTheSelfTriggeredReload()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, _) = ASessionWithConfig(tree, valid);
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
-        session.Save(new SaveInput(Speaker("Bob", "B"), "config", valid, "require-valid"));
+        session.Save(ConfigSave(ASpeakerConfig("Bob", "B"), valid));
         session.RefreshConfig(); // the watcher firing for the browser's own config write
 
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
     }
 
     [Fact]
     public void RefreshConfig_ExternalChangeBackToSelfWrittenContent_StillBroadcasts()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var valid = Speaker("Alice", "A");
-        var configPath = tree.File("dialogue.toml", valid);
-        var session = ConfiguredSession(docPath, configPath);
+        var valid = ASpeakerConfig("Alice", "A");
+        var (session, configPath) = ASessionWithConfig(tree, valid);
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
-        var bob = Speaker("Bob", "B");
-        session.Save(new SaveInput(bob, "config", valid, "require-valid"));
+        var bob = ASpeakerConfig("Bob", "B");
+        session.Save(ConfigSave(bob, valid));
         session.RefreshConfig(); // the browser's own config write is suppressed once
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
 
-        File.WriteAllText(configPath, Speaker("External", "E"));
+        File.WriteAllText(configPath, ASpeakerConfig("External", "E"));
         session.RefreshConfig();
-        Assert.True(reader.TryRead(out var toExternal));
-        Assert.Contains("External", toExternal!.Data);
+        Assert.Equal(ASpeakerConfig("External", "E"), AssertBroadcast(reader, "reload-config").ConfigSource);
 
         File.WriteAllText(configPath, bob);
         session.RefreshConfig();
-        Assert.True(reader.TryRead(out var backToBob));
-        Assert.Contains("Bob", backToBob!.Data);
+        Assert.Equal(bob, AssertBroadcast(reader, "reload-config").ConfigSource);
     }
 
     [Fact]
     public void RefreshConfig_DeletedConfiguration_BroadcastsAProblemTargetingConfig()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var configPath = tree.File("dialogue.toml", Speaker("Alice", "A"));
-        var session = ConfiguredSession(docPath, configPath);
+        var (session, configPath) = ASessionWithConfig(tree, ASpeakerConfig("Alice", "A"));
         using var subscription = session.Broadcaster.Subscribe(out var reader);
         File.Delete(configPath);
 
         session.RefreshConfig();
 
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("not found", received.Data, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"target\":\"config\"", received.Data); // routes through the config controller
+        var problem = AssertBroadcast(reader, "problem");
+        Assert.Contains("not found", problem.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("config", problem.Target); // routes through the config controller
     }
 
     [Fact]
     public void RefreshConfig_UnreadableConfiguration_BroadcastsAProblemInsteadOfThrowing()
     {
         using var tree = new TempTree();
-        var docPath = tree.File("scene.dialogue.md", "# Scene\n\nAlice: Hi.");
-        var configPath = tree.File("dialogue.toml", Speaker("Alice", "A"));
-        var session = ConfiguredSession(docPath, configPath);
+        var (session, configPath) = ASessionWithConfig(tree, ASpeakerConfig("Alice", "A"));
         using var subscription = session.Broadcaster.Subscribe(out var reader);
         File.Delete(configPath);
         Directory.CreateDirectory(configPath); // reading a directory throws UnauthorizedAccessException
@@ -817,9 +798,7 @@ public sealed class LiveSessionTests
         var problem = Record.Exception(() => session.RefreshConfig());
 
         Assert.Null(problem); // the timer callback never escapes
-        Assert.True(reader.TryRead(out var received));
-        Assert.Equal("problem", received!.Event);
-        Assert.Contains("\"target\":\"config\"", received.Data);
+        Assert.Equal("config", AssertBroadcast(reader, "problem").Target);
     }
 
     [Fact]
@@ -831,18 +810,34 @@ public sealed class LiveSessionTests
 
         session.RefreshConfig();
 
-        Assert.False(reader.TryRead(out _));
+        AssertNothingBroadcast(reader);
     }
 
-    private static LiveSession ConfiguredSession(string docPath, string configPath)
+    /// <summary>A session editing <see cref="AScene"/>, whose <c>dialogue.toml</c> holds <paramref name="config"/>.</summary>
+    /// <param name="tree">The folder the script and its config are written into.</param>
+    /// <param name="config">What <c>dialogue.toml</c> says.</param>
+    /// <returns>A session in edit mode that applies the config, and where the config was written.</returns>
+    private static (LiveSession Session, string ConfigPath) ASessionWithConfig(TempTree tree, string config)
     {
-        var source = File.ReadAllText(configPath);
+        var docPath = tree.File("scene.dialogue.md", AScene);
+        var configPath = tree.File("dialogue.toml", config);
         var configuration = AppliedConfiguration.FromFile(
-            configPath, source, TomlConfigurationLoader.Parse(source, configPath));
-        return new LiveSession(
+            configPath, config, TomlConfigurationLoader.Parse(config, configPath));
+        var session = new LiveSession(
             docPath, VisualizationMode.Edit, new CompilationVisualizer(configuration), configPath);
+
+        return (session, configPath);
     }
 
-    private static string Speaker(string name, string id) =>
-        $"[[speakers]]\nname = \"{name}\"\nid = \"{id}\"\n";
+    /// <summary>A request to save the config, checked against the text the page last loaded.</summary>
+    private static SaveInput ConfigSave(string source, string baseline, string validation = "require-valid") =>
+        new(source, Target: "config", ExpectedBaseline: baseline, Validation: validation);
+
+    /// <summary>A <c>dialogue.toml</c> declaring one speaker.</summary>
+    private static string ASpeakerConfig(string name, string id) => $"""
+        [[speakers]]
+        name = "{name}"
+        id = "{id}"
+
+        """;
 }

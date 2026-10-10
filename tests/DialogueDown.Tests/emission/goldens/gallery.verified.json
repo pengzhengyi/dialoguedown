@@ -135,10 +135,36 @@
       "speech": [
         {
           "kind": "text",
-          "text": "The market lies east, past the old mill. But beware \u2014 the west road turns"
+          "text": "The market lies east, past "
+        },
+        {
+          "kind": "link",
+          "target": "#the-market",
+          "label": [
+            {
+              "kind": "text",
+              "text": "the old "
+            },
+            {
+              "kind": "query",
+              "key": "millName"
+            },
+            {
+              "kind": "text",
+              "text": " mill"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "text": ". But"
         },
         {
           "kind": "break"
+        },
+        {
+          "kind": "text",
+          "text": "beware \u2014 the west road turns "
         },
         {
           "kind": "styled",
@@ -204,7 +230,11 @@
           "label": [
             {
               "kind": "text",
-              "text": "Take the east road to the market"
+              "text": "Take the east road to "
+            },
+            {
+              "kind": "query",
+              "key": "marketName"
             }
           ]
         },
@@ -259,7 +289,11 @@
           "label": [
             {
               "kind": "text",
-              "text": "Take the east road to the market"
+              "text": "Take the east road to "
+            },
+            {
+              "kind": "query",
+              "key": "marketName"
             }
           ]
         }

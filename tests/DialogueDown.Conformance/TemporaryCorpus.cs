@@ -1,4 +1,3 @@
-
 namespace DialogueDown.Conformance;
 
 /// <summary>

@@ -1,4 +1,5 @@
 using DialogueDown.ConfigurationLoader.Errors;
+using DialogueDown.ConfigurationLoader.Tests.Support;
 using DialogueDown.ConfigurationLoader.Toml;
 using Tomlyn.Syntax;
 
@@ -31,6 +32,6 @@ public sealed class TomlErrorsTests
         DialogueConfigurationException exception = TomlErrors.At("'mode' must be a string.", value);
 
         Assert.Equal("'mode' must be a string.", exception.Message);
-        Assert.Equal(new ConfigurationSourceLocation("dialogue.toml", 2, 8), exception.Location);
+        Assert.Equal(new ConfigurationSourceLocation(TomlConfigReading.SourceName, 2, 8), exception.Location);
     }
 }

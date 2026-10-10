@@ -1,7 +1,10 @@
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
+using DialogueDown.ConfigurationLoader.Tests.Support;
 using Tomlyn.Syntax;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfiguredSpeakerAssert;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
@@ -31,28 +34,26 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_UnrelatedTableArray_IsIgnored()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[extras]]
             note = "not a speaker"
 
             [[speakers]]
             name = "Alice"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal("Alice", speaker.Name);
     }
 
     [Fact]
     public void Read_NameAndId_AreMapped()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             id = "A"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal("Alice", speaker.Name);
         Assert.Equal("A", speaker.Id);
         Assert.Empty(speaker.CustomTags);
@@ -62,115 +63,97 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_SpeakerWithoutId_LeavesIdNull()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Narrator"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Null(speaker.Id);
     }
 
     [Fact]
     public void Read_DefaultTrue_AddsDefaultReservedTag()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Narrator"
             default = true
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag reserved = Assert.Single(speaker.ReservedTags);
-        Assert.Equal(new ConfiguredTag(ReservedTagNames.Default), reserved);
+        Assert.Equal([new ConfiguredTag(ReservedTagNames.Default)], speaker.ReservedTags);
     }
 
     [Fact]
     public void Read_DefaultFalse_AddsNoReservedTag()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             default = false
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Empty(speaker.ReservedTags);
     }
 
     [Fact]
     public void Read_ShorthandTagWithoutValue_MapsNameOnly()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = ["main"]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("main"), tag);
+        Assert.Equal([new ConfiguredTag("main")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_ShorthandTagWithValue_SplitsAtFirstEquals()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = ["mood=happy=ish"]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("mood", "happy=ish"), tag);
+        Assert.Equal([new ConfiguredTag("mood", "happy=ish")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_InlineTableTag_MapsNameAndValue()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "quest=intro", value = "ok" }]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("quest=intro", "ok"), tag);
+        Assert.Equal([new ConfiguredTag("quest=intro", "ok")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_InlineTableTagWithoutValue_LeavesValueNull()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "quest=intro" }]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag tag = Assert.Single(speaker.CustomTags);
-        Assert.Equal(new ConfiguredTag("quest=intro"), tag);
+        Assert.Equal([new ConfiguredTag("quest=intro")], speaker.CustomTags);
     }
 
     [Fact]
     public void Read_MixedTagForms_PreserveArrayOrder()
     {
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Alice"
             tags = ["main", "mood=happy", { name = "role", value = "guide" }]
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal(
-            new[]
-            {
-                new ConfiguredTag("main"),
-                new ConfiguredTag("mood", "happy"),
-                new ConfiguredTag("role", "guide"),
-            },
+            [new ConfiguredTag("main"), new ConfiguredTag("mood", "happy"), new ConfiguredTag("role", "guide")],
             speaker.CustomTags);
     }
 
@@ -185,7 +168,7 @@ public sealed class ConfiguredSpeakerReaderTests
             name = "Alice"
             """);
 
-        Assert.Equal(new[] { "Narrator", "Alice" }, speakers.Select(s => s.Name));
+        Assert.Equal(["Narrator", "Alice"], speakers.Select(speaker => speaker.Name));
     }
 
     [Fact]
@@ -193,21 +176,19 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // The reader maps reserved keys generically: a bool is a name-only tag, a string a valued
         // one. 'default' is the only reserved name, so it stands in for the string path.
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             name = "Narrator"
             default = "primary"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
-        ConfiguredTag reserved = Assert.Single(speaker.ReservedTags);
-        Assert.Equal(new ConfiguredTag(ReservedTagNames.Default, "primary"), reserved);
+        Assert.Equal([new ConfiguredTag(ReservedTagNames.Default, "primary")], speaker.ReservedTags);
     }
 
     [Fact]
     public void Read_MissingName_ThrowsLocatedAtSpeaker()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [[speakers]]
             id = "A"
             """);
@@ -218,87 +199,87 @@ public sealed class ConfiguredSpeakerReaderTests
     [Fact]
     public void Read_EmptyName_Throws()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [[speakers]]
             name = ""
             """);
 
-        Assert.Equal(2, exception.Location.Line);
+        AssertRejectedAt(exception, line: 2);
     }
 
     [Fact]
     public void Read_NonStringName_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = 42
-            """));
+            """);
     }
 
     [Fact]
     public void Read_TagsNotArray_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = "main"
-            """));
+            """);
     }
 
     [Fact]
     public void Read_TagElementOfWrongType_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = [42]
-            """));
+            """);
     }
 
     [Fact]
     public void Read_UnknownKey_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             color = "red"
-            """));
+            """);
     }
 
     [Fact]
     public void Read_ReservedTagOfWrongType_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             default = 42
-            """));
+            """);
     }
 
     [Fact]
     public void Read_InlineTableTagWithoutName_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = [{ value = "orphan" }]
-            """));
+            """);
     }
 
     [Fact]
     public void Read_InlineTableTagWithUnknownField_Throws()
     {
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             tags = [{ name = "role", extra = "x" }]
-            """));
+            """);
     }
 
     [Fact]
     public void Read_TwoDefaultSpeakers_ThrowsLocatedAtSecond()
     {
-        var exception = Reject("""
+        var exception = AssertRejects("""
             [[speakers]]
             name = "Narrator"
             default = true
@@ -308,21 +289,18 @@ public sealed class ConfiguredSpeakerReaderTests
             default = true
             """);
 
-        Assert.Equal(5, exception.Location.Line);
-        Assert.Contains("Narrator", exception.Message);
-        Assert.Contains("Alice", exception.Message);
+        AssertRejectedAt(exception, line: 5, "Narrator", "Alice");
     }
 
     [Fact]
     public void Read_QuotedStructuralKey_IsEquivalentToBareKey()
     {
         // TOML treats "name" and name as the same key.
-        var speakers = Read("""
+        var speaker = AssertOnlySpeaker(Read("""
             [[speakers]]
             "name" = "Alice"
-            """);
+            """));
 
-        ConfiguredSpeaker speaker = Assert.Single(speakers);
         Assert.Equal("Alice", speaker.Name);
     }
 
@@ -331,11 +309,11 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // An empty id is as meaningless as a missing name; the core forbids it (an @id must name
         // at least one character), so the loader rejects it too.
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name = "Alice"
             id = ""
-            """));
+            """);
     }
 
     [Fact]
@@ -343,17 +321,17 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // A dotted key is not part of the flat speaker schema; it must be rejected, not read as
         // its first segment (which would silently misread 'name.first' as 'name').
-        Assert.Throws<DialogueConfigurationException>(() => Read("""
+        AssertRejects("""
             [[speakers]]
             name.first = "Alice"
-            """));
+            """);
     }
 
     private static IReadOnlyList<ConfiguredSpeaker> Read(string toml) =>
         TomlConfigReading.Read(toml, ReadSpeakers);
 
-    private static DialogueConfigurationException Reject(string toml) =>
-        TomlConfigReading.Reject(toml, ReadSpeakers);
+    private static DialogueConfigurationException AssertRejects(string toml) =>
+        TomlConfigReading.AssertRejects(toml, ReadSpeakers);
 
     private static IReadOnlyList<ConfiguredSpeaker> ReadSpeakers(DocumentSyntax document) =>
         new ConfiguredSpeakerReader().Read(document);

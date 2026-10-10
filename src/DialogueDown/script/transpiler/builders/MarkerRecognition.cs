@@ -8,8 +8,8 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// condition code span, as in <c>`if` `Rich?`</c>. It only classifies: a leading marker keyword
 /// yields a <see cref="BranchMarker"/> carrying its captured condition and remainder, and anything
 /// else yields null so the block reads as ordinary content. The condition is read by
-/// <see cref="ConditionReader.TryPeel"/>; judging a marker well-formed — and reporting one that is
-/// not — happens when the control block is built.
+/// <see cref="ConditionReader.TryReadLeading"/>; judging a marker well-formed — and reporting one
+/// that is not — happens when the control block is built.
 /// </summary>
 internal static class MarkerRecognition
 {
@@ -31,7 +31,7 @@ internal static class MarkerRecognition
         }
 
         var afterKeyword = inlines.Skip(1).TrimLeadingWhitespace();
-        if (ConditionReader.TryPeel(afterKeyword, out var condition, out var remainder))
+        if (ConditionReader.TryReadLeading(afterKeyword, out var condition, out var remainder))
         {
             return new BranchMarker(kind, condition, remainder);
         }

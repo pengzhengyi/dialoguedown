@@ -406,7 +406,7 @@ describe("createTreeView — folding a scene", () => {
  * Laid out by subtree extent alone, the Market's choice sinks towards the Forest's fan while the
  * Forest's band reaches up to hold its first arm, and the two bands cross.
  */
-function wovenStage(): Stage {
+function crossSceneStage(): Stage {
     const line = (id: string, label: string, region?: string): DisplayNode => ({
         id,
         label,
@@ -464,7 +464,7 @@ function bandRows(view: { svg: SVGSVGElement }): { region: string; top: number; 
 
 describe("createTreeView — scenes never share rows with one another", () => {
     it("gives each scene a run of rows clear of every other scene's", () => {
-        const rows = bandRows(createTreeView(wovenStage(), () => {})).sort(
+        const rows = bandRows(createTreeView(crossSceneStage(), () => {})).sort(
             (left, right) => left.top - right.top,
         );
 
@@ -475,7 +475,7 @@ describe("createTreeView — scenes never share rows with one another", () => {
     });
 
     it("stacks the scenes in the order the legend names them", () => {
-        const rows = bandRows(createTreeView(wovenStage(), () => {})).sort(
+        const rows = bandRows(createTreeView(crossSceneStage(), () => {})).sort(
             (left, right) => left.top - right.top,
         );
 
@@ -483,7 +483,7 @@ describe("createTreeView — scenes never share rows with one another", () => {
     });
 
     it("keeps the scenes clear of one another with one of them folded away", () => {
-        const view = createTreeView(wovenStage(), () => {});
+        const view = createTreeView(crossSceneStage(), () => {});
 
         foldScene(view, "The Forest");
 
@@ -495,7 +495,7 @@ describe("createTreeView — scenes never share rows with one another", () => {
 });
 
 describe("createTreeView — the fold control keeps to its own corner", () => {
-    it("dresses the band and the control in classes of their own", () => {
+    it("styles the band and the control with classes of their own", () => {
         // The stylesheet draws a folded band with a dashed edge. A rule matching every rect in
         // the band would also outline the control's invisible hit target around the chevron.
         const view = createTreeView(scenedStage(), () => {}, { initialRegionFold: ["The Market"] });
@@ -785,7 +785,7 @@ describe("createTreeView — keyboard navigation follows the edges", () => {
         // The Forest's box stands where its first node stood: the Market's choice has two arms,
         // `m2` and the box, so ↓ from one lands on the other like any pair of siblings.
         const chosen: DisplayNode[] = [];
-        const view = createTreeView(wovenStage(), (node) => chosen.push(node), {
+        const view = createTreeView(crossSceneStage(), (node) => chosen.push(node), {
             initialRegionFold: ["The Forest"],
         });
 

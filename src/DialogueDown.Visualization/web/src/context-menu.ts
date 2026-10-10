@@ -1,3 +1,5 @@
+/** @file A VS Code-style right-click menu, with optional icons and nested submenus. */
+
 import { codicon } from "./codicon";
 
 /** A leaf entry in a right-click context menu: an optional codicon, a label, and its action. */

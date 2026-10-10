@@ -303,9 +303,9 @@ The reader requires a choice node whose every option carries a condition to have
 [playbook reader rules](./Playbook%20Reader%20Rules.md)). The compiler points it
 past the menu. When no option is available, the walk takes it, as it takes a
 branch's arm ([A8](./Asking%20the%20World.md#a8--a-branch-node-is-walked-past-not-stood-at)),
-and offers nothing. Walking past inside the walk keeps a ring of such menus inside
-the ring bound. A menu with nothing available and no fall-through leads nowhere,
-and says so.
+and offers nothing. Walking past inside the walk keeps a loop of such menus inside
+the walk's bound, so it is refused as an endless loop. A menu with nothing
+available and no fall-through leads nowhere, and says so.
 
 This is not the hiding D8 rules out. D8 keeps an unavailable option beside the
 ones that can be taken, so the host decides how to show it. A menu with none that

@@ -11,15 +11,11 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// </remarks>
 internal static class ExpectationMatchers
 {
-    // Keyed, so two matchers claiming one key fail at startup rather than one silently replacing
-    // the other.
-    private static readonly Dictionary<string, IExpectationMatcher> _byKey =
-        new IExpectationMatcher[]
-        {
+    private static readonly IReadOnlyDictionary<string, IExpectationMatcher> _byKey =
+        KeyedHandlers.ByKey<IExpectationMatcher>(
+            matcher => matcher.Key,
             new SaidMatcher(), new ContinuedMatcher(), new EndedMatcher(), new PerformMatcher(),
-            new RefusedMatcher(), new ResolveMatcher(), new OfferMatcher(),
-        }
-            .ToDictionary(matcher => matcher.Key, StringComparer.Ordinal);
+            new RefusedMatcher(), new ResolveMatcher(), new OfferMatcher());
 
     /// <summary>Whether a matcher owns this key in an expectation.</summary>
     /// <param name="key">The claim's key, as a fixture writes it.</param>

@@ -3,6 +3,7 @@ import { writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { audit } from "../e2e/audit";
 import { dirname, join } from "node:path";
 import { LIVE_DOC, INITIAL_SOURCE } from "./fixture.mjs";
+import { letPointerThroughPanels } from "../e2e/overlays";
 
 // A 1×1 PNG, written next to the document so a relative image link can resolve.
 const PNG_1x1 = Buffer.from(
@@ -125,10 +126,7 @@ test("keeps a graph's zoom across a hot reload", async ({ page }) => {
 
 test("keeps a graph's collapsed nodes across a hot reload", async ({ page }) => {
     await page.locator(".tab", { hasText: "Markdown AST" }).click();
-    // Overlays (legend, zoom, detail) sit above the SVG; let the collapse click through.
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
 
     const nodes = page.locator("section.stage.active g.node");
     const collapsed = page.locator("section.stage.active g.node.collapsed");
@@ -1519,10 +1517,7 @@ test("folds a scene in the graph to a single box the flow still passes through",
         ].join("\n"),
     );
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
-    // The panels floating over the canvas must not intercept a press aimed at a band's corner.
-    await page.addStyleTag({
-        content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
-    });
+    await letPointerThroughPanels(page);
     const stage = page.locator("section.stage.active");
 
     // A node's drawn label is clipped to a *measured* budget, so what is rendered depends on the

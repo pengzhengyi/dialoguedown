@@ -30,12 +30,12 @@ public sealed class ConditionExtensionsTests
 
     [Fact]
     public void Keys_RefuseAKindTheyWereNeverTaught() =>
-        Assert.Throws<NotSupportedException>(() => new UntaughtCondition().Keys());
+        Assert.Throws<NotSupportedException>(() => new UnhandledCondition().Keys());
 
     [Fact]
     public void Keys_RejectNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Condition)null!).Keys());
 
     /// <summary>A condition kind no reader handles, for the refusal case.</summary>
-    private sealed record UntaughtCondition : Condition;
+    private sealed record UnhandledCondition : Condition;
 }

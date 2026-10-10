@@ -1,3 +1,5 @@
+/** @file The header badge naming the report's mode, with a tooltip explaining it. */
+
 import tippy from "tippy.js";
 import type { VisualizationMode } from "./model";
 

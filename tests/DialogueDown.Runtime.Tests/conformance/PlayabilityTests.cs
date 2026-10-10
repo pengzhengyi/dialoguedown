@@ -102,7 +102,7 @@ public sealed class PlayabilityTests
             Assert.True(
                 Playability.CanPlay(node) == !refused,
                 $"{name}: the harness calls it "
-                    + $"{(Playability.CanPlay(node) ? "playable" : "untaught")}, "
+                    + $"{(Playability.CanPlay(node) ? "playable" : "unplayable")}, "
                     + $"but arriving at it {(refused ? "refuses" : "does not refuse")}.");
         }
     }

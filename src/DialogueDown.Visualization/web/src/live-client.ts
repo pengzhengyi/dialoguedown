@@ -1,3 +1,8 @@
+/**
+ * @file Subscribes to a served session's event stream and passes each reload or problem event to
+ * the right handler.
+ */
+
 import type { Report } from "./model";
 
 /** Where the served session pushes hot-reload and problem events. */

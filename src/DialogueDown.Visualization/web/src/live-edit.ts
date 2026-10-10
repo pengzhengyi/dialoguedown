@@ -1,3 +1,8 @@
+/**
+ * @file The Live Edit state machine: one document's edits, saves, and conflicts with the file on
+ * disk.
+ */
+
 import type { Report } from "./model";
 import type { DocumentType, SaveMode } from "./save-mode";
 
@@ -243,7 +248,7 @@ export function createLiveEdit(
         ports.setUnloadGuard(isDirty() || inFlight !== null);
     }
 
-    function armIdle(): void {
+    function startIdle(): void {
         clearIdle();
         cancelIdle = ports.scheduleIdle(() => {
             cancelIdle = null;
@@ -459,7 +464,7 @@ export function createLiveEdit(
             // A newer edit exists: discard this stale outcome; the queue or idle timer handles it.
             setStatus("dirty");
             refreshChrome();
-            if (queued === null && mode === "auto" && isDirty()) armIdle();
+            if (queued === null && mode === "auto" && isDirty()) startIdle();
             return "superseded";
         }
         setStatus("waiting", outcome.message);
@@ -523,7 +528,7 @@ export function createLiveEdit(
         }
         // A successful save that left newer edits behind schedules one idle follow-up in Auto.
         if (!isPaused() && isDirty() && mode === "auto" && cancelIdle === null) {
-            armIdle();
+            startIdle();
         }
         notifyIdle();
     }
@@ -592,7 +597,7 @@ export function createLiveEdit(
             }
             if (status !== "saving") setStatus("dirty");
             refreshChrome();
-            if (mode === "auto") armIdle();
+            if (mode === "auto") startIdle();
         },
         save(saveOptions = {}) {
             return requestSave("explicit", saveOptions);
@@ -727,7 +732,7 @@ export function createLiveEdit(
                 // A queued explicit follow-up survives; cancel only an idle-scheduled one.
                 if (queued !== null && queued.request.trigger === "idle") clearQueue();
             } else if (isDirty() && !isPaused() && inFlight === null && cancelIdle === null) {
-                armIdle();
+                startIdle();
             }
         },
     };

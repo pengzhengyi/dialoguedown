@@ -355,7 +355,7 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_AWeaveBack_IsAReferenceFromTheSecondArm()
+    public void Project_ArmsRejoiningANode_TheSecondIsAReference()
     {
         var graph = Project("""
             Guide: Pick.

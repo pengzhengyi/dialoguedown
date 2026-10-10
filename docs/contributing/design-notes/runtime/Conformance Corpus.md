@@ -89,6 +89,7 @@ rather than a script.
 | `a-conditional-block` | Are the arms tried in the order written? | yes |
 | `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | yes |
 | `a-query-after-a-command` | Is a query written after a command asked only once the command is done? | yes |
+| `a-query-in-a-link` | Is a query in a link's label resolved, and the answer spoken as part of the line? | yes |
 | `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | yes |
 | `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | yes |
 | `a-numbered-menu` | Is a numbered menu offered as ordered, its positions counted in the order written? | yes |

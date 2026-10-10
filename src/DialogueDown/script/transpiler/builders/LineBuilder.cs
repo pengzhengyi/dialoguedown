@@ -49,8 +49,8 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
 
         public Line Build()
         {
-            var condition = PeelCondition();
-            var speaker = PeelSpeaker();
+            var condition = ReadCondition();
+            var speaker = ReadSpeaker();
             if (speaker is null)
             {
                 // No speaker prefix: warn when styled leading text would have been one.
@@ -68,9 +68,9 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
         // A leading `"key"?` condition code span is the line's condition — but only when non-jump
         // content follows it to guard. A condition that directly precedes a jump guards the jump
         // (bound later in desugar), and a lone condition guards nothing; both are left in place.
-        private Condition? PeelCondition()
+        private Condition? ReadCondition()
         {
-            if (!ConditionReader.TryPeel(_remaining, out var condition, out var remainder)
+            if (!ConditionReader.TryReadLeading(_remaining, out var condition, out var remainder)
                 || remainder.Count == 0 || PrecedesAJump(remainder))
             {
                 return null;
@@ -82,7 +82,7 @@ internal sealed class LineBuilder(SpeakerBuilder speakerBuilder, InlineBuilder i
 
         // Splits an optional speaker prefix off the leading text. A prefix that binds tags but
         // names no speaker reports through the speaker builder and recovers to a default speaker.
-        private Speaker? PeelSpeaker()
+        private Speaker? ReadSpeaker()
         {
             // An escaped leading character is literal, so it cannot start a speaker prefix:
             // `\#tag: hi` is speech, not a tag-only prefix.

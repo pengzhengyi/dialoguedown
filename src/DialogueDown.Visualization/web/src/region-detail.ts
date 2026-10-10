@@ -1,5 +1,11 @@
+/**
+ * @file What the inspector says about a region: how much it holds, and which routes cross its
+ * border.
+ */
+
 import type { Span, Stage } from "./model";
 import { isFlow } from "./neighbors";
+import { tintsOf } from "./region-bands";
 
 /** One end of a route, as a region's border table names it. */
 export interface CrossingEnd {
@@ -20,7 +26,6 @@ export interface BorderCrossing {
     to: CrossingEnd;
     category?: string;
 }
-import { tintsOf } from "./region-bands";
 
 /**
  * A region seen as a thing in its own right: how much it holds, and how control gets in and out

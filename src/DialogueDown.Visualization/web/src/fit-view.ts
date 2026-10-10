@@ -1,3 +1,5 @@
+/** @file The zoom and position that show a whole drawing, clear of the panels floating over it. */
+
 import type { CameraTransform } from "./graph-camera";
 
 /** A rectangle in the drawing's own coordinates. */

@@ -20,7 +20,13 @@ public sealed class BrokenBlockTests
         var block = BrokenBlock.Parse(source);
 
         Assert.Equal("the else is not last", block.Note);
-        Assert.Equal("> `if` `Rich?`\n>\n> Alice: Welcome.", block.Script);
+        Assert.Equal(
+            """
+            > `if` `Rich?`
+            >
+            > Alice: Welcome.
+            """,
+            block.Script);
     }
 
     [Fact]

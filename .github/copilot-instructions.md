@@ -128,8 +128,28 @@ Words that read two ways or are figurative:
 | rides, rides along | is carried, holds | figurative |
 | wears (a class or color) | has, is drawn with | figurative |
 | reads on, held to | continues, checked against | figurative |
-| ring (of nodes) | cycle | a cycle is the graph term |
+| ring (of nodes) | cycle; an endless loop when it never stops for the host | a cycle is the graph term, and is ordinary dialogue; the runtime refuses only an endless loop |
 | writer, for code that builds a playbook | the compiler | a **writer** is the person who writes the script |
+| branch, for a whole choice | a choice, its options | a **branch** is one alternative: an `if`, `elseif`, or `else` body, or one option's path through a choice |
+| taught (a reader is taught X) | handles, supports | figurative |
+| hole, for a value left open | query, placeholder | figurative |
+| owed | needs, still has to | figurative |
+| clobber | overwrite | slang |
+| wedge | leave stuck, block | figurative |
+| lockstep | in sync | figurative |
+| minted | assigned, created | figurative |
+| umbrella, apparatus, scaffolding | name the thing | says nothing about what it is |
+| lifts (a value, some text) | copies, takes | figurative |
+| lights up | highlights | figurative |
+| chips (as a verb) | shows a notice | figurative |
+| summons | opens | figurative |
+| outranks | overrides, takes precedence over | figurative |
+| adrift | unattached | figurative |
+| spoken for | already claimed | idiom |
+| yields ground | is cut short | figurative |
+| signpost (as a verb) | mark | figurative |
+| upheld | guaranteed, kept | figurative |
+| converge, for a value | resolves to | for routes that meet at one node, **converge** is literal and fine |
 
 ## Engineering principles
 
@@ -145,7 +165,7 @@ Decision heuristics for changes here:
   tests, minimal end-to-end; strive for 100% meaningful coverage. Treat tests as
   code and refactor them too.
 - **SOLID, patterns applied judiciously.** Use a pattern only where it removes
-  real duplication or coupling. Add a seam or interface where behavior is likely
+  real duplication or coupling. Add an interface where behavior is likely
   to change — but avoid premature generalization and over-abstraction (YAGNI).
 - **Law of Demeter — tell, don't ask.** Send messages to your own collaborators,
   not to objects reached through them: prefer `owner.Send()` over

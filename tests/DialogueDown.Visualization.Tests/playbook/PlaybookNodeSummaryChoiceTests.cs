@@ -21,7 +21,7 @@ public sealed class PlaybookNodeSummaryChoiceTests
     // Brackets mean a command throughout, so one the host already knows keeps them even with no
     // arguments to hold.
     [Fact]
-    public void Of_ACommandTheHostAlreadyKnows_WearsBracketsAroundItsAction()
+    public void Of_ACommandTheHostAlreadyKnows_ShowsBracketsAroundItsAction()
     {
         Assert.Equal(
             "(fade in)", SummaryOf(Control(DefaultCommand("fade in")), Speakers()));

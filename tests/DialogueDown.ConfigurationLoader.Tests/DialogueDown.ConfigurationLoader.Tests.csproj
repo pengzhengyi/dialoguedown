@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DialogueDown.ConfigurationLoader\DialogueDown.ConfigurationLoader.csproj" />
+    <ProjectReference Include="..\DialogueDown.TestSupport\DialogueDown.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

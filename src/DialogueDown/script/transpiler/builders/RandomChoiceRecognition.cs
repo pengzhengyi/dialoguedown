@@ -24,7 +24,7 @@ internal static class RandomChoiceRecognition
 
         // A condition may guard a random option and is written before its weight
         // (`Alice.HasKey?` `30%` Alice: Hi.), so look past it for the weight.
-        var inlines = ConditionReader.TryPeel(paragraph.Inlines, out _, out var afterCondition)
+        var inlines = ConditionReader.TryReadLeading(paragraph.Inlines, out _, out var afterCondition)
             ? afterCondition
             : paragraph.Inlines;
         return StartsWithWeight(inlines);

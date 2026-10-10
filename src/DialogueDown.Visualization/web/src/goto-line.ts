@@ -1,16 +1,16 @@
-import { EditorSelection, type EditorState } from "@codemirror/state";
-import { EditorView, showDialog, type Command, type KeyBinding } from "@codemirror/view";
-
 /**
- * Go to line, shaped like VS Code's: a small box that floats over the text with the field on one
- * line and a sentence under it saying what pressing Enter will do. No button — Enter goes, Escape
- * and clicking away dismiss. The sentence is what teaches the reader the expression syntax.
+ * @file Go to line, shaped like VS Code's: a small box that floats over the text with the field on
+ * one line and a sentence under it saying what pressing Enter will do. No button — Enter goes,
+ * Escape and clicking away dismiss. The sentence is what teaches the reader the expression syntax.
  *
  * CodeMirror's own `gotoLine` calls `showDialog` without `content` or `top`, so its dialog has a
  * button, sits at the bottom, and has no second line. This module therefore renders the dialog and
  * parses the expression itself. {@link resolve} computes both the sentence and the position the
- * cursor lands on, so the dialog never promises a line it does not then go to.
+ * cursor goes to, so the dialog never promises a line it does not then go to.
  */
+
+import { EditorSelection, type EditorState } from "@codemirror/state";
+import { EditorView, showDialog, type Command, type KeyBinding } from "@codemirror/view";
 
 /** Where a Go to line expression lands, once resolved against the document. */
 interface GotoTarget {

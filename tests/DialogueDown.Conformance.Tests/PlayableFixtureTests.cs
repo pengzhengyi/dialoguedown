@@ -1,4 +1,7 @@
 using System.Text.Json.Nodes;
+using static DialogueDown.Conformance.Tests.Support.FixtureJsonFactory;
+using static DialogueDown.Conformance.Tests.Support.InvalidFixtureAssert;
+using static DialogueDown.Conformance.Tests.Support.SessionEntryAssert;
 
 namespace DialogueDown.Conformance;
 
@@ -25,19 +28,12 @@ public sealed class PlayableFixtureTests
         Assert.Equal("playbook.json", fixture.Playbook);
         Assert.Equal("a reason a reviewer can weigh", fixture.Because);
 
-        Assert.Equal(4, fixture.Session.Length);
-
-        var send1 = Assert.IsType<Send>(fixture.Session[0]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("\"next\""), send1.Message));
-
-        var send2 = Assert.IsType<Send>(fixture.Session[1]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("""{ "choose": 0 }"""), send2.Message));
-
-        var expect1 = Assert.IsType<Expect>(fixture.Session[2]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("""{ "said": { "speaker": "Alice", "speech": "Hi" } }"""), expect1.Message));
-
-        var expect2 = Assert.IsType<Expect>(fixture.Session[3]);
-        Assert.True(JsonNode.DeepEquals(JsonNode.Parse("""{ "ended": {} }"""), expect2.Message));
+        Assert.Collection(
+            fixture.Session,
+            entry => AssertSends(entry, "\"next\""),
+            entry => AssertSends(entry, """{ "choose": 0 }"""),
+            entry => AssertExpects(entry, """{ "said": { "speaker": "Alice", "speech": "Hi" } }"""),
+            entry => AssertExpects(entry, """{ "ended": {} }"""));
     }
 
     [Theory]
@@ -47,32 +43,30 @@ public sealed class PlayableFixtureTests
     [InlineData("session")]
     public void Read_AFixtureMissingAField_SaysWhichIsMissing(string missing)
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(Without(missing)));
-
-        Assert.Contains(missing, error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => PlayableFixture.Read(APlayableFixture().WithoutField(missing)), missing);
     }
 
     [Fact]
     public void Read_AMisspelledField_IsRefusedRatherThanIgnored()
     {
-        var error = Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(With("playbok", "playbook.json")));
-
-        Assert.Contains("playbok", error.Message, StringComparison.Ordinal);
+        AssertInvalid(() => PlayableFixture.Read(APlayableFixture().WithField("playbok", "playbook.json")), "playbok");
     }
 
     [Fact]
     public void Read_AFixturePointingAtItsSchema_KeepsTheUrl()
     {
         var fixture = PlayableFixture.Read(
-            With("$schema", "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json"));
+            APlayableFixture().WithField("$schema", SchemaUrl));
 
-        Assert.Equal("https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json", fixture.Schema);
+        Assert.Equal(SchemaUrl, fixture.Schema);
     }
 
     [Fact]
     public void Read_AFixtureWithoutASchema_IsStillRead()
     {
-        Assert.Null(PlayableFixture.Read(Fixture().ToJsonString()).Schema);
+        var fixture = PlayableFixture.Read(APlayableFixture().ToJsonString());
+
+        Assert.Null(fixture.Schema);
     }
 
     [Theory]
@@ -82,49 +76,24 @@ public sealed class PlayableFixtureTests
     [InlineData("[]")]
     public void Read_SomethingThatIsNotAFixture_SaysSo(string json)
     {
-        Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(json));
+        AssertInvalid(() => PlayableFixture.Read(json));
     }
 
     [Fact]
     public void Read_ASessionEntryCarryingBothSendAndExpect_IsRefused()
     {
-        var json = With("session", new JsonArray(
+        var json = APlayableFixture().WithField("session", new JsonArray(
             new JsonObject { ["send"] = "next", ["expect"] = "same" }));
 
-        Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(json));
+        AssertInvalid(() => PlayableFixture.Read(json));
     }
 
     [Fact]
     public void Read_ASessionEntryCarryingNeitherSendNorExpect_IsRefused()
     {
-        var json = With("session", new JsonArray(
+        var json = APlayableFixture().WithField("session", new JsonArray(
             new JsonObject { ["unrelated"] = 1 }));
 
-        Assert.Throws<InvalidFixtureException>(() => PlayableFixture.Read(json));
-    }
-
-    private static JsonObject Fixture() => new()
-    {
-        ["name"] = "a fixture",
-        ["playbook"] = "playbook.json",
-        ["because"] = "a reason a reviewer can weigh",
-        ["session"] = new JsonArray(new JsonObject { ["send"] = "next" }),
-    };
-
-    private static string With(string field, JsonNode value)
-    {
-        var fixture = Fixture();
-        fixture[field] = value;
-
-        return fixture.ToJsonString();
-    }
-
-    private static string Without(string field)
-    {
-        var fixture = Fixture();
-
-        Assert.True(fixture.Remove(field), $"'{field}' is not a field of a fixture.");
-
-        return fixture.ToJsonString();
+        AssertInvalid(() => PlayableFixture.Read(json));
     }
 }

@@ -6,10 +6,10 @@ namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
 /// Splits a leading condition off a choice list item, so the condition guards the whole option
-/// rather than its first line. It reads the condition with <see cref="ConditionReader.TryPeel"/>
-/// on the item's first paragraph and returns the item's blocks with the condition removed; the
-/// player and random choice builders both call it, before the option body — and, for a random
-/// option, its weight — is built.
+/// rather than its first line. It reads the condition with
+/// <see cref="ConditionReader.TryReadLeading"/> on the item's first paragraph and returns the
+/// item's blocks with the condition removed; the player and random choice builders both call it,
+/// before the option body — and, for a random option, its weight — is built.
 /// </summary>
 /// <remarks>
 /// <code>
@@ -23,10 +23,10 @@ internal static class ChoiceConditionRecognition
     /// <paramref name="condition"/> is the condition, or <c>null</c> when the option is unconditional
     /// and the blocks are returned unchanged.
     /// </summary>
-    public static IReadOnlyList<MarkdownBlock> Peel(ListItem item, out Condition? condition)
+    public static IReadOnlyList<MarkdownBlock> WithoutLeadingCondition(ListItem item, out Condition? condition)
     {
         if (item.Blocks is [Paragraph paragraph, ..]
-            && ConditionReader.TryPeel(paragraph.Inlines, out var found, out var remainder))
+            && ConditionReader.TryReadLeading(paragraph.Inlines, out var found, out var remainder))
         {
             condition = found;
             var head = remainder.Count > 0

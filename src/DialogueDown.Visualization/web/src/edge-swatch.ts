@@ -1,13 +1,13 @@
-import { ARROWHEAD_PATH, CROSS_PATH, edgeStyle, type EdgeStyle } from "./edge-style";
-import { colorOf } from "./palette";
-
 /**
- * A legend swatch drawn as the edge itself, rather than approximated.
+ * @file A legend swatch drawn as the edge itself, rather than approximated.
  *
  * The swatch is a tiny SVG using the very same `stroke-dasharray`, the same round caps, the same
  * arrowhead, and the same stamped glyphs as the route it stands for, so what the reader learns is
  * what the reader will find.
  */
+
+import { ARROWHEAD_PATH, CROSS_PATH, edgeStyle, type EdgeStyle } from "./edge-style";
+import { colorOf } from "./palette";
 
 /**
  * How wide a swatch is drawn. Wide enough that the longest pattern repeats — a pattern shown once

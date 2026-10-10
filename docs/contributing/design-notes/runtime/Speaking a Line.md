@@ -342,11 +342,11 @@ plays) and `Departure` (leaving it):
 
 | Step type | Owns | Entered from |
 | --- | --- | --- |
-| `Arrival` | The walk, and whether a node plays; the ring bound | `Start`, every way onward, and a `Supply` for playing from the start |
+| `Arrival` | The walk, and whether a node plays; the loop bound | `Start`, every way onward, and a `Supply` for playing from the start |
 | `Playing` | What a node hands the host, by kind: a line from a resume place to its next stop, a control block's effects, the end | `Arrival`, a `Supply` for continuing inside a line, and every `Done` |
 | `Departure` | Leaving a node by the way the world allows | `Next`, `Playing` once a control block is done, and a `Supply` for `ToLeave` |
 
-The walk's loop stays in `Arrival`, which keeps the ring bound counting every node
+The walk's loop stays in `Arrival`, which keeps the loop bound counting every node
 the walk passes. Every `Done` goes to `Playing`, so the rule that the kind of node
 decides what follows (S5) sits beside the code that made the host a request.
 

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { SAMPLE_REPORT, SAMPLE_STAGES, writeReport } from "./report";
+import { letPointerThroughPanels } from "./overlays";
 
 // A phone-sized viewport. Every assertion here is about geometry the browser only
 // produces after layout, so these run against the real built report rather than jsdom.
@@ -198,10 +199,8 @@ test.describe("on a short window with a tall graph inspector", () => {
         await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
 
         // The Document's inspector is the tallest the static fixture carries — front matter,
-        // source, and preview at once. Overlays can cover the node, so let the click through.
-        await page.addStyleTag({
-            content: ".legend, .zoom-controls, .detail { pointer-events: none !important; }",
-        });
+        // source, and preview at once.
+        await letPointerThroughPanels(page);
         await page.locator("g.node", { hasText: "Document" }).first().click();
         await expect(page.locator("#detail-title")).toContainText("Document");
 

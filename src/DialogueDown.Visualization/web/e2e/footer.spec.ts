@@ -18,7 +18,7 @@ const REPORT_WITH_PATH: Report = {
 // invisible on the light footer.
 test.use({ colorScheme: "light" });
 
-test("the document path stays legible on hover (not white-on-white)", async ({ page }) => {
+test("the document path stays legible on hover", async ({ page }) => {
     await page.goto(writeReport(REPORT_WITH_PATH));
     const path = page.locator("#doc-path");
     await expect(path).toBeVisible();

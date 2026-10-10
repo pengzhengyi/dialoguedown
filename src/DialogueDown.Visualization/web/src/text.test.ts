@@ -128,7 +128,7 @@ describe("tooltipHtml", () => {
 });
 
 describe("splitFrontMatter", () => {
-    it("peels a leading YAML front matter block off the body", () => {
+    it("splits a leading YAML front matter block off the body", () => {
         const source = "---\ntitle: Scene\n---\n# Heading\n";
         expect(splitFrontMatter(source)).toEqual({
             frontMatter: "title: Scene",

@@ -299,10 +299,10 @@ text — want three reads rather than one stringly method. Above that sits a
 registration layer, as ink and Yarn Spinner both settled on, so a host binds keys
 rather than writing a `switch`.
 
-The host interface that exists is `IGameSystem` (`Query(string)` returning a
-string, and `Execute(string)`), and nothing in the compiler or runtime calls it. A
-read-only replacement with a separate boolean read is proposed; its name is not
-settled. It arrives with the drivers that answer the runner's questions from a world.
+No host interface for the world ships yet, and nothing in the compiler or runtime
+needs one: the runner asks its driver. A read-only world interface with a separate
+boolean read is proposed; its name is not settled. It arrives with the drivers that
+answer the runner's questions from a world.
 
 Unbound keys follow an explicit policy, reusing the **Keep / Ignore** vocabulary of
 [unmodeled Markdown](../core/Unmodeled%20Markdown%20Handling.md). The default is
@@ -629,5 +629,5 @@ failing fixture also *shrinks* to the smallest reproduction.
   play a random choice.
 - **Detour syntax and return boundary** stay owned by
   [Progression Order](../language/Progression%20Order.md).
-- **The world interface's name.** `IGameSystem` exists; the proposed read-only seam
-  and its boolean read have no settled names.
+- **The world interface's name.** The proposed read-only interface and its boolean
+  read have no settled names.

@@ -1,3 +1,7 @@
+/**
+ * @file Switches a served session between View, which is read-only and follows the file, and Edit.
+ */
+
 import type { AppController } from "./app";
 import type { LiveEditController } from "./live-edit";
 import type { Report, ServedMode } from "./model";

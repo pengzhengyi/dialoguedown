@@ -1,3 +1,8 @@
+/**
+ * @file A stage's legend: its node categories, regions, and edge kinds with their counts, and the
+ * commands that fold every region.
+ */
+
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import { CATEGORY_COLORS } from "./palette";
 import { edgeStyle } from "./edge-style";
@@ -5,14 +10,13 @@ import { edgeSwatch } from "./edge-swatch";
 import { tintsOf } from "./region-bands";
 import { codicon } from "./codicon";
 import { FOLD_COMMAND_GLYPHS } from "./fold-glyph";
+import { baseLabel } from "./text";
 
 function nameFold(button: HTMLButtonElement, open: boolean): void {
     const label = open ? "Hide the legend" : "Show the legend";
     button.setAttribute("aria-label", label);
     button.title = label;
 }
-
-import { baseLabel } from "./text";
 
 export interface CategoryStat {
     names: string[];
