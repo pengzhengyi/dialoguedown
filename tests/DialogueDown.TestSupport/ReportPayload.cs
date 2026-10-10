@@ -40,6 +40,15 @@ public sealed class ReportPayload
     /// <summary>Gets the compiler stages the report shows, or <c>null</c> when it carries none.</summary>
     public JsonArray? Stages => Json["stages"] as JsonArray;
 
+    /// <summary>Gets the jump targets, speakers, and tags the editor completes, or <c>null</c>.</summary>
+    public JsonObject? Symbols => Json["symbols"] as JsonObject;
+
+    /// <summary>Gets the problems the editor marks, in the Language Server Protocol's shape, or <c>null</c>.</summary>
+    public JsonArray? Diagnostics => Json["diagnostics"] as JsonArray;
+
+    /// <summary>Gets the ranges the editor highlights and what each one is, or <c>null</c>.</summary>
+    public JsonArray? SemanticTokens => Json["semanticTokens"] as JsonArray;
+
     /// <summary>Gets <c>saved-invalid</c> when the configuration on disk does not parse, or <c>null</c>.</summary>
     public string? ConfigStatus => Text("configStatus");
 
