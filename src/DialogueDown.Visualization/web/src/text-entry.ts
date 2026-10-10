@@ -1,3 +1,5 @@
+/** @file Tells which elements take typed input, so global shortcuts leave them alone. */
+
 /**
  * Selector for surfaces that own their keyboard input: form fields and the CodeMirror
  * editor (a `contenteditable` `.cm-editor`). Global shortcuts and graph-navigation

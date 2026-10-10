@@ -1,7 +1,5 @@
-import { PAD_BOTTOM, PAD_TOP } from "./region-bands";
-
 /**
- * Laying a graph out so a scene's band is never drawn over another's.
+ * @file Laying a graph out so a scene's band is never drawn over another's.
  *
  * The tree layout places a node from its place among its siblings and the extent of its subtree,
  * and never reads which scene the node belongs to. Where flow crosses between scenes their rows
@@ -13,6 +11,8 @@ import { PAD_BOTTOM, PAD_TOP } from "./region-bands";
  *
  * Depth is never touched, so a node keeps the column the tree layout gave it.
  */
+
+import { PAD_BOTTOM, PAD_TOP } from "./region-bands";
 
 /** What the pass needs of a node the tree layout has already placed. */
 export interface RankInput {

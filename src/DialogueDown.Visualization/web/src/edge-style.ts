@@ -1,3 +1,5 @@
+/** @file How each kind of edge is drawn and named: its color, line pattern, and markers. */
+
 /**
  * How each edge category is drawn and named.
  *

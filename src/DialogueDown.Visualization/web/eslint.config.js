@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import jsdoc from "eslint-plugin-jsdoc";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -26,6 +27,16 @@ export default tseslint.config(
                     message: "Move this import up with the module's other imports.",
                 },
             ],
+        },
+    },
+    {
+        // Every client module opens with a `@file` comment saying what it does, so a reader
+        // learns what a file is for before reading its code.
+        files: ["src/**/*.ts"],
+        ignores: ["src/**/*.test.ts", "src/**/*.d.ts"],
+        plugins: { jsdoc },
+        rules: {
+            "jsdoc/require-file-overview": "error",
         },
     },
     {

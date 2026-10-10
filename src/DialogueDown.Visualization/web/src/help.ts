@@ -1,3 +1,5 @@
+/** @file The help panel in the footer drawer, which explains the active tab. */
+
 /** Which tab's help to show: the Source tab, a tree stage, the Dialogue Graph, the Semantic tab,
  *  the Playbook, or — on the empty state — the Explorer sidebar. */
 export type HelpContext = "source" | "tree" | "graph" | "semantic" | "playbook" | "explorer";

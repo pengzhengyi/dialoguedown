@@ -1,3 +1,8 @@
+/**
+ * @file The served report when no script is open: the Explorer over the project, to open a script
+ * from.
+ */
+
 import { runApp } from "./app";
 import { initExplorer, type ExplorerHandle } from "./explorer";
 import { codicon } from "./codicon";

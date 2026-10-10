@@ -1,3 +1,8 @@
+/**
+ * @file Draws the Mermaid diagrams in a Preview in the current theme, and shows the source instead
+ * when a diagram cannot be drawn.
+ */
+
 import type { MermaidConfig, ParseOptions, ParseResult, RenderResult } from "mermaid";
 import { MERMAID_PLACEHOLDER_ATTRIBUTE, MERMAID_PLACEHOLDER_TOKEN } from "./mermaid-placeholder";
 import { loadMermaidFrom, mermaidSource } from "./mermaid-loader";

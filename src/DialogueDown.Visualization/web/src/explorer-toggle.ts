@@ -1,5 +1,5 @@
 /**
- * The Explorer's own control: a Files button pinned at the leading edge of the tab bar.
+ * @file The Explorer's own control: a Files button pinned at the leading edge of the tab bar.
  *
  * It is a **glyph alone**, sized and spaced like the Zen and maximize buttons at the row's other
  * end, so the tab bar's width stays with the stages; the file glyph is the same mark an editor

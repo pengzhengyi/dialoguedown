@@ -1,3 +1,8 @@
+/**
+ * @file The full-screen and Zen focus modes, which hide the report's chrome and, in Zen, the active
+ * tab's side panel.
+ */
+
 import { isTextEntryTarget } from "./text-entry";
 
 /** The root-element class that maximizes the active tab and hides the app chrome. */
