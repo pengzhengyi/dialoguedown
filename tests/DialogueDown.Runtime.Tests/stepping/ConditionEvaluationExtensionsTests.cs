@@ -61,7 +61,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void Allows_AGuardedWayOut_IsWhatItsGuardReadsTo(bool holds) =>
         Assert.Equal(
             holds,
-            AGuarded(Divert("Hero.HasSword", target: 1), holds));
+            AllowedWhenItsGuardReads(Divert("Hero.HasSword", target: 1), holds));
 
     [Theory]
     [InlineData(true)]
@@ -70,7 +70,7 @@ public sealed class ConditionEvaluationExtensionsTests
         // A node and an edge are read the same way, which is what lets one reader serve both.
         Assert.Equal(
             holds,
-            AGuarded(
+            AllowedWhenItsGuardReads(
                 SilentLine(condition: "Hero.HasSword", next: 1),
                 holds));
 
@@ -85,7 +85,7 @@ public sealed class ConditionEvaluationExtensionsTests
         Assert.Throws<ArgumentNullException>(
             () => ((Supply)null!).Allows(Divert(target: 1)));
 
-    private static bool AGuarded(IConditional guarded, bool holds) =>
+    private static bool AllowedWhenItsGuardReads(IConditional guarded, bool holds) =>
         Answering(("Hero.HasSword", holds)).Allows(guarded);
 
     private static Supply AnsweringEvery(Condition condition) =>
