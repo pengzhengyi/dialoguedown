@@ -18,7 +18,7 @@ public sealed class DisplayGraphTests
         Assert.Null(graph.Tables);
         Assert.NotNull(graph.Unavailable);
         Assert.Equal(
-            "This stage is unavailable due to compilation errors.", graph.Unavailable!.Reason);
+            "This stage is unavailable due to compilation errors.", graph.Unavailable.Reason);
     }
 
     [Fact]

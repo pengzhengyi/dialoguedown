@@ -380,7 +380,7 @@ public sealed class GraphProjectionTests
         var graph = GraphProjection.Unavailable("no graph");
 
         Assert.Equal("Dialogue Graph", graph.Title);
-        Assert.Equal("no graph", graph.Unavailable!.Reason);
+        Assert.Equal("no graph", graph.Unavailable?.Reason);
         Assert.Empty(graph.Nodes);
     }
 

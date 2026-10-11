@@ -55,7 +55,9 @@ public sealed class SpeakerNumberingTests
         var error = Assert.Throws<ArgumentException>(
             () => numbering.Position(SpeakerSymbol.ForName("Bob")));
 
-        Assert.Contains("Bob", error.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "Bob says nothing in this graph, so no line can name them. (Parameter 'speaker')",
+            error.Message);
     }
 
     [Fact]

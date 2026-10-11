@@ -58,8 +58,7 @@ public sealed class MarkdigMarkdownParserFrontMatterTests : MarkdigMarkdownParse
 
         Assert.Equal(3, document.Blocks.Count);
         var divider = Assert.IsType<Paragraph>(document.Blocks[1]);
-        var text = Assert.IsType<TextInline>(Assert.Single(divider.Inlines));
-        Assert.StartsWith("---", text.Text);
+        AssertSingleText(divider.Inlines, "---");
     }
 
     [Fact]

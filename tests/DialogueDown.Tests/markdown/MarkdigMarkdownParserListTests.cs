@@ -44,7 +44,11 @@ public sealed class MarkdigMarkdownParserListTests : MarkdigMarkdownParserTestBa
     [Fact]
     public void Parse_ListWithMultipleItems_KeepsTextualOrder()
     {
-        var list = AssertSingleBlock<ListBlock>(Parse("- one\n- two"));
+        var list = AssertSingleBlock<ListBlock>(Parse(
+            """
+            - one
+            - two
+            """));
 
         Assert.Equal(2, list.Items.Count);
         AssertItemText(list, 0, "one");
@@ -67,7 +71,11 @@ public sealed class MarkdigMarkdownParserListTests : MarkdigMarkdownParserTestBa
     public void Parse_NestedList_PreservesNestingAndSuccession()
     {
         // A choice with a follow-up line and a nested choice underneath it.
-        var list = AssertSingleBlock<ListBlock>(Parse("- Bob: Really?\n    - Alice: Yes."));
+        var list = AssertSingleBlock<ListBlock>(Parse(
+            """
+            - Bob: Really?
+                - Alice: Yes.
+            """));
 
         var item = Assert.Single(list.Items);
         Assert.Equal(2, item.Blocks.Count);

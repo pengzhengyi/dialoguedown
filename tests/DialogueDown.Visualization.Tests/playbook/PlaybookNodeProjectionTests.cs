@@ -38,7 +38,8 @@ public sealed class PlaybookNodeProjectionTests
     {
         var report = Project(Source);
 
-        Assert.Equal(report.Metadata!.NodeCount, report.Nodes.Count);
+        Assert.NotNull(report.Metadata);
+        Assert.Equal(report.Metadata.NodeCount, report.Nodes.Count);
     }
 
     [Fact]

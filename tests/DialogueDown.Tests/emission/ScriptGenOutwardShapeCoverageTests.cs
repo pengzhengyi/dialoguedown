@@ -66,10 +66,8 @@ public sealed class ScriptGenOutwardShapeCoverageTests
 
         var missing = Enum.GetValues<OutwardShape>().Where(shape => !seen.ContainsKey(shape)).ToList();
 
-        Assert.True(
-            missing.Count == 0,
-            $"ScriptGen never produced: {string.Join(", ", missing)}. "
-                + "The round-trip tests would pass without ever covering these.");
+        // A shape ScriptGen never produced is one the round-trip tests would pass without covering.
+        Assert.Empty(missing);
     }
 
     private static PlaybookDocument Write(CompilationSuccess compiled) =>

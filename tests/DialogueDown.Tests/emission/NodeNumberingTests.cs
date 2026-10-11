@@ -32,7 +32,9 @@ public sealed class NodeNumberingTests
 
         var error = Assert.Throws<ArgumentException>(() => numbering.Position(NodeId(6)));
 
-        Assert.Contains("6", error.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "No node in this graph has id 6, so nothing can point at it. (Parameter 'id')",
+            error.Message);
     }
 
     [Fact]

@@ -1,5 +1,7 @@
+using System.Text.Json;
 using DialogueDown.Compilation;
 using DialogueDown.Emission;
+using DialogueDown.Playbook;
 using DialogueDown.Visualization.Playbook;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
@@ -24,7 +26,10 @@ public sealed class PlaybookProjectionTests
 
         Assert.NotNull(report.Json);
         Assert.Null(report.Unavailable);
-        Assert.Contains("\"nodes\"", report.Json, StringComparison.Ordinal);
+        var playbook = JsonSerializer.Deserialize<PlaybookDocument>(report.Json, PlaybookJson.Options);
+        Assert.NotNull(playbook);
+        Assert.Equal(Script, playbook.Script);
+        Assert.NotEmpty(playbook.Nodes);
     }
 
     [Fact]
@@ -33,7 +38,8 @@ public sealed class PlaybookProjectionTests
         // The report shows the playbook to be read, not diffed against a file, so it is indented.
         var report = Project(Source);
 
-        Assert.Contains("\n  ", report.Json!, StringComparison.Ordinal);
+        Assert.NotNull(report.Json);
+        Assert.Contains("\n  ", report.Json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -63,7 +69,13 @@ public sealed class PlaybookProjectionTests
     public void Project_AScriptWithErrors_HasNoPlaybookAndSaysWhy()
     {
         // The graph is built only for a clean compile, and only a graph becomes a playbook.
-        var report = Project("# Scene\n\nAlice: Go => [Nowhere](#missing)\n");
+        var report = Project(
+            """
+            # Scene
+
+            Alice: Go => [Nowhere](#missing)
+
+            """);
 
         Assert.Null(report.Json);
         Assert.Null(report.Metadata);
@@ -74,7 +86,17 @@ public sealed class PlaybookProjectionTests
     [Fact]
     public void Project_ListsEveryAnchorWithTheNodeItLandsOn()
     {
-        var report = Project("# The Tavern\n\nAlice: Hello.\n\n# The Road\n\nAlice: Onward.\n");
+        var report = Project(
+            """
+            # The Tavern
+
+            Alice: Hello.
+
+            # The Road
+
+            Alice: Onward.
+
+            """);
 
         Assert.Collection(
             report.Anchors.OrderBy(anchor => anchor.Name, StringComparer.Ordinal),

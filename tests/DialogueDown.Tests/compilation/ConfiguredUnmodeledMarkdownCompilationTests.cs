@@ -24,6 +24,21 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
         Keeper: Welcome.
         """;
 
+    // The text fragments the front end keeps from the script, joined by newlines, with and
+    // without the table.
+    private const string WithoutTheTable = """
+        The Tavern
+        Keeper: Welcome.
+        """;
+
+    private const string WithTheTable = """
+        The Tavern
+        | Speaker | Mood |
+        | --- | --- |
+        | Keeper | wary |
+        Keeper: Welcome.
+        """;
+
     private static readonly CompilerOptions _keepsTables = CompilerOptions.Default with
     {
         UnmodeledMarkdown = ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling>.Empty
@@ -32,11 +47,11 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
 
     [Fact]
     public void CreateDefault_Unconfigured_IgnoresTheTable() =>
-        Assert.DoesNotContain("wary", TextOf(Compile(ScriptCompilerFactory.CreateDefault())));
+        Assert.Equal(WithoutTheTable, TextOf(Compile(ScriptCompilerFactory.CreateDefault())));
 
     [Fact]
     public void CreateDefault_ConfiguredToKeepTables_KeepsTheTableText() =>
-        Assert.Contains("wary", TextOf(Compile(ScriptCompilerFactory.CreateDefault(_keepsTables))));
+        Assert.Equal(WithTheTable, TextOf(Compile(ScriptCompilerFactory.CreateDefault(_keepsTables))));
 
     [Fact]
     public void AddDialogueDown_ConfiguredToKeepTables_KeepsTheTableText()
@@ -48,7 +63,7 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
 
         var result = Compile(provider.GetRequiredService<IScriptCompiler>());
 
-        Assert.Contains("wary", TextOf(result));
+        Assert.Equal(WithTheTable, TextOf(result));
     }
 
     [Fact]
@@ -58,15 +73,13 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
 
         var result = Compile(provider.GetRequiredService<IScriptCompiler>());
 
-        Assert.DoesNotContain("wary", TextOf(result));
+        Assert.Equal(WithoutTheTable, TextOf(result));
     }
 
     [Fact]
     public void CreateDefault_ConfiguredToKeepOneKind_LeavesTheOtherDefaultsAlone()
     {
-        // Keeping tables must not also start keeping dividers. The divider is written `***` so it
-        // cannot be confused with a table's own `| --- |` separator row, which survives inside the
-        // kept table text.
+        // Keeping tables must not also start keeping dividers, so the `***` leaves no text behind.
         const string Script = """
             # The Tavern
 
@@ -79,8 +92,14 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
 
         var text = TextOf(ScriptCompilerFactory.CreateDefault(_keepsTables).Compile(Script));
 
-        Assert.Contains("wary", text);
-        Assert.DoesNotContain("***", text);
+        Assert.Equal(
+            """
+            The Tavern
+            | Speaker | Mood |
+            | --- | --- |
+            | Keeper | wary |
+            """,
+            text);
     }
 
     [Fact]
@@ -102,7 +121,14 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
 
         var text = TextOf(ScriptCompilerFactory.CreateDefault().Compile(Script));
 
-        Assert.Equal("A\nGuide: Hi.\nB\nGuide: There.", text);
+        Assert.Equal(
+            """
+            A
+            Guide: Hi.
+            B
+            Guide: There.
+            """,
+            text);
     }
 
     private static CompilationResult Compile(IScriptCompiler compiler) =>

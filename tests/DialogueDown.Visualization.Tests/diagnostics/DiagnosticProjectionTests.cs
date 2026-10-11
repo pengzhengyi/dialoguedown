@@ -112,7 +112,7 @@ public sealed class DiagnosticProjectionTests
             startOffset: 10,
             fixes: [new LocatedFix("Escape as literal text", [new LocatedEdit(10, 10, "\\")])]));
 
-        var fix = Assert.Single(projected.Fixes!);
+        var fix = Assert.Single(projected.Fixes ?? []);
         Assert.Equal("Escape as literal text", fix.Title);
         var edit = Assert.Single(fix.Edits);
         Assert.Equal(0, edit.Start);
@@ -127,7 +127,7 @@ public sealed class DiagnosticProjectionTests
             startOffset: 10,
             fixes: [new LocatedFix("Replace", [new LocatedEdit(12, 14, "x")])]));
 
-        var edit = Assert.Single(Assert.Single(projected.Fixes!).Edits);
+        var edit = Assert.Single(Assert.Single(projected.Fixes ?? []).Edits);
         Assert.Equal(2, edit.Start);
         Assert.Equal(4, edit.End);
     }

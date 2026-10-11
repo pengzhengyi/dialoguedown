@@ -56,10 +56,11 @@ public static class PlaybookFactory
         new(id, name, @default, [.. tags ?? []]);
 
     /// <summary>
-    /// The playbook's speakers, in order. A null name is the anonymous speaker every script has.
+    /// The playbook's speakers, in order. A null name is the anonymous speaker, who says the lines
+    /// nobody is named for when a script names no default, so it is marked as the default.
     /// </summary>
     public static ImmutableArray<PlaybookSpeaker> Speakers(params string?[] names) =>
-        [.. names.Select(name => Speaker(name: name))];
+        [.. names.Select(name => Speaker(name: name, @default: name is null))];
 
     private static ImmutableSortedDictionary<string, int> Table(
         IEnumerable<(string Key, int Node)> entries) =>

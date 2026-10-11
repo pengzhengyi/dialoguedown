@@ -17,7 +17,7 @@ public sealed class LineNodeDraftTests
         var draft = new LineNodeDraft(
             NodeId(0),
             line.Span,
-            AssertHasSpeaker(model, line.Speaker!, "Alice"),
+            AssertHasSpeaker(model, line.Speaker, "Alice"),
             line.Speech);
         draft.AddSuccessionEdge(1);
 
