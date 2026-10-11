@@ -35,7 +35,11 @@ internal static class NodeQuestionExtensions
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return KeysOf((node as IConditional)?.Condition);
+        return node switch
+        {
+            IConditional guarded => KeysOf(guarded.Condition),
+            _ => [],
+        };
     }
 
     /// <summary>What the world must answer before a run can say what a node says.</summary>
