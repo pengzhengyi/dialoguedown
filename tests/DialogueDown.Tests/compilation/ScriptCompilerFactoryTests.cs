@@ -1,3 +1,4 @@
+using System.Globalization;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
@@ -37,7 +38,7 @@ public sealed class ScriptCompilerFactoryTests
         AssertSceneHeading(body[0], "Scene", 1);
 
         var spoken = AssertLine(body[1]);
-        AssertSpeakerNameReference(spoken.Speaker!, "Alice");
+        AssertSpeakerNameReference(spoken.Speaker, "Alice");
         AssertJump(spoken.Speech[^1], "#scene");
 
         var silent = AssertLine(body[2]);
@@ -70,7 +71,7 @@ public sealed class ScriptCompilerFactoryTests
         AssertAutoWeight(random.Options[1]);
 
         var first = AssertLine(Assert.Single(random.Options[0].Body));
-        AssertSpeakerNameReference(first.Speaker!, "Alice");
+        AssertSpeakerNameReference(first.Speaker, "Alice");
         AssertSpeechText(first, "Heads it is.");
     }
 
@@ -99,7 +100,7 @@ public sealed class ScriptCompilerFactoryTests
             control.Branches,
             branch =>
             {
-                AssertCondition(branch.Condition!, "Rich");
+                AssertCondition(branch.Condition, "Rich");
                 AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome upstairs.");
             },
             branch =>
@@ -257,7 +258,7 @@ public sealed class ScriptCompilerFactoryTests
         var result = AssertFailure(BestEffortCompiler().Compile("#lonely: Hi"));
 
         AssertReported(result.Diagnostics, DiagnosticCatalog.TagsWithoutSpeaker);
-        AssertDefaultSpeaker(AssertLine(result.Desugared!.Body[0]).Speaker);
+        AssertDefaultSpeaker(AssertLine(result.Desugared?.Body[0]).Speaker);
     }
 
     [Fact]
@@ -288,7 +289,13 @@ public sealed class ScriptCompilerFactoryTests
             DiagnosticCatalog.TagsWithoutSpeaker,
             DiagnosticSeverity.Error,
             new LinePosition(1, 1));
-        Assert.Contains("names no speaker", located.Message);
+        // The catalog's own wording, with the line filled in where the format asks for it.
+        Assert.Equal(
+            string.Format(
+                CultureInfo.InvariantCulture,
+                DiagnosticCatalog.TagsWithoutSpeaker.MessageFormat,
+                "#lonely: Hi"),
+            located.Message);
     }
 
     [Fact]
