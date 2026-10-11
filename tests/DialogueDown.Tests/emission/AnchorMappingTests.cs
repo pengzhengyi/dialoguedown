@@ -20,8 +20,7 @@ public sealed class AnchorMappingTests
 
         var anchors = AnchorMapping.Write(graph.Regions, NodeNumbering.Of(graph.Nodes));
 
-        Assert.Equal(["gate", "the-inn"], anchors.Keys);
-        Assert.Equal(0, anchors["gate"]);
+        Assert.Equal([("gate", 0), ("the-inn", 1)], anchors.Select(anchor => (anchor.Key, anchor.Value)));
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public sealed class AnchorMappingTests
 
         var anchors = AnchorMapping.Write(graph.Regions, NodeNumbering.Of(graph.Nodes));
 
-        Assert.Contains("the-inn", anchors.Keys);
+        Assert.Equal([("chapter", 0), ("the-inn", 1)], anchors.Select(anchor => (anchor.Key, anchor.Value)));
     }
 
     [Fact]
