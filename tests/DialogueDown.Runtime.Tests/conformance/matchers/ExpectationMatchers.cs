@@ -15,7 +15,7 @@ internal static class ExpectationMatchers
         KeyedHandlers.ByKey<IExpectationMatcher>(
             matcher => matcher.Key,
             new SaidMatcher(), new ContinuedMatcher(), new EndedMatcher(), new PerformMatcher(),
-            new RefusedMatcher(), new ResolveMatcher());
+            new RefusedMatcher(), new ResolveMatcher(), new OfferMatcher());
 
     /// <summary>Whether a matcher owns this key in an expectation.</summary>
     /// <param name="key">The claim's key, as a fixture writes it.</param>

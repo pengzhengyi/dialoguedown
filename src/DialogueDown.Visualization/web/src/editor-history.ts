@@ -1,8 +1,8 @@
 /**
- * Undo history that belongs to **one document**. Replacing an editor's text covers two different
- * intents: reverting the same file (a reload, a discard), where undo should still reach the text
- * before it; and opening a different file, where it must not — undoing into another script's text
- * would leave it in this buffer, and a save would then write it to the wrong file.
+ * @file Undo history that belongs to **one document**. Replacing an editor's text covers two
+ * different intents: reverting the same file (a reload, a discard), where undo should still reach
+ * the text before it; and opening a different file, where it must not — undoing into another
+ * script's text would leave it in this buffer, and a save would then write it to the wrong file.
  */
 
 import { Compartment } from "@codemirror/state";

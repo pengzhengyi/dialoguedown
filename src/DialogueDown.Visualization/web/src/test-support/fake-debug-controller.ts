@@ -1,3 +1,7 @@
+/**
+ * @file A fake debugger over a small fixture program, for tests and the debugger harness to drive.
+ */
+
 import type {
     BreakpointBinding,
     DebugController,

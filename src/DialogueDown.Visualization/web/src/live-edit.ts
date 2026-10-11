@@ -1,3 +1,8 @@
+/**
+ * @file The Live Edit state machine: one document's edits, saves, and conflicts with the file on
+ * disk.
+ */
+
 import type { Report } from "./model";
 import type { DocumentType, SaveMode } from "./save-mode";
 

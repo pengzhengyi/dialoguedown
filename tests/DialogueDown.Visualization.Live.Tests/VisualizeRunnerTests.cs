@@ -16,32 +16,32 @@ public sealed class VisualizeRunnerTests
 
         var code = runner.RunStatic(script.Path, output: null, noOpen: false, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
 
-        Assert.Equal(0, code);
         var opened = Assert.Single(browser.Opened);
-        Assert.EndsWith(".html", opened);
-        Assert.True(File.Exists(opened));
-        File.Delete(opened);
+        try
+        {
+            Assert.Equal(0, code);
+            Assert.EndsWith(".html", opened);
+            Assert.True(File.Exists(opened));
+        }
+        finally
+        {
+            File.Delete(opened);
+        }
     }
 
     [Fact]
     public void RunStatic_Output_WritesToThePathWithoutOpening()
     {
-        using var script = new TempScript("# Scene");
-        var target = Path.Combine(Path.GetTempPath(), $"dd-vr-{Guid.NewGuid():N}.html");
+        using var tree = new TempTree();
+        var script = tree.File("scene.dialogue.md", "# Scene");
+        var target = Path.Combine(tree.Root, "report.html");
         var browser = new FakeBrowserLauncher();
         var runner = new VisualizeRunner(browser);
 
-        try
-        {
-            var code = runner.RunStatic(script.Path, target, noOpen: true, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
+        var code = runner.RunStatic(script, target, noOpen: true, AppliedConfiguration.WithoutFile(CompilerOptions.Default));
 
-            Assert.Equal(0, code);
-            Assert.True(File.Exists(target));
-            Assert.Empty(browser.Opened);
-        }
-        finally
-        {
-            File.Delete(target);
-        }
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(target));
+        Assert.Empty(browser.Opened);
     }
 }

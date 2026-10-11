@@ -2,9 +2,10 @@ using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -121,7 +122,16 @@ public sealed class PlayingTests
         AssertPerformed(PlayTheFirstNode(TwoEffectsThenALine()), "fade in", "play a chime");
 
     [Fact]
-    public void At_TheEnd_EndsTheRun() => AssertEnded(PlayTheFirstNode(PlayContextFactory.Of([End(0)])));
+    public void At_TheEnd_EndsTheRun() => AssertEnded(PlayTheFirstNode(PlayContextFactory.Of([End(id: 0)])));
+
+    [Fact]
+    public void At_AMenu_OffersItsOptionsAndWaitsForThePlayer()
+    {
+        var result = PlayTheFirstNode(PlayContextFactory.AMenu());
+
+        AssertEvents(result, "offer 'Go east', 'Go west'");
+        AssertAwaitingChoice(result, 0);
+    }
 
     [Fact]
     public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
@@ -129,7 +139,7 @@ public sealed class PlayingTests
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
         // than as a node kind the runner cannot play.
         AssertRefused(
-            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "ChoiceNode");
+            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "RandomChoiceNode");
     }
 
     [Fact]
@@ -155,7 +165,7 @@ public sealed class PlayingTests
     public void Performed_AtAKindThatAsksNothingOfTheHost_IsRefused()
     {
         // A run never waits on the host at the end, so only a state built by hand gets here.
-        var result = Playing.Performed(PlayContextFactory.Of([End(0)]), WaitingOnTheHost(0));
+        var result = Playing.Performed(PlayContextFactory.Of([End(id: 0)]), WaitingOnTheHost(0));
 
         AssertRefused(result, RefusalReason.Misplaced, "asks nothing of the host");
         AssertAwaitingDone(result, 0);
@@ -284,13 +294,13 @@ public sealed class PlayingTests
     private static PlayContext ALineWithTwoCommandsBeforeAQuery() =>
         OneLineSaying(
             "Alice",
-            new TextFragment("A "),
-            Command("One"),
-            new TextFragment(" B "),
-            Command("Two"),
-            new TextFragment(" "),
-            new QueryFragment("k"),
-            new TextFragment("."));
+            Text("A "),
+            CustomCommand("One"),
+            Text(" B "),
+            CustomCommand("Two"),
+            Text(" "),
+            Query("k"),
+            Text("."));
 
     /// <summary>A line with a query after each of its two commands, then the end.</summary>
     /// <remarks>
@@ -302,15 +312,15 @@ public sealed class PlayingTests
     private static PlayContext ALineWithAQueryAfterEachOfTwoCommands() =>
         OneLineSaying(
             "Alice",
-            new TextFragment("A "),
-            Command("One"),
-            new TextFragment(" "),
-            new QueryFragment("k"),
-            new TextFragment(" "),
-            Command("Two"),
-            new TextFragment(" "),
-            new QueryFragment("j"),
-            new TextFragment("."));
+            Text("A "),
+            CustomCommand("One"),
+            Text(" "),
+            Query("k"),
+            Text(" "),
+            CustomCommand("Two"),
+            Text(" "),
+            Query("j"),
+            Text("."));
 
     /// <summary>A line with nobody named in front of it, then the end.</summary>
     /// <remarks>
@@ -320,7 +330,7 @@ public sealed class PlayingTests
     /// </remarks>
     /// <returns>A context whose only line is said by the anonymous default speaker.</returns>
     private static PlayContext ALineNobodyClaims() =>
-        PlayContextFactory.Of([Line(0, speaker: 0, "Nobody said this.", next: 1), End(1)], [null]);
+        PlayContextFactory.Of([Line("Nobody said this.", id: 0, next: 1), End(id: 1)], [null]);
 
     /// <summary>A line whose only speech is a command, then the end.</summary>
     /// <remarks>
@@ -330,7 +340,7 @@ public sealed class PlayingTests
     /// </remarks>
     /// <returns>A context whose only line has no words to say.</returns>
     private static PlayContext ALineThatIsOnlyACommand() =>
-        OneLineSaying("Alice", Command("Wave"));
+        OneLineSaying("Alice", CustomCommand("Wave"));
 
     /// <summary>A line opening with a command, then the end.</summary>
     /// <remarks>
@@ -340,7 +350,7 @@ public sealed class PlayingTests
     /// </remarks>
     /// <returns>A context whose only line says its words after its command.</returns>
     private static PlayContext ALineOpeningWithACommand() =>
-        OneLineSaying("Alice", Command("Wave"), new TextFragment(" Hello."));
+        OneLineSaying("Alice", CustomCommand("Wave"), Text(" Hello."));
 
     /// <summary>A line with a stage direction in the middle of a sentence, then the end.</summary>
     /// <remarks>
@@ -352,9 +362,9 @@ public sealed class PlayingTests
     private static PlayContext ALineWithAStageDirectionMidSentence() =>
         OneLineSaying(
             "Yuki",
-            new TextFragment("Then... "),
-            new DefaultCommandFragment("Yuki hides a smile behind her sleeve"),
-            new TextFragment(" I will not argue."));
+            Text("Then... "),
+            DefaultCommand("Yuki hides a smile behind her sleeve"),
+            Text(" I will not argue."));
 
     /// <summary>A line with two commands in a row, a space between them, then the end.</summary>
     /// <remarks>
@@ -366,11 +376,11 @@ public sealed class PlayingTests
     private static PlayContext ALineWithTwoCommandsInARow() =>
         OneLineSaying(
             "Alice",
-            new TextFragment("Hi. "),
-            Command("Bow"),
-            new TextFragment(" "),
-            Command("Wave"),
-            new TextFragment(" Bye."));
+            Text("Hi. "),
+            CustomCommand("Bow"),
+            Text(" "),
+            CustomCommand("Wave"),
+            Text(" Bye."));
 
     /// <summary>A line ending with a command and a space after it, then the end.</summary>
     /// <remarks>
@@ -380,7 +390,7 @@ public sealed class PlayingTests
     /// </remarks>
     /// <returns>A context whose only line holds words that say nothing after its command.</returns>
     private static PlayContext ALineEndingWithACommandAndASpace() =>
-        OneLineSaying("Alice", new TextFragment("Hello. "), Command("Wave"), new TextFragment(" "));
+        OneLineSaying("Alice", Text("Hello. "), CustomCommand("Wave"), Text(" "));
 
     /// <summary>A line with a query before its command, then the end.</summary>
     /// <remarks>
@@ -392,22 +402,17 @@ public sealed class PlayingTests
     private static PlayContext ALineWithAQueryBeforeACommand() =>
         OneLineSaying(
             "Alice",
-            new TextFragment("Hello, "),
-            new QueryFragment("playerName"),
-            new TextFragment(". "),
-            Command("Wave"));
+            Text("Hello, "),
+            Query("playerName"),
+            Text(". "),
+            CustomCommand("Wave"));
 
     /// <summary>One line said by one speaker, then the end.</summary>
     /// <param name="speaker">Who says the line.</param>
     /// <param name="speech">What the line says, in the order written.</param>
     /// <returns>A context whose only line is the one given.</returns>
     private static PlayContext OneLineSaying(string speaker, params SpeechFragment[] speech) =>
-        PlayContextFactory.Of([LineSaying(0, speaker: 0, next: 1, condition: null, speech), End(1)], [speaker]);
-
-    /// <summary>A command the host binds by name, with no arguments.</summary>
-    /// <param name="name">What the host binds it by.</param>
-    /// <returns>The command, as it stands in a line.</returns>
-    private static CustomCommandFragment Command(string name) => new(name, []);
+        PlayContextFactory.Of([LineOf([.. speech], id: 0, next: 1), End(id: 1)], [speaker]);
 
     /// <summary>Two effects in one node, then a line, then the end.</summary>
     /// <remarks>
@@ -421,9 +426,9 @@ public sealed class PlayingTests
     private static PlayContext TwoEffectsThenALine() =>
         PlayContextFactory.Of(
             [
-                Effects(0, next: 1, "fade in", "play a chime"),
-                Line(1, speaker: 0, "Hello.", next: 2),
-                End(2),
+                ControlOf([DefaultCommand("fade in"), DefaultCommand("play a chime")], id: 0, next: 1),
+                Line("Hello.", id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice"]);
 }

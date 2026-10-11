@@ -1,10 +1,11 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
+using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -13,9 +14,10 @@ namespace DialogueDown.Runtime.Tests;
 /// script to get there.
 /// </summary>
 /// <remarks>
-/// The nodes come from <see cref="PlaybookNodes"/>; this builds the document around them and the
-/// context that steps it. A test that needs the document itself rather than a context over it —
-/// the writer's tests, say — asks for <see cref="Document"/>.
+/// The nodes come from <see cref="PlaybookNodeFactory"/>; this builds the document around them and
+/// the context that steps it. A test that needs the document itself rather than a context over it —
+/// the writer's tests, say — asks for <see cref="Document"/>. A few scenarios are single nodes that
+/// several test classes share; they return the node rather than a context.
 /// </remarks>
 internal static class PlayContextFactory
 {
@@ -35,11 +37,10 @@ internal static class PlayContextFactory
     /// <returns>The playbook.</returns>
     public static PlaybookDocument Document(
         ImmutableArray<Node> nodes, ImmutableArray<PlaybookSpeaker> speakers, int entry = 0) =>
-        new(
-            new PlaybookFormat(PlaybookSupport.NewestReadableVersion, ["core"], []),
+        PlaybookFactory.Document(
+            format: PlaybookFactory.Format(PlaybookSupport.NewestReadableVersion),
             script: "a-script.dialogue.md",
             entry: entry,
-            anchors: ImmutableSortedDictionary<string, int>.Empty,
             speakers: speakers,
             nodes: nodes);
 
@@ -51,7 +52,7 @@ internal static class PlayContextFactory
     /// </remarks>
     /// <returns>A context a single <c>Next</c> finishes.</returns>
     public static PlayContext OneLine() =>
-        Of([Line(0, speaker: 0, "Hello.", next: 1), End(1)], ["Alice"]);
+        Of([Line("Hello.", id: 0, next: 1), End(id: 1)], ["Alice"]);
 
     /// <summary>Two lines, then the end.</summary>
     /// <remarks>
@@ -65,9 +66,9 @@ internal static class PlayContextFactory
     public static PlayContext TwoLines() =>
         Of(
             [
-                Line(0, speaker: 0, "Hello.", next: 1),
-                Line(1, speaker: 1, "Goodbye.", next: 2),
-                End(2),
+                Line("Hello.", id: 0, next: 1),
+                Line("Goodbye.", speaker: 1, id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice", "Bob"]);
 
@@ -81,15 +82,8 @@ internal static class PlayContextFactory
     public static PlayContext ALineWithAQuery() =>
         Of(
             [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    condition: null,
-                    new TextFragment("Hello, "),
-                    new QueryFragment("playerName"),
-                    new TextFragment(".")),
-                End(1),
+                LineOf([Text("Hello, "), Query("playerName"), Text(".")], id: 0, next: 1),
+                End(id: 1),
             ],
             ["Alice"]);
 
@@ -105,9 +99,9 @@ internal static class PlayContextFactory
     public static PlayContext ALineEndingWithACommand() =>
         Of(
             [
-                LineSaying(0, speaker: 0, next: 1, condition: null, new TextFragment("Hello. "), Wave()),
-                Line(1, speaker: 1, "Goodbye.", next: 2),
-                End(2),
+                LineOf([Text("Hello. "), Wave()], id: 0, next: 1),
+                Line("Goodbye.", speaker: 1, id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice", "Bob"]);
 
@@ -123,20 +117,20 @@ internal static class PlayContextFactory
     public static PlayContext ALineWithAQueryAfterACommand() =>
         Of(
             [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    condition: null,
-                    new TextFragment("Hello, "),
-                    new QueryFragment("playerName"),
-                    new TextFragment(". "),
-                    Wave(),
-                    new TextFragment(" You look "),
-                    new QueryFragment("mood"),
-                    new TextFragment(".")),
-                Line(1, speaker: 1, "Goodbye.", next: 2),
-                End(2),
+                LineOf(
+                    [
+                        Text("Hello, "),
+                        Query("playerName"),
+                        Text(". "),
+                        Wave(),
+                        Text(" You look "),
+                        Query("mood"),
+                        Text("."),
+                    ],
+                    id: 0,
+                    next: 1),
+                Line("Goodbye.", speaker: 1, id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice", "Bob"]);
 
@@ -150,31 +144,49 @@ internal static class PlayContextFactory
     public static PlayContext ALineReadingOneKeyEitherSideOfACommand() =>
         Of(
             [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    condition: null,
-                    new TextFragment("It was "),
-                    new QueryFragment("weapon.Attack"),
-                    new TextFragment(". "),
-                    new CustomCommandFragment("Polish", []),
-                    new TextFragment(" Now it is "),
-                    new QueryFragment("weapon.Attack"),
-                    new TextFragment(".")),
-                End(1),
+                LineOf(
+                    [
+                        Text("It was "),
+                        Query("weapon.Attack"),
+                        Text(". "),
+                        CustomCommand("Polish"),
+                        Text(" Now it is "),
+                        Query("weapon.Attack"),
+                        Text("."),
+                    ],
+                    id: 0,
+                    next: 1),
+                End(id: 1),
             ],
             ["Smith"]);
 
-    /// <summary>A choice, which is a node kind the runner cannot play.</summary>
+    /// <summary>A menu of two options, each said as it is taken, then the end.</summary>
     /// <remarks>
     /// <code>
     /// - Go east
+    /// - Go west
     /// </code>
     /// </remarks>
-    /// <returns>A context that begins at a choice.</returns>
+    /// <returns>A context that begins at the menu.</returns>
+    public static PlayContext AMenu() =>
+        Of(
+            [
+                Choice(Option("Go east", target: 1), Option("Go west", target: 2)),
+                Line("Go east", id: 1, next: 3),
+                Line("Go west", id: 2, next: 3),
+                End(id: 3),
+            ],
+            [null]);
+
+    /// <summary>A random choice, which is a node kind the runner cannot play.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `%` Go east
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that begins at a random choice.</returns>
     public static PlayContext NotYetPlayable() =>
-        Of([Choice(0, leadsTo: 1), End(1)], ["Alice"]);
+        Of([RandomChoice(EvenChance(target: 1)), End(id: 1)], ["Alice"]);
 
     /// <summary>A loop of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
@@ -186,7 +198,11 @@ internal static class PlayContextFactory
     /// <param name="length">How many jumps the loop holds.</param>
     /// <returns>A context whose entry walks forever unless something stops it.</returns>
     public static PlayContext LoopOfJumps(int length) =>
-        Of([.. Enumerable.Range(0, length).Select(at => Jump(at, (at + 1) % length))]);
+        Of(
+            [
+                .. Enumerable.Range(0, length)
+                    .Select(at => DivertingUnlabeled(target: (at + 1) % length, id: at)),
+            ]);
 
     /// <summary>A chain of jumps ending at the end.</summary>
     /// <remarks>
@@ -200,8 +216,9 @@ internal static class PlayContextFactory
     public static PlayContext ChainOfJumps(int jumps) =>
         Of(
             [
-                .. Enumerable.Range(0, jumps).Select(at => (Node)Jump(at, at + 1)),
-                End(jumps),
+                .. Enumerable.Range(0, jumps)
+                    .Select(at => (Node)DivertingUnlabeled(target: at + 1, id: at)),
+                End(id: jumps),
             ]);
 
     /// <summary>An effect, then a line, then the end.</summary>
@@ -216,9 +233,9 @@ internal static class PlayContextFactory
     public static PlayContext AnEffectThenALine() =>
         Of(
             [
-                Effects(0, next: 1, "fade in"),
-                Line(1, speaker: 0, "Hello.", next: 2),
-                End(2),
+                ControlOf([DefaultCommand("fade in")], id: 0, next: 1),
+                Line("Hello.", id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice"]);
 
@@ -238,10 +255,10 @@ internal static class PlayContextFactory
     public static PlayContext ALineWhoseJumpAsksTheWorld() =>
         Of(
             [
-                LineWithConditionalJump(0, speaker: 0, "Away.", jumpTo: 2, next: 1, key: "Alice.HasKey"),
-                Line(1, speaker: 0, "Here.", next: 2),
-                Line(2, speaker: 0, "Inside.", next: 3),
-                End(3),
+                Line("Away.", id: 0, next: 1, ways: [Divert("Alice.HasKey", target: 2)]),
+                Line("Here.", id: 1, next: 2),
+                Line("Inside.", id: 2, next: 3),
+                End(id: 3),
             ],
             ["Alice"]);
 
@@ -261,10 +278,10 @@ internal static class PlayContextFactory
     public static PlayContext AGuardedJumpOnItsOwnLine() =>
         Of(
             [
-                Bare(0, Divert(2, "Rainy"), new SuccessionEdge(1)),
-                Line(1, speaker: 0, "Onward in the sun.", next: 2),
-                Line(2, speaker: 0, "Inside, out of the rain.", next: 3),
-                End(3),
+                ControlOf([], id: 0, next: 1, ways: [Divert("Rainy", target: 2)]),
+                Line("Onward in the sun.", id: 1, next: 2),
+                Line("Inside, out of the rain.", id: 2, next: 3),
+                End(id: 3),
             ],
             ["Alice"]);
 
@@ -288,16 +305,56 @@ internal static class PlayContextFactory
     public static PlayContext AConditionalBlock() =>
         Of(
             [
-                Branch(0, Arm(1, order: 0, "Alice.HasKey"), Arm(2, order: 1, "Alice.HasPick"), Else(3, order: 2)),
-                Line(1, speaker: 0, "The key turns.", next: 4),
-                Line(2, speaker: 0, "The pick clicks.", next: 4),
-                Line(3, speaker: 0, "The door stays shut.", next: 4),
-                End(4),
+                Branch(Arm("Alice.HasKey", target: 1), Arm("Alice.HasPick", target: 2), Else(target: 3)),
+                Line("The key turns.", id: 1, next: 4),
+                Line("The pick clicks.", id: 2, next: 4),
+                Line("The door stays shut.", id: 3, next: 4),
+                End(id: 4),
             ],
             ["Alice"]);
 
-    private static CustomCommandFragment Wave() => new("Wave", []);
+    /// <summary>A menu whose first option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Wait here
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    public static ChoiceNode AMenuWithAConditionalOption() =>
+        Choice(
+            Option("Open the door", condition: "Alice.HasKey", target: 1),
+            Option("Wait here", target: 2));
+
+    /// <summary>A menu whose only option's label asks the world for words.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Call `"playerName"` over
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    public static ChoiceNode AMenuWithAQueryInALabel() =>
+        Choice(OptionOf([Text("Call "), Query("playerName"), Text(" over")], target: 1));
+
+    /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
+    /// <remarks>
+    /// Written out by hand, because reflection cannot choose a sensible instance of each kind; a
+    /// separate test checks that the list is complete.
+    /// </remarks>
+    /// <returns>The nodes, each at position 0 and, unless it is the end, leading to position 1.</returns>
+    public static IEnumerable<Node> OneOfEveryNodeKind() =>
+    [
+        Line("Hello.", id: 0, next: 1),
+        End(id: 0),
+        ControlOf([], id: 0, next: 1),
+        ControlOf([DefaultCommand("fade in")], id: 0, next: 1),
+        Choice(Option("Go east", target: 1)),
+        Branch(Else(target: 1)),
+        RandomChoice(EvenChance(target: 1)),
+    ];
+
+    private static CustomCommandFragment Wave() => CustomCommand("Wave");
 
     private static PlaybookSpeaker Speaker(string? name) =>
-        new(Id: null, Name: name, Default: name is null, Tags: []);
+        PlaybookFactory.Speaker(name: name, @default: name is null);
 }

@@ -1,3 +1,7 @@
+/**
+ * @file The marks that tell a genuine Mermaid placeholder from raw HTML a script's author wrote.
+ */
+
 /** A per-page capability token that author-controlled raw HTML cannot predict. */
 export const MERMAID_PLACEHOLDER_TOKEN = globalThis.crypto.randomUUID();
 

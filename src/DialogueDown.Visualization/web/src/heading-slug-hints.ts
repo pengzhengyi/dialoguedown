@@ -1,3 +1,5 @@
+/** @file Shows the `#slug` of the heading under the cursor in the Source editor, ready to copy. */
+
 import { type EditorState, type Extension, StateField, type Transaction } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";

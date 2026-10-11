@@ -1,3 +1,8 @@
+/**
+ * @file Finds the node whose source best encloses a selection, so **Jump to** can go from the
+ * Source tab to a stage.
+ */
+
 import type { DisplayEdge, DisplayNode, Span } from "./model";
 
 /** The node a reverse **Jump to** should reveal, and the source range it covers. */

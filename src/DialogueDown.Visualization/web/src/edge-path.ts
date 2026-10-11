@@ -1,5 +1,5 @@
 /**
- * Where an edge runs between two laid-out nodes.
+ * @file Where an edge runs between two laid-out nodes.
  *
  * A node writes its label to the right of its dot, so a line that leaves from the dot crosses the
  * very words it belongs to. And a cross-link that spans the drawing lies across every

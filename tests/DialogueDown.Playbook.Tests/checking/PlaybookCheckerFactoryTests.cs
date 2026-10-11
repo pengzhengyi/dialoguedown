@@ -1,8 +1,6 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Conditions;
-using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Playbook.Tests.Checking;
 
@@ -49,7 +47,7 @@ public sealed class PlaybookCheckerFactoryTests
     {
         // A readable header still has to describe a document that holds together. This node sits
         // at index 0 claiming id 7, which only the wider set looks at.
-        var playbook = PlaybookFactory.Document(nodes: [new EndNode(7)]);
+        var playbook = PlaybookFactory.Document(nodes: [End(id: 7)]);
 
         AssertReaderRefuses(playbook, "7", "position");
     }
@@ -57,16 +55,12 @@ public sealed class PlaybookCheckerFactoryTests
     [Fact]
     public void CreateDefault_AlsoChecksABranchsArmOrder()
     {
-        // A branch whose arms descend is valid by the format check and well shaped; only the
+        // A branch whose else comes first is valid by the format check and well shaped; only the
         // wider set cares which arm is tried first.
         var playbook = PlaybookFactory.Document(
-            nodes:
-            [
-                new BranchNode(0, [new BranchEdge(1, 1, Key()), new BranchEdge(1, 0, null)]),
-                new EndNode(1),
-            ]);
+            nodes: [Branch(Else(target: 1), Arm("HasMap", target: 1)), End(id: 1)]);
 
-        AssertReaderRefuses(playbook, "out of order");
+        AssertReaderRefuses(playbook, "else arm before another arm");
     }
 
     /// <summary>
@@ -124,6 +118,4 @@ public sealed class PlaybookCheckerFactoryTests
 
     private static string Say(int version) =>
         version.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    private static KeyCondition Key() => new("HasMap");
 }

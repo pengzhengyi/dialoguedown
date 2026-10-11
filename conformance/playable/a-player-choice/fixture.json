@@ -6,10 +6,10 @@
   "session": [
     { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
     { "send": "next" },
-    { "expect": { "asked": [
+    { "expect": { "offer": { "ordered": false, "options": [
         { "label": "Go east", "available": true },
         { "label": "Go west", "available": true }
-      ] } },
+      ] } } },
     { "send": { "choose": 0 } },
     { "expect": { "said": { "speech": "Go east" } } },
     { "send": "next" },

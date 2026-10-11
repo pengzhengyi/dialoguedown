@@ -1,3 +1,5 @@
+/** @file Sanitizes the HTML a preview renders, while keeping the markup DialogueDown adds to it. */
+
 import DOMPurify from "dompurify";
 
 /**

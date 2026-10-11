@@ -1,3 +1,5 @@
+/** @file A short popover beside whatever a jump went to, saying how the reader got there. */
+
 import tippy, { type Instance } from "tippy.js";
 
 /**

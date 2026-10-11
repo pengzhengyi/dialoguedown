@@ -6,6 +6,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// </summary>
 internal static class SessionReasons
 {
+    /// <summary>A menu this build cannot offer yet, because its options ask the world something.</summary>
+    public const string UnsupportedMenu = "nothing offers a menu that asks the world yet";
+
     /// <summary>A node kind this build cannot play.</summary>
     /// <param name="kind">The kind's name, as the type gives it.</param>
     /// <returns>The reason.</returns>

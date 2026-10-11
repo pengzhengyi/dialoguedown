@@ -1,5 +1,5 @@
 /**
- * Clipping a label to the width it is allowed, rather than to a count of characters.
+ * @file Clipping a label to the width it is allowed, rather than to a count of characters.
  *
  * Thirty `W`s are more than twice as wide as thirty `i`s, so only a measured clip gives the gap
  * beside a column a known width. The tree view's cross-link corridors run in that gap, and a known

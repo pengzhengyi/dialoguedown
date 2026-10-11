@@ -1,12 +1,12 @@
+/**
+ * @file The Problems panel: every diagnostic the compiler reported for the document, as a list
+ * whose rows navigate to the text they describe.
+ */
+
 import { codicon } from "./codicon";
 import { errorCodeUrl } from "./diagnostics-overlay";
 import { orderDiagnostics } from "./diagnostic-order";
 import type { LspDiagnostic, LspFix, LspSeverity } from "./model";
-
-/**
- * The Problems panel: every diagnostic the compiler reported for the document, as a list whose
- * rows navigate to the text they describe.
- */
 
 /** How many diagnostics of each severity the document currently has. */
 export interface DiagnosticCounts {

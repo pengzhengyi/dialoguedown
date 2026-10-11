@@ -1,7 +1,7 @@
 /**
- * Cross-links the Semantic and Playbook tabs: hovering any element that carries an entity key
- * highlights every element sharing it — for example a scene's graph node, its anchor-table row,
- * and any jump that resolves to it. The key is the single source of truth (no title or position
+ * @file Cross-links the Semantic and Playbook tabs: hovering any element that carries an entity key
+ * highlights every element sharing it — for example a scene's graph node, its anchor-table row, and
+ * any jump that resolves to it. The key is the single source of truth (no title or position
  * matching), carried as `data-entity-key` (the element *is* that entity) or `data-ref-key` (the
  * element *references* it). Both map to the same highlight.
  */

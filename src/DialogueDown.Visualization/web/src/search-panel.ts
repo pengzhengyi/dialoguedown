@@ -1,3 +1,5 @@
+/** @file The compact, VS Code-style find and replace panel every editor in the report uses. */
+
 import { EditorView, type Panel, type ViewUpdate } from "@codemirror/view";
 import {
     search,

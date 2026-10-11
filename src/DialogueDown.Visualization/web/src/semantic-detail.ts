@@ -1,3 +1,5 @@
+/** @file The Semantic tab's node-details panel, pinned above its tables. */
+
 import type { DisplayNode, Span } from "./model";
 import { nodeDetailTitle, nodeDetailBody, NODE_DETAIL_PLACEHOLDER } from "./detail-panel";
 import { createJumpButton, type JumpButton } from "./jump-button";

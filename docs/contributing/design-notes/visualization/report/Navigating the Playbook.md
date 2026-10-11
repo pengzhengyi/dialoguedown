@@ -99,8 +99,8 @@ target, and the Playbook tab, which owns the editor, listens.
 
 The schema already types `entry`, every `anchors/*`, every edge `target`, and a line's `speaker`
 as references. The classifier reads the `$ref` at the end of a line's path instead of listing
-those paths, so it cannot drift from the format. A plain number — `format.version`, an edge's
-`order`, a weight's `percentage` — gets no mark.
+those paths, so it cannot drift from the format. A plain number — `format.version` or a weight's
+`percentage` — gets no mark.
 
 ### D3 — Marks cover the viewport and read the text
 

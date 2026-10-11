@@ -2,9 +2,9 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -92,7 +92,7 @@ public sealed class DepartureTests
     /// </remarks>
     /// <returns>A context whose only line leads nowhere.</returns>
     private static PlayContext ALineLeadingNowhere() =>
-        PlayContextFactory.Of([Dead(0, "Away.")], ["Alice"]);
+        PlayContextFactory.Of([Line("Away.", id: 0)], ["Alice"]);
 
     /// <summary>A block condition with an if and no else, then a line after the block.</summary>
     /// <remarks>
@@ -108,10 +108,10 @@ public sealed class DepartureTests
     private static PlayContext AConditionalBlockWithoutAnElse() =>
         PlayContextFactory.Of(
             [
-                Branch(0, Arm(1, order: 0, "Alice.HasKey"), new SuccessionEdge(2)),
-                Line(1, speaker: 0, "The key turns.", next: 2),
-                Line(2, speaker: 0, "Onward.", next: 3),
-                End(3),
+                Branch(Arm("Alice.HasKey", target: 1), new SuccessionEdge(2)),
+                Line("The key turns.", id: 1, next: 2),
+                Line("Onward.", id: 2, next: 3),
+                End(id: 3),
             ],
             ["Alice"]);
 

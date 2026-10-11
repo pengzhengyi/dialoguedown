@@ -1,0 +1,24 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a command in a label is left out of the offer, and performed when its option is taken",
+  "playbook": "playbook.json",
+  "because": "a label's command belongs to the line spoken once the option is taken, so the offer shows only the words around it and performs nothing -- a runner that performed it on offer would wave for an option the player may never take; the label is claimed as fragments so the missing command shows",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Time to go." } } },
+    { "send": "next" },
+    { "expect": { "offer": { "ordered": false, "options": [
+        { "label": [
+            { "kind": "text", "text": "Say goodbye " },
+            { "kind": "text", "text": " and leave" }
+          ], "available": true },
+        { "label": "Stay a while", "available": true }
+      ] } } },
+    { "send": { "choose": 0 } },
+    { "expect": { "said": { "speech": "Say goodbye " } } },
+    { "expect": { "perform": { "kind": "custom-command", "name": "Wave", "args": [] } } },
+    { "expect": { "continued": { "speech": " and leave" } } },
+    { "send": "done" },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

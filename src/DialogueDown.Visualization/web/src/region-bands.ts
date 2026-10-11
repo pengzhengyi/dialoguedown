@@ -1,6 +1,6 @@
 /**
- * The bands drawn behind the nodes of a region, so a scene's name is drawn once, above the nodes
- * it holds, rather than under each node.
+ * @file The bands drawn behind the nodes of a region, so a scene's name is drawn once, above the
+ * nodes it holds, rather than under each node.
  */
 
 export interface PlacedNode {

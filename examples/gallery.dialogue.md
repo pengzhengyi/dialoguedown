@@ -14,12 +14,12 @@ choose where to go next.
 
 Alice: I have walked for days. Which way leads to the *market*?
 
-Guide: The market lies east, past the old mill. But beware — the west road turns
-**dangerous** after dark. `playSound("wind_howl")`
+Guide: The market lies east, past [the old `"millName"` mill](#the-market). But
+beware — the west road turns **dangerous** after dark. `playSound("wind_howl")`
 
 Guide: What will you do, `"playerName"`?
 
-- => [Take the east road to the market](#the-market)
+- => [Take the east road to `"marketName"`](#the-market)
 - => [Brave the west road](#the-dark-forest)
 - `Alice.HasMap?` Slip onto the hidden trail through the hills.
 - Ask the guide for advice first #cautious

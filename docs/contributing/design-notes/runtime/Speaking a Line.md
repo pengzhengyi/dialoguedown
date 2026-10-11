@@ -85,7 +85,8 @@ M1:
 - [x] `Failed` on a command inside a line holds the run, as it does for a control
       block, and `Done` then carries on.
 - [x] The player's turn comes when a step leaves the host nothing to answer.
-- [ ] An option's label is never performed. Deferred to choices (C2b).
+- [x] An option's label is never performed: a menu offers its words and performs
+      nothing.
 
 M2:
 
@@ -243,9 +244,10 @@ the `Perform` anyway, and a line without a query after a command never stops.
 ### S4 — The player's turn comes when a step leaves nothing to answer
 
 A driver answers requests in the order they arrive — `Perform` with `Done`,
-`Resolve` with `Supply` — and when a step leaves nothing to answer, the player
-has the turn and the driver waits for `Next`. After a `Failed`, the run is still
-waiting on the host, so the driver's own retry or give-up decides.
+`Resolve` with `Supply`, and `Offer` with the player's `Choose` — and when a step
+leaves nothing to answer, the player has the turn and the driver waits for `Next`.
+After a `Failed`, the run is still waiting on the host, so the driver's own retry
+or give-up decides.
 
 That rule holds for every shape this pass creates. A line with no commands sends
 `Said` and nothing to answer. A line that ends with a command sends `Said` and
@@ -326,8 +328,9 @@ one it will enforce.
 An option's label is a compiled copy of the words of the line it leads to, so a
 label can carry the commands that line carries. Performing them would fire every
 option's commands when a menu is shown. A label is display-only: a command is
-performed only when the run plays the line that owns it. Whether a label reaches
-the host with its commands removed is for choices (C2b) to decide.
+performed only when the run plays the line that owns it. So a label reaches the
+host with its commands removed: the `Offer` carries the words around them, and
+the line the option leads to performs them once the option is taken.
 
 ### S10 — Playing is its own step, beside arriving and leaving
 

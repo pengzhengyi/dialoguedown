@@ -1,9 +1,9 @@
 /**
- * The Explorer client: a lazy, expand/collapse tree of the project root's folders and
+ * @file The Explorer client: a lazy, expand/collapse tree of the project root's folders and
  * `.dialogue.md` scripts, with the active script highlighted and revealed. A folder loads its
- * children the first time it is expanded (one `GET /api/browse` per folder). The DOM building
- * lives here (unit-tested with jsdom); the browser wiring — `fetch`, and save-safe navigation —
- * is injected through {@link ExplorerPorts}.
+ * children the first time it is expanded (one `GET /api/browse` per folder). The DOM building lives
+ * here (unit-tested with jsdom); the browser wiring — `fetch`, and save-safe navigation — is
+ * injected through {@link ExplorerPorts}.
  */
 
 import { foldGlyphName } from "./fold-glyph";

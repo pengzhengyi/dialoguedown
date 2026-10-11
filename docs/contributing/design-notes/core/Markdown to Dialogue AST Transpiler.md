@@ -210,8 +210,7 @@ what the context admits (`Supports`) and whether `=>` is a jump (`SupportsJumps`
 | --- | --- | --- | --- |
 | `AllowAllInlinePolicy` | speech | everything; `=>` is a jump | — |
 | `TitleInlinePolicy` | heading titles | everything; `=>` is text | — |
-| `LiteralInlinePolicy` | link labels, alt text | text and styling | restored to its plain-text form |
-| `RejectingInlinePolicy` | an alternative label policy, not in the default composition | text and styling | dropped, reporting `DLG1103` |
+| `LabelInlinePolicy` | link labels, alt text | text, styling, and code spans | restored to its plain-text form |
 
 `InlineLeafTokenizer` builds `Repeated(Or(text, tag, jump)).ConsumeAll()` from the
 allowed leaves, dropping `jump` where jumps are off. It honors the
@@ -244,8 +243,8 @@ builder's policy, not a property of the parser.
 ### D9 — Report and recover
 
 A malformed surface reports a diagnostic and recovers, so the stage always returns
-a `ScriptDocument`. The transpiler reports `DLG1101`–`DLG1105` and `DLG1107`–`DLG1112`;
-each code's recovery is listed in
+a `ScriptDocument`. The transpiler reports `DLG1101`, `DLG1102`, `DLG1104`,
+`DLG1105`, and `DLG1107`–`DLG1112`; each code's recovery is listed in
 [Diagnostics and Validation](../diagnostics/Diagnostics%20and%20Validation.md#recovery-at-each-reporting-site).
 
 ## Error and boundary cases
@@ -261,7 +260,8 @@ each code's recovery is listed in
 | Empty emphasis (`****`) | Markdig leaves it as text, so `StyledText` is never empty. |
 | Content before the first heading | Part of the document body. |
 | Deeply nested choices | Represented faithfully; `DLG3002` advises past level 3. |
-| A game call or link inside a label | Restored to text by the default policy. |
+| A game call inside a label | Built as in speech; validation then reports a command with `DLG1103` and a condition with `DLG1106` (see [Game Calls in Labels](../language/Game%20Calls%20in%20Labels.md)). |
+| A link or image inside a label | Restored to text by the label policy. |
 | A node the front end ignored | Never reaches the transpiler. |
 
 ## Testability

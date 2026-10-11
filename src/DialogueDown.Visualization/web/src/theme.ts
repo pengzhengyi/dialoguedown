@@ -1,4 +1,9 @@
 /**
+ * @file The light, dark, or system color theme: the header control that picks it, and remembering
+ * the choice.
+ */
+
+/**
  * The reader's color-theme choice. "system" follows the OS (no override); "light" and
  * "dark" force the theme. The choice drives Pico's `data-theme` attribute (and the
  * editor's `--md-*` colors via CSS), and is remembered in `localStorage`.

@@ -1,3 +1,5 @@
+/** @file The button that enters and leaves full screen. */
+
 /**
  * Feather Icons (MIT): `maximize-2` (arrows pointing out) to enter full screen and
  * `minimize-2` (arrows pointing in) to leave it — the same outward/inward zoom arrows

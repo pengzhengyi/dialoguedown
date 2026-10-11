@@ -4,7 +4,9 @@ using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Visualization.Playbook;
-using static DialogueDown.Visualization.Tests.Support.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.PlaybookFactory;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
 
@@ -16,15 +18,15 @@ public sealed class PlaybookNodeSummarySegmentTests
 {
     private static readonly SpeechFragment[] _everyFragmentKind =
     [
-        new TextFragment("words"),
-        new StyledTextFragment(SpeechStyle.Italic, [new TextFragment("words")]),
-        new LinkFragment("target", [new TextFragment("words")]),
-        new ImageFragment("source.png", [new TextFragment("words")]),
-        new LineBreakFragment(),
-        new QueryFragment("Key"),
-        new DefaultCommandFragment("fade"),
-        new CustomCommandFragment("Show", ["a"]),
-        new TagFragment("wise", null, false),
+        Text("words"),
+        Italic("words"),
+        Link(),
+        Image(),
+        LineBreak(),
+        Query("Key"),
+        DefaultCommand("fade"),
+        CustomCommand("Show", "a"),
+        Tag("wise"),
     ];
 
     [Fact]
@@ -84,7 +86,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ABranch_PairsEachConditionWithTheNodeItReaches() =>
         AssertSegments(
-            Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
+            Branch(Arm("Alice.HasMap", target: 16), Else(target: 18)),
             [
                 ("keyword", "IF "),
                 ("query", "Alice.HasMap?"),
@@ -120,7 +122,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_AConditionalLine_LeadsWithItsCondition() =>
         AssertSegments(
-            Line("Take a torch.", speaker: 1, condition: If("Hero.IsBrave")),
+            Line("Take a torch.", speaker: 1, condition: "Hero.IsBrave"),
             [
                 ("keyword", "IF "),
                 ("query", "Hero.IsBrave?"),
@@ -183,7 +185,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_AQueryInSpeech_IsAQuery() =>
         AssertSegments(
-            LineOf([Words("You hold "), Query("Gold"), Words(" gold.")]),
+            LineOf([Text("You hold "), Query("Gold"), Text(" gold.")]),
             [
                 ("speaker", "<anonymous>"),
                 ("separator", ": "),
@@ -198,7 +200,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_BracesAWriterTyped_AreTheirWords() =>
         AssertSegments(
-            LineOf([Words("Write {hello} to greet.")]),
+            LineOf([Text("Write {hello} to greet.")]),
             [
                 ("speaker", "<anonymous>"),
                 ("separator", ": "),
@@ -209,7 +211,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_AQueryInsideStyledWords_IsStillAQuery() =>
         AssertSegments(
-            LineOf([Emphasized(Words("very "), Query("Gold"))]),
+            LineOf([Italic(Text("very "), Query("Gold"))]),
             [
                 ("speaker", "<anonymous>"),
                 ("separator", ": "),
@@ -223,7 +225,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ThePieces_JoinBackToTheLineTheTableShows()
     {
-        var branch = Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18));
+        var branch = Branch(Arm("Alice.HasMap", target: 16), Else(target: 18));
 
         Assert.Equal(
             "IF Alice.HasMap? THEN 16 ELSE 18",
@@ -264,7 +266,7 @@ public sealed class PlaybookNodeSummarySegmentTests
             fragment => Assert.Equal(
                 $"before{SpeechText.Of([fragment])}after",
                 string.Concat(
-                    SpeechPieces([Words("before"), fragment, Words("after")])
+                    SpeechPieces([Text("before"), fragment, Text("after")])
                         .Select(piece => piece.Text))));
 
     // A condition is a boolean query, so it takes the query role and the `?` the script marks it
@@ -280,7 +282,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ABranch_NamesTheNodesItsArmsReach() =>
         AssertTargets(
-            Branch(Arm("Alice.HasMap", target: 16), Arm(null, order: 1, target: 18)),
+            Branch(Arm("Alice.HasMap", target: 16), Else(target: 18)),
             [("16", 16), ("18", 18)]);
 
     [Fact]

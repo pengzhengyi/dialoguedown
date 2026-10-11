@@ -13,12 +13,11 @@ public sealed class ServeRootResolverTests
         var documentDirectory = Path.GetDirectoryName(Path.GetFullPath(document))!;
         var error = new StringWriter();
 
-        var serveRoot = ServeRootResolver.Resolve(
-            document, ["assets/pic.png"], explicitServeRoot: null, new ThrowingConsent(), error);
+        var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
+            document, ["assets/pic.png"], explicitServeRoot: null, new ThrowingConsent(), error));
 
-        Assert.NotNull(serveRoot);
-        Assert.Equal(documentDirectory, serveRoot.Value.RootDirectory);
-        Assert.Equal("/", serveRoot.Value.ReportPath);
+        Assert.Equal(documentDirectory, serveRoot.RootDirectory);
+        Assert.Equal("/", serveRoot.ReportPath);
         Assert.Equal(string.Empty, error.ToString());
     }
 
@@ -28,10 +27,10 @@ public sealed class ServeRootResolverTests
         using var tree = new TempTree();
         var document = tree.File("proj/scene.dialogue.md");
 
-        var serveRoot = ServeRootResolver.Resolve(
-            document, [], explicitServeRoot: null, new ThrowingConsent(), new StringWriter());
+        var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
+            document, [], explicitServeRoot: null, new ThrowingConsent(), new StringWriter()));
 
-        Assert.Equal("/", serveRoot!.Value.ReportPath);
+        Assert.Equal("/", serveRoot.ReportPath);
     }
 
     [Fact]
@@ -42,16 +41,16 @@ public sealed class ServeRootResolverTests
         var painting = tree.File("shared/painting.png");
         var consent = new StubConsent(allow: true);
 
-        var serveRoot = ServeRootResolver.Resolve(
-            document, ["../shared/painting.png"], explicitServeRoot: null, consent, new StringWriter());
+        var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
+            document, ["../shared/painting.png"], explicitServeRoot: null, consent, new StringWriter()));
 
-        Assert.NotNull(serveRoot);
-        Assert.Equal(Path.GetFullPath(tree.Root), serveRoot.Value.RootDirectory);
-        Assert.Equal("/proj/", serveRoot.Value.ReportPath);
-        Assert.NotNull(consent.Received);
-        Assert.Equal(Path.GetFullPath(tree.Root), consent.Received!.RootDirectory);
-        Assert.Equal(Path.GetFullPath(document), consent.Received.DocumentPath);
-        Assert.Contains(Path.GetFullPath(painting), consent.Received.OutsideImages);
+        Assert.Equal(Path.GetFullPath(tree.Root), serveRoot.RootDirectory);
+        Assert.Equal("/proj/", serveRoot.ReportPath);
+        var request = consent.Received;
+        Assert.NotNull(request);
+        Assert.Equal(Path.GetFullPath(tree.Root), request.RootDirectory);
+        Assert.Equal(Path.GetFullPath(document), request.DocumentPath);
+        Assert.Contains(Path.GetFullPath(painting), request.OutsideImages);
     }
 
     [Fact]
@@ -61,11 +60,11 @@ public sealed class ServeRootResolverTests
         var document = tree.File("proj/scene.dialogue.md");
         var documentDirectory = Path.GetDirectoryName(Path.GetFullPath(document))!;
 
-        var serveRoot = ServeRootResolver.Resolve(
-            document, ["../shared/painting.png"], explicitServeRoot: null, new StubConsent(allow: false), new StringWriter());
+        var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
+            document, ["../shared/painting.png"], explicitServeRoot: null, new StubConsent(allow: false), new StringWriter()));
 
-        Assert.Equal(documentDirectory, serveRoot!.Value.RootDirectory);
-        Assert.Equal("/", serveRoot.Value.ReportPath);
+        Assert.Equal(documentDirectory, serveRoot.RootDirectory);
+        Assert.Equal("/", serveRoot.ReportPath);
     }
 
     [Fact]
@@ -76,10 +75,10 @@ public sealed class ServeRootResolverTests
         var painting = tree.File("gallery/p.jpg");
         var consent = new StubConsent(allow: true);
 
-        var serveRoot = ServeRootResolver.Resolve(
-            document, [painting], explicitServeRoot: null, consent, new StringWriter());
+        var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
+            document, [painting], explicitServeRoot: null, consent, new StringWriter()));
 
-        Assert.Equal(Path.GetFullPath(tree.Root), serveRoot!.Value.RootDirectory);
+        Assert.Equal(Path.GetFullPath(tree.Root), serveRoot.RootDirectory);
         Assert.NotNull(consent.Received);
     }
 
@@ -89,11 +88,11 @@ public sealed class ServeRootResolverTests
         using var tree = new TempTree();
         var document = tree.File("proj/scene.dialogue.md");
 
-        var serveRoot = ServeRootResolver.Resolve(
-            document, ["../shared/x.png"], explicitServeRoot: tree.Root, new ThrowingConsent(), new StringWriter());
+        var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
+            document, ["../shared/x.png"], explicitServeRoot: tree.Root, new ThrowingConsent(), new StringWriter()));
 
-        Assert.Equal(Path.GetFullPath(tree.Root), serveRoot!.Value.RootDirectory);
-        Assert.Equal("/proj/", serveRoot.Value.ReportPath);
+        Assert.Equal(Path.GetFullPath(tree.Root), serveRoot.RootDirectory);
+        Assert.Equal("/proj/", serveRoot.ReportPath);
     }
 
     [Fact]

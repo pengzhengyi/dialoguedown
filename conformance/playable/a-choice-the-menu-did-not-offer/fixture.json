@@ -1,0 +1,20 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a menu refuses a choice past its last option, and stays open for another",
+  "playbook": "playbook.json",
+  "because": "positions count from 0, so the position equal to the number of options is the first one a menu does not have -- a runner counting from 1 would take it as the last option, and one that gave up on a bad choice would leave the player no way on",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
+    { "send": "next" },
+    { "expect": { "offer": { "ordered": false, "options": [
+        { "label": "Go east", "available": true },
+        { "label": "Go west", "available": true }
+      ] } } },
+    { "send": { "choose": 2 } },
+    { "expect": { "refused": { "reason": "no-such-option" } } },
+    { "send": { "choose": 1 } },
+    { "expect": { "said": { "speech": "Go west" } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

@@ -1,3 +1,8 @@
+/**
+ * @file Builds the report's tabs: one per stage, beside the optional Config, Source, and Playbook
+ * tabs. Returns a controller that refreshes them with new data.
+ */
+
 import type {
     Report,
     Stage,

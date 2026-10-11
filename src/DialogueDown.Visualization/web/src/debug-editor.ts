@@ -1,3 +1,8 @@
+/**
+ * @file Breakpoints and the current execution line in the Source editor, kept in step with the
+ * debugger controller.
+ */
+
 import {
     RangeSet,
     StateEffect,

@@ -4,7 +4,7 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
 using static DialogueDown.Runtime.Tests.Conformance.PlayabilityAssert;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -19,7 +19,7 @@ public sealed class PlayabilityTests
     [Fact]
     public void CanPlay_ASendNoReaderOwns_IsNot()
     {
-        AssertNotPlayable(Sent("""{ "choose": 0 }"""));
+        AssertNotPlayable(Sent("""{ "frobnicate": 0 }"""));
     }
 
     [Fact]
@@ -34,23 +34,33 @@ public sealed class PlayabilityTests
     {
         // A key no matcher owns would end the run where it is read, so the screen reports it before
         // the run starts.
-        AssertNotPlayable(Expected("""{ "asked": [] }"""));
+        AssertNotPlayable(Expected("""{ "invalidated": {} }"""));
     }
 
     [Fact]
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
         var context = PlayContextFactory.Of(
-            [Choice(0, leadsTo: 3), Choice(1, leadsTo: 3), RandomChoice(2, leadsTo: 3), End(3)],
+            [RandomChoice(EvenChance(target: 2)), RandomChoice(id: 1, EvenChance(target: 2)), End(id: 2)],
             ["Alice"]);
 
-        AssertNotPlayable(context, "nothing plays a ChoiceNode yet", "nothing plays a RandomChoiceNode yet");
+        AssertNotPlayable(context, "nothing plays a RandomChoiceNode yet");
+    }
+
+    [Fact]
+    public void WhyNotPlayable_OfAMenuThatAsksTheWorld_SaysSoRatherThanNamingItsKind()
+    {
+        // This build plays menus, so naming the kind would say the wrong thing is missing.
+        var context = PlayContextFactory.Of(
+            [PlayContextFactory.AMenuWithAConditionalOption(), End(id: 1), End(id: 2)], ["Alice"]);
+
+        AssertNotPlayable(context, "nothing offers a menu that asks the world yet");
     }
 
     [Fact]
     public void WhyNotPlayable_OfASendNoReaderOwns_NamesItsCommand()
     {
-        AssertNotPlayable(Sent("""{ "choose": 0 }"""), "nothing sends choose yet");
+        AssertNotPlayable(Sent("""{ "frobnicate": 0 }"""), "nothing sends frobnicate yet");
     }
 
     [Fact]
@@ -64,9 +74,9 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAnExpectation_NamesEachClaimNobodyChecks()
     {
         var session = ImmutableArray.Create<SessionEntry>(
-            Expected("""{ "asked": [ { "label": "Go east" } ], "frobnicate": true }"""));
+            Expected("""{ "invalidated": {}, "frobnicate": true }"""));
 
-        AssertNotPlayable(session, "nothing checks asked yet", "nothing checks frobnicate yet");
+        AssertNotPlayable(session, "nothing checks invalidated yet", "nothing checks frobnicate yet");
     }
 
     [Fact]
@@ -76,26 +86,26 @@ public sealed class PlayabilityTests
             SentCommand("next"),
             SentCommand("frobnicate"),
             SentCommand("frobnicate"),
-            Sent("""{ "choose": 0 }"""),
-            Sent("""{ "choose": 1 }"""));
+            Sent("""{ "twiddle": 0 }"""),
+            Sent("""{ "twiddle": 1 }"""));
 
-        AssertNotPlayable(session, "nothing sends frobnicate yet", "nothing sends choose yet");
+        AssertNotPlayable(session, "nothing sends frobnicate yet", "nothing sends twiddle yet");
     }
 
     [Fact]
     public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
     {
         // The harness screens a playbook before stepping, and the screen restates what the runner
-        // can play, so the two must agree.
-        foreach (var node in OneOfEveryNodeKind())
+        // can play, so the two must agree: on every kind, and on the menus refused for what they ask.
+        foreach (var (name, node) in EveryKindAndEveryMenuThatAsksTheWorld())
         {
             var refused = node.RefusalOnArrival() is not null;
 
             Assert.True(
                 Playability.CanPlay(node) == !refused,
-                $"{node.GetType().Name}: the harness calls it "
+                $"{name}: the harness calls it "
                     + $"{(Playability.CanPlay(node) ? "playable" : "unplayable")}, "
-                    + $"but arriving at one {(refused ? "refuses" : "does not refuse")}.");
+                    + $"but arriving at it {(refused ? "refuses" : "does not refuse")}.");
         }
     }
 
@@ -104,6 +114,20 @@ public sealed class PlayabilityTests
     {
         // Guards the guard: a list that stopped naming kinds would leave the check above agreeing
         // about nothing.
-        UnionCoverageAssert.AssertCoversEveryMember<Node>(OneOfEveryNodeKind());
+        UnionCoverageAssert.AssertCoversEveryMember<Node>(PlayContextFactory.OneOfEveryNodeKind());
     }
+
+    /// <summary>
+    /// One node of every kind, named by its kind, and each menu that asks the world, named by the
+    /// scenario that builds it.
+    /// </summary>
+    /// <returns>Each node, with the name a failure reports it by.</returns>
+    private static IEnumerable<(string Name, Node Node)> EveryKindAndEveryMenuThatAsksTheWorld() =>
+    [
+        .. PlayContextFactory.OneOfEveryNodeKind().Select(node => (node.GetType().Name, node)),
+        (
+            nameof(PlayContextFactory.AMenuWithAConditionalOption),
+            PlayContextFactory.AMenuWithAConditionalOption()),
+        (nameof(PlayContextFactory.AMenuWithAQueryInALabel), PlayContextFactory.AMenuWithAQueryInALabel()),
+    ];
 }

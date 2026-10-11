@@ -1,16 +1,16 @@
-import type { TagView } from "./model";
-
 /**
- * One tag, drawn the same capsule wherever the report shows it — the Config tab, the Semantic
+ * @file One tag, drawn the same capsule wherever the report shows it — the Config tab, the Semantic
  * Model, and the Playbook.
  *
  * Color carries two things at once, deliberately kept apart. The capsule itself keeps the
  * palette's canonical **tag** hue, so a reader who has learned that pink means "tag" in the graph
- * legend reads it the same way in a table; reserved names DialogueDown owns wear a distinct
+ * legend reads it the same way in a table; reserved names DialogueDown owns are drawn in a distinct
  * violet, because for them the kind *is* the identity. The tag's own identity moves to a small
- * leading dot, whose hue is derived from the tag's name — so `#wise` wears the same dot in every
+ * leading dot, whose hue is derived from the tag's name — so `#wise` has the same dot in every
  * table and every tab, and `role=guide` shares its dot with `role=merchant`.
  */
+
+import type { TagView } from "./model";
 
 /**
  * Hues for the identity dot. Deliberately a separate, small set from the semantic

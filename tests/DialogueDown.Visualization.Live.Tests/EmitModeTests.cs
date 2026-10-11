@@ -9,23 +9,21 @@ public sealed class EmitModeTests
     [Fact]
     public void Run_Dot_WithOutput_WritesDigraphToTheFileNotStdout()
     {
-        using var script = new TempScript("# Scene\n\nAlice: Hi.");
+        using var tree = new TempTree();
+        var script = tree.File("scene.dialogue.md", """
+            # Scene
+
+            Alice: Hi.
+            """);
+        var output = Path.Combine(tree.Root, "graph.dot");
         var stdout = new StringWriter();
-        var output = Path.Combine(Path.GetTempPath(), $"dd-emit-{Guid.NewGuid():N}.dot");
 
-        try
-        {
-            var code = EmitMode.Run(script.Path, EmitFormat.Dot, output, CompilerOptions.Default, stdout, new StringWriter());
+        var code = EmitMode.Run(script, EmitFormat.Dot, output, CompilerOptions.Default, stdout, new StringWriter());
 
-            Assert.Equal(0, code);
-            Assert.True(File.Exists(output));
-            Assert.Contains("digraph", File.ReadAllText(output));
-            Assert.Equal(string.Empty, stdout.ToString());
-        }
-        finally
-        {
-            File.Delete(output);
-        }
+        Assert.Equal(0, code);
+        Assert.True(File.Exists(output));
+        Assert.Contains("digraph", File.ReadAllText(output));
+        Assert.Equal(string.Empty, stdout.ToString());
     }
 
     [Fact]

@@ -1,3 +1,7 @@
+/**
+ * @file Copies the text of any clicked element marked `data-copy`, and confirms it with a toast.
+ */
+
 import { copyToClipboard } from "./path-display";
 import { showToast } from "./toast";
 

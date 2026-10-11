@@ -1,5 +1,6 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
+
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class VersionCheckerTests
@@ -23,8 +24,7 @@ public sealed class VersionCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(
             () => checker.Check(PlaybookFactory.Document(format: PlaybookFactory.Format(99))));
 
-        Assert.Contains("99", error.Message, StringComparison.Ordinal);
-        Assert.Contains("1", error.Message, StringComparison.Ordinal);
+        Assert.Equal("This playbook is version 99, and this build reads up to 1.", error.Message);
     }
 
     [Fact]
@@ -35,8 +35,7 @@ public sealed class VersionCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(
             () => checker.Check(PlaybookFactory.Document(format: PlaybookFactory.Format(1))));
 
-        Assert.Contains("1", error.Message, StringComparison.Ordinal);
-        Assert.Contains("3", error.Message, StringComparison.Ordinal);
+        Assert.Equal("This playbook is version 1, and this build reads back to 3.", error.Message);
     }
 
     [Fact]

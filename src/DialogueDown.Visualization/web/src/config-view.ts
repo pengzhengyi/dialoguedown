@@ -1,3 +1,8 @@
+/**
+ * @file The Config tab: the `dialogue.toml` file beside the configuration it applies, editable in a
+ * served session.
+ */
+
 import { EditorState, Compartment } from "@codemirror/state";
 import {
     EditorView,

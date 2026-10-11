@@ -9,8 +9,9 @@ author: DialogueDown examples
   source. Each mistake is labeled with the DLG code it triggers; the other
   examples show the same constructs used correctly.
 
-  The mistakes here are all warnings before the semantic stage plus a few
-  semantic-stage errors, so every pipeline stage still has something to show.
+  None of the mistakes is an error from parsing or transpiling, which would halt
+  the compile before the later stages, so every pipeline stage still has
+  something to show.
 -->
 
 # The Foyer
@@ -33,6 +34,9 @@ A door groans somewhere above you. Two ways lead deeper into the dark.
 
 <!-- DLG2007 (error): @caretaker is referenced but never declared with a name. -->
 @caretaker: Pay the specter no mind. This way, quickly.
+
+<!-- DLG1103 (error): a command inside a label never runs. -->
+- => [Leave `SlamDoor()`](#the-foyer)
 
 <!-- DLG1003 (warning): text after a jump on one line can never play. -->
 => [The Foyer](#the-foyer) and the candle went out.

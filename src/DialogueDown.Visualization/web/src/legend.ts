@@ -1,3 +1,8 @@
+/**
+ * @file A stage's legend: its node categories, regions, and edge kinds with their counts, and the
+ * commands that fold every region.
+ */
+
 import type { DisplayEdge, DisplayNode, Stage } from "./model";
 import { CATEGORY_COLORS } from "./palette";
 import { edgeStyle } from "./edge-style";

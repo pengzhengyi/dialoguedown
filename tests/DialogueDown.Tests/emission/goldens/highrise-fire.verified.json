@@ -331,7 +331,6 @@
         {
           "kind": "branch",
           "target": 12,
-          "order": 0,
           "condition": {
             "kind": "key",
             "key": "DoorIsHot"
@@ -339,8 +338,7 @@
         },
         {
           "kind": "branch",
-          "target": 15,
-          "order": 1
+          "target": 15
         }
       ]
     },

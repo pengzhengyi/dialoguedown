@@ -1,3 +1,8 @@
+/**
+ * @file The controls Live Edit shows: the Auto/Manual save switch, the save status, and Save and
+ * Discard.
+ */
+
 import type { AppController } from "./app";
 import type {
     DiskLoad,

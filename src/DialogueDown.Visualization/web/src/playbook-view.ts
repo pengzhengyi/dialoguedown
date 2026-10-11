@@ -1,3 +1,8 @@
+/**
+ * @file The Playbook tab: the compiled playbook's JSON beside tables summarizing its speakers,
+ * anchors, and nodes.
+ */
+
 import { EditorState } from "@codemirror/state";
 import {
     EditorView,

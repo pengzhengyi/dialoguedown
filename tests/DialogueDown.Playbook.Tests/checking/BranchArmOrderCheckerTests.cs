@@ -1,8 +1,7 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Playbook.Tests.Checking;
 
@@ -11,13 +10,13 @@ public sealed class BranchArmOrderCheckerTests
     private readonly BranchArmOrderChecker _checker = new();
 
     [Fact]
-    public void Check_ABranchWhoseArmsAscendWithTheElseLast_IsAccepted()
+    public void Check_ABranchWhoseElseIsLast_IsAccepted()
     {
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                new BranchNode(0, [Arm(1, 0), Arm(1, 1), Arm(1, 2, isElse: true)]),
-                new EndNode(1),
+                Branch(Arm("HasMap", target: 1), Arm("HasMap", target: 1), Else(target: 1)),
+                End(id: 1),
             ]);
 
         _checker.Check(playbook);
@@ -26,9 +25,8 @@ public sealed class BranchArmOrderCheckerTests
     [Fact]
     public void Check_ABranchWithASingleGatedArm_IsAccepted()
     {
-        // One gated arm is trivially in order.
         var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [Arm(1, 0)]), new EndNode(1)]);
+            nodes: [Branch(Arm("HasMap", target: 1)), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -38,20 +36,14 @@ public sealed class BranchArmOrderCheckerTests
     {
         // An else is the fallback for gated arms; with no gated arm, the branch tests nothing.
         var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [Arm(1, 0, isElse: true)]), new EndNode(1)]);
+            nodes: [Branch(Else(target: 1)), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("gated", error.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void Check_ABranchWhoseOrdersHaveAGap_IsAccepted()
-    {
-        var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [Arm(1, 0), Arm(1, 2, isElse: true)]), new EndNode(1)]);
-
-        _checker.Check(playbook);
+        Assert.Equal(
+            "Node 0, a branch, carries no gated arm; every arm is an else. "
+                + "A branch is a block condition, so at least one arm carries one.",
+            error.Message);
     }
 
     [Fact]
@@ -61,8 +53,8 @@ public sealed class BranchArmOrderCheckerTests
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                new BranchNode(0, [new SuccessionEdge(1), Arm(1, 0), Arm(1, 1, isElse: true)]),
-                new EndNode(1),
+                Branch(new SuccessionEdge(1), Arm("HasMap", target: 1), Else(target: 1)),
+                End(id: 1),
             ]);
 
         _checker.Check(playbook);
@@ -71,56 +63,42 @@ public sealed class BranchArmOrderCheckerTests
     [Fact]
     public void Check_ABranchWithNoArms_IsIgnored()
     {
-        // An arm count of zero is the outward-shape rule's to refuse; this rule has nothing to order.
+        // An arm count of zero is the outward-shape rule's to refuse; this rule has nothing to check.
         var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, []), new EndNode(1)]);
+            nodes: [Branch(), End(id: 1)]);
 
         _checker.Check(playbook);
     }
 
     [Fact]
-    public void Check_ABranchWhoseArmsAreOutOfOrder_IsRefused()
-    {
-        var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [Arm(1, 1), Arm(1, 0, isElse: true)]), new EndNode(1)]);
-
-        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
-
-        Assert.Contains("order", error.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void Check_ABranchWithTwoArmsSharingAnOrder_IsRefused()
-    {
-        var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [Arm(1, 0), Arm(1, 0, isElse: true)]), new EndNode(1)]);
-
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
-    }
-
-    [Fact]
     public void Check_ABranchWhoseElseIsNotLast_IsRefused()
     {
-        // The orders ascend, but the conditionless arm still comes before a gated one.
         var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [Arm(1, 0, isElse: true), Arm(1, 1)]), new EndNode(1)]);
+            nodes: [Branch(Else(target: 1), Arm("HasMap", target: 1)), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("else", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            "Node 0, a branch, carries its else arm before another arm; the else is tried last.",
+            error.Message);
     }
 
     [Fact]
-    public void Check_ABranchWithTwoConditionlessArms_IsRefused()
+    public void Check_ABranchWithASecondElse_IsRefused()
     {
+        // Only one arm can be last, so the first else comes before another arm.
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                new BranchNode(0, [Arm(1, 0, isElse: true), Arm(1, 1, isElse: true)]),
-                new EndNode(1),
+                Branch(Arm("HasMap", target: 1), Else(target: 1), Else(target: 1)),
+                End(id: 1),
             ]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal(
+            "Node 0, a branch, carries its else arm before another arm; the else is tried last.",
+            error.Message);
     }
 
     [Fact]
@@ -129,11 +107,7 @@ public sealed class BranchArmOrderCheckerTests
         // A line is not a branch, so its edges are left to the outward-shape rule.
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes:
-            [
-                new LineNode(0, 0, [], null, [new BranchEdge(1, 5, null), new BranchEdge(1, 2, null)]),
-                new EndNode(1),
-            ]);
+            nodes: [SilentLine(ways: [Else(target: 1), Arm("HasMap", target: 1)]), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -143,9 +117,4 @@ public sealed class BranchArmOrderCheckerTests
     {
         Assert.Throws<ArgumentNullException>(() => _checker.Check(null!));
     }
-
-    private static KeyCondition Key() => new("HasMap");
-
-    private static BranchEdge Arm(int to, int order, bool isElse = false) =>
-        new(to, order, isElse ? null : Key());
 }

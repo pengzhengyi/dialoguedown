@@ -76,9 +76,9 @@ internal static class DialogueGraphFactory
         NodeId target, ChoiceWeight? weight = null, Condition? condition = null) =>
         new(target, weight ?? DialogueAstFactory.AutoWeight(), condition);
 
-    /// <summary>One arm of a conditional block, tried in <paramref name="order"/>.</summary>
-    public static BranchEdge BranchEdge(NodeId target, int order = 0, Condition? condition = null) =>
-        new(target, order, condition);
+    /// <summary>One arm of a conditional block; with no condition, it is the else.</summary>
+    public static BranchEdge BranchEdge(NodeId target, Condition? condition = null) =>
+        new(target, condition);
 
     /// <summary>A divert to <paramref name="target"/>, labelled as a writer would have.</summary>
     public static DivertEdge DivertEdge(

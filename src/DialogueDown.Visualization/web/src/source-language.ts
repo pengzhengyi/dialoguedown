@@ -1,3 +1,5 @@
+/** @file The Source editor's language: optional YAML front matter followed by Markdown. */
+
 import { markdown } from "@codemirror/lang-markdown";
 import { yamlFrontmatter } from "@codemirror/lang-yaml";
 

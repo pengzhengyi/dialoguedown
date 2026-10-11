@@ -1,10 +1,9 @@
-using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -13,7 +12,7 @@ public sealed class ExpectationMatchersTests
     private const string SaidHi = """{ "said": { "speaker": "Alice", "speech": "Hi" } }""";
 
     private static readonly Said _hello =
-        new("Alice", ImmutableArray.Create<SpeechFragment>(new TextFragment("Hi")));
+        new("Alice", [Text("Hi")]);
 
     [Fact]
     public void AClaimThatHoldsConforms()

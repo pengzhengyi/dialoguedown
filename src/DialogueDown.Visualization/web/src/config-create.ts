@@ -1,3 +1,8 @@
+/**
+ * @file Creates a `dialogue.toml` for a project that has none, then reloads the report on its
+ * Config tab.
+ */
+
 const CREATE_CONFIG_URL = "/api/create-config";
 const OPEN_CONFIG_KEY = "dd-open-config-after-create";
 

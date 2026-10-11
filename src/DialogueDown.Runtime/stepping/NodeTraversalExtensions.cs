@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
@@ -10,7 +11,8 @@ namespace DialogueDown.Runtime.Stepping;
 /// </summary>
 /// <remarks>
 /// A jump and a block condition's arms are taken as the world allows, the first allowed in the
-/// order written; when none is allowed, the run falls through to the succession.
+/// order written; when none is allowed, the run falls through to the succession. A menu's options
+/// are taken as the player chooses.
 /// </remarks>
 internal static class NodeTraversalExtensions
 {
@@ -25,6 +27,19 @@ internal static class NodeTraversalExtensions
         ArgumentNullException.ThrowIfNull(node);
 
         return node.Out.OfType<SuccessionEdge>().SingleOrDefault()?.Target;
+    }
+
+    /// <summary>The options a menu offers the player, in the order its node lists them.</summary>
+    /// <remarks>
+    /// A choice node's fall-through is not an option, so it is never offered or chosen.
+    /// </remarks>
+    /// <param name="menu">The menu.</param>
+    /// <returns>The menu's option edges.</returns>
+    public static ImmutableArray<OptionEdge> Options(this ChoiceNode menu)
+    {
+        ArgumentNullException.ThrowIfNull(menu);
+
+        return [.. menu.Out.OfType<OptionEdge>()];
     }
 
     /// <summary>Where a node leads on to, when no way out needs the world's answer.</summary>
@@ -64,8 +79,7 @@ internal static class NodeTraversalExtensions
         return node.FirstWayOutTaken(way => way.IsAllowed(supply)) ?? node.SuccessionTarget();
     }
 
-    // The reader refuses a branch whose arms are out of order, so the array order is the order the
-    // arms are tried.
+    // A branch's arms are tried in the order they appear, so the first one allowed is the arm taken.
     private static int? FirstWayOutTaken(this Node node, Func<IConditional, bool> isTaken) =>
         node.Out
             .FirstOrDefault(way => way is DivertEdge or BranchEdge && isTaken((IConditional)way))

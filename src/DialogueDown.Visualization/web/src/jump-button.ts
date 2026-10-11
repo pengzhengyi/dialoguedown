@@ -1,3 +1,5 @@
+/** @file The **Jump to source** button beside a node's title in a details panel. */
+
 import tippy from "tippy.js";
 import { codicon } from "./codicon";
 import type { DisplayNode, Span } from "./model";

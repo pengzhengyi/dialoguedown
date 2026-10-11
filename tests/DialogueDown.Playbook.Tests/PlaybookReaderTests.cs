@@ -27,13 +27,13 @@ public sealed class PlaybookReaderTests
     [Fact]
     public void Read_ACheckerThatRefuses_SaysWhyRatherThanReturning()
     {
-        _checker.When(check => check.Check(Arg.Any<PlaybookDocument>()))
-            .Throw(new InvalidPlaybookException("the entry leads nowhere"));
+        var refusal = new InvalidPlaybookException("the entry leads nowhere");
+        _checker.When(check => check.Check(Arg.Any<PlaybookDocument>())).Throw(refusal);
 
         var error = Assert.Throws<InvalidPlaybookException>(
             () => new PlaybookReader(_checker).Read(Playbook()));
 
-        Assert.Contains("leads nowhere", error.Message, StringComparison.Ordinal);
+        Assert.Same(refusal, error);
     }
 
     [Fact]

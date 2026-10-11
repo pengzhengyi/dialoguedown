@@ -1,3 +1,5 @@
+/** @file The zoom controls over a graph: zoom in and out, type a percentage, or reset. */
+
 /** The factor each zoom-in/out button press multiplies (or divides) the scale by. */
 export const ZOOM_STEP = 1.3;
 

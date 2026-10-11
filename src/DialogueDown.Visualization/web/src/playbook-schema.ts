@@ -1,13 +1,5 @@
-import { hoverTooltip, Decoration, EditorView } from "@codemirror/view";
-import type { DecorationSet, Tooltip } from "@codemirror/view";
-import { StateEffect, StateField } from "@codemirror/state";
-import type { EditorState } from "@codemirror/state";
-import schema from "../../../../schema/playbook-0.schema.json";
-import { escapeHtml } from "./text";
-import { blockEnd, depthOf, opensBlock } from "./playbook-json";
-
 /**
- * Schema-driven hover for the playbook editor: hovering a property shows what the format says
+ * @file Schema-driven hover for the playbook editor: hovering a property shows what the format says
  * that property means, the way an editor does for a `$schema`-linked JSON file.
  *
  * The descriptions come from the published playbook schema itself, imported here rather than
@@ -18,6 +10,14 @@ import { blockEnd, depthOf, opensBlock } from "./playbook-json";
  * up front. The playbook format is recursive — a fragment holds fragments — so a table of every
  * path would not terminate; following `$ref`s only as deep as the reader hovers does.
  */
+
+import { hoverTooltip, Decoration, EditorView } from "@codemirror/view";
+import type { DecorationSet, Tooltip } from "@codemirror/view";
+import { StateEffect, StateField } from "@codemirror/state";
+import type { EditorState } from "@codemirror/state";
+import schema from "../../../../schema/playbook-0.schema.json";
+import { escapeHtml } from "./text";
+import { blockEnd, depthOf, opensBlock } from "./playbook-json";
 
 /** How far a `$ref` chain is followed before the schema is assumed to be cyclic. */
 const MAX_HOPS = 16;

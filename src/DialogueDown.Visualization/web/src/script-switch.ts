@@ -1,7 +1,7 @@
 /**
- * Opening another script **in place**: ask the server to change its active document, fetch the new
- * report, and repaint — instead of loading a whole page. The reader keeps the window they were
- * working in, so their zoom and open tab survive the move.
+ * @file Opening another script **in place**: ask the server to change its active document, fetch
+ * the new report, and repaint — instead of loading a whole page. The reader keeps the window they
+ * were working in, so their zoom and open tab survive the move.
  *
  * The browser wiring (`fetch`, `history`, `location`) is injected through
  * {@link ScriptSwitchPorts}, so the sequence is unit-testable.

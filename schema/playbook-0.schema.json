@@ -454,8 +454,7 @@
           "type": "object",
           "required": [
             "kind",
-            "target",
-            "order"
+            "target"
           ],
           "properties": {
             "kind": {
@@ -464,16 +463,11 @@
             "target": {
               "$ref": "#/$defs/nodeReference"
             },
-            "order": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Where this arm sits in the order they are tried. Written because a reader is not obliged to keep a JSON array in the order it was given."
-            },
             "condition": {
               "$ref": "#/$defs/condition"
             }
           },
-          "description": "One arm of a conditional block."
+          "description": "One arm of a conditional block, or its else when it has no condition."
         },
         {
           "type": "object",
@@ -616,7 +610,7 @@
     },
     "branchOut": {
       "type": "array",
-      "description": "A branch's arms: at least one gated and at most one else, plus at most one succession.",
+      "description": "A branch's arms, in the order they are tried: at least one gated and at most one else, which comes last, plus at most one succession. Whether the else comes last is checked on load: a schema cannot compare positions.",
       "items": {
         "$ref": "#/$defs/edge",
         "properties": {
@@ -716,7 +710,7 @@
             },
             "ordered": {
               "const": true,
-              "description": "Present only when the options must be offered in the order given."
+              "description": "Present only when the options must be shown in the order given. Every menu is offered in that order, and without this a host may show the options in any order."
             },
             "out": {
               "$ref": "#/$defs/choiceOut"

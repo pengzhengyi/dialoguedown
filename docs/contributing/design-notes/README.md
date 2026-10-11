@@ -115,7 +115,8 @@ flowchart LR
     SPT --> RN["6. Runner"]
     RN --> AW["7. Asking the World"]
     AW --> SL["8. Speaking a Line"]
-    SL --> RUN(["players, adapters"])
+    SL --> OC["9. Offering a Choice"]
+    OC --> RUN(["players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
@@ -128,6 +129,7 @@ flowchart LR
 | 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |
 | 7 | [Asking the World](./runtime/Asking%20the%20World.md) | How the runner asks the world: `Resolve` answered by `Supply`, for conditions, block conditions, and queries in speech | Implemented |
 | 8 | [Speaking a Line](./runtime/Speaking%20a%20Line.md) | How the runner plays a line's words and commands in written order, stopping inside the line only before a query written after a command | Implemented |
+| 9 | [Offering a Choice](./runtime/Offering%20a%20Choice.md) | How the runner offers a menu with `Offer`, and follows the option the player takes with `Choose` | Partially implemented |
 
 ### Language constructs
 
@@ -145,6 +147,7 @@ first, since a construct threads through them.
 | [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./language/Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
+| [Game Calls in Labels](./language/Game%20Calls%20in%20Labels.md) | Which game calls a link label, alt text, or menu option may hold: a query is filled like one in speech, a command or condition is reported | Implemented |
 | [Cross-File Jump Resolution](./language/Cross-File%20Jump%20Resolution.md) | Resolve a jump that targets a scene in another script (`chapter-02.dialogue.md#meet-bob`) across a project, via a linker | Proposed |
 
 ### Configuration

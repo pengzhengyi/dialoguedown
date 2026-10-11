@@ -1,9 +1,8 @@
 /**
- * Arrow controls for the stage-tab row. The row scrolls horizontally on a narrow window, but
- * a horizontal scroll gesture is not something every pointing device offers — a plain wheel
- * mouse or a trackpad-less desktop has no way to reach an off-screen tab except by tabbing
- * through it. These give that reader an explicit control, and stay hidden when the whole row
- * already fits.
+ * @file Arrow controls for the stage-tab row. The row scrolls horizontally on a narrow window, but
+ * a horizontal scroll gesture is not something every pointing device offers — a plain wheel mouse
+ * or a trackpad-less desktop has no way to reach an off-screen tab except by tabbing through it.
+ * These give that reader an explicit control, and stay hidden when the whole row already fits.
  */
 
 /** How much of the visible row a single press travels, leaving a tab of context behind. */

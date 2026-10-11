@@ -1,3 +1,8 @@
+/**
+ * @file The graph tabs' inspector: details of the selected node, region, or edge, including a
+ * node's source and a rendered preview.
+ */
+
 import type { DisplayNode, Span } from "./model";
 import { colorOf } from "./palette";
 import { ellipsize, escapeHtml, renderNodePreview } from "./text";

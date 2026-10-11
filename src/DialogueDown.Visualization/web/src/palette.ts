@@ -1,3 +1,5 @@
+/** @file The colors each node category is drawn in, shared by every stage. */
+
 /**
  * Semantic color palette. The projection tags each node with a stable,
  * cross-stage category; a later stage reuses the same name for a corresponding

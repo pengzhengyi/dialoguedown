@@ -1,3 +1,8 @@
+/**
+ * @file A panel under the Source editor listing the jump targets the language reserves, each with a
+ * link to copy.
+ */
+
 import { StateEffect, StateField, type Extension } from "@codemirror/state";
 import { EditorView, showPanel, type Panel, type ViewUpdate } from "@codemirror/view";
 import tippy, { type Instance } from "tippy.js";

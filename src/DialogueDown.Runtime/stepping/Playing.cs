@@ -7,9 +7,9 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What playing a node hands the host — a line's words and commands, a control block's effects, or
-/// the end — and what follows once the host has done what the node asked, or once the world has
-/// answered what a line needs part-way through.
+/// What playing a node hands the host — a line's words and commands, a control block's effects, a
+/// menu's options, or the end — and what follows once the host has done what the node asked, or
+/// once the world has answered what a line needs part-way through.
 /// </summary>
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
@@ -32,6 +32,7 @@ internal static class Playing
         {
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
+            ChoiceNode choice => Choosing.Offer(position, choice),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
         };

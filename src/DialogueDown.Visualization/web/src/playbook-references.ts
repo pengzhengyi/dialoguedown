@@ -1,3 +1,16 @@
+/**
+ * @file Following an index in the rendered playbook to the node or speaker it names.
+ *
+ * The playbook is full of bare integers that point somewhere — `"entry": 0`, an edge's
+ * `"target": 5`, a line's `"speaker": 1`, an anchor's node. Each becomes a link: its digits carry
+ * a `dd-playbook-ref` mark, a click follows it, and `F12` follows the one on the cursor's line.
+ * The jump stays in the same editor, reusing the line-finding the summary tables' jumps use.
+ *
+ * Like the rest of the tab's reading, this works off the text: the document is `WriteIndented`
+ * output and therefore exactly regular, and text answers the same however far the reader has
+ * scrolled (see [`playbook-json`](./playbook-json.ts)).
+ */
+
 import { RangeSetBuilder, type EditorState, type Extension } from "@codemirror/state";
 import {
     Decoration,
@@ -10,19 +23,6 @@ import {
 } from "@codemirror/view";
 import { schemaPathAt, referenceTypeAt, type ReferenceType } from "./playbook-schema";
 import { elementLine, nodeLine, revealLine } from "./playbook-jump";
-
-/**
- * Following an index in the rendered playbook to the node or speaker it names.
- *
- * The playbook is full of bare integers that point somewhere — `"entry": 0`, an edge's
- * `"target": 5`, a line's `"speaker": 1`, an anchor's node. Each becomes a link: its digits carry
- * a `dd-playbook-ref` mark, a click follows it, and `F12` follows the one on the cursor's line.
- * The jump lands in the same editor, reusing the line-finding the summary tables' jumps use.
- *
- * Like the rest of the tab's reading, this works off the text: the document is `WriteIndented`
- * output and therefore exactly regular, and text answers the same however far the reader has
- * scrolled (see [`playbook-json`](./playbook-json.ts)).
- */
 
 /** A reference the reader can follow: which list it points into, and the index it names. */
 export interface Reference {

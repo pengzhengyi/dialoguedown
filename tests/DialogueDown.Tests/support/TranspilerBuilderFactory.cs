@@ -19,7 +19,7 @@ internal static class TranspilerBuilderFactory
 
     public static InlineLeafBuilder InlineLeafBuilder() => new(TagBuilder());
 
-    public static InlineBuilder InlineBuilder() => InlineBuilder(new LiteralInlinePolicy());
+    public static InlineBuilder InlineBuilder() => InlineBuilder(new LabelInlinePolicy());
 
     public static InlineBuilder InlineBuilder(IInlinePolicy labelPolicy) =>
         new(InlineLeafBuilder(), GameCallBuilder(), labelPolicy);

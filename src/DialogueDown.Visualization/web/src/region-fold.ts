@@ -1,5 +1,5 @@
 /**
- * Folding a scene: the graph seen with one region contracted to a single box.
+ * @file Folding a scene: the graph seen with one region contracted to a single box.
  *
  * The scene's nodes contract to one box, the edges that crossed its border are re-pointed at that
  * box, and the edges wholly inside are dropped with the nodes they joined. Everything downstream

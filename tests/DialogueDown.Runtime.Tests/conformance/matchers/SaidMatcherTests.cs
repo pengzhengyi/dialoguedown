@@ -1,9 +1,8 @@
-using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -24,9 +23,9 @@ public sealed class SaidMatcherTests
     {
         AssertConformed(Match(
             new Said("Alice", [
-                new TextFragment("My key is "),
-                new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("rusty")]),
-                new TextFragment("."),
+                Text("My key is "),
+                Bold("rusty"),
+                Text("."),
             ]),
             """{ "speaker": "Alice", "speech": "My key is rusty." }"""));
     }
@@ -106,7 +105,7 @@ public sealed class SaidMatcherTests
     {
         // A fixture may write a fragment's properties in any order; the speech is the same.
         AssertConformed(Match(
-            new Said("Alice", [new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("Hi")])]),
+            new Said("Alice", [Bold("Hi")]),
             """{ "speaker": "Alice", "speech": [ { "kind": "styled", "children": [ { "kind": "text", "text": "Hi" } ], "style": "bold" } ] }"""));
     }
 
@@ -123,7 +122,7 @@ public sealed class SaidMatcherTests
     {
         AssertDiverged(
             Match(
-                new Said("Alice", [new TextFragment("Hi"), new TextFragment("there")]),
+                new Said("Alice", [Text("Hi"), Text("there")]),
                 """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hi" }, { "kind": "text", "text": "friend" } ] }"""),
             "fragment 1",
             "friend",
@@ -135,7 +134,7 @@ public sealed class SaidMatcherTests
     {
         // The counts agree, so every fragment is compared and every mismatch is named.
         var outcome = Match(
-            new Said("Alice", [new TextFragment("Hi"), new TextFragment("there")]),
+            new Said("Alice", [Text("Hi"), Text("there")]),
             """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hey" }, { "kind": "text", "text": "friend" } ] }""");
 
         AssertDiverged(outcome, "fragment 0", "Hey", "fragment 1", "friend");
@@ -150,7 +149,7 @@ public sealed class SaidMatcherTests
     }
 
     private static Said Spoke(string? speaker, string text) =>
-        new(speaker, ImmutableArray.Create<SpeechFragment>(new TextFragment(text)));
+        new(speaker, [Text(text)]);
 
     private SessionOutcome Match(Event happened, string expectation) =>
         _matcher.Match(happened, JsonNode.Parse(expectation)!);

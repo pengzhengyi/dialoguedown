@@ -1,9 +1,9 @@
 using System.Collections.Immutable;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -57,6 +57,40 @@ public sealed class RunnerTests
 
         AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
         AssertAwaitingDone(result, 0);
+    }
+
+    [Fact]
+    public void Step_NextAtAMenu_IsRefused()
+    {
+        // A menu is answered by the player's choice, and moving past it would take no option.
+        var context = PlayContextFactory.AMenu();
+
+        var result = Runner.Step(context, Started(context), new Next());
+
+        AssertRefused(result, RefusalReason.Misplaced, "waiting for the player to choose");
+        AssertAwaitingChoice(result, 0);
+    }
+
+    [Fact]
+    public void Step_ChooseAtAMenu_LeavesByTheOptionTaken()
+    {
+        var context = PlayContextFactory.AMenu();
+
+        var result = Runner.Step(context, Started(context), new Choose(0));
+
+        AssertSaid(result, speaker: null, text: "Go east");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void Step_ChooseAwayFromAMenu_IsMisplacedRatherThanUnknown()
+    {
+        var context = PlayContextFactory.OneLine();
+
+        var result = Runner.Step(context, Started(context), new Choose(0));
+
+        AssertRefused(result, RefusalReason.Misplaced, "cannot take Choose");
+        AssertAt(result, 0);
     }
 
     [Fact]
@@ -264,7 +298,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextAtANodeLeadingNowhere_IsRefused()
     {
-        var context = PlayContextFactory.Of([Dead(0, "Alone.")], ["Alice"]);
+        var context = PlayContextFactory.Of([Line("Alone.", id: 0)], ["Alice"]);
 
         AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
     }

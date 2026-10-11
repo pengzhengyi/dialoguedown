@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using DialogueDown.Common;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
@@ -14,6 +15,8 @@ using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Playbook;
 using DialogueDown.Visualization.Render;
 using NSubstitute;
+using static DialogueDown.TestSupport.JsonAssert;
+using static DialogueDown.TestSupport.ReportPayload;
 
 namespace DialogueDown.Visualization.Tests;
 
@@ -50,28 +53,38 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void RenderHtmlReport_WithConfigurationFile_EmbedsItsPathSourceAndSpeakers()
     {
+        var toml = """
+            [[speakers]]
+            name = "Narrator"
+            """;
         var applied = AppliedConfiguration.FromFile(
             "/proj/dialogue.toml",
-            "[[speakers]]\nname = \"Narrator\"",
+            toml,
             new CompilerOptions { Speakers = [new ConfiguredSpeaker("Narrator", null, [], [])] });
 
-        var html = new CompilationVisualizer(applied).RenderHtmlReport("The room is quiet.");
+        var report = FromPage(new CompilationVisualizer(applied).RenderHtmlReport("The room is quiet."));
 
-        Assert.Contains("\"configuration\"", html, StringComparison.Ordinal);
-        Assert.Contains("dialogue.toml", html, StringComparison.Ordinal);
-        Assert.Contains("Narrator", html, StringComparison.Ordinal);
+        Assert.Equal("/proj/dialogue.toml", report.ConfigPath);
+        Assert.Equal(toml, report.ConfigSource);
+        Assert.Equal(["Narrator"], report.SpeakerNames);
     }
 
     [Fact]
     public void RenderHtmlReport_EmbedsThePlaybookTheCompileProduced()
     {
         var html = new CompilationVisualizer().RenderHtmlReport(
-            "# Scene\n\nNarrator: The room is quiet.\n", "/proj/quiet.dialogue.md");
+            """
+            # Scene
 
-        Assert.Contains("\"playbook\"", html, StringComparison.Ordinal);
+            Narrator: The room is quiet.
+
+            """,
+            "/proj/quiet.dialogue.md");
+
+        var playbook = FromPage(html).Playbook;
         // The playbook names the script it was compiled from, not the path the report was written to.
-        Assert.Contains("quiet.dialogue.md", html, StringComparison.Ordinal);
-        Assert.Contains("Narrator", html, StringComparison.Ordinal);
+        Assert.Equal("quiet.dialogue.md", (string?)playbook?["metadata"]?["script"]);
+        Assert.Equal(["Narrator"], SpeakerNamesIn(playbook));
     }
 
     [Fact]
@@ -79,18 +92,23 @@ public sealed class CompilationVisualizerTests
     {
         var html = new CompilationVisualizer().RenderHtmlReport("=> [Gone](#missing)\n");
 
-        // A stage carries an `unavailable` field too, so assert the playbook's own reason.
-        Assert.Contains(PlaybookProjection.UnavailableReason, html, StringComparison.Ordinal);
+        Assert.Equal(PlaybookProjection.UnavailableReason, (string?)FromPage(html).Playbook?["unavailable"]);
     }
 
     [Fact]
     public void SerializeDocument_EmbedsThePlaybookForTheLiveReport()
     {
         var json = new CompilationVisualizer().SerializeDocument(
-            "/proj/quiet.dialogue.md", "# Scene\n\nNarrator: Quiet.\n", "edit");
+            "/proj/quiet.dialogue.md",
+            """
+            # Scene
 
-        Assert.Contains("\"playbook\"", json, StringComparison.Ordinal);
-        Assert.Contains("quiet.dialogue.md", json, StringComparison.Ordinal);
+            Narrator: Quiet.
+
+            """,
+            "edit");
+
+        Assert.Equal("quiet.dialogue.md", (string?)Parse(json).Playbook?["metadata"]?["script"]);
     }
 
     [Fact]
@@ -98,7 +116,7 @@ public sealed class CompilationVisualizerTests
     {
         var html = new CompilationVisualizer().RenderHtmlReport("The room is quiet.");
 
-        Assert.DoesNotContain("\"configuration\"", html, StringComparison.Ordinal);
+        AssertOmits(FromPage(html).Json, "configuration");
     }
 
     [Fact]
@@ -111,7 +129,7 @@ public sealed class CompilationVisualizerTests
 
         var html = new CompilationVisualizer(options).RenderHtmlReport("The room is quiet.");
 
-        Assert.Contains("Narrator", html, StringComparison.Ordinal);
+        AssertJson("""["Narrator"]""", FromPage(html).Symbols?["speakers"]);
     }
 
     [Fact]
@@ -237,12 +255,17 @@ public sealed class CompilationVisualizerTests
 
         var html = new CompilationVisualizer(compiler).RenderHtmlReport("broken");
 
-        Assert.Contains(
-            "\"symbols\":{\"jumpTargets\":[{\"slug\":\"END\",\"heading\":\"End the run\"}],"
-            + "\"speakers\":[],\"speakerIds\":[],\"tags\":[],"
-            + "\"reservedTargets\":[{\"anchor\":\"END\",\"label\":\"End\",\"role\":\"Terminal\"}]}",
-            html,
-            StringComparison.Ordinal);
+        AssertJson(
+            """
+            {
+              "jumpTargets": [{ "slug": "END", "heading": "End the run" }],
+              "speakers": [],
+              "speakerIds": [],
+              "tags": [],
+              "reservedTargets": [{ "anchor": "END", "label": "End", "role": "Terminal" }]
+            }
+            """,
+            FromPage(html).Symbols);
     }
 
     [Fact]
@@ -317,11 +340,13 @@ public sealed class CompilationVisualizerTests
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("cdn.jsdelivr.net", html);    // self-contained: no CDN
         Assert.Contains(".tippy-box", html);                // client libs inlined
-        Assert.Contains("\"title\":\"Markdown AST\"", html);
-        Assert.Contains("Heading (H1)", html);
-        Assert.Contains("Paragraph", html);
-        Assert.Contains("\"source\":\"# Hello\"", html);     // heading's source snippet
-        Assert.Contains("\"source\":\"# Hello\\n\\nWorld\"", html); // whole document for the Source tab
+        var report = FromPage(html);
+        var markdown = report.Stages![0]!;
+        Assert.Equal("Markdown AST", (string?)markdown["title"]);
+        var heading = Assert.Single(NodesIn(markdown), node => (string?)node["label"] == "Heading (H1)");
+        Assert.Equal("# Hello", (string?)heading["source"]);    // the heading's own source
+        Assert.Contains(NodesIn(markdown), node => (string?)node["label"] == "Paragraph");
+        Assert.Equal("# Hello\n\nWorld", report.Source);      // the whole document, for the Source tab
     }
 
     [Fact]
@@ -332,9 +357,10 @@ public sealed class CompilationVisualizerTests
         var html = visualizer.RenderLiveReport("scene.dialogue.md", "# Hello", "view");
 
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"mode\":\"view\"", html);
-        Assert.Contains("\"path\":\"scene.dialogue.md\"", html);
-        Assert.Contains("\"title\":\"Markdown AST\"", html);
+        var report = FromPage(html);
+        Assert.Equal("view", report.Mode);
+        Assert.Equal("scene.dialogue.md", report.Path);
+        Assert.Equal("Markdown AST", (string?)report.Stages![0]!["title"]);
     }
 
     [Fact]
@@ -345,12 +371,12 @@ public sealed class CompilationVisualizerTests
         var html = visualizer.RenderEmptyShell("/project", "edit");
 
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"project\":{", html);
-        Assert.Contains("\"root\":\"/project\"", html);
-        Assert.Contains("\"mode\":\"edit\"", html);
-        // No active document: no active path, no source, no stages to show.
-        Assert.DoesNotContain("\"activePath\"", html);
-        Assert.DoesNotContain("\"source\":", html);
+        var report = FromPage(html);
+        Assert.Equal("edit", report.Mode);
+        // The project it serves, and no active document: no active path, no source, no stages to show.
+        AssertJson("""{ "root": "/project" }""", report.Json["project"]);
+        AssertOmits(report.Json, "source");
+        Assert.Empty(report.Stages!);
     }
 
     [Fact]
@@ -360,8 +386,7 @@ public sealed class CompilationVisualizerTests
 
         var html = visualizer.RenderHtmlReport("# Hello");
 
-        Assert.Contains("\"mode\":\"static\"", html);
-        Assert.DoesNotContain("\"mode\":\"view\"", html);
+        Assert.Equal("static", FromPage(html).Mode);
     }
 
     [Fact]
@@ -369,10 +394,10 @@ public sealed class CompilationVisualizerTests
     {
         var visualizer = new CompilationVisualizer();
 
-        var html = visualizer.RenderHtmlReport("# Hello", "scene.dialogue.md");
+        var report = FromPage(visualizer.RenderHtmlReport("# Hello", "scene.dialogue.md"));
 
-        Assert.Contains("\"mode\":\"static\"", html);
-        Assert.Contains("\"path\":\"scene.dialogue.md\"", html);
+        Assert.Equal("static", report.Mode);
+        Assert.Equal("scene.dialogue.md", report.Path);
     }
 
     [Fact]
@@ -387,13 +412,12 @@ public sealed class CompilationVisualizerTests
     {
         var visualizer = new CompilationVisualizer();
 
-        var json = visualizer.SerializeDocument("scene.dialogue.md", "# Hello", "view");
+        var report = Parse(visualizer.SerializeDocument("scene.dialogue.md", "# Hello", "view"));
 
-        Assert.Contains("\"mode\":\"view\"", json);
-        Assert.Contains("\"path\":\"scene.dialogue.md\"", json);
-        Assert.Contains("\"source\":\"# Hello\"", json);
-        Assert.Contains("\"stages\":[", json);
-        Assert.Contains("\"title\":\"Markdown AST\"", json);
+        Assert.Equal("view", report.Mode);
+        Assert.Equal("scene.dialogue.md", report.Path);
+        Assert.Equal("# Hello", report.Source);
+        Assert.Equal("Markdown AST", (string?)report.Stages![0]!["title"]);
     }
 
     [Fact]
@@ -419,9 +443,9 @@ public sealed class CompilationVisualizerTests
             """,
             "view");
 
-        Assert.Contains("\"diagnostics\":[", json);
-        Assert.Contains("\"code\":\"DLG2001\"", json);
-        Assert.Contains("\"source\":\"dialoguedown\"", json);
+        var diagnostic = Assert.Single(Parse(json).Diagnostics!)!;
+        Assert.Equal("DLG2001", (string?)diagnostic["code"]);
+        Assert.Equal("dialoguedown", (string?)diagnostic["source"]);
     }
 
     [Fact]
@@ -437,7 +461,7 @@ public sealed class CompilationVisualizerTests
             """,
             "view");
 
-        Assert.Contains("\"diagnostics\":[]", json);
+        AssertJson("[]", Parse(json).Diagnostics);
     }
 
     [Fact]
@@ -453,12 +477,12 @@ public sealed class CompilationVisualizerTests
             """,
             "view");
 
-        Assert.Contains("\"semanticTokens\":[", json);
-        Assert.Contains("\"kind\":\"SpeakerName\"", json);
-        Assert.Contains("\"kind\":\"CustomTag\"", json);
-        Assert.Contains("\"kind\":\"Separator\"", json);
-        Assert.Contains("\"kind\":\"JumpIndicator\"", json);
-        Assert.DoesNotContain("\"kind\":\"Speaker\"", json); // a speaker is SpeakerName
+        var kinds = Parse(json).SemanticTokens!.Select(token => (string?)token!["kind"]).ToList();
+        Assert.Contains("SpeakerName", kinds);
+        Assert.Contains("CustomTag", kinds);
+        Assert.Contains("Separator", kinds);
+        Assert.Contains("JumpIndicator", kinds);
+        Assert.DoesNotContain("Speaker", kinds); // a speaker is SpeakerName
     }
 
     [Fact]
@@ -468,7 +492,7 @@ public sealed class CompilationVisualizerTests
 
         var html = visualizer.RenderHtmlReport("# Just a heading");
 
-        Assert.Contains("\"semanticTokens\":[]", html);
+        AssertJson("[]", FromPage(html).SemanticTokens);
     }
 
     [Fact]
@@ -517,7 +541,12 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void LocalImageReferences_NoImages_ReturnsEmpty()
     {
-        var references = new CompilationVisualizer().LocalImageReferences("# Just a heading\n\nAlice: Hi.");
+        var references = new CompilationVisualizer().LocalImageReferences(
+            """
+            # Just a heading
+
+            Alice: Hi.
+            """);
 
         Assert.Empty(references);
     }
@@ -532,7 +561,13 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void RenderText_Dot_EmitsEveryStageUnderAHeaderAsDigraph()
     {
-        var text = new CompilationVisualizer().RenderText("# Scene\n\nAlice: Hi.", EmitFormat.Dot);
+        var text = new CompilationVisualizer().RenderText(
+            """
+            # Scene
+
+            Alice: Hi.
+            """,
+            EmitFormat.Dot);
 
         Assert.Contains("// Markdown AST", text);
         Assert.Contains("// Dialogue AST", text);
@@ -583,7 +618,15 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void RenderHtmlReport_CarriesMermaidForAScriptThatDrawsOne()
     {
-        var source = "The room is quiet.\n\n```mermaid\nflowchart LR\n  a --> b\n```\n";
+        var source = """
+            The room is quiet.
+
+            ```mermaid
+            flowchart LR
+              a --> b
+            ```
+
+            """;
 
         var html = new CompilationVisualizer().RenderHtmlReport(source);
 
@@ -603,6 +646,14 @@ public sealed class CompilationVisualizerTests
         Assert.DoesNotContain("__esbuild_esm_mermaid_nm", html, StringComparison.Ordinal);
         Assert.Contains("__DD_MERMAID__ = \"/assets/", html, StringComparison.Ordinal);
     }
+
+    // The nodes a serialized stage shows.
+    private static IEnumerable<JsonNode> NodesIn(JsonNode stage) =>
+        stage["nodes"]!.AsArray().Select(node => node!);
+
+    // The names of the speakers a serialized playbook section declares.
+    private static IReadOnlyList<string?> SpeakerNamesIn(JsonNode? playbook) =>
+        [.. playbook?["speakers"]?.AsArray().Select(speaker => (string?)speaker?["name"]) ?? []];
 
     private static DialogueGraph EmptyGraph()
     {

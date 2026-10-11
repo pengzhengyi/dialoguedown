@@ -1,3 +1,8 @@
+/**
+ * @file A copy-link control on each heading in the Preview, which copies a ready-to-paste Markdown
+ * jump link to it.
+ */
+
 import { delegate } from "tippy.js";
 import { copyToClipboard } from "./path-display";
 import { showToast } from "./toast";

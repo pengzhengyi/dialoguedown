@@ -1,3 +1,8 @@
+/**
+ * @file How much of the Markdown the compiler ignored the Preview shows, per region or all at once,
+ * remembered across reloads.
+ */
+
 import { codicon } from "./codicon";
 import { FOLD_COMMAND_GLYPHS, foldControlIcon } from "./fold-glyph";
 

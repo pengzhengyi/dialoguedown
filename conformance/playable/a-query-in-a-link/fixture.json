@@ -1,0 +1,38 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a query in a link's label is resolved and the answer is spoken",
+  "playbook": "playbook.json",
+  "because": "a link's label is part of the line, so a query inside it is asked for and filled like one in plain speech; a runtime that skips labels would leave the place unnamed",
+  "session": [
+    {
+      "expect": {
+        "resolve": [
+          "innName"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "innName": "Gilded Goose"
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Meet me at the Gilded Goose inn."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

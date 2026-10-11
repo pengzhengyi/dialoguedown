@@ -1242,7 +1242,6 @@
         {
           "kind": "branch",
           "target": 44,
-          "order": 0,
           "condition": {
             "kind": "key",
             "key": "Yuki.LovesPlayer"
@@ -1250,8 +1249,7 @@
         },
         {
           "kind": "branch",
-          "target": 48,
-          "order": 1
+          "target": 48
         }
       ]
     },

@@ -30,6 +30,7 @@ internal static class SituationExtensions
                 $"node {waiting.Node}, waiting for the world before continuing from segment {play.SegmentIndex}",
             AwaitingSupply { Moment: Moment.ToLeave } waiting =>
                 $"node {waiting.Node}, waiting for the world before it leaves",
+            AwaitingChoice waiting => $"node {waiting.Node}, waiting for the player to choose",
             AtEnd => "the end",
 
             // Every situation is named above, so one added later arrives here as a failure rather

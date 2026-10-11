@@ -1,5 +1,5 @@
 /**
- * Naming an ignored region by what it contains.
+ * @file Naming an ignored region by what it contains.
  *
  * A reader's fold choice has to follow its region through a re-render — the Preview rebuilds its
  * whole document on every keystroke — so a region needs a name that is not its position. Inserting

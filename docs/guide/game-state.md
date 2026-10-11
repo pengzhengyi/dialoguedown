@@ -9,6 +9,7 @@ Part of the [script language specification](script-language.md).
 ## Table of contents
 
 - [Queries](#queries)
+  - [A query in a label](#a-query-in-a-label)
   - [Where a query has no answer yet](#where-a-query-has-no-answer-yet)
 - [Commands](#commands)
 - [Quoting a key](#quoting-a-key)
@@ -51,6 +52,22 @@ Alice: My favorite color is red.
 > [!TIP]
 > A query can also drive a random choice's odds — see
 > [Dynamic weights](structure-and-flow.md#dynamic-weights).
+
+### A query in a label
+
+A query can also stand in a label: a link's text, an image's alt text, or the text
+of a jump, including a menu option written as one.
+
+```markdown
+Alice: Meet me at [the `"InnName"` inn](#the-inn).
+
+- => [Ask `"CompanionName"` to join](#join)
+```
+
+It is filled wherever the words are shown. A line's links and images are filled
+when the line is said. A menu option's text is filled when the menu is offered.
+The text of a jump at the end of a line is never shown, so a query there is kept
+but never asked.
 
 ### Where a query has no answer yet
 
@@ -132,6 +149,15 @@ Smith: It was `"weapon.Attack"`. `Polish()` Now it is `"weapon.Attack"`.
 
 The line still belongs to its speaker, even when a command opens it or is all it
 says, and the reader moves on from it as from any other line.
+
+A command cannot stand in a label. A link, an image, and a menu option are each
+shown whole, so a command inside the brackets would never run, and the compiler
+reports [`DLG1103`](error-codes.md#dlg1103). Write it outside the brackets
+instead. Before `=>`, it runs when the jump is taken:
+
+```markdown
+- `SlamDoor()` => [Leave](#exit)
+```
 
 Under the hood, a silent command is an **effect**, not speech: it compiles to a
 command-only control line that has no speaker, so it is never attributed to a

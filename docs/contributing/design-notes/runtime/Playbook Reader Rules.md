@@ -3,8 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. Two reader rules close gaps where two conformant
 > runtimes could otherwise play one playbook differently: every node's ways out have
-> a well-defined shape (`OutwardShapeChecker`), and a `branch`'s arms are in one
-> canonical order (`BranchArmOrderChecker`). Both run in the default reader, the
+> a well-defined shape (`OutwardShapeChecker`), and a `branch`'s else comes after
+> every gated arm (`BranchArmOrderChecker`). Both run in the default reader, the
 > schema states what it can of each, and `readable/` conformance cases pin the
 > refusals. The reader pipeline they join is in
 > [Playbook Format](./Playbook%20Format.md#reading-a-playbook).
@@ -30,7 +30,7 @@
 | **Else** | A `branch` arm with no condition. |
 | **Fall-through** | The single `succession` edge a node takes when no arm applies. |
 | **Leads somewhere** | Following `out` always reaches a next node, whatever the conditions decide. |
-| **Arm order** | The `order` a `branch` arm carries: where it sits in the sequence the arms are tried, lowest first. |
+| **Arm order** | The sequence a `branch` node's arms are tried in: the order they appear in its `out`, first to last. |
 
 ## Outward shape
 
@@ -58,19 +58,18 @@ fall-through that is present but not needed is dead: accepted
 
 ## Branch arm order
 
-> A `branch` node's arms appear in its `out` in strictly ascending `order`, at
-> least one of them is gated, and the else, when present, is the last arm.
+> A `branch` node's arms are tried in the order they appear in its `out`. At least
+> one of them is gated, and the else, when present, is the last arm.
 
-Three independent guards, all required:
+Two independent guards, both required:
 
 - at least one arm is gated, so the else has something to fall back from;
-- the arms ascend, so the order in the array is the order the `order` fields state;
 - the else is last, so it is tried only after every gated arm. Because only one arm
   can be last, a second else is refused too.
 
-Together they buy **agreement**: a reader that walks `out` and one that sorts by
-`order` take the same arm. Gaps (`0`, `2`) are allowed; a `succession` may sit
-anywhere among the arms, because it is not an arm.
+Together they keep a branch meaning what its chain says. An else is taken whenever
+it is reached, so an else before another arm would leave that arm unreachable. A
+`succession` may sit anywhere among the arms, because it is not an arm.
 
 ## Key design decisions
 
@@ -87,8 +86,8 @@ A schema describes shape in isolation. It can restrict each node kind's `out` to
 edge kinds (`items`), demand an arm (`contains`), bound the succession count
 (`minContains` / `maxContains`), demand a gated `branch` arm, and allow at most one
 else. It cannot relate a succession's presence to the conditions on other edges, and
-it cannot compare positions or values, so "leads somewhere", "ascending", and
-"last" belong to the reader.
+it cannot compare positions, so "leads somewhere" and "last" belong to the
+reader.
 
 ```json
 "allOf": [
@@ -110,12 +109,14 @@ refusing it would reject a harmless document. `IPlaybookChecker` is throw-or-sil
 so it is accepted. Warning about it needs a diagnostics channel on the reader, which
 does not exist.
 
-### D4 — `order` is authoritative; the sorted array is canonical
+### D4 — The array is the order
 
-`order` exists because a port may reorder, normalize, or model `out` as an
-unordered collection. The checker makes the array and `order` agree, so a reader
-that ignores `order` still takes the right arm. The compiler emits `order` as the
-arm's source index, so every compiled branch already satisfies the rule.
+An arm's place in the order is its position in `out`. JSON keeps the order of an
+array, so the position already says everything a separate `order` field could, and
+a second copy could only disagree with it. A port keeps `out` in the order it was
+read; one that reorders the arms fails the `a-conditional-block` playable case,
+which takes the first arm over the else. The compiler writes the arms in source
+order, so every compiled branch already satisfies the rule.
 
 ### D5 — One idea per checker, in dependency order
 
@@ -135,12 +136,9 @@ of the right kind.
 | `choice` / `random-choice` / `branch` with no arm | refuse | — |
 | node with an open arm **and** a `succession` | accept — the succession is dead | — |
 | `end` with an edge | cannot occur — `EndNode` takes no edges and the reader drops an `out`; the schema's `maxItems: 0` is the backstop | — |
-| branch arms `order` `1` then `0` | refuse — not ascending | `arms-out-of-order` |
-| two branch arms sharing an `order` | refuse — ascending is strict | `arms-share-an-order` |
 | else first, a gated arm after | refuse — else not last | `else-arm-not-last` |
 | two else arms | refuse | `two-else-arms` |
 | a branch whose only arm is an else | refuse — nothing to fall back from | `an-else-alone` |
-| branch arms `order` `0`, `2` | accept — a gap is not a fault | — |
 | a `succession` before or among the branch arms | accept — not an arm | — |
 
 ## Testability
@@ -154,7 +152,8 @@ of the right kind.
 | Schema | CI validates every golden and accepted conformance playbook; the goldens' else-less branches protect `minContains: 0` |
 
 The round-trip property catches a checker that is too strict, never one too lax. A
-writer assertion that each emitted branch is sorted would guard the other direction.
+writer assertion that each emitted branch puts its else last would guard the other
+direction.
 
 ## Open questions
 

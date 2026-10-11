@@ -50,6 +50,7 @@ public static class Runner
             (AtNode at, Next) => Departure.From(context, at.Node),
             (AwaitingDone waiting, Done) => Playing.Performed(context, waiting),
             (AwaitingSupply waiting, Supply supply) => Supplied(context, waiting, supply),
+            (AwaitingChoice waiting, Choose choose) => Choosing.Chosen(context, waiting, choose),
             (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(
                 state,
@@ -87,7 +88,7 @@ public static class Runner
     // A known command sent in the wrong situation is misplaced; any other command is unknown.
     // Conformance tests compare this reason, never the explanation's wording.
     private static RefusalReason ReasonFor(Command command) =>
-        command is Next or Done or Failed or Supply
+        command is Next or Done or Failed or Supply or Choose
             ? RefusalReason.Misplaced
             : RefusalReason.UnknownCommand;
 

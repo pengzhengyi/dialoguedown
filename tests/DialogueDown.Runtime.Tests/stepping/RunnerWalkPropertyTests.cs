@@ -4,6 +4,7 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
+using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -27,7 +28,12 @@ public sealed class RunnerWalkPropertyTests
     // such as into an endless loop, and that refusal is about where the walk went, not about the
     // answer.
     private static readonly RefusalReason[] _answerRefusals =
-        [RefusalReason.UnansweredKey, RefusalReason.UnaskedKey, RefusalReason.WrongAnswerKind];
+        [
+            RefusalReason.UnansweredKey,
+            RefusalReason.UnaskedKey,
+            RefusalReason.WrongAnswerKind,
+            RefusalReason.NoSuchOption,
+        ];
 
     /// <summary>
     /// A run only ever stands at a node the playbook has.
@@ -95,7 +101,7 @@ public sealed class RunnerWalkPropertyTests
 
                 Assert.True(
                     turnedAway is null,
-                    $"The run turned away what the world answered: {turnedAway?.Explanation}");
+                    $"The run turned away an answer the walk gave: {turnedAway?.Explanation}");
             });
 
     /// <summary>
@@ -111,10 +117,11 @@ public sealed class RunnerWalkPropertyTests
             playbook => PlaybookCheckerFactory.CreateDefault().Check(playbook), iter: Samples);
 
     // Walks every drawn playbook from its start, answering its questions from a world drawn beside
-    // it. Every step the walk takes is checked, not only the one it stops at.
+    // it, and taking the option drawn for it at every menu. Every step the walk takes is checked,
+    // not only the one it stops at.
     private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds) =>
-        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
-            (playbook, world) =>
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), Gen.Int.NonNegative).Sample(
+            (playbook, world, pick) =>
             {
                 var context = PlayContext.Of(playbook);
                 var state = PlayState.Initial;
@@ -127,30 +134,38 @@ public sealed class RunnerWalkPropertyTests
                     everyStepHolds(context, stepped);
 
                     state = stepped.State;
-                    command = MovesOnFrom(state.Situation, world);
+                    command = MovesOnFrom(context, state.Situation, world, pick);
                 }
             },
             iter: Samples);
 
     // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
-    // host work, or to ask the world something, carries on rather than ending the walk there.
-    private static Command? MovesOnFrom(Situation situation, DrawnWorld world) => situation switch
-    {
-        AtNode => new Next(),
-        AwaitingDone => new Done(),
-        AwaitingSupply waiting => world.Answering(waiting.Keys),
-        _ => null,
-    };
+    // host work, to ask the world something, or to offer a menu carries on rather than ending the
+    // walk there.
+    private static Command? MovesOnFrom(PlayContext context, Situation situation, DrawnWorld world, int pick) =>
+        situation switch
+        {
+            AtNode => new Next(),
+            AwaitingDone => new Done(),
+            AwaitingSupply waiting => world.Answering(waiting.Keys),
+            AwaitingChoice waiting => new Choose(pick % OptionsAt(context, waiting.Node)),
+            _ => null,
+        };
+
+    // A menu offers at least one option, so the pick modulo their count is always one of them.
+    private static int OptionsAt(PlayContext context, int node) =>
+        Assert.IsType<ChoiceNode>(context.NodeAt(node)).Options().Length;
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {
-        // Three stages name a node, and a walk standing outside the document at any of them is the
+        // Four stages name a node, and a walk standing outside the document at any of them is the
         // same defect.
         var node = situation switch
         {
             AtNode at => at.Node,
             AwaitingDone waiting => waiting.Node,
             AwaitingSupply waiting => waiting.Node,
+            AwaitingChoice waiting => waiting.Node,
             _ => (int?)null,
         };
 

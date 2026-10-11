@@ -24,7 +24,6 @@
         {
           "kind": "branch",
           "target": 1,
-          "order": 0,
           "condition": {
             "kind": "key",
             "key": "Alice.HasKey"
@@ -32,8 +31,7 @@
         },
         {
           "kind": "branch",
-          "target": 2,
-          "order": 1
+          "target": 2
         }
       ]
     },

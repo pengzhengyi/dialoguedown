@@ -1,3 +1,5 @@
+/** @file The Source tab: the script in a CodeMirror editor beside its rendered preview. */
+
 import {
     EditorView,
     keymap,

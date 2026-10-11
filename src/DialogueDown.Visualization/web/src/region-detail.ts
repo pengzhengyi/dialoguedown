@@ -1,3 +1,8 @@
+/**
+ * @file What the inspector says about a region: how much it holds, and which routes cross its
+ * border.
+ */
+
 import type { Span, Stage } from "./model";
 import { isFlow } from "./neighbors";
 import { tintsOf } from "./region-bands";

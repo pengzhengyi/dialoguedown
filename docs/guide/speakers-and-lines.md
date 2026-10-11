@@ -282,6 +282,8 @@ image is shown (size, alignment, or any hint the game defines), using the same
 Alice: ![Alice smiling #size=small #align=left](alice.png)
 ```
 
-The compiler keeps the source path and the alt text (including any tags) exactly
-as written; the presentation layer decides what the tags mean and how the image
-renders.
+The compiler keeps the source path and the alt text (including any tags) as
+written; the presentation layer decides what the tags mean and how the image
+renders. A [query](game-state.md#a-query-in-a-label) in the alt text is the one
+exception: it is filled like a query in speech, so a portrait can name who it
+shows.

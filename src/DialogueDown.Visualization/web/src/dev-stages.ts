@@ -1,3 +1,5 @@
+/** @file Sample stages and source for the development server; never part of the built report. */
+
 import type { Stage } from "./model";
 
 /** A sample document shown in the dev server's Source tab. */

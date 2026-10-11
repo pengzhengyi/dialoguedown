@@ -1,0 +1,18 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a numbered menu is offered as ordered, and a position counts its options in the order written",
+  "playbook": "playbook.json",
+  "because": "ordered is the only thing that tells a host the writer numbered the options, so it must keep them in the written order on screen -- a runner that dropped it would let a host shuffle a numbered menu; choosing 1 takes the option written second, not the one numbered 1",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Which way?" } } },
+    { "send": "next" },
+    { "expect": { "offer": { "ordered": true, "options": [
+        { "label": "Go east", "available": true },
+        { "label": "Go west", "available": true }
+      ] } } },
+    { "send": { "choose": 1 } },
+    { "expect": { "said": { "speech": "Go west" } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

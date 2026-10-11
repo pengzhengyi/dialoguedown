@@ -31,16 +31,19 @@
     },
     {
       "expect": {
-        "asked": [
-          {
-            "label": "Open the door",
-            "available": false
-          },
-          {
-            "label": "Wait here",
-            "available": true
-          }
-        ]
+        "offer": {
+          "ordered": true,
+          "options": [
+            {
+              "label": "Open the door",
+              "available": false
+            },
+            {
+              "label": "Wait here",
+              "available": true
+            }
+          ]
+        }
       }
     },
     {

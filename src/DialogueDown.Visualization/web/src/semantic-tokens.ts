@@ -1,3 +1,5 @@
+/** @file Highlights the compiler's dialogue tokens in the Source editor. */
+
 import { type EditorState, type Extension, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import { positionToOffset } from "./lsp-position";

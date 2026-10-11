@@ -6,6 +6,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -14,14 +15,15 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to carry something out, and a block condition. A line may hold a command before,
-/// between, or after its words, or say nothing but a command. A node or edge kind the runner gains
-/// belongs here too, so a walk covers everything a run can meet.
+/// asks the host to carry something out, a block condition, and a menu. A line may hold a command
+/// before, between, or after its words, or say nothing but a command. A node or edge kind the
+/// runner gains belongs here too, so a walk covers everything a run can meet.
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
 /// fire only when the world allows it, a block condition's first arm is always guarded, and a line
 /// may have a query in what it says. A guard and a query never read the same key, so a world drawn
-/// beside the playbook can answer each key in the kind it needs.
+/// beside the playbook can answer each key in the kind it needs. A menu is the exception: it is
+/// offered without reading the world, so nothing guards its options and its labels ask nothing.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -63,6 +65,9 @@ internal static class PlaybookGen
 
         /// <summary>A block condition with one arm and an else.</summary>
         BlockWithAnElse,
+
+        /// <summary>A menu of two options, one carrying on and one leading elsewhere.</summary>
+        Menu,
     }
 
     /// <summary>Where a drawn line holds a command in what it says.</summary>
@@ -115,7 +120,8 @@ internal static class PlaybookGen
                 Draws.Effects,
                 Draws.LineThatJumps,
                 Draws.Block,
-                Draws.BlockWithAnElse),
+                Draws.BlockWithAnElse,
+                Draws.Menu),
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
@@ -174,12 +180,13 @@ internal static class PlaybookGen
             Draws.Jump => new ControlNode(id, [], Condition: null, JumpOnItsOwnLine()),
             Draws.Effects => new ControlNode(
                 id,
-                [new DefaultCommandFragment("do something")],
+                [DefaultCommand("do something")],
                 Guard,
                 [new SuccessionEdge(Onward)]),
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
             Draws.Block => new BranchNode(id, [Arm(), new SuccessionEdge(Onward)]),
-            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Order: 1, Condition: null)]),
+            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Condition: null)]),
+            Draws.Menu => new ChoiceNode(id, Ordered: false, Options()),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
@@ -197,7 +204,7 @@ internal static class PlaybookGen
             CommandAt switch
             {
                 CommandAt.First => [Wave(), .. Words()],
-                CommandAt.Between => [new TextFragment("Well "), Wave(), .. Words()],
+                CommandAt.Between => [Text("Well "), Wave(), .. Words()],
                 CommandAt.Last => [.. Words(), Wave()],
                 CommandAt.Alone => [Wave()],
                 _ => Words(),
@@ -205,13 +212,19 @@ internal static class PlaybookGen
 
         private ImmutableArray<SpeechFragment> Words() =>
             Asks
-                ? [new TextFragment("Something, "), new QueryFragment(WordsKey), new TextFragment(".")]
-                : [new TextFragment("Something.")];
+                ? [Text("Something, "), Query(WordsKey), Text(".")]
+                : [Text("Something.")];
 
-        private static CustomCommandFragment Wave() => new("Wave", []);
+        private static CustomCommandFragment Wave() => CustomCommand("Wave");
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
-        private BranchEdge Arm() => new(Elsewhere, Order: 0, ArmGuard);
+        private BranchEdge Arm() => new(Elsewhere, ArmGuard);
+
+        private ImmutableArray<Edge> Options() =>
+            [Option(Onward, "Go on."), Option(Elsewhere, "Go elsewhere.")];
+
+        private static OptionEdge Option(int target, string label) =>
+            new(target, [Text(label)], Condition: null);
     }
 }

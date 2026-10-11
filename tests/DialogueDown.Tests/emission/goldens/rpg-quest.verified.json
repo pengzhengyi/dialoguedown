@@ -552,7 +552,6 @@
         {
           "kind": "branch",
           "target": 19,
-          "order": 0,
           "condition": {
             "kind": "key",
             "key": "Hero.IsBrave"
@@ -560,8 +559,7 @@
         },
         {
           "kind": "branch",
-          "target": 21,
-          "order": 1
+          "target": 21
         }
       ]
     },
@@ -1140,7 +1138,6 @@
         {
           "kind": "branch",
           "target": 42,
-          "order": 0,
           "condition": {
             "kind": "key",
             "key": "Hero.SparedDragon"
@@ -1148,8 +1145,7 @@
         },
         {
           "kind": "branch",
-          "target": 45,
-          "order": 1
+          "target": 45
         }
       ]
     },

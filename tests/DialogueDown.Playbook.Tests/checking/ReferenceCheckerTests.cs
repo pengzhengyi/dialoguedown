@@ -1,7 +1,7 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class ReferenceCheckerTests
@@ -15,7 +15,7 @@ public sealed class ReferenceCheckerTests
             entry: 0,
             anchors: [("the-inn", 1)],
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [Line(0, speaker: 0, to: 1), new EndNode(1)]);
+            nodes: [SilentLine(next: 1), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -27,8 +27,7 @@ public sealed class ReferenceCheckerTests
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("entry", error.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("4", error.Message, StringComparison.Ordinal);
+        Assert.Equal("The entry points at 4, but there are only 1.", error.Message);
     }
 
     [Fact]
@@ -37,7 +36,9 @@ public sealed class ReferenceCheckerTests
         // With no nodes, the entry points at nothing. This is where an empty playbook is caught.
         var playbook = PlaybookFactory.Document(nodes: []);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal("The entry points at 0, but there are only 0.", error.Message);
     }
 
     [Fact]
@@ -45,22 +46,22 @@ public sealed class ReferenceCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [Line(0, speaker: 0, to: 9), new EndNode(1)]);
+            nodes: [SilentLine(next: 9), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("9", error.Message, StringComparison.Ordinal);
-        Assert.Contains("edge", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("An edge out of node 0 points at 9, but there are only 2.", error.Message);
     }
 
     [Fact]
     public void Check_ALineQuotingASpeakerWhoIsNotThere_IsRefused()
     {
-        var playbook = PlaybookFactory.Document(nodes: [Line(0, speaker: 3, to: 0)]);
+        var playbook = PlaybookFactory.Document(
+            nodes: [SilentLine(speaker: 3, next: 0)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("speaker", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("The speaker of node 0 points at 3, but there are only 0.", error.Message);
     }
 
     [Fact]
@@ -70,7 +71,7 @@ public sealed class ReferenceCheckerTests
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("the-inn", error.Message, StringComparison.Ordinal);
+        Assert.Equal("The anchor 'the-inn' points at 5, but there are only 1.", error.Message);
     }
 
     [Fact]
@@ -78,7 +79,4 @@ public sealed class ReferenceCheckerTests
     {
         Assert.Throws<ArgumentNullException>(() => _checker.Check(null!));
     }
-
-    private static LineNode Line(int id, int speaker, int to) =>
-        new(id, speaker, [], null, [new SuccessionEdge(to)]);
 }

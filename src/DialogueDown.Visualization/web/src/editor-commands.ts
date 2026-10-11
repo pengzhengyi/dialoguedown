@@ -1,3 +1,8 @@
+/**
+ * @file Markdown editing commands for the Source editor: wrap a selection in bold or italic, insert
+ * a link, add or remove a blockquote, and find where a heading's section ends.
+ */
+
 import { EditorSelection, type EditorState, type Line, type StateCommand } from "@codemirror/state";
 
 /**

@@ -1,3 +1,5 @@
+/** @file Puts the full-screen and Zen buttons in the tab row. */
+
 import { createMaximizeButton } from "./maximize-button";
 import { createZenButton } from "./zen-button";
 

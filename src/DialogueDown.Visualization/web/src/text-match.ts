@@ -1,3 +1,5 @@
+/** @file Finds a query in text, with the editor's Match Case and Match Whole Word options. */
+
 /** Options mirroring the editor's Match Case / Match Whole Word search toggles. */
 export interface MatchOptions {
     caseSensitive: boolean;
