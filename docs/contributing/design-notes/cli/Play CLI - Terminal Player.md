@@ -326,6 +326,7 @@ frame. The header keeps only the title.
 | Ctrl+C at a menu | The turn is `Quit`; the transcript records the menu with nothing taken. |
 | The terminal's kill signal | The driver keeps Ctrl+C as input for the run, so the key reaches the player instead of killing the process mid-transcript. |
 | A cancelled token | The prompt stops with `OperationCanceledException`, leaving the cursor on a line start. |
+| The console has no key to give (its input has gone) | The wait ends at once as a quit; a menu records nothing taken. |
 | A title with `[` or `]` in it | Escaped like any text; a path with brackets still reads. |
 | A console without Unicode support | The cursor, the cross, and the arrows fall back to ASCII (`>`, `x`), so every surface still reads. |
 
