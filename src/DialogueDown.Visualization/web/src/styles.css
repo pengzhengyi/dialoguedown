@@ -4927,6 +4927,33 @@ body.zen .playbook-view > .playbook-source {
     padding-top: 0.4rem;
 }
 
+/* The Problems toolbar: the batch action above the list, shown only while a fix is available. */
+.problem-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 0.3rem 0.35rem;
+}
+
+.problem-fix-all {
+    --pico-background-color: transparent;
+
+    width: auto;
+    margin: 0;
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: transparent;
+    color: var(--problem-text);
+    font-size: 13px;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.problem-fix-all:hover {
+    color: var(--problem-text);
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 14%, transparent);
+}
+
 /* The Problems list: one row per diagnostic, each a button that navigates to its text. */
 .problem-list {
     display: flex;
