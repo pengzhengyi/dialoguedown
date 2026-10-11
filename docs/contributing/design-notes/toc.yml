@@ -126,6 +126,8 @@
       href: visualization/editor/Diagnostics Overlay.md
     - name: Diagnostic Quick Fixes
       href: visualization/editor/Diagnostic Quick Fixes.md
+    - name: Fix All Diagnostics
+      href: visualization/editor/Fix All Diagnostics.md
     - name: Heading Anchors
       href: visualization/editor/Heading Anchors.md
     - name: Unmodeled Markdown Highlighting

@@ -28,7 +28,7 @@ internal static class PlayContextFactory
     /// <returns>A context ready to step.</returns>
     public static PlayContext Of(
         ImmutableArray<Node> nodes, IEnumerable<string?>? speakers = null, int entry = 0) =>
-        PlayContext.Of(Document(nodes, [.. (speakers ?? []).Select(Speaker)], entry));
+        PlayContext.Of(Document(nodes, PlaybookFactory.Speakers([.. speakers ?? []]), entry));
 
     /// <summary>The document a context is built over, for a test that needs the playbook itself.</summary>
     /// <param name="nodes">The steps of the playthrough.</param>
@@ -354,7 +354,4 @@ internal static class PlayContextFactory
     ];
 
     private static CustomCommandFragment Wave() => CustomCommand("Wave");
-
-    private static PlaybookSpeaker Speaker(string? name) =>
-        PlaybookFactory.Speaker(name: name, @default: name is null);
 }

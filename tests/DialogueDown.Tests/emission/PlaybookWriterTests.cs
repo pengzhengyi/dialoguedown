@@ -31,7 +31,8 @@ public sealed class PlaybookWriterTests
         var playbook = _writer.Write(OneEndNode(), Script);
 
         Assert.Equal(PlaybookWriter.FormatVersion, playbook.Format.Version);
-        Assert.Contains(Capabilities.Core, playbook.Format.Requires);
+        Assert.Equal([Capabilities.Core], playbook.Format.Requires);
+        Assert.Empty(playbook.Format.Uses);
     }
 
     [Fact]

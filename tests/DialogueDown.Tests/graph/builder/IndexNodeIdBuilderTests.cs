@@ -15,7 +15,12 @@ public sealed class IndexNodeIdBuilderTests
     [Fact]
     public void GetOrAssign_AssignsIdsIncrementally_AndCachesEachBlock()
     {
-        var blocks = Pipeline.Blocks("Alice: a\n\nBob: b");
+        var blocks = Pipeline.Blocks(
+            """
+            Alice: a
+
+            Bob: b
+            """);
 
         var first = _builder.GetOrAssign(blocks[0]);
         var repeated = _builder.GetOrAssign(blocks[0]);

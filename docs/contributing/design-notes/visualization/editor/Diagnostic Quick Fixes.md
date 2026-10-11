@@ -209,7 +209,8 @@ recompile.
 
 ## Out of scope
 
-- General refactors, "fix all", and fixes in the published reference.
+- General refactors and fixes in the published reference. Applying many fixes at once is
+  [Fix All Diagnostics](./Fix%20All%20Diagnostics.md).
 - A literalize command or suggestions for valid sigils: a valid sigil carries no diagnostic, the
   escape is one typed character, and suggestions for tag-like prose would be noise.
 - Further producers: each is one attach call, and its message must already name the remedy (D5).

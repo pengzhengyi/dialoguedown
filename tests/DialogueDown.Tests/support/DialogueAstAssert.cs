@@ -68,7 +68,7 @@ internal static class DialogueAstAssert
         return command;
     }
 
-    public static Condition AssertCondition(InlineFragment actual, string key)
+    public static Condition AssertCondition(InlineFragment? actual, string key)
     {
         var condition = Assert.IsType<Condition>(actual);
         Assert.Equal(key, condition.Key);
@@ -120,14 +120,14 @@ internal static class DialogueAstAssert
         return partial;
     }
 
-    public static SpeakerNameReference AssertSpeakerNameReference(Speaker actual, string name)
+    public static SpeakerNameReference AssertSpeakerNameReference(Speaker? actual, string name)
     {
         var reference = Assert.IsType<SpeakerNameReference>(actual);
         Assert.Equal(name, reference.Name);
         return reference;
     }
 
-    public static SpeakerIdReference AssertSpeakerIdReference(Speaker actual, string id)
+    public static SpeakerIdReference AssertSpeakerIdReference(Speaker? actual, string id)
     {
         var reference = Assert.IsType<SpeakerIdReference>(actual);
         Assert.Equal(id, reference.Id);
@@ -145,7 +145,7 @@ internal static class DialogueAstAssert
         return scene;
     }
 
-    public static Line AssertLine(ScriptBlock actual) => Assert.IsType<Line>(actual);
+    public static Line AssertLine(ScriptBlock? actual) => Assert.IsType<Line>(actual);
 
     public static ControlLine AssertControlLine(ScriptBlock actual) =>
         Assert.IsType<ControlLine>(actual);

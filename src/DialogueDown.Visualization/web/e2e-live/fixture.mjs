@@ -97,3 +97,9 @@ export const SWITCH_SECOND_SOURCE = "# Second Scene\n\nBob: The script in a sub-
 export const QUICK_FIX_PORT = 5187;
 export const QUICK_FIX_DOC = join(here, ".quick-fix-doc.dialogue.md");
 export const QUICK_FIX_SOURCE = "# Scene\n\nAlice: The rule is x => y.\n";
+
+// A fix-all server: one line carries two dangling arrows (two DLG1113 warnings), so the batch has
+// several fixes to apply at once.
+export const FIX_ALL_PORT = 5188;
+export const FIX_ALL_DOC = join(here, ".fix-all-doc.dialogue.md");
+export const FIX_ALL_SOURCE = "# Scene\n\nAlice: The rule is x => y and z => w.\n";

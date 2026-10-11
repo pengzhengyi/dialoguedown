@@ -33,6 +33,8 @@ public sealed class PlaybookRoundTripTests
                 var written = Playbooks.Serialize(Write(compilation));
                 var reread = Playbooks.Serialize(PlaybookReader.Default.Read(written));
 
+                // Assert.True rather than Assert.Equal, so a failure carries the generated script
+                // that reproduces it.
                 Assert.True(
                     written == reread,
                     $"A playbook changed when it was read back and written again.{Environment.NewLine}"

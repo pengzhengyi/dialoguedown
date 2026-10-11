@@ -73,7 +73,7 @@ public sealed class SceneTreeProjectionTests
         var projection = new SceneTreeProjection(model, source);
         var scene = model.SceneRoot.ChildScenes[0];
 
-        Assert.Contains("The Market", projection.Describe(scene).Source!);
+        Assert.Equal("# The Market", projection.Describe(scene).Source);
     }
 
     [Fact]
@@ -99,7 +99,8 @@ public sealed class SceneTreeProjectionTests
         // source, so its detail panel can jump there.
         var source = "Alice: Hello.";
         var model = Pipeline.Model(source);
-        var speaker = FirstLine(model).Speaker!;
+        var speaker = FirstLine(model).Speaker;
+        Assert.NotNull(speaker);
 
         AssertSpanAsOnTheDesugaredTab(source, model, speaker);
     }
