@@ -101,7 +101,7 @@ internal static class Playing
     {
         for (var later = segmentIndex + 1; later < segments.Length; later++)
         {
-            if (SpeechTemplate.HasKeys(segments[later].Words))
+            if (SpeechTemplate.HasQueries(segments[later].Words))
             {
                 return later;
             }

@@ -70,7 +70,7 @@ internal static class Choosing
     }
 
     private static bool ALabelAsksTheWorld(ChoiceNode choice) =>
-        choice.Options().Any(option => SpeechTemplate.HasKeys(option.Label));
+        choice.Options().Any(option => SpeechTemplate.HasQueries(option.Label));
 
     // An option nothing guards can always be taken, and a guarded one only when the world allows
     // it. Without answers, only an option nothing guards can be taken.

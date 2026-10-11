@@ -59,7 +59,7 @@ public static class SpeechTemplate
     /// <summary>Whether the speech holds a query.</summary>
     /// <param name="speech">The speech to read.</param>
     /// <returns><see langword="true"/> when the speech holds a query, wherever it sits.</returns>
-    public static bool HasKeys(ImmutableArray<SpeechFragment> speech) => !Keys(speech).IsEmpty;
+    public static bool HasQueries(ImmutableArray<SpeechFragment> speech) => !Keys(speech).IsEmpty;
 
     /// <summary>Replaces each query with its answer, leaving everything else as it is.</summary>
     /// <param name="speech">The speech to fill.</param>

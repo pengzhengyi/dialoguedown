@@ -40,17 +40,17 @@ public sealed class SpeechTemplateTests
             $"A query {where} was not found.");
 
     [Fact]
-    public void HasKeys_OfSpeechWithNoQueries_IsFalse() =>
-        Assert.False(SpeechTemplate.HasKeys([Text("Hello."), Bold("there")]));
+    public void HasQueries_OfSpeechWithNoQueries_IsFalse() =>
+        Assert.False(SpeechTemplate.HasQueries([Text("Hello."), Bold("there")]));
 
     [Fact]
-    public void HasKeys_OfSpeechWithAQuery_IsTrue() =>
-        Assert.True(SpeechTemplate.HasKeys([Text("Hello, "), Query("HeroName")]));
+    public void HasQueries_OfSpeechWithAQuery_IsTrue() =>
+        Assert.True(SpeechTemplate.HasQueries([Text("Hello, "), Query("HeroName")]));
 
     [Theory]
     [MemberData(nameof(NestedQueries))]
-    public void HasKeys_FindsAQueryHoweverDeeplyItSits(string where, SpeechFragment nested) =>
-        Assert.True(SpeechTemplate.HasKeys([nested]), $"A query {where} was not found.");
+    public void HasQueries_FindsAQueryHoweverDeeplyItSits(string where, SpeechFragment nested) =>
+        Assert.True(SpeechTemplate.HasQueries([nested]), $"A query {where} was not found.");
 
     [Fact]
     public void Fill_PutsTheWordsWhereTheQueryWas() =>

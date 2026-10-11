@@ -88,7 +88,7 @@ internal static class Playability
 
     // The runner refuses such a menu rather than offer it with a label's query unfilled.
     private static bool ALabelAsksTheWorld(ChoiceNode menu) =>
-        menu.Options().Any(option => SpeechTemplate.HasKeys(option.Label));
+        menu.Options().Any(option => SpeechTemplate.HasQueries(option.Label));
 
     // This build plays menus, so a menu is named for what it asks rather than for its kind.
     private static string ReasonFor(Node node) =>
