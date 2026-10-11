@@ -85,7 +85,7 @@ internal static class Arrival
             return new StepResult(new PlayState(waiting), [refusal]);
         }
 
-        if (arrived is IConditional guarded && !guarded.IsAllowed(supply))
+        if (arrived is IConditional guarded && !supply.Allows(guarded))
         {
             // A skipped node's jump is skipped too: the run goes on to its succession.
             return arrived.SuccessionTarget() is int onward

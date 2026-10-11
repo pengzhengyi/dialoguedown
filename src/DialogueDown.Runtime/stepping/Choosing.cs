@@ -78,7 +78,7 @@ internal static class Choosing
         [.. Enumerable.Range(0, options.Length).Where(at => IsAvailable(options[at], supply))];
 
     private static bool IsAvailable(OptionEdge option, Supply? supply) =>
-        option.Condition is null || (supply is not null && option.IsAllowed(supply));
+        option.Condition is null || (supply is not null && supply.Allows(option));
 
     // Every option is offered, in the order the node lists them, and the wait keeps the ones the
     // player can take.

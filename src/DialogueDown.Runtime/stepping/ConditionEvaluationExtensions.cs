@@ -37,14 +37,14 @@ internal static class ConditionEvaluationExtensions
         };
     }
 
-    /// <summary>Whether a node or arm may go ahead, given the world's answers.</summary>
-    /// <param name="guarded">The node or arm to check.</param>
+    /// <summary>Whether the world allows a node or arm to go ahead.</summary>
     /// <param name="supply">What the world said.</param>
+    /// <param name="guarded">The node or arm to check.</param>
     /// <returns><see langword="true"/> when nothing guards it, or its guard holds.</returns>
-    public static bool IsAllowed(this IConditional guarded, Supply supply)
+    public static bool Allows(this Supply supply, IConditional guarded)
     {
-        ArgumentNullException.ThrowIfNull(guarded);
         ArgumentNullException.ThrowIfNull(supply);
+        ArgumentNullException.ThrowIfNull(guarded);
 
         return guarded.Condition is null || guarded.Condition.Holds(supply);
     }
