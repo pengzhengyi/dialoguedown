@@ -58,19 +58,31 @@ internal static class Choosing
 
     // Every option is offered, in the order the node lists them. Nothing guards an option here, so
     // every one of them can be taken.
-    private static StepResult OfferEveryOption(int position, ChoiceNode choice) =>
-        new(
-            new PlayState(new AwaitingChoice(position)),
-            [new Offer(choice.Ordered, [.. choice.Options().Select(Offered)])]);
+    private static StepResult OfferEveryOption(int position, ChoiceNode choice)
+    {
+        var options = choice.Options();
 
-    private static OfferedOption Offered(OptionEdge option) =>
-        new([.. SpeechTemplate.Segments(option.Label).SelectMany(segment => segment.Words)], Available: true);
+        return new(
+            new PlayState(new AwaitingChoice(position, EveryOptionAvailable(options))),
+            [new Offer(choice.Ordered, [.. options.Select(option => OfferedOptions.From(option, available: true))])]);
+    }
 
+    private static ImmutableArray<int> EveryOptionAvailable(ImmutableArray<OptionEdge> options) =>
+        [.. Enumerable.Range(0, options.Length)];
+
+    // The node says how many options there are; the wait says which of them could be taken.
     private static StepResult Take(
-        PlayContext context, AwaitingChoice waiting, ImmutableArray<OptionEdge> options, int index) =>
-        index >= 0 && index < options.Length
+        PlayContext context, AwaitingChoice waiting, ImmutableArray<OptionEdge> options, int index)
+    {
+        if (index < 0 || index >= options.Length)
+        {
+            return RefuseNoSuchOption(waiting, options.Length, index);
+        }
+
+        return waiting.Available.Contains(index)
             ? Arrival.At(context, options[index].Target)
-            : RefuseNoSuchOption(waiting, options.Length, index);
+            : RefuseUnavailableOption(waiting, index);
+    }
 
     private static StepResult RefuseNoSuchOption(AwaitingChoice waiting, int offered, int index) =>
         new(
@@ -79,6 +91,15 @@ internal static class Choosing
                 new Refused(
                     RefusalReason.NoSuchOption,
                     $"The menu at node {waiting.Node} has no option {index}; choose from 0 to {offered - 1}."),
+            ]);
+
+    private static StepResult RefuseUnavailableOption(AwaitingChoice waiting, int index) =>
+        new(
+            new PlayState(waiting),
+            [
+                new Refused(
+                    RefusalReason.UnavailableOption,
+                    $"The menu at node {waiting.Node} offered option {index} as one the player cannot take."),
             ]);
 
     // A wait at a menu can be restored against a playbook whose node there is something else.

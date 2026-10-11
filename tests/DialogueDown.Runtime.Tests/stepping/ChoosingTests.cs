@@ -22,6 +22,10 @@ public sealed class ChoosingTests
     public void Offer_AMenu_WaitsForThePlayerToChoose() => AssertAwaitingChoice(Offering(TwoWays()), 0);
 
     [Fact]
+    public void Offer_AMenuThatAsksTheWorldNothing_KeepsEveryOptionAsOneThePlayerCanTake() =>
+        Assert.Equal([0, 1], AssertAwaitingChoice(Offering(TwoWays()), 0).Available);
+
+    [Fact]
     public void Offer_ANumberedMenu_SaysItsOrderIsTheWritersToKeep() =>
         AssertEvents(Offering(ANumberedMenu()), "offer ordered 'Open the door', 'Wait here'");
 
@@ -33,10 +37,6 @@ public sealed class ChoosingTests
     public void Offer_AMenuWhoseLabelHoldsACommand_OffersTheWordsAroundItAndPerformsNothing() =>
         // The command is performed when the option's arm plays, not when the menu is offered.
         AssertEvents(Offering(AMenuWithACommandInALabel()), "offer 'Say goodbye  and go'");
-
-    [Fact]
-    public void Offer_AMenuWhoseLabelIsOnlyACommand_OffersAnEmptyLabel() =>
-        AssertEvents(Offering(AMenuWhoseLabelIsOnlyACommand()), "offer ''");
 
     [Fact]
     public void Offer_AMenuWithAConditionalOption_IsRefusedRatherThanOfferedUnasked() =>
@@ -52,7 +52,7 @@ public sealed class ChoosingTests
     [Fact]
     public void Chosen_AnOptionOffered_ArrivesAtTheNodeItLeadsTo()
     {
-        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(), new Choose(1));
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1), new Choose(1));
 
         AssertSaid(result, speaker: null, text: "Go west");
         AssertAt(result, 2);
@@ -61,16 +61,35 @@ public sealed class ChoosingTests
     [Fact]
     public void Chosen_PastTheLastOption_IsRefusedAndTheMenuStaysOpen()
     {
-        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(), new Choose(2));
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1), new Choose(2));
 
         AssertRefused(result, RefusalReason.NoSuchOption, "no option 2; choose from 0 to 1");
         AssertAwaitingChoice(result, 0);
     }
 
     [Fact]
+    public void Chosen_PastTheLastOptionOfAWaitThatCallsItAvailable_IsRefusedAsNoSuchOption()
+    {
+        // How many options there are is read from the node, so a wait that disagrees with its
+        // playbook cannot name an option the node lacks.
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1, 2), new Choose(2));
+
+        AssertRefused(result, RefusalReason.NoSuchOption, "no option 2");
+    }
+
+    [Fact]
+    public void Chosen_AnOptionOfferedUnavailable_IsRefusedAndTheMenuStaysOpen()
+    {
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(1), new Choose(0));
+
+        AssertRefused(result, RefusalReason.UnavailableOption, "option 0");
+        AssertAwaitingChoice(result, 0);
+    }
+
+    [Fact]
     public void Chosen_BelowZero_IsRefusedAndTheMenuStaysOpen()
     {
-        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(), new Choose(-1));
+        var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1), new Choose(-1));
 
         AssertRefused(result, RefusalReason.NoSuchOption, "no option -1");
         AssertAwaitingChoice(result, 0);
@@ -80,7 +99,7 @@ public sealed class ChoosingTests
     public void Chosen_WhereOnlyTheFallThroughFollowsTheOptions_IsRefused() =>
         // The fall-through is never offered, so a choice past the options does not reach it.
         AssertRefused(
-            Choosing.Chosen(Standing(AMenuWithAFallThrough()), WaitingAtTheMenu(), new Choose(1)),
+            Choosing.Chosen(Standing(AMenuWithAFallThrough()), WaitingAtTheMenu(0), new Choose(1)),
             RefusalReason.NoSuchOption,
             "no option 1");
 
@@ -88,7 +107,7 @@ public sealed class ChoosingTests
     public void Chosen_WhereTheNodeIsNotAMenu_IsRefusedAsMisplaced() =>
         // A wait at a menu can be restored against a playbook whose node there is something else.
         AssertRefused(
-            Choosing.Chosen(PlayContextFactory.OneLine(), WaitingAtTheMenu(), new Choose(0)),
+            Choosing.Chosen(PlayContextFactory.OneLine(), WaitingAtTheMenu(0), new Choose(0)),
             RefusalReason.Misplaced,
             "not a menu");
 
@@ -98,8 +117,9 @@ public sealed class ChoosingTests
     private static StepResult Offering(ChoiceNode menu) => Choosing.Offer(0, menu);
 
     /// <summary>Where a playthrough stands once the menu at the start has been offered.</summary>
+    /// <param name="available">The positions of the options offered as ones the player can take.</param>
     /// <returns>The wait.</returns>
-    private static AwaitingChoice WaitingAtTheMenu() => new(0);
+    private static AwaitingChoice WaitingAtTheMenu(params int[] available) => new(0, [.. available]);
 
     /// <summary>A playbook that begins at a menu whose options lead to two ends.</summary>
     /// <param name="menu">The menu, standing first.</param>
@@ -147,15 +167,6 @@ public sealed class ChoosingTests
     /// <returns>The menu.</returns>
     private static ChoiceNode AMenuWithACommandInALabel() =>
         Menu(0, OptionSaying(1, new TextFragment("Say goodbye "), Command("Wave"), new TextFragment(" and go")));
-
-    /// <summary>A menu whose only option's label is a command.</summary>
-    /// <remarks>
-    /// <code>
-    /// - `Wave()`
-    /// </code>
-    /// </remarks>
-    /// <returns>The menu.</returns>
-    private static ChoiceNode AMenuWhoseLabelIsOnlyACommand() => Menu(0, OptionSaying(1, Command("Wave")));
 
     private static CustomCommandFragment Command(string name) => new(name, []);
 }

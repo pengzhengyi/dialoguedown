@@ -103,8 +103,15 @@ internal static class StepAssert
     /// <summary>Asserts a step left the run waiting for the player to choose at a menu.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">The menu it should be waiting at.</param>
-    public static void AssertAwaitingChoice(StepResult result, int node) =>
-        Assert.Equal(new AwaitingChoice(node), result.State.Situation);
+    /// <returns>The wait, so a test can check which options it keeps as ones the player can take.</returns>
+    public static AwaitingChoice AssertAwaitingChoice(StepResult result, int node)
+    {
+        var waiting = Assert.IsType<AwaitingChoice>(result.State.Situation);
+
+        Assert.Equal(node, waiting.Node);
+
+        return waiting;
+    }
 
     /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
     /// <param name="result">What the step produced.</param>
