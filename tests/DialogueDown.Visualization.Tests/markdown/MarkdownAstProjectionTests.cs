@@ -105,11 +105,15 @@ public sealed class MarkdownAstProjectionTests
     [Fact]
     public void Describe_Document_SpansTheWholeSource()
     {
-        var source = "# Hi\n\nWorld";
+        const string Source = """
+            # Hi
 
-        var description = new MarkdownAstProjection(source).Describe(new MarkdownDocument([]));
+            World
+            """;
 
-        Assert.Equal(new DisplaySpan(0, source.Length), description.Span);
+        var description = new MarkdownAstProjection(Source).Describe(new MarkdownDocument([]));
+
+        Assert.Equal(new DisplaySpan(0, Source.Length), description.Span);
     }
 
     [Fact]

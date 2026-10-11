@@ -15,7 +15,7 @@ public sealed class AppliedConfigurationTests
         Assert.True(applied.IsConfiguredFromFile);
         Assert.False(applied.UsesDefaultConfiguration);
         Assert.NotNull(applied.File);
-        Assert.Equal("/proj/dialogue.toml", applied.File!.Path);
+        Assert.Equal("/proj/dialogue.toml", applied.File.Path);
         Assert.Equal("[[speakers]]", applied.File.Source);
         Assert.Same(options, applied.Options);
     }

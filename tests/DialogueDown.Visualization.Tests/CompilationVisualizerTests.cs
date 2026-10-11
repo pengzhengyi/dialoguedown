@@ -328,25 +328,25 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void RenderHtmlReport_RealCompiler_ProducesSelfContainedReportWithStageAndLabels()
     {
-        var visualizer = new CompilationVisualizer();
-
-        var html = visualizer.RenderHtmlReport(
-            """
+        const string Source = """
             # Hello
 
             World
-            """);
+            """;
+        var visualizer = new CompilationVisualizer();
+
+        var html = visualizer.RenderHtmlReport(Source);
 
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("cdn.jsdelivr.net", html);    // self-contained: no CDN
         Assert.Contains(".tippy-box", html);                // client libs inlined
         var report = FromPage(html);
-        var markdown = report.Stages![0]!;
+        var markdown = Assert.IsType<JsonObject>(report.Stages?[0]);
         Assert.Equal("Markdown AST", (string?)markdown["title"]);
         var heading = Assert.Single(NodesIn(markdown), node => (string?)node["label"] == "Heading (H1)");
         Assert.Equal("# Hello", (string?)heading["source"]);    // the heading's own source
         Assert.Contains(NodesIn(markdown), node => (string?)node["label"] == "Paragraph");
-        Assert.Equal("# Hello\n\nWorld", report.Source);      // the whole document, for the Source tab
+        Assert.Equal(Source, report.Source);                  // the whole document, for the Source tab
     }
 
     [Fact]
@@ -360,7 +360,7 @@ public sealed class CompilationVisualizerTests
         var report = FromPage(html);
         Assert.Equal("view", report.Mode);
         Assert.Equal("scene.dialogue.md", report.Path);
-        Assert.Equal("Markdown AST", (string?)report.Stages![0]!["title"]);
+        Assert.Equal("Markdown AST", (string?)report.Stages?[0]?["title"]);
     }
 
     [Fact]
@@ -376,7 +376,7 @@ public sealed class CompilationVisualizerTests
         // The project it serves, and no active document: no active path, no source, no stages to show.
         AssertJson("""{ "root": "/project" }""", report.Json["project"]);
         AssertOmits(report.Json, "source");
-        Assert.Empty(report.Stages!);
+        Assert.Empty(Assert.IsType<JsonArray>(report.Stages));
     }
 
     [Fact]
@@ -417,7 +417,7 @@ public sealed class CompilationVisualizerTests
         Assert.Equal("view", report.Mode);
         Assert.Equal("scene.dialogue.md", report.Path);
         Assert.Equal("# Hello", report.Source);
-        Assert.Equal("Markdown AST", (string?)report.Stages![0]!["title"]);
+        Assert.Equal("Markdown AST", (string?)report.Stages?[0]?["title"]);
     }
 
     [Fact]
@@ -443,7 +443,8 @@ public sealed class CompilationVisualizerTests
             """,
             "view");
 
-        var diagnostic = Assert.Single(Parse(json).Diagnostics!)!;
+        var diagnostic = Assert.IsType<JsonObject>(
+            Assert.Single(Assert.IsType<JsonArray>(Parse(json).Diagnostics)));
         Assert.Equal("DLG2001", (string?)diagnostic["code"]);
         Assert.Equal("dialoguedown", (string?)diagnostic["source"]);
     }
@@ -477,7 +478,9 @@ public sealed class CompilationVisualizerTests
             """,
             "view");
 
-        var kinds = Parse(json).SemanticTokens!.Select(token => (string?)token!["kind"]).ToList();
+        var kinds = Assert.IsType<JsonArray>(Parse(json).SemanticTokens)
+            .Select(token => (string?)token?["kind"])
+            .ToList();
         Assert.Contains("SpeakerName", kinds);
         Assert.Contains("CustomTag", kinds);
         Assert.Contains("Separator", kinds);
@@ -649,7 +652,7 @@ public sealed class CompilationVisualizerTests
 
     // The nodes a serialized stage shows.
     private static IEnumerable<JsonNode> NodesIn(JsonNode stage) =>
-        stage["nodes"]!.AsArray().Select(node => node!);
+        Assert.IsType<JsonArray>(stage["nodes"]).Select(node => Assert.IsType<JsonObject>(node));
 
     // The names of the speakers a serialized playbook section declares.
     private static IReadOnlyList<string?> SpeakerNamesIn(JsonNode? playbook) =>
