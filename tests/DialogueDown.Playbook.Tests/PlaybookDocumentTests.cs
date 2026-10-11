@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Tests.Support;
@@ -118,7 +117,7 @@ public sealed class PlaybookDocumentTests
         PlaybookDocument Build() => PlaybookFactory.Document(
             anchors: [("the-inn", 1)],
             speakers: [PlaybookFactory.Speaker("alice", tags: [new SpeakerTag("mood", "warm", false)])],
-            nodes: [Line("Welcome.", ways: [new SuccessionEdge(1)]), End(id: 1)]);
+            nodes: [Line("Welcome.", next: 1), End(id: 1)]);
 
         var left = Build();
         var right = Build();

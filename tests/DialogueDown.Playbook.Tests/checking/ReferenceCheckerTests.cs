@@ -1,5 +1,4 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.TestSupport;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
@@ -16,7 +15,7 @@ public sealed class ReferenceCheckerTests
             entry: 0,
             anchors: [("the-inn", 1)],
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [SilentLine(ways: [new SuccessionEdge(1)]), End(id: 1)]);
+            nodes: [SilentLine(next: 1), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -47,7 +46,7 @@ public sealed class ReferenceCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [SilentLine(ways: [new SuccessionEdge(9)]), End(id: 1)]);
+            nodes: [SilentLine(next: 9), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
@@ -58,7 +57,7 @@ public sealed class ReferenceCheckerTests
     public void Check_ALineQuotingASpeakerWhoIsNotThere_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [SilentLine(speaker: 3, ways: [new SuccessionEdge(0)])]);
+            nodes: [SilentLine(speaker: 3, next: 0)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
