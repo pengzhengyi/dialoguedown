@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 
@@ -79,8 +80,9 @@ internal static class NodeQuestionExtensions
     /// <param name="node">The node being left.</param>
     /// <returns>The keys its ways out ask about, each named once. Empty when none is guarded.</returns>
     /// <remarks>
-    /// A succession carries no condition, being the fall-through a run takes when nothing else is
-    /// available, so only the arms a writer guarded are asked about here.
+    /// A run leaves a node by a jump or by one of a block condition's arms, so only those are asked
+    /// about. A succession carries no condition, being the fall-through a run takes when nothing
+    /// else is available, and a menu's options are taken by choosing, never by leaving.
     /// </remarks>
     public static ImmutableArray<string> FindTruthsForLeaving(this Node node)
     {
@@ -88,8 +90,9 @@ internal static class NodeQuestionExtensions
 
         return
         [
-            .. node.Out.OfType<IConditional>()
-                .SelectMany(arm => KeysOf(arm.Condition))
+            .. node.Out
+                .Where(way => way is DivertEdge or BranchEdge)
+                .SelectMany(way => KeysOf(((IConditional)way).Condition))
                 .Distinct(StringComparer.Ordinal),
         ];
     }

@@ -52,24 +52,28 @@ public sealed class NodeQuestionExtensionsTests
         Assert.Empty(Line(condition: null, new SuccessionEdge(1)).FindTruthsForLeaving());
 
     [Fact]
-    public void FindTruthsForLeaving_NameWhatEveryGuardedWayOutAsks() =>
+    public void FindTruthsForLeaving_OfAGuardedJump_NameWhatItsConditionAsks() =>
+        Assert.Equal(
+            ["Hero.HasSword"],
+            Line(condition: null, Divert(1, "Hero.HasSword"), new SuccessionEdge(2)).FindTruthsForLeaving());
+
+    [Fact]
+    public void FindTruthsForLeaving_OfABlockCondition_NameWhatEveryGuardedArmAsks() =>
         Assert.Equal(
             ["Hero.HasSword", "Hero.HasShield"],
-            Line(
-                condition: null,
-                Option(1, "Hero.HasSword"),
-                Option(2, "Hero.HasShield"),
-                new SuccessionEdge(3))
-                .FindTruthsForLeaving());
+            Branch(Arm(1, "Hero.HasSword"), Arm(2, "Hero.HasShield"), new SuccessionEdge(3)).FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForLeaving_NameARepeatedKeyOnce() =>
-        // One reading of the world decides the whole menu, so it cannot offer one option and
-        // withhold another on the same key.
+        // One reading of the world decides every way out, so two arms on one key cannot disagree.
         Assert.Equal(
             ["Hero.HasSword"],
-            Line(condition: null, Option(1, "Hero.HasSword"), Option(2, "Hero.HasSword"))
-                .FindTruthsForLeaving());
+            Branch(Arm(1, "Hero.HasSword"), Arm(2, "Hero.HasSword")).FindTruthsForLeaving());
+
+    [Fact]
+    public void FindTruthsForLeaving_OfAMenu_AreNone() =>
+        // An option is taken by choosing, never by leaving.
+        Assert.Empty(Menu(Option(1, "Hero.HasSword"), new SuccessionEdge(2)).FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForPlaying_AreNotReadFromNothing() =>
@@ -82,10 +86,20 @@ public sealed class NodeQuestionExtensionsTests
     private static LineNode Line(Condition? condition, params Edge[] ways) =>
         new(0, 0, [], condition, [.. ways]);
 
+    private static BranchNode Branch(params Edge[] ways) => new(0, [.. ways]);
+
+    private static ChoiceNode Menu(params Edge[] ways) => new(0, Ordered: false, [.. ways]);
+
     /// <summary>A line whose speech is the fragments given, said by nobody in particular.</summary>
     private static LineNode Saying(params SpeechFragment[] speech) =>
         new(0, 0, [.. speech], Condition: null, []);
 
     private static OptionEdge Option(int target, string key) =>
         new(target, [], new KeyCondition(key));
+
+    private static DivertEdge Divert(int target, string key) =>
+        new(target, [], new KeyCondition(key));
+
+    private static BranchEdge Arm(int target, string key) =>
+        new(target, new KeyCondition(key));
 }
