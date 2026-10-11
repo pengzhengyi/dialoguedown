@@ -19,6 +19,7 @@ internal static class Consoles
     {
         var console = Interactive();
         console.EmitAnsiSequences = true;
+        console.Profile.Capabilities.Ansi = true;
         return console;
     }
 

@@ -57,7 +57,7 @@ public sealed class ChoicePrompt : IPrompt<int?>
         ShowAsync(console, CancellationToken.None).GetAwaiter().GetResult();
 
     /// <inheritdoc />
-    public Task<int?> ShowAsync(IAnsiConsole console, CancellationToken cancellationToken)
+    public async Task<int?> ShowAsync(IAnsiConsole console, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(console);
 
@@ -66,7 +66,7 @@ public sealed class ChoicePrompt : IPrompt<int?>
         var height = FrameHeight(console);
         while (true)
         {
-            var key = console.Input.ReadKey(intercept: true);
+            var key = await KeyPress.ReadAsync(console, cancellationToken);
             switch (key?.Key)
             {
                 case ConsoleKey.UpArrow:
@@ -76,9 +76,9 @@ public sealed class ChoicePrompt : IPrompt<int?>
                     Draw(console);
                     break;
                 case ConsoleKey.Enter:
-                    return Task.FromResult<int?>(_cursor);
+                    return _cursor;
                 case ConsoleKey.C when key.Value.Modifiers.HasFlag(ConsoleModifiers.Control):
-                    return Task.FromResult<int?>(null);
+                    return null;
             }
         }
     }

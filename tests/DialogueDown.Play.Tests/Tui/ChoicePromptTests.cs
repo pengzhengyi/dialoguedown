@@ -80,6 +80,16 @@ public sealed class ChoicePromptTests
     }
 
     [Fact]
+    public async Task Show_Cancelled_StopsTheWait()
+    {
+        var console = Plain();
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => new ChoicePrompt(_menu).ShowAsync(console, new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task Show_ShowsEveryOptionInOrder_WithUnavailableMarked()
     {
         var console = Plain();

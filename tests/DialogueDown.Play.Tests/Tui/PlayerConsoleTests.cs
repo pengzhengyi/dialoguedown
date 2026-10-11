@@ -131,6 +131,100 @@ public sealed class PlayerConsoleTests
     }
 
     [Fact]
+    public async Task AdvanceAsync_WithEnter_ReportsGoingOn()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
+
+        Assert.IsType<PlayerTurn.Advance>(turn);
+        Assert.Contains("enter to proceed \u00b7 ctrl+c quit", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_QuitsOnCtrlC()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        console.Input.PushKey(new ConsoleKeyInfo('\x03', ConsoleKey.C, false, false, true));
+
+        var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
+
+        Assert.IsType<PlayerTurn.Quit>(turn);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_IgnoresOtherKeys()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        console.Input.PushKey(ConsoleKey.X);
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
+
+        Assert.IsType<PlayerTurn.Advance>(turn);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_ErasesTheHint_WhenAnswered()
+    {
+        var console = Styled();
+        var player = new PlayerConsole(console);
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        await player.AdvanceAsync(TestContext.Current.CancellationToken);
+
+        // Move up one line and erase it: the wait leaves no line behind in the transcript.
+        Assert.Contains("\u001b[1A\u001b[2K", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_Cancelled_StopsTheWait()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => player.AdvanceAsync(new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
+    public async Task TakeAsync_ReportsTheOptionTaken_AndRecordsTheMenu()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        var options = Menu(
+            ("Open the door", false), ("Wait here", true), ("Go around the back", true));
+        console.Input.PushKey(ConsoleKey.DownArrow);
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        var turn = await player.TakeAsync(options, TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, Assert.IsType<PlayerTurn.Take>(turn).Index);
+        var menu = Assert.IsType<TranscriptEntry.Menu>(player.Transcript[^1]);
+        Assert.Equal(2, menu.Taken);
+        Assert.Equal(3, menu.Options.Length);
+    }
+
+    [Fact]
+    public async Task TakeAsync_QuitsOnCtrlC_AndRecordsTheMenuWithNothingTaken()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        var options = Menu(("Wait here", true));
+        console.Input.PushKey(new ConsoleKeyInfo('\x03', ConsoleKey.C, false, false, true));
+
+        var turn = await player.TakeAsync(options, TestContext.Current.CancellationToken);
+
+        Assert.IsType<PlayerTurn.Quit>(turn);
+        Assert.Null(Assert.IsType<TranscriptEntry.Menu>(player.Transcript[^1]).Taken);
+    }
+
+    [Fact]
     public void SpeakerColor_IsTheSameForAName_OnEveryConsole()
     {
         var first = new PlayerConsole(Plain());
@@ -152,4 +246,9 @@ public sealed class PlayerConsoleTests
         // A large cast of speakers shares a handful of colors; collisions are the design.
         Assert.InRange(colors.Count, 2, 5);
     }
+
+    private static System.Collections.Immutable.ImmutableArray<MenuOption> Menu(
+        params (string Label, bool Available)[] options) =>
+        [.. options.Select(option => new MenuOption([Text(option.Label)], option.Available))];
+
 }

@@ -14,6 +14,9 @@ namespace DialogueDown.Play.Tui;
 /// </remarks>
 public sealed class PlayerConsole
 {
+    /// <summary>What the player reads while they are asked to go on.</summary>
+    private const string Hint = "enter to proceed \u00b7 ctrl+c quit";
+
     // Five bright ANSI colors, so a terminal's own palette themes them. Two speakers may collide;
     // the name is what identifies them either way.
     private static readonly Color[] _palette =
@@ -94,6 +97,48 @@ public sealed class PlayerConsole
         _console.MarkupLine($"[red]\u2717[/] {Markup.Escape(text)}");
     }
 
+    /// <summary>
+    /// Asks the player to go on. A hint is drawn where the key is expected and erased once it
+    /// arrives, so the transcript keeps no record of the wait.
+    /// </summary>
+    /// <param name="cancellationToken">Stops the wait.</param>
+    /// <returns><see cref="PlayerTurn.Advance"/>, or <see cref="PlayerTurn.Quit"/> at Ctrl+C.</returns>
+    public async Task<PlayerTurn> AdvanceAsync(CancellationToken cancellationToken = default)
+    {
+        _console.MarkupLine($"[grey]{Hint}[/]");
+        var height = HeightOf(Hint);
+        try
+        {
+            while (true)
+            {
+                var key = await KeyPress.ReadAsync(_console, cancellationToken);
+                switch (key?.Key)
+                {
+                    case ConsoleKey.Enter:
+                        return new PlayerTurn.Advance();
+                    case ConsoleKey.C when key.Value.Modifiers.HasFlag(ConsoleModifiers.Control):
+                        return new PlayerTurn.Quit();
+                }
+            }
+        }
+        finally
+        {
+            Erase(height);
+        }
+    }
+
+    /// <summary>Offers a menu and asks the player to take one option.</summary>
+    /// <param name="options">Every option, with whether it can be taken.</param>
+    /// <param name="cancellationToken">Stops the wait.</param>
+    /// <returns>The option taken, or <see cref="PlayerTurn.Quit"/> at Ctrl+C.</returns>
+    public async Task<PlayerTurn> TakeAsync(
+        ImmutableArray<MenuOption> options, CancellationToken cancellationToken = default)
+    {
+        var taken = await new ChoicePrompt(options).ShowAsync(_console, cancellationToken);
+        _transcript.Add(new TranscriptEntry.Menu(options, taken));
+        return taken is int index ? new PlayerTurn.Take(index) : new PlayerTurn.Quit();
+    }
+
     /// <summary>Closes the transcript with the ending rule.</summary>
     public void End()
     {
@@ -125,5 +170,20 @@ public sealed class PlayerConsole
         }
 
         return color;
+    }
+
+    /// <summary>Erases the last <paramref name="height"/> lines, leaving the cursor at their top.</summary>
+    private void Erase(int height)
+    {
+        for (var line = 0; line < height; line++)
+        {
+            _console.WriteAnsi("\u001b[1A\u001b[2K");
+        }
+    }
+
+    private int HeightOf(string text)
+    {
+        var width = Math.Max(1, _console.Profile.Width);
+        return Math.Max(1, (text.Length + width - 1) / width);
     }
 }
