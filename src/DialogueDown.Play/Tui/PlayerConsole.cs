@@ -127,7 +127,8 @@ public sealed class PlayerConsole
                 var key = await KeyPress.ReadAsync(_console, cancellationToken);
                 if (key is null)
                 {
-                    continue;
+                    // The console has no key to give: its input is gone, so the wait is over.
+                    return new PlayerTurn.Quit();
                 }
 
                 if (key.Value.Key == ConsoleKey.C

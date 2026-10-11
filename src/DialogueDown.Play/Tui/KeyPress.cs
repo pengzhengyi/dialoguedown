@@ -31,7 +31,7 @@ internal static class KeyPress
             return await read;
         }
 
-        await stopped;
-        return null;
+        // The token fired first: the wait stops, taking the console's own read with it.
+        throw new OperationCanceledException(cancellationToken);
     }
 }

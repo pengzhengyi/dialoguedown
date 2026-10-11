@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
+using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
+using Spectre.Console;
 using static DialogueDown.Play.Tests.Support.Consoles;
 using static DialogueDown.Play.Tests.Support.Fragments;
 
@@ -16,6 +18,28 @@ public sealed class ChoicePromptTests
         ("Open the door", false),
         ("Wait here", true),
         ("Go around the back", true));
+
+    [Fact]
+    public void Show_TakesTheOption_ThroughTheSynchronousOverload()
+    {
+        var console = Plain();
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        // The interface's synchronous member, which a consumer may call directly.
+        var taken = new ChoicePrompt(_menu).Show(console);
+
+        Assert.Equal(1, taken);
+    }
+
+    [Fact]
+    public async Task Show_WithoutAKeyToGive_ClosesWithNothingTaken()
+    {
+        var console = StubConsoles.WithNoKey();
+
+        var taken = await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
+
+        Assert.Null(taken);
+    }
 
     [Fact]
     public async Task Show_DrawsTheMenu_WithoutWaitingForAMove()

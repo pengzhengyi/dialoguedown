@@ -75,7 +75,13 @@ public sealed class ChoicePrompt : IPrompt<int?>
                 while (true)
                 {
                     var key = await KeyPress.ReadAsync(console, cancellationToken);
-                    switch (key?.Key)
+                    if (key is null)
+                    {
+                        // The console has no key to give: the menu closes with nothing taken.
+                        return;
+                    }
+
+                    switch (key.Value.Key)
                     {
                         case ConsoleKey.UpArrow:
                         case ConsoleKey.DownArrow:
@@ -107,7 +113,8 @@ public sealed class ChoicePrompt : IPrompt<int?>
         for (var i = 0; i < _options.Length; i++)
         {
             var option = _options[i];
-            var marker = i == _cursor && option.Available ? $"  [bold]{Glyphs.Cursor(console)}[/]" : "   ";
+            // The cursor never rests on an unavailable option, so the marker needs no test for it.
+            var marker = i == _cursor ? $"  [bold]{Glyphs.Cursor(console)}[/]" : "   ";
             var label = option.Available
                 ? Selected(i == _cursor, option.Label)
                 : $"[grey]{SpeechMarkup.Of(option.Label)}[/] [grey](unavailable)[/]";

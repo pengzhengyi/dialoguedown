@@ -255,6 +255,17 @@ public sealed class PlayerConsoleTests
     }
 
     [Fact]
+    public async Task AdvanceAsync_WithoutAKeyToGive_QuitsTheWait()
+    {
+        var player = new PlayerConsole(StubConsoles.WithNoKey());
+
+        var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
+
+        // A console whose input has gone ends the wait rather than spinning on it.
+        Assert.IsType<PlayerTurn.Quit>(turn);
+    }
+
+    [Fact]
     public async Task AdvanceAsync_WithAnyOtherKey_GoesOn()
     {
         var console = Plain();
