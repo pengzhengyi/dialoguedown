@@ -1,5 +1,5 @@
 using DialogueDown.Playbook.Nodes;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -18,7 +18,7 @@ public sealed class PlayContextTests
     public void Entry_APlaybook_IsWhereItSaysToBegin()
     {
         var context = PlayContextFactory.Of(
-            [End(0), Line(1, speaker: 0, "Hello.", next: 0)],
+            [End(id: 0), Line("Hello.", id: 1, next: 0)],
             ["Alice"],
             entry: 1);
 
@@ -45,7 +45,7 @@ public sealed class PlayContextTests
     public void SpeakerName_TheAnonymousSpeaker_IsNobody()
     {
         // The default speaker has no name, which is not the same as being called nothing.
-        var context = PlayContextFactory.Of([End(0)], [null]);
+        var context = PlayContextFactory.Of([End(id: 0)], [null]);
 
         Assert.Null(context.SpeakerName(0));
     }

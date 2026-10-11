@@ -6,6 +6,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -179,7 +180,7 @@ internal static class PlaybookGen
             Draws.Jump => new ControlNode(id, [], Condition: null, JumpOnItsOwnLine()),
             Draws.Effects => new ControlNode(
                 id,
-                [new DefaultCommandFragment("do something")],
+                [DefaultCommand("do something")],
                 Guard,
                 [new SuccessionEdge(Onward)]),
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
@@ -203,7 +204,7 @@ internal static class PlaybookGen
             CommandAt switch
             {
                 CommandAt.First => [Wave(), .. Words()],
-                CommandAt.Between => [new TextFragment("Well "), Wave(), .. Words()],
+                CommandAt.Between => [Text("Well "), Wave(), .. Words()],
                 CommandAt.Last => [.. Words(), Wave()],
                 CommandAt.Alone => [Wave()],
                 _ => Words(),
@@ -211,10 +212,10 @@ internal static class PlaybookGen
 
         private ImmutableArray<SpeechFragment> Words() =>
             Asks
-                ? [new TextFragment("Something, "), new QueryFragment(WordsKey), new TextFragment(".")]
-                : [new TextFragment("Something.")];
+                ? [Text("Something, "), Query(WordsKey), Text(".")]
+                : [Text("Something.")];
 
-        private static CustomCommandFragment Wave() => new("Wave", []);
+        private static CustomCommandFragment Wave() => CustomCommand("Wave");
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
@@ -224,6 +225,6 @@ internal static class PlaybookGen
             [Option(Onward, "Go on."), Option(Elsewhere, "Go elsewhere.")];
 
         private static OptionEdge Option(int target, string label) =>
-            new(target, [new TextFragment(label)], Condition: null);
+            new(target, [Text(label)], Condition: null);
     }
 }

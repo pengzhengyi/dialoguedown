@@ -1,8 +1,8 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -14,7 +14,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeThatCarriesOn_IsWhereItCarriesOnTo()
     {
-        var node = Line(0, speaker: 0, "Hello.", next: 7);
+        var node = Line("Hello.", id: 0, next: 7);
 
         Assert.Equal(7, node.SuccessionTarget());
     }
@@ -24,7 +24,7 @@ public sealed class NodeTraversalExtensionsTests
     {
         // The jump is the way out the writer asked for; the succession beside it is only for when
         // the jump does not apply.
-        var node = Bare(0, Divert(9), new SuccessionEdge(4));
+        var node = ControlOf([], id: 0, next: 4, ways: [Divert(target: 9)]);
 
         Assert.Equal(9, node.OnwardTarget());
     }
@@ -32,7 +32,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ANodeWithOnlyAFallThrough_LeadsWhereItFallsThrough()
     {
-        var node = Line(0, speaker: 0, "Hello.", next: 7);
+        var node = Line("Hello.", id: 0, next: 7);
 
         Assert.Equal(7, node.OnwardTarget());
     }
@@ -48,14 +48,14 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_AJumpTheWorldWithholdsAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            Bare(0, Divert(9, "Alice.HasKey"))
+            ControlOf([], id: 0, ways: [Divert("Alice.HasKey", target: 9)])
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_AnUnguardedJump_IsTakenWhateverTheWorldAnswered() =>
         Assert.Equal(
             9,
-            Bare(0, Divert(9), new SuccessionEdge(4))
+            ControlOf([], id: 0, next: 4, ways: [Divert(target: 9)])
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
@@ -82,12 +82,12 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void OnwardTarget_ABranchWhoseArmIsWithheldAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            Branch(0, Arm(7, "Alice.HasKey"))
+            Branch(Arm("Alice.HasKey", target: 7))
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
     public void OnwardTarget_WithoutAnswers_TakesAnArmNothingGuards() =>
-        Assert.Equal(9, Branch(0, Else(9)).OnwardTarget());
+        Assert.Equal(9, Branch(Else(target: 9)).OnwardTarget());
 
     [Fact]
     public void OnwardTarget_WithoutAnswers_PassesOverAJumpTheWorldMustAllow() =>
@@ -101,19 +101,19 @@ public sealed class NodeTraversalExtensionsTests
 
     [Fact]
     public void OnwardTarget_IsNotReadWithoutAnswers() =>
-        Assert.Throws<ArgumentNullException>(() => End(0).OnwardTarget(null!));
+        Assert.Throws<ArgumentNullException>(() => End(id: 0).OnwardTarget(null!));
 
     [Fact]
     public void SuccessionTarget_ANodeWithNoWayOut_IsNowhere()
     {
-        Assert.Null(End(0).SuccessionTarget());
+        Assert.Null(End(id: 0).SuccessionTarget());
     }
 
     [Fact]
     public void SuccessionTarget_ANodeLeavingByAnotherKindOfEdge_IsNowhere()
     {
         // An option is taken by choosing it, not by carrying on, so nothing here leads onward.
-        var node = new ChoiceNode(0, Ordered: true, [new OptionEdge(1, [], null)]);
+        var node = NumberedChoice(Option("Go east", target: 1));
 
         Assert.Null(node.SuccessionTarget());
     }
@@ -121,7 +121,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void SuccessionTarget_ANodeAmongOtherWaysOut_IsTheOneThatCarriesOn()
     {
-        var node = Bare(0, Divert(9), new SuccessionEdge(4));
+        var node = ControlOf([], id: 0, next: 4, ways: [Divert(target: 9)]);
 
         Assert.Equal(4, node.SuccessionTarget());
     }
@@ -131,7 +131,7 @@ public sealed class NodeTraversalExtensionsTests
     {
         // A reader refuses such a node, so a run never meets one. Throwing here, rather than taking
         // the first succession, shows when that guarantee breaks.
-        var node = Bare(0, new SuccessionEdge(4), new SuccessionEdge(9));
+        var node = ControlOf([], id: 0, ways: [new SuccessionEdge(4), new SuccessionEdge(9)]);
 
         Assert.Throws<InvalidOperationException>(() => node.SuccessionTarget());
     }
@@ -145,7 +145,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void Options_AMenuWithAFallThrough_AreOnlyItsOptionsInTheOrderListed()
     {
-        var menu = Menu(0, Option(7, "Go east"), new SuccessionEdge(4), Option(8, "Go west"));
+        var menu = Choice(Option("Go east", target: 7), new SuccessionEdge(4), Option("Go west", target: 8));
 
         Assert.Equal([7, 8], menu.Options().Select(option => option.Target));
     }
@@ -164,7 +164,7 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static ControlNode AJumpTheWorldMustAllow() =>
-        Bare(0, Divert(9, "Alice.HasKey"), new SuccessionEdge(4));
+        ControlOf([], id: 0, next: 4, ways: [Divert("Alice.HasKey", target: 9)]);
 
     /// <summary>A block condition with an if, an elseif, and an else.</summary>
     /// <remarks>
@@ -174,11 +174,7 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithAnElse() =>
-        Branch(
-            0,
-            Arm(7, "Alice.HasKey"),
-            Arm(8, "Alice.HasPick"),
-            Else(9));
+        Branch(Arm("Alice.HasKey", target: 7), Arm("Alice.HasPick", target: 8), Else(target: 9));
 
     /// <summary>A block condition with an if and no else, and a succession beneath it.</summary>
     /// <remarks>
@@ -188,5 +184,5 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithoutAnElse() =>
-        Branch(0, Arm(7, "Alice.HasKey"), new SuccessionEdge(4));
+        Branch(Arm("Alice.HasKey", target: 7), new SuccessionEdge(4));
 }

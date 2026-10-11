@@ -1,9 +1,9 @@
 using System.Collections.Immutable;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -298,7 +298,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextAtANodeLeadingNowhere_IsRefused()
     {
-        var context = PlayContextFactory.Of([Dead(0, "Alone.")], ["Alice"]);
+        var context = PlayContextFactory.Of([Line("Alone.", id: 0)], ["Alice"]);
 
         AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
     }

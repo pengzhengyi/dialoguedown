@@ -4,7 +4,6 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 
 namespace DialogueDown.Runtime.Tests;
 
@@ -51,7 +50,7 @@ public sealed class PlaybookGenTests
     public void EveryNodeKindLeftOut_IsStillOneTheRunnerRefuses()
     {
         // Fails once the runner plays a listed kind, naming the kind the generator must now draw.
-        foreach (var node in OneOfEveryNodeKind())
+        foreach (var node in PlayContextFactory.OneOfEveryNodeKind())
         {
             var kind = node.GetType().Name;
 

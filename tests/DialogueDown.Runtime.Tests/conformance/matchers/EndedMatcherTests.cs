@@ -1,8 +1,7 @@
-using System.Collections.Immutable;
 using System.Text.Json.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -35,7 +34,7 @@ public sealed class EndedMatcherTests
     }
 
     private static Said Spoke(string? speaker) =>
-        new(speaker, ImmutableArray.Create<SpeechFragment>(new TextFragment("Hi")));
+        new(speaker, [Text("Hi")]);
 
     // What an `ended` claim carries says nothing beyond the key itself, so the tests do not read it.
     private SessionOutcome Match(Event happened) => _matcher.Match(happened, JsonNode.Parse("true")!);
