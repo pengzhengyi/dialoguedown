@@ -75,7 +75,10 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
 
         var thrown = Assert.Throws<NotSupportedException>(() => handler.Handle(ThematicBreak()));
 
-        Assert.Contains("ThematicBreakBlock", thrown.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "The handling policy chose neither to keep nor to ignore a ThematicBreakBlock. "
+                + "Every UnmodeledNodeHandling must be handled here.",
+            thrown.Message);
     }
 
     [Fact]

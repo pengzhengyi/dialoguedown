@@ -1,3 +1,4 @@
+using System.Globalization;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
@@ -288,7 +289,13 @@ public sealed class ScriptCompilerFactoryTests
             DiagnosticCatalog.TagsWithoutSpeaker,
             DiagnosticSeverity.Error,
             new LinePosition(1, 1));
-        Assert.Contains("names no speaker", located.Message);
+        // The catalog's own wording, with the line filled in where the format asks for it.
+        Assert.Equal(
+            string.Format(
+                CultureInfo.InvariantCulture,
+                DiagnosticCatalog.TagsWithoutSpeaker.MessageFormat,
+                "#lonely: Hi"),
+            located.Message);
     }
 
     [Fact]
