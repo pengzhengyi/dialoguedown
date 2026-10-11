@@ -2,9 +2,9 @@ using System.Collections.Immutable;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Playbook.Tests;
 
@@ -117,12 +117,8 @@ public sealed class PlaybookDocumentTests
         // The whole document compares by value, so every table and node it holds does too.
         PlaybookDocument Build() => PlaybookFactory.Document(
             anchors: [("the-inn", 1)],
-            speakers: [new PlaybookSpeaker("alice", "Alice", false, [new SpeakerTag("mood", "warm", false)])],
-            nodes:
-            [
-                new LineNode(0, 0, [new TextFragment("Welcome.")], Condition: null, [new SuccessionEdge(1)]),
-                new EndNode(1),
-            ]);
+            speakers: [PlaybookFactory.Speaker("alice", tags: [new SpeakerTag("mood", "warm", false)])],
+            nodes: [Line("Welcome.", ways: [new SuccessionEdge(1)]), End(id: 1)]);
 
         var left = Build();
         var right = Build();
@@ -133,8 +129,8 @@ public sealed class PlaybookDocumentTests
     [Fact]
     public void Equality_DifferentNodes_AreNotEqual()
     {
-        var left = PlaybookFactory.Document(nodes: [new EndNode(0)]);
-        var right = PlaybookFactory.Document(nodes: [new EndNode(0), new EndNode(1)]);
+        var left = PlaybookFactory.Document(nodes: [End(id: 0)]);
+        var right = PlaybookFactory.Document(nodes: [End(id: 0), End(id: 1)]);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

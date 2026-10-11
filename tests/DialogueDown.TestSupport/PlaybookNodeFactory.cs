@@ -23,10 +23,10 @@ namespace DialogueDown.TestSupport;
 /// </remarks>
 public static class PlaybookNodeFactory
 {
-    /// <summary>A line somebody says.</summary>
+    /// <summary>A line somebody says, leaving by the ways given.</summary>
     public static LineNode Line(
-        string words, int speaker = 0, string? condition = null, int id = 0) =>
-        new(id, speaker, Speech(words), If(condition), []);
+        string words, int speaker = 0, string? condition = null, int id = 0, params Edge[] ways) =>
+        new(id, speaker, Speech(words), If(condition), [.. ways]);
 
     /// <summary>
     /// A line whose speech is the fragments a test composed, so it can hold a query, a tag, or
