@@ -59,7 +59,7 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
         if (arms.FirstOrDefault(edge => edge.GetType() != shape.ArmEdge) is { } foreign)
         {
             Refuse(
-                $"Node {node.Id}, a {shape.Kind}, carries a '{NameOf(foreign.GetType())}' way out; "
+                $"Node {node.Id}, a {shape.Kind}, carries a way out of kind '{NameOf(foreign.GetType())}'; "
                     + $"its arms are '{NameOf(shape.ArmEdge)}' edges.");
         }
     }

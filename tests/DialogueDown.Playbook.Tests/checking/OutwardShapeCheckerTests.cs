@@ -47,7 +47,7 @@ public sealed class OutwardShapeCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
         Assert.Equal(
-            "Node 0, a line, carries a 'option' way out; its arms are 'divert' edges.",
+            "Node 0, a line, carries a way out of kind 'option'; its arms are 'divert' edges.",
             error.Message);
     }
 
@@ -60,7 +60,7 @@ public sealed class OutwardShapeCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
         Assert.Equal(
-            "Node 0, a choice, carries a 'branch' way out; its arms are 'option' edges.",
+            "Node 0, a choice, carries a way out of kind 'branch'; its arms are 'option' edges.",
             error.Message);
     }
 
