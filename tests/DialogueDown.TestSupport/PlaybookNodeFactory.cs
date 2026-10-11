@@ -18,6 +18,10 @@ namespace DialogueDown.TestSupport;
 /// place, and a test about the graph names the ids and targets it is about.
 /// </para>
 /// <para>
+/// A node that can fall through takes <c>next</c>, the node its succession leads to. The
+/// succession is added after any other ways out it is given.
+/// </para>
+/// <para>
 /// A <c>condition</c> is the key the world must allow before the node or edge applies.
 /// </para>
 /// </remarks>
@@ -25,8 +29,13 @@ public static class PlaybookNodeFactory
 {
     /// <summary>A line somebody says, leaving by the ways given.</summary>
     public static LineNode Line(
-        string words, int speaker = 0, string? condition = null, int id = 0, params Edge[] ways) =>
-        new(id, speaker, Speech(words), If(condition), [.. ways]);
+        string words,
+        int speaker = 0,
+        string? condition = null,
+        int id = 0,
+        int? next = null,
+        params Edge[] ways) =>
+        new(id, speaker, Speech(words), If(condition), Ways(ways, next));
 
     /// <summary>
     /// A line whose speech is the fragments a test composed, so it can hold a query, a tag, or
@@ -37,8 +46,9 @@ public static class PlaybookNodeFactory
         int speaker = 0,
         string? condition = null,
         int id = 0,
+        int? next = null,
         params Edge[] ways) =>
-        new(id, speaker, speech, If(condition), [.. ways]);
+        new(id, speaker, speech, If(condition), Ways(ways, next));
 
     /// <summary>
     /// A line with no speech at all, which the format allows, leaving by the ways given.
@@ -47,8 +57,12 @@ public static class PlaybookNodeFactory
     /// For a test about a line's ways out, where what it says is beside the point.
     /// </remarks>
     public static LineNode SilentLine(
-        int speaker = 0, string? condition = null, int id = 0, params Edge[] ways) =>
-        new(id, speaker, [], If(condition), [.. ways]);
+        int speaker = 0,
+        string? condition = null,
+        int id = 0,
+        int? next = null,
+        params Edge[] ways) =>
+        new(id, speaker, [], If(condition), Ways(ways, next));
 
     /// <summary>Where play stops.</summary>
     public static EndNode End(int id = 0) => new(id);
@@ -99,9 +113,29 @@ public static class PlaybookNodeFactory
     public static ControlNode Diverting(string label, int target = 0) =>
         new(0, [], null, [new DivertEdge(target, Speech(label), null)]);
 
+    /// <summary>
+    /// A control node whose effects are the fragments a test composed, leaving by the ways given.
+    /// </summary>
+    /// <remarks>
+    /// For a control node that needs an id, a <c>next</c>, or ways out; <see cref="Control"/>
+    /// covers effects alone.
+    /// </remarks>
+    public static ControlNode ControlOf(
+        ImmutableArray<SpeechFragment> effects,
+        string? condition = null,
+        int id = 0,
+        int? next = null,
+        params Edge[] ways) =>
+        new(id, effects, If(condition), Ways(ways, next));
+
     /// <summary>A control node that neither performs anything nor names where it goes.</summary>
-    public static ControlNode DivertingUnlabeled(int target = 0) =>
-        new(0, [], null, [Divert(target: target)]);
+    /// <remarks>
+    /// <code>
+    /// => [](#the-cellar)
+    /// </code>
+    /// </remarks>
+    public static ControlNode DivertingUnlabeled(int target = 0, int id = 0) =>
+        new(id, [], null, [Divert(target: target)]);
 
     /// <summary>A jump with no words of its own, taken whenever the world allows its condition.</summary>
     public static DivertEdge Divert(string? condition = null, int target = 0) =>
@@ -120,9 +154,29 @@ public static class PlaybookNodeFactory
     /// <summary>A menu at the id given.</summary>
     public static ChoiceNode Choice(int id, params Edge[] options) => new(id, false, [.. options]);
 
+    /// <summary>A numbered menu, whose options are shown in the order written.</summary>
+    /// <remarks>
+    /// <code>
+    /// 1. Alice: Open the door.
+    /// 2. Alice: Wait here.
+    /// </code>
+    /// </remarks>
+    public static ChoiceNode NumberedChoice(params Edge[] options) => new(0, true, [.. options]);
+
+    /// <summary>A numbered menu at the id given.</summary>
+    public static ChoiceNode NumberedChoice(int id, params Edge[] options) =>
+        new(id, true, [.. options]);
+
     /// <summary>One arm of a menu, carrying the words the menu shows for it.</summary>
     public static OptionEdge Option(string words, string? condition = null, int target = 0) =>
         new(target, Speech(words), If(condition));
+
+    /// <summary>
+    /// An option whose label is the fragments a test composed, so it can hold a query or a command.
+    /// </summary>
+    public static OptionEdge OptionOf(
+        ImmutableArray<SpeechFragment> label, string? condition = null, int target = 0) =>
+        new(target, label, If(condition));
 
     /// <summary>An option the writer left blank, which the compiler reports as a diagnostic.</summary>
     public static OptionEdge UnlabeledOption(int target = 0) => new(target, [], null);
@@ -137,6 +191,9 @@ public static class PlaybookNodeFactory
     /// </remarks>
     public static RandomChoiceNode RandomChoice(params Edge[] arms) => new(0, [.. arms]);
 
+    /// <summary>A random choice at the id given.</summary>
+    public static RandomChoiceNode RandomChoice(int id, params Edge[] arms) => new(id, [.. arms]);
+
     /// <summary>One arm of a random choice, at odds the writer fixed in the script.</summary>
     public static RandomOptionEdge Chance(
         double percentage, string? condition = null, int target = 0) =>
@@ -149,6 +206,9 @@ public static class PlaybookNodeFactory
     /// <summary>One arm of a random choice, sharing evenly in whatever the rest leave.</summary>
     public static RandomOptionEdge EvenChance(string? condition = null, int target = 0) =>
         new(target, new AutoWeight(), If(condition));
+
+    private static ImmutableArray<Edge> Ways(Edge[] ways, int? next) =>
+        next is int target ? [.. ways, new SuccessionEdge(target)] : [.. ways];
 
     private static KeyCondition? If(string? condition) =>
         condition is null ? null : new KeyCondition(condition);

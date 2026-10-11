@@ -4,6 +4,7 @@ using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -43,7 +44,7 @@ public sealed class LineEventsBuilderTests
             Gathered(
                 "Alice",
                 Answering(("playerName", "Robin")),
-                Segment([new TextFragment("Hello, "), new QueryFragment("playerName")], command: "Wave")),
+                Segment([Text("Hello, "), Query("playerName")], command: "Wave")),
             "said Alice 'Hello, Robin'",
             "perform Wave()");
 
@@ -56,7 +57,7 @@ public sealed class LineEventsBuilderTests
                 "Alice",
                 Answering(("title", string.Empty)),
                 Segment("Hi. ", command: "Wave"),
-                Segment([new QueryFragment("title")])),
+                Segment([Query("title")])),
             "said Alice 'Hi. '",
             "perform Wave()",
             "continued ''");
@@ -123,12 +124,12 @@ public sealed class LineEventsBuilderTests
     /// <param name="command">The name the host binds the command by, or <see langword="null"/> for none.</param>
     /// <returns>The segment.</returns>
     private static SpeechSegment Segment(string words, string? command = null) =>
-        Segment(words.Length == 0 ? [] : [new TextFragment(words)], command);
+        Segment(words.Length == 0 ? [] : [Text(words)], command);
 
     /// <summary>Any words, and the command written after them.</summary>
     /// <param name="words">What is said, in the order written.</param>
     /// <param name="command">The name the host binds the command by, or <see langword="null"/> for none.</param>
     /// <returns>The segment.</returns>
     private static SpeechSegment Segment(SpeechFragment[] words, string? command = null) =>
-        new([.. words], command is null ? null : new CustomCommandFragment(command, []));
+        new([.. words], command is null ? null : CustomCommand(command));
 }

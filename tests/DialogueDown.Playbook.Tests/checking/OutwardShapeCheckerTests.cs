@@ -17,7 +17,7 @@ public sealed class OutwardShapeCheckerTests
             speakers: [PlaybookFactory.Speaker()],
             nodes:
             [
-                SilentLine(id: 0, ways: [new SuccessionEdge(1)]),
+                SilentLine(id: 0, next: 1),
                 Choice(
                     id: 1,
                     Option("Go east", target: 2),
@@ -192,7 +192,8 @@ public sealed class OutwardShapeCheckerTests
             [
                 SilentLine(
                     condition: "HasMap",
-                    ways: [Divert(condition: "HasMap", target: 1), new SuccessionEdge(1)]),
+                    next: 1,
+                    ways: [Divert(condition: "HasMap", target: 1)]),
                 End(id: 1),
             ]);
 

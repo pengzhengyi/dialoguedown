@@ -1,9 +1,8 @@
-using DialogueDown.Playbook.Conditions;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -11,7 +10,7 @@ public sealed class NodeQuestionsTests
 {
     [Fact]
     public void RequiredToPlay_OfANodeThatAsksNothing_HasNoKeys() =>
-        Assert.Empty(NodeQuestions.RequiredToPlay(new EndNode(0)).Keys());
+        Assert.Empty(NodeQuestions.RequiredToPlay(End()).Keys());
 
     [Fact]
     public void RequiredToPlay_ReadsTheGuardAsATruthAndTheQueryAsWords()
@@ -83,20 +82,18 @@ public sealed class NodeQuestionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static LineNode AGuardedLineAskingEitherSideOfACommand() =>
-        new(
-            0,
-            Speaker: 0,
+        LineOf(
             [
-                new TextFragment("Hello, "),
-                new QueryFragment("playerName"),
-                new TextFragment(". "),
-                new CustomCommandFragment("Wave", []),
-                new TextFragment(" You look "),
-                new QueryFragment("mood"),
-                new TextFragment("."),
+                Text("Hello, "),
+                Query("playerName"),
+                Text(". "),
+                CustomCommand("Wave"),
+                Text(" You look "),
+                Query("mood"),
+                Text("."),
             ],
-            new KeyCondition("Rainy"),
-            [new SuccessionEdge(1)]);
+            condition: "Rainy",
+            next: 1);
 
     /// <summary>A line the world must allow, with a query standing in what it says.</summary>
     /// <remarks>
@@ -108,10 +105,5 @@ public sealed class NodeQuestionsTests
     /// <param name="query">The key standing in what the line says.</param>
     /// <returns>The node.</returns>
     private static LineNode AGuardedLineSaying(string guard, string query) =>
-        new(
-            0,
-            Speaker: 0,
-            [new TextFragment("You are "), new QueryFragment(query), new TextFragment(".")],
-            new KeyCondition(guard),
-            [new SuccessionEdge(1)]);
+        LineOf([Text("You are "), Query(query), Text(".")], condition: guard, next: 1);
 }

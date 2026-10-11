@@ -1,9 +1,8 @@
-using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -28,7 +27,7 @@ public sealed class ContinuedMatcherTests
         // A port that sent a second Said where the line went on would show the speaker's name
         // twice for one sentence.
         AssertDiverged(
-            Match(new Said("Alice", [new TextFragment(" Bye.")]), """{ "speech": " Bye." }"""),
+            Match(new Said("Alice", [Text(" Bye.")]), """{ "speech": " Bye." }"""),
             "expected the line to go on",
             "heard Alice speak");
 
@@ -43,7 +42,7 @@ public sealed class ContinuedMatcherTests
         Assert.Throws<InvalidFixtureException>(() => Match(WentOn(" Bye."), "{}"));
 
     private static Continued WentOn(string text) =>
-        new(ImmutableArray.Create<SpeechFragment>(new TextFragment(text)));
+        new([Text(text)]);
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, JsonNode.Parse(expected)!);

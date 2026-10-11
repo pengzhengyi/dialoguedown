@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -77,7 +77,7 @@ public sealed class OfferMatcherTests
     /// <param name="available">Whether the player can take it.</param>
     /// <returns>The option.</returns>
     private static OfferedOption Option(string label, bool available = true) =>
-        new([new TextFragment(label)], available);
+        new([Text(label)], available);
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, JsonNode.Parse(expected)!);
