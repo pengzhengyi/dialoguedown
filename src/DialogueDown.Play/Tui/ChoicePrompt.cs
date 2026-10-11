@@ -69,6 +69,9 @@ public sealed class ChoicePrompt : IPrompt<int?>
             .AutoClear(false)
             .StartAsync(async context =>
             {
+                // A live display draws on a refresh, so the opening frame is drawn here rather than
+                // waiting for the first move: a menu that is offered is a menu the player can read.
+                context.Refresh();
                 while (true)
                 {
                     var key = await KeyPress.ReadAsync(console, cancellationToken);

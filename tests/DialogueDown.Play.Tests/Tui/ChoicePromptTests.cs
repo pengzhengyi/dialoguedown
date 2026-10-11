@@ -18,6 +18,22 @@ public sealed class ChoicePromptTests
         ("Go around the back", true));
 
     [Fact]
+    public async Task Show_DrawsTheMenu_WithoutWaitingForAMove()
+    {
+        var console = Plain();
+        console.Input.PushKey(ConsoleKey.X);     // ignored, and no reason to redraw the frame
+        console.Input.PushKey(ConsoleKey.Enter); // take what the cursor starts on
+
+        var taken = await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
+
+        // A menu that is offered is on screen at once: the frame is drawn before any move, so an
+        // ignored key is enough to see it.
+        Assert.Equal(1, taken);
+        Assert.Contains("Wait here", console.Output, StringComparison.Ordinal);
+        Assert.Contains("ctrl+c quit", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Show_TakesTheOptionTheCursorStartsOn()
     {
         var console = Plain();
