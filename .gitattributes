@@ -1,0 +1,4 @@
+# Check out every text file with LF line endings, on every platform. Tests write expected
+# output as raw string literals and compare it with text joined by "\n", so a CRLF checkout
+# would fail them. Git still detects binary files, such as images, and leaves them alone.
+* text=auto eol=lf
