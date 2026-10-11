@@ -32,7 +32,7 @@ internal static class Playing
         {
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
-            ChoiceNode choice => Choosing.Offer(position, choice),
+            ChoiceNode choice => Choosing.Offer(position, choice, supply),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
         };

@@ -48,12 +48,12 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
-    public void WhyNotPlayable_OfAMenuThatAsksTheWorld_SaysSoRatherThanNamingItsKind()
+    public void WhyNotPlayable_OfAMenuWhoseLabelAsksTheWorld_SaysSoRatherThanNamingItsKind()
     {
         // This build plays menus, so naming the kind would say the wrong thing is missing.
         var context = PlayContextFactory.Of([PlayContextFactory.AMenuWithAQueryInALabel(), End(id: 1)], ["Alice"]);
 
-        AssertNotPlayable(context, "nothing offers a menu that asks the world yet");
+        AssertNotPlayable(context, "nothing offers a menu whose label asks the world yet");
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class PlayabilityTests
     public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
     {
         // The harness screens a playbook before stepping, and the screen restates what the runner
-        // can play, so the two must agree: on every kind, and on the menus refused for what they ask.
+        // can play, so the two must agree: on every kind, and on each way a menu asks the world.
         foreach (var (name, node) in EveryKindAndEveryMenuThatAsksTheWorld())
         {
             var refused = node.RefusalOnArrival() is not null;

@@ -14,8 +14,10 @@ namespace DialogueDown.Runtime.Stepping;
 /// The offer and the choice are kept together because both read the same options: a choice is
 /// counted against the options in the order the offer listed them.
 /// <para>
-/// A menu is offered without reading the world, so a menu whose options depend on the world is
-/// refused rather than offered with an option's condition unasked or a label's query unfilled.
+/// A menu's options' conditions are read on arrival, so an option the world withholds is offered
+/// as unavailable rather than hidden. A label's query is not filled yet, so a menu whose labels ask
+/// the world is refused rather than offered with a query unfilled; so is a menu with no option the
+/// player can take, until it can be walked past.
 /// </para>
 /// </remarks>
 internal static class Choosing
@@ -23,12 +25,26 @@ internal static class Choosing
     /// <summary>Offers a menu's options, and waits for the player to choose.</summary>
     /// <param name="position">The menu's position in the playbook.</param>
     /// <param name="choice">The menu itself.</param>
+    /// <param name="supply">
+    /// What the world said about the options' conditions, or <see langword="null"/> when nothing
+    /// was asked.
+    /// </param>
     /// <returns>Where the run now stands, and what it has to say.</returns>
-    public static StepResult Offer(int position, ChoiceNode choice)
+    public static StepResult Offer(int position, ChoiceNode choice, Supply? supply = null)
     {
         ArgumentNullException.ThrowIfNull(choice);
 
-        return AsksTheWorld(choice) ? RefuseAMenuThatAsksTheWorld(position) : OfferEveryOption(position, choice);
+        if (ALabelAsksTheWorld(choice))
+        {
+            return RefuseAMenuWhoseLabelAsksTheWorld(position);
+        }
+
+        var options = choice.Options();
+        var available = AvailableOptions(options, supply);
+
+        return available.IsEmpty
+            ? RefuseAMenuWithNothingAvailable(position)
+            : OfferOptions(position, choice.Ordered, options, available);
     }
 
     /// <summary>Takes the option the player chose, and arrives at the node it leads to.</summary>
@@ -53,22 +69,28 @@ internal static class Choosing
         };
     }
 
-    private static bool AsksTheWorld(ChoiceNode choice) =>
-        choice.Options().Any(option => option.Condition is not null || SpeechTemplate.HasKeys(option.Label));
+    private static bool ALabelAsksTheWorld(ChoiceNode choice) =>
+        choice.Options().Any(option => SpeechTemplate.HasKeys(option.Label));
 
-    // Every option is offered, in the order the node lists them. Nothing guards an option here, so
-    // every one of them can be taken.
-    private static StepResult OfferEveryOption(int position, ChoiceNode choice)
-    {
-        var options = choice.Options();
+    // An option nothing guards can always be taken, and a guarded one only when the world allows
+    // it. Without answers, only an option nothing guards can be taken.
+    private static ImmutableArray<int> AvailableOptions(ImmutableArray<OptionEdge> options, Supply? supply) =>
+        [.. Enumerable.Range(0, options.Length).Where(at => IsAvailable(options[at], supply))];
 
-        return new(
-            new PlayState(new AwaitingChoice(position, EveryOptionAvailable(options))),
-            [new Offer(choice.Ordered, [.. options.Select(option => OfferedOptions.From(option, available: true))])]);
-    }
+    private static bool IsAvailable(OptionEdge option, Supply? supply) =>
+        option.Condition is null || (supply is not null && option.IsAllowed(supply));
 
-    private static ImmutableArray<int> EveryOptionAvailable(ImmutableArray<OptionEdge> options) =>
-        [.. Enumerable.Range(0, options.Length)];
+    // Every option is offered, in the order the node lists them, and the wait keeps the ones the
+    // player can take.
+    private static StepResult OfferOptions(
+        int position, bool ordered, ImmutableArray<OptionEdge> options, ImmutableArray<int> available) =>
+        new(
+            new PlayState(new AwaitingChoice(position, available)),
+            [
+                new Offer(
+                    ordered,
+                    [.. options.Select((option, at) => OfferedOptions.From(option, available.Contains(at)))]),
+            ]);
 
     // The node says how many options there are; the wait says which of them could be taken.
     private static StepResult Take(
@@ -113,9 +135,15 @@ internal static class Choosing
                         + "no Choose to take there."),
             ]);
 
-    private static StepResult RefuseAMenuThatAsksTheWorld(int position) =>
+    private static StepResult RefuseAMenuWhoseLabelAsksTheWorld(int position) =>
         StepResults.Refuse(
             position,
             RefusalReason.UnplayableNode,
-            "This build cannot yet offer a menu whose options ask the world anything.");
+            "This build cannot yet offer a menu whose labels ask the world anything.");
+
+    private static StepResult RefuseAMenuWithNothingAvailable(int position) =>
+        StepResults.Refuse(
+            position,
+            RefusalReason.UnplayableNode,
+            "This build cannot yet walk past a menu with no option the player can take.");
 }

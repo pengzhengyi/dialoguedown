@@ -4,6 +4,7 @@ using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.StepAssert;
+using static DialogueDown.Runtime.Tests.World;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -39,11 +40,32 @@ public sealed class ChoosingTests
         AssertEvents(Offering(AMenuWithACommandInALabel()), "offer 'Say goodbye  and go'");
 
     [Fact]
-    public void Offer_AMenuWithAConditionalOption_IsRefusedRatherThanOfferedUnasked() =>
+    public void Offer_AConditionalOptionTheWorldAllows_IsOfferedAvailable() =>
+        AssertEvents(
+            Offering(PlayContextFactory.AMenuWithAConditionalOption(), Answering(("Alice.HasKey", true))),
+            "offer 'Open the door', 'Wait here'");
+
+    [Fact]
+    public void Offer_AConditionalOptionTheWorldWithholds_IsOfferedUnavailable() =>
+        // Shown rather than hidden, so the host decides how a withheld option looks.
+        AssertEvents(
+            Offering(PlayContextFactory.AMenuWithAConditionalOption(), Answering(("Alice.HasKey", false))),
+            "offer 'Open the door' unavailable, 'Wait here'");
+
+    [Fact]
+    public void Offer_AConditionalOptionTheWorldWithholds_IsNotKeptAsOneThePlayerCanTake()
+    {
+        var result = Offering(PlayContextFactory.AMenuWithAConditionalOption(), Answering(("Alice.HasKey", false)));
+
+        Assert.Equal([1], AssertAwaitingChoice(result, 0).Available);
+    }
+
+    [Fact]
+    public void Offer_AMenuWithNothingAvailable_IsRefusedUntilItCanBeWalkedPast() =>
         AssertRefused(
-            Offering(PlayContextFactory.AMenuWithAConditionalOption()),
+            Offering(AMenuWhoseOnlyOptionIsConditional(), Answering(("Alice.HasKey", false))),
             RefusalReason.UnplayableNode,
-            "ask the world");
+            "walk past");
 
     [Fact]
     public void Offer_AMenuWhoseLabelHoldsAQuery_IsRefusedRatherThanOfferedUnfilled() =>
@@ -119,8 +141,9 @@ public sealed class ChoosingTests
 
     /// <summary>Offers a menu standing at the start of a playbook.</summary>
     /// <param name="menu">The menu under test.</param>
+    /// <param name="supply">What the world said about the menu's options, when it was asked.</param>
     /// <returns>What offering it produced.</returns>
-    private static StepResult Offering(ChoiceNode menu) => Choosing.Offer(0, menu);
+    private static StepResult Offering(ChoiceNode menu, Supply? supply = null) => Choosing.Offer(0, menu, supply);
 
     /// <summary>Where a playthrough stands once the menu at the start has been offered.</summary>
     /// <param name="available">The positions of the options offered as ones the player can take.</param>
@@ -176,4 +199,16 @@ public sealed class ChoosingTests
     /// <returns>The menu.</returns>
     private static ChoiceNode AMenuWithACommandInALabel() =>
         Choice(OptionOf([Text("Say goodbye "), CustomCommand("Wave"), Text(" and go")], target: 1));
+
+    /// <summary>A menu whose only option the world must allow, with a fall-through beside it.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// </code>
+    /// The compiler writes the fall-through, which leads past the menu, because every option has a
+    /// condition.
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    private static ChoiceNode AMenuWhoseOnlyOptionIsConditional() =>
+        Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), new SuccessionEdge(2));
 }

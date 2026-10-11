@@ -16,7 +16,7 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// playable rather than as a divergence. The screen restates what the runner can play, so a test
 /// checks that the two agree.
 /// <para>
-/// A node is playable by its kind, and a menu only when none of its options asks the world. A
+/// A node is playable by its kind, and a menu only when none of its labels asks the world. A
 /// send is playable when a reader owns it, and an expectation when the harness can check every
 /// claim in it.
 /// </para>
@@ -28,7 +28,7 @@ internal static class Playability
     /// <returns><see langword="true"/> when arriving at the node is something this build does.</returns>
     public static bool CanPlay(Node node) => node switch
     {
-        ChoiceNode menu => !AsksTheWorld(menu),
+        ChoiceNode menu => !ALabelAsksTheWorld(menu),
         _ => node is LineNode or EndNode or ControlNode or BranchNode,
     };
 
@@ -86,10 +86,9 @@ internal static class Playability
     public static IEnumerable<string> WhyNotPlayable(ImmutableArray<SessionEntry> session) =>
         session.SelectMany(WhyNotPlayable).Distinct(StringComparer.Ordinal);
 
-    // The runner refuses such a menu rather than offer it with an option's condition unasked or a
-    // label's query unfilled.
-    private static bool AsksTheWorld(ChoiceNode menu) =>
-        menu.Options().Any(option => option.Condition is not null || SpeechTemplate.HasKeys(option.Label));
+    // The runner refuses such a menu rather than offer it with a label's query unfilled.
+    private static bool ALabelAsksTheWorld(ChoiceNode menu) =>
+        menu.Options().Any(option => SpeechTemplate.HasKeys(option.Label));
 
     // This build plays menus, so a menu is named for what it asks rather than for its kind.
     private static string ReasonFor(Node node) =>

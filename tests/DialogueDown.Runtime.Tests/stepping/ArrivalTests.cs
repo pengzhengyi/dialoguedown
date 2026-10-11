@@ -24,6 +24,21 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_AMenuWithAConditionalOption_AsksTheWorldBeforeOfferingIt() =>
+        AssertAsked(
+            Arrival.At(AMenuWithAConditionalOptionStanding(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
+
+    [Fact]
+    public void Supplied_AtAMenu_OffersItAsTheWorldAnswered()
+    {
+        var result = Arrival.Supplied(
+            AMenuWithAConditionalOptionStanding(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false)));
+
+        AssertEvents(result, "offer 'Open the door' unavailable, 'Wait here'");
+        Assert.Equal([1], AssertAwaitingChoice(result, 0).Available);
+    }
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
@@ -434,4 +449,15 @@ public sealed class ArrivalTests
     /// <summary>Where a run stands after asking, on the way in, about these keys.</summary>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
         new(node, [.. keys], Moment.BeforePlaying);
+
+    /// <summary>A playbook that begins at a menu whose first option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Wait here
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext AMenuWithAConditionalOptionStanding() =>
+        PlayContextFactory.Of([PlayContextFactory.AMenuWithAConditionalOption(), End(id: 1), End(id: 2)]);
 }

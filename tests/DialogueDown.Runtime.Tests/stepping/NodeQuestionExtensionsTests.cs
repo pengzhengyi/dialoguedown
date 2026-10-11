@@ -22,6 +22,27 @@ public sealed class NodeQuestionExtensionsTests
         Assert.Empty(End().FindTruthsForPlaying());
 
     [Fact]
+    public void FindTruthsForPlaying_OfAMenu_NameItsOptionsConditionsInTheOrderWritten() =>
+        Assert.Equal(
+            ["Hero.HasSword", "Hero.HasShield"],
+            Choice(
+                Option("Draw the sword", condition: "Hero.HasSword", target: 1),
+                Option("Run", target: 2),
+                Option("Raise the shield", condition: "Hero.HasShield", target: 3))
+                .FindTruthsForPlaying());
+
+    [Fact]
+    public void FindTruthsForPlaying_OfAMenu_NameARepeatedKeyOnce() =>
+        // One reading of the world decides the whole menu, so it cannot offer one option and
+        // withhold another on the same key.
+        Assert.Equal(
+            ["Hero.HasSword"],
+            Choice(
+                Option("Draw the sword", condition: "Hero.HasSword", target: 1),
+                Option("Swing the sword", condition: "Hero.HasSword", target: 2))
+                .FindTruthsForPlaying());
+
+    [Fact]
     public void FindWordsForPlaying_OfALineWithNoQueryInIt_AreNone() =>
         Assert.Empty(Line("Hello.").FindWordsForPlaying());
 
