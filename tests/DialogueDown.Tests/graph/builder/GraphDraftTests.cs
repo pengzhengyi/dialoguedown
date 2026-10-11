@@ -32,7 +32,13 @@ public sealed class GraphDraftTests
     [Fact]
     public void AddBlock_TheFirstTrackedBlockBecomesTheEntry()
     {
-        var blocks = Pipeline.Blocks("Alice: a\n\nBob: b", out var model);
+        var blocks = Pipeline.Blocks(
+            """
+            Alice: a
+
+            Bob: b
+            """,
+            out var model);
         var draft = Draft();
         var firstId = AddLine(draft, model, (Line)blocks[0]);
         AddLine(draft, model, (Line)blocks[1]);
