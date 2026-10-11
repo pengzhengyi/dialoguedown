@@ -2,7 +2,7 @@ using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
 using DialogueDown.Playbook.Speech;
 using static DialogueDown.Play.Tests.Support.Consoles;
-using static DialogueDown.Play.Tests.Support.Fragments;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;
 
@@ -257,7 +257,7 @@ public sealed class PlayerConsoleTests
     [Fact]
     public async Task AdvanceAsync_WithoutAKeyToGive_QuitsTheWait()
     {
-        var player = new PlayerConsole(StubConsoles.WithNoKey());
+        var player = new PlayerConsole(Consoles.WithoutAKey());
 
         var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
 

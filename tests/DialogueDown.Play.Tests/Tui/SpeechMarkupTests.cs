@@ -3,7 +3,7 @@ using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
 using Spectre.Console;
 using static DialogueDown.Play.Tests.Support.Consoles;
-using static DialogueDown.Play.Tests.Support.Fragments;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;
 
@@ -32,6 +32,14 @@ public sealed class SpeechMarkupTests
         (CustomCommand("ShowSprite", "yuki"), ""),
     ];
 
+    /// <summary>The markup tag each emphasis is written as, one per value of the style enum.</summary>
+    private static readonly Dictionary<SpeechStyle, string> _emphasis = new()
+    {
+        [SpeechStyle.Bold] = "bold",
+        [SpeechStyle.Italic] = "italic",
+        [SpeechStyle.Strikethrough] = "strikethrough",
+    };
+
     [Fact]
     public void Of_RendersEachFragmentKindAsItsMarkup()
     {
@@ -45,6 +53,20 @@ public sealed class SpeechMarkupTests
         // quiet line rather than a missing rendering.
         UnionCoverageAssert.AssertCoversEveryMember<SpeechFragment>(
             _everyKind.Select(kind => kind.Fragment));
+    }
+
+    [Fact]
+    public void Of_RendersEveryEmphasisTheFormatDeclares()
+    {
+        // A style with no rendering would drop the emphasis the writer wrote. Walking the enum
+        // rather than a list of the styles known today means a style added later fails here.
+        Assert.Equal(Enum.GetValues<SpeechStyle>().Order(), _emphasis.Keys.Order());
+
+        Assert.All(
+            Enum.GetValues<SpeechStyle>(),
+            style => Assert.Equal(
+                $"[{_emphasis[style]}]words[/]",
+                SpeechMarkup.Of([new StyledTextFragment(style, [Text("words")])])));
     }
 
     [Fact]

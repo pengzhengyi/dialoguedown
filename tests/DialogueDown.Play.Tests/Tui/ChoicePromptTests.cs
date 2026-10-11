@@ -3,7 +3,7 @@ using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
 using Spectre.Console;
 using static DialogueDown.Play.Tests.Support.Consoles;
-using static DialogueDown.Play.Tests.Support.Fragments;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;
 
@@ -34,7 +34,7 @@ public sealed class ChoicePromptTests
     [Fact]
     public async Task Show_WithoutAKeyToGive_ClosesWithNothingTaken()
     {
-        var console = StubConsoles.WithNoKey();
+        var console = Consoles.WithoutAKey();
 
         var taken = await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
 

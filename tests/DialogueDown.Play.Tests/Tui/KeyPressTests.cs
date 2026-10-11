@@ -14,7 +14,7 @@ public sealed class KeyPressTests
     {
         // A test console faults rather than waiting, so a real wait is stubbed here; this is the
         // path a driver's cancellation takes.
-        var console = StubConsoles.ThatNeverAnswers();
+        var console = Consoles.ThatNeverAnswers();
         using var cancelled = new CancellationTokenSource();
 
         var waiting = KeyPress.ReadAsync(console, cancelled.Token);
@@ -26,7 +26,7 @@ public sealed class KeyPressTests
     [Fact]
     public async Task ReadAsync_WithoutAKey_AnswersNothing()
     {
-        var console = StubConsoles.WithNoKey();
+        var console = Consoles.WithoutAKey();
 
         var key = await KeyPress.ReadAsync(console, CancellationToken.None);
 
