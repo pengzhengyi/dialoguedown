@@ -127,7 +127,7 @@ public sealed class SemanticProjectionTests
         var graph = Project("Alice: Hi.");
         Assert.Equal(
             ["Speakers", "Anchors", "Jump resolutions"],
-            graph.Tables!.Select(table => table.Title));
+            graph.Tables?.Select(table => table.Title));
     }
 
     [Fact]
@@ -333,5 +333,5 @@ public sealed class SemanticProjectionTests
         new SemanticProjection().Project(Pipeline.Model(source), source);
 
     private static SemanticTable Table(DisplayGraph graph, string title) =>
-        graph.Tables!.Single(table => table.Title == title);
+        Assert.Single(graph.Tables ?? [], table => table.Title == title);
 }

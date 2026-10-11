@@ -55,7 +55,7 @@ public sealed class ConfigurationProjectionTests
         var report = ConfigurationProjection.Project(applied);
 
         Assert.NotNull(report.File);
-        Assert.Equal("/proj/dialogue.toml", report.File!.Path);
+        Assert.Equal("/proj/dialogue.toml", report.File.Path);
         Assert.Equal("[[speakers]]", report.File.Source);
     }
 
