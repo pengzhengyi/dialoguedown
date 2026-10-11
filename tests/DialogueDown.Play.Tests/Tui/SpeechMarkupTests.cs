@@ -2,7 +2,7 @@ using DialogueDown.Play.Tui;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
 using Spectre.Console;
-using Spectre.Console.Testing;
+using static DialogueDown.Play.Tests.Support.Consoles;
 using static DialogueDown.Play.Tests.Support.Fragments;
 
 namespace DialogueDown.Play.Tests.Tui;
@@ -73,7 +73,7 @@ public sealed class SpeechMarkupTests
     public void Of_EscapesMarkupCharacters_SoTheWordsReadAsWritten()
     {
         // A writer's brackets are prose, so markup must show them rather than act on them.
-        var console = PlainConsole();
+        var console = Plain();
         console.MarkupLine(SpeechMarkup.Of([Text("Use [brackets], not [bold]markup")]));
 
         Assert.Contains("Use [brackets], not [bold]markup", console.Output, StringComparison.Ordinal);
@@ -82,17 +82,9 @@ public sealed class SpeechMarkupTests
     [Fact]
     public void Of_EscapesTheWordsOfANestedEmphasis()
     {
-        var console = PlainConsole();
+        var console = Plain();
         console.MarkupLine(SpeechMarkup.Of([Italic(Text("the [old] road"))]));
 
         Assert.Contains("the [old] road", console.Output, StringComparison.Ordinal);
-    }
-
-    /// <summary>A console that strips styling, so an assertion reads as a person reads.</summary>
-    private static TestConsole PlainConsole()
-    {
-        var console = new TestConsole();
-        console.Profile.Capabilities.ColorSystem = ColorSystem.NoColors;
-        return console;
     }
 }
