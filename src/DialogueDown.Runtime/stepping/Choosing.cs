@@ -83,14 +83,13 @@ internal static class Choosing
     // Every option is offered, in the order the node lists them, and the wait keeps the ones the
     // player can take.
     private static StepResult OfferOptions(
-        int position, bool ordered, ImmutableArray<OptionEdge> options, ImmutableArray<int> available) =>
-        new(
-            new PlayState(new AwaitingChoice(position, available)),
-            [
-                new Offer(
-                    ordered,
-                    [.. options.Select((option, at) => OfferedOptions.From(option, available.Contains(at)))]),
-            ]);
+        int position, bool ordered, ImmutableArray<OptionEdge> options, ImmutableArray<int> available)
+    {
+        var offered = options.Select((option, at) => OfferedOptions.From(option, available.Contains(at)));
+        var waiting = new AwaitingChoice(position, available);
+
+        return new StepResult(new PlayState(waiting), [new Offer(ordered, [.. offered])]);
+    }
 
     // The node says how many options there are; the wait says which of them could be taken.
     private static StepResult Take(
