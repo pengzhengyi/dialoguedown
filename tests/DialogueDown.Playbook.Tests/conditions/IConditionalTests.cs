@@ -3,6 +3,7 @@ using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Playbook.Tests.Conditions;
 
@@ -11,7 +12,7 @@ public sealed class IConditionalTests
     [Fact]
     public void IsConditional_SomethingAConditionGuards_IsTrue()
     {
-        var guarded = new DivertEdge(1, [], new KeyCondition("Alice.HasKey"));
+        var guarded = Divert(condition: "Alice.HasKey", target: 1);
 
         Assert.True(guarded.IsConditional());
     }
@@ -19,7 +20,7 @@ public sealed class IConditionalTests
     [Fact]
     public void IsConditional_SomethingNothingGuards_IsFalse()
     {
-        var open = new DivertEdge(1, [], Condition: null);
+        var open = Divert(target: 1);
 
         Assert.False(open.IsConditional());
     }

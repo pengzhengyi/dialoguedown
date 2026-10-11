@@ -1,5 +1,6 @@
 using DialogueDown.Playbook.Checking;
 using DialogueDown.TestSupport;
+
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class CapabilityCheckerTests
@@ -25,7 +26,8 @@ public sealed class CapabilityCheckerTests
 
         var error = Assert.Throws<InvalidPlaybookException>(() => checker.Check(playbook));
 
-        Assert.Contains("detour", error.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "This playbook requires 'detour', which this build does not understand.", error.Message);
     }
 
     [Fact]

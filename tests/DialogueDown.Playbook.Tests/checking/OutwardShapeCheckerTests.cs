@@ -1,9 +1,8 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Weights;
 using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Playbook.Tests.Checking;
 
@@ -18,9 +17,13 @@ public sealed class OutwardShapeCheckerTests
             speakers: [PlaybookFactory.Speaker()],
             nodes:
             [
-                new LineNode(0, 0, [], null, [new SuccessionEdge(1)]),
-                new ChoiceNode(1, false, [Option(2), Option(2, gated: true), new SuccessionEdge(2)]),
-                new EndNode(2),
+                SilentLine(id: 0, ways: [new SuccessionEdge(1)]),
+                Choice(
+                    id: 1,
+                    Option("Go east", target: 2),
+                    Option("Go west", condition: "HasMap", target: 2),
+                    new SuccessionEdge(2)),
+                End(id: 2),
             ]);
 
         _checker.Check(playbook);
@@ -31,7 +34,7 @@ public sealed class OutwardShapeCheckerTests
     {
         // An end's record takes no edges, so this is all an end can be; the schema guards a
         // hand-written end that carries an `out`.
-        _checker.Check(PlaybookFactory.Document(nodes: [new EndNode(0)]));
+        _checker.Check(PlaybookFactory.Document(nodes: [End(id: 0)]));
     }
 
     [Fact]
@@ -39,21 +42,26 @@ public sealed class OutwardShapeCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [new LineNode(0, 0, [], null, [Option(1)]), new EndNode(1)]);
+            nodes: [SilentLine(ways: [Option("Go east", target: 1)]), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("option", error.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("divert", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            "Node 0, a line, carries a 'option' way out; its arms are 'divert' edges.",
+            error.Message);
     }
 
     [Fact]
     public void Check_AChoiceMixingOptionAndBranchArms_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [new ChoiceNode(0, false, [Option(1), new BranchEdge(1, null)]), new EndNode(1)]);
+            nodes: [Choice(Option("Go east", target: 1), Else(target: 1)), End(id: 1)]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal(
+            "Node 0, a choice, carries a 'branch' way out; its arms are 'option' edges.",
+            error.Message);
     }
 
     [Fact]
@@ -61,20 +69,22 @@ public sealed class OutwardShapeCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [new LineNode(0, 0, [], null, [Divert(1), Divert(1)]), new EndNode(1)]);
+            nodes: [SilentLine(ways: [Divert(target: 1), Divert(target: 1)]), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("divert", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Node 0, a line, carries 2 'divert' edges; it takes at most 1.", error.Message);
     }
 
     [Fact]
     public void Check_AChoiceWithNoOptions_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [new ChoiceNode(0, false, [new SuccessionEdge(1)]), new EndNode(1)]);
+            nodes: [Choice(new SuccessionEdge(1)), End(id: 1)]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal("Node 0, a choice, carries 0 arms; it needs at least 1.", error.Message);
     }
 
     [Fact]
@@ -82,11 +92,13 @@ public sealed class OutwardShapeCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [new LineNode(0, 0, [], null, [new SuccessionEdge(1), new SuccessionEdge(1)]), new EndNode(1)]);
+            nodes: [SilentLine(ways: [new SuccessionEdge(1), new SuccessionEdge(1)]), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("succession", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            "Node 0 carries 2 succession edges; a node falls through at most one way.",
+            error.Message);
     }
 
     [Fact]
@@ -95,22 +107,32 @@ public sealed class OutwardShapeCheckerTests
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                new ChoiceNode(0, false, [Option(1, gated: true), Option(1, gated: true)]),
-                new EndNode(1),
+                Choice(
+                    Option("Go east", condition: "HasMap", target: 1),
+                    Option("Go west", condition: "HasMap", target: 1)),
+                End(id: 1),
             ]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("nowhere", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            "Node 0, a choice, can lead nowhere: nothing guarantees a way out, "
+                + "and it has no succession to fall through to.",
+            error.Message);
     }
 
     [Fact]
     public void Check_AnIfWithNoElseAndNoSuccession_LeadsNowhere_AndIsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [new BranchNode(0, [new BranchEdge(1, Key())]), new EndNode(1)]);
+            nodes: [Branch(Arm("HasMap", target: 1)), End(id: 1)]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal(
+            "Node 0, a branch, can lead nowhere: nothing guarantees a way out, "
+                + "and it has no succession to fall through to.",
+            error.Message);
     }
 
     [Fact]
@@ -120,9 +142,14 @@ public sealed class OutwardShapeCheckerTests
         // succession to fall through to when it is.
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [new LineNode(0, 0, [], Key(), [Divert(1)]), new EndNode(1)]);
+            nodes: [SilentLine(condition: "HasMap", ways: [Divert(target: 1)]), End(id: 1)]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal(
+            "Node 0, a line, can lead nowhere: nothing guarantees a way out, "
+                + "and it has no succession to fall through to.",
+            error.Message);
     }
 
     [Fact]
@@ -130,9 +157,14 @@ public sealed class OutwardShapeCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [new LineNode(0, 0, [], null, []), new EndNode(1)]);
+            nodes: [SilentLine(), End(id: 1)]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal(
+            "Node 0, a line, can lead nowhere: nothing guarantees a way out, "
+                + "and it has no succession to fall through to.",
+            error.Message);
     }
 
     [Fact]
@@ -141,8 +173,11 @@ public sealed class OutwardShapeCheckerTests
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                new ChoiceNode(0, false, [Option(1, gated: true), Option(1, gated: true), new SuccessionEdge(1)]),
-                new EndNode(1),
+                Choice(
+                    Option("Go east", condition: "HasMap", target: 1),
+                    Option("Go west", condition: "HasMap", target: 1),
+                    new SuccessionEdge(1)),
+                End(id: 1),
             ]);
 
         _checker.Check(playbook);
@@ -155,8 +190,10 @@ public sealed class OutwardShapeCheckerTests
             speakers: [PlaybookFactory.Speaker()],
             nodes:
             [
-                new LineNode(0, 0, [], Key(), [Divert(1, gated: true), new SuccessionEdge(1)]),
-                new EndNode(1),
+                SilentLine(
+                    condition: "HasMap",
+                    ways: [Divert(condition: "HasMap", target: 1), new SuccessionEdge(1)]),
+                End(id: 1),
             ]);
 
         _checker.Check(playbook);
@@ -168,7 +205,7 @@ public sealed class OutwardShapeCheckerTests
         // The succession can never run — an open option is always there — but it plays no
         // differently, so it is not refused.
         var playbook = PlaybookFactory.Document(
-            nodes: [new ChoiceNode(0, false, [Option(1), new SuccessionEdge(1)]), new EndNode(1)]);
+            nodes: [Choice(Option("Go east", target: 1), new SuccessionEdge(1)), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -177,20 +214,21 @@ public sealed class OutwardShapeCheckerTests
     public void Check_ARandomChoiceWhereEveryArmIsGated_AndNoSuccession_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes:
-            [
-                new RandomChoiceNode(0, [new RandomOptionEdge(1, new AutoWeight(), Key())]),
-                new EndNode(1),
-            ]);
+            nodes: [RandomChoice(EvenChance(condition: "HasMap", target: 1)), End(id: 1)]);
 
-        Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+        var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
+
+        Assert.Equal(
+            "Node 0, a random-choice, can lead nowhere: nothing guarantees a way out, "
+                + "and it has no succession to fall through to.",
+            error.Message);
     }
 
     [Fact]
     public void Check_AControlWithAnOpenDivert_IsAccepted()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [new ControlNode(0, [], null, [Divert(1)]), new EndNode(1)]);
+            nodes: [DivertingUnlabeled(target: 1), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -199,11 +237,7 @@ public sealed class OutwardShapeCheckerTests
     public void Check_ARandomChoiceWithAnOpenArm_IsAccepted()
     {
         var playbook = PlaybookFactory.Document(
-            nodes:
-            [
-                new RandomChoiceNode(0, [new RandomOptionEdge(1, new AutoWeight(), null)]),
-                new EndNode(1),
-            ]);
+            nodes: [RandomChoice(EvenChance(target: 1)), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -213,11 +247,7 @@ public sealed class OutwardShapeCheckerTests
     {
         // The else arm carries no condition, so the branch always resolves and needs no succession.
         var playbook = PlaybookFactory.Document(
-            nodes:
-            [
-                new BranchNode(0, [new BranchEdge(1, Key()), new BranchEdge(1, null)]),
-                new EndNode(1),
-            ]);
+            nodes: [Branch(Arm("HasMap", target: 1), Else(target: 1)), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -237,12 +267,4 @@ public sealed class OutwardShapeCheckerTests
     {
         Assert.Throws<ArgumentNullException>(() => _checker.Check(null!));
     }
-
-    private static KeyCondition Key() => new("HasMap");
-
-    private static OptionEdge Option(int to, bool gated = false) =>
-        new(to, [], gated ? Key() : null);
-
-    private static DivertEdge Divert(int to, bool gated = false) =>
-        new(to, [], gated ? Key() : null);
 }
