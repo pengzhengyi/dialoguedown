@@ -4,7 +4,7 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
 using static DialogueDown.Runtime.Tests.Conformance.PlayabilityAssert;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -41,7 +41,8 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
         var context = PlayContextFactory.Of(
-            [RandomChoice(0, leadsTo: 2), RandomChoice(1, leadsTo: 2), End(2)], ["Alice"]);
+            [RandomChoice(EvenChance(target: 2)), RandomChoice(id: 1, EvenChance(target: 2)), End(id: 2)],
+            ["Alice"]);
 
         AssertNotPlayable(context, "nothing plays a RandomChoiceNode yet");
     }
@@ -50,7 +51,7 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAMenuThatAsksTheWorld_SaysSoRatherThanNamingItsKind()
     {
         // This build plays menus, so naming the kind would say the wrong thing is missing.
-        var context = PlayContextFactory.Of([AMenuWithAQueryInALabel(), End(1)], ["Alice"]);
+        var context = PlayContextFactory.Of([PlayContextFactory.AMenuWithAQueryInALabel(), End(id: 1)], ["Alice"]);
 
         AssertNotPlayable(context, "nothing offers a menu that asks the world yet");
     }
@@ -112,7 +113,7 @@ public sealed class PlayabilityTests
     {
         // Guards the guard: a list that stopped naming kinds would leave the check above agreeing
         // about nothing.
-        UnionCoverageAssert.AssertCoversEveryMember<Node>(OneOfEveryNodeKind());
+        UnionCoverageAssert.AssertCoversEveryMember<Node>(PlayContextFactory.OneOfEveryNodeKind());
     }
 
     /// <summary>
@@ -122,8 +123,10 @@ public sealed class PlayabilityTests
     /// <returns>Each node, with the name a failure reports it by.</returns>
     private static IEnumerable<(string Name, Node Node)> EveryKindAndEveryMenuThatAsksTheWorld() =>
     [
-        .. OneOfEveryNodeKind().Select(node => (node.GetType().Name, node)),
-        (nameof(AMenuWithAConditionalOption), AMenuWithAConditionalOption()),
-        (nameof(AMenuWithAQueryInALabel), AMenuWithAQueryInALabel()),
+        .. PlayContextFactory.OneOfEveryNodeKind().Select(node => (node.GetType().Name, node)),
+        (
+            nameof(PlayContextFactory.AMenuWithAConditionalOption),
+            PlayContextFactory.AMenuWithAConditionalOption()),
+        (nameof(PlayContextFactory.AMenuWithAQueryInALabel), PlayContextFactory.AMenuWithAQueryInALabel()),
     ];
 }

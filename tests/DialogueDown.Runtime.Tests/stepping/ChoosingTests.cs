@@ -1,11 +1,11 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -40,11 +40,17 @@ public sealed class ChoosingTests
 
     [Fact]
     public void Offer_AMenuWithAConditionalOption_IsRefusedRatherThanOfferedUnasked() =>
-        AssertRefused(Offering(AMenuWithAConditionalOption()), RefusalReason.UnplayableNode, "ask the world");
+        AssertRefused(
+            Offering(PlayContextFactory.AMenuWithAConditionalOption()),
+            RefusalReason.UnplayableNode,
+            "ask the world");
 
     [Fact]
     public void Offer_AMenuWhoseLabelHoldsAQuery_IsRefusedRatherThanOfferedUnfilled() =>
-        AssertRefused(Offering(AMenuWithAQueryInALabel()), RefusalReason.UnplayableNode, "ask the world");
+        AssertRefused(
+            Offering(PlayContextFactory.AMenuWithAQueryInALabel()),
+            RefusalReason.UnplayableNode,
+            "ask the world");
 
     [Fact]
     public void Offer_NoMenu_IsRejected() => Assert.Throws<ArgumentNullException>(() => Choosing.Offer(0, null!));
@@ -124,7 +130,8 @@ public sealed class ChoosingTests
     /// <summary>A playbook that begins at a menu whose options lead to two ends.</summary>
     /// <param name="menu">The menu, standing first.</param>
     /// <returns>A context ready to step.</returns>
-    private static PlayContext Standing(ChoiceNode menu) => PlayContextFactory.Of([menu, End(1), End(2)]);
+    private static PlayContext Standing(ChoiceNode menu) =>
+        PlayContextFactory.Of([menu, End(id: 1), End(id: 2)]);
 
     /// <summary>A menu of two options.</summary>
     /// <remarks>
@@ -134,7 +141,8 @@ public sealed class ChoosingTests
     /// </code>
     /// </remarks>
     /// <returns>The menu.</returns>
-    private static ChoiceNode TwoWays() => Menu(0, Option(1, "Go east"), Option(2, "Go west"));
+    private static ChoiceNode TwoWays() =>
+        Choice(Option("Go east", target: 1), Option("Go west", target: 2));
 
     /// <summary>A numbered menu of two options.</summary>
     /// <remarks>
@@ -145,7 +153,7 @@ public sealed class ChoosingTests
     /// </remarks>
     /// <returns>The menu.</returns>
     private static ChoiceNode ANumberedMenu() =>
-        NumberedMenu(0, Option(1, "Open the door"), Option(2, "Wait here"));
+        NumberedChoice(Option("Open the door", target: 1), Option("Wait here", target: 2));
 
     /// <summary>A menu of one option, with a fall-through beside it.</summary>
     /// <remarks>
@@ -156,7 +164,8 @@ public sealed class ChoosingTests
     /// one beside an option that has none.
     /// </remarks>
     /// <returns>The menu.</returns>
-    private static ChoiceNode AMenuWithAFallThrough() => Menu(0, Option(1, "Go east"), new SuccessionEdge(2));
+    private static ChoiceNode AMenuWithAFallThrough() =>
+        Choice(Option("Go east", target: 1), new SuccessionEdge(2));
 
     /// <summary>A menu whose only option has a command in the middle of its label.</summary>
     /// <remarks>
@@ -166,7 +175,5 @@ public sealed class ChoosingTests
     /// </remarks>
     /// <returns>The menu.</returns>
     private static ChoiceNode AMenuWithACommandInALabel() =>
-        Menu(0, OptionSaying(1, new TextFragment("Say goodbye "), Command("Wave"), new TextFragment(" and go")));
-
-    private static CustomCommandFragment Command(string name) => new(name, []);
+        Choice(OptionOf([Text("Say goodbye "), CustomCommand("Wave"), Text(" and go")], target: 1));
 }

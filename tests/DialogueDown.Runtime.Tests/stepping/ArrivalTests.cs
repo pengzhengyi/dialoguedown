@@ -1,13 +1,10 @@
-using DialogueDown.Playbook.Conditions;
-using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.StepAssert;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -257,8 +254,8 @@ public sealed class ArrivalTests
     private static PlayContext AConditionalLine() =>
         PlayContextFactory.Of(
             [
-                ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
-                End(1),
+                Line("I have the key.", condition: "Alice.HasKey", id: 0, next: 1),
+                End(id: 1),
             ],
             ["Alice"]);
 
@@ -274,9 +271,9 @@ public sealed class ArrivalTests
     private static PlayContext AConditionalLineThenAnother() =>
         PlayContextFactory.Of(
             [
-                ConditionalLine(0, speaker: 0, "I have the key.", next: 1, key: "Alice.HasKey"),
-                Line(1, speaker: 0, "Onward.", next: 2),
-                End(2),
+                Line("I have the key.", condition: "Alice.HasKey", id: 0, next: 1),
+                Line("Onward.", id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice"]);
 
@@ -288,7 +285,7 @@ public sealed class ArrivalTests
     /// <returns>A context whose only line leads nowhere.</returns>
     private static PlayContext AConditionalLineLeadingNowhere() =>
         PlayContextFactory.Of(
-            [new LineNode(0, Speaker: 0, [new TextFragment("I have the key.")], new KeyCondition("Alice.HasKey"), [])],
+            [Line("I have the key.", condition: "Alice.HasKey", id: 0)],
             ["Alice"]);
 
     /// <summary>A jump on its own line, over the line that follows it.</summary>
@@ -307,10 +304,10 @@ public sealed class ArrivalTests
     private static PlayContext AJumpPastALine() =>
         PlayContextFactory.Of(
             [
-                Jump(0, jumpTo: 2),
-                Line(1, speaker: 0, "Never spoken.", next: 2),
-                Line(2, speaker: 0, "Here.", next: 3),
-                End(3),
+                DivertingUnlabeled(target: 2, id: 0),
+                Line("Never spoken.", id: 1, next: 2),
+                Line("Here.", id: 2, next: 3),
+                End(id: 3),
             ],
             ["Alice"]);
 
@@ -324,15 +321,12 @@ public sealed class ArrivalTests
     private static PlayContext AGuardedLineWithAQuery() =>
         PlayContextFactory.Of(
             [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    new KeyCondition("Alice.HasKey"),
-                    new TextFragment("You are "),
-                    new QueryFragment("playerName"),
-                    new TextFragment(".")),
-                End(1),
+                LineOf(
+                    [Text("You are "), Query("playerName"), Text(".")],
+                    condition: "Alice.HasKey",
+                    id: 0,
+                    next: 1),
+                End(id: 1),
             ],
             ["Alice"]);
 
@@ -346,15 +340,12 @@ public sealed class ArrivalTests
     private static PlayContext ALineNeedingOneKeyBothWays() =>
         PlayContextFactory.Of(
             [
-                LineSaying(
-                    0,
-                    speaker: 0,
-                    next: 1,
-                    new KeyCondition("Alice.HasKey"),
-                    new TextFragment("You have "),
-                    new QueryFragment("Alice.HasKey"),
-                    new TextFragment(".")),
-                End(1),
+                LineOf(
+                    [Text("You have "), Query("Alice.HasKey"), Text(".")],
+                    condition: "Alice.HasKey",
+                    id: 0,
+                    next: 1),
+                End(id: 1),
             ],
             ["Alice"]);
 
@@ -374,15 +365,15 @@ public sealed class ArrivalTests
     private static PlayContext AGuardedLineCarryingAJump() =>
         PlayContextFactory.Of(
             [
-                new LineNode(
-                    0,
-                    Speaker: 0,
-                    [new TextFragment("I unlock it.")],
-                    new KeyCondition("Alice.HasKey"),
-                    [Divert(2), new SuccessionEdge(1)]),
-                Line(1, speaker: 0, "The door is locked.", next: 2),
-                Line(2, speaker: 0, "Inside.", next: 3),
-                End(3),
+                Line(
+                    "I unlock it.",
+                    condition: "Alice.HasKey",
+                    id: 0,
+                    next: 1,
+                    ways: [Divert(target: 2)]),
+                Line("The door is locked.", id: 1, next: 2),
+                Line("Inside.", id: 2, next: 3),
+                End(id: 3),
             ],
             ["Alice"]);
 
@@ -400,9 +391,9 @@ public sealed class ArrivalTests
     private static PlayContext ALoopOfOneGuardedLine() =>
         PlayContextFactory.Of(
             [
-                ConditionalLine(0, speaker: 0, "Still raining.", next: 1, key: "Rainy"),
-                Jump(1, jumpTo: 0),
-                End(2),
+                Line("Still raining.", condition: "Rainy", id: 0, next: 1),
+                DivertingUnlabeled(target: 0, id: 1),
+                End(id: 2),
             ],
             ["Alice"]);
 
@@ -415,9 +406,9 @@ public sealed class ArrivalTests
     private static PlayContext AGuardedNodeWithNothingToHandTheHost() =>
         PlayContextFactory.Of(
             [
-                new ControlNode(0, [], new KeyCondition("Rainy"), [new SuccessionEdge(1)]),
-                Line(1, speaker: 0, "Onward.", next: 2),
-                End(2),
+                ControlOf([], condition: "Rainy", id: 0, next: 1),
+                Line("Onward.", id: 1, next: 2),
+                End(id: 2),
             ],
             ["Alice"]);
 
@@ -433,10 +424,10 @@ public sealed class ArrivalTests
     private static PlayContext AGuardedNodeWithNothingToHandTheHostButAGuardedJump() =>
         PlayContextFactory.Of(
             [
-                new ControlNode(0, [], new KeyCondition("Rainy"), [Divert(2, "Late"), new SuccessionEdge(1)]),
-                Line(1, speaker: 0, "We press on.", next: 2),
-                Line(2, speaker: 0, "We wait out the storm.", next: 3),
-                End(3),
+                ControlOf([], condition: "Rainy", id: 0, next: 1, ways: [Divert("Late", target: 2)]),
+                Line("We press on.", id: 1, next: 2),
+                Line("We wait out the storm.", id: 2, next: 3),
+                End(id: 3),
             ],
             ["Alice"]);
 

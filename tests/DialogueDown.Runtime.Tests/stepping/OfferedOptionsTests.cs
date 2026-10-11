@@ -1,7 +1,7 @@
 using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Stepping;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -12,25 +12,25 @@ public sealed class OfferedOptionsTests
 {
     [Fact]
     public void From_ALabelOfPlainWords_IsOfferedAsWritten() =>
-        Assert.Equal([new TextFragment("Go east")], OfferedOptions.From(Option(1, "Go east"), available: true).Label);
+        Assert.Equal([Text("Go east")], OfferedOptions.From(Option("Go east"), available: true).Label);
 
     [Fact]
     public void From_ALabelHoldingACommand_KeepsTheWordsEitherSideAndLeavesOutTheCommand() =>
         Assert.Equal(
-            [new TextFragment("Say goodbye "), new TextFragment(" and go")],
+            [Text("Say goodbye "), Text(" and go")],
             OfferedOptions.From(AnOptionWithACommandInItsLabel(), available: true).Label);
 
     [Fact]
     public void From_ALabelThatIsOnlyACommand_IsEmpty() =>
-        Assert.Empty(OfferedOptions.From(OptionSaying(1, Wave()), available: true).Label);
+        Assert.Empty(OfferedOptions.From(OptionOf([CustomCommand("Wave")]), available: true).Label);
 
     [Fact]
     public void From_AnOptionThePlayerCanTake_IsOfferedAvailable() =>
-        Assert.True(OfferedOptions.From(Option(1, "Go east"), available: true).Available);
+        Assert.True(OfferedOptions.From(Option("Go east"), available: true).Available);
 
     [Fact]
     public void From_AnOptionThePlayerCannotTake_IsOfferedUnavailable() =>
-        Assert.False(OfferedOptions.From(Option(1, "Go east"), available: false).Available);
+        Assert.False(OfferedOptions.From(Option("Go east"), available: false).Available);
 
     [Fact]
     public void From_NoOption_IsRejected() =>
@@ -44,7 +44,5 @@ public sealed class OfferedOptionsTests
     /// </remarks>
     /// <returns>The option.</returns>
     private static OptionEdge AnOptionWithACommandInItsLabel() =>
-        OptionSaying(1, new TextFragment("Say goodbye "), Wave(), new TextFragment(" and go"));
-
-    private static CustomCommandFragment Wave() => new("Wave", []);
+        OptionOf([Text("Say goodbye "), CustomCommand("Wave"), Text(" and go")]);
 }

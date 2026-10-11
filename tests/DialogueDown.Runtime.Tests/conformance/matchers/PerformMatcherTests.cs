@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -40,7 +40,7 @@ public sealed class PerformMatcherTests
     /// <summary>A run asking the host to perform a named command that takes no arguments.</summary>
     /// <param name="command">The command's name.</param>
     /// <returns>The request.</returns>
-    private static Perform Performed(string command) => new(new CustomCommandFragment(command, []));
+    private static Perform Performed(string command) => new(CustomCommand(command));
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, JsonNode.Parse(expected)!);

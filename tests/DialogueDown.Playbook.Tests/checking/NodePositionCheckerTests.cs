@@ -1,6 +1,7 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class NodePositionCheckerTests
@@ -10,7 +11,7 @@ public sealed class NodePositionCheckerTests
     [Fact]
     public void Check_EveryNodeAtItsOwnIndex_IsAccepted()
     {
-        var playbook = PlaybookFactory.Document(nodes: [new EndNode(0), new EndNode(1)]);
+        var playbook = PlaybookFactory.Document(nodes: [End(id: 0), End(id: 1)]);
 
         _checker.Check(playbook);
     }
@@ -20,12 +21,11 @@ public sealed class NodePositionCheckerTests
     {
         // An id is the position, so a node claiming another one silently redirects every edge
         // that ever names it.
-        var playbook = PlaybookFactory.Document(nodes: [new EndNode(0), new EndNode(7)]);
+        var playbook = PlaybookFactory.Document(nodes: [End(id: 0), End(id: 7)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Contains("1", error.Message, StringComparison.Ordinal);
-        Assert.Contains("7", error.Message, StringComparison.Ordinal);
+        Assert.Equal("Node at index 1 claims id 7; a node's id is its position.", error.Message);
     }
 
     [Fact]
