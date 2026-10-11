@@ -50,7 +50,7 @@ public sealed class PlayabilityTests
     public void WhyNotPlayable_OfAMenuThatAsksTheWorld_SaysSoRatherThanNamingItsKind()
     {
         // This build plays menus, so naming the kind would say the wrong thing is missing.
-        var context = PlayContextFactory.Of([AMenuWithAConditionalOption(), End(1), End(2)], ["Alice"]);
+        var context = PlayContextFactory.Of([AMenuWithAQueryInALabel(), End(1)], ["Alice"]);
 
         AssertNotPlayable(context, "nothing offers a menu that asks the world yet");
     }
