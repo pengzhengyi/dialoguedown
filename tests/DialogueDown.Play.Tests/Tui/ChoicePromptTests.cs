@@ -146,6 +146,20 @@ public sealed class ChoicePromptTests
     }
 
     [Fact]
+    public async Task Show_FallsBackToAscii_WithoutUnicode()
+    {
+        var console = Plain();
+        console.Profile.Capabilities.Unicode = false;
+        console.Input.PushKey(ConsoleKey.Enter);
+
+        await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
+
+        Assert.Contains("> Wait here", console.Output, StringComparison.Ordinal);
+        Assert.Contains("^v move - enter to take - ctrl+c quit", console.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u276f", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Construct_WithoutOptions_IsRefused()
     {
         Assert.Throws<ArgumentException>(() => new ChoicePrompt([]));

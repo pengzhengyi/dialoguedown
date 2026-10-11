@@ -1,3 +1,4 @@
+using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
 using DialogueDown.Playbook.Speech;
 using static DialogueDown.Play.Tests.Support.Consoles;
@@ -128,6 +129,104 @@ public sealed class PlayerConsoleTests
             entry => Assert.Equal("Bob", Assert.IsType<TranscriptEntry.Line>(entry).Speaker),
             entry => Assert.Equal("A refusal.", Assert.IsType<TranscriptEntry.Notice>(entry).Text),
             entry => Assert.IsType<TranscriptEntry.Ending>(entry));
+    }
+
+    [Fact]
+    public void Say_WithNoWords_RecordsTheLine_AndDrawsNothing()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+
+        player.Say("Alice", [DefaultCommand("Wave")]);
+
+        // A line whose words are all commands says nothing, so nothing appears on screen.
+        Assert.Equal(string.Empty, console.Output);
+        var line = Assert.IsType<TranscriptEntry.Line>(Assert.Single(player.Transcript));
+        Assert.Equal("Alice", line.Speaker);
+    }
+
+    [Fact]
+    public void Continue_WithNoWords_DrawsNothing()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        player.Say("Alice", [Text("Ready?")]);
+        var before = console.Output;
+
+        player.Continue([DefaultCommand("Wave")]);
+
+        Assert.Equal(before, console.Output);
+    }
+
+    [Fact]
+    public void Notice_FallsBackToAnAsciiCross_WithoutUnicode()
+    {
+        var console = Plain();
+        console.Profile.Capabilities.Unicode = false;
+        var player = new PlayerConsole(console);
+
+        player.Notice("A refusal.");
+
+        Assert.Contains("x A refusal.", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Continue_AlignsUnderAWideSpeakerName_ByItsCellsNotItsCharacters()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        player.Say("\u795e\u8bc6", [Text("Hear me.")]);
+        player.Continue([Text("Again.")]);
+
+        // Two wide characters occupy four cells, so this speaker's words begin at column six.
+        Assert.Contains("\n      Again.", console.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AWholePlaythrough_ReadsInOrder()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        var options = Menu(("Open the door", false), ("Wait here", true));
+        console.Input.PushKey(ConsoleKey.Enter);  // go on from Alice's line
+        console.Input.PushKey(ConsoleKey.Enter);  // go on from Bob's line
+        console.Input.PushKey(ConsoleKey.Enter);  // take Wait here
+
+        player.Start("act-1/scene.dialogue.md");
+        player.Say("Alice", [Text("The market closes at dusk.")]);
+        await player.AdvanceAsync(TestContext.Current.CancellationToken);
+        player.Continue([Text("Come with me, then.")]);
+        player.Say("Bob", [Text("You stayed, then.")]);
+        await player.AdvanceAsync(TestContext.Current.CancellationToken);
+        player.Say("Alice", [Text("Ready?")]);
+        await player.TakeAsync(options, TestContext.Current.CancellationToken);
+        player.Say(null, options[1].Label);
+        player.Notice("A refusal.");
+        player.End();
+
+        Assert.Collection(
+            player.Transcript,
+            entry => Assert.Equal("Alice", Assert.IsType<TranscriptEntry.Line>(entry).Speaker),
+            entry => Assert.IsType<TranscriptEntry.Continuation>(entry),
+            entry => Assert.Equal("Bob", Assert.IsType<TranscriptEntry.Line>(entry).Speaker),
+            entry => Assert.Equal("Alice", Assert.IsType<TranscriptEntry.Line>(entry).Speaker),
+            entry => Assert.Equal(1, Assert.IsType<TranscriptEntry.Menu>(entry).Taken),
+            entry => Assert.Null(Assert.IsType<TranscriptEntry.Line>(entry).Speaker),
+            entry => Assert.Equal("A refusal.", Assert.IsType<TranscriptEntry.Notice>(entry).Text),
+            entry => Assert.IsType<TranscriptEntry.Ending>(entry));
+
+        OutputAssert.AssertInOrder(
+            console.Output,
+            "ddown play",
+            "The market closes at dusk.",
+            "Come with me, then.",
+            "You stayed, then.",
+            "enter to proceed",
+            "Ready?",
+            "Open the door (unavailable)",
+            "Wait here",
+            "A refusal.",
+            "the end");
     }
 
     [Fact]

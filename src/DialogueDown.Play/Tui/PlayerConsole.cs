@@ -14,9 +14,6 @@ namespace DialogueDown.Play.Tui;
 /// </remarks>
 public sealed class PlayerConsole
 {
-    /// <summary>What the player reads while they are asked to go on.</summary>
-    private const string Hint = "enter to proceed \u00b7 ctrl+c quit";
-
     // Five bright ANSI colors, so a terminal's own palette themes them. Two speakers may collide;
     // the name is what identifies them either way.
     private static readonly Color[] _palette =
@@ -53,7 +50,7 @@ public sealed class PlayerConsole
     public void Start(string title)
     {
         ArgumentNullException.ThrowIfNull(title);
-        _console.Write(new Rule($"[bold]ddown play[/] [grey]\u00b7[/] {Markup.Escape(title)}").LeftJustified());
+        _console.Write(new Rule($"[bold]ddown play[/] [grey]{Glyphs.Separator(_console)}[/] {Markup.Escape(title)}").LeftJustified());
         _console.WriteLine();
     }
 
@@ -64,16 +61,24 @@ public sealed class PlayerConsole
     {
         _transcript.Add(new TranscriptEntry.Line(speaker, words));
 
+        var markup = SpeechMarkup.Of(words);
+        if (markup.Length == 0)
+        {
+            // A line whose words are all commands says nothing, so it changes nothing on screen.
+            return;
+        }
+
         if (speaker is null)
         {
             _indent = 2;
-            _console.MarkupLine(SpeechMarkup.Of(words));
+            _console.MarkupLine(markup);
         }
         else
         {
-            _indent = speaker.Length + 2;
+            // A name occupies terminal cells, not characters: a wide script indents by its width.
+            _indent = speaker.GetCellWidth() + 2;
             _console.MarkupLine(
-                $"[{SpeakerColor(speaker).ToMarkup()}]{Markup.Escape(speaker)}[/]  {SpeechMarkup.Of(words)}");
+                $"[{SpeakerColor(speaker).ToMarkup()}]{Markup.Escape(speaker)}[/]  {markup}");
         }
 
         _console.WriteLine();
@@ -84,7 +89,14 @@ public sealed class PlayerConsole
     public void Continue(ImmutableArray<SpeechFragment> words)
     {
         _transcript.Add(new TranscriptEntry.Continuation(words));
-        _console.MarkupLine($"{new string(' ', _indent)}{SpeechMarkup.Of(words)}");
+
+        var markup = SpeechMarkup.Of(words);
+        if (markup.Length == 0)
+        {
+            return;
+        }
+
+        _console.MarkupLine($"{new string(' ', _indent)}{markup}");
         _console.WriteLine();
     }
 
@@ -94,7 +106,7 @@ public sealed class PlayerConsole
     {
         ArgumentNullException.ThrowIfNull(text);
         _transcript.Add(new TranscriptEntry.Notice(text));
-        _console.MarkupLine($"[red]\u2717[/] {Markup.Escape(text)}");
+        _console.MarkupLine($"[red]{Glyphs.Cross(_console)}[/] {Markup.Escape(text)}");
     }
 
     /// <summary>
@@ -105,8 +117,9 @@ public sealed class PlayerConsole
     /// <returns><see cref="PlayerTurn.Advance"/>, or <see cref="PlayerTurn.Quit"/> at Ctrl+C.</returns>
     public async Task<PlayerTurn> AdvanceAsync(CancellationToken cancellationToken = default)
     {
-        _console.MarkupLine($"[grey]{Hint}[/]");
-        var height = HeightOf(Hint);
+        var hint = Hint(_console);
+        _console.MarkupLine($"[grey]{hint}[/]");
+        var height = HeightOf(hint);
         try
         {
             while (true)
@@ -171,6 +184,10 @@ public sealed class PlayerConsole
 
         return color;
     }
+
+    /// <summary>What the player reads while they are asked to go on.</summary>
+    private static string Hint(IAnsiConsole console) =>
+        $"enter to proceed {Glyphs.Separator(console)} ctrl+c quit";
 
     /// <summary>Erases the last <paramref name="height"/> lines, leaving the cursor at their top.</summary>
     private void Erase(int height)
