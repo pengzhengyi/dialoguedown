@@ -58,7 +58,8 @@ the `ddown play` command; the raw stdio REPL; saves, history, and world answers.
       without color.
 - [x] A refusal renders as a red cross, apart from speech.
 - [x] Long labels wrap under their own words, and a move redraws the menu in place.
-- [x] Enter advances; Enter on an option takes it; Ctrl+C quits, at either wait.
+- [x] Any key goes on (Escape is the one that does nothing); Enter on an option takes it;
+      Ctrl+C quits, at either wait.
 - [x] A wait hint appears where the player acts and is erased once answered; a menu keeps a
       dim key footer.
 - [x] A turn is a value: advance, `Take(index)`, quit.
@@ -267,7 +268,9 @@ and tested while the runner is still moving.
 what a turn means; the driver turns an `Advance` into `Done` and a `Take` into `Choose`.
 
 Quit is Ctrl+C at either wait; Escape is retired — one key, the one a command-line reader
-already reaches for to stop something, and not one a hand brushes by accident. The player
+already reaches for to stop something, and not one a hand brushes by accident. Going on
+takes any key, so a key pressed a moment before a menu appears moves the story on rather
+than vanishing; only Escape is inert, and only Ctrl+C stops the run. The player
 reads Ctrl+C as a key; the driver owns the terminal's mode, keeping Ctrl+C as input for the
 run so the terminal's default kill cannot fire mid-transcript.
 
@@ -300,7 +303,7 @@ named, not measured, so each terminal's palette decides how bright it reads.
 
 A header line scrolls away, and a fixed status line would need the alternate screen
 [D2](#d2--an-inline-transcript-not-an-alternate-screen) refuses. Instructions therefore
-appear at the point of action: while a line waits, a dim `enter to proceed · ctrl+c quit` hint sits
+appear at the point of action: while a line waits, a dim `any key to go on · ctrl+c quit` hint sits
 under it and is erased the moment the key arrives, leaving the scrollback clean; while a
 menu is open, a dim footer under its options names the keys and stays with the menu's last
 frame. The header keeps only the title.
