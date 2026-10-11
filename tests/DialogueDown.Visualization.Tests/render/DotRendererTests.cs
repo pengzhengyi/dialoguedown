@@ -42,7 +42,16 @@ public sealed class DotRendererTests
 
         var output = _renderer.Render(graph);
 
-        Assert.Contains("n0 -> n1 [style=dashed];", output);
+        Assert.Equal(
+            """
+            digraph "G" {
+                n0 [label="a"];
+                n1 [label="b"];
+                n0 -> n1 [style=dashed];
+            }
+
+            """,
+            output);
     }
 
     [Fact]
@@ -55,7 +64,14 @@ public sealed class DotRendererTests
 
         var output = _renderer.Render(graph);
 
-        Assert.Contains("""n0 [label="Heading\nlevel: 2"];""", output);
+        Assert.Equal(
+            """
+            digraph "G" {
+                n0 [label="Heading\nlevel: 2"];
+            }
+
+            """,
+            output);
     }
 
     [Fact]
@@ -65,6 +81,13 @@ public sealed class DotRendererTests
 
         var output = _renderer.Render(graph);
 
-        Assert.Contains("""n0 [label="a \"b\" \\c"];""", output);
+        Assert.Equal(
+            """
+            digraph "G" {
+                n0 [label="a \"b\" \\c"];
+            }
+
+            """,
+            output);
     }
 }

@@ -1,5 +1,7 @@
+using System.Text.Json;
 using DialogueDown.Compilation;
 using DialogueDown.Emission;
+using DialogueDown.Playbook;
 using DialogueDown.Visualization.Playbook;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
@@ -24,7 +26,10 @@ public sealed class PlaybookProjectionTests
 
         Assert.NotNull(report.Json);
         Assert.Null(report.Unavailable);
-        Assert.Contains("\"nodes\"", report.Json, StringComparison.Ordinal);
+        var playbook = JsonSerializer.Deserialize<PlaybookDocument>(report.Json, PlaybookJson.Options);
+        Assert.NotNull(playbook);
+        Assert.Equal(Script, playbook.Script);
+        Assert.NotEmpty(playbook.Nodes);
     }
 
     [Fact]
@@ -33,7 +38,8 @@ public sealed class PlaybookProjectionTests
         // The report shows the playbook to be read, not diffed against a file, so it is indented.
         var report = Project(Source);
 
-        Assert.Contains("\n  ", report.Json!, StringComparison.Ordinal);
+        Assert.NotNull(report.Json);
+        Assert.Contains("\n  ", report.Json, StringComparison.Ordinal);
     }
 
     [Fact]

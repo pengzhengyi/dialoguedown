@@ -73,7 +73,7 @@ public sealed class SceneTreeProjectionTests
         var projection = new SceneTreeProjection(model, source);
         var scene = model.SceneRoot.ChildScenes[0];
 
-        Assert.Contains("The Market", projection.Describe(scene).Source!);
+        Assert.Equal("# The Market", projection.Describe(scene).Source);
     }
 
     [Fact]
