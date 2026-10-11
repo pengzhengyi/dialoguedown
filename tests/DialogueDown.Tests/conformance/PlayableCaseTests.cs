@@ -19,7 +19,7 @@ public sealed class PlayableCaseTests
 
     public static TheoryData<string> Cases() =>
         [.. Directory.EnumerateDirectories(Half)
-            .Select(folder => Path.GetFileName(folder)!)
+            .Select(folder => Path.GetFileName(folder))
             .Order(StringComparer.Ordinal)];
 
     [Fact]

@@ -119,8 +119,13 @@ public sealed class GraphDraftTests
         Assert.Throws<InvalidOperationException>(() => draft.AddEnd(SourceSpanFactory.Span()));
     }
 
-    private static NodeId AddLine(GraphDraft draft, SemanticModel model, Line line) =>
-        draft.AddBlock(
+    private static NodeId AddLine(GraphDraft draft, SemanticModel model, Line line)
+    {
+        var speaker = line.Speaker;
+        Assert.NotNull(speaker);
+
+        return draft.AddBlock(
             line,
-            id => new LineNodeDraft(id, line.Span, model.Speakers.Resolve(line.Speaker!), line.Speech));
+            id => new LineNodeDraft(id, line.Span, model.Speakers.Resolve(speaker), line.Speech));
+    }
 }
