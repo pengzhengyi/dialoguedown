@@ -266,7 +266,7 @@ hovering the call shows the script:
 /// </code>
 /// </remarks>
 public static PlayContext OneLine() =>
-    Of([Line(0, speaker: 0, "Hello.", next: 1), End(1)], ["Alice"]);
+    Of([Line("Hello.", id: 0, next: 1), End(id: 1)], ["Alice"]);
 ```
 
 A fixture that no script could produce, such as a node with no way out, says so in
@@ -276,6 +276,12 @@ Prefer **real dialogue** to a hand-built model. Where a suite has a `Pipeline`
 and the stage under test can be reached by compiling a script, compile it and
 let the test show the source as a raw string literal. Build the model by hand
 only to test a stage in isolation, or to reach a shape no script produces.
+
+Any multi-line input or expected text is a raw string literal, so it reads as the
+writer would type it rather than as `"# Scene\n\nAlice: Hi."`. An input stays
+escaped only when the escape is what the test is about: `\r\n` beside `\n`, a
+trailing space that an editor would trim, or text that is nothing but whitespace.
+Say so in a comment where it is not obvious.
 
 ### One mother per type
 
@@ -347,6 +353,16 @@ narrowed value so the test can assert more on it. Where this matters most:
   place.
 - **Large output** such as a whole playbook or report is pinned as a
   [golden](#golden-tests) with Verify, not checked by a dozen `Contains` calls.
+- **Exact values** beat fragments. A message, a table cell, or a rendered line is
+  compared whole with `Assert.Equal`, so the test shows what the reader sees.
+  A `Contains` check stays only when the text itself is the subject, such as a
+  page that must inline its scripts, or when .NET composes the message.
+- **No `!` to reach a value.** A value the test needs is checked with
+  `Assert.IsType` or `Assert.NotNull`, which narrow it, or handed to a helper that
+  accepts it missing and fails naming what it expected. A value that is only
+  compared reads through `?.`, so a missing one fails the comparison. The one
+  exception is an NSubstitute `Arg.Is` matcher, whose expression tree cannot hold
+  `?.`.
 
 Where a helper wraps a member, that member's own test calls it directly, so
 the member is tested without the helper in between.
