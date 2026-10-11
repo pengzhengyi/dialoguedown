@@ -234,6 +234,7 @@ projected from the compiler rather than a client-side grammar.
 | [Compiler-Projected Editor Semantics](./visualization/editor/Compiler-Projected%20Editor%20Semantics.md) | Highlighting tokens and completions projected from the compiler's own parse | Implemented |
 | [Diagnostics Overlay](./visualization/editor/Diagnostics%20Overlay.md) | Diagnostics as squiggles, gutter markers, and tooltips on an LSP-shaped projection, with co-located diagnostics ordered once | Implemented |
 | [Diagnostic Quick Fixes](./visualization/editor/Diagnostic%20Quick%20Fixes.md) | A diagnostic's suggested repair offered as an editor action | Implemented |
+| [Fix All Diagnostics](./visualization/editor/Fix%20All%20Diagnostics.md) | Apply every preferred diagnostic fix in one edit from the Problems panel | Implemented |
 | [Heading Anchors](./visualization/editor/Heading%20Anchors.md) | Copy a scene heading's jump target from a preview link or an active-line hint | Implemented |
 | [Unmodeled Markdown Highlighting](./visualization/editor/Unmodeled%20Markdown%20Highlighting.md) | The editor marks the Markdown its policy ignores and styles comments as writer-only notes | Implemented |
 | [Front Matter Source Highlighting](./visualization/editor/Front%20Matter%20Source%20Highlighting.md) | Leading front matter highlighted as YAML | Implemented |

@@ -6,6 +6,7 @@
 import { codicon } from "./codicon";
 import { errorCodeUrl } from "./diagnostics-overlay";
 import { orderDiagnostics } from "./diagnostic-order";
+import { fixableCount } from "./fix-all";
 import type { LspDiagnostic, LspFix, LspSeverity } from "./model";
 
 /** How many diagnostics of each severity the document currently has. */
@@ -41,6 +42,11 @@ export interface ProblemsPanelOptions {
      * the caller routes them to the editor.
      */
     applyFix(diagnostic: LspDiagnostic, fix: LspFix): void;
+    /**
+     * Apply every fixable problem's preferred fix at once. Like {@link applyFix}, the panel hands
+     * over the list and the caller routes it to the editor.
+     */
+    applyAll(diagnostics: readonly LspDiagnostic[]): void;
 }
 
 export interface ProblemsPanel {
@@ -138,14 +144,24 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
     const element = document.createElement("div");
     element.className = "problems-panel";
 
+    // The batch action leads the panel: one control that applies every fixable problem's preferred
+    // fix. It stays hidden until such a fix exists (see the Fix All Diagnostics note).
+    const toolbar = document.createElement("div");
+    toolbar.className = "problem-toolbar";
+    const fixAll = document.createElement("button");
+    fixAll.type = "button";
+    fixAll.className = "problem-fix-all";
+    fixAll.addEventListener("click", () => options.applyAll(listed));
+    toolbar.appendChild(fixAll);
+
     const list = document.createElement("div");
     list.className = "problem-list";
-    element.appendChild(list);
 
     const empty = document.createElement("p");
     empty.className = "problem-empty";
     empty.textContent = "No problems — this script compiles cleanly.";
-    element.appendChild(empty);
+
+    element.append(toolbar, list, empty);
 
     let current: DiagnosticCounts = { error: 0, warning: 0, info: 0 };
     let listed: readonly LspDiagnostic[] = [];
@@ -166,6 +182,14 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
         const tally = { error: 0, warning: 0, info: 0 };
         for (const d of listed) tally[SEVERITY_NAME[d.severity]] += 1;
         current = tally;
+
+        // Offer the batch only while editing and only when there is a fix to apply; the count is
+        // the same unit the toast reports.
+        const fixable = fixableCount(listed);
+        toolbar.hidden = !(editable && fixable > 0);
+        fixAll.textContent = `Fix all (${fixable})`;
+        fixAll.title = "Apply every suggested repair";
+        fixAll.setAttribute("aria-label", `Apply every suggested repair (${fixable})`);
 
         const clean = listed.length === 0;
         empty.hidden = !clean;

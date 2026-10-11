@@ -47,6 +47,8 @@ import { ellipsize, escapeHtml } from "./text";
 import { hideArrivalNote, showArrivalNote } from "./arrival-note";
 import { setHelp, helpBody, type HelpContext } from "./help";
 import { createProblemsPanel } from "./problems-panel";
+import { fixAllMessage } from "./fix-all";
+import { showToast } from "./toast";
 import { createDiagnosticSummary } from "./diagnostic-summary";
 import { orderDiagnostics } from "./diagnostic-order";
 import { createFooterDrawer } from "./footer-drawer";
@@ -267,6 +269,12 @@ export function runApp(
                   if (span) jumpToSource(span);
               },
               applyFix: (diagnostic, fix) => sourceHandle?.applyDiagnosticFix(diagnostic, fix),
+              applyAll: (diagnostics) => {
+                  const outcome = sourceHandle?.applyAllFixes(diagnostics);
+                  if (outcome && (outcome.applied > 0 || outcome.skipped > 0)) {
+                      showToast(fixAllMessage(outcome));
+                  }
+              },
           })
         : null;
     const summary = diagnosing

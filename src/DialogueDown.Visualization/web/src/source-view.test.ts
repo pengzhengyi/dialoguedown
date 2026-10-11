@@ -500,4 +500,47 @@ describe("createSourceView quick-fix actions", () => {
 
         expect(source.getContent()).toBe("x \\=> y");
     });
+
+    it("applies every fixable diagnostic's fix in one edit that one undo reverts", () => {
+        const source = mountSource("a => b\nc => d\n", { editable: true });
+        const second: LspDiagnostic = {
+            ...DIAGNOSTIC,
+            range: { start: { line: 1, character: 2 }, end: { line: 1, character: 4 } },
+        };
+        const first: LspDiagnostic = {
+            ...DIAGNOSTIC,
+            range: { start: { line: 0, character: 2 }, end: { line: 0, character: 4 } },
+        };
+
+        const outcome = source.applyAllFixes([second, first]);
+
+        expect(source.getContent()).toBe("a \\=> b\nc \\=> d\n");
+        expect(outcome).toEqual({ applied: 2, skipped: 0 });
+
+        const view = EditorView.findFromDOM(source.element.querySelector(".cm-editor")!)!;
+        undo(view);
+        expect(source.getContent()).toBe("a => b\nc => d\n");
+    });
+
+    it("skips a fix whose diagnostic names no text", () => {
+        const source = mountSource("x => y", { editable: true });
+        const gone: LspDiagnostic = {
+            ...DIAGNOSTIC,
+            range: { start: { line: 0, character: 3 }, end: { line: 0, character: 3 } },
+        };
+
+        const outcome = source.applyAllFixes([gone]);
+
+        expect(source.getContent()).toBe("x => y");
+        expect(outcome).toEqual({ applied: 0, skipped: 1 });
+    });
+
+    it("applies nothing in a read-only editor", () => {
+        const source = mountSource("x => y", { editable: false });
+
+        const outcome = source.applyAllFixes([DIAGNOSTIC]);
+
+        expect(source.getContent()).toBe("x => y");
+        expect(outcome).toEqual({ applied: 0, skipped: 0 });
+    });
 });
