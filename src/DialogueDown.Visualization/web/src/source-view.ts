@@ -60,6 +60,7 @@ import { openContextMenu, type ContextMenuItem } from "./context-menu";
 import { initCollapsiblePanel } from "./collapse-toggle";
 import { dialogueAutocompletion } from "./editor-completions";
 import { applyFix, diagnosticsOverlay, setEditorDiagnostics } from "./diagnostics-overlay";
+import { planFixAll, type FixAllOutcome } from "./fix-all";
 import { positionToOffset } from "./lsp-position";
 import { annotateHeadingAnchors, wireHeadingAnchorCopy } from "./heading-anchors";
 import { headingSlugHints } from "./heading-slug-hints";
@@ -432,6 +433,12 @@ export interface SourceViewHandle {
      */
     applyDiagnosticFix(diagnostic: LspDiagnostic, fix: LspFix): void;
     /**
+     * Apply every fixable diagnostic's preferred fix in a single edit, returning how many were
+     * applied and how many were skipped (see the Fix All Diagnostics note). A read-only editor
+     * applies nothing.
+     */
+    applyAllFixes(diagnostics: readonly LspDiagnostic[]): FixAllOutcome;
+    /**
      * Replace the compiler's semantic tokens shown as dialogue highlighting. An empty list
      * clears the highlighting — called on load, a hot-reload, or a save.
      */
@@ -741,6 +748,13 @@ export function createSourceView(
     // depends on editability: only an editable editor offers fix actions.
     let lastDiagnostics: readonly LspDiagnostic[] = [];
 
+    // Resolve an LSP range to offsets against the current buffer — the one way a single fix, the
+    // batch, and the panel's navigation read a range.
+    const resolveOffsets = (range: LspRange) => {
+        const start = positionToOffset(view.state, range.start);
+        return { start, end: Math.max(start, positionToOffset(view.state, range.end)) };
+    };
+
     return {
         element: container,
         destroy: () => {
@@ -764,9 +778,26 @@ export function createSourceView(
             setEditorDiagnostics(view, diagnostics);
         },
         applyDiagnosticFix: (diagnostic, fix) => {
-            const from = positionToOffset(view.state, diagnostic.range.start);
-            const to = Math.max(from, positionToOffset(view.state, diagnostic.range.end));
-            applyFix(view, fix, from, to);
+            const { start, end } = resolveOffsets(diagnostic.range);
+            applyFix(view, fix, start, end);
+        },
+        applyAllFixes: (diagnostics) => {
+            // A read-only editor (View mode, the exported report) takes no edits, like a single fix.
+            if (view.state.readOnly) return { applied: 0, skipped: 0 };
+
+            const plan = planFixAll(diagnostics, resolveOffsets);
+            if (plan.edits.length > 0) {
+                view.dispatch({
+                    changes: plan.edits.map((edit) => ({
+                        from: edit.from,
+                        to: edit.to,
+                        insert: edit.insert,
+                    })),
+                    userEvent: "input",
+                });
+            }
+
+            return { applied: plan.applied, skipped: plan.skipped };
         },
         setSemanticTokens: (tokens) => {
             setEditorSemanticTokens(view, tokens);
@@ -790,10 +821,7 @@ export function createSourceView(
             renderPreview(view.state.doc.toString());
         },
         setReservedTargets: (targets) => setEditorReservedTargets(view, targets),
-        resolveRange: (range) => {
-            const start = positionToOffset(view.state, range.start);
-            return { start, end: Math.max(start, positionToOffset(view.state, range.end)) };
-        },
+        resolveRange: resolveOffsets,
         selectRange: (from, to) => revealInEditor(view, from, to),
     };
 }

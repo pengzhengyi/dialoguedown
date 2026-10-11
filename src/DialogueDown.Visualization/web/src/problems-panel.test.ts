@@ -5,7 +5,7 @@ import type { LspDiagnostic } from "./model";
 /** The panel with inert callbacks unless a test supplies its own — navigation and fixes are the
  *  caller's job, so most tests only care about what the rows render. */
 function createPanel(options: Partial<ProblemsPanelOptions> = {}) {
-    return createProblemsPanel({ goTo: vi.fn(), applyFix: vi.fn(), ...options });
+    return createProblemsPanel({ goTo: vi.fn(), applyFix: vi.fn(), applyAll: vi.fn(), ...options });
 }
 
 /** A diagnostic at a zero-based line/character, with a one-character range by default. */
@@ -217,5 +217,55 @@ describe("createProblemsPanel", () => {
         panel.setDiagnostics([ERROR]);
 
         expect(panel.element.querySelector(".problem-fix")).toBeNull();
+    });
+
+    it("offers the batch only when a fix exists and the editor is editable", () => {
+        const fixed = {
+            ...ERROR,
+            fixes: [{ title: "Escape", edits: [{ start: 0, end: 0, newText: "\\" }] }],
+        };
+        const panel = createPanel();
+        const toolbar = () => panel.element.querySelector<HTMLElement>(".problem-toolbar")!;
+        panel.setEditable(true);
+        panel.setDiagnostics([ERROR]);
+
+        // Nothing to fix, so no batch action.
+        expect(toolbar().hidden).toBe(true);
+
+        panel.setDiagnostics([fixed]);
+        const button = panel.element.querySelector<HTMLButtonElement>(".problem-fix-all")!;
+        expect(toolbar().hidden).toBe(false);
+        expect(button.textContent).toBe("Fix all (1)");
+
+        // A read-only editor offers no edit, batch or single.
+        panel.setEditable(false);
+        expect(toolbar().hidden).toBe(true);
+    });
+
+    it("counts the fixable problems in the batch label", () => {
+        const fix = { title: "Escape", edits: [{ start: 0, end: 0, newText: "\\" }] };
+        const panel = createPanel();
+        panel.setEditable(true);
+
+        panel.setDiagnostics([{ ...ERROR, fixes: [fix] }, { ...WARNING, fixes: [fix] }, INFO]);
+
+        expect(panel.element.querySelector(".problem-fix-all")!.textContent).toBe("Fix all (2)");
+    });
+
+    it("applies every fixable problem at once without navigating", () => {
+        const applyAll = vi.fn();
+        const goTo = vi.fn();
+        const fixed = {
+            ...ERROR,
+            fixes: [{ title: "Escape", edits: [{ start: 0, end: 0, newText: "\\" }] }],
+        };
+        const panel = createPanel({ applyAll, goTo });
+        panel.setEditable(true);
+        panel.setDiagnostics([fixed]);
+
+        panel.element.querySelector<HTMLButtonElement>(".problem-fix-all")!.click();
+
+        expect(applyAll).toHaveBeenCalledWith([fixed]);
+        expect(goTo).not.toHaveBeenCalled();
     });
 });
