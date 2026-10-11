@@ -1,7 +1,10 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using DialogueDown.Playbook.Nodes;
-using static DialogueDown.Visualization.Tests.Support.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.PlaybookFactory;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
+using static DialogueDown.Visualization.Tests.Support.PlaybookNodeSummaryAssert;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
 
@@ -49,8 +52,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
     {
         var words = string.Join(" ", Enumerable.Repeat("word", 20));
 
-        Assert.Equal(
-            $"Alice: {words}", SummaryOf(Line(words), Speakers("Alice")));
+        AssertSummary($"Alice: {words}", Line(words), Speakers("Alice"));
     }
 
     // One enormous paragraph would otherwise travel in the payload and then wrap a single row into

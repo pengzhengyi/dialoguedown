@@ -1,6 +1,6 @@
 using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
-using static DialogueDown.Playbook.Tests.Support.PlaybookFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Playbook.Tests.Speech;
 

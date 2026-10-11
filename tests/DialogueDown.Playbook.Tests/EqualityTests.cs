@@ -8,6 +8,7 @@ using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 using DialogueDown.Playbook.Weights;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Playbook.Tests;
 
