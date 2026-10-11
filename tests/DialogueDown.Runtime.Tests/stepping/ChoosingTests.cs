@@ -61,6 +61,13 @@ public sealed class ChoosingTests
     }
 
     [Fact]
+    public void Offer_AConditionalOptionWithoutAnswers_IsOfferedUnavailable() =>
+        // Nobody asked the world about the option, so nothing says the player can take it.
+        AssertEvents(
+            Offering(PlayContextFactory.AMenuWithAConditionalOption()),
+            "offer 'Open the door' unavailable, 'Wait here'");
+
+    [Fact]
     public void Offer_AMenuWithNothingAvailable_IsRefusedUntilItCanBeWalkedPast() =>
         AssertRefused(
             Offering(AMenuWhoseOnlyOptionIsConditional(), Answering(("Alice.HasKey", false))),
