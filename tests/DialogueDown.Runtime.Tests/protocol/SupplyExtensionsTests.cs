@@ -8,8 +8,8 @@ public sealed class SupplyExtensionsTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Holds_ReadsTheTruthTheWorldGave(bool holds) =>
-        Assert.Equal(holds, Answering(("Hero.HasSword", new BooleanAnswer(holds))).Holds("Hero.HasSword"));
+    public void Affirms_IsTheTruthTheWorldGave(bool truth) =>
+        Assert.Equal(truth, Answering(("Hero.HasSword", new BooleanAnswer(truth))).Affirms("Hero.HasSword"));
 
     [Fact]
     public void Words_ReadTheWordsTheWorldGave() =>
@@ -20,15 +20,15 @@ public sealed class SupplyExtensionsTests
         Assert.Equal(string.Empty, Answering(("HeroName", new TextAnswer(string.Empty))).Words("HeroName"));
 
     [Fact]
-    public void Holds_WhenTheKeyWentUnanswered_IsAFaultInTheRun() =>
+    public void Affirms_WhenTheKeyWentUnanswered_IsAFaultInTheRun() =>
         // Not a refusal: a supply is checked against the keys asked before it is read, so a gap
         // here means that check was skipped rather than that the driver did anything wrong.
-        Assert.Throws<InvalidOperationException>(() => Answering().Holds("Hero.HasSword"));
+        Assert.Throws<InvalidOperationException>(() => Answering().Affirms("Hero.HasSword"));
 
     [Fact]
-    public void Holds_WhenTheKeyWasAnsweredWithWords_IsAFaultInTheRun() =>
+    public void Affirms_WhenTheKeyWasAnsweredWithWords_IsAFaultInTheRun() =>
         Assert.Throws<InvalidOperationException>(
-            () => Answering(("Hero.HasSword", new TextAnswer("yes"))).Holds("Hero.HasSword"));
+            () => Answering(("Hero.HasSword", new TextAnswer("yes"))).Affirms("Hero.HasSword"));
 
     [Fact]
     public void Words_WhenTheKeyWasAnsweredWithATruth_IsAFaultInTheRun() =>
@@ -36,8 +36,8 @@ public sealed class SupplyExtensionsTests
             () => Answering(("HeroName", new BooleanAnswer(true))).Words("HeroName"));
 
     [Fact]
-    public void Holds_IsNotReadFromNothing() =>
-        Assert.Throws<ArgumentNullException>(() => ((Supply)null!).Holds("Hero.HasSword"));
+    public void Affirms_IsNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => ((Supply)null!).Affirms("Hero.HasSword"));
 
     [Fact]
     public void Words_IsNotReadFromNothing() =>

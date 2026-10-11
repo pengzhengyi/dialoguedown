@@ -28,7 +28,7 @@ internal static class ConditionEvaluationExtensions
 
         return condition switch
         {
-            KeyCondition key => supply.Holds(key.Key),
+            KeyCondition key => supply.Affirms(key.Key),
 
             // Every kind is named above, so a kind added to the format arrives here as a failure
             // rather than as a guard nothing knows how to read.

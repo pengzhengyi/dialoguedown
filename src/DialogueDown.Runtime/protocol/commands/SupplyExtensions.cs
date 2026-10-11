@@ -11,14 +11,14 @@ namespace DialogueDown.Runtime.Protocol;
 /// </remarks>
 internal static class SupplyExtensions
 {
-    /// <summary>The truth the world gave for a key a guard reads.</summary>
+    /// <summary>Whether the world affirms a key a guard reads.</summary>
     /// <param name="supply">What the world said.</param>
     /// <param name="key">The key to read.</param>
-    /// <returns>Whether the world said the key holds.</returns>
+    /// <returns><see langword="true"/> when the world answered the key yes.</returns>
     /// <exception cref="InvalidOperationException">
     /// The key went unanswered, or was answered with something other than a truth.
     /// </exception>
-    public static bool Holds(this Supply supply, string key)
+    public static bool Affirms(this Supply supply, string key)
     {
         ArgumentNullException.ThrowIfNull(supply);
 
