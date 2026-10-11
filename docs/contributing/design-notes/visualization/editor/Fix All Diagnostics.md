@@ -1,10 +1,10 @@
 # Fix All Diagnostics
 
 > [!NOTE]
-> Status: **proposed**. The Problems panel applies every preferred diagnostic fix in
-> one edit, so a script with many repairs is corrected in a click. The fix producers
-> and the per-row lightbulbs are unchanged; this note owns planning the batch and
-> resolving what happens when two fixes collide.
+> Status: **implemented**. The Problems panel applies every fixable problem's
+> preferred fix in one edit, so a script with many repairs is corrected in a click.
+> The fix producers and the per-row lightbulbs are unchanged; this note owns planning
+> the batch and resolving what happens when two fixes collide.
 
 ## Table of contents
 

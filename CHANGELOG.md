@@ -30,6 +30,10 @@ changes easy to categorize.
   its row in the Problems panel. The dangling-arrow warning's fix escapes the arrow. See
   [Diagnostic quick fixes](docs/contributing/design-notes/visualization/editor/Diagnostic%20Quick%20Fixes.md).
 
+- **Fix all** — the Problems panel applies every fixable problem's preferred fix in one edit, so a
+  script with many repairs is corrected in a click; one undo reverts the batch. See
+  [Fix all diagnostics](docs/contributing/design-notes/visualization/editor/Fix%20All%20Diagnostics.md).
+
 - **Literal punctuation** — a backslash writes the next ASCII punctuation character
   literally, so a script can spell a literal tag (`\#word`, `\##default`) or arrow (`\=>`)
   in prose, and escaping a speaker-prefix element keeps the line in the default voice. The
