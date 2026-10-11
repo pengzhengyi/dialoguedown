@@ -10,18 +10,17 @@ public sealed class MarkdigMarkdownParserCustomPolicyTests
     [Fact]
     public void CustomPolicy_KeepingTables_FlattensTableToText()
     {
-        // Override the default (which ignores tables) to keep the table as raw text.
-        var document = MarkdownParserFactory.Parse(
-            """
+        // Override the default (which ignores tables) to keep the table as raw text, verbatim.
+        const string Table = """
             | a | b |
             | --- | --- |
             | x | y |
-            """,
-            TestUnmodeledNodePolicy.Default.Keep(UnmodeledNodeKind.Table));
+            """;
 
-        var paragraph = AssertSingleBlock<Paragraph>(document);
-        var text = Assert.IsType<TextInline>(Assert.Single(paragraph.Inlines));
-        Assert.StartsWith("| a | b |", text.Text);
+        var document = MarkdownParserFactory.Parse(
+            Table, TestUnmodeledNodePolicy.Default.Keep(UnmodeledNodeKind.Table));
+
+        AssertSingleText(AssertSingleBlock<Paragraph>(document).Inlines, Table);
     }
 
     [Fact]

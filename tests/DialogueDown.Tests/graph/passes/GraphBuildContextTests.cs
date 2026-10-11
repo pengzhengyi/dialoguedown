@@ -38,7 +38,7 @@ public sealed class GraphBuildContextTests
         Assert.Same(diagnostics, context.Diagnostics);
         Assert.Same(firstRead, secondRead);
         Assert.Equal(2, firstRead.Count);
-        Assert.True(firstRead[0].Span.Start < firstRead[1].Span.Start);
+        Assert.Equal(firstRead.OrderBy(block => block.Span.Start), firstRead);
     }
 
     [Fact]

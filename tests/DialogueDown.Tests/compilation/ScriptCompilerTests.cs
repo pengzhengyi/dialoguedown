@@ -76,7 +76,7 @@ public sealed class ScriptCompilerTests
         var compiler = Compiler(out _, out var analyzer);
         var diagnostic = DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Error);
         analyzer.When(a => a.Analyze(Arg.Any<DesugaredScriptDocument>(), Arg.Any<DiagnosticsContext>()))
-            .Do(call => call.Arg<DiagnosticsContext>()!.Diagnostics.Report(diagnostic));
+            .Do(call => call.Arg<DiagnosticsContext>().Diagnostics.Report(diagnostic));
 
         var result = compiler.Compile("Alice: hi");
 
@@ -171,7 +171,7 @@ public sealed class ScriptCompilerTests
     {
         var compiler = Compiler(out var transpiler, out _, mode);
         transpiler.When(t => t.Transpile(Arg.Any<MarkdownDocument>(), Arg.Any<DiagnosticsContext>()))
-            .Do(call => call.Arg<DiagnosticsContext>()!.Diagnostics.Report(diagnostic));
+            .Do(call => call.Arg<DiagnosticsContext>().Diagnostics.Report(diagnostic));
         return compiler;
     }
 

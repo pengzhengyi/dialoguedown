@@ -1,12 +1,10 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
-using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using DialogueDown.TestSupport;
-using static DialogueDown.Runtime.Tests.PlaybookNodes;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -55,7 +53,7 @@ public sealed class ConditionEvaluationExtensionsTests
         // A jump a writer left unguarded, so asking whether it is allowed does not mean first
         // asking whether anybody guarded it.
         Assert.True(
-            Divert(1).IsAllowed(Answering(("Hero.HasSword", false))));
+            Divert(target: 1).IsAllowed(Answering(("Hero.HasSword", false))));
 
     [Theory]
     [InlineData(true)]
@@ -63,7 +61,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void IsAllowed_AGuardedWayOut_IsWhatItsGuardReadsTo(bool holds) =>
         Assert.Equal(
             holds,
-            AGuarded(Divert(1, "Hero.HasSword"), holds));
+            AGuarded(Divert("Hero.HasSword", target: 1), holds));
 
     [Theory]
     [InlineData(true)]
@@ -73,7 +71,7 @@ public sealed class ConditionEvaluationExtensionsTests
         Assert.Equal(
             holds,
             AGuarded(
-                new LineNode(0, 0, [], new KeyCondition("Hero.HasSword"), [new SuccessionEdge(1)]),
+                SilentLine(condition: "Hero.HasSword", next: 1),
                 holds));
 
     [Fact]
@@ -85,7 +83,7 @@ public sealed class ConditionEvaluationExtensionsTests
     public void IsAllowed_IsNotReadWithoutWhatTheWorldAnswered() =>
         // Refused even for something nobody guarded, so the contract does not depend on the answer.
         Assert.Throws<ArgumentNullException>(
-            () => Divert(1).IsAllowed(null!));
+            () => Divert(target: 1).IsAllowed(null!));
 
     private static bool AGuarded(IConditional guarded, bool holds) =>
         guarded.IsAllowed(Answering(("Hero.HasSword", holds)));

@@ -6,7 +6,7 @@ using DialogueDown.Visualization.Lsp;
 using DialogueDown.Visualization.Render;
 using static DialogueDown.TestSupport.JsonAssert;
 using static DialogueDown.TestSupport.ReportPayload;
-using static DialogueDown.Visualization.Tests.Support.Display;
+using static DialogueDown.Visualization.Tests.Support.DisplayFactory;
 
 namespace DialogueDown.Visualization.Tests.Render;
 
@@ -124,9 +124,9 @@ public sealed class DisplayGraphJsonTests
             [new DisplayNode("n0", "Text", [], "# Hi"), Node("n1", "Empty")],
             []);
 
-        var nodes = OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]!;
+        var nodes = Assert.IsType<JsonArray>(OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]);
 
-        Assert.Equal("# Hi", (string?)nodes[0]!["source"]);
+        Assert.Equal("# Hi", (string?)nodes[0]?["source"]);
         AssertOmits(nodes[1], "source");
     }
 
@@ -135,7 +135,9 @@ public sealed class DisplayGraphJsonTests
     {
         var graph = MakeGraph("G", [new DisplayNode("n0", "Code span", [], null, "call")], []);
 
-        var node = OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]![0]!;
+        var json = DisplayGraphJson.Serialize([graph]);
+
+        var node = Assert.IsType<JsonObject>(OnlyStage(json)["nodes"]?[0]);
 
         Assert.Equal("call", (string?)node["category"]);
     }
@@ -148,9 +150,9 @@ public sealed class DisplayGraphJsonTests
             [new DisplayNode("n0", "The Market", [], null, "structure", "scene:the-market"), Node("n1", "Plain")],
             []);
 
-        var nodes = OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]!;
+        var nodes = Assert.IsType<JsonArray>(OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]);
 
-        Assert.Equal("scene:the-market", (string?)nodes[0]!["entityKey"]);
+        Assert.Equal("scene:the-market", (string?)nodes[0]?["entityKey"]);
         AssertOmits(nodes[1], "entityKey");
     }
 
@@ -204,10 +206,9 @@ public sealed class DisplayGraphJsonTests
             ],
         };
 
-        var table = OnlyStage(DisplayGraphJson.Serialize([graph]))["tables"]![0]!;
-        var cell = table["rows"]![0]!["cells"]![0]!;
+        var cell = OnlyStage(DisplayGraphJson.Serialize([graph]))["tables"]?[0]?["rows"]?[0]?["cells"]?[0];
 
-        Assert.Equal("scene:the-market", (string?)cell["refKey"]);
+        Assert.Equal("scene:the-market", (string?)cell?["refKey"]);
     }
 
     [Fact]
@@ -220,7 +221,8 @@ public sealed class DisplayGraphJsonTests
         // This one is about the text itself: the page inlines it inside a <script> element.
         Assert.DoesNotContain("</script>", json);
         Assert.Contains("\\u003C", json); // '<' is unicode-escaped
-        Assert.Equal("</script><b>&", (string?)OnlyStage(json)["nodes"]![0]!["label"]); // and reads back unchanged
+        // And it reads back unchanged.
+        Assert.Equal("</script><b>&", (string?)OnlyStage(json)["nodes"]?[0]?["label"]);
     }
 
     [Fact]
@@ -232,7 +234,8 @@ public sealed class DisplayGraphJsonTests
 
         Assert.Equal("static", report.Mode);
         Assert.Equal("# Hello", report.Source);
-        Assert.Equal("Markdown AST", (string?)Assert.Single(report.Stages!)!["title"]);
+        var stage = Assert.Single(Assert.IsType<JsonArray>(report.Stages));
+        Assert.Equal("Markdown AST", (string?)stage?["title"]);
     }
 
     [Fact]
@@ -358,7 +361,7 @@ public sealed class DisplayGraphJsonTests
         var report = Parse(DisplayGraphJson.SerializeReport(
             "static", null, "# Hi", [graph], diagnostics: diagnostics));
 
-        AssertJson("1", report.Diagnostics![0]!["severity"]); // the number, not "Error"
+        AssertJson("1", report.Diagnostics?[0]?["severity"]); // the number, not "Error"
     }
 
     [Fact]
@@ -381,7 +384,7 @@ public sealed class DisplayGraphJsonTests
 
         AssertJson(
             """[{ "title": "Escape as literal text", "edits": [{ "start": 0, "end": 0, "newText": "\\" }] }]""",
-            report.Diagnostics![0]!["fixes"]);
+            report.Diagnostics?[0]?["fixes"]);
     }
 
     [Fact]
@@ -398,7 +401,7 @@ public sealed class DisplayGraphJsonTests
         var report = Parse(DisplayGraphJson.SerializeReport(
             "static", null, "# Hi", [graph], diagnostics: diagnostics));
 
-        AssertOmits(report.Diagnostics![0], "fixes");
+        AssertOmits(report.Diagnostics?[0], "fixes");
     }
 
     [Fact]
@@ -456,7 +459,7 @@ public sealed class DisplayGraphJsonTests
         var report = Parse(DisplayGraphJson.SerializeReport(
             "static", null, "#happy", [graph], semanticTokens: tokens));
 
-        Assert.Equal("CustomTag", (string?)report.SemanticTokens![0]!["kind"]);
+        Assert.Equal("CustomTag", (string?)report.SemanticTokens?[0]?["kind"]);
     }
 
     [Fact]

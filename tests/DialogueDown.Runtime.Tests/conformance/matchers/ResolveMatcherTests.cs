@@ -1,8 +1,7 @@
-using System.Collections.Immutable;
 using System.Text.Json.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -44,7 +43,7 @@ public sealed class ResolveMatcherTests
     private static Resolve Asked(params string[] keys) => new([.. keys]);
 
     private static Said Spoke() =>
-        new("Alice", ImmutableArray.Create<SpeechFragment>(new TextFragment("Hi")));
+        new("Alice", [Text("Hi")]);
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, JsonNode.Parse(expected)!);

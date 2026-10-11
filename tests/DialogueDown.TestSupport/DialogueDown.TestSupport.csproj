@@ -8,10 +8,16 @@
     <AssemblyName>DialogueDown.TestSupport</AssemblyName>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
-    <!-- Helpers the test suites share. It references no project of its own: every question it
-         answers is asked about a type the caller already has, so the caller brings the assembly
-         with it. -->
+    <!-- Helpers the test suites share. Most answer a question about a type the caller already
+         has, so the caller brings that assembly with it. The playbook mothers build the
+         playbook's own types, so this project references the playbook library: a model with no
+         project references of its own, which every suite that builds a playbook already depends
+         on. -->
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DialogueDown.Playbook\DialogueDown.Playbook.csproj" />
+  </ItemGroup>
 
   <!-- Assertions only. The test framework itself belongs to the suites that run tests; this
        project holds the checks they share. -->

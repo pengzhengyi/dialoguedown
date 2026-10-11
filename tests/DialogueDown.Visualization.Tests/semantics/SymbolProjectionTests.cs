@@ -25,9 +25,12 @@ public sealed class SymbolProjectionTests
             Bob: Spooky.
             """);
 
-        Assert.Contains(symbols.JumpTargets, target => target is { Slug: "the-market", Heading: "The Market" });
-        Assert.Contains(
-            symbols.JumpTargets, target => target is { Slug: "the-dark-forest", Heading: "The Dark Forest" });
+        // The reserved #END terminator is offered too; a test of its own covers it.
+        Assert.Equal(
+            [("the-market", "The Market"), ("the-dark-forest", "The Dark Forest")],
+            symbols.JumpTargets
+                .Where(target => target.Slug != "END")
+                .Select(target => (target.Slug, target.Heading)));
     }
 
     [Fact]
@@ -35,8 +38,8 @@ public sealed class SymbolProjectionTests
     {
         var symbols = Project("Guide @guide: Welcome.");
 
-        Assert.Contains("Guide", symbols.Speakers);
-        Assert.Contains("guide", symbols.SpeakerIds);
+        Assert.Equal(["Guide"], symbols.Speakers);
+        Assert.Equal(["guide"], symbols.SpeakerIds);
     }
 
     [Fact]
@@ -60,8 +63,7 @@ public sealed class SymbolProjectionTests
     {
         var symbols = Project("Guide @guide #wise #calm: Welcome.");
 
-        Assert.Contains("wise", symbols.Tags);
-        Assert.Contains("calm", symbols.Tags);
+        Assert.Equal(["wise", "calm"], symbols.Tags);
     }
 
     [Fact]
@@ -122,7 +124,7 @@ public sealed class SymbolProjectionTests
 
         var symbols = new SymbolProjection().Project(Pipeline.Model("The room is quiet.", options));
 
-        Assert.Contains("Narrator", symbols.Speakers);
+        Assert.Equal(["Narrator"], symbols.Speakers);
     }
 
     private static SymbolSet Project(string source) =>

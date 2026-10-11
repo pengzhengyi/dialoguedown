@@ -1,6 +1,8 @@
+using System.Text.Json.Nodes;
+using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Render;
-using static DialogueDown.Visualization.Tests.Support.Display;
+using static DialogueDown.Visualization.Tests.Support.DisplayFactory;
 
 namespace DialogueDown.Visualization.Tests.Render;
 
@@ -39,7 +41,7 @@ public sealed class HtmlRendererTests
 
         var html = _renderer.Render(graph);
 
-        Assert.Contains("\"source\":\"# Hello\"", html);
+        Assert.Equal("# Hello", (string?)OnlyStage(html)["nodes"]?[0]?["source"]);
     }
 
     [Fact]
@@ -52,8 +54,11 @@ public sealed class HtmlRendererTests
 
         var html = _renderer.Render(graph);
 
-        Assert.Contains("\"title\":\"Markdown AST\"", html);
-        Assert.Contains("\"label\":\"Paragraph\"", html);
+        var stage = OnlyStage(html);
+        Assert.Equal("Markdown AST", (string?)stage["title"]);
+        Assert.Equal(
+            ["Document", "Paragraph"],
+            Assert.IsType<JsonArray>(stage["nodes"]).Select(node => (string?)node?["label"]));
     }
 
     [Fact]
@@ -63,7 +68,14 @@ public sealed class HtmlRendererTests
 
         var html = _renderer.Render(graph);
 
-        // The data-derived closing tag is unicode-escaped inside the inlined JSON.
+        // The data-derived closing tag is unicode-escaped inside the inlined JSON, and reads back
+        // unchanged.
         Assert.Contains("\\u003C/script", html);
+        Assert.Equal("</script>", (string?)OnlyStage(html)["nodes"]?[0]?["label"]);
     }
+
+    // The one stage the page's embedded report holds.
+    private static JsonObject OnlyStage(string html) =>
+        Assert.IsType<JsonObject>(
+            Assert.Single(Assert.IsType<JsonArray>(ReportPayload.FromPage(html).Stages)));
 }

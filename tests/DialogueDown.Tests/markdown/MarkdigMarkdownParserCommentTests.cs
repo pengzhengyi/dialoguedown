@@ -29,7 +29,11 @@ public sealed class MarkdigMarkdownParserCommentTests : MarkdigMarkdownParserTes
     [Fact]
     public void Parse_BlockCommentBetweenContent_IsDiscarded()
     {
-        var document = Parse("<!-- note -->\nBob: Hey");
+        var document = Parse(
+            """
+            <!-- note -->
+            Bob: Hey
+            """);
 
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertSingleText(paragraph.Inlines, "Bob: Hey");

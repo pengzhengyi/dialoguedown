@@ -11,9 +11,10 @@ internal static class SpeakerSymbolAssert
 {
     public static SpeakerSymbol AssertHasSpeaker(
         SemanticModel model,
-        Speaker speaker,
+        Speaker? speaker,
         string expectedName)
     {
+        Assert.NotNull(speaker);
         var symbol = model.Speakers.Resolve(speaker);
         Assert.Equal(expectedName, symbol.Name);
         return symbol;

@@ -56,7 +56,7 @@ are the reason this page exists.
 | `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the readable half of the corpus. |
 | `DialogueDown.Runtime.Tests` | The runner — stepping, positions, the protocol — and the harness that plays the corpus against it. |
 | `DialogueDown.Conformance` | Not tests: the reader both halves of the corpus load their cases with. |
-| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, temporary files and folders, a reader for a report's JSON (`ReportPayload`), and assertions that compare JSON as JSON (`JsonAssert`). |
+| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, temporary files and folders, the playbook's mothers (`PlaybookFactory`, `PlaybookNodeFactory`, `SpeechFactory`), a reader for a report's JSON (`ReportPayload`), and assertions that compare JSON as JSON (`JsonAssert`). |
 | `DialogueDown.Conformance.Tests` | That reader, and the corpus's own integrity. |
 | `DialogueDown.Architecture.Tests` | The boundaries between all of the above. |
 | `src/DialogueDown.Visualization/web` | The report client: unit tests beside the source, browser tests under `e2e/` and `e2e-live/`. |
@@ -280,14 +280,14 @@ only to test a stage in isolation, or to reach a shape no script produces.
 ### One mother per type
 
 The type under test, and a value a reader takes in at a glance such as
-`new EndNode(0)`, are built directly. Everything else comes from its type's
+`new SuccessionEdge(1)`, are built directly. Everything else comes from its type's
 mother, so a change to a constructor touches one file. A test that needs a
 variation says only what varies: with `with` where the record allows it, or with
 an argument to the mother where it does not.
 
 ```csharp
 var options = CompilerOptions.Default with { Mode = CompilationMode.BestEffort };
-var gated = PlaybookNodes.Divert(target: 2, key: "Alice.HasKey");
+var gated = PlaybookNodeFactory.Option("Open the door", condition: "Alice.HasKey", target: 2);
 ```
 
 The playbook records redeclare their properties get-only, so a `with` expression
@@ -299,13 +299,28 @@ cannot set them; their mothers take the varying value as an argument instead.
 | A scenario several classes use | The suite's `support/` folder | `PlayContextFactory.OneLine()` |
 | The mother for a type | The suite's `support/` folder; `DialogueDown.TestSupport` when several suites need it, with the project reference that takes | `SourceSpanFactory` |
 
-Keep one mother per type. When two suites each have one, merge them. The runtime
-and visualization suites still keep separate playbook mothers.
+Keep one mother per type. When two suites each have one, merge them.
+
+The playbook's mothers live in `DialogueDown.TestSupport`: `PlaybookFactory`
+builds a document, its format, and its speakers; `PlaybookNodeFactory` builds
+nodes and the ways out of them; `SpeechFactory` builds the speech they hold. A
+node's mother takes what the node says first, and its id and targets after, as
+named, optional arguments. A test about speech leaves the graph out, and a test
+about the graph names the ids and targets it is about. A node that falls through
+takes `next`, the node its succession leads to; the succession comes after any
+other ways out the node is given:
+
+```csharp
+Line("Take a torch.", speaker: 1)
+Branch(Arm("Alice.HasMap", target: 16), Else(target: 18))
+Line("Hello.", id: 0, next: 1)
+```
+
+A builder whose name ends in `Of` (`LineOf`, `OptionOf`, `ControlOf`) takes
+fragments a test composed, for speech that holds a query or a command.
 
 Name a mother for the main type it builds, with the `Factory` suffix:
-`SourceSpanFactory`, `LocatedDiagnosticFactory`. The runtime's `PlaybookNodes` is
-the one exception, because its `Line(…)` and `End(…)` read like the playbook they
-build.
+`SourceSpanFactory`, `LocatedDiagnosticFactory`, `PlaybookNodeFactory`.
 
 ### Assertions say what they claim
 

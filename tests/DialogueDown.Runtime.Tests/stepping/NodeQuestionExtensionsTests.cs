@@ -1,8 +1,8 @@
-using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -10,38 +10,37 @@ public sealed class NodeQuestionExtensionsTests
 {
     [Fact]
     public void FindTruthsForPlaying_OfAnUnguardedLine_AreNone() =>
-        Assert.Empty(Line(condition: null).FindTruthsForPlaying());
+        Assert.Empty(SilentLine().FindTruthsForPlaying());
 
     [Fact]
     public void FindTruthsForPlaying_OfAGuardedLine_NameWhatItsOwnConditionAsks() =>
-        Assert.Equal(["Hero.HasSword"], Line(new KeyCondition("Hero.HasSword")).FindTruthsForPlaying());
+        Assert.Equal(["Hero.HasSword"], SilentLine(condition: "Hero.HasSword").FindTruthsForPlaying());
 
     [Fact]
     public void FindTruthsForPlaying_OfAKindThatCarriesNoCondition_AreNone() =>
         // An end is never guarded, so nothing has to be answered before arriving at one.
-        Assert.Empty(new EndNode(0).FindTruthsForPlaying());
+        Assert.Empty(End().FindTruthsForPlaying());
 
     [Fact]
     public void FindWordsForPlaying_OfALineWithNoQueryInIt_AreNone() =>
-        Assert.Empty(Saying(new TextFragment("Hello.")).FindWordsForPlaying());
+        Assert.Empty(Line("Hello.").FindWordsForPlaying());
 
     [Fact]
     public void FindWordsForPlaying_NameTheQueriesStandingInWhatIsSaid() =>
         Assert.Equal(
             ["playerName"],
-            Saying(new TextFragment("Hello, "), new QueryFragment("playerName")).FindWordsForPlaying());
+            LineOf([Text("Hello, "), Query("playerName")]).FindWordsForPlaying());
 
     [Fact]
     public void FindWordsForPlaying_NameAQueryWrittenTwiceOnlyOnce() =>
         // One reading of the world answers both queries, so the same name is not asked about twice.
         Assert.Equal(
             ["Hero"],
-            Saying(new QueryFragment("Hero"), new TextFragment(" told "), new QueryFragment("Hero"))
-                .FindWordsForPlaying());
+            LineOf([Query("Hero"), Text(" told "), Query("Hero")]).FindWordsForPlaying());
 
     [Fact]
     public void FindWordsForPlaying_OfAKindThatSaysNothing_AreNone() =>
-        Assert.Empty(new EndNode(0).FindWordsForPlaying());
+        Assert.Empty(End().FindWordsForPlaying());
 
     [Fact]
     public void FindWordsForPlaying_AreNotReadFromNothing() =>
@@ -49,16 +48,15 @@ public sealed class NodeQuestionExtensionsTests
 
     [Fact]
     public void FindTruthsForLeaving_WhenTheOnlyWayOutIsTheFallThrough_AreNone() =>
-        Assert.Empty(Line(condition: null, new SuccessionEdge(1)).FindTruthsForLeaving());
+        Assert.Empty(SilentLine(next: 1).FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForLeaving_NameWhatEveryGuardedWayOutAsks() =>
         Assert.Equal(
             ["Hero.HasSword", "Hero.HasShield"],
-            Line(
-                condition: null,
-                Option(1, "Hero.HasSword"),
-                Option(2, "Hero.HasShield"),
+            Choice(
+                Option("Draw the sword", condition: "Hero.HasSword", target: 1),
+                Option("Raise the shield", condition: "Hero.HasShield", target: 2),
                 new SuccessionEdge(3))
                 .FindTruthsForLeaving());
 
@@ -68,7 +66,9 @@ public sealed class NodeQuestionExtensionsTests
         // withhold another on the same key.
         Assert.Equal(
             ["Hero.HasSword"],
-            Line(condition: null, Option(1, "Hero.HasSword"), Option(2, "Hero.HasSword"))
+            Choice(
+                Option("Draw the sword", condition: "Hero.HasSword", target: 1),
+                Option("Swing the sword", condition: "Hero.HasSword", target: 2))
                 .FindTruthsForLeaving());
 
     [Fact]
@@ -78,14 +78,4 @@ public sealed class NodeQuestionExtensionsTests
     [Fact]
     public void FindTruthsForLeaving_AreNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindTruthsForLeaving());
-
-    private static LineNode Line(Condition? condition, params Edge[] ways) =>
-        new(0, 0, [], condition, [.. ways]);
-
-    /// <summary>A line whose speech is the fragments given, said by nobody in particular.</summary>
-    private static LineNode Saying(params SpeechFragment[] speech) =>
-        new(0, 0, [.. speech], Condition: null, []);
-
-    private static OptionEdge Option(int target, string key) =>
-        new(target, [], new KeyCondition(key));
 }

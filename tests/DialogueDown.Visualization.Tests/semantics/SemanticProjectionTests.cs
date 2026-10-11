@@ -127,7 +127,7 @@ public sealed class SemanticProjectionTests
         var graph = Project("Alice: Hi.");
         Assert.Equal(
             ["Speakers", "Anchors", "Jump resolutions"],
-            graph.Tables!.Select(table => table.Title));
+            graph.Tables?.Select(table => table.Title));
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class SemanticProjectionTests
         Assert.Equal("speaker:@guide", row.EntityKey);
         Assert.Equal("Guide", row.Cells[0].Text);
         Assert.Equal("@guide", row.Cells[1].Text);
-        Assert.Contains("#wise", row.Cells[2].Text);
+        Assert.Equal("#wise", row.Cells[2].Text);
         Assert.Equal("✓", row.Cells[3].Text);
     }
 
@@ -260,7 +260,7 @@ public sealed class SemanticProjectionTests
         Assert.Equal("structure", row.Cells[0].Category);
         Assert.Equal("east", row.Cells[1].Text);
         Assert.Equal("#the-forest", row.Cells[2].Text);
-        Assert.StartsWith("=> ", row.Cells[3].Text); // "=> The Forest"
+        Assert.Equal("=> The Forest", row.Cells[3].Text);
         // The jump's resolves-to cell references the same key the scene node and anchor row carry.
         Assert.Equal("scene:the-forest", row.Cells[3].RefKey);
         Assert.Contains(graph.Nodes, node => node.EntityKey == "scene:the-forest");
@@ -275,7 +275,7 @@ public sealed class SemanticProjectionTests
         var row = Assert.Single(Table(graph, "Jump resolutions").Rows);
         Assert.Equal("Cross-file", row.Cells[0].Text);
         Assert.Equal("deferred", row.Cells[0].Category);
-        Assert.Contains("deferred", row.Cells[3].Text);
+        Assert.Equal("guide.md#intro (deferred)", row.Cells[3].Text);
         Assert.Null(row.Cells[3].RefKey);
     }
 
@@ -333,5 +333,5 @@ public sealed class SemanticProjectionTests
         new SemanticProjection().Project(Pipeline.Model(source), source);
 
     private static SemanticTable Table(DisplayGraph graph, string title) =>
-        graph.Tables!.Single(table => table.Title == title);
+        Assert.Single(graph.Tables ?? [], table => table.Title == title);
 }

@@ -32,7 +32,13 @@ public sealed class GraphDraftTests
     [Fact]
     public void AddBlock_TheFirstTrackedBlockBecomesTheEntry()
     {
-        var blocks = Pipeline.Blocks("Alice: a\n\nBob: b", out var model);
+        var blocks = Pipeline.Blocks(
+            """
+            Alice: a
+
+            Bob: b
+            """,
+            out var model);
         var draft = Draft();
         var firstId = AddLine(draft, model, (Line)blocks[0]);
         AddLine(draft, model, (Line)blocks[1]);
@@ -113,8 +119,13 @@ public sealed class GraphDraftTests
         Assert.Throws<InvalidOperationException>(() => draft.AddEnd(SourceSpanFactory.Span()));
     }
 
-    private static NodeId AddLine(GraphDraft draft, SemanticModel model, Line line) =>
-        draft.AddBlock(
+    private static NodeId AddLine(GraphDraft draft, SemanticModel model, Line line)
+    {
+        var speaker = line.Speaker;
+        Assert.NotNull(speaker);
+
+        return draft.AddBlock(
             line,
-            id => new LineNodeDraft(id, line.Span, model.Speakers.Resolve(line.Speaker!), line.Speech));
+            id => new LineNodeDraft(id, line.Span, model.Speakers.Resolve(speaker), line.Speech));
+    }
 }
