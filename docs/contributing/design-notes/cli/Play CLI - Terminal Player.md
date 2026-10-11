@@ -63,8 +63,7 @@ the `ddown play` command; the raw stdio REPL; saves, history, and world answers.
 - [ ] A wait hint appears where the player acts and is erased once answered; a menu keeps a
       dim key footer.
 - [ ] A turn is a value: advance, `Take(index)`, quit.
-- [ ] A non-interactive console is refused with a message that names the alternative, and
-      the player keeps Ctrl+C as input while it runs.
+- [ ] A non-interactive console is refused with a message that names the alternative.
 - [ ] The transcript reads in order and its ending is marked.
 
 ## Ubiquitous language
@@ -270,8 +269,8 @@ what a turn means; the driver turns an `Advance` into `Done` and a `Take` into `
 
 Quit is Ctrl+C at either wait; Escape is retired — one key, the one a command-line reader
 already reaches for to stop something, and not one a hand brushes by accident. The player
-keeps Ctrl+C as input while it runs and restores the console when it ends, so the
-terminal's default kill cannot fire mid-transcript.
+reads Ctrl+C as a key; the driver owns the terminal's mode, keeping Ctrl+C as input for the
+run so the terminal's default kill cannot fire mid-transcript.
 
 A cancelled token is not Ctrl+C: cancellation stops a prompt with
 `OperationCanceledException`, as any .NET async call, while Ctrl+C is the player's own
@@ -323,7 +322,7 @@ frame. The header keeps only the title.
 | Escape, anywhere | Does nothing; an accidental tap cannot abandon a run. |
 | Ctrl+C at a wait | The turn is `Quit`; the transcript appends nothing. |
 | Ctrl+C at a menu | The turn is `Quit`; the transcript records the menu with nothing taken. |
-| A console that cannot keep Ctrl+C as input | Refused when the player is constructed, as part of the interactive requirement; the setting is restored when the player ends. |
+| The terminal's kill signal | The driver keeps Ctrl+C as input for the run, so the key reaches the player instead of killing the process mid-transcript. |
 | A cancelled token | The prompt stops with `OperationCanceledException`, leaving the cursor on a line start. |
 | A title with `[` or `]` in it | Escaped like any text; a path with brackets still reads. |
 | A console without Unicode support | The cursor, the cross, and the arrows fall back to ASCII (`>`, `x`), so every surface still reads. |
@@ -333,8 +332,8 @@ frame. The header keeps only the title.
 - **Part 2 (deferred)** — `ddown play <script>` loads a playbook, steps the runner, and
   drives the player: `Said`→`Say`, `Continued`→`Continue`, the menu request→`TakeAsync`,
   `Refused`→`Notice`, `Ended`→`End`; the player's `Advance` becomes the runner's `Done`
-  and a `Take` becomes its take command. The raw stdio REPL speaks the same protocol
-  without a player.
+  and a `Take` becomes its take command, and it keeps Ctrl+C as input for the run so a quit
+  reaches the player. The raw stdio REPL speaks the same protocol without a player.
 - **Assembly boundary** — `DialogueDown.Play` may depend on `System`,
   `DialogueDown.Playbook`, and `Spectre.Console`; part 2 adds `DialogueDown.Runtime`. The
   architecture suite gains the rule, and the assembly joins `AllAssemblies`.
