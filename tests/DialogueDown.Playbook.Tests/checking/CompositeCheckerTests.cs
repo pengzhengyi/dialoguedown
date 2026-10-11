@@ -1,5 +1,5 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
 using NSubstitute;
 namespace DialogueDown.Playbook.Tests.Checking;
 

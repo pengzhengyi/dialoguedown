@@ -1,6 +1,6 @@
 using DialogueDown.Playbook.Checking;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Tests.Support;
+using DialogueDown.TestSupport;
 namespace DialogueDown.Playbook.Tests.Checking;
 
 public sealed class NodePositionCheckerTests
