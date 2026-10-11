@@ -221,7 +221,7 @@ public sealed class PlayerConsoleTests
             "The market closes at dusk.",
             "Come with me, then.",
             "You stayed, then.",
-            "enter to proceed",
+            "any key to go on",
             "Ready?",
             "Open the door (unavailable)",
             "Wait here",
@@ -239,7 +239,7 @@ public sealed class PlayerConsoleTests
         var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
 
         Assert.IsType<PlayerTurn.Advance>(turn);
-        Assert.Contains("enter to proceed \u00b7 ctrl+c quit", console.Output, StringComparison.Ordinal);
+        Assert.Contains("any key to go on \u00b7 ctrl+c quit", console.Output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -255,11 +255,24 @@ public sealed class PlayerConsoleTests
     }
 
     [Fact]
-    public async Task AdvanceAsync_IgnoresOtherKeys()
+    public async Task AdvanceAsync_WithAnyOtherKey_GoesOn()
     {
         var console = Plain();
         var player = new PlayerConsole(console);
         console.Input.PushKey(ConsoleKey.X);
+
+        var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
+
+        // A key pressed a moment early goes on rather than vanishing, so it is never swallowed.
+        Assert.IsType<PlayerTurn.Advance>(turn);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_IgnoresEscape()
+    {
+        var console = Plain();
+        var player = new PlayerConsole(console);
+        console.Input.PushKey(ConsoleKey.Escape);
         console.Input.PushKey(ConsoleKey.Enter);
 
         var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);

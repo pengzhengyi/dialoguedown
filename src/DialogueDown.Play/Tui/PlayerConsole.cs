@@ -125,12 +125,23 @@ public sealed class PlayerConsole
             while (true)
             {
                 var key = await KeyPress.ReadAsync(_console, cancellationToken);
-                switch (key?.Key)
+                if (key is null)
                 {
-                    case ConsoleKey.Enter:
-                        return new PlayerTurn.Advance();
-                    case ConsoleKey.C when key.Value.Modifiers.HasFlag(ConsoleModifiers.Control):
-                        return new PlayerTurn.Quit();
+                    continue;
+                }
+
+                if (key.Value.Key == ConsoleKey.C
+                    && key.Value.Modifiers.HasFlag(ConsoleModifiers.Control))
+                {
+                    return new PlayerTurn.Quit();
+                }
+
+                if (key.Value.Key != ConsoleKey.Escape)
+                {
+                    // Any key goes on, so a key pressed a moment early is never swallowed: an arrow
+                    // aimed at a menu that has not appeared yet moves the story on instead of
+                    // vanishing, and the next arrow still moves the menu's cursor.
+                    return new PlayerTurn.Advance();
                 }
             }
         }
@@ -187,7 +198,7 @@ public sealed class PlayerConsole
 
     /// <summary>What the player reads while they are asked to go on.</summary>
     private static string Hint(IAnsiConsole console) =>
-        $"enter to proceed {Glyphs.Separator(console)} ctrl+c quit";
+        $"any key to go on {Glyphs.Separator(console)} ctrl+c quit";
 
     /// <summary>Erases the last <paramref name="height"/> lines, leaving the cursor at their top.</summary>
     private void Erase(int height)
