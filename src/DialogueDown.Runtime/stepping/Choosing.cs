@@ -72,13 +72,12 @@ internal static class Choosing
     private static bool ALabelAsksTheWorld(ChoiceNode choice) =>
         choice.Options().Any(option => SpeechTemplate.HasQueries(option.Label));
 
-    // An option nothing guards can always be taken, and a guarded one only when the world allows
-    // it. Without answers, only an option nothing guards can be taken.
     private static ImmutableArray<int> AvailableOptions(ImmutableArray<OptionEdge> options, Supply? supply) =>
         [.. Enumerable.Range(0, options.Length).Where(at => IsAvailable(options[at], supply))];
 
+    // Without answers, only an option nothing guards can be taken; with them, whichever the world allows.
     private static bool IsAvailable(OptionEdge option, Supply? supply) =>
-        option.Condition is null || (supply is not null && supply.Allows(option));
+        supply is null ? option.Condition is null : supply.Allows(option);
 
     // Every option is offered, in the order the node lists them, and the wait keeps the ones the
     // player can take.
