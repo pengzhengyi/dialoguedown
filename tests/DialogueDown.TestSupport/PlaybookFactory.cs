@@ -11,7 +11,8 @@ namespace DialogueDown.TestSupport;
 /// every test.
 /// </summary>
 /// <remarks>
-/// The speech inside a document's nodes comes from <see cref="SpeechFactory"/>.
+/// The nodes a document holds come from <see cref="PlaybookNodeFactory"/>, and the speech inside
+/// them from <see cref="SpeechFactory"/>.
 /// </remarks>
 public static class PlaybookFactory
 {

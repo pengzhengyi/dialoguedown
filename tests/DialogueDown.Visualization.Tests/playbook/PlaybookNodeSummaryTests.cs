@@ -1,4 +1,6 @@
-using static DialogueDown.Visualization.Tests.Support.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.PlaybookFactory;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.Visualization.Tests.Support.PlaybookNodeSummaryAssert;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
 
@@ -15,15 +17,16 @@ public sealed class PlaybookNodeSummaryTests
     [Fact]
     public void Of_ALine_NamesItsSpeakerAndSaysWhatIsSaid()
     {
-        Assert.Equal(
+        AssertSummary(
             "Keeper: Take a torch.",
-            SummaryOf(Line("Take a torch.", speaker: 1), Speakers("Alice", "Keeper")));
+            Line("Take a torch.", speaker: 1),
+            Speakers("Alice", "Keeper"));
     }
 
     [Fact]
     public void Of_AnEnd_SaysOnlyThatItEnds()
     {
-        Assert.Equal("END", SummaryOf(End(), Speakers()));
+        AssertSummary("END", End());
     }
 
     // The Leads to column lists a branch's targets but cannot say which condition reaches which, so
@@ -31,35 +34,29 @@ public sealed class PlaybookNodeSummaryTests
     [Fact]
     public void Of_ABranch_PairsEachConditionWithTheNodeItReaches()
     {
-        Assert.Equal(
+        AssertSummary(
             "IF Alice.HasMap? THEN 16 ELSE 18",
-            SummaryOf(
-                Branch(Arm("Alice.HasMap", target: 16), Arm(null, target: 18)),
-                Speakers()));
+            Branch(Arm("Alice.HasMap", target: 16), Else(target: 18)));
     }
 
     [Fact]
     public void Of_ABranchOfSeveralArms_ChainsThemAsWrittenAndEndsWithTheElse()
     {
-        Assert.Equal(
+        AssertSummary(
             "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9 ELSE 14",
-            SummaryOf(
-                Branch(
-                    Arm("Hero.IsBrave", target: 5),
-                    Arm("Hero.HasMap", target: 9),
-                    Arm(null, target: 14)),
-                Speakers()));
+            Branch(
+                Arm("Hero.IsBrave", target: 5),
+                Arm("Hero.HasMap", target: 9),
+                Else(target: 14)));
     }
 
     // A branch with every arm guarded has no else to fall to, so the chain simply stops.
     [Fact]
     public void Of_ABranchWithNoElseArm_EndsOnItsLastCondition()
     {
-        Assert.Equal(
+        AssertSummary(
             "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9",
-            SummaryOf(
-                Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", target: 9)),
-                Speakers()));
+            Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", target: 9)));
     }
 
     // A condition on the node governs everything it holds rather than one way out of it, so it
@@ -67,19 +64,19 @@ public sealed class PlaybookNodeSummaryTests
     [Fact]
     public void Of_ALineThatIsItselfConditional_LeadsWithTheCondition()
     {
-        Assert.Equal(
+        AssertSummary(
             "IF Hero.IsBrave? THEN Keeper: Take a torch.",
-            SummaryOf(
-                Line("Take a torch.", speaker: 1, condition: If("Hero.IsBrave")),
-                Speakers("Alice", "Keeper")));
+            Line("Take a torch.", speaker: 1, condition: "Hero.IsBrave"),
+            Speakers("Alice", "Keeper"));
     }
 
     [Fact]
     public void Of_ALineByTheAnonymousSpeaker_StandsInForTheNameTheyLack()
     {
-        Assert.Equal(
+        AssertSummary(
             "<anonymous>: The room is quiet.",
-            SummaryOf(Line("The room is quiet."), Speakers([null])));
+            Line("The room is quiet."),
+            Speakers([null]));
     }
 
     // Cannot occur in a playbook the compiler wrote, but a report that renders nothing is worse
@@ -87,16 +84,13 @@ public sealed class PlaybookNodeSummaryTests
     [Fact]
     public void Of_ALineWhoseSpeakerIsNotInTheList_SaysSoRatherThanThrowing()
     {
-        Assert.Equal(
-            "<unknown>: Hello.",
-            SummaryOf(Line("Hello.", speaker: 7), Speakers("Alice")));
+        AssertSummary("<unknown>: Hello.", Line("Hello.", speaker: 7), Speakers("Alice"));
     }
 
     [Fact]
     public void Of_ALineWithNoSpeech_StandsInForTheWordsItLacks()
     {
-        Assert.Equal(
-            "Alice: <no speech>", SummaryOf(SilentLine(), Speakers("Alice")));
+        AssertSummary("Alice: <no speech>", SilentLine(), Speakers("Alice"));
     }
 
     // Speech arrives exactly as it was composed, and a jump lifted out of a line can leave a space
@@ -104,17 +98,15 @@ public sealed class PlaybookNodeSummaryTests
     [Fact]
     public void Of_ALineWhoseSpeechIsPadded_TrimsIt()
     {
-        Assert.Equal(
+        AssertSummary(
             "Alice: The keeper hands a shield across the bar.",
-            SummaryOf(
-                Line("  The keeper hands a shield across the bar. "), Speakers("Alice")));
+            Line("  The keeper hands a shield across the bar. "),
+            Speakers("Alice"));
     }
 
     [Fact]
     public void Of_ALineWhoseSpeechIsNothingButSpace_StandsInForTheWordsItLacks()
     {
-        Assert.Equal(
-            "Alice: <no speech>",
-            SummaryOf(Line("   "), Speakers("Alice")));
+        AssertSummary("Alice: <no speech>", Line("   "), Speakers("Alice"));
     }
 }
