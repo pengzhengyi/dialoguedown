@@ -1,11 +1,11 @@
 # Play CLI — Terminal Player
 
 > [!NOTE]
-> Status: **proposed**. This is part 1 of C4
+> Status: **implemented**. This is part 1 of C4
 > ([`ddown play` and the REPL](https://github.com/pengzhengyi/dialoguedown/issues/299)):
 > the terminal player's presentation. The driver that feeds it from the runner, the
-> `ddown play` command, and the raw stdio REPL are part 2, and wait for this and the
-> [runner](../runtime/Runner.md) to conclude.
+> `ddown play` command, and the raw stdio REPL remain part 2, waiting on this and the
+> [runner](../runtime/Runner.md).
 
 ## Table of contents
 
@@ -45,26 +45,25 @@ the `ddown play` command; the raw stdio REPL; saves, history, and world answers.
 
 ## Functionality checklist
 
-- [ ] A line renders its speaker apart from the words; every speaker carries a color of
+- [x] A line renders its speaker apart from the words; every speaker carries a color of
       its own; a continuation renders without repeating the speaker.
-- [ ] Italic, bold, and strikethrough render as such, and nest.
-- [ ] Text with markup characters renders literally: `Use [brackets]` shows the brackets.
-- [ ] A query with no answer renders as `{Key}` — the convention
+- [x] Italic, bold, and strikethrough render as such, and nest.
+- [x] Text with markup characters renders literally: `Use [brackets]` shows the brackets.
+- [x] A query with no answer renders as `{Key}` — the convention
       [`SpeechText.Of`](../runtime/Speech%20as%20Plain%20Text.md) sets.
-- [ ] A link renders its label; an image renders its alt text; commands and tags render
+- [x] A link renders its label; an image renders its alt text; commands and tags render
       nothing.
-- [ ] A menu shows every option; an unavailable one is dimmed and says so; the cursor
+- [x] A menu shows every option; an unavailable one is dimmed and says so; the cursor
       never lands on it; the option under the cursor is inverted, so the choice reads
       without color.
-- [ ] A refusal renders as a red cross, apart from speech.
-- [ ] Long labels wrap under their own words, and the redraw returns to the menu's
-      first line.
-- [ ] Enter advances; Enter on an option takes it; Ctrl+C quits, at either wait.
-- [ ] A wait hint appears where the player acts and is erased once answered; a menu keeps a
+- [x] A refusal renders as a red cross, apart from speech.
+- [x] Long labels wrap under their own words, and a move redraws the menu in place.
+- [x] Enter advances; Enter on an option takes it; Ctrl+C quits, at either wait.
+- [x] A wait hint appears where the player acts and is erased once answered; a menu keeps a
       dim key footer.
-- [ ] A turn is a value: advance, `Take(index)`, quit.
-- [ ] A non-interactive console is refused with a message that names the alternative.
-- [ ] The transcript reads in order and its ending is marked.
+- [x] A turn is a value: advance, `Take(index)`, quit.
+- [x] A non-interactive console is refused with a message that names the alternative.
+- [x] The transcript reads in order and its ending is marked.
 
 ## Ubiquitous language
 
@@ -314,7 +313,7 @@ frame. The header keeps only the title.
 | Speech that says nothing (all commands, or empty) | Draws no words; the transcript records it and nothing changes on screen. |
 | A menu with no available option | Refused with a clear error: the runner never offers one — a menu with nothing available is skipped, not shown. |
 | A label with `[` or `]` | Escaped; shown literally, never parsed as markup. |
-| A label longer than the terminal is wide | Wraps under its own words; the redraw measures the block so the cursor returns to the menu's first line. |
+| A label longer than the terminal is wide | Wraps under its own words; the live frame redraws in place, so a move never reprints the menu. |
 | Many options | All draw; the terminal scrolls. A page that follows the cursor is deferred. |
 | A terminal with no color | Spectre's profile decides; the name, the `(unavailable)` suffix, the inverted selection, and the cursor carry the meaning without color. |
 | Two speakers the hash colors alike | They share a color; the names still tell them apart. |
@@ -376,7 +375,8 @@ The real prompt and renderer are the same shape, so no new dependency is adopted
   order. It is the scene from [The look](#the-look), captured as text.
 - Boundary tests: escaping, speech that says nothing, a menu with no available option
   refused, wrapping, a non-interactive refusal, Ctrl+C quitting from both waits, Escape
-  doing nothing, and the wait hint drawn then erased.
+  doing nothing, the wait hint drawn then erased, the ASCII fallback, a wide speaker name,
+  and a whole playthrough read in order.
 
 ## What this does not do
 
