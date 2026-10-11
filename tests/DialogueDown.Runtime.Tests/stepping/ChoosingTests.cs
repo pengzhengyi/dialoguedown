@@ -68,13 +68,6 @@ public sealed class ChoosingTests
             "offer 'Open the door' unavailable, 'Wait here'");
 
     [Fact]
-    public void Offer_AMenuWithNothingAvailable_IsRefusedUntilItCanBeWalkedPast() =>
-        AssertRefused(
-            Offering(AMenuWhoseOnlyOptionIsConditional(), Answering(("Alice.HasKey", false))),
-            RefusalReason.UnplayableNode,
-            "walk past");
-
-    [Fact]
     public void Offer_AMenuWhoseLabelHoldsAQuery_IsRefusedRatherThanOfferedUnfilled() =>
         AssertRefused(
             Offering(PlayContextFactory.AMenuWithAQueryInALabel()),
@@ -83,6 +76,20 @@ public sealed class ChoosingTests
 
     [Fact]
     public void Offer_NoMenu_IsRejected() => Assert.Throws<ArgumentNullException>(() => Choosing.Offer(0, null!));
+
+    [Fact]
+    public void HasNoOptionAvailable_WhenTheWorldWithholdsEveryOption_IsTrue() =>
+        Assert.True(
+            Choosing.HasNoOptionAvailable(AMenuWhoseOnlyOptionIsConditional(), Answering(("Alice.HasKey", false))));
+
+    [Fact]
+    public void HasNoOptionAvailable_WhenTheWorldAllowsAnOption_IsFalse() =>
+        Assert.False(
+            Choosing.HasNoOptionAvailable(AMenuWhoseOnlyOptionIsConditional(), Answering(("Alice.HasKey", true))));
+
+    [Fact]
+    public void HasNoOptionAvailable_OfNoMenu_IsRejected() =>
+        Assert.Throws<ArgumentNullException>(() => Choosing.HasNoOptionAvailable(null!));
 
     [Fact]
     public void Chosen_AnOptionOffered_ArrivesAtTheNodeItLeadsTo()

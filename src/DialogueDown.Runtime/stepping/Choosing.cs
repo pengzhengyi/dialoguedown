@@ -15,13 +15,30 @@ namespace DialogueDown.Runtime.Stepping;
 /// counted against the options in the order the offer listed them.
 /// <para>
 /// A menu's options' conditions are read on arrival, so an option the world withholds is offered
-/// as unavailable rather than hidden. A label's query is not filled yet, so a menu whose labels ask
-/// the world is refused rather than offered with a query unfilled; so is a menu with no option the
-/// player can take, until it can be walked past.
+/// as unavailable rather than hidden. A menu with no option the player can take is not offered at
+/// all: the run walks past it by its fall-through. A label's query is not filled yet, so a menu
+/// whose labels ask the world is refused rather than offered with a query unfilled.
 /// </para>
 /// </remarks>
 internal static class Choosing
 {
+    /// <summary>Whether a menu has no option the player can take.</summary>
+    /// <param name="choice">The menu.</param>
+    /// <param name="supply">
+    /// What the world said about the options' conditions, or <see langword="null"/> when nothing
+    /// was asked.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the world withholds every option, so the menu is walked past
+    /// rather than offered.
+    /// </returns>
+    public static bool HasNoOptionAvailable(ChoiceNode choice, Supply? supply = null)
+    {
+        ArgumentNullException.ThrowIfNull(choice);
+
+        return AvailableOptions(choice.Options(), supply).IsEmpty;
+    }
+
     /// <summary>Offers a menu's options, and waits for the player to choose.</summary>
     /// <param name="position">The menu's position in the playbook.</param>
     /// <param name="choice">The menu itself.</param>
@@ -40,11 +57,8 @@ internal static class Choosing
         }
 
         var options = choice.Options();
-        var available = AvailableOptions(options, supply);
 
-        return available.IsEmpty
-            ? RefuseAMenuWithNothingAvailable(position)
-            : OfferOptions(position, choice.Ordered, options, available);
+        return OfferOptions(position, choice.Ordered, options, AvailableOptions(options, supply));
     }
 
     /// <summary>Takes the option the player chose, and arrives at the node it leads to.</summary>
@@ -138,10 +152,4 @@ internal static class Choosing
             position,
             RefusalReason.UnplayableNode,
             "This build cannot yet offer a menu whose labels ask the world anything.");
-
-    private static StepResult RefuseAMenuWithNothingAvailable(int position) =>
-        StepResults.Refuse(
-            position,
-            RefusalReason.UnplayableNode,
-            "This build cannot yet walk past a menu with no option the player can take.");
 }

@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
@@ -36,6 +37,20 @@ public sealed class ArrivalTests
 
         AssertEvents(result, "offer 'Open the door' unavailable, 'Wait here'");
         Assert.Equal([1], AssertAwaitingChoice(result, 0).Available);
+    }
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsEveryOptionOfAMenu_WalksOnByItsFallThrough()
+    {
+        // A menu the player can take nothing from would only wait forever, so the run goes on to
+        // where the script carries on after it.
+        var result = Arrival.Supplied(
+            AMenuWhoseOnlyOptionIsConditionalThenALine(),
+            Waiting(0, "Alice.HasKey"),
+            Answering(("Alice.HasKey", false)));
+
+        AssertSaid(result, "Alice", "It stays shut.");
+        AssertAt(result, 2);
     }
 
     [Fact]
@@ -460,4 +475,26 @@ public sealed class ArrivalTests
     /// <returns>A context ready to step.</returns>
     private static PlayContext AMenuWithAConditionalOptionStanding() =>
         PlayContextFactory.Of([PlayContextFactory.AMenuWithAConditionalOption(), End(id: 1), End(id: 2)]);
+
+    /// <summary>A menu whose only option the world must allow, then the line after it.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    ///
+    /// Alice: It stays shut.
+    /// </code>
+    /// The compiler writes the menu's fall-through, which leads to the line after it, because every
+    /// option has a condition. The option's own arm is an end here, so taking it and falling through
+    /// lead to different places.
+    /// </remarks>
+    /// <returns>A context that asks about <c>Alice.HasKey</c> before offering anything.</returns>
+    private static PlayContext AMenuWhoseOnlyOptionIsConditionalThenALine() =>
+        PlayContextFactory.Of(
+            [
+                Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), new SuccessionEdge(2)),
+                End(id: 1),
+                Line("It stays shut.", id: 2, next: 3),
+                End(id: 3),
+            ],
+            ["Alice"]);
 }
