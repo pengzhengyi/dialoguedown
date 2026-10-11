@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
@@ -5,7 +6,7 @@ using DialogueDown.Runtime.Protocol;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// Builds an option as a menu offers it, from the option its node lists.
+/// Builds options as a menu offers them, from the options its node lists.
 /// </summary>
 internal static class OfferedOptions
 {
@@ -23,4 +24,15 @@ internal static class OfferedOptions
 
         return new([.. SpeechTemplate.Segments(option.Label).SelectMany(segment => segment.Words)], available);
     }
+
+    /// <summary>Every option of a menu as the menu offers them.</summary>
+    /// <param name="options">The menu's options, as its node lists them.</param>
+    /// <param name="available">
+    /// The positions of the options the player can take. Every other option is offered as one the
+    /// player cannot take.
+    /// </param>
+    /// <returns>Every option as offered, in the order the node lists them.</returns>
+    public static ImmutableArray<OfferedOption> From(
+        ImmutableArray<OptionEdge> options, ImmutableArray<int> available) =>
+        [.. options.Select((option, at) => From(option, available.Contains(at)))];
 }

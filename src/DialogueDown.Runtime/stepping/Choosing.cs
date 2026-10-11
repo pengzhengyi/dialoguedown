@@ -85,10 +85,10 @@ internal static class Choosing
     private static StepResult OfferOptions(
         int position, bool ordered, ImmutableArray<OptionEdge> options, ImmutableArray<int> available)
     {
-        var offered = options.Select((option, at) => OfferedOptions.From(option, available.Contains(at)));
+        var offer = new Offer(ordered, OfferedOptions.From(options, available));
         var waiting = new AwaitingChoice(position, available);
 
-        return new StepResult(new PlayState(waiting), [new Offer(ordered, [.. offered])]);
+        return new StepResult(new PlayState(waiting), [offer]);
     }
 
     // The node says how many options there are; the wait says which of them could be taken.
