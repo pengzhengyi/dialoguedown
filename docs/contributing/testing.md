@@ -306,21 +306,21 @@ builds a document, its format, and its speakers; `PlaybookNodeFactory` builds
 nodes and the ways out of them; `SpeechFactory` builds the speech they hold. A
 node's mother takes what the node says first, and its id and targets after, as
 named, optional arguments. A test about speech leaves the graph out, and a test
-about the graph names the ids and targets it is about:
+about the graph names the ids and targets it is about. A node that falls through
+takes `next`, the node its succession leads to; the succession comes after any
+other ways out the node is given:
 
 ```csharp
 Line("Take a torch.", speaker: 1)
 Branch(Arm("Alice.HasMap", target: 16), Else(target: 18))
+Line("Hello.", id: 0, next: 1)
 ```
 
-The runtime suite still builds its nodes with its own `PlaybookNodes`, which came
-before the shared mother. Moving it onto `PlaybookNodeFactory` is outstanding
-work.
+A builder whose name ends in `Of` (`LineOf`, `OptionOf`, `ControlOf`) takes
+fragments a test composed, for speech that holds a query or a command.
 
 Name a mother for the main type it builds, with the `Factory` suffix:
-`SourceSpanFactory`, `LocatedDiagnosticFactory`. The runtime's `PlaybookNodes` is
-the one exception, because its `Line(…)` and `End(…)` read like the playbook they
-build.
+`SourceSpanFactory`, `LocatedDiagnosticFactory`, `PlaybookNodeFactory`.
 
 ### Assertions say what they claim
 
