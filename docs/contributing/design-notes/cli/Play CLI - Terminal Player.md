@@ -258,9 +258,10 @@ returns a position among the options as offered — the position a take names.
 ### D5 — The seam takes speech, not runtime events
 
 The calls take `ImmutableArray<SpeechFragment>` and `MenuOption`s rather than
-`Said`/`Offer`. The payloads are the same fragment records, so part 2's mapping is nearly
-the identity — but the dependency is not, and the presentation can be designed, built,
-and tested while the runner is still moving.
+`Said`/`Offer`. The payloads are the same fragment records, and the runner's
+[`OfferedOption`](../runtime/Offering%20a%20Choice.md) has `MenuOption`'s shape, so part 2's
+mapping is nearly the identity — a `Take` is a `Choose` — but the dependency is not, and the
+presentation can be designed, built, and tested while the runner is still moving.
 
 ### D6 — A turn is a value
 
