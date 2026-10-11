@@ -63,7 +63,13 @@ public sealed class PlaybookProjectionTests
     public void Project_AScriptWithErrors_HasNoPlaybookAndSaysWhy()
     {
         // The graph is built only for a clean compile, and only a graph becomes a playbook.
-        var report = Project("# Scene\n\nAlice: Go => [Nowhere](#missing)\n");
+        var report = Project(
+            """
+            # Scene
+
+            Alice: Go => [Nowhere](#missing)
+
+            """);
 
         Assert.Null(report.Json);
         Assert.Null(report.Metadata);
@@ -74,7 +80,17 @@ public sealed class PlaybookProjectionTests
     [Fact]
     public void Project_ListsEveryAnchorWithTheNodeItLandsOn()
     {
-        var report = Project("# The Tavern\n\nAlice: Hello.\n\n# The Road\n\nAlice: Onward.\n");
+        var report = Project(
+            """
+            # The Tavern
+
+            Alice: Hello.
+
+            # The Road
+
+            Alice: Onward.
+
+            """);
 
         Assert.Collection(
             report.Anchors.OrderBy(anchor => anchor.Name, StringComparer.Ordinal),

@@ -328,14 +328,14 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void RenderHtmlReport_RealCompiler_ProducesSelfContainedReportWithStageAndLabels()
     {
-        var visualizer = new CompilationVisualizer();
-
-        var html = visualizer.RenderHtmlReport(
-            """
+        const string Source = """
             # Hello
 
             World
-            """);
+            """;
+        var visualizer = new CompilationVisualizer();
+
+        var html = visualizer.RenderHtmlReport(Source);
 
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("cdn.jsdelivr.net", html);    // self-contained: no CDN
@@ -346,7 +346,7 @@ public sealed class CompilationVisualizerTests
         var heading = Assert.Single(NodesIn(markdown), node => (string?)node["label"] == "Heading (H1)");
         Assert.Equal("# Hello", (string?)heading["source"]);    // the heading's own source
         Assert.Contains(NodesIn(markdown), node => (string?)node["label"] == "Paragraph");
-        Assert.Equal("# Hello\n\nWorld", report.Source);      // the whole document, for the Source tab
+        Assert.Equal(Source, report.Source);                  // the whole document, for the Source tab
     }
 
     [Fact]
