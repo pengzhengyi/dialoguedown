@@ -1,5 +1,5 @@
 using DialogueDown.Visualization.Render;
-using static DialogueDown.Visualization.Tests.Support.Display;
+using static DialogueDown.Visualization.Tests.Support.DisplayFactory;
 
 namespace DialogueDown.Visualization.Tests.Render;
 

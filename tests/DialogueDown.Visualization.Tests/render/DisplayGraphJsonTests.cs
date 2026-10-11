@@ -6,7 +6,7 @@ using DialogueDown.Visualization.Lsp;
 using DialogueDown.Visualization.Render;
 using static DialogueDown.TestSupport.JsonAssert;
 using static DialogueDown.TestSupport.ReportPayload;
-using static DialogueDown.Visualization.Tests.Support.Display;
+using static DialogueDown.Visualization.Tests.Support.DisplayFactory;
 
 namespace DialogueDown.Visualization.Tests.Render;
 
