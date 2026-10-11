@@ -335,7 +335,9 @@ frame. The header keeps only the title.
   drives the player: `Said`→`Say`, `Continued`→`Continue`, the menu request→`TakeAsync`,
   `Refused`→`Notice`, `Ended`→`End`; the player's `Advance` becomes the runner's `Done`
   and a `Take` becomes its take command, and it keeps Ctrl+C as input for the run so a quit
-  reaches the player. The raw stdio REPL speaks the same protocol without a player.
+  reaches the player. A menu is a turn of its own: the player goes on from the line that asks
+  the question, and only then is the menu offered and drawn. The raw stdio REPL speaks the
+  same protocol without a player.
 - **Assembly boundary** — `DialogueDown.Play` may depend on `System`,
   `DialogueDown.Playbook`, and `Spectre.Console`; part 2 adds `DialogueDown.Runtime`. The
   architecture suite gains the rule, and the assembly joins `AllAssemblies`.
