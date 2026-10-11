@@ -3,9 +3,8 @@ using System.Net.Http.Json;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Browsing;
 using DialogueDown.Visualization.Live.Serving;
-using DialogueDown.Visualization.Live.Tests.Support;
 using DialogueDown.Visualization.Render;
-using static DialogueDown.Visualization.Live.Tests.Support.LivePayload;
+using static DialogueDown.TestSupport.ReportPayload;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -754,11 +753,11 @@ public sealed class ServedShellServerTests
             $"/api/browse?path={Uri.EscapeDataString(path)}", TestContext.Current.CancellationToken);
 
     // The report the page at a URL embeds.
-    private static async Task<LivePayload> ReportAt(HttpClient client, string url) =>
+    private static async Task<ReportPayload> ReportAt(HttpClient client, string url) =>
         FromPage(await client.GetStringAsync(url, TestContext.Current.CancellationToken));
 
     // The JSON an API response carries.
-    private static async Task<LivePayload> PayloadOf(HttpResponseMessage response) =>
+    private static async Task<ReportPayload> PayloadOf(HttpResponseMessage response) =>
         Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
     private static async Task<StreamReader> SubscribeAsync(HttpClient client, string doc)

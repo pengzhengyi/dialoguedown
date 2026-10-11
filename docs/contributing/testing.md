@@ -56,7 +56,7 @@ are the reason this page exists.
 | `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the readable half of the corpus. |
 | `DialogueDown.Runtime.Tests` | The runner — stepping, positions, the protocol — and the harness that plays the corpus against it. |
 | `DialogueDown.Conformance` | Not tests: the reader both halves of the corpus load their cases with. |
-| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, and temporary files and folders. |
+| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, temporary files and folders, a reader for a report's JSON (`ReportPayload`), and assertions that compare JSON as JSON (`JsonAssert`). |
 | `DialogueDown.Conformance.Tests` | That reader, and the corpus's own integrity. |
 | `DialogueDown.Architecture.Tests` | The boundaries between all of the above. |
 | `src/DialogueDown.Visualization/web` | The report client: unit tests beside the source, browser tests under `e2e/` and `e2e-live/`. |
