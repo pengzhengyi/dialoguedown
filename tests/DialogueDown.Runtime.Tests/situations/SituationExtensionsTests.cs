@@ -23,14 +23,14 @@ public sealed class SituationExtensionsTests
     [Fact]
     public void Describe_ReadsAsPartOfASentence()
     {
-        Assert.Equal("no position, before the run has started", new NotStarted().Describe());
-        Assert.Equal("node 4", new AtNode(4).Describe());
+        Assert.Equal("before it has started", new NotStarted().Describe());
+        Assert.Equal("at node 4", new AtNode(4).Describe());
         Assert.Equal(
-            "node 4, waiting for the host", new AwaitingDone(4, new Resume.FromNodeEnd()).Describe());
+            "at node 4, waiting for the host", new AwaitingDone(4, new Resume.FromNodeEnd()).Describe());
         Assert.Equal(
-            "node 4, waiting for the world before it plays",
+            "at node 4, waiting for the world before it plays",
             new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforePlaying).Describe());
-        Assert.Equal("the end", new AtEnd().Describe());
+        Assert.Equal("at the end", new AtEnd().Describe());
     }
 
     [Fact]
@@ -38,23 +38,23 @@ public sealed class SituationExtensionsTests
         // A node can ask about one key on the way in and again on the way out, so the keys alone
         // would read as the same wait twice.
         Assert.Equal(
-            "node 4, waiting for the world before it leaves",
+            "at node 4, waiting for the world before it leaves",
             new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeLeaving).Describe());
 
     [Fact]
     public void Describe_SaysAMenuWaitsOnThePlayer() =>
-        Assert.Equal("node 4, waiting for the player to choose", new AwaitingChoice(4, [0, 1]).Describe());
+        Assert.Equal("at node 4, waiting for the player to choose", new AwaitingChoice(4, [0, 1]).Describe());
 
     [Fact]
     public void Describe_SaysWhereALineContinuesOnceTheWorldAnswers() =>
         Assert.Equal(
-            "node 4, waiting for the world before continuing from segment 2",
+            "at node 4, waiting for the world before continuing from segment 2",
             new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeContinuingFrom(2)).Describe());
 
     [Fact]
     public void Describe_SaysWhereALineContinuesOnceTheHostIsDone() =>
         Assert.Equal(
-            "node 4, waiting for the host before continuing from segment 2",
+            "at node 4, waiting for the host before continuing from segment 2",
             new AwaitingDone(4, new Resume.From(2)).Describe());
 
     [Fact]
