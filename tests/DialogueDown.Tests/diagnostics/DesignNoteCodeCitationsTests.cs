@@ -4,7 +4,8 @@ using DialogueDown.Tests.Support;
 namespace DialogueDown.Tests.Diagnostics;
 
 /// <summary>
-/// Checks that a shipped design note cites only diagnostic codes the catalog can emit.
+/// Checks that a shipped design note cites only diagnostic codes the catalog can emit, and that
+/// every exemption from that rule is still needed.
 /// </summary>
 /// <remarks>
 /// A note whose status is Explored or Proposed is exempt, because it may name codes it means to
@@ -21,31 +22,17 @@ public sealed partial class DesignNoteCodeCitationsTests
         ["DLG3001"] = "Choice Nesting Diagnostic names it as a code left unused.",
     };
 
+    private static readonly HashSet<string> _catalog = DiagnosticCatalogReflection.Descriptors()
+        .Select(descriptor => descriptor.Code)
+        .ToHashSet(StringComparer.Ordinal);
+
     [Fact]
     public void ShippedNotes_CodeCitations_ExistInTheCatalog()
     {
-        var catalog = DiagnosticCatalogReflection.Descriptors()
-            .Select(descriptor => descriptor.Code)
-            .ToHashSet(StringComparer.Ordinal);
-        var root = Repository.Root;
-        var offenders = new List<string>();
-
-        foreach (var path in Directory.EnumerateFiles(
-            Path.Combine(root, "docs", "contributing", "design-notes"),
-            "*.md",
-            SearchOption.AllDirectories))
-        {
-            var text = File.ReadAllText(path);
-            if (!IsShipped(text))
-            {
-                continue;
-            }
-
-            offenders.AddRange(Codes().Matches(text)
-                .Select(match => match.Value)
-                .Where(code => !catalog.Contains(code) && !_namedButNotShipped.ContainsKey(code))
-                .Select(code => $"{Path.GetRelativePath(root, path)}: {code}"));
-        }
+        var offenders = ShippedCitations()
+            .Where(citation => !_catalog.Contains(citation.Code) && !_namedButNotShipped.ContainsKey(citation.Code))
+            .Select(citation => $"{citation.Note}: {citation.Code}")
+            .ToList();
 
         // Assert.True rather than Assert.Empty: xUnit shortens each entry it prints, which would cut
         // off the code at the end of a note's path.
@@ -56,6 +43,46 @@ public sealed partial class DesignNoteCodeCitationsTests
             + "as one:\n  " + string.Join("\n  ", offenders)
             + "\nExempt by design: "
             + string.Join("; ", _namedButNotShipped.Select(entry => $"{entry.Key} ({entry.Value})")));
+    }
+
+    [Fact]
+    public void Exemptions_AreStillNeeded()
+    {
+        var cited = ShippedCitations().Select(citation => citation.Code).ToHashSet(StringComparer.Ordinal);
+
+        // An exemption is needed while a shipped note cites its code and the catalog cannot emit
+        // it. One that outlives either would quietly excuse the next stale citation of that code.
+        Assert.All(
+            _namedButNotShipped.Keys,
+            code =>
+            {
+                Assert.Contains(code, cited);
+                Assert.DoesNotContain(code, _catalog);
+            });
+    }
+
+    /// <summary>
+    /// Every code a shipped note cites, beside the note's path from the repository root.
+    /// </summary>
+    private static IEnumerable<(string Note, string Code)> ShippedCitations()
+    {
+        var root = Repository.Root;
+        var notes = Directory.EnumerateFiles(
+            Path.Combine(root, "docs", "contributing", "design-notes"), "*.md", SearchOption.AllDirectories);
+
+        foreach (var path in notes)
+        {
+            var text = File.ReadAllText(path);
+            if (!IsShipped(text))
+            {
+                continue;
+            }
+
+            foreach (Match match in Codes().Matches(text))
+            {
+                yield return (Path.GetRelativePath(root, path), match.Value);
+            }
+        }
     }
 
     /// <summary>
