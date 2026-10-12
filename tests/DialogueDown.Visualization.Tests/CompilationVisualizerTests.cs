@@ -1,19 +1,11 @@
 using System.Text.Json.Nodes;
-using DialogueDown.Common;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
-using DialogueDown.Diagnostics;
-using DialogueDown.Graph;
-using DialogueDown.Graph.Nodes;
-using DialogueDown.Graph.Regions;
-using DialogueDown.Markdown;
-using DialogueDown.Script.Ast;
-using DialogueDown.Script.Desugar;
-using DialogueDown.Script.Semantics;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Playbook;
 using DialogueDown.Visualization.Render;
+using DialogueDown.Visualization.Tests.Support;
 using NSubstitute;
 using static DialogueDown.TestSupport.JsonAssert;
 using static DialogueDown.TestSupport.ReportPayload;
@@ -141,34 +133,14 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void BuildStages_ProjectsTheStagesFromTheCompilerSeam()
     {
-        var markdown = new MarkdownDocument(
-        [
-            new Paragraph([new TextInline("Hi", new SourceSpan(0, 2))], new SourceSpan(0, 2)),
-        ]);
-        var script = new ScriptDocument(
-        [
-            new Line(null, [new Text("Hi", new SourceSpan(0, 2))], new SourceSpan(0, 2)),
-        ]);
+        const string Source = "Hi";
         var compiler = Substitute.For<IScriptCompiler>();
-        var desugared = new DesugaredScriptDocument(script);
-        var semantics = new SemanticAnalyzer(new SemanticAnalyzerOptions([]))
-            .Analyze(desugared, new DiagnosticsContext("script source", new DiagnosticBag()));
-        compiler.Compile("script source").Returns(
-            new CompilationSuccess(
-                "script source",
-                markdown,
-                script,
-                desugared,
-                semantics,
-                // The hand-built AST lacks the defaults lowering needs, so the graph is an empty
-                // stand-in.
-                EmptyGraph(),
-                []));
+        compiler.Compile(Source).Returns(Pipeline.Compilation(Source));
         var visualizer = new CompilationVisualizer(compiler);
 
-        var stages = visualizer.BuildStages("script source");
+        var stages = visualizer.BuildStages(Source);
 
-        compiler.Received(1).Compile("script source");
+        compiler.Received(1).Compile(Source);
         Assert.Collection(
             stages,
             markdownStage => Assert.Equal("Markdown AST", markdownStage.Title),
@@ -188,23 +160,12 @@ public sealed class CompilationVisualizerTests
     }
 
     [Fact]
-    public void BuildStages_HaltedResult_KeepsProducedStagesAndDisablesTheRest()
+    public void BuildStages_ATranspileError_KeepsProducedStagesAndDisablesTheRest()
     {
-        var markdown = new MarkdownDocument(
-        [
-            new Paragraph([new TextInline("Hi", new SourceSpan(0, 2))], new SourceSpan(0, 2)),
-        ]);
-        var script = new ScriptDocument(
-        [
-            new Line(null, [new Text("Hi", new SourceSpan(0, 2))], new SourceSpan(0, 2)),
-        ]);
-        var compiler = Substitute.For<IScriptCompiler>();
-        // A halted compile: the transpiler produced the Dialogue AST, but desugar and semantic
-        // analysis never ran, so their stages are unavailable.
-        compiler.Compile("broken").Returns(
-            CompilationFailure.AtTranspile("broken", markdown, script, []));
-
-        var stages = new CompilationVisualizer(compiler).BuildStages("broken");
+        // "#lonely: Hi" is a tags-without-speaker error reported during transpile: the
+        // stage-boundary compile halts, so the transpiler produced the Dialogue AST, but desugar
+        // and semantic analysis never ran, and their stages render as disabled tabs.
+        var stages = new CompilationVisualizer().BuildStages("#lonely: Hi");
 
         Assert.Collection(
             stages,
@@ -241,19 +202,8 @@ public sealed class CompilationVisualizerTests
     [Fact]
     public void RenderHtmlReport_HaltedResult_HasEmptyEditorSymbols()
     {
-        var markdown = new MarkdownDocument(
-        [
-            new Paragraph([new TextInline("Hi", new SourceSpan(0, 2))], new SourceSpan(0, 2)),
-        ]);
-        var script = new ScriptDocument(
-        [
-            new Line(null, [new Text("Hi", new SourceSpan(0, 2))], new SourceSpan(0, 2)),
-        ]);
-        var compiler = Substitute.For<IScriptCompiler>();
-        compiler.Compile("broken").Returns(
-            CompilationFailure.AtTranspile("broken", markdown, script, []));
-
-        var html = new CompilationVisualizer(compiler).RenderHtmlReport("broken");
+        // Tags with no speaker halt the compile at transpile, before analysis gathers a symbol.
+        var html = new CompilationVisualizer().RenderHtmlReport("#lonely: Hi");
 
         AssertJson(
             """
@@ -280,26 +230,6 @@ public sealed class CompilationVisualizerTests
         // fills a synthetic default speaker, so only the Desugared stage shows it.
         Assert.DoesNotContain(stages[1].Nodes, n => n.Label == "Speaker (default)");
         Assert.Contains(desugared.Nodes, n => n.Label == "Speaker (default)");
-    }
-
-    [Fact]
-    public void BuildStages_RealCompiler_ATranspileErrorHaltsAndDisablesTheLaterStages()
-    {
-        // "#lonely: Hi" is a tags-without-speaker error reported during transpile: the
-        // stage-boundary compile halts, so the desugared and semantic stages are never produced
-        // and render as disabled tabs.
-        var stages = new CompilationVisualizer().BuildStages("#lonely: Hi");
-
-        Assert.Equal(5, stages.Count);
-        Assert.Null(stages[0].Unavailable); // Markdown AST — produced
-        Assert.Null(stages[1].Unavailable); // Dialogue AST — produced
-        Assert.Equal("Desugared AST", stages[2].Title);
-        Assert.NotNull(stages[2].Unavailable); // disabled
-        Assert.Empty(stages[2].Nodes);
-        Assert.Equal("Semantic Model", stages[3].Title);
-        Assert.NotNull(stages[3].Unavailable); // disabled
-        Assert.Equal("Dialogue Graph", stages[4].Title);
-        Assert.NotNull(stages[4].Unavailable); // disabled
     }
 
     [Fact]
@@ -657,11 +587,4 @@ public sealed class CompilationVisualizerTests
     // The names of the speakers a serialized playbook section declares.
     private static IReadOnlyList<string?> SpeakerNamesIn(JsonNode? playbook) =>
         [.. playbook?["speakers"]?.AsArray().Select(speaker => (string?)speaker?["name"]) ?? []];
-
-    private static DialogueGraph EmptyGraph()
-    {
-        var end = new NodeId(0);
-        return new DialogueGraph(
-            [new EndNode(end, new SourceSpan(0, 0))], entry: end, end: end, RegionTree.Empty);
-    }
 }

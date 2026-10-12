@@ -2,11 +2,37 @@ using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Script;
+using static DialogueDown.Visualization.Tests.Support.CompileAssert;
 
 namespace DialogueDown.Visualization.Tests.Script;
 
 public sealed class DialogueAstProjectionTests
 {
+    // A random choice with one option of each weight: a number, auto, and a query.
+    private const string Weighted = """
+        - `50%` Alice: Hi.
+        - `%` Alice: Bye.
+        - `"Bob.Affection"%` Alice: Later.
+        """;
+
+    // A control block with a conditional branch and an else branch.
+    private const string IfElse = """
+        > `if` `Rich?`
+        >
+        > Alice: Buy two.
+        >
+        > `else`
+        >
+        > Alice: Maybe later.
+        """;
+
+    // A line Alice speaks, then one the default speaker fills in at a zero-width position.
+    private const string FilledDefault = """
+        Alice: Hi.
+
+        Bye.
+        """;
+
     private readonly DialogueAstProjection _projection = new("Hi there");
 
     [Fact]
@@ -31,7 +57,7 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_Document_LabelsDocumentWithTheWholeSource()
     {
-        var description = _projection.Describe(new ScriptDocument([]));
+        var description = DescribeSingle<ScriptDocument>("Hi there");
 
         Assert.Equal("Document", description.Label);
         Assert.Equal("document", description.Category);
@@ -47,45 +73,51 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_SlicesTheSourceFromTheSpan()
     {
-        var description = _projection.Describe(new Text("Hi", new SourceSpan(0, 2)));
+        var description = DescribeSingle<Text>("Alice: Hi there.");
 
         Assert.Equal("Text", description.Label);
         Assert.Equal("text", description.Category);
-        Assert.Equal("Hi", description.Source);
+        Assert.Equal("Hi there.", description.Source);
     }
 
     [Fact]
     public void Describe_Tag_UsesTagCategoryAndOmitsAnAbsentValue()
     {
-        var withValue = _projection.Describe(new CustomTag("mood", "happy", new SourceSpan(0, 5)));
+        // Tags in a speaker prefix: a custom tag with a value, and a reserved tag without one.
+        const string Source = "Alice #mood=happy ##default: Hi.";
+
+        var withValue = DescribeSingle<CustomTag>(Source);
         Assert.Equal("Tag (custom)", withValue.Label);
         Assert.Equal("tag", withValue.Category);
-        Assert.Contains(withValue.Attributes, a => a.Name == "value" && a.Value == "happy");
+        Assert.Equal(
+            [new("name", "mood"), new("value", "happy"), new("span", "[6, 17)")],
+            withValue.Attributes);
 
-        var withoutValue = _projection.Describe(new ReservedTag("hidden", null, new SourceSpan(0, 5)));
+        var withoutValue = DescribeSingle<ReservedTag>(Source);
         Assert.Equal("Tag (reserved)", withoutValue.Label);
         Assert.Equal("tag", withoutValue.Category);
-        Assert.DoesNotContain(withoutValue.Attributes, a => a.Name == "value");
+        Assert.Equal([new("name", "default"), new("span", "[18, 27)")], withoutValue.Attributes);
     }
 
     [Fact]
     public void Describe_SpeakerDeclaration_IncludesIdOnlyWhenPresent()
     {
-        var span = new SourceSpan(0, 5);
-
-        var withId = _projection.Describe(new SpeakerDeclaration("Alice", "alice", [], span));
+        var withId = DescribeSingle<SpeakerDeclaration>("Alice @alice: Hi.");
         Assert.Equal("Speaker (declaration)", withId.Label);
         Assert.Equal("speech", withId.Category);
-        Assert.Contains(withId.Attributes, a => a.Name == "id" && a.Value == "alice");
+        Assert.Equal(
+            [new("name", "Alice"), new("id", "alice"), new("span", "[0, 14)")],
+            withId.Attributes);
 
-        var withoutId = _projection.Describe(new SpeakerDeclaration("Alice", null, [], span));
-        Assert.DoesNotContain(withoutId.Attributes, a => a.Name == "id");
+        // A tag is what makes a prefix with no id a declaration; its span runs to the tag's end.
+        var withoutId = DescribeSingle<SpeakerDeclaration>("Alice #mood=happy: Hi.");
+        Assert.Equal([new("name", "Alice"), new("span", "[0, 19)")], withoutId.Attributes);
     }
 
     [Fact]
     public void Describe_RandomChoices_LabelsItWithTheChoiceCategory()
     {
-        var description = _projection.Describe(new RandomChoices([], new SourceSpan(0, 5)));
+        var description = DescribeSingle<RandomChoices>(Weighted);
 
         Assert.Equal("Random choices", description.Label);
         Assert.Equal("choice", description.Category);
@@ -94,96 +126,90 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_RandomOption_ShowsItsWeightAsWritten()
     {
-        var span = new SourceSpan(0, 5);
-
-        var numeric = _projection.Describe(new RandomOption(new NumberWeight(50, span), [], span));
-        Assert.Equal("Random option", numeric.Label);
-        Assert.Equal("choice", numeric.Category);
-        Assert.Contains(numeric.Attributes, a => a.Name == "weight" && a.Value == "50%");
-
-        var auto = _projection.Describe(new RandomOption(new AutoWeight(span), [], span));
-        Assert.Contains(auto.Attributes, a => a.Name == "weight" && a.Value == "%");
-
-        var query = _projection.Describe(
-            new RandomOption(new QueryWeight("Bob.Affection", span), [], span));
-        Assert.Contains(query.Attributes, a => a.Name == "weight" && a.Value == "\"Bob.Affection\"%");
+        Assert.Collection(
+            DescribeAll<RandomOption>(Weighted),
+            numeric =>
+            {
+                Assert.Equal("Random option", numeric.Label);
+                Assert.Equal("choice", numeric.Category);
+                Assert.Equal([new("weight", "50%"), new("span", "[0, 18)")], numeric.Attributes);
+            },
+            auto => Assert.Equal([new("weight", "%"), new("span", "[19, 36)")], auto.Attributes),
+            query => Assert.Equal(
+                [new("weight", "\"Bob.Affection\"%"), new("span", "[37, 71)")],
+                query.Attributes));
     }
 
     [Fact]
     public void Neighbors_RandomChoices_YieldsOptions()
     {
-        var option = new RandomOption(new AutoWeight(new SourceSpan(0, 1)), [], new SourceSpan(0, 1));
-        var random = new RandomChoices([option], new SourceSpan(0, 5));
+        var random = AssertCompilesSingle<RandomChoices>(Weighted);
 
-        Assert.Equal(new object[] { option }, _projection.Neighbors(random));
+        AssertNeighbors(random, [.. random.Options]);
     }
 
     [Fact]
     public void Describe_Condition_ShowsItsKey_InTheCallCategory()
     {
-        var description = _projection.Describe(new Condition("Rainy", new SourceSpan(0, 9)));
+        var description = DescribeSingle<Condition>("`Rainy?` Alice: Hi.");
 
         Assert.Equal("Condition", description.Label);
         Assert.Equal("call", description.Category);
-        Assert.Contains(description.Attributes, a => a.Name == "key" && a.Value == "Rainy");
+        Assert.Equal([new("key", "Rainy"), new("span", "[0, 8)")], description.Attributes);
     }
 
     [Fact]
     public void Neighbors_ConditionalJump_YieldsTheConditionThenTheLabel()
     {
-        var span = new SourceSpan(0, 5);
-        var condition = new Condition("Rainy", span);
-        var label = new Text("go", span);
-        var jump = new Jump("#x", [label], span, condition);
+        var jump = AssertDesugarsSingle<Jump>("`Rainy?` => [The end](#END)");
 
-        Assert.Equal(new object[] { condition, label }, _projection.Neighbors(jump));
+        AssertNeighbors(jump, [jump.Condition, .. jump.Label]);
     }
 
     [Fact]
     public void Neighbors_UnconditionalJump_YieldsOnlyTheLabel()
     {
-        var span = new SourceSpan(0, 5);
-        var label = new Text("go", span);
-        var jump = new Jump("#x", [label], span);
+        var jump = AssertDesugarsSingle<Jump>("=> [The end](#END)");
 
-        Assert.Equal(new object[] { label }, _projection.Neighbors(jump));
+        AssertNeighbors(jump, [.. jump.Label]);
     }
 
     [Fact]
     public void Neighbors_RandomOption_YieldsBody()
     {
-        var line = new Line(null, [new Text("x", new SourceSpan(0, 1))], new SourceSpan(0, 1));
-        var option = new RandomOption(new NumberWeight(50, new SourceSpan(0, 5)), [line], new SourceSpan(0, 5));
+        var option = AssertCompiles<RandomOption>(Weighted)[0];
 
-        Assert.Equal(new object[] { line }, _projection.Neighbors(option));
+        AssertNeighbors(option, [.. option.Body]);
     }
 
     [Fact]
     public void Neighbors_ConditionalChoice_YieldsTheConditionThenBody()
     {
-        var span = new SourceSpan(0, 5);
-        var condition = new Condition("Rainy", span);
-        var line = new Line(null, [new Text("x", span)], span);
-        var choice = new Choice([line], span, condition);
+        const string Source = """
+            - `Rainy?` Alice: Hi.
+            - Alice: Bye.
+            """;
+        var choice = AssertCompiles<Choice>(Source)[0];
 
-        Assert.Equal(new object[] { condition, line }, _projection.Neighbors(choice));
+        AssertNeighbors(choice, [choice.Condition, .. choice.Body]);
     }
 
     [Fact]
     public void Neighbors_ConditionalRandomOption_YieldsTheConditionThenBody()
     {
-        var span = new SourceSpan(0, 5);
-        var condition = new Condition("Rainy", span);
-        var line = new Line(null, [new Text("x", span)], span);
-        var option = new RandomOption(new NumberWeight(50, span), [line], span, condition);
+        const string Source = """
+            - `50%` Alice: Hi.
+            - `Rainy?` `50%` Alice: Bye.
+            """;
+        var option = AssertCompiles<RandomOption>(Source)[1];
 
-        Assert.Equal(new object[] { condition, line }, _projection.Neighbors(option));
+        AssertNeighbors(option, [option.Condition, .. option.Body]);
     }
 
     [Fact]
     public void Describe_ControlBlock_LabelsItWithTheControlCategory()
     {
-        var description = _projection.Describe(new ControlBlock([], new SourceSpan(0, 5)));
+        var description = DescribeSingle<ControlBlock>(IfElse);
 
         Assert.Equal("Control block", description.Label);
         Assert.Equal("control", description.Category);
@@ -192,10 +218,7 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_Branch_LabelsAConditionalBranchWithTheControlCategory()
     {
-        var span = new SourceSpan(0, 5);
-        var branch = new Branch(new Condition("Rich", span), [], span);
-
-        var description = _projection.Describe(branch);
+        var description = DescribeAll<Branch>(IfElse)[0];
 
         Assert.Equal("Branch", description.Label);
         Assert.Equal("control", description.Category);
@@ -204,9 +227,7 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_ElseBranch_LabelsItAsAnElseBranch()
     {
-        var span = new SourceSpan(0, 5);
-
-        var description = _projection.Describe(new Branch(null, [], span));
+        var description = DescribeAll<Branch>(IfElse)[1];
 
         Assert.Equal("Else branch", description.Label);
         Assert.Equal("control", description.Category);
@@ -215,80 +236,66 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Neighbors_ControlBlock_YieldsBranches()
     {
-        var span = new SourceSpan(0, 5);
-        var branch = new Branch(new Condition("Rich", span), [], span);
-        var control = new ControlBlock([branch], span);
+        var control = AssertCompilesSingle<ControlBlock>(IfElse);
 
-        Assert.Equal(new object[] { branch }, _projection.Neighbors(control));
+        AssertNeighbors(control, [.. control.Branches]);
     }
 
     [Fact]
     public void Neighbors_Branch_YieldsTheConditionThenBody()
     {
-        var span = new SourceSpan(0, 5);
-        var condition = new Condition("Rich", span);
-        var line = new Line(null, [new Text("x", span)], span);
-        var branch = new Branch(condition, [line], span);
+        var branch = AssertCompiles<Branch>(IfElse)[0];
 
-        Assert.Equal(new object[] { condition, line }, _projection.Neighbors(branch));
+        AssertNeighbors(branch, [branch.Condition, .. branch.Body]);
     }
 
     [Fact]
     public void Neighbors_ElseBranch_YieldsOnlyBody()
     {
-        var span = new SourceSpan(0, 5);
-        var line = new Line(null, [new Text("x", span)], span);
-        var branch = new Branch(null, [line], span);
+        var branch = AssertCompiles<Branch>(IfElse)[1];
 
-        Assert.Equal(new object[] { line }, _projection.Neighbors(branch));
+        AssertNeighbors(branch, [.. branch.Body]);
     }
 
     [Fact]
     public void Neighbors_Line_YieldsSpeakerThenSpeech()
     {
-        var span = new SourceSpan(0, 5);
-        var speaker = new SpeakerNameReference("Alice", span);
-        var text = new Text("Hi", span);
-        var line = new Line(speaker, [text], span);
+        var line = AssertCompilesSingle<Line>("Alice: Hi.");
 
-        Assert.Equal(new object[] { speaker, text }, _projection.Neighbors(line));
+        AssertNeighbors(line, [line.Speaker, .. line.Speech]);
     }
 
     [Fact]
     public void Neighbors_LineWithoutSpeaker_YieldsOnlySpeech()
     {
-        var span = new SourceSpan(0, 2);
-        var text = new Text("Hi", span);
+        // The transpiled line names no speaker; desugaring fills the default in later.
+        var line = AssertCompilesSingle<Line>("Hi there");
 
-        Assert.Equal(new object[] { text }, _projection.Neighbors(new Line(null, [text], span)));
+        AssertNeighbors(line, [.. line.Speech]);
     }
 
     [Fact]
     public void Neighbors_ConditionalLine_YieldsTheConditionThenSpeakerThenSpeech()
     {
-        var span = new SourceSpan(0, 5);
-        var condition = new Condition("Rainy", span);
-        var speaker = new SpeakerNameReference("Alice", span);
-        var text = new Text("Hi", span);
-        var line = new Line(speaker, [text], span, condition);
+        var line = AssertCompilesSingle<Line>("`Rainy?` Alice: Hi.");
 
-        Assert.Equal(new object[] { condition, speaker, text }, _projection.Neighbors(line));
+        AssertNeighbors(line, [line.Condition, line.Speaker, .. line.Speech]);
     }
 
     [Fact]
     public void Neighbors_Leaf_IsEmpty()
     {
-        Assert.Empty(_projection.Neighbors(new Text("Hi", new SourceSpan(0, 2))));
+        Assert.Empty(_projection.Neighbors(AssertCompilesSingle<Text>("Hi there")));
     }
 
     [Fact]
     public void Describe_DefaultSpeaker_LabelsItDefaultWithSpeechCategory()
     {
-        var description = _projection.Describe(new DefaultSpeaker(SourceSpan.EmptyAt(3)));
+        var description = DescribeDesugaredSingle<DefaultSpeaker>(FilledDefault);
 
         Assert.Equal("Speaker (default)", description.Label);
         Assert.Equal("speech", description.Category);
-        Assert.Contains(description.Attributes, a => a.Name == "span");
+        Assert.Equal([new("span", "[12, 12)")], description.Attributes);
     }
 
     [Fact]
@@ -296,7 +303,7 @@ public sealed class DialogueAstProjectionTests
     {
         // A synthetic node (a filled default speaker) marks a zero-width position, so it
         // has no source to slice — null, not an empty string that renders as a blank block.
-        var description = _projection.Describe(new DefaultSpeaker(SourceSpan.EmptyAt(3)));
+        var description = DescribeDesugaredSingle<DefaultSpeaker>(FilledDefault);
 
         Assert.Null(description.Source);
     }
@@ -306,7 +313,7 @@ public sealed class DialogueAstProjectionTests
     {
         // The pre-desugar `=>` marker and the assembled Jump are different nodes; the
         // indicator keeps its own name so it stands out from the Jump it becomes.
-        var indicator = _projection.Describe(new JumpIndicator(new SourceSpan(0, 2)));
+        var indicator = DescribeSingle<JumpIndicator>("=> [The end](#END)");
 
         Assert.Equal("Jump indicator", indicator.Label);
         Assert.Equal("jump", indicator.Category);
@@ -315,22 +322,21 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_Jump_LabelsItWithTargetAndLabel()
     {
-        var span = new SourceSpan(0, 8);
-        var jump = _projection.Describe(new Jump("scene-2", [new Text("Go", span)], span));
+        var jump = DescribeDesugaredSingle<Jump>("=> [The end](#END)");
 
         Assert.Equal("Jump", jump.Label);
         Assert.Equal("jump", jump.Category);
-        Assert.Contains(jump.Attributes, a => a.Name == "target" && a.Value == "scene-2");
-        Assert.Contains(jump.Attributes, a => a.Name == "label" && a.Value == "Go");
+        Assert.Equal(
+            [new("target", "#END"), new("label", "The end"), new("span", "[0, 18)")],
+            jump.Attributes);
     }
 
     [Fact]
     public void Neighbors_Jump_YieldsItsLabelFragments()
     {
-        var span = new SourceSpan(0, 2);
-        var label = new Text("Go", span);
+        var jump = AssertDesugarsSingle<Jump>("=> [The **end**](#END)");
 
-        Assert.Equal(new object[] { label }, _projection.Neighbors(new Jump("t", [label], span)));
+        AssertNeighbors(jump, [.. jump.Label]);
     }
 
     [Fact]
@@ -345,15 +351,15 @@ public sealed class DialogueAstProjectionTests
     [Fact]
     public void Describe_SpannedNode_CarriesTheStructuredSpan()
     {
-        var description = _projection.Describe(new Text("Hi", new SourceSpan(0, 2)));
+        var description = DescribeSingle<Text>("Alice: Hi there.");
 
-        Assert.Equal(new DisplaySpan(0, 2), description.Span);
+        Assert.Equal(new DisplaySpan(7, 16), description.Span);
     }
 
     [Fact]
     public void Describe_Document_SpansTheWholeSource()
     {
-        var description = _projection.Describe(new ScriptDocument([]));
+        var description = DescribeSingle<ScriptDocument>("Hi there");
 
         Assert.Equal(new DisplaySpan(0, "Hi there".Length), description.Span);
     }
@@ -364,16 +370,46 @@ public sealed class DialogueAstProjectionTests
         // A filled default speaker carries an empty (zero-width) span: a caret position, not a
         // range of source. It has no source text to slice, but it keeps its position so a client
         // can place the cursor there — a "jump to source" on a synthetic node.
-        var description = _projection.Describe(new DefaultSpeaker(new SourceSpan(3, 0)));
+        var description = DescribeDesugaredSingle<DefaultSpeaker>(FilledDefault);
 
-        Assert.Equal(new DisplaySpan(3, 3), description.Span);
+        Assert.Equal(new DisplaySpan(12, 12), description.Span);
     }
 
+    // The projection clamps a span that runs past the end of its source rather than throw. No
+    // script in these tests produces one, so the node is built by hand.
     [Fact]
     public void Describe_SpanPastEnd_ClampsToTheSource()
     {
         var description = _projection.Describe(new Text("x", new SourceSpan(5, 20)));
 
         Assert.Equal(new DisplaySpan(5, "Hi there".Length), description.Span);
+    }
+
+    // Describes the one node of the type given that the source compiles to, reading its snippet
+    // and span from that source.
+    private static NodeDescription DescribeSingle<TNode>(string source)
+        where TNode : notnull =>
+        new DialogueAstProjection(source).Describe(AssertCompilesSingle<TNode>(source));
+
+    // Describes every node of the type given that the source compiles to, in document order.
+    private static IReadOnlyList<NodeDescription> DescribeAll<TNode>(string source)
+        where TNode : notnull
+    {
+        var projection = new DialogueAstProjection(source);
+        return [.. AssertCompiles<TNode>(source).Select(node => projection.Describe(node))];
+    }
+
+    // Describes the one node of the type given in the source's desugared tree.
+    private static NodeDescription DescribeDesugaredSingle<TNode>(string source)
+        where TNode : notnull =>
+        new DialogueAstProjection(source).Describe(AssertDesugarsSingle<TNode>(source));
+
+    // Asserts the projection yields exactly the children given, in order. The children are read
+    // from the node itself, so a node with none would pass without checking anything; the guard
+    // keeps every fixture meaningful.
+    private void AssertNeighbors(object node, IReadOnlyList<object?> expected)
+    {
+        Assert.NotEmpty(expected);
+        Assert.Equal(expected, _projection.Neighbors(node));
     }
 }

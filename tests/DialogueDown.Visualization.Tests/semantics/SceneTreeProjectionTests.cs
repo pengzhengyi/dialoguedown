@@ -1,4 +1,3 @@
-using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Visualization.Display;
@@ -10,7 +9,7 @@ namespace DialogueDown.Visualization.Tests.Semantics;
 
 public sealed class SceneTreeProjectionTests
 {
-    // The scene-description tests never touch the model, so any valid one will do.
+    // The title, description, and root tests never touch the model, so any valid one will do.
     private readonly SceneTreeProjection _projection = new(Pipeline.Model("Hi."), "Hi.");
 
     [Fact]
@@ -37,27 +36,32 @@ public sealed class SceneTreeProjectionTests
     [Fact]
     public void Describe_AnchoredScene_CarriesLabelAnchorLevelAndKey()
     {
-        var heading = new SceneHeading([new Text("The Market", new SourceSpan(0, 1))], 2, new SourceSpan(0, 1));
-        var scene = Scene.ForHeading(heading, "the-market");
+        const string Source = "## The Market";
+        var model = Pipeline.Model(Source);
+        var scene = Assert.Single(model.SceneRoot.ChildScenes);
 
-        var description = _projection.Describe(scene);
+        var description = new SceneTreeProjection(model, Source).Describe(scene);
 
         Assert.Equal("The Market", description.Label);
         Assert.Equal("Scene", description.TypeName);
         Assert.Equal("structure", description.Category);
         Assert.Equal("scene:the-market", description.EntityKey);
-        Assert.Contains(description.Attributes, attribute => attribute is { Name: "anchor", Value: "#the-market" });
-        Assert.Contains(description.Attributes, attribute => attribute is { Name: "level", Value: "2" });
+        Assert.Equal([new("anchor", "#the-market"), new("level", "2")], description.Attributes);
     }
 
     [Fact]
     public void Describe_Scene_CarriesItsHeadingSpan()
     {
         // A scene maps to its heading in the source, so its detail panel can jump there.
-        var heading = new SceneHeading([new Text("Hi", new SourceSpan(0, 2))], 2, new SourceSpan(0, 2));
-        var scene = Scene.ForHeading(heading, "hi");
+        const string Source = """
+            Alice: Hi.
 
-        Assert.Equal(new DisplaySpan(0, 2), _projection.Describe(scene).Span);
+            ## The Market
+            """;
+        var model = Pipeline.Model(Source);
+        var scene = Assert.Single(model.SceneRoot.ChildScenes);
+
+        Assert.Equal(new DisplaySpan(12, 25), new SceneTreeProjection(model, Source).Describe(scene).Span);
     }
 
     [Fact]
