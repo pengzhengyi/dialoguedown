@@ -1,6 +1,6 @@
 {
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
-  "name": "an effect is carried out before the run goes past it",
+  "name": "an effect is performed before the run goes past it",
   "playbook": "playbook.json",
   "because": "the run must not reach the next line until the host says the effect is done -- a runtime that fired and forgot would let a guard after an effect read the world as it was before",
   "session": [

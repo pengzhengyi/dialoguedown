@@ -90,6 +90,8 @@
     href: cli/Compile CLI - Emit DOT.md
   - name: Compile CLI — Fix Mode
     href: cli/Compile CLI - Fix Mode.md
+  - name: Play CLI — Terminal Player
+    href: cli/Play CLI - Terminal Player.md
 - name: Visualization
   items:
   - name: Report and stage tabs

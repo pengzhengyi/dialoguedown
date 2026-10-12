@@ -1,6 +1,7 @@
 using System.Reflection;
 using DialogueDown.Compilation;
 using DialogueDown.ConfigurationLoader;
+using DialogueDown.Play.Tui;
 using DialogueDown.Playbook;
 using DialogueDown.Runtime;
 using DialogueDown.Visualization;
@@ -22,6 +23,7 @@ internal static class Architecture
     public const string VisualizationLive = "DialogueDown.Visualization.Live";
     public const string ConfigurationLoader = "DialogueDown.ConfigurationLoader";
     public const string Playbook = "DialogueDown.Playbook";
+    public const string Play = "DialogueDown.Play";
     public const string Runtime = "DialogueDown.Runtime";
 
     // Core internal layers.
@@ -63,6 +65,9 @@ internal static class Architecture
     /// <summary>The runner that plays a playbook, which a game embeds without the compiler.</summary>
     public static readonly Assembly RuntimeAssembly = typeof(Runner).Assembly;
 
+    /// <summary>The terminal player: the presentation a driver shows a run through.</summary>
+    public static readonly Assembly PlayAssembly = typeof(PlayerConsole).Assembly;
+
     /// <summary>
     /// The command-line front-end. Loaded by name because the CLI exposes no public
     /// type to anchor with <c>typeof</c> — even its entry point is the internal
@@ -77,6 +82,7 @@ internal static class Architecture
         CoreAssembly,
         PlaybookAssembly,
         RuntimeAssembly,
+        PlayAssembly,
         ConfigurationLoaderAssembly,
         VisualizationAssembly,
         VisualizationLiveAssembly,

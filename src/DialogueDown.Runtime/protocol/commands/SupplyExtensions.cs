@@ -1,7 +1,11 @@
+using System.Collections.Immutable;
+using DialogueDown.Playbook.Speech;
+
 namespace DialogueDown.Runtime.Protocol;
 
 /// <summary>
-/// Reads one key's answer from a supply that has already been checked.
+/// Reads the answers in a supply that has already been checked: one key's at a time, or every
+/// query's in some speech.
 /// </summary>
 /// <remarks>
 /// A supply is checked against what was asked before anything reads it: the same keys, each
@@ -11,14 +15,14 @@ namespace DialogueDown.Runtime.Protocol;
 /// </remarks>
 internal static class SupplyExtensions
 {
-    /// <summary>The truth the world gave for a key a guard reads.</summary>
+    /// <summary>Whether the world affirms a key a guard reads.</summary>
     /// <param name="supply">What the world said.</param>
     /// <param name="key">The key to read.</param>
-    /// <returns>Whether the world said the key holds.</returns>
+    /// <returns><see langword="true"/> when the world answered the key yes.</returns>
     /// <exception cref="InvalidOperationException">
     /// The key went unanswered, or was answered with something other than a truth.
     /// </exception>
-    public static bool Holds(this Supply supply, string key)
+    public static bool Affirms(this Supply supply, string key)
     {
         ArgumentNullException.ThrowIfNull(supply);
 
@@ -37,6 +41,20 @@ internal static class SupplyExtensions
         ArgumentNullException.ThrowIfNull(supply);
 
         return Read<TextAnswer>(supply, key).Text;
+    }
+
+    /// <summary>Replaces each query in some speech with the words the world gave for its key.</summary>
+    /// <param name="supply">What the world said.</param>
+    /// <param name="speech">The speech to fill.</param>
+    /// <returns>The speech, with each query replaced by the words that answered it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// A query's key went unanswered, or was answered with something other than words.
+    /// </exception>
+    public static ImmutableArray<SpeechFragment> Fill(this Supply supply, ImmutableArray<SpeechFragment> speech)
+    {
+        ArgumentNullException.ThrowIfNull(supply);
+
+        return SpeechTemplate.Fill(speech, supply.Words);
     }
 
     private static TAnswer Read<TAnswer>(Supply supply, string key)

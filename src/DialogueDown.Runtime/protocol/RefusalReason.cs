@@ -54,4 +54,7 @@ public enum RefusalReason
 
     /// <summary><c>Choose</c> named a position outside the options the menu offered.</summary>
     NoSuchOption,
+
+    /// <summary><c>Choose</c> named an option the menu offered as one the player cannot take.</summary>
+    UnavailableOption,
 }

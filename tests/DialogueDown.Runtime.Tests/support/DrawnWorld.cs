@@ -13,6 +13,9 @@ namespace DialogueDown.Runtime.Tests;
 /// <param name="truths">Whether each key a guard reads holds.</param>
 internal sealed class DrawnWorld(ImmutableDictionary<string, bool> truths)
 {
+    /// <summary>The words this world answers every query with.</summary>
+    public const string Words = "Robin";
+
     /// <summary>What this world answers when a run asks it about these keys.</summary>
     /// <param name="keys">The keys the run asked about.</param>
     /// <returns>The supply, answering each key once.</returns>
@@ -20,5 +23,5 @@ internal sealed class DrawnWorld(ImmutableDictionary<string, bool> truths)
         World.Answering([.. keys.Select(key => (key, AnswerTo(key)))]);
 
     private Answer AnswerTo(string key) =>
-        truths.TryGetValue(key, out var holds) ? new BooleanAnswer(holds) : new TextAnswer("Robin");
+        truths.TryGetValue(key, out var holds) ? new BooleanAnswer(holds) : new TextAnswer(Words);
 }

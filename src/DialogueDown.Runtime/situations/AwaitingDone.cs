@@ -1,7 +1,7 @@
 namespace DialogueDown.Runtime.Situations;
 
 /// <summary>
-/// Standing at a node, waiting for the host to say what it asked for was carried out.
+/// Standing at a node, waiting for the host to say what it asked for was performed.
 /// </summary>
 /// <remarks>
 /// The run has sent <c>Perform</c> and waits for <c>Done</c> before going on, because what comes

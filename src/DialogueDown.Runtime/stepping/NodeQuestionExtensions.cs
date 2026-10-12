@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook.Conditions;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 
@@ -28,31 +29,42 @@ internal static class NodeQuestionExtensions
     /// <summary>What the world must answer before a run can tell whether a node plays.</summary>
     /// <param name="node">The node being arrived at.</param>
     /// <returns>
-    /// The keys the node's own condition asks about, each needing a truth. Empty when nothing
+    /// The keys the node's own condition asks about, each needing a truth; for a menu, the keys its
+    /// options' conditions ask about, in the order written and each named once. Empty when nothing
     /// guards it, and empty for a kind that carries no condition at all.
     /// </returns>
     public static ImmutableArray<string> FindTruthsForPlaying(this Node node)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return KeysOf((node as IConditional)?.Condition);
+        return node switch
+        {
+            ChoiceNode menu => ConditionKeysOfOptions(menu),
+            IConditional guarded => KeysOf(guarded.Condition),
+            _ => [],
+        };
     }
 
     /// <summary>What the world must answer before a run can say what a node says.</summary>
     /// <param name="node">The node being arrived at.</param>
     /// <returns>
-    /// The keys standing in the node's speech, each needing words, in the order they first appear.
-    /// Empty for a node that says nothing.
+    /// The keys standing in the node's speech, each needing words, in the order they first appear;
+    /// for a menu, the keys standing in its options' labels. Empty for a node that says nothing.
     /// </returns>
     /// <remarks>
-    /// Only a line's speech is searched for queries. A control block's effects are for the host to
-    /// carry out, not for anybody to read.
+    /// Only a line's speech and a menu's labels are searched for queries. A control block's effects
+    /// are for the host to perform, not for anybody to read.
     /// </remarks>
     public static ImmutableArray<string> FindWordsForPlaying(this Node node)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return node is LineNode line ? SpeechTemplate.Keys(line.Speech) : [];
+        return node switch
+        {
+            LineNode line => SpeechTemplate.Keys(line.Speech),
+            ChoiceNode menu => QueryKeysOfLabels(menu),
+            _ => [],
+        };
     }
 
     /// <summary>What the world must answer before a run can say one segment of a node.</summary>
@@ -60,23 +72,28 @@ internal static class NodeQuestionExtensions
     /// <param name="segmentIndex">The segment's index among the line's segments.</param>
     /// <returns>
     /// The keys standing in that segment's words, each needing words, in the order they first
-    /// appear. Empty for a node that says nothing.
+    /// appear; for a menu, which is offered whole, the keys standing in all its labels. Empty for a
+    /// node that says nothing.
     /// </returns>
     public static ImmutableArray<string> FindWordsForSegment(this Node node, int segmentIndex)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return node is LineNode line
-            ? SpeechTemplate.Keys(SpeechTemplate.Segments(line.Speech)[segmentIndex].Words)
-            : [];
+        return node switch
+        {
+            LineNode line => SpeechTemplate.Keys(SpeechTemplate.Segments(line.Speech)[segmentIndex].Words),
+            ChoiceNode menu => QueryKeysOfLabels(menu),
+            _ => [],
+        };
     }
 
     /// <summary>What the world must answer before a run can tell which way out it takes.</summary>
     /// <param name="node">The node being left.</param>
     /// <returns>The keys its ways out ask about, each named once. Empty when none is guarded.</returns>
     /// <remarks>
-    /// A succession carries no condition, being the fall-through a run takes when nothing else is
-    /// available, so only the arms a writer guarded are asked about here.
+    /// A run leaves a node by a jump or by one of a block condition's arms, so only those are asked
+    /// about. A succession carries no condition, being the fall-through a run takes when nothing
+    /// else is available, and a menu's options are taken by choosing, never by leaving.
     /// </remarks>
     public static ImmutableArray<string> FindTruthsForLeaving(this Node node)
     {
@@ -84,11 +101,22 @@ internal static class NodeQuestionExtensions
 
         return
         [
-            .. node.Out.OfType<IConditional>()
-                .SelectMany(arm => KeysOf(arm.Condition))
+            .. node.Out
+                .Where(way => way is DivertEdge or BranchEdge)
+                .SelectMany(way => KeysOf(((IConditional)way).Condition))
                 .Distinct(StringComparer.Ordinal),
         ];
     }
+
+    // A menu reads every option's condition before it is offered, so whether each option can be
+    // taken is known when the menu is shown.
+    private static ImmutableArray<string> ConditionKeysOfOptions(ChoiceNode menu) =>
+        [.. menu.Options().SelectMany(option => KeysOf(option.Condition)).Distinct(StringComparer.Ordinal)];
+
+    // A menu's labels are shown when it is offered, so their queries are asked with its options'
+    // conditions.
+    private static ImmutableArray<string> QueryKeysOfLabels(ChoiceNode menu) =>
+        [.. menu.Options().SelectMany(option => SpeechTemplate.Keys(option.Label)).Distinct(StringComparer.Ordinal)];
 
     private static ImmutableArray<string> KeysOf(Condition? condition) => condition?.Keys() ?? [];
 }

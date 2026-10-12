@@ -1,7 +1,7 @@
 namespace DialogueDown.Runtime.Protocol;
 
 /// <summary>
-/// What was asked for has been carried out.
+/// What was asked for has been performed.
 /// </summary>
 /// <remarks>
 /// The answer to a <see cref="Perform"/>, so a condition after an effect reads the world the effect

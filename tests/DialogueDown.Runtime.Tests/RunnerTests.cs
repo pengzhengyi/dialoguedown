@@ -38,7 +38,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextWhileTheHostHasSomethingToCarryOut_IsRefused()
     {
-        // Reading on here would pass an effect the host has not carried out, and the next node
+        // Reading on here would pass an effect the host has not performed, and the next node
         // might depend on it.
         var context = PlayContextFactory.AnEffectThenALine();
 

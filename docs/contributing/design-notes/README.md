@@ -129,7 +129,7 @@ flowchart LR
 | 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |
 | 7 | [Asking the World](./runtime/Asking%20the%20World.md) | How the runner asks the world: `Resolve` answered by `Supply`, for conditions, block conditions, and queries in speech | Implemented |
 | 8 | [Speaking a Line](./runtime/Speaking%20a%20Line.md) | How the runner plays a line's words and commands in written order, stopping inside the line only before a query written after a command | Implemented |
-| 9 | [Offering a Choice](./runtime/Offering%20a%20Choice.md) | How the runner offers a menu with `Offer`, and follows the option the player takes with `Choose` | Partially implemented |
+| 9 | [Offering a Choice](./runtime/Offering%20a%20Choice.md) | How the runner offers a menu with `Offer`, and follows the option the player takes with `Choose` | Implemented |
 
 ### Language constructs
 
@@ -190,6 +190,7 @@ Spectre.Console.Cli; they are not needed to understand the compiler.
 | 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `ddown` CLI: `compile` and `visualize`, and the Live server as a library | Implemented |
 | 2 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
 | 3 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Implemented |
+| 4 | [Play CLI — Terminal Player](./cli/Play%20CLI%20-%20Terminal%20Player.md) | The terminal player's presentation — speech rendering, the choice menu, and the player's turns (part 1 of `ddown play`) | Implemented |
 
 ### Visualization
 

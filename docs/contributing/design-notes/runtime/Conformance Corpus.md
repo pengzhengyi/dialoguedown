@@ -39,8 +39,8 @@ what the runtime must reply, in order.
 | `send` | Means |
 | --- | --- |
 | `"next"` | `Next` — proceed past what was just said |
-| `"done"` | `Done` — the effect just asked for has been carried out |
-| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
+| `"done"` | `Done` — the effect just asked for has been performed |
+| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be performed |
 | `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered, which is also its position as written |
 | `{ "supply": { … } }` | `Supply(answers)` — what the world says |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than `entry` |
@@ -51,7 +51,7 @@ what the runtime must reply, in order.
 | `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
 | `offer` | the menu offered: whether it is `ordered`, and its `options` in the order offered, which is the order written, each a `label` and whether it is `available` |
-| `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
+| `perform` | the effect the runtime asks the host to perform, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
@@ -62,8 +62,7 @@ written either as an **array** — the playbook's fragments, verbatim — or as 
 **string**, which asserts the flattening defined by
 [Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# harness sends
 everything but `start` and `describe`, and checks everything but `invalidated`. A
-case that uses one of those is not yet playable, and so is a case whose menu asks
-the world, which the C# runner does not offer yet.
+case that uses one of those is not yet playable.
 
 ## What the corpus covers
 
@@ -77,10 +76,10 @@ rather than a script.
 | `a-jump` | Does a jump transfer without returning? | yes |
 | `an-effect` | Is an effect asked for, and waited on before the run goes past it? | yes |
 | `a-failed-effect` | Does the run stand still, so a retry carries on and an advance cannot? | yes |
-| `a-next-while-waiting` | Is `next` refused while the host is carrying out an effect? | yes |
+| `a-next-while-waiting` | Is `next` refused while the host is performing an effect? | yes |
 | `a-command-opening-a-line` | Does a line opening with a command still open in its speaker's name? | yes |
-| `a-command-mid-line` | Is a command in the middle of a line carried out between its words? | yes |
-| `a-command-ending-a-line` | Is a command ending a line carried out after its words, before the player moves on? | yes |
+| `a-command-mid-line` | Is a command in the middle of a line performed between its words? | yes |
+| `a-command-ending-a-line` | Is a command ending a line performed after its words, before the player moves on? | yes |
 | `a-line-that-is-only-a-command` | Does a line whose only speech is a command still wait for the player? | yes |
 | `a-failed-command-in-a-line` | Does a failed command in a line hold the run, so the retry gives the player the turn? | yes |
 | `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |
@@ -98,7 +97,12 @@ rather than a script.
 | `a-choice-the-menu-did-not-offer` | Is a choice past the last option refused, with the menu still open? | yes |
 | `a-choice-after-the-menu-is-left` | Is a second choice refused once an option has been taken? | yes |
 | `a-next-at-a-menu` | Is `next` refused at a menu, which still takes a choice afterwards? | yes |
-| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | not yet |
+| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | yes |
+| `a-choice-of-an-unavailable-option` | Is a choice of an option offered as unavailable refused, with the menu still open? | yes |
+| `a-choice-onto-the-fall-through` | Is a choice one past the options refused, rather than taking the fall-through the menu never offered? | yes |
+| `a-query-in-a-label` | Is a label's query asked before the menu is offered, and the label shown with the answer? | yes |
+| `a-menu-asking-truths-and-words` | Are a menu's conditions asked before its labels' queries, in one request? | yes |
+| `a-menu-with-nothing-available` | Is a menu whose every option the world withholds walked past by its fall-through? | yes |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the
