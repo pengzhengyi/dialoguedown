@@ -36,7 +36,7 @@ internal sealed class LineEventsBuilder
         _supply = supply;
     }
 
-    /// <summary>Gets whether a command was taken, which leaves the host something to carry out.</summary>
+    /// <summary>Gets whether a command was taken, which leaves the host something to perform.</summary>
     public bool HasCommand { get; private set; }
 
     /// <summary>Creates a builder that has taken the segments to play.</summary>

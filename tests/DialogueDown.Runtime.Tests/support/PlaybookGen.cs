@@ -15,7 +15,7 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to carry something out, a block condition, and a menu. A line may hold a command
+/// asks the host to perform something, a block condition, and a menu. A line may hold a command
 /// before, between, or after its words, or say nothing but a command. A node or edge kind the
 /// runner gains belongs here too, so a walk covers everything a run can meet.
 /// <para>
@@ -54,7 +54,7 @@ internal static class PlaybookGen
         /// <summary>A jump on its own line: nothing said and nothing performed.</summary>
         Jump,
 
-        /// <summary>A control block asking the host to carry something out.</summary>
+        /// <summary>A control block asking the host to perform something.</summary>
         Effects,
 
         /// <summary>A line carrying a jump, with a succession beside it to fall through to.</summary>

@@ -53,7 +53,7 @@ internal static class NodeQuestionExtensions
     /// </returns>
     /// <remarks>
     /// Only a line's speech is searched for queries. A control block's effects are for the host to
-    /// carry out, not for anybody to read.
+    /// perform, not for anybody to read.
     /// </remarks>
     public static ImmutableArray<string> FindWordsForPlaying(this Node node)
     {

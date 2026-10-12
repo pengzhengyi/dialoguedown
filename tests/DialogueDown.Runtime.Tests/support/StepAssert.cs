@@ -39,7 +39,7 @@ internal static class StepAssert
     public static void AssertEvents(IEnumerable<Event> events, params string[] expected) =>
         Assert.Equal(expected, events.Select(WrittenOut));
 
-    /// <summary>Asserts a step asked the host to carry things out, in order, and nothing else.</summary>
+    /// <summary>Asserts a step asked the host to perform these actions, in order, and nothing else.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="actions">What should have been asked for, in the order written.</param>
     public static void AssertPerformed(StepResult result, params string[] actions)

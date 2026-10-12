@@ -81,7 +81,7 @@ public static class Runner
             _ => throw new NotSupportedException($"No step is defined for {waiting.Moment}."),
         };
 
-    // The host could not carry out what was asked, so the run stays where it is and sends no
+    // The host could not perform what was asked, so the run stays where it is and sends no
     // event; the driver's Failed explanation records why.
     private static StepResult Hold(PlayState state) => new(state, []);
 

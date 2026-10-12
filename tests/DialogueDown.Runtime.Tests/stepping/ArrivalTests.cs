@@ -294,7 +294,7 @@ public sealed class ArrivalTests
     [Fact]
     public void At_AControlNodeCarryingEffects_StopsThereRatherThanReadingOn()
     {
-        // The line after it must not be reached until the host says the effects were carried out,
+        // The line after it must not be reached until the host says the effects were performed,
         // or a guard further on would read a world the effects had not changed yet.
         var context = PlayContextFactory.AnEffectThenALine();
 
