@@ -49,44 +49,44 @@ public sealed class ConditionEvaluationExtensionsTests
             () => new KeyCondition("Hero.HasSword").Holds(null!));
 
     [Fact]
-    public void IsAllowed_WhatNobodyGuarded_IsAlwaysSo() =>
-        // A jump a writer left unguarded, so asking whether it is allowed does not mean first
-        // asking whether anybody guarded it.
+    public void Allows_WhatNobodyGuarded_IsAlwaysSo() =>
+        // A jump a writer left unguarded, so asking whether the world allows it does not mean
+        // first asking whether anybody guarded it.
         Assert.True(
-            Divert(target: 1).IsAllowed(Answering(("Hero.HasSword", false))));
+            Answering(("Hero.HasSword", false)).Allows(Divert(target: 1)));
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void IsAllowed_AGuardedWayOut_IsWhatItsGuardReadsTo(bool holds) =>
+    public void Allows_AGuardedWayOut_IsWhatItsGuardReadsTo(bool holds) =>
         Assert.Equal(
             holds,
-            AGuarded(Divert("Hero.HasSword", target: 1), holds));
+            AllowedWhenItsGuardReads(Divert("Hero.HasSword", target: 1), holds));
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void IsAllowed_AGuardedNode_IsWhatItsGuardReadsTo(bool holds) =>
+    public void Allows_AGuardedNode_IsWhatItsGuardReadsTo(bool holds) =>
         // A node and an edge are read the same way, which is what lets one reader serve both.
         Assert.Equal(
             holds,
-            AGuarded(
+            AllowedWhenItsGuardReads(
                 SilentLine(condition: "Hero.HasSword", next: 1),
                 holds));
 
     [Fact]
-    public void IsAllowed_IsNotReadFromNothing() =>
+    public void Allows_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(
-            () => ((IConditional)null!).IsAllowed(Answering(("Hero.HasSword", true))));
+            () => Answering(("Hero.HasSword", true)).Allows(null!));
 
     [Fact]
-    public void IsAllowed_IsNotReadWithoutWhatTheWorldAnswered() =>
+    public void Allows_IsNotReadWithoutWhatTheWorldAnswered() =>
         // Refused even for something nobody guarded, so the contract does not depend on the answer.
         Assert.Throws<ArgumentNullException>(
-            () => Divert(target: 1).IsAllowed(null!));
+            () => ((Supply)null!).Allows(Divert(target: 1)));
 
-    private static bool AGuarded(IConditional guarded, bool holds) =>
-        guarded.IsAllowed(Answering(("Hero.HasSword", holds)));
+    private static bool AllowedWhenItsGuardReads(IConditional guarded, bool holds) =>
+        Answering(("Hero.HasSword", holds)).Allows(guarded);
 
     private static Supply AnsweringEvery(Condition condition) =>
         new(condition.Keys().ToImmutableDictionary(

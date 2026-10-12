@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
@@ -22,6 +23,73 @@ public sealed class ArrivalTests
     {
         AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
     }
+
+    [Fact]
+    public void At_AMenuWithAConditionalOption_AsksTheWorldBeforeOfferingIt() =>
+        AssertAsked(
+            Arrival.At(AMenuWithAConditionalOptionStanding(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
+
+    [Fact]
+    public void Supplied_AtAMenu_OffersItAsTheWorldAnswered()
+    {
+        var result = Arrival.Supplied(
+            AMenuWithAConditionalOptionStanding(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false)));
+
+        AssertEvents(result, "offer 'Open the door' unavailable, 'Wait here'");
+        Assert.Equal([1], AssertAwaitingChoice(result, 0).Available);
+    }
+
+    [Fact]
+    public void At_AMenuWithAQueryInALabel_AsksTheWorldBeforeOfferingIt() =>
+        AssertAsked(Arrival.At(AMenuWithAQueryInALabelStanding(), 0), node: 0, Moment.BeforePlaying, "playerName");
+
+    [Fact]
+    public void Supplied_AtAMenuWithAQueryInALabel_OffersItWithTheWordsTheWorldGave() =>
+        AssertEvents(
+            Arrival.Supplied(
+                AMenuWithAQueryInALabelStanding(), Waiting(0, "playerName"), Answering(("playerName", "Ada"))),
+            "offer 'Call Ada over'");
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsEveryOptionOfAMenu_WalksOnByItsFallThrough()
+    {
+        // A menu the player can take nothing from would only wait forever, so the run goes on to
+        // where the script carries on after it.
+        var result = Arrival.Supplied(
+            AMenuWhoseOnlyOptionIsConditionalThenALine(),
+            Waiting(0, "Alice.HasKey"),
+            Answering(("Alice.HasKey", false)));
+
+        AssertSaid(result, "Alice", "It stays shut.");
+        AssertAt(result, 2);
+    }
+
+    [Fact]
+    public void Supplied_WhenAMenuWithNoOptionAvailableHasNoFallThrough_RefusesAsLeadingNowhere() =>
+        AssertRefused(
+            Arrival.Supplied(
+                AMenuWhoseOnlyOptionIsConditionalWithNoFallThrough(),
+                Waiting(0, "Alice.HasKey"),
+                Answering(("Alice.HasKey", false))),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
+
+    [Fact]
+    public void At_AMenuWithNoOptions_WalksPastItAsOneWithNoOptionAvailable()
+    {
+        var result = Arrival.At(AMenuWithNoOptions(), 0);
+
+        AssertSaid(result, "Alice", "Onward.");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void At_AMenuWithNoOptionsFallingThroughToItself_RefusesRatherThanWalkingForever() =>
+        // A menu is walked past inside the walk, so the walk's bound stops a loop of them too.
+        AssertRefused(
+            Arrival.At(AMenuWithNoOptionsFallingThroughToItself(), 0),
+            RefusalReason.EndlessLoop,
+            "Node 0 sits in a loop of nodes that hand the host nothing, so a run entering it would never come out.");
 
     [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
@@ -163,6 +231,15 @@ public sealed class ArrivalTests
             "Alice.HasKey");
 
     [Fact]
+    public void At_AMenuNeedingOneKeyBothWays_RefusesBeforeAskingAnything() =>
+        // One option's condition and another's label share the key, and the world answers a key
+        // once for the whole menu.
+        AssertRefused(
+            Arrival.At(AMenuNeedingOneKeyBothWays(), 0),
+            RefusalReason.KeyNeededBothWays,
+            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+
+    [Fact]
     public void Supplied_ToALineNeedingOneKeyBothWays_RefusesRatherThanReadingTheWrongKind() =>
         // A walk refuses such a node before asking, so getting here means the run was restored
         // into the wait rather than walked into it. The step must stay total either way.
@@ -237,7 +314,7 @@ public sealed class ArrivalTests
     [Fact]
     public void At_AControlNodeCarryingEffects_StopsThereRatherThanReadingOn()
     {
-        // The line after it must not be reached until the host says the effects were carried out,
+        // The line after it must not be reached until the host says the effects were performed,
         // or a guard further on would read a world the effects had not changed yet.
         var context = PlayContextFactory.AnEffectThenALine();
 
@@ -349,6 +426,24 @@ public sealed class ArrivalTests
             ],
             ["Alice"]);
 
+    /// <summary>A menu naming one key as one option's condition and in another option's label.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Ask about `"Alice.HasKey"`
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose menu needs one key answered two ways.</returns>
+    private static PlayContext AMenuNeedingOneKeyBothWays() =>
+        PlayContextFactory.Of(
+            [
+                Choice(
+                    Option("Open the door", condition: "Alice.HasKey", target: 1),
+                    OptionOf([Text("Ask about "), Query("Alice.HasKey")], target: 2)),
+                End(id: 1),
+                End(id: 2),
+            ]);
+
     /// <summary>A line the world must allow, carrying a jump, with an alternative beneath it.</summary>
     /// <remarks>
     /// <code>
@@ -434,4 +529,73 @@ public sealed class ArrivalTests
     /// <summary>Where a run stands after asking, on the way in, about these keys.</summary>
     private static AwaitingSupply Waiting(int node, params string[] keys) =>
         new(node, [.. keys], Moment.BeforePlaying);
+
+    /// <summary>A playbook that begins at a menu whose first option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Wait here
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext AMenuWithAConditionalOptionStanding() =>
+        PlayContextFactory.Of([PlayContextFactory.AMenuWithAConditionalOption(), End(id: 1), End(id: 2)]);
+
+    /// <summary>A playbook that begins at a menu whose only label asks the world for words.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Call `"playerName"` over
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext AMenuWithAQueryInALabelStanding() =>
+        PlayContextFactory.Of([PlayContextFactory.AMenuWithAQueryInALabel(), End(id: 1)]);
+
+    /// <summary>A menu whose only option the world must allow, then the line after it.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    ///
+    /// Alice: It stays shut.
+    /// </code>
+    /// The compiler writes the menu's fall-through, which leads to the line after it, because every
+    /// option has a condition. The option's own arm is an end here, so taking it and falling through
+    /// lead to different places.
+    /// </remarks>
+    /// <returns>A context that asks about <c>Alice.HasKey</c> before offering anything.</returns>
+    private static PlayContext AMenuWhoseOnlyOptionIsConditionalThenALine() =>
+        PlayContextFactory.Of(
+            [
+                Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), new SuccessionEdge(2)),
+                End(id: 1),
+                Line("It stays shut.", id: 2, next: 3),
+                End(id: 3),
+            ],
+            ["Alice"]);
+
+    /// <summary>A menu whose only option the world must allow, with no fall-through beside it.</summary>
+    /// <remarks>
+    /// Built by hand rather than written: the reader requires a fall-through beside a menu whose
+    /// every option has a condition, so a written menu always leads somewhere.
+    /// </remarks>
+    /// <returns>A context whose menu leads nowhere once the world withholds its option.</returns>
+    private static PlayContext AMenuWhoseOnlyOptionIsConditionalWithNoFallThrough() =>
+        PlayContextFactory.Of([Choice(Option("Open the door", condition: "Alice.HasKey", target: 1)), End(id: 1)]);
+
+    /// <summary>A menu with no options, then a line.</summary>
+    /// <remarks>
+    /// Built by hand rather than written, because no script writes a menu without options. Its
+    /// fall-through leads to the line.
+    /// </remarks>
+    /// <returns>A context whose entry has nothing to offer.</returns>
+    private static PlayContext AMenuWithNoOptions() =>
+        PlayContextFactory.Of(
+            [Choice(new SuccessionEdge(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
+            ["Alice"]);
+
+    /// <summary>A menu with no options whose fall-through leads back to itself.</summary>
+    /// <remarks>Built by hand rather than written, because no script writes a menu without options.</remarks>
+    /// <returns>A context whose only node is walked past forever.</returns>
+    private static PlayContext AMenuWithNoOptionsFallingThroughToItself() =>
+        PlayContextFactory.Of([Choice(new SuccessionEdge(0))]);
 }

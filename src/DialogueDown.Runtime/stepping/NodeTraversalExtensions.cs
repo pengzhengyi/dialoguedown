@@ -76,7 +76,7 @@ internal static class NodeTraversalExtensions
         ArgumentNullException.ThrowIfNull(node);
         ArgumentNullException.ThrowIfNull(supply);
 
-        return node.FirstWayOutTaken(way => way.IsAllowed(supply)) ?? node.SuccessionTarget();
+        return node.FirstWayOutTaken(supply.Allows) ?? node.SuccessionTarget();
     }
 
     // A branch's arms are tried in the order they appear, so the first one allowed is the arm taken.

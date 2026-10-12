@@ -16,7 +16,7 @@ public sealed class SituationExtensionsTests
         new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforePlaying),
         new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeContinuingFrom(2)),
         new AwaitingSupply(4, ["Alice.HasKey"], Moment.BeforeLeaving),
-        new AwaitingChoice(4),
+        new AwaitingChoice(4, [0, 1]),
         new AtEnd(),
     ];
 
@@ -43,7 +43,7 @@ public sealed class SituationExtensionsTests
 
     [Fact]
     public void Describe_SaysAMenuWaitsOnThePlayer() =>
-        Assert.Equal("node 4, waiting for the player to choose", new AwaitingChoice(4).Describe());
+        Assert.Equal("node 4, waiting for the player to choose", new AwaitingChoice(4, [0, 1]).Describe());
 
     [Fact]
     public void Describe_SaysWhereALineContinuesOnceTheWorldAnswers() =>

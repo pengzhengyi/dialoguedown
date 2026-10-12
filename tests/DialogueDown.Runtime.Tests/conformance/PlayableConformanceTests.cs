@@ -12,10 +12,7 @@ public sealed class PlayableConformanceTests
     // conform, so a new case is held to the whole conversation unless it is listed here. A listed
     // case must give exactly its reasons, so one that starts conforming, or that is held back by
     // something else, is noticed.
-    private static readonly Dictionary<string, string[]> _notYetPlayable = new(StringComparer.Ordinal)
-    {
-        ["an-unavailable-option"] = [SessionReasons.UnsupportedMenu],
-    };
+    private static readonly Dictionary<string, string[]> _notYetPlayable = new(StringComparer.Ordinal);
 
     public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];
 

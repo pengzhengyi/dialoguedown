@@ -4,7 +4,6 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
-using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -33,6 +32,7 @@ public sealed class RunnerWalkPropertyTests
             RefusalReason.UnaskedKey,
             RefusalReason.WrongAnswerKind,
             RefusalReason.NoSuchOption,
+            RefusalReason.UnavailableOption,
         ];
 
     /// <summary>
@@ -84,6 +84,70 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
+    /// A menu is only ever offered with every label's queries filled in.
+    /// </summary>
+    /// <remarks>
+    /// A label reaches the host as words to show, so a query left in one would show the player a
+    /// placeholder rather than what the world said.
+    /// </remarks>
+    [Fact]
+    public void AWalkIsOnlyEverOfferedLabelsWithTheirQueriesFilled() =>
+        ForEveryWalk(
+            (_, stepped) => Assert.All(
+                stepped.Events.OfType<Offer>().SelectMany(offer => offer.Options),
+                option => Assert.False(
+                    SpeechTemplate.HasQueries(option.Label), "A label was offered with a query in it.")));
+
+    /// <summary>
+    /// Some walk is offered a label the world filled in.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If no drawn label asked the world, the walk
+    /// above would pass without a query ever standing in a label.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsOfferedALabelTheWorldFilledIn()
+    {
+        var filled = 0;
+
+        ForEveryWalk(
+            (_, stepped) =>
+            {
+                if (stepped.Events.OfType<Offer>().SelectMany(offer => offer.Options).Any(SaysTheWorldsWords))
+                {
+                    Interlocked.Increment(ref filled);
+                }
+            });
+
+        Assert.True(filled > 0, "No walk was offered a label the world filled in.");
+    }
+
+    /// <summary>
+    /// Some walk is offered an option it cannot take.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If every option offered could be taken, the walk
+    /// would never have to choose around one, and the check below that the run accepts its choices
+    /// would pass without testing that.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsOfferedAnOptionItCannotTake()
+    {
+        var withheld = 0;
+
+        ForEveryWalk(
+            (_, stepped) =>
+            {
+                if (stepped.Events.OfType<Offer>().Any(offer => offer.Options.Any(option => !option.Available)))
+                {
+                    Interlocked.Increment(ref withheld);
+                }
+            });
+
+        Assert.True(withheld > 0, "No walk was offered an option it cannot take.");
+    }
+
+    /// <summary>
     /// Every answer a walk gives is one the run accepts.
     /// </summary>
     /// <remarks>
@@ -117,8 +181,8 @@ public sealed class RunnerWalkPropertyTests
             playbook => PlaybookCheckerFactory.CreateDefault().Check(playbook), iter: Samples);
 
     // Walks every drawn playbook from its start, answering its questions from a world drawn beside
-    // it, and taking the option drawn for it at every menu. Every step the walk takes is checked,
-    // not only the one it stops at.
+    // it, and taking an option the player can take at every menu, picked by a number drawn for it.
+    // Every step the walk takes is checked, not only the one it stops at.
     private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds) =>
         Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), Gen.Int.NonNegative).Sample(
             (playbook, world, pick) =>
@@ -134,7 +198,7 @@ public sealed class RunnerWalkPropertyTests
                     everyStepHolds(context, stepped);
 
                     state = stepped.State;
-                    command = MovesOnFrom(context, state.Situation, world, pick);
+                    command = MovesOnFrom(state.Situation, world, pick);
                 }
             },
             iter: Samples);
@@ -142,19 +206,25 @@ public sealed class RunnerWalkPropertyTests
     // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
     // host work, to ask the world something, or to offer a menu carries on rather than ending the
     // walk there.
-    private static Command? MovesOnFrom(PlayContext context, Situation situation, DrawnWorld world, int pick) =>
+    private static Command? MovesOnFrom(Situation situation, DrawnWorld world, int pick) =>
         situation switch
         {
             AtNode => new Next(),
             AwaitingDone => new Done(),
             AwaitingSupply waiting => world.Answering(waiting.Keys),
-            AwaitingChoice waiting => new Choose(pick % OptionsAt(context, waiting.Node)),
+            AwaitingChoice waiting => new Choose(OneThePlayerCanTake(waiting, pick)),
             _ => null,
         };
 
-    // A menu offers at least one option, so the pick modulo their count is always one of them.
-    private static int OptionsAt(PlayContext context, int node) =>
-        Assert.IsType<ChoiceNode>(context.NodeAt(node)).Options().Length;
+    // A menu with no option the player can take is walked past rather than offered, so a menu that
+    // waits always has one, and the pick modulo their count lands on one of them.
+    private static int OneThePlayerCanTake(AwaitingChoice waiting, int pick) =>
+        waiting.Available[pick % waiting.Available.Length];
+
+    // The drawn world answers every query with the same words, so finding them in a label shows the
+    // world filled it in.
+    private static bool SaysTheWorldsWords(OfferedOption option) =>
+        option.Label.Contains(new TextFragment(DrawnWorld.Words));
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {

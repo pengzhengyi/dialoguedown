@@ -4,8 +4,8 @@
 > Status: **implemented**. The compiler recognizes a condition (`` `key?` ``),
 > binds it to the jump, line, control line, choice option, or control branch it
 > fronts, and carries it into the playbook. The runner asks the world about it
-> (see [Asking the World](../runtime/Asking%20the%20World.md)), except on a choice
-> option, which waits until the runner plays choices.
+> wherever it stands (see [Asking the World](../runtime/Asking%20the%20World.md)),
+> a choice option's included (see [Offering a Choice](../runtime/Offering%20a%20Choice.md)).
 
 ## Table of contents
 

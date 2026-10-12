@@ -1,0 +1,89 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a choice one past the options is refused rather than taking the fall-through",
+  "playbook": "playbook.json",
+  "because": "the fall-through sits beside the options in the playbook but is never offered, so counting it as an option would let a choice reach a way out the menu did not show",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Ready?"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "Alice.HasKey"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Alice.HasKey": true
+        }
+      }
+    },
+    {
+      "expect": {
+        "offer": {
+          "ordered": false,
+          "options": [
+            {
+              "label": "Open the door",
+              "available": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "send": {
+        "choose": 1
+      }
+    },
+    {
+      "expect": {
+        "refused": {
+          "reason": "no-such-option"
+        }
+      }
+    },
+    {
+      "send": {
+        "choose": 0
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speech": "Open the door"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Then we wait."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}
