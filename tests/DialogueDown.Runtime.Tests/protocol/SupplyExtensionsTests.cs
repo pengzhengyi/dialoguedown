@@ -1,5 +1,6 @@
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.World;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Protocol;
 
@@ -20,6 +21,12 @@ public sealed class SupplyExtensionsTests
         Assert.Equal(string.Empty, Answering(("HeroName", new TextAnswer(string.Empty))).Words("HeroName"));
 
     [Fact]
+    public void Fill_PutsTheWordsTheWorldGaveWhereEachQueryStands() =>
+        Assert.Equal(
+            [Text("You are "), Text("Ada"), Text(".")],
+            Answering(("HeroName", new TextAnswer("Ada"))).Fill([Text("You are "), Query("HeroName"), Text(".")]));
+
+    [Fact]
     public void Affirms_WhenTheKeyWentUnanswered_IsAFaultInTheRun() =>
         // Not a refusal: a supply is checked against the keys asked before it is read, so a gap
         // here means that check was skipped rather than that the driver did anything wrong.
@@ -36,10 +43,18 @@ public sealed class SupplyExtensionsTests
             () => Answering(("HeroName", new BooleanAnswer(true))).Words("HeroName"));
 
     [Fact]
+    public void Fill_WhenAQueryWentUnanswered_IsAFaultInTheRun() =>
+        Assert.Throws<InvalidOperationException>(() => Answering().Fill([Query("HeroName")]));
+
+    [Fact]
     public void Affirms_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Supply)null!).Affirms("Hero.HasSword"));
 
     [Fact]
     public void Words_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Supply)null!).Words("HeroName"));
+
+    [Fact]
+    public void Fill_IsNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => ((Supply)null!).Fill([Query("HeroName")]));
 }

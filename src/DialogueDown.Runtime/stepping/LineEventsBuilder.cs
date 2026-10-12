@@ -99,5 +99,5 @@ internal sealed class LineEventsBuilder
     // Words without queries are spoken as written. Words with queries are spoken with the words the
     // world gave for each.
     private ImmutableArray<SpeechFragment> AsSpoken(ImmutableArray<SpeechFragment> words) =>
-        _supply is null ? words : SpeechTemplate.Fill(words, _supply.Words);
+        _supply?.Fill(words) ?? words;
 }
