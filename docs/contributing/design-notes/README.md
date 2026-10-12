@@ -190,6 +190,7 @@ Spectre.Console.Cli; they are not needed to understand the compiler.
 | 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `ddown` CLI: `compile` and `visualize`, and the Live server as a library | Implemented |
 | 2 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
 | 3 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Implemented |
+| 4 | [Play CLI — Terminal Player](./cli/Play%20CLI%20-%20Terminal%20Player.md) | The terminal player's presentation — speech rendering, the choice menu, and the player's turns (part 1 of `ddown play`) | Implemented |
 
 ### Visualization
 
