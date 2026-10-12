@@ -263,6 +263,11 @@ The calls take `ImmutableArray<SpeechFragment>` and `MenuOption`s rather than
 mapping is nearly the identity — a `Take` is a `Choose` — but the dependency is not, and the
 presentation can be designed, built, and tested while the runner is still moving.
 
+The menu arrives ready to read: the runner fills a label's queries from the world and leaves its
+commands out before offering it, so a `MenuOption` is drawn as it comes. An offer also says
+whether the writer numbered the menu; a bulleted menu may be shown in any order, and this one
+shows the offered order, so a taken position names the same option either way.
+
 ### D6 — A turn is a value
 
 `Advance`, `Take(index)`, `Quit`. The presentation never sends anything and never decides
@@ -375,15 +380,19 @@ The real prompt and renderer are the same shape, so no new dependency is adopted
 - One test file per type, the repository's `Foo.cs` → `FooTests.cs` convention:
   `SpeechMarkupTests`, `ChoicePromptTests`, `PlayerConsoleTests`.
 - `TestConsole` with `Interactive = true` and `ColorSystem.NoColors` for plain-text
-  assertions; queued keys for the prompts; the CLI suite's `AssertInOrder` idiom to say
-  what a reader meets.
+  assertions, its keys queued; beside it, a stubbed console for the reads a test console
+  cannot produce — a wait that never answers, or one whose input has gone.
+- A test asserts what a reader meets: a rendered line is compared whole through the suite's
+  reader, a refusal as the whole message the project writes, and a menu's frame through the
+  prompt's own frame, because the live echo closes each frame over the next line. Speech comes
+  from the shared `SpeechFactory`, and the fragment kinds are checked against the union itself,
+  so a kind added to the format later fails here by name rather than going unrendered.
 - A full-scene test drives a whole playthrough — start, two lines, a menu with one
-  unavailable option, a notice, the ending — and asserts the transcript and the frames in
-  order. It is the scene from [The look](#the-look), captured as text.
+  unavailable option, a notice, the ending — and compares the whole transcript, with the screen
+  read in order. It is the scene from [The look](#the-look), captured as text.
 - Boundary tests: escaping, speech that says nothing, a menu with no available option
   refused, wrapping, a non-interactive refusal, Ctrl+C quitting from both waits, Escape
-  doing nothing, the wait hint drawn then erased, the ASCII fallback, a wide speaker name,
-  and a whole playthrough read in order.
+  doing nothing, the wait hint drawn then erased, the ASCII fallback, and a wide speaker name.
 
 ## What this does not do
 
@@ -392,4 +401,6 @@ The real prompt and renderer are the same shape, so no new dependency is adopted
   entry that replays a canned scene — lets the maintainer feel the player in a real
   terminal; it is deleted before the merge.
 - Paging a menu taller than the terminal; every option draws today.
-- Number-key quick takes and re-rendering the screen on resize.
+- Number-key quick takes. A menu the writer numbered is drawn like any other — the runner's
+  `Ordered` flag leaves numbering to the host — so drawn numbers are part 2's call.
+- Re-rendering the screen on resize.
