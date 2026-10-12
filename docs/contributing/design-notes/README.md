@@ -145,6 +145,7 @@ first, since a construct threads through them.
 | [Conditions](./language/Conditions.md) | The condition (`` `key?` ``) and every place it attaches — a line, a jump, a choice option — with its grammar and how each resolves | Implemented |
 | [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
 | [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
+| [Speech Whitespace](./language/Speech%20Whitespace.md) | Spaces typed together reach the playbook as one, as a Markdown preview shows them; a command or tag takes no room; `DLG1115` notes where typed spacing collapses | Proposed |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
 | [Control Line](./language/Control%20Line.md) | An effect-only line (a bare jump or a silent command) with no speaker, so an effect is never attributed to the default speaker | Implemented |
 | [Game Calls in Labels](./language/Game%20Calls%20in%20Labels.md) | Which game calls a link label, alt text, or menu option may hold: a query is filled like one in speech, a command or condition is reported | Implemented |
