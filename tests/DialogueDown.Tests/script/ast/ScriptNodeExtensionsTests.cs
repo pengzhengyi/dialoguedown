@@ -12,7 +12,7 @@ public sealed class ScriptNodeExtensionsTests
     {
         var speaker = SpeakerNameReference("Alice");
         var speech = Text("hi");
-        var line = new Line(speaker, [speech], SourceSpanFactory.Span());
+        var line = Line(speaker, speech);
 
         Assert.Equal([speaker, speech], line.Children());
     }
@@ -97,7 +97,7 @@ public sealed class ScriptNodeExtensionsTests
     {
         var condition = Condition("Rainy");
         var label = Text("Go");
-        var jump = new Jump("#a", [label], SourceSpanFactory.Span(), condition);
+        var jump = ConditionalJump(condition, "#a", label);
 
         Assert.Equal([condition, label], jump.Children());
     }
@@ -106,7 +106,7 @@ public sealed class ScriptNodeExtensionsTests
     public void Children_SceneHeading_YieldsTitle()
     {
         var title = Text("Scene");
-        var heading = new SceneHeading([title], 1, SourceSpanFactory.Span());
+        var heading = SceneHeading(1, title);
 
         Assert.Equal([title], heading.Children());
     }
@@ -115,7 +115,7 @@ public sealed class ScriptNodeExtensionsTests
     public void Children_SpeakerDeclaration_YieldsTags()
     {
         var tag = CustomTag("main");
-        var declaration = new SpeakerDeclaration("Alice", "A", [tag], SourceSpanFactory.Span());
+        var declaration = SpeakerDeclaration("Alice", "A", tag);
 
         Assert.Equal([tag], declaration.Children());
     }
@@ -124,7 +124,7 @@ public sealed class ScriptNodeExtensionsTests
     public void Children_PartialSpeakerDeclaration_YieldsTags()
     {
         var tag = CustomTag("excited");
-        var partial = new PartialSpeakerDeclaration("A", [tag], SourceSpanFactory.Span());
+        var partial = PartialSpeakerDeclaration("A", tag);
 
         Assert.Equal([tag], partial.Children());
     }
@@ -133,7 +133,7 @@ public sealed class ScriptNodeExtensionsTests
     public void Children_StyledText_YieldsChildren()
     {
         var inner = Text("bold");
-        var styled = new StyledText(SpeechStyle.Bold, [inner], SourceSpanFactory.Span());
+        var styled = StyledText(SpeechStyle.Bold, inner);
 
         Assert.Equal([inner], styled.Children());
     }
@@ -142,7 +142,7 @@ public sealed class ScriptNodeExtensionsTests
     public void Children_Image_YieldsAlt()
     {
         var alt = Text("alt");
-        var image = new Image("a.png", [alt], SourceSpanFactory.Span());
+        var image = Image("a.png", alt);
 
         Assert.Equal([alt], image.Children());
     }
@@ -176,9 +176,9 @@ public sealed class ScriptNodeExtensionsTests
             DefaultSpeaker(),
             SpeakerNameReference("Alice"),
             SpeakerIdReference("A"),
-            new Query("hp", SourceSpanFactory.Span()),
-            new DefaultCommand("wait", SourceSpanFactory.Span()),
-            new CustomCommand("shake", [], SourceSpanFactory.Span()),
+            Query("hp"),
+            DefaultCommand("wait"),
+            CustomCommand("shake"),
             CustomTag("main"),
             ReservedTag("default"),
         ];
@@ -231,8 +231,8 @@ public sealed class ScriptNodeExtensionsTests
         var speaker = SpeakerNameReference("Alice");
         var hi = Text("hi");
         var go = Text("go");
-        var jump = new Jump("#play", [go], SourceSpanFactory.Span());
-        var line = new Line(speaker, [hi, jump], SourceSpanFactory.Span());
+        var jump = Jump("#play", go);
+        var line = Line(speaker, hi, jump);
 
         Assert.Equal([line, speaker, hi, jump, go], line.DescendantsAndSelf());
     }
@@ -249,7 +249,7 @@ public sealed class ScriptNodeExtensionsTests
     public void PlainText_ConcatenatesEveryTextFragment()
     {
         IReadOnlyList<InlineFragment> fragments =
-            [Text("Play "), new StyledText(SpeechStyle.Bold, [Text("tennis")], SourceSpanFactory.Span())];
+            [Text("Play "), StyledText(SpeechStyle.Bold, Text("tennis"))];
 
         Assert.Equal("Play tennis", fragments.PlainText());
     }

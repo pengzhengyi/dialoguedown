@@ -25,9 +25,9 @@ public sealed class DialogueAstRewriterTests
     {
         var body = new IdentityRewriter().Rewrite(SpeakerSample()).Body;
 
-        AssertSpeakerDeclaration(AssertLine(body[0]).Speaker!, "alice", "A", CustomTag("mood"));
-        AssertPartialSpeakerDeclaration(AssertLine(body[1]).Speaker!, "B", CustomTag("added"));
-        AssertSpeakerNameReference(AssertLine(body[2]).Speaker!, "bob");
+        AssertSpeakerDeclaration(AssertLine(body[0]).Speaker, "alice", "A", CustomTag("mood"));
+        AssertPartialSpeakerDeclaration(AssertLine(body[1]).Speaker, "B", CustomTag("added"));
+        AssertSpeakerNameReference(AssertLine(body[2]).Speaker, "bob");
         Assert.Null(AssertLine(body[3]).Speaker);
     }
 
@@ -55,16 +55,16 @@ public sealed class DialogueAstRewriterTests
         var body = new UppercaseTagRewriter().Rewrite(SpeakerSample()).Body;
 
         // A tag in a speaker declaration and a tag in speech both route through RewriteTag.
-        AssertSpeakerDeclaration(AssertLine(body[0]).Speaker!, "alice", "A", CustomTag("MOOD"));
+        AssertSpeakerDeclaration(AssertLine(body[0]).Speaker, "alice", "A", CustomTag("MOOD"));
         AssertCustomTag(AssertLine(body[0]).Speech[1], "ASIDE");
-        AssertPartialSpeakerDeclaration(AssertLine(body[1]).Speaker!, "B", CustomTag("ADDED"));
+        AssertPartialSpeakerDeclaration(AssertLine(body[1]).Speaker, "B", CustomTag("ADDED"));
     }
 
     [Fact]
     public void UnknownBlockKind_Throws() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new IdentityRewriter().Rewrite(
-                new ScriptDocument([new UnknownScriptBlock(SourceSpanFactory.Span())])));
+                Document(new UnknownScriptBlock(SourceSpanFactory.Span()))));
 
     [Fact]
     public void Identity_PreservesRandomChoiceWeightsAndOptions()
@@ -91,7 +91,7 @@ public sealed class DialogueAstRewriterTests
     {
         var control = AssertControlBlock(new IdentityRewriter().Rewrite(ControlBlockSample()).Body[0]);
 
-        Assert.Equal("Rich", control.Branches[0].Condition!.Key);
+        AssertCondition(control.Branches[0].Condition, "Rich");
         AssertSpeechText(AssertLine(control.Branches[0].Body[0]), "wealthy");
         Assert.Null(control.Branches[1].Condition);
         AssertSpeechText(AssertLine(control.Branches[1].Body[0]), "broke");
@@ -119,15 +119,10 @@ public sealed class DialogueAstRewriterTests
     /// </code>
     /// </remarks>
     private static ScriptDocument ControlBlockSample() =>
-        new(
-        [
-            new ControlBlock(
-                [
-                    new Branch(Condition("Rich"), [Line(Text("wealthy"))], SourceSpanFactory.Span()),
-                    new Branch(null, [Line(Text("broke"))], SourceSpanFactory.Span()),
-                ],
-                SourceSpanFactory.Span()),
-        ]);
+        Document(
+            ControlBlock(
+                Branch(Condition("Rich"), Line(Text("wealthy"))),
+                ElseBranch(Line(Text("broke")))));
 
     /// <summary>A random choice with a numeric weight and an auto weight.</summary>
     /// <remarks>
@@ -137,15 +132,10 @@ public sealed class DialogueAstRewriterTests
     /// </code>
     /// </remarks>
     private static ScriptDocument RandomChoiceSample() =>
-        new(
-        [
-            new RandomChoices(
-                [
-                    new RandomOption(NumberWeight(50), [Line(Text("heads"))], SourceSpanFactory.Span()),
-                    new RandomOption(AutoWeight(), [Line(Text("tails"))], SourceSpanFactory.Span()),
-                ],
-                SourceSpanFactory.Span()),
-        ]);
+        Document(
+            RandomChoices(
+                RandomOption(NumberWeight(50), Line(Text("heads"))),
+                RandomOption(AutoWeight(), Line(Text("tails")))));
 
     /// <summary>A scene heading, a line holding a fragment of every kind, and a choice.</summary>
     /// <remarks>
@@ -160,22 +150,17 @@ public sealed class DialogueAstRewriterTests
     /// </code>
     /// </remarks>
     private static ScriptDocument FragmentSample() =>
-        new(
-        [
-            new SceneHeading([Text("cave")], 2, SourceSpanFactory.Span()),
-            new Line(
+        Document(
+            SceneHeading("cave", 2),
+            Line(
                 SpeakerNameReference("alice"),
-                [
-                    Text("hi "),
-                    new StyledText(SpeechStyle.Bold, [Text("bold")], SourceSpanFactory.Span()),
-                    new Link("#x", [Text("link")], SourceSpanFactory.Span()),
-                    new Image("p.png", [Text("alt")], SourceSpanFactory.Span()),
-                    Jump("#y", Text("jump")),
-                    CustomTag("aside"),
-                ],
-                SourceSpanFactory.Span()),
-            Choices(Choice(Line(Text("choice")))),
-        ]);
+                Text("hi "),
+                StyledText(SpeechStyle.Bold, Text("bold")),
+                Link("#x", Text("link")),
+                Image("p.png", Text("alt")),
+                Jump("#y", Text("jump")),
+                CustomTag("aside")),
+            Choices(Choice(Line(Text("choice")))));
 
     /// <summary>
     /// One line for each speaker form — a declaration, a partial declaration, a name reference,
@@ -190,19 +175,11 @@ public sealed class DialogueAstRewriterTests
     /// </code>
     /// </remarks>
     private static ScriptDocument SpeakerSample() =>
-        new(
-        [
-            new Line(
-                SpeakerDeclaration("alice", "A", CustomTag("mood")),
-                [Text("hi "), CustomTag("aside")],
-                SourceSpanFactory.Span()),
-            new Line(
-                new PartialSpeakerDeclaration("B", [CustomTag("added")], SourceSpanFactory.Span()),
-                [Text("yo")],
-                SourceSpanFactory.Span()),
-            new Line(SpeakerNameReference("bob"), [Text("hey")], SourceSpanFactory.Span()),
-            new Line(null, [Text("narrator text")], SourceSpanFactory.Span()),
-        ]);
+        Document(
+            Line(SpeakerDeclaration("alice", "A", CustomTag("mood")), Text("hi "), CustomTag("aside")),
+            Line(PartialSpeakerDeclaration("B", CustomTag("added")), Text("yo")),
+            Line(SpeakerNameReference("bob"), Text("hey")),
+            Line(Text("narrator text")));
 
     private sealed class IdentityRewriter : DialogueAstRewriter;
 

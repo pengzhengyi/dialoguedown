@@ -40,7 +40,7 @@ public sealed class JumpTests
     [Fact]
     public void Constructor_CarriesAnOptionalCondition()
     {
-        var condition = new Condition("Rainy", SourceSpanFactory.Span());
+        var condition = Condition("Rainy");
 
         var jump = new Jump("#x", [], SourceSpanFactory.Span(), condition);
 
@@ -51,7 +51,6 @@ public sealed class JumpTests
     public void IsConditional_ReflectsWhetherAConditionGuardsTheJump()
     {
         Assert.False(new Jump("#x", [], SourceSpanFactory.Span()).IsConditional());
-        Assert.True(new Jump("#x", [], SourceSpanFactory.Span(),
-            new Condition("Rainy", SourceSpanFactory.Span())).IsConditional());
+        Assert.True(new Jump("#x", [], SourceSpanFactory.Span(), Condition("Rainy")).IsConditional());
     }
 }

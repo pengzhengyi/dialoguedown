@@ -1,5 +1,6 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Ast;
 
@@ -14,9 +15,9 @@ public sealed class ControlLineTests
     public void IsConditional_ReflectsWhetherAConditionGuardsTheControlLine()
     {
         var span = SourceSpanFactory.Span();
-        var effects = new InlineFragment[] { new DefaultCommand("open the gate", span) };
+        var effects = new InlineFragment[] { DefaultCommand("open the gate") };
 
         Assert.False(new ControlLine(effects, span).IsConditional());
-        Assert.True(new ControlLine(effects, span, new Condition("GateJammed", span)).IsConditional());
+        Assert.True(new ControlLine(effects, span, Condition("GateJammed")).IsConditional());
     }
 }
