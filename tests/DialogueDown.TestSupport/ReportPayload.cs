@@ -94,6 +94,12 @@ public sealed class ReportPayload
     /// <returns>The payload.</returns>
     public static ReportPayload Parse(string json) => new(Assert.IsType<JsonObject>(JsonNode.Parse(json)));
 
+    /// <summary>Asserts a list of stages holds exactly one, and returns it.</summary>
+    /// <param name="stages">The serialized stages, such as a report's <see cref="Stages"/>.</param>
+    /// <returns>The one stage.</returns>
+    public static JsonObject OnlyStage(JsonNode? stages) =>
+        Assert.IsType<JsonObject>(Assert.Single(Assert.IsType<JsonArray>(stages)));
+
     /// <summary>Reads the report a page carries in its data slot.</summary>
     /// <param name="html">The page.</param>
     /// <returns>The report the page embeds.</returns>

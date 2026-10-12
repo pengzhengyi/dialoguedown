@@ -47,8 +47,8 @@ public sealed class DisplayGraphJsonTests
         var nesting = MakeGraph("Markdown AST", [Node("n0", "Document")], []);
         var flow = MakeGraph("Dialogue Graph", [Node("n0", "Line")], []) with { Nests = false };
 
-        Assert.True((bool?)OnlyStage(DisplayGraphJson.Serialize([nesting]))["nests"]);
-        Assert.False((bool?)OnlyStage(DisplayGraphJson.Serialize([flow]))["nests"]);
+        Assert.True((bool?)OnlyStageOf(DisplayGraphJson.Serialize([nesting]))["nests"]);
+        Assert.False((bool?)OnlyStageOf(DisplayGraphJson.Serialize([flow]))["nests"]);
     }
 
     [Fact]
@@ -59,8 +59,8 @@ public sealed class DisplayGraphJsonTests
         var dialogue =
             MakeGraph("Dialogue AST", [Node("n0", "Line")], []) with { ReadsDialogueMeaning = true };
 
-        Assert.False((bool?)OnlyStage(DisplayGraphJson.Serialize([plain]))["readsDialogueMeaning"]);
-        Assert.True((bool?)OnlyStage(DisplayGraphJson.Serialize([dialogue]))["readsDialogueMeaning"]);
+        Assert.False((bool?)OnlyStageOf(DisplayGraphJson.Serialize([plain]))["readsDialogueMeaning"]);
+        Assert.True((bool?)OnlyStageOf(DisplayGraphJson.Serialize([dialogue]))["readsDialogueMeaning"]);
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public sealed class DisplayGraphJsonTests
         var graph = MakeGraph(
             "Markdown AST", [Node("n0", "Document")], [], description: "What it shows.");
 
-        var stage = OnlyStage(DisplayGraphJson.Serialize([graph]));
+        var stage = OnlyStageOf(DisplayGraphJson.Serialize([graph]));
 
         Assert.Equal("What it shows.", (string?)stage["description"]);
     }
@@ -80,7 +80,7 @@ public sealed class DisplayGraphJsonTests
         var graph = DisplayGraph.ForUnavailableStage(
             "Semantic Model", "What it would show.", "Unavailable due to compilation errors.");
 
-        var stage = OnlyStage(DisplayGraphJson.Serialize([graph]));
+        var stage = OnlyStageOf(DisplayGraphJson.Serialize([graph]));
 
         AssertJson("""{ "reason": "Unavailable due to compilation errors." }""", stage["unavailable"]);
         AssertJson("[]", stage["nodes"]);
@@ -124,7 +124,7 @@ public sealed class DisplayGraphJsonTests
             [new DisplayNode("n0", "Text", [], "# Hi"), Node("n1", "Empty")],
             []);
 
-        var nodes = Assert.IsType<JsonArray>(OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]);
+        var nodes = Assert.IsType<JsonArray>(OnlyStageOf(DisplayGraphJson.Serialize([graph]))["nodes"]);
 
         Assert.Equal("# Hi", (string?)nodes[0]?["source"]);
         AssertOmits(nodes[1], "source");
@@ -137,7 +137,7 @@ public sealed class DisplayGraphJsonTests
 
         var json = DisplayGraphJson.Serialize([graph]);
 
-        var node = Assert.IsType<JsonObject>(OnlyStage(json)["nodes"]?[0]);
+        var node = Assert.IsType<JsonObject>(OnlyStageOf(json)["nodes"]?[0]);
 
         Assert.Equal("call", (string?)node["category"]);
     }
@@ -150,7 +150,7 @@ public sealed class DisplayGraphJsonTests
             [new DisplayNode("n0", "The Market", [], null, "structure", "scene:the-market"), Node("n1", "Plain")],
             []);
 
-        var nodes = Assert.IsType<JsonArray>(OnlyStage(DisplayGraphJson.Serialize([graph]))["nodes"]);
+        var nodes = Assert.IsType<JsonArray>(OnlyStageOf(DisplayGraphJson.Serialize([graph]))["nodes"]);
 
         Assert.Equal("scene:the-market", (string?)nodes[0]?["entityKey"]);
         AssertOmits(nodes[1], "entityKey");
@@ -160,7 +160,7 @@ public sealed class DisplayGraphJsonTests
     public void Serialize_OmitsTablesWhenNullAndIncludesThemWhenPresent()
     {
         var plain = MakeGraph("G", [Node("n0", "Document")], []);
-        AssertOmits(OnlyStage(DisplayGraphJson.Serialize([plain])), "tables");
+        AssertOmits(OnlyStageOf(DisplayGraphJson.Serialize([plain])), "tables");
 
         var withTables = plain with
         {
@@ -173,7 +173,7 @@ public sealed class DisplayGraphJsonTests
                     "No scenes."),
             ],
         };
-        var stage = OnlyStage(DisplayGraphJson.Serialize([withTables]));
+        var stage = OnlyStageOf(DisplayGraphJson.Serialize([withTables]));
 
         AssertJson(
             """
@@ -206,7 +206,7 @@ public sealed class DisplayGraphJsonTests
             ],
         };
 
-        var cell = OnlyStage(DisplayGraphJson.Serialize([graph]))["tables"]?[0]?["rows"]?[0]?["cells"]?[0];
+        var cell = OnlyStageOf(DisplayGraphJson.Serialize([graph]))["tables"]?[0]?["rows"]?[0]?["cells"]?[0];
 
         Assert.Equal("scene:the-market", (string?)cell?["refKey"]);
     }
@@ -222,7 +222,7 @@ public sealed class DisplayGraphJsonTests
         Assert.DoesNotContain("</script>", json);
         Assert.Contains("\\u003C", json); // '<' is unicode-escaped
         // And it reads back unchanged.
-        Assert.Equal("</script><b>&", (string?)OnlyStage(json)["nodes"]?[0]?["label"]);
+        Assert.Equal("</script><b>&", (string?)OnlyStageOf(json)["nodes"]?[0]?["label"]);
     }
 
     [Fact]
@@ -234,8 +234,7 @@ public sealed class DisplayGraphJsonTests
 
         Assert.Equal("static", report.Mode);
         Assert.Equal("# Hello", report.Source);
-        var stage = Assert.Single(Assert.IsType<JsonArray>(report.Stages));
-        Assert.Equal("Markdown AST", (string?)stage?["title"]);
+        Assert.Equal("Markdown AST", (string?)OnlyStage(report.Stages)["title"]);
     }
 
     [Fact]
@@ -474,6 +473,5 @@ public sealed class DisplayGraphJsonTests
     }
 
     // The one stage a serialized list of stages holds.
-    private static JsonObject OnlyStage(string json) =>
-        Assert.IsType<JsonObject>(Assert.Single(Assert.IsType<JsonArray>(JsonNode.Parse(json))));
+    private static JsonObject OnlyStageOf(string json) => OnlyStage(JsonNode.Parse(json));
 }
