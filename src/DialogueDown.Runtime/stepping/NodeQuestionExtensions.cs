@@ -39,7 +39,7 @@ internal static class NodeQuestionExtensions
 
         return node switch
         {
-            ChoiceNode menu => KeysOfOptions(menu),
+            ChoiceNode menu => ConditionKeysOfOptions(menu),
             IConditional guarded => KeysOf(guarded.Condition),
             _ => [],
         };
@@ -101,7 +101,7 @@ internal static class NodeQuestionExtensions
 
     // A menu reads every option's condition before it is offered, so whether each option can be
     // taken is known when the menu is shown.
-    private static ImmutableArray<string> KeysOfOptions(ChoiceNode menu) =>
+    private static ImmutableArray<string> ConditionKeysOfOptions(ChoiceNode menu) =>
         [.. menu.Options().SelectMany(option => KeysOf(option.Condition)).Distinct(StringComparer.Ordinal)];
 
     private static ImmutableArray<string> KeysOf(Condition? condition) => condition?.Keys() ?? [];
