@@ -84,6 +84,45 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
+    /// A menu is only ever offered with every label's queries filled in.
+    /// </summary>
+    /// <remarks>
+    /// A label reaches the host as words to show, so a query left in one would show the player a
+    /// placeholder rather than what the world said.
+    /// </remarks>
+    [Fact]
+    public void AWalkIsOnlyEverOfferedLabelsWithTheirQueriesFilled() =>
+        ForEveryWalk(
+            (_, stepped) => Assert.All(
+                stepped.Events.OfType<Offer>().SelectMany(offer => offer.Options),
+                option => Assert.False(
+                    SpeechTemplate.HasQueries(option.Label), "A label was offered with a query in it.")));
+
+    /// <summary>
+    /// Some walk is offered a label the world filled in.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If no drawn label asked the world, the walk
+    /// above would pass without a query ever standing in a label.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsOfferedALabelTheWorldFilledIn()
+    {
+        var filled = 0;
+
+        ForEveryWalk(
+            (_, stepped) =>
+            {
+                if (stepped.Events.OfType<Offer>().SelectMany(offer => offer.Options).Any(SaysTheWorldsWords))
+                {
+                    Interlocked.Increment(ref filled);
+                }
+            });
+
+        Assert.True(filled > 0, "No walk was offered a label the world filled in.");
+    }
+
+    /// <summary>
     /// Some walk is offered an option it cannot take.
     /// </summary>
     /// <remarks>
@@ -181,6 +220,11 @@ public sealed class RunnerWalkPropertyTests
     // waits always has one, and the pick modulo their count lands on one of them.
     private static int OneThePlayerCanTake(AwaitingChoice waiting, int pick) =>
         waiting.Available[pick % waiting.Available.Length];
+
+    // The drawn world answers every query with the same words, so finding them in a label shows the
+    // world filled it in.
+    private static bool SaysTheWorldsWords(OfferedOption option) =>
+        option.Label.Contains(new TextFragment(DrawnWorld.Words));
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {

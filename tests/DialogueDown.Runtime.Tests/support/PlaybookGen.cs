@@ -21,10 +21,10 @@ namespace DialogueDown.Runtime.Tests;
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
 /// fire only when the world allows it, a block condition's first arm is always guarded, a menu's
-/// options may be guarded, and a line may have a query in what it says. A guard and a query never
-/// read the same key, so a world drawn beside the playbook can answer each key in the kind it needs.
-/// A menu whose every option is guarded has a fall-through beside them, as a script compiles to,
-/// so a walk sometimes passes a menu by. A menu's labels ask nothing.
+/// options may be guarded, and a line or an option's label may have a query in what it says. A
+/// guard and a query never read the same key, so a world drawn beside the playbook can answer each
+/// key in the kind it needs. A menu whose every option is guarded has a fall-through beside them,
+/// as a script compiles to, so a walk sometimes passes a menu by.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -155,7 +155,13 @@ internal static class PlaybookGen
         Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]);
 
     private static Gen<MenuDraft> Menu() =>
-        Gen.Select(Guard(), Guard(), (onward, elsewhere) => new MenuDraft(onward, elsewhere));
+        Gen.Select(
+            Guard(),
+            Guard(),
+            Gen.Bool,
+            Gen.Bool,
+            (onwardGuard, elsewhereGuard, onwardAsks, elsewhereAsks) =>
+                new MenuDraft(onwardGuard, elsewhereGuard, onwardAsks, elsewhereAsks));
 
     private static PlaybookDocument Document(NodeDraft[] drafts, int speakers, int entry) =>
         PlayContextFactory.Document(
@@ -248,16 +254,24 @@ internal static class PlaybookGen
             Menu.EveryOptionIsGuarded ? [.. TwoOptions(), new SuccessionEdge(Onward)] : [.. TwoOptions()];
 
         private ImmutableArray<OptionEdge> TwoOptions() =>
-            [Option(Onward, "Go on.", Menu.OnwardGuard), Option(Elsewhere, "Go elsewhere.", Menu.ElsewhereGuard)];
+            [
+                Option(Onward, "Go on", Menu.OnwardGuard, Menu.OnwardAsks),
+                Option(Elsewhere, "Go elsewhere", Menu.ElsewhereGuard, Menu.ElsewhereAsks),
+            ];
 
-        private static OptionEdge Option(int target, string label, Condition? guard) =>
-            new(target, [Text(label)], guard);
+        // An option whose label asks names who it is said to, which the world fills in when the
+        // menu is offered.
+        private static OptionEdge Option(int target, string words, Condition? guard, bool asks) =>
+            new(target, asks ? [Text($"{words}, "), Query(WordsKey), Text(".")] : [Text($"{words}.")], guard);
     }
 
     /// <summary>What a drawn menu's options ask of the world.</summary>
     /// <param name="OnwardGuard">What the world must allow for the option that carries on to be taken.</param>
     /// <param name="ElsewhereGuard">What the world must allow for the option leading elsewhere to be taken.</param>
-    private readonly record struct MenuDraft(Condition? OnwardGuard, Condition? ElsewhereGuard)
+    /// <param name="OnwardAsks">Whether the label of the option that carries on has a query in it.</param>
+    /// <param name="ElsewhereAsks">Whether the label of the option leading elsewhere has a query in it.</param>
+    private readonly record struct MenuDraft(
+        Condition? OnwardGuard, Condition? ElsewhereGuard, bool OnwardAsks, bool ElsewhereAsks)
     {
         /// <summary>Gets whether the world may withhold every option.</summary>
         public bool EveryOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
