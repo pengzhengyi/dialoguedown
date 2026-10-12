@@ -64,12 +64,13 @@ public sealed class AtomicFileTests
     public void Transact_MissingDirectory_ReportsNullWithoutWriting()
     {
         using var tree = new TempTree();
-        var path = Path.Combine(tree.Root, "nope", "doc.txt");
+        var missing = Path.Combine(tree.Root, "nope");
+        var path = Path.Combine(missing, "doc.txt");
 
         var seen = AtomicFile.Transact(path, transaction => transaction.Disk);
 
         Assert.Null(seen);
-        Assert.False(Directory.Exists(Path.GetDirectoryName(path)!));
+        Assert.False(Directory.Exists(missing));
     }
 
     [Fact]

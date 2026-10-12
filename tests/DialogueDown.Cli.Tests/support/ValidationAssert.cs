@@ -16,9 +16,10 @@ internal static class ValidationAssert
     public static void AssertRejected(ValidationResult result, params string[] mentioning)
     {
         Assert.False(result.Successful, "Expected the argument to be rejected.");
+        Assert.NotNull(result.Message);
         foreach (var fragment in mentioning)
         {
-            Assert.Contains(fragment, result.Message!, StringComparison.Ordinal);
+            Assert.Contains(fragment, result.Message, StringComparison.Ordinal);
         }
     }
 }

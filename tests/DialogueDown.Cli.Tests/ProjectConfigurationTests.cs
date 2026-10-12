@@ -138,7 +138,8 @@ public sealed class ProjectConfigurationTests
     private static void AssertConfiguredFrom(AppliedConfiguration applied, string path, string source)
     {
         Assert.True(applied.IsConfiguredFromFile);
-        Assert.Equal(path, applied.File!.Path);
+        Assert.NotNull(applied.File);
+        Assert.Equal(path, applied.File.Path);
         Assert.Equal(source, applied.File.Source);
     }
 }

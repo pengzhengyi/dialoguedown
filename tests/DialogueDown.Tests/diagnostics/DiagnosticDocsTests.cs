@@ -46,7 +46,7 @@ public sealed class DiagnosticDocsTests
     [MemberData(nameof(CodesWithExamples))]
     public void TheTriggeringExampleReportsItsCode(string code)
     {
-        var example = DiagnosticDocs.ByCode[code].Example!;
+        var example = ExampleOf(code);
 
         Assert.Contains(code, ReportedCodes(example.Broken));
     }
@@ -55,7 +55,7 @@ public sealed class DiagnosticDocsTests
     [MemberData(nameof(CodesWithExamples))]
     public void TheFixedExampleNoLongerReportsTheCode(string code)
     {
-        var example = DiagnosticDocs.ByCode[code].Example!;
+        var example = ExampleOf(code);
 
         Assert.DoesNotContain(code, ReportedCodes(example.Fixed));
     }
@@ -64,7 +64,7 @@ public sealed class DiagnosticDocsTests
     [MemberData(nameof(CodesWithExamples))]
     public void EveryHighlightOccursInItsExample(string code)
     {
-        var example = DiagnosticDocs.ByCode[code].Example!;
+        var example = ExampleOf(code);
 
         Assert.All(example.BrokenHighlights, highlight => Assert.Contains(highlight, example.Broken));
         Assert.All(example.FixedHighlights, highlight => Assert.Contains(highlight, example.Fixed));
@@ -80,7 +80,7 @@ public sealed class DiagnosticDocsTests
     {
         // A second fix is only offered when the right edit depends on what the writer meant, so
         // both must genuinely resolve the diagnostic.
-        if (DiagnosticDocs.ByCode[code].Example!.Alternative is not { } alternative)
+        if (ExampleOf(code).Alternative is not { } alternative)
         {
             return;
         }
@@ -94,12 +94,20 @@ public sealed class DiagnosticDocsTests
     {
         // Two unlabelled fixes would read as one being the default, which is the impression this
         // page must not give.
-        var example = DiagnosticDocs.ByCode[code].Example!;
+        var example = ExampleOf(code);
 
         if (example.Alternative is not null)
         {
             Assert.NotNull(example.FixWhen);
         }
+    }
+
+    // The documented example for a code listed in CodesWithExamples.
+    private static DiagnosticExample ExampleOf(string code)
+    {
+        var example = DiagnosticDocs.ByCode[code].Example;
+        Assert.NotNull(example);
+        return example;
     }
 
     // Best-effort so every stage runs and reports, even when an earlier error would otherwise halt
