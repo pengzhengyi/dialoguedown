@@ -2,6 +2,7 @@ using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
 using DialogueDown.Playbook.Speech;
 using static DialogueDown.Play.Tests.Support.Consoles;
+using static DialogueDown.Play.Tests.Support.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;
@@ -18,7 +19,10 @@ public sealed class PlayerConsoleTests
         var exception = Assert.Throws<InvalidOperationException>(
             () => new PlayerConsole(NonInteractive()));
 
-        Assert.Contains("raw stdio", exception.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "The terminal player needs an interactive console to read the player's turns; a run "
+            + "without a terminal is what the raw stdio mode is for.",
+            exception.Message);
     }
 
     [Fact]
@@ -27,8 +31,9 @@ public sealed class PlayerConsoleTests
         var console = Plain();
         new PlayerConsole(console).Start("act-1/scene.dialogue.md");
 
-        Assert.Contains("ddown play", console.Output, StringComparison.Ordinal);
-        Assert.Contains("act-1/scene.dialogue.md", console.Output, StringComparison.Ordinal);
+        AssertReads(
+            console.Output,
+            "── ddown play · act-1/scene.dialogue.md ────────────────────────────────────────");
     }
 
     [Fact]
@@ -37,7 +42,9 @@ public sealed class PlayerConsoleTests
         var console = Plain();
         new PlayerConsole(console).Start("act [1]/scene.md");
 
-        Assert.Contains("act [1]/scene.md", console.Output, StringComparison.Ordinal);
+        AssertReads(
+            console.Output,
+            "── ddown play · act [1]/scene.md ───────────────────────────────────────────────");
     }
 
     [Fact]
@@ -47,7 +54,7 @@ public sealed class PlayerConsoleTests
         var player = new PlayerConsole(console);
         player.Say("Alice", [Text("The market closes at dusk.")]);
 
-        Assert.Contains("Alice  The market closes at dusk.", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "Alice  The market closes at dusk.");
         var line = Assert.IsType<TranscriptEntry.Line>(Assert.Single(player.Transcript));
         Assert.Equal("Alice", line.Speaker);
         Assert.Equal("The market closes at dusk.", SpeechText.Of(line.Words));
@@ -60,7 +67,7 @@ public sealed class PlayerConsoleTests
         var player = new PlayerConsole(console);
         player.Say(null, [Text("Wait here")]);
 
-        Assert.Contains("Wait here", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "Wait here");
         Assert.Null(Assert.IsType<TranscriptEntry.Line>(Assert.Single(player.Transcript)).Speaker);
     }
 
@@ -73,7 +80,11 @@ public sealed class PlayerConsoleTests
         player.Continue([Text("Come with me, then.")]);
 
         // Alice is five characters, so her words begin at column seven.
-        Assert.Contains("\n       Come with me, then.", console.Output, StringComparison.Ordinal);
+        AssertReads(
+            console.Output,
+            "Alice  The market closes at dusk.",
+            "",
+            "       Come with me, then.");
         Assert.IsType<TranscriptEntry.Continuation>(player.Transcript[1]);
     }
 
@@ -85,7 +96,11 @@ public sealed class PlayerConsoleTests
         player.Start("scene.dialogue.md");
         player.Continue([Text("Come with me, then.")]);
 
-        Assert.Contains("\n  Come with me, then.", console.Output, StringComparison.Ordinal);
+        AssertReads(
+            console.Output,
+            "── ddown play · scene.dialogue.md ──────────────────────────────────────────────",
+            "",
+            "  Come with me, then.");
     }
 
     [Fact]
@@ -95,8 +110,7 @@ public sealed class PlayerConsoleTests
         var player = new PlayerConsole(console);
         player.Notice("That command belongs to no line here.");
 
-        Assert.Contains(
-            "\u2717 That command belongs to no line here.", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "✗ That command belongs to no line here.");
         Assert.IsType<TranscriptEntry.Notice>(Assert.Single(player.Transcript));
     }
 
@@ -107,7 +121,10 @@ public sealed class PlayerConsoleTests
         var player = new PlayerConsole(console);
         player.End();
 
-        Assert.Contains("the end", console.Output, StringComparison.Ordinal);
+        AssertReads(
+            console.Output,
+            "",
+            "─────────────────────────────────── the end ────────────────────────────────────");
         Assert.IsType<TranscriptEntry.Ending>(Assert.Single(player.Transcript));
     }
 
@@ -167,7 +184,7 @@ public sealed class PlayerConsoleTests
 
         player.Notice("A refusal.");
 
-        Assert.Contains("x A refusal.", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "x A refusal.");
     }
 
     [Fact]
@@ -175,11 +192,15 @@ public sealed class PlayerConsoleTests
     {
         var console = Plain();
         var player = new PlayerConsole(console);
-        player.Say("\u795e\u8bc6", [Text("Hear me.")]);
+        player.Say("神识", [Text("Hear me.")]);
         player.Continue([Text("Again.")]);
 
         // Two wide characters occupy four cells, so this speaker's words begin at column six.
-        Assert.Contains("\n      Again.", console.Output, StringComparison.Ordinal);
+        AssertReads(
+            console.Output,
+            "神识  Hear me.",
+            "",
+            "      Again.");
     }
 
     [Fact]
@@ -215,7 +236,9 @@ public sealed class PlayerConsoleTests
             entry => Assert.Equal("A refusal.", Assert.IsType<TranscriptEntry.Notice>(entry).Text),
             entry => Assert.IsType<TranscriptEntry.Ending>(entry));
 
-        OutputAssert.AssertInOrder(
+        // The transcript above is the whole record; here the screen is read in order, its live menu
+        // frames included, which is why it is not compared line for line.
+        AssertInOrder(
             console.Output,
             "ddown play",
             "The market closes at dusk.",
@@ -239,7 +262,7 @@ public sealed class PlayerConsoleTests
         var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
 
         Assert.IsType<PlayerTurn.Advance>(turn);
-        Assert.Contains("any key to go on \u00b7 ctrl+c quit", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "any key to go on · ctrl+c quit");
     }
 
     [Fact]
@@ -373,5 +396,4 @@ public sealed class PlayerConsoleTests
     private static System.Collections.Immutable.ImmutableArray<MenuOption> Menu(
         params (string Label, bool Available)[] options) =>
         [.. options.Select(option => new MenuOption([Text(option.Label)], option.Available))];
-
 }

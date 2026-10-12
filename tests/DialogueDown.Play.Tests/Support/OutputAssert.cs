@@ -6,6 +6,18 @@ namespace DialogueDown.Play.Tests.Support;
 /// </summary>
 internal static class OutputAssert
 {
+    /// <summary>Asserts that the output reads as exactly these lines, and nothing else.</summary>
+    /// <param name="output">What was printed.</param>
+    /// <param name="lines">Every line, in the order a reader meets it.</param>
+    public static void AssertReads(string output, params string[] lines) =>
+        Assert.Equal(lines, ReadLines(output));
+
+    /// <summary>The output's lines, each without the fill to its right or the blank line after it.</summary>
+    /// <param name="output">What was printed.</param>
+    /// <returns>The lines a reader meets, in order.</returns>
+    public static string[] ReadLines(string output) =>
+        [.. output.TrimEnd('\n').Split('\n').Select(line => line.TrimEnd())];
+
     /// <summary>Asserts that the fragments appear in this order, each after the one before it.</summary>
     /// <param name="output">What was printed.</param>
     /// <param name="fragments">Text that must appear, in the order a reader meets it.</param>

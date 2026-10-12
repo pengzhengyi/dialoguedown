@@ -102,10 +102,10 @@ public sealed class ChoicePrompt : IPrompt<int?>
         return taken;
     }
 
-    private static string Selected(bool at, ImmutableArray<SpeechFragment> label) =>
-        at ? $"[bold invert]{SpeechMarkup.Of(label)}[/]" : SpeechMarkup.Of(label);
-
-    private IRenderable Frame(IAnsiConsole console)
+    /// <summary>The menu's frame: every option in the offered order, the cursor on the one under it,
+    /// and the keys below.</summary>
+    /// <param name="console">The console whose glyphs the frame draws with.</param>
+    internal IRenderable Frame(IAnsiConsole console)
     {
         var menu = new Grid();
         menu.AddColumn(new GridColumn { Width = MarkerWidth, NoWrap = true, Padding = new Padding(0) });
@@ -125,6 +125,9 @@ public sealed class ChoicePrompt : IPrompt<int?>
             + $"{Glyphs.Separator(console)} ctrl+c quit";
         return new Rows(menu, new Markup($"[grey]{footer}[/]"));
     }
+
+    private static string Selected(bool at, ImmutableArray<SpeechFragment> label) =>
+        at ? $"[bold invert]{SpeechMarkup.Of(label)}[/]" : SpeechMarkup.Of(label);
 
     private int First()
     {

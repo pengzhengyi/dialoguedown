@@ -3,6 +3,7 @@ using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
 using Spectre.Console;
 using static DialogueDown.Play.Tests.Support.Consoles;
+using static DialogueDown.Play.Tests.Support.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;
@@ -98,7 +99,7 @@ public sealed class SpeechMarkupTests
         var console = Plain();
         console.MarkupLine(SpeechMarkup.Of([Text("Use [brackets], not [bold]markup")]));
 
-        Assert.Contains("Use [brackets], not [bold]markup", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "Use [brackets], not [bold]markup");
     }
 
     [Fact]
@@ -107,6 +108,6 @@ public sealed class SpeechMarkupTests
         var console = Plain();
         console.MarkupLine(SpeechMarkup.Of([Italic(Text("the [old] road"))]));
 
-        Assert.Contains("the [old] road", console.Output, StringComparison.Ordinal);
+        AssertReads(console.Output, "the [old] road");
     }
 }
