@@ -14,7 +14,7 @@ Part of the [script language specification](script-language.md).
 - [Commands](#commands)
 - [Quoting a key](#quoting-a-key)
 
-Your game answers what a script asks of it and carries out what the script
+Your game answers what a script asks of it and performs what the script
 commands. The interface a game implements — the runtime's world read and effect
 handling — lands with the runtime, so this page describes what a script asks of
 your game rather than the C# shape of the answer. See the
@@ -99,7 +99,7 @@ Command        = DefaultCommand | CustomCommand ;
 ```
 
 Your game recognizes the command's text — `JoinClub("Alice", "Kung Fu")` — and
-carries it out.
+performs it.
 
 Default command:
 
@@ -133,7 +133,7 @@ Bob: Of course.
 Alice: Thank you!
 ```
 
-A command in a line is carried out where you wrote it. The words before it are
+A command in a line is performed where you wrote it. The words before it are
 said, the command runs, and then the line carries on, so a stage direction in the
 middle of a sentence happens in the middle of that sentence:
 

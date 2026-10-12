@@ -39,8 +39,8 @@ what the runtime must reply, in order.
 | `send` | Means |
 | --- | --- |
 | `"next"` | `Next` — proceed past what was just said |
-| `"done"` | `Done` — the effect just asked for has been carried out |
-| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be carried out |
+| `"done"` | `Done` — the effect just asked for has been performed |
+| `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be performed |
 | `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered, which is also its position as written |
 | `{ "supply": { … } }` | `Supply(answers)` — what the world says |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than `entry` |
@@ -51,7 +51,7 @@ what the runtime must reply, in order.
 | `said` | the `speaker` name (absent for the anonymous default speaker) and the `speech` |
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
 | `offer` | the menu offered: whether it is `ordered`, and its `options` in the order offered, which is the order written, each a `label` and whether it is `available` |
-| `perform` | the effect the runtime asks the host to carry out, as the playbook names it |
+| `perform` | the effect the runtime asks the host to perform, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
@@ -76,10 +76,10 @@ rather than a script.
 | `a-jump` | Does a jump transfer without returning? | yes |
 | `an-effect` | Is an effect asked for, and waited on before the run goes past it? | yes |
 | `a-failed-effect` | Does the run stand still, so a retry carries on and an advance cannot? | yes |
-| `a-next-while-waiting` | Is `next` refused while the host is carrying out an effect? | yes |
+| `a-next-while-waiting` | Is `next` refused while the host is performing an effect? | yes |
 | `a-command-opening-a-line` | Does a line opening with a command still open in its speaker's name? | yes |
-| `a-command-mid-line` | Is a command in the middle of a line carried out between its words? | yes |
-| `a-command-ending-a-line` | Is a command ending a line carried out after its words, before the player moves on? | yes |
+| `a-command-mid-line` | Is a command in the middle of a line performed between its words? | yes |
+| `a-command-ending-a-line` | Is a command ending a line performed after its words, before the player moves on? | yes |
 | `a-line-that-is-only-a-command` | Does a line whose only speech is a command still wait for the player? | yes |
 | `a-failed-command-in-a-line` | Does a failed command in a line hold the run, so the retry gives the player the turn? | yes |
 | `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |

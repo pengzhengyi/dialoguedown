@@ -142,7 +142,7 @@ since a guard is written before the line it guards; a menu follows the same rule
 every condition before any label's query, so every runtime sends the same request.
 
 The two are kept apart because the node changes the world between them. A node
-that performs an effect has that effect carried out after it is played and before
+that performs an effect has the host perform it after it is played and before
 the run reads on, so an arm guarded by a key the effect touches must be judged
 against the world the effect left behind. Asking on the way in would read the
 world as it was before, and the run would take a way out the writer did not mean.
