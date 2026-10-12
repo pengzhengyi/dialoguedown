@@ -1,6 +1,6 @@
 using DialogueDown.Common;
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Semantics;
 
@@ -9,7 +9,7 @@ public sealed class TagExtensionsTests
     [Fact]
     public void SemanticKey_IsNameAndValue()
     {
-        var tag = new CustomTag("mood", "happy", new SourceSpan(3, 4));
+        var tag = CustomTag("mood", "happy");
 
         Assert.Equal(("mood", "happy"), tag.SemanticKey());
     }
@@ -17,8 +17,8 @@ public sealed class TagExtensionsTests
     [Fact]
     public void SemanticKey_IgnoresTheSpan()
     {
-        var here = new CustomTag("mood", "happy", new SourceSpan(0, 1));
-        var elsewhere = new CustomTag("mood", "happy", new SourceSpan(99, 5));
+        var here = CustomTag("mood", "happy");
+        var elsewhere = here with { Span = new SourceSpan(99, 5) };
 
         Assert.Equal(here.SemanticKey(), elsewhere.SemanticKey());
     }
@@ -26,8 +26,8 @@ public sealed class TagExtensionsTests
     [Fact]
     public void SemanticKey_TreatsADifferentValueAsDistinct()
     {
-        var happy = new CustomTag("mood", "happy", new SourceSpan(0, 1));
-        var sad = new CustomTag("mood", "sad", new SourceSpan(0, 1));
+        var happy = CustomTag("mood", "happy");
+        var sad = CustomTag("mood", "sad");
 
         Assert.NotEqual(happy.SemanticKey(), sad.SemanticKey());
     }
@@ -35,7 +35,7 @@ public sealed class TagExtensionsTests
     [Fact]
     public void SemanticKey_HandlesANullValue()
     {
-        var tag = new CustomTag("happy", null, new SourceSpan(0, 1));
+        var tag = CustomTag("happy");
 
         Assert.Equal(("happy", (string?)null), tag.SemanticKey());
     }

@@ -1,6 +1,5 @@
 using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
-using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
@@ -108,6 +107,6 @@ public sealed class SceneBuilderTests
         out DiagnosticBag diagnostics, params ScriptBlock[] blocks)
     {
         diagnostics = new DiagnosticBag();
-        return SceneBuilder.Build(new DesugaredScriptDocument(new ScriptDocument(blocks)), diagnostics);
+        return SceneBuilder.Build(DesugaredDocument(blocks), diagnostics);
     }
 }

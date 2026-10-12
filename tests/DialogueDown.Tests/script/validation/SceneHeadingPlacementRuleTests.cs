@@ -2,6 +2,7 @@ using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Validation;
+using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
@@ -12,7 +13,7 @@ public sealed class SceneHeadingPlacementRuleTests
     [Fact]
     public void Check_HeadingInsideControlBranch_ReportsAtTheHeadingSpan()
     {
-        var heading = SceneHeading("Nested scene");
+        var heading = SceneHeading("Nested scene") with { Span = SourceSpanFactory.Span(7) };
         var control = ControlBlock(Branch(Condition("Rainy"), heading));
 
         var diagnostic = AssertReported(Check(control), "DLG2015");
@@ -43,7 +44,7 @@ public sealed class SceneHeadingPlacementRuleTests
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();
-        var document = new DesugaredScriptDocument(new ScriptDocument([root]));
+        var document = DesugaredDocument(root);
         new SceneHeadingPlacementRule().Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;
     }

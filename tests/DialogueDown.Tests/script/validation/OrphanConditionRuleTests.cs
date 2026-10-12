@@ -13,7 +13,7 @@ public sealed class OrphanConditionRuleTests
     [Fact]
     public void Check_AConditionInSpeech_ReportsAtTheConditionSpan()
     {
-        var condition = new Condition("Rainy", SourceSpanFactory.Span(7));
+        var condition = Condition("Rainy") with { Span = SourceSpanFactory.Span(7) };
         var line = Line(condition);
 
         var diagnostic = AssertReported(Check(line), DiagnosticCatalog.OrphanCondition);
@@ -25,7 +25,7 @@ public sealed class OrphanConditionRuleTests
     [Fact]
     public void Check_AConditionBoundToAJump_ReportsNothing()
     {
-        var jump = new Jump("#play", [], SourceSpanFactory.Span(), Condition("Rainy"));
+        var jump = ConditionalJump(Condition("Rainy"), "#play");
         var line = Line(jump);
 
         Assert.Empty(Check(line));
@@ -42,7 +42,7 @@ public sealed class OrphanConditionRuleTests
     [Fact]
     public void Check_ALineConditionBesideAStrayCondition_ReportsOnlyTheStrayOne()
     {
-        var stray = new Condition("Sunny", SourceSpanFactory.Span(20));
+        var stray = Condition("Sunny") with { Span = SourceSpanFactory.Span(20) };
         var line = ConditionalLine(Condition("Rainy"), Text("It is "), stray);
 
         var diagnostics = Check(line);
@@ -73,7 +73,7 @@ public sealed class OrphanConditionRuleTests
     public void Check_AConditionBoundToAControlLine_ReportsNothing()
     {
         var control = ConditionalControlLine(
-            Condition("GateJammed"), new DefaultCommand("force", SourceSpanFactory.Span()));
+            Condition("GateJammed"), DefaultCommand("force"));
 
         Assert.Empty(Check(control));
     }
@@ -92,8 +92,8 @@ public sealed class OrphanConditionRuleTests
     public void Check_AConditionInsideAHeading_ReportsAtTheConditionSpan()
     {
         // A heading cannot hold a condition, so one in its title guards nothing.
-        var condition = new Condition("Rainy", SourceSpanFactory.Span());
-        var heading = new SceneHeading([condition], 1, SourceSpanFactory.Span());
+        var condition = Condition("Rainy") with { Span = SourceSpanFactory.Span(7) };
+        var heading = SceneHeading(1, condition);
 
         var diagnostic = AssertReported(Check(heading), DiagnosticCatalog.OrphanCondition);
 
@@ -103,7 +103,7 @@ public sealed class OrphanConditionRuleTests
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();
-        var document = new DesugaredScriptDocument(new ScriptDocument([root]));
+        var document = DesugaredDocument(root);
         new OrphanConditionRule().Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;
     }

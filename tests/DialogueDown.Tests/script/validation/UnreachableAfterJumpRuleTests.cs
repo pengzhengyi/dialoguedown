@@ -71,7 +71,7 @@ public sealed class UnreachableAfterJumpRuleTests
     private IReadOnlyList<Diagnostic> Check(params ScriptBlock[] blocks)
     {
         var bag = new DiagnosticBag();
-        var index = DialogueTreeIndex.Build(new DesugaredScriptDocument(new ScriptDocument(blocks)));
+        var index = DialogueTreeIndex.Build(DesugaredDocument(blocks));
         _rule.Check(index, bag);
         return bag.Diagnostics;
     }

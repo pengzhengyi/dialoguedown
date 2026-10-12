@@ -160,7 +160,7 @@ public sealed class CommandInLabelRuleTests
     private static IReadOnlyList<Diagnostic> Check(ScriptBlock root)
     {
         var bag = new DiagnosticBag();
-        var document = new DesugaredScriptDocument(new ScriptDocument([root]));
+        var document = DesugaredDocument(root);
         new CommandInLabelRule().Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;
     }

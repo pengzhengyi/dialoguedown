@@ -1,5 +1,3 @@
-using DialogueDown.Common;
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
@@ -29,7 +27,7 @@ public sealed class InlineFragmentExtensionsTests
     [Fact]
     public void IsBlank_NonTextFragment_IsFalse()
     {
-        Assert.False(new Link("#play", [Text("go")], new SourceSpan(0, 5)).IsBlank());
+        Assert.False(Link("#play", Text("go")).IsBlank());
     }
 
     [Fact]

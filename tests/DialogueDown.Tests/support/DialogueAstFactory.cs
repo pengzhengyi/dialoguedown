@@ -1,4 +1,5 @@
 using DialogueDown.Script.Ast;
+using DialogueDown.Script.Desugar;
 
 namespace DialogueDown.Tests.Support;
 
@@ -9,6 +10,9 @@ namespace DialogueDown.Tests.Support;
 internal static class DialogueAstFactory
 {
     public static ScriptDocument Document(params ScriptBlock[] body) => new(body);
+
+    /// <summary>A document as the desugarer hands it on, for a stage that reads desugared input.</summary>
+    public static DesugaredScriptDocument DesugaredDocument(params ScriptBlock[] body) => new(Document(body));
 
     public static CustomTag CustomTag(string name, string? value = null) =>
         new(name, value, SourceSpanFactory.Span());
@@ -36,6 +40,9 @@ internal static class DialogueAstFactory
 
     public static Jump Jump(string target, params InlineFragment[] label) =>
         new(target, label, SourceSpanFactory.Span());
+
+    public static Jump ConditionalJump(Condition condition, string target, params InlineFragment[] label) =>
+        new(target, label, SourceSpanFactory.Span(), condition);
 
     public static JumpIndicator JumpIndicator() => new(SourceSpanFactory.Span());
 
@@ -72,6 +79,9 @@ internal static class DialogueAstFactory
 
     public static Line Line(params InlineFragment[] speech) =>
         new(null, speech, SourceSpanFactory.Span());
+
+    public static Line Line(Speaker speaker, params InlineFragment[] speech) =>
+        new(speaker, speech, SourceSpanFactory.Span());
 
     public static Line ConditionalLine(Condition condition, params InlineFragment[] speech) =>
         new(null, speech, SourceSpanFactory.Span(), condition);
@@ -130,12 +140,18 @@ internal static class DialogueAstFactory
     public static SceneHeading SceneHeading(string title = "Scene", int level = 1) =>
         new([Text(title)], level, SourceSpanFactory.Span());
 
+    public static SceneHeading SceneHeading(int level, InlineFragment first, params InlineFragment[] rest) =>
+        new([first, .. rest], level, SourceSpanFactory.Span());
+
     public static SpeakerDeclaration SpeakerDeclaration(
         string name, string? id = null, params Tag[] tags) =>
         new(name, id, tags, SourceSpanFactory.Span());
 
     public static SpeakerDeclaration DefaultSpeakerDeclaration(string name) =>
         SpeakerDeclaration(name, tags: ReservedTag("default"));
+
+    public static PartialSpeakerDeclaration PartialSpeakerDeclaration(string id, params Tag[] tags) =>
+        new(id, tags, SourceSpanFactory.Span());
 
     public static SpeakerNameReference SpeakerNameReference(string name) =>
         new(name, SourceSpanFactory.Span());

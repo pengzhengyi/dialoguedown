@@ -1,6 +1,5 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
-using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
@@ -23,7 +22,7 @@ public sealed class ControlLineRecognitionRuleTests
     [Fact]
     public void Apply_MakesASilentCommandLineAControlLine()
     {
-        var document = Document(Line(new DefaultCommand("open the gate", SourceSpanFactory.Span())));
+        var document = Document(Line(DefaultCommand("open the gate")));
 
         var control = AssertControlLine(_rule.Apply(document).Body[0]);
 
@@ -43,19 +42,18 @@ public sealed class ControlLineRecognitionRuleTests
     [Fact]
     public void Apply_LeavesASpeakerLineWithATrailingJumpSpoken()
     {
-        var document = Document(new Line(
-            SpeakerNameReference("Guide"), [Text("Follow me. "), Jump("#cave")], SourceSpanFactory.Span()));
+        var document = Document(Line(SpeakerNameReference("Guide"), Text("Follow me. "), Jump("#cave")));
 
         var line = AssertLine(_rule.Apply(document).Body[0]);
 
-        AssertSpeakerNameReference(line.Speaker!, "Guide");
+        AssertSpeakerNameReference(line.Speaker, "Guide");
     }
 
     [Fact]
     public void Apply_TreatsASpeakerlessQueryLineAsSpoken()
     {
         // A query reads state into speech, so a line that is only a query is spoken, not an effect.
-        var document = Document(Line(new Query("PlayerName", SourceSpanFactory.Span())));
+        var document = Document(Line(Query("PlayerName")));
 
         AssertLine(_rule.Apply(document).Body[0]);
     }
@@ -63,14 +61,11 @@ public sealed class ControlLineRecognitionRuleTests
     [Fact]
     public void Apply_CarriesTheConditionOntoAConditionalControlLine()
     {
-        var span = SourceSpanFactory.Span();
-        var document = Document(
-            ConditionalLine(new Condition("GateJammed", span), new DefaultCommand("force", span)));
+        var document = Document(ConditionalLine(Condition("GateJammed"), DefaultCommand("force")));
 
         var control = AssertControlLine(_rule.Apply(document).Body[0]);
 
-        Assert.NotNull(control.Condition);
-        Assert.Equal("GateJammed", control.Condition!.Key);
+        AssertCondition(control.Condition, "GateJammed");
     }
 
     [Fact]

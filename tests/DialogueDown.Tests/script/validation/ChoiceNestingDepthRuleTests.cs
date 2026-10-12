@@ -125,7 +125,7 @@ public sealed class ChoiceNestingDepthRuleTests
     private static IReadOnlyList<Diagnostic> Check(Choices root, int maximumNestingLevel = 3)
     {
         var bag = new DiagnosticBag();
-        var document = new DesugaredScriptDocument(new ScriptDocument([root]));
+        var document = DesugaredDocument(root);
         new ChoiceNestingDepthRule(maximumNestingLevel)
             .Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;

@@ -118,7 +118,7 @@ public sealed class WeightTotalRuleTests
     private static IReadOnlyList<Diagnostic> Check(RandomChoices root)
     {
         var bag = new DiagnosticBag();
-        var document = new DesugaredScriptDocument(new ScriptDocument([root]));
+        var document = DesugaredDocument(root);
         new WeightTotalRule(new DefaultWeightNormalization())
             .Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;

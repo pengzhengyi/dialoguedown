@@ -1,6 +1,5 @@
 using DialogueDown.Diagnostics;
 using DialogueDown.Script.Ast;
-using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
@@ -142,7 +141,7 @@ public sealed class JumpResolverTests
     private static AnchorTable AnchorsFor(params ScriptBlock[] blocks)
     {
         var (_, anchors) = SceneBuilder.Build(
-            new DesugaredScriptDocument(new ScriptDocument(blocks)), new DiagnosticBag());
+            DesugaredDocument(blocks), new DiagnosticBag());
         return anchors;
     }
 }

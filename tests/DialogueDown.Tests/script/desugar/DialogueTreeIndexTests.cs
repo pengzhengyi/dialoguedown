@@ -1,6 +1,6 @@
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
-using DialogueDown.Tests.Support;
+using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
 namespace DialogueDown.Tests.Script.Desugar;
@@ -24,7 +24,7 @@ public sealed class DialogueTreeIndexTests
 
         // Speaker is abstract; the query still finds the concrete reference under it.
         var speaker = Assert.Single(index.OfType<Speaker>());
-        Assert.IsType<SpeakerNameReference>(speaker);
+        AssertSpeakerNameReference(speaker, "Alice");
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class DialogueTreeIndexTests
     [Fact]
     public void Build_EmptyDocument_HasNoNodes()
     {
-        var index = DialogueTreeIndex.Build(new DesugaredScriptDocument(new ScriptDocument([])));
+        var index = DialogueTreeIndex.Build(DesugaredDocument());
 
         Assert.Empty(index.OfType<ScriptNode>());
     }
@@ -78,9 +78,8 @@ public sealed class DialogueTreeIndexTests
     [Fact]
     public void AncestorsOf_StructurallyEqualNodes_UsesReferenceIdentity()
     {
-        IReadOnlyList<Choice> sharedOptions = [];
-        var first = new Choices(false, sharedOptions, SourceSpanFactory.Span());
-        var second = new Choices(false, sharedOptions, SourceSpanFactory.Span());
+        var first = Choices();
+        var second = first with { };
         var firstParent = Choice(first);
         var secondParent = Choice(second);
         var index = Build(Choices(firstParent, secondParent));
@@ -121,7 +120,7 @@ public sealed class DialogueTreeIndexTests
         Assert.Throws<ArgumentNullException>(() => DialogueTreeIndex.Build(null!));
 
     private static DialogueTreeIndex Build(params ScriptBlock[] blocks) =>
-        DialogueTreeIndex.Build(new DesugaredScriptDocument(new ScriptDocument(blocks)));
+        DialogueTreeIndex.Build(DesugaredDocument(blocks));
 
     /// <summary>A scene heading, a line that jumps, and a choice with one option.</summary>
     /// <remarks>
@@ -136,11 +135,8 @@ public sealed class DialogueTreeIndexTests
     private static DesugaredScriptDocument SampleDocument()
     {
         var heading = SceneHeading("Scene", 1);
-        var spoken = new Line(
-            SpeakerNameReference("Alice"),
-            [Text("hi"), Jump("#play", Text("go"))],
-            SourceSpanFactory.Span());
+        var spoken = Line(SpeakerNameReference("Alice"), Text("hi"), Jump("#play", Text("go")));
         var choices = Choices(Choice(Line(Text("pick"))));
-        return new DesugaredScriptDocument(new ScriptDocument([heading, spoken, choices]));
+        return DesugaredDocument(heading, spoken, choices);
     }
 }

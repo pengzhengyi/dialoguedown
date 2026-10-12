@@ -99,7 +99,7 @@ public sealed class SpeakerBinderTests
     {
         var table = Bind(
             SpeakerDeclaration("Alice", "A", CustomTag("calm")),
-            new PartialSpeakerDeclaration("A", [CustomTag("excited")], SourceSpanFactory.Span()));
+            PartialSpeakerDeclaration("A", CustomTag("excited")));
 
         var names = table.Resolve(SpeakerIdReference("A")).Tags.Select(tag => tag.Name);
         Assert.Equal(["calm", "excited"], names.OrderBy(name => name));
@@ -219,7 +219,7 @@ public sealed class SpeakerBinderTests
     {
         var table = Bind(
             SpeakerDeclaration("Alice", "A", ReservedTag("default")),
-            new PartialSpeakerDeclaration("A", [ReservedTag("default")], SourceSpanFactory.Span()));
+            PartialSpeakerDeclaration("A", ReservedTag("default")));
 
         Assert.True(table.Resolve(SpeakerNameReference("Alice")).IsDefault);
     }
@@ -231,7 +231,7 @@ public sealed class SpeakerBinderTests
         // established default (@A) and the offending one (Bob), labelling the id-only one by its id.
         Bind(
             out var diagnostics,
-            new PartialSpeakerDeclaration("A", [ReservedTag("default")], SourceSpanFactory.Span()),
+            PartialSpeakerDeclaration("A", ReservedTag("default")),
             DefaultSpeakerDeclaration("Bob"));
 
         var diagnostic = AssertReported(diagnostics.Diagnostics, DiagnosticCatalog.MultipleDefaultSpeakers);
@@ -242,7 +242,7 @@ public sealed class SpeakerBinderTests
     [Fact]
     public void Bind_IdNeverGivenAName_Reports()
     {
-        var reference = new SpeakerIdReference("A", new SourceSpan(7, 2));
+        var reference = SpeakerIdReference("A") with { Span = new SourceSpan(7, 2) };
 
         Bind(out var diagnostics, reference);
 
