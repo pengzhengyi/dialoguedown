@@ -66,8 +66,10 @@ Alice: Meet me at [the `"InnName"` inn](#the-inn).
 
 It is filled wherever the words are shown. A line's links and images are filled
 when the line is said. A menu option's text is filled when the menu is offered.
-The text of a jump at the end of a line is never shown, so a query there is kept
-but never asked.
+An option written as words rather than as a jump is also said once it is taken,
+so a query in it is asked a second time then; your game decides whether to answer
+the same way. The text of a jump at the end of a line is never shown, so a query
+there is kept but never asked.
 
 ### Where a query has no answer yet
 
