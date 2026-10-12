@@ -322,7 +322,8 @@
                 "wrong-answer-kind",
                 "key-needed-both-ways",
                 "unplayable-node",
-                "no-such-option"
+                "no-such-option",
+                "unavailable-option"
               ]
             }
           },

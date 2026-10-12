@@ -28,6 +28,14 @@ public sealed class NodeQuestionsTests
             NodeQuestions.RequiredToPlay(AGuardedLineSaying("Hero.HasSword", "HeroName")).Keys());
 
     [Fact]
+    public void Keys_OfAMenu_NameEveryTruthBeforeAnyWords() =>
+        // Every node names its truths before its words, so a menu does too, whatever order its
+        // options write them in.
+        Assert.Equal(
+            ["Hero.HasSword", "Hero.HasShield", "WeaponName", "ShieldName"],
+            NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).Keys());
+
+    [Fact]
     public void Asked_HoldsEachKeyToTheKindItsUseNeeds()
     {
         var asked = NodeQuestions.RequiredToPlay(AGuardedLineSaying("Hero.HasSword", "HeroName")).Asked();
@@ -71,6 +79,13 @@ public sealed class NodeQuestionsTests
         Assert.Equal(["mood"], NodeQuestions.RequiredToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 1).Keys());
 
     [Fact]
+    public void RequiredToPlayFrom_TheStartOfAMenu_ReadsEverythingItNeeds() =>
+        // A menu is offered whole, so nothing it asks is left for later.
+        Assert.Equal(
+            NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).Keys(),
+            NodeQuestions.RequiredToPlayFrom(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold(), 0).Keys());
+
+    [Fact]
     public void RequiredToPlayFrom_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => NodeQuestions.RequiredToPlayFrom(null!, 0));
 
@@ -106,4 +121,17 @@ public sealed class NodeQuestionsTests
     /// <returns>The node.</returns>
     private static LineNode AGuardedLineSaying(string guard, string query) =>
         LineOf([Text("You are "), Query(query), Text(".")], condition: guard, next: 1);
+
+    /// <summary>A menu whose options the world must allow, each naming what the hero holds.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Hero.HasSword?` Draw `"WeaponName"`
+    /// - `Hero.HasShield?` Raise `"ShieldName"`
+    /// </code>
+    /// </remarks>
+    /// <returns>The menu.</returns>
+    private static ChoiceNode AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold() =>
+        Choice(
+            OptionOf([Text("Draw "), Query("WeaponName")], condition: "Hero.HasSword", target: 1),
+            OptionOf([Text("Raise "), Query("ShieldName")], condition: "Hero.HasShield", target: 2));
 }

@@ -6,7 +6,7 @@ namespace DialogueDown.Runtime.Situations;
 /// <remarks>
 /// Two facts travel as one value. The first is where the run is. The second is what is happening
 /// at that node: the run may have said a line and be waiting for the player to read on, or have
-/// asked the host to carry out an effect, or have asked the world a question the node depends on.
+/// asked the host to perform an effect, or have asked the world a question the node depends on.
 /// <para>
 /// Both are needed to know what may be sent next, and neither is enough alone. A run at node 4
 /// that has just said a line takes <c>Next</c>. The same run at node 4, having asked the world

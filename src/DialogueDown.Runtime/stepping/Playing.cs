@@ -32,7 +32,7 @@ internal static class Playing
         {
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
-            ChoiceNode choice => Choosing.Offer(position, choice),
+            ChoiceNode choice => Choosing.Offer(position, choice, supply),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
         };
@@ -101,7 +101,7 @@ internal static class Playing
     {
         for (var later = segmentIndex + 1; later < segments.Length; later++)
         {
-            if (SpeechTemplate.HasKeys(segments[later].Words))
+            if (SpeechTemplate.HasQueries(segments[later].Words))
             {
                 return later;
             }
@@ -124,7 +124,7 @@ internal static class Playing
     }
 
     // A command can change the world, so the words after it are asked about only once the host has
-    // carried it out. When those words ask nothing, the line goes on at once.
+    // performed it. When those words ask nothing, the line goes on at once.
     private static StepResult AskBeforeContinuing(
         PlayContext context, int position, LineNode line, int segmentIndex) =>
         NodeQuestions.RequiredToPlayFrom(line, segmentIndex).Keys() is { IsEmpty: false } keys
@@ -146,7 +146,7 @@ internal static class Playing
     }
 
     // A control block asks the host for each of its effects in the order written, and the run
-    // waits until the host has carried them out.
+    // waits until the host has performed them.
     private static StepResult Control(int position, ControlNode control) =>
         new(
             new PlayState(new AwaitingDone(position, new Resume.FromNodeEnd())),
