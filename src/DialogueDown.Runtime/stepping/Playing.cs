@@ -184,6 +184,6 @@ internal static class Playing
             [
                 new Refused(
                     RefusalReason.Misplaced,
-                    $"There is nothing to continue at {waiting.Describe()}, so there is no Supply to take there."),
+                    $"There is nothing to continue {waiting.Describe()}, so there is no Supply to take there."),
             ]);
 }

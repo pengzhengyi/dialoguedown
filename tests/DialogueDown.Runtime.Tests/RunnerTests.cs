@@ -46,7 +46,7 @@ public sealed class RunnerTests
         AssertRefused(
             result,
             RefusalReason.Misplaced,
-            "A run at node 0, waiting for the host cannot take Next.");
+            "A run cannot take Next at node 0, waiting for the host.");
         AssertAwaitingDone(result, 0);
     }
 
@@ -60,7 +60,7 @@ public sealed class RunnerTests
         AssertRefused(
             result,
             RefusalReason.Misplaced,
-            "A run at node 0, waiting for the host cannot take Next.");
+            "A run cannot take Next at node 0, waiting for the host.");
         AssertAwaitingDone(result, 0);
     }
 
@@ -75,7 +75,7 @@ public sealed class RunnerTests
         AssertRefused(
             result,
             RefusalReason.Misplaced,
-            "A run at node 0, waiting for the player to choose cannot take Next.");
+            "A run cannot take Next at node 0, waiting for the player to choose.");
         AssertAwaitingChoice(result, 0);
     }
 
@@ -97,7 +97,7 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, Started(context), new Choose(0));
 
-        AssertRefused(result, RefusalReason.Misplaced, "A run at node 0 cannot take Choose.");
+        AssertRefused(result, RefusalReason.Misplaced, "A run cannot take Choose at node 0.");
         AssertAt(result, 0);
     }
 
@@ -176,7 +176,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, Started(context), new Done()),
             RefusalReason.Misplaced,
-            "A run at node 0 cannot take Done.");
+            "A run cannot take Done at node 0.");
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public sealed class RunnerTests
                 Started(context),
                 Answering()),
             RefusalReason.Misplaced,
-            "A run at node 0 cannot take Supply.");
+            "A run cannot take Supply at node 0.");
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, PlayState.Initial, new Done()),
             RefusalReason.Misplaced,
-            "A run at no position, before the run has started cannot take Done.");
+            "A run cannot take Done before it has started.");
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, ended, new Failed("nothing left to fail")),
             RefusalReason.Misplaced,
-            "A run at the end cannot take Failed.");
+            "A run cannot take Failed at the end.");
     }
 
     [Fact]
@@ -255,7 +255,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, Started(context), new Failed("nothing to fail")),
             RefusalReason.Misplaced,
-            "A run at node 0 cannot take Failed.");
+            "A run cannot take Failed at node 0.");
     }
 
     [Fact]
