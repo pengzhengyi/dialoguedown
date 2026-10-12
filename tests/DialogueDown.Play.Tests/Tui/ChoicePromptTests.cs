@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
-using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
-using Spectre.Console;
 using Spectre.Console.Testing;
 using static DialogueDown.Play.Tests.Support.Consoles;
+using static DialogueDown.Play.Tests.Support.MenuOptionFactory;
 using static DialogueDown.Play.Tests.Support.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -42,9 +41,7 @@ public sealed class ChoicePromptTests
     {
         var console = Plain();
         console.Profile.Width = 40;
-        var option = new MenuOption(
-            [Text("Go around the back, past the well, and wait by the gate until the bells ring twice")],
-            Available: true);
+        var option = Option("Go around the back, past the well, and wait by the gate until the bells ring twice");
 
         string[] expected =
         [
@@ -178,7 +175,7 @@ public sealed class ChoicePromptTests
     [Fact]
     public async Task Show_WithoutAKeyToGive_ClosesWithNothingTaken()
     {
-        var console = Consoles.WithoutAKey();
+        var console = WithoutAKey();
 
         var taken = await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
 
@@ -232,7 +229,4 @@ public sealed class ChoicePromptTests
         console.Write(prompt.Frame(console));
         return ReadLines(console.Output);
     }
-
-    private static ImmutableArray<MenuOption> Menu(params (string Label, bool Available)[] options) =>
-        [.. options.Select(option => new MenuOption([Text(option.Label)], option.Available))];
 }

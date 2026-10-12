@@ -61,6 +61,7 @@ public static class SpeechFactory
     public static CustomCommandFragment CustomCommand(string name, params string[] args) =>
         new(name, [.. args]);
 
-    private static StyledTextFragment Styled(SpeechStyle style, SpeechFragment[] children) =>
+    /// <summary>Any style around other pieces, for a test that takes the style as a value; "styled" when given none.</summary>
+    public static StyledTextFragment Styled(SpeechStyle style, params SpeechFragment[] children) =>
         new(style, [.. children.Length == 0 ? [Text("styled")] : children]);
 }
