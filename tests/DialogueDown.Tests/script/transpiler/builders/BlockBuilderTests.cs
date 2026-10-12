@@ -59,7 +59,7 @@ public sealed class BlockBuilderTests
         var body = Build([TextParagraph("Alice: Hello there.")]);
 
         var line = AssertLine(Assert.Single(body));
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hello there.");
     }
 
@@ -71,10 +71,10 @@ public sealed class BlockBuilderTests
 
         Assert.Equal(2, body.Count);
         var first = AssertLine(body[0]);
-        AssertSpeakerNameReference(first.Speaker!, "Alice");
+        AssertSpeakerNameReference(first.Speaker, "Alice");
         AssertSpeechText(first, "Hi");
         var second = AssertLine(body[1]);
-        AssertSpeakerNameReference(second.Speaker!, "Bob");
+        AssertSpeakerNameReference(second.Speaker, "Bob");
         AssertSpeechText(second, "Yo");
     }
 
@@ -85,7 +85,7 @@ public sealed class BlockBuilderTests
             [Paragraph(Text("Alice: Hi"), LineBreak(hard: false), Text("there"))]);
 
         var line = AssertLine(Assert.Single(body));
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         Assert.Equal(3, line.Speech.Count);
         AssertText(line.Speech[0], "Hi");
         AssertLineBreak(line.Speech[1]);
@@ -107,8 +107,8 @@ public sealed class BlockBuilderTests
         ]);
 
         Assert.Equal(2, body.Count);
-        AssertSpeakerNameReference(AssertLine(body[0]).Speaker!, "Alice");
-        AssertSpeakerNameReference(AssertLine(body[1]).Speaker!, "Bob");
+        AssertSpeakerNameReference(AssertLine(body[0]).Speaker, "Alice");
+        AssertSpeakerNameReference(AssertLine(body[1]).Speaker, "Bob");
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public sealed class BlockBuilderTests
 
         var choices = AssertChoices(Assert.Single(body), isOrdered: false);
         var line = AssertChoiceLine(Assert.Single(choices.Options));
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hi");
     }
 
@@ -178,7 +178,7 @@ public sealed class BlockBuilderTests
 
         var choices = AssertChoices(Assert.Single(body), isOrdered: false);
         var conditional = choices.Options[0];
-        AssertCondition(conditional.Condition!, "HasKey");
+        AssertCondition(conditional.Condition, "HasKey");
         Assert.True(conditional.IsConditional());
         AssertSpeechText(AssertChoiceLine(conditional), "Use the key.");
 
@@ -198,10 +198,10 @@ public sealed class BlockBuilderTests
         ]);
 
         var choice = Assert.Single(AssertChoices(Assert.Single(body), isOrdered: false).Options);
-        AssertCondition(choice.Condition!, "IsAngry");
+        AssertCondition(choice.Condition, "IsAngry");
         var line = AssertChoiceLine(choice);
         Assert.Null(line.Condition);
-        AssertSpeakerNameReference(line.Speaker!, "Bob");
+        AssertSpeakerNameReference(line.Speaker, "Bob");
         AssertSpeechText(line, "Attack!");
     }
 
@@ -219,7 +219,7 @@ public sealed class BlockBuilderTests
 
         var random = AssertRandomChoices(Assert.Single(body));
         var conditional = random.Options[0];
-        AssertCondition(conditional.Condition!, "IsAngry");
+        AssertCondition(conditional.Condition, "IsAngry");
         Assert.True(conditional.IsConditional());
         AssertNumberWeight(conditional, 50);
         AssertSpeechText(AssertRandomOptionLine(conditional), "The guard glares.");
@@ -240,8 +240,8 @@ public sealed class BlockBuilderTests
         ]);
 
         var random = AssertRandomChoices(Assert.Single(body));
-        AssertCondition(random.Options[0].Condition!, "C1");
-        AssertCondition(random.Options[1].Condition!, "C2");
+        AssertCondition(random.Options[0].Condition, "C1");
+        AssertCondition(random.Options[1].Condition, "C2");
     }
 
     [Fact]
@@ -283,9 +283,9 @@ public sealed class BlockBuilderTests
         var body = Build([QuoteBlock(TextParagraph("Alice: Hi"), TextParagraph("Bob: Yo"))]);
 
         Assert.Equal(2, body.Count);
-        AssertSpeakerNameReference(AssertLine(body[0]).Speaker!, "Alice");
+        AssertSpeakerNameReference(AssertLine(body[0]).Speaker, "Alice");
         AssertSpeechText(AssertLine(body[0]), "Hi");
-        AssertSpeakerNameReference(AssertLine(body[1]).Speaker!, "Bob");
+        AssertSpeakerNameReference(AssertLine(body[1]).Speaker, "Bob");
         AssertSpeechText(AssertLine(body[1]), "Yo");
     }
 
@@ -307,7 +307,7 @@ public sealed class BlockBuilderTests
         var control = AssertControlBlock(Assert.Single(Build([quote])));
 
         var branch = Assert.Single(control.Branches);
-        AssertCondition(branch.Condition!, "Rich");
+        AssertCondition(branch.Condition, "Rich");
         AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome upstairs.");
     }
 
@@ -360,7 +360,7 @@ public sealed class BlockBuilderTests
         ]);
 
         var line = AssertRandomOptionLine(Assert.Single(AssertRandomChoices(Assert.Single(body)).Options));
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hi");
     }
 

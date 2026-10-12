@@ -384,6 +384,9 @@ If `HasKey` is false, the first option is still offered but marked unavailable,
 so the player can see it and cannot pick it. The condition guards the whole option, not just its
 first line.
 
+When every option is unavailable there is nothing to pick, so the menu is passed
+by and the run carries on with whatever follows the list.
+
 A [random option](#random-choices) can be conditional too — the condition comes
 **first, before the weight**:
 

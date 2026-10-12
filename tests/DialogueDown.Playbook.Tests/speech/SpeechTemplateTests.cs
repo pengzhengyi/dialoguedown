@@ -40,17 +40,17 @@ public sealed class SpeechTemplateTests
             $"A query {where} was not found.");
 
     [Fact]
-    public void HasKeys_OfSpeechWithNoQueries_IsFalse() =>
-        Assert.False(SpeechTemplate.HasKeys([Text("Hello."), Bold("there")]));
+    public void HasQueries_OfSpeechWithNoQueries_IsFalse() =>
+        Assert.False(SpeechTemplate.HasQueries([Text("Hello."), Bold("there")]));
 
     [Fact]
-    public void HasKeys_OfSpeechWithAQuery_IsTrue() =>
-        Assert.True(SpeechTemplate.HasKeys([Text("Hello, "), Query("HeroName")]));
+    public void HasQueries_OfSpeechWithAQuery_IsTrue() =>
+        Assert.True(SpeechTemplate.HasQueries([Text("Hello, "), Query("HeroName")]));
 
     [Theory]
     [MemberData(nameof(NestedQueries))]
-    public void HasKeys_FindsAQueryHoweverDeeplyItSits(string where, SpeechFragment nested) =>
-        Assert.True(SpeechTemplate.HasKeys([nested]), $"A query {where} was not found.");
+    public void HasQueries_FindsAQueryHoweverDeeplyItSits(string where, SpeechFragment nested) =>
+        Assert.True(SpeechTemplate.HasQueries([nested]), $"A query {where} was not found.");
 
     [Fact]
     public void Fill_PutsTheWordsWhereTheQueryWas() =>
@@ -328,6 +328,29 @@ public sealed class SpeechTemplateTests
         var image = Assert.IsType<ImageFragment>(Assert.Single(only.Words));
         Assert.Contains(image.Alt, fragment => fragment is DefaultCommandFragment);
     }
+
+    [Fact]
+    public void Words_LeaveOutACommandAndKeepTheWordsEitherSide() =>
+        Assert.Equal(
+            [Text("Say goodbye "), Text(" and go")],
+            SpeechTemplate.Words([Text("Say goodbye "), CustomCommand("Wave"), Text(" and go")]));
+
+    [Fact]
+    public void Words_KeepEmphasisAroundACommandOnBothSidesOfIt() =>
+        Assert.Equal(
+            [Bold(Text("polished ")), Bold(Text(" bright"))],
+            SpeechTemplate.Words([Bold(Text("polished "), DefaultCommand("it gleams"), Text(" bright"))]));
+
+    [Fact]
+    public void Words_OfACommandAlone_AreNone() =>
+        Assert.Empty(SpeechTemplate.Words([CustomCommand("Wave")]));
+
+    [Fact]
+    public void Words_KeepACommandInsideALinkLabelAmongThem() =>
+        // A link is one thing, so its label is kept whole, command and all, as a segment keeps it.
+        Assert.Equal(
+            [Link("#the-inn", Text("Ask "), DefaultCommand("waves"), Text(" now"))],
+            SpeechTemplate.Words([Link("#the-inn", Text("Ask "), DefaultCommand("waves"), Text(" now"))]));
 
     /// <summary>Checks what a segment says and what it performs, in one place.</summary>
     /// <param name="segment">The segment to check.</param>

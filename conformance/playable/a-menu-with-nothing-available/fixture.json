@@ -1,0 +1,51 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a menu whose every option the world withholds is walked past by its fall-through",
+  "playbook": "playbook.json",
+  "because": "a menu nothing can be chosen from would only wait forever, so the run goes on where the script carries on after it; a port that offered it anyway would leave the player stuck",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Ready?"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "Alice.HasKey",
+          "Alice.HasMap"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Alice.HasKey": false,
+          "Alice.HasMap": false
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Then we wait."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

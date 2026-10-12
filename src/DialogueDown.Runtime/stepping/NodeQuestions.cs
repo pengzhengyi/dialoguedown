@@ -58,7 +58,7 @@ internal readonly record struct NodeQuestions(
         return new NodeQuestions(node.FindTruthsForLeaving(), []);
     }
 
-    /// <summary>The keys to ask about, in the order the playbook names them.</summary>
+    /// <summary>The keys to ask about: the truths, then the words.</summary>
     /// <returns>The keys, each named once. Empty when the node asks nothing.</returns>
     public ImmutableArray<string> Keys() => Questions.Keys(Truths, Words);
 

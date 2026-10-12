@@ -26,7 +26,7 @@
     ],
     "resource": [
       {
-        "files": ["guide/assets/**", "logo.svg", "logo-pipeline.svg"]
+        "files": ["guide/assets/**", "contributing/design-notes/**/*.png", "logo.svg", "logo-pipeline.svg"]
       }
     ],
     "output": "_site",
