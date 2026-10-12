@@ -60,6 +60,26 @@ public sealed class NodeQuestionExtensionsTests
             LineOf([Query("Hero"), Text(" told "), Query("Hero")]).FindWordsForPlaying());
 
     [Fact]
+    public void FindWordsForPlaying_OfAMenu_NameItsLabelsQueriesInTheOrderWritten() =>
+        Assert.Equal(
+            ["WeaponName", "ShieldName"],
+            Choice(
+                OptionOf([Text("Draw "), Query("WeaponName")], target: 1),
+                Option("Run", target: 2),
+                OptionOf([Text("Raise "), Query("ShieldName")], target: 3))
+                .FindWordsForPlaying());
+
+    [Fact]
+    public void FindWordsForPlaying_OfAMenu_NameAQueryInTwoLabelsOnce() =>
+        // One reading of the world fills every label, so the same name is not asked about twice.
+        Assert.Equal(
+            ["WeaponName"],
+            Choice(
+                OptionOf([Text("Draw "), Query("WeaponName")], target: 1),
+                OptionOf([Text("Sheathe "), Query("WeaponName")], target: 2))
+                .FindWordsForPlaying());
+
+    [Fact]
     public void FindWordsForPlaying_OfAKindThatSaysNothing_AreNone() =>
         Assert.Empty(End().FindWordsForPlaying());
 

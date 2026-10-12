@@ -48,18 +48,23 @@ internal static class NodeQuestionExtensions
     /// <summary>What the world must answer before a run can say what a node says.</summary>
     /// <param name="node">The node being arrived at.</param>
     /// <returns>
-    /// The keys standing in the node's speech, each needing words, in the order they first appear.
-    /// Empty for a node that says nothing.
+    /// The keys standing in the node's speech, each needing words, in the order they first appear;
+    /// for a menu, the keys standing in its options' labels. Empty for a node that says nothing.
     /// </returns>
     /// <remarks>
-    /// Only a line's speech is searched for queries. A control block's effects are for the host to
-    /// perform, not for anybody to read.
+    /// Only a line's speech and a menu's labels are searched for queries. A control block's effects
+    /// are for the host to perform, not for anybody to read.
     /// </remarks>
     public static ImmutableArray<string> FindWordsForPlaying(this Node node)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return node is LineNode line ? SpeechTemplate.Keys(line.Speech) : [];
+        return node switch
+        {
+            LineNode line => SpeechTemplate.Keys(line.Speech),
+            ChoiceNode menu => QueryKeysOfLabels(menu),
+            _ => [],
+        };
     }
 
     /// <summary>What the world must answer before a run can say one segment of a node.</summary>
@@ -103,6 +108,11 @@ internal static class NodeQuestionExtensions
     // taken is known when the menu is shown.
     private static ImmutableArray<string> ConditionKeysOfOptions(ChoiceNode menu) =>
         [.. menu.Options().SelectMany(option => KeysOf(option.Condition)).Distinct(StringComparer.Ordinal)];
+
+    // A menu's labels are shown when it is offered, so their queries are asked with its options'
+    // conditions.
+    private static ImmutableArray<string> QueryKeysOfLabels(ChoiceNode menu) =>
+        [.. menu.Options().SelectMany(option => SpeechTemplate.Keys(option.Label)).Distinct(StringComparer.Ordinal)];
 
     private static ImmutableArray<string> KeysOf(Condition? condition) => condition?.Keys() ?? [];
 }

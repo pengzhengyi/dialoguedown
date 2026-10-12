@@ -220,6 +220,15 @@ public sealed class ArrivalTests
             "Alice.HasKey");
 
     [Fact]
+    public void At_AMenuNeedingOneKeyBothWays_RefusesBeforeAskingAnything() =>
+        // One option's condition and another's label share the key, and the world answers a key
+        // once for the whole menu.
+        AssertRefused(
+            Arrival.At(AMenuNeedingOneKeyBothWays(), 0),
+            RefusalReason.KeyNeededBothWays,
+            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+
+    [Fact]
     public void Supplied_ToALineNeedingOneKeyBothWays_RefusesRatherThanReadingTheWrongKind() =>
         // A walk refuses such a node before asking, so getting here means the run was restored
         // into the wait rather than walked into it. The step must stay total either way.
@@ -405,6 +414,24 @@ public sealed class ArrivalTests
                 End(id: 1),
             ],
             ["Alice"]);
+
+    /// <summary>A menu naming one key as one option's condition and in another option's label.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Alice.HasKey?` Open the door
+    /// - Ask about `"Alice.HasKey"`
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose menu needs one key answered two ways.</returns>
+    private static PlayContext AMenuNeedingOneKeyBothWays() =>
+        PlayContextFactory.Of(
+            [
+                Choice(
+                    Option("Open the door", condition: "Alice.HasKey", target: 1),
+                    OptionOf([Text("Ask about "), Query("Alice.HasKey")], target: 2)),
+                End(id: 1),
+                End(id: 2),
+            ]);
 
     /// <summary>A line the world must allow, carrying a jump, with an alternative beneath it.</summary>
     /// <remarks>
