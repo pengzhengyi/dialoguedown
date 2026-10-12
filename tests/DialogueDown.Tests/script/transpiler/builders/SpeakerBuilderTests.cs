@@ -58,7 +58,7 @@ public sealed class SpeakerBuilderTests
     {
         var text = "Alice @A #main: Hi";
 
-        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+        var prefix = Assert.IsType<SpeakerPrefixSpans>(SpeakerAt(text, 10).PrefixSpans);
 
         AssertSpan(prefix.Separator, 10 + text.IndexOf(':'), length: 1); // just the ":"
     }
@@ -68,7 +68,7 @@ public sealed class SpeakerBuilderTests
     {
         var text = "Alice: Hi";
 
-        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+        var prefix = Assert.IsType<SpeakerPrefixSpans>(SpeakerAt(text, 10).PrefixSpans);
 
         AssertSpan(prefix.Name, 10 + text.IndexOf("Alice", StringComparison.Ordinal), "Alice".Length);
         Assert.Null(prefix.Id);
@@ -79,7 +79,7 @@ public sealed class SpeakerBuilderTests
     {
         var text = "\"Old Man\": Hi";
 
-        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+        var prefix = Assert.IsType<SpeakerPrefixSpans>(SpeakerAt(text, 10).PrefixSpans);
 
         // The span covers the whole quoted literal, quotes included.
         AssertSpan(prefix.Name, 10 + text.IndexOf('"'), "\"Old Man\"".Length);
@@ -90,7 +90,7 @@ public sealed class SpeakerBuilderTests
     {
         var text = "@alice: Hi";
 
-        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+        var prefix = Assert.IsType<SpeakerPrefixSpans>(SpeakerAt(text, 10).PrefixSpans);
 
         AssertSpan(prefix.Id, 10 + text.IndexOf('@'), "@alice".Length);
         Assert.Null(prefix.Name);
@@ -101,7 +101,7 @@ public sealed class SpeakerBuilderTests
     {
         var text = "Alice @alice: Hi";
 
-        var prefix = SpeakerAt(text, 10).PrefixSpans!;
+        var prefix = Assert.IsType<SpeakerPrefixSpans>(SpeakerAt(text, 10).PrefixSpans);
 
         AssertSpan(prefix.Name, 10 + text.IndexOf("Alice", StringComparison.Ordinal), "Alice".Length);
         AssertSpan(prefix.Id, 10 + text.IndexOf('@'), "@alice".Length);

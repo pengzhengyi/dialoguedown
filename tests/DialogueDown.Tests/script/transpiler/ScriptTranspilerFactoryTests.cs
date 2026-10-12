@@ -16,7 +16,7 @@ public sealed class ScriptTranspilerFactoryTests
             .Transpile(document, DiagnosticsContextFactory.Context("Alice: Hi"));
 
         var line = AssertLine(Assert.Single(script.Body));
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hi");
     }
 }

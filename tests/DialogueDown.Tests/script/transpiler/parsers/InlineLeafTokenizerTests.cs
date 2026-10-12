@@ -1,4 +1,3 @@
-using DialogueDown.Markdown;
 using DialogueDown.Script.Transpiler.Parsed;
 using DialogueDown.Script.Transpiler.Parsers;
 using DialogueDown.Script.Transpiler.Parsing;
@@ -148,8 +147,7 @@ public sealed class InlineLeafTokenizerTests
     [Fact]
     public void StartsWithJumpIndicator_FalseForAnEscapedArrowOrOtherText()
     {
-        var escaped = new TextInline(
-            "=> go", Span(0, 6), Span(1, 5), isFirstCharacterEscaped: true);
+        var escaped = TextEscaped("=> go", Span(0, 6));
 
         Assert.False(escaped.StartsWithJumpIndicator());
         Assert.False(Text("= go").StartsWithJumpIndicator());
