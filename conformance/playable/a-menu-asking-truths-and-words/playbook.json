@@ -1,0 +1,152 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    },
+    {
+      "default": true,
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "What now?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 1,
+      "out": [
+        {
+          "kind": "option",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Draw "
+            },
+            {
+              "kind": "query",
+              "key": "WeaponName"
+            }
+          ],
+          "condition": {
+            "kind": "key",
+            "key": "Hero.HasSword"
+          }
+        },
+        {
+          "kind": "option",
+          "target": 3,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Raise "
+            },
+            {
+              "kind": "query",
+              "key": "ShieldName"
+            }
+          ],
+          "condition": {
+            "kind": "key",
+            "key": "Hero.HasShield"
+          }
+        },
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Draw "
+        },
+        {
+          "kind": "query",
+          "key": "WeaponName"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Raise "
+        },
+        {
+          "kind": "query",
+          "key": "ShieldName"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Steady."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 5,
+      "out": []
+    }
+  ]
+}

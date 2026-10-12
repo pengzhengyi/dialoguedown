@@ -30,7 +30,7 @@ A writer puts a command inside a line to tie it to the words around it:
 Keeper: Steel and nerve. Perhaps you *will* come back. `GiveQuest("EmberCrown")`
 ```
 
-The host needs to know when to carry out each command, a command there must be
+The host needs to know when to perform each command, a command there must be
 able to report failure, and a query after a command must see what the command
 changed. So the runner plays such a line in the order it was written: the line
 opens with a `Said` that names its speaker, each command arrives as a `Perform`,
@@ -168,7 +168,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `SpeechTemplate.Segments` | Breaks speech into segments at each command | `Playing` |
 | `SpeechSegment.SaysSomething` | Whether a segment's words say something, judged before any query is filled | `LineEventsBuilder` |
-| `SpeechTemplate.HasKeys` | Whether a run of speech holds a query, which is where a step stops | `Playing` |
+| `SpeechTemplate.HasQueries` | Whether a run of speech holds a query, which is where a step stops | `Playing` |
 | `LineEventsBuilder` | Gathers the events of the part of a line a step plays, one segment at a time: the `Said` when the part starts the line, each `Continued`, and each `Perform` | `Playing` |
 | `Continued(speech)` | An event: the words after a command, in the utterance the line's `Said` opened | `Event`, alongside `Said` |
 | `AwaitingDone(node, resume)` | Waiting for the host, and where the node carries on once it is done | `Situation` |
@@ -376,14 +376,14 @@ decides what follows (S5) sits beside the code that made the host a request.
 | --- | --- |
 | `protocol` | `Continued` joins the events; `Said` carries the words before a line's first command, with queries filled and no commands |
 | `situations` | `AwaitingDone` carries `Resume`; `Moment` becomes a closed union |
-| Playbook | `SpeechSegment.SaysSomething` and `SpeechTemplate.HasKeys`; `SpeechTemplate.Fill` leaves nothing where a query is answered with no words |
+| Playbook | `SpeechSegment.SaysSomething` and `SpeechTemplate.HasQueries`; `SpeechTemplate.Fill` leaves nothing where a query is answered with no words |
 | `stepping` | `Playing` plays a node (S10) and walks a line's segments; `LineEventsBuilder` gathers a line's events; `NodeQuestions.RequiredToPlayFrom` reads from a starting segment |
 | `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which continues or stands at a line, and leaves a control block; a `Supply` answering a later segment goes to `Playing` |
 | Fixture schema | A `continued` expectation beside `said` |
 | Harness | `ContinuedMatcher`; the screen learns `continued` |
 | Corpus | New cases: a command at the end of a line, one mid-line, one opening a line, a line whose only speech is a command, a query after a command, and a failed command inside a line |
 | `PlaybookGen` | Draws lines with commands, and queries after commands, so the walk property stops inside lines |
-| Guide | The Commands section says a command in a line is carried out where it is written, and a query after it reads what the command changed |
+| Guide | The Commands section says a command in a line is performed where it is written, and a query after it reads what the command changed |
 | Asking the world | A1 counts one more moment at each stop inside a line |
 | Runner | D3 states S4's rule; D12 and the arriving table let a line wait on the host once per step; its vocabulary lists `Continued` |
 | Runtime architecture | The transcript fold joins a `Continued` onto the `Said` before it |
@@ -392,7 +392,7 @@ decides what follows (S5) sits beside the code that made the host a request.
 
 | Level | What it covers |
 | --- | --- |
-| Unit — segments | `SpeechTemplate`'s own tests, plus "says something" on whitespace, line breaks, and a lone query, and `HasKeys` on a query however deeply it sits |
+| Unit — segments | `SpeechTemplate`'s own tests, plus "says something" on whitespace, line breaks, and a lone query, and `HasQueries` on a query however deeply it sits |
 | Unit — `LineEventsBuilder` | The `Said` only when a part starts the line; a part starting later continues it; a part ending early leaves the rest |
 | Unit — `Playing` | Parts and commands in order; the `Said` sent even with no words; no `Continued` for words that say nothing; stopping after the last command before a query; resuming from a place |
 | Unit — questions | The guard and first segment's keys on arrival; a later segment's keys alone |

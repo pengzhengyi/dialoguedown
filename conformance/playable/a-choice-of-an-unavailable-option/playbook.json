@@ -1,0 +1,112 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    },
+    {
+      "default": true,
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Ready?"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "choice",
+      "id": 1,
+      "ordered": true,
+      "out": [
+        {
+          "kind": "option",
+          "target": 2,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Open the door"
+            }
+          ],
+          "condition": {
+            "kind": "key",
+            "key": "Alice.HasKey"
+          }
+        },
+        {
+          "kind": "option",
+          "target": 3,
+          "label": [
+            {
+              "kind": "text",
+              "text": "Wait here"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Open the door"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Wait here"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 4,
+      "out": []
+    }
+  ]
+}
