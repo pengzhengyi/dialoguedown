@@ -68,11 +68,10 @@ public sealed class ChoosingTests
             "offer 'Open the door' unavailable, 'Wait here'");
 
     [Fact]
-    public void Offer_AMenuWhoseLabelHoldsAQuery_IsRefusedRatherThanOfferedUnfilled() =>
-        AssertRefused(
-            Offering(PlayContextFactory.AMenuWithAQueryInALabel()),
-            RefusalReason.UnplayableNode,
-            "ask the world");
+    public void Offer_AMenuWhoseLabelHoldsAQuery_OffersItWithTheWordsTheWorldGave() =>
+        AssertEvents(
+            Offering(PlayContextFactory.AMenuWithAQueryInALabel(), Answering(("playerName", "Ada"))),
+            "offer 'Call Ada over'");
 
     [Fact]
     public void Offer_NoMenu_IsRejected() => Assert.Throws<ArgumentNullException>(() => Choosing.Offer(0, null!));

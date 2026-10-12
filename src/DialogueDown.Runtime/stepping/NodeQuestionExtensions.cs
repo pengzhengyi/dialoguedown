@@ -72,15 +72,19 @@ internal static class NodeQuestionExtensions
     /// <param name="segmentIndex">The segment's index among the line's segments.</param>
     /// <returns>
     /// The keys standing in that segment's words, each needing words, in the order they first
-    /// appear. Empty for a node that says nothing.
+    /// appear; for a menu, which is offered whole, the keys standing in all its labels. Empty for a
+    /// node that says nothing.
     /// </returns>
     public static ImmutableArray<string> FindWordsForSegment(this Node node, int segmentIndex)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return node is LineNode line
-            ? SpeechTemplate.Keys(SpeechTemplate.Segments(line.Speech)[segmentIndex].Words)
-            : [];
+        return node switch
+        {
+            LineNode line => SpeechTemplate.Keys(SpeechTemplate.Segments(line.Speech)[segmentIndex].Words),
+            ChoiceNode menu => QueryKeysOfLabels(menu),
+            _ => [],
+        };
     }
 
     /// <summary>What the world must answer before a run can tell which way out it takes.</summary>

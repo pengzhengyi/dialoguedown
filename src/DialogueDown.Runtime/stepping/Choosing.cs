@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 
@@ -15,9 +14,9 @@ namespace DialogueDown.Runtime.Stepping;
 /// counted against the options in the order the offer listed them.
 /// <para>
 /// A menu's options' conditions are read on arrival, so an option the world withholds is offered
-/// as unavailable rather than hidden. A menu with no option the player can take is not offered at
-/// all: the run walks past it by its fall-through. A label's query is not filled yet, so a menu
-/// whose labels ask the world is refused rather than offered with a query unfilled.
+/// as unavailable rather than hidden. Its labels' queries are asked at the same time and filled
+/// from the same answers, so one reading of the world decides the whole menu. A menu with no option
+/// the player can take is not offered at all: the run walks past it by its fall-through.
 /// </para>
 /// </remarks>
 internal static class Choosing
@@ -43,8 +42,8 @@ internal static class Choosing
     /// <param name="position">The menu's position in the playbook.</param>
     /// <param name="choice">The menu itself.</param>
     /// <param name="supply">
-    /// What the world said about the options' conditions, or <see langword="null"/> when nothing
-    /// was asked.
+    /// What the world said about the options' conditions and the labels' queries, or
+    /// <see langword="null"/> when nothing was asked.
     /// </param>
     /// <returns>Where the run now stands, and what it has to say.</returns>
     /// <remarks>
@@ -55,14 +54,9 @@ internal static class Choosing
     {
         ArgumentNullException.ThrowIfNull(choice);
 
-        if (ALabelAsksTheWorld(choice))
-        {
-            return RefuseAMenuWhoseLabelAsksTheWorld(position);
-        }
-
         var options = choice.Options();
         var available = AvailableOptions(options, supply);
-        var offer = new Offer(choice.Ordered, OfferedOptions.From(options, available));
+        var offer = new Offer(choice.Ordered, OfferedOptions.From(options, available, supply));
         var waiting = new AwaitingChoice(position, available);
 
         return new StepResult(new PlayState(waiting), [offer]);
@@ -89,9 +83,6 @@ internal static class Choosing
             var notAMenu => RefuseChoose(waiting, notAMenu),
         };
     }
-
-    private static bool ALabelAsksTheWorld(ChoiceNode choice) =>
-        choice.Options().Any(option => SpeechTemplate.HasQueries(option.Label));
 
     private static ImmutableArray<int> AvailableOptions(ImmutableArray<OptionEdge> options, Supply? supply) =>
         [.. Enumerable.Range(0, options.Length).Where(at => IsAvailable(options[at], supply))];
@@ -142,10 +133,4 @@ internal static class Choosing
                     $"Node {waiting.Node}, of kind {notAMenu.GetType().Name}, is not a menu, so there is "
                         + "no Choose to take there."),
             ]);
-
-    private static StepResult RefuseAMenuWhoseLabelAsksTheWorld(int position) =>
-        StepResults.Refuse(
-            position,
-            RefusalReason.UnplayableNode,
-            "This build cannot yet offer a menu whose labels ask the world anything.");
 }

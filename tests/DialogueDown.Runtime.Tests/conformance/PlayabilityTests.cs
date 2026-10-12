@@ -48,15 +48,6 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
-    public void WhyNotPlayable_OfAMenuWhoseLabelAsksTheWorld_SaysSoRatherThanNamingItsKind()
-    {
-        // This build plays menus, so naming the kind would say the wrong thing is missing.
-        var context = PlayContextFactory.Of([PlayContextFactory.AMenuWithAQueryInALabel(), End(id: 1)], ["Alice"]);
-
-        AssertNotPlayable(context, "nothing offers a menu whose label asks the world yet");
-    }
-
-    [Fact]
     public void WhyNotPlayable_OfASendNoReaderOwns_NamesItsCommand()
     {
         AssertNotPlayable(Sent("""{ "frobnicate": 0 }"""), "nothing sends frobnicate yet");

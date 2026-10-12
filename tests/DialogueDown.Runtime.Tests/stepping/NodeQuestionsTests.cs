@@ -79,6 +79,13 @@ public sealed class NodeQuestionsTests
         Assert.Equal(["mood"], NodeQuestions.RequiredToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 1).Keys());
 
     [Fact]
+    public void RequiredToPlayFrom_TheStartOfAMenu_ReadsEverythingItNeeds() =>
+        // A menu is offered whole, so nothing it asks is left for later.
+        Assert.Equal(
+            NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).Keys(),
+            NodeQuestions.RequiredToPlayFrom(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold(), 0).Keys());
+
+    [Fact]
     public void RequiredToPlayFrom_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => NodeQuestions.RequiredToPlayFrom(null!, 0));
 

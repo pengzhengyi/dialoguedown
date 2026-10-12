@@ -40,6 +40,17 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void At_AMenuWithAQueryInALabel_AsksTheWorldBeforeOfferingIt() =>
+        AssertAsked(Arrival.At(AMenuWithAQueryInALabelStanding(), 0), node: 0, Moment.BeforePlaying, "playerName");
+
+    [Fact]
+    public void Supplied_AtAMenuWithAQueryInALabel_OffersItWithTheWordsTheWorldGave() =>
+        AssertEvents(
+            Arrival.Supplied(
+                AMenuWithAQueryInALabelStanding(), Waiting(0, "playerName"), Answering(("playerName", "Ada"))),
+            "offer 'Call Ada over'");
+
+    [Fact]
     public void Supplied_WhenTheWorldWithholdsEveryOptionOfAMenu_WalksOnByItsFallThrough()
     {
         // A menu the player can take nothing from would only wait forever, so the run goes on to
@@ -529,6 +540,16 @@ public sealed class ArrivalTests
     /// <returns>A context ready to step.</returns>
     private static PlayContext AMenuWithAConditionalOptionStanding() =>
         PlayContextFactory.Of([PlayContextFactory.AMenuWithAConditionalOption(), End(id: 1), End(id: 2)]);
+
+    /// <summary>A playbook that begins at a menu whose only label asks the world for words.</summary>
+    /// <remarks>
+    /// <code>
+    /// - Call `"playerName"` over
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext AMenuWithAQueryInALabelStanding() =>
+        PlayContextFactory.Of([PlayContextFactory.AMenuWithAQueryInALabel(), End(id: 1)]);
 
     /// <summary>A menu whose only option the world must allow, then the line after it.</summary>
     /// <remarks>
