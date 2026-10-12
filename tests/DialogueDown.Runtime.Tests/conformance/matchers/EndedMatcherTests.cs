@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -18,24 +18,26 @@ public sealed class EndedMatcherTests
     [Fact]
     public void ARunStillSpeakingDiverges()
     {
-        AssertDiverged(Match(Spoke("Alice")), "expected the run to end", "heard Alice speak");
+        AssertDiverged(Match(Spoke("Alice")), "expected the run to end, but it heard Alice speak");
     }
 
     [Fact]
     public void ARefusalDiverges()
     {
-        AssertDiverged(Match(new Refused(RefusalReason.LeadsNowhere, "no step")), "expected the run to end", "refused: no step");
+        AssertDiverged(
+            Match(new Refused(RefusalReason.LeadsNowhere, "no step")),
+            "expected the run to end, but it refused: no step");
     }
 
     [Fact]
     public void AnUnnamedSpeakerIsDescribedAsTheDefaultOne()
     {
-        AssertDiverged(Match(Spoke(null)), "heard <default> speak");
+        AssertDiverged(Match(Spoke(null)), "expected the run to end, but it heard <default> speak");
     }
 
     private static Said Spoke(string? speaker) =>
         new(speaker, [Text("Hi")]);
 
     // What an `ended` claim carries says nothing beyond the key itself, so the tests do not read it.
-    private SessionOutcome Match(Event happened) => _matcher.Match(happened, JsonNode.Parse("true")!);
+    private SessionOutcome Match(Event happened) => _matcher.Match(happened, Json("true"));
 }

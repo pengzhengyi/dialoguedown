@@ -1,6 +1,6 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
@@ -20,8 +20,7 @@ public sealed class RefusedMatcherTests
     {
         AssertDiverged(
             Match(Refusing(RefusalReason.NotStarted), """{ "reason": "already-ended" }"""),
-            "expected a refusal for already-ended",
-            "refused for not-started");
+            "expected a refusal for already-ended, but it refused for not-started");
     }
 
     [Fact]
@@ -29,8 +28,7 @@ public sealed class RefusedMatcherTests
     {
         AssertDiverged(
             Match(new Ended(), """{ "reason": "already-ended" }"""),
-            "expected the run to refuse",
-            "ended");
+            "expected the run to refuse, but it ended");
     }
 
     [Fact]
@@ -50,5 +48,5 @@ public sealed class RefusedMatcherTests
     private static Refused Refusing(RefusalReason reason) => new(reason, "The run is over.");
 
     private SessionOutcome Match(Event happened, string claimed) =>
-        _matcher.Match(happened, JsonNode.Parse(claimed)!);
+        _matcher.Match(happened, Json(claimed));
 }

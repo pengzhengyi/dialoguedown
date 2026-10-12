@@ -1,5 +1,4 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.TestSupport;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
@@ -53,7 +52,7 @@ public sealed class BranchArmOrderCheckerTests
         var playbook = PlaybookFactory.Document(
             nodes:
             [
-                Branch(new SuccessionEdge(1), Arm("HasMap", target: 1), Else(target: 1)),
+                Branch(Succession(1), Arm("HasMap", target: 1), Else(target: 1)),
                 End(id: 1),
             ]);
 

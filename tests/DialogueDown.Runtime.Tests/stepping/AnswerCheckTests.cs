@@ -27,7 +27,7 @@ public sealed class AnswerCheckTests
         Assert.True(AnswerCheck.Disagrees(Guards("Hero.HasSword"), Answered(), out var refusal));
 
         Assert.Equal(RefusalReason.UnansweredKey, refusal.Reason);
-        Assert.Contains("Hero.HasSword", refusal.Explanation, StringComparison.Ordinal);
+        Assert.Equal("The world was asked about Hero.HasSword and did not say.", refusal.Explanation);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public sealed class AnswerCheckTests
         Assert.True(AnswerCheck.Disagrees(Guards(), Truth("Bob.HasRope"), out var refusal));
 
         Assert.Equal(RefusalReason.UnaskedKey, refusal.Reason);
-        Assert.Contains("Bob.HasRope", refusal.Explanation, StringComparison.Ordinal);
+        Assert.Equal("The world answered Bob.HasRope, which nothing asked about.", refusal.Explanation);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class AnswerCheckTests
         Assert.True(
             AnswerCheck.Disagrees(Guards("Hero.HasSword", "Alice.HasKey"), Answered(), out var refusal));
 
-        Assert.Contains("Alice.HasKey, Hero.HasSword", refusal.Explanation, StringComparison.Ordinal);
+        Assert.Equal("The world was asked about Alice.HasKey, Hero.HasSword and did not say.", refusal.Explanation);
     }
 
     [Fact]
@@ -86,8 +86,10 @@ public sealed class AnswerCheckTests
                     ("Alice.HasKey", new TextAnswer("no"))),
                 out var refusal));
 
-        Assert.StartsWith("Alice.HasKey needs", refusal.Explanation, StringComparison.Ordinal);
-        Assert.Contains("; Hero.HasSword needs", refusal.Explanation, StringComparison.Ordinal);
+        Assert.Equal(
+            "Alice.HasKey needs a truth and was answered with words; "
+            + "Hero.HasSword needs a truth and was answered with words.",
+            refusal.Explanation);
     }
 
     [Fact]

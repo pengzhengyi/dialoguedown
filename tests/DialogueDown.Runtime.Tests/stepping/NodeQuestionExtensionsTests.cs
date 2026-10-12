@@ -1,4 +1,3 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
@@ -104,7 +103,7 @@ public sealed class NodeQuestionExtensionsTests
             Branch(
                 Arm("Hero.HasSword", target: 1),
                 Arm("Hero.HasShield", target: 2),
-                new SuccessionEdge(3))
+                Succession(3))
                 .FindTruthsForLeaving());
 
     [Fact]
@@ -118,7 +117,7 @@ public sealed class NodeQuestionExtensionsTests
     public void FindTruthsForLeaving_OfAMenu_AreNone() =>
         // An option is taken by choosing, never by leaving.
         Assert.Empty(
-            Choice(Option("Draw the sword", condition: "Hero.HasSword", target: 1), new SuccessionEdge(2))
+            Choice(Option("Draw the sword", condition: "Hero.HasSword", target: 1), Succession(2))
                 .FindTruthsForLeaving());
 
     [Fact]

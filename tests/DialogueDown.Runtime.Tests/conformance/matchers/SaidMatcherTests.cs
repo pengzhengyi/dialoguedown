@@ -1,6 +1,6 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -63,13 +63,17 @@ public sealed class SaidMatcherTests
     {
         AssertDiverged(
             Match(Spoke("Alice", "Hello"), """{ "speaker": "Alice", "speech": "Hi" }"""),
-            "expected \"Hi\", but heard \"Hello\"");
+            """
+            expected "Hi", but heard "Hello"
+            """);
     }
 
     [Fact]
     public void DifferentFragmentSpeechDiverges()
     {
-        AssertDiverged(Match(Spoke("Alice", "Hello"), Fragments), "fragment 0", "Hello", "Hi");
+        AssertDiverged(
+            Match(Spoke("Alice", "Hello"), Fragments),
+            """fragment 0: expected {"kind":"text","text":"Hi"}, but heard {"kind":"text","text":"Hello"}""");
     }
 
     [Fact]
@@ -81,8 +85,9 @@ public sealed class SaidMatcherTests
         AssertDiverged(
             outcome,
             "expected Bob to speak, but Alice did",
-            "expected \"Hi\", but heard \"Hello\"");
-        Assert.Equal(2, outcome.Reasons.Length);
+            """
+            expected "Hi", but heard "Hello"
+            """);
     }
 
     [Fact]
@@ -90,8 +95,7 @@ public sealed class SaidMatcherTests
     {
         AssertDiverged(
             Match(new Ended(), """{ "speaker": "Alice", "speech": "Hi" }"""),
-            "expected somebody to speak",
-            "ended");
+            "expected somebody to speak, but the run ended");
     }
 
     [Fact]
@@ -124,9 +128,7 @@ public sealed class SaidMatcherTests
             Match(
                 new Said("Alice", [Text("Hi"), Text("there")]),
                 """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hi" }, { "kind": "text", "text": "friend" } ] }"""),
-            "fragment 1",
-            "friend",
-            "there");
+            """fragment 1: expected {"kind":"text","text":"friend"}, but heard {"kind":"text","text":"there"}""");
     }
 
     [Fact]
@@ -137,8 +139,10 @@ public sealed class SaidMatcherTests
             new Said("Alice", [Text("Hi"), Text("there")]),
             """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hey" }, { "kind": "text", "text": "friend" } ] }""");
 
-        AssertDiverged(outcome, "fragment 0", "Hey", "fragment 1", "friend");
-        Assert.Equal(2, outcome.Reasons.Length);
+        AssertDiverged(
+            outcome,
+            """fragment 0: expected {"kind":"text","text":"Hey"}, but heard {"kind":"text","text":"Hi"}""",
+            """fragment 1: expected {"kind":"text","text":"friend"}, but heard {"kind":"text","text":"there"}""");
     }
 
     [Fact]
@@ -152,5 +156,5 @@ public sealed class SaidMatcherTests
         new(speaker, [Text(text)]);
 
     private SessionOutcome Match(Event happened, string expectation) =>
-        _matcher.Match(happened, JsonNode.Parse(expectation)!);
+        _matcher.Match(happened, Json(expectation));
 }

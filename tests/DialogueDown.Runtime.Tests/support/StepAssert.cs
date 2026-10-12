@@ -58,16 +58,16 @@ internal static class StepAssert
         Assert.IsType<AtEnd>(result.State.Situation);
     }
 
-    /// <summary>Asserts a step refused, for a reason, saying something in particular.</summary>
+    /// <summary>Asserts a step refused, for a reason, in exactly these words.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="reason">Why it should have refused.</param>
-    /// <param name="explanation">A phrase the refusal should name.</param>
+    /// <param name="explanation">The whole explanation the refusal should give.</param>
     public static void AssertRefused(StepResult result, RefusalReason reason, string explanation)
     {
         var refused = Assert.IsType<Refused>(Assert.Single(result.Events));
 
         Assert.Equal(reason, refused.Reason);
-        Assert.Contains(explanation, refused.Explanation, StringComparison.Ordinal);
+        Assert.Equal(explanation, refused.Explanation);
     }
 
     /// <summary>Asserts a step left the run standing at a node.</summary>
