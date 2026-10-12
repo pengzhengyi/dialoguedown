@@ -40,6 +40,18 @@ public static class SpeechTemplate
     public static ImmutableArray<SpeechSegment> Segments(ImmutableArray<SpeechFragment> speech) =>
         SegmentBuilder.Of(speech).Freeze();
 
+    /// <summary>What the speech says, with the commands it performs left out.</summary>
+    /// <param name="speech">The speech to read.</param>
+    /// <returns>Every segment's words, joined in written order.</returns>
+    /// <remarks>
+    /// These are the words <see cref="Segments"/> puts on each side of each command, so
+    /// <c>Say goodbye `Wave()` and go</c> reads <c>Say goodbye  and go</c>, with both spaces kept.
+    /// Emphasis around a command stays on both sides of it, and a command inside a link's label or
+    /// an image's alt text stays among the words there, as it does in a segment.
+    /// </remarks>
+    public static ImmutableArray<SpeechFragment> Words(ImmutableArray<SpeechFragment> speech) =>
+        [.. Segments(speech).SelectMany(segment => segment.Words)];
+
     /// <summary>The keys the speech's queries ask about, in the order they first appear.</summary>
     /// <param name="speech">The speech to read.</param>
     /// <returns>The keys, each named once.</returns>

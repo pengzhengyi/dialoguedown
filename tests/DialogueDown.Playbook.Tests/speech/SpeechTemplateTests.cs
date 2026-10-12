@@ -329,6 +329,29 @@ public sealed class SpeechTemplateTests
         Assert.Contains(image.Alt, fragment => fragment is DefaultCommandFragment);
     }
 
+    [Fact]
+    public void Words_LeaveOutACommandAndKeepTheWordsEitherSide() =>
+        Assert.Equal(
+            [Text("Say goodbye "), Text(" and go")],
+            SpeechTemplate.Words([Text("Say goodbye "), CustomCommand("Wave"), Text(" and go")]));
+
+    [Fact]
+    public void Words_KeepEmphasisAroundACommandOnBothSidesOfIt() =>
+        Assert.Equal(
+            [Bold(Text("polished ")), Bold(Text(" bright"))],
+            SpeechTemplate.Words([Bold(Text("polished "), DefaultCommand("it gleams"), Text(" bright"))]));
+
+    [Fact]
+    public void Words_OfACommandAlone_AreNone() =>
+        Assert.Empty(SpeechTemplate.Words([CustomCommand("Wave")]));
+
+    [Fact]
+    public void Words_KeepACommandInsideALinkLabelAmongThem() =>
+        // A link is one thing, so its label is kept whole, command and all, as a segment keeps it.
+        Assert.Equal(
+            [Link("#the-inn", Text("Ask "), DefaultCommand("waves"), Text(" now"))],
+            SpeechTemplate.Words([Link("#the-inn", Text("Ask "), DefaultCommand("waves"), Text(" now"))]));
+
     /// <summary>Checks what a segment says and what it performs, in one place.</summary>
     /// <param name="segment">The segment to check.</param>
     /// <param name="spoken">The words, with each query named rather than answered.</param>

@@ -22,7 +22,7 @@ internal static class OfferedOptions
     {
         ArgumentNullException.ThrowIfNull(option);
 
-        return new([.. SpeechTemplate.Segments(option.Label).SelectMany(segment => segment.Words)], available);
+        return new(SpeechTemplate.Words(option.Label), available);
     }
 
     /// <summary>Every option of a menu as the menu offers them.</summary>
